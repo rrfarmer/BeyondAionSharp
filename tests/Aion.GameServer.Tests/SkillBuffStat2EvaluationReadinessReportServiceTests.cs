@@ -55,6 +55,8 @@ public sealed class SkillBuffStat2EvaluationReadinessReportServiceTests
 		Assert.Equal(2, report.BonusFunctionCount);
 		Assert.Equal(1, report.BaseFunctionCount);
 		Assert.Equal(1, report.ConditionedFunctionCount);
+		Assert.Equal(0, report.NegativeSpeedRateFunctionCount);
+		Assert.False(report.RequiresNegativeSpeedRateFunctionHandling);
 	}
 
 	[Fact]
@@ -133,6 +135,34 @@ public sealed class SkillBuffStat2EvaluationReadinessReportServiceTests
 	}
 
 	[Fact]
+	public void CreateReport_BlocksNegativeSpeedRateFunctionUntilJavaSpecialCaseExists()
+	{
+		var report = SkillBuffStat2EvaluationReadinessReportService.CreateReport(
+		[
+			CreatePlan(
+				321,
+				"speed",
+				[new SkillStatChange("SPEED", "PERCENT", -50, 0)],
+				hasOwner: true,
+				hasRegistry: true,
+				hasConditionValidator: true)
+		],
+			hasLiveStat2StateProvider: true,
+			hasLiveCurrentValueFormulaProvider: true,
+			hasLiveAdditionStatProvider: true,
+			hasLiveReverseStatProvider: true,
+			hasLiveStatFunctionApplyProvider: true,
+			hasLiveStatCapProvider: true);
+
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.BlockedMissingNegativeSpeedRateFunctionProvider, report.Status);
+		Assert.False(report.IsReadyForRuntimeEvaluation);
+		Assert.Equal(1, report.NegativeSpeedRateFunctionCount);
+		Assert.True(report.RequiresNegativeSpeedRateFunctionHandling);
+		Assert.Contains("StatRateFunction uses current value", report.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("live StatRateFunction negative SPEED current-value base provider", report.MissingInputs);
+	}
+
+	[Fact]
 	public void CreateReport_IsReadyOnlyWhenEveryRuntimeEvaluationGateExists()
 	{
 		var report = SkillBuffStat2EvaluationReadinessReportService.CreateReport(
@@ -154,6 +184,34 @@ public sealed class SkillBuffStat2EvaluationReadinessReportServiceTests
 
 		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.Ready, report.Status);
 		Assert.True(report.IsReadyForRuntimeEvaluation);
+		Assert.Empty(report.MissingInputs);
+	}
+
+	[Fact]
+	public void CreateReport_IsReadyForNegativeSpeedRateFunctionOnlyWhenSpecialCaseProviderExists()
+	{
+		var report = SkillBuffStat2EvaluationReadinessReportService.CreateReport(
+		[
+			CreatePlan(
+				321,
+				"speed",
+				[new SkillStatChange("SPEED", "PERCENT", -50, 0)],
+				hasOwner: true,
+				hasRegistry: true,
+				hasConditionValidator: true)
+		],
+			hasLiveStat2StateProvider: true,
+			hasLiveCurrentValueFormulaProvider: true,
+			hasLiveAdditionStatProvider: true,
+			hasLiveReverseStatProvider: true,
+			hasLiveStatFunctionApplyProvider: true,
+			hasLiveStatCapProvider: true,
+			hasLiveNegativeSpeedRateFunctionProvider: true);
+
+		Assert.Equal(SkillBuffStat2EvaluationReadinessStatus.Ready, report.Status);
+		Assert.True(report.IsReadyForRuntimeEvaluation);
+		Assert.Equal(1, report.NegativeSpeedRateFunctionCount);
+		Assert.True(report.RequiresNegativeSpeedRateFunctionHandling);
 		Assert.Empty(report.MissingInputs);
 	}
 

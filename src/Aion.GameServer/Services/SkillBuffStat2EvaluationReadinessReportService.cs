@@ -11,10 +11,14 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 		bool hasLiveAdditionStatProvider = false,
 		bool hasLiveReverseStatProvider = false,
 		bool hasLiveStatFunctionApplyProvider = false,
-		bool hasLiveStatCapProvider = false)
+		bool hasLiveStatCapProvider = false,
+		bool hasLiveNegativeSpeedRateFunctionProvider = false)
 	{
 		var functions = functionPlans
 			.SelectMany(plan => plan.Functions)
+			.ToArray();
+		var negativeSpeedRateFunctions = functions
+			.Where(IsNegativeSpeedRateFunction)
 			.ToArray();
 		var missingInputs = new List<string>();
 
@@ -30,6 +34,8 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 			missingInputs.Add("live StatAddFunction/StatRateFunction/StatSetFunction apply provider");
 		if (!hasLiveStatCapProvider)
 			missingInputs.Add("live StatCapUtil.calculateBaseValue provider");
+		if (negativeSpeedRateFunctions.Length > 0 && !hasLiveNegativeSpeedRateFunctionProvider)
+			missingInputs.Add("live StatRateFunction negative SPEED current-value base provider");
 		if (functionPlans.Any(plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction))
 			missingInputs.Add("supported BufEffect stat function mapping");
 
@@ -41,7 +47,9 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 			hasLiveAdditionStatProvider,
 			hasLiveReverseStatProvider,
 			hasLiveStatFunctionApplyProvider,
-			hasLiveStatCapProvider);
+			hasLiveStatCapProvider,
+			negativeSpeedRateFunctions.Length,
+			hasLiveNegativeSpeedRateFunctionProvider);
 		return new SkillBuffStat2EvaluationReadinessReport(
 			status,
 			functionPlans.Count,
@@ -56,15 +64,18 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 			functions.Count(function => function.IsBonus),
 			functions.Count(function => !function.IsBonus),
 			functions.Count(function => function.HasConditions),
+			negativeSpeedRateFunctions.Length,
+			negativeSpeedRateFunctions.Length > 0,
 			hasLiveStat2StateProvider,
 			hasLiveCurrentValueFormulaProvider,
 			hasLiveAdditionStatProvider,
 			hasLiveReverseStatProvider,
 			hasLiveStatFunctionApplyProvider,
 			hasLiveStatCapProvider,
+			hasLiveNegativeSpeedRateFunctionProvider,
 			JavaCurrentValueFormula,
 			missingInputs,
-			"CreatureGameStats.getStat creates AdditionStat or ReverseStat, applies sorted IStatFunction instances that validate(stat), then calls StatCapUtil.calculateBaseValue; Stat2.getCurrent truncates base * baseRate + bonus * bonusRate + base * fixedBonusRate");
+			"CreatureGameStats.getStat creates AdditionStat or ReverseStat, applies sorted IStatFunction instances that validate(stat), then calls StatCapUtil.calculateBaseValue; Stat2.getCurrent truncates base * baseRate + bonus * bonusRate + base * fixedBonusRate; StatRateFunction uses current value instead of baseWithoutBaseRate for negative bonus SPEED when bonus is already negative");
 	}
 
 	private static SkillBuffStat2EvaluationReadinessStatus DetermineStatus(
@@ -75,7 +86,9 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 		bool hasLiveAdditionStatProvider,
 		bool hasLiveReverseStatProvider,
 		bool hasLiveStatFunctionApplyProvider,
-		bool hasLiveStatCapProvider)
+		bool hasLiveStatCapProvider,
+		int negativeSpeedRateFunctionCount,
+		bool hasLiveNegativeSpeedRateFunctionProvider)
 	{
 		if (functionPlans.Count == 0 || functionCount == 0)
 			return SkillBuffStat2EvaluationReadinessStatus.NoFunctionPlans;
@@ -93,7 +106,17 @@ public static class SkillBuffStat2EvaluationReadinessReportService
 			return SkillBuffStat2EvaluationReadinessStatus.BlockedMissingStatFunctionApplyProvider;
 		if (!hasLiveStatCapProvider)
 			return SkillBuffStat2EvaluationReadinessStatus.BlockedMissingStatCapProvider;
+		if (negativeSpeedRateFunctionCount > 0 && !hasLiveNegativeSpeedRateFunctionProvider)
+			return SkillBuffStat2EvaluationReadinessStatus.BlockedMissingNegativeSpeedRateFunctionProvider;
 		return SkillBuffStat2EvaluationReadinessStatus.Ready;
+	}
+
+	private static bool IsNegativeSpeedRateFunction(SkillBuffStatFunctionPlan function)
+	{
+		return string.Equals(function.StatName, "SPEED", StringComparison.Ordinal)
+			&& string.Equals(function.JavaFunctionType, "StatRateFunction", StringComparison.Ordinal)
+			&& function.IsBonus
+			&& function.EffectiveValue < 0;
 	}
 }
 
@@ -107,6 +130,7 @@ public enum SkillBuffStat2EvaluationReadinessStatus
 	BlockedMissingReverseStatProvider,
 	BlockedMissingStatFunctionApplyProvider,
 	BlockedMissingStatCapProvider,
+	BlockedMissingNegativeSpeedRateFunctionProvider,
 	Ready,
 }
 
@@ -121,12 +145,15 @@ public sealed record SkillBuffStat2EvaluationReadinessReport(
 	int BonusFunctionCount,
 	int BaseFunctionCount,
 	int ConditionedFunctionCount,
+	int NegativeSpeedRateFunctionCount,
+	bool RequiresNegativeSpeedRateFunctionHandling,
 	bool HasLiveStat2StateProvider,
 	bool HasLiveCurrentValueFormulaProvider,
 	bool HasLiveAdditionStatProvider,
 	bool HasLiveReverseStatProvider,
 	bool HasLiveStatFunctionApplyProvider,
 	bool HasLiveStatCapProvider,
+	bool HasLiveNegativeSpeedRateFunctionProvider,
 	string CurrentValueFormula,
 	IReadOnlyList<string> MissingInputs,
 	string JavaSource)
