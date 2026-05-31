@@ -1,0 +1,200 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
+
+namespace Aion.GameServer.Tests;
+
+public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
+{
+	[Fact]
+	public void CreateDisabledPlan_ComposesPrivateStoreFinalOutcomeWithoutDispatch()
+	{
+		var handlerPlan = CreatePrivateStoreHandlerPlan(CreatePrivateStorePurchasePlan());
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.NotNull(outcome.PrivateStoreFacadePlan);
+		Assert.NotNull(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellFacadePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.PrivateStoreOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.True(outcome.WouldWriteExchangeLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ComposesPetMerchantFinalOutcomeWithoutDispatch()
+	{
+		var sellPlan = CreatePetSellPlan();
+		var handlerPlan = CreatePetMerchantHandlerPlan(sellPlan);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PetMerchantSellOutcomeCreated, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreFacadePlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.NotNull(outcome.PetMerchantSellFacadePlan);
+		Assert.NotNull(outcome.PetMerchantSellOutcomePlan);
+		Assert.Equal(PetMerchantSellOutcomePlanStatus.DisabledNoTransaction, outcome.PetMerchantSellOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldAddRepurchaseItems);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_BlockedPrivateStoreSelectionCarriesTerminalOutcome()
+	{
+		var packet = CreatePacket(0, [new CmBuyItemEntry(4, 1)]);
+		var handlerPlan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Player,
+				PrivateStoreItems: []));
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
+		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.BoughtItemsPlanNotReady, outcome.PrivateStoreFacadePlan!.Status);
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.FacadeNotReady, outcome.PrivateStoreOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_NonOutcomeHandlerPlanDoesNotCreateFinalOutcome()
+	{
+		var handlerPlan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(13, [new CmBuyItemEntry(100000001, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc));
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_MissingHandlerPlanDoesNotCreateFinalOutcome()
+	{
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(null);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.MissingHandlerPlan, outcome.Status);
+		Assert.Null(outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+	}
+
+	private static CmBuyItemHandlerCompositionPlan CreatePrivateStoreHandlerPlan(PrivateStorePurchasePlan purchasePlan)
+	{
+		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(0, [new CmBuyItemEntry(0, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Player,
+				PrivateStoreItems:
+				[
+					new PrivateStoreListedItemSummary(0, ItemObjectId: 3001, ItemId: 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword"),
+				],
+				PrivateStorePurchasePlan: purchasePlan));
+	}
+
+	private static CmBuyItemHandlerCompositionPlan CreatePetMerchantHandlerPlan(TradeSellToShopPlan sellPlan)
+	{
+		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(17, [new CmBuyItemEntry(2001, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Pet,
+				PetHasMerchantFunction: true,
+				PetSellModifier: 33,
+				PetSellToShopPlan: sellPlan));
+	}
+
+	private static PrivateStorePurchasePlan CreatePrivateStorePurchasePlan()
+	{
+		var sellerItem = new InventoryItem { ObjectId = 3001, ItemId = 100000001, Count = 0, OwnerId = 7001 };
+		var buyerItem = new InventoryItem { ObjectId = 4001, ItemId = 100000001, Count = 1, OwnerId = 8001 };
+		var buyerKinah = new InventoryItem { ObjectId = 5001, ItemId = InventoryItemFactory.KinahItemId, Count = 90_000, OwnerId = 8001 };
+		var sellerKinah = new InventoryItem { ObjectId = 5002, ItemId = InventoryItemFactory.KinahItemId, Count = 10_000, OwnerId = 7001 };
+		var notification = PrivateStoreSellNotificationPlanService.CreatePlan(1, "Practice Sword");
+
+		return new PrivateStorePurchasePlan(
+			PrivateStorePurchasePlanStatus.PlanCreated,
+			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SellerItemUpdates: [],
+			SellerDeletedItemObjectIds: [sellerItem.ObjectId],
+			BuyerAddedItems: [buyerItem],
+			BuyerUpdatedItems: [],
+			BuyerKinahUpdate: buyerKinah,
+			SellerKinahUpdate: sellerKinah,
+			BuyerMessages: [],
+			SellerMessages: [notification.NotificationMessage!],
+			ShouldCloseSellerStore: true,
+			"PrivateStoreService.sellStoreItem");
+	}
+
+	private static TradeSellToShopPlan CreatePetSellPlan()
+	{
+		return new TradeSellToShopPlan(
+			TradeSellToShopPlanStatus.PlanCreated,
+			SellerDeletedItemObjectIds: [2001],
+			SellerItemUpdates: [],
+			RepurchaseItems: [new RepurchaseSourceItem(new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1 }, RepurchasePrice: 330)],
+			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_330 },
+			"TradeService.performSellToShop");
+	}
+
+	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)
+	{
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(SellerObjectId);
+		buffer.WriteH(tradeActionId);
+		buffer.WriteH(entries.Count);
+		foreach (var entry in entries)
+		{
+			buffer.WriteD(entry.ItemObjectId);
+			buffer.WriteQ(entry.Count);
+		}
+
+		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private const int SellerObjectId = 7001;
+}
