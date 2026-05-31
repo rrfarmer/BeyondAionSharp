@@ -276,6 +276,60 @@ public sealed class CraftService
 			bonusCritModifier);
 	}
 
+	public CraftStartInventoryMutationPlan CreateStartInventoryMutationPlan(
+		CraftStartConsumptionPlan? consumptionPlan,
+		IReadOnlyList<InventoryItem>? inventoryItems)
+	{
+		// Java parity: Storage.decreaseByItemId walks matching item stacks, decreases each
+		// with ItemUpdateType.DEC_ITEM_USE, and deletes non-kinah stacks that reach zero.
+		if (consumptionPlan == null)
+			return CraftStartInventoryMutationPlan.NotPlanned("CraftService.checkCraft inventory mutation planning requires consumption evidence");
+		if (!consumptionPlan.IsPlanned)
+			return CraftStartInventoryMutationPlan.NotPlanned("CraftService.checkCraft consumption was not planned");
+		if (inventoryItems == null)
+			return CraftStartInventoryMutationPlan.MissingInventory(consumptionPlan);
+
+		var workingItems = inventoryItems
+			.Select(item => new CraftInventoryWorkingItem(item, item.Count))
+			.ToList();
+		var updatedItems = new List<InventoryItem>();
+		var deletedObjectIds = new List<int>();
+
+		foreach (var decrease in consumptionPlan.Decreases)
+		{
+			var remaining = decrease.Quantity;
+			foreach (var item in workingItems.Where(item =>
+				item.Item.ItemId == decrease.ItemId
+				&& item.Item.Location == CubeStorageId
+				&& !item.Item.IsEquipped
+				&& item.Count > 0))
+			{
+				if (remaining <= 0)
+					break;
+
+				var removed = Math.Min(remaining, item.Count);
+				remaining -= removed;
+				item.Count -= removed;
+				if (item.Count <= 0)
+					deletedObjectIds.Add(item.Item.ObjectId);
+				else
+					updatedItems.Add(CopyInventoryItem(item.Item, item.Count));
+			}
+
+			if (remaining > 0)
+			{
+				return CraftStartInventoryMutationPlan.InsufficientInventory(
+					consumptionPlan,
+					decrease,
+					decrease.Quantity - remaining,
+					updatedItems,
+					deletedObjectIds);
+			}
+		}
+
+		return CraftStartInventoryMutationPlan.Planned(consumptionPlan, updatedItems, deletedObjectIds);
+	}
+
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
 	{
 		// Java parity: services/craft/CraftService.finishCrafting product-selection branch.
@@ -513,6 +567,65 @@ public sealed class CraftService
 		copy.Godstone = item.Godstone;
 		copy.IdianStone = item.IdianStone;
 		return copy;
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item)
+	{
+		return CopyInventoryItem(item, item.Count);
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = item.PendingTuneResult,
+			PersistentState = item.PersistentState,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			Godstone = item.Godstone,
+			IdianStone = item.IdianStone,
+		};
+	}
+
+	private sealed class CraftInventoryWorkingItem
+	{
+		public CraftInventoryWorkingItem(InventoryItem item, long count)
+		{
+			Item = item;
+			Count = count;
+		}
+
+		public InventoryItem Item { get; }
+
+		public long Count { get; set; }
 	}
 }
 
@@ -1277,6 +1390,87 @@ public enum CraftStartConsumedItemKind
 {
 	BonusItem,
 	Component,
+}
+
+public sealed record CraftStartInventoryMutationPlan(
+	CraftStartInventoryMutationStatus Status,
+	CraftStartConsumptionPlan? ConsumptionPlan,
+	IReadOnlyList<InventoryItem> UpdatedItems,
+	IReadOnlyList<int> DeletedObjectIds,
+	CraftStartConsumedItemPlan? FailedDecrease,
+	long AvailableCount,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartInventoryMutationStatus.Planned;
+
+	public static CraftStartInventoryMutationPlan NotPlanned(string javaSource)
+	{
+		return new CraftStartInventoryMutationPlan(
+			CraftStartInventoryMutationStatus.NotPlanned,
+			ConsumptionPlan: null,
+			UpdatedItems: Array.Empty<InventoryItem>(),
+			DeletedObjectIds: Array.Empty<int>(),
+			FailedDecrease: null,
+			AvailableCount: 0,
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryMutationPlan MissingInventory(CraftStartConsumptionPlan consumptionPlan)
+	{
+		return new CraftStartInventoryMutationPlan(
+			CraftStartInventoryMutationStatus.MissingInventory,
+			consumptionPlan,
+			UpdatedItems: Array.Empty<InventoryItem>(),
+			DeletedObjectIds: Array.Empty<int>(),
+			FailedDecrease: null,
+			AvailableCount: 0,
+			"CraftService.checkCraft inventory mutation planning requires player inventory",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryMutationPlan InsufficientInventory(
+		CraftStartConsumptionPlan consumptionPlan,
+		CraftStartConsumedItemPlan failedDecrease,
+		long availableCount,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<int> deletedObjectIds)
+	{
+		return new CraftStartInventoryMutationPlan(
+			CraftStartInventoryMutationStatus.InsufficientInventory,
+			consumptionPlan,
+			updatedItems.ToArray(),
+			deletedObjectIds.ToArray(),
+			failedDecrease,
+			availableCount,
+			"Storage.decreaseByItemId -> matching stacks could not satisfy requested count",
+			IsLive: false);
+	}
+
+	public static CraftStartInventoryMutationPlan Planned(
+		CraftStartConsumptionPlan consumptionPlan,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<int> deletedObjectIds)
+	{
+		return new CraftStartInventoryMutationPlan(
+			CraftStartInventoryMutationStatus.Planned,
+			consumptionPlan,
+			updatedItems.ToArray(),
+			deletedObjectIds.ToArray(),
+			FailedDecrease: null,
+			AvailableCount: 0,
+			"Storage.decreaseByItemId -> decreaseItemCount(..., ItemUpdateType.DEC_ITEM_USE), delete stacks at zero",
+			IsLive: false);
+	}
+}
+
+public enum CraftStartInventoryMutationStatus
+{
+	NotPlanned,
+	MissingInventory,
+	InsufficientInventory,
+	Planned,
 }
 
 public sealed record CraftStartTaskPlan(

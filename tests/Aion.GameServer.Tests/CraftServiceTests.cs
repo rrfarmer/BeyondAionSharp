@@ -1039,6 +1039,121 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartInventoryMutationPlan_PlansJavaStackDecreasesWithoutMutatingInventory()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1145, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000038,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2), (152000902, 1))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8010, itemId: 169401081, count: 1),
+			CreateInventoryItem(objectId: 8011, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8012, itemId: 152000901, count: 3),
+			CreateInventoryItem(objectId: 8013, itemId: 152000902, count: 5),
+		];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9029, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials,
+			craftType: 1);
+		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials, craftType: 1);
+
+		var mutation = service.CreateStartInventoryMutationPlan(consumption, player.InventoryItems);
+
+		Assert.Equal(CraftStartInventoryMutationStatus.Planned, mutation.Status);
+		Assert.False(mutation.IsLive);
+		Assert.Same(consumption, mutation.ConsumptionPlan);
+		Assert.Equal([8010, 8011], mutation.DeletedObjectIds);
+		Assert.Collection(
+			mutation.UpdatedItems,
+			item =>
+			{
+				Assert.Equal(8012, item.ObjectId);
+				Assert.Equal(2, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(8013, item.ObjectId);
+				Assert.Equal(4, item.Count);
+			});
+		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == 8010).Count);
+		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == 8011).Count);
+		Assert.Equal(3, player.InventoryItems.Single(item => item.ObjectId == 8012).Count);
+		Assert.Contains("Storage.decreaseByItemId", mutation.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartInventoryMutationPlan_ReportsInsufficientInventoryConservatively()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1146, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000039,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 2))]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems = [CreateInventoryItem(objectId: 8014, itemId: 152000901, count: 2)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9030, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 2 };
+		var validation = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials);
+		var consumption = service.CreateStartConsumptionPlan(validation, recipe, selectedMaterials);
+
+		var mutation = service.CreateStartInventoryMutationPlan(
+			consumption,
+			[CreateInventoryItem(objectId: 8015, itemId: 152000901, count: 1)]);
+
+		Assert.Equal(CraftStartInventoryMutationStatus.InsufficientInventory, mutation.Status);
+		Assert.Equal(152000901, mutation.FailedDecrease?.ItemId);
+		Assert.Equal(1, mutation.AvailableCount);
+		Assert.Equal([8015], mutation.DeletedObjectIds);
+		Assert.Empty(mutation.UpdatedItems);
+		Assert.False(mutation.IsLive);
+	}
+
+	[Fact]
+	public void CreateStartInventoryMutationPlan_DoesNotPlanWithoutConsumption()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var notPlanned = CraftStartConsumptionPlan.NotPlanned("validation failed");
+
+		var mutation = service.CreateStartInventoryMutationPlan(notPlanned, []);
+
+		Assert.Equal(CraftStartInventoryMutationStatus.NotPlanned, mutation.Status);
+		Assert.Empty(mutation.UpdatedItems);
+		Assert.Empty(mutation.DeletedObjectIds);
+		Assert.Contains("not planned", mutation.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateStartTaskPlan_UsesJavaIntervalFormulaAndBonusModifier()
 	{
 		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
