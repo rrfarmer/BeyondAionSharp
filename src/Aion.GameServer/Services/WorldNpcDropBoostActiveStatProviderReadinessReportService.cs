@@ -10,7 +10,8 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		bool hasLiveEffectStatOwnerProvider = false,
 		bool hasLiveStatFunctionRegistryProvider = false,
 		bool hasLiveCreatureGameStatsStatQueryProvider = false,
-		bool hasLiveConditionValidatorProvider = false)
+		bool hasLiveConditionValidatorProvider = false,
+		int statFunctionPlanSkillLevel = 1)
 	{
 		var staticMetadataReport = WorldNpcDropBoostStatProviderReadinessReportService.CreateReport(
 			skillTemplates,
@@ -18,6 +19,12 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			hasLiveCreatureGameStatsProvider: hasLiveCreatureGameStatsStatQueryProvider);
 		var conditionReadinessReport = SkillStatChangeConditionReadinessReportService.CreateReport(
 			skillTemplates,
+			hasLiveConditionValidatorProvider);
+		var statFunctionPlans = CreateStatFunctionPlans(
+			skillTemplates,
+			statFunctionPlanSkillLevel,
+			hasLiveEffectStatOwnerProvider,
+			hasLiveStatFunctionRegistryProvider,
 			hasLiveConditionValidatorProvider);
 		var missingInputs = new List<string>();
 
@@ -43,11 +50,14 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			missingInputs.Add("live CreatureGameStats.getStat provider");
 		if (conditionReadinessReport.ConditionEntryCount > 0 && !hasLiveConditionValidatorProvider)
 			missingInputs.Add("live Conditions.validate provider");
+		if (statFunctionPlans.Any(plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction))
+			missingInputs.Add("supported BufEffect stat function mapping");
 
 		var status = DetermineStatus(
 			skillTemplates,
 			staticMetadataReport,
 			conditionReadinessReport,
+			statFunctionPlans,
 			hasLiveActiveEffectControllerProvider,
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
@@ -57,6 +67,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			status,
 			staticMetadataReport,
 			conditionReadinessReport,
+			statFunctionPlans,
 			hasLiveActiveEffectControllerProvider,
 			hasLiveEffectStatOwnerProvider,
 			hasLiveStatFunctionRegistryProvider,
@@ -70,6 +81,7 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 		SkillTemplateTable? skillTemplates,
 		WorldNpcDropBoostStatProviderReadinessReport staticMetadataReport,
 		SkillStatChangeConditionReadinessReport conditionReadinessReport,
+		IReadOnlyList<SkillBuffStatFunctionRegistryPlan> statFunctionPlans,
 		bool hasLiveActiveEffectControllerProvider,
 		bool hasLiveEffectStatOwnerProvider,
 		bool hasLiveStatFunctionRegistryProvider,
@@ -83,6 +95,8 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			|| staticMetadataReport.DrBoostEffectCount == 0
 			|| staticMetadataReport.DrBoostChangeCount == 0)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.MissingStaticMetadata;
+		if (statFunctionPlans.Any(plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction))
+			return WorldNpcDropBoostActiveStatProviderReadinessStatus.UnsupportedStatFunctionPlan;
 		if (!hasLiveActiveEffectControllerProvider)
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingActiveEffectControllerProvider;
 		if (!hasLiveEffectStatOwnerProvider)
@@ -95,12 +109,38 @@ public static class WorldNpcDropBoostActiveStatProviderReadinessReportService
 			return WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingConditionValidatorProvider;
 		return WorldNpcDropBoostActiveStatProviderReadinessStatus.Ready;
 	}
+
+	private static IReadOnlyList<SkillBuffStatFunctionRegistryPlan> CreateStatFunctionPlans(
+		SkillTemplateTable? skillTemplates,
+		int skillLevel,
+		bool hasLiveEffectStatOwnerProvider,
+		bool hasLiveStatFunctionRegistryProvider,
+		bool hasLiveConditionValidatorProvider)
+	{
+		if (skillTemplates == null)
+			return Array.Empty<SkillBuffStatFunctionRegistryPlan>();
+
+		return skillTemplates.Templates
+			.SelectMany(template => template.BuffStatEffects
+				.Where(effect => string.Equals(effect.EffectName, "boostdroprate", StringComparison.Ordinal)
+					|| string.Equals(effect.EffectName, "drboost", StringComparison.Ordinal))
+				.Select(effect => SkillBuffStatFunctionPlanService.CreateRegistryPlan(
+					template.SkillId,
+					effect.EffectName,
+					skillLevel,
+					effect.Changes,
+					hasLiveEffectStatOwnerProvider,
+					hasLiveStatFunctionRegistryProvider,
+					hasLiveConditionValidatorProvider)))
+			.ToArray();
+	}
 }
 
 public enum WorldNpcDropBoostActiveStatProviderReadinessStatus
 {
 	MissingSkillTemplates,
 	MissingStaticMetadata,
+	UnsupportedStatFunctionPlan,
 	BlockedMissingActiveEffectControllerProvider,
 	BlockedMissingEffectStatOwnerProvider,
 	BlockedMissingStatFunctionRegistryProvider,
@@ -113,6 +153,7 @@ public sealed record WorldNpcDropBoostActiveStatProviderReadinessReport(
 	WorldNpcDropBoostActiveStatProviderReadinessStatus Status,
 	WorldNpcDropBoostStatProviderReadinessReport StaticMetadataReport,
 	SkillStatChangeConditionReadinessReport ConditionReadinessReport,
+	IReadOnlyList<SkillBuffStatFunctionRegistryPlan> StatFunctionPlans,
 	bool HasLiveActiveEffectControllerProvider,
 	bool HasLiveEffectStatOwnerProvider,
 	bool HasLiveStatFunctionRegistryProvider,
@@ -122,4 +163,6 @@ public sealed record WorldNpcDropBoostActiveStatProviderReadinessReport(
 	string JavaSource)
 {
 	public bool IsReadyForDropWorkflow => Status == WorldNpcDropBoostActiveStatProviderReadinessStatus.Ready;
+
+	public int StatFunctionPlanCount => StatFunctionPlans.Count;
 }

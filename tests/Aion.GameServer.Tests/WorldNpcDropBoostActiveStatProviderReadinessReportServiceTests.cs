@@ -20,6 +20,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Contains("EffectController.addEffect", report.JavaSource, StringComparison.Ordinal);
 		Assert.Equal(WorldNpcDropBoostStatProviderReadinessStatus.MissingSkillTemplates, report.StaticMetadataReport.Status);
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.MissingSkillTemplates, report.ConditionReadinessReport.Status);
+		Assert.Empty(report.StatFunctionPlans);
 	}
 
 	[Fact]
@@ -38,6 +39,41 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Contains("live CreatureGameStats stat-function registry", report.MissingInputs);
 		Assert.Contains("live CreatureGameStats.getStat provider", report.MissingInputs);
 		Assert.DoesNotContain("live Conditions.validate provider", report.MissingInputs);
+		Assert.Equal(2, report.StatFunctionPlanCount);
+		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.BlockedMissingEffectStatOwnerProvider, plan.Status));
+	}
+
+	[Fact]
+	public void CreateReport_AttachesDropBoostStatFunctionPlansAsEvidence()
+	{
+		var templates = new SkillTemplateTable(
+		[
+			CreateTemplate(
+				8472,
+				[new SkillBuffStatEffectSummary("boostdroprate", [new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 5)])]),
+			CreateTemplate(
+				9878,
+				[new SkillBuffStatEffectSummary("drboost", [new SkillStatChange("DR_BOOST", "REPLACE", 80, 10)])])
+		]);
+
+		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(
+			templates,
+			statFunctionPlanSkillLevel: 2);
+
+		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.BlockedMissingActiveEffectControllerProvider, report.Status);
+		var dropBoostPlan = Assert.Single(report.StatFunctionPlans, plan => string.Equals(plan.EffectName, "boostdroprate", StringComparison.Ordinal));
+		var dropBoostFunction = Assert.Single(dropBoostPlan.Functions);
+		Assert.Equal(8472, dropBoostPlan.SkillId);
+		Assert.Equal(2, dropBoostPlan.SkillLevel);
+		Assert.Equal("StatAddFunction", dropBoostFunction.JavaFunctionType);
+		Assert.Equal(30, dropBoostFunction.EffectiveValue);
+		Assert.True(dropBoostFunction.RequiresStatFunctionProxy);
+
+		var drBoostPlan = Assert.Single(report.StatFunctionPlans, plan => string.Equals(plan.EffectName, "drboost", StringComparison.Ordinal));
+		var drBoostFunction = Assert.Single(drBoostPlan.Functions);
+		Assert.Equal("StatSetFunction", drBoostFunction.JavaFunctionType);
+		Assert.Equal(100, drBoostFunction.EffectiveValue);
+		Assert.False(drBoostFunction.IsBonus);
 	}
 
 	[Fact]
@@ -85,6 +121,30 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.DoesNotContain("live Effect StatOwner provider", report.MissingInputs);
 		Assert.DoesNotContain("live CreatureGameStats stat-function registry", report.MissingInputs);
 		Assert.DoesNotContain("live CreatureGameStats.getStat provider", report.MissingInputs);
+		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.BlockedMissingConditionValidatorProvider, plan.Status));
+	}
+
+	[Fact]
+	public void CreateReport_ReportsUnsupportedStatFunctionPlansBeforeLiveProviderReadiness()
+	{
+		var templates = new SkillTemplateTable(
+		[
+			CreateTemplate(
+				8472,
+				[new SkillBuffStatEffectSummary("boostdroprate", [new SkillStatChange("BOOST_DROP_RATE", "ABS", 20, 0)])]),
+			CreateTemplate(
+				9878,
+				[new SkillBuffStatEffectSummary("drboost", [new SkillStatChange("DR_BOOST", "ADD", 100, 0)])])
+		]);
+
+		var report = WorldNpcDropBoostActiveStatProviderReadinessReportService.CreateReport(templates);
+
+		Assert.Equal(WorldNpcDropBoostActiveStatProviderReadinessStatus.UnsupportedStatFunctionPlan, report.Status);
+		Assert.False(report.IsReadyForDropWorkflow);
+		Assert.Contains("supported BufEffect stat function mapping", report.MissingInputs);
+		var unsupportedPlan = Assert.Single(report.StatFunctionPlans, plan => plan.Status == SkillBuffStatFunctionRegistryPlanStatus.UnsupportedFunction);
+		Assert.Equal("boostdroprate", unsupportedPlan.EffectName);
+		Assert.Equal("unsupported", Assert.Single(unsupportedPlan.Functions).JavaFunctionType);
 	}
 
 	[Fact]
@@ -103,6 +163,7 @@ public sealed class WorldNpcDropBoostActiveStatProviderReadinessReportServiceTes
 		Assert.Empty(report.MissingInputs);
 		Assert.Equal(WorldNpcDropBoostStatProviderReadinessStatus.Ready, report.StaticMetadataReport.Status);
 		Assert.Equal(SkillStatChangeConditionReadinessStatus.Ready, report.ConditionReadinessReport.Status);
+		Assert.All(report.StatFunctionPlans, plan => Assert.Equal(SkillBuffStatFunctionRegistryPlanStatus.Ready, plan.Status));
 	}
 
 	private static SkillTemplateTable CreateDropBoostSkillTemplates()
