@@ -84,6 +84,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmCraftRuntimePlan>? _cmCraftRuntimePlanObserver;
 	private readonly Action<CmCraftStartCompositionPlan>? _cmCraftStartCompositionPlanObserver;
 	private readonly Action<CmBuyItemHandlerCompositionPlan>? _cmBuyItemHandlerCompositionPlanObserver;
+	private readonly Func<Player, int, bool>? _buyItemKnownObjectResolver;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -154,7 +155,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Func<bool>? isShuttingDownSoon = null,
 		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null,
 		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null,
-		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null)
+		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null,
+		Func<Player, int, bool>? buyItemKnownObjectResolver = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -199,6 +201,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmCraftRuntimePlanObserver = cmCraftRuntimePlanObserver;
 		_cmCraftStartCompositionPlanObserver = cmCraftStartCompositionPlanObserver;
 		_cmBuyItemHandlerCompositionPlanObserver = cmBuyItemHandlerCompositionPlanObserver;
+		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -3954,7 +3957,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_cmBuyItemHandlerCompositionPlanObserver == null)
 			return;
 
-		var targetKind = ResolveBuyItemTargetKind(packet.SellerObjectId);
+		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
@@ -3963,19 +3966,23 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmBuyItemHandlerCompositionPlanObserver.Invoke(plan);
 	}
 
-	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(int sellerObjectId)
+	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(Player? player, int sellerObjectId)
 	{
-		// Java resolves player.getKnownList().getObject(sellerObjId). This diagnostic
-		// path only classifies already-available C# world objects and stays non-live.
-		if (_world?.TryGetObject(sellerObjectId, out var gameObject) != true || gameObject == null)
-			return CmBuyItemRunTargetKind.Unknown;
-
-		return gameObject switch
-		{
-			Player => CmBuyItemRunTargetKind.Player,
-			IWorldNpcObject => CmBuyItemRunTargetKind.Npc,
-			_ => CmBuyItemRunTargetKind.Other,
-		};
+		// Java resolves player.getKnownList().getObject(sellerObjId). When no known-list
+		// fact resolver is available, the observer path keeps reporting the existing
+		// world-object-only approximation as non-live diagnostic evidence.
+		var worldObject = _world?.TryGetObject(sellerObjectId, out var gameObject) == true
+			? gameObject
+			: null;
+		bool? isKnownByPlayer = player == null || _buyItemKnownObjectResolver == null
+			? null
+			: _buyItemKnownObjectResolver(player, sellerObjectId);
+		var factPlan = CmBuyItemKnownListTargetFactAdapterService.CreatePlan(
+			player,
+			sellerObjectId,
+			worldObject,
+			isKnownByPlayer);
+		return factPlan.TargetKind;
 	}
 
 	private IWorldNpcObject? ResolveCraftTarget(int targetObjectId)
