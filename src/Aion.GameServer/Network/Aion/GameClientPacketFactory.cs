@@ -82,6 +82,7 @@ public static class GameClientPacketFactory
 		Register(136, states => new CmGetMailAttachment(136, states), GameConnectionState.InGame);
 		Register(137, states => new CmDeleteMail(137, states), GameConnectionState.InGame);
 		Register(139, states => new CmTitleSet(139, states), GameConnectionState.InGame);
+		Register(141, states => new CmCraft(141, states), GameConnectionState.InGame);
 		Register(145, states => new CmQuestionnaire(145, states), GameConnectionState.InGame);
 		Register(146, states => new CmRejectRevive(146, states), GameConnectionState.InGame);
 		Register(147, states => new CmHeadingUpdate(147, states), GameConnectionState.InGame);
