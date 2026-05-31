@@ -48,7 +48,8 @@ public sealed record RecipeTemplateSummary(
 	IReadOnlyList<int>? ComboProducts = null,
 	int? CraftDelayId = null,
 	int? CraftDelayTime = null,
-	IReadOnlyList<RecipeComponentDataSummary>? ComponentsData = null)
+	IReadOnlyList<RecipeComponentDataSummary>? ComponentsData = null,
+	int? MaxProductionCount = null)
 {
 	public IReadOnlyList<RecipeComponentDataSummary> ComponentGroups => ComponentsData ?? Array.Empty<RecipeComponentDataSummary>();
 

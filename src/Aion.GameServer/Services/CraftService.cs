@@ -454,6 +454,33 @@ public sealed class CraftService
 			marksCreatorOnEquipment);
 	}
 
+	public CraftFinishWorkOrderPlan CreateFinishWorkOrderPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
+	{
+		// Java parity: CraftService.finishCrafting maxProductionCount branch runs before XP/reward.
+		if (player == null)
+			return CraftFinishWorkOrderPlan.MissingPlayer(recipeTemplate?.RecipeId ?? 0, critCount);
+		if (recipeTemplate == null)
+			return CraftFinishWorkOrderPlan.MissingRecipe(player.ObjectId, critCount);
+		if (!recipeTemplate.MaxProductionCount.HasValue)
+			return CraftFinishWorkOrderPlan.NotWorkOrder(player.ObjectId, recipeTemplate.RecipeId, critCount, player.Recipes);
+
+		var projectedRecipes = player.Recipes.Contains(recipeTemplate.RecipeId)
+			? player.Recipes.Where(recipeId => recipeId != recipeTemplate.RecipeId).Order().ToArray()
+			: player.Recipes.ToArray();
+		var failCraftItemId = critCount == 0 ? recipeTemplate.GetComboProduct(1) ?? 0 : 0;
+
+		return CraftFinishWorkOrderPlan.DisabledNoMutation(
+			player.ObjectId,
+			recipeTemplate.RecipeId,
+			critCount,
+			recipeTemplate.MaxProductionCount.Value,
+			player.Recipes,
+			projectedRecipes,
+			player.Recipes.Contains(recipeTemplate.RecipeId),
+			critCount == 0,
+			failCraftItemId);
+	}
+
 	public CraftFinishCooldownPlan CreateFinishCooldownPlan(
 		Player? player,
 		RecipeTemplateSummary? recipeTemplate,
@@ -2427,6 +2454,131 @@ public enum CraftFinishProductStatus
 	MissingPlayer,
 	MissingRecipe,
 	MissingComboProduct,
+}
+
+public sealed record CraftFinishWorkOrderPlan(
+	CraftFinishWorkOrderStatus Status,
+	int ObjectId,
+	int RecipeId,
+	int CritCount,
+	int MaxProductionCount,
+	IReadOnlyList<int> ExistingRecipes,
+	IReadOnlyList<int> ProjectedRecipes,
+	bool WouldAttemptRecipeDelete,
+	bool WouldDeleteKnownRecipe,
+	bool DidDeleteRecipe,
+	bool WouldSendRecipeDeletePacket,
+	bool DidSendRecipeDeletePacket,
+	bool WouldCallQuestEngineOnFailCraft,
+	bool DidCallQuestEngineOnFailCraft,
+	int FailCraftItemId,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftFinishWorkOrderPlan MissingPlayer(int recipeId, int critCount)
+	{
+		return new CraftFinishWorkOrderPlan(
+			CraftFinishWorkOrderStatus.MissingPlayer,
+			ObjectId: 0,
+			recipeId,
+			critCount,
+			MaxProductionCount: 0,
+			Array.Empty<int>(),
+			Array.Empty<int>(),
+			WouldAttemptRecipeDelete: false,
+			WouldDeleteKnownRecipe: false,
+			DidDeleteRecipe: false,
+			WouldSendRecipeDeletePacket: false,
+			DidSendRecipeDeletePacket: false,
+			WouldCallQuestEngineOnFailCraft: false,
+			DidCallQuestEngineOnFailCraft: false,
+			FailCraftItemId: 0,
+			"CraftService.finishCrafting work-order branch requires player recipe list",
+			IsLive: false);
+	}
+
+	public static CraftFinishWorkOrderPlan MissingRecipe(int objectId, int critCount)
+	{
+		return new CraftFinishWorkOrderPlan(
+			CraftFinishWorkOrderStatus.MissingRecipe,
+			objectId,
+			RecipeId: 0,
+			critCount,
+			MaxProductionCount: 0,
+			Array.Empty<int>(),
+			Array.Empty<int>(),
+			WouldAttemptRecipeDelete: false,
+			WouldDeleteKnownRecipe: false,
+			DidDeleteRecipe: false,
+			WouldSendRecipeDeletePacket: false,
+			DidSendRecipeDeletePacket: false,
+			WouldCallQuestEngineOnFailCraft: false,
+			DidCallQuestEngineOnFailCraft: false,
+			FailCraftItemId: 0,
+			"CraftService.finishCrafting work-order branch requires recipe template",
+			IsLive: false);
+	}
+
+	public static CraftFinishWorkOrderPlan NotWorkOrder(int objectId, int recipeId, int critCount, IReadOnlyList<int> recipes)
+	{
+		return new CraftFinishWorkOrderPlan(
+			CraftFinishWorkOrderStatus.NotWorkOrder,
+			objectId,
+			recipeId,
+			critCount,
+			MaxProductionCount: 0,
+			recipes.ToArray(),
+			recipes.ToArray(),
+			WouldAttemptRecipeDelete: false,
+			WouldDeleteKnownRecipe: false,
+			DidDeleteRecipe: false,
+			WouldSendRecipeDeletePacket: false,
+			DidSendRecipeDeletePacket: false,
+			WouldCallQuestEngineOnFailCraft: false,
+			DidCallQuestEngineOnFailCraft: false,
+			FailCraftItemId: 0,
+			"CraftService.finishCrafting -> recipeTemplate.getMaxProductionCount() == null",
+			IsLive: false);
+	}
+
+	public static CraftFinishWorkOrderPlan DisabledNoMutation(
+		int objectId,
+		int recipeId,
+		int critCount,
+		int maxProductionCount,
+		IReadOnlyList<int> existingRecipes,
+		IReadOnlyList<int> projectedRecipes,
+		bool wouldDeleteKnownRecipe,
+		bool wouldCallQuestEngineOnFailCraft,
+		int failCraftItemId)
+	{
+		return new CraftFinishWorkOrderPlan(
+			CraftFinishWorkOrderStatus.DisabledNoMutation,
+			objectId,
+			recipeId,
+			critCount,
+			maxProductionCount,
+			existingRecipes.ToArray(),
+			projectedRecipes.ToArray(),
+			WouldAttemptRecipeDelete: true,
+			wouldDeleteKnownRecipe,
+			DidDeleteRecipe: false,
+			WouldSendRecipeDeletePacket: wouldDeleteKnownRecipe,
+			DidSendRecipeDeletePacket: false,
+			wouldCallQuestEngineOnFailCraft,
+			DidCallQuestEngineOnFailCraft: false,
+			failCraftItemId,
+			"CraftService.finishCrafting -> RecipeList.deleteRecipe, and QuestEngine.onFailCraft(new QuestEnv(null, player, 0), comboProduct(1) ?: 0) when critCount == 0; live mutation/callback/packet send remains disabled",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishWorkOrderStatus
+{
+	DisabledNoMutation,
+	NotWorkOrder,
+	MissingPlayer,
+	MissingRecipe,
 }
 
 public sealed record CraftFinishCooldownPlan(

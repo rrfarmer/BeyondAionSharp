@@ -2552,7 +2552,8 @@ public sealed class StaticData
 					ReadIntAttribute(reader, "productid"),
 					ReadIntAttribute(reader, "quantity"),
 					ReadNullableIntAttribute(reader, "craft_delay_id"),
-					ReadNullableIntAttribute(reader, "craft_delay_time"));
+					ReadNullableIntAttribute(reader, "craft_delay_time"),
+					ReadNullableIntAttribute(reader, "max_production_count"));
 				if (reader.IsEmptyElement)
 				{
 					recipeTemplates.Add(currentRecipeTemplate.ToSummary());
@@ -3787,7 +3788,8 @@ public sealed class StaticData
 			int productId,
 			int quantity,
 			int? craftDelayId,
-			int? craftDelayTime)
+			int? craftDelayTime,
+			int? maxProductionCount)
 		{
 			RecipeId = recipeId;
 			NameId = nameId;
@@ -3800,6 +3802,7 @@ public sealed class StaticData
 			Quantity = quantity;
 			CraftDelayId = craftDelayId;
 			CraftDelayTime = craftDelayTime;
+			MaxProductionCount = maxProductionCount;
 		}
 
 		public int RecipeId { get; }
@@ -3823,6 +3826,8 @@ public sealed class StaticData
 		public int? CraftDelayId { get; }
 
 		public int? CraftDelayTime { get; }
+
+		public int? MaxProductionCount { get; }
 
 		public void AddComboProduct(int itemId)
 		{
@@ -3863,7 +3868,8 @@ public sealed class StaticData
 				_comboProducts.Count == 0 ? null : _comboProducts.AsReadOnly(),
 				CraftDelayId,
 				CraftDelayTime,
-				_componentGroups.Count == 0 ? null : _componentGroups.AsReadOnly());
+				_componentGroups.Count == 0 ? null : _componentGroups.AsReadOnly(),
+				MaxProductionCount);
 		}
 	}
 

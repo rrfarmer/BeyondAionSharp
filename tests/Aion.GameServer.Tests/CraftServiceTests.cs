@@ -2271,6 +2271,80 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishWorkOrderPlan_ProjectsRecipeDeleteAndFailCraftQuestForFailedWorkOrder()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1156, dp: 600);
+		player.Recipes = [155000046, 155000047];
+		var recipe = CreateRecipe(
+			recipeId: 155000046,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			maxProductionCount: 1,
+			comboProducts: [182206759]);
+
+		var plan = service.CreateFinishWorkOrderPlan(player, recipe, critCount: 0);
+
+		Assert.Equal(CraftFinishWorkOrderStatus.DisabledNoMutation, plan.Status);
+		Assert.False(plan.IsLive);
+		Assert.True(plan.WouldAttemptRecipeDelete);
+		Assert.True(plan.WouldDeleteKnownRecipe);
+		Assert.False(plan.DidDeleteRecipe);
+		Assert.True(plan.WouldSendRecipeDeletePacket);
+		Assert.False(plan.DidSendRecipeDeletePacket);
+		Assert.True(plan.WouldCallQuestEngineOnFailCraft);
+		Assert.False(plan.DidCallQuestEngineOnFailCraft);
+		Assert.Equal(182206759, plan.FailCraftItemId);
+		Assert.Equal([155000047], plan.ProjectedRecipes);
+		Assert.Equal([155000046, 155000047], player.Recipes);
+		Assert.Contains("QuestEngine.onFailCraft", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishWorkOrderPlan_DeletesRecipeButSkipsFailCraftQuestOnCriticalSuccess()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1157, dp: 600);
+		player.Recipes = [155000048];
+		var recipe = CreateRecipe(
+			recipeId: 155000048,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			maxProductionCount: 1,
+			comboProducts: [182206759]);
+
+		var plan = service.CreateFinishWorkOrderPlan(player, recipe, critCount: 1);
+
+		Assert.Equal(CraftFinishWorkOrderStatus.DisabledNoMutation, plan.Status);
+		Assert.True(plan.WouldAttemptRecipeDelete);
+		Assert.True(plan.WouldDeleteKnownRecipe);
+		Assert.True(plan.WouldSendRecipeDeletePacket);
+		Assert.False(plan.WouldCallQuestEngineOnFailCraft);
+		Assert.Equal(0, plan.FailCraftItemId);
+		Assert.Empty(plan.ProjectedRecipes);
+		Assert.Equal([155000048], player.Recipes);
+	}
+
+	[Fact]
+	public void CreateFinishWorkOrderPlan_SkipsRecipeWithoutMaxProductionCount()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1158, dp: 600);
+		player.Recipes = [155000049];
+		var recipe = CreateRecipe(recipeId: 155000049, dp: 0, productId: 100200203, skillId: 40001);
+
+		var plan = service.CreateFinishWorkOrderPlan(player, recipe, critCount: 0);
+
+		Assert.Equal(CraftFinishWorkOrderStatus.NotWorkOrder, plan.Status);
+		Assert.False(plan.WouldAttemptRecipeDelete);
+		Assert.False(plan.WouldCallQuestEngineOnFailCraft);
+		Assert.Equal([155000049], plan.ProjectedRecipes);
+		Assert.Equal([155000049], player.Recipes);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
@@ -2448,7 +2522,8 @@ public sealed class CraftServiceTests
 		int skillPoint = 0,
 		int? craftDelayId = null,
 		int? craftDelayTime = null,
-		IReadOnlyList<RecipeComponentDataSummary>? componentGroups = null)
+		IReadOnlyList<RecipeComponentDataSummary>? componentGroups = null,
+		int? maxProductionCount = null)
 	{
 		return new RecipeTemplateSummary(
 			recipeId,
@@ -2463,7 +2538,8 @@ public sealed class CraftServiceTests
 			comboProducts,
 			craftDelayId,
 			craftDelayTime,
-			componentGroups);
+			componentGroups,
+			maxProductionCount);
 	}
 
 	private static PlayerSkill CreateSkill(int skillId, int skillLevel)
