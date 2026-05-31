@@ -95,6 +95,46 @@ public sealed class SkillStatChangeConditionReadinessReportServiceTests
 	}
 
 	[Fact]
+	public void CreateReport_ClassifiesMappedStatConditionOverrideAndPassThroughBehavior()
+	{
+		var itemChargeChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		itemChargeChange.AddCondition(new SkillStatChangeConditionSummary("charge", new Dictionary<string, string>(StringComparer.Ordinal) { ["value"] = "1" }));
+
+		var onFlyChange = new SkillStatChange("DR_BOOST", "ADD", 20, 0);
+		onFlyChange.AddCondition(new SkillStatChangeConditionSummary("onfly", new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var passThroughChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		passThroughChange.AddCondition(new SkillStatChangeConditionSummary("back", new Dictionary<string, string>(StringComparer.Ordinal)));
+		passThroughChange.AddCondition(new SkillStatChangeConditionSummary("chargeweapon", new Dictionary<string, string>(StringComparer.Ordinal) { ["value"] = "1" }));
+
+		var report = SkillStatChangeConditionReadinessReportService.CreateReport(new SkillTemplateTable(
+		[
+			CreateTemplate(2001, [new SkillBuffStatEffectSummary("boostdroprate", [itemChargeChange, passThroughChange])]),
+			CreateTemplate(2002, [new SkillBuffStatEffectSummary("drboost", [onFlyChange])])
+		]));
+
+		var chargePlan = report.ValidatorPlans.Single(plan => plan.ConditionName == "charge");
+		Assert.Contains("statFunction.getOwner()", chargePlan.StatValidationBehavior, StringComparison.Ordinal);
+		Assert.Contains("Item charge level", chargePlan.RequiredLiveInputs);
+		Assert.Contains("non-Item owners return false", chargePlan.JavaSource, StringComparison.Ordinal);
+
+		var onFlyPlan = report.ValidatorPlans.Single(plan => plan.ConditionName == "onfly");
+		Assert.Contains("stat.getOwner().isFlying()", onFlyPlan.StatValidationBehavior, StringComparison.Ordinal);
+		Assert.Contains("Creature flying state", onFlyPlan.RequiredLiveInputs);
+		Assert.Contains("OnFlyCondition.validate(Stat2, IStatFunction)", onFlyPlan.JavaSource, StringComparison.Ordinal);
+
+		var backPlan = report.ValidatorPlans.Single(plan => plan.ConditionName == "back");
+		Assert.Contains("does not override validate(Stat2, IStatFunction)", backPlan.StatValidationBehavior, StringComparison.Ordinal);
+		Assert.Contains("Condition base-class Stat2 validation pass-through", backPlan.RequiredLiveInputs);
+		Assert.Contains("Condition.validate base method returns true", backPlan.JavaSource, StringComparison.Ordinal);
+
+		var chargeWeaponPlan = report.ValidatorPlans.Single(plan => plan.ConditionName == "chargeweapon");
+		Assert.Contains("does not override validate(Stat2, IStatFunction)", chargeWeaponPlan.StatValidationBehavior, StringComparison.Ordinal);
+		Assert.Contains(chargeWeaponPlan.RequiredLiveInputs, input => input.Contains("ChargeWeaponCondition Skill/Effect validation remains separate", StringComparison.Ordinal));
+		Assert.Contains("Condition.validate base method returns true", chargeWeaponPlan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateReport_BlocksUnknownConditionMetadataBeforeValidatorProviderReadiness()
 	{
 		var change = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);

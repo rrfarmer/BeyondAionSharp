@@ -146,8 +146,11 @@ public static class SkillStatChangeConditionReadinessReportService
 		return conditionName switch
 		{
 			"weapon" => "WeaponCondition.validate(Stat2, IStatFunction) checks the Stat2 owner; players must have a main-hand weapon ItemGroup listed by the XML weapon attribute, while NPCs pass without weapon validation",
+			"charge" => "ItemChargeCondition.validate(Stat2, IStatFunction) checks statFunction.getOwner(); Item owners pass only when item.getChargeLevel() is greater than or equal to the XML value attribute, and non-Item owners fail",
+			"onfly" => "OnFlyCondition.validate(Stat2, IStatFunction) checks stat.getOwner().isFlying()",
 			"front" => "FrontCondition does not override validate(Stat2, IStatFunction), so stat-function validation inherits Condition.validate and returns true; front-facing geometry is only implemented for Skill/Effect validation",
-			_ when javaConditionType != null => $"{javaConditionType} stat-function validation behavior has not been audited in this readiness slice",
+			_ when IsKnownStatPassThroughCondition(conditionName) => $"{javaConditionType} does not override validate(Stat2, IStatFunction), so stat-function validation inherits Condition.validate and returns true",
+			_ when javaConditionType != null => $"{javaConditionType} stat-function validation behavior has not been classified in this readiness slice",
 			_ => "No Java condition mapping is available for stat-function validation",
 		};
 	}
@@ -163,12 +166,29 @@ public static class SkillStatChangeConditionReadinessReportService
 				"XML weapon attribute ItemGroup list",
 				"NPC owner pass-through rule"
 			],
+			"charge" =>
+			[
+				"IStatFunction owner StatOwner",
+				"Item function owner",
+				"Item charge level",
+				"XML value attribute"
+			],
+			"onfly" =>
+			[
+				"Stat2 owner Creature",
+				"Creature flying state"
+			],
 			"front" =>
 			[
 				"Condition base-class Stat2 validation pass-through",
 				"Skill/Effect effector/effected geometry remains separate from stat-function validation"
 			],
-			_ when javaConditionType != null => [$"{javaConditionType} live input audit"],
+			_ when IsKnownStatPassThroughCondition(conditionName) =>
+			[
+				"Condition base-class Stat2 validation pass-through",
+				$"{javaConditionType} Skill/Effect validation remains separate from stat-function validation"
+			],
+			_ when javaConditionType != null => [$"{javaConditionType} live input classification"],
 			_ => [],
 		};
 	}
@@ -178,10 +198,39 @@ public static class SkillStatChangeConditionReadinessReportService
 		return conditionName switch
 		{
 			"weapon" => "Conditions.validate -> WeaponCondition.validate(Stat2, IStatFunction) -> isValidWeapon(stat.getOwner()) -> Player.getEquipment().getMainHandWeaponType(); non-player owners return true",
+			"charge" => "Conditions.validate -> ItemChargeCondition.validate(Stat2, IStatFunction) -> statFunction.getOwner() must be Item with item.getChargeLevel() >= value; non-Item owners return false",
+			"onfly" => "Conditions.validate -> OnFlyCondition.validate(Stat2, IStatFunction) -> stat.getOwner().isFlying()",
 			"front" => "Conditions.validate -> FrontCondition overrides Skill/Effect validation only; Condition.validate(Stat2, IStatFunction) base method returns true",
+			_ when IsKnownStatPassThroughCondition(conditionName) => $"Conditions.validate -> {javaConditionType} does not override validate(Stat2, IStatFunction); Condition.validate base method returns true",
 			_ when javaConditionType != null => $"{javaConditionType}; Conditions.validate iterates child Condition instances and returns false on the first child validator failure",
 			_ => "Conditions.validate child mapping missing",
 		};
+	}
+
+	private static bool IsKnownStatPassThroughCondition(string conditionName)
+	{
+		return conditionName is
+			"abnormal" or
+			"back" or
+			"chain" or
+			"chargearmor" or
+			"chargeweapon" or
+			"combatcheck" or
+			"dp" or
+			"form" or
+			"front" or
+			"hp" or
+			"lefthandweapon" or
+			"move_casting" or
+			"mp" or
+			"noflying" or
+			"polishchargeweapon" or
+			"race" or
+			"ride_robot" or
+			"selfflying" or
+			"skillcharge" or
+			"target" or
+			"targetflying";
 	}
 
 	private static string? MapJavaConditionType(string conditionName)
