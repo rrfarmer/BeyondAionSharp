@@ -625,6 +625,95 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsMissingSelectedComponentAfterSkillValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var lowSkillPlayer = CreatePlayer(objectId: 1125, dp: 700);
+		var player = CreatePlayer(objectId: 1126, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000021,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups: [CreateComponentGroup((152000901, 3))]);
+		lowSkillPlayer.Recipes = [recipe.RecipeId];
+		lowSkillPlayer.Skills = [CreateSkill(recipe.SkillId, skillLevel: 100)];
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems = [CreateInventoryItem(objectId: 8001, itemId: 152000901, count: 2)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9014, templateId: 730190);
+		var selectedMaterials = new Dictionary<int, long> { [152000901] = 3 };
+
+		var skillWinsBeforeMaterials = service.CreateStartCraftingValidationPlan(
+			lowSkillPlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials);
+		var missingComponent = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterials);
+
+		Assert.Equal(CraftStartValidationStatus.CraftSkillTooLow, skillWinsBeforeMaterials.Status);
+		Assert.Equal(CraftStartValidationStatus.MissingComponentItem, missingComponent.Status);
+		Assert.Equal(1330047, Assert.IsType<SmSystemMessage>(missingComponent.FailurePacket).MessageId);
+		Assert.Equal(152000901, missingComponent.MissingComponentItemId);
+		Assert.Equal(3, missingComponent.MissingComponentRequiredCount);
+		Assert.Equal(2, missingComponent.MissingComponentAvailableCount);
+		Assert.True(missingComponent.ShouldSendCancelCraft);
+		Assert.Contains("component group", missingComponent.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_ValidatesOnlySelectedComponentGroup()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1127, dp: 700);
+		var recipe = CreateRecipe(
+			recipeId: 155000022,
+			dp: 600,
+			productId: 100200203,
+			skillId: 40001,
+			skillPoint: 200,
+			componentGroups:
+			[
+				CreateComponentGroup((152000901, 5)),
+				CreateComponentGroup((152000902, 1)),
+			]);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 200)];
+		player.InventoryItems = [CreateInventoryItem(objectId: 8002, itemId: 152000902, count: 1)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9015, templateId: 730190);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false,
+			selectedMaterialData: new Dictionary<int, long> { [152000902] = 1 });
+
+		Assert.Equal(CraftStartValidationStatus.ReadyForNextValidation, plan.Status);
+		Assert.Equal(0, plan.MissingComponentItemId);
+		Assert.True(plan.IsReadyForNextValidation);
+		Assert.Contains("bonus item guard", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
@@ -866,7 +955,8 @@ public sealed class CraftServiceTests
 		int skillId = CraftStartValidationPlan.MorphSubstancesSkillId,
 		int skillPoint = 0,
 		int? craftDelayId = null,
-		int? craftDelayTime = null)
+		int? craftDelayTime = null,
+		IReadOnlyList<RecipeComponentDataSummary>? componentGroups = null)
 	{
 		return new RecipeTemplateSummary(
 			recipeId,
@@ -880,7 +970,8 @@ public sealed class CraftServiceTests
 			quantity,
 			comboProducts,
 			craftDelayId,
-			craftDelayTime);
+			craftDelayTime,
+			componentGroups);
 	}
 
 	private static PlayerSkill CreateSkill(int skillId, int skillLevel)
@@ -889,6 +980,25 @@ public sealed class CraftServiceTests
 		{
 			SkillId = skillId,
 			SkillLevel = skillLevel,
+		};
+	}
+
+	private static RecipeComponentDataSummary CreateComponentGroup(params (int ItemId, long Quantity)[] components)
+	{
+		return new RecipeComponentDataSummary(
+			components
+				.Select(component => new RecipeComponentSummary(component.ItemId, component.Quantity))
+				.ToArray());
+	}
+
+	private static InventoryItem CreateInventoryItem(int objectId, int itemId, long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemId,
+			Count = count,
+			Location = 0,
 		};
 	}
 
@@ -972,6 +1082,32 @@ public sealed class CraftServiceTests
 				0,
 				1,
 				"QUEST",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				10,
+				1,
+				0),
+			new ItemTemplateSummary(
+				152000901,
+				"Material A",
+				730900,
+				0,
+				1,
+				"MATERIAL",
+				"ITEM",
+				"COMMON",
+				"PC_ALL",
+				10,
+				1,
+				0),
+			new ItemTemplateSummary(
+				152000902,
+				"Material B",
+				730901,
+				0,
+				1,
+				"MATERIAL",
 				"ITEM",
 				"COMMON",
 				"PC_ALL",

@@ -1525,6 +1525,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1330044, skillName);
 	}
 
+	public static SmSystemMessage CombineNoComponentItemSingle(string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_NO_COMPONENT_ITEM_SINGLE.
+		return new SmSystemMessage(1330046, itemName);
+	}
+
+	public static SmSystemMessage CombineNoComponentItemMultiple(long quantity, string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_NO_COMPONENT_ITEM_MULTIPLE.
+		return new SmSystemMessage(1330047, itemName, quantity.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage SoulBoundItemSucceed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED.

@@ -429,6 +429,9 @@ public sealed class StaticData
 					currentRecipeTemplate = null;
 				}
 
+				if (reader.Depth == 3 && reader.LocalName == "components_data" && currentRecipeTemplate != null)
+					currentRecipeTemplate.EndComponentData();
+
 				if (reader.Depth == 2 && reader.LocalName == "decomposable" && currentDecomposableItem != null)
 				{
 					decomposableItems.Add(currentDecomposableItem.ToSummary());
@@ -2560,6 +2563,26 @@ public sealed class StaticData
 
 			if (reader.Depth == 3
 				&& currentRecipeTemplate != null
+				&& reader.LocalName == "components_data")
+			{
+				currentRecipeTemplate.BeginComponentData();
+				if (reader.IsEmptyElement)
+					currentRecipeTemplate.EndComponentData();
+				continue;
+			}
+
+			if (reader.Depth == 4
+				&& currentRecipeTemplate != null
+				&& reader.LocalName == "component")
+			{
+				currentRecipeTemplate.AddComponent(
+					ReadRequiredIntAttribute(reader, "itemid"),
+					ReadLongAttribute(reader, "quantity"));
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& currentRecipeTemplate != null
 				&& reader.LocalName == "comboproduct")
 			{
 				currentRecipeTemplate.AddComboProduct(ReadRequiredIntAttribute(reader, "itemid"));
@@ -3750,6 +3773,8 @@ public sealed class StaticData
 	private sealed class RecipeTemplateBuilder
 	{
 		private readonly List<int> _comboProducts = [];
+		private readonly List<RecipeComponentDataSummary> _componentGroups = [];
+		private List<RecipeComponentSummary>? _currentComponents;
 
 		public RecipeTemplateBuilder(
 			int recipeId,
@@ -3804,6 +3829,25 @@ public sealed class StaticData
 			_comboProducts.Add(itemId);
 		}
 
+		public void BeginComponentData()
+		{
+			_currentComponents = [];
+		}
+
+		public void AddComponent(int itemId, long quantity)
+		{
+			_currentComponents ??= [];
+			_currentComponents.Add(new RecipeComponentSummary(itemId, quantity));
+		}
+
+		public void EndComponentData()
+		{
+			if (_currentComponents is { Count: > 0 })
+				_componentGroups.Add(new RecipeComponentDataSummary(_currentComponents.AsReadOnly()));
+
+			_currentComponents = null;
+		}
+
 		public RecipeTemplateSummary ToSummary()
 		{
 			return new RecipeTemplateSummary(
@@ -3818,7 +3862,8 @@ public sealed class StaticData
 				Quantity,
 				_comboProducts.Count == 0 ? null : _comboProducts.AsReadOnly(),
 				CraftDelayId,
-				CraftDelayTime);
+				CraftDelayTime,
+				_componentGroups.Count == 0 ? null : _componentGroups.AsReadOnly());
 		}
 	}
 

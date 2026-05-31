@@ -8,6 +8,7 @@ namespace Aion.GameServer.Services;
 public sealed class CraftService
 {
 	private readonly WorldNpcResourceStatsService _resourceStats;
+	private const int CubeStorageId = 0;
 	private readonly ItemTemplateTable? _itemTemplates;
 	private readonly SkillTemplateTable? _skillTemplates;
 
@@ -48,7 +49,8 @@ public sealed class CraftService
 		IWorldNpcObject? target,
 		bool targetIsStaticObject,
 		bool targetIsWithinToolRange,
-		bool hasCraftingTaskInProgress)
+		bool hasCraftingTaskInProgress,
+		IReadOnlyDictionary<int, long>? selectedMaterialData = null)
 	{
 		// Java parity: services/craft/CraftService.startCrafting + early checkCraft guards.
 		if (player == null)
@@ -104,6 +106,23 @@ public sealed class CraftService
 				productTemplate,
 				target?.ObjectId ?? 0,
 				skillName);
+
+		var missingComponent = GetMissingComponent(player, recipeTemplate, selectedMaterialData ?? new Dictionary<int, long>());
+		if (missingComponent != null)
+		{
+			var itemName = GetItemClientName(missingComponent.ItemId);
+			return CraftStartValidationPlan.MissingComponentItem(
+				player.ObjectId,
+				player.Dp,
+				playerSkill.SkillLevel,
+				recipeTemplate,
+				productTemplate,
+				target?.ObjectId ?? 0,
+				missingComponent.ItemId,
+				missingComponent.RequiredQuantity,
+				missingComponent.AvailableCount,
+				itemName);
+		}
 
 		return CraftStartValidationPlan.ReadyForNextValidation(
 			player.ObjectId,
@@ -244,6 +263,42 @@ public sealed class CraftService
 		return _skillTemplates?.GetSkillTemplate(skillId)?.GetClientName() ?? string.Empty;
 	}
 
+	private string GetItemClientName(int itemId)
+	{
+		return _itemTemplates?.GetItemTemplate(itemId)?.GetClientName() ?? string.Empty;
+	}
+
+	private static MissingCraftComponent? GetMissingComponent(
+		Player player,
+		RecipeTemplateSummary recipeTemplate,
+		IReadOnlyDictionary<int, long> selectedMaterialData)
+	{
+		foreach (var componentGroup in recipeTemplate.ComponentGroups)
+		{
+			var firstComponent = componentGroup.FirstComponent;
+			if (firstComponent == null || !selectedMaterialData.ContainsKey(firstComponent.ItemId))
+				continue;
+
+			foreach (var component in componentGroup.Components)
+			{
+				var availableCount = GetCubeItemCountByItemId(player.InventoryItems, component.ItemId);
+				if (availableCount < component.Quantity)
+					return new MissingCraftComponent(component.ItemId, component.Quantity, availableCount);
+			}
+
+			break;
+		}
+
+		return null;
+	}
+
+	private static long GetCubeItemCountByItemId(IReadOnlyList<InventoryItem> inventoryItems, int itemId)
+	{
+		return inventoryItems
+			.Where(item => item.ItemId == itemId && item.Location == CubeStorageId && !item.IsEquipped)
+			.Sum(item => item.Count);
+	}
+
 	private static InventoryItem CopyInventoryItem(InventoryItem item, string creatorName)
 	{
 		var copy = new InventoryItem
@@ -371,6 +426,9 @@ public sealed record CraftStartValidationPlan(
 	int CurrentDp,
 	int RequiredSkillPoint,
 	int CurrentSkillLevel,
+	int MissingComponentItemId,
+	long MissingComponentRequiredCount,
+	long MissingComponentAvailableCount,
 	bool IsMorphRecipe,
 	bool ShouldSendCancelCraft,
 	bool IsReadyForNextValidation,
@@ -385,6 +443,9 @@ public sealed record CraftStartValidationPlan(
 			CraftStartValidationStatus.MissingPlayer,
 			0,
 			recipeId,
+			0,
+			0,
+			0,
 			0,
 			0,
 			0,
@@ -414,6 +475,9 @@ public sealed record CraftStartValidationPlan(
 			0,
 			0,
 			0,
+			0,
+			0,
+			0,
 			IsMorphRecipe: false,
 			ShouldSendCancelCraft: true,
 			IsReadyForNextValidation: false,
@@ -434,6 +498,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp: 0,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: null,
@@ -456,6 +523,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp: 0,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: null,
@@ -478,6 +548,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp: 0,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: null,
@@ -501,6 +574,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp: 0,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: null,
@@ -525,6 +601,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: null,
@@ -549,6 +628,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: SmSystemMessage.CraftCannotCombineWhileInCurrentStance(),
@@ -573,6 +655,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: SmSystemMessage.CombineInventoryFull(),
@@ -597,6 +682,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: SmSystemMessage.CombineCannotFindRecipe(),
@@ -621,6 +709,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: SmSystemMessage.ItemCantUseUntilDelayTime(),
@@ -646,6 +737,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel: 0,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: SmSystemMessage.CombineCantUse(skillName),
@@ -672,10 +766,47 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: true,
 			isReadyForNextValidation: false,
 			failurePacket: SmSystemMessage.CombineOutOfSkillPoint(skillName),
 			"CraftService.checkCraft -> player.getSkillList().getSkillLevel(skillId) < recipeTemplate.getSkillpoint()");
+	}
+
+	public static CraftStartValidationPlan MissingComponentItem(
+		int objectId,
+		int currentDp,
+		int currentSkillLevel,
+		RecipeTemplateSummary recipeTemplate,
+		ItemTemplateSummary productTemplate,
+		int targetObjectId,
+		int componentItemId,
+		long requiredQuantity,
+		long availableCount,
+		string itemName)
+	{
+		return FromRecipe(
+			CraftStartValidationStatus.MissingComponentItem,
+			objectId,
+			recipeTemplate,
+			productTemplate.TemplateId,
+			targetObjectId,
+			targetTemplateId: 0,
+			requiredDp: recipeTemplate.Dp,
+			currentDp,
+			requiredSkillPoint: recipeTemplate.SkillPoint,
+			currentSkillLevel,
+			missingComponentItemId: componentItemId,
+			missingComponentRequiredCount: requiredQuantity,
+			missingComponentAvailableCount: availableCount,
+			shouldSendCancelCraft: true,
+			isReadyForNextValidation: false,
+			failurePacket: requiredQuantity == 1
+				? SmSystemMessage.CombineNoComponentItemSingle(itemName)
+				: SmSystemMessage.CombineNoComponentItemMultiple(requiredQuantity, itemName),
+			"CraftService.checkCraft -> selected recipe component group inventory count is below component quantity");
 	}
 
 	public static CraftStartValidationPlan ReadyForNextValidation(
@@ -698,12 +829,15 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint: recipeTemplate.SkillPoint,
 			currentSkillLevel,
+			missingComponentItemId: 0,
+			missingComponentRequiredCount: 0,
+			missingComponentAvailableCount: 0,
 			shouldSendCancelCraft: false,
 			isReadyForNextValidation: true,
 			failurePacket: null,
 			isMorphRecipe
-				? "CraftService.checkCraft -> morphing does not need static object/npc to use; skill guards passed"
-				: "CraftService.checkCraft -> static target/DP/stance/inventory/recipe/cooldown/skill guards passed; continue to material guards");
+				? "CraftService.checkCraft -> morphing does not need static object/npc to use; skill/material guards passed"
+				: "CraftService.checkCraft -> static target/DP/stance/inventory/recipe/cooldown/skill/material guards passed; continue to bonus item guard");
 	}
 
 	private static CraftStartValidationPlan FromRecipe(
@@ -717,6 +851,9 @@ public sealed record CraftStartValidationPlan(
 		int currentDp,
 		int requiredSkillPoint,
 		int currentSkillLevel,
+		int missingComponentItemId,
+		long missingComponentRequiredCount,
+		long missingComponentAvailableCount,
 		bool shouldSendCancelCraft,
 		bool isReadyForNextValidation,
 		GameServerPacket? failurePacket,
@@ -734,6 +871,9 @@ public sealed record CraftStartValidationPlan(
 			currentDp,
 			requiredSkillPoint,
 			currentSkillLevel,
+			missingComponentItemId,
+			missingComponentRequiredCount,
+			missingComponentAvailableCount,
 			recipeTemplate.SkillId == MorphSubstancesSkillId,
 			shouldSendCancelCraft,
 			isReadyForNextValidation,
@@ -757,8 +897,11 @@ public enum CraftStartValidationStatus
 	CraftCooldownActive,
 	MissingCraftSkill,
 	CraftSkillTooLow,
+	MissingComponentItem,
 	ReadyForNextValidation,
 }
+
+public sealed record MissingCraftComponent(int ItemId, long RequiredQuantity, long AvailableCount);
 
 public sealed record CraftStartCancelPacketPlan(
 	CraftStartCancelPacketPlanStatus Status,

@@ -1421,6 +1421,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CombineCannotFindRecipe(), 1330043);
 		AssertSystemMessage(SmSystemMessage.CombineCantUse("skill"), 1330042, "skill");
 		AssertSystemMessage(SmSystemMessage.CombineOutOfSkillPoint("skill"), 1330044, "skill");
+		AssertSystemMessage(SmSystemMessage.CombineNoComponentItemSingle("item"), 1330046, "item");
+		AssertSystemMessage(SmSystemMessage.CombineNoComponentItemMultiple(3, "item"), 1330047, "item", "3");
 		AssertSystemMessage(SmSystemMessage.EnchantItemCanceled("item"), 1300457, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemOptionCanceled("item"), 1300464, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemProcCancel("item"), 1402238, "item");

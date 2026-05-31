@@ -47,8 +47,11 @@ public sealed record RecipeTemplateSummary(
 	int Quantity,
 	IReadOnlyList<int>? ComboProducts = null,
 	int? CraftDelayId = null,
-	int? CraftDelayTime = null)
+	int? CraftDelayTime = null,
+	IReadOnlyList<RecipeComponentDataSummary>? ComponentsData = null)
 {
+	public IReadOnlyList<RecipeComponentDataSummary> ComponentGroups => ComponentsData ?? Array.Empty<RecipeComponentDataSummary>();
+
 	public int? GetComboProduct(int count)
 	{
 		var comboProducts = ComboProducts;
@@ -58,3 +61,10 @@ public sealed record RecipeTemplateSummary(
 		return comboProducts[count - 1];
 	}
 }
+
+public sealed record RecipeComponentDataSummary(IReadOnlyList<RecipeComponentSummary> Components)
+{
+	public RecipeComponentSummary? FirstComponent => Components.Count == 0 ? null : Components[0];
+}
+
+public sealed record RecipeComponentSummary(int ItemId, long Quantity);
