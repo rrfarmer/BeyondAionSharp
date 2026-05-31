@@ -14,11 +14,12 @@ public static class SkillStatConditionEvaluatorService
 			"weapon" => EvaluateWeapon(condition, creatureSnapshot),
 			"charge" => EvaluateCharge(condition, itemOwnerSnapshot),
 			"onfly" => EvaluateOnFly(condition, creatureSnapshot),
+			_ when IsKnownStatPassThroughCondition(condition.ConditionName) => EvaluateKnownPassThrough(condition.ConditionName),
 			_ => new SkillStatConditionEvaluationResult(
 				condition.ConditionName,
 				SkillStatConditionEvaluationStatus.UnsupportedCondition,
 				[$"unsupported stat-condition evaluator: {condition.ConditionName}"],
-				"Only WeaponCondition, ItemChargeCondition, and OnFlyCondition are implemented in this isolated helper"),
+				"Only audited Stat2 condition overrides and mapped base-pass-through stat conditions are implemented in this isolated helper"),
 		};
 	}
 
@@ -85,6 +86,70 @@ public static class SkillStatConditionEvaluatorService
 			? SkillStatConditionEvaluationStatus.Satisfied
 			: SkillStatConditionEvaluationStatus.NotSatisfied;
 		return new SkillStatConditionEvaluationResult(condition.ConditionName, status, [], javaSource);
+	}
+
+	private static SkillStatConditionEvaluationResult EvaluateKnownPassThrough(string conditionName)
+	{
+		return new SkillStatConditionEvaluationResult(
+			conditionName,
+			SkillStatConditionEvaluationStatus.Satisfied,
+			[],
+			$"{MapKnownPassThroughJavaType(conditionName)} does not override validate(Stat2, IStatFunction); Condition.validate base method returns true for stat-function validation");
+	}
+
+	private static bool IsKnownStatPassThroughCondition(string conditionName)
+	{
+		return conditionName is
+			"abnormal" or
+			"back" or
+			"chain" or
+			"chargearmor" or
+			"chargeweapon" or
+			"combatcheck" or
+			"dp" or
+			"form" or
+			"front" or
+			"hp" or
+			"lefthandweapon" or
+			"move_casting" or
+			"mp" or
+			"noflying" or
+			"polishchargeweapon" or
+			"race" or
+			"ride_robot" or
+			"selfflying" or
+			"skillcharge" or
+			"target" or
+			"targetflying";
+	}
+
+	private static string MapKnownPassThroughJavaType(string conditionName)
+	{
+		return conditionName switch
+		{
+			"abnormal" => "AbnormalStateCondition",
+			"back" => "BackCondition",
+			"chain" => "ChainCondition",
+			"chargearmor" => "ChargeArmorCondition",
+			"chargeweapon" => "ChargeWeaponCondition",
+			"combatcheck" => "CombatCheckCondition",
+			"dp" => "DpCondition",
+			"form" => "FormCondition",
+			"front" => "FrontCondition",
+			"hp" => "HpCondition",
+			"lefthandweapon" => "LeftHandCondition",
+			"move_casting" => "PlayerMovedCondition",
+			"mp" => "MpCondition",
+			"noflying" => "NoFlyingCondition",
+			"polishchargeweapon" => "PolishChargeCondition",
+			"race" => "RaceCondition",
+			"ride_robot" => "RideRobotCondition",
+			"selfflying" => "SelfFlyingCondition",
+			"skillcharge" => "SkillChargeCondition",
+			"target" => "TargetCondition",
+			"targetflying" => "TargetFlyingCondition",
+			_ => "Condition",
+		};
 	}
 
 	private static SkillStatConditionEvaluationResult Missing(

@@ -221,4 +221,26 @@ public sealed class SkillBuffStatChangeEvaluatorServiceTests
 		Assert.Equal(SkillStatConditionEvaluationStatus.MissingInput, conditionResult.Status);
 		Assert.Contains("equipped main-hand item", conditionResult.MissingInputs);
 	}
+
+	[Fact]
+	public void Evaluate_WithConditionContext_AppliesKnownPassThroughStatCondition()
+	{
+		var conditionedChange = new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0);
+		conditionedChange.AddCondition(new SkillStatChangeConditionSummary(
+			"front",
+			new Dictionary<string, string>(StringComparer.Ordinal)));
+
+		var evaluation = SkillBuffStatChangeEvaluatorService.Evaluate(
+			"BOOST_DROP_RATE",
+			100,
+			[conditionedChange],
+			skillLevel: 1,
+			conditionContext: new SkillBuffStatConditionEvaluationContext());
+
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.Evaluated, evaluation.Status);
+		Assert.Equal(120, evaluation.Current);
+		var conditionResult = Assert.Single(Assert.Single(evaluation.Steps).ConditionResults);
+		Assert.Equal(SkillStatConditionEvaluationStatus.Satisfied, conditionResult.Status);
+		Assert.Contains("Condition.validate base method returns true", conditionResult.JavaSource, StringComparison.Ordinal);
+	}
 }

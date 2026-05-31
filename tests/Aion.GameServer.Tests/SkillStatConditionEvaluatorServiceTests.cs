@@ -125,10 +125,27 @@ public sealed class SkillStatConditionEvaluatorServiceTests
 	[Fact]
 	public void Evaluate_UnsupportedConditionReportsUnsupportedStatus()
 	{
-		var result = SkillStatConditionEvaluatorService.Evaluate(CreateCondition("front"));
+		var result = SkillStatConditionEvaluatorService.Evaluate(CreateCondition("unsupported_condition"));
 
 		Assert.Equal(SkillStatConditionEvaluationStatus.UnsupportedCondition, result.Status);
-		Assert.Contains("unsupported stat-condition evaluator: front", result.MissingInputs);
+		Assert.Contains("unsupported stat-condition evaluator: unsupported_condition", result.MissingInputs);
+	}
+
+	[Theory]
+	[InlineData("front", "FrontCondition")]
+	[InlineData("back", "BackCondition")]
+	[InlineData("chargeweapon", "ChargeWeaponCondition")]
+	public void Evaluate_KnownPassThroughStatConditionsUseBaseConditionValidation(
+		string conditionName,
+		string javaType)
+	{
+		var result = SkillStatConditionEvaluatorService.Evaluate(CreateCondition(conditionName));
+
+		Assert.Equal(SkillStatConditionEvaluationStatus.Satisfied, result.Status);
+		Assert.True(result.IsSatisfied);
+		Assert.Empty(result.MissingInputs);
+		Assert.Contains(javaType, result.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("Condition.validate base method returns true", result.JavaSource, StringComparison.Ordinal);
 	}
 
 	private static SkillStatChangeConditionSummary CreateCondition(
