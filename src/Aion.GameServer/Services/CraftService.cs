@@ -180,6 +180,42 @@ public sealed class CraftService
 				CraftingTaskPacketPlanService.AnimationCompleteAction));
 	}
 
+	public CraftStartFailureOrchestrationPlan CreateStartFailureOrchestrationPlan(
+		CraftStartValidationPlan? validationPlan,
+		CraftStartCancelPacketPlan? cancelPlan)
+	{
+		// Java parity: CraftService.startCrafting -> checkCraft may send a system message,
+		// then startCrafting calls sendCancelCraft when checkCraft returns false.
+		if (validationPlan == null)
+			return CraftStartFailureOrchestrationPlan.NotPlanned("CraftService.startCrafting failure orchestration requires a validation plan");
+		if (validationPlan.IsReadyForNextValidation)
+			return CraftStartFailureOrchestrationPlan.NotPlanned("CraftService.startCrafting -> checkCraft returned true; no failure packets planned");
+		if (!validationPlan.ShouldSendCancelCraft)
+			return CraftStartFailureOrchestrationPlan.NotPlanned("CraftService.startCrafting failure did not request sendCancelCraft");
+
+		var orderedPackets = new List<GameServerPacket>();
+		if (validationPlan.FailurePacket != null)
+			orderedPackets.Add(validationPlan.FailurePacket);
+
+		if (cancelPlan?.Status == CraftStartCancelPacketPlanStatus.Planned)
+		{
+			if (cancelPlan.SelfPacket != null)
+				orderedPackets.Add(cancelPlan.SelfPacket);
+			if (cancelPlan.BroadcastPacket != null)
+				orderedPackets.Add(cancelPlan.BroadcastPacket);
+
+			return CraftStartFailureOrchestrationPlan.Planned(
+				validationPlan,
+				cancelPlan,
+				orderedPackets);
+		}
+
+		return CraftStartFailureOrchestrationPlan.CancelNotPlanned(
+			validationPlan,
+			cancelPlan,
+			orderedPackets);
+	}
+
 	public CraftFinishProductPlan CreateFinishProductPlan(Player? player, RecipeTemplateSummary? recipeTemplate, int critCount)
 	{
 		// Java parity: services/craft/CraftService.finishCrafting product-selection branch.
@@ -998,6 +1034,69 @@ public enum CraftStartCancelPacketPlanStatus
 {
 	NotPlanned,
 	Planned,
+}
+
+public sealed record CraftStartFailureOrchestrationPlan(
+	CraftStartFailureOrchestrationStatus Status,
+	CraftStartValidationPlan? ValidationPlan,
+	CraftStartCancelPacketPlan? CancelPlan,
+	IReadOnlyList<GameServerPacket> OrderedPackets,
+	string JavaSource,
+	bool IsLive)
+{
+	public bool IsPlanned => Status == CraftStartFailureOrchestrationStatus.Planned;
+
+	public GameServerPacket? FailurePacket => ValidationPlan?.FailurePacket;
+
+	public GameServerPacket? SelfCancelPacket => CancelPlan?.SelfPacket;
+
+	public GameServerPacket? BroadcastCancelPacket => CancelPlan?.BroadcastPacket;
+
+	public static CraftStartFailureOrchestrationPlan NotPlanned(string javaSource)
+	{
+		return new CraftStartFailureOrchestrationPlan(
+			CraftStartFailureOrchestrationStatus.NotPlanned,
+			ValidationPlan: null,
+			CancelPlan: null,
+			OrderedPackets: Array.Empty<GameServerPacket>(),
+			javaSource,
+			IsLive: false);
+	}
+
+	public static CraftStartFailureOrchestrationPlan Planned(
+		CraftStartValidationPlan validationPlan,
+		CraftStartCancelPacketPlan cancelPlan,
+		IReadOnlyList<GameServerPacket> orderedPackets)
+	{
+		return new CraftStartFailureOrchestrationPlan(
+			CraftStartFailureOrchestrationStatus.Planned,
+			validationPlan,
+			cancelPlan,
+			orderedPackets,
+			"CraftService.startCrafting -> checkCraft failure packet, then sendCancelCraft update/animation",
+			IsLive: false);
+	}
+
+	public static CraftStartFailureOrchestrationPlan CancelNotPlanned(
+		CraftStartValidationPlan validationPlan,
+		CraftStartCancelPacketPlan? cancelPlan,
+		IReadOnlyList<GameServerPacket> orderedPackets)
+	{
+		return new CraftStartFailureOrchestrationPlan(
+			CraftStartFailureOrchestrationStatus.CancelNotPlanned,
+			validationPlan,
+			cancelPlan,
+			orderedPackets,
+			"CraftService.startCrafting -> checkCraft returned false, but sendCancelCraft packet prerequisites were unavailable",
+			IsLive: false);
+	}
+}
+
+public enum CraftStartFailureOrchestrationStatus
+{
+	NotPlanned,
+	Planned,
+	CancelNotPlanned,
 }
 
 public sealed record CraftFinishProductPlan(
