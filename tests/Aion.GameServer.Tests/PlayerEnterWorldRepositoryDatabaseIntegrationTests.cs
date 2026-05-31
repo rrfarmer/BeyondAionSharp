@@ -88,6 +88,46 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePlayerLogoutAsync_DeletesTrackedInventoryRowsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerLeaveWorldService.leaveWorld -> PlayerService.storePlayer
+		// -> InventoryDAO.store(player) -> player.getDirtyItemsToUpdate() including Storage.deletedItems.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9501, itemId: 110100001, count: 1);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PurifyIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			InventoryItems = Array.Empty<InventoryItem>(),
+		};
+		player.TrackDeletedItem(new InventoryItem
+		{
+			ObjectId = 9501,
+			ItemId = 110100001,
+			Count = 1,
+			OwnerId = PlayerObjectId,
+			Location = 0,
+			PersistentState = InventoryItemPersistentState.Updated,
+		});
+
+		var saved = await repository.SavePlayerLogoutAsync(player, new DateTime(2026, 5, 30, 13, 0, 0, DateTimeKind.Local));
+
+		Assert.True(saved);
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9501"));
+		Assert.Empty(player.DeletedInventoryItems);
+	}
+
+	[Fact]
 	public async Task SaveItemPurificationMutation_WritesInventoryStonesAndAbyssRankAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

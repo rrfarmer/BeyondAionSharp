@@ -1032,9 +1032,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		// PlayerDAO.storeLastOnlineTime, then PlayerDAO.onlinePlayer(false).
 		// Java PlayerService.storePlayer also calls InventoryDAO.store(player), which flushes
 		// dirty storage/equipment item rows via InventoryDAO.UPDATE_QUERY before the final
-		// online/offline flags are written. C# does not yet track Java PersistentState on
-		// InventoryItem/Storage, so logout conservatively flushes the current item snapshots
-		// for the player-owned storages that are already modeled live.
+		// online/offline flags are written. C# now tracks item-level dirty/deleted state for
+		// the currently modeled player-owned storages, but still uses conservative snapshot
+		// updates for current rows while flushing tracked deletes explicitly on logout.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
@@ -1047,6 +1047,13 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
 			await SavePlayerPortalCooldownsAsync(connection, player.ObjectId, player.PortalCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
+			if (!await DeleteInventoryItemSnapshotAsync(
+				connection,
+				player.GetDirtyItemsToUpdate().Where(item => item.PersistentState == InventoryItemPersistentState.Deleted).ToArray(),
+				cancellationToken))
+			{
+				return false;
+			}
 			if (!await SaveInventoryItemSnapshotAsync(connection, player.InventoryItems, cancellationToken))
 				return false;
 			if (!await SaveInventoryItemSnapshotAsync(connection, player.WarehouseItems, cancellationToken))
@@ -1107,6 +1114,20 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		foreach (var item in items)
 		{
 			if (!await SaveInventoryItemFullStateAsync(connection, item, cancellationToken))
+				return false;
+		}
+
+		return true;
+	}
+
+	private static async Task<bool> DeleteInventoryItemSnapshotAsync(
+		MySqlConnection connection,
+		IReadOnlyList<InventoryItem> items,
+		CancellationToken cancellationToken)
+	{
+		foreach (var item in items)
+		{
+			if (!await DeleteInventoryItemAsync(connection, null, item.OwnerId, item.ObjectId, cancellationToken))
 				return false;
 		}
 
@@ -2308,7 +2329,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	private static async Task<bool> DeleteInventoryItemAsync(
 		MySqlConnection connection,
-		MySqlTransaction transaction,
+		MySqlTransaction? transaction,
 		int playerObjectId,
 		int itemObjectId,
 		CancellationToken cancellationToken)

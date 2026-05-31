@@ -200,6 +200,13 @@ public sealed class Player
 
 	public IReadOnlyList<InventoryItem> AccountWarehouseItems { get; set; } = Array.Empty<InventoryItem>();
 
+	// Java parity: model/items/storage/Storage.deletedItems for the currently modeled player-owned storages.
+	public IReadOnlyList<InventoryItem> DeletedInventoryItems { get; private set; } = Array.Empty<InventoryItem>();
+
+	public IReadOnlyList<InventoryItem> DeletedWarehouseItems { get; private set; } = Array.Empty<InventoryItem>();
+
+	public IReadOnlyList<InventoryItem> DeletedAccountWarehouseItems { get; private set; } = Array.Empty<InventoryItem>();
+
 	// Java parity: model/gameobjects/player/Player.getDirtyItemsToUpdate.
 	public List<InventoryItem> GetDirtyItemsToUpdate()
 	{
@@ -207,6 +214,9 @@ public sealed class Player
 		AddDirtyItems(dirtyItems, InventoryItems);
 		AddDirtyItems(dirtyItems, WarehouseItems);
 		AddDirtyItems(dirtyItems, AccountWarehouseItems);
+		dirtyItems.AddRange(DeletedInventoryItems);
+		dirtyItems.AddRange(DeletedWarehouseItems);
+		dirtyItems.AddRange(DeletedAccountWarehouseItems);
 		return dirtyItems;
 	}
 
@@ -216,6 +226,37 @@ public sealed class Player
 		InventoryItems = NormalizePersistentState(InventoryItems);
 		WarehouseItems = NormalizePersistentState(WarehouseItems);
 		AccountWarehouseItems = NormalizePersistentState(AccountWarehouseItems);
+		DeletedInventoryItems = Array.Empty<InventoryItem>();
+		DeletedWarehouseItems = Array.Empty<InventoryItem>();
+		DeletedAccountWarehouseItems = Array.Empty<InventoryItem>();
+	}
+
+	// Java parity: model/items/storage/Storage.delete(Item, ...) adds deleted rows to storage.deletedItems.
+	public void TrackDeletedItem(InventoryItem item)
+	{
+		var deletedState = InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.Deleted);
+		switch (deletedState)
+		{
+			case InventoryItemPersistentState.NoAction:
+				RemoveDeletedItem(item);
+				return;
+			case InventoryItemPersistentState.Deleted:
+				var deletedItem = CopyInventoryItem(item, deletedState);
+				switch (item.Location)
+				{
+					case 0:
+						DeletedInventoryItems = ReplaceDeletedItem(DeletedInventoryItems, deletedItem);
+						return;
+					case 1:
+						DeletedWarehouseItems = ReplaceDeletedItem(DeletedWarehouseItems, deletedItem);
+						return;
+					case 2:
+						DeletedAccountWarehouseItems = ReplaceDeletedItem(DeletedAccountWarehouseItems, deletedItem);
+						return;
+				}
+
+				return;
+		}
 	}
 
 	public IReadOnlyList<PlayerSkill> Skills { get; set; } = Array.Empty<PlayerSkill>();
@@ -284,6 +325,37 @@ public sealed class Player
 			return items;
 
 		return items.Select(item => item.PersistentState == InventoryItemPersistentState.Updated ? item : CopyInventoryItem(item, InventoryItemPersistentState.Updated)).ToArray();
+	}
+
+	private void RemoveDeletedItem(InventoryItem item)
+	{
+		switch (item.Location)
+		{
+			case 0:
+				DeletedInventoryItems = RemoveDeletedItem(DeletedInventoryItems, item.ObjectId);
+				return;
+			case 1:
+				DeletedWarehouseItems = RemoveDeletedItem(DeletedWarehouseItems, item.ObjectId);
+				return;
+			case 2:
+				DeletedAccountWarehouseItems = RemoveDeletedItem(DeletedAccountWarehouseItems, item.ObjectId);
+				return;
+		}
+	}
+
+	private static IReadOnlyList<InventoryItem> ReplaceDeletedItem(IReadOnlyList<InventoryItem> items, InventoryItem deletedItem)
+	{
+		var updated = items.Where(item => item.ObjectId != deletedItem.ObjectId).ToList();
+		updated.Add(deletedItem);
+		return updated.ToArray();
+	}
+
+	private static IReadOnlyList<InventoryItem> RemoveDeletedItem(IReadOnlyList<InventoryItem> items, int objectId)
+	{
+		if (!items.Any(item => item.ObjectId == objectId))
+			return items;
+
+		return items.Where(item => item.ObjectId != objectId).ToArray();
 	}
 
 	private static InventoryItem CopyInventoryItem(InventoryItem item, InventoryItemPersistentState persistentState)

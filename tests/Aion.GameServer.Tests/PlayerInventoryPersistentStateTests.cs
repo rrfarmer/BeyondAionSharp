@@ -48,6 +48,41 @@ public sealed class PlayerInventoryPersistentStateTests
 	}
 
 	[Fact]
+	public void GetDirtyItemsToUpdate_IncludesTrackedDeletedItemsAcrossModeledStorages()
+	{
+		var player = new Player
+		{
+			InventoryItems = [CreateItem(1001, location: 0, InventoryItemPersistentState.Updated)],
+			WarehouseItems = [CreateItem(2001, location: 1, InventoryItemPersistentState.Updated)],
+			AccountWarehouseItems = [CreateItem(3001, location: 2, InventoryItemPersistentState.Updated)],
+		};
+
+		player.TrackDeletedItem(player.InventoryItems.Single());
+		player.TrackDeletedItem(player.WarehouseItems.Single());
+		player.TrackDeletedItem(player.AccountWarehouseItems.Single());
+
+		var dirtyItems = player.GetDirtyItemsToUpdate();
+
+		Assert.Equal(
+			[(1001, InventoryItemPersistentState.Deleted), (2001, InventoryItemPersistentState.Deleted), (3001, InventoryItemPersistentState.Deleted)],
+			dirtyItems.Select(item => (item.ObjectId, item.PersistentState)).ToArray());
+	}
+
+	[Fact]
+	public void TrackDeletedItem_DropsNewItemsAsNoAction()
+	{
+		var player = new Player
+		{
+			InventoryItems = [CreateItem(1001, location: 0, InventoryItemPersistentState.New)],
+		};
+
+		player.TrackDeletedItem(player.InventoryItems.Single());
+
+		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Equal([1001], player.GetDirtyItemsToUpdate().Select(item => item.ObjectId).ToArray());
+	}
+
+	[Fact]
 	public void MarkDirtyItemsPersisted_NormalizesDirtyItemsToUpdated()
 	{
 		var pendingTuneResult = new PendingTuneResult(OptionalSockets: 1, EnchantBonus: 2, StatBonusId: 3, IsAttributeOnly: false);
@@ -74,6 +109,21 @@ public sealed class PlayerInventoryPersistentStateTests
 		Assert.Equal(pendingTuneResult, player.InventoryItems.Single().PendingTuneResult);
 		Assert.Equal(InventoryItemPersistentState.Updated, player.WarehouseItems.Single().PersistentState);
 		Assert.Equal(InventoryItemPersistentState.Updated, player.AccountWarehouseItems.Single().PersistentState);
+	}
+
+	[Fact]
+	public void MarkDirtyItemsPersisted_ClearsTrackedDeletedItems()
+	{
+		var player = new Player
+		{
+			InventoryItems = [CreateItem(1001, location: 0, InventoryItemPersistentState.Updated)],
+		};
+
+		player.TrackDeletedItem(player.InventoryItems.Single());
+		player.MarkDirtyItemsPersisted();
+
+		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Empty(player.GetDirtyItemsToUpdate());
 	}
 
 	private static InventoryItem CreateItem(
