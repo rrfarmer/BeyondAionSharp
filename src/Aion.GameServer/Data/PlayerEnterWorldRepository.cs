@@ -192,6 +192,12 @@ public interface IPlayerEnterWorldRepository
 		long? nowMillis = null,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerCraftCooldownsAsync(
+		int playerObjectId,
+		IReadOnlyDictionary<int, long> cooldowns,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default);
+
 	Task<PlayerLifeStats?> LoadPlayerLifeStatsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyList<PlayerFriend>> LoadPlayerFriendsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -683,6 +689,21 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		SavedPortalCooldowns = cooldowns;
+		return Task.FromResult(true);
+	}
+
+	public IReadOnlyDictionary<int, long>? SavedCraftCooldowns { get; private set; }
+
+	public long? SavedCraftCooldownsNowMillis { get; private set; }
+
+	public Task<bool> SavePlayerCraftCooldownsAsync(
+		int playerObjectId,
+		IReadOnlyDictionary<int, long> cooldowns,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default)
+	{
+		SavedCraftCooldowns = cooldowns;
+		SavedCraftCooldownsNowMillis = nowMillis;
 		return Task.FromResult(true);
 	}
 
@@ -2634,6 +2655,20 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not save portal cooldowns for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
+	}
+
+	public Task<bool> SavePlayerCraftCooldownsAsync(
+		int playerObjectId,
+		IReadOnlyDictionary<int, long> cooldowns,
+		long? nowMillis = null,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity target: dao/CraftCooldownsDAO.storeCraftCooldowns. Live MySQL execution
+		// remains disabled until the separate-connection/error-swallowing decision is implemented.
+		_logger.LogWarning(
+			"Craft cooldown persistence for player {PlayerObjectId} is planned but not wired to MySQL yet",
+			playerObjectId);
+		return Task.FromResult(false);
 	}
 
 	private static async Task SavePlayerPortalCooldownsAsync(

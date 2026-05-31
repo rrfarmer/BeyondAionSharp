@@ -316,6 +316,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(new PlayerLifeStats(333, 444, 55), repository.SavedLogoutPlayer!.LifeStats);
 		Assert.Single(repository.SavedLogoutPlayer.SkillCooldowns);
 		Assert.Single(repository.SavedLogoutPlayer.ItemCooldowns);
+		Assert.Equal(0, repository.SaveCraftCooldownsCalls);
 		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
 		Assert.Equal(0, player.ResponseRequester.Count);
 		Assert.Null(player.PendingFriendRequest);
@@ -543,6 +544,48 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.False(plan.RequiresSeparateConnectionPerSqlOperation);
 		Assert.False(plan.IsLive);
 		Assert.Contains("blocked until connection and SQL error behavior decisions are explicit", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task EmptyRepository_SavePlayerCraftCooldownsAsync_CapturesDisabledFakeStateWithoutSql()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var cooldowns = new Dictionary<int, long> { [77] = 2_000 };
+
+		var saved = await repository.SavePlayerCraftCooldownsAsync(1001, cooldowns, nowMillis: 1_000);
+
+		Assert.True(saved);
+		Assert.Same(cooldowns, repository.SavedCraftCooldowns);
+		Assert.Equal(1_000, repository.SavedCraftCooldownsNowMillis);
+	}
+
+	[Fact]
+	public async Task CapturingRepository_SavePlayerCraftCooldownsAsync_CapturesFutureInterfaceCallWithoutLogoutHook()
+	{
+		var repository = new CapturingEnterWorldRepository();
+		var cooldowns = new Dictionary<int, long> { [77] = 2_000 };
+
+		var saved = await repository.SavePlayerCraftCooldownsAsync(1001, cooldowns, nowMillis: 1_000);
+
+		Assert.True(saved);
+		Assert.Equal(1, repository.SaveCraftCooldownsCalls);
+		Assert.Same(cooldowns, repository.SavedCraftCooldowns);
+		Assert.Equal(1_000, repository.SaveCraftCooldownsNowMillis);
+	}
+
+	[Fact]
+	public async Task MySqlRepository_SavePlayerCraftCooldownsAsync_RemainsDisabledUntilLiveSqlIsScoped()
+	{
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SavePlayerCraftCooldownsAsync(
+			1001,
+			new Dictionary<int, long> { [77] = 2_000 },
+			nowMillis: 1_000);
+
+		Assert.False(saved);
 	}
 
 	[Fact]
@@ -1252,6 +1295,12 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public long? SavePortalCooldownsNowMillis { get; private set; }
 
+		public int SaveCraftCooldownsCalls { get; private set; }
+
+		public IReadOnlyDictionary<int, long>? SavedCraftCooldowns { get; private set; }
+
+		public long? SaveCraftCooldownsNowMillis { get; private set; }
+
 		public int LoadLifeStatsCalls { get; private set; }
 
 		public int LoadFriendsCalls { get; private set; }
@@ -1911,6 +1960,18 @@ public sealed class PlayerEnterWorldServiceTests
 			SavePortalCooldownsCalls++;
 			SavedPortalCooldowns = cooldowns;
 			SavePortalCooldownsNowMillis = nowMillis;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SavePlayerCraftCooldownsAsync(
+			int playerObjectId,
+			IReadOnlyDictionary<int, long> cooldowns,
+			long? nowMillis = null,
+			CancellationToken cancellationToken = default)
+		{
+			SaveCraftCooldownsCalls++;
+			SavedCraftCooldowns = cooldowns;
+			SaveCraftCooldownsNowMillis = nowMillis;
 			return Task.FromResult(true);
 		}
 
