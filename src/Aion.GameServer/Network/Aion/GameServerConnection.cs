@@ -82,6 +82,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GameServerCastSpellHandlerHooks _castSpellHooks;
 	private readonly Func<bool> _isShuttingDownSoon;
 	private readonly Action<CmCraftRuntimePlan>? _cmCraftRuntimePlanObserver;
+	private readonly Action<CmCraftStartCompositionPlan>? _cmCraftStartCompositionPlanObserver;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -150,7 +151,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		GameServerCastSpellHandlerHooks? castSpellHooks = null,
 		Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? dialogSelectPlanObserver = null,
 		Func<bool>? isShuttingDownSoon = null,
-		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null)
+		Action<CmCraftRuntimePlan>? cmCraftRuntimePlanObserver = null,
+		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -193,6 +195,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_castSpellHooks = castSpellHooks ?? new GameServerCastSpellHandlerHooks();
 		_isShuttingDownSoon = isShuttingDownSoon ?? (() => false);
 		_cmCraftRuntimePlanObserver = cmCraftRuntimePlanObserver;
+		_cmCraftStartCompositionPlanObserver = cmCraftStartCompositionPlanObserver;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -3873,10 +3876,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		var targetExists = true;
 		var targetIsInRange = true;
 		var targetTemplateMatches = true;
+		IWorldNpcObject? target = null;
 
 		if (hasPlayer && isPlayerSpawned && !isShuttingDownSoon && packet.UnknownByte != CmCraftRuntimePlanService.MorphSubstancesMarker)
 		{
-			var target = ResolveCraftTarget(packet.TargetObjectId);
+			target = ResolveCraftTarget(packet.TargetObjectId);
 			targetExists = target != null;
 			targetIsInRange = target != null && IsInCraftTargetRange(player!, target);
 			targetTemplateMatches = target != null && target.TemplateId == packet.TargetTemplateId;
@@ -3895,6 +3899,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			targetIsInRange,
 			targetTemplateMatches);
 		_cmCraftRuntimePlanObserver?.Invoke(plan);
+		ObserveCraftStartCompositionPlan(player, packet, plan, target, targetIsInRange);
 
 		if (plan.Status == CmCraftRuntimePlanStatus.StartCrafting)
 		{
@@ -3906,6 +3911,36 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return Task.CompletedTask;
+	}
+
+	private void ObserveCraftStartCompositionPlan(
+		Player? player,
+		CmCraft packet,
+		CmCraftRuntimePlan runtimePlan,
+		IWorldNpcObject? target,
+		bool targetIsWithinToolRange)
+	{
+		if (_cmCraftStartCompositionPlanObserver == null)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var recipeTemplate = staticData?.RecipeTemplates.GetRecipeTemplateById(packet.RecipeId);
+		var productTemplate = recipeTemplate == null ? null : staticData?.ItemTemplates.GetItemTemplate(recipeTemplate.ProductId);
+		var craftService = new CraftService(
+			resourceStats: null!,
+			staticData?.ItemTemplates,
+			staticData?.SkillTemplates);
+		var compositionPlan = CmCraftStartCompositionPlanService.CreatePlan(
+			runtimePlan,
+			craftService,
+			player,
+			recipeTemplate,
+			productTemplate,
+			target,
+			targetIsStaticObject: target?.Template.Type == "STATIC",
+			targetIsWithinToolRange,
+			hasCraftingTaskInProgress: false);
+		_cmCraftStartCompositionPlanObserver.Invoke(compositionPlan);
 	}
 
 	private IWorldNpcObject? ResolveCraftTarget(int targetObjectId)

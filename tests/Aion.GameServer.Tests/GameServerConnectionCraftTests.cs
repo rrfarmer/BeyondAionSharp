@@ -99,6 +99,58 @@ public sealed class GameServerConnectionCraftTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CmCraftStartIntentRecordsNonLiveCompositionPlan()
+	{
+		await using var fixture = await CraftFixture.CreateAsync();
+		var player = CreatePlayer(isOnline: true);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateCraftPayload(
+				unknownByte: CmCraftRuntimePlanService.MorphSubstancesMarker,
+				targetTemplateId: 0,
+				recipeId: 155000078,
+				targetObjectId: 0,
+				craftType: 1,
+				new Dictionary<int, long> { [186000040] = 3 }));
+
+		var runtimePlan = Assert.Single(fixture.CraftPlans);
+		Assert.Equal(CmCraftRuntimePlanStatus.StartCrafting, runtimePlan.Status);
+		var compositionPlan = Assert.Single(fixture.CraftStartCompositionPlans);
+		Assert.Equal(CmCraftStartCompositionPlanStatus.ValidationFailed, compositionPlan.Status);
+		Assert.Same(runtimePlan, compositionPlan.RuntimePlan);
+		Assert.Equal(CraftStartValidationStatus.MissingRecipe, compositionPlan.ValidationPlan?.Status);
+		Assert.Equal(1, compositionPlan.RuntimePlan!.StartIntent?.CraftType);
+		Assert.Equal(3, compositionPlan.RuntimePlan.StartIntent!.MaterialsData[186000040]);
+		Assert.False(compositionPlan.IsLive);
+		Assert.False(compositionPlan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmCraftRuntimeBlockedRecordsCompositionWithoutPlannerSideEffects()
+	{
+		await using var fixture = await CraftFixture.CreateAsync();
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateCraftPayload(unknownByte: 1, targetTemplateId: 730190, recipeId: 155000001, targetObjectId: 9001, craftType: 0));
+
+		var runtimePlan = Assert.Single(fixture.CraftPlans);
+		var compositionPlan = Assert.Single(fixture.CraftStartCompositionPlans);
+		Assert.Equal(CmCraftRuntimePlanStatus.NoPlayerOrNotSpawned, runtimePlan.Status);
+		Assert.Equal(CmCraftStartCompositionPlanStatus.RuntimeBlocked, compositionPlan.Status);
+		Assert.Same(runtimePlan, compositionPlan.RuntimePlan);
+		Assert.Null(compositionPlan.ValidationPlan);
+		Assert.Null(compositionPlan.ConsumptionPlan);
+		Assert.Null(compositionPlan.TaskPlan);
+		Assert.False(compositionPlan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
 	private static Player CreatePlayer(bool isOnline) =>
 		new()
 		{
@@ -194,12 +246,14 @@ public sealed class GameServerConnectionCraftTests
 			GameServerConnection connection,
 			GameWorld world,
 			List<CmCraftRuntimePlan> craftPlans,
+			List<CmCraftStartCompositionPlan> craftStartCompositionPlans,
 			List<GameServerPacket> sentPackets)
 		{
 			_client = client;
 			Connection = connection;
 			World = world;
 			CraftPlans = craftPlans;
+			CraftStartCompositionPlans = craftStartCompositionPlans;
 			SentPackets = sentPackets;
 		}
 
@@ -208,6 +262,8 @@ public sealed class GameServerConnectionCraftTests
 		public GameWorld World { get; }
 
 		public List<CmCraftRuntimePlan> CraftPlans { get; }
+
+		public List<CmCraftStartCompositionPlan> CraftStartCompositionPlans { get; }
 
 		public List<GameServerPacket> SentPackets { get; }
 
@@ -227,6 +283,7 @@ public sealed class GameServerConnectionCraftTests
 				var world = new GameWorld(NullLogger<GameWorld>.Instance);
 				world.Initialize();
 				var craftPlans = new List<CmCraftRuntimePlan>();
+				var craftStartCompositionPlans = new List<CmCraftStartCompositionPlan>();
 				var sentPackets = new List<GameServerPacket>();
 				var fixture = new CraftFixture(
 					client,
@@ -240,9 +297,11 @@ public sealed class GameServerConnectionCraftTests
 						crypt: crypt,
 						sentPacketObserver: sentPackets.Add,
 						isShuttingDownSoon: isShuttingDownSoon,
-						cmCraftRuntimePlanObserver: craftPlans.Add),
+						cmCraftRuntimePlanObserver: craftPlans.Add,
+						cmCraftStartCompositionPlanObserver: craftStartCompositionPlans.Add),
 					world,
 					craftPlans,
+					craftStartCompositionPlans,
 					sentPackets);
 				return fixture;
 			}
