@@ -139,6 +139,9 @@ public sealed class GameServerConnectionBuyItemTests
 		return new WorldNpc(objectId, templateId, template, position);
 	}
 
+	internal static Task InvokeProcessPacketAsyncForAdapterTests(GameServerConnection connection, byte[] payload) =>
+		InvokeProcessPacketAsync(connection, payload);
+
 	private static async Task InvokeProcessPacketAsync(GameServerConnection connection, byte[] payload)
 	{
 		var method = typeof(GameServerConnection).GetMethod("ProcessPacketAsync", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -147,6 +150,9 @@ public sealed class GameServerConnectionBuyItemTests
 		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [packet]));
 		await task;
 	}
+
+	internal static void SetActivePlayerForPacketDispatchForAdapterTests(GameServerConnection connection, Player player) =>
+		SetActivePlayerForPacketDispatch(connection, player);
 
 	private static void SetActivePlayerForPacketDispatch(GameServerConnection connection, Player player)
 	{
@@ -162,6 +168,12 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.NotNull(stateField);
 		stateField.SetValue(connection, state);
 	}
+
+	internal static byte[] CreateBuyItemPayloadForAdapterTests(
+		int sellerObjectId,
+		int tradeActionId,
+		IReadOnlyList<(int ItemObjectId, long Count)> items) =>
+		CreateBuyItemPayload(sellerObjectId, tradeActionId, items);
 
 	private static byte[] CreateBuyItemPayload(
 		int sellerObjectId,
@@ -190,7 +202,7 @@ public sealed class GameServerConnectionBuyItemTests
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
 	}
 
-	private sealed class BuyItemFixture : IAsyncDisposable
+	internal sealed class BuyItemFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
 

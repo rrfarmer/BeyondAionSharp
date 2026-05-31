@@ -1,0 +1,220 @@
+using System.Collections.Concurrent;
+using Aion.GameServer.Model.GameObjects;
+
+namespace Aion.GameServer.Services;
+
+public enum CmBuyItemKnownVisibleObjectKind
+{
+	Player,
+	Npc,
+	Pet,
+	Other,
+}
+
+public enum CmBuyItemKnownVisibleObjectMembershipUpdateReason
+{
+	Manual,
+	KnownListRefresh,
+	Removed,
+	Cleared,
+}
+
+public sealed record CmBuyItemKnownVisibleObjectMembershipCandidate(
+	int ObjectId,
+	CmBuyItemKnownVisibleObjectKind Kind,
+	bool IsVisibleToOwner,
+	string? JavaSource = null);
+
+public sealed record CmBuyItemKnownVisibleObjectMembershipEntry(
+	int OwnerPlayerObjectId,
+	int KnownObjectId,
+	CmBuyItemKnownVisibleObjectKind Kind,
+	bool IsVisibleToOwner,
+	CmBuyItemKnownVisibleObjectMembershipUpdateReason UpdateReason,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record CmBuyItemKnownVisibleObjectMembershipSnapshot(
+	int OwnerPlayerObjectId,
+	IReadOnlyList<CmBuyItemKnownVisibleObjectMembershipEntry> Entries,
+	bool ExcludesOwnerByNormalAddPath,
+	bool DeduplicatesByObjectId,
+	string JavaSource,
+	bool IsLive)
+{
+	public IReadOnlyList<int> KnownObjectIds { get; } = Entries.Select(entry => entry.KnownObjectId).ToArray();
+}
+
+public sealed class CmBuyItemKnownVisibleObjectMembershipService
+{
+	private const string DefaultJavaSource =
+		"com.aionemu.gameserver.world.knownlist.KnownList.knownObjects / KnownList.getObject";
+
+	private readonly ConcurrentDictionary<int, Dictionary<int, CmBuyItemKnownVisibleObjectMembershipEntry>> _knownObjectsByOwner = new();
+
+	public CmBuyItemKnownVisibleObjectMembershipSnapshot UpsertKnownObjects(
+		int ownerPlayerObjectId,
+		IEnumerable<CmBuyItemKnownVisibleObjectMembershipCandidate>? candidates,
+		CmBuyItemKnownVisibleObjectMembershipUpdateReason updateReason = CmBuyItemKnownVisibleObjectMembershipUpdateReason.Manual)
+	{
+		var entries = _knownObjectsByOwner.GetOrAdd(ownerPlayerObjectId, _ => new Dictionary<int, CmBuyItemKnownVisibleObjectMembershipEntry>());
+
+		lock (entries)
+		{
+			foreach (var candidate in candidates ?? Array.Empty<CmBuyItemKnownVisibleObjectMembershipCandidate>())
+			{
+				// Java parity: KnownList.isAwareOf rejects the owner through the normal add path.
+				if (candidate.ObjectId == ownerPlayerObjectId)
+					continue;
+
+				entries[candidate.ObjectId] = new CmBuyItemKnownVisibleObjectMembershipEntry(
+					ownerPlayerObjectId,
+					candidate.ObjectId,
+					candidate.Kind,
+					candidate.IsVisibleToOwner,
+					updateReason,
+					candidate.JavaSource ?? DefaultJavaSource,
+					IsLive: false);
+			}
+
+			return CreateSnapshot(ownerPlayerObjectId, entries.Values);
+		}
+	}
+
+	public bool RemoveKnownObject(
+		int ownerPlayerObjectId,
+		int knownObjectId,
+		out CmBuyItemKnownVisibleObjectMembershipSnapshot snapshot)
+	{
+		if (!_knownObjectsByOwner.TryGetValue(ownerPlayerObjectId, out var entries))
+		{
+			snapshot = CreateSnapshot(ownerPlayerObjectId, Array.Empty<CmBuyItemKnownVisibleObjectMembershipEntry>());
+			return false;
+		}
+
+		lock (entries)
+		{
+			var removed = entries.Remove(knownObjectId);
+			if (entries.Count == 0)
+				_knownObjectsByOwner.TryRemove(ownerPlayerObjectId, out _);
+
+			snapshot = CreateSnapshot(ownerPlayerObjectId, entries.Values);
+			return removed;
+		}
+	}
+
+	public CmBuyItemKnownVisibleObjectMembershipSnapshot ClearKnownObjects(int ownerPlayerObjectId)
+	{
+		_knownObjectsByOwner.TryRemove(ownerPlayerObjectId, out _);
+		return CreateSnapshot(ownerPlayerObjectId, Array.Empty<CmBuyItemKnownVisibleObjectMembershipEntry>());
+	}
+
+	public CmBuyItemKnownVisibleObjectMembershipSnapshot GetSnapshot(int ownerPlayerObjectId)
+	{
+		if (!_knownObjectsByOwner.TryGetValue(ownerPlayerObjectId, out var entries))
+			return CreateSnapshot(ownerPlayerObjectId, Array.Empty<CmBuyItemKnownVisibleObjectMembershipEntry>());
+
+		lock (entries)
+		{
+			return CreateSnapshot(ownerPlayerObjectId, entries.Values);
+		}
+	}
+
+	private static CmBuyItemKnownVisibleObjectMembershipSnapshot CreateSnapshot(
+		int ownerPlayerObjectId,
+		IEnumerable<CmBuyItemKnownVisibleObjectMembershipEntry> entries) =>
+		new(
+			ownerPlayerObjectId,
+			entries.ToArray(),
+			ExcludesOwnerByNormalAddPath: true,
+			DeduplicatesByObjectId: true,
+			DefaultJavaSource,
+			IsLive: false);
+}
+
+public enum CmBuyItemKnownVisibleObjectResolverAdapterStatus
+{
+	MissingPlayer,
+	MissingMembershipService,
+	KnownObjectTarget,
+	UnknownObjectTarget,
+}
+
+public sealed record CmBuyItemKnownVisibleObjectResolverAdapterPlan(
+	CmBuyItemKnownVisibleObjectResolverAdapterStatus Status,
+	int SellerObjectId,
+	bool? IsKnownByPlayer,
+	CmBuyItemKnownVisibleObjectKind? SnapshotObjectKind,
+	int SnapshotEntryCount,
+	bool UsesKnownVisibleObjectSnapshot,
+	bool IsJavaKnownListParity,
+	string JavaSource,
+	bool IsLive);
+
+public static class CmBuyItemKnownVisibleObjectResolverAdapterService
+{
+	public static Func<Player, int, object?, bool?> CreateResolver(CmBuyItemKnownVisibleObjectMembershipService membershipService) =>
+		(player, sellerObjectId, _) => CreatePlan(player, sellerObjectId, membershipService).IsKnownByPlayer;
+
+	public static CmBuyItemKnownVisibleObjectResolverAdapterPlan CreatePlan(
+		Player? player,
+		int sellerObjectId,
+		CmBuyItemKnownVisibleObjectMembershipService? membershipService)
+	{
+		if (player == null)
+			return CreatePlan(
+				CmBuyItemKnownVisibleObjectResolverAdapterStatus.MissingPlayer,
+				sellerObjectId,
+				isKnownByPlayer: null,
+				snapshotObjectKind: null,
+				snapshotEntryCount: 0,
+				usesKnownVisibleObjectSnapshot: false,
+				"CM_BUY_ITEM known-visible-object resolver adapter cannot read membership without active player");
+
+		if (membershipService == null)
+			return CreatePlan(
+				CmBuyItemKnownVisibleObjectResolverAdapterStatus.MissingMembershipService,
+				sellerObjectId,
+				isKnownByPlayer: null,
+				snapshotObjectKind: null,
+				snapshotEntryCount: 0,
+				usesKnownVisibleObjectSnapshot: false,
+				"CM_BUY_ITEM known-visible-object resolver adapter has no membership service");
+
+		var snapshot = membershipService.GetSnapshot(player.ObjectId);
+		var entry = snapshot.Entries.FirstOrDefault(entry => entry.KnownObjectId == sellerObjectId);
+		var isKnown = entry != null;
+
+		return CreatePlan(
+			isKnown
+				? CmBuyItemKnownVisibleObjectResolverAdapterStatus.KnownObjectTarget
+				: CmBuyItemKnownVisibleObjectResolverAdapterStatus.UnknownObjectTarget,
+			sellerObjectId,
+			isKnown,
+			entry?.Kind,
+			snapshot.Entries.Count,
+			usesKnownVisibleObjectSnapshot: true,
+			"KnownList.getObject membership approximated from supplied generic known-visible-object snapshot");
+	}
+
+	private static CmBuyItemKnownVisibleObjectResolverAdapterPlan CreatePlan(
+		CmBuyItemKnownVisibleObjectResolverAdapterStatus status,
+		int sellerObjectId,
+		bool? isKnownByPlayer,
+		CmBuyItemKnownVisibleObjectKind? snapshotObjectKind,
+		int snapshotEntryCount,
+		bool usesKnownVisibleObjectSnapshot,
+		string javaSource)
+	{
+		return new CmBuyItemKnownVisibleObjectResolverAdapterPlan(
+			status,
+			sellerObjectId,
+			isKnownByPlayer,
+			snapshotObjectKind,
+			snapshotEntryCount,
+			usesKnownVisibleObjectSnapshot,
+			IsJavaKnownListParity: false,
+			javaSource,
+			IsLive: false);
+	}
+}
