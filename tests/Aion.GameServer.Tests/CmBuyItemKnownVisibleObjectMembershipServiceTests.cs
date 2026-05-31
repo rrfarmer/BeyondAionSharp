@@ -125,6 +125,54 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 	}
 
 	[Fact]
+	public void PopulationResolverAdapter_RefreshesSuppliedFactsBeforeResolvingSeller()
+	{
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var adapter = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var visibleNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+
+		var plan = adapter.CreatePlan(
+			owner,
+			SellerNpcObjectId,
+			_ => [owner],
+			_ => [visibleNpc]);
+
+		Assert.True(plan.RefreshesSuppliedFactsBeforeResolve);
+		Assert.False(plan.IsJavaRegionKnownListParity);
+		Assert.False(plan.IsLive);
+		Assert.NotNull(plan.PopulationResult);
+		Assert.Equal(1, plan.PopulationResult.UpsertedVisibleObjectCount);
+		Assert.Equal(CmBuyItemKnownVisibleObjectResolverAdapterStatus.KnownObjectTarget, plan.ResolverPlan.Status);
+		Assert.True(plan.ResolverPlan.IsKnownByPlayer);
+		Assert.Equal(CmBuyItemKnownVisibleObjectKind.Npc, plan.ResolverPlan.SnapshotObjectKind);
+	}
+
+	[Fact]
+	public void PopulationResolverAdapter_RemovesStaleFactsBeforeResolvingSeller()
+	{
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var adapter = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		membership.UpsertKnownObjects(
+			OwnerPlayerObjectId,
+			[new CmBuyItemKnownVisibleObjectMembershipCandidate(SellerNpcObjectId, CmBuyItemKnownVisibleObjectKind.Npc, IsVisibleToOwner: true)]);
+
+		var plan = adapter.CreatePlan(
+			owner,
+			SellerNpcObjectId,
+			_ => [owner],
+			_ => []);
+
+		Assert.NotNull(plan.PopulationResult);
+		Assert.Equal(1, plan.PopulationResult.RemovedStaleObjectCount);
+		Assert.Equal(CmBuyItemKnownVisibleObjectResolverAdapterStatus.UnknownObjectTarget, plan.ResolverPlan.Status);
+		Assert.False(plan.ResolverPlan.IsKnownByPlayer);
+	}
+
+	[Fact]
 	public async Task GameServerConnection_KnownNpcFactAllowsNpcBuyPlannerSelection()
 	{
 		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
@@ -144,6 +192,57 @@ public sealed class CmBuyItemKnownVisibleObjectMembershipServiceTests
 		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner, plan.Status);
 		Assert.NotNull(plan.BuyFromShopPlan);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task GameServerConnection_PopulationResolverAcceptsSuppliedVisibleNpcTarget()
+	{
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var sellerNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var adapter = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		await using var fixture = await GameServerConnectionBuyItemTests.BuyItemFixture.CreateAsync(
+			adapter.CreateResolver(_ => [owner], _ => [sellerNpc]));
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, owner);
+		fixture.World.TryAddObject(SellerNpcObjectId, sellerNpc);
+
+		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
+			fixture.Connection,
+			GameServerConnectionBuyItemTests.CreateBuyItemPayloadForAdapterTests(SellerNpcObjectId, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner, plan.Status);
+		Assert.NotNull(plan.BuyFromShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.Contains(SellerNpcObjectId, membership.GetSnapshot(OwnerPlayerObjectId).KnownObjectIds);
+	}
+
+	[Fact]
+	public async Task GameServerConnection_PopulationResolverRejectsStaleNpcTarget()
+	{
+		var owner = CreatePlayer(OwnerPlayerObjectId, x: 0, worldId: 210010000);
+		var sellerNpc = CreateNpc(SellerNpcObjectId, x: 11, worldId: 210010000);
+		var membership = new CmBuyItemKnownVisibleObjectMembershipService();
+		membership.UpsertKnownObjects(
+			OwnerPlayerObjectId,
+			[new CmBuyItemKnownVisibleObjectMembershipCandidate(SellerNpcObjectId, CmBuyItemKnownVisibleObjectKind.Npc, IsVisibleToOwner: true)]);
+		var population = new CmBuyItemKnownVisibleObjectPopulationAdapterService(membership);
+		var adapter = new CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(membership, population);
+		await using var fixture = await GameServerConnectionBuyItemTests.BuyItemFixture.CreateAsync(
+			adapter.CreateResolver(_ => [owner], _ => []));
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, owner);
+		fixture.World.TryAddObject(SellerNpcObjectId, sellerNpc);
+
+		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
+			fixture.Connection,
+			GameServerConnectionBuyItemTests.CreateBuyItemPayloadForAdapterTests(SellerNpcObjectId, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedUnknownTarget, plan.Status);
+		Assert.Null(plan.BuyFromShopPlan);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.DoesNotContain(SellerNpcObjectId, membership.GetSnapshot(OwnerPlayerObjectId).KnownObjectIds);
 	}
 
 	[Fact]

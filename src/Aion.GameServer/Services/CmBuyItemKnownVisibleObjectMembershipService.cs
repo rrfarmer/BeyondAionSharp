@@ -221,6 +221,69 @@ public enum CmBuyItemKnownVisibleObjectResolverAdapterStatus
 	UnknownObjectTarget,
 }
 
+public sealed record CmBuyItemKnownVisibleObjectPopulationResolverAdapterPlan(
+	CmBuyItemKnownVisibleObjectPopulationResult? PopulationResult,
+	CmBuyItemKnownVisibleObjectResolverAdapterPlan ResolverPlan,
+	bool RefreshesSuppliedFactsBeforeResolve,
+	bool IsJavaRegionKnownListParity,
+	string JavaSource,
+	bool IsLive);
+
+public sealed class CmBuyItemKnownVisibleObjectPopulationResolverAdapterService
+{
+	private readonly CmBuyItemKnownVisibleObjectMembershipService _membershipService;
+	private readonly CmBuyItemKnownVisibleObjectPopulationAdapterService _populationAdapter;
+
+	public CmBuyItemKnownVisibleObjectPopulationResolverAdapterService(
+		CmBuyItemKnownVisibleObjectMembershipService membershipService,
+		CmBuyItemKnownVisibleObjectPopulationAdapterService populationAdapter)
+	{
+		_membershipService = membershipService;
+		_populationAdapter = populationAdapter;
+	}
+
+	public Func<Player, int, object?, bool?> CreateResolver(
+		Func<Player, IEnumerable<Player>?> onlinePlayersProvider,
+		Func<Player, IEnumerable<IWorldNpcObject>?> npcProvider) =>
+		(player, sellerObjectId, _) => CreatePlan(player, sellerObjectId, onlinePlayersProvider, npcProvider).ResolverPlan.IsKnownByPlayer;
+
+	public CmBuyItemKnownVisibleObjectPopulationResolverAdapterPlan CreatePlan(
+		Player? player,
+		int sellerObjectId,
+		Func<Player, IEnumerable<Player>?> onlinePlayersProvider,
+		Func<Player, IEnumerable<IWorldNpcObject>?> npcProvider)
+	{
+		if (player == null)
+			return CreatePlan(
+				populationResult: null,
+				CmBuyItemKnownVisibleObjectResolverAdapterService.CreatePlan(player, sellerObjectId, _membershipService),
+				"CM_BUY_ITEM population resolver adapter cannot refresh supplied facts without active player");
+
+		var populationResult = _populationAdapter.RefreshOwnerFromSuppliedFacts(
+			player,
+			onlinePlayersProvider(player),
+			npcProvider(player));
+		var resolverPlan = CmBuyItemKnownVisibleObjectResolverAdapterService.CreatePlan(player, sellerObjectId, _membershipService);
+
+		return CreatePlan(
+			populationResult,
+			resolverPlan,
+			"KnownList.update/findVisibleObjects supplied-facts approximation refreshed before KnownList.getObject resolver plan");
+	}
+
+	private static CmBuyItemKnownVisibleObjectPopulationResolverAdapterPlan CreatePlan(
+		CmBuyItemKnownVisibleObjectPopulationResult? populationResult,
+		CmBuyItemKnownVisibleObjectResolverAdapterPlan resolverPlan,
+		string javaSource) =>
+		new(
+			populationResult,
+			resolverPlan,
+			RefreshesSuppliedFactsBeforeResolve: populationResult != null,
+			IsJavaRegionKnownListParity: false,
+			javaSource,
+			IsLive: false);
+}
+
 public sealed record CmBuyItemKnownVisibleObjectResolverAdapterPlan(
 	CmBuyItemKnownVisibleObjectResolverAdapterStatus Status,
 	int SellerObjectId,
