@@ -105,7 +105,8 @@ public static class WorldNpcDropBoostRateContextPlanService
 		bool hasKillerDrBoostStatSource = false,
 		bool hasSalvationSource = false,
 		bool hasActivePalaceSource = false,
-		HousingTemplateTable? housingTemplates = null)
+		HousingTemplateTable? housingTemplates = null,
+		byte? salvationPercent = null)
 	{
 		// Java parity: RatesConfig.DROP_RATES is now represented by GameServerRateOptions.DropRates.
 		return CreateDisabledPlan(
@@ -116,7 +117,8 @@ public static class WorldNpcDropBoostRateContextPlanService
 			hasKillerDrBoostStatSource,
 			hasSalvationSource,
 			hasActivePalaceSource,
-			housingTemplates);
+			housingTemplates,
+			salvationPercent);
 	}
 
 	public static WorldNpcDropBoostRateContextPlan CreateDisabledPlan(
@@ -127,12 +129,15 @@ public static class WorldNpcDropBoostRateContextPlanService
 		bool hasKillerDrBoostStatSource = false,
 		bool hasSalvationSource = false,
 		bool hasActivePalaceSource = false,
-		HousingTemplateTable? housingTemplates = null)
+		HousingTemplateTable? housingTemplates = null,
+		byte? salvationPercent = null)
 	{
 		// Java parity: DropRegistrationService.calculateBoostDropRate reads live
 		// npc/player stats, RatesConfig.DROP_RATES, repose, salvation, and active house.
 		var hasActivePalace = PlayerActiveHouseResolverService.HasActivePalace(looter, housingTemplates);
 		var hasResolvedActivePalaceSource = hasActivePalaceSource || hasActivePalace.HasValue;
+		var hasResolvedSalvationSource = hasSalvationSource || salvationPercent.HasValue;
+		var hasSalvation = salvationPercent.HasValue ? salvationPercent.Value > 0 : (bool?)null;
 		var missingInputs = new List<string>();
 		if (looter == null)
 			missingInputs.Add("looter");
@@ -144,7 +149,7 @@ public static class WorldNpcDropBoostRateContextPlanService
 			missingInputs.Add("killer BOOST_DROP_RATE stat source");
 		if (!hasKillerDrBoostStatSource)
 			missingInputs.Add("killer DR_BOOST stat source");
-		if (!hasSalvationSource)
+		if (!hasResolvedSalvationSource)
 			missingInputs.Add("killer salvation percent source");
 		if (!hasResolvedActivePalaceSource)
 			missingInputs.Add("active palace source");
@@ -156,6 +161,7 @@ public static class WorldNpcDropBoostRateContextPlanService
 			? new WorldNpcDropBoostRateContext(
 				configuredDropRate,
 				HasReposeEnergy: looter.ReposeEnergy > 0,
+				HasSalvation: hasSalvation == true,
 				HasActivePalace: hasActivePalace == true)
 			: null;
 
@@ -166,11 +172,13 @@ public static class WorldNpcDropBoostRateContextPlanService
 			context,
 			configuredDropRate,
 			looter?.ReposeEnergy > 0,
+			salvationPercent,
+			hasSalvation,
 			hasActivePalace,
 			hasNpcBoostStatSource,
 			hasKillerBoostStatSource,
 			hasKillerDrBoostStatSource,
-			hasSalvationSource,
+			hasResolvedSalvationSource,
 			hasResolvedActivePalaceSource,
 			missingInputs,
 			"DropRegistrationService.calculateBoostDropRate -> Rates.get(killer, RatesConfig.DROP_RATES), npc BOOST_DROP_RATE, killer BOOST_DROP_RATE, killer DR_BOOST, repose, salvation, active palace");
@@ -206,6 +214,8 @@ public sealed record WorldNpcDropBoostRateContextPlan(
 	WorldNpcDropBoostRateContext? Context,
 	float ConfiguredDropRate,
 	bool? HasReposeEnergy,
+	byte? SalvationPercent,
+	bool? HasSalvation,
 	bool? HasActivePalace,
 	bool HasNpcBoostStatSource,
 	bool HasKillerBoostStatSource,

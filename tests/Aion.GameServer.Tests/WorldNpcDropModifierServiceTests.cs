@@ -237,6 +237,46 @@ public sealed class WorldNpcDropModifierServiceTests
 		Assert.Contains("npc BOOST_DROP_RATE stat source", plan.MissingInputs);
 	}
 
+	[Fact]
+	public void CreateDisabledPlan_ConsumesResolvedSalvationPercentWithoutPlayerSurface()
+	{
+		var looter = new Player { ObjectId = 1001, AccountMembership = 0 };
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[1f],
+			hasActivePalaceSource: true,
+			salvationPercent: 10);
+
+		Assert.Equal(WorldNpcDropBoostRateContextPlanStatus.Blocked, plan.Status);
+		Assert.Equal((byte)10, plan.SalvationPercent);
+		Assert.True(plan.HasSalvation);
+		Assert.True(plan.HasSalvationSource);
+		Assert.DoesNotContain("killer salvation percent source", plan.MissingInputs);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(1.05f, plan.Context.CalculateBoostDropRate(), precision: 3);
+		Assert.Contains("npc BOOST_DROP_RATE stat source", plan.MissingInputs);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_ZeroResolvedSalvationPercentCountsAsSourceWithoutBonus()
+	{
+		var looter = new Player { ObjectId = 1001, AccountMembership = 0 };
+
+		var plan = WorldNpcDropBoostRateContextPlanService.CreateDisabledPlan(
+			looter,
+			[1f],
+			hasActivePalaceSource: true,
+			salvationPercent: 0);
+
+		Assert.Equal((byte)0, plan.SalvationPercent);
+		Assert.False(plan.HasSalvation);
+		Assert.True(plan.HasSalvationSource);
+		Assert.DoesNotContain("killer salvation percent source", plan.MissingInputs);
+		Assert.NotNull(plan.Context);
+		Assert.Equal(1f, plan.Context.CalculateBoostDropRate(), precision: 3);
+	}
+
 	private static WorldNpc CreateNpc(int level)
 	{
 		return new WorldNpc(
