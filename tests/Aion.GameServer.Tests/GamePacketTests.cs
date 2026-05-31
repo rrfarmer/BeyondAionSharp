@@ -1419,6 +1419,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkill("skill"), 1330062, "skill");
 		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkillPoint(), 1330063);
 		AssertSystemMessage(SmSystemMessage.CombineCannotFindRecipe(), 1330043);
+		AssertSystemMessage(SmSystemMessage.CombineCantUse("skill"), 1330042, "skill");
+		AssertSystemMessage(SmSystemMessage.CombineOutOfSkillPoint("skill"), 1330044, "skill");
 		AssertSystemMessage(SmSystemMessage.EnchantItemCanceled("item"), 1300457, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemOptionCanceled("item"), 1300464, "item");
 		AssertSystemMessage(SmSystemMessage.GiveItemProcCancel("item"), 1402238, "item");

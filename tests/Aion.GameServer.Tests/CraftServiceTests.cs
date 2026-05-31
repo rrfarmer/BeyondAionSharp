@@ -180,6 +180,7 @@ public sealed class CraftServiceTests
 		var player = CreatePlayer(objectId: 1106, dp: 600);
 		var recipe = CreateRecipe(recipeId: 155000007, dp: 0, productId: 152000401, skillId: CraftStartValidationPlan.MorphSubstancesSkillId);
 		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, recipe.SkillPoint)];
 		var productTemplate = CreateItemTemplates().GetItemTemplate(152000401);
 
 		var plan = service.CreateStartCraftingValidationPlan(
@@ -261,6 +262,7 @@ public sealed class CraftServiceTests
 		var player = CreatePlayer(objectId: 1109, dp: 600);
 		var recipe = CreateRecipe(recipeId: 155000010, dp: 0, productId: 100200203, skillId: 40001);
 		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, recipe.SkillPoint)];
 		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
 		var target = CreateTarget(objectId: 9003, templateId: 730190);
 
@@ -324,6 +326,7 @@ public sealed class CraftServiceTests
 		var player = CreatePlayer(objectId: 1111, dp: 700);
 		var recipe = CreateRecipe(recipeId: 155000012, dp: 600, productId: 100200203, skillId: 40001);
 		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, recipe.SkillPoint)];
 		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
 		var target = CreateTarget(objectId: 9005, templateId: 730190);
 
@@ -554,6 +557,74 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsMissingCraftSkillAfterCooldownValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var cooldownPlayer = CreatePlayer(objectId: 1122, dp: 700);
+		cooldownPlayer.Recipes = [155000019];
+		cooldownPlayer.CraftCooldowns = new Dictionary<int, long> { [78] = 999999 };
+		var player = CreatePlayer(objectId: 1123, dp: 700);
+		player.Recipes = [155000019];
+		var recipe = CreateRecipe(recipeId: 155000019, dp: 600, productId: 100200203, skillId: 40001, skillPoint: 200, craftDelayId: 78);
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9012, templateId: 730190);
+
+		var cooldownWinsBeforeSkill = service.CreateStartCraftingValidationPlan(
+			cooldownPlayer,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+		var missingSkill = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.CraftCooldownActive, cooldownWinsBeforeSkill.Status);
+		Assert.Equal(CraftStartValidationStatus.MissingCraftSkill, missingSkill.Status);
+		Assert.Equal(1330042, Assert.IsType<SmSystemMessage>(missingSkill.FailurePacket).MessageId);
+		Assert.Equal(200, missingSkill.RequiredSkillPoint);
+		Assert.Equal(0, missingSkill.CurrentSkillLevel);
+		Assert.True(missingSkill.ShouldSendCancelCraft);
+		Assert.Contains("isSkillPresent", missingSkill.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateStartCraftingValidationPlan_RejectsLowCraftSkillAfterPresenceValidation()
+	{
+		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
+		var player = CreatePlayer(objectId: 1124, dp: 700);
+		var recipe = CreateRecipe(recipeId: 155000020, dp: 600, productId: 100200203, skillId: 40001, skillPoint: 200);
+		player.Recipes = [recipe.RecipeId];
+		player.Skills = [CreateSkill(recipe.SkillId, skillLevel: 100)];
+		var productTemplate = CreateItemTemplates().GetItemTemplate(100200203);
+		var target = CreateTarget(objectId: 9013, templateId: 730190);
+
+		var plan = service.CreateStartCraftingValidationPlan(
+			player,
+			recipe,
+			productTemplate,
+			target,
+			targetIsStaticObject: true,
+			targetIsWithinToolRange: true,
+			hasCraftingTaskInProgress: false);
+
+		Assert.Equal(CraftStartValidationStatus.CraftSkillTooLow, plan.Status);
+		Assert.Equal(1330044, Assert.IsType<SmSystemMessage>(plan.FailurePacket).MessageId);
+		Assert.Equal(200, plan.RequiredSkillPoint);
+		Assert.Equal(100, plan.CurrentSkillLevel);
+		Assert.True(plan.ShouldSendCancelCraft);
+		Assert.False(plan.IsReadyForNextValidation);
+		Assert.Contains("getSkillLevel", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_UsesBaseProductWhenCraftDoesNotCrit()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
@@ -745,14 +816,17 @@ public sealed class CraftServiceTests
 		Assert.Empty(plan.UpdatedItems);
 	}
 
-	private static CraftService CreateService(out CapturingConnectionRegistry registry, ItemTemplateTable? itemTemplates = null)
+	private static CraftService CreateService(
+		out CapturingConnectionRegistry registry,
+		ItemTemplateTable? itemTemplates = null,
+		SkillTemplateTable? skillTemplates = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
 			new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!)),
 			registry,
 			new PlayerVisualStatsUpdateService(registry));
-		return new CraftService(resourceStats, itemTemplates);
+		return new CraftService(resourceStats, itemTemplates, skillTemplates);
 	}
 
 	private static void AssertVisualStatsUpdate(WorldNpcResourceChangeResult change)
@@ -790,6 +864,7 @@ public sealed class CraftServiceTests
 		int quantity = 1,
 		IReadOnlyList<int>? comboProducts = null,
 		int skillId = CraftStartValidationPlan.MorphSubstancesSkillId,
+		int skillPoint = 0,
 		int? craftDelayId = null,
 		int? craftDelayTime = null)
 	{
@@ -798,7 +873,7 @@ public sealed class CraftServiceTests
 			0,
 			skillId,
 			"PC_ALL",
-			0,
+			skillPoint,
 			dp,
 			0,
 			productId,
@@ -806,6 +881,15 @@ public sealed class CraftServiceTests
 			comboProducts,
 			craftDelayId,
 			craftDelayTime);
+	}
+
+	private static PlayerSkill CreateSkill(int skillId, int skillLevel)
+	{
+		return new PlayerSkill
+		{
+			SkillId = skillId,
+			SkillLevel = skillLevel,
+		};
 	}
 
 	private static WorldNpc CreateTarget(int objectId, int templateId)
@@ -893,6 +977,35 @@ public sealed class CraftServiceTests
 				"PC_ALL",
 				10,
 				1,
+				0),
+		]);
+	}
+
+	private static SkillTemplateTable CreateSkillTemplates()
+	{
+		return new SkillTemplateTable(
+		[
+			new SkillTemplateSummary(
+				40001,
+				"Weapon Smithing",
+				12345,
+				1,
+				"CRAFT",
+				"CRAFT",
+				"CRAFT",
+				"NONE",
+				0,
+				0),
+			new SkillTemplateSummary(
+				CraftStartValidationPlan.MorphSubstancesSkillId,
+				"Morph Substances",
+				12346,
+				1,
+				"MORPH",
+				"MORPH",
+				"CRAFT",
+				"NONE",
+				0,
 				0),
 		]);
 	}

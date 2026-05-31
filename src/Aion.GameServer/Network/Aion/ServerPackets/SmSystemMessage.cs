@@ -1513,6 +1513,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1330043);
 	}
 
+	public static SmSystemMessage CombineCantUse(string skillName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_CANT_USE.
+		return new SmSystemMessage(1330042, skillName);
+	}
+
+	public static SmSystemMessage CombineOutOfSkillPoint(string skillName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_OUT_OF_SKILL_POINT.
+		return new SmSystemMessage(1330044, skillName);
+	}
+
 	public static SmSystemMessage SoulBoundItemSucceed(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED.
