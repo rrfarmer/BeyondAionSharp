@@ -479,6 +479,31 @@ public sealed class CraftService
 			reuseTimeMillis);
 	}
 
+	public CraftFinishCooldownCompositionPlan CreateFinishCooldownCompositionPlan(
+		Player? player,
+		RecipeTemplateSummary? recipeTemplate,
+		long currentTimeMillis)
+	{
+		var cooldownPlan = CreateFinishCooldownPlan(player, recipeTemplate, currentTimeMillis);
+		var applicationPlan = CraftFinishCooldownApplicationPlanService.CreateDisabledPlan(
+			player,
+			cooldownPlan,
+			currentTimeMillis);
+		var persistencePlan = applicationPlan.Status == CraftFinishCooldownApplicationStatus.DisabledNoMutation
+			? CraftCooldownPersistencePlanService.CreateDisabledPlan(
+				applicationPlan.ObjectId,
+				applicationPlan.ProjectedCooldowns,
+				currentTimeMillis)
+			: CraftCooldownPersistencePlan.CooldownsMissing(applicationPlan.ObjectId, currentTimeMillis);
+		var persistenceAdapterPlan = CraftCooldownPersistenceAdapterPlanService.CreateDisabledPlan(persistencePlan);
+
+		return CraftFinishCooldownCompositionPlan.Create(
+			cooldownPlan,
+			applicationPlan,
+			persistencePlan,
+			persistenceAdapterPlan);
+	}
+
 	public CraftFinishRewardPlan CreateFinishRewardPlan(
 		Player? player,
 		IReadOnlyList<InventoryItem>? inventoryItems,
@@ -2861,6 +2886,52 @@ public enum CraftCooldownPersistenceAdapterStatus
 	PersistencePlanMissing,
 	PersistencePlanNotReady,
 	DisabledNoWrite,
+}
+
+public sealed record CraftFinishCooldownCompositionPlan(
+	CraftFinishCooldownCompositionStatus Status,
+	CraftFinishCooldownPlan CooldownPlan,
+	CraftFinishCooldownApplicationPlan ApplicationPlan,
+	CraftCooldownPersistencePlan PersistencePlan,
+	CraftCooldownPersistenceAdapterPlan PersistenceAdapterPlan,
+	bool WouldApplyCooldown,
+	bool DidApplyCooldown,
+	bool WouldPersistCooldowns,
+	bool DidPersistCooldowns,
+	string JavaSource,
+	bool IsLive)
+{
+	public static CraftFinishCooldownCompositionPlan Create(
+		CraftFinishCooldownPlan cooldownPlan,
+		CraftFinishCooldownApplicationPlan applicationPlan,
+		CraftCooldownPersistencePlan persistencePlan,
+		CraftCooldownPersistenceAdapterPlan persistenceAdapterPlan)
+	{
+		var status = cooldownPlan.Status == CraftFinishCooldownStatus.Planned
+			&& applicationPlan.Status == CraftFinishCooldownApplicationStatus.DisabledNoMutation
+			&& persistencePlan.Status == CraftCooldownPersistencePlanStatus.DisabledNoWrite
+			&& persistenceAdapterPlan.Status == CraftCooldownPersistenceAdapterStatus.DisabledNoWrite
+				? CraftFinishCooldownCompositionStatus.DisabledReady
+				: CraftFinishCooldownCompositionStatus.NotReady;
+		return new CraftFinishCooldownCompositionPlan(
+			status,
+			cooldownPlan,
+			applicationPlan,
+			persistencePlan,
+			persistenceAdapterPlan,
+			WouldApplyCooldown: applicationPlan.WouldStoreCooldown || applicationPlan.WouldRemoveCooldown,
+			DidApplyCooldown: applicationPlan.DidStoreCooldown || applicationPlan.DidRemoveCooldown,
+			WouldPersistCooldowns: persistenceAdapterPlan.WouldExecuteSql,
+			DidPersistCooldowns: persistenceAdapterPlan.DidExecuteSql,
+			"CraftService.finishCrafting cooldown branch composed with Cooldowns.put projection and CraftCooldownsDAO.storeCraftCooldowns SQL intent; all live side effects remain disabled",
+			IsLive: false);
+	}
+}
+
+public enum CraftFinishCooldownCompositionStatus
+{
+	DisabledReady,
+	NotReady,
 }
 
 public sealed record CraftFinishRewardPlan(

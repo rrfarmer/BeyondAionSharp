@@ -2123,6 +2123,65 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateFinishCooldownCompositionPlan_ComposesApplicationProjectionAndDisabledPersistence()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1151, dp: 600);
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 1_000 };
+		var recipe = CreateRecipe(
+			recipeId: 155000041,
+			dp: 0,
+			productId: 100200203,
+			skillId: 40001,
+			craftDelayId: 77,
+			craftDelayTime: 30);
+
+		var composition = service.CreateFinishCooldownCompositionPlan(
+			player,
+			recipe,
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownCompositionStatus.DisabledReady, composition.Status);
+		Assert.False(composition.IsLive);
+		Assert.True(composition.WouldApplyCooldown);
+		Assert.False(composition.DidApplyCooldown);
+		Assert.True(composition.WouldPersistCooldowns);
+		Assert.False(composition.DidPersistCooldowns);
+		Assert.Equal(CraftFinishCooldownStatus.Planned, composition.CooldownPlan.Status);
+		Assert.Equal(CraftFinishCooldownApplicationStatus.DisabledNoMutation, composition.ApplicationPlan.Status);
+		Assert.Equal(1_030_000, composition.ApplicationPlan.ProjectedCooldowns[77]);
+		Assert.Equal(CraftCooldownPersistencePlanStatus.DisabledNoWrite, composition.PersistencePlan.Status);
+		Assert.Equal(2, composition.PersistencePlan.SqlDescriptors.Count);
+		Assert.Equal(CraftCooldownPersistenceAdapterStatus.DisabledNoWrite, composition.PersistenceAdapterPlan.Status);
+		Assert.Equal(2, composition.PersistenceAdapterPlan.WouldExecuteSqlCount);
+		Assert.Equal(1_000, player.CraftCooldowns[77]);
+		Assert.Contains("all live side effects remain disabled", composition.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateFinishCooldownCompositionPlan_RemainsNotReadyForRecipeWithoutDelay()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1152, dp: 600);
+		player.CraftCooldowns = new Dictionary<int, long> { [77] = 1_000 };
+		var recipe = CreateRecipe(recipeId: 155000042, dp: 0, productId: 100200203, skillId: 40001);
+
+		var composition = service.CreateFinishCooldownCompositionPlan(
+			player,
+			recipe,
+			currentTimeMillis: 1_000_000);
+
+		Assert.Equal(CraftFinishCooldownCompositionStatus.NotReady, composition.Status);
+		Assert.False(composition.WouldApplyCooldown);
+		Assert.False(composition.WouldPersistCooldowns);
+		Assert.Equal(CraftFinishCooldownStatus.NoCooldown, composition.CooldownPlan.Status);
+		Assert.Equal(CraftFinishCooldownApplicationStatus.CooldownPlanNotReady, composition.ApplicationPlan.Status);
+		Assert.Equal(CraftCooldownPersistencePlanStatus.CooldownsMissing, composition.PersistencePlan.Status);
+		Assert.Equal(CraftCooldownPersistenceAdapterStatus.PersistencePlanNotReady, composition.PersistenceAdapterPlan.Status);
+		Assert.Equal(1_000, player.CraftCooldowns[77]);
+	}
+
+	[Fact]
 	public void CreateFinishProductPlan_ReportsMissingComboProductConservatively()
 	{
 		var service = CreateService(out _, CreateItemTemplates());
