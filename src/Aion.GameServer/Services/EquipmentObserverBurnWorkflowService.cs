@@ -38,6 +38,13 @@ public static class EquipmentObserverBurnWorkflowService
 		var chargeApplication = ItemChargeBurnApplicationService.ApplyBurnPlan(player, chargePlan, itemTemplates);
 		var chargePersisted = saveItemChargeBurnAsync == null || !chargePlan.Changed
 			|| await saveItemChargeBurnAsync(player, chargePlan, cancellationToken);
+		if (chargePlan.Changed && !chargePersisted)
+		{
+			// Java parity: model/items/ChargeInfo.updateChargePoints marks the owning
+			// equipment persistent state before later persistence. Preserve modeled
+			// equipment dirtiness when the immediate C# save boundary fails.
+			player.MarkEquipmentDirty();
+		}
 
 		var packets = idianApplication.Packets.Concat(chargeApplication.Packets).ToArray();
 		return new EquipmentObserverBurnWorkflowResult(

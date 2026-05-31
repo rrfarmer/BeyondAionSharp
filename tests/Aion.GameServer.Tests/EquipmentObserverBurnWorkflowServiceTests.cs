@@ -215,6 +215,60 @@ public sealed class EquipmentObserverBurnWorkflowServiceTests
 		Assert.Equal(2, result.Packets.Count);
 	}
 
+	[Fact]
+	public async Task ApplyObserverBurnsAsync_ChargePersistenceFailureMarksEquipmentDirty()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			InventoryItems =
+			[
+				CreateItem(objectId: 10, itemId: 100, charge: 100_050, polishCharge: 350_000),
+			],
+		};
+
+		var result = await EquipmentObserverBurnWorkflowService.ApplyObserverBurnsAsync(
+			player,
+			CreateItemTemplates(),
+			EquipmentObserverBurnEvent.Attack,
+			skillId: 0,
+			saveIdianPolishBurnAsync: (_, _, _) => Task.FromResult(true),
+			saveItemChargeBurnAsync: (_, _, _) => Task.FromResult(false));
+
+		Assert.True(result.Changed);
+		Assert.False(result.Persisted);
+		Assert.True(result.IdianPersisted);
+		Assert.False(result.ChargePersisted);
+		Assert.Equal(StoragePersistentState.UpdateRequired, player.EquipmentPersistentState);
+		Assert.Equal(99_850, Assert.Single(player.InventoryItems).Charge);
+	}
+
+	[Fact]
+	public async Task ApplyObserverBurnsAsync_ChargePersistenceSuccessLeavesEquipmentStateClean()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			InventoryItems =
+			[
+				CreateItem(objectId: 10, itemId: 100, charge: 100_050, polishCharge: 350_000),
+			],
+		};
+
+		var result = await EquipmentObserverBurnWorkflowService.ApplyObserverBurnsAsync(
+			player,
+			CreateItemTemplates(),
+			EquipmentObserverBurnEvent.Attack,
+			skillId: 0,
+			saveIdianPolishBurnAsync: (_, _, _) => Task.FromResult(true),
+			saveItemChargeBurnAsync: (_, _, _) => Task.FromResult(true));
+
+		Assert.True(result.Changed);
+		Assert.True(result.Persisted);
+		Assert.Equal(StoragePersistentState.Updated, player.EquipmentPersistentState);
+		Assert.Equal(99_850, Assert.Single(player.InventoryItems).Charge);
+	}
+
 	private static void AssertPolishChargePacket(GameServerPacket packet, int objectId, int polishCharge)
 	{
 		var payload = SerializeUnencryptedPayload(packet);
