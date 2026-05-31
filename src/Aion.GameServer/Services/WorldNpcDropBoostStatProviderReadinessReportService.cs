@@ -7,9 +7,13 @@ public static class WorldNpcDropBoostStatProviderReadinessReportService
 	public static WorldNpcDropBoostStatProviderReadinessReport CreateReport(
 		SkillTemplateTable? skillTemplates,
 		bool hasLiveEffectStateProvider = false,
-		bool hasLiveCreatureGameStatsProvider = false)
+		bool hasLiveCreatureGameStatsProvider = false,
+		int staticPreviewSkillLevel = 1,
+		float boostDropRateBase = 100f,
+		float drBoostBase = 100f)
 	{
 		var missingInputs = new List<string>();
+		var staticEvaluationPreviews = new List<WorldNpcDropBoostStaticEvaluationPreview>();
 		var dropBoostEffects = 0;
 		var drBoostEffects = 0;
 		var boostDropRateChanges = 0;
@@ -26,9 +30,25 @@ public static class WorldNpcDropBoostStatProviderReadinessReportService
 				foreach (var effect in template.BuffStatEffects)
 				{
 					if (string.Equals(effect.EffectName, "boostdroprate", StringComparison.Ordinal))
+					{
 						dropBoostEffects++;
+						staticEvaluationPreviews.Add(CreatePreview(
+							template.SkillId,
+							effect,
+							"BOOST_DROP_RATE",
+							staticPreviewSkillLevel,
+							boostDropRateBase));
+					}
 					else if (string.Equals(effect.EffectName, "drboost", StringComparison.Ordinal))
+					{
 						drBoostEffects++;
+						staticEvaluationPreviews.Add(CreatePreview(
+							template.SkillId,
+							effect,
+							"DR_BOOST",
+							staticPreviewSkillLevel,
+							drBoostBase));
+					}
 
 					foreach (var change in effect.Changes)
 					{
@@ -60,8 +80,25 @@ public static class WorldNpcDropBoostStatProviderReadinessReportService
 			drBoostChanges,
 			HasLiveEffectStateProvider: hasLiveEffectStateProvider,
 			HasLiveCreatureGameStatsProvider: hasLiveCreatureGameStatsProvider,
-			missingInputs,
-			"DropRegistrationService.calculateBoostDropRate -> CreatureGameStats.getStat(BOOST_DROP_RATE/DR_BOOST); BufEffect.startEffect -> CreatureGameStats.addEffect");
+			StaticEvaluationPreviews: staticEvaluationPreviews,
+			MissingInputs: missingInputs,
+			JavaSource: "DropRegistrationService.calculateBoostDropRate -> CreatureGameStats.getStat(BOOST_DROP_RATE/DR_BOOST); BufEffect.startEffect -> CreatureGameStats.addEffect");
+	}
+
+	private static WorldNpcDropBoostStaticEvaluationPreview CreatePreview(
+		int skillId,
+		SkillBuffStatEffectSummary effect,
+		string statName,
+		int skillLevel,
+		float baseValue)
+	{
+		return new WorldNpcDropBoostStaticEvaluationPreview(
+			skillId,
+			effect.EffectName,
+			statName,
+			skillLevel,
+			baseValue,
+			SkillBuffStatChangeEvaluatorService.Evaluate(statName, baseValue, effect.Changes, skillLevel));
 	}
 
 	private static WorldNpcDropBoostStatProviderReadinessStatus DetermineStatus(
@@ -102,8 +139,19 @@ public sealed record WorldNpcDropBoostStatProviderReadinessReport(
 	int DrBoostChangeCount,
 	bool HasLiveEffectStateProvider,
 	bool HasLiveCreatureGameStatsProvider,
+	IReadOnlyList<WorldNpcDropBoostStaticEvaluationPreview> StaticEvaluationPreviews,
 	IReadOnlyList<string> MissingInputs,
 	string JavaSource)
 {
 	public bool IsReadyForWorkflow => Status == WorldNpcDropBoostStatProviderReadinessStatus.Ready;
+
+	public int StaticEvaluationPreviewCount => StaticEvaluationPreviews.Count;
 }
+
+public sealed record WorldNpcDropBoostStaticEvaluationPreview(
+	int SkillId,
+	string EffectName,
+	string StatName,
+	int SkillLevel,
+	float BaseValue,
+	SkillBuffStatChangeEvaluation Evaluation);

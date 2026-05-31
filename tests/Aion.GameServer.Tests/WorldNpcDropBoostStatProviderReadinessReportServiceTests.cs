@@ -29,10 +29,63 @@ public sealed class WorldNpcDropBoostStatProviderReadinessReportServiceTests
 		Assert.Equal(1, report.DrBoostEffectCount);
 		Assert.Equal(1, report.BoostDropRateChangeCount);
 		Assert.Equal(1, report.DrBoostChangeCount);
+		Assert.Equal(2, report.StaticEvaluationPreviewCount);
 		Assert.DoesNotContain("static boostdroprate BOOST_DROP_RATE metadata", report.MissingInputs);
 		Assert.DoesNotContain("static drboost DR_BOOST metadata", report.MissingInputs);
 		Assert.Contains("live effect state provider", report.MissingInputs);
 		Assert.Contains("live CreatureGameStats provider", report.MissingInputs);
+	}
+
+	[Fact]
+	public void CreateReport_AddsStaticEvaluationPreviewWithoutUnblockingLiveWorkflow()
+	{
+		var report = WorldNpcDropBoostStatProviderReadinessReportService.CreateReport(CreateDropBoostSkillTemplates());
+
+		var dropBoostPreview = Assert.Single(
+			report.StaticEvaluationPreviews,
+			preview => preview.SkillId == 8472 && string.Equals(preview.StatName, "BOOST_DROP_RATE", StringComparison.Ordinal));
+		Assert.Equal("boostdroprate", dropBoostPreview.EffectName);
+		Assert.Equal(1, dropBoostPreview.SkillLevel);
+		Assert.Equal(100f, dropBoostPreview.BaseValue);
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.Evaluated, dropBoostPreview.Evaluation.Status);
+		Assert.Equal(120, dropBoostPreview.Evaluation.Current);
+
+		var drBoostPreview = Assert.Single(
+			report.StaticEvaluationPreviews,
+			preview => preview.SkillId == 9878 && string.Equals(preview.StatName, "DR_BOOST", StringComparison.Ordinal));
+		Assert.Equal("drboost", drBoostPreview.EffectName);
+		Assert.Equal(SkillBuffStatChangeEvaluationStatus.Evaluated, drBoostPreview.Evaluation.Status);
+		Assert.Equal(200, drBoostPreview.Evaluation.Current);
+
+		Assert.Equal(WorldNpcDropBoostStatProviderReadinessStatus.BlockedMissingLiveEffectStateProvider, report.Status);
+		Assert.False(report.IsReadyForWorkflow);
+	}
+
+	[Fact]
+	public void CreateReport_KeepsStaticPreviewPerTemplateEffectInsteadOfAggregatingAllTemplates()
+	{
+		var templates = new SkillTemplateTable(
+		[
+			CreateTemplate(
+				8472,
+				[new SkillBuffStatEffectSummary("boostdroprate", [new SkillStatChange("BOOST_DROP_RATE", "ADD", 20, 0)])]),
+			CreateTemplate(
+				8473,
+				[new SkillBuffStatEffectSummary("boostdroprate", [new SkillStatChange("BOOST_DROP_RATE", "ADD", 30, 0)])]),
+			CreateTemplate(
+				9878,
+				[new SkillBuffStatEffectSummary("drboost", [new SkillStatChange("DR_BOOST", "ADD", 100, 0)])])
+		]);
+
+		var report = WorldNpcDropBoostStatProviderReadinessReportService.CreateReport(templates);
+		var dropBoostCurrents = report.StaticEvaluationPreviews
+			.Where(preview => string.Equals(preview.StatName, "BOOST_DROP_RATE", StringComparison.Ordinal))
+			.Select(preview => preview.Evaluation.Current)
+			.Order()
+			.ToArray();
+
+		Assert.Equal([120, 130], dropBoostCurrents);
+		Assert.DoesNotContain(150, dropBoostCurrents);
 	}
 
 	[Fact]
