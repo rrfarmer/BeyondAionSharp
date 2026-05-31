@@ -30,6 +30,55 @@ public enum TradeBuyTransactionStep
 	PlanItemAddsAndLimitUpdates,
 }
 
+public enum TradeBuyTransactionPersistenceAdapterStatus
+{
+	MissingTransactionPlan,
+	TransactionPlanNotReady,
+	DisabledNoWrites,
+}
+
+public enum TradeBuyTransactionPersistenceOperationKind
+{
+	SaveAbyssPoints,
+	SaveKinah,
+	DeleteRequiredItem,
+	SaveAddedItem,
+	UpdateLimitedItemCounter,
+}
+
+public enum TradeBuyTransactionSendAdapterStatus
+{
+	MissingTransactionPlan,
+	DisabledNoPackets,
+}
+
+public enum TradeBuyTransactionSendIntentKind
+{
+	SendInvalidBuyItemMessage,
+	SendNotEnoughKinah,
+	SendNotEnoughAbyssPoints,
+	SendFullInventory,
+	SendLimitedBuyDenied,
+	SendAbyssPointsUpdate,
+	SendKinahUpdate,
+	SendRequiredItemDelete,
+	SendBoughtItemAdd,
+	WriteAuditLog,
+}
+
+public enum TradeBuyTransactionOutcomePlanStatus
+{
+	MissingTransactionPlan,
+	DisabledNoTransaction,
+}
+
+public enum TradeBuyTransactionOutcomeStepKind
+{
+	PersistRepositoryWrites,
+	DispatchPacketAndAuditIntents,
+	CommitTransactionBoundary,
+}
+
 public sealed record TradeBuyTransactionInput(
 	IReadOnlyList<TradeBuyTransactionItemRequest> TradeItems,
 	TradeListTemplateSummary TradeTemplate,
@@ -62,6 +111,67 @@ public sealed record TradeBuyTransactionMutationDescriptor(
 	IReadOnlyList<int> LimitedItemUpdateItemIds,
 	string JavaSource,
 	bool IsLive = false);
+
+public sealed record TradeBuyTransactionPersistenceOperationPlan(
+	TradeBuyTransactionPersistenceOperationKind Kind,
+	int? ItemId,
+	bool WouldWrite,
+	bool DidWrite,
+	string JavaSource);
+
+public sealed record TradeBuyTransactionPersistenceAdapterPlan(
+	TradeBuyTransactionPersistenceAdapterStatus Status,
+	TradeBuyTransactionPlan? TransactionPlan,
+	IReadOnlyList<TradeBuyTransactionPersistenceOperationPlan> Operations,
+	bool WouldWriteRepository,
+	bool DidWriteRepository,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record TradeBuyTransactionSendIntentPlan(
+	TradeBuyTransactionSendIntentKind Kind,
+	int? ItemId,
+	bool WouldSend,
+	bool DidSend,
+	string JavaSource);
+
+public sealed record TradeBuyTransactionSendAdapterPlan(
+	TradeBuyTransactionSendAdapterStatus Status,
+	TradeBuyTransactionPlan? TransactionPlan,
+	IReadOnlyList<TradeBuyTransactionSendIntentPlan> Intents,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldWriteAuditLog,
+	bool DidWriteAuditLog,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record TradeBuyTransactionOutcomeStepPlan(
+	TradeBuyTransactionOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record TradeBuyTransactionOutcomePlan(
+	TradeBuyTransactionOutcomePlanStatus Status,
+	TradeBuyTransactionPlan? TransactionPlan,
+	TradeBuyTransactionPersistenceAdapterPlan? PersistenceAdapterPlan,
+	TradeBuyTransactionSendAdapterPlan? SendAdapterPlan,
+	IReadOnlyList<TradeBuyTransactionOutcomeStepPlan> Steps,
+	bool WouldWritePersistence,
+	bool DidWritePersistence,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldWriteAuditLog,
+	bool DidWriteAuditLog,
+	bool WouldCommitTransactionBoundary,
+	bool DidCommitTransactionBoundary,
+	bool ShouldCommitTransactionBoundary,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
 
 public sealed record TradeBuyTransactionPlan(
 	TradeBuyTransactionPlanStatus Status,
@@ -295,4 +405,270 @@ public static class TradeBuyTransactionPlanService
 			missingRequiredItem,
 			auditReason);
 	}
+}
+
+public static class TradeBuyTransactionPersistenceAdapterPlanService
+{
+	public static TradeBuyTransactionPersistenceAdapterPlan CreateDisabledPlan(TradeBuyTransactionPlan? transactionPlan)
+	{
+		if (transactionPlan == null)
+			return CreateTerminalPlan(
+				TradeBuyTransactionPersistenceAdapterStatus.MissingTransactionPlan,
+				transactionPlan,
+				"TradeService.performBuyTransaction persistence adapter requires a transaction plan");
+
+		if (transactionPlan.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction || transactionPlan.Mutation == null)
+			return CreateTerminalPlan(
+				TradeBuyTransactionPersistenceAdapterStatus.TransactionPlanNotReady,
+				transactionPlan,
+				"TradeService.performBuyTransaction persistence adapter stops before repository writes because transaction plan is blocked");
+
+		var mutation = transactionPlan.Mutation;
+		var operations = new List<TradeBuyTransactionPersistenceOperationPlan>();
+		if (mutation.RequiredAbyssPoints > 0)
+			operations.Add(Disabled(
+				TradeBuyTransactionPersistenceOperationKind.SaveAbyssPoints,
+				itemId: null,
+				"TradeService.performBuyTransaction -> AbyssPointsService.addAp(player, -requiredAp) persists AP deduction"));
+		if (mutation.RequiredKinah > 0)
+			operations.Add(Disabled(
+				TradeBuyTransactionPersistenceOperationKind.SaveKinah,
+				itemId: null,
+				"TradeService.performBuyTransaction -> inventory.tryDecreaseKinah(tradeListPrice) persists Kinah deduction"));
+		operations.AddRange(mutation.RequiredItems.Select(item => Disabled(
+			TradeBuyTransactionPersistenceOperationKind.DeleteRequiredItem,
+			item.ItemId,
+			"TradeService.performBuyTransaction -> inventory.decreaseByItemId(requiredItemId, count) persists required item consumption")));
+		operations.AddRange(mutation.AddedItems.Select(item => Disabled(
+			TradeBuyTransactionPersistenceOperationKind.SaveAddedItem,
+			item.ItemId,
+			"TradeService.performBuyTransaction -> ItemService.addItem(player, itemId, count, true, BUY/INC_ITEM_BUY) persists bought item")));
+		operations.AddRange(mutation.LimitedItemUpdateItemIds.Select(itemId => Disabled(
+			TradeBuyTransactionPersistenceOperationKind.UpdateLimitedItemCounter,
+			itemId,
+			"TradeService.performBuyTransaction -> LimitedItemTradeService updates per-player buy count/default sell limit")));
+
+		return new TradeBuyTransactionPersistenceAdapterPlan(
+			TradeBuyTransactionPersistenceAdapterStatus.DisabledNoWrites,
+			transactionPlan,
+			operations,
+			WouldWriteRepository: operations.Count > 0,
+			DidWriteRepository: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction persistence writes are recorded but disabled",
+			IsLive: false);
+	}
+
+	private static TradeBuyTransactionPersistenceAdapterPlan CreateTerminalPlan(
+		TradeBuyTransactionPersistenceAdapterStatus status,
+		TradeBuyTransactionPlan? transactionPlan,
+		string javaSource) =>
+		new(
+			status,
+			transactionPlan,
+			Operations: Array.Empty<TradeBuyTransactionPersistenceOperationPlan>(),
+			WouldWriteRepository: false,
+			DidWriteRepository: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static TradeBuyTransactionPersistenceOperationPlan Disabled(
+		TradeBuyTransactionPersistenceOperationKind kind,
+		int? itemId,
+		string javaSource) =>
+		new(kind, itemId, WouldWrite: true, DidWrite: false, javaSource);
+}
+
+public static class TradeBuyTransactionSendAdapterPlanService
+{
+	public static TradeBuyTransactionSendAdapterPlan CreateDisabledPlan(TradeBuyTransactionPlan? transactionPlan)
+	{
+		if (transactionPlan == null)
+			return CreateTerminalPlan(
+				TradeBuyTransactionSendAdapterStatus.MissingTransactionPlan,
+				transactionPlan,
+				"TradeService.performBuyTransaction send adapter requires a transaction plan");
+
+		var intents = new List<TradeBuyTransactionSendIntentPlan>();
+		switch (transactionPlan.Status)
+		{
+			case TradeBuyTransactionPlanStatus.BlockedInvalidBuyItem:
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.SendInvalidBuyItemMessage,
+					transactionPlan.RejectedItem?.ItemId,
+					"TradeService.performBuyTransaction -> PacketSendUtility.sendMessage(\"Some items are not allowed to be sold from this NPC.\")"));
+				break;
+			case TradeBuyTransactionPlanStatus.BlockedNotEnoughKinah:
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.SendNotEnoughKinah,
+					itemId: null,
+					"TradeService.performBuyTransaction -> STR_MSG_NOT_ENOUGH_MONEY"));
+				break;
+			case TradeBuyTransactionPlanStatus.BlockedNotEnoughAbyssPoints:
+			case TradeBuyTransactionPlanStatus.BlockedNotEnoughRequiredItems:
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.SendNotEnoughAbyssPoints,
+					transactionPlan.MissingRequiredItem?.ItemId,
+					"TradeService.performBuyTransaction -> STR_MSG_NOT_ENOUGH_ABYSSPOINT"));
+				break;
+			case TradeBuyTransactionPlanStatus.AuditNegativeRequiredAp:
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.WriteAuditLog,
+					itemId: null,
+					"TradeService.performBuyTransaction -> AuditLogger.log(player, \"possibly used packet hack: tradeList.getRequiredAp() < 0\")"));
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.SendNotEnoughAbyssPoints,
+					itemId: null,
+					"TradeService.performBuyTransaction negative required AP -> STR_MSG_NOT_ENOUGH_ABYSSPOINT"));
+				break;
+			case TradeBuyTransactionPlanStatus.BlockedInventoryFull:
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.SendFullInventory,
+					itemId: null,
+					"TradeService.performBuyTransaction -> STR_MSG_FULL_INVENTORY"));
+				break;
+			case TradeBuyTransactionPlanStatus.BlockedLimitedItem:
+				intents.Add(Disabled(
+					TradeBuyTransactionSendIntentKind.SendLimitedBuyDenied,
+					transactionPlan.RejectedItem?.ItemId,
+					"TradeService.performBuyTransaction -> STR_MSG_LIMITED_BUYING_CANT_SELECT_NO_ITEMS"));
+				break;
+			case TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction:
+				AddSuccessIntents(transactionPlan, intents);
+				break;
+		}
+
+		return new TradeBuyTransactionSendAdapterPlan(
+			TradeBuyTransactionSendAdapterStatus.DisabledNoPackets,
+			transactionPlan,
+			intents,
+			WouldSendPackets: intents.Any(intent => intent.Kind != TradeBuyTransactionSendIntentKind.WriteAuditLog),
+			DidSendPackets: false,
+			WouldWriteAuditLog: intents.Any(intent => intent.Kind == TradeBuyTransactionSendIntentKind.WriteAuditLog),
+			DidWriteAuditLog: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction packet/audit intents are recorded but disabled",
+			IsLive: false);
+	}
+
+	private static void AddSuccessIntents(
+		TradeBuyTransactionPlan transactionPlan,
+		List<TradeBuyTransactionSendIntentPlan> intents)
+	{
+		if (transactionPlan.Mutation == null)
+			return;
+
+		if (transactionPlan.Mutation.RequiredAbyssPoints > 0)
+			intents.Add(Disabled(
+				TradeBuyTransactionSendIntentKind.SendAbyssPointsUpdate,
+				itemId: null,
+				"TradeService.performBuyTransaction -> AbyssPointsService.addAp sends AP update"));
+		if (transactionPlan.Mutation.RequiredKinah > 0)
+			intents.Add(Disabled(
+				TradeBuyTransactionSendIntentKind.SendKinahUpdate,
+				itemId: null,
+				"TradeService.performBuyTransaction -> inventory.tryDecreaseKinah sends Kinah update"));
+		intents.AddRange(transactionPlan.Mutation.RequiredItems.Select(item => Disabled(
+			TradeBuyTransactionSendIntentKind.SendRequiredItemDelete,
+			item.ItemId,
+			"TradeService.performBuyTransaction -> inventory.decreaseByItemId sends required item delete/update")));
+		intents.AddRange(transactionPlan.Mutation.AddedItems.Select(item => Disabled(
+			TradeBuyTransactionSendIntentKind.SendBoughtItemAdd,
+			item.ItemId,
+			"TradeService.performBuyTransaction -> ItemService.addItem sends bought item add/update")));
+	}
+
+	private static TradeBuyTransactionSendAdapterPlan CreateTerminalPlan(
+		TradeBuyTransactionSendAdapterStatus status,
+		TradeBuyTransactionPlan? transactionPlan,
+		string javaSource) =>
+		new(
+			status,
+			transactionPlan,
+			Intents: Array.Empty<TradeBuyTransactionSendIntentPlan>(),
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldWriteAuditLog: false,
+			DidWriteAuditLog: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static TradeBuyTransactionSendIntentPlan Disabled(
+		TradeBuyTransactionSendIntentKind kind,
+		int? itemId,
+		string javaSource) =>
+		new(kind, itemId, WouldSend: true, DidSend: false, javaSource);
+}
+
+public static class TradeBuyTransactionOutcomePlanService
+{
+	public static TradeBuyTransactionOutcomePlan CreateDisabledPlan(TradeBuyTransactionPlan? transactionPlan)
+	{
+		if (transactionPlan == null)
+			return new TradeBuyTransactionOutcomePlan(
+				TradeBuyTransactionOutcomePlanStatus.MissingTransactionPlan,
+				transactionPlan,
+				PersistenceAdapterPlan: null,
+				SendAdapterPlan: null,
+				Steps: Array.Empty<TradeBuyTransactionOutcomeStepPlan>(),
+				WouldWritePersistence: false,
+				DidWritePersistence: false,
+				WouldSendPackets: false,
+				DidSendPackets: false,
+				WouldWriteAuditLog: false,
+				DidWriteAuditLog: false,
+				WouldCommitTransactionBoundary: false,
+				DidCommitTransactionBoundary: false,
+				ShouldCommitTransactionBoundary: false,
+				ShouldDispatchLiveSideEffects: false,
+				"TradeService.performBuyTransaction final outcome requires a transaction plan",
+				IsLive: false);
+
+		var persistenceAdapterPlan = TradeBuyTransactionPersistenceAdapterPlanService.CreateDisabledPlan(transactionPlan);
+		var sendAdapterPlan = TradeBuyTransactionSendAdapterPlanService.CreateDisabledPlan(transactionPlan);
+		var wouldWritePersistence = persistenceAdapterPlan.WouldWriteRepository;
+		var wouldSendPackets = sendAdapterPlan.WouldSendPackets;
+		var wouldWriteAuditLog = sendAdapterPlan.WouldWriteAuditLog;
+		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets || wouldWriteAuditLog;
+
+		var steps = new List<TradeBuyTransactionOutcomeStepPlan>();
+		if (wouldWritePersistence)
+			steps.Add(Disabled(
+				TradeBuyTransactionOutcomeStepKind.PersistRepositoryWrites,
+				"TradeService.performBuyTransaction -> persist AP/Kinah/required-item/bought-item/limited-item updates"));
+		if (wouldSendPackets || wouldWriteAuditLog)
+			steps.Add(Disabled(
+				TradeBuyTransactionOutcomeStepKind.DispatchPacketAndAuditIntents,
+				"TradeService.performBuyTransaction -> dispatch system/inventory/AP packet intents and audit log entries"));
+		if (wouldCommitBoundary)
+			steps.Add(Disabled(
+				TradeBuyTransactionOutcomeStepKind.CommitTransactionBoundary,
+				"TradeService.performBuyTransaction final transaction boundary is recorded only; Java transaction semantics are not yet runtime-verified"));
+
+		return new TradeBuyTransactionOutcomePlan(
+			TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction,
+			transactionPlan,
+			persistenceAdapterPlan,
+			sendAdapterPlan,
+			steps,
+			wouldWritePersistence,
+			DidWritePersistence: false,
+			wouldSendPackets,
+			DidSendPackets: false,
+			wouldWriteAuditLog,
+			DidWriteAuditLog: false,
+			wouldCommitBoundary,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performBuyTransaction final outcome is disabled; write/send/audit/transaction boundaries are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static TradeBuyTransactionOutcomeStepPlan Disabled(
+		TradeBuyTransactionOutcomeStepKind kind,
+		string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }
