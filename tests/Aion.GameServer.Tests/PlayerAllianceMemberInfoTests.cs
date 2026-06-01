@@ -31,20 +31,24 @@ public sealed class PlayerAllianceMemberInfoTests
 	{
 		Assert.Equal(5, PlayerAllianceMemberInfoEvent.Join.WireId);
 		Assert.Equal(5, PlayerAllianceMemberInfoEvent.MemberGroupChange.WireId);
+		Assert.Equal(13, PlayerAllianceMemberInfoEvent.Reconnect.WireId);
 		Assert.Equal(13, PlayerAllianceMemberInfoEvent.AppointViceCaptain.WireId);
 		Assert.Equal(13, PlayerAllianceMemberInfoEvent.DemoteViceCaptain.WireId);
 		Assert.Equal(13, PlayerAllianceMemberInfoEvent.AppointCaptain.WireId);
 		Assert.Equal(PlayerAllianceEvent.Join, PlayerAllianceMemberInfoEvent.Join.LegacyEvent);
 		Assert.Equal(PlayerAllianceEvent.MemberGroupChange, PlayerAllianceMemberInfoEvent.MemberGroupChange.LegacyEvent);
+		Assert.Equal(PlayerAllianceEvent.Reconnect, PlayerAllianceMemberInfoEvent.Reconnect.LegacyEvent);
 		Assert.Equal(PlayerAllianceEvent.AppointViceCaptain, PlayerAllianceMemberInfoEvent.AppointViceCaptain.LegacyEvent);
 		Assert.Equal(PlayerAllianceEvent.DemoteViceCaptain, PlayerAllianceMemberInfoEvent.DemoteViceCaptain.LegacyEvent);
 		Assert.Equal(PlayerAllianceEvent.AppointCaptain, PlayerAllianceMemberInfoEvent.AppointCaptain.LegacyEvent);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, PlayerAllianceMemberInfoEvent.Join.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, PlayerAllianceMemberInfoEvent.MemberGroupChange.Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Reconnect, PlayerAllianceMemberInfoEvent.Reconnect.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.AppointViceCaptain, PlayerAllianceMemberInfoEvent.AppointViceCaptain.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.DemoteViceCaptain, PlayerAllianceMemberInfoEvent.DemoteViceCaptain.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.AppointCaptain, PlayerAllianceMemberInfoEvent.AppointCaptain.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, PlayerAllianceMemberInfoEvent.FromLegacyEvent(PlayerAllianceEvent.Join).Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Enter, PlayerAllianceMemberInfoEvent.FromLegacyEvent(PlayerAllianceEvent.Reconnect).Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.Enter, PlayerAllianceMemberInfoEvent.FromLegacyEvent(PlayerAllianceEvent.AppointCaptain).Kind);
 	}
 
@@ -444,6 +448,25 @@ public sealed class PlayerAllianceMemberInfoTests
 		AssertOnlineNameZeroEffectAlliancePayload(appointVicePlan, expectedAllianceId: 88007, expectedObjectId: 2012, expectedName: "AllianceVice");
 		AssertOnlineNameZeroEffectAlliancePayload(demoteVicePlan, expectedAllianceId: 88008, expectedObjectId: 2013, expectedName: "AllianceDemote");
 		AssertOnlineNameZeroEffectAlliancePayload(appointCaptainPlan, expectedAllianceId: 88009, expectedObjectId: 2014, expectedName: "AllianceCaptain");
+	}
+
+	[Fact]
+	public void SmAllianceMemberInfo_ReconnectMatchesJavaGoldenZeroEffectPayload()
+	{
+		var member = new Player
+		{
+			ObjectId = 2015,
+			Name = "AllianceReconnect",
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		};
+		var plan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88010, member, PlayerAllianceMemberInfoEvent.Reconnect);
+
+		AssertOnlineNameZeroEffectAlliancePayload(plan, expectedAllianceId: 88010, expectedObjectId: 2015, expectedName: "AllianceReconnect");
 	}
 
 	[Fact]
