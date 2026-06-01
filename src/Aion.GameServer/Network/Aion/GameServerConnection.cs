@@ -575,6 +575,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_LEGION.runImpl dispatches LegionService by exOpcode.
 				// Legion mutation and membership side effects remain unported; keep this parser-only for now.
 				break;
+			case CmInstanceLeave:
+				// Java parity: network/aion/clientpackets/CM_INSTANCE_LEAVE.runImpl delegates to the live instance handler; deferred.
+				break;
 			case CmClientCommandRoll commandRoll:
 				if (_activePlayer != null)
 					await HandleClientCommandRollAsync(_activePlayer, commandRoll);
