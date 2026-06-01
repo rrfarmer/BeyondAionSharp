@@ -9,13 +9,19 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 {
 	private readonly FindGroupClientActionPlanService _planner;
 	private readonly GameWorld? _world;
+	private readonly PlayerGroupRuntime? _groupRuntime;
+	private readonly PlayerAllianceRuntime? _allianceRuntime;
 
 	public FindGroupConnectionClientActionCompositionPlanService(
 		FindGroupClientActionPlanService planner,
-		GameWorld? world = null)
+		GameWorld? world = null,
+		PlayerGroupRuntime? groupRuntime = null,
+		PlayerAllianceRuntime? allianceRuntime = null)
 	{
 		_planner = planner;
 		_world = world;
+		_groupRuntime = groupRuntime;
+		_allianceRuntime = allianceRuntime;
 	}
 
 	public FindGroupConnectionClientActionCompositionPlan CreateDisabledPlan(
@@ -60,6 +66,8 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			return FindGroupConnectionClientActionCompositionPlan.SkippedMissingActivePlayer(action);
 		}
 
+		currentTeam ??= ResolveCurrentTeam(activePlayer);
+		currentMembers ??= ResolveCurrentMembers(activePlayer);
 		var facts = new FindGroupClientActionRuntimeFacts(
 			activePlayer,
 			nowEpochSeconds,
@@ -85,6 +93,76 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			&& gameObject is Player player
 				? player
 				: null;
+	}
+
+	private FindGroupRecruitmentSubject? ResolveCurrentTeam(Player player)
+	{
+		var teamId = player.CurrentTeamId;
+		if (teamId == 0 || player.TeamMembership == PlayerTeamMembership.None)
+			return null;
+
+		var members = ResolveCurrentTeamPlayers(player);
+		if (members.Count == 0)
+			return null;
+
+		var leaderObjectId = player.TeamMembership switch
+		{
+			PlayerTeamMembership.Group => _groupRuntime?.GetDescriptor(teamId)?.LeaderObjectId,
+			PlayerTeamMembership.Alliance => _allianceRuntime?.GetDescriptor(teamId)?.LeaderObjectId
+				?? player.CurrentAllianceSnapshot?.LeaderObjectId,
+			_ => null,
+		};
+		var leader = leaderObjectId.HasValue
+			? members.FirstOrDefault(member => member.ObjectId == leaderObjectId.Value)
+			: null;
+		leader ??= members[0];
+
+		// Java parity: GroupRecruitment built from TemporaryPlayerTeam reports team id, leader
+		// name/class, member count, race, and min/max member levels.
+		return new FindGroupRecruitmentSubject(
+			teamId,
+			leader.Race,
+			IsSoloPlayer: false,
+			leader.Name,
+			members.Count,
+			members.Min(member => member.Level),
+			members.Max(member => member.Level),
+			FindGroupRecruitmentSubject.ToJavaClassId(leader.PlayerClass));
+	}
+
+	private IReadOnlyList<FindGroupInstanceGroupMemberState>? ResolveCurrentMembers(Player player)
+	{
+		if (player.CurrentTeamId == 0 || player.TeamMembership == PlayerTeamMembership.None)
+			return null;
+
+		var members = ResolveCurrentTeamPlayers(player);
+		return members.Count == 0
+			? null
+			: members.Select(FindGroupInstanceGroupMemberState.FromPlayer).ToArray();
+	}
+
+	private IReadOnlyList<Player> ResolveCurrentTeamPlayers(Player player)
+	{
+		var teamId = player.CurrentTeamId;
+		var objectIds = player.TeamMembership switch
+		{
+			PlayerTeamMembership.Group => _groupRuntime?.GetMemberObjectIds(teamId),
+			PlayerTeamMembership.Alliance => _allianceRuntime?.GetMemberObjectIds(teamId),
+			_ => null,
+		};
+		objectIds = objectIds is { Count: > 0 } ? objectIds : player.CurrentTeamMemberObjectIds;
+		if (objectIds.Count == 0)
+			return Array.Empty<Player>();
+
+		var members = new List<Player>(objectIds.Count);
+		foreach (var objectId in objectIds)
+		{
+			var member = objectId == player.ObjectId ? player : ResolveWorldPlayer(objectId);
+			if (member != null)
+				members.Add(member);
+		}
+
+		return members;
 	}
 }
 

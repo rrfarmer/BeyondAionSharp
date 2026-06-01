@@ -6,6 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -151,14 +152,132 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
 	}
 
+	[Fact]
+	public async Task CreateDisabledPlan_UsesGroupRuntimeForRecruitmentSubject()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS", "CLERIC", 65);
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS", "RANGER", 61);
+		SetActivePlayer(fixture.Connection, member);
+		Assert.True(fixture.World.TryAddObject(leader.ObjectId, leader));
+		Assert.True(fixture.World.TryAddObject(member.ObjectId, member));
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(7001, [leader, member]);
+		var service = CreateService(fixture.World, groupRuntime: groupRuntime);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteD(member.ObjectId);
+				buffer.WriteS("Team listing");
+				buffer.WriteC(3);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupClientActionPlanKind.AddRecruitment, plan.ClientActionPlan!.Kind);
+		var recruitment = plan.ClientActionPlan.RecruitmentMutationPlan!.CurrentRecruitment!;
+		Assert.Equal(7001, recruitment.ObjectId);
+		Assert.False(recruitment.IsSoloPlayer);
+		Assert.Equal("Leader", recruitment.RecruiterName);
+		Assert.Equal(2, recruitment.Size);
+		Assert.Equal(61, recruitment.MinLevel);
+		Assert.Equal(65, recruitment.MaxLevel);
+		Assert.Equal(FindGroupRecruitmentSubject.ToJavaClassId("CLERIC"), recruitment.ClassId);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_UsesGroupRuntimeMembersForInstanceGroupRegistration()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS", "CLERIC", 65);
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS", "RANGER", 61);
+		leader.Position = new WorldPosition(210010000, 10, 20, 30, 0);
+		member.Position = new WorldPosition(220010000, 11, 21, 31, 0);
+		SetActivePlayer(fixture.Connection, leader);
+		Assert.True(fixture.World.TryAddObject(leader.ObjectId, leader));
+		Assert.True(fixture.World.TryAddObject(member.ObjectId, member));
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(7001, [leader, member]);
+		var service = CreateService(fixture.World, groupRuntime: groupRuntime);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(8);
+				buffer.WriteD(0x11223344);
+				buffer.WriteC(0);
+				buffer.WriteS("Entry");
+				buffer.WriteC(2);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupClientActionPlanKind.RegisterInstanceGroup, plan.ClientActionPlan!.Kind);
+		var instanceGroup = plan.ClientActionPlan.InstanceGroupMutationPlan!.CurrentInstanceGroup!;
+		Assert.Equal([leader.ObjectId, member.ObjectId], instanceGroup.Members.Select(memberState => memberState.PlayerObjectId));
+		Assert.Equal([210010000, 220010000], instanceGroup.Members.Select(memberState => memberState.WorldId));
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_ExplicitCurrentTeamOverridesRuntimeTeamFact()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS", "CLERIC", 65);
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS", "RANGER", 61);
+		SetActivePlayer(fixture.Connection, member);
+		Assert.True(fixture.World.TryAddObject(leader.ObjectId, leader));
+		Assert.True(fixture.World.TryAddObject(member.ObjectId, member));
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(7001, [leader, member]);
+		var service = CreateService(fixture.World, groupRuntime: groupRuntime);
+		var overrideTeam = new FindGroupRecruitmentSubject(
+			ObjectId: 9001,
+			Race: "ELYOS",
+			IsSoloPlayer: false,
+			RecruiterName: "Override",
+			Size: 3,
+			MinLevel: 50,
+			MaxLevel: 55,
+			ClassId: 10);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteD(member.ObjectId);
+				buffer.WriteS("Override listing");
+				buffer.WriteC(3);
+			});
+
+		var plan = service.CreateDisabledPlan(
+			fixture.Connection,
+			packet,
+			nowEpochSeconds: 200,
+			currentTeam: overrideTeam);
+
+		var recruitment = plan.ClientActionPlan!.RecruitmentMutationPlan!.CurrentRecruitment!;
+		Assert.Equal(9001, recruitment.ObjectId);
+		Assert.Equal("Override", recruitment.RecruiterName);
+		Assert.Equal(3, recruitment.Size);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
 	private static FindGroupConnectionClientActionCompositionPlanService CreateService(
 		GameWorld world,
-		FindGroupRecruitmentPlanService? findGroupService = null)
+		FindGroupRecruitmentPlanService? findGroupService = null,
+		PlayerGroupRuntime? groupRuntime = null,
+		PlayerAllianceRuntime? allianceRuntime = null)
 	{
 		findGroupService ??= new FindGroupRecruitmentPlanService();
 		return new FindGroupConnectionClientActionCompositionPlanService(
 			new FindGroupClientActionPlanService(findGroupService),
-			world);
+			world,
+			groupRuntime,
+			allianceRuntime);
 	}
 
 	private static CmFindGroup CreateFindGroupPacket(Action<PacketBuffer> writePayload)
