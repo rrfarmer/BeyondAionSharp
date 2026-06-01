@@ -13,6 +13,7 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly byte _unknown2;
 	private readonly byte _unknown3;
 	private readonly IReadOnlyList<int> _instanceMaskIds;
+	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
 
 	private SmFindGroup(
 		int action,
@@ -21,7 +22,8 @@ public sealed class SmFindGroup : GameServerPacket
 		byte unknown1 = 0,
 		byte unknown2 = 0,
 		byte unknown3 = 0,
-		IReadOnlyList<int>? instanceMaskIds = null)
+		IReadOnlyList<int>? instanceMaskIds = null,
+		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null)
 		: base(PacketOpCode)
 	{
 		_action = action;
@@ -31,6 +33,7 @@ public sealed class SmFindGroup : GameServerPacket
 		_unknown2 = unknown2;
 		_unknown3 = unknown3;
 		_instanceMaskIds = instanceMaskIds ?? [];
+		_instanceGroupWindow = instanceGroupWindow;
 	}
 
 	public static SmFindGroup RemoveRecruitment(int recruitmentIdToDelete, byte serverId, byte unknown1, byte unknown2, byte unknown3)
@@ -49,6 +52,18 @@ public sealed class SmFindGroup : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_FIND_GROUP(List<Integer> instanceMaskIds).
 		return new SmFindGroup(26, instanceMaskIds: instanceMaskIds);
+	}
+
+	public static SmFindGroup ShowEnterButtonInPrepareForEntryWindow(FindGroupInstanceGroupWindowSnapshot instanceGroup)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 18 showEnterButtonInPrepareForEntryWindow.
+		return new SmFindGroup(18, instanceGroupWindow: instanceGroup);
+	}
+
+	public static SmFindGroup ShowPrepareForEntryWindow(FindGroupInstanceGroupWindowSnapshot instanceGroup)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 22 showPrepareForEntryWindow.
+		return new SmFindGroup(22, instanceGroupWindow: instanceGroup);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -71,6 +86,14 @@ public sealed class SmFindGroup : GameServerPacket
 				foreach (var instanceMaskId in _instanceMaskIds)
 					buffer.WriteD(instanceMaskId);
 				break;
+			case 18:
+			case 22:
+				var instanceGroup = _instanceGroupWindow ?? throw new InvalidOperationException("Instance group window snapshot is required.");
+				buffer.WriteD(instanceGroup.GroupEntryId);
+				buffer.WriteD(instanceGroup.InstanceMaskId);
+				break;
 		}
 	}
 }
+
+public sealed record FindGroupInstanceGroupWindowSnapshot(int GroupEntryId, int InstanceMaskId);

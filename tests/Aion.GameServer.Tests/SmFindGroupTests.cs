@@ -37,6 +37,24 @@ public sealed class SmFindGroupTests
 		Assert.Equal(Convert.FromHexString("1A0200B050E311F0ECE311"), payload);
 	}
 
+	[Fact]
+	public void WritePayload_ShowEnterButtonMatchesJavaGolden()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.ShowEnterButtonInPrepareForEntryWindow(new FindGroupInstanceGroupWindowSnapshot(0x01020304, 0x11223344)));
+
+		Assert.Equal(Convert.FromHexString("120403020144332211"), payload);
+	}
+
+	[Fact]
+	public void WritePayload_ShowPrepareWindowMatchesJavaGolden()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.ShowPrepareForEntryWindow(new FindGroupInstanceGroupWindowSnapshot(0x01020304, 0x11223344)));
+
+		Assert.Equal(Convert.FromHexString("160403020144332211"), payload);
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
