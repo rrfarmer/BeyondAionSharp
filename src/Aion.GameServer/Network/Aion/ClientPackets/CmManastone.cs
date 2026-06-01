@@ -41,7 +41,7 @@ public sealed class CmManastone : GameClientPacket
 			case 3:
 				SlotNumber = buffer.ReadC();
 				buffer.ReadC();
-				buffer.ReadH();
+				buffer.ReadSignedH();
 				NpcObjectId = buffer.ReadD();
 				break;
 		}
