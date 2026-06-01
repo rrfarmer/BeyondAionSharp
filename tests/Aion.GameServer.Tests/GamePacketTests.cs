@@ -7160,6 +7160,26 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesLegionWarehouseKinahPacket()
+	{
+		var legionWarehouseKinah = Assert.IsType<CmLegionWarehouseKinah>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(76, buffer =>
+			{
+				buffer.WriteQ(9876543210L);
+				buffer.WriteC(1);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(9876543210L, legionWarehouseKinah.Amount);
+		Assert.Equal(1, legionWarehouseKinah.ActionType);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(76, buffer =>
+		{
+			buffer.WriteQ(1L);
+			buffer.WriteC(0);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(

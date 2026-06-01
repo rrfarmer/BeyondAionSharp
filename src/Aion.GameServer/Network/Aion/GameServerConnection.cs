@@ -454,6 +454,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmWindstream:
 				// Java parity: network/aion/clientpackets/CM_WINDSTREAM.runImpl mutates flight state and sends emotion/windstream packets; deferred.
 				break;
+			case CmLegionWarehouseKinah:
+				// Java parity: network/aion/clientpackets/CM_LEGION_WH_KINAH.runImpl mutates player/legion Kinah and history; deferred.
+				break;
 			case CmGfWebshopTokenRequest:
 				// Java parity: network/aion/clientpackets/CM_GF_WEBSHOP_TOKEN_REQUEST.runImpl sends an empty token response.
 				await SendPacketAsync(new SmGfWebshopTokenResponse(string.Empty));
