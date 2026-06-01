@@ -1030,6 +1030,27 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void SmGroupMemberInfo_EnterAndUpdateZeroEffectsMatchJavaGoldenPayloads()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1008,
+			IsOnline = true,
+			Name = "Effectless",
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		});
+		var enterPlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Enter);
+		var updatePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.Update);
+
+		AssertGroupMemberInfoZeroEffectGoldenPayload(enterPlan, expectedEventId: 13);
+		AssertGroupMemberInfoZeroEffectGoldenPayload(updatePlan, expectedEventId: 13);
+	}
+
+	[Fact]
 	public void SmGroupMemberInfo_WritesUpdateEffectsZeroEffectSkeletonLikeJava()
 	{
 		var member = new PlayerGroupMember(new Player
@@ -1545,6 +1566,40 @@ public sealed class PlayerGroupRuntimeTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
 		SkipGroupMemberInfoPrefix(reader);
 		Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(127, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertGroupMemberInfoZeroEffectGoldenPayload(PlayerGroupMemberInfoPacketPlan plan, int expectedEventId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+		Assert.Equal(99001, reader.ReadD());
+		Assert.Equal(1008, reader.ReadD());
+		Assert.Equal(819, reader.ReadD());
+		Assert.Equal(819, reader.ReadD());
+		Assert.Equal(840, reader.ReadD());
+		Assert.Equal(840, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(10.5f, reader.ReadF());
+		Assert.Equal(20.25f, reader.ReadF());
+		Assert.Equal(30.75f, reader.ReadF());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(10, (int)reader.ReadC());
+		Assert.Equal(expectedEventId, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal("Effectless", reader.ReadS());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(127, (int)reader.ReadC());
