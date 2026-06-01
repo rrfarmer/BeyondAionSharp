@@ -746,6 +746,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleShowDialogAsync(_activePlayer, showDialog);
 				break;
+			case CmCloseDialog:
+				// Java parity: network/aion/clientpackets/CM_CLOSE_DIALOG.runImpl delegates to DialogService.onCloseDialog; deferred.
+				break;
 			case CmCharacterList characterList:
 				await SendPacketAsync(CreateAccountPropertiesPacket());
 				var characters = _accountId == 0

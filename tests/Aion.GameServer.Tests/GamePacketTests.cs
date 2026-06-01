@@ -6007,9 +6007,14 @@ public class GamePacketTests
 		var showDialog = Assert.IsType<CmShowDialog>(
 			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, b => b.WriteD(7001)), GameConnectionState.InGame)
 		);
+		var closeDialog = Assert.IsType<CmCloseDialog>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(53, b => b.WriteD(7002)), GameConnectionState.InGame)
+		);
 
 		Assert.Equal(7001, showDialog.TargetObjectId);
+		Assert.Equal(7002, closeDialog.TargetObjectId);
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(52, _ => { }), GameConnectionState.Authed));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(53, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

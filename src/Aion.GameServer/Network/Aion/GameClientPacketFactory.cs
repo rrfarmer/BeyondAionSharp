@@ -46,6 +46,7 @@ public static class GameClientPacketFactory
 		Register(50, states => new CmQuestionResponse(50, states), GameConnectionState.InGame);
 		Register(51, states => new CmBuyItem(51, states), GameConnectionState.InGame);
 		Register(52, states => new CmShowDialog(52, states), GameConnectionState.InGame);
+		Register(53, states => new CmCloseDialog(53, states), GameConnectionState.InGame);
 		Register(54, states => new CmDialogSelect(54, states), GameConnectionState.InGame);
 		Register(58, states => new CmSetNote(58, states), GameConnectionState.InGame);
 		Register(61, states => new CmChatGroupInfo(61, states), GameConnectionState.InGame);
