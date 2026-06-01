@@ -7,6 +7,7 @@ namespace Aion.GameServer.Services;
 public sealed class FindGroupRecruitmentPlanService
 {
 	private readonly Dictionary<int, FindGroupRecruitmentState> _recruitments = [];
+	private readonly Dictionary<int, FindGroupApplicationState> _applications = [];
 
 	public FindGroupRecruitmentMutationPlan AddRecruitment(
 		Player player,
@@ -129,9 +130,124 @@ public sealed class FindGroupRecruitmentPlanService
 			snapshots,
 			SmFindGroup.ShowRecruitments(nowEpochSeconds, snapshots));
 	}
+
+	public FindGroupApplicationMutationPlan AddApplication(
+		Player player,
+		string message,
+		int groupType,
+		int classId,
+		int level,
+		int nowEpochSeconds)
+	{
+		// Java parity: FindGroupService.addApplication stores by player object id, sends
+		// STR_PARTY_MATCH_SEEK_PARTY_POSTED, then showApplications(player). Live sends stay disabled.
+		var state = FindGroupApplicationState.FromPlayer(player, message, groupType, classId, level, nowEpochSeconds);
+		_applications[player.ObjectId] = state;
+
+		return new FindGroupApplicationMutationPlan(
+			FindGroupApplicationPlanStatus.Added,
+			state,
+			RemovedApplication: null,
+			DirectPacketIntents:
+			[
+				new FindGroupDirectPacketIntent(
+					player.ObjectId,
+					new SmSystemMessage(1400393),
+					"SM_SYSTEM_MESSAGE.STR_PARTY_MATCH_SEEK_PARTY_POSTED")
+			],
+			WorldBroadcastIntent: null,
+			ShowApplications(player.Race, nowEpochSeconds));
+	}
+
+	public FindGroupApplicationMutationPlan UpdateApplication(
+		Player player,
+		string message,
+		int groupType,
+		int classId,
+		int level,
+		int nowEpochSeconds)
+	{
+		if (!_applications.TryGetValue(player.ObjectId, out var state))
+		{
+			return new FindGroupApplicationMutationPlan(
+				FindGroupApplicationPlanStatus.Missing,
+				CurrentApplication: null,
+				RemovedApplication: null,
+				DirectPacketIntents: [],
+				WorldBroadcastIntent: null,
+				ShowApplicationsPlan: null);
+		}
+
+		var updated = state with
+		{
+			Message = message,
+			GroupType = groupType,
+			ClassId = classId,
+			Level = level,
+			LastUpdate = nowEpochSeconds,
+		};
+		_applications[player.ObjectId] = updated;
+
+		return new FindGroupApplicationMutationPlan(
+			FindGroupApplicationPlanStatus.Updated,
+			updated,
+			RemovedApplication: null,
+			DirectPacketIntents: [],
+			WorldBroadcastIntent: null,
+			ShowApplicationsPlan: null);
+	}
+
+	public FindGroupApplicationMutationPlan RemoveApplication(Player player)
+	{
+		if (!_applications.Remove(player.ObjectId, out var removed))
+		{
+			return new FindGroupApplicationMutationPlan(
+				FindGroupApplicationPlanStatus.Missing,
+				CurrentApplication: null,
+				RemovedApplication: null,
+				DirectPacketIntents: [],
+				WorldBroadcastIntent: null,
+				ShowApplicationsPlan: null);
+		}
+
+		return new FindGroupApplicationMutationPlan(
+			FindGroupApplicationPlanStatus.Removed,
+			CurrentApplication: null,
+			removed,
+			DirectPacketIntents: [],
+			new FindGroupWorldBroadcastIntent(
+				removed.Race,
+				SmFindGroup.RemoveApplication(player.ObjectId),
+				"PacketSendUtility.broadcastToWorld(..., p -> p.getRace() == application.getPlayer().getRace())"),
+			ShowApplicationsPlan: null);
+	}
+
+	public FindGroupApplicationShowPlan ShowApplications(string playerRace, int nowEpochSeconds)
+	{
+		// Java parity: showApplications filters application players by race and writes the current
+		// server second into the SM_FIND_GROUP action 4 packet header.
+		var snapshots = _applications.Values
+			.Where(application => string.Equals(application.Race, playerRace, StringComparison.Ordinal))
+			.Select(application => application.ToSnapshot())
+			.ToArray();
+
+		return new FindGroupApplicationShowPlan(
+			playerRace,
+			nowEpochSeconds,
+			snapshots,
+			SmFindGroup.ShowApplications(nowEpochSeconds, snapshots));
+	}
 }
 
 public enum FindGroupRecruitmentPlanStatus
+{
+	Added,
+	Updated,
+	Removed,
+	Missing,
+}
+
+public enum FindGroupApplicationPlanStatus
 {
 	Added,
 	Updated,
@@ -161,6 +277,20 @@ public sealed record FindGroupRecruitmentShowPlan(
 	string Race,
 	int LastUpdate,
 	IReadOnlyList<FindGroupRecruitmentSnapshot> Recruitments,
+	GameServerPacket Packet);
+
+public sealed record FindGroupApplicationMutationPlan(
+	FindGroupApplicationPlanStatus Status,
+	FindGroupApplicationState? CurrentApplication,
+	FindGroupApplicationState? RemovedApplication,
+	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents,
+	FindGroupWorldBroadcastIntent? WorldBroadcastIntent,
+	FindGroupApplicationShowPlan? ShowApplicationsPlan);
+
+public sealed record FindGroupApplicationShowPlan(
+	string Race,
+	int LastUpdate,
+	IReadOnlyList<FindGroupApplicationSnapshot> Applications,
 	GameServerPacket Packet);
 
 public sealed record FindGroupRecruitmentState(
@@ -258,5 +388,47 @@ public sealed record FindGroupRecruitmentSubject(
 			"BARD" => 16,
 			_ => 0,
 		};
+	}
+}
+
+public sealed record FindGroupApplicationState(
+	int PlayerObjectId,
+	string Race,
+	int GroupType,
+	string Message,
+	string PlayerName,
+	int ClassId,
+	int Level,
+	int LastUpdate)
+{
+	public static FindGroupApplicationState FromPlayer(
+		Player player,
+		string message,
+		int groupType,
+		int classId,
+		int level,
+		int nowEpochSeconds)
+	{
+		return new FindGroupApplicationState(
+			player.ObjectId,
+			player.Race,
+			groupType,
+			message,
+			player.Name,
+			classId,
+			level,
+			nowEpochSeconds);
+	}
+
+	public FindGroupApplicationSnapshot ToSnapshot()
+	{
+		return new FindGroupApplicationSnapshot(
+			PlayerObjectId,
+			(byte)GroupType,
+			Message,
+			PlayerName,
+			(byte)ClassId,
+			(byte)Level,
+			LastUpdate);
 	}
 }
