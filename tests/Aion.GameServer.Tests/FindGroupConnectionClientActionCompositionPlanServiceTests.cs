@@ -7,6 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -18,7 +19,7 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 		await using var fixture = await ConnectionFixture.CreateAsync();
 		var player = CreatePlayer(0x01020304, "Recruiter", "ELYOS", "CLERIC", 65);
 		SetActivePlayer(fixture.Connection, player);
-		var service = CreateService();
+		var service = CreateService(fixture.World);
 		var packet = CreateFindGroupPacket(
 			buffer =>
 			{
@@ -43,7 +44,7 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 	public async Task CreateDisabledPlan_MissingActivePlayerRecordsDisabledSkip()
 	{
 		await using var fixture = await ConnectionFixture.CreateAsync();
-		var service = CreateService();
+		var service = CreateService(fixture.World);
 		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(0));
 
 		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
@@ -55,10 +56,109 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 	}
 
-	private static FindGroupConnectionClientActionCompositionPlanService CreateService()
+	[Fact]
+	public async Task CreateDisabledPlan_UsesWorldResolverForInstanceApplication()
 	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+		var recruiter = CreatePlayer(0x01020307, "Recruiter", "ELYOS", "GLADIATOR", 65);
+		SetActivePlayer(fixture.Connection, applicant);
+		Assert.True(fixture.World.TryAddObject(recruiter.ObjectId, recruiter));
+		var service = CreateService(fixture.World);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(11);
+				buffer.WriteD(recruiter.ObjectId);
+				buffer.WriteD(0x11223344);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, plan.Status);
+		Assert.NotNull(plan.ClientActionPlan);
+		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplication, plan.ClientActionPlan!.Kind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.ApplicationSent, plan.ClientActionPlan.InstanceApplicationPlan!.Status);
+		var intent = Assert.Single(plan.ClientActionPlan.InstanceApplicationPlan.DirectPacketIntents);
+		Assert.Equal(recruiter.ObjectId, intent.RecipientObjectId);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_UsesWorldResolverForApplicationResult()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS", "GLADIATOR", 65);
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+		SetActivePlayer(fixture.Connection, responder);
+		Assert.True(fixture.World.TryAddObject(applicant.ObjectId, applicant));
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(
+			responder,
+			instanceMaskId: 0x11223344,
+			message: "Entry",
+			minMembers: 6,
+			nowEpochSeconds: 100);
+		var service = CreateService(fixture.World, findGroupService);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(12);
+				buffer.WriteD(applicant.ObjectId);
+				buffer.WriteC(1);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, plan.Status);
+		Assert.NotNull(plan.ClientActionPlan);
+		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.ClientActionPlan!.Kind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite, plan.ClientActionPlan.InstanceApplicationPlan!.Status);
+		Assert.NotNull(plan.ClientActionPlan.InstanceApplicationPlan.InviteIntent);
+		Assert.Equal(applicant.ObjectId, plan.ClientActionPlan.InstanceApplicationPlan.InviteIntent!.InvitedObjectId);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_ExplicitResolverOverridesWorldResolver()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+		var worldRecruiter = CreatePlayer(0x01020307, "WorldRecruiter", "ELYOS", "GLADIATOR", 65);
+		SetActivePlayer(fixture.Connection, applicant);
+		Assert.True(fixture.World.TryAddObject(worldRecruiter.ObjectId, worldRecruiter));
+		var service = CreateService(fixture.World);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(11);
+				buffer.WriteD(worldRecruiter.ObjectId);
+				buffer.WriteD(0x11223344);
+			});
+
+		var plan = service.CreateDisabledPlan(
+			fixture.Connection,
+			packet,
+			nowEpochSeconds: 200,
+			resolvePlayer: _ => null);
+
+		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, plan.Status);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.MissingRecipient, plan.ClientActionPlan!.InstanceApplicationPlan!.Status);
+		Assert.Empty(plan.ClientActionPlan.InstanceApplicationPlan.DirectPacketIntents);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	private static FindGroupConnectionClientActionCompositionPlanService CreateService(
+		GameWorld world,
+		FindGroupRecruitmentPlanService? findGroupService = null)
+	{
+		findGroupService ??= new FindGroupRecruitmentPlanService();
 		return new FindGroupConnectionClientActionCompositionPlanService(
-			new FindGroupClientActionPlanService(new FindGroupRecruitmentPlanService()));
+			new FindGroupClientActionPlanService(findGroupService),
+			world);
 	}
 
 	private static CmFindGroup CreateFindGroupPacket(Action<PacketBuffer> writePayload)
@@ -107,13 +207,16 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 	{
 		private readonly TcpClient _client;
 
-		private ConnectionFixture(TcpClient client, GameServerConnection connection)
+		private ConnectionFixture(TcpClient client, GameServerConnection connection, GameWorld world)
 		{
 			_client = client;
 			Connection = connection;
+			World = world;
 		}
 
 		public GameServerConnection Connection { get; }
+
+		public GameWorld World { get; }
 
 		public static async Task<ConnectionFixture> CreateAsync()
 		{
@@ -126,13 +229,17 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 				var acceptTask = listener.AcceptTcpClientAsync();
 				await client.ConnectAsync(endpoint.Address, endpoint.Port);
 				var serverClient = await acceptTask;
+				var world = new GameWorld(NullLogger<GameWorld>.Instance);
+				world.Initialize();
 				return new ConnectionFixture(
 					client,
 					new GameServerConnection(
 						NullLogger.Instance,
 						serverClient,
 						"find-group-composition-test",
-						new GamePacketProcessor<string>((_, _) => Task.CompletedTask)));
+						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+						world: world),
+					world);
 			}
 			finally
 			{

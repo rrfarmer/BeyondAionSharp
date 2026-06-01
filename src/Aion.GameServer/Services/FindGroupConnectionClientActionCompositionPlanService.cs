@@ -1,16 +1,21 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
 public sealed class FindGroupConnectionClientActionCompositionPlanService
 {
 	private readonly FindGroupClientActionPlanService _planner;
+	private readonly GameWorld? _world;
 
-	public FindGroupConnectionClientActionCompositionPlanService(FindGroupClientActionPlanService planner)
+	public FindGroupConnectionClientActionCompositionPlanService(
+		FindGroupClientActionPlanService planner,
+		GameWorld? world = null)
 	{
 		_planner = planner;
+		_world = world;
 	}
 
 	public FindGroupConnectionClientActionCompositionPlan CreateDisabledPlan(
@@ -28,7 +33,7 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			connection.ActivePlayer,
 			packet,
 			nowEpochSeconds,
-			resolvePlayer,
+			resolvePlayer ?? ResolveWorldPlayer,
 			currentTeam,
 			currentMembers,
 			formInstanceGroupAnywhere,
@@ -58,7 +63,7 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 		var facts = new FindGroupClientActionRuntimeFacts(
 			activePlayer,
 			nowEpochSeconds,
-			resolvePlayer,
+			resolvePlayer ?? ResolveWorldPlayer,
 			currentTeam,
 			currentMembers,
 			formInstanceGroupAnywhere,
@@ -68,6 +73,18 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			activePlayer,
 			action,
 			facts.ComposeDisabledPlan(_planner, action));
+	}
+
+	private Player? ResolveWorldPlayer(int objectId)
+	{
+		// Java parity: FindGroupService.sendInstanceApplication and sendInstanceApplicationResult
+		// call World.getInstance().getPlayer(objectId). The disabled adapter reads the C# world
+		// snapshot when supplied, but still only composes non-live side-effect plans.
+		return _world != null
+			&& _world.TryGetObject(objectId, out var gameObject)
+			&& gameObject is Player player
+				? player
+				: null;
 	}
 }
 
