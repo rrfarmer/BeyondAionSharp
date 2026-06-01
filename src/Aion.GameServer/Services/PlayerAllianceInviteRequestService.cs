@@ -5,6 +5,13 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerAllianceInviteRequestService
 {
+	private readonly FindGroupJoinedTeamLifecycleRecorder? _findGroupJoinRecorder;
+
+	public PlayerAllianceInviteRequestService(FindGroupJoinedTeamLifecycleRecorder? findGroupJoinRecorder = null)
+	{
+		_findGroupJoinRecorder = findGroupJoinRecorder;
+	}
+
 	public AllianceInviteRequestResult SendInvite(
 		Player inviter,
 		Player invited,
@@ -105,6 +112,7 @@ public sealed class PlayerAllianceInviteRequestService
 		var requesterAlliance = allianceRuntime.Resolve(requester);
 		PlayerAllianceSnapshot snapshot;
 		var enteredPlans = new List<PlayerAllianceEnteredPlan>();
+		var findGroupJoinedTeamPlans = new List<FindGroupJoinedTeamPlan>();
 		if (requesterAlliance == null)
 		{
 			var newAllianceId = allocateAllianceId();
@@ -112,17 +120,19 @@ public sealed class PlayerAllianceInviteRequestService
 				return AllianceInviteResponseResult.MissingRequest(request);
 
 			allianceRuntime.CreateAlliance(newAllianceId, requester);
-			snapshot = AddPlayersToAlliance(newAllianceId, playersToAdd.PlayersToAdd, allianceRuntime, enteredPlans);
+			RecordJoinedTeam(findGroupJoinedTeamPlans, requester, allianceRuntime, newAllianceId);
+			snapshot = AddPlayersToAlliance(newAllianceId, playersToAdd.PlayersToAdd, allianceRuntime, enteredPlans, findGroupJoinedTeamPlans);
 		}
 		else
 		{
-			snapshot = AddPlayersToAlliance(requesterAlliance.AllianceId, playersToAdd.PlayersToAdd, allianceRuntime, enteredPlans);
+			snapshot = AddPlayersToAlliance(requesterAlliance.AllianceId, playersToAdd.PlayersToAdd, allianceRuntime, enteredPlans, findGroupJoinedTeamPlans);
 		}
 
 		return AllianceInviteResponseResult.Accepted(
 			request,
 			snapshot,
-			enteredPlans);
+			enteredPlans,
+			findGroupJoinedTeamPlans);
 	}
 
 	private static AllianceInviteAcceptCollection CollectPlayersToAdd(
@@ -182,22 +192,35 @@ public sealed class PlayerAllianceInviteRequestService
 			.ToArray();
 	}
 
-	private static PlayerAllianceSnapshot AddPlayersToAlliance(
+	private PlayerAllianceSnapshot AddPlayersToAlliance(
 		int allianceId,
 		IReadOnlyList<Player> playersToAdd,
 		PlayerAllianceRuntime allianceRuntime,
-		List<PlayerAllianceEnteredPlan> enteredPlans)
+		List<PlayerAllianceEnteredPlan> enteredPlans,
+		List<FindGroupJoinedTeamPlan> findGroupJoinedTeamPlans)
 	{
 		PlayerAllianceSnapshot? snapshot = null;
 		foreach (var player in playersToAdd)
 		{
 			snapshot = allianceRuntime.AddMember(allianceId, player);
+			RecordJoinedTeam(findGroupJoinedTeamPlans, player, allianceRuntime, allianceId);
 			var enteredPlan = allianceRuntime.CreateEnteredPlan(allianceId, player);
 			if (enteredPlan != null)
 				enteredPlans.Add(enteredPlan);
 		}
 
 		return snapshot ?? allianceRuntime.GetSnapshot(allianceId) ?? throw new InvalidOperationException("Alliance invite accept produced no alliance snapshot.");
+	}
+
+	private void RecordJoinedTeam(
+		List<FindGroupJoinedTeamPlan> joinedTeamPlans,
+		Player player,
+		PlayerAllianceRuntime allianceRuntime,
+		int allianceId)
+	{
+		var plan = _findGroupJoinRecorder?.RecordAllianceJoin(player, allianceRuntime, allianceId);
+		if (plan != null)
+			joinedTeamPlans.Add(plan);
 	}
 
 	private static SmSystemMessage? CreateRepresentedRestrictionMessage(
@@ -298,39 +321,42 @@ public sealed record AllianceInviteResponseResult(
 	PendingAllianceInviteRequest? Request,
 	SmSystemMessage? Message,
 	PlayerAllianceSnapshot? AllianceSnapshot,
-	IReadOnlyList<PlayerAllianceEnteredPlan> EnteredPlans)
+	IReadOnlyList<PlayerAllianceEnteredPlan> EnteredPlans,
+	IReadOnlyList<FindGroupJoinedTeamPlan> FindGroupJoinedTeamPlans)
 {
 	public static AllianceInviteResponseResult Ignored()
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Ignored, null, null, null, Array.Empty<PlayerAllianceEnteredPlan>());
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Ignored, null, null, null, Array.Empty<PlayerAllianceEnteredPlan>(), Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static AllianceInviteResponseResult MissingRequest(PendingAllianceInviteRequest? request = null)
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.MissingRequest, request, null, null, Array.Empty<PlayerAllianceEnteredPlan>());
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.MissingRequest, request, null, null, Array.Empty<PlayerAllianceEnteredPlan>(), Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static AllianceInviteResponseResult Denied(PendingAllianceInviteRequest request, SmSystemMessage denyMessage)
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Denied, request, denyMessage, null, Array.Empty<PlayerAllianceEnteredPlan>());
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Denied, request, denyMessage, null, Array.Empty<PlayerAllianceEnteredPlan>(), Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static AllianceInviteResponseResult Rejected(PendingAllianceInviteRequest request, SmSystemMessage rejectionMessage)
 	{
-		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Rejected, request, rejectionMessage, null, Array.Empty<PlayerAllianceEnteredPlan>());
+		return new AllianceInviteResponseResult(AllianceInviteResponseStatus.Rejected, request, rejectionMessage, null, Array.Empty<PlayerAllianceEnteredPlan>(), Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static AllianceInviteResponseResult Accepted(
 		PendingAllianceInviteRequest request,
 		PlayerAllianceSnapshot allianceSnapshot,
-		IReadOnlyList<PlayerAllianceEnteredPlan> enteredPlans)
+		IReadOnlyList<PlayerAllianceEnteredPlan> enteredPlans,
+		IReadOnlyList<FindGroupJoinedTeamPlan>? findGroupJoinedTeamPlans = null)
 	{
 		return new AllianceInviteResponseResult(
 			AllianceInviteResponseStatus.Accepted,
 			request,
 			null,
 			allianceSnapshot,
-			enteredPlans);
+			enteredPlans,
+			findGroupJoinedTeamPlans ?? Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 }
 

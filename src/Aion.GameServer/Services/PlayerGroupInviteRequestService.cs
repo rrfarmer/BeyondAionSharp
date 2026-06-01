@@ -5,6 +5,13 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerGroupInviteRequestService
 {
+	private readonly FindGroupJoinedTeamLifecycleRecorder? _findGroupJoinRecorder;
+
+	public PlayerGroupInviteRequestService(FindGroupJoinedTeamLifecycleRecorder? findGroupJoinRecorder = null)
+	{
+		_findGroupJoinRecorder = findGroupJoinRecorder;
+	}
+
 	public GroupInviteRequestResult SendInvite(Player inviter, Player invited)
 	{
 		// Java parity: model/team/group/PlayerGroupService.inviteToGroup registers
@@ -81,7 +88,7 @@ public sealed class PlayerGroupInviteRequestService
 				dispatch.Accepted && groupRuntime.Resolve(inviter) == null ? allocateGroupId() : 0);
 	}
 
-	private static GroupInviteResponseResult HandleResolvedResponse(
+	private GroupInviteResponseResult HandleResolvedResponse(
 		Player inviter,
 		Player invited,
 		bool accepted,
@@ -96,11 +103,33 @@ public sealed class PlayerGroupInviteRequestService
 		if (inviterGroup == null && newGroupId <= 0)
 			return GroupInviteResponseResult.MissingRequest(request);
 
+		var joinedTeamPlans = new List<FindGroupJoinedTeamPlan>();
 		var snapshot = inviterGroup == null
 			? groupRuntime.CreateOrUpdateGroup(newGroupId, [inviter, invited])
 			: groupRuntime.AddMember(inviterGroup.TeamId, invited);
+		if (inviterGroup == null)
+		{
+			RecordJoinedTeam(joinedTeamPlans, inviter, groupRuntime, snapshot.TeamId);
+			RecordJoinedTeam(joinedTeamPlans, invited, groupRuntime, snapshot.TeamId);
+		}
+		else
+		{
+			RecordJoinedTeam(joinedTeamPlans, invited, groupRuntime, snapshot.TeamId);
+		}
+
 		var enteredPlan = groupRuntime.CreateEnteredPacketPlan(snapshot.TeamId, invited);
-		return GroupInviteResponseResult.Accepted(request, snapshot, enteredPlan);
+		return GroupInviteResponseResult.Accepted(request, snapshot, enteredPlan, joinedTeamPlans);
+	}
+
+	private void RecordJoinedTeam(
+		List<FindGroupJoinedTeamPlan> joinedTeamPlans,
+		Player player,
+		PlayerGroupRuntime groupRuntime,
+		int teamId)
+	{
+		var plan = _findGroupJoinRecorder?.RecordGroupJoin(player, groupRuntime, teamId);
+		if (plan != null)
+			joinedTeamPlans.Add(plan);
 	}
 }
 
@@ -147,39 +176,42 @@ public sealed record GroupInviteResponseResult(
 	PendingGroupInviteRequest? Request,
 	SmSystemMessage? DenyMessage,
 	PlayerGroupSnapshot? GroupSnapshot,
-	PlayerGroupEnteredPacketPlan? EnteredPacketPlan)
+	PlayerGroupEnteredPacketPlan? EnteredPacketPlan,
+	IReadOnlyList<FindGroupJoinedTeamPlan> FindGroupJoinedTeamPlans)
 {
 	public static GroupInviteResponseResult Ignored()
 	{
-		return new GroupInviteResponseResult(GroupInviteResponseStatus.Ignored, null, null, null, null);
+		return new GroupInviteResponseResult(GroupInviteResponseStatus.Ignored, null, null, null, null, Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static GroupInviteResponseResult MissingRequest()
 	{
-		return new GroupInviteResponseResult(GroupInviteResponseStatus.MissingRequest, null, null, null, null);
+		return new GroupInviteResponseResult(GroupInviteResponseStatus.MissingRequest, null, null, null, null, Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static GroupInviteResponseResult MissingRequest(PendingGroupInviteRequest request)
 	{
-		return new GroupInviteResponseResult(GroupInviteResponseStatus.MissingRequest, request, null, null, null);
+		return new GroupInviteResponseResult(GroupInviteResponseStatus.MissingRequest, request, null, null, null, Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static GroupInviteResponseResult Denied(PendingGroupInviteRequest request, SmSystemMessage denyMessage)
 	{
-		return new GroupInviteResponseResult(GroupInviteResponseStatus.Denied, request, denyMessage, null, null);
+		return new GroupInviteResponseResult(GroupInviteResponseStatus.Denied, request, denyMessage, null, null, Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 
 	public static GroupInviteResponseResult Accepted(
 		PendingGroupInviteRequest request,
 		PlayerGroupSnapshot groupSnapshot,
-		PlayerGroupEnteredPacketPlan? enteredPacketPlan)
+		PlayerGroupEnteredPacketPlan? enteredPacketPlan,
+		IReadOnlyList<FindGroupJoinedTeamPlan>? findGroupJoinedTeamPlans = null)
 	{
 		return new GroupInviteResponseResult(
 			GroupInviteResponseStatus.Accepted,
 			request,
 			null,
 			groupSnapshot,
-			enteredPacketPlan);
+			enteredPacketPlan,
+			findGroupJoinedTeamPlans ?? Array.Empty<FindGroupJoinedTeamPlan>());
 	}
 }
 

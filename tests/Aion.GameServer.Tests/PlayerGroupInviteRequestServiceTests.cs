@@ -100,6 +100,41 @@ public sealed class PlayerGroupInviteRequestServiceTests
 	}
 
 	[Fact]
+	public void HandleResponse_AcceptCreatesGroupRecordsFindGroupJoinedTeamForBothEntrantsLikeJavaEvent()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var observed = new List<FindGroupJoinedTeamPlan>();
+		var service = new PlayerGroupInviteRequestService(
+			new FindGroupJoinedTeamLifecycleRecorder(findGroupService, () => 333, serverId: 5, observed.Add));
+		var runtime = new PlayerGroupRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var invited = CreatePlayer(1002, "Invited");
+		findGroupService.AddRecruitment(inviter, "Leader solo", groupType: 4, nowEpochSeconds: 220);
+		findGroupService.AddApplication(invited, "Invite me", groupType: 2, classId: 5, level: 45, nowEpochSeconds: 221);
+		findGroupService.AddRecruitment(invited, "Invited solo", groupType: 4, nowEpochSeconds: 222);
+		service.SendInvite(inviter, invited);
+
+		var response = service.HandleResponse(
+			inviter,
+			invited,
+			SmQuestionWindow.PartyInvite,
+			response: 1,
+			runtime,
+			newGroupId: 7001);
+
+		Assert.Equal(GroupInviteResponseStatus.Accepted, response.Status);
+		Assert.Equal(2, response.FindGroupJoinedTeamPlans.Count);
+		Assert.Same(response.FindGroupJoinedTeamPlans[0], observed[0]);
+		Assert.All(response.FindGroupJoinedTeamPlans, plan => Assert.False(plan.DispatchLiveSideEffects));
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, response.FindGroupJoinedTeamPlans[0].SoloRecruitmentRemoval.Status);
+		Assert.NotNull(response.FindGroupJoinedTeamPlans[0].TeamRecruitmentAdd);
+		Assert.Equal(7001, response.FindGroupJoinedTeamPlans[0].TeamRecruitmentAdd!.CurrentRecruitment?.ObjectId);
+		Assert.Equal(FindGroupApplicationPlanStatus.Removed, response.FindGroupJoinedTeamPlans[1].ApplicationRemoval.Status);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, response.FindGroupJoinedTeamPlans[1].SoloRecruitmentRemoval.Status);
+		Assert.Empty(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 400).Applications);
+	}
+
+	[Fact]
 	public void HandleResponse_AcceptAddsInvitedToExistingInviterGroup()
 	{
 		var service = new PlayerGroupInviteRequestService();
@@ -123,6 +158,35 @@ public sealed class PlayerGroupInviteRequestServiceTests
 		Assert.Equal([1001, 1003, 1002], response.GroupSnapshot?.MemberObjectIds);
 		Assert.Equal(7001, invited.CurrentGroupSnapshot?.TeamId);
 		Assert.NotNull(response.EnteredPacketPlan);
+	}
+
+	[Fact]
+	public void HandleResponse_AcceptAddsToExistingGroupRecordsFindGroupJoinedTeamOnlyForInvited()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var service = new PlayerGroupInviteRequestService(
+			new FindGroupJoinedTeamLifecycleRecorder(findGroupService, () => 333, serverId: 5));
+		var runtime = new PlayerGroupRuntime();
+		var inviter = CreatePlayer(1001, "Inviter");
+		var existing = CreatePlayer(1003, "Existing");
+		var invited = CreatePlayer(1002, "Invited");
+		runtime.CreateOrUpdateGroup(7001, [inviter, existing]);
+		findGroupService.AddApplication(invited, "Invite me", groupType: 2, classId: 5, level: 45, nowEpochSeconds: 221);
+		service.SendInvite(inviter, invited);
+
+		var response = service.HandleResponse(
+			inviter,
+			invited,
+			SmQuestionWindow.PartyInvite,
+			response: 1,
+			runtime,
+			newGroupId: 9001);
+
+		var plan = Assert.Single(response.FindGroupJoinedTeamPlans);
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Equal(FindGroupApplicationPlanStatus.Removed, plan.ApplicationRemoval.Status);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Missing, plan.SoloRecruitmentRemoval.Status);
+		Assert.Null(plan.TeamRecruitmentAdd);
 	}
 
 	[Fact]
@@ -151,6 +215,9 @@ public sealed class PlayerGroupInviteRequestServiceTests
 		{
 			ObjectId = objectId,
 			Name = name,
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 45,
 			Position = new WorldPosition(210010000, objectId, 20, 30, 0),
 		};
 	}
