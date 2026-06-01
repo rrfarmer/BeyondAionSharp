@@ -7120,6 +7120,23 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesOpenStaticDoorPacket()
+	{
+		var openStaticDoor = Assert.IsType<CmOpenStaticDoor>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(23, buffer =>
+			{
+				buffer.WriteD(700123);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(700123, openStaticDoor.DoorId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(23, buffer =>
+		{
+			buffer.WriteD(1);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(

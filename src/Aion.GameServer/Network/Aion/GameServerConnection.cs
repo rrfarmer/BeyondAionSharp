@@ -448,6 +448,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmBreakWeapons:
 				// Java parity: network/aion/clientpackets/CM_BREAK_WEAPONS.runImpl validates armsfusion NPC targeting before service dispatch; deferred.
 				break;
+			case CmOpenStaticDoor:
+				// Java parity: network/aion/clientpackets/CM_OPEN_STATICDOOR.runImpl dispatches StaticDoorService.openStaticDoor; deferred.
+				break;
 			case CmGfWebshopTokenRequest:
 				// Java parity: network/aion/clientpackets/CM_GF_WEBSHOP_TOKEN_REQUEST.runImpl sends an empty token response.
 				await SendPacketAsync(new SmGfWebshopTokenResponse(string.Empty));
