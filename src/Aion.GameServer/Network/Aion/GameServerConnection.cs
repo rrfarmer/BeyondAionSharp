@@ -458,6 +458,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_MOVE_ITEM.runImpl calls ItemMoveService.moveItem.
 				// Inventory/warehouse move side effects remain unported; keep this parser-only for now.
 				break;
+			case CmSplitItem:
+				// Java parity: network/aion/clientpackets/CM_SPLIT_ITEM.runImpl calls ItemSplitService.splitItem.
+				// Stack split storage side effects remain unported; keep this parser-only for now.
+				break;
 			case CmSubzoneChange:
 				if (_activePlayer != null)
 				{
