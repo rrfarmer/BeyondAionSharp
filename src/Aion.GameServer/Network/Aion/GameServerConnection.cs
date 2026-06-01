@@ -610,6 +610,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_TOGGLE_SKILL_DEACTIVATE.runImpl validates toggle/stance skills, removes the effect, and stops matching stance.
 				// Live SkillEngine effect-controller and stance-controller mutation remain unported.
 				break;
+			case CmRemoveAlteredState:
+				// Java parity: network/aion/clientpackets/CM_REMOVE_ALTERED_STATE.runImpl blocks client debuff removal and ends non-debuff effects.
+				// Live EffectController lookup, debuff audit logging, and effect-end mutation remain unported.
+				break;
 			case CmSummonCastSpell summonCastSpell:
 				if (_activePlayer != null)
 					await HandleSummonCastSpellAsync(_activePlayer, summonCastSpell);
