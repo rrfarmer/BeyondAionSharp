@@ -495,6 +495,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmCheckMailUnknown:
 				// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_UNK.runImpl is TODO/no-op.
 				break;
+			case CmAtreianPassport:
+				// Java parity: network/aion/clientpackets/CM_ATREIAN_PASSPORT.runImpl calls AtreianPassportService.takeReward.
+				// Reward execution/account passport mutation remain unported; keep this parser-only for now.
+				break;
 			case CmObjectSearch:
 				// Java parity: network/aion/clientpackets/CM_OBJECT_SEARCH.runImpl searches DataManager.SPAWNS_DATA; deferred until spawn search data is ported.
 				break;

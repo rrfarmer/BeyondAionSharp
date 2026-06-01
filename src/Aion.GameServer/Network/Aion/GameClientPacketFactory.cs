@@ -136,6 +136,7 @@ public static class GameClientPacketFactory
 		Register(239, states => new CmFriendSetMemo(239, states), GameConnectionState.InGame);
 		Register(244, states => new CmBindPointTeleport(244, states), GameConnectionState.InGame);
 		Register(247, states => new CmItemPurification(247, states), GameConnectionState.InGame);
+		Register(248, states => new CmAtreianPassport(248, states), GameConnectionState.InGame);
 	}
 
 	public static GameClientPacket? TryCreatePacket(ReadOnlySpan<byte> decryptedPayload, GameConnectionState state)
