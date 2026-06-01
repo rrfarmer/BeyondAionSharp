@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
@@ -171,6 +172,13 @@ public enum PetAutoSellActivationPlanStatus
 	DisabledNoSideEffects,
 }
 
+public enum CmPetAutoSellActivationCompositionPlanStatus
+{
+	NotFoodAction,
+	NotAutoSellAction,
+	ActivationPlanCreated,
+}
+
 public enum PetAutoSellStepKind
 {
 	CheckPetSelling,
@@ -315,6 +323,13 @@ public sealed record PetAutoSellActivationInput(
 	int? MasterObjectId,
 	string? PetName);
 
+public sealed record CmPetAutoSellActivationCompositionContext(
+	bool PetPresent,
+	bool PetHasMerchantFunction,
+	int? PetObjectId,
+	int? MasterObjectId,
+	string? PetName);
+
 public sealed record PetAutoSellActivationStepPlan(
 	PetAutoSellActivationStepKind Kind,
 	bool WouldRun,
@@ -335,6 +350,15 @@ public sealed record PetAutoSellActivationPlan(
 	bool DidWriteAuditLog,
 	string? AuditMessage,
 	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record CmPetAutoSellActivationCompositionPlan(
+	CmPet Packet,
+	CmPetAutoSellActivationCompositionPlanStatus Status,
+	CmPetAutoSellActivationCompositionContext Context,
+	bool ParsedActivationFlag,
+	PetAutoSellActivationPlan? ActivationPlan,
 	string JavaSource,
 	bool IsLive);
 
@@ -459,6 +483,66 @@ public static class PetAutoSellPlanService
 
 	private static PetAutoSellStepPlan Disabled(PetAutoSellStepKind kind, string javaSource) =>
 		new(kind, WouldRun: true, DidRun: false, javaSource);
+}
+
+public static class CmPetAutoSellActivationCompositionPlanService
+{
+	public static CmPetAutoSellActivationCompositionPlan CreateDisabledPlan(
+		CmPet packet,
+		CmPetAutoSellActivationCompositionContext context)
+	{
+		// Java parity: CM_PET.runImpl routes FOOD actionType 4 to PetService.activateAutoSell.
+		if (packet.Action != PetAction.Food)
+		{
+			return Terminal(
+				packet,
+				context,
+				CmPetAutoSellActivationCompositionPlanStatus.NotFoodAction,
+				"CM_PET.runImpl only reaches auto-sell activation inside the FOOD action branch");
+		}
+
+		if (packet.ActionType != 4)
+		{
+			return Terminal(
+				packet,
+				context,
+				CmPetAutoSellActivationCompositionPlanStatus.NotAutoSellAction,
+				"CM_PET.runImpl FOOD actionType 4 is the auto-sell activation branch; other FOOD action types route elsewhere");
+		}
+
+		var activationInput = new PetAutoSellActivationInput(
+			context.PetPresent,
+			Activate: packet.ActivateSpecialFunction != 0,
+			context.PetHasMerchantFunction,
+			context.PetObjectId,
+			context.MasterObjectId,
+			context.PetName);
+		var activationPlan = PetAutoSellActivationPlanService.CreateDisabledPlan(activationInput);
+		return new CmPetAutoSellActivationCompositionPlan(
+			packet,
+			CmPetAutoSellActivationCompositionPlanStatus.ActivationPlanCreated,
+			context,
+			activationInput.Activate,
+			activationPlan,
+			"CM_PET.runImpl FOOD actionType 4 -> PetService.activateAutoSell(pet, activateSpecialFunction != 0), with live side effects disabled",
+			IsLive: false);
+	}
+
+	private static CmPetAutoSellActivationCompositionPlan Terminal(
+		CmPet packet,
+		CmPetAutoSellActivationCompositionContext context,
+		CmPetAutoSellActivationCompositionPlanStatus status,
+		string javaSource)
+	{
+		return new CmPetAutoSellActivationCompositionPlan(
+			packet,
+			status,
+			context,
+			ParsedActivationFlag: false,
+			ActivationPlan: null,
+			javaSource,
+			IsLive: false);
+	}
 }
 
 public static class PetAutoSellActivationPlanService

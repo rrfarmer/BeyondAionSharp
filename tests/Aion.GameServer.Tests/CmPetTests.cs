@@ -2,6 +2,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
 
@@ -193,7 +194,125 @@ public sealed class CmPetTests
 		Assert.Equal(0, packet.ObjectId);
 	}
 
+	[Theory]
+	[InlineData(1, true)]
+	[InlineData(0, false)]
+	public void CreateDisabledAutoSellActivationComposition_MapsParsedActionTypeFourToActivationPlan(
+		int activateSpecialFunction,
+		bool expectedActivate)
+	{
+		var packet = ReadPacket(buffer =>
+		{
+			buffer.WriteH((int)PetAction.Food);
+			buffer.WriteD(4);
+			buffer.WriteD(activateSpecialFunction);
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+		});
+		var context = new CmPetAutoSellActivationCompositionContext(
+			PetPresent: true,
+			PetHasMerchantFunction: true,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var composition = CmPetAutoSellActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(CmPetAutoSellActivationCompositionPlanStatus.ActivationPlanCreated, composition.Status);
+		Assert.False(composition.IsLive);
+		Assert.Same(packet, composition.Packet);
+		Assert.Same(context, composition.Context);
+		Assert.Equal(expectedActivate, composition.ParsedActivationFlag);
+		Assert.Contains("CM_PET.runImpl FOOD actionType 4", composition.JavaSource, StringComparison.Ordinal);
+		var activation = Assert.IsType<PetAutoSellActivationPlan>(composition.ActivationPlan);
+		Assert.Equal(PetAutoSellActivationPlanStatus.DisabledNoSideEffects, activation.Status);
+		Assert.Equal(expectedActivate, activation.Input.Activate);
+		Assert.Equal(expectedActivate, activation.TargetSellingState);
+		Assert.True(activation.WouldSetSellingState);
+		Assert.False(activation.DidSetSellingState);
+		Assert.True(activation.WouldSendPacket);
+		Assert.False(activation.DidSendPacket);
+		Assert.False(activation.ShouldDispatchLiveSideEffects);
+		Assert.False(activation.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledAutoSellActivationComposition_RecordsMissingPetReturnBeforeService()
+	{
+		var packet = ReadPacket(buffer =>
+		{
+			buffer.WriteH((int)PetAction.Food);
+			buffer.WriteD(4);
+			buffer.WriteD(1);
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+		});
+		var context = new CmPetAutoSellActivationCompositionContext(
+			PetPresent: false,
+			PetHasMerchantFunction: true,
+			PetObjectId: null,
+			MasterObjectId: 1153,
+			PetName: null);
+
+		var composition = CmPetAutoSellActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(CmPetAutoSellActivationCompositionPlanStatus.ActivationPlanCreated, composition.Status);
+		var activation = Assert.IsType<PetAutoSellActivationPlan>(composition.ActivationPlan);
+		Assert.Equal(PetAutoSellActivationPlanStatus.MissingPet, activation.Status);
+		Assert.Empty(activation.Steps);
+		Assert.False(activation.WouldSetSellingState);
+		Assert.False(activation.WouldSendPacket);
+		Assert.False(activation.ShouldDispatchLiveSideEffects);
+		Assert.Contains("if (pet == null) return", activation.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Theory]
+	[InlineData(PetAction.Spawn, 0, CmPetAutoSellActivationCompositionPlanStatus.NotFoodAction)]
+	[InlineData(PetAction.Food, 3, CmPetAutoSellActivationCompositionPlanStatus.NotAutoSellAction)]
+	public void CreateDisabledAutoSellActivationComposition_SkipsBranchesJavaRoutesElsewhere(
+		PetAction action,
+		int actionType,
+		CmPetAutoSellActivationCompositionPlanStatus expectedStatus)
+	{
+		var packet = action == PetAction.Food
+			? ReadPacket(buffer =>
+			{
+				buffer.WriteH((int)PetAction.Food);
+				buffer.WriteD(actionType);
+				buffer.WriteD(1);
+				buffer.WriteD(0);
+				buffer.WriteD(0);
+			})
+			: ReadPacket(buffer =>
+			{
+				buffer.WriteH((int)action);
+				buffer.WriteD(900123);
+			});
+		var context = new CmPetAutoSellActivationCompositionContext(
+			PetPresent: true,
+			PetHasMerchantFunction: true,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var composition = CmPetAutoSellActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(expectedStatus, composition.Status);
+		Assert.Null(composition.ActivationPlan);
+		Assert.False(composition.ParsedActivationFlag);
+		Assert.False(composition.IsLive);
+	}
+
 	private static CmPet CreatePacket() => new(22, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+
+	private static CmPet ReadPacket(Action<PacketBuffer> writePayload)
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		writePayload(buffer);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
 	{
