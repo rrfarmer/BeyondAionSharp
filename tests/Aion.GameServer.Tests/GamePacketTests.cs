@@ -6946,6 +6946,17 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesAbyssRankingPlayersPacket()
+	{
+		var rankingPlayers = Assert.IsType<CmAbyssRankingPlayers>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(188, buffer => buffer.WriteC(0)), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(0, rankingPlayers.RaceId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(188, buffer => buffer.WriteC(1)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
