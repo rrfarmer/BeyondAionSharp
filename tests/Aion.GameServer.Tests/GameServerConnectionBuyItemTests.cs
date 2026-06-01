@@ -91,6 +91,71 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcRepurchaseHydratesDisabledExecutionPlanFromSnapshot()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001));
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 5_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		player.RepurchaseItems =
+		[
+			new RepurchaseSourceItem(
+				new InventoryItem
+				{
+					ObjectId = 7101,
+					ItemId = 100000001,
+					Count = 1,
+					OwnerId = player.ObjectId,
+					Location = 0,
+					Slot = 65535,
+				},
+				RepurchasePrice: 1_200),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 2, [(7101, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedRepurchasePlanner, plan.Status);
+		Assert.Equal(CmBuyItemRepurchaseCompositionPlanStatus.WouldDispatchRepurchase, plan.RepurchasePlan!.Status);
+		Assert.Equal([7101], plan.RepurchasePlan.ReadPlan.RepurchaseItemObjectIds);
+		var dispatch = Assert.IsType<CmBuyItemRepurchaseDispatchDescriptor>(plan.RepurchasePlan.RunPlan.Dispatch);
+		var repurchasePlan = Assert.IsType<RepurchasePlan>(dispatch.RepurchasePlan);
+		Assert.Equal(RepurchasePlanStatus.PlanCreated, repurchasePlan.Status);
+		Assert.Equal([7101], repurchasePlan.RepurchasedItemObjectIds);
+		Assert.Equal([7101], repurchasePlan.RemovedRepurchaseItemObjectIds);
+		Assert.Equal(3_800, repurchasePlan.KinahUpdate!.Count);
+		Assert.Single(repurchasePlan.AddedItems);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopHydratesDisabledBuyTransactionPlan()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(

@@ -4013,6 +4013,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var buyTransactionPlan = ResolveBuyItemBuyTransactionPlan(player, packet, targetKind, buyFromShopTradeTemplate);
 		var privateStoreItems = ResolveBuyItemPrivateStoreItems(player, packet, targetKind);
 		var privateStorePurchasePlan = ResolveBuyItemPrivateStorePurchasePlan(player, packet, targetKind, privateStoreItems);
+		var repurchasableItemObjectIds = ResolveBuyItemRepurchasableItemObjectIds(player, packet, targetKind);
+		var repurchasePlan = ResolveBuyItemRepurchasePlan(player, packet, targetKind, repurchasableItemObjectIds);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
@@ -4026,10 +4028,71 @@ public sealed class GameServerConnection : BaseClientConnection
 				BuyTransactionPlan: buyTransactionPlan,
 				SellToShopPlan: sellToShopPlan,
 				SellForApToShopPlan: sellForApToShopPlan,
+				RepurchasableItemObjectIds: repurchasableItemObjectIds,
+				RepurchasePlan: repurchasePlan,
 				PrivateStoreItems: privateStoreItems,
 				PrivateStorePurchasePlan: privateStorePurchasePlan));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
 		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
+	}
+
+	private static IReadOnlySet<int> ResolveBuyItemRepurchasableItemObjectIds(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemRepurchaseReadPlanService.RepurchaseTradeActionId)
+			return new HashSet<int>();
+
+		// Java parity: RepurchaseList.addRepurchaseItem filters each requested
+		// object id through RepurchaseService.canRepurchase(player, itemObjectId).
+		return player.RepurchaseItems.Select(item => item.Item.ObjectId).ToHashSet();
+	}
+
+	private RepurchasePlan? ResolveBuyItemRepurchasePlan(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		IReadOnlySet<int> repurchasableItemObjectIds)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemRepurchaseReadPlanService.RepurchaseTradeActionId
+			|| repurchasableItemObjectIds.Count == 0)
+			return null;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return null;
+
+		var readItems = packet.Items
+			.Select(item => new CmBuyItemReadItem(item.ItemObjectId, item.Count))
+			.ToList();
+		if (packet.AuditItem is { } auditItem)
+			readItems.Add(new CmBuyItemReadItem(auditItem.ItemObjectId, auditItem.Count));
+
+		var readPlan = CmBuyItemRepurchaseReadPlanService.CreatePlan(
+			packet.SellerObjectId,
+			packet.TradeActionId,
+			packet.Amount,
+			readItems,
+			repurchasableItemObjectIds);
+		if (readPlan.Status != CmBuyItemRepurchaseReadPlanStatus.PlanCreated)
+			return null;
+
+		// Java parity: RepurchaseService.repurchaseFromShop runs after CM_BUY_ITEM
+		// target and npc.canBuy gates. This remains a disabled diagnostic payload.
+		return RepurchasePlanService.CreatePlan(
+			CanTrade(player),
+			player,
+			player.InventoryItems,
+			readPlan.RepurchaseItemObjectIds,
+			player.RepurchaseItems,
+			itemTemplates,
+			_buyItemDiagnosticObjectIdProvider ?? (() => 0));
 	}
 
 	private IReadOnlyList<PrivateStoreListedItemSummary>? ResolveBuyItemPrivateStoreItems(
