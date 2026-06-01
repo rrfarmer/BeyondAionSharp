@@ -164,6 +164,82 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopHydratesJavaBuyPriceDiagnostics()
+	{
+		var options = new GameServerOptions
+		{
+			Prices = new GameServerPriceOptions
+			{
+				DefaultPrices = 100,
+				DefaultModifier = 90,
+				DefaultTaxes = 100,
+				VendorBuyModifier = 125,
+				VendorSellModifier = 20,
+			},
+		};
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			options: options,
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(501, Items: [new GoodsListItemSummary(1001)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 12_345)),
+			buyItemPriceInfluenceRates: new PriceInfluenceRates(Elyos: 0.5f, Asmodians: 0.3f));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "BuyItemTester",
+			Race = "ASMODIANS",
+			PlayerClass = "RANGER",
+			Level = 1,
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 20_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		var dispatch = Assert.IsType<CmBuyItemBuyFromShopDispatchDescriptor>(plan.BuyFromShopPlan!.Dispatch);
+		var transactionPlan = Assert.IsType<TradeBuyTransactionPlan>(dispatch.BuyTransactionPlan);
+		Assert.Equal(TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction, transactionPlan.Status);
+		Assert.Equal(new PriceSnapshot(GlobalPrices: 110, GlobalPricesModifier: 90, Taxes: 105, VendorBuyModifier: 125, VendorSellModifier: 20), transactionPlan.PriceSnapshot);
+		Assert.Equal(16_039, Assert.Single(transactionPlan.Mutation!.AddedItems).UnitBuyPrice);
+		Assert.Equal(16_039, transactionPlan.RequiredKinah);
+		Assert.False(transactionPlan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopBlocksDisabledLimitedItemPlan()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
@@ -1071,7 +1147,9 @@ public sealed class GameServerConnectionBuyItemTests
 			ItemTemplateTable? buyItemItemTemplates = null,
 			GoodsListTable? buyItemGoodsLists = null,
 			long? buyItemCurrentSellLimit = null,
-			Func<int>? buyItemDiagnosticObjectIdProvider = null)
+			Func<int>? buyItemDiagnosticObjectIdProvider = null,
+			GameServerOptions? options = null,
+			PriceInfluenceRates? buyItemPriceInfluenceRates = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1096,7 +1174,7 @@ public sealed class GameServerConnectionBuyItemTests
 						serverClient,
 						"cm-buy-item-test",
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
-						options: new GameServerOptions(),
+						options: options ?? new GameServerOptions(),
 						world: world,
 						crypt: crypt,
 						sentPacketObserver: sentPackets.Add,
@@ -1107,7 +1185,8 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemItemTemplates: buyItemItemTemplates,
 						buyItemGoodsLists: buyItemGoodsLists,
 						buyItemCurrentSellLimit: buyItemCurrentSellLimit,
-						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider),
+						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider,
+						buyItemPriceInfluenceRates: buyItemPriceInfluenceRates),
 					world,
 					buyItemPlans,
 					buyItemSideEffectOutcomePlans,

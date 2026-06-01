@@ -91,6 +91,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GoodsListTable? _buyItemGoodsLists;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
+	private readonly PriceInfluenceRates _buyItemPriceInfluenceRates;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -168,7 +169,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemTemplateTable? buyItemItemTemplates = null,
 		GoodsListTable? buyItemGoodsLists = null,
 		long? buyItemCurrentSellLimit = null,
-		Func<int>? buyItemDiagnosticObjectIdProvider = null)
+		Func<int>? buyItemDiagnosticObjectIdProvider = null,
+		PriceInfluenceRates? buyItemPriceInfluenceRates = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -220,6 +222,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemGoodsLists = buyItemGoodsLists;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
+		_buyItemPriceInfluenceRates = buyItemPriceInfluenceRates ?? new PriceInfluenceRates();
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -4261,6 +4264,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			new NpcDialogLimitedItemFactAdapterInput(tradeTemplate.NpcId, player.ObjectId),
 			new TradeListTable([tradeTemplate], Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>()),
 			goodsLists);
+		var priceSnapshot = PricesService.CreateSnapshot(player.Race, _options.Prices, _buyItemPriceInfluenceRates);
 		var tradeItems = packet.Items
 			.Select(item =>
 			{
@@ -4268,7 +4272,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				return new TradeBuyTransactionItemRequest(
 					item.ItemObjectId,
 					item.Count,
-					template?.Price ?? 0,
+					template == null ? 0 : PricesService.GetBuyPrice(template.Price, player.Race, _options.Prices, _buyItemPriceInfluenceRates),
 					template?.RequiredAbyssPoints ?? 0,
 					template?.AcquisitionType ?? string.Empty,
 					template?.AcquisitionItemId ?? 0,
@@ -4288,7 +4292,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				CurrentAbyssPoints: player.AbyssRank.Ap,
 				FreeSlots: InventoryCapacity.GetFreeCubeSlots(player, itemTemplates),
 				AvailableRequiredItems: CreateInventoryItemCountByItemId(player.InventoryItems),
-				VendorBuyModifier: PricesService.GetVendorBuyModifier(_options.Prices)));
+				VendorBuyModifier: PricesService.GetVendorBuyModifier(_options.Prices),
+				PriceSnapshot: priceSnapshot));
 	}
 
 	private static IReadOnlySet<int> CreateBuyItemAllowedGoodsItemIds(

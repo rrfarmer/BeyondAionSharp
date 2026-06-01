@@ -88,7 +88,8 @@ public sealed record TradeBuyTransactionInput(
 	int CurrentAbyssPoints,
 	int FreeSlots,
 	IReadOnlyDictionary<int, long>? AvailableRequiredItems = null,
-	int VendorBuyModifier = 100);
+	int VendorBuyModifier = 100,
+	PriceSnapshot? PriceSnapshot = null);
 
 public sealed record TradeBuyTransactionItemRequest(
 	int ItemId,
@@ -186,6 +187,8 @@ public sealed record TradeBuyTransactionPlan(
 	TradeBuyTransactionRequiredItem? MissingRequiredItem = null,
 	string? AuditReason = null)
 {
+	public PriceSnapshot? PriceSnapshot { get; init; }
+
 	public bool IsLive => false;
 }
 
@@ -205,7 +208,8 @@ public static class TradeBuyTransactionPlanService
 			return CreatePlan(
 				TradeBuyTransactionPlanStatus.BlockedCannotTrade,
 				steps,
-				"TradeService.performBuyTransaction -> !PlayerRestrictions.canTrade(player) -> false");
+				"TradeService.performBuyTransaction -> !PlayerRestrictions.canTrade(player) -> false",
+				priceSnapshot: input.PriceSnapshot);
 
 		steps.Add(TradeBuyTransactionStep.ValidateBuyItems);
 		var invalidItem = input.TradeItems.FirstOrDefault(item => item.Count < 1 || !item.IsAllowedByNpcGoodsList);
@@ -214,6 +218,7 @@ public static class TradeBuyTransactionPlanService
 				TradeBuyTransactionPlanStatus.BlockedInvalidBuyItem,
 				steps,
 				"TradeService.validateBuyItems -> count < 1 or item id not in trade goods list -> false",
+				priceSnapshot: input.PriceSnapshot,
 				rejectedItem: invalidItem);
 
 		steps.Add(TradeBuyTransactionStep.SnapshotInventoryFreeSlots);
@@ -237,7 +242,8 @@ public static class TradeBuyTransactionPlanService
 					TradeBuyTransactionPlanStatus.BlockedNotEnoughKinah,
 					steps,
 					"TradeService.performBuyTransaction -> useKinah && !tradeList.calculateBuyListPrice -> STR_MSG_NOT_ENOUGH_MONEY",
-					requiredKinah: requiredKinah);
+					requiredKinah: requiredKinah,
+					priceSnapshot: input.PriceSnapshot);
 			}
 		}
 
@@ -252,7 +258,8 @@ public static class TradeBuyTransactionPlanService
 				"TradeService.performBuyTransaction -> !tradeList.calculateAbyssRewardBuyList due AP -> STR_MSG_NOT_ENOUGH_ABYSSPOINT",
 				requiredKinah: requiredKinah,
 				requiredAp: requiredAp,
-				requiredItems: requiredItems);
+				requiredItems: requiredItems,
+				priceSnapshot: input.PriceSnapshot);
 		}
 
 		var availableRequiredItems = input.AvailableRequiredItems ?? new Dictionary<int, long>();
@@ -267,6 +274,7 @@ public static class TradeBuyTransactionPlanService
 				requiredKinah: requiredKinah,
 				requiredAp: requiredAp,
 				requiredItems: requiredItems,
+				priceSnapshot: input.PriceSnapshot,
 				missingRequiredItem: missingRequiredItem);
 		}
 
@@ -280,6 +288,7 @@ public static class TradeBuyTransactionPlanService
 				requiredKinah: requiredKinah,
 				requiredAp: requiredAp,
 				requiredItems: requiredItems,
+				priceSnapshot: input.PriceSnapshot,
 				auditReason: "possibly used packet hack: tradeList.getRequiredAp() < 0");
 		}
 
@@ -292,7 +301,8 @@ public static class TradeBuyTransactionPlanService
 				"TradeService.performBuyTransaction -> freeSlots < tradeList.size() -> STR_MSG_FULL_INVENTORY",
 				requiredKinah: requiredKinah,
 				requiredAp: requiredAp,
-				requiredItems: requiredItems);
+				requiredItems: requiredItems,
+				priceSnapshot: input.PriceSnapshot);
 		}
 
 		steps.Add(TradeBuyTransactionStep.CheckLimitedItems);
@@ -306,6 +316,7 @@ public static class TradeBuyTransactionPlanService
 				requiredKinah: requiredKinah,
 				requiredAp: requiredAp,
 				requiredItems: requiredItems,
+				priceSnapshot: input.PriceSnapshot,
 				rejectedItem: limitedBlockedItem);
 		}
 
@@ -323,6 +334,7 @@ public static class TradeBuyTransactionPlanService
 			requiredKinah: requiredKinah,
 			requiredAp: requiredAp,
 			requiredItems: requiredItems,
+			priceSnapshot: input.PriceSnapshot,
 			mutation: new TradeBuyTransactionMutationDescriptor(
 				requiredKinah,
 				requiredAp,
@@ -390,7 +402,8 @@ public static class TradeBuyTransactionPlanService
 		TradeBuyTransactionMutationDescriptor? mutation = null,
 		TradeBuyTransactionItemRequest? rejectedItem = null,
 		TradeBuyTransactionRequiredItem? missingRequiredItem = null,
-		string? auditReason = null)
+		string? auditReason = null,
+		PriceSnapshot? priceSnapshot = null)
 	{
 		return new TradeBuyTransactionPlan(
 			status,
@@ -403,7 +416,10 @@ public static class TradeBuyTransactionPlanService
 			mutation,
 			rejectedItem,
 			missingRequiredItem,
-			auditReason);
+			auditReason)
+		{
+			PriceSnapshot = priceSnapshot,
+		};
 	}
 }
 
