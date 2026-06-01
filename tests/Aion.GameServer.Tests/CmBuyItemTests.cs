@@ -30,13 +30,19 @@ public sealed class CmBuyItemTests
 			GameConnectionState.Authed));
 	}
 
-	[Fact]
-	public void ReadFrom_ReadsSellerActionAmountAndItemsLikeJava()
+	[Theory]
+	[InlineData(1)]
+	[InlineData(13)]
+	[InlineData(14)]
+	[InlineData(15)]
+	[InlineData(16)]
+	[InlineData(17)]
+	public void ReadFrom_ReadsTradeListActionsAmountAndItemsLikeJava(int tradeActionId)
 	{
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
 		buffer.WriteD(SellerObjectId);
-		buffer.WriteH(13);
+		buffer.WriteH(tradeActionId);
 		buffer.WriteH(2);
 		buffer.WriteD(100000001);
 		buffer.WriteQ(1);
@@ -46,7 +52,7 @@ public sealed class CmBuyItemTests
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 
 		Assert.Equal(SellerObjectId, packet.SellerObjectId);
-		Assert.Equal(13, packet.TradeActionId);
+		Assert.Equal(tradeActionId, packet.TradeActionId);
 		Assert.Equal(2, packet.Amount);
 		Assert.False(packet.IsAudit);
 		Assert.Null(packet.AuditItem);
