@@ -85,6 +85,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmCraftStartCompositionPlan>? _cmCraftStartCompositionPlanObserver;
 	private readonly Action<CmBuyItemHandlerCompositionPlan>? _cmBuyItemHandlerCompositionPlanObserver;
 	private readonly Action<CmBuyItemSideEffectOutcomePlan>? _cmBuyItemSideEffectOutcomePlanObserver;
+	private readonly Action<PrivateStoreCreatePlan>? _privateStoreCreatePlanObserver;
+	private readonly Action<PrivateStoreNameOpenCompositionPlan>? _privateStoreNameOpenCompositionPlanObserver;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
@@ -164,6 +166,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null,
 		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null,
 		Action<CmBuyItemSideEffectOutcomePlan>? cmBuyItemSideEffectOutcomePlanObserver = null,
+		Action<PrivateStoreCreatePlan>? privateStoreCreatePlanObserver = null,
+		Action<PrivateStoreNameOpenCompositionPlan>? privateStoreNameOpenCompositionPlanObserver = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
@@ -216,6 +220,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmCraftStartCompositionPlanObserver = cmCraftStartCompositionPlanObserver;
 		_cmBuyItemHandlerCompositionPlanObserver = cmBuyItemHandlerCompositionPlanObserver;
 		_cmBuyItemSideEffectOutcomePlanObserver = cmBuyItemSideEffectOutcomePlanObserver;
+		_privateStoreCreatePlanObserver = privateStoreCreatePlanObserver;
+		_privateStoreNameOpenCompositionPlanObserver = privateStoreNameOpenCompositionPlanObserver;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
@@ -815,15 +821,19 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 				}
 				break;
-			case CmPrivateStore:
+			case CmPrivateStore privateStore:
 				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE.runImpl closes the private store when no
 				// items are listed, otherwise calls PrivateStoreService.createStoreWithItems. Live store mutation,
 				// validation, packet fanout, and persistence remain deferred; this unit is parser-only.
+				if (_activePlayer != null)
+					_privateStoreCreatePlanObserver?.Invoke(CreatePrivateStoreCreatePlan(privateStore, _activePlayer));
 				break;
-			case CmPrivateStoreName:
+			case CmPrivateStoreName privateStoreName:
 				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE_NAME.runImpl calls
 				// PrivateStoreService.openPrivateStore(activePlayer, name). Existing C# open-plan diagnostics
 				// remain non-live; handler wiring is deferred until store state mutation is ported.
+				if (_activePlayer != null)
+					_privateStoreNameOpenCompositionPlanObserver?.Invoke(CreatePrivateStoreNameOpenPlan(privateStoreName, _activePlayer));
 				break;
 			case CmBrokerList brokerList:
 				if (_activePlayer != null)
@@ -4100,6 +4110,60 @@ public sealed class GameServerConnection : BaseClientConnection
 			plan,
 			player?.ObjectId,
 			repurchaseStateSnapshots));
+	}
+
+	private static PrivateStoreCreatePlan CreatePrivateStoreCreatePlan(CmPrivateStore packet, Player player)
+	{
+		// Java parity: CM_PRIVATE_STORE.runImpl -> closePrivateStore/createStoreWithItems.
+		// Handler diagnostics hydrate the disabled planner from current player snapshots only.
+		var context = new PrivateStoreCreatePlayerContext(
+			player.ObjectId,
+			(int)player.CreatureState,
+			IsPrivateStoreOpen(player),
+			player.IsFlying(),
+			player.Movement.Mask != MovementMask.Immediate,
+			player.IsInState(PlayerCreatureState.WeaponEquipped),
+			player.IsTrading,
+			player.IsInRideMode,
+			player.VisualState != PlayerVisualStates.Visible && player.VisualState != PlayerVisualStates.Blinking,
+			IsDead(player),
+			player.IsInState(PlayerCreatureState.Chair));
+
+		var itemContexts = player.InventoryItems
+			.GroupBy(item => item.ObjectId)
+			.ToDictionary(
+				group => group.Key,
+				group =>
+				{
+					var item = group.First();
+					return new PrivateStoreCreateItemContext(
+						item.ObjectId,
+						item.ItemId,
+						item.Count,
+						ItemExistsAndIdMatches: true,
+						ItemIsPackCountAboveZeroOrTradeable: item.PackCount > 0,
+						item.IsEquipped);
+				});
+
+		return PrivateStoreCreatePlanService.CreateDisabledPlan(packet, context, itemContexts);
+	}
+
+	private static PrivateStoreNameOpenCompositionPlan CreatePrivateStoreNameOpenPlan(CmPrivateStoreName packet, Player player)
+	{
+		// Java parity: CM_PRIVATE_STORE_NAME.runImpl -> PrivateStoreService.openPrivateStore(activePlayer, name).
+		// Live store-message mutation and SM_PRIVATE_STORE_NAME fanout remain deferred.
+		var context = new PrivateStoreNameOpenCompositionContext(player.ObjectId, IsPrivateStoreOpen(player));
+		return PrivateStoreNameOpenCompositionPlanService.CreateDisabledPlan(packet, context);
+	}
+
+	private static bool IsPrivateStoreOpen(Player player)
+	{
+		return player.IsInState(PlayerCreatureState.PrivateShop) || player.PrivateStoreItems.Count > 0;
+	}
+
+	private static bool IsDead(Player player)
+	{
+		return player.LifeStats?.CurrentHp <= 0 || player.CreatureState == PlayerCreatureState.Dead;
 	}
 
 	private static IReadOnlySet<int> ResolveBuyItemRepurchasableItemObjectIds(
