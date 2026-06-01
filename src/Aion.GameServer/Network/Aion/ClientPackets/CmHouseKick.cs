@@ -15,6 +15,6 @@ public sealed class CmHouseKick : GameClientPacket
 	{
 		// Java parity: network/aion/clientpackets/CM_HOUSE_KICK.readImpl.
 		Option = buffer.ReadC();
-		_ = buffer.ReadH();
+		_ = buffer.ReadSignedH();
 	}
 }
