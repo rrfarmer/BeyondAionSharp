@@ -7207,6 +7207,45 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesGroupDataExchangePacket()
+	{
+		var nearbyExchange = Assert.IsType<CmGroupDataExchange>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(79, buffer =>
+			{
+				buffer.WriteC(1);
+				buffer.WriteD(3);
+				buffer.WriteB(new byte[] { 1, 2, 255 });
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(1, nearbyExchange.Action);
+		Assert.Equal(0, nearbyExchange.GroupType);
+		Assert.Equal(0, nearbyExchange.Unknown2);
+		Assert.Equal(new byte[] { 1, 2, 255 }, nearbyExchange.Data);
+
+		var teamExchange = Assert.IsType<CmGroupDataExchange>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(79, buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteC(1);
+				buffer.WriteC(7);
+				buffer.WriteD(4);
+				buffer.WriteB(new byte[] { 10, 11, 12, 13 });
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(2, teamExchange.Action);
+		Assert.Equal(1, teamExchange.GroupType);
+		Assert.Equal(7, teamExchange.Unknown2);
+		Assert.Equal(new byte[] { 10, 11, 12, 13 }, teamExchange.Data);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(79, buffer =>
+		{
+			buffer.WriteC(1);
+			buffer.WriteD(0);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(

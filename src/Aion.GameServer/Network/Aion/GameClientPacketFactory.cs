@@ -65,6 +65,7 @@ public static class GameClientPacketFactory
 		Register(75, states => new CmHouseDecorate(75, states), GameConnectionState.InGame);
 		Register(76, states => new CmLegionWarehouseKinah(76, states), GameConnectionState.InGame);
 		Register(78, states => new CmChargeItem(78, states), GameConnectionState.InGame);
+		Register(79, states => new CmGroupDataExchange(79, states), GameConnectionState.InGame);
 		Register(80, states => new CmDeleteQuest(80, states), GameConnectionState.InGame);
 		Register(81, states => new CmPlayMovieEnd(81, states), GameConnectionState.InGame);
 		Register(82, states => new CmHouseEdit(82, states), GameConnectionState.InGame);
