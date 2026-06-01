@@ -538,6 +538,7 @@ public class GamePacketTests
 		Assert.Equal(Convert.FromHexString("D20400002A000000"), SerializeUnencryptedPayload(new SmTimeCheck(42, () => 1234)));
 		Assert.Equal(Convert.FromHexString("03000000010203"), SerializeUnencryptedPayload(new SmChatInit([1, 2, 3])));
 		Assert.Equal(Convert.FromHexString("00616263000000"), SerializeUnencryptedPayload(new SmSecurityToken("abc")));
+		Assert.Equal(new byte[66], SerializeUnencryptedPayload(new SmGfWebshopTokenResponse(string.Empty)));
 		Assert.Equal(Convert.FromHexString("03"), SerializeUnencryptedPayload(new SmFriendStatus(3)));
 		Assert.Equal(Convert.FromHexString("D204000000"), SerializeUnencryptedPayload(new SmCharacterList(playOk2: 1234)));
 		Assert.Equal(Convert.FromHexString("16000000"), SerializeUnencryptedPayload(new SmCreateCharacter(SmCreateCharacter.ResponseOpenCreationWindow)));
@@ -7020,6 +7021,16 @@ public class GamePacketTests
 			buffer.WriteD(700001);
 			buffer.WriteD(1001);
 		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesGfWebshopTokenRequestPacket()
+	{
+		Assert.IsType<CmGfWebshopTokenRequest>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(229, _ => { }), GameConnectionState.InGame)
+		);
+
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(229, _ => { }), GameConnectionState.Authed));
 	}
 
 	[Fact]

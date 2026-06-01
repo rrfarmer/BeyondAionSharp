@@ -155,6 +155,7 @@ public static class GameClientPacketFactory
 		Register(223, states => new CmHousePayRent(223, states), GameConnectionState.InGame);
 		Register(224, states => new CmUseHouseObject(224, states), GameConnectionState.InGame);
 		Register(225, states => new CmReleaseObject(225, states), GameConnectionState.InGame);
+		Register(229, states => new CmGfWebshopTokenRequest(229, states), GameConnectionState.InGame);
 		Register(230, states => new CmShowFriendList(230, states), GameConnectionState.InGame);
 		Register(233, states => new CmBonusTitle(233, states), GameConnectionState.InGame);
 		Register(234, states => new CmUseChargeSkill(234, states), GameConnectionState.InGame);
