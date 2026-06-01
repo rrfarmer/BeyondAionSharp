@@ -32,23 +32,26 @@ public sealed class SmRepurchaseTests
 	[Fact]
 	public void WritePayload_WritesRepurchaseItemsWithBlobThenPrice()
 	{
-		var template = Template(SwordItemId);
+		var template = Template(SimpleItemId);
 		var item = new InventoryItem
 		{
 			ObjectId = 7001,
-			ItemId = SwordItemId,
+			ItemId = SimpleItemId,
 			Count = 1,
 			OwnerId = 1001,
 			Location = 0,
 			Slot = 65535,
-			Color = 0x112233,
-			Enchant = 3,
 		};
 
 		var payload = SerializeUnencryptedPayload(
 			new SmRepurchase(
 				targetObjectId: 9001,
 				items: [new RepurchasePacketItem(item, template, RepurchasePrice: 12_345)]));
+
+		Assert.Equal(
+			Convert.FromHexString("29230000010000000100591B000001E1F50524008138010000002200000100010000000000000000000000000000000000000000000000000000000012003930000000000000"),
+			payload);
+
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal(9001, reader.ReadD());
@@ -87,8 +90,8 @@ public sealed class SmRepurchaseTests
 			Race: "PC_ALL",
 			MaxStackCount: 1,
 			Price: 0,
-			ValidEquipmentSlots: 1);
+			ValidEquipmentSlots: 0);
 	}
 
-	private const int SwordItemId = 100000001;
+	private const int SimpleItemId = 100000001;
 }
