@@ -237,6 +237,63 @@ public sealed class FindGroupRecruitmentPlanService
 			snapshots,
 			SmFindGroup.ShowApplications(nowEpochSeconds, snapshots));
 	}
+
+	public FindGroupJoinedTeamPlan OnJoinedTeam(
+		Player player,
+		FindGroupRecruitmentSubject currentTeam,
+		bool isLeader,
+		bool isFull,
+		int nowEpochSeconds,
+		byte serverId,
+		FindGroupInstanceGroupJoinState? instanceGroup = null)
+	{
+		// Java parity: FindGroupService.onJoinedTeam first removes a qualifying server-wide
+		// instance-group registration, then removes applications, removes the old solo
+		// recruitment with unknown3=16, and either re-adds it as the current team or removes
+		// the full team's recruitment. This is a disabled planner: callers must dispatch nothing.
+		var instanceGroupRemoval = new FindGroupInstanceGroupRemovalPlan(
+			instanceGroup is not null
+				&& instanceGroup.PlayerObjectId == player.ObjectId
+				&& instanceGroup.MemberCount >= instanceGroup.MinMembers,
+			"instanceGroups.remove(player.getObjectId()) when members >= minMembers");
+		var applicationRemoval = RemoveApplication(player);
+		var soloRecruitmentRemoval = RemoveRecruitment(
+			player.ObjectId,
+			serverId,
+			unknown1: 0,
+			unknown2: 0,
+			unknown3: 16);
+
+		FindGroupRecruitmentMutationPlan? teamRecruitmentAdd = null;
+		FindGroupRecruitmentMutationPlan? fullTeamRecruitmentRemoval = null;
+
+		if (soloRecruitmentRemoval.RemovedRecruitment is not null && isLeader)
+		{
+			teamRecruitmentAdd = AddRecruitment(
+				player,
+				soloRecruitmentRemoval.RemovedRecruitment.Message,
+				soloRecruitmentRemoval.RemovedRecruitment.GroupType,
+				nowEpochSeconds,
+				currentTeam);
+		}
+		else if (isFull)
+		{
+			fullTeamRecruitmentRemoval = RemoveRecruitment(
+				currentTeam.ObjectId,
+				serverId,
+				unknown1: 0,
+				unknown2: 0,
+				unknown3: 0);
+		}
+
+		return new FindGroupJoinedTeamPlan(
+			instanceGroupRemoval,
+			applicationRemoval,
+			soloRecruitmentRemoval,
+			teamRecruitmentAdd,
+			fullTeamRecruitmentRemoval,
+			DispatchLiveSideEffects: false);
+	}
 }
 
 public enum FindGroupRecruitmentPlanStatus
@@ -254,6 +311,23 @@ public enum FindGroupApplicationPlanStatus
 	Removed,
 	Missing,
 }
+
+public sealed record FindGroupJoinedTeamPlan(
+	FindGroupInstanceGroupRemovalPlan InstanceGroupRemoval,
+	FindGroupApplicationMutationPlan ApplicationRemoval,
+	FindGroupRecruitmentMutationPlan SoloRecruitmentRemoval,
+	FindGroupRecruitmentMutationPlan? TeamRecruitmentAdd,
+	FindGroupRecruitmentMutationPlan? FullTeamRecruitmentRemoval,
+	bool DispatchLiveSideEffects);
+
+public sealed record FindGroupInstanceGroupJoinState(
+	int PlayerObjectId,
+	int MemberCount,
+	int MinMembers);
+
+public sealed record FindGroupInstanceGroupRemovalPlan(
+	bool ShouldRemove,
+	string JavaSource);
 
 public sealed record FindGroupRecruitmentMutationPlan(
 	FindGroupRecruitmentPlanStatus Status,
