@@ -16,6 +16,7 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly int _lastUpdate;
 	private readonly IReadOnlyList<int> _instanceMaskIds;
 	private readonly IReadOnlyList<FindGroupRecruitmentSnapshot> _recruitments;
+	private readonly IReadOnlyList<FindGroupApplicationSnapshot> _applications;
 	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
 	private readonly FindGroupInstanceApplicantSnapshot? _instanceApplicant;
 	private readonly IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> _instanceGroups;
@@ -33,6 +34,7 @@ public sealed class SmFindGroup : GameServerPacket
 		int lastUpdate = 0,
 		IReadOnlyList<int>? instanceMaskIds = null,
 		IReadOnlyList<FindGroupRecruitmentSnapshot>? recruitments = null,
+		IReadOnlyList<FindGroupApplicationSnapshot>? applications = null,
 		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null,
 		FindGroupInstanceApplicantSnapshot? instanceApplicant = null,
 		IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>? instanceGroups = null,
@@ -50,6 +52,7 @@ public sealed class SmFindGroup : GameServerPacket
 		_lastUpdate = lastUpdate;
 		_instanceMaskIds = instanceMaskIds ?? [];
 		_recruitments = recruitments ?? [];
+		_applications = applications ?? [];
 		_instanceGroupWindow = instanceGroupWindow;
 		_instanceApplicant = instanceApplicant;
 		_instanceGroups = instanceGroups ?? [];
@@ -79,6 +82,12 @@ public sealed class SmFindGroup : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 0 showRecruitments.
 		return new SmFindGroup(0, lastUpdate: lastUpdate, recruitments: recruitments);
+	}
+
+	public static SmFindGroup ShowApplications(int lastUpdate, IReadOnlyList<FindGroupApplicationSnapshot> applications)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 4 showApplications.
+		return new SmFindGroup(4, lastUpdate: lastUpdate, applications: applications);
 	}
 
 	public static SmFindGroup ShowEnterButtonInPrepareForEntryWindow(FindGroupInstanceGroupWindowSnapshot instanceGroup)
@@ -154,6 +163,21 @@ public sealed class SmFindGroup : GameServerPacket
 					buffer.WriteC(recruitment.MinLevel);
 					buffer.WriteC(recruitment.MaxLevel);
 					buffer.WriteD(recruitment.LastUpdate);
+				}
+				break;
+			case 4:
+				buffer.WriteH(_applications.Count);
+				buffer.WriteH(_applications.Count);
+				buffer.WriteD(_lastUpdate);
+				foreach (var application in _applications)
+				{
+					buffer.WriteD(application.PlayerObjectId);
+					buffer.WriteC(application.GroupType);
+					buffer.WriteS(application.Message);
+					buffer.WriteS(application.PlayerName);
+					buffer.WriteC(application.ClassId);
+					buffer.WriteC(application.Level);
+					buffer.WriteD(application.LastUpdate);
 				}
 				break;
 			case 1:
@@ -294,6 +318,15 @@ public sealed record FindGroupRecruitmentSnapshot(
 	byte Size,
 	byte MinLevel,
 	byte MaxLevel,
+	int LastUpdate);
+
+public sealed record FindGroupApplicationSnapshot(
+	int PlayerObjectId,
+	byte GroupType,
+	string Message,
+	string PlayerName,
+	byte ClassId,
+	byte Level,
 	int LastUpdate);
 
 public sealed record FindGroupInstanceApplicantSnapshot(int PlayerObjectId, byte ClassId, int Level, string Name);

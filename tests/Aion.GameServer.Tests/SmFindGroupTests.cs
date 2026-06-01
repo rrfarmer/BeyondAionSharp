@@ -30,6 +30,28 @@ public sealed class SmFindGroupTests
 	}
 
 	[Fact]
+	public void WritePayload_ShowApplicationsMatchesJavaShape()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.ShowApplications(
+				0x01020305,
+				[
+					new FindGroupApplicationSnapshot(
+						PlayerObjectId: 0x01020304,
+						GroupType: 1,
+						Message: "Apply",
+						PlayerName: "Applicant",
+						ClassId: 5,
+						Level: 65,
+						LastUpdate: 0x01020305)
+				]));
+
+		Assert.Equal(
+			Convert.FromHexString("04010001000503020104030201014100700070006C00790000004100700070006C006900630061006E0074000000054105030201"),
+			payload);
+	}
+
+	[Fact]
 	public void WritePayload_EnableRegisterForInstancesMatchesJavaGolden()
 	{
 		var payload = SerializeUnencryptedPayload(SmFindGroup.EnableRegisterForInstances([300110000, 300150000]));
