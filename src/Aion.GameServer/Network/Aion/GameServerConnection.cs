@@ -460,6 +460,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmGroupDataExchange:
 				// Java parity: network/aion/clientpackets/CM_GROUP_DATA_EXCHANGE.runImpl broadcasts client data to nearby/group/team recipients; deferred.
 				break;
+			case CmFindGroup:
+				// Java parity: network/aion/clientpackets/CM_FIND_GROUP.runImpl dispatches FindGroupService actions; deferred.
+				break;
 			case CmGfWebshopTokenRequest:
 				// Java parity: network/aion/clientpackets/CM_GF_WEBSHOP_TOKEN_REQUEST.runImpl sends an empty token response.
 				await SendPacketAsync(new SmGfWebshopTokenResponse(string.Empty));

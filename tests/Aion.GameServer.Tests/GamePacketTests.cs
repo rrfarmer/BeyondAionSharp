@@ -7246,6 +7246,50 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesFindGroupPacket()
+	{
+		var recruitList = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer => buffer.WriteC(0)), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(0, recruitList.Action);
+		Assert.Equal(0, recruitList.PlayerOrTeamId);
+		Assert.Null(recruitList.Message);
+
+		var sendOffer = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteD(700100);
+				buffer.WriteS("Need cleric");
+				buffer.WriteC(3);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(2, sendOffer.Action);
+		Assert.Equal(700100, sendOffer.PlayerOrTeamId);
+		Assert.Equal("Need cleric", sendOffer.Message);
+		Assert.Equal(3, sendOffer.GroupType);
+
+		var instanceGroup = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(8);
+				buffer.WriteD(300320000);
+				buffer.WriteC(0);
+				buffer.WriteS("Dredgion now");
+				buffer.WriteC(6);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(8, instanceGroup.Action);
+		Assert.Equal(300320000, instanceGroup.InstanceMaskId);
+		Assert.Equal("Dredgion now", instanceGroup.Message);
+		Assert.Equal(6, instanceGroup.MinMembers);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer => buffer.WriteC(0)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
