@@ -51,6 +51,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"PlayerGroupInviteRequestService and PlayerAllianceInviteRequestService can expose disabled FindGroupService.onJoinedTeam plans after accepted invite membership mutation.",
 				"FindGroupRecruitmentPlanService.OnJoinedTeam removes stored instance-group registration when current-team size reaches minMembers.",
 				"FindGroupInstanceApplicationInviteDispatchPlanService can compose action 12 group/alliance invite request-service results without sending packets.",
+				"FindGroupSideEffectDispatchAuditService can audit direct packet and world-broadcast intents without calling the live connection registry.",
 			],
 			"Java sources reviewed: CM_FIND_GROUP.runImpl and services/findgroup/FindGroupService.");
 	}
