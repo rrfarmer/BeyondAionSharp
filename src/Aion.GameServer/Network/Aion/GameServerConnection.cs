@@ -3976,7 +3976,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
-		var sellActionFacts = ResolveBuyItemSellActionFacts(player, packet, targetKind);
+		var npcTradeFunctionFacts = ResolveBuyItemNpcTradeFunctionFacts(player, packet, targetKind);
+		var sellActionFacts = ResolveBuyItemSellActionFacts(player, packet, targetKind, npcTradeFunctionFacts);
 		var sellToShopPlan = ResolveBuyItemSellToShopPlan(player, packet, targetKind, sellActionFacts);
 		var sellForApToShopPlan = ResolveBuyItemSellForApToShopPlan(player, packet, sellActionFacts);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
@@ -3984,6 +3985,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				packet,
 				PlayerPresent: player != null,
 				TargetKind: targetKind,
+				NpcCanBuy: npcTradeFunctionFacts?.NpcCanBuy ?? true,
+				NpcCanPurchase: npcTradeFunctionFacts?.NpcCanPurchase ?? false,
+				NpcCanSell: npcTradeFunctionFacts?.NpcCanSell ?? true,
 				PurchaseTemplate: sellActionFacts?.PurchaseTemplate,
 				SellToShopPlan: sellToShopPlan,
 				SellForApToShopPlan: sellForApToShopPlan));
@@ -3994,11 +3998,34 @@ public sealed class GameServerConnection : BaseClientConnection
 	private CmBuyItemSellActionFactAdapterPlan? ResolveBuyItemSellActionFacts(
 		Player? player,
 		CmBuyItem packet,
-		CmBuyItemRunTargetKind targetKind)
+		CmBuyItemRunTargetKind targetKind,
+		CmBuyItemNpcTradeFunctionFactAdapterPlan? npcTradeFunctionFacts)
 	{
 		if (player == null
 			|| targetKind != CmBuyItemRunTargetKind.Npc
 			|| packet.TradeActionId != CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId
+			|| npcTradeFunctionFacts == null)
+			return null;
+
+		var tradeLists = _buyItemTradeLists ?? _runtimeContext?.DataManager?.StaticData.TradeLists;
+		if (tradeLists == null)
+			return null;
+
+		return CmBuyItemSellActionFactAdapterService.CreatePlan(
+			new CmBuyItemSellActionFactAdapterInput(
+				NpcId: npcTradeFunctionFacts.NpcId,
+				NpcCanBuy: npcTradeFunctionFacts.NpcCanBuy,
+				NpcCanPurchase: npcTradeFunctionFacts.NpcCanPurchase),
+			tradeLists);
+	}
+
+	private CmBuyItemNpcTradeFunctionFactAdapterPlan? ResolveBuyItemNpcTradeFunctionFacts(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
 			|| _world == null
 			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
 			|| gameObject is not IWorldNpcObject npc)
@@ -4008,15 +4035,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (tradeLists == null)
 			return null;
 
-		// Java parity: CM_BUY_ITEM.runImpl action 1 uses npc.getNpcId() for
-		// getPurchaseTemplate. Function flags still use the existing diagnostic
-		// defaults until NPC function facts are safely exposed to this socket path.
-		return CmBuyItemSellActionFactAdapterService.CreatePlan(
-			new CmBuyItemSellActionFactAdapterInput(
-				NpcId: npc.TemplateId,
-				NpcCanBuy: true,
-				NpcCanPurchase: false),
-			tradeLists);
+		// Java parity: Npc.canSell/canBuy/canPurchase combine TalkInfo
+		// func_dialogs with TradeListData presence before CM_BUY_ITEM dispatch.
+		return CmBuyItemNpcTradeFunctionFactAdapterService.CreatePlan(npc.Template, tradeLists);
 	}
 
 	private TradeSellToShopPlan? ResolveBuyItemSellToShopPlan(

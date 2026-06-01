@@ -66,7 +66,10 @@ public sealed class GameServerConnectionBuyItemTests
 		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
 		fixture.World.TryAddObject(
 			9001,
-			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0)));
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -94,7 +97,10 @@ public sealed class GameServerConnectionBuyItemTests
 		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
 		fixture.World.TryAddObject(
 			9001,
-			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0)));
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -134,7 +140,11 @@ public sealed class GameServerConnectionBuyItemTests
 		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
 		fixture.World.TryAddObject(
 			9001,
-			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [103]));
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -190,7 +200,11 @@ public sealed class GameServerConnectionBuyItemTests
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
 		fixture.World.TryAddObject(
 			9001,
-			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [103]));
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -243,7 +257,11 @@ public sealed class GameServerConnectionBuyItemTests
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
 		fixture.World.TryAddObject(
 			9001,
-			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [103]));
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -274,7 +292,11 @@ public sealed class GameServerConnectionBuyItemTests
 		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
 		fixture.World.TryAddObject(
 			9001,
-			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [103]));
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -289,6 +311,35 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal("NORMAL", dispatch.PurchaseTemplate?.NpcType);
 		Assert.Null(dispatch.SellToShopPlan);
 		Assert.Null(dispatch.SellForApToShopPlan);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.MissingSellToShopPlan, outcome.SellToShopOutcomePlan!.Status);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionUsesFunctionFactsToSkipUnsupportedNpc()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateTradeLists(
+				new TradeListTemplateSummary(700001, [129], NpcType: "ABYSS", BuyPriceRate: 35)));
+		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner, plan.Status);
+		Assert.NotNull(plan.SellToShopPlan);
+		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.SkippedNpcCannotBuyOrPurchase, plan.SellToShopPlan!.Status);
+		Assert.Null(plan.SellToShopPlan.Dispatch);
 
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
 		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
@@ -606,7 +657,11 @@ public sealed class GameServerConnectionBuyItemTests
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
 
-	private static WorldNpc CreateNpc(int objectId, int templateId, WorldPosition position)
+	private static WorldNpc CreateNpc(
+		int objectId,
+		int templateId,
+		WorldPosition position,
+		IReadOnlyList<int>? functionDialogIds = null)
 	{
 		var template = new NpcTemplateSummary(
 			templateId,
@@ -617,7 +672,8 @@ public sealed class GameServerConnectionBuyItemTests
 			Rating: "NORMAL",
 			Race: "NONE",
 			Tribe: "NONE",
-			Type: "NPC");
+			Type: "NPC",
+			FunctionDialogIds: functionDialogIds);
 		return new WorldNpc(objectId, templateId, template, position);
 	}
 
