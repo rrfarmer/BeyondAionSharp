@@ -32,7 +32,7 @@ public sealed class CmBuyItem : GameClientPacket
 	{
 		// Java parity: network/aion/clientpackets/CM_BUY_ITEM.readImpl.
 		SellerObjectId = buffer.ReadD();
-		TradeActionId = buffer.ReadH();
+		TradeActionId = buffer.ReadSignedH();
 		Amount = buffer.ReadH();
 
 		if (Amount > MaxItemAmount)

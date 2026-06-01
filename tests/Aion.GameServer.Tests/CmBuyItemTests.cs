@@ -97,6 +97,25 @@ public sealed class CmBuyItemTests
 		Assert.Null(packet.AuditItem);
 	}
 
+	[Fact]
+	public void ReadFrom_HighBitTradeActionIdReadsAsJavaSignedShort()
+	{
+		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(SellerObjectId);
+		buffer.WriteH(0xFFFF);
+		buffer.WriteH(0);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.Equal(SellerObjectId, packet.SellerObjectId);
+		Assert.Equal(-1, packet.TradeActionId);
+		Assert.Equal(0, packet.Amount);
+		Assert.False(packet.IsAudit);
+		Assert.Empty(packet.Items);
+		Assert.Null(packet.AuditItem);
+	}
+
 	[Theory]
 	[InlineData(2)]
 	[InlineData(13)]
