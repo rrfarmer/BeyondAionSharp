@@ -1,6 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;
 
@@ -359,6 +360,90 @@ public sealed class FindGroupRecruitmentPlanService
 			]);
 	}
 
+	public FindGroupInstanceApplicationPlan SendInstanceApplication(Player applicant, Player? recruiter)
+	{
+		// Java parity: FindGroupService.sendInstanceApplication resolves the target player through
+		// World.getPlayer(playerOrTeamId) and sends SM_FIND_GROUP action 11 only when online.
+		if (recruiter is null)
+		{
+			return new FindGroupInstanceApplicationPlan(
+				FindGroupInstanceApplicationPlanStatus.MissingRecipient,
+				DirectPacketIntents: [],
+				InviteIntent: null);
+		}
+
+		return new FindGroupInstanceApplicationPlan(
+			FindGroupInstanceApplicationPlanStatus.ApplicationSent,
+			DirectPacketIntents:
+			[
+				new FindGroupDirectPacketIntent(
+					recruiter.ObjectId,
+					SmFindGroup.SendInstanceGroupApplicationAsWhisperChatMessage(
+						new FindGroupInstanceApplicantSnapshot(
+							applicant.ObjectId,
+							(byte)FindGroupRecruitmentSubject.ToJavaClassId(applicant.PlayerClass),
+							applicant.Level,
+							applicant.Name)),
+					"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(applicant))")
+			],
+			InviteIntent: null);
+	}
+
+	public FindGroupInstanceApplicationPlan SendInstanceApplicationResult(
+		Player responder,
+		Player? applicant,
+		int applicantId,
+		byte instanceApplicationReply)
+	{
+		// Java parity: FindGroupService.sendInstanceApplicationResult resolves the applicant through
+		// World.getPlayer(applicantId). Accept plans group/alliance invite; denial sends localized whisper.
+		if (applicant is null)
+		{
+			return new FindGroupInstanceApplicationPlan(
+				FindGroupInstanceApplicationPlanStatus.MissingApplicant,
+				DirectPacketIntents: [],
+				InviteIntent: null);
+		}
+
+		if (instanceApplicationReply == 1)
+		{
+			if (!_instanceGroups.TryGetValue(responder.ObjectId, out var instanceGroup))
+			{
+				return new FindGroupInstanceApplicationPlan(
+					FindGroupInstanceApplicationPlanStatus.MissingInstanceGroup,
+					DirectPacketIntents: [],
+					InviteIntent: null);
+			}
+
+			var inviteKind = instanceGroup.MinMembers <= 6
+				? FindGroupInstanceInviteKind.Group
+				: FindGroupInstanceInviteKind.Alliance;
+			return new FindGroupInstanceApplicationPlan(
+				inviteKind == FindGroupInstanceInviteKind.Group
+					? FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite
+					: FindGroupInstanceApplicationPlanStatus.AcceptedAllianceInvite,
+				DirectPacketIntents: [],
+				new FindGroupInstanceInviteIntent(
+					inviteKind,
+					responder.ObjectId,
+					applicant.ObjectId,
+					inviteKind == FindGroupInstanceInviteKind.Group
+						? "PlayerGroupService.inviteToGroup(responder, applicant)"
+						: "PlayerAllianceService.inviteToAlliance(responder, applicant)"));
+		}
+
+		return new FindGroupInstanceApplicationPlan(
+			FindGroupInstanceApplicationPlanStatus.Declined,
+			DirectPacketIntents:
+			[
+				new FindGroupDirectPacketIntent(
+					applicant.ObjectId,
+					new SmMessage(responder, ChatUtil.L10n(1400217)!, 4),
+					"PacketSendUtility.sendPacket(applicant, new SM_MESSAGE(responder, ChatUtil.l10n(1400217), ChatType.WHISPER))")
+			],
+			InviteIntent: null);
+	}
+
 	public FindGroupJoinedTeamPlan OnJoinedTeam(
 		Player player,
 		FindGroupRecruitmentSubject currentTeam,
@@ -442,6 +527,23 @@ public enum FindGroupInstanceGroupPlanStatus
 	Shown,
 }
 
+public enum FindGroupInstanceApplicationPlanStatus
+{
+	ApplicationSent,
+	MissingRecipient,
+	AcceptedGroupInvite,
+	AcceptedAllianceInvite,
+	Declined,
+	MissingApplicant,
+	MissingInstanceGroup,
+}
+
+public enum FindGroupInstanceInviteKind
+{
+	Group,
+	Alliance,
+}
+
 public sealed record FindGroupJoinedTeamPlan(
 	FindGroupInstanceGroupRemovalPlan InstanceGroupRemoval,
 	FindGroupApplicationMutationPlan ApplicationRemoval,
@@ -514,6 +616,17 @@ public sealed record FindGroupInstanceGroupMemberInfoPlan(
 	FindGroupInstanceGroupPlanStatus Status,
 	FindGroupInstanceGroupMemberInfoSnapshot? MemberInfo,
 	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents);
+
+public sealed record FindGroupInstanceApplicationPlan(
+	FindGroupInstanceApplicationPlanStatus Status,
+	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents,
+	FindGroupInstanceInviteIntent? InviteIntent);
+
+public sealed record FindGroupInstanceInviteIntent(
+	FindGroupInstanceInviteKind Kind,
+	int InviterObjectId,
+	int InvitedObjectId,
+	string JavaSource);
 
 public sealed record FindGroupRecruitmentState(
 	int ObjectId,

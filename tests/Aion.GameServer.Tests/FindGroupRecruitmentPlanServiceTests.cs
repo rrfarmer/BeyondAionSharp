@@ -2,6 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -463,6 +464,110 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 		Assert.Equal(
 			Convert.FromHexString("10010001000503020100000000B050E311040302014100000001000000010000005200650063007200750069007400650072000000"),
 			SerializeUnencryptedPayload(direct.Packet));
+	}
+
+	[Fact]
+	public void SendInstanceApplication_OnlineRecruiterPlansJavaAction11Packet()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+		var recruiter = CreatePlayer(0x01020307, "Recruiter", "ELYOS", "GLADIATOR", 65);
+
+		var plan = service.SendInstanceApplication(applicant, recruiter);
+
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.ApplicationSent, plan.Status);
+		Assert.Null(plan.InviteIntent);
+		var direct = Assert.Single(plan.DirectPacketIntents);
+		Assert.Equal(recruiter.ObjectId, direct.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(applicant))", direct.JavaSource);
+		Assert.Equal(
+			Convert.FromHexString("0B04030201000000000000000000000005410000004100700070006C006900630061006E0074000000"),
+			SerializeUnencryptedPayload(direct.Packet));
+	}
+
+	[Fact]
+	public void SendInstanceApplication_MissingRecruiterDoesNotPlanPacket()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+
+		var plan = service.SendInstanceApplication(applicant, recruiter: null);
+
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.MissingRecipient, plan.Status);
+		Assert.Empty(plan.DirectPacketIntents);
+		Assert.Null(plan.InviteIntent);
+	}
+
+	[Fact]
+	public void SendInstanceApplicationResult_AcceptPlansGroupInviteWhenMinMembersAtMostSix()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS", "GLADIATOR", 65);
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+		service.RegisterInstanceGroup(responder, instanceMaskId: 0x11223344, message: "Entry", minMembers: 6, nowEpochSeconds: 0x01020305);
+
+		var plan = service.SendInstanceApplicationResult(responder, applicant, applicant.ObjectId, instanceApplicationReply: 1);
+
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite, plan.Status);
+		Assert.Empty(plan.DirectPacketIntents);
+		Assert.NotNull(plan.InviteIntent);
+		Assert.Equal(FindGroupInstanceInviteKind.Group, plan.InviteIntent!.Kind);
+		Assert.Equal(responder.ObjectId, plan.InviteIntent.InviterObjectId);
+		Assert.Equal(applicant.ObjectId, plan.InviteIntent.InvitedObjectId);
+		Assert.Equal("PlayerGroupService.inviteToGroup(responder, applicant)", plan.InviteIntent.JavaSource);
+	}
+
+	[Fact]
+	public void SendInstanceApplicationResult_AcceptPlansAllianceInviteWhenMinMembersAboveSix()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS", "GLADIATOR", 65);
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+		service.RegisterInstanceGroup(responder, instanceMaskId: 0x11223344, message: "Entry", minMembers: 7, nowEpochSeconds: 0x01020305);
+
+		var plan = service.SendInstanceApplicationResult(responder, applicant, applicant.ObjectId, instanceApplicationReply: 1);
+
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedAllianceInvite, plan.Status);
+		Assert.NotNull(plan.InviteIntent);
+		Assert.Equal(FindGroupInstanceInviteKind.Alliance, plan.InviteIntent!.Kind);
+		Assert.Equal("PlayerAllianceService.inviteToAlliance(responder, applicant)", plan.InviteIntent.JavaSource);
+	}
+
+	[Fact]
+	public void SendInstanceApplicationResult_DeclinePlansLocalizedWhisper()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS", "GLADIATOR", 65);
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+
+		var plan = service.SendInstanceApplicationResult(responder, applicant, applicant.ObjectId, instanceApplicationReply: 0);
+
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.Declined, plan.Status);
+		Assert.Null(plan.InviteIntent);
+		var direct = Assert.Single(plan.DirectPacketIntents);
+		Assert.Equal(applicant.ObjectId, direct.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(applicant, new SM_MESSAGE(responder, ChatUtil.l10n(1400217), ChatType.WHISPER))", direct.JavaSource);
+		Assert.Equal(
+			SerializeUnencryptedPayload(new SmMessage(responder, ChatUtil.L10n(1400217)!, 4)),
+			SerializeUnencryptedPayload(direct.Packet));
+	}
+
+	[Fact]
+	public void SendInstanceApplicationResult_AcceptMissingStateDoesNotPlanInvite()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS", "GLADIATOR", 65);
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS", "RANGER", 65);
+
+		var missingApplicant = service.SendInstanceApplicationResult(responder, null, applicant.ObjectId, instanceApplicationReply: 1);
+		var missingInstanceGroup = service.SendInstanceApplicationResult(responder, applicant, applicant.ObjectId, instanceApplicationReply: 1);
+
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.MissingApplicant, missingApplicant.Status);
+		Assert.Empty(missingApplicant.DirectPacketIntents);
+		Assert.Null(missingApplicant.InviteIntent);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.MissingInstanceGroup, missingInstanceGroup.Status);
+		Assert.Empty(missingInstanceGroup.DirectPacketIntents);
+		Assert.Null(missingInstanceGroup.InviteIntent);
 	}
 
 	private static Player CreatePlayer(int objectId, string name, string race, string playerClass, int level)
