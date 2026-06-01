@@ -84,8 +84,10 @@ public sealed class CmPet : GameClientPacket
 				SubType = buffer.ReadD();
 				EmotionId = buffer.ReadD();
 				break;
-			// Java also reads two D fields for EXTEND_EXPIRATION, but runImpl is a no-op.
-			// Deferred intentionally with the expiration system; see Phase 6 pet dead-branch audit.
+			case PetAction.ExtendExpiration:
+				EggObjectId = buffer.ReadD();
+				ObjectId = buffer.ReadD();
+				break;
 		}
 	}
 

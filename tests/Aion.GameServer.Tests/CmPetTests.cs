@@ -179,6 +179,22 @@ public sealed class CmPetTests
 	}
 
 	[Fact]
+	public void ReadFrom_ExtendExpirationReadsItemAndPetObjectIdsLikeJava()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteH((int)PetAction.ExtendExpiration);
+		buffer.WriteD(7001);
+		buffer.WriteD(8801);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.Equal(PetAction.ExtendExpiration, packet.Action);
+		Assert.Equal(7001, packet.EggObjectId);
+		Assert.Equal(8801, packet.ObjectId);
+	}
+
+	[Fact]
 	public void ReadFrom_UnknownActionKeepsJavaDefaultFields()
 	{
 		var packet = CreatePacket();
