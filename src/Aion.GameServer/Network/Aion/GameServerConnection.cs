@@ -452,6 +452,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_GF_WEBSHOP_TOKEN_REQUEST.runImpl sends an empty token response.
 				await SendPacketAsync(new SmGfWebshopTokenResponse(string.Empty));
 				break;
+			case CmChallengeList:
+				// Java parity: network/aion/clientpackets/CM_CHALLENGE_LIST.runImpl dispatches ChallengeTaskService list requests; deferred.
+				break;
 			case CmTimeCheck timeCheck:
 				// Java parity: network/aion/clientpackets/CM_TIME_CHECK.runImpl sends SM_AFTER_TIME_CHECK_4_7_5 before SM_TIME_CHECK.
 				await SendPacketAsync(new SmAfterTimeCheck475());

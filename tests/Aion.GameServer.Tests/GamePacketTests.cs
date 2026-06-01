@@ -7034,6 +7034,35 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesChallengeListPacket()
+	{
+		var challengeList = Assert.IsType<CmChallengeList>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(232, buffer =>
+			{
+				buffer.WriteC(255);
+				buffer.WriteD(7001);
+				buffer.WriteC(1);
+				buffer.WriteD(1001);
+				buffer.WriteD(20240601);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(255, challengeList.Action);
+		Assert.Equal(7001, challengeList.TaskOwner);
+		Assert.Equal(1, challengeList.OwnerType);
+		Assert.Equal(1001, challengeList.PlayerId);
+		Assert.Equal(20240601, challengeList.DateSince);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(232, buffer =>
+		{
+			buffer.WriteC(1);
+			buffer.WriteD(7001);
+			buffer.WriteC(0);
+			buffer.WriteD(1001);
+			buffer.WriteD(20240601);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(

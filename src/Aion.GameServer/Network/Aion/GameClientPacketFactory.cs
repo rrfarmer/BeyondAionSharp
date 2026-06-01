@@ -157,6 +157,7 @@ public static class GameClientPacketFactory
 		Register(225, states => new CmReleaseObject(225, states), GameConnectionState.InGame);
 		Register(229, states => new CmGfWebshopTokenRequest(229, states), GameConnectionState.InGame);
 		Register(230, states => new CmShowFriendList(230, states), GameConnectionState.InGame);
+		Register(232, states => new CmChallengeList(232, states), GameConnectionState.InGame);
 		Register(233, states => new CmBonusTitle(233, states), GameConnectionState.InGame);
 		Register(234, states => new CmUseChargeSkill(234, states), GameConnectionState.InGame);
 		Register(235, states => new CmTune(235, states), GameConnectionState.InGame);
