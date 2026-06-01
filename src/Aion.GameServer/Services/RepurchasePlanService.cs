@@ -63,6 +63,7 @@ public enum RepurchasePacketIntentKind
 	SendKinahUpdate,
 	SendRepurchasedItemAdd,
 	SendRepurchasedItemUpdate,
+	SendCubeSizeUpdate,
 }
 
 public sealed record RepurchaseOutcomeStepPlan(
@@ -517,6 +518,11 @@ public static class RepurchaseOutcomePlanService
 			item.ObjectId,
 			SmInventoryAddItem.ItemCollect,
 			"ItemService.addItem(player, repurchaseItem) uses DEFAULT_UPDATE_PREDICATE -> ItemAddType.ITEM_COLLECT for new cube items")));
+		intents.AddRange(repurchasePlan.AddedItems.Select(item => Disabled(
+			RepurchasePacketIntentKind.SendCubeSizeUpdate,
+			item.ObjectId,
+			SmCubeUpdate.PacketOpCode,
+			"ItemService.addItem(player, repurchaseItem) -> Storage.add -> ItemPacketService.sendStorageUpdatePacket sends SM_CUBE_UPDATE.cubeSize after the new cube item add")));
 		intents.AddRange(repurchasePlan.UpdatedItems.Select(item => Disabled(
 			RepurchasePacketIntentKind.SendRepurchasedItemUpdate,
 			item.ObjectId,

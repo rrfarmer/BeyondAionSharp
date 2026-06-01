@@ -286,6 +286,13 @@ public sealed class RepurchasePlanServiceTests
 				Assert.NotNull(intent.ItemObjectId);
 				Assert.Equal(SmInventoryAddItem.ItemCollect, intent.PacketMask);
 				Assert.Contains("ITEM_COLLECT", intent.JavaSource, StringComparison.Ordinal);
+			},
+			intent =>
+			{
+				Assert.Equal(RepurchasePacketIntentKind.SendCubeSizeUpdate, intent.Kind);
+				Assert.NotNull(intent.ItemObjectId);
+				Assert.Equal(SmCubeUpdate.PacketOpCode, intent.PacketMask);
+				Assert.Contains("SM_CUBE_UPDATE.cubeSize", intent.JavaSource, StringComparison.Ordinal);
 			});
 		var stateRemoval = Assert.IsType<RepurchaseStateItemRemovalPlan>(outcome.StateItemRemovalPlan);
 		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, stateRemoval.Status);
@@ -312,7 +319,7 @@ public sealed class RepurchasePlanServiceTests
 		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
 		Assert.True(outcome.WouldRemoveRepurchaseItems);
 		Assert.Equal(3, outcome.SuccessOperations.Count);
-		Assert.Equal(2, outcome.PacketIntents.Count);
+		Assert.Equal(3, outcome.PacketIntents.Count);
 		Assert.Null(outcome.StateItemRemovalPlan);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 	}
@@ -346,6 +353,7 @@ public sealed class RepurchasePlanServiceTests
 			intent.Kind == RepurchasePacketIntentKind.SendRepurchasedItemUpdate
 			&& intent.ItemObjectId == existingStack.ObjectId
 			&& intent.PacketMask == SmInventoryUpdateItem.IncreaseItemCollect);
+		Assert.DoesNotContain(mergeOutcome.PacketIntents, intent => intent.Kind == RepurchasePacketIntentKind.SendCubeSizeUpdate);
 		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, fullOutcome.Status);
 		var fullIntent = Assert.Single(fullOutcome.PacketIntents);
 		Assert.Equal(RepurchasePacketIntentKind.SendInventoryFullMessage, fullIntent.Kind);
