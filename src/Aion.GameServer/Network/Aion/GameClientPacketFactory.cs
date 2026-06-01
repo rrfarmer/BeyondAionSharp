@@ -57,6 +57,7 @@ public static class GameClientPacketFactory
 		Register(67, states => new CmExchangeLock(67, states), GameConnectionState.InGame);
 		Register(68, states => new CmExchangeOk(68, states), GameConnectionState.InGame);
 		Register(69, states => new CmExchangeCancel(69, states), GameConnectionState.InGame);
+		Register(70, states => new CmWindstream(70, states), GameConnectionState.InGame);
 		Register(71, states => new CmMotion(71, states), GameConnectionState.InGame);
 		Register(72, states => new CmHouseKick(72, states), GameConnectionState.InGame);
 		Register(73, states => new CmHouseSettings(73, states), GameConnectionState.InGame);

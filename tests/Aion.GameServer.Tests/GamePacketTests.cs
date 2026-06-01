@@ -7137,6 +7137,29 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesWindstreamPacket()
+	{
+		var windstream = Assert.IsType<CmWindstream>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(70, buffer =>
+			{
+				buffer.WriteD(300500);
+				buffer.WriteD(1250);
+				buffer.WriteD(7);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(300500, windstream.TeleportId);
+		Assert.Equal(1250, windstream.Distance);
+		Assert.Equal(7, windstream.State);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(70, buffer =>
+		{
+			buffer.WriteD(1);
+			buffer.WriteD(2);
+			buffer.WriteD(3);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
