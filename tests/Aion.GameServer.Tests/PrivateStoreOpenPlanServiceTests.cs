@@ -23,13 +23,14 @@ public sealed class PrivateStoreOpenPlanServiceTests
 	[Theory]
 	[InlineData(null)]
 	[InlineData("")]
-	public void CreatePlan_EmptyMessageBlocksBroadcast(string? message)
+	public void CreatePlan_EmptyMessageStillBroadcastsJavaEmptyStoreName(string? message)
 	{
 		var plan = PrivateStoreOpenPlanService.CreatePlan(playerObjectId: 9001, storeMessage: message);
 
-		Assert.Equal(PrivateStoreOpenPlanStatus.BlockedEmptyStoreMessage, plan.Status);
-		Assert.False(plan.ShouldBroadcastStoreName);
-		Assert.Null(plan.PrivateStoreNamePacket);
+		Assert.Equal(PrivateStoreOpenPlanStatus.PlanCreated, plan.Status);
+		Assert.True(plan.ShouldBroadcastStoreName);
+		Assert.NotNull(plan.PrivateStoreNamePacket);
+		Assert.Equal(string.Empty, plan.StoreMessage);
 	}
 
 	[Fact]

@@ -5,7 +5,6 @@ namespace Aion.GameServer.Services;
 public enum PrivateStoreOpenPlanStatus
 {
 	PlanCreated,
-	BlockedEmptyStoreMessage,
 }
 
 public sealed record PrivateStoreOpenPlan(
@@ -27,25 +26,15 @@ public static class PrivateStoreOpenPlanService
 		// Java parity: services/PrivateStoreService.openPrivateStore.
 		// Sets store message then broadcasts SM_PRIVATE_STORE_NAME to all visible players including self.
 		// Live player.getStore().setStoreMessage and broadcastPacket dispatch are deferred.
-		if (string.IsNullOrEmpty(storeMessage))
-		{
-			return new PrivateStoreOpenPlan(
-				PrivateStoreOpenPlanStatus.BlockedEmptyStoreMessage,
-				playerObjectId,
-				storeMessage,
-				PrivateStoreNamePacket: null,
-				ShouldBroadcastStoreName: false,
-				"PrivateStoreService.openPrivateStore -> store message is empty; SM_PRIVATE_STORE_NAME not broadcast"
-			);
-		}
+		var effectiveStoreMessage = storeMessage ?? string.Empty;
 
 		return new PrivateStoreOpenPlan(
 			PrivateStoreOpenPlanStatus.PlanCreated,
 			playerObjectId,
-			storeMessage,
-			new SmPrivateStoreName(playerObjectId, storeMessage),
+			effectiveStoreMessage,
+			new SmPrivateStoreName(playerObjectId, effectiveStoreMessage),
 			ShouldBroadcastStoreName: true,
-			"PrivateStoreService.openPrivateStore -> activePlayer.getStore().setStoreMessage(name) [live/deferred] -> broadcastPacket(SM_PRIVATE_STORE_NAME, true)"
+			"PrivateStoreService.openPrivateStore -> activePlayer.getStore().setStoreMessage(name) [live/deferred] -> broadcastPacket(SM_PRIVATE_STORE_NAME, true); empty/null names serialize as PrivateStore.getStoreMessage() empty string"
 		);
 	}
 }
