@@ -6684,6 +6684,13 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesHouseTeleportBackPacket()
+	{
+		Assert.IsType<CmHouseTeleportBack>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(95, _ => { }), GameConnectionState.InGame));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(95, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesLevelReadyInGame()
 	{
 		Assert.IsType<CmLevelReady>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.InGame));

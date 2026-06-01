@@ -459,6 +459,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_TELEPORT_SELECT.runImpl validates an NPC teleporter and dispatches TeleportService.teleport.
 				// Teleporter templates, NPC known-list validation, audit logging, and airport route side effects remain unported.
 				break;
+			case CmHouseTeleportBack:
+				// Java parity: network/aion/clientpackets/CM_HOUSE_TELEPORT_BACK.runImpl uses battle-return teleport state; deferred.
+				break;
 			case CmPositionSelf:
 				// Java parity: network/aion/clientpackets/CM_POSITION_SELF.runImpl has no side effect.
 				break;
