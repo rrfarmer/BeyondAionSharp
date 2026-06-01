@@ -6030,6 +6030,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_RejectsRetiredGodstoneSocketOpcode()
+	{
+		// Java parity: AionClientPacketFactory leaves opcode 91 / CM_GODSTONE_SOCKET unregistered;
+		// modern godstone socketing is handled by CM_MANASTONE action 4.
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(91, b =>
+		{
+			b.WriteD(7001);
+			b.WriteD(1001);
+			b.WriteD(2001);
+		}), GameConnectionState.InGame));
+
+		var manastoneGodstone = Assert.IsType<CmManastone>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(74, b =>
+			{
+				b.WriteC(4);
+				b.WriteC(0);
+				b.WriteD(1001);
+				b.WriteD(2001);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(4, manastoneGodstone.ActionType);
+		Assert.Equal(1001, manastoneGodstone.TargetItemObjectId);
+		Assert.Equal(2001, manastoneGodstone.StoneObjectId);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesShowDialog()
 	{
 		var showDialog = Assert.IsType<CmShowDialog>(
