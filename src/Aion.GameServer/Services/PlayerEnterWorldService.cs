@@ -20,6 +20,7 @@ public sealed class PlayerEnterWorldService
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly GameServerRuntimeContext? _runtimeContext;
+	private readonly Action<RepurchaseStateRemovePlan>? _repurchaseStateRemovePlanObserver;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -31,7 +32,8 @@ public sealed class PlayerEnterWorldService
 		WorldNpcResourceStatsService? resourceStats = null,
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
-		GameServerRuntimeContext? runtimeContext = null)
+		GameServerRuntimeContext? runtimeContext = null,
+		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -40,6 +42,7 @@ public sealed class PlayerEnterWorldService
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_connectionRegistry = connectionRegistry;
 		_runtimeContext = runtimeContext;
+		_repurchaseStateRemovePlanObserver = repurchaseStateRemovePlanObserver;
 		_logger = logger;
 	}
 
@@ -774,6 +777,7 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
 		await ClearPendingQuestionResponsesAsync(player);
+		RecordLogoutRepurchaseStateRemoval(player);
 		var lastOnline = DateTime.Now;
 		player.IsOnline = false;
 		player.LastOnline = lastOnline;
@@ -784,6 +788,35 @@ public sealed class PlayerEnterWorldService
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
 			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
+	private void RecordLogoutRepurchaseStateRemoval(Player player)
+	{
+		if (_repurchaseStateRemovePlanObserver == null)
+			return;
+
+		// Java parity: PlayerLeaveWorldService.leaveWorld calls
+		// RepurchaseService.removeRepurchaseItems(player). Empty supplied player
+		// facts cannot distinguish an absent map key from an empty Java set.
+		IReadOnlyList<RepurchaseStateSnapshot> currentSnapshots;
+		if (player.RepurchaseItems.Count == 0)
+		{
+			currentSnapshots = Array.Empty<RepurchaseStateSnapshot>();
+		}
+		else
+		{
+			currentSnapshots =
+			[
+				new RepurchaseStateSnapshot(
+					player.ObjectId,
+					player.RepurchaseItems,
+					"PlayerLeaveWorldService.leaveWorld supplied Player.RepurchaseItems for disabled RepurchaseService.removeRepurchaseItems cleanup"),
+			];
+		}
+
+		_repurchaseStateRemovePlanObserver(RepurchaseStatePlanService.CreateRemoveDisabledPlan(
+			player.ObjectId,
+			currentSnapshots));
 	}
 
 	private bool IsInsideReentryWindow(DateTime? lastOnline)

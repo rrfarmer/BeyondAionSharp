@@ -347,6 +347,70 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_RecordsDisabledRepurchaseStateRemovalWithoutMutatingPlayerItems()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		var repurchaseItem = new RepurchaseSourceItem(
+			new InventoryItem
+			{
+				ObjectId = 7101,
+				ItemId = 100000001,
+				Count = 1,
+				OwnerId = player.ObjectId,
+			},
+			RepurchasePrice: 1_200);
+		player.RepurchaseItems = [repurchaseItem];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var logoutRepurchasePlans = new List<RepurchaseStateRemovePlan>();
+		var service = CreateService(
+			repository,
+			world,
+			out _,
+			repurchaseStateRemovePlanObserver: logoutRepurchasePlans.Add);
+
+		await service.LeaveWorldAsync(player);
+
+		var plan = Assert.Single(logoutRepurchasePlans);
+		Assert.Equal(RepurchaseStateRemovePlanStatus.SnapshotRemoved, plan.Status);
+		Assert.Equal(player.ObjectId, plan.PlayerObjectId);
+		Assert.Empty(plan.UpdatedSnapshots);
+		Assert.True(plan.WouldRemoveMapEntry);
+		Assert.False(plan.DidRemoveMapEntry);
+		Assert.False(plan.IsLive);
+		Assert.Same(repurchaseItem, Assert.Single(player.RepurchaseItems));
+		Assert.Contains("RepurchaseService.removeRepurchaseItems", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_RecordsNoRepurchaseSnapshotWhenNoPlayerFactsAreAvailable()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.RepurchaseItems = [];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var logoutRepurchasePlans = new List<RepurchaseStateRemovePlan>();
+		var service = CreateService(
+			repository,
+			world,
+			out _,
+			repurchaseStateRemovePlanObserver: logoutRepurchasePlans.Add);
+
+		await service.LeaveWorldAsync(player);
+
+		var plan = Assert.Single(logoutRepurchasePlans);
+		Assert.Equal(RepurchaseStateRemovePlanStatus.NoSnapshot, plan.Status);
+		Assert.Equal(player.ObjectId, plan.PlayerObjectId);
+		Assert.Empty(plan.UpdatedSnapshots);
+		Assert.True(plan.WouldRemoveMapEntry);
+		Assert.False(plan.DidRemoveMapEntry);
+		Assert.Empty(player.RepurchaseItems);
+		Assert.Contains("remove absent player key is a no-op", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateLogoutCraftCooldownSavePlan_RecordsJavaLogoutStoreBoundaryWithoutWriting()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
@@ -957,7 +1021,8 @@ public sealed class PlayerEnterWorldServiceTests
 		GameWorld world,
 		out CapturingConnectionRegistry registry,
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
-		GameServerRuntimeContext? runtimeContext = null)
+		GameServerRuntimeContext? runtimeContext = null,
+		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -972,7 +1037,8 @@ public sealed class PlayerEnterWorldServiceTests
 			resourceStats,
 			creaturePvpZoneCounterService,
 			registry,
-			runtimeContext);
+			runtimeContext,
+			repurchaseStateRemovePlanObserver);
 	}
 
 	private static PlayerEnterWorldService CreateService(
