@@ -1052,6 +1052,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(staticData.GetElementCount("cleanup"), staticData.ItemRestrictionCleanups.Count);
 		Assert.True(staticData.ItemRestrictionCleanups.HasAccountOrLegionWarehouseStorabilityDisabled(188053996));
 		AssertTradeListCorpusMatchesJavaStaticData(repoRoot, staticData);
+		AssertAutoGroupCorpusMatchesJavaStaticData(repoRoot, staticData);
 		var purification = staticData.ItemPurifications.GetResultItem(100201319, 100201416);
 		Assert.NotNull(purification);
 		Assert.Equal(10, purification.MinEnchantCount);
@@ -1762,6 +1763,63 @@ public sealed class StaticDataLoadingTests
 			staticData.GoodsLists.GetGoodsPurchaseListById(1));
 	}
 
+	private static void AssertAutoGroupCorpusMatchesJavaStaticData(string repoRoot, StaticData staticData)
+	{
+		// Java parity breadcrumbs:
+		// - data/static_data/auto_group/auto_group.xml feeds dataholders/AutoGroupData.
+		// - model/autogroup/AutoGroup.isRecruitableInstance drives portal-NPC mask indexes.
+		var sourceAutoGroups = XDocument.Load(Path.Combine(repoRoot, "game-server", "data", "static_data", "auto_group", "auto_group.xml"));
+		var autoGroupElements = sourceAutoGroups.Root!.Elements("auto_group").ToArray();
+		Assert.Equal(autoGroupElements.Length, staticData.GetElementCount("auto_group"));
+		Assert.Equal(autoGroupElements.Length, staticData.AutoGroups.Count);
+
+		AssertAutoGroupMatchesSource(
+			GetSingleByAttribute(autoGroupElements, "id", 302),
+			staticData.AutoGroups.GetTemplateByInstanceMaskId(302));
+		AssertAutoGroupMatchesSource(
+			GetSingleByAttribute(autoGroupElements, "id", 303),
+			staticData.AutoGroups.GetTemplateByInstanceMaskId(303));
+		AssertAutoGroupMatchesSource(
+			GetSingleByAttribute(autoGroupElements, "id", 401),
+			staticData.AutoGroups.GetTemplateByInstanceMaskId(401));
+
+		var recruitableMasksByPortalNpc = autoGroupElements
+			.Where(IsRecruitableAutoGroup)
+			.SelectMany(element => ReadIntListAttribute(element, "npc_ids").Select(npcId => new { NpcId = npcId, MaskId = ReadRequiredIntAttribute(element, "id") }))
+			.GroupBy(entry => entry.NpcId)
+			.ToDictionary(group => group.Key, group => group.Select(entry => entry.MaskId).ToArray());
+		Assert.Equal(recruitableMasksByPortalNpc[730069], staticData.AutoGroups.GetRecruitableInstanceMaskIds(730069));
+		Assert.Equal(recruitableMasksByPortalNpc[730365], staticData.AutoGroups.GetRecruitableInstanceMaskIds(730365));
+		Assert.Equal(recruitableMasksByPortalNpc[730366], staticData.AutoGroups.GetRecruitableInstanceMaskIds(730366));
+		Assert.Null(staticData.AutoGroups.GetRecruitableInstanceMaskIds(1));
+		Assert.Equal(
+			recruitableMasksByPortalNpc.Values.SelectMany(maskIds => maskIds).Distinct().OrderBy(maskId => maskId),
+			staticData.AutoGroups.GetRecruitableInstanceMaskIds().OrderBy(maskId => maskId));
+	}
+
+	private static void AssertAutoGroupMatchesSource(XElement sourceAutoGroup, AutoGroupSummary? actualAutoGroup)
+	{
+		Assert.NotNull(actualAutoGroup);
+		Assert.Equal(ReadRequiredIntAttribute(sourceAutoGroup, "id"), actualAutoGroup.MaskId);
+		Assert.Equal(ReadRequiredIntAttribute(sourceAutoGroup, "instanceId"), actualAutoGroup.InstanceMapId);
+		Assert.Equal(ReadOptionalIntAttribute(sourceAutoGroup, "name_id", 0), actualAutoGroup.NameId);
+		Assert.Equal(ReadOptionalIntAttribute(sourceAutoGroup, "title_id", 0), actualAutoGroup.TitleId);
+		Assert.Equal(ReadOptionalIntAttribute(sourceAutoGroup, "min_lvl", 0), actualAutoGroup.MinLevel);
+		Assert.Equal(ReadOptionalIntAttribute(sourceAutoGroup, "max_lvl", 0), actualAutoGroup.MaxLevel);
+		Assert.Equal(ReadOptionalBoolAttribute(sourceAutoGroup, "register_quick", false), actualAutoGroup.RegisterQuick);
+		Assert.Equal(ReadOptionalBoolAttribute(sourceAutoGroup, "register_group", false), actualAutoGroup.RegisterGroup);
+		Assert.Equal(ReadOptionalBoolAttribute(sourceAutoGroup, "register_new", false), actualAutoGroup.RegisterNew);
+		Assert.Equal(ReadIntListAttribute(sourceAutoGroup, "npc_ids"), actualAutoGroup.NpcIds);
+		Assert.Equal(IsRecruitableAutoGroup(sourceAutoGroup), actualAutoGroup.IsRecruitableInstance);
+	}
+
+	private static bool IsRecruitableAutoGroup(XElement sourceAutoGroup)
+	{
+		var maskId = ReadRequiredIntAttribute(sourceAutoGroup, "id");
+		var instanceMapId = ReadRequiredIntAttribute(sourceAutoGroup, "instanceId");
+		return maskId >= 302 && maskId < 400 || instanceMapId is 300600000 or 300220000;
+	}
+
 	private static int ReadNpcId(XElement element) => ReadRequiredIntAttribute(element, "npc_id");
 
 	private static int ReadId(XElement element) => ReadRequiredIntAttribute(element, "id");
@@ -1826,6 +1884,26 @@ public sealed class StaticDataLoadingTests
 		return attribute == null
 			? null
 			: int.Parse(attribute.Value, System.Globalization.CultureInfo.InvariantCulture);
+	}
+
+	private static bool ReadOptionalBoolAttribute(XElement element, string attributeName, bool defaultValue)
+	{
+		var attribute = element.Attribute(attributeName);
+		return attribute == null
+			? defaultValue
+			: bool.Parse(attribute.Value);
+	}
+
+	private static IReadOnlyList<int> ReadIntListAttribute(XElement element, string attributeName)
+	{
+		var value = element.Attribute(attributeName)?.Value;
+		if (string.IsNullOrWhiteSpace(value))
+			return Array.Empty<int>();
+
+		return value
+			.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+			.Select(part => int.Parse(part, System.Globalization.CultureInfo.InvariantCulture))
+			.ToArray();
 	}
 
 	private static string ReadOptionalStringAttribute(XElement element, string attributeName, string defaultValue)
