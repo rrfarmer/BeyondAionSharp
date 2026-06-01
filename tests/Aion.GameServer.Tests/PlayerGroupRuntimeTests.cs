@@ -1075,6 +1075,54 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void SmGroupMemberInfo_UpdateEffectsZeroEffectsMatchesJavaGoldenPayload()
+	{
+		var member = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1009,
+			IsOnline = true,
+			Name = "TargetSlot",
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		});
+		var plan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, member, PlayerGroupEvent.UpdateEffects, slot: 4);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(plan)));
+
+		Assert.Equal(99001, reader.ReadD());
+		Assert.Equal(1009, reader.ReadD());
+		Assert.Equal(819, reader.ReadD());
+		Assert.Equal(819, reader.ReadD());
+		Assert.Equal(840, reader.ReadD());
+		Assert.Equal(840, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(10.5f, reader.ReadF());
+		Assert.Equal(20.25f, reader.ReadF());
+		Assert.Equal(30.75f, reader.ReadF());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(10, (int)reader.ReadC());
+		Assert.Equal(65, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(4, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		for (var i = 0; i < 8; i++)
+			Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmGroupMemberInfo_WritesNonEmptyEffectEntriesLikeJava()
 	{
 		var member = new PlayerGroupMember(new Player
