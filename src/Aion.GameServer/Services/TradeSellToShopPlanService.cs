@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -163,6 +164,13 @@ public enum PetAutoSellPlanStatus
 	DisabledNoSideEffects,
 }
 
+public enum PetAutoSellActivationPlanStatus
+{
+	MissingPet,
+	BlockedMissingMerchantFunction,
+	DisabledNoSideEffects,
+}
+
 public enum PetAutoSellStepKind
 {
 	CheckPetSelling,
@@ -170,6 +178,14 @@ public enum PetAutoSellStepKind
 	BuildTradeList,
 	InvokeSellToShop,
 	SendAutoSellNotification,
+}
+
+public enum PetAutoSellActivationStepKind
+{
+	ValidateMerchantFunction,
+	SetSellingState,
+	SendAutoSellPacket,
+	WriteAuditLog,
 }
 
 public enum PetMerchantSellOutcomeStepKind
@@ -287,6 +303,37 @@ public sealed record PetAutoSellPlan(
 	bool DidSendAutoSellNotification,
 	int? AutoSellNotificationMessageId,
 	string? AutoSellNotificationPetName,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
+public sealed record PetAutoSellActivationInput(
+	bool PetPresent,
+	bool Activate,
+	bool PetHasMerchantFunction,
+	int? PetObjectId,
+	int? MasterObjectId,
+	string? PetName);
+
+public sealed record PetAutoSellActivationStepPlan(
+	PetAutoSellActivationStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record PetAutoSellActivationPlan(
+	PetAutoSellActivationPlanStatus Status,
+	PetAutoSellActivationInput Input,
+	IReadOnlyList<PetAutoSellActivationStepPlan> Steps,
+	bool WouldSetSellingState,
+	bool DidSetSellingState,
+	bool TargetSellingState,
+	bool WouldSendPacket,
+	bool DidSendPacket,
+	SmPet? PacketIntent,
+	bool WouldWriteAuditLog,
+	bool DidWriteAuditLog,
+	string? AuditMessage,
 	bool ShouldDispatchLiveSideEffects,
 	string JavaSource,
 	bool IsLive);
@@ -411,6 +458,90 @@ public static class PetAutoSellPlanService
 			IsLive: false);
 
 	private static PetAutoSellStepPlan Disabled(PetAutoSellStepKind kind, string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
+}
+
+public static class PetAutoSellActivationPlanService
+{
+	public static PetAutoSellActivationPlan CreateDisabledPlan(PetAutoSellActivationInput input)
+	{
+		// Java parity: services/toypet/PetService.activateAutoSell.
+		// CM_PET.runImpl already returns before this service when player.getPet() is null.
+		if (!input.PetPresent)
+			return CreateTerminalPlan(
+				PetAutoSellActivationPlanStatus.MissingPet,
+				input,
+				"CM_PET.runImpl FOOD actionType 4 -> if (pet == null) return before PetService.activateAutoSell");
+
+		if (input.Activate && !input.PetHasMerchantFunction)
+		{
+			var auditPetName = input.PetName ?? input.PetObjectId?.ToString() ?? "<unknown>";
+			var auditMessage = $"tried to enable auto-sell on non-selling {auditPetName}";
+			return new PetAutoSellActivationPlan(
+				PetAutoSellActivationPlanStatus.BlockedMissingMerchantFunction,
+				input,
+				[Disabled(PetAutoSellActivationStepKind.WriteAuditLog, "PetService.activateAutoSell -> activate && !containsFunction(MERCHANT) -> AuditLogger.log and return")],
+				WouldSetSellingState: false,
+				DidSetSellingState: false,
+				TargetSellingState: input.Activate,
+				WouldSendPacket: false,
+				DidSendPacket: false,
+				PacketIntent: null,
+				WouldWriteAuditLog: true,
+				DidWriteAuditLog: false,
+				auditMessage,
+				ShouldDispatchLiveSideEffects: false,
+				"PetService.activateAutoSell blocked by missing MERCHANT function; audit is recorded without live logging",
+				IsLive: false);
+		}
+
+		var packet = SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoSell, input.Activate));
+		return new PetAutoSellActivationPlan(
+			PetAutoSellActivationPlanStatus.DisabledNoSideEffects,
+			input,
+			[
+				Disabled(PetAutoSellActivationStepKind.ValidateMerchantFunction, input.Activate
+					? "PetService.activateAutoSell -> activate true and containsFunction(MERCHANT) guard passed"
+					: "PetService.activateAutoSell -> deactivate skips MERCHANT guard"),
+				Disabled(PetAutoSellActivationStepKind.SetSellingState, "PetService.activateAutoSell -> pet.getCommonData().setIsSelling(activate)"),
+				Disabled(PetAutoSellActivationStepKind.SendAutoSellPacket, "PetService.activateAutoSell -> send SM_PET(PetSpecialFunction.AUTOSELL, activate)"),
+			],
+			WouldSetSellingState: true,
+			DidSetSellingState: false,
+			TargetSellingState: input.Activate,
+			WouldSendPacket: true,
+			DidSendPacket: false,
+			packet,
+			WouldWriteAuditLog: false,
+			DidWriteAuditLog: false,
+			AuditMessage: null,
+			ShouldDispatchLiveSideEffects: false,
+			"PetService.activateAutoSell activation boundary is disabled; selling-state and SM_PET(AUTOSELL) intents are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static PetAutoSellActivationPlan CreateTerminalPlan(
+		PetAutoSellActivationPlanStatus status,
+		PetAutoSellActivationInput input,
+		string javaSource) =>
+		new(
+			status,
+			input,
+			Steps: Array.Empty<PetAutoSellActivationStepPlan>(),
+			WouldSetSellingState: false,
+			DidSetSellingState: false,
+			TargetSellingState: input.Activate,
+			WouldSendPacket: false,
+			DidSendPacket: false,
+			PacketIntent: null,
+			WouldWriteAuditLog: false,
+			DidWriteAuditLog: false,
+			AuditMessage: null,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PetAutoSellActivationStepPlan Disabled(PetAutoSellActivationStepKind kind, string javaSource) =>
 		new(kind, WouldRun: true, DidRun: false, javaSource);
 }
 

@@ -2,6 +2,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -379,6 +380,94 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 		});
 	}
 
+	[Theory]
+	[InlineData(true, 1)]
+	[InlineData(false, 0)]
+	public void CreateDisabledPetAutoSellActivationPlan_RecordsSellingStateAndPacketIntent(bool activate, int expectedActive)
+	{
+		var plan = PetAutoSellActivationPlanService.CreateDisabledPlan(CreateAutoSellActivationInput(activate: activate));
+
+		Assert.Equal(PetAutoSellActivationPlanStatus.DisabledNoSideEffects, plan.Status);
+		Assert.True(plan.WouldSetSellingState);
+		Assert.False(plan.DidSetSellingState);
+		Assert.Equal(activate, plan.TargetSellingState);
+		Assert.True(plan.WouldSendPacket);
+		Assert.False(plan.DidSendPacket);
+		Assert.False(plan.WouldWriteAuditLog);
+		Assert.False(plan.DidWriteAuditLog);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsLive);
+		Assert.Collection(
+			plan.Steps.Select(step => step.Kind),
+			kind => Assert.Equal(PetAutoSellActivationStepKind.ValidateMerchantFunction, kind),
+			kind => Assert.Equal(PetAutoSellActivationStepKind.SetSellingState, kind),
+			kind => Assert.Equal(PetAutoSellActivationStepKind.SendAutoSellPacket, kind));
+		Assert.All(plan.Steps, step =>
+		{
+			Assert.True(step.WouldRun);
+			Assert.False(step.DidRun);
+		});
+
+		var packet = Assert.IsType<SmPet>(plan.PacketIntent);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)PetSpecialFunction.AutoSell, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedActive, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void CreateDisabledPetAutoSellActivationPlan_EnableWithoutMerchantRecordsAuditOnly()
+	{
+		var plan = PetAutoSellActivationPlanService.CreateDisabledPlan(CreateAutoSellActivationInput(activate: true, petHasMerchantFunction: false));
+
+		Assert.Equal(PetAutoSellActivationPlanStatus.BlockedMissingMerchantFunction, plan.Status);
+		Assert.False(plan.WouldSetSellingState);
+		Assert.False(plan.DidSetSellingState);
+		Assert.False(plan.WouldSendPacket);
+		Assert.False(plan.DidSendPacket);
+		Assert.Null(plan.PacketIntent);
+		Assert.True(plan.WouldWriteAuditLog);
+		Assert.False(plan.DidWriteAuditLog);
+		Assert.Contains("tried to enable auto-sell on non-selling Bibi", plan.AuditMessage);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsLive);
+		var step = Assert.Single(plan.Steps);
+		Assert.Equal(PetAutoSellActivationStepKind.WriteAuditLog, step.Kind);
+		Assert.True(step.WouldRun);
+		Assert.False(step.DidRun);
+	}
+
+	[Fact]
+	public void CreateDisabledPetAutoSellActivationPlan_DeactivateSkipsMerchantGuard()
+	{
+		var plan = PetAutoSellActivationPlanService.CreateDisabledPlan(CreateAutoSellActivationInput(activate: false, petHasMerchantFunction: false));
+
+		Assert.Equal(PetAutoSellActivationPlanStatus.DisabledNoSideEffects, plan.Status);
+		Assert.True(plan.WouldSetSellingState);
+		Assert.False(plan.TargetSellingState);
+		Assert.True(plan.WouldSendPacket);
+		Assert.NotNull(plan.PacketIntent);
+		Assert.False(plan.WouldWriteAuditLog);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreateDisabledPetAutoSellActivationPlan_MissingPetMatchesCmPetReturn()
+	{
+		var plan = PetAutoSellActivationPlanService.CreateDisabledPlan(CreateAutoSellActivationInput(petPresent: false));
+
+		Assert.Equal(PetAutoSellActivationPlanStatus.MissingPet, plan.Status);
+		Assert.Empty(plan.Steps);
+		Assert.False(plan.WouldSetSellingState);
+		Assert.False(plan.WouldSendPacket);
+		Assert.Null(plan.PacketIntent);
+		Assert.False(plan.WouldWriteAuditLog);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsLive);
+	}
+
 	[Fact]
 	public void CreateDisabledAdapters_MissingAndBlockedSellPlansStopBeforeSideEffects()
 	{
@@ -455,6 +544,18 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 			SellToShopPlan: sellPlan ?? CreateSellPlan());
 	}
 
+	private static PetAutoSellActivationInput CreateAutoSellActivationInput(
+		bool petPresent = true,
+		bool activate = true,
+		bool petHasMerchantFunction = true) =>
+		new(
+			petPresent,
+			activate,
+			petHasMerchantFunction,
+			PetObjectId: 7001,
+			MasterObjectId: 1001,
+			PetName: "Bibi");
+
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)
 	{
 		using var buffer = new PacketBuffer();
@@ -470,6 +571,14 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private const int SellerObjectId = 7001;
