@@ -37,6 +37,8 @@ public sealed record PrivateStorePurchasePlan(
 	InventoryItem? SellerKinahUpdate,
 	IReadOnlyList<SmSystemMessage> BuyerMessages,
 	IReadOnlyList<SmSystemMessage> SellerMessages,
+	bool WouldWriteAuditLog,
+	string? AuditMessage,
 	bool ShouldCloseSellerStore,
 	string JavaSource)
 {
@@ -265,7 +267,9 @@ public static class PrivateStorePurchasePlanService
 			return Block(
 				PrivateStorePurchasePlanStatus.BlockedPriceOverflow,
 				boughtItems,
-				"PrivateStoreService.sellStoreItem -> price < 0 kinah dupe guard -> audit and return");
+				"PrivateStoreService.sellStoreItem -> price < 0 kinah dupe guard -> audit and return",
+				wouldWriteAuditLog: true,
+				auditMessage: "tried to buy item with negative kinah price from private store");
 
 		var buyerKinah = buyerInventoryItems.FirstOrDefault(item => item.ItemId == InventoryItemFactory.KinahItemId && item.Location == CubeStorageId);
 		if (buyerKinah == null || buyerKinah.Count < totalPrice)
@@ -294,7 +298,9 @@ public static class PrivateStorePurchasePlanService
 				return Block(
 					PrivateStorePurchasePlanStatus.BlockedSellerItemCountChanged,
 					boughtItems,
-					"PrivateStoreService.sellStoreItem -> item.getItemCount() < boughtItem.getCount() -> audit and return");
+					"PrivateStoreService.sellStoreItem -> item.getItemCount() < boughtItem.getCount() -> audit and return",
+					wouldWriteAuditLog: true,
+					auditMessage: "tried to buy more than players private store item stack count");
 
 			var template = itemTemplates.GetItemTemplate(boughtItem.ItemId);
 			if (template == null)
@@ -365,6 +371,8 @@ public static class PrivateStorePurchasePlanService
 			sellerKinahUpdate,
 			BuyerMessages: Array.Empty<SmSystemMessage>(),
 			sellerMessages,
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
 			ShouldCloseSellerStore: remainingStoreItemObjectIdsAfterPurchase.Count == 0,
 			"PrivateStoreService.sellStoreItem -> decrease seller item -> unpack if packCount>0 -> ItemService.addItem(buyer, item, count) -> seller message -> decrease buyer kinah -> increase seller kinah -> close store when soldItems empty");
 	}
@@ -387,7 +395,9 @@ public static class PrivateStorePurchasePlanService
 		PrivateStorePurchasePlanStatus status,
 		IReadOnlyList<PrivateStorePurchaseItemRequest> boughtItems,
 		string javaSource,
-		IReadOnlyList<SmSystemMessage>? buyerMessages = null)
+		IReadOnlyList<SmSystemMessage>? buyerMessages = null,
+		bool wouldWriteAuditLog = false,
+		string? auditMessage = null)
 	{
 		return new PrivateStorePurchasePlan(
 			status,
@@ -400,6 +410,8 @@ public static class PrivateStorePurchasePlanService
 			SellerKinahUpdate: null,
 			buyerMessages ?? Array.Empty<SmSystemMessage>(),
 			SellerMessages: Array.Empty<SmSystemMessage>(),
+			wouldWriteAuditLog,
+			auditMessage,
 			ShouldCloseSellerStore: false,
 			javaSource);
 	}

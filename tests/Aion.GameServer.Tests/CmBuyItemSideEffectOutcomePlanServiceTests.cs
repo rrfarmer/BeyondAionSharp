@@ -357,6 +357,22 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_BlockedPrivateStoreAuditIntentPropagatesToOutcome()
+	{
+		var handlerPlan = CreatePrivateStoreHandlerPlan(CreateBlockedPrivateStoreAuditPurchasePlan());
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
+		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.PurchasePlanNotReady, outcome.PrivateStoreFacadePlan!.Status);
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.FacadeNotReady, outcome.PrivateStoreOutcomePlan!.Status);
+		Assert.True(outcome.WouldWriteAuditLog);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_NonOutcomeHandlerPlanDoesNotCreateFinalOutcome()
 	{
 		var handlerPlan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
@@ -490,8 +506,29 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 			SellerKinahUpdate: sellerKinah,
 			BuyerMessages: [],
 			SellerMessages: [notification.NotificationMessage!],
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
 			ShouldCloseSellerStore: true,
 			"PrivateStoreService.sellStoreItem");
+	}
+
+	private static PrivateStorePurchasePlan CreateBlockedPrivateStoreAuditPurchasePlan()
+	{
+		return new PrivateStorePurchasePlan(
+			PrivateStorePurchasePlanStatus.BlockedSellerItemCountChanged,
+			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 2, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SellerItemUpdates: [],
+			SellerDeletedItemObjectIds: [],
+			BuyerAddedItems: [],
+			BuyerUpdatedItems: [],
+			BuyerKinahUpdate: null,
+			SellerKinahUpdate: null,
+			BuyerMessages: [],
+			SellerMessages: [],
+			WouldWriteAuditLog: true,
+			AuditMessage: "tried to buy more than players private store item stack count",
+			ShouldCloseSellerStore: false,
+			"PrivateStoreService.sellStoreItem -> item.getItemCount() < boughtItem.getCount() -> audit and return");
 	}
 
 	private static TradeSellToShopPlan CreatePetSellPlan()

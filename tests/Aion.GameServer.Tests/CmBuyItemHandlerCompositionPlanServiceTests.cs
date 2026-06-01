@@ -323,6 +323,8 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 			SellerKinahUpdate: null,
 			BuyerMessages: Array.Empty<SmSystemMessage>(),
 			SellerMessages: Array.Empty<SmSystemMessage>(),
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
 			ShouldCloseSellerStore: false,
 			"PrivateStoreService.sellStoreItem");
 	}

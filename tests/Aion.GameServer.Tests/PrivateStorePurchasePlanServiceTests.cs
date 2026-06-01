@@ -148,6 +148,8 @@ public sealed class PrivateStorePurchasePlanServiceTests
 		Assert.Equal(PrivateStorePurchasePlanStatus.BlockedPriceOverflow, plan.Status);
 		Assert.Empty(plan.BuyerMessages);
 		Assert.Empty(plan.BuyerAddedItems);
+		Assert.True(plan.WouldWriteAuditLog);
+		Assert.Equal("tried to buy item with negative kinah price from private store", plan.AuditMessage);
 	}
 
 	[Fact]
@@ -194,6 +196,8 @@ public sealed class PrivateStorePurchasePlanServiceTests
 		Assert.Equal(PrivateStorePurchasePlanStatus.BlockedSellerItemCountChanged, plan.Status);
 		Assert.Empty(plan.BuyerAddedItems);
 		Assert.Empty(plan.SellerItemUpdates);
+		Assert.True(plan.WouldWriteAuditLog);
+		Assert.Equal("tried to buy more than players private store item stack count", plan.AuditMessage);
 	}
 
 	private static PrivateStorePurchasePlan CreatePlan(

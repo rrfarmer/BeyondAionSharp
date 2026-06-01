@@ -92,7 +92,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			WouldAddRepurchaseItems: false,
 			WouldSendPackets: outcomePlan.WouldSendPackets,
 			WouldWriteExchangeLog: outcomePlan.WouldWriteExchangeLog,
-			WouldWriteAuditLog: false,
+			WouldWriteAuditLog: handlerPlan.PrivateStorePurchasePlan?.WouldWriteAuditLog == true,
 			WouldCommitTransactionBoundary: outcomePlan.WouldCommitTransactionBoundary,
 			ShouldCommitTransactionBoundary: false,
 			ShouldDispatchLiveSideEffects: false,

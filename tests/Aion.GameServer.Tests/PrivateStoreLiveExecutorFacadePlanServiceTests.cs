@@ -360,6 +360,8 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 			SellerKinahUpdate: sellerKinah,
 			BuyerMessages: [],
 			SellerMessages: [notification.NotificationMessage!],
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
 			ShouldCloseSellerStore: true,
 			"PrivateStoreService.sellStoreItem");
 	}
@@ -377,6 +379,8 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 			SellerKinahUpdate: null,
 			BuyerMessages: [],
 			SellerMessages: [],
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
 			ShouldCloseSellerStore: false,
 			"PrivateStoreService.sellStoreItem -> price > buyer.getInventory().getKinah() -> return");
 	}
