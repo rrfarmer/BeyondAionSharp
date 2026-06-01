@@ -7290,6 +7290,139 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesRemainingFindGroupLayouts()
+	{
+		var deleteRecruitment = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(1);
+				buffer.WriteD(700101);
+				buffer.WriteC(5);
+				buffer.WriteC(6);
+				buffer.WriteC(7);
+				buffer.WriteC(8);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(1, deleteRecruitment.Action);
+		Assert.Equal(700101, deleteRecruitment.PlayerOrTeamId);
+		Assert.Equal(5, deleteRecruitment.ServerId);
+		Assert.Equal(6, deleteRecruitment.Unknown1);
+		Assert.Equal(7, deleteRecruitment.Unknown2);
+		Assert.Equal(8, deleteRecruitment.Unknown3);
+
+		var updateRecruitment = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(3);
+				buffer.WriteD(700103);
+				buffer.WriteC(1);
+				buffer.WriteC(2);
+				buffer.WriteC(3);
+				buffer.WriteC(4);
+				buffer.WriteS("Update group");
+				buffer.WriteC(2);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(3, updateRecruitment.Action);
+		Assert.Equal(700103, updateRecruitment.PlayerOrTeamId);
+		Assert.Equal("Update group", updateRecruitment.Message);
+		Assert.Equal(2, updateRecruitment.GroupType);
+
+		var deletePost = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(5);
+				buffer.WriteD(700105);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(5, deletePost.Action);
+		Assert.Equal(700105, deletePost.PlayerOrTeamId);
+
+		var application = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(6);
+				buffer.WriteD(700106);
+				buffer.WriteS("Apply");
+				buffer.WriteC(1);
+				buffer.WriteC(4);
+				buffer.WriteC(65);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(6, application.Action);
+		Assert.Equal("Apply", application.Message);
+		Assert.Equal(1, application.GroupType);
+		Assert.Equal(4, application.ClassId);
+		Assert.Equal(65, application.Level);
+
+		var deleteInstance = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(9);
+				buffer.WriteD(700109);
+				buffer.WriteD(300110000);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(9, deleteInstance.Action);
+		Assert.Equal(700109, deleteInstance.PlayerOrTeamId);
+		Assert.Equal(300110000, deleteInstance.InstanceMaskId);
+
+		var reply = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(12);
+				buffer.WriteD(700112);
+				buffer.WriteC(1);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(12, reply.Action);
+		Assert.Equal(700112, reply.PlayerOrTeamId);
+		Assert.Equal(1, reply.InstanceApplicationReply);
+
+		var updateInstance = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(17);
+				buffer.WriteD(700117);
+				buffer.WriteD(300140000);
+				buffer.WriteS("Updated instance");
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(17, updateInstance.Action);
+		Assert.Equal(700117, updateInstance.PlayerOrTeamId);
+		Assert.Equal(300140000, updateInstance.InstanceMaskId);
+		Assert.Equal("Updated instance", updateInstance.Message);
+
+		var enterReady = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer => buffer.WriteC(20)), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(20, enterReady.Action);
+
+		var ban = Assert.IsType<CmFindGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(77, buffer =>
+			{
+				buffer.WriteC(25);
+				buffer.WriteD(700125);
+				buffer.WriteD(300150000);
+				buffer.WriteD(800125);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(25, ban.Action);
+		Assert.Equal(700125, ban.PlayerOrTeamId);
+		Assert.Equal(300150000, ban.InstanceMaskId);
+		Assert.Equal(800125, ban.BannedPlayerId);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
