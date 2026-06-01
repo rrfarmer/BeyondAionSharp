@@ -520,6 +520,56 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void PrepareWindowPlansRouteToJavaEquivalentPacketsWithoutLiveDispatch()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020307, "Player", "ELYOS", "CLERIC", 65);
+		var group = new FindGroupInstanceGroupWindowSnapshot(0x01020304, 0x11223344);
+		var updateSnapshot = new FindGroupInstanceGroupPrepareWindowSnapshot(
+			GroupEntryId: 0x01020304,
+			InstanceMaskId: 0x11223344,
+			Members:
+			[
+				new FindGroupInstanceGroupPrepareMemberSnapshot(
+					PlayerObjectId: 0x01020307,
+					Level: 65,
+					ClassId: 10,
+					IsOnline: true,
+					Name: "Player")
+			]);
+
+		var enterButton = service.ShowEnterButtonInPrepareForEntryWindow(player, group);
+		var showWindow = service.ShowPrepareForEntryWindow(player, group);
+		var destroyWindow = service.DestroyPrepareForEntryWindow(player, group, showEnterInstanceMessage: true);
+		var updateWindow = service.UpdatePrepareForEntryWindow(player, updateSnapshot);
+
+		AssertPreparePlan(
+			enterButton,
+			FindGroupPrepareWindowPlanKind.ShowEnterButton,
+			player.ObjectId,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(18, List.of(instanceGroup)))",
+			SmFindGroup.ShowEnterButtonInPrepareForEntryWindow(group));
+		AssertPreparePlan(
+			showWindow,
+			FindGroupPrepareWindowPlanKind.ShowPrepareWindow,
+			player.ObjectId,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(22, List.of(instanceGroup)))",
+			SmFindGroup.ShowPrepareForEntryWindow(group));
+		AssertPreparePlan(
+			destroyWindow,
+			FindGroupPrepareWindowPlanKind.DestroyPrepareWindow,
+			player.ObjectId,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(23, List.of(instanceGroup), showEnterInstanceMessage))",
+			SmFindGroup.DestroyPrepareForEntryWindow(group, showEnterInstanceMessage: true));
+		AssertPreparePlan(
+			updateWindow,
+			FindGroupPrepareWindowPlanKind.UpdatePrepareWindow,
+			player.ObjectId,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(24, List.of(instanceGroup)))",
+			SmFindGroup.UpdatePrepareForEntryWindow(updateSnapshot));
+	}
+
+	[Fact]
 	public void SendInstanceApplicationResult_AcceptPlansGroupInviteWhenMinMembersAtMostSix()
 	{
 		var service = new FindGroupRecruitmentPlanService();
@@ -621,6 +671,21 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 			minLevel,
 			maxLevel,
 			ClassId: 5);
+	}
+
+	private static void AssertPreparePlan(
+		FindGroupPrepareWindowPlan plan,
+		FindGroupPrepareWindowPlanKind expectedKind,
+		int expectedRecipientObjectId,
+		string expectedJavaSource,
+		GameServerPacket expectedPacket)
+	{
+		Assert.Equal(expectedKind, plan.Kind);
+		Assert.False(plan.DispatchLiveSideEffects);
+		var intent = Assert.Single(plan.DirectPacketIntents);
+		Assert.Equal(expectedRecipientObjectId, intent.RecipientObjectId);
+		Assert.Equal(expectedJavaSource, intent.JavaSource);
+		Assert.Equal(SerializeUnencryptedPayload(expectedPacket), SerializeUnencryptedPayload(intent.Packet));
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

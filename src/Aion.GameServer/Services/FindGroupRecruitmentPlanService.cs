@@ -380,6 +380,55 @@ public sealed class FindGroupRecruitmentPlanService
 			enableRegisterIntent);
 	}
 
+	public FindGroupPrepareWindowPlan ShowEnterButtonInPrepareForEntryWindow(
+		Player player,
+		FindGroupInstanceGroupWindowSnapshot instanceGroup)
+	{
+		return FindGroupPrepareWindowPlan.WithIntent(
+			FindGroupPrepareWindowPlanKind.ShowEnterButton,
+			new FindGroupDirectPacketIntent(
+				player.ObjectId,
+				SmFindGroup.ShowEnterButtonInPrepareForEntryWindow(instanceGroup),
+				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(18, List.of(instanceGroup)))"));
+	}
+
+	public FindGroupPrepareWindowPlan ShowPrepareForEntryWindow(
+		Player player,
+		FindGroupInstanceGroupWindowSnapshot instanceGroup)
+	{
+		return FindGroupPrepareWindowPlan.WithIntent(
+			FindGroupPrepareWindowPlanKind.ShowPrepareWindow,
+			new FindGroupDirectPacketIntent(
+				player.ObjectId,
+				SmFindGroup.ShowPrepareForEntryWindow(instanceGroup),
+				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(22, List.of(instanceGroup)))"));
+	}
+
+	public FindGroupPrepareWindowPlan DestroyPrepareForEntryWindow(
+		Player player,
+		FindGroupInstanceGroupWindowSnapshot instanceGroup,
+		bool showEnterInstanceMessage)
+	{
+		return FindGroupPrepareWindowPlan.WithIntent(
+			FindGroupPrepareWindowPlanKind.DestroyPrepareWindow,
+			new FindGroupDirectPacketIntent(
+				player.ObjectId,
+				SmFindGroup.DestroyPrepareForEntryWindow(instanceGroup, showEnterInstanceMessage),
+				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(23, List.of(instanceGroup), showEnterInstanceMessage))"));
+	}
+
+	public FindGroupPrepareWindowPlan UpdatePrepareForEntryWindow(
+		Player player,
+		FindGroupInstanceGroupPrepareWindowSnapshot instanceGroup)
+	{
+		return FindGroupPrepareWindowPlan.WithIntent(
+			FindGroupPrepareWindowPlanKind.UpdatePrepareWindow,
+			new FindGroupDirectPacketIntent(
+				player.ObjectId,
+				SmFindGroup.UpdatePrepareForEntryWindow(instanceGroup),
+				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(24, List.of(instanceGroup)))"));
+	}
+
 	public FindGroupInstanceGroupMemberInfoPlan ShowInstanceGroupMembersInfo(
 		Player player,
 		int playerObjectId,
@@ -669,6 +718,27 @@ public sealed record FindGroupInstanceGroupClientShowPlan(
 public sealed record FindGroupPortalInstanceGroupShowPlan(
 	IReadOnlyList<int>? EnabledInstanceMaskIds,
 	FindGroupDirectPacketIntent? EnableRegisterForInstancesIntent);
+
+public enum FindGroupPrepareWindowPlanKind
+{
+	ShowEnterButton,
+	ShowPrepareWindow,
+	DestroyPrepareWindow,
+	UpdatePrepareWindow,
+}
+
+public sealed record FindGroupPrepareWindowPlan(
+	FindGroupPrepareWindowPlanKind Kind,
+	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents,
+	bool DispatchLiveSideEffects)
+{
+	public static FindGroupPrepareWindowPlan WithIntent(
+		FindGroupPrepareWindowPlanKind kind,
+		FindGroupDirectPacketIntent intent)
+	{
+		return new FindGroupPrepareWindowPlan(kind, [intent], DispatchLiveSideEffects: false);
+	}
+}
 
 public sealed record FindGroupInstanceGroupMemberInfoPlan(
 	FindGroupInstanceGroupPlanStatus Status,
