@@ -606,6 +606,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleCastSpellAsync(_activePlayer, castSpell);
 				break;
+			case CmToggleSkillDeactivate:
+				// Java parity: network/aion/clientpackets/CM_TOGGLE_SKILL_DEACTIVATE.runImpl validates toggle/stance skills, removes the effect, and stops matching stance.
+				// Live SkillEngine effect-controller and stance-controller mutation remain unported.
+				break;
 			case CmSummonCastSpell summonCastSpell:
 				if (_activePlayer != null)
 					await HandleSummonCastSpellAsync(_activePlayer, summonCastSpell);
