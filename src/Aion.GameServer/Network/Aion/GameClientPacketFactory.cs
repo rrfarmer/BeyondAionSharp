@@ -143,6 +143,7 @@ public static class GameClientPacketFactory
 		Register(202, states => new CmSummonEmotion(202, states), GameConnectionState.InGame);
 		Register(203, states => new CmSummonAttack(203, states), GameConnectionState.InGame);
 		Register(205, states => new CmSummonCastSpell(205, states), GameConnectionState.InGame);
+		Register(206, states => new CmFusionWeapons(206, states), GameConnectionState.InGame);
 		Register(208, states => new CmCompositeStones(208, states), GameConnectionState.InGame);
 		Register(209, states => new CmTimeCheckQuit(209, states), GameConnectionState.InGame);
 		Register(210, states => new CmCharacterPasskey(210, states), GameConnectionState.Authed);

@@ -442,6 +442,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmAutoGroup:
 				// Java parity: network/aion/clientpackets/CM_AUTO_GROUP.runImpl dispatches AutoGroupService/PeriodicInstanceManager actions; deferred.
 				break;
+			case CmFusionWeapons:
+				// Java parity: network/aion/clientpackets/CM_FUSION_WEAPONS.runImpl validates armsfusion NPC targeting before service dispatch; deferred.
+				break;
 			case CmTimeCheck timeCheck:
 				// Java parity: network/aion/clientpackets/CM_TIME_CHECK.runImpl sends SM_AFTER_TIME_CHECK_4_7_5 before SM_TIME_CHECK.
 				await SendPacketAsync(new SmAfterTimeCheck475());

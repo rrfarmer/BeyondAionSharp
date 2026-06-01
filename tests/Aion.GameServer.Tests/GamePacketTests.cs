@@ -6980,6 +6980,29 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesFusionWeaponsPacket()
+	{
+		var fusionWeapons = Assert.IsType<CmFusionWeapons>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(206, buffer =>
+			{
+				buffer.WriteD(700001);
+				buffer.WriteD(1001);
+				buffer.WriteD(1002);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(700001, fusionWeapons.NpcObjectId);
+		Assert.Equal(1001, fusionWeapons.MainWeaponObjectId);
+		Assert.Equal(1002, fusionWeapons.FuseWeaponObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(206, buffer =>
+		{
+			buffer.WriteD(700001);
+			buffer.WriteD(1001);
+			buffer.WriteD(1002);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
