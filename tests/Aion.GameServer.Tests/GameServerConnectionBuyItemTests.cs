@@ -157,6 +157,13 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.True(outcome.WouldMutateKinah);
 		Assert.True(outcome.WouldSendPackets);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.NotNull(outcome.RepurchaseOutcomePlan.StateItemRemovalPlan);
+		var stateRemoval = outcome.RepurchaseOutcomePlan.StateItemRemovalPlan!;
+		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, stateRemoval.Status);
+		Assert.Equal([7101], stateRemoval.RemovedItemObjectIds);
+		Assert.Empty(stateRemoval.UpdatedSnapshot!.RepurchaseItems);
+		Assert.False(stateRemoval.DidRemoveItems);
+		Assert.False(stateRemoval.IsLive);
 		Assert.Empty(fixture.SentPackets);
 	}
 

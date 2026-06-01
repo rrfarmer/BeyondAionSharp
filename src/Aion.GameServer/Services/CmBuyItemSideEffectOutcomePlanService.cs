@@ -39,7 +39,10 @@ public sealed record CmBuyItemSideEffectOutcomePlan(
 
 public static class CmBuyItemSideEffectOutcomePlanService
 {
-	public static CmBuyItemSideEffectOutcomePlan CreateDisabledPlan(CmBuyItemHandlerCompositionPlan? handlerPlan)
+	public static CmBuyItemSideEffectOutcomePlan CreateDisabledPlan(
+		CmBuyItemHandlerCompositionPlan? handlerPlan,
+		int? repurchasePlayerObjectId = null,
+		IReadOnlyList<RepurchaseStateSnapshot>? repurchaseStateSnapshots = null)
 	{
 		if (handlerPlan == null)
 			return CreateTerminalPlan(
@@ -52,7 +55,10 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner => CreatePrivateStoreOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner => CreatePetMerchantOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner => CreateBuyFromShopOutcomePlan(handlerPlan),
-			CmBuyItemHandlerCompositionPlanStatus.SelectedRepurchasePlanner => CreateRepurchaseOutcomePlan(handlerPlan),
+			CmBuyItemHandlerCompositionPlanStatus.SelectedRepurchasePlanner => CreateRepurchaseOutcomePlan(
+				handlerPlan,
+				repurchasePlayerObjectId,
+				repurchaseStateSnapshots),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner when
 				handlerPlan.SellToShopPlan?.Dispatch?.DispatchesAbyssApSell == true => CreateSellForApToShopOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner => CreateSellToShopOutcomePlan(handlerPlan),
@@ -156,10 +162,16 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			IsLive: false);
 	}
 
-	private static CmBuyItemSideEffectOutcomePlan CreateRepurchaseOutcomePlan(CmBuyItemHandlerCompositionPlan handlerPlan)
+	private static CmBuyItemSideEffectOutcomePlan CreateRepurchaseOutcomePlan(
+		CmBuyItemHandlerCompositionPlan handlerPlan,
+		int? repurchasePlayerObjectId,
+		IReadOnlyList<RepurchaseStateSnapshot>? repurchaseStateSnapshots)
 	{
 		var repurchasePlan = handlerPlan.RepurchasePlan?.RunPlan.Dispatch?.RepurchasePlan;
-		var outcomePlan = RepurchaseOutcomePlanService.CreateDisabledPlan(repurchasePlan);
+		var outcomePlan = RepurchaseOutcomePlanService.CreateDisabledPlan(
+			repurchasePlan,
+			repurchasePlayerObjectId,
+			repurchaseStateSnapshots);
 
 		return new CmBuyItemSideEffectOutcomePlan(
 			CmBuyItemSideEffectOutcomePlanStatus.RepurchaseOutcomeCreated,

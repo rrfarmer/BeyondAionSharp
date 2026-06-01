@@ -180,6 +180,40 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
 		Assert.Contains(outcome.RepurchaseOutcomePlan.Steps, step => step.Kind == RepurchaseOutcomeStepKind.RemoveRepurchaseItems);
+		Assert.Null(outcome.RepurchaseOutcomePlan.StateItemRemovalPlan);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_RepurchaseOutcomeCarriesSuppliedStateRemovalSnapshot()
+	{
+		var repurchasePlan = CreateRepurchasePlan();
+		var handlerPlan = CreateRepurchaseHandlerPlan(repurchasePlan);
+		var playerObjectId = 7001;
+		var removedItem = new RepurchaseSourceItem(
+			new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1, OwnerId = playerObjectId },
+			RepurchasePrice: 330);
+		var remainingItem = new RepurchaseSourceItem(
+			new InventoryItem { ObjectId = 2002, ItemId = 100000002, Count = 1, OwnerId = playerObjectId },
+			RepurchasePrice: 120);
+		var currentSnapshot = new RepurchaseStateSnapshot(
+			playerObjectId,
+			[removedItem, remainingItem],
+			"test current RepurchaseService state");
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(
+			handlerPlan,
+			playerObjectId,
+			[currentSnapshot]);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.RepurchaseOutcomeCreated, outcome.Status);
+		Assert.NotNull(outcome.RepurchaseOutcomePlan!.StateItemRemovalPlan);
+		var stateRemoval = outcome.RepurchaseOutcomePlan.StateItemRemovalPlan!;
+		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, stateRemoval.Status);
+		Assert.Equal([2001], stateRemoval.RemovedItemObjectIds);
+		Assert.Empty(stateRemoval.MissingItemObjectIds);
+		Assert.Equal([2002], stateRemoval.UpdatedSnapshot!.RepurchaseItems.Select(item => item.Item.ObjectId));
+		Assert.False(stateRemoval.DidRemoveItems);
+		Assert.False(stateRemoval.IsLive);
 	}
 
 	[Fact]

@@ -4015,6 +4015,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var privateStorePurchasePlan = ResolveBuyItemPrivateStorePurchasePlan(player, packet, targetKind, privateStoreItems);
 		var repurchasableItemObjectIds = ResolveBuyItemRepurchasableItemObjectIds(player, packet, targetKind);
 		var repurchasePlan = ResolveBuyItemRepurchasePlan(player, packet, targetKind, repurchasableItemObjectIds);
+		var repurchaseStateSnapshots = ResolveBuyItemRepurchaseStateSnapshots(player, packet, targetKind);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
@@ -4033,7 +4034,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				PrivateStoreItems: privateStoreItems,
 				PrivateStorePurchasePlan: privateStorePurchasePlan));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
-		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
+		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(
+			plan,
+			player?.ObjectId,
+			repurchaseStateSnapshots));
 	}
 
 	private static IReadOnlySet<int> ResolveBuyItemRepurchasableItemObjectIds(
@@ -4049,6 +4053,27 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: RepurchaseList.addRepurchaseItem filters each requested
 		// object id through RepurchaseService.canRepurchase(player, itemObjectId).
 		return player.RepurchaseItems.Select(item => item.Item.ObjectId).ToHashSet();
+	}
+
+	private static IReadOnlyList<RepurchaseStateSnapshot>? ResolveBuyItemRepurchaseStateSnapshots(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemRepurchaseReadPlanService.RepurchaseTradeActionId)
+			return null;
+
+		// Java parity: RepurchaseService.repurchaseFromShop mutates the current
+		// set returned from the service map; this records the supplied facts only.
+		return
+		[
+			new RepurchaseStateSnapshot(
+				player.ObjectId,
+				player.RepurchaseItems,
+				"CM_BUY_ITEM action 2 supplied Player.RepurchaseItems snapshot for disabled RepurchaseService.repurchaseFromShop outcome"),
+		];
 	}
 
 	private RepurchasePlan? ResolveBuyItemRepurchasePlan(
