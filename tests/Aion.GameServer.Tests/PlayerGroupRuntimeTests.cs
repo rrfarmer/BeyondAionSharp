@@ -934,6 +934,84 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void SmGroupMemberInfo_JoinAndEnterOfflineMatchJavaGoldenPayloads()
+	{
+		var joiningMember = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1006,
+			IsOnline = true,
+			Name = "Joiner",
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		});
+		var offlineMember = new PlayerGroupMember(new Player
+		{
+			ObjectId = 1007,
+			IsOnline = false,
+			Name = "Offline",
+			PlayerClass = "RIDER",
+			Gender = "MALE",
+			Level = 20,
+			Position = new WorldPosition(210010000, 1.25f, 2.5f, 3.75f, 0),
+		});
+		var joinPlan = PlayerGroupMemberInfoPacketPlan.FromMember(99001, joiningMember, PlayerGroupEvent.Join);
+		var offlinePlan = PlayerGroupMemberInfoPacketPlan.FromMember(99002, offlineMember, PlayerGroupEvent.Enter);
+
+		using var joinReader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(joinPlan)));
+		Assert.Equal(99001, joinReader.ReadD());
+		Assert.Equal(1006, joinReader.ReadD());
+		Assert.Equal(819, joinReader.ReadD());
+		Assert.Equal(819, joinReader.ReadD());
+		Assert.Equal(840, joinReader.ReadD());
+		Assert.Equal(840, joinReader.ReadD());
+		Assert.Equal(60, joinReader.ReadD());
+		Assert.Equal(60, joinReader.ReadD());
+		Assert.Equal(0, joinReader.ReadD());
+		Assert.Equal(220010000, joinReader.ReadD());
+		Assert.Equal(220010000, joinReader.ReadD());
+		Assert.Equal(10.5f, joinReader.ReadF());
+		Assert.Equal(20.25f, joinReader.ReadF());
+		Assert.Equal(30.75f, joinReader.ReadF());
+		Assert.Equal(1, (int)joinReader.ReadC());
+		Assert.Equal(1, (int)joinReader.ReadC());
+		Assert.Equal(10, (int)joinReader.ReadC());
+		Assert.Equal(5, (int)joinReader.ReadC());
+		Assert.Equal(1, (int)joinReader.ReadC());
+		Assert.Equal(0, (int)joinReader.ReadC());
+		Assert.Equal(0, (int)joinReader.ReadC());
+		Assert.Equal("Joiner", joinReader.ReadS());
+		Assert.Equal(0, joinReader.Remaining);
+
+		using var offlineReader = new PacketBuffer(SerializeUnencryptedPayload(new Network.Aion.ServerPackets.SmGroupMemberInfo(offlinePlan)));
+		Assert.Equal(99002, offlineReader.ReadD());
+		Assert.Equal(1007, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(0, offlineReader.ReadD());
+		Assert.Equal(210010000, offlineReader.ReadD());
+		Assert.Equal(210010000, offlineReader.ReadD());
+		Assert.Equal(1.25f, offlineReader.ReadF());
+		Assert.Equal(2.5f, offlineReader.ReadF());
+		Assert.Equal(3.75f, offlineReader.ReadF());
+		Assert.Equal(13, (int)offlineReader.ReadC());
+		Assert.Equal(0, (int)offlineReader.ReadC());
+		Assert.Equal(20, (int)offlineReader.ReadC());
+		Assert.Equal(7, (int)offlineReader.ReadC());
+		Assert.Equal(1, (int)offlineReader.ReadC());
+		Assert.Equal(0, (int)offlineReader.ReadC());
+		Assert.Equal(0, (int)offlineReader.ReadC());
+		Assert.Equal("Offline", offlineReader.ReadS());
+		Assert.Equal(0, offlineReader.Remaining);
+	}
+
+	[Fact]
 	public void SmGroupMemberInfo_WritesEnterAndUpdateZeroEffectSkeletonLikeJava()
 	{
 		var member = new PlayerGroupMember(new Player
