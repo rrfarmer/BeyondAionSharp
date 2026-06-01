@@ -1794,8 +1794,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		var limitedItemFactInput = packet.DialogActionId == CmDialogSelect.Buy
 			? tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId)
 			: null;
+		var repurchasePacketSnapshotPlan = packet.DialogActionId == CmDialogSelect.BuyAgain && staticData?.ItemTemplates != null
+			? RepurchasePacketSnapshotPlanService.CreateDisabledPlan(
+				packet.TargetObjectId,
+				player.RepurchaseItems,
+				staticData.ItemTemplates)
+			: null;
 		var repurchasePacket = packet.DialogActionId == CmDialogSelect.BuyAgain
-			? CreateDialogRepurchasePacket(player, packet.TargetObjectId, staticData?.ItemTemplates)
+			? repurchasePacketSnapshotPlan?.Packet
+				?? CreateDialogRepurchasePacket(player, packet.TargetObjectId, staticData?.ItemTemplates)
 			: null;
 
 		return QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
@@ -1820,7 +1827,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				TradeRuntimeFactPlan: tradeRuntimeFactPlan,
 				TradeListFactInput: tradeListFactInput,
 				LimitedItemFactInput: limitedItemFactInput,
-				RepurchasePacket: repurchasePacket),
+				RepurchasePacket: repurchasePacket,
+				RepurchasePacketSnapshotPlan: repurchasePacketSnapshotPlan),
 			npcTemplates,
 			staticData?.TradeLists,
 			staticData?.GoodsLists);

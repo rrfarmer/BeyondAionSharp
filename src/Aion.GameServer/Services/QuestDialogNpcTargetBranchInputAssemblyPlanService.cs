@@ -21,7 +21,8 @@ public sealed record QuestDialogNpcTargetBranchRuntimeSnapshot(
 	NpcDialogTradeRuntimeFactAdapterPlan? TradeRuntimeFactPlan = null,
 	NpcDialogTradeListFactAdapterInput? TradeListFactInput = null,
 	NpcDialogLimitedItemFactAdapterInput? LimitedItemFactInput = null,
-	SmRepurchase? RepurchasePacket = null);
+	SmRepurchase? RepurchasePacket = null,
+	RepurchasePacketSnapshotPlan? RepurchasePacketSnapshotPlan = null);
 
 public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	QuestDialogNpcTargetBranchInput Input,
@@ -36,7 +37,8 @@ public sealed record QuestDialogNpcTargetBranchInputAssemblyPlan(
 	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
 	SmRepurchase? RepurchasePacket = null,
 	NpcDialogControllerDispatchPlan? ControllerDispatchPlan = null,
-	bool IsLive = false);
+	bool IsLive = false,
+	RepurchasePacketSnapshotPlan? RepurchasePacketSnapshotPlan = null);
 
 public sealed record QuestDialogNpcControllerDispatchFacts(
 	bool IsInTalkRange = true,
@@ -96,7 +98,8 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			tradeListFactAdapterPlan,
 			tradeListPacketPlan,
 			tradeInListPacketPlan,
-			snapshot.RepurchasePacket);
+			snapshot.RepurchasePacket,
+			snapshot.RepurchasePacketSnapshotPlan);
 
 		return new QuestDialogNpcTargetBranchInputAssemblyPlan(
 			input,
@@ -111,7 +114,8 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 			tradeInListPacketPlan,
 			snapshot.RepurchasePacket,
 			controllerDispatchPlan,
-			IsLive: false);
+			IsLive: false,
+			RepurchasePacketSnapshotPlan: snapshot.RepurchasePacketSnapshotPlan);
 	}
 
 	private static NpcDialogTradeListFactAdapterPlan? CreateTradeListFactAdapterPlan(
@@ -211,7 +215,8 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 		NpcDialogTradeListFactAdapterPlan? tradeListFactAdapterPlan,
 		SmTradeListPacketPlan? tradeListPacketPlan,
 		SmTradeInListPacketPlan? tradeInListPacketPlan,
-		SmRepurchase? repurchasePacket)
+		SmRepurchase? repurchasePacket,
+		RepurchasePacketSnapshotPlan? repurchasePacketSnapshotPlan)
 	{
 		if (snapshot.ControllerDispatchFacts == null || branchPlan.Dispatch == null)
 		{
@@ -228,6 +233,7 @@ public static class QuestDialogNpcTargetBranchInputAssemblyPlanService
 				dialogServiceFacts,
 				tradeListPacketPlan,
 				tradeInListPacketPlan,
-				repurchasePacket));
+				repurchasePacket,
+				repurchasePacketSnapshotPlan));
 	}
 }

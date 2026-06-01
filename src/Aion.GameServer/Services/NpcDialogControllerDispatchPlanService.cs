@@ -18,7 +18,8 @@ public sealed record NpcDialogControllerDispatchInput(
 	NpcDialogServiceSelectFacts? DialogServiceFacts = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
 	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
-	SmRepurchase? RepurchasePacket = null);
+	SmRepurchase? RepurchasePacket = null,
+	RepurchasePacketSnapshotPlan? RepurchasePacketSnapshotPlan = null);
 
 public sealed record NpcDialogServiceSelectFacts(
 	bool NpcSupportsAction = true,
@@ -131,6 +132,7 @@ public static class NpcDialogControllerDispatchPlanService
 				facts.HasTradeInList,
 				input.TradeListPacketPlan,
 				input.TradeInListPacketPlan,
-				input.RepurchasePacket));
+				input.RepurchasePacket,
+				input.RepurchasePacketSnapshotPlan));
 	}
 }
