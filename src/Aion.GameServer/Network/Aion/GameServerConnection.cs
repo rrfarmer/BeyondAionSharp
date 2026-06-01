@@ -583,6 +583,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleHouseEditAsync(_activePlayer, houseEdit);
 				break;
+			case CmHouseScript:
+				// Java parity: network/aion/clientpackets/CM_HOUSE_SCRIPT.runImpl validates active house ownership,
+				// mutates PlayerScripts, sends overflow errors, and broadcasts SM_HOUSE_SCRIPTS. Live script persistence/fanout remains unported.
+				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
 				{
