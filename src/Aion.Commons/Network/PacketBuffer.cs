@@ -221,6 +221,22 @@ namespace Aion.Commons.Network
 		}
 
 		/// <summary>
+		/// Read a 16-bit signed integer in little-endian. (readH in Java)
+		/// </summary>
+		public short ReadSignedH()
+		{
+			if (Remaining < 2)
+			{
+				if (!_strictReads)
+					return 0;
+				throw new EndOfStreamException("Not enough data to read short");
+			}
+			var value = BinaryPrimitives.ReadInt16LittleEndian(new Span<byte>(_buffer, _position, 2));
+			_position += 2;
+			return value;
+		}
+
+		/// <summary>
 		/// Read a 32-bit signed integer in little-endian. (readD in Java)
 		/// </summary>
 		public int ReadD()

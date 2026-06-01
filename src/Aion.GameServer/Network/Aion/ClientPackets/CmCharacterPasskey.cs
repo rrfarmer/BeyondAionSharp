@@ -21,7 +21,7 @@ public sealed class CmCharacterPasskey : GameClientPacket
 	protected override void ReadPayload(PacketBuffer buffer)
 	{
 		// Java parity: network/aion/clientpackets/CM_CHARACTER_PASSKEY.readImpl.
-		Type = buffer.ReadH();
+		Type = buffer.ReadSignedH();
 		Passkey = ReadFixedUtf16String(buffer);
 		if (Type == 2)
 			NewPasskey = ReadFixedUtf16String(buffer);
