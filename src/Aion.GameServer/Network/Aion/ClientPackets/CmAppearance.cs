@@ -20,7 +20,7 @@ public sealed class CmAppearance : GameClientPacket
 		// Java parity: network/aion/clientpackets/CM_APPEARANCE.readImpl.
 		Type = buffer.ReadC();
 		buffer.ReadC();
-		buffer.ReadH();
+		buffer.ReadSignedH();
 		ItemObjectId = buffer.ReadD();
 		if (Type is 0 or 1)
 			NewName = buffer.ReadS();
