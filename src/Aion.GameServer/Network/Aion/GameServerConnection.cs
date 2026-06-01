@@ -369,10 +369,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: runImpl methods for the registered CM_* infrastructure packets handled here.
 		switch (packet)
 		{
-			case CmVersionCheck:
+			case CmVersionCheck versionCheck:
 				// Java parity: network/aion/clientpackets/CM_VERSION_CHECK.runImpl sends SM_VERSION_CHECK
 				// with dynamic config, server-time, chat-server, ratio, passport, and event-theme data.
-				// The parser/factory boundary is ported; live version-check response remains unported.
+				// The incompatible-version response is deterministic; the success response remains unported.
+				if (versionCheck.AionClientVersion != SmVersionCheck.InternalVersion)
+					await SendPacketAsync(new SmVersionCheck(versionCheck.AionClientVersion, EventTheme.None));
 				break;
 			case CmL2AuthLoginCheck auth:
 				var authResult = await AuthenticateAccountAsync(auth);
