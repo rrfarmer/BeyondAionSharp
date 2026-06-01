@@ -843,6 +843,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					_privateStoreNameOpenCompositionPlanObserver?.Invoke(CreatePrivateStoreNameOpenPlan(privateStoreName, _activePlayer));
 				break;
+			case CmSummonCommand:
+				// Java parity: network/aion/clientpackets/CM_SUMMON_COMMAND.runImpl dispatches SummonsService.doMode.
+				// Live summon mode command handling remains unported; existing summon command planners are non-live only.
+				break;
 			case CmBrokerList brokerList:
 				if (_activePlayer != null)
 				{

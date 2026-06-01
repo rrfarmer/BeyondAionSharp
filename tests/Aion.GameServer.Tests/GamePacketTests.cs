@@ -7324,6 +7324,32 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesSummonCommand()
+	{
+		var summonCommand = Assert.IsType<CmSummonCommand>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					121,
+					b =>
+					{
+						b.WriteC(255);
+						b.WriteD(111);
+						b.WriteD(222);
+						b.WriteD(9001);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+
+		Assert.Equal(255, summonCommand.Mode);
+		Assert.Equal(111, summonCommand.Unknown1);
+		Assert.Equal(222, summonCommand.Unknown2);
+		Assert.Equal(9001, summonCommand.TargetObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(121, b => b.WriteC(1)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesBrokerPackets()
 	{
 		var sellWindow = Assert.IsType<CmBrokerSellWindow>(
