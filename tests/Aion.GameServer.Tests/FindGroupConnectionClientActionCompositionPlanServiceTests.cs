@@ -60,6 +60,52 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 	}
 
 	[Fact]
+	public async Task CreateDisabledPlan_ActionTwentyParsesButDoesNotDispatchLikeJavaRunImpl()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		SetActivePlayer(fixture.Connection, player);
+		var service = CreateService(fixture.World);
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(20));
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, plan.Status);
+		Assert.Equal(20, plan.Action.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.ParsedButNoRunImpl, plan.ClientActionPlan!.Kind);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_ActionTwentyFivePreservesBanPayloadButDoesNotDispatchLikeJavaRunImpl()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		SetActivePlayer(fixture.Connection, player);
+		var service = CreateService(fixture.World);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(25);
+				buffer.WriteD(0x11121314);
+				buffer.WriteD(0x21222324);
+				buffer.WriteD(0x31323334);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, plan.Status);
+		Assert.Equal(25, plan.Action.Action);
+		Assert.Equal(0x11121314, plan.Action.PlayerOrTeamId);
+		Assert.Equal(0x21222324, plan.Action.InstanceMaskId);
+		Assert.Equal(0x31323334, plan.Action.BannedPlayerId);
+		Assert.Equal(FindGroupClientActionPlanKind.ParsedButNoRunImpl, plan.ClientActionPlan!.Kind);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public async Task CreateDisabledPlan_UsesWorldResolverForInstanceApplication()
 	{
 		await using var fixture = await ConnectionFixture.CreateAsync();
