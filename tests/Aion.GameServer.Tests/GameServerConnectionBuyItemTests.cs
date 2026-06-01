@@ -150,7 +150,12 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
-		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.HandlerNotOutcomeEligible, outcome.Status);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.RepurchaseOutcomeCreated, outcome.Status);
+		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.RepurchaseOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldSendPackets);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.Empty(fixture.SentPackets);
 	}

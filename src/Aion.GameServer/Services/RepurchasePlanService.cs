@@ -34,6 +34,51 @@ public sealed record RepurchasePlan(
 	public bool IsLive => false;
 }
 
+public enum RepurchaseOutcomePlanStatus
+{
+	MissingRepurchasePlan,
+	RepurchasePlanNotReady,
+	DisabledNoTransaction,
+}
+
+public enum RepurchaseOutcomeStepKind
+{
+	PersistInventoryWrites,
+	RemoveRepurchaseItems,
+	DispatchPacketIntents,
+	WriteAuditLog,
+	CommitSideEffectBoundary,
+}
+
+public sealed record RepurchaseOutcomeStepPlan(
+	RepurchaseOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record RepurchaseOutcomePlan(
+	RepurchaseOutcomePlanStatus Status,
+	RepurchasePlan? RepurchasePlan,
+	IReadOnlyList<RepurchaseOutcomeStepPlan> Steps,
+	bool WouldWritePersistence,
+	bool DidWritePersistence,
+	bool WouldMutatePlayerInventory,
+	bool DidMutatePlayerInventory,
+	bool WouldRemoveRepurchaseItems,
+	bool DidRemoveRepurchaseItems,
+	bool WouldMutateKinah,
+	bool DidMutateKinah,
+	bool WouldSendPackets,
+	bool DidSendPackets,
+	bool WouldWriteAuditLog,
+	bool DidWriteAuditLog,
+	bool WouldCommitTransactionBoundary,
+	bool DidCommitTransactionBoundary,
+	bool ShouldCommitTransactionBoundary,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
 public static class RepurchasePlanService
 {
 	private const int CubeStorageId = 0;
@@ -266,4 +311,107 @@ public static class RepurchasePlanService
 		copy.IdianStone = item.IdianStone;
 		return copy;
 	}
+}
+
+public static class RepurchaseOutcomePlanService
+{
+	public static RepurchaseOutcomePlan CreateDisabledPlan(RepurchasePlan? repurchasePlan)
+	{
+		if (repurchasePlan == null)
+			return CreateTerminalPlan(
+				RepurchaseOutcomePlanStatus.MissingRepurchasePlan,
+				repurchasePlan,
+				"RepurchaseService.repurchaseFromShop final outcome requires a repurchase execution plan");
+
+		var wouldMutatePlayerInventory = repurchasePlan.AddedItems.Count > 0 || repurchasePlan.UpdatedItems.Count > 0;
+		var wouldRemoveRepurchaseItems = repurchasePlan.RemovedRepurchaseItemObjectIds.Count > 0;
+		var wouldMutateKinah = repurchasePlan.RepurchasedItemObjectIds.Count > 0 && repurchasePlan.KinahUpdate != null;
+		var wouldWritePersistence = wouldMutatePlayerInventory || wouldRemoveRepurchaseItems || wouldMutateKinah;
+		var wouldSendPackets = wouldMutatePlayerInventory || wouldMutateKinah || repurchasePlan.Messages.Count > 0;
+		var wouldWriteAuditLog = repurchasePlan.AuditMessages.Count > 0;
+		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets || wouldWriteAuditLog;
+
+		if (!wouldCommitBoundary)
+			return CreateTerminalPlan(
+				RepurchaseOutcomePlanStatus.RepurchasePlanNotReady,
+				repurchasePlan,
+				"RepurchaseService.repurchaseFromShop final outcome has no recorded mutation, packet, or audit side effect");
+
+		var steps = new List<RepurchaseOutcomeStepPlan>();
+		if (wouldWritePersistence)
+			steps.Add(Disabled(
+				RepurchaseOutcomeStepKind.PersistInventoryWrites,
+				"RepurchaseService.repurchaseFromShop -> tryDecreaseKinah and ItemService.addItem persist player inventory/Kinah state"));
+		if (wouldRemoveRepurchaseItems)
+			steps.Add(Disabled(
+				RepurchaseOutcomeStepKind.RemoveRepurchaseItems,
+				"RepurchaseService.repurchaseFromShop -> items.remove(repurchaseItem) removes the item from the singleton repurchase set"));
+		if (wouldSendPackets)
+			steps.Add(Disabled(
+				RepurchaseOutcomeStepKind.DispatchPacketIntents,
+				"RepurchaseService.repurchaseFromShop -> inventory mutations and inventory-full guards emit packet intents"));
+		if (wouldWriteAuditLog)
+			steps.Add(Disabled(
+				RepurchaseOutcomeStepKind.WriteAuditLog,
+				"RepurchaseService.repurchaseFromShop -> insufficient Kinah branch writes AuditLogger output"));
+		if (wouldCommitBoundary)
+			steps.Add(Disabled(
+				RepurchaseOutcomeStepKind.CommitSideEffectBoundary,
+				"RepurchaseService.repurchaseFromShop side-effect boundary is recorded only; Java runtime ordering is not yet verified"));
+
+		return new RepurchaseOutcomePlan(
+			RepurchaseOutcomePlanStatus.DisabledNoTransaction,
+			repurchasePlan,
+			steps,
+			wouldWritePersistence,
+			DidWritePersistence: false,
+			wouldMutatePlayerInventory,
+			DidMutatePlayerInventory: false,
+			wouldRemoveRepurchaseItems,
+			DidRemoveRepurchaseItems: false,
+			wouldMutateKinah,
+			DidMutateKinah: false,
+			wouldSendPackets,
+			DidSendPackets: false,
+			wouldWriteAuditLog,
+			DidWriteAuditLog: false,
+			wouldCommitBoundary,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"RepurchaseService.repurchaseFromShop final outcome is disabled; inventory/Kinah/repurchase-set writes, packets, and audits are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static RepurchaseOutcomePlan CreateTerminalPlan(
+		RepurchaseOutcomePlanStatus status,
+		RepurchasePlan? repurchasePlan,
+		string javaSource) =>
+		new(
+			status,
+			repurchasePlan,
+			Steps: Array.Empty<RepurchaseOutcomeStepPlan>(),
+			WouldWritePersistence: false,
+			DidWritePersistence: false,
+			WouldMutatePlayerInventory: false,
+			DidMutatePlayerInventory: false,
+			WouldRemoveRepurchaseItems: false,
+			DidRemoveRepurchaseItems: false,
+			WouldMutateKinah: false,
+			DidMutateKinah: false,
+			WouldSendPackets: false,
+			DidSendPackets: false,
+			WouldWriteAuditLog: false,
+			DidWriteAuditLog: false,
+			WouldCommitTransactionBoundary: false,
+			DidCommitTransactionBoundary: false,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static RepurchaseOutcomeStepPlan Disabled(
+		RepurchaseOutcomeStepKind kind,
+		string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }

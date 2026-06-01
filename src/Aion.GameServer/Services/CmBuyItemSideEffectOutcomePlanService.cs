@@ -7,6 +7,7 @@ public enum CmBuyItemSideEffectOutcomePlanStatus
 	PrivateStoreOutcomeCreated,
 	PetMerchantSellOutcomeCreated,
 	BuyFromShopOutcomeCreated,
+	RepurchaseOutcomeCreated,
 	SellForApToShopOutcomeCreated,
 	SellToShopOutcomeCreated,
 }
@@ -19,6 +20,7 @@ public sealed record CmBuyItemSideEffectOutcomePlan(
 	PetMerchantSellLiveExecutorFacadePlan? PetMerchantSellFacadePlan,
 	PetMerchantSellOutcomePlan? PetMerchantSellOutcomePlan,
 	TradeBuyTransactionOutcomePlan? BuyFromShopOutcomePlan,
+	RepurchaseOutcomePlan? RepurchaseOutcomePlan,
 	TradeSellToShopOutcomePlan? SellToShopOutcomePlan,
 	TradeSellForApToShopOutcomePlan? SellForApToShopOutcomePlan,
 	bool WouldWritePersistence,
@@ -50,6 +52,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner => CreatePrivateStoreOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner => CreatePetMerchantOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner => CreateBuyFromShopOutcomePlan(handlerPlan),
+			CmBuyItemHandlerCompositionPlanStatus.SelectedRepurchasePlanner => CreateRepurchaseOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner when
 				handlerPlan.SellToShopPlan?.Dispatch?.DispatchesAbyssApSell == true => CreateSellForApToShopOutcomePlan(handlerPlan),
 			CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner => CreateSellToShopOutcomePlan(handlerPlan),
@@ -73,6 +76,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: null,
+			RepurchaseOutcomePlan: null,
 			SellToShopOutcomePlan: null,
 			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
@@ -103,6 +107,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: facadePlan,
 			PetMerchantSellOutcomePlan: outcomePlan,
 			BuyFromShopOutcomePlan: null,
+			RepurchaseOutcomePlan: null,
 			SellToShopOutcomePlan: null,
 			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
@@ -133,6 +138,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: outcomePlan,
+			RepurchaseOutcomePlan: null,
 			SellToShopOutcomePlan: null,
 			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
@@ -150,6 +156,37 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			IsLive: false);
 	}
 
+	private static CmBuyItemSideEffectOutcomePlan CreateRepurchaseOutcomePlan(CmBuyItemHandlerCompositionPlan handlerPlan)
+	{
+		var repurchasePlan = handlerPlan.RepurchasePlan?.RunPlan.Dispatch?.RepurchasePlan;
+		var outcomePlan = RepurchaseOutcomePlanService.CreateDisabledPlan(repurchasePlan);
+
+		return new CmBuyItemSideEffectOutcomePlan(
+			CmBuyItemSideEffectOutcomePlanStatus.RepurchaseOutcomeCreated,
+			handlerPlan,
+			PrivateStoreFacadePlan: null,
+			PrivateStoreOutcomePlan: null,
+			PetMerchantSellFacadePlan: null,
+			PetMerchantSellOutcomePlan: null,
+			BuyFromShopOutcomePlan: null,
+			RepurchaseOutcomePlan: outcomePlan,
+			SellToShopOutcomePlan: null,
+			SellForApToShopOutcomePlan: null,
+			WouldWritePersistence: outcomePlan.WouldWritePersistence,
+			WouldMutateSellerInventory: false,
+			WouldMutateBuyerInventory: outcomePlan.WouldMutatePlayerInventory,
+			WouldMutateKinah: outcomePlan.WouldMutateKinah,
+			WouldAddRepurchaseItems: false,
+			WouldSendPackets: outcomePlan.WouldSendPackets,
+			WouldWriteExchangeLog: false,
+			WouldWriteAuditLog: outcomePlan.WouldWriteAuditLog,
+			WouldCommitTransactionBoundary: outcomePlan.WouldCommitTransactionBoundary,
+			ShouldCommitTransactionBoundary: false,
+			ShouldDispatchLiveSideEffects: false,
+			"CM_BUY_ITEM Npc action 2 disabled repurchase final outcome is composed from handler plan without dispatch",
+			IsLive: false);
+	}
+
 	private static CmBuyItemSideEffectOutcomePlan CreateSellToShopOutcomePlan(CmBuyItemHandlerCompositionPlan handlerPlan)
 	{
 		var sellPlan = handlerPlan.SellToShopPlan?.Dispatch?.SellToShopPlan;
@@ -163,6 +200,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: null,
+			RepurchaseOutcomePlan: null,
 			SellToShopOutcomePlan: outcomePlan,
 			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
@@ -193,6 +231,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: null,
+			RepurchaseOutcomePlan: null,
 			SellToShopOutcomePlan: null,
 			SellForApToShopOutcomePlan: outcomePlan,
 			WouldWritePersistence: outcomePlan.WouldWritePersistence,
@@ -222,6 +261,7 @@ public static class CmBuyItemSideEffectOutcomePlanService
 			PetMerchantSellFacadePlan: null,
 			PetMerchantSellOutcomePlan: null,
 			BuyFromShopOutcomePlan: null,
+			RepurchaseOutcomePlan: null,
 			SellToShopOutcomePlan: null,
 			SellForApToShopOutcomePlan: null,
 			WouldWritePersistence: false,

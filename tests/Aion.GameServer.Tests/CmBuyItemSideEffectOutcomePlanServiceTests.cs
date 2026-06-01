@@ -24,6 +24,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.PrivateStoreOutcomePlan!.Status);
@@ -54,6 +55,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreFacadePlan);
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.NotNull(outcome.PetMerchantSellFacadePlan);
@@ -88,6 +90,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.NotNull(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
@@ -146,6 +149,55 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_ComposesRepurchaseFinalOutcomeWithoutDispatch()
+	{
+		var repurchasePlan = CreateRepurchasePlan();
+		var handlerPlan = CreateRepurchaseHandlerPlan(repurchasePlan);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.RepurchaseOutcomeCreated, outcome.Status);
+		Assert.Same(handlerPlan, outcome.HandlerPlan);
+		Assert.Null(outcome.PrivateStoreFacadePlan);
+		Assert.Null(outcome.PrivateStoreOutcomePlan);
+		Assert.Null(outcome.PetMerchantSellFacadePlan);
+		Assert.Null(outcome.PetMerchantSellOutcomePlan);
+		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.NotNull(outcome.RepurchaseOutcomePlan);
+		Assert.Null(outcome.SellToShopOutcomePlan);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
+		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.RepurchaseOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldWriteExchangeLog);
+		Assert.False(outcome.WouldWriteAuditLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.False(outcome.IsLive);
+		Assert.Contains(outcome.RepurchaseOutcomePlan.Steps, step => step.Kind == RepurchaseOutcomeStepKind.RemoveRepurchaseItems);
+	}
+
+	[Fact]
+	public void CreateDisabledPlan_RepurchaseSelectionWithoutExecutionPlanCarriesMissingOutcome()
+	{
+		var handlerPlan = CreateRepurchaseHandlerPlan(repurchasePlan: null);
+
+		var outcome = CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(handlerPlan);
+
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.RepurchaseOutcomeCreated, outcome.Status);
+		Assert.Equal(RepurchaseOutcomePlanStatus.MissingRepurchasePlan, outcome.RepurchaseOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_ComposesApSellFinalOutcomeWithoutDispatch()
 	{
 		var apSellPlan = CreateApSellPlan();
@@ -160,6 +212,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.NotNull(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellForApToShopOutcomePlan!.Status);
 		Assert.True(outcome.WouldWritePersistence);
@@ -191,6 +244,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PetMerchantSellFacadePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.NotNull(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.Equal(TradeSellToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellToShopOutcomePlan!.Status);
@@ -275,6 +329,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
@@ -292,6 +347,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.Null(outcome.PrivateStoreOutcomePlan);
 		Assert.Null(outcome.PetMerchantSellOutcomePlan);
 		Assert.Null(outcome.BuyFromShopOutcomePlan);
+		Assert.Null(outcome.RepurchaseOutcomePlan);
 		Assert.Null(outcome.SellToShopOutcomePlan);
 		Assert.Null(outcome.SellForApToShopOutcomePlan);
 		Assert.False(outcome.WouldWritePersistence);
@@ -334,6 +390,18 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 				TargetKind: CmBuyItemRunTargetKind.Npc,
 				SellTemplate: new TradeListTemplateSummary(203060, [129], NpcType: "NORMAL"),
 				BuyTransactionPlan: buyTransactionPlan));
+	}
+
+	private static CmBuyItemHandlerCompositionPlan CreateRepurchaseHandlerPlan(RepurchasePlan? repurchasePlan)
+	{
+		return CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				CreatePacket(2, [new CmBuyItemEntry(2001, 1)]),
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				NpcCanBuy: true,
+				RepurchasableItemObjectIds: new HashSet<int> { 2001 },
+				RepurchasePlan: repurchasePlan));
 	}
 
 	private static CmBuyItemHandlerCompositionPlan CreateSellToShopHandlerPlan(TradeSellToShopPlan? sellPlan)
@@ -403,6 +471,23 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 			RepurchaseItems: [new RepurchaseSourceItem(new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1 }, RepurchasePrice: 330)],
 			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_330 },
 			"TradeService.performSellToShop");
+	}
+
+	private static RepurchasePlan CreateRepurchasePlan()
+	{
+		return new RepurchasePlan(
+			RepurchasePlanStatus.PlanCreated,
+			RequestedItemObjectIds: [2001],
+			RepurchasedItemObjectIds: [2001],
+			MissingRepurchaseItemObjectIds: [],
+			InsufficientKinahItemObjectIds: [],
+			AddedItems: [new InventoryItem { ObjectId = 4001, ItemId = 100000001, Count = 1 }],
+			UpdatedItems: [],
+			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_000 },
+			RemovedRepurchaseItemObjectIds: [2001],
+			Messages: [],
+			AuditMessages: [],
+			"RepurchaseService.repurchaseFromShop");
 	}
 
 	private static TradeBuyTransactionPlan CreateBuyTransactionPlan()
