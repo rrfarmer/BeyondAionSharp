@@ -498,6 +498,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.PlanCreated,
 			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SkippedMissingSellerItems: [],
 			SellerItemUpdates: [],
 			SellerDeletedItemObjectIds: [sellerItem.ObjectId],
 			BuyerAddedItems: [buyerItem],
@@ -517,6 +518,7 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.BlockedSellerItemCountChanged,
 			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 2, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SkippedMissingSellerItems: [],
 			SellerItemUpdates: [],
 			SellerDeletedItemObjectIds: [],
 			BuyerAddedItems: [],

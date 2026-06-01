@@ -29,6 +29,7 @@ public sealed record PrivateStorePurchaseItemRequest(
 public sealed record PrivateStorePurchasePlan(
 	PrivateStorePurchasePlanStatus Status,
 	IReadOnlyList<PrivateStorePurchaseItemRequest> BoughtItems,
+	IReadOnlyList<PrivateStorePurchaseItemRequest> SkippedMissingSellerItems,
 	IReadOnlyList<InventoryItem> SellerItemUpdates,
 	IReadOnlyList<int> SellerDeletedItemObjectIds,
 	IReadOnlyList<InventoryItem> BuyerAddedItems,
@@ -283,16 +284,17 @@ public static class PrivateStorePurchasePlanService
 		var sellerDeletes = new List<int>();
 		var buyerAddedItems = new List<InventoryItem>();
 		var buyerUpdatedItems = new List<InventoryItem>();
+		var skippedMissingSellerItems = new List<PrivateStorePurchaseItemRequest>();
 		var sellerMessages = new List<SmSystemMessage>();
 
 		foreach (var boughtItem in boughtItems)
 		{
 			var sellerItem = sellerInventoryItems.FirstOrDefault(item => item.ObjectId == boughtItem.ItemObjectId && item.ItemId == boughtItem.ItemId);
 			if (sellerItem == null)
-				return Block(
-					PrivateStorePurchasePlanStatus.BlockedMissingSellerItem,
-					boughtItems,
-					"PrivateStoreService.sellStoreItem -> seller.getInventory().getItemByObjId(...) == null -> skip item; planner blocks because live partial-send semantics are not wired");
+			{
+				skippedMissingSellerItems.Add(boughtItem);
+				continue;
+			}
 
 			if (sellerItem.Count < boughtItem.Count)
 				return Block(
@@ -359,10 +361,14 @@ public static class PrivateStorePurchasePlanService
 				PersistentState = InventoryItemPersistentState.New,
 			}
 			: CopyInventoryItem(sellerKinah, sellerKinah.Count + totalPrice);
+		var javaSource = skippedMissingSellerItems.Count == 0
+			? "PrivateStoreService.sellStoreItem -> decrease seller item -> unpack if packCount>0 -> ItemService.addItem(buyer, item, count) -> seller message -> decrease buyer kinah -> increase seller kinah -> close store when soldItems empty"
+			: "PrivateStoreService.sellStoreItem -> seller.getInventory().getItemByObjId(...) == null skips that bought item inside loop; buyer.getInventory().decreaseKinah(price) and seller.getInventory().increaseKinah(price) still run after loop";
 
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.PlanCreated,
 			boughtItems,
+			skippedMissingSellerItems,
 			sellerUpdates,
 			sellerDeletes,
 			buyerAddedItems,
@@ -374,7 +380,7 @@ public static class PrivateStorePurchasePlanService
 			WouldWriteAuditLog: false,
 			AuditMessage: null,
 			ShouldCloseSellerStore: remainingStoreItemObjectIdsAfterPurchase.Count == 0,
-			"PrivateStoreService.sellStoreItem -> decrease seller item -> unpack if packCount>0 -> ItemService.addItem(buyer, item, count) -> seller message -> decrease buyer kinah -> increase seller kinah -> close store when soldItems empty");
+			javaSource);
 	}
 
 	private static bool TryCalculatePrice(IReadOnlyList<PrivateStorePurchaseItemRequest> boughtItems, out long totalPrice)
@@ -402,6 +408,7 @@ public static class PrivateStorePurchasePlanService
 		return new PrivateStorePurchasePlan(
 			status,
 			boughtItems,
+			SkippedMissingSellerItems: Array.Empty<PrivateStorePurchaseItemRequest>(),
 			SellerItemUpdates: Array.Empty<InventoryItem>(),
 			SellerDeletedItemObjectIds: Array.Empty<int>(),
 			BuyerAddedItems: Array.Empty<InventoryItem>(),
@@ -712,7 +719,7 @@ public static class PrivateStoreSendAdapterPlanService
 				targetPlayerObjectId: null,
 				itemObjectId: null,
 				"PrivateStoreService.closePrivateStore -> broadcast SM_EMOTION(CLOSE_PRIVATESHOP)"));
-		if (purchasePlan.BoughtItems.Count > 0)
+		if (purchasePlan.BuyerAddedItems.Count > 0 || purchasePlan.BuyerUpdatedItems.Count > 0)
 			intents.Add(Disabled(
 				PrivateStoreSendIntentKind.WriteExchangeLog,
 				targetPlayerObjectId: null,
@@ -844,7 +851,7 @@ public static class PrivateStoreLiveExecutorFacadePlanService
 				PrivateStoreLiveExecutorOperationKind.SendSellerNotification,
 				"PrivateStoreService.sellStoreItem -> STR_MSG_PERSONAL_SHOP_SELL_ITEM or STR_MSG_PERSONAL_SHOP_SELL_ITEM_MULTI"));
 
-		if (purchasePlan.BoughtItems.Count > 0)
+		if (purchasePlan.BuyerAddedItems.Count > 0 || purchasePlan.BuyerUpdatedItems.Count > 0)
 			operations.Add(Disabled(
 				PrivateStoreLiveExecutorOperationKind.LogPrivateStoreSale,
 				"PrivateStoreService.sellStoreItem -> EXCHANGE_LOG private-store sale line"));
@@ -878,7 +885,7 @@ public static class PrivateStoreLiveExecutorFacadePlanService
 			DidMutateBuyerInventory: false,
 			WouldSendSellerMessages: purchasePlan.SellerMessages.Count > 0,
 			DidSendSellerMessages: false,
-			WouldWriteExchangeLog: purchasePlan.BoughtItems.Count > 0,
+			WouldWriteExchangeLog: purchasePlan.BuyerAddedItems.Count > 0 || purchasePlan.BuyerUpdatedItems.Count > 0,
 			DidWriteExchangeLog: false,
 			WouldMutateBuyerKinah: purchasePlan.BuyerKinahUpdate != null,
 			DidMutateBuyerKinah: false,

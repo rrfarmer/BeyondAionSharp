@@ -315,6 +315,7 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.PlanCreated,
 			BoughtItems: [],
+			SkippedMissingSellerItems: [],
 			SellerItemUpdates: [],
 			SellerDeletedItemObjectIds: [],
 			BuyerAddedItems: [],

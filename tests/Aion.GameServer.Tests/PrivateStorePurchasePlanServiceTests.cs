@@ -200,6 +200,37 @@ public sealed class PrivateStorePurchasePlanServiceTests
 		Assert.Equal("tried to buy more than players private store item stack count", plan.AuditMessage);
 	}
 
+	[Fact]
+	public void CreatePlan_SkipsMissingSellerItemButKeepsJavaKinahTransferIntent()
+	{
+		var buyer = new Player { ObjectId = 1001 };
+		var seller = new Player { ObjectId = 2001 };
+		var buyerKinah = Item(10, KinahItemId, 10_000, ownerId: buyer.ObjectId);
+		var sellerKinah = Item(20, KinahItemId, 500, ownerId: seller.ObjectId);
+		var request = new PrivateStorePurchaseItemRequest(0, ItemObjectId: 30, SwordItemId, Count: 1, PricePerItem: 4_000, ItemName: "Practice Sword");
+
+		var plan = CreatePlan(
+			buyer,
+			seller,
+			buyerInventoryItems: [buyerKinah],
+			sellerInventoryItems: [sellerKinah],
+			boughtItems: [request],
+			remainingStoreItemObjectIdsAfterPurchase: [request.ItemObjectId]);
+
+		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.Equal([request], plan.SkippedMissingSellerItems);
+		Assert.Empty(plan.SellerItemUpdates);
+		Assert.Empty(plan.SellerDeletedItemObjectIds);
+		Assert.Empty(plan.BuyerAddedItems);
+		Assert.Empty(plan.BuyerUpdatedItems);
+		Assert.Empty(plan.SellerMessages);
+		Assert.False(plan.WouldWriteAuditLog);
+		Assert.False(plan.ShouldCloseSellerStore);
+		Assert.Equal(6_000, plan.BuyerKinahUpdate!.Count);
+		Assert.Equal(4_500, plan.SellerKinahUpdate!.Count);
+		Assert.Contains("seller.getInventory().getItemByObjId", plan.JavaSource, StringComparison.Ordinal);
+	}
+
 	private static PrivateStorePurchasePlan CreatePlan(
 		Player buyer,
 		Player seller,

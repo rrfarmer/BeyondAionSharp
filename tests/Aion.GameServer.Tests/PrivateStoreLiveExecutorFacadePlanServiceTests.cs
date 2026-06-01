@@ -120,6 +120,23 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledSendAdapterPlan_MissingSellerItemSkipDoesNotWriteExchangeLog()
+	{
+		var purchasePlan = CreateMissingSellerItemSkipPlan();
+
+		var adapter = PrivateStoreSendAdapterPlanService.CreateDisabledPlan(purchasePlan);
+
+		Assert.Equal(PrivateStoreSendAdapterStatus.DisabledNoPackets, adapter.Status);
+		Assert.True(adapter.WouldSendPackets);
+		Assert.False(adapter.WouldWriteExchangeLog);
+		Assert.DoesNotContain(adapter.Intents, intent => intent.Kind == PrivateStoreSendIntentKind.WriteExchangeLog);
+		Assert.Collection(
+			adapter.Intents.Select(intent => intent.Kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendBuyerKinahUpdate, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerKinahUpdate, kind));
+	}
+
+	[Fact]
 	public void CreateDisabledAdapterPlans_MissingPurchasePlanStopsBeforeIntents()
 	{
 		var persistence = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(null);
@@ -352,6 +369,7 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.PlanCreated,
 			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SkippedMissingSellerItems: [],
 			SellerItemUpdates: [],
 			SellerDeletedItemObjectIds: [sellerItem.ObjectId],
 			BuyerAddedItems: [buyerItem],
@@ -371,6 +389,7 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.BlockedInsufficientKinah,
 			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SkippedMissingSellerItems: [],
 			SellerItemUpdates: [],
 			SellerDeletedItemObjectIds: [],
 			BuyerAddedItems: [],
@@ -383,6 +402,26 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 			AuditMessage: null,
 			ShouldCloseSellerStore: false,
 			"PrivateStoreService.sellStoreItem -> price > buyer.getInventory().getKinah() -> return");
+	}
+
+	private static PrivateStorePurchasePlan CreateMissingSellerItemSkipPlan()
+	{
+		return new PrivateStorePurchasePlan(
+			PrivateStorePurchasePlanStatus.PlanCreated,
+			BoughtItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SkippedMissingSellerItems: [new PrivateStorePurchaseItemRequest(0, 3001, 100000001, Count: 1, PricePerItem: 10_000, ItemName: "Practice Sword")],
+			SellerItemUpdates: [],
+			SellerDeletedItemObjectIds: [],
+			BuyerAddedItems: [],
+			BuyerUpdatedItems: [],
+			BuyerKinahUpdate: new InventoryItem { ObjectId = 5001, ItemId = InventoryItemFactory.KinahItemId, Count = 90_000, OwnerId = 8001 },
+			SellerKinahUpdate: new InventoryItem { ObjectId = 5002, ItemId = InventoryItemFactory.KinahItemId, Count = 10_000, OwnerId = 7001 },
+			BuyerMessages: [],
+			SellerMessages: [],
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
+			ShouldCloseSellerStore: false,
+			"PrivateStoreService.sellStoreItem -> seller.getInventory().getItemByObjId(...) == null -> skip item; buyer/seller Kinah transfer remains after loop");
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)
