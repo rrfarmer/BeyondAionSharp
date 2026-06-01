@@ -547,6 +547,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleEmotionAsync(_activePlayer, emotion);
 				break;
+			case CmLegion:
+				// Java parity: network/aion/clientpackets/CM_LEGION.runImpl dispatches LegionService by exOpcode.
+				// Legion mutation and membership side effects remain unported; keep this parser-only for now.
+				break;
 			case CmClientCommandRoll commandRoll:
 				if (_activePlayer != null)
 					await HandleClientCommandRollAsync(_activePlayer, commandRoll);
