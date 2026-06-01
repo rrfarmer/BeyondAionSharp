@@ -8,6 +8,7 @@ public sealed class FindGroupRecruitmentPlanService
 {
 	private readonly Dictionary<int, FindGroupRecruitmentState> _recruitments = [];
 	private readonly Dictionary<int, FindGroupApplicationState> _applications = [];
+	private readonly Dictionary<int, FindGroupInstanceGroupState> _instanceGroups = [];
 
 	public FindGroupRecruitmentMutationPlan AddRecruitment(
 		Player player,
@@ -238,6 +239,126 @@ public sealed class FindGroupRecruitmentPlanService
 			SmFindGroup.ShowApplications(nowEpochSeconds, snapshots));
 	}
 
+	public FindGroupInstanceGroupMutationPlan RegisterInstanceGroup(
+		Player player,
+		int instanceMaskId,
+		string message,
+		int minMembers,
+		int nowEpochSeconds,
+		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null)
+	{
+		// Java parity: FindGroupService.registerInstanceGroup stores a ServerWideGroup keyed by
+		// recruiter object id, then sends SM_FIND_GROUP action 14 to the registering player.
+		var state = FindGroupInstanceGroupState.FromPlayer(
+			player,
+			instanceMaskId,
+			minMembers,
+			message,
+			nowEpochSeconds,
+			currentMembers);
+		_instanceGroups[player.ObjectId] = state;
+
+		return new FindGroupInstanceGroupMutationPlan(
+			FindGroupInstanceGroupPlanStatus.Added,
+			state,
+			RemovedInstanceGroup: null,
+			DirectPacketIntents:
+			[
+				new FindGroupDirectPacketIntent(
+					player.ObjectId,
+					SmFindGroup.RegisterInstanceGroup([state.ToRegistrationSnapshot()]),
+					"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(14, List.of(instanceGroup)))")
+			],
+			ShowInstanceGroupsPlan: null);
+	}
+
+	public FindGroupInstanceGroupMutationPlan UpdateInstanceGroup(
+		Player player,
+		string message,
+		int nowEpochSeconds,
+		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null)
+	{
+		if (!_instanceGroups.TryGetValue(player.ObjectId, out var state))
+		{
+			return new FindGroupInstanceGroupMutationPlan(
+				FindGroupInstanceGroupPlanStatus.Missing,
+				CurrentInstanceGroup: null,
+				RemovedInstanceGroup: null,
+				DirectPacketIntents: [],
+				ShowInstanceGroupsPlan: null);
+		}
+
+		var updated = state with
+		{
+			Message = message,
+			LastUpdate = nowEpochSeconds,
+			Members = currentMembers ?? state.Members,
+		};
+		_instanceGroups[player.ObjectId] = updated;
+
+		return new FindGroupInstanceGroupMutationPlan(
+			FindGroupInstanceGroupPlanStatus.Updated,
+			updated,
+			RemovedInstanceGroup: null,
+			DirectPacketIntents: [],
+			ShowInstanceGroups(player.Race, nowEpochSeconds));
+	}
+
+	public FindGroupInstanceGroupMutationPlan RemoveInstanceGroup(Player player, int nowEpochSeconds)
+	{
+		_instanceGroups.Remove(player.ObjectId, out var removed);
+
+		return new FindGroupInstanceGroupMutationPlan(
+			removed is null ? FindGroupInstanceGroupPlanStatus.Missing : FindGroupInstanceGroupPlanStatus.Removed,
+			CurrentInstanceGroup: null,
+			removed,
+			DirectPacketIntents: [],
+			ShowInstanceGroups(player.Race, nowEpochSeconds));
+	}
+
+	public FindGroupInstanceGroupShowPlan ShowInstanceGroups(string playerRace, int nowEpochSeconds)
+	{
+		// Java parity: showInstanceGroups filters ServerWideGroup values by recruiter race and
+		// sends SM_FIND_GROUP action 10 after any optional action 26 mask-list packet.
+		var snapshots = _instanceGroups.Values
+			.Where(instanceGroup => string.Equals(instanceGroup.Race, playerRace, StringComparison.Ordinal))
+			.Select(instanceGroup => instanceGroup.ToRegistrationSnapshot())
+			.ToArray();
+
+		return new FindGroupInstanceGroupShowPlan(
+			playerRace,
+			nowEpochSeconds,
+			snapshots,
+			SmFindGroup.ShowInstanceGroups(nowEpochSeconds, snapshots));
+	}
+
+	public FindGroupInstanceGroupMemberInfoPlan ShowInstanceGroupMembersInfo(
+		Player player,
+		int playerObjectId,
+		int nowEpochSeconds,
+		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null)
+	{
+		if (!_instanceGroups.TryGetValue(playerObjectId, out var state))
+		{
+			return new FindGroupInstanceGroupMemberInfoPlan(
+				FindGroupInstanceGroupPlanStatus.Missing,
+				MemberInfo: null,
+				DirectPacketIntents: []);
+		}
+
+		var snapshot = state.ToMemberInfoSnapshot(nowEpochSeconds, currentMembers);
+		return new FindGroupInstanceGroupMemberInfoPlan(
+			FindGroupInstanceGroupPlanStatus.Shown,
+			snapshot,
+			DirectPacketIntents:
+			[
+				new FindGroupDirectPacketIntent(
+					player.ObjectId,
+					SmFindGroup.ShowInstanceGroupMemberInfo(snapshot),
+					"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(16, List.of(instanceGroup)))")
+			]);
+	}
+
 	public FindGroupJoinedTeamPlan OnJoinedTeam(
 		Player player,
 		FindGroupRecruitmentSubject currentTeam,
@@ -312,6 +433,15 @@ public enum FindGroupApplicationPlanStatus
 	Missing,
 }
 
+public enum FindGroupInstanceGroupPlanStatus
+{
+	Added,
+	Updated,
+	Removed,
+	Missing,
+	Shown,
+}
+
 public sealed record FindGroupJoinedTeamPlan(
 	FindGroupInstanceGroupRemovalPlan InstanceGroupRemoval,
 	FindGroupApplicationMutationPlan ApplicationRemoval,
@@ -366,6 +496,24 @@ public sealed record FindGroupApplicationShowPlan(
 	int LastUpdate,
 	IReadOnlyList<FindGroupApplicationSnapshot> Applications,
 	GameServerPacket Packet);
+
+public sealed record FindGroupInstanceGroupMutationPlan(
+	FindGroupInstanceGroupPlanStatus Status,
+	FindGroupInstanceGroupState? CurrentInstanceGroup,
+	FindGroupInstanceGroupState? RemovedInstanceGroup,
+	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents,
+	FindGroupInstanceGroupShowPlan? ShowInstanceGroupsPlan);
+
+public sealed record FindGroupInstanceGroupShowPlan(
+	string Race,
+	int LastUpdate,
+	IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> InstanceGroups,
+	GameServerPacket Packet);
+
+public sealed record FindGroupInstanceGroupMemberInfoPlan(
+	FindGroupInstanceGroupPlanStatus Status,
+	FindGroupInstanceGroupMemberInfoSnapshot? MemberInfo,
+	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents);
 
 public sealed record FindGroupRecruitmentState(
 	int ObjectId,
@@ -439,7 +587,7 @@ public sealed record FindGroupRecruitmentSubject(
 			ToJavaClassId(player.PlayerClass));
 	}
 
-	private static int ToJavaClassId(string playerClass)
+	public static int ToJavaClassId(string playerClass)
 	{
 		// Java parity: model/PlayerClass.getClassId.
 		return playerClass.ToUpperInvariant() switch
@@ -462,6 +610,90 @@ public sealed record FindGroupRecruitmentSubject(
 			"BARD" => 16,
 			_ => 0,
 		};
+	}
+}
+
+public sealed record FindGroupInstanceGroupState(
+	int RecruiterObjectId,
+	string Race,
+	int InstanceMaskId,
+	int MinMembers,
+	string Message,
+	int LastUpdate,
+	string RecruiterName,
+	IReadOnlyList<FindGroupInstanceGroupMemberState> Members)
+{
+	public static FindGroupInstanceGroupState FromPlayer(
+		Player player,
+		int instanceMaskId,
+		int minMembers,
+		string message,
+		int nowEpochSeconds,
+		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers)
+	{
+		return new FindGroupInstanceGroupState(
+			player.ObjectId,
+			player.Race,
+			instanceMaskId,
+			minMembers,
+			message,
+			nowEpochSeconds,
+			player.Name,
+			currentMembers ?? [FindGroupInstanceGroupMemberState.FromPlayer(player)]);
+	}
+
+	public FindGroupInstanceGroupRegistrationSnapshot ToRegistrationSnapshot()
+	{
+		return new FindGroupInstanceGroupRegistrationSnapshot(
+			RecruiterObjectId,
+			InstanceMaskId,
+			Members.Count,
+			MinMembers,
+			RecruiterObjectId,
+			// Java parity: ServerWideGroup.getMinLevel/getMaxLevel use inverted comparators.
+			MinLevel: Members.Max(member => member.Level),
+			MaxLevel: Members.Min(member => member.Level),
+			LastUpdate,
+			RecruiterName,
+			Message);
+	}
+
+	public FindGroupInstanceGroupMemberInfoSnapshot ToMemberInfoSnapshot(
+		int nowEpochSeconds,
+		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null)
+	{
+		var members = currentMembers ?? Members;
+		return new FindGroupInstanceGroupMemberInfoSnapshot(
+			nowEpochSeconds,
+			members.Select(member => member.ToMemberInfoSnapshot()).ToArray());
+	}
+}
+
+public sealed record FindGroupInstanceGroupMemberState(
+	int WorldId,
+	int PlayerObjectId,
+	int Level,
+	int ClassId,
+	string Name)
+{
+	public static FindGroupInstanceGroupMemberState FromPlayer(Player player)
+	{
+		return new FindGroupInstanceGroupMemberState(
+			player.Position.WorldId,
+			player.ObjectId,
+			player.Level,
+			FindGroupRecruitmentSubject.ToJavaClassId(player.PlayerClass),
+			player.Name);
+	}
+
+	public FindGroupInstanceGroupMemberInfoMemberSnapshot ToMemberInfoSnapshot()
+	{
+		return new FindGroupInstanceGroupMemberInfoMemberSnapshot(
+			WorldId,
+			PlayerObjectId,
+			Level,
+			ClassId,
+			Name);
 	}
 }
 

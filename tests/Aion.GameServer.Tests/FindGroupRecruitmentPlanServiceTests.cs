@@ -2,6 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -346,6 +347,122 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 		Assert.False(belowThreshold.InstanceGroupRemoval.ShouldRemove);
 		Assert.True(reachedThreshold.InstanceGroupRemoval.ShouldRemove);
 		Assert.Equal("instanceGroups.remove(player.getObjectId()) when members >= minMembers", reachedThreshold.InstanceGroupRemoval.JavaSource);
+	}
+
+	[Fact]
+	public void RegisterInstanceGroup_StoresEntryThenPlansJavaAction14Packet()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020304, "Recruiter", "ELYOS", "RANGER", 65);
+
+		var plan = service.RegisterInstanceGroup(
+			player,
+			instanceMaskId: 0x11223344,
+			message: "Entry",
+			minMembers: 3,
+			nowEpochSeconds: 0x01020305);
+
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Added, plan.Status);
+		Assert.NotNull(plan.CurrentInstanceGroup);
+		var state = plan.CurrentInstanceGroup!;
+		Assert.Equal(0x01020304, state.RecruiterObjectId);
+		Assert.Equal("ELYOS", state.Race);
+		Assert.Equal(0x11223344, state.InstanceMaskId);
+		Assert.Equal(3, state.MinMembers);
+		Assert.Equal("Entry", state.Message);
+		Assert.Equal(0x01020305, state.LastUpdate);
+		var direct = Assert.Single(plan.DirectPacketIntents);
+		Assert.Equal(0x01020304, direct.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(14, List.of(instanceGroup)))", direct.JavaSource);
+		Assert.Equal(
+			Convert.FromHexString(
+				"0E0104030201443322110100000001030000040302010100010000000000414100000503020100000000520065006300720075006900740065007200000045006E007400720079000000"),
+			SerializeUnencryptedPayload(direct.Packet));
+		Assert.Null(plan.ShowInstanceGroupsPlan);
+	}
+
+	[Fact]
+	public void ShowInstanceGroups_FiltersByRaceAndUsesJavaAction10Shape()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020304, "Recruiter", "ELYOS", "RANGER", 65);
+		var asmodian = CreatePlayer(0x01020306, "Other", "ASMODIANS", "RANGER", 60);
+		service.RegisterInstanceGroup(player, 0x11223344, "Entry", minMembers: 3, nowEpochSeconds: 0x01020305);
+		service.RegisterInstanceGroup(asmodian, 0x11223345, "Other", minMembers: 2, nowEpochSeconds: 0x01020306);
+
+		var show = service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 0x01020305);
+
+		Assert.Equal("ELYOS", show.Race);
+		Assert.Equal(0x01020305, show.LastUpdate);
+		var snapshot = Assert.Single(show.InstanceGroups);
+		Assert.Equal(0x01020304, snapshot.GroupEntryId);
+		Assert.Equal(0x11223344, snapshot.InstanceMaskId);
+		Assert.Equal("Entry", snapshot.Message);
+		Assert.Equal(
+			Convert.FromHexString(
+				"0A010001000503020104030201443322110100000001030000040302010100000000000000414100000503020100000000520065006300720075006900740065007200000045006E007400720079000000"),
+			SerializeUnencryptedPayload(show.Packet));
+	}
+
+	[Fact]
+	public void UpdateInstanceGroup_ExistingEntryMutatesMessageTimestampAndPlansShowList()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020304, "Recruiter", "ELYOS", "RANGER", 65);
+		service.RegisterInstanceGroup(player, 0x11223344, "Old", minMembers: 3, nowEpochSeconds: 0x01020305);
+
+		var plan = service.UpdateInstanceGroup(player, "New", nowEpochSeconds: 0x01020306);
+
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Updated, plan.Status);
+		Assert.NotNull(plan.CurrentInstanceGroup);
+		Assert.Equal("New", plan.CurrentInstanceGroup!.Message);
+		Assert.Equal(0x01020306, plan.CurrentInstanceGroup.LastUpdate);
+		Assert.Empty(plan.DirectPacketIntents);
+		Assert.NotNull(plan.ShowInstanceGroupsPlan);
+		var snapshot = Assert.Single(plan.ShowInstanceGroupsPlan!.InstanceGroups);
+		Assert.Equal("New", snapshot.Message);
+		Assert.Equal(0x01020306, snapshot.LastUpdate);
+	}
+
+	[Fact]
+	public void RemoveInstanceGroup_RemovesExistingEntryThenPlansUpdatedShowList()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var removedPlayer = CreatePlayer(0x01020304, "Recruiter", "ELYOS", "RANGER", 65);
+		var remainingPlayer = CreatePlayer(0x01020308, "Remaining", "ELYOS", "CLERIC", 55);
+		service.RegisterInstanceGroup(removedPlayer, 0x11223344, "Removed", minMembers: 3, nowEpochSeconds: 0x01020305);
+		service.RegisterInstanceGroup(remainingPlayer, 0x11223345, "Remaining", minMembers: 2, nowEpochSeconds: 0x01020305);
+
+		var plan = service.RemoveInstanceGroup(removedPlayer, nowEpochSeconds: 0x01020306);
+
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Removed, plan.Status);
+		Assert.NotNull(plan.RemovedInstanceGroup);
+		Assert.Empty(plan.DirectPacketIntents);
+		Assert.NotNull(plan.ShowInstanceGroupsPlan);
+		var snapshot = Assert.Single(plan.ShowInstanceGroupsPlan!.InstanceGroups);
+		Assert.Equal(0x01020308, snapshot.GroupEntryId);
+		Assert.Equal("Remaining", snapshot.Message);
+	}
+
+	[Fact]
+	public void ShowInstanceGroupMembersInfo_ExistingEntryPlansJavaAction16Packet()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020307, "Viewer", "ELYOS", "RANGER", 65);
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS", "GLADIATOR", 65);
+		recruiter.Position = new WorldPosition(300110000, 0, 0, 0, 0);
+		service.RegisterInstanceGroup(recruiter, 0x11223344, "Entry", minMembers: 3, nowEpochSeconds: 0x01020305);
+
+		var plan = service.ShowInstanceGroupMembersInfo(viewer, recruiter.ObjectId, nowEpochSeconds: 0x01020305);
+
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Shown, plan.Status);
+		Assert.NotNull(plan.MemberInfo);
+		var direct = Assert.Single(plan.DirectPacketIntents);
+		Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(16, List.of(instanceGroup)))", direct.JavaSource);
+		Assert.Equal(
+			Convert.FromHexString("10010001000503020100000000B050E311040302014100000001000000010000005200650063007200750069007400650072000000"),
+			SerializeUnencryptedPayload(direct.Packet));
 	}
 
 	private static Player CreatePlayer(int objectId, string name, string race, string playerClass, int level)
