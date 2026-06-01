@@ -137,6 +137,56 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledAdapterPlans_MixedMissingSellerItemUpdatesOnlyPresentItemButKeepsFullKinahTransfer()
+	{
+		var purchasePlan = CreateMixedSellerItemSkipPlan();
+
+		var persistence = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(purchasePlan);
+		var send = PrivateStoreSendAdapterPlanService.CreateDisabledPlan(purchasePlan);
+		var facade = PrivateStoreLiveExecutorFacadePlanService.CreateDisabledPlan(CreatePrivateStoreHandlerPlan(purchasePlan));
+
+		Assert.Equal(PrivateStorePersistenceAdapterStatus.DisabledNoWrites, persistence.Status);
+		Assert.Collection(
+			persistence.Operations.Select(operation => (operation.Kind, operation.ItemObjectId)),
+			operation => Assert.Equal((PrivateStorePersistenceOperationKind.SaveSellerItemUpdate, 3001), operation),
+			operation => Assert.Equal((PrivateStorePersistenceOperationKind.SaveBuyerAddedItem, 4001), operation),
+			operation => Assert.Equal((PrivateStorePersistenceOperationKind.SaveBuyerKinah, 5001), operation),
+			operation => Assert.Equal((PrivateStorePersistenceOperationKind.SaveSellerKinah, 5002), operation),
+			operation => Assert.Equal((PrivateStorePersistenceOperationKind.UpdateSellerStoreItem, 3001), operation));
+		Assert.DoesNotContain(persistence.Operations, operation => operation.ItemObjectId == 3002);
+
+		Assert.Equal(PrivateStoreSendAdapterStatus.DisabledNoPackets, send.Status);
+		Assert.True(send.WouldSendPackets);
+		Assert.True(send.WouldWriteExchangeLog);
+		Assert.Collection(
+			send.Intents.Select(intent => intent.Kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerItemUpdate, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendBuyerItemAdd, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendBuyerKinahUpdate, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerKinahUpdate, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.SendSellerNotification, kind),
+			kind => Assert.Equal(PrivateStoreSendIntentKind.WriteExchangeLog, kind));
+		Assert.DoesNotContain(send.Intents, intent => intent.Kind == PrivateStoreSendIntentKind.BroadcastSellerStoreClose);
+
+		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.DisabledNoSideEffects, facade.Status);
+		Assert.True(facade.WouldMutateSellerInventory);
+		Assert.True(facade.WouldMutateBuyerInventory);
+		Assert.True(facade.WouldWriteExchangeLog);
+		Assert.True(facade.WouldMutateBuyerKinah);
+		Assert.True(facade.WouldMutateSellerKinah);
+		Assert.False(facade.WouldCloseSellerStore);
+		Assert.Collection(
+			facade.Operations.Select(operation => operation.Kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.DecreaseSellerItem, kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.UpdateSellerStoreItem, kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.AddBuyerItem, kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.SendSellerNotification, kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.LogPrivateStoreSale, kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.DecreaseBuyerKinah, kind),
+			kind => Assert.Equal(PrivateStoreLiveExecutorOperationKind.IncreaseSellerKinah, kind));
+	}
+
+	[Fact]
 	public void CreateDisabledAdapterPlans_MissingPurchasePlanStopsBeforeIntents()
 	{
 		var persistence = PrivateStorePersistenceAdapterPlanService.CreateDisabledPlan(null);
@@ -422,6 +472,32 @@ public sealed class PrivateStoreLiveExecutorFacadePlanServiceTests
 			AuditMessage: null,
 			ShouldCloseSellerStore: false,
 			"PrivateStoreService.sellStoreItem -> seller.getInventory().getItemByObjId(...) == null -> skip item; buyer/seller Kinah transfer remains after loop");
+	}
+
+	private static PrivateStorePurchasePlan CreateMixedSellerItemSkipPlan()
+	{
+		var notification = PrivateStoreSellNotificationPlanService.CreatePlan(2, "Practice Bundle");
+
+		return new PrivateStorePurchasePlan(
+			PrivateStorePurchasePlanStatus.PlanCreated,
+			BoughtItems:
+			[
+				new PrivateStorePurchaseItemRequest(0, 3001, 182003001, Count: 2, PricePerItem: 100, ItemName: "Practice Bundle"),
+				new PrivateStorePurchaseItemRequest(1, 3002, 100000001, Count: 1, PricePerItem: 4_000, ItemName: "Practice Sword"),
+			],
+			SkippedMissingSellerItems: [new PrivateStorePurchaseItemRequest(1, 3002, 100000001, Count: 1, PricePerItem: 4_000, ItemName: "Practice Sword")],
+			SellerItemUpdates: [new InventoryItem { ObjectId = 3001, ItemId = 182003001, Count = 3, OwnerId = 7001 }],
+			SellerDeletedItemObjectIds: [],
+			BuyerAddedItems: [new InventoryItem { ObjectId = 4001, ItemId = 182003001, Count = 2, OwnerId = 8001 }],
+			BuyerUpdatedItems: [],
+			BuyerKinahUpdate: new InventoryItem { ObjectId = 5001, ItemId = InventoryItemFactory.KinahItemId, Count = 5_800, OwnerId = 8001 },
+			SellerKinahUpdate: new InventoryItem { ObjectId = 5002, ItemId = InventoryItemFactory.KinahItemId, Count = 4_700, OwnerId = 7001 },
+			BuyerMessages: [],
+			SellerMessages: [notification.NotificationMessage!],
+			WouldWriteAuditLog: false,
+			AuditMessage: null,
+			ShouldCloseSellerStore: false,
+			"PrivateStoreService.sellStoreItem -> present item mutates/logs inside item != null branch; missing item is skipped; full precomputed price transfers after loop");
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)

@@ -612,10 +612,16 @@ public static class PrivateStorePersistenceAdapterPlanService
 				purchasePlan.SellerKinahUpdate.ObjectId,
 				purchasePlan.SellerKinahUpdate.OwnerId,
 				"seller.getInventory().increaseKinah(price) -> persist seller Kinah"));
-		foreach (var boughtItem in purchasePlan.BoughtItems)
+		foreach (var sellerItem in purchasePlan.SellerItemUpdates)
 			operations.Add(Disabled(
 				PrivateStorePersistenceOperationKind.UpdateSellerStoreItem,
-				boughtItem.ItemObjectId,
+				sellerItem.ObjectId,
+				playerObjectId: null,
+				"PrivateStoreService.decreaseItemFromPlayer -> persist private-store sold item count/remove"));
+		foreach (var objectId in purchasePlan.SellerDeletedItemObjectIds)
+			operations.Add(Disabled(
+				PrivateStorePersistenceOperationKind.UpdateSellerStoreItem,
+				objectId,
 				playerObjectId: null,
 				"PrivateStoreService.decreaseItemFromPlayer -> persist private-store sold item count/remove"));
 		if (purchasePlan.ShouldCloseSellerStore)

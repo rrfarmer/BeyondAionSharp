@@ -231,6 +231,42 @@ public sealed class PrivateStorePurchasePlanServiceTests
 		Assert.Contains("seller.getInventory().getItemByObjId", plan.JavaSource, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public void CreatePlan_MixedPresentAndMissingSellerItemsMutatesPresentItemButChargesFullPrice()
+	{
+		var buyer = new Player { ObjectId = 1001 };
+		var seller = new Player { ObjectId = 2001 };
+		var buyerKinah = Item(10, KinahItemId, 10_000, ownerId: buyer.ObjectId);
+		var sellerKinah = Item(20, KinahItemId, 500, ownerId: seller.ObjectId);
+		var sellerItem = Item(30, StackableItemId, 5, ownerId: seller.ObjectId);
+		var presentRequest = new PrivateStorePurchaseItemRequest(0, sellerItem.ObjectId, sellerItem.ItemId, Count: 2, PricePerItem: 100, ItemName: "Practice Bundle");
+		var missingRequest = new PrivateStorePurchaseItemRequest(1, ItemObjectId: 31, SwordItemId, Count: 1, PricePerItem: 4_000, ItemName: "Practice Sword");
+
+		var plan = CreatePlan(
+			buyer,
+			seller,
+			buyerInventoryItems: [buyerKinah],
+			sellerInventoryItems: [sellerKinah, sellerItem],
+			boughtItems: [presentRequest, missingRequest],
+			remainingStoreItemObjectIdsAfterPurchase: [missingRequest.ItemObjectId]);
+
+		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.Equal([presentRequest, missingRequest], plan.BoughtItems);
+		Assert.Equal([missingRequest], plan.SkippedMissingSellerItems);
+		var sellerUpdate = Assert.Single(plan.SellerItemUpdates);
+		Assert.Equal((sellerItem.ObjectId, 3L), (sellerUpdate.ObjectId, sellerUpdate.Count));
+		Assert.Empty(plan.SellerDeletedItemObjectIds);
+		var buyerItem = Assert.Single(plan.BuyerAddedItems);
+		Assert.Equal((StackableItemId, 2L, buyer.ObjectId), (buyerItem.ItemId, buyerItem.Count, buyerItem.OwnerId));
+		Assert.Empty(plan.BuyerUpdatedItems);
+		Assert.Equal(5_800, plan.BuyerKinahUpdate!.Count);
+		Assert.Equal(4_700, plan.SellerKinahUpdate!.Count);
+		Assert.False(plan.ShouldCloseSellerStore);
+		Assert.Equal(1400135, Assert.Single(plan.SellerMessages).MessageId);
+		Assert.False(plan.WouldWriteAuditLog);
+		Assert.Contains("skips that bought item", plan.JavaSource, StringComparison.Ordinal);
+	}
+
 	private static PrivateStorePurchasePlan CreatePlan(
 		Player buyer,
 		Player seller,
