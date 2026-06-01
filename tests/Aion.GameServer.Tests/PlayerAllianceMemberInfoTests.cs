@@ -31,11 +31,21 @@ public sealed class PlayerAllianceMemberInfoTests
 	{
 		Assert.Equal(5, PlayerAllianceMemberInfoEvent.Join.WireId);
 		Assert.Equal(5, PlayerAllianceMemberInfoEvent.MemberGroupChange.WireId);
+		Assert.Equal(13, PlayerAllianceMemberInfoEvent.AppointViceCaptain.WireId);
+		Assert.Equal(13, PlayerAllianceMemberInfoEvent.DemoteViceCaptain.WireId);
+		Assert.Equal(13, PlayerAllianceMemberInfoEvent.AppointCaptain.WireId);
 		Assert.Equal(PlayerAllianceEvent.Join, PlayerAllianceMemberInfoEvent.Join.LegacyEvent);
 		Assert.Equal(PlayerAllianceEvent.MemberGroupChange, PlayerAllianceMemberInfoEvent.MemberGroupChange.LegacyEvent);
+		Assert.Equal(PlayerAllianceEvent.AppointViceCaptain, PlayerAllianceMemberInfoEvent.AppointViceCaptain.LegacyEvent);
+		Assert.Equal(PlayerAllianceEvent.DemoteViceCaptain, PlayerAllianceMemberInfoEvent.DemoteViceCaptain.LegacyEvent);
+		Assert.Equal(PlayerAllianceEvent.AppointCaptain, PlayerAllianceMemberInfoEvent.AppointCaptain.LegacyEvent);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, PlayerAllianceMemberInfoEvent.Join.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.MemberGroupChange, PlayerAllianceMemberInfoEvent.MemberGroupChange.Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.AppointViceCaptain, PlayerAllianceMemberInfoEvent.AppointViceCaptain.Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.DemoteViceCaptain, PlayerAllianceMemberInfoEvent.DemoteViceCaptain.Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.AppointCaptain, PlayerAllianceMemberInfoEvent.AppointCaptain.Kind);
 		Assert.Equal(PlayerAllianceMemberInfoEventKind.Join, PlayerAllianceMemberInfoEvent.FromLegacyEvent(PlayerAllianceEvent.Join).Kind);
+		Assert.Equal(PlayerAllianceMemberInfoEventKind.Enter, PlayerAllianceMemberInfoEvent.FromLegacyEvent(PlayerAllianceEvent.AppointCaptain).Kind);
 	}
 
 	[Fact]
@@ -389,6 +399,51 @@ public sealed class PlayerAllianceMemberInfoTests
 
 		AssertOnlineNameZeroEffectAlliancePayload(enterPlan, expectedAllianceId: 88005, expectedObjectId: 2010, expectedName: "AllianceEnter");
 		AssertOnlineNameZeroEffectAlliancePayload(updatePlan, expectedAllianceId: 88006, expectedObjectId: 2011, expectedName: "AllianceUpdate");
+	}
+
+	[Fact]
+	public void SmAllianceMemberInfo_CaptainRoleEventsMatchJavaGoldenZeroEffectPayloads()
+	{
+		var appointViceMember = new Player
+		{
+			ObjectId = 2012,
+			Name = "AllianceVice",
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		};
+		var demoteViceMember = new Player
+		{
+			ObjectId = 2013,
+			Name = "AllianceDemote",
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		};
+		var appointCaptainMember = new Player
+		{
+			ObjectId = 2014,
+			Name = "AllianceCaptain",
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		};
+		var appointVicePlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88007, appointViceMember, PlayerAllianceMemberInfoEvent.AppointViceCaptain);
+		var demoteVicePlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88008, demoteViceMember, PlayerAllianceMemberInfoEvent.DemoteViceCaptain);
+		var appointCaptainPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88009, appointCaptainMember, PlayerAllianceMemberInfoEvent.AppointCaptain);
+
+		AssertOnlineNameZeroEffectAlliancePayload(appointVicePlan, expectedAllianceId: 88007, expectedObjectId: 2012, expectedName: "AllianceVice");
+		AssertOnlineNameZeroEffectAlliancePayload(demoteVicePlan, expectedAllianceId: 88008, expectedObjectId: 2013, expectedName: "AllianceDemote");
+		AssertOnlineNameZeroEffectAlliancePayload(appointCaptainPlan, expectedAllianceId: 88009, expectedObjectId: 2014, expectedName: "AllianceCaptain");
 	}
 
 	[Fact]
