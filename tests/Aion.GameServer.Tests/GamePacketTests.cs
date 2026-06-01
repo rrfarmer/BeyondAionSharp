@@ -6665,6 +6665,13 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesStopTrainingPacket()
+	{
+		Assert.IsType<CmStopTraining>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(84, _ => { }), GameConnectionState.InGame));
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(84, _ => { }), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesLevelReadyInGame()
 	{
 		Assert.IsType<CmLevelReady>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.InGame));

@@ -579,6 +579,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleClientCommandRollAsync(_activePlayer, commandRoll);
 				break;
+			case CmStopTraining:
+				// Java parity: network/aion/clientpackets/CM_STOP_TRAINING.runImpl delegates to the live instance handler; deferred.
+				break;
 			case CmRecipeDelete recipeDelete:
 				if (_activePlayer != null)
 					await HandleRecipeDeleteAsync(_activePlayer, recipeDelete);
