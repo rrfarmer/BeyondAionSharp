@@ -315,6 +315,55 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(descriptor.IsLive);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_BuyAgainComposesRepurchaseSnapshotPacketWithoutSending()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9009);
+		var npc = CreateExpansionNpc(9009, templateId: 203064, dialogActionId: CmDialogSelect.BuyAgain);
+		var soldItem = new InventoryItem
+		{
+			ObjectId = 7001,
+			ItemId = SwordItemId,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 65535,
+		};
+		var sellPlan = TradeSellToShopPlanService.CreatePlan(
+			canTrade: true,
+			player,
+			inventoryItems: [soldItem],
+			tradeItems: [new TradeSellToShopItemRequest(soldItem.ObjectId, Count: 1)],
+			CreateItemTemplates(),
+			purchaseTemplate: null,
+			goodsLists: null,
+			sellModifier: 20,
+			nextObjectId: () => 8001);
+		var snapshot = RepurchaseDiagnosticSnapshotPlanService.CreateDisabledPlan(sellPlan);
+		player.RepurchaseItems = snapshot.RepurchaseItems;
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.BuyAgain));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated, snapshot.Status);
+		Assert.True(snapshot.WouldReplacePlayerSnapshot);
+		Assert.False(snapshot.DidReplacePlayerSnapshot);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.RepurchasePacket, descriptor.Kind);
+		Assert.Same(plan.RepurchasePacket, descriptor.RepurchasePacket);
+
+		var payload = SerializeUnencryptedPayload(descriptor.RepurchasePacket!);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(npc.ObjectId, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(1, reader.ReadH());
+		Assert.True(reader.Remaining > 0);
+	}
+
 	private static Player CreatePlayer(int targetObjectId, int legionId = 0, int legionLevel = 0)
 	{
 		return new Player
@@ -361,6 +410,38 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		return packet;
 	}
 
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
+
+	private static ItemTemplateTable CreateItemTemplates()
+	{
+		return new ItemTemplateTable([CreateItemTemplate(SwordItemId, price: 1_000)]);
+	}
+
+	private static ItemTemplateSummary CreateItemTemplate(int itemId, long price)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			$"Item {itemId}",
+			DescriptionId: 1,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "NORMAL",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1,
+			Price: price,
+			ValidEquipmentSlots: 0);
+	}
+
+	private const int SwordItemId = 100000001;
+
 	private sealed class StorageExpansionDialogFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
@@ -400,6 +481,9 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 				"""
 				<?xml version="1.0" encoding="UTF-8"?>
 				<static_data>
+					<item_templates>
+						<item_template id="100000001" name="Item 100000001" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="1" price="1000" />
+					</item_templates>
 					<cube_expander>
 						<expansion_npc ids="798008">
 							<expand level="1" price="1000" />
