@@ -142,13 +142,21 @@ public sealed class CmBuyItemTests
 		Assert.Equal([new CmBuyItemEntry(0, CmBuyItem.MaxItemCount)], packet.Items);
 	}
 
-	[Fact]
-	public void ReadFrom_CountAboveJavaMaximumAudits()
+	[Theory]
+	[InlineData(0)]
+	[InlineData(1)]
+	[InlineData(2)]
+	[InlineData(13)]
+	[InlineData(14)]
+	[InlineData(15)]
+	[InlineData(16)]
+	[InlineData(17)]
+	public void ReadFrom_CountAboveJavaMaximumAudits(int tradeActionId)
 	{
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
 		buffer.WriteD(SellerObjectId);
-		buffer.WriteH(2);
+		buffer.WriteH(tradeActionId);
 		buffer.WriteH(1);
 		buffer.WriteD(101);
 		buffer.WriteQ(20_001);
