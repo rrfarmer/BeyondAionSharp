@@ -269,6 +269,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.PartyHeRejectInvitation("Responder"), 1300161, "Responder");
 		AssertSystemMessage(SmSystemMessage.PartyInvitedHim("Invited"), 1300173, "Invited");
 		AssertSystemMessage(SmSystemMessage.PartyAllianceHeRejectInvitation("Responder"), 1300190, "Responder");
+		AssertSystemMessage(SmSystemMessage.MerchantPetGetSellItem("Bibi"), 1402570, "Bibi");
 	}
 
 	[Fact]

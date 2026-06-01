@@ -136,6 +136,24 @@ public enum PetMerchantSellOutcomePlanStatus
 	DisabledNoTransaction,
 }
 
+public enum PetAutoSellPlanStatus
+{
+	MissingPet,
+	PetNotSelling,
+	MissingMerchantFunction,
+	EmptyTradeList,
+	DisabledNoSideEffects,
+}
+
+public enum PetAutoSellStepKind
+{
+	CheckPetSelling,
+	ResolveMerchantFunction,
+	BuildTradeList,
+	InvokeSellToShop,
+	SendAutoSellNotification,
+}
+
 public enum PetMerchantSellOutcomeStepKind
 {
 	PersistRepositoryWrites,
@@ -218,6 +236,43 @@ public sealed record PetMerchantSellOutcomePlan(
 	string JavaSource,
 	bool IsLive);
 
+public sealed record PetAutoSellInput(
+	bool PetPresent,
+	bool PetIsSelling,
+	bool PetHasMerchantFunction,
+	int? PetObjectId,
+	int? MasterObjectId,
+	string? PetName,
+	int? SellModifier,
+	IReadOnlyList<TradeSellToShopItemRequest> TradeItems,
+	TradeSellToShopPlan? SellToShopPlan);
+
+public sealed record PetAutoSellStepPlan(
+	PetAutoSellStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record PetAutoSellPlan(
+	PetAutoSellPlanStatus Status,
+	PetAutoSellInput Input,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<PetAutoSellStepPlan> Steps,
+	bool WouldInvokeSellToShop,
+	bool DidInvokeSellToShop,
+	bool WouldWritePersistence,
+	bool WouldMutateSellerInventory,
+	bool WouldAddRepurchaseItems,
+	bool WouldMutateKinah,
+	bool WouldSendPackets,
+	bool WouldSendAutoSellNotification,
+	bool DidSendAutoSellNotification,
+	int? AutoSellNotificationMessageId,
+	string? AutoSellNotificationPetName,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
 public sealed record PetMerchantSellLiveExecutorFacadePlan(
 	PetMerchantSellLiveExecutorFacadeStatus Status,
 	CmBuyItemHandlerCompositionPlan? HandlerPlan,
@@ -237,6 +292,108 @@ public sealed record PetMerchantSellLiveExecutorFacadePlan(
 	bool IsLive)
 {
 	public bool IsDisabled => Status == PetMerchantSellLiveExecutorFacadeStatus.DisabledNoSideEffects;
+}
+
+public static class PetAutoSellPlanService
+{
+	public const int MerchantPetGetSellItemMessageId = 1402570;
+
+	public static PetAutoSellPlan CreateDisabledPlan(PetAutoSellInput input)
+	{
+		// Java parity: services/toypet/PetService.sell returns when the pet is
+		// absent or not auto-selling, resolves the MERCHANT function, builds a
+		// TradeList from supplied items, calls TradeService.performSellToShop,
+		// then sends STR_MSG_MERCHANT_PET_GET_SELL_ITEM(pet.getName()).
+		if (!input.PetPresent)
+			return CreateTerminalPlan(
+				PetAutoSellPlanStatus.MissingPet,
+				input,
+				"PetService.sell -> if (pet == null || !pet.getCommonData().isSelling()) return");
+
+		if (!input.PetIsSelling)
+			return CreateTerminalPlan(
+				PetAutoSellPlanStatus.PetNotSelling,
+				input,
+				"PetService.sell -> if (pet == null || !pet.getCommonData().isSelling()) return");
+
+		if (!input.PetHasMerchantFunction)
+			return CreateTerminalPlan(
+				PetAutoSellPlanStatus.MissingMerchantFunction,
+				input,
+				"PetService.sell -> PetFunction pf = pet.getObjectTemplate().getPetFunction(MERCHANT); if (pf != null) ...");
+
+		if (input.TradeItems.Count == 0)
+			return CreateTerminalPlan(
+				PetAutoSellPlanStatus.EmptyTradeList,
+				input,
+				"PetService.sell -> if (tradeList.size() > 0) performSellToShop and notify");
+
+		var sellToShopPlan = input.SellToShopPlan;
+		var wouldWritePersistence = sellToShopPlan?.Status == TradeSellToShopPlanStatus.PlanCreated
+			&& (sellToShopPlan.SellerDeletedItemObjectIds.Count > 0
+				|| sellToShopPlan.SellerItemUpdates.Count > 0
+				|| sellToShopPlan.RepurchaseItems.Count > 0
+				|| sellToShopPlan.KinahUpdate != null);
+		var wouldMutateSellerInventory = sellToShopPlan?.Status == TradeSellToShopPlanStatus.PlanCreated
+			&& (sellToShopPlan.SellerDeletedItemObjectIds.Count > 0 || sellToShopPlan.SellerItemUpdates.Count > 0);
+		var wouldAddRepurchaseItems = sellToShopPlan?.Status == TradeSellToShopPlanStatus.PlanCreated
+			&& sellToShopPlan.RepurchaseItems.Count > 0;
+		var wouldMutateKinah = sellToShopPlan?.Status == TradeSellToShopPlanStatus.PlanCreated
+			&& sellToShopPlan.KinahUpdate != null;
+
+		return new PetAutoSellPlan(
+			PetAutoSellPlanStatus.DisabledNoSideEffects,
+			input,
+			sellToShopPlan,
+			[
+				Disabled(PetAutoSellStepKind.CheckPetSelling, "PetService.sell -> pet common data auto-sell guard passed"),
+				Disabled(PetAutoSellStepKind.ResolveMerchantFunction, "PetService.sell -> resolved PetFunctionType.MERCHANT and pf.getRatePrice()"),
+				Disabled(PetAutoSellStepKind.BuildTradeList, "PetService.sell -> new TradeList(pet.getObjectId()) and add item object IDs/counts"),
+				Disabled(PetAutoSellStepKind.InvokeSellToShop, "PetService.sell -> TradeService.performSellToShop(pet.getMaster(), tradeList, null, pf.getRatePrice())"),
+				Disabled(PetAutoSellStepKind.SendAutoSellNotification, "PetService.sell -> STR_MSG_MERCHANT_PET_GET_SELL_ITEM(pet.getName())"),
+			],
+			WouldInvokeSellToShop: true,
+			DidInvokeSellToShop: false,
+			WouldWritePersistence: wouldWritePersistence,
+			WouldMutateSellerInventory: wouldMutateSellerInventory,
+			WouldAddRepurchaseItems: wouldAddRepurchaseItems,
+			WouldMutateKinah: wouldMutateKinah,
+			WouldSendPackets: true,
+			WouldSendAutoSellNotification: true,
+			DidSendAutoSellNotification: false,
+			AutoSellNotificationMessageId: MerchantPetGetSellItemMessageId,
+			AutoSellNotificationPetName: input.PetName,
+			ShouldDispatchLiveSideEffects: false,
+			JavaSource: "PetService.sell auto-sell side-effect boundary is disabled; sell-to-shop and notification intents are recorded without dispatch",
+			IsLive: false);
+	}
+
+	private static PetAutoSellPlan CreateTerminalPlan(
+		PetAutoSellPlanStatus status,
+		PetAutoSellInput input,
+		string javaSource) =>
+		new(
+			status,
+			input,
+			input.SellToShopPlan,
+			Steps: Array.Empty<PetAutoSellStepPlan>(),
+			WouldInvokeSellToShop: false,
+			DidInvokeSellToShop: false,
+			WouldWritePersistence: false,
+			WouldMutateSellerInventory: false,
+			WouldAddRepurchaseItems: false,
+			WouldMutateKinah: false,
+			WouldSendPackets: false,
+			WouldSendAutoSellNotification: false,
+			DidSendAutoSellNotification: false,
+			AutoSellNotificationMessageId: null,
+			AutoSellNotificationPetName: null,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+
+	private static PetAutoSellStepPlan Disabled(PetAutoSellStepKind kind, string javaSource) =>
+		new(kind, WouldRun: true, DidRun: false, javaSource);
 }
 
 public static class TradeSellToShopPlanService

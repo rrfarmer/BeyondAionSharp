@@ -1826,6 +1826,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400135, itemName, count.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage MerchantPetGetSellItem(string? petName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MERCHANT_PET_GET_SELL_ITEM(String). %0 sold the item automatically.
+		return new SmSystemMessage(1402570, petName);
+	}
+
 	public static SmSystemMessage StigmaNotEnoughMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_STIGMA_NOT_ENOUGH_MONEY.

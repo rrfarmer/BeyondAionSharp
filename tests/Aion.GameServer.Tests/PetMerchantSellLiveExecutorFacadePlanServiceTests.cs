@@ -295,6 +295,91 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPetAutoSellPlan_RecordsNotificationAfterSellToShopBoundary()
+	{
+		var sellPlan = CreateSellPlan();
+		var input = CreateAutoSellInput(sellPlan: sellPlan);
+
+		var plan = PetAutoSellPlanService.CreateDisabledPlan(input);
+
+		Assert.Equal(PetAutoSellPlanStatus.DisabledNoSideEffects, plan.Status);
+		Assert.Same(sellPlan, plan.SellToShopPlan);
+		Assert.True(plan.WouldInvokeSellToShop);
+		Assert.False(plan.DidInvokeSellToShop);
+		Assert.True(plan.WouldWritePersistence);
+		Assert.True(plan.WouldMutateSellerInventory);
+		Assert.True(plan.WouldAddRepurchaseItems);
+		Assert.True(plan.WouldMutateKinah);
+		Assert.True(plan.WouldSendPackets);
+		Assert.True(plan.WouldSendAutoSellNotification);
+		Assert.False(plan.DidSendAutoSellNotification);
+		Assert.Equal(1402570, plan.AutoSellNotificationMessageId);
+		Assert.Equal("Bibi", plan.AutoSellNotificationPetName);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsLive);
+		Assert.Collection(
+			plan.Steps.Select(step => step.Kind),
+			kind => Assert.Equal(PetAutoSellStepKind.CheckPetSelling, kind),
+			kind => Assert.Equal(PetAutoSellStepKind.ResolveMerchantFunction, kind),
+			kind => Assert.Equal(PetAutoSellStepKind.BuildTradeList, kind),
+			kind => Assert.Equal(PetAutoSellStepKind.InvokeSellToShop, kind),
+			kind => Assert.Equal(PetAutoSellStepKind.SendAutoSellNotification, kind));
+		Assert.All(plan.Steps, step =>
+		{
+			Assert.True(step.WouldRun);
+			Assert.False(step.DidRun);
+		});
+	}
+
+	[Fact]
+	public void CreateDisabledPetAutoSellPlan_NotificationIsIndependentOfBlockedSellPlan()
+	{
+		var blockedSellPlan = new TradeSellToShopPlan(
+			TradeSellToShopPlanStatus.BlockedCannotTrade,
+			SellerDeletedItemObjectIds: [],
+			SellerItemUpdates: [],
+			RepurchaseItems: [],
+			KinahUpdate: null,
+			"TradeService.performSellToShop -> !PlayerRestrictions.canTrade(player) -> false");
+		var input = CreateAutoSellInput(sellPlan: blockedSellPlan);
+
+		var plan = PetAutoSellPlanService.CreateDisabledPlan(input);
+
+		Assert.Equal(PetAutoSellPlanStatus.DisabledNoSideEffects, plan.Status);
+		Assert.Same(blockedSellPlan, plan.SellToShopPlan);
+		Assert.True(plan.WouldInvokeSellToShop);
+		Assert.False(plan.WouldWritePersistence);
+		Assert.False(plan.WouldMutateSellerInventory);
+		Assert.False(plan.WouldAddRepurchaseItems);
+		Assert.False(plan.WouldMutateKinah);
+		Assert.True(plan.WouldSendPackets);
+		Assert.True(plan.WouldSendAutoSellNotification);
+		Assert.Equal(1402570, plan.AutoSellNotificationMessageId);
+	}
+
+	[Fact]
+	public void CreateDisabledPetAutoSellPlan_GuardsMatchJavaReturnOrder()
+	{
+		var missingPet = PetAutoSellPlanService.CreateDisabledPlan(CreateAutoSellInput(petPresent: false));
+		var notSelling = PetAutoSellPlanService.CreateDisabledPlan(CreateAutoSellInput(petIsSelling: false));
+		var noMerchant = PetAutoSellPlanService.CreateDisabledPlan(CreateAutoSellInput(petHasMerchantFunction: false));
+		var emptyTradeList = PetAutoSellPlanService.CreateDisabledPlan(CreateAutoSellInput(tradeItems: []));
+
+		Assert.Equal(PetAutoSellPlanStatus.MissingPet, missingPet.Status);
+		Assert.Equal(PetAutoSellPlanStatus.PetNotSelling, notSelling.Status);
+		Assert.Equal(PetAutoSellPlanStatus.MissingMerchantFunction, noMerchant.Status);
+		Assert.Equal(PetAutoSellPlanStatus.EmptyTradeList, emptyTradeList.Status);
+		Assert.All(new[] { missingPet, notSelling, noMerchant, emptyTradeList }, plan =>
+		{
+			Assert.False(plan.WouldInvokeSellToShop);
+			Assert.False(plan.WouldSendAutoSellNotification);
+			Assert.False(plan.WouldSendPackets);
+			Assert.Empty(plan.Steps);
+			Assert.False(plan.ShouldDispatchLiveSideEffects);
+		});
+	}
+
+	[Fact]
 	public void CreateDisabledAdapters_MissingAndBlockedSellPlansStopBeforeSideEffects()
 	{
 		var blockedSellPlan = new TradeSellToShopPlan(
@@ -349,6 +434,25 @@ public sealed class PetMerchantSellLiveExecutorFacadePlanServiceTests
 			RepurchaseItems: [new RepurchaseSourceItem(new InventoryItem { ObjectId = 2001, ItemId = 100000001, Count = 1 }, RepurchasePrice: 330)],
 			KinahUpdate: new InventoryItem { ObjectId = 3001, ItemId = InventoryItemFactory.KinahItemId, Count = 1_330 },
 			"TradeService.performSellToShop");
+	}
+
+	private static PetAutoSellInput CreateAutoSellInput(
+		bool petPresent = true,
+		bool petIsSelling = true,
+		bool petHasMerchantFunction = true,
+		IReadOnlyList<TradeSellToShopItemRequest>? tradeItems = null,
+		TradeSellToShopPlan? sellPlan = null)
+	{
+		return new PetAutoSellInput(
+			petPresent,
+			petIsSelling,
+			petHasMerchantFunction,
+			PetObjectId: 7001,
+			MasterObjectId: 1001,
+			PetName: "Bibi",
+			SellModifier: 33,
+			TradeItems: tradeItems ?? [new TradeSellToShopItemRequest(2001, Count: 1)],
+			SellToShopPlan: sellPlan ?? CreateSellPlan());
 	}
 
 	private static CmBuyItem CreatePacket(int tradeActionId, IReadOnlyList<CmBuyItemEntry> entries)
