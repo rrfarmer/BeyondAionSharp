@@ -38,6 +38,18 @@ public sealed class SmFindGroupTests
 	}
 
 	[Fact]
+	public void WritePayload_InstanceApplicationWhisperMatchesJavaGolden()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.SendInstanceGroupApplicationAsWhisperChatMessage(
+				new FindGroupInstanceApplicantSnapshot(0x01020304, ClassId: 5, Level: 65, Name: "Applicant")));
+
+		Assert.Equal(
+			Convert.FromHexString("0B04030201000000000000000000000005410000004100700070006C006900630061006E0074000000"),
+			payload);
+	}
+
+	[Fact]
 	public void WritePayload_ShowEnterButtonMatchesJavaGolden()
 	{
 		var payload = SerializeUnencryptedPayload(

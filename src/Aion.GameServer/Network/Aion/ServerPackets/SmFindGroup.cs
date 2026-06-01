@@ -14,6 +14,7 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly byte _unknown3;
 	private readonly IReadOnlyList<int> _instanceMaskIds;
 	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
+	private readonly FindGroupInstanceApplicantSnapshot? _instanceApplicant;
 
 	private SmFindGroup(
 		int action,
@@ -23,7 +24,8 @@ public sealed class SmFindGroup : GameServerPacket
 		byte unknown2 = 0,
 		byte unknown3 = 0,
 		IReadOnlyList<int>? instanceMaskIds = null,
-		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null)
+		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null,
+		FindGroupInstanceApplicantSnapshot? instanceApplicant = null)
 		: base(PacketOpCode)
 	{
 		_action = action;
@@ -34,6 +36,7 @@ public sealed class SmFindGroup : GameServerPacket
 		_unknown3 = unknown3;
 		_instanceMaskIds = instanceMaskIds ?? [];
 		_instanceGroupWindow = instanceGroupWindow;
+		_instanceApplicant = instanceApplicant;
 	}
 
 	public static SmFindGroup RemoveRecruitment(int recruitmentIdToDelete, byte serverId, byte unknown1, byte unknown2, byte unknown3)
@@ -66,6 +69,12 @@ public sealed class SmFindGroup : GameServerPacket
 		return new SmFindGroup(22, instanceGroupWindow: instanceGroup);
 	}
 
+	public static SmFindGroup SendInstanceGroupApplicationAsWhisperChatMessage(FindGroupInstanceApplicantSnapshot instanceApplicant)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP(Player instanceApplicant), action 11.
+		return new SmFindGroup(11, instanceApplicant: instanceApplicant);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		buffer.WriteC(_action);
@@ -92,8 +101,21 @@ public sealed class SmFindGroup : GameServerPacket
 				buffer.WriteD(instanceGroup.GroupEntryId);
 				buffer.WriteD(instanceGroup.InstanceMaskId);
 				break;
+			case 11:
+				var applicant = _instanceApplicant ?? throw new InvalidOperationException("Instance applicant snapshot is required.");
+				buffer.WriteD(applicant.PlayerObjectId);
+				buffer.WriteD(0);
+				buffer.WriteD(0);
+				buffer.WriteH(0);
+				buffer.WriteC(0);
+				buffer.WriteC(applicant.ClassId);
+				buffer.WriteD(applicant.Level);
+				buffer.WriteS(applicant.Name);
+				break;
 		}
 	}
 }
 
 public sealed record FindGroupInstanceGroupWindowSnapshot(int GroupEntryId, int InstanceMaskId);
+
+public sealed record FindGroupInstanceApplicantSnapshot(int PlayerObjectId, byte ClassId, int Level, string Name);
