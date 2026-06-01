@@ -1737,7 +1737,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (packet.DialogActionId is CmDialogSelect.Buy or CmDialogSelect.TradeIn)
+		if (packet.DialogActionId is CmDialogSelect.Buy or CmDialogSelect.BuyAgain or CmDialogSelect.TradeIn)
 		{
 			var plan = CreateNonLiveTradeDialogSelectPlan(player, packet);
 			if (plan != null)
@@ -1794,6 +1794,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		var limitedItemFactInput = packet.DialogActionId == CmDialogSelect.Buy
 			? tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId)
 			: null;
+		var repurchasePacket = packet.DialogActionId == CmDialogSelect.BuyAgain
+			? CreateDialogRepurchasePacket(player, packet.TargetObjectId, staticData?.ItemTemplates)
+			: null;
 
 		return QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(
 			new QuestDialogNpcTargetBranchRuntimeSnapshot(
@@ -1810,13 +1813,36 @@ public sealed class GameServerConnection : BaseClientConnection
 				InteractionAllowed: true,
 				ControllerDispatchFacts: new QuestDialogNpcControllerDispatchFacts(
 					IsInTalkRange: isInTalkRange,
-					NpcAiHandledDialogSelect: false),
+					NpcAiHandledDialogSelect: false,
+					DialogServiceFacts: packet.DialogActionId == CmDialogSelect.BuyAgain
+						? new NpcDialogServiceSelectFacts(NpcSupportsAction: npc.Template.SupportsDialogAction(CmDialogSelect.BuyAgain))
+						: null),
 				TradeRuntimeFactPlan: tradeRuntimeFactPlan,
 				TradeListFactInput: tradeListFactInput,
-				LimitedItemFactInput: limitedItemFactInput),
+				LimitedItemFactInput: limitedItemFactInput,
+				RepurchasePacket: repurchasePacket),
 			npcTemplates,
 			staticData?.TradeLists,
 			staticData?.GoodsLists);
+	}
+
+	private static SmRepurchase CreateDialogRepurchasePacket(Player player, int targetObjectId, ItemTemplateTable? itemTemplates)
+	{
+		// Java parity: SM_REPURCHASE snapshots RepurchaseService.getRepurchaseItems(player.getObjectId())
+		// when DialogService handles BUY_AGAIN. Missing templates are skipped here because this
+		// diagnostic path must remain non-throwing until live repurchase state is owned.
+		var packetItems = new List<RepurchasePacketItem>();
+		if (itemTemplates != null)
+		{
+			foreach (var sourceItem in player.RepurchaseItems)
+			{
+				var template = itemTemplates.GetItemTemplate(sourceItem.Item.ItemId);
+				if (template != null)
+					packetItems.Add(new RepurchasePacketItem(sourceItem.Item, template, sourceItem.RepurchasePrice));
+			}
+		}
+
+		return new SmRepurchase(targetObjectId, packetItems);
 	}
 
 	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)

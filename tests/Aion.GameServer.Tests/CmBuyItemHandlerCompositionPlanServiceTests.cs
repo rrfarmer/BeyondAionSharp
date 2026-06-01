@@ -223,6 +223,23 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_NpcActionEighteenIsNotBuyAgainRepurchaseInJavaCmBuyItem()
+	{
+		var packet = CreatePacket(18, [new CmBuyItemEntry(101, 1)]);
+
+		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
+			new CmBuyItemHandlerCompositionInput(
+				packet,
+				PlayerPresent: true,
+				TargetKind: CmBuyItemRunTargetKind.Npc,
+				RepurchasableItemObjectIds: new HashSet<int> { 101 }));
+
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SkippedNpcUnsupportedAction, plan.Status);
+		Assert.Null(plan.RepurchasePlan);
+		Assert.Contains("Unknown shop action", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreatePlan_SelectsPetSellToShopPlannerForMerchantActionSeventeen()
 	{
 		var packet = CreatePacket(17, [new CmBuyItemEntry(200, 1)]);

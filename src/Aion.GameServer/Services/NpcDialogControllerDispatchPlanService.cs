@@ -1,3 +1,5 @@
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public enum NpcDialogControllerDispatchStatus
@@ -15,7 +17,8 @@ public sealed record NpcDialogControllerDispatchInput(
 	bool NpcAiHandledDialogSelect = false,
 	NpcDialogServiceSelectFacts? DialogServiceFacts = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
-	SmTradeInListPacketPlan? TradeInListPacketPlan = null);
+	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
+	SmRepurchase? RepurchasePacket = null);
 
 public sealed record NpcDialogServiceSelectFacts(
 	bool NpcSupportsAction = true,
@@ -127,6 +130,7 @@ public static class NpcDialogControllerDispatchPlanService
 				facts.TradeSellPriceRate,
 				facts.HasTradeInList,
 				input.TradeListPacketPlan,
-				input.TradeInListPacketPlan));
+				input.TradeInListPacketPlan,
+				input.RepurchasePacket));
 	}
 }

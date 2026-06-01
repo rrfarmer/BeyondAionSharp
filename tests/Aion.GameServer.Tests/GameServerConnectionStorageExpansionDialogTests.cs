@@ -289,6 +289,32 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.False(servicePlan.IsLive);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_BuyAgainPlansRepurchasePacketWithoutSending()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9008);
+		var npc = CreateExpansionNpc(9008, templateId: 203064, dialogActionId: CmDialogSelect.BuyAgain);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.BuyAgain));
+
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		Assert.Equal(QuestDialogNpcTargetBranchStatus.DispatchController, plan.BranchPlan.Status);
+		Assert.NotNull(plan.RepurchasePacket);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		Assert.Equal(NpcDialogServiceSelectStatus.ServiceDispatch, servicePlan.Status);
+		Assert.Contains("BUY_AGAIN", servicePlan.JavaSource, StringComparison.Ordinal);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.RepurchasePacket, descriptor.Kind);
+		Assert.Equal(npc.ObjectId, descriptor.TargetObjectId);
+		Assert.Same(plan.RepurchasePacket, descriptor.RepurchasePacket);
+		Assert.False(servicePlan.IsLive);
+		Assert.False(descriptor.IsLive);
+	}
+
 	private static Player CreatePlayer(int targetObjectId, int legionId = 0, int legionLevel = 0)
 	{
 		return new Player
