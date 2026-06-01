@@ -303,6 +303,166 @@ public sealed class CmPetTests
 		Assert.False(composition.IsLive);
 	}
 
+	[Theory]
+	[InlineData(1, true)]
+	[InlineData(0, false)]
+	public void CreateDisabledAutoLootActivationComposition_MapsParsedActionTypeThreeToActivationPlan(
+		int activateSpecialFunction,
+		bool expectedActivate)
+	{
+		var packet = ReadPacket(buffer =>
+		{
+			buffer.WriteH((int)PetAction.Food);
+			buffer.WriteD(3);
+			buffer.WriteD(activateSpecialFunction);
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+		});
+		var context = new CmPetAutoLootActivationCompositionContext(
+			PetPresent: true,
+			PetHasLootFunction: true,
+			IsFreeForAllLootRule: false,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var composition = CmPetAutoLootActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(CmPetAutoLootActivationCompositionPlanStatus.ActivationPlanCreated, composition.Status);
+		Assert.False(composition.IsLive);
+		Assert.Same(packet, composition.Packet);
+		Assert.Same(context, composition.Context);
+		Assert.Equal(expectedActivate, composition.ParsedActivationFlag);
+		Assert.Contains("CM_PET.runImpl FOOD actionType 3", composition.JavaSource, StringComparison.Ordinal);
+		var activation = Assert.IsType<PetAutoLootActivationPlan>(composition.ActivationPlan);
+		Assert.Equal(PetAutoLootActivationPlanStatus.DisabledNoSideEffects, activation.Status);
+		Assert.Equal(expectedActivate, activation.Input.Activate);
+		Assert.Equal(expectedActivate, activation.TargetLootingState);
+		Assert.True(activation.WouldSetLootingState);
+		Assert.False(activation.DidSetLootingState);
+		Assert.True(activation.WouldSendPacket);
+		Assert.False(activation.DidSendPacket);
+		Assert.False(activation.ShouldDispatchLiveSideEffects);
+		Assert.False(activation.IsLive);
+		Assert.Equal(expectedActivate ? PetAutoLootActivationPlanService.AutoLootEnabledMessageId : null, activation.SystemMessageId);
+	}
+
+	[Fact]
+	public void CreateDisabledAutoLootActivationComposition_RecordsMissingPetReturnBeforeService()
+	{
+		var packet = ReadPacket(buffer =>
+		{
+			buffer.WriteH((int)PetAction.Food);
+			buffer.WriteD(3);
+			buffer.WriteD(1);
+			buffer.WriteD(0);
+			buffer.WriteD(0);
+		});
+		var context = new CmPetAutoLootActivationCompositionContext(
+			PetPresent: false,
+			PetHasLootFunction: true,
+			IsFreeForAllLootRule: false,
+			PetObjectId: null,
+			MasterObjectId: 1153,
+			PetName: null);
+
+		var composition = CmPetAutoLootActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(CmPetAutoLootActivationCompositionPlanStatus.ActivationPlanCreated, composition.Status);
+		var activation = Assert.IsType<PetAutoLootActivationPlan>(composition.ActivationPlan);
+		Assert.Equal(PetAutoLootActivationPlanStatus.MissingPet, activation.Status);
+		Assert.Contains("if (pet == null) return", activation.JavaSource, StringComparison.Ordinal);
+		Assert.False(activation.WouldSetLootingState);
+		Assert.False(activation.WouldSendPacket);
+	}
+
+	[Fact]
+	public void CreateDisabledAutoLootActivationPlan_EnableWithoutLootFunctionRecordsAuditOnly()
+	{
+		var input = new PetAutoLootActivationInput(
+			PetPresent: true,
+			Activate: true,
+			PetHasLootFunction: false,
+			IsFreeForAllLootRule: false,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var activation = PetAutoLootActivationPlanService.CreateDisabledPlan(input);
+
+		Assert.Equal(PetAutoLootActivationPlanStatus.BlockedMissingLootFunction, activation.Status);
+		Assert.True(activation.WouldWriteAuditLog);
+		Assert.False(activation.DidWriteAuditLog);
+		Assert.Contains("non-looting Bibi", activation.AuditMessage, StringComparison.Ordinal);
+		Assert.False(activation.WouldSetLootingState);
+		Assert.False(activation.WouldSendPacket);
+		Assert.Collection(activation.Steps,
+			step => Assert.Equal(PetAutoLootActivationStepKind.WriteAuditLog, step.Kind));
+	}
+
+	[Fact]
+	public void CreateDisabledAutoLootActivationPlan_FreeForAllLootRuleRecordsSystemMessageOnly()
+	{
+		var input = new PetAutoLootActivationInput(
+			PetPresent: true,
+			Activate: true,
+			PetHasLootFunction: true,
+			IsFreeForAllLootRule: true,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var activation = PetAutoLootActivationPlanService.CreateDisabledPlan(input);
+
+		Assert.Equal(PetAutoLootActivationPlanStatus.BlockedFreeForAllLoot, activation.Status);
+		Assert.True(activation.WouldSendSystemMessage);
+		Assert.False(activation.DidSendSystemMessage);
+		Assert.Equal(PetAutoLootActivationPlanService.FreeForAllLootRuleMessageId, activation.SystemMessageId);
+		Assert.False(activation.WouldSetLootingState);
+		Assert.False(activation.WouldSendPacket);
+		Assert.Collection(activation.Steps,
+			step => Assert.Equal(PetAutoLootActivationStepKind.SendFreeForAllMessage, step.Kind));
+	}
+
+	[Theory]
+	[InlineData(PetAction.Spawn, 0, CmPetAutoLootActivationCompositionPlanStatus.NotFoodAction)]
+	[InlineData(PetAction.Food, 4, CmPetAutoLootActivationCompositionPlanStatus.NotAutoLootAction)]
+	public void CreateDisabledAutoLootActivationComposition_SkipsBranchesJavaRoutesElsewhere(
+		PetAction action,
+		int actionType,
+		CmPetAutoLootActivationCompositionPlanStatus expectedStatus)
+	{
+		var packet = ReadPacket(buffer =>
+		{
+			buffer.WriteH((int)action);
+			if (action == PetAction.Food)
+			{
+				buffer.WriteD(actionType);
+				buffer.WriteD(1);
+				buffer.WriteD(0);
+				buffer.WriteD(0);
+			}
+			else
+			{
+				buffer.WriteD(900001);
+			}
+		});
+		var context = new CmPetAutoLootActivationCompositionContext(
+			PetPresent: true,
+			PetHasLootFunction: true,
+			IsFreeForAllLootRule: false,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var composition = CmPetAutoLootActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(expectedStatus, composition.Status);
+		Assert.Null(composition.ActivationPlan);
+		Assert.False(composition.ParsedActivationFlag);
+		Assert.False(composition.IsLive);
+	}
+
 	private static CmPet CreatePacket() => new(22, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 
 	private static CmPet ReadPacket(Action<PacketBuffer> writePayload)
