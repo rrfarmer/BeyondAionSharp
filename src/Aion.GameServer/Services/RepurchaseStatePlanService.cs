@@ -66,6 +66,25 @@ public sealed record RepurchaseStateCanRepurchasePlan(
 	string JavaSource,
 	bool IsLive);
 
+public enum RepurchaseStateItemRemovalPlanStatus
+{
+	SnapshotUpdated,
+	SnapshotUnchanged,
+	MissingSnapshot,
+}
+
+public sealed record RepurchaseStateItemRemovalPlan(
+	RepurchaseStateItemRemovalPlanStatus Status,
+	int PlayerObjectId,
+	IReadOnlyList<int> RemovedItemObjectIds,
+	IReadOnlyList<int> MissingItemObjectIds,
+	RepurchaseStateSnapshot? UpdatedSnapshot,
+	IReadOnlyList<RepurchaseStateSnapshot> UpdatedSnapshots,
+	bool WouldRemoveItems,
+	bool DidRemoveItems,
+	string JavaSource,
+	bool IsLive);
+
 public static class RepurchaseStatePlanService
 {
 	public static RepurchaseStateReplacePlan CreateReplaceDisabledPlan(
@@ -159,6 +178,63 @@ public static class RepurchaseStatePlanService
 			WouldQueryMapEntry: true,
 			DidQueryMapEntry: false,
 			"RepurchaseService.canRepurchase -> getRepurchaseItems(player.getObjectId()).stream().anyMatch(item.getObjectId() == itemObjectId)",
+			IsLive: false);
+	}
+
+	public static RepurchaseStateItemRemovalPlan CreateRemoveItemsDisabledPlan(
+		int playerObjectId,
+		IReadOnlyList<int> removedItemObjectIds,
+		IReadOnlyList<RepurchaseStateSnapshot> currentSnapshots)
+	{
+		// Java parity: RepurchaseService.repurchaseFromShop removes each
+		// successfully repurchased Item from the player's current Set<Item>.
+		var snapshot = FindSnapshot(playerObjectId, currentSnapshots);
+		if (snapshot == null)
+			return new RepurchaseStateItemRemovalPlan(
+				RepurchaseStateItemRemovalPlanStatus.MissingSnapshot,
+				playerObjectId,
+				RemovedItemObjectIds: Array.Empty<int>(),
+				removedItemObjectIds.ToArray(),
+				UpdatedSnapshot: null,
+				currentSnapshots.ToArray(),
+				WouldRemoveItems: removedItemObjectIds.Count > 0,
+				DidRemoveItems: false,
+				"RepurchaseService.repurchaseFromShop -> items.remove(repurchaseItem) requires a current repurchase set",
+				IsLive: false);
+
+		var requestedRemovals = removedItemObjectIds.ToHashSet();
+		var updatedItems = snapshot.RepurchaseItems
+			.Where(item => !requestedRemovals.Contains(item.Item.ObjectId))
+			.ToArray();
+		var removedItemSet = snapshot.RepurchaseItems
+			.Select(item => item.Item.ObjectId)
+			.Where(requestedRemovals.Contains)
+			.ToHashSet();
+		var removedItems = removedItemObjectIds
+			.Where(removedItemSet.Contains)
+			.ToArray();
+		var missingItems = removedItemObjectIds
+			.Where(objectId => !removedItemSet.Contains(objectId))
+			.ToArray();
+		var updatedSnapshot = snapshot with
+		{
+			RepurchaseItems = updatedItems,
+			JavaSource = "RepurchaseService.repurchaseFromShop -> items.remove(repurchaseItem) updated supplied repurchase snapshot",
+		};
+		var updatedSnapshots = ReplaceSnapshot(currentSnapshots, updatedSnapshot);
+
+		return new RepurchaseStateItemRemovalPlan(
+			removedItems.Length > 0
+				? RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated
+				: RepurchaseStateItemRemovalPlanStatus.SnapshotUnchanged,
+			playerObjectId,
+			removedItems,
+			missingItems,
+			updatedSnapshot,
+			updatedSnapshots,
+			WouldRemoveItems: removedItemObjectIds.Count > 0,
+			DidRemoveItems: false,
+			"RepurchaseService.repurchaseFromShop -> items.remove(repurchaseItem) disabled item-removal payload; Java Set<Item> mutation is recorded without live state changes",
 			IsLive: false);
 	}
 

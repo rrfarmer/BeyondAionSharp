@@ -225,6 +225,63 @@ public sealed class RepurchasePlanServiceTests
 		Assert.Empty(plan.RemovedRepurchaseItemObjectIds);
 	}
 
+	[Fact]
+	public void CreateDisabledOutcome_CarriesPostRepurchaseStateRemovalPlanWhenSnapshotContextIsSupplied()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var repurchaseItem = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var remainingItem = Item(201, StackableItemId, 3, ownerId: player.ObjectId);
+		var repurchaseItems =
+			new[]
+			{
+				new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100),
+				new RepurchaseSourceItem(remainingItem, RepurchasePrice: 50),
+			};
+		var repurchasePlan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems);
+		var currentSnapshot = new RepurchaseStateSnapshot(
+			player.ObjectId,
+			repurchaseItems,
+			"current supplied repurchase set");
+
+		var outcome = RepurchaseOutcomePlanService.CreateDisabledPlan(
+			repurchasePlan,
+			player.ObjectId,
+			[currentSnapshot]);
+
+		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.True(outcome.WouldRemoveRepurchaseItems);
+		var stateRemoval = Assert.IsType<RepurchaseStateItemRemovalPlan>(outcome.StateItemRemovalPlan);
+		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, stateRemoval.Status);
+		Assert.Equal([repurchaseItem.ObjectId], stateRemoval.RemovedItemObjectIds);
+		Assert.Empty(stateRemoval.MissingItemObjectIds);
+		Assert.Equal([remainingItem.ObjectId], stateRemoval.UpdatedSnapshot!.RepurchaseItems.Select(item => item.Item.ObjectId));
+		Assert.False(stateRemoval.DidRemoveItems);
+		Assert.False(stateRemoval.IsLive);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcome_LeavesStateRemovalPlanNullWithoutSnapshotContext()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var repurchaseItem = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var repurchasePlan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+
+		var outcome = RepurchaseOutcomePlanService.CreateDisabledPlan(repurchasePlan);
+
+		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
+		Assert.True(outcome.WouldRemoveRepurchaseItems);
+		Assert.Null(outcome.StateItemRemovalPlan);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
 	private static RepurchasePlan CreatePlan(
 		Player player,
 		IReadOnlyList<InventoryItem> inventoryItems,

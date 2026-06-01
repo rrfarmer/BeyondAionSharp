@@ -112,6 +112,56 @@ public sealed class RepurchaseStatePlanServiceTests
 		Assert.False(allowed.IsLive);
 	}
 
+	[Fact]
+	public void CreateRemoveItemsDisabledPlan_RemovesItemsFromCurrentSnapshotWithoutRemovingMapEntry()
+	{
+		var snapshot = new RepurchaseStateSnapshot(
+			1001,
+			[
+				new RepurchaseSourceItem(Item(2001, itemId: 100000001), RepurchasePrice: 100),
+				new RepurchaseSourceItem(Item(2002, itemId: 100000002), RepurchasePrice: 200),
+				new RepurchaseSourceItem(Item(2003, itemId: 100000003), RepurchasePrice: 300),
+			],
+			"stored snapshot");
+		var otherSnapshot = new RepurchaseStateSnapshot(
+			1002,
+			[new RepurchaseSourceItem(Item(3001, itemId: 100000004), RepurchasePrice: 400)],
+			"other snapshot");
+
+		var plan = RepurchaseStatePlanService.CreateRemoveItemsDisabledPlan(
+			1001,
+			[2002, 9999],
+			[snapshot, otherSnapshot]);
+
+		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, plan.Status);
+		Assert.Equal([2002], plan.RemovedItemObjectIds);
+		Assert.Equal([9999], plan.MissingItemObjectIds);
+		Assert.Equal([2001, 2003], plan.UpdatedSnapshot!.RepurchaseItems.Select(item => item.Item.ObjectId));
+		Assert.Equal([1002, 1001], plan.UpdatedSnapshots.Select(state => state.PlayerObjectId));
+		Assert.True(plan.WouldRemoveItems);
+		Assert.False(plan.DidRemoveItems);
+		Assert.False(plan.IsLive);
+		Assert.Contains("items.remove", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateRemoveItemsDisabledPlan_MissingSnapshotRecordsNoLiveMutation()
+	{
+		var plan = RepurchaseStatePlanService.CreateRemoveItemsDisabledPlan(
+			1001,
+			[2001],
+			[]);
+
+		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.MissingSnapshot, plan.Status);
+		Assert.Null(plan.UpdatedSnapshot);
+		Assert.Empty(plan.RemovedItemObjectIds);
+		Assert.Equal([2001], plan.MissingItemObjectIds);
+		Assert.Empty(plan.UpdatedSnapshots);
+		Assert.True(plan.WouldRemoveItems);
+		Assert.False(plan.DidRemoveItems);
+		Assert.False(plan.IsLive);
+	}
+
 	private static InventoryItem Item(int objectId, int itemId, long count = 1)
 	{
 		return new InventoryItem

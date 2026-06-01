@@ -59,6 +59,7 @@ public sealed record RepurchaseOutcomeStepPlan(
 public sealed record RepurchaseOutcomePlan(
 	RepurchaseOutcomePlanStatus Status,
 	RepurchasePlan? RepurchasePlan,
+	RepurchaseStateItemRemovalPlan? StateItemRemovalPlan,
 	IReadOnlyList<RepurchaseOutcomeStepPlan> Steps,
 	bool WouldWritePersistence,
 	bool DidWritePersistence,
@@ -315,7 +316,10 @@ public static class RepurchasePlanService
 
 public static class RepurchaseOutcomePlanService
 {
-	public static RepurchaseOutcomePlan CreateDisabledPlan(RepurchasePlan? repurchasePlan)
+	public static RepurchaseOutcomePlan CreateDisabledPlan(
+		RepurchasePlan? repurchasePlan,
+		int? playerObjectId = null,
+		IReadOnlyList<RepurchaseStateSnapshot>? currentSnapshots = null)
 	{
 		if (repurchasePlan == null)
 			return CreateTerminalPlan(
@@ -359,9 +363,17 @@ public static class RepurchaseOutcomePlanService
 				RepurchaseOutcomeStepKind.CommitSideEffectBoundary,
 				"RepurchaseService.repurchaseFromShop side-effect boundary is recorded only; Java runtime ordering is not yet verified"));
 
+		var stateItemRemovalPlan = wouldRemoveRepurchaseItems && playerObjectId != null && currentSnapshots != null
+			? RepurchaseStatePlanService.CreateRemoveItemsDisabledPlan(
+				playerObjectId.Value,
+				repurchasePlan.RemovedRepurchaseItemObjectIds,
+				currentSnapshots)
+			: null;
+
 		return new RepurchaseOutcomePlan(
 			RepurchaseOutcomePlanStatus.DisabledNoTransaction,
 			repurchasePlan,
+			stateItemRemovalPlan,
 			steps,
 			wouldWritePersistence,
 			DidWritePersistence: false,
@@ -390,6 +402,7 @@ public static class RepurchaseOutcomePlanService
 		new(
 			status,
 			repurchasePlan,
+			StateItemRemovalPlan: null,
 			Steps: Array.Empty<RepurchaseOutcomeStepPlan>(),
 			WouldWritePersistence: false,
 			DidWritePersistence: false,
