@@ -1801,8 +1801,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				staticData.ItemTemplates)
 			: null;
 		var repurchasePacket = packet.DialogActionId == CmDialogSelect.BuyAgain
-			? repurchasePacketSnapshotPlan?.Packet
-				?? CreateDialogRepurchasePacket(player, packet.TargetObjectId, staticData?.ItemTemplates)
+			? repurchasePacketSnapshotPlan != null
+				? repurchasePacketSnapshotPlan.Packet
+				: CreateDialogRepurchasePacket(player, packet.TargetObjectId, staticData?.ItemTemplates)
 			: null;
 
 		return QuestDialogNpcTargetBranchInputAssemblyPlanService.CreatePlan(

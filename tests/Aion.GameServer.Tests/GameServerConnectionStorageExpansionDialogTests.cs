@@ -325,6 +325,44 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_BuyAgainCarriesMissingTemplateSnapshotWithoutFallbackPacket()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9010);
+		var npc = CreateExpansionNpc(9010, templateId: 203064, dialogActionId: CmDialogSelect.BuyAgain);
+		var missingTemplateItem = new InventoryItem
+		{
+			ObjectId = 7003,
+			ItemId = MissingTemplateItemId,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = 65535,
+		};
+		player.RepurchaseItems = [new RepurchaseSourceItem(missingTemplateItem, RepurchasePrice: 1_234)];
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.BuyAgain));
+
+		Assert.Empty(fixture.SentPackets);
+		var plan = Assert.Single(fixture.DialogSelectPlans);
+		Assert.Null(plan.RepurchasePacket);
+		var packetSnapshotPlan = Assert.IsType<RepurchasePacketSnapshotPlan>(plan.RepurchasePacketSnapshotPlan);
+		Assert.Equal(RepurchasePacketSnapshotPlanStatus.BlockedMissingTemplate, packetSnapshotPlan.Status);
+		Assert.Equal([MissingTemplateItemId], packetSnapshotPlan.MissingTemplateItemIds);
+		Assert.Null(packetSnapshotPlan.Packet);
+		Assert.True(packetSnapshotPlan.WouldQueryRepurchaseItems);
+		Assert.False(packetSnapshotPlan.WouldSendPacket);
+		Assert.Contains("lack item templates", packetSnapshotPlan.JavaSource, StringComparison.Ordinal);
+		var servicePlan = Assert.IsType<NpcDialogServiceSelectPlan>(plan.ControllerDispatchPlan?.DialogServicePlan);
+		var descriptor = Assert.Single(servicePlan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.RepurchasePacket, descriptor.Kind);
+		Assert.Same(packetSnapshotPlan, descriptor.RepurchasePacketSnapshotPlan);
+		Assert.Null(descriptor.RepurchasePacket);
+		Assert.False(descriptor.IsLive);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_BuyAgainComposesRepurchaseSnapshotPacketWithoutSending()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
@@ -462,6 +500,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	private const int SwordItemId = 100000001;
+	private const int MissingTemplateItemId = 100000099;
 
 	private sealed class StorageExpansionDialogFixture : IAsyncDisposable
 	{
