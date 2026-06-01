@@ -1,6 +1,7 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Items;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -268,6 +269,24 @@ public sealed class RepurchasePlanServiceTests
 			Assert.False(operation.DidRun);
 			Assert.Contains("RepurchaseService.repurchaseFromShop", operation.JavaSource, StringComparison.Ordinal);
 		});
+		Assert.Collection(
+			outcome.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(RepurchasePacketIntentKind.SendKinahUpdate, intent.Kind);
+				Assert.Equal(99, intent.ItemObjectId);
+				Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, intent.PacketMask);
+				Assert.True(intent.WouldSend);
+				Assert.False(intent.DidSend);
+				Assert.Contains("DEC_KINAH_BUY", intent.JavaSource, StringComparison.Ordinal);
+			},
+			intent =>
+			{
+				Assert.Equal(RepurchasePacketIntentKind.SendRepurchasedItemAdd, intent.Kind);
+				Assert.NotNull(intent.ItemObjectId);
+				Assert.Equal(SmInventoryAddItem.ItemCollect, intent.PacketMask);
+				Assert.Contains("ITEM_COLLECT", intent.JavaSource, StringComparison.Ordinal);
+			});
 		var stateRemoval = Assert.IsType<RepurchaseStateItemRemovalPlan>(outcome.StateItemRemovalPlan);
 		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, stateRemoval.Status);
 		Assert.Equal([repurchaseItem.ObjectId], stateRemoval.RemovedItemObjectIds);
@@ -293,8 +312,46 @@ public sealed class RepurchasePlanServiceTests
 		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
 		Assert.True(outcome.WouldRemoveRepurchaseItems);
 		Assert.Equal(3, outcome.SuccessOperations.Count);
+		Assert.Equal(2, outcome.PacketIntents.Count);
 		Assert.Null(outcome.StateItemRemovalPlan);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public void CreateDisabledOutcome_RecordsStackMergeAndInventoryFullPacketIntents()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var kinah = Item(99, KinahItemId, 10_000, ownerId: player.ObjectId);
+		var existingStack = Item(50, StackableItemId, 1, ownerId: player.ObjectId);
+		var repurchaseItem = Item(200, StackableItemId, 2, ownerId: player.ObjectId);
+		var mergePlan = CreatePlan(
+			player,
+			inventoryItems: [kinah, existingStack],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+		var fillerItems = Enumerable.Range(0, 26)
+			.Select(index => Item(index + 1, 3_000 + index, 1, ownerId: player.ObjectId))
+			.ToArray();
+		var fullPlan = CreatePlan(
+			player,
+			inventoryItems: [kinah, .. fillerItems, existingStack],
+			requestedItemObjectIds: [repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+
+		var mergeOutcome = RepurchaseOutcomePlanService.CreateDisabledPlan(mergePlan);
+		var fullOutcome = RepurchaseOutcomePlanService.CreateDisabledPlan(fullPlan);
+
+		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, mergeOutcome.Status);
+		Assert.Contains(mergeOutcome.PacketIntents, intent =>
+			intent.Kind == RepurchasePacketIntentKind.SendRepurchasedItemUpdate
+			&& intent.ItemObjectId == existingStack.ObjectId
+			&& intent.PacketMask == SmInventoryUpdateItem.IncreaseItemCollect);
+		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, fullOutcome.Status);
+		var fullIntent = Assert.Single(fullOutcome.PacketIntents);
+		Assert.Equal(RepurchasePacketIntentKind.SendInventoryFullMessage, fullIntent.Kind);
+		Assert.Null(fullIntent.ItemObjectId);
+		Assert.Null(fullIntent.PacketMask);
+		Assert.Contains("STR_MSG_DICE_INVEN_ERROR", fullIntent.JavaSource, StringComparison.Ordinal);
 	}
 
 	private static RepurchasePlan CreatePlan(

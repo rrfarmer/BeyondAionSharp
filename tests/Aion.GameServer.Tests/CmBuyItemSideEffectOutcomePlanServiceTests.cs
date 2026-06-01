@@ -187,6 +187,8 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 				RepurchaseSuccessOperationKind.RemoveRepurchaseItem,
 			],
 			outcome.RepurchaseOutcomePlan.SuccessOperations.Select(operation => operation.Kind));
+		Assert.Contains(outcome.RepurchaseOutcomePlan.PacketIntents, intent => intent.Kind == RepurchasePacketIntentKind.SendKinahUpdate);
+		Assert.Contains(outcome.RepurchaseOutcomePlan.PacketIntents, intent => intent.Kind == RepurchasePacketIntentKind.SendRepurchasedItemAdd);
 		Assert.Null(outcome.RepurchaseOutcomePlan.StateItemRemovalPlan);
 	}
 

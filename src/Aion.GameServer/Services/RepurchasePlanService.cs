@@ -57,6 +57,14 @@ public enum RepurchaseSuccessOperationKind
 	RemoveRepurchaseItem,
 }
 
+public enum RepurchasePacketIntentKind
+{
+	SendInventoryFullMessage,
+	SendKinahUpdate,
+	SendRepurchasedItemAdd,
+	SendRepurchasedItemUpdate,
+}
+
 public sealed record RepurchaseOutcomeStepPlan(
 	RepurchaseOutcomeStepKind Kind,
 	bool WouldRun,
@@ -70,11 +78,20 @@ public sealed record RepurchaseSuccessOperationPlan(
 	bool DidRun,
 	string JavaSource);
 
+public sealed record RepurchasePacketIntentPlan(
+	RepurchasePacketIntentKind Kind,
+	int? ItemObjectId,
+	int? PacketMask,
+	bool WouldSend,
+	bool DidSend,
+	string JavaSource);
+
 public sealed record RepurchaseOutcomePlan(
 	RepurchaseOutcomePlanStatus Status,
 	RepurchasePlan? RepurchasePlan,
 	RepurchaseStateItemRemovalPlan? StateItemRemovalPlan,
 	IReadOnlyList<RepurchaseSuccessOperationPlan> SuccessOperations,
+	IReadOnlyList<RepurchasePacketIntentPlan> PacketIntents,
 	IReadOnlyList<RepurchaseOutcomeStepPlan> Steps,
 	bool WouldWritePersistence,
 	bool DidWritePersistence,
@@ -350,6 +367,7 @@ public static class RepurchaseOutcomePlanService
 		var wouldWriteAuditLog = repurchasePlan.AuditMessages.Count > 0;
 		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets || wouldWriteAuditLog;
 		var successOperations = CreateSuccessOperations(repurchasePlan);
+		var packetIntents = CreatePacketIntents(repurchasePlan);
 
 		if (!wouldCommitBoundary)
 			return CreateTerminalPlan(
@@ -391,6 +409,7 @@ public static class RepurchaseOutcomePlanService
 			repurchasePlan,
 			stateItemRemovalPlan,
 			successOperations,
+			packetIntents,
 			steps,
 			wouldWritePersistence,
 			DidWritePersistence: false,
@@ -421,6 +440,7 @@ public static class RepurchaseOutcomePlanService
 			repurchasePlan,
 			StateItemRemovalPlan: null,
 			SuccessOperations: Array.Empty<RepurchaseSuccessOperationPlan>(),
+			PacketIntents: Array.Empty<RepurchasePacketIntentPlan>(),
 			Steps: Array.Empty<RepurchaseOutcomeStepPlan>(),
 			WouldWritePersistence: false,
 			DidWritePersistence: false,
@@ -473,4 +493,43 @@ public static class RepurchaseOutcomePlanService
 		RepurchaseSuccessOperationKind kind,
 		string javaSource) =>
 		new(itemObjectId, kind, WouldRun: true, DidRun: false, javaSource);
+
+	private static IReadOnlyList<RepurchasePacketIntentPlan> CreatePacketIntents(RepurchasePlan repurchasePlan)
+	{
+		var intents = new List<RepurchasePacketIntentPlan>();
+		intents.AddRange(repurchasePlan.Messages.Select(_ => Disabled(
+			RepurchasePacketIntentKind.SendInventoryFullMessage,
+			itemObjectId: null,
+			packetMask: null,
+			"RepurchaseService.repurchaseFromShop -> player.getInventory().isFull() sends STR_MSG_DICE_INVEN_ERROR")));
+
+		if (repurchasePlan.RepurchasedItemObjectIds.Count > 0 && repurchasePlan.KinahUpdate != null)
+		{
+			intents.Add(Disabled(
+				RepurchasePacketIntentKind.SendKinahUpdate,
+				repurchasePlan.KinahUpdate.ObjectId,
+				SmInventoryUpdateItem.DecreaseKinahBuy,
+				"Storage.tryDecreaseKinah -> Storage.decreaseKinah -> ItemPacketService.sendItemPacket with ItemUpdateType.DEC_KINAH_BUY"));
+		}
+
+		intents.AddRange(repurchasePlan.AddedItems.Select(item => Disabled(
+			RepurchasePacketIntentKind.SendRepurchasedItemAdd,
+			item.ObjectId,
+			SmInventoryAddItem.ItemCollect,
+			"ItemService.addItem(player, repurchaseItem) uses DEFAULT_UPDATE_PREDICATE -> ItemAddType.ITEM_COLLECT for new cube items")));
+		intents.AddRange(repurchasePlan.UpdatedItems.Select(item => Disabled(
+			RepurchasePacketIntentKind.SendRepurchasedItemUpdate,
+			item.ObjectId,
+			SmInventoryUpdateItem.IncreaseItemCollect,
+			"ItemService.addItem(player, repurchaseItem) uses DEFAULT_UPDATE_PREDICATE -> ItemUpdateType.INC_ITEM_COLLECT for stack merges")));
+
+		return intents;
+	}
+
+	private static RepurchasePacketIntentPlan Disabled(
+		RepurchasePacketIntentKind kind,
+		int? itemObjectId,
+		int? packetMask,
+		string javaSource) =>
+		new(kind, itemObjectId, packetMask, WouldSend: true, DidSend: false, javaSource);
 }
