@@ -461,6 +461,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmUnwrapItem:
 				// Java parity: network/aion/clientpackets/CM_UNWRAP_ITEM.runImpl mutates pack count and sends unwrap/inventory packets; deferred.
 				break;
+			case CmUpgradeArcade:
+				// Java parity: network/aion/clientpackets/CM_UPGRADE_ARCADE.runImpl gates on EventsConfig then dispatches UpgradeArcadeService; deferred.
+				break;
 			case CmTimeCheck timeCheck:
 				// Java parity: network/aion/clientpackets/CM_TIME_CHECK.runImpl sends SM_AFTER_TIME_CHECK_4_7_5 before SM_TIME_CHECK.
 				await SendPacketAsync(new SmAfterTimeCheck475());

@@ -7100,6 +7100,26 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesUpgradeArcadePacket()
+	{
+		var upgradeArcade = Assert.IsType<CmUpgradeArcade>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(246, buffer =>
+			{
+				buffer.WriteC(5);
+				buffer.WriteD(20260601);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(5, upgradeArcade.Action);
+		Assert.Equal(20260601, upgradeArcade.SessionId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(246, buffer =>
+		{
+			buffer.WriteC(1);
+			buffer.WriteD(1);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
