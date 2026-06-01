@@ -439,6 +439,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleTeleportAnimationDoneAsync(_activePlayer);
 				break;
+			case CmTeleportSelect:
+				// Java parity: network/aion/clientpackets/CM_TELEPORT_SELECT.runImpl validates an NPC teleporter and dispatches TeleportService.teleport.
+				// Teleporter templates, NPC known-list validation, audit logging, and airport route side effects remain unported.
+				break;
 			case CmPositionSelf:
 				// Java parity: network/aion/clientpackets/CM_POSITION_SELF.runImpl has no side effect.
 				break;

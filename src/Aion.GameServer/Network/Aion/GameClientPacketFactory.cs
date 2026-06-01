@@ -88,6 +88,7 @@ public static class GameClientPacketFactory
 		Register(145, states => new CmQuestionnaire(145, states), GameConnectionState.InGame);
 		Register(146, states => new CmRejectRevive(146, states), GameConnectionState.InGame);
 		Register(147, states => new CmHeadingUpdate(147, states), GameConnectionState.InGame);
+		Register(148, states => new CmTeleportSelect(148, states), GameConnectionState.InGame);
 		Register(149, states => new CmL2AuthLoginCheck(149, states), GameConnectionState.Connected);
 		Register(150, states => new CmCharacterList(150, states), GameConnectionState.Authed);
 		Register(151, states => new CmCreateCharacter(151, states), GameConnectionState.Authed);
