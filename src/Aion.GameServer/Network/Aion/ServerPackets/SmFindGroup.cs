@@ -12,10 +12,12 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly byte _unknown1;
 	private readonly byte _unknown2;
 	private readonly byte _unknown3;
+	private readonly bool _showEnterInstanceMessage;
 	private readonly IReadOnlyList<int> _instanceMaskIds;
 	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
 	private readonly FindGroupInstanceApplicantSnapshot? _instanceApplicant;
 	private readonly IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> _instanceGroups;
+	private readonly FindGroupInstanceGroupPrepareWindowSnapshot? _prepareWindow;
 
 	private SmFindGroup(
 		int action,
@@ -24,10 +26,12 @@ public sealed class SmFindGroup : GameServerPacket
 		byte unknown1 = 0,
 		byte unknown2 = 0,
 		byte unknown3 = 0,
+		bool showEnterInstanceMessage = false,
 		IReadOnlyList<int>? instanceMaskIds = null,
 		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null,
 		FindGroupInstanceApplicantSnapshot? instanceApplicant = null,
-		IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>? instanceGroups = null)
+		IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>? instanceGroups = null,
+		FindGroupInstanceGroupPrepareWindowSnapshot? prepareWindow = null)
 		: base(PacketOpCode)
 	{
 		_action = action;
@@ -36,10 +40,12 @@ public sealed class SmFindGroup : GameServerPacket
 		_unknown1 = unknown1;
 		_unknown2 = unknown2;
 		_unknown3 = unknown3;
+		_showEnterInstanceMessage = showEnterInstanceMessage;
 		_instanceMaskIds = instanceMaskIds ?? [];
 		_instanceGroupWindow = instanceGroupWindow;
 		_instanceApplicant = instanceApplicant;
 		_instanceGroups = instanceGroups ?? [];
+		_prepareWindow = prepareWindow;
 	}
 
 	public static SmFindGroup RemoveRecruitment(int recruitmentIdToDelete, byte serverId, byte unknown1, byte unknown2, byte unknown3)
@@ -82,6 +88,20 @@ public sealed class SmFindGroup : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 14 registerInstanceGroup.
 		return new SmFindGroup(14, instanceGroups: instanceGroups);
+	}
+
+	public static SmFindGroup DestroyPrepareForEntryWindow(
+		FindGroupInstanceGroupWindowSnapshot instanceGroup,
+		bool showEnterInstanceMessage)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 23 destroyPrepareForEntryWindow.
+		return new SmFindGroup(23, showEnterInstanceMessage: showEnterInstanceMessage, instanceGroupWindow: instanceGroup);
+	}
+
+	public static SmFindGroup UpdatePrepareForEntryWindow(FindGroupInstanceGroupPrepareWindowSnapshot instanceGroup)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 24 updatePrepareForEntryWindow.
+		return new SmFindGroup(24, prepareWindow: instanceGroup);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -145,6 +165,30 @@ public sealed class SmFindGroup : GameServerPacket
 					buffer.WriteS(group.Message);
 				}
 				break;
+			case 23:
+				var prepareWindowGroup = _instanceGroupWindow ?? throw new InvalidOperationException("Instance group window snapshot is required.");
+				buffer.WriteD(prepareWindowGroup.GroupEntryId);
+				buffer.WriteD(prepareWindowGroup.InstanceMaskId);
+				buffer.WriteC(_showEnterInstanceMessage ? 1 : 0);
+				break;
+			case 24:
+				var prepareWindow = _prepareWindow ?? throw new InvalidOperationException("Prepare window snapshot is required.");
+				buffer.WriteD(prepareWindow.GroupEntryId);
+				buffer.WriteD(prepareWindow.InstanceMaskId);
+				buffer.WriteC(prepareWindow.Members.Count);
+				foreach (var member in prepareWindow.Members)
+				{
+					buffer.WriteD(0);
+					buffer.WriteD(0);
+					buffer.WriteD(member.PlayerObjectId);
+					buffer.WriteD(member.Level);
+					buffer.WriteD(member.ClassId);
+					buffer.WriteH(0);
+					buffer.WriteC(1);
+					buffer.WriteC(member.IsOnline ? 1 : 0);
+					buffer.WriteS(member.Name);
+				}
+				break;
 		}
 	}
 }
@@ -164,3 +208,15 @@ public sealed record FindGroupInstanceGroupRegistrationSnapshot(
 	int LastUpdate,
 	string RecruiterName,
 	string Message);
+
+public sealed record FindGroupInstanceGroupPrepareWindowSnapshot(
+	int GroupEntryId,
+	int InstanceMaskId,
+	IReadOnlyList<FindGroupInstanceGroupPrepareMemberSnapshot> Members);
+
+public sealed record FindGroupInstanceGroupPrepareMemberSnapshot(
+	int PlayerObjectId,
+	int Level,
+	int ClassId,
+	bool IsOnline,
+	string Name);

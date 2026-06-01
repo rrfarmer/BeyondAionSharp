@@ -92,6 +92,40 @@ public sealed class SmFindGroupTests
 			payload);
 	}
 
+	[Fact]
+	public void WritePayload_DestroyPrepareWindowMatchesJavaGolden()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.DestroyPrepareForEntryWindow(
+				new FindGroupInstanceGroupWindowSnapshot(0x01020304, 0x11223344),
+				showEnterInstanceMessage: false));
+
+		Assert.Equal(Convert.FromHexString("17040302014433221100"), payload);
+	}
+
+	[Fact]
+	public void WritePayload_UpdatePrepareWindowMatchesJavaGolden()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.UpdatePrepareForEntryWindow(
+				new FindGroupInstanceGroupPrepareWindowSnapshot(
+					GroupEntryId: 0x01020304,
+					InstanceMaskId: 0x11223344,
+					Members:
+					[
+						new FindGroupInstanceGroupPrepareMemberSnapshot(
+							PlayerObjectId: 0x01020304,
+							Level: 65,
+							ClassId: 1,
+							IsOnline: false,
+							Name: "Recruiter")
+					])));
+
+		Assert.Equal(
+			Convert.FromHexString("180403020144332211010000000000000000040302014100000001000000000001005200650063007200750069007400650072000000"),
+			payload);
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
