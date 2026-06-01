@@ -101,9 +101,13 @@ public sealed class CmBuyItemTests
 	}
 
 	[Theory]
-	[InlineData(2)]
 	[InlineData(1)]
+	[InlineData(2)]
 	[InlineData(13)]
+	[InlineData(14)]
+	[InlineData(15)]
+	[InlineData(16)]
+	[InlineData(17)]
 	public void ReadFrom_NonPositiveItemObjectIdAuditsForNonPrivateStoreActions(int tradeActionId)
 	{
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
