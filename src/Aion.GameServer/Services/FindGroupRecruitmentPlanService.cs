@@ -429,6 +429,24 @@ public sealed class FindGroupRecruitmentPlanService
 				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(24, List.of(instanceGroup)))"));
 	}
 
+	public FindGroupLogoutCleanupPlan OnLogout(Player player)
+	{
+		// Java parity: FindGroupService.onLogout removes entries keyed by player.getObjectId()
+		// from all three maps and sends no packets.
+		_recruitments.Remove(player.ObjectId, out var removedRecruitment);
+		_applications.Remove(player.ObjectId, out var removedApplication);
+		_instanceGroups.Remove(player.ObjectId, out var removedInstanceGroup);
+
+		return new FindGroupLogoutCleanupPlan(
+			player.ObjectId,
+			removedRecruitment,
+			removedApplication,
+			removedInstanceGroup,
+			DirectPacketIntents: [],
+			DispatchLiveSideEffects: false,
+			"recruitments.remove(player.getObjectId()); applications.remove(player.getObjectId()); instanceGroups.remove(player.getObjectId())");
+	}
+
 	public FindGroupInstanceGroupMemberInfoPlan ShowInstanceGroupMembersInfo(
 		Player player,
 		int playerObjectId,
@@ -739,6 +757,15 @@ public sealed record FindGroupPrepareWindowPlan(
 		return new FindGroupPrepareWindowPlan(kind, [intent], DispatchLiveSideEffects: false);
 	}
 }
+
+public sealed record FindGroupLogoutCleanupPlan(
+	int PlayerObjectId,
+	FindGroupRecruitmentState? RemovedRecruitment,
+	FindGroupApplicationState? RemovedApplication,
+	FindGroupInstanceGroupState? RemovedInstanceGroup,
+	IReadOnlyList<FindGroupDirectPacketIntent> DirectPacketIntents,
+	bool DispatchLiveSideEffects,
+	string JavaSource);
 
 public sealed record FindGroupInstanceGroupMemberInfoPlan(
 	FindGroupInstanceGroupPlanStatus Status,

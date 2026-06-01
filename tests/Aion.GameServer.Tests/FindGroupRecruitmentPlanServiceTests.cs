@@ -570,6 +570,51 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void OnLogout_RemovesOnlyPlayerObjectIdEntriesWithoutPackets()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		service.AddRecruitment(player, "Solo", groupType: 1, nowEpochSeconds: 100);
+		service.AddApplication(player, "Apply", groupType: 2, classId: 5, level: 65, nowEpochSeconds: 101);
+		service.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: "Entry", minMembers: 6, nowEpochSeconds: 102);
+
+		var plan = service.OnLogout(player);
+
+		Assert.Equal(player.ObjectId, plan.PlayerObjectId);
+		Assert.NotNull(plan.RemovedRecruitment);
+		Assert.NotNull(plan.RemovedApplication);
+		Assert.NotNull(plan.RemovedInstanceGroup);
+		Assert.Empty(plan.DirectPacketIntents);
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Equal(
+			"recruitments.remove(player.getObjectId()); applications.remove(player.getObjectId()); instanceGroups.remove(player.getObjectId())",
+			plan.JavaSource);
+		Assert.Empty(service.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Empty(service.ShowApplications("ELYOS", nowEpochSeconds: 201).Applications);
+		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 202).InstanceGroups);
+	}
+
+	[Fact]
+	public void OnLogout_DoesNotRemoveTeamRecruitmentKeyedByTeamObjectId()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = WithTeam(CreatePlayer(0x01020304, "Leader", "ELYOS", "RANGER", 65), PlayerTeamMembership.Group, teamId: 0x01020309);
+		service.AddRecruitment(
+			player,
+			"Team",
+			groupType: 3,
+			nowEpochSeconds: 100,
+			CreateTeamSubject(0x01020309, "Leader", size: 3, minLevel: 60, maxLevel: 65));
+
+		var plan = service.OnLogout(player);
+
+		Assert.Null(plan.RemovedRecruitment);
+		var remaining = Assert.Single(service.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Equal(0x01020309, remaining.ObjectId);
+		Assert.False(remaining.IsSoloPlayer);
+	}
+
+	[Fact]
 	public void SendInstanceApplicationResult_AcceptPlansGroupInviteWhenMinMembersAtMostSix()
 	{
 		var service = new FindGroupRecruitmentPlanService();
