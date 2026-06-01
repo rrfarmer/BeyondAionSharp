@@ -164,6 +164,63 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopBlocksDisabledLimitedItemPlan()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(
+					501,
+					SalesTime: "0 0 9 ? * MON",
+					Items: [new GoodsListItemSummary(1001, SellLimit: 1, BuyLimit: 1)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 500)));
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner, plan.Status);
+		var dispatch = Assert.IsType<CmBuyItemBuyFromShopDispatchDescriptor>(plan.BuyFromShopPlan!.Dispatch);
+		var transactionPlan = Assert.IsType<TradeBuyTransactionPlan>(dispatch.BuyTransactionPlan);
+		Assert.Equal(TradeBuyTransactionPlanStatus.BlockedLimitedItem, transactionPlan.Status);
+		Assert.Equal(1001, transactionPlan.RejectedItem?.ItemId);
+		Assert.Contains(TradeBuyTransactionStep.CheckLimitedItems, transactionPlan.Steps);
+		Assert.False(transactionPlan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionRecordsMissingSellOutcomeWithoutSideEffects()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();

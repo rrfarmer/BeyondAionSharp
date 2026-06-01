@@ -4182,6 +4182,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		// ids/counts through TradeList, then validates those ids against the NPC
 		// trade goods lists before any live inventory/AP/Kinah mutation.
 		var allowedGoodsItemIds = CreateBuyItemAllowedGoodsItemIds(tradeTemplate, goodsLists);
+		var limitedItemFacts = NpcDialogLimitedItemFactAdapterService.CreatePlan(
+			new NpcDialogLimitedItemFactAdapterInput(tradeTemplate.NpcId, player.ObjectId),
+			new TradeListTable([tradeTemplate], Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>()),
+			goodsLists);
 		var tradeItems = packet.Items
 			.Select(item =>
 			{
@@ -4195,7 +4199,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					template?.AcquisitionItemId ?? 0,
 					template?.AcquisitionItemCount ?? 0,
 					IsAllowedByNpcGoodsList: allowedGoodsItemIds.Contains(item.ItemObjectId),
-					LimitedItemCanBuy: true);
+					LimitedItemCanBuy: CanBuyLimitedItem(limitedItemFacts.LimitedItems, item.ItemObjectId, item.Count));
 			})
 			.ToArray();
 
@@ -4226,6 +4230,24 @@ public sealed class GameServerConnection : BaseClientConnection
 				allowed.Add(item.Id);
 		}
 		return allowed;
+	}
+
+	private static bool CanBuyLimitedItem(
+		IReadOnlyList<NpcDialogLimitedItemFact> limitedItems,
+		int itemId,
+		long requestedCount)
+	{
+		var limitedItem = limitedItems.FirstOrDefault(item => item.ItemId == itemId);
+		if (limitedItem == null)
+			return true;
+
+		// Java parity: TradeService.canBuyLimitItem consults the live LimitedItem
+		// created by LimitedItemTradeService.start before cost subtraction.
+		if (limitedItem.SellLimit > 0 && limitedItem.SellLimit - requestedCount < 0)
+			return false;
+		if (limitedItem.BuyLimit > 0 && limitedItem.PlayerBuyCount + requestedCount > limitedItem.BuyLimit)
+			return false;
+		return true;
 	}
 
 	private static IReadOnlyDictionary<int, long> CreateInventoryItemCountByItemId(IReadOnlyList<InventoryItem> inventoryItems)
