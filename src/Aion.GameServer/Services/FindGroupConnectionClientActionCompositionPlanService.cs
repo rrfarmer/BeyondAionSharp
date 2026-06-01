@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -11,17 +12,20 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 	private readonly GameWorld? _world;
 	private readonly PlayerGroupRuntime? _groupRuntime;
 	private readonly PlayerAllianceRuntime? _allianceRuntime;
+	private readonly AutoGroupTable? _autoGroups;
 
 	public FindGroupConnectionClientActionCompositionPlanService(
 		FindGroupClientActionPlanService planner,
 		GameWorld? world = null,
 		PlayerGroupRuntime? groupRuntime = null,
-		PlayerAllianceRuntime? allianceRuntime = null)
+		PlayerAllianceRuntime? allianceRuntime = null,
+		AutoGroupTable? autoGroups = null)
 	{
 		_planner = planner;
 		_world = world;
 		_groupRuntime = groupRuntime;
 		_allianceRuntime = allianceRuntime;
+		_autoGroups = autoGroups;
 	}
 
 	public FindGroupConnectionClientActionCompositionPlan CreateDisabledPlan(
@@ -68,6 +72,8 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 
 		currentTeam ??= ResolveCurrentTeam(activePlayer);
 		currentMembers ??= ResolveCurrentMembers(activePlayer);
+		targetNpcInstanceMaskIds ??= ResolveTargetNpcInstanceMaskIds(activePlayer);
+		allRecruitableInstanceMaskIds ??= _autoGroups?.GetRecruitableInstanceMaskIds();
 		var facts = new FindGroupClientActionRuntimeFacts(
 			activePlayer,
 			nowEpochSeconds,
@@ -163,6 +169,19 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 		}
 
 		return members;
+	}
+
+	private IReadOnlyList<int>? ResolveTargetNpcInstanceMaskIds(Player player)
+	{
+		// Java parity: FindGroupService.showInstanceGroups checks player.getTarget() instanceof Npc
+		// before asking DataManager.AUTO_GROUP.getRecruitableInstanceMaskIds(npc.getNpcId()).
+		return _autoGroups != null
+			&& _world != null
+			&& player.TargetObjectId != 0
+			&& _world.TryGetObject(player.TargetObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject npc
+				? _autoGroups.GetRecruitableInstanceMaskIds(npc.TemplateId)
+				: null;
 	}
 }
 

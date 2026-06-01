@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -338,18 +339,83 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
 	}
 
+	[Fact]
+	public async Task CreateDisabledPlan_UsesAutoGroupTableForTargetNpcInstanceMasks()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		player.TargetObjectId = 0x02030405;
+		SetActivePlayer(fixture.Connection, player);
+		Assert.True(fixture.World.TryAddObject(player.ObjectId, player));
+		Assert.True(fixture.World.TryAddObject(player.TargetObjectId, CreateNpc(player.TargetObjectId, templateId: 700001)));
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [700001]),
+			new AutoGroupSummary(303, 300120000, 0, 0, 0, 0, false, false, false, [700002]),
+			new AutoGroupSummary(401, 300600000, 0, 0, 0, 0, false, false, false, [700001]),
+		]);
+		var service = CreateService(fixture.World, autoGroups: autoGroups);
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(10));
+
+		var plan = service.CreateDisabledPlan(
+			fixture.Connection,
+			packet,
+			nowEpochSeconds: 200,
+			formInstanceGroupAnywhere: true);
+
+		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroups, plan.ClientActionPlan!.Kind);
+		var showPlan = plan.ClientActionPlan.InstanceGroupClientShowPlan!;
+		Assert.Equal([302, 401], showPlan.EnabledInstanceMaskIds);
+		Assert.NotNull(showPlan.EnableRegisterForInstancesIntent);
+		Assert.False(showPlan.IsUpdate);
+		Assert.True(showPlan.FormInstanceGroupAnywhere);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_FallsBackToAllAutoGroupMasksWhenTargetNpcHasNoMasks()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		player.TargetObjectId = 0x02030405;
+		SetActivePlayer(fixture.Connection, player);
+		Assert.True(fixture.World.TryAddObject(player.TargetObjectId, CreateNpc(player.TargetObjectId, templateId: 799999)));
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [700001]),
+			new AutoGroupSummary(303, 300120000, 0, 0, 0, 0, false, false, false, [700002]),
+		]);
+		var service = CreateService(fixture.World, autoGroups: autoGroups);
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(10));
+
+		var plan = service.CreateDisabledPlan(
+			fixture.Connection,
+			packet,
+			nowEpochSeconds: 200,
+			formInstanceGroupAnywhere: true);
+
+		var showPlan = plan.ClientActionPlan!.InstanceGroupClientShowPlan!;
+		Assert.Equal([302, 303], showPlan.EnabledInstanceMaskIds);
+		Assert.NotNull(showPlan.EnableRegisterForInstancesIntent);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
 	private static FindGroupConnectionClientActionCompositionPlanService CreateService(
 		GameWorld world,
 		FindGroupRecruitmentPlanService? findGroupService = null,
 		PlayerGroupRuntime? groupRuntime = null,
-		PlayerAllianceRuntime? allianceRuntime = null)
+		PlayerAllianceRuntime? allianceRuntime = null,
+		AutoGroupTable? autoGroups = null)
 	{
 		findGroupService ??= new FindGroupRecruitmentPlanService();
 		return new FindGroupConnectionClientActionCompositionPlanService(
 			new FindGroupClientActionPlanService(findGroupService),
 			world,
 			groupRuntime,
-			allianceRuntime);
+			allianceRuntime,
+			autoGroups);
 	}
 
 	private static CmFindGroup CreateFindGroupPacket(Action<PacketBuffer> writePayload)
@@ -370,6 +436,21 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 			PlayerClass = playerClass,
 			Level = level,
 		};
+	}
+
+	private static WorldNpc CreateNpc(int objectId, int templateId)
+	{
+		var template = new NpcTemplateSummary(
+			templateId,
+			"Portal",
+			NameId: 0,
+			Level: 65,
+			Rank: string.Empty,
+			Rating: string.Empty,
+			Race: string.Empty,
+			Tribe: string.Empty,
+			Type: string.Empty);
+		return new WorldNpc(objectId, templateId, template, new WorldPosition(210010000, 10, 20, 30, 0));
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)

@@ -147,6 +147,45 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsAutoGroupsLikeJavaDataholder()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<auto_groups>
+					<auto_group id="302" instanceId="300110000" name_id="1001" title_id="2001" min_lvl="25" max_lvl="55" register_quick="true" register_group="true" register_new="false" npc_ids="700001 700002" />
+					<auto_group id="303" instanceId="300120000" npc_ids="700002" />
+					<auto_group id="401" instanceId="300600000" npc_ids="700001" />
+					<auto_group id="250" instanceId="300010000" npc_ids="700001" />
+				</auto_groups>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(4, staticData.AutoGroups.Count);
+		var template = staticData.AutoGroups.GetTemplateByInstanceMaskId(302);
+		Assert.NotNull(template);
+		Assert.Equal(300110000, template.InstanceMapId);
+		Assert.Equal(1001, template.NameId);
+		Assert.Equal(2001, template.TitleId);
+		Assert.Equal(25, template.MinLevel);
+		Assert.Equal(55, template.MaxLevel);
+		Assert.True(template.RegisterQuick);
+		Assert.True(template.RegisterGroup);
+		Assert.False(template.RegisterNew);
+		Assert.Equal([700001, 700002], template.NpcIds);
+		Assert.Equal([302, 401], staticData.AutoGroups.GetRecruitableInstanceMaskIds(700001));
+		Assert.Equal([302, 303], staticData.AutoGroups.GetRecruitableInstanceMaskIds(700002));
+		Assert.Null(staticData.AutoGroups.GetRecruitableInstanceMaskIds(700003));
+		Assert.Equal([302, 303, 401], staticData.AutoGroups.GetRecruitableInstanceMaskIds().OrderBy(maskId => maskId));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsStorageExpansionTemplatesByNpcId()
 	{
 		using var temp = TempDirectory.Create();

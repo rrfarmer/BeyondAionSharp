@@ -53,6 +53,7 @@ public sealed class StaticData
 		InstanceCooltimeTable instanceCooltimes,
 		PortalPathTable portalPaths,
 		PortalLocTable portalLocs,
+		AutoGroupTable autoGroups,
 		PlayerInitialDataTable playerInitialData,
 		SkillTreeTable skillTree,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
@@ -107,6 +108,7 @@ public sealed class StaticData
 		InstanceCooltimes = instanceCooltimes;
 		PortalPaths = portalPaths;
 		PortalLocs = portalLocs;
+		AutoGroups = autoGroups;
 		PlayerInitialData = playerInitialData;
 		SkillTree = skillTree;
 		CubeExpansionTemplates = cubeExpansionTemplates;
@@ -209,6 +211,8 @@ public sealed class StaticData
 
 	public PortalLocTable PortalLocs { get; }
 
+	public AutoGroupTable AutoGroups { get; }
+
 	public PlayerInitialDataTable PlayerInitialData { get; }
 
 	public SkillTreeTable SkillTree { get; }
@@ -296,6 +300,7 @@ public sealed class StaticData
 		var portalScrollPaths = new List<PortalPathSummary>();
 		var portalDialogTeleportIds = new Dictionary<int, int>();
 		var portalLocs = new List<PortalLocSummary>();
+		var autoGroups = new List<AutoGroupSummary>();
 		var petSkills = new List<PetSkillSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
@@ -945,6 +950,24 @@ public sealed class StaticData
 						ReadFloatAttribute(reader, "y"),
 						ReadFloatAttribute(reader, "z"),
 						(byte)ReadIntAttribute(reader, "h")));
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "auto_group" && elementPath.GetValueOrDefault(1) == "auto_groups")
+			{
+				// Java parity: model/autogroup/AutoGroup JAXB scalar attributes used by AutoGroupData.
+				autoGroups.Add(
+					new AutoGroupSummary(
+						ReadRequiredIntAttribute(reader, "id"),
+						ReadRequiredIntAttribute(reader, "instanceId"),
+						ReadIntAttribute(reader, "name_id"),
+						ReadIntAttribute(reader, "title_id"),
+						ReadIntAttribute(reader, "min_lvl"),
+						ReadIntAttribute(reader, "max_lvl"),
+						ReadBoolAttribute(reader, "register_quick"),
+						ReadBoolAttribute(reader, "register_group"),
+						ReadBoolAttribute(reader, "register_new"),
+						ReadXmlIntListAttribute(reader, "npc_ids")));
 				continue;
 			}
 
@@ -2764,6 +2787,7 @@ public sealed class StaticData
 				portalUsePaths.AsReadOnly(),
 				portalScrollPaths.AsReadOnly()),
 			new PortalLocTable(portalLocs.AsReadOnly()),
+			new AutoGroupTable(autoGroups.AsReadOnly()),
 			new PlayerInitialDataTable(
 				creationItemsByClass.ToDictionary(
 					pair => pair.Key,
