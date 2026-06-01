@@ -18,7 +18,10 @@ public sealed class FindGroupClientActionPlanService
 		int nowEpochSeconds,
 		Func<int, Player?>? resolvePlayer = null,
 		FindGroupRecruitmentSubject? currentTeam = null,
-		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null)
+		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null,
+		bool formInstanceGroupAnywhere = false,
+		IReadOnlyList<int>? targetNpcInstanceMaskIds = null,
+		IReadOnlyList<int>? allRecruitableInstanceMaskIds = null)
 	{
 		// Java parity: network/aion/clientpackets/CM_FIND_GROUP.runImpl. This planner only
 		// composes disabled plan calls; live dispatch remains intentionally unimplemented.
@@ -97,7 +100,13 @@ public sealed class FindGroupClientActionPlanService
 			10 => FindGroupClientActionPlan.ForInstanceGroupShow(
 				action.Action,
 				FindGroupClientActionPlanKind.ShowInstanceGroups,
-				_findGroupService.ShowInstanceGroups(player.Race, nowEpochSeconds)),
+				_findGroupService.ShowInstanceGroupsForClient(
+					player,
+					isUpdate: false,
+					formInstanceGroupAnywhere,
+					targetNpcInstanceMaskIds,
+					allRecruitableInstanceMaskIds ?? [],
+					nowEpochSeconds)),
 			11 => FindGroupClientActionPlan.ForInstanceApplication(
 				action.Action,
 				FindGroupClientActionPlanKind.SendInstanceApplication,
@@ -113,7 +122,13 @@ public sealed class FindGroupClientActionPlanService
 			13 => FindGroupClientActionPlan.ForInstanceGroupShow(
 				action.Action,
 				FindGroupClientActionPlanKind.ShowInstanceGroupsUpdate,
-				_findGroupService.ShowInstanceGroups(player.Race, nowEpochSeconds)),
+				_findGroupService.ShowInstanceGroupsForClient(
+					player,
+					isUpdate: true,
+					formInstanceGroupAnywhere,
+					targetNpcInstanceMaskIds,
+					allRecruitableInstanceMaskIds ?? [],
+					nowEpochSeconds)),
 			15 => FindGroupClientActionPlan.ForInstanceGroupMemberInfo(
 				action.Action,
 				_findGroupService.ShowInstanceGroupMembersInfo(
@@ -202,6 +217,7 @@ public sealed record FindGroupClientActionPlan(
 	FindGroupApplicationShowPlan? ApplicationShowPlan,
 	FindGroupInstanceGroupMutationPlan? InstanceGroupMutationPlan,
 	FindGroupInstanceGroupShowPlan? InstanceGroupShowPlan,
+	FindGroupInstanceGroupClientShowPlan? InstanceGroupClientShowPlan,
 	FindGroupInstanceGroupMemberInfoPlan? InstanceGroupMemberInfoPlan,
 	FindGroupInstanceApplicationPlan? InstanceApplicationPlan,
 	bool DispatchLiveSideEffects)
@@ -220,6 +236,7 @@ public sealed record FindGroupClientActionPlan(
 			ApplicationShowPlan: null,
 			InstanceGroupMutationPlan: null,
 			InstanceGroupShowPlan: null,
+			InstanceGroupClientShowPlan: null,
 			InstanceGroupMemberInfoPlan: null,
 			InstanceApplicationPlan: null,
 			DispatchLiveSideEffects: false);
@@ -254,9 +271,13 @@ public sealed record FindGroupClientActionPlan(
 	public static FindGroupClientActionPlan ForInstanceGroupShow(
 		int action,
 		FindGroupClientActionPlanKind kind,
-		FindGroupInstanceGroupShowPlan plan)
+		FindGroupInstanceGroupClientShowPlan plan)
 	{
-		return Empty(action, kind) with { InstanceGroupShowPlan = plan };
+		return Empty(action, kind) with
+		{
+			InstanceGroupShowPlan = plan.ShowInstanceGroupsPlan,
+			InstanceGroupClientShowPlan = plan,
+		};
 	}
 
 	public static FindGroupClientActionPlan ForInstanceGroupMemberInfo(
@@ -298,6 +319,7 @@ public sealed record FindGroupClientActionPlan(
 			ApplicationShowPlan: null,
 			InstanceGroupMutationPlan: null,
 			InstanceGroupShowPlan: null,
+			InstanceGroupClientShowPlan: null,
 			InstanceGroupMemberInfoPlan: null,
 			InstanceApplicationPlan: null,
 			DispatchLiveSideEffects: false);

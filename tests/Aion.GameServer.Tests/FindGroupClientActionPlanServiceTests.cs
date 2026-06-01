@@ -111,12 +111,62 @@ public sealed class FindGroupClientActionPlanServiceTests
 		Assert.Equal("Updated", update.InstanceGroupMutationPlan.CurrentInstanceGroup!.Message);
 		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroups, show.Kind);
 		Assert.Single(show.InstanceGroupShowPlan!.InstanceGroups);
+		Assert.NotNull(show.InstanceGroupClientShowPlan);
+		Assert.Null(show.InstanceGroupClientShowPlan!.EnableRegisterForInstancesIntent);
 		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroupsUpdate, showUpdate.Kind);
 		Assert.Single(showUpdate.InstanceGroupShowPlan!.InstanceGroups);
+		Assert.NotNull(showUpdate.InstanceGroupClientShowPlan);
+		Assert.True(showUpdate.InstanceGroupClientShowPlan!.IsUpdate);
 		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroupMembersInfo, memberInfo.Kind);
 		Assert.Equal(FindGroupInstanceGroupPlanStatus.Shown, memberInfo.InstanceGroupMemberInfoPlan!.Status);
 		Assert.Equal(FindGroupClientActionPlanKind.RemoveInstanceGroup, remove.Kind);
 		Assert.Equal(FindGroupInstanceGroupPlanStatus.Removed, remove.InstanceGroupMutationPlan!.Status);
+	}
+
+	[Fact]
+	public void Plan_ActionTenPlansMaskListOnlyForNonUpdateWhenFormAnywhereIsEnabled()
+	{
+		var service = CreateService();
+		var player = CreatePlayer(4101, "Recruiter", "ELYOS", "CLERIC", 65);
+		service.Plan(
+			player,
+			new FindGroupClientAction(8, InstanceMaskId: 0x11223344, Message: "Entry", MinMembers: 6),
+			nowEpochSeconds: 350);
+
+		var nonUpdate = service.Plan(
+			player,
+			new FindGroupClientAction(10),
+			nowEpochSeconds: 351,
+			formInstanceGroupAnywhere: true,
+			targetNpcInstanceMaskIds: [300110000],
+			allRecruitableInstanceMaskIds: [300110000, 300150000]);
+		var update = service.Plan(
+			player,
+			new FindGroupClientAction(13),
+			nowEpochSeconds: 352,
+			formInstanceGroupAnywhere: true,
+			targetNpcInstanceMaskIds: [300110000],
+			allRecruitableInstanceMaskIds: [300110000, 300150000]);
+		var fallback = service.Plan(
+			player,
+			new FindGroupClientAction(10),
+			nowEpochSeconds: 353,
+			formInstanceGroupAnywhere: true,
+			targetNpcInstanceMaskIds: null,
+			allRecruitableInstanceMaskIds: [300110000, 300150000]);
+
+		Assert.NotNull(nonUpdate.InstanceGroupClientShowPlan);
+		Assert.False(nonUpdate.InstanceGroupClientShowPlan!.IsUpdate);
+		Assert.True(nonUpdate.InstanceGroupClientShowPlan.FormInstanceGroupAnywhere);
+		Assert.Equal([300110000], nonUpdate.InstanceGroupClientShowPlan.EnabledInstanceMaskIds);
+		var maskIntent = Assert.IsType<FindGroupDirectPacketIntent>(nonUpdate.InstanceGroupClientShowPlan.EnableRegisterForInstancesIntent);
+		Assert.Equal(player.ObjectId, maskIntent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(instanceMaskIds))", maskIntent.JavaSource);
+		Assert.Single(nonUpdate.InstanceGroupShowPlan!.InstanceGroups);
+		Assert.NotNull(update.InstanceGroupClientShowPlan);
+		Assert.Null(update.InstanceGroupClientShowPlan!.EnabledInstanceMaskIds);
+		Assert.Null(update.InstanceGroupClientShowPlan.EnableRegisterForInstancesIntent);
+		Assert.Equal([300110000, 300150000], fallback.InstanceGroupClientShowPlan!.EnabledInstanceMaskIds);
 	}
 
 	[Fact]

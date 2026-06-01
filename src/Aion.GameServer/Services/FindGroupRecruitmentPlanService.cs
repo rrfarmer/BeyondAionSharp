@@ -333,6 +333,35 @@ public sealed class FindGroupRecruitmentPlanService
 			SmFindGroup.ShowInstanceGroups(nowEpochSeconds, snapshots));
 	}
 
+	public FindGroupInstanceGroupClientShowPlan ShowInstanceGroupsForClient(
+		Player player,
+		bool isUpdate,
+		bool formInstanceGroupAnywhere,
+		IReadOnlyList<int>? targetNpcInstanceMaskIds,
+		IReadOnlyList<int> allRecruitableInstanceMaskIds,
+		int nowEpochSeconds)
+	{
+		// Java parity: FindGroupService.showInstanceGroups(player, isUpdate) sends action 26 only
+		// when this is not an update and GroupConfig.FORM_INSTANCE_GROUP_ANYWHERE is enabled.
+		FindGroupDirectPacketIntent? enableRegisterIntent = null;
+		IReadOnlyList<int>? enabledInstanceMaskIds = null;
+		if (!isUpdate && formInstanceGroupAnywhere)
+		{
+			enabledInstanceMaskIds = targetNpcInstanceMaskIds ?? allRecruitableInstanceMaskIds;
+			enableRegisterIntent = new FindGroupDirectPacketIntent(
+				player.ObjectId,
+				SmFindGroup.EnableRegisterForInstances(enabledInstanceMaskIds),
+				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(instanceMaskIds))");
+		}
+
+		return new FindGroupInstanceGroupClientShowPlan(
+			IsUpdate: isUpdate,
+			FormInstanceGroupAnywhere: formInstanceGroupAnywhere,
+			EnabledInstanceMaskIds: enabledInstanceMaskIds,
+			EnableRegisterForInstancesIntent: enableRegisterIntent,
+			ShowInstanceGroupsPlan: ShowInstanceGroups(player.Race, nowEpochSeconds));
+	}
+
 	public FindGroupInstanceGroupMemberInfoPlan ShowInstanceGroupMembersInfo(
 		Player player,
 		int playerObjectId,
@@ -611,6 +640,13 @@ public sealed record FindGroupInstanceGroupShowPlan(
 	int LastUpdate,
 	IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> InstanceGroups,
 	GameServerPacket Packet);
+
+public sealed record FindGroupInstanceGroupClientShowPlan(
+	bool IsUpdate,
+	bool FormInstanceGroupAnywhere,
+	IReadOnlyList<int>? EnabledInstanceMaskIds,
+	FindGroupDirectPacketIntent? EnableRegisterForInstancesIntent,
+	FindGroupInstanceGroupShowPlan ShowInstanceGroupsPlan);
 
 public sealed record FindGroupInstanceGroupMemberInfoPlan(
 	FindGroupInstanceGroupPlanStatus Status,
