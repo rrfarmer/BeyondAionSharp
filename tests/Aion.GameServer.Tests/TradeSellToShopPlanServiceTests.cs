@@ -208,6 +208,11 @@ public sealed class TradeSellToShopPlanServiceTests
 		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated, snapshot.Status);
 		Assert.Same(sellPlan, snapshot.SellToShopPlan);
 		Assert.Equal(sellPlan.RepurchaseItems, snapshot.RepurchaseItems);
+		Assert.NotNull(snapshot.StateReplacementPlan);
+		Assert.Equal(RepurchaseStateReplacePlanStatus.SnapshotReplaced, snapshot.StateReplacementPlan!.Status);
+		Assert.Equal(player.ObjectId, snapshot.StateReplacementPlan.PlayerObjectId);
+		Assert.Equal([sword.ObjectId], snapshot.StateReplacementPlan.Snapshot.RepurchaseItems.Select(item => item.Item.ObjectId));
+		Assert.False(snapshot.StateReplacementPlan.PreservesJavaHashSetIterationOrder);
 		Assert.True(snapshot.WouldReplacePlayerSnapshot);
 		Assert.False(snapshot.DidReplacePlayerSnapshot);
 		Assert.False(snapshot.ShouldDispatchLiveSideEffects);
@@ -229,8 +234,44 @@ public sealed class TradeSellToShopPlanServiceTests
 
 		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated, snapshot.Status);
 		Assert.Empty(snapshot.RepurchaseItems);
+		Assert.NotNull(snapshot.StateReplacementPlan);
+		Assert.Equal(player.ObjectId, snapshot.StateReplacementPlan!.PlayerObjectId);
+		Assert.Empty(snapshot.StateReplacementPlan.Snapshot.RepurchaseItems);
 		Assert.True(snapshot.WouldReplacePlayerSnapshot);
 		Assert.False(snapshot.DidReplacePlayerSnapshot);
+	}
+
+	[Fact]
+	public void CreateRepurchaseDiagnosticSnapshot_CarriesStateReplacementAgainstSuppliedCurrentSnapshots()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var oldSnapshot = new RepurchaseStateSnapshot(
+			player.ObjectId,
+			[new RepurchaseSourceItem(Item(777, SwordItemId, 1, ownerId: player.ObjectId), RepurchasePrice: 1)],
+			"old snapshot");
+		var otherSnapshot = new RepurchaseStateSnapshot(
+			1002,
+			[new RepurchaseSourceItem(Item(888, SwordItemId, 1, ownerId: 1002), RepurchasePrice: 1)],
+			"other snapshot");
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var sellPlan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 1_000, ownerId: player.ObjectId), sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1)]);
+
+		var snapshot = RepurchaseDiagnosticSnapshotPlanService.CreateDisabledPlan(
+			sellPlan,
+			player.ObjectId,
+			[oldSnapshot, otherSnapshot]);
+
+		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated, snapshot.Status);
+		var replacement = Assert.IsType<RepurchaseStateReplacePlan>(snapshot.StateReplacementPlan);
+		Assert.True(replacement.WouldReplaceMapEntry);
+		Assert.False(replacement.DidReplaceMapEntry);
+		Assert.Equal([player.ObjectId], replacement.Snapshot.RepurchaseItems.Select(item => item.Item.OwnerId).Distinct());
+		Assert.DoesNotContain(replacement.UpdatedSnapshots, state => state.PlayerObjectId == player.ObjectId && state.JavaSource == oldSnapshot.JavaSource);
+		Assert.Contains(otherSnapshot, replacement.UpdatedSnapshots);
+		Assert.Contains("disabled state replacement payload", snapshot.JavaSource, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -253,6 +294,7 @@ public sealed class TradeSellToShopPlanServiceTests
 
 		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SellToShopPlanNotReady, snapshot.Status);
 		Assert.Empty(snapshot.RepurchaseItems);
+		Assert.Null(snapshot.StateReplacementPlan);
 		Assert.False(snapshot.WouldReplacePlayerSnapshot);
 		Assert.False(snapshot.ShouldDispatchLiveSideEffects);
 	}

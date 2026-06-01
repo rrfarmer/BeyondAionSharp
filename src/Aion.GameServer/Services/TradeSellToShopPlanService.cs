@@ -44,6 +44,7 @@ public sealed record RepurchaseDiagnosticSnapshotPlan(
 	RepurchaseDiagnosticSnapshotPlanStatus Status,
 	TradeSellToShopPlan? SellToShopPlan,
 	IReadOnlyList<RepurchaseSourceItem> RepurchaseItems,
+	RepurchaseStateReplacePlan? StateReplacementPlan,
 	bool WouldReplacePlayerSnapshot,
 	bool DidReplacePlayerSnapshot,
 	bool ShouldDispatchLiveSideEffects,
@@ -415,7 +416,10 @@ public static class PetAutoSellPlanService
 
 public static class RepurchaseDiagnosticSnapshotPlanService
 {
-	public static RepurchaseDiagnosticSnapshotPlan CreateDisabledPlan(TradeSellToShopPlan? sellToShopPlan)
+	public static RepurchaseDiagnosticSnapshotPlan CreateDisabledPlan(
+		TradeSellToShopPlan? sellToShopPlan,
+		int? playerObjectId = null,
+		IReadOnlyList<RepurchaseStateSnapshot>? currentSnapshots = null)
 	{
 		// Java parity: TradeService.performSellToShop always calls
 		// RepurchaseService.addRepurchaseItems(player, items) after the sell loop
@@ -434,15 +438,34 @@ public static class RepurchaseDiagnosticSnapshotPlanService
 				Array.Empty<RepurchaseSourceItem>(),
 				"TradeService.performSellToShop did not reach RepurchaseService.addRepurchaseItems");
 
+		var resolvedPlayerObjectId = playerObjectId
+			?? ResolvePlayerObjectId(sellToShopPlan);
+		var stateReplacementPlan = resolvedPlayerObjectId == null
+			? null
+			: RepurchaseStatePlanService.CreateReplaceDisabledPlan(
+				resolvedPlayerObjectId.Value,
+				sellToShopPlan.RepurchaseItems,
+				currentSnapshots);
+
 		return new RepurchaseDiagnosticSnapshotPlan(
 			RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated,
 			sellToShopPlan,
 			sellToShopPlan.RepurchaseItems.ToArray(),
+			stateReplacementPlan,
 			WouldReplacePlayerSnapshot: true,
 			DidReplacePlayerSnapshot: false,
 			ShouldDispatchLiveSideEffects: false,
-			"TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items) diagnostic snapshot only",
+			stateReplacementPlan == null
+				? "TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items) diagnostic snapshot only; player object id could not be inferred for replacement payload"
+				: "TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items) diagnostic snapshot with disabled state replacement payload",
 			IsLive: false);
+	}
+
+	private static int? ResolvePlayerObjectId(TradeSellToShopPlan sellToShopPlan)
+	{
+		return sellToShopPlan.RepurchaseItems.FirstOrDefault()?.Item.OwnerId
+			?? sellToShopPlan.KinahUpdate?.OwnerId
+			?? sellToShopPlan.SellerItemUpdates.FirstOrDefault()?.OwnerId;
 	}
 
 	private static RepurchaseDiagnosticSnapshotPlan Terminal(
@@ -455,6 +478,7 @@ public static class RepurchaseDiagnosticSnapshotPlanService
 			status,
 			sellToShopPlan,
 			repurchaseItems,
+			StateReplacementPlan: null,
 			WouldReplacePlayerSnapshot: false,
 			DidReplacePlayerSnapshot: false,
 			ShouldDispatchLiveSideEffects: false,
