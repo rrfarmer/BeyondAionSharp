@@ -78,13 +78,15 @@ public sealed class CmBuyItemTests
 		Assert.Null(packet.AuditItem);
 	}
 
-	[Fact]
-	public void ReadFrom_NegativeCountAuditsAndLeavesOnlyPriorValidItems()
+	[Theory]
+	[InlineData(2)]
+	[InlineData(13)]
+	public void ReadFrom_NegativeCountAuditsAndLeavesOnlyPriorValidItems(int tradeActionId)
 	{
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
 		buffer.WriteD(SellerObjectId);
-		buffer.WriteH(2);
+		buffer.WriteH(tradeActionId);
 		buffer.WriteH(2);
 		buffer.WriteD(101);
 		buffer.WriteQ(1);
