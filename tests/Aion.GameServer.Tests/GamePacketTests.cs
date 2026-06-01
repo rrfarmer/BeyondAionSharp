@@ -7003,6 +7003,26 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesBreakWeaponsPacket()
+	{
+		var breakWeapons = Assert.IsType<CmBreakWeapons>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(207, buffer =>
+			{
+				buffer.WriteD(700001);
+				buffer.WriteD(1001);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(700001, breakWeapons.NpcObjectId);
+		Assert.Equal(1001, breakWeapons.WeaponObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(207, buffer =>
+		{
+			buffer.WriteD(700001);
+			buffer.WriteD(1001);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
