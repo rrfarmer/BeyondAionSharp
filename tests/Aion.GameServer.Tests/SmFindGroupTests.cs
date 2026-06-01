@@ -93,6 +93,28 @@ public sealed class SmFindGroupTests
 	}
 
 	[Fact]
+	public void WritePayload_ShowInstanceGroupMemberInfoMatchesJavaShape()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.ShowInstanceGroupMemberInfo(
+				new FindGroupInstanceGroupMemberInfoSnapshot(
+					LastUpdate: 0x01020305,
+					Members:
+					[
+						new FindGroupInstanceGroupMemberInfoMemberSnapshot(
+							WorldId: 300110000,
+							PlayerObjectId: 0x01020304,
+							Level: 65,
+							ClassId: 1,
+							Name: "Recruiter")
+					])));
+
+		Assert.Equal(
+			Convert.FromHexString("10010001000503020100000000B050E311040302014100000001000000010000005200650063007200750069007400650072000000"),
+			payload);
+	}
+
+	[Fact]
 	public void WritePayload_DestroyPrepareWindowMatchesJavaGolden()
 	{
 		var payload = SerializeUnencryptedPayload(

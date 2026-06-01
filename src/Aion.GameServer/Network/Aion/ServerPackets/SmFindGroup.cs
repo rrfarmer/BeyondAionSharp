@@ -17,6 +17,7 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
 	private readonly FindGroupInstanceApplicantSnapshot? _instanceApplicant;
 	private readonly IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> _instanceGroups;
+	private readonly FindGroupInstanceGroupMemberInfoSnapshot? _memberInfo;
 	private readonly FindGroupInstanceGroupPrepareWindowSnapshot? _prepareWindow;
 
 	private SmFindGroup(
@@ -31,6 +32,7 @@ public sealed class SmFindGroup : GameServerPacket
 		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null,
 		FindGroupInstanceApplicantSnapshot? instanceApplicant = null,
 		IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>? instanceGroups = null,
+		FindGroupInstanceGroupMemberInfoSnapshot? memberInfo = null,
 		FindGroupInstanceGroupPrepareWindowSnapshot? prepareWindow = null)
 		: base(PacketOpCode)
 	{
@@ -45,6 +47,7 @@ public sealed class SmFindGroup : GameServerPacket
 		_instanceGroupWindow = instanceGroupWindow;
 		_instanceApplicant = instanceApplicant;
 		_instanceGroups = instanceGroups ?? [];
+		_memberInfo = memberInfo;
 		_prepareWindow = prepareWindow;
 	}
 
@@ -88,6 +91,12 @@ public sealed class SmFindGroup : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 14 registerInstanceGroup.
 		return new SmFindGroup(14, instanceGroups: instanceGroups);
+	}
+
+	public static SmFindGroup ShowInstanceGroupMemberInfo(FindGroupInstanceGroupMemberInfoSnapshot instanceGroup)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 16 showInstanceGroupMemberInfo.
+		return new SmFindGroup(16, memberInfo: instanceGroup);
 	}
 
 	public static SmFindGroup DestroyPrepareForEntryWindow(
@@ -165,6 +174,24 @@ public sealed class SmFindGroup : GameServerPacket
 					buffer.WriteS(group.Message);
 				}
 				break;
+			case 16:
+				var memberInfo = _memberInfo ?? throw new InvalidOperationException("Instance group member-info snapshot is required.");
+				buffer.WriteH(memberInfo.Members.Count);
+				buffer.WriteH(memberInfo.Members.Count);
+				buffer.WriteD(memberInfo.LastUpdate);
+				foreach (var member in memberInfo.Members)
+				{
+					buffer.WriteD(0);
+					buffer.WriteD(member.WorldId);
+					buffer.WriteD(member.PlayerObjectId);
+					buffer.WriteD(member.Level);
+					buffer.WriteD(member.ClassId);
+					buffer.WriteH(1);
+					buffer.WriteC(0);
+					buffer.WriteC(0);
+					buffer.WriteS(member.Name);
+				}
+				break;
 			case 23:
 				var prepareWindowGroup = _instanceGroupWindow ?? throw new InvalidOperationException("Instance group window snapshot is required.");
 				buffer.WriteD(prepareWindowGroup.GroupEntryId);
@@ -208,6 +235,17 @@ public sealed record FindGroupInstanceGroupRegistrationSnapshot(
 	int LastUpdate,
 	string RecruiterName,
 	string Message);
+
+public sealed record FindGroupInstanceGroupMemberInfoSnapshot(
+	int LastUpdate,
+	IReadOnlyList<FindGroupInstanceGroupMemberInfoMemberSnapshot> Members);
+
+public sealed record FindGroupInstanceGroupMemberInfoMemberSnapshot(
+	int WorldId,
+	int PlayerObjectId,
+	int Level,
+	int ClassId,
+	string Name);
 
 public sealed record FindGroupInstanceGroupPrepareWindowSnapshot(
 	int GroupEntryId,
