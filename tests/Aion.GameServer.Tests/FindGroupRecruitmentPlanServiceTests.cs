@@ -499,6 +499,27 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void ShowInstanceGroupsForPortal_PlansActionTwentySixOnlyWhenPortalMasksExist()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+
+		var missingPortal = service.ShowInstanceGroupsForPortal(player, portalNpcInstanceMaskIds: null);
+		var knownPortal = service.ShowInstanceGroupsForPortal(player, portalNpcInstanceMaskIds: [300110000, 300150000]);
+
+		Assert.Null(missingPortal.EnabledInstanceMaskIds);
+		Assert.Null(missingPortal.EnableRegisterForInstancesIntent);
+		Assert.Equal([300110000, 300150000], knownPortal.EnabledInstanceMaskIds);
+		Assert.NotNull(knownPortal.EnableRegisterForInstancesIntent);
+		var intent = knownPortal.EnableRegisterForInstancesIntent!;
+		Assert.Equal(player.ObjectId, intent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(instanceMaskIds))", intent.JavaSource);
+		Assert.Equal(
+			SerializeUnencryptedPayload(SmFindGroup.EnableRegisterForInstances([300110000, 300150000])),
+			SerializeUnencryptedPayload(intent.Packet));
+	}
+
+	[Fact]
 	public void SendInstanceApplicationResult_AcceptPlansGroupInviteWhenMinMembersAtMostSix()
 	{
 		var service = new FindGroupRecruitmentPlanService();

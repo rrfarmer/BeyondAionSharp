@@ -362,6 +362,24 @@ public sealed class FindGroupRecruitmentPlanService
 			ShowInstanceGroupsPlan: ShowInstanceGroups(player.Race, nowEpochSeconds));
 	}
 
+	public FindGroupPortalInstanceGroupShowPlan ShowInstanceGroupsForPortal(
+		Player player,
+		IReadOnlyList<int>? portalNpcInstanceMaskIds)
+	{
+		// Java parity: FindGroupService.showInstanceGroups(player, portalNpc) sends only action 26,
+		// and only when DataManager.AUTO_GROUP has mask ids for the portal NPC.
+		var enableRegisterIntent = portalNpcInstanceMaskIds is null
+			? null
+			: new FindGroupDirectPacketIntent(
+				player.ObjectId,
+				SmFindGroup.EnableRegisterForInstances(portalNpcInstanceMaskIds),
+				"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(instanceMaskIds))");
+
+		return new FindGroupPortalInstanceGroupShowPlan(
+			portalNpcInstanceMaskIds,
+			enableRegisterIntent);
+	}
+
 	public FindGroupInstanceGroupMemberInfoPlan ShowInstanceGroupMembersInfo(
 		Player player,
 		int playerObjectId,
@@ -647,6 +665,10 @@ public sealed record FindGroupInstanceGroupClientShowPlan(
 	IReadOnlyList<int>? EnabledInstanceMaskIds,
 	FindGroupDirectPacketIntent? EnableRegisterForInstancesIntent,
 	FindGroupInstanceGroupShowPlan ShowInstanceGroupsPlan);
+
+public sealed record FindGroupPortalInstanceGroupShowPlan(
+	IReadOnlyList<int>? EnabledInstanceMaskIds,
+	FindGroupDirectPacketIntent? EnableRegisterForInstancesIntent);
 
 public sealed record FindGroupInstanceGroupMemberInfoPlan(
 	FindGroupInstanceGroupPlanStatus Status,
