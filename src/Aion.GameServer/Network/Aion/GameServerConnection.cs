@@ -90,6 +90,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
 	private readonly GoodsListTable? _buyItemGoodsLists;
 	private readonly long? _buyItemCurrentSellLimit;
+	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -166,7 +167,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
 		GoodsListTable? buyItemGoodsLists = null,
-		long? buyItemCurrentSellLimit = null)
+		long? buyItemCurrentSellLimit = null,
+		Func<int>? buyItemDiagnosticObjectIdProvider = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -217,6 +219,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemItemTemplates = buyItemItemTemplates;
 		_buyItemGoodsLists = buyItemGoodsLists;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
+		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -4080,7 +4083,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			sellActionFacts?.PurchaseTemplate,
 			goodsLists,
 			sellModifier,
-			() => 0);
+			_buyItemDiagnosticObjectIdProvider ?? (() => 0));
 	}
 
 	private TradeSellForApToShopPlan? ResolveBuyItemSellForApToShopPlan(

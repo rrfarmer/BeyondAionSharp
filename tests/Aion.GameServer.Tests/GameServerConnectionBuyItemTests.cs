@@ -406,6 +406,110 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionHydratesPartialStackAndMissingKinahWithDiagnosticObjectIds()
+	{
+		var diagnosticIds = new Queue<int>([4001, 4002]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, mask: 1 << 2, maxStackCount: 10)),
+			buyItemDiagnosticObjectIdProvider: diagnosticIds.Dequeue);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 5,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.SellToShopPlan!.Dispatch);
+		var sellPlan = Assert.IsType<TradeSellToShopPlan>(dispatch.SellToShopPlan);
+		Assert.Equal(TradeSellToShopPlanStatus.PlanCreated, sellPlan.Status);
+		Assert.Empty(sellPlan.SellerDeletedItemObjectIds);
+		var sellerUpdate = Assert.Single(sellPlan.SellerItemUpdates);
+		Assert.Equal(2001, sellerUpdate.ObjectId);
+		Assert.Equal(3, sellerUpdate.Count);
+		var repurchase = Assert.Single(sellPlan.RepurchaseItems);
+		Assert.Equal(4001, repurchase.Item.ObjectId);
+		Assert.Equal(2, repurchase.Item.Count);
+		Assert.Equal(400, repurchase.RepurchasePrice);
+		Assert.NotNull(sellPlan.KinahUpdate);
+		Assert.Equal(4002, sellPlan.KinahUpdate!.ObjectId);
+		Assert.Equal(InventoryItemFactory.KinahItemId, sellPlan.KinahUpdate.ItemId);
+		Assert.Equal(400, sellPlan.KinahUpdate.Count);
+		Assert.Empty(diagnosticIds);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellToShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldAddRepurchaseItems);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionKeepsPartialStackBlockedWithoutDiagnosticObjectIds()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, mask: 1 << 2)));
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 5,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.SellToShopPlan!.Dispatch);
+		var sellPlan = Assert.IsType<TradeSellToShopPlan>(dispatch.SellToShopPlan);
+		Assert.Equal(TradeSellToShopPlanStatus.BlockedRepurchaseItemCreateFailed, sellPlan.Status);
+		Assert.Empty(sellPlan.SellerDeletedItemObjectIds);
+		Assert.Empty(sellPlan.RepurchaseItems);
+		Assert.Null(sellPlan.KinahUpdate);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.SellToShopPlanNotReady, outcome.SellToShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemKnownListResolverCanRejectWorldObjectTarget()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(buyItemKnownObjectResolver: (_, _, _) => false);
@@ -538,7 +642,7 @@ public sealed class GameServerConnectionBuyItemTests
 		return new ItemTemplateTable(templates);
 	}
 
-	private static ItemTemplateSummary Template(int itemId, long price, int requiredAbyssPoints = 0, int mask = 0)
+	private static ItemTemplateSummary Template(int itemId, long price, int requiredAbyssPoints = 0, int mask = 0, int maxStackCount = 1)
 	{
 		return new ItemTemplateSummary(
 			itemId,
@@ -550,7 +654,7 @@ public sealed class GameServerConnectionBuyItemTests
 			ItemType: "NORMAL",
 			Quality: "COMMON",
 			Race: "PC_ALL",
-			MaxStackCount: 1,
+			MaxStackCount: maxStackCount,
 			Price: price,
 			ValidEquipmentSlots: 0,
 			RequiredAbyssPoints: requiredAbyssPoints);
@@ -654,7 +758,8 @@ public sealed class GameServerConnectionBuyItemTests
 			TradeListTable? buyItemTradeLists = null,
 			ItemTemplateTable? buyItemItemTemplates = null,
 			GoodsListTable? buyItemGoodsLists = null,
-			long? buyItemCurrentSellLimit = null)
+			long? buyItemCurrentSellLimit = null,
+			Func<int>? buyItemDiagnosticObjectIdProvider = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -689,7 +794,8 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemTradeLists: buyItemTradeLists,
 						buyItemItemTemplates: buyItemItemTemplates,
 						buyItemGoodsLists: buyItemGoodsLists,
-						buyItemCurrentSellLimit: buyItemCurrentSellLimit),
+						buyItemCurrentSellLimit: buyItemCurrentSellLimit,
+						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider),
 					world,
 					buyItemPlans,
 					buyItemSideEffectOutcomePlans,
