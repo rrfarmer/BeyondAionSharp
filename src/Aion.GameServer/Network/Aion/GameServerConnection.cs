@@ -432,6 +432,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmMayLoginIntoGame:
 				await SendPacketAsync(new SmMayLoginIntoGame());
 				break;
+			case CmDisconnect:
+				// Java parity: network/aion/clientpackets/CM_DISCONNECT.runImpl has no side effect; the socket closes separately.
+				break;
 			case CmMayQuit:
 				break;
 			case CmQuit quit:

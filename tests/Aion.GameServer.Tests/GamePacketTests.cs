@@ -5337,6 +5337,21 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesDisconnectPacket()
+	{
+		var disconnectAuthed = Assert.IsType<CmDisconnect>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(2, buffer => buffer.WriteC(255)), GameConnectionState.Authed)
+		);
+		var disconnectInGame = Assert.IsType<CmDisconnect>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(2, buffer => buffer.WriteC(0)), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(255, disconnectAuthed.Unknown);
+		Assert.Equal(0, disconnectInGame.Unknown);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(2, buffer => buffer.WriteC(1)), GameConnectionState.Connected));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesPingAndTimeCheckPackets()
 	{
 		var timeCheck = Assert.IsType<CmTimeCheck>(
