@@ -7063,6 +7063,26 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesMegaphonePacket()
+	{
+		var megaphone = Assert.IsType<CmMegaphone>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(237, buffer =>
+			{
+				buffer.WriteS("Dredgion forming");
+				buffer.WriteD(188910000);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal("Dredgion forming", megaphone.Message);
+		Assert.Equal(188910000, megaphone.ItemObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(237, buffer =>
+		{
+			buffer.WriteS("Nope");
+			buffer.WriteD(1);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
