@@ -141,6 +141,49 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
+	public void SmAllianceMemberInfo_MovementMatchesJavaGoldenPrefixPayload()
+	{
+		var member = new Player
+		{
+			ObjectId = 2004,
+			Name = "AllyMover",
+			IsOnline = true,
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			FlyState = PlayerFlyState.Flying,
+			LifeStats = new PlayerLifeStats(CurrentHp: 777, CurrentMp: 333, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
+		};
+		var plan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.Movement);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmAllianceMemberInfo(plan)));
+
+		Assert.Equal(88001, reader.ReadD());
+		Assert.Equal(2004, reader.ReadD());
+		Assert.Equal(819, reader.ReadD());
+		Assert.Equal(777, reader.ReadD());
+		Assert.Equal(840, reader.ReadD());
+		Assert.Equal(333, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(60, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(220010000, reader.ReadD());
+		Assert.Equal(10.5f, reader.ReadF());
+		Assert.Equal(20.25f, reader.ReadF());
+		Assert.Equal(30.75f, reader.ReadF());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(10, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmAllianceMemberInfo_WritesMemberGroupChangeNameOnlyDespiteSharedJoinWireId()
 	{
 		var member = new Player
