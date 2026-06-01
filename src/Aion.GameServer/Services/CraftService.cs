@@ -2437,9 +2437,20 @@ public sealed record CraftStartInventoryPacketSendOperation(
 			packetIndex,
 			packet,
 			packet.GetType().Name,
-			"ItemPacketService -> PacketSendUtility.sendPacket",
+			GetJavaUtilityMethod(packet),
 			WouldCallSendPacketAsync: true,
 			DidCallSendPacketAsync: false);
+	}
+
+	private static string GetJavaUtilityMethod(GameServerPacket packet)
+	{
+		return packet switch
+		{
+			SmDeleteItem => "ItemPacketService.sendItemDeletePacket -> PacketSendUtility.sendPacket(SM_DELETE_ITEM)",
+			SmCubeUpdate => "ItemPacketService.sendItemDeletePacket -> PacketSendUtility.sendPacket(SM_CUBE_UPDATE.cubeSize)",
+			SmInventoryUpdateItem => "ItemPacketService.sendItemUpdatePacket -> PacketSendUtility.sendPacket(SM_INVENTORY_UPDATE_ITEM)",
+			_ => "ItemPacketService -> PacketSendUtility.sendPacket",
+		};
 	}
 }
 

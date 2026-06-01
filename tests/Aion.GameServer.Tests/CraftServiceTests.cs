@@ -1521,6 +1521,43 @@ public sealed class CraftServiceTests
 	}
 
 	[Fact]
+	public void CreateStartInventoryPacketPlan_DeleteCubeSizeSnapshotsExcludeKinah()
+	{
+		var service = CreateService(out _, CreateItemTemplates());
+		var player = CreatePlayer(objectId: 1152, dp: 700);
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 8050, itemId: 182400001, count: 10_000),
+			CreateInventoryItem(objectId: 8051, itemId: 152000901, count: 1),
+			CreateInventoryItem(objectId: 8052, itemId: 152000902, count: 1),
+			CreateInventoryItem(objectId: 8053, itemId: 169401081, count: 1),
+		];
+		var firstDelete = CraftStartConsumedItemPlan.Component(152000901, quantity: 1);
+		var secondDelete = CraftStartConsumedItemPlan.Component(152000902, quantity: 1);
+		var mutation = CraftStartInventoryMutationPlan.Planned(
+			CraftStartConsumptionPlan.NotPlanned("packet evidence only"),
+			updatedItems: [],
+			deletedObjectIds: [8051, 8052],
+			orderedOperations:
+			[
+				CraftStartInventoryMutationOperation.Deleted(firstDelete, deletedObjectId: 8051),
+				CraftStartInventoryMutationOperation.Deleted(secondDelete, deletedObjectId: 8052),
+			]);
+
+		var packetPlan = service.CreateStartInventoryPacketPlan(mutation, player);
+
+		Assert.Equal(CraftStartInventoryPacketStatus.Planned, packetPlan.Status);
+		Assert.False(packetPlan.IsLive);
+		Assert.Contains("SM_CUBE_UPDATE", packetPlan.JavaSource, StringComparison.Ordinal);
+		Assert.Collection(
+			packetPlan.Packets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8051, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 8052, expectedDeleteType: SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public void CraftStartInventoryPacketSendAdapter_DisabledPlanRecordsJavaBoundaryWithoutSending()
 	{
 		var service = CreateService(out _, CreateItemTemplates(), CreateSkillTemplates());
@@ -1609,7 +1646,14 @@ public sealed class CraftServiceTests
 				Assert.Equal(nameof(SmInventoryUpdateItem), operation.PacketTypeName);
 				Assert.Same(packetPlan.Packets[5], operation.Packet);
 			});
-		Assert.All(adapterPlan.Operations, operation => Assert.Equal("ItemPacketService -> PacketSendUtility.sendPacket", operation.JavaUtilityMethod));
+		Assert.Collection(
+			adapterPlan.Operations,
+			operation => Assert.Equal("ItemPacketService.sendItemDeletePacket -> PacketSendUtility.sendPacket(SM_DELETE_ITEM)", operation.JavaUtilityMethod),
+			operation => Assert.Equal("ItemPacketService.sendItemDeletePacket -> PacketSendUtility.sendPacket(SM_CUBE_UPDATE.cubeSize)", operation.JavaUtilityMethod),
+			operation => Assert.Equal("ItemPacketService.sendItemDeletePacket -> PacketSendUtility.sendPacket(SM_DELETE_ITEM)", operation.JavaUtilityMethod),
+			operation => Assert.Equal("ItemPacketService.sendItemDeletePacket -> PacketSendUtility.sendPacket(SM_CUBE_UPDATE.cubeSize)", operation.JavaUtilityMethod),
+			operation => Assert.Equal("ItemPacketService.sendItemUpdatePacket -> PacketSendUtility.sendPacket(SM_INVENTORY_UPDATE_ITEM)", operation.JavaUtilityMethod),
+			operation => Assert.Equal("ItemPacketService.sendItemUpdatePacket -> PacketSendUtility.sendPacket(SM_INVENTORY_UPDATE_ITEM)", operation.JavaUtilityMethod));
 	}
 
 	[Fact]
