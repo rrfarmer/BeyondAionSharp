@@ -165,6 +165,36 @@ public sealed class NpcDialogServiceSelectPlanServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_PlansBuyAgainWithRepurchaseSnapshotAdapter()
+	{
+		var item = new InventoryItem
+		{
+			ObjectId = 7001,
+			ItemId = SwordItemId,
+			Count = 1,
+			OwnerId = 1001,
+			Location = 0,
+			Slot = 65535,
+		};
+		var snapshotPlan = RepurchasePacketSnapshotPlanService.CreateDisabledPlan(
+			targetObjectId: 9001,
+			repurchaseItems: [new RepurchaseSourceItem(item, RepurchasePrice: 1_200)],
+			itemTemplates: new ItemTemplateTable([Template(SwordItemId)]));
+
+		var plan = NpcDialogServiceSelectPlanService.CreatePlan(
+			new NpcDialogServiceSelectInput(
+				CreateFallback(dialogActionId: 70),
+				RepurchasePacketSnapshotPlan: snapshotPlan));
+
+		var descriptor = Assert.Single(plan.Descriptors);
+		Assert.Equal(NpcDialogServiceDescriptorKind.RepurchasePacket, descriptor.Kind);
+		Assert.Same(snapshotPlan, descriptor.RepurchasePacketSnapshotPlan);
+		Assert.Same(snapshotPlan.Packet, descriptor.RepurchasePacket);
+		Assert.False(snapshotPlan.ShouldDispatchLiveSideEffects);
+		Assert.False(descriptor.IsLive);
+	}
+
+	[Fact]
 	public void CreatePlan_PlansTradeInFromExplicitTradeInListAvailability()
 	{
 		var packetPlan = SmTradeInListPacketPlanService.CreatePlan(

@@ -54,7 +54,8 @@ public sealed record NpcDialogServiceSelectInput(
 	bool HasTradeInList = false,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
 	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
-	SmRepurchase? RepurchasePacket = null
+	SmRepurchase? RepurchasePacket = null,
+	RepurchasePacketSnapshotPlan? RepurchasePacketSnapshotPlan = null
 );
 
 public sealed record NpcDialogServiceDescriptor(
@@ -68,7 +69,8 @@ public sealed record NpcDialogServiceDescriptor(
 	int? PriceModifier = null,
 	SmTradeListPacketPlan? TradeListPacketPlan = null,
 	SmTradeInListPacketPlan? TradeInListPacketPlan = null,
-	SmRepurchase? RepurchasePacket = null
+	SmRepurchase? RepurchasePacket = null,
+	RepurchasePacketSnapshotPlan? RepurchasePacketSnapshotPlan = null
 );
 
 public sealed record NpcDialogServiceSelectPlan(
@@ -302,7 +304,8 @@ public static class NpcDialogServiceSelectPlanService
 					input.Fallback,
 					NpcDialogServiceDescriptorKind.RepurchasePacket,
 					"SM_REPURCHASE",
-					repurchasePacket: input.RepurchasePacket
+					repurchasePacket: input.RepurchasePacket ?? input.RepurchasePacketSnapshotPlan?.Packet,
+					repurchasePacketSnapshotPlan: input.RepurchasePacketSnapshotPlan
 				),
 			]
 		);
@@ -359,7 +362,8 @@ public static class NpcDialogServiceSelectPlanService
 		int? priceModifier = null,
 		SmTradeListPacketPlan? tradeListPacketPlan = null,
 		SmTradeInListPacketPlan? tradeInListPacketPlan = null,
-		SmRepurchase? repurchasePacket = null
+		SmRepurchase? repurchasePacket = null,
+		RepurchasePacketSnapshotPlan? repurchasePacketSnapshotPlan = null
 	)
 	{
 		return new NpcDialogServiceDescriptor(
@@ -373,7 +377,8 @@ public static class NpcDialogServiceSelectPlanService
 			priceModifier,
 			tradeListPacketPlan,
 			tradeInListPacketPlan,
-			repurchasePacket
+			repurchasePacket,
+			repurchasePacketSnapshotPlan
 		);
 	}
 }
