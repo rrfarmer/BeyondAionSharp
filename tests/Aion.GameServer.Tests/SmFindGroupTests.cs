@@ -67,6 +67,31 @@ public sealed class SmFindGroupTests
 		Assert.Equal(Convert.FromHexString("160403020144332211"), payload);
 	}
 
+	[Fact]
+	public void WritePayload_RegisterInstanceGroupMatchesJavaGolden()
+	{
+		var payload = SerializeUnencryptedPayload(
+			SmFindGroup.RegisterInstanceGroup(
+			[
+				new FindGroupInstanceGroupRegistrationSnapshot(
+					GroupEntryId: 0x01020304,
+					InstanceMaskId: 0x11223344,
+					MemberCount: 1,
+					MinMembers: 3,
+					RecruiterObjectId: 0x01020304,
+					MinLevel: 65,
+					MaxLevel: 65,
+					LastUpdate: 0x01020305,
+					RecruiterName: "Recruiter",
+					Message: "Entry")
+			]));
+
+		Assert.Equal(
+			Convert.FromHexString(
+				"0E0104030201443322110100000001030000040302010100010000000000414100000503020100000000520065006300720075006900740065007200000045006E007400720079000000"),
+			payload);
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);

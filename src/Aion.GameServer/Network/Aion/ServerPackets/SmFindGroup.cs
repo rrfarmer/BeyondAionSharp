@@ -15,6 +15,7 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly IReadOnlyList<int> _instanceMaskIds;
 	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
 	private readonly FindGroupInstanceApplicantSnapshot? _instanceApplicant;
+	private readonly IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> _instanceGroups;
 
 	private SmFindGroup(
 		int action,
@@ -25,7 +26,8 @@ public sealed class SmFindGroup : GameServerPacket
 		byte unknown3 = 0,
 		IReadOnlyList<int>? instanceMaskIds = null,
 		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null,
-		FindGroupInstanceApplicantSnapshot? instanceApplicant = null)
+		FindGroupInstanceApplicantSnapshot? instanceApplicant = null,
+		IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>? instanceGroups = null)
 		: base(PacketOpCode)
 	{
 		_action = action;
@@ -37,6 +39,7 @@ public sealed class SmFindGroup : GameServerPacket
 		_instanceMaskIds = instanceMaskIds ?? [];
 		_instanceGroupWindow = instanceGroupWindow;
 		_instanceApplicant = instanceApplicant;
+		_instanceGroups = instanceGroups ?? [];
 	}
 
 	public static SmFindGroup RemoveRecruitment(int recruitmentIdToDelete, byte serverId, byte unknown1, byte unknown2, byte unknown3)
@@ -73,6 +76,12 @@ public sealed class SmFindGroup : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_FIND_GROUP(Player instanceApplicant), action 11.
 		return new SmFindGroup(11, instanceApplicant: instanceApplicant);
+	}
+
+	public static SmFindGroup RegisterInstanceGroup(IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> instanceGroups)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 14 registerInstanceGroup.
+		return new SmFindGroup(14, instanceGroups: instanceGroups);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
@@ -112,6 +121,30 @@ public sealed class SmFindGroup : GameServerPacket
 				buffer.WriteD(applicant.Level);
 				buffer.WriteS(applicant.Name);
 				break;
+			case 14:
+				buffer.WriteC(1);
+				foreach (var group in _instanceGroups)
+				{
+					buffer.WriteD(group.GroupEntryId);
+					buffer.WriteD(group.InstanceMaskId);
+					buffer.WriteD(1);
+					buffer.WriteC(group.MemberCount);
+					buffer.WriteC(group.MinMembers);
+					buffer.WriteH(0);
+					buffer.WriteD(group.RecruiterObjectId);
+					buffer.WriteC(1);
+					buffer.WriteC(0);
+					buffer.WriteD(1);
+					buffer.WriteH(0);
+					buffer.WriteC(group.MinLevel);
+					buffer.WriteC(group.MaxLevel);
+					buffer.WriteH(0);
+					buffer.WriteD(group.LastUpdate);
+					buffer.WriteD(0);
+					buffer.WriteS(group.RecruiterName);
+					buffer.WriteS(group.Message);
+				}
+				break;
 		}
 	}
 }
@@ -119,3 +152,15 @@ public sealed class SmFindGroup : GameServerPacket
 public sealed record FindGroupInstanceGroupWindowSnapshot(int GroupEntryId, int InstanceMaskId);
 
 public sealed record FindGroupInstanceApplicantSnapshot(int PlayerObjectId, byte ClassId, int Level, string Name);
+
+public sealed record FindGroupInstanceGroupRegistrationSnapshot(
+	int GroupEntryId,
+	int InstanceMaskId,
+	int MemberCount,
+	int MinMembers,
+	int RecruiterObjectId,
+	int MinLevel,
+	int MaxLevel,
+	int LastUpdate,
+	string RecruiterName,
+	string Message);
