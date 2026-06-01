@@ -165,6 +165,7 @@ public static class GameClientPacketFactory
 		Register(237, states => new CmMegaphone(237, states), GameConnectionState.InGame);
 		Register(238, states => new CmTuneResult(238, states), GameConnectionState.InGame);
 		Register(239, states => new CmFriendSetMemo(239, states), GameConnectionState.InGame);
+		Register(240, states => new CmUnwrapItem(240, states), GameConnectionState.InGame);
 		Register(244, states => new CmBindPointTeleport(244, states), GameConnectionState.InGame);
 		Register(247, states => new CmItemPurification(247, states), GameConnectionState.InGame);
 		Register(248, states => new CmAtreianPassport(248, states), GameConnectionState.InGame);

@@ -7083,6 +7083,23 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesUnwrapItemPacket()
+	{
+		var unwrapItem = Assert.IsType<CmUnwrapItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(240, buffer =>
+			{
+				buffer.WriteD(188920001);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(188920001, unwrapItem.ObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(240, buffer =>
+		{
+			buffer.WriteD(1);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
