@@ -5917,6 +5917,34 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesDialogSelectUnsignedShortFields()
+	{
+		var dialogSelect = Assert.IsType<CmDialogSelect>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					54,
+					b =>
+					{
+						b.WriteD(7001);
+						b.WriteH(0x8002);
+						b.WriteH(0xFFFF);
+						b.WriteH(0x8004);
+						b.WriteD(11056);
+						b.WriteH(0x8009);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+
+		Assert.Equal(7001, dialogSelect.TargetObjectId);
+		Assert.Equal(0x8002, dialogSelect.DialogActionId);
+		Assert.Equal(0xFFFF, dialogSelect.ExtendedRewardIndex);
+		Assert.Equal(0x8004, dialogSelect.LastPage);
+		Assert.Equal(11056, dialogSelect.QuestId);
+	}
+
+	[Fact]
 	public void ItemChargeService_CreatesChargeAllPlansForMatchingEquippedItems()
 	{
 		var templates = new ItemTemplateTable(
