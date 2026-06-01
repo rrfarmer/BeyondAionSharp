@@ -5379,6 +5379,33 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesGameguardPacket()
+	{
+		var inGame = Assert.IsType<CmGameguard>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					104,
+					buffer =>
+					{
+						buffer.WriteD(3);
+						buffer.WriteB([0xA5, 0x5A, 0xFF]);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+		var authed = Assert.IsType<CmGameguard>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(104, buffer => buffer.WriteD(0)), GameConnectionState.Authed)
+		);
+
+		Assert.Equal(3, inGame.Size);
+		Assert.Equal([0xA5, 0x5A, 0xFF], inGame.Data);
+		Assert.Equal(0, authed.Size);
+		Assert.Empty(authed.Data);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(104, buffer => buffer.WriteD(0)), GameConnectionState.Connected));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesPublicChatPacket()
 	{
 		var chatMessage = Assert.IsType<CmChatMessagePublic>(
