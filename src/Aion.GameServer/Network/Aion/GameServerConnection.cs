@@ -87,6 +87,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmBuyItemSideEffectOutcomePlan>? _cmBuyItemSideEffectOutcomePlanObserver;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
 	private readonly TradeListTable? _buyItemTradeLists;
+	private readonly ItemTemplateTable? _buyItemItemTemplates;
+	private readonly GoodsListTable? _buyItemGoodsLists;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -160,7 +162,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null,
 		Action<CmBuyItemSideEffectOutcomePlan>? cmBuyItemSideEffectOutcomePlanObserver = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
-		TradeListTable? buyItemTradeLists = null)
+		TradeListTable? buyItemTradeLists = null,
+		ItemTemplateTable? buyItemItemTemplates = null,
+		GoodsListTable? buyItemGoodsLists = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -208,6 +212,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmBuyItemSideEffectOutcomePlanObserver = cmBuyItemSideEffectOutcomePlanObserver;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
 		_buyItemTradeLists = buyItemTradeLists;
+		_buyItemItemTemplates = buyItemItemTemplates;
+		_buyItemGoodsLists = buyItemGoodsLists;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -3965,12 +3971,14 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
 		var sellActionFacts = ResolveBuyItemSellActionFacts(player, packet, targetKind);
+		var sellForApToShopPlan = ResolveBuyItemSellForApToShopPlan(player, packet, sellActionFacts);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
 				PlayerPresent: player != null,
 				TargetKind: targetKind,
-				PurchaseTemplate: sellActionFacts?.PurchaseTemplate));
+				PurchaseTemplate: sellActionFacts?.PurchaseTemplate,
+				SellForApToShopPlan: sellForApToShopPlan));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
 		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
 	}
@@ -4001,6 +4009,38 @@ public sealed class GameServerConnection : BaseClientConnection
 				NpcCanBuy: true,
 				NpcCanPurchase: false),
 			tradeLists);
+	}
+
+	private TradeSellForApToShopPlan? ResolveBuyItemSellForApToShopPlan(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemSellActionFactAdapterPlan? sellActionFacts)
+	{
+		if (player == null
+			|| sellActionFacts?.DispatchesAbyssApSell != true
+			|| sellActionFacts.PurchaseTemplate == null)
+			return null;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		var goodsLists = _buyItemGoodsLists ?? staticData?.GoodsLists;
+		if (itemTemplates == null || goodsLists == null)
+			return null;
+
+		// Java parity: TradeService.performSellForAPToShop consumes inventory by
+		// object id and only awards AP when decreaseByObjectId succeeds. This
+		// diagnostic plan models that success/failure without mutating inventory.
+		return TradeSellForApToShopPlanService.CreatePlan(
+			_options.Custom.SellingApItemsEnabled,
+			CanTrade(player),
+			player.InventoryItems,
+			packet.Items.Select(item => new TradeSellForApToShopItemRequest(
+				item.ItemObjectId,
+				item.Count,
+				InventoryDecreaseSucceeds: player.InventoryItems.FirstOrDefault(inventoryItem => inventoryItem.ObjectId == item.ItemObjectId)?.Count >= item.Count)).ToArray(),
+			itemTemplates,
+			sellActionFacts.PurchaseTemplate,
+			goodsLists);
 	}
 
 	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(Player? player, int sellerObjectId)

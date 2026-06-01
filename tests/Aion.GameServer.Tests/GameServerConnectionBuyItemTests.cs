@@ -165,6 +165,107 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcAbyssSellActionHydratesDisabledApSellPlanFromInventoryFacts()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateTradeLists(
+				new TradeListTemplateSummary(700001, [129], NpcType: "ABYSS", BuyPriceRate: 35)),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, requiredAbyssPoints: 1_000)),
+			buyItemGoodsLists: CreateGoodsLists(
+				new GoodsListSummary(129, Items: [new GoodsListItemSummary(100000001)])));
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 2,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.SellToShopPlan!.Dispatch);
+		var apPlan = Assert.IsType<TradeSellForApToShopPlan>(dispatch.SellForApToShopPlan);
+		Assert.Equal(TradeSellForApToShopPlanStatus.PlanCreated, apPlan.Status);
+		Assert.Equal([2001], apPlan.DeletedItemObjectIds);
+		var reward = Assert.Single(apPlan.AbyssPointRewards);
+		Assert.Equal(700, reward.ApReward);
+		Assert.Equal(700, apPlan.TotalAbyssPoints);
+		Assert.False(apPlan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellForApToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellForApToShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.SellForApToShopOutcomePlan.WouldMutateAbyssPoints);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcAbyssSellActionBlocksDisabledApPlanWhenGoodsListRejectsItem()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateTradeLists(
+				new TradeListTemplateSummary(700001, [129], NpcType: "ABYSS", BuyPriceRate: 35)),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, requiredAbyssPoints: 1_000)),
+			buyItemGoodsLists: CreateGoodsLists(
+				new GoodsListSummary(129, Items: [new GoodsListItemSummary(100000002)])));
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 1,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.SellToShopPlan!.Dispatch);
+		var apPlan = Assert.IsType<TradeSellForApToShopPlan>(dispatch.SellForApToShopPlan);
+		Assert.Equal(TradeSellForApToShopPlanStatus.BlockedInvalidPurchaseItem, apPlan.Status);
+		Assert.Equal(2001, apPlan.RejectedItemObjectId);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellForApToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.SellForApToShopPlanNotReady, outcome.SellForApToShopOutcomePlan!.Status);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionClassifiesNormalPurchaseTemplateForDisabledSellOutcome()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
@@ -316,6 +417,37 @@ public sealed class GameServerConnectionBuyItemTests
 			purchaseLists);
 	}
 
+	private static GoodsListTable CreateGoodsLists(params GoodsListSummary[] purchaseLists)
+	{
+		return new GoodsListTable(
+			Array.Empty<GoodsListSummary>(),
+			Array.Empty<GoodsListSummary>(),
+			purchaseLists);
+	}
+
+	private static ItemTemplateTable CreateItemTemplates(params ItemTemplateSummary[] templates)
+	{
+		return new ItemTemplateTable(templates);
+	}
+
+	private static ItemTemplateSummary Template(int itemId, long price, int requiredAbyssPoints = 0)
+	{
+		return new ItemTemplateSummary(
+			itemId,
+			$"Item {itemId}",
+			DescriptionId: 1,
+			Mask: 0,
+			Level: 1,
+			ItemGroup: "NORMAL",
+			ItemType: "NORMAL",
+			Quality: "COMMON",
+			Race: "PC_ALL",
+			MaxStackCount: 1,
+			Price: price,
+			ValidEquipmentSlots: 0,
+			RequiredAbyssPoints: requiredAbyssPoints);
+	}
+
 	internal static Task InvokeProcessPacketAsyncForAdapterTests(GameServerConnection connection, byte[] payload) =>
 		InvokeProcessPacketAsync(connection, payload);
 
@@ -411,7 +543,9 @@ public sealed class GameServerConnectionBuyItemTests
 
 		public static async Task<BuyItemFixture> CreateAsync(
 			Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
-			TradeListTable? buyItemTradeLists = null)
+			TradeListTable? buyItemTradeLists = null,
+			ItemTemplateTable? buyItemItemTemplates = null,
+			GoodsListTable? buyItemGoodsLists = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -443,7 +577,9 @@ public sealed class GameServerConnectionBuyItemTests
 						cmBuyItemHandlerCompositionPlanObserver: buyItemPlans.Add,
 						cmBuyItemSideEffectOutcomePlanObserver: buyItemSideEffectOutcomePlans.Add,
 						buyItemKnownObjectResolver: buyItemKnownObjectResolver,
-						buyItemTradeLists: buyItemTradeLists),
+						buyItemTradeLists: buyItemTradeLists,
+						buyItemItemTemplates: buyItemItemTemplates,
+						buyItemGoodsLists: buyItemGoodsLists),
 					world,
 					buyItemPlans,
 					buyItemSideEffectOutcomePlans,
