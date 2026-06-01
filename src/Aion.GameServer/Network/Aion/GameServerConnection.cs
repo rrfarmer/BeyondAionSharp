@@ -427,6 +427,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmGameguard:
 				// Java parity: network/aion/clientpackets/CM_GAMEGUARD.runImpl delegates to AntiHackService.checkAionBin; deferred.
 				break;
+			case CmGroupDistribution:
+				// Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION.runImpl validates trade state and splits Kinah across group/alliance/league; deferred.
+				break;
 			case CmTimeCheck timeCheck:
 				// Java parity: network/aion/clientpackets/CM_TIME_CHECK.runImpl sends SM_AFTER_TIME_CHECK_4_7_5 before SM_TIME_CHECK.
 				await SendPacketAsync(new SmAfterTimeCheck475());

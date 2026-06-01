@@ -6924,6 +6924,28 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesGroupDistributionPacket()
+	{
+		var distribution = Assert.IsType<CmGroupDistribution>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					108,
+					buffer =>
+					{
+						buffer.WriteQ(9876543210L);
+						buffer.WriteC(3);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+
+		Assert.Equal(9876543210L, distribution.Amount);
+		Assert.Equal(3, distribution.PartyType);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(108, b => b.WriteQ(2L)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesTitlePackets()
 	{
 		var titleSet = Assert.IsType<CmTitleSet>(
