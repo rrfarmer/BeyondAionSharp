@@ -33,6 +33,23 @@ public sealed record TradeSellToShopPlan(
 	public bool IsLive => false;
 }
 
+public enum RepurchaseDiagnosticSnapshotPlanStatus
+{
+	MissingSellToShopPlan,
+	SellToShopPlanNotReady,
+	SnapshotCreated,
+}
+
+public sealed record RepurchaseDiagnosticSnapshotPlan(
+	RepurchaseDiagnosticSnapshotPlanStatus Status,
+	TradeSellToShopPlan? SellToShopPlan,
+	IReadOnlyList<RepurchaseSourceItem> RepurchaseItems,
+	bool WouldReplacePlayerSnapshot,
+	bool DidReplacePlayerSnapshot,
+	bool ShouldDispatchLiveSideEffects,
+	string JavaSource,
+	bool IsLive);
+
 public enum TradeSellToShopOutcomePlanStatus
 {
 	MissingSellToShopPlan,
@@ -394,6 +411,56 @@ public static class PetAutoSellPlanService
 
 	private static PetAutoSellStepPlan Disabled(PetAutoSellStepKind kind, string javaSource) =>
 		new(kind, WouldRun: true, DidRun: false, javaSource);
+}
+
+public static class RepurchaseDiagnosticSnapshotPlanService
+{
+	public static RepurchaseDiagnosticSnapshotPlan CreateDisabledPlan(TradeSellToShopPlan? sellToShopPlan)
+	{
+		// Java parity: TradeService.performSellToShop always calls
+		// RepurchaseService.addRepurchaseItems(player, items) after the sell loop
+		// reaches its success path, even when the collected list is empty.
+		if (sellToShopPlan == null)
+			return Terminal(
+				RepurchaseDiagnosticSnapshotPlanStatus.MissingSellToShopPlan,
+				null,
+				Array.Empty<RepurchaseSourceItem>(),
+				"RepurchaseService.addRepurchaseItems requires a successful TradeService.performSellToShop plan");
+
+		if (sellToShopPlan.Status != TradeSellToShopPlanStatus.PlanCreated)
+			return Terminal(
+				RepurchaseDiagnosticSnapshotPlanStatus.SellToShopPlanNotReady,
+				sellToShopPlan,
+				Array.Empty<RepurchaseSourceItem>(),
+				"TradeService.performSellToShop did not reach RepurchaseService.addRepurchaseItems");
+
+		return new RepurchaseDiagnosticSnapshotPlan(
+			RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated,
+			sellToShopPlan,
+			sellToShopPlan.RepurchaseItems.ToArray(),
+			WouldReplacePlayerSnapshot: true,
+			DidReplacePlayerSnapshot: false,
+			ShouldDispatchLiveSideEffects: false,
+			"TradeService.performSellToShop -> RepurchaseService.addRepurchaseItems(player, items) diagnostic snapshot only",
+			IsLive: false);
+	}
+
+	private static RepurchaseDiagnosticSnapshotPlan Terminal(
+		RepurchaseDiagnosticSnapshotPlanStatus status,
+		TradeSellToShopPlan? sellToShopPlan,
+		IReadOnlyList<RepurchaseSourceItem> repurchaseItems,
+		string javaSource)
+	{
+		return new RepurchaseDiagnosticSnapshotPlan(
+			status,
+			sellToShopPlan,
+			repurchaseItems,
+			WouldReplacePlayerSnapshot: false,
+			DidReplacePlayerSnapshot: false,
+			ShouldDispatchLiveSideEffects: false,
+			javaSource,
+			IsLive: false);
+	}
 }
 
 public static class TradeSellToShopPlanService

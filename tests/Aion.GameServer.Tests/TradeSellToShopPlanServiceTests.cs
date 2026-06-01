@@ -194,6 +194,70 @@ public sealed class TradeSellToShopPlanServiceTests
 	}
 
 	[Fact]
+	public void CreateRepurchaseDiagnosticSnapshot_CarriesSuccessfulSellRepurchaseItemsWithoutLiveState()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var sellPlan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 1_000, ownerId: player.ObjectId), sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1)]);
+
+		var snapshot = RepurchaseDiagnosticSnapshotPlanService.CreateDisabledPlan(sellPlan);
+
+		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated, snapshot.Status);
+		Assert.Same(sellPlan, snapshot.SellToShopPlan);
+		Assert.Equal(sellPlan.RepurchaseItems, snapshot.RepurchaseItems);
+		Assert.True(snapshot.WouldReplacePlayerSnapshot);
+		Assert.False(snapshot.DidReplacePlayerSnapshot);
+		Assert.False(snapshot.ShouldDispatchLiveSideEffects);
+		Assert.False(snapshot.IsLive);
+		Assert.Contains("RepurchaseService.addRepurchaseItems", snapshot.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void CreateRepurchaseDiagnosticSnapshot_StillCreatesEmptySnapshotForSuccessfulEmptySellList()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var sellPlan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 1_000, ownerId: player.ObjectId), sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1, SellLimitAdjustedCount: 0)]);
+
+		var snapshot = RepurchaseDiagnosticSnapshotPlanService.CreateDisabledPlan(sellPlan);
+
+		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SnapshotCreated, snapshot.Status);
+		Assert.Empty(snapshot.RepurchaseItems);
+		Assert.True(snapshot.WouldReplacePlayerSnapshot);
+		Assert.False(snapshot.DidReplacePlayerSnapshot);
+	}
+
+	[Fact]
+	public void CreateRepurchaseDiagnosticSnapshot_BlockedSellPlanDoesNotReplaceSnapshot()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var sword = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+		var sellPlan = TradeSellToShopPlanService.CreatePlan(
+			canTrade: false,
+			player,
+			inventoryItems: [sword],
+			tradeItems: [new TradeSellToShopItemRequest(sword.ObjectId, Count: 1)],
+			CreateTemplates(),
+			purchaseTemplate: null,
+			goodsLists: null,
+			sellModifier: 20,
+			nextObjectId: () => 100);
+
+		var snapshot = RepurchaseDiagnosticSnapshotPlanService.CreateDisabledPlan(sellPlan);
+
+		Assert.Equal(RepurchaseDiagnosticSnapshotPlanStatus.SellToShopPlanNotReady, snapshot.Status);
+		Assert.Empty(snapshot.RepurchaseItems);
+		Assert.False(snapshot.WouldReplacePlayerSnapshot);
+		Assert.False(snapshot.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreateDisabledOutcome_NotSellableCarriesOnlyJavaSystemPacket()
 	{
 		var player = new Player { ObjectId = 1001 };
