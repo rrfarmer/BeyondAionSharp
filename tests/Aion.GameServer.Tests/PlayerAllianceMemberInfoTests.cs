@@ -1226,40 +1226,36 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
-	public void SmAllianceMemberInfo_WritesNonEmptyEffectEntriesLikeJava()
+	public void SmAllianceMemberInfo_NonEmptyEffectsMatchJavaGoldenPayloads()
 	{
 		var member = new Player
 		{
-			ObjectId = 1001,
-			Name = "Effected",
+			ObjectId = 2016,
+			Name = "AllianceEffected",
 			IsOnline = true,
-			PlayerClass = "CHANTER",
-			Level = 50,
-			Position = new WorldPosition(220010000, 11, 22, 33, 64),
+			PlayerClass = "GLADIATOR",
+			Gender = "FEMALE",
+			Level = 10,
+			LifeStats = new PlayerLifeStats(CurrentHp: 819, CurrentMp: 840, CurrentFp: 60),
+			Position = new WorldPosition(220010000, 10.5f, 20.25f, 30.75f, 64),
 		};
-		var fullSlotEffect = new PlayerGroupMemberEffectInfo(
-			EffectorObjectId: 7001,
-			SkillId: 1234,
+		var effect = new PlayerGroupMemberEffectInfo(
+			EffectorObjectId: 7016,
+			SkillId: 12345,
 			SkillLevel: 3,
-			TargetSlotOrdinal: 2,
-			RemainingTimeToDisplayMillis: 45000);
-		var targetedEffect = new PlayerGroupMemberEffectInfo(
-			EffectorObjectId: 7002,
-			SkillId: 5678,
-			SkillLevel: 1,
-			TargetSlotOrdinal: 4,
-			RemainingTimeToDisplayMillis: 90000);
-		var enterPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.Enter) with
+			TargetSlotOrdinal: 0,
+			RemainingTimeToDisplayMillis: -1);
+		var enterPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88011, member, PlayerAllianceEvent.Enter) with
 		{
-			AbnormalEffects = [fullSlotEffect],
+			AbnormalEffects = [effect],
 		};
-		var updateEffectsPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88001, member, PlayerAllianceEvent.UpdateEffects, slot: 4) with
+		var updateEffectsPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(88011, member, PlayerAllianceEvent.UpdateEffects, slot: 1) with
 		{
-			AbnormalEffects = [targetedEffect],
+			AbnormalEffects = [effect],
 		};
 
-		AssertAllianceEffectPayload(enterPlan, expectedName: "Effected", expectedSlot: 127, fullSlotEffect);
-		AssertAllianceEffectPayload(updateEffectsPlan, expectedName: null, expectedSlot: 4, targetedEffect);
+		AssertAllianceEffectPayload(enterPlan, expectedName: "AllianceEffected", expectedSlot: 127, effect);
+		AssertAllianceEffectPayload(updateEffectsPlan, expectedName: null, expectedSlot: 1, effect);
 	}
 
 	private static void AssertMovementIntent(
@@ -1297,9 +1293,9 @@ public sealed class PlayerAllianceMemberInfoTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(new SmAllianceMemberInfo(plan)));
 		SkipAllianceMemberInfoPrefix(
 			reader,
-			expectedClassId: 11,
-			expectedGenderId: 0,
-			expectedLevel: 50,
+			expectedClassId: 1,
+			expectedGenderId: 1,
+			expectedLevel: 10,
 			expectedEventId: (int)plan.EffectiveEvent);
 		if (expectedName != null)
 			Assert.Equal(expectedName, reader.ReadS());
