@@ -57,6 +57,41 @@ public sealed class RepurchasePacketSnapshotPlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_PreservesSuppliedRepurchaseItemOrder()
+	{
+		var first = new InventoryItem
+		{
+			ObjectId = 7002,
+			ItemId = SimpleItemId,
+			Count = 1,
+			OwnerId = 1001,
+			Location = 0,
+			Slot = 65535,
+		};
+		var second = new InventoryItem
+		{
+			ObjectId = 7001,
+			ItemId = SimpleItemId,
+			Count = 1,
+			OwnerId = 1001,
+			Location = 0,
+			Slot = 65535,
+		};
+
+		var plan = RepurchasePacketSnapshotPlanService.CreateDisabledPlan(
+			targetObjectId: 9001,
+			repurchaseItems:
+			[
+				new RepurchaseSourceItem(first, RepurchasePrice: 12_345),
+				new RepurchaseSourceItem(second, RepurchasePrice: 12_345),
+			],
+			itemTemplates: new ItemTemplateTable([Template(SimpleItemId)]));
+
+		Assert.Equal([7002, 7001], ReadRepurchaseItemObjectIds(SerializeUnencryptedPayload(plan.Packet!)));
+		Assert.Contains("supplied collection order is preserved", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_BlocksWhenRepurchaseItemTemplateIsMissing()
 	{
 		var item = new InventoryItem
@@ -88,6 +123,27 @@ public sealed class RepurchasePacketSnapshotPlanServiceTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static int[] ReadRepurchaseItemObjectIds(byte[] payload)
+	{
+		using var reader = new PacketBuffer(payload);
+		reader.ReadD();
+		reader.ReadD();
+		var itemCount = reader.ReadH();
+		var objectIds = new int[itemCount];
+		for (var i = 0; i < itemCount; i++)
+		{
+			objectIds[i] = reader.ReadD();
+			reader.ReadD();
+			reader.ReadS();
+			var blobLength = reader.ReadH();
+			reader.ReadB(blobLength);
+			reader.ReadQ();
+		}
+
+		Assert.Equal(0, reader.Remaining);
+		return objectIds;
 	}
 
 	private static ItemTemplateSummary Template(int itemId)
