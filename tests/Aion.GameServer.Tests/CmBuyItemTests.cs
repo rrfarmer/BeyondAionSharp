@@ -114,7 +114,7 @@ public sealed class CmBuyItemTests
 	}
 
 	[Fact]
-	public void ReadFrom_PrivateStoreActionAllowsNonPositiveItemIndex()
+	public void ReadFrom_PrivateStoreActionAllowsNonPositiveItemIndexAndJavaMaxCount()
 	{
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
@@ -122,12 +122,12 @@ public sealed class CmBuyItemTests
 		buffer.WriteH(0);
 		buffer.WriteH(1);
 		buffer.WriteD(0);
-		buffer.WriteQ(1);
+		buffer.WriteQ(CmBuyItem.MaxItemCount);
 
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 
 		Assert.False(packet.IsAudit);
-		Assert.Equal([new CmBuyItemEntry(0, 1)], packet.Items);
+		Assert.Equal([new CmBuyItemEntry(0, CmBuyItem.MaxItemCount)], packet.Items);
 	}
 
 	[Fact]
