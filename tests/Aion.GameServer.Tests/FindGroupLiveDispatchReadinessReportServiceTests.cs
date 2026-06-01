@@ -24,6 +24,8 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 			});
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("GameServerConnection still defers CmFindGroup", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("real-client runtime comparison", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("onLogout cleanup", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("onJoinedTeam plans", StringComparison.Ordinal));
 	}
 
 	[Theory]
@@ -50,5 +52,17 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(FindGroupClientActionRuntimeRequirement.WorldPlayerLookup, actionTwelve.Requirements);
 		Assert.Contains(FindGroupClientActionRuntimeRequirement.GroupAllianceInviteDispatch, actionTwelve.Requirements);
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("PlayerGroupService.inviteToGroup", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void CreateReport_RecordsLifecycleObserverEvidenceWithoutMarkingLiveDispatchReady()
+	{
+		var report = FindGroupLiveDispatchReadinessReportService.CreateReport();
+
+		Assert.False(report.IsReadyForLiveDispatch);
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("LeaveWorldAsync", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("PlayerGroupInviteRequestService", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("current-team size reaches minMembers", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("not wired as a live singleton", StringComparison.Ordinal));
 	}
 }

@@ -43,8 +43,13 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"Direct PacketSendUtility.sendPacket intents are planned but not executed from the CM_FIND_GROUP boundary.",
 				"PacketSendUtility.broadcastToWorld race-filter fanout is planned but not executed from the CM_FIND_GROUP boundary.",
 				"PlayerGroupService.inviteToGroup and PlayerAllianceService.inviteToAlliance side effects for action 12 are planned but not executed.",
-				"FindGroupService.onJoinedTeam and onLogout lifecycle hooks are represented by disabled planners but not wired into all live team/logout callers.",
+				"FindGroupService lifecycle hooks now have observer-only evidence for logout and invite joined-team paths, but they are not wired as a live singleton across all team/logout callers.",
 				"No encrypted socket or real-client runtime comparison has verified live packet order, visibility filtering, or service concurrency.",
+			],
+			[
+				"PlayerEnterWorldService.LeaveWorldAsync can record disabled FindGroupService.onLogout cleanup before pending question denial.",
+				"PlayerGroupInviteRequestService and PlayerAllianceInviteRequestService can expose disabled FindGroupService.onJoinedTeam plans after accepted invite membership mutation.",
+				"FindGroupRecruitmentPlanService.OnJoinedTeam removes stored instance-group registration when current-team size reaches minMembers.",
 			],
 			"Java sources reviewed: CM_FIND_GROUP.runImpl and services/findgroup/FindGroupService.");
 	}
@@ -73,6 +78,7 @@ public sealed record FindGroupLiveDispatchReadinessReport(
 	IReadOnlyList<int> ParsedButNoRunImplActions,
 	IReadOnlyList<FindGroupLiveDispatchActionReadiness> Actions,
 	IReadOnlyList<string> GlobalBlockers,
+	IReadOnlyList<string> ObserverEvidence,
 	string JavaSource)
 {
 	public bool IsReadyForLiveDispatch => Status == FindGroupLiveDispatchReadinessStatus.Ready;
