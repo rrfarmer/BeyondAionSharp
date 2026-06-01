@@ -42,7 +42,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"GameServerConnection still defers CmFindGroup instead of invoking FindGroupService-equivalent live side effects.",
 				"Direct PacketSendUtility.sendPacket intents are planned but not executed from the CM_FIND_GROUP boundary.",
 				"PacketSendUtility.broadcastToWorld race-filter fanout is planned but not executed from the CM_FIND_GROUP boundary.",
-				"PlayerGroupService.inviteToGroup and PlayerAllianceService.inviteToAlliance side effects for action 12 are planned but not executed.",
+				"Action 12 group/alliance invite request dispatch has connection-adjacent disabled executor evidence but is not invoked from the CM_FIND_GROUP boundary.",
 				"FindGroupService lifecycle hooks now have observer-only evidence for logout and invite joined-team paths, but they are not wired as a live singleton across all team/logout callers.",
 				"No encrypted socket or real-client runtime comparison has verified live packet order, visibility filtering, or service concurrency.",
 			],
@@ -50,6 +50,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"PlayerEnterWorldService.LeaveWorldAsync can record disabled FindGroupService.onLogout cleanup before pending question denial.",
 				"PlayerGroupInviteRequestService and PlayerAllianceInviteRequestService can expose disabled FindGroupService.onJoinedTeam plans after accepted invite membership mutation.",
 				"FindGroupRecruitmentPlanService.OnJoinedTeam removes stored instance-group registration when current-team size reaches minMembers.",
+				"FindGroupInstanceApplicationInviteDispatchPlanService can compose action 12 group/alliance invite request-service results without sending packets.",
 			],
 			"Java sources reviewed: CM_FIND_GROUP.runImpl and services/findgroup/FindGroupService.");
 	}

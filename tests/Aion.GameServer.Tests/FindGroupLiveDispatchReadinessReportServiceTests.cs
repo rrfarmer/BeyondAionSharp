@@ -51,7 +51,8 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.True(actionTwelve.HasJavaRunImplBranch);
 		Assert.Contains(FindGroupClientActionRuntimeRequirement.WorldPlayerLookup, actionTwelve.Requirements);
 		Assert.Contains(FindGroupClientActionRuntimeRequirement.GroupAllianceInviteDispatch, actionTwelve.Requirements);
-		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("PlayerGroupService.inviteToGroup", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("Action 12 group/alliance invite request dispatch", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupInstanceApplicationInviteDispatchPlanService", StringComparison.Ordinal));
 	}
 
 	[Fact]
