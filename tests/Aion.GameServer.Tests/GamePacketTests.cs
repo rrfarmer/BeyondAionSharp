@@ -6924,6 +6924,17 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesDeleteItemPacket()
+	{
+		var deleteItem = Assert.IsType<CmDeleteItem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(116, buffer => buffer.WriteD(9001)), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(9001, deleteItem.ItemObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(116, buffer => buffer.WriteD(9001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(
