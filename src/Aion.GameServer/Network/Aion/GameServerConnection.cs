@@ -89,6 +89,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
 	private readonly GoodsListTable? _buyItemGoodsLists;
+	private readonly long? _buyItemCurrentSellLimit;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -164,7 +165,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
-		GoodsListTable? buyItemGoodsLists = null)
+		GoodsListTable? buyItemGoodsLists = null,
+		long? buyItemCurrentSellLimit = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -214,6 +216,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
 		_buyItemGoodsLists = buyItemGoodsLists;
+		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -3971,6 +3974,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
 		var sellActionFacts = ResolveBuyItemSellActionFacts(player, packet, targetKind);
+		var sellToShopPlan = ResolveBuyItemSellToShopPlan(player, packet, targetKind, sellActionFacts);
 		var sellForApToShopPlan = ResolveBuyItemSellForApToShopPlan(player, packet, sellActionFacts);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
@@ -3978,6 +3982,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				PlayerPresent: player != null,
 				TargetKind: targetKind,
 				PurchaseTemplate: sellActionFacts?.PurchaseTemplate,
+				SellToShopPlan: sellToShopPlan,
 				SellForApToShopPlan: sellForApToShopPlan));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
 		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
@@ -4011,6 +4016,73 @@ public sealed class GameServerConnection : BaseClientConnection
 			tradeLists);
 	}
 
+	private TradeSellToShopPlan? ResolveBuyItemSellToShopPlan(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		CmBuyItemSellActionFactAdapterPlan? sellActionFacts)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| sellActionFacts?.DispatchesAbyssApSell == true
+			|| packet.TradeActionId != CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId)
+			return null;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		var goodsLists = _buyItemGoodsLists ?? staticData?.GoodsLists;
+		if (itemTemplates == null)
+			return null;
+
+		// Java parity: TradeService.performSellToShop reads the item object id,
+		// item sellable mask, and PlayerLimitService.updateSellLimit before it
+		// mutates inventory. This diagnostic keeps those facts non-live.
+		var sellModifier = PricesService.GetVendorSellModifier(_options.Prices);
+		var sellLimitLookup = SellLimitLookupService.CreatePlan(player.Level);
+		var remainingSellLimit = _buyItemCurrentSellLimit ?? sellLimitLookup.BaseLimit ?? 0;
+		var tradeItems = new List<TradeSellToShopItemRequest>();
+		foreach (var packetItem in packet.Items)
+		{
+			var inventoryItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packetItem.ItemObjectId);
+			var template = inventoryItem == null ? null : itemTemplates.GetItemTemplate(inventoryItem.ItemId);
+			var isSellable = sellActionFacts?.PurchaseTemplate != null
+				|| template == null
+				|| IsItemTemplateSellable(template);
+			long? sellLimitAdjustedCount = null;
+			if (template != null)
+			{
+				var sellReward = sellActionFacts?.PurchaseTemplate == null
+					? PricesService.GetSellReward(template.Price, sellModifier)
+					: (long)(template.Price * sellActionFacts.PurchaseTemplate.BuyPriceRate / 100D);
+				var sellLimitPlan = PlayerSellLimitPlanService.CreatePlan(
+					_options.Custom.LimitsEnabled,
+					_options.Custom.LimitsEnableDynamicCap,
+					sellReward,
+					packetItem.Count,
+					remainingSellLimit);
+				sellLimitAdjustedCount = sellLimitPlan.UseCount;
+				remainingSellLimit = sellLimitPlan.RemainingLimitAfter;
+			}
+
+			tradeItems.Add(new TradeSellToShopItemRequest(
+				packetItem.ItemObjectId,
+				packetItem.Count,
+				isSellable,
+				sellLimitAdjustedCount));
+		}
+
+		return TradeSellToShopPlanService.CreatePlan(
+			CanTrade(player),
+			player,
+			player.InventoryItems,
+			tradeItems,
+			itemTemplates,
+			sellActionFacts?.PurchaseTemplate,
+			goodsLists,
+			sellModifier,
+			() => 0);
+	}
+
 	private TradeSellForApToShopPlan? ResolveBuyItemSellForApToShopPlan(
 		Player? player,
 		CmBuyItem packet,
@@ -4041,6 +4113,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			sellActionFacts.PurchaseTemplate,
 			goodsLists);
+	}
+
+	private static bool IsItemTemplateSellable(ItemTemplateSummary template)
+	{
+		const int SellableMask = 1 << 2;
+		return (template.Mask & SellableMask) == SellableMask;
 	}
 
 	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(Player? player, int sellerObjectId)
