@@ -266,6 +266,78 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
 	}
 
+	[Fact]
+	public async Task CreateDisabledPlan_UsesAllianceRuntimeForRecruitmentSubject()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var leader = CreatePlayer(0x01020304, "AllianceLeader", "ELYOS", "CLERIC", 65);
+		var member = CreatePlayer(0x01020305, "AllianceMember", "ELYOS", "RANGER", 61);
+		SetActivePlayer(fixture.Connection, member);
+		Assert.True(fixture.World.TryAddObject(leader.ObjectId, leader));
+		Assert.True(fixture.World.TryAddObject(member.ObjectId, member));
+		var allianceRuntime = new PlayerAllianceRuntime();
+		allianceRuntime.CreateAlliance(8001, leader);
+		allianceRuntime.AddMember(8001, member);
+		var service = CreateService(fixture.World, allianceRuntime: allianceRuntime);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteD(member.ObjectId);
+				buffer.WriteS("Alliance listing");
+				buffer.WriteC(5);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupClientActionPlanKind.AddRecruitment, plan.ClientActionPlan!.Kind);
+		var recruitment = plan.ClientActionPlan.RecruitmentMutationPlan!.CurrentRecruitment!;
+		Assert.Equal(8001, recruitment.ObjectId);
+		Assert.False(recruitment.IsSoloPlayer);
+		Assert.Equal("AllianceLeader", recruitment.RecruiterName);
+		Assert.Equal(2, recruitment.Size);
+		Assert.Equal(61, recruitment.MinLevel);
+		Assert.Equal(65, recruitment.MaxLevel);
+		Assert.Equal(FindGroupRecruitmentSubject.ToJavaClassId("CLERIC"), recruitment.ClassId);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_UsesAllianceRuntimeMembersForInstanceGroupRegistration()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var leader = CreatePlayer(0x01020304, "AllianceLeader", "ELYOS", "CLERIC", 65);
+		var member = CreatePlayer(0x01020305, "AllianceMember", "ELYOS", "RANGER", 61);
+		leader.Position = new WorldPosition(210010000, 10, 20, 30, 0);
+		member.Position = new WorldPosition(220010000, 11, 21, 31, 0);
+		SetActivePlayer(fixture.Connection, leader);
+		Assert.True(fixture.World.TryAddObject(leader.ObjectId, leader));
+		Assert.True(fixture.World.TryAddObject(member.ObjectId, member));
+		var allianceRuntime = new PlayerAllianceRuntime();
+		allianceRuntime.CreateAlliance(8001, leader);
+		allianceRuntime.AddMember(8001, member);
+		var service = CreateService(fixture.World, allianceRuntime: allianceRuntime);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(8);
+				buffer.WriteD(0x11223344);
+				buffer.WriteC(0);
+				buffer.WriteS("Alliance entry");
+				buffer.WriteC(12);
+			});
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		Assert.Equal(FindGroupClientActionPlanKind.RegisterInstanceGroup, plan.ClientActionPlan!.Kind);
+		var instanceGroup = plan.ClientActionPlan.InstanceGroupMutationPlan!.CurrentInstanceGroup!;
+		Assert.Equal([leader.ObjectId, member.ObjectId], instanceGroup.Members.Select(memberState => memberState.PlayerObjectId));
+		Assert.Equal([210010000, 220010000], instanceGroup.Members.Select(memberState => memberState.WorldId));
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
 	private static FindGroupConnectionClientActionCompositionPlanService CreateService(
 		GameWorld world,
 		FindGroupRecruitmentPlanService? findGroupService = null,
