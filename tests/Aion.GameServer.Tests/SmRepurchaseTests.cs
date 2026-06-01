@@ -68,6 +68,31 @@ public sealed class SmRepurchaseTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	[Fact]
+	public void WritePayload_WritesEquipmentRepurchaseItemWithEquipmentBlobThenPrice()
+	{
+		var template = Template(SimpleItemId, itemGroup: "SWORD", validEquipmentSlots: 3);
+		var item = new InventoryItem
+		{
+			ObjectId = 7002,
+			ItemId = SimpleItemId,
+			Count = 1,
+			OwnerId = 1001,
+			Location = 0,
+			Slot = 65535,
+			Enchant = 3,
+		};
+
+		var payload = SerializeUnencryptedPayload(
+			new SmRepurchase(
+				targetObjectId: 9001,
+				items: [new RepurchasePacketItem(item, template, RepurchasePrice: 12_345)]));
+
+		Assert.Equal(
+			Convert.FromHexString("292300000100000001005A1B000001E1F5052400813801000000CB0006000000000000000001010000000000000002000000000000000B000301E1F50500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000100010000000000000000000000000000000000000000000000000000000012003930000000000000"),
+			payload);
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -76,7 +101,7 @@ public sealed class SmRepurchaseTests
 		return frame[7..];
 	}
 
-	private static ItemTemplateSummary Template(int itemId)
+	private static ItemTemplateSummary Template(int itemId, string itemGroup = "NORMAL", long validEquipmentSlots = 0)
 	{
 		return new ItemTemplateSummary(
 			itemId,
@@ -84,13 +109,13 @@ public sealed class SmRepurchaseTests
 			DescriptionId: 40_000,
 			Mask: 1,
 			Level: 1,
-			ItemGroup: "NORMAL",
+			ItemGroup: itemGroup,
 			ItemType: "NORMAL",
 			Quality: "COMMON",
 			Race: "PC_ALL",
 			MaxStackCount: 1,
 			Price: 0,
-			ValidEquipmentSlots: 0);
+			ValidEquipmentSlots: validEquipmentSlots);
 	}
 
 	private const int SimpleItemId = 100000001;
