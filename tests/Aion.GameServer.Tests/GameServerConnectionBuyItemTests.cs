@@ -88,6 +88,44 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionRecordsMissingSellOutcomeWithoutSideEffects()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		SetActivePlayerForPacketDispatch(fixture.Connection, CreatePlayer());
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(objectId: 9001, templateId: 700001, position: new WorldPosition(210010000, 11, 0, 0, 0)));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner, plan.Status);
+		Assert.NotNull(plan.SellToShopPlan);
+		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.WouldDispatchSellToShop, plan.SellToShopPlan!.Status);
+		Assert.NotNull(plan.SellToShopPlan.Dispatch);
+		Assert.Null(plan.SellToShopPlan.Dispatch!.SellToShopPlan);
+		Assert.False(plan.SellToShopPlan.Dispatch.DispatchesAbyssApSell);
+		Assert.False(plan.IsLive);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellToShopOutcomeCreated, outcome.Status);
+		Assert.Same(plan, outcome.HandlerPlan);
+		Assert.Equal(TradeSellToShopOutcomePlanStatus.MissingSellToShopPlan, outcome.SellToShopOutcomePlan!.Status);
+		Assert.Null(outcome.SellForApToShopOutcomePlan);
+		Assert.False(outcome.WouldWritePersistence);
+		Assert.False(outcome.WouldMutateSellerInventory);
+		Assert.False(outcome.WouldMutateKinah);
+		Assert.False(outcome.WouldAddRepurchaseItems);
+		Assert.False(outcome.WouldSendPackets);
+		Assert.False(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemKnownListResolverCanRejectWorldObjectTarget()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(buyItemKnownObjectResolver: (_, _, _) => false);
