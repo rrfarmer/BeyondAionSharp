@@ -137,9 +137,32 @@ public sealed class RepurchasePlanServiceTests
 		Assert.Equal(RepurchasePlanStatus.PlanCreated, plan.Status);
 		Assert.Equal([expensiveItem.ObjectId], plan.InsufficientKinahItemObjectIds);
 		Assert.Equal([affordableItem.ObjectId], plan.RepurchasedItemObjectIds);
+		Assert.Equal(
+			[$"tried to repurchase item {expensiveItem.ItemId}, count: {expensiveItem.Count} without kinah"],
+			plan.AuditMessages);
 		Assert.Equal(50, plan.KinahUpdate!.Count);
 		var addedItem = Assert.Single(plan.AddedItems);
 		Assert.Equal((StackableItemId, 3L), (addedItem.ItemId, addedItem.Count));
+	}
+
+	[Fact]
+	public void CreatePlan_RemovesSuccessfulRepurchaseItemBeforeRepeatedRequestCanMatchAgain()
+	{
+		var player = new Player { ObjectId = 1001 };
+		var repurchaseItem = Item(200, SwordItemId, 1, ownerId: player.ObjectId);
+
+		var plan = CreatePlan(
+			player,
+			inventoryItems: [Item(99, KinahItemId, 10_000, ownerId: player.ObjectId)],
+			requestedItemObjectIds: [repurchaseItem.ObjectId, repurchaseItem.ObjectId],
+			repurchaseItems: [new RepurchaseSourceItem(repurchaseItem, RepurchasePrice: 100)]);
+
+		Assert.Equal(RepurchasePlanStatus.PlanCreated, plan.Status);
+		Assert.Equal([repurchaseItem.ObjectId], plan.RepurchasedItemObjectIds);
+		Assert.Equal([repurchaseItem.ObjectId], plan.RemovedRepurchaseItemObjectIds);
+		Assert.Equal([repurchaseItem.ObjectId], plan.MissingRepurchaseItemObjectIds);
+		Assert.Single(plan.AddedItems);
+		Assert.Equal(9_900, plan.KinahUpdate!.Count);
 	}
 
 	[Fact]

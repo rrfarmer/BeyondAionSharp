@@ -28,6 +28,7 @@ public sealed record RepurchasePlan(
 	InventoryItem? KinahUpdate,
 	IReadOnlyList<int> RemovedRepurchaseItemObjectIds,
 	IReadOnlyList<SmSystemMessage> Messages,
+	IReadOnlyList<string> AuditMessages,
 	string JavaSource)
 {
 	public bool IsLive => false;
@@ -60,6 +61,8 @@ public static class RepurchasePlanService
 		var missingIds = new List<int>();
 		var insufficientKinahIds = new List<int>();
 		var removedRepurchaseIds = new List<int>();
+		var auditMessages = new List<string>();
+		var workingRepurchaseItems = repurchaseItems.ToList();
 		var kinahItem = workingItems.FirstOrDefault(item => item.ItemId == InventoryItemFactory.KinahItemId && item.Location == CubeStorageId);
 		var kinahCount = kinahItem?.Count ?? 0;
 
@@ -79,10 +82,11 @@ public static class RepurchasePlanService
 					kinahCount,
 					removedRepurchaseIds,
 					messages: [SmSystemMessage.DiceInventoryError()],
+					auditMessages,
 					"RepurchaseService.repurchaseFromShop -> player.getInventory().isFull() -> STR_MSG_DICE_INVEN_ERROR and break");
 			}
 
-			var repurchaseItem = repurchaseItems.FirstOrDefault(item => item.Item.ObjectId == itemObjectId);
+			var repurchaseItem = workingRepurchaseItems.FirstOrDefault(item => item.Item.ObjectId == itemObjectId);
 			if (repurchaseItem == null)
 			{
 				missingIds.Add(itemObjectId);
@@ -92,6 +96,7 @@ public static class RepurchasePlanService
 			if (kinahCount < repurchaseItem.RepurchasePrice)
 			{
 				insufficientKinahIds.Add(itemObjectId);
+				auditMessages.Add($"tried to repurchase item {repurchaseItem.Item.ItemId}, count: {repurchaseItem.Item.Count} without kinah");
 				continue;
 			}
 
@@ -109,6 +114,7 @@ public static class RepurchasePlanService
 					kinahCount,
 					removedRepurchaseIds,
 					messages: Array.Empty<SmSystemMessage>(),
+					auditMessages,
 					"ItemService.addItem(player, repurchaseItem) -> DataManager.ITEM_DATA missing template would fail before inventory mutation");
 
 			kinahCount -= repurchaseItem.RepurchasePrice;
@@ -135,11 +141,13 @@ public static class RepurchasePlanService
 					kinahCount + repurchaseItem.RepurchasePrice,
 					removedRepurchaseIds,
 					messages: addPlan.InventoryFull ? [SmSystemMessage.DiceInventoryError()] : Array.Empty<SmSystemMessage>(),
+					auditMessages,
 					"ItemService.addItem(player, repurchaseItem) returned remaining count; live exception/partial-add behavior is not wired in this non-live planner");
 
 			addedItems.AddRange(addPlan.AddedItems);
 			updatedItems.AddRange(addPlan.UpdatedItems);
 			ApplyAddPlan(workingItems, addPlan);
+			workingRepurchaseItems.Remove(repurchaseItem);
 			repurchasedIds.Add(itemObjectId);
 			removedRepurchaseIds.Add(itemObjectId);
 		}
@@ -156,6 +164,7 @@ public static class RepurchasePlanService
 			kinahCount,
 			removedRepurchaseIds,
 			messages: Array.Empty<SmSystemMessage>(),
+			auditMessages,
 			"RepurchaseService.repurchaseFromShop -> for each requested object id, precheck inventory full -> find repurchase item -> tryDecreaseKinah(price) -> ItemService.addItem(player, repurchaseItem) -> remove from repurchase set");
 	}
 
@@ -172,6 +181,7 @@ public static class RepurchasePlanService
 			KinahUpdate: null,
 			RemovedRepurchaseItemObjectIds: Array.Empty<int>(),
 			Messages: Array.Empty<SmSystemMessage>(),
+			AuditMessages: Array.Empty<string>(),
 			javaSource);
 	}
 
@@ -187,6 +197,7 @@ public static class RepurchasePlanService
 		long kinahCount,
 		IReadOnlyList<int> removedRepurchaseIds,
 		IReadOnlyList<SmSystemMessage> messages,
+		IReadOnlyList<string> auditMessages,
 		string javaSource)
 	{
 		return new RepurchasePlan(
@@ -200,6 +211,7 @@ public static class RepurchasePlanService
 			kinahItem == null ? null : CopyInventoryItem(kinahItem, kinahCount),
 			removedRepurchaseIds.ToArray(),
 			messages,
+			auditMessages.ToArray(),
 			javaSource);
 	}
 

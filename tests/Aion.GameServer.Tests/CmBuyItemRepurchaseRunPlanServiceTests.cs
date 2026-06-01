@@ -39,6 +39,7 @@ public sealed class CmBuyItemRepurchaseRunPlanServiceTests
 			KinahUpdate: null,
 			RemovedRepurchaseItemObjectIds: [101],
 			Messages: [],
+			AuditMessages: [],
 			"RepurchaseService.repurchaseFromShop");
 
 		var plan = CmBuyItemRepurchaseRunPlanService.CreatePlan(
