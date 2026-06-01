@@ -36,21 +36,21 @@ public sealed class CmBuyItemTests
 		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
 		buffer.WriteD(SellerObjectId);
+		buffer.WriteH(13);
 		buffer.WriteH(2);
-		buffer.WriteH(2);
-		buffer.WriteD(101);
+		buffer.WriteD(100000001);
 		buffer.WriteQ(1);
-		buffer.WriteD(102);
+		buffer.WriteD(100000002);
 		buffer.WriteQ(5);
 
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 
 		Assert.Equal(SellerObjectId, packet.SellerObjectId);
-		Assert.Equal(2, packet.TradeActionId);
+		Assert.Equal(13, packet.TradeActionId);
 		Assert.Equal(2, packet.Amount);
 		Assert.False(packet.IsAudit);
 		Assert.Null(packet.AuditItem);
-		Assert.Equal([new CmBuyItemEntry(101, 1), new CmBuyItemEntry(102, 5)], packet.Items);
+		Assert.Equal([new CmBuyItemEntry(100000001, 1), new CmBuyItemEntry(100000002, 5)], packet.Items);
 	}
 
 	[Fact]
