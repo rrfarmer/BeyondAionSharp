@@ -237,6 +237,38 @@ public sealed class CmPetTests
 	}
 
 	[Fact]
+	public void CreateDisabledAutoSellActivationComposition_TreatsHighBitActivationAsJavaNonZero()
+	{
+		var packet = ReadPacket(buffer =>
+		{
+			buffer.WriteH((int)PetAction.Food);
+			buffer.WriteD(4);
+			buffer.WriteD(int.MinValue);
+			buffer.WriteD(int.MaxValue);
+			buffer.WriteD(-1);
+		});
+		var context = new CmPetAutoSellActivationCompositionContext(
+			PetPresent: true,
+			PetHasMerchantFunction: true,
+			PetObjectId: 8801,
+			MasterObjectId: 1153,
+			PetName: "Bibi");
+
+		var composition = CmPetAutoSellActivationCompositionPlanService.CreateDisabledPlan(packet, context);
+
+		Assert.Equal(4, packet.ActionType);
+		Assert.Equal(int.MinValue, packet.ActivateSpecialFunction);
+		Assert.Equal(CmPetAutoSellActivationCompositionPlanStatus.ActivationPlanCreated, composition.Status);
+		Assert.True(composition.ParsedActivationFlag);
+		var activation = Assert.IsType<PetAutoSellActivationPlan>(composition.ActivationPlan);
+		Assert.True(activation.Input.Activate);
+		Assert.True(activation.TargetSellingState);
+		Assert.True(activation.WouldSetSellingState);
+		Assert.True(activation.WouldSendPacket);
+		Assert.False(activation.ShouldDispatchLiveSideEffects);
+	}
+
+	[Fact]
 	public void CreateDisabledAutoSellActivationComposition_RecordsMissingPetReturnBeforeService()
 	{
 		var packet = ReadPacket(buffer =>
