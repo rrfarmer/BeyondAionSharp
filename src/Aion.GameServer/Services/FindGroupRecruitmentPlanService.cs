@@ -571,11 +571,24 @@ public sealed class FindGroupRecruitmentPlanService
 		// instance-group registration, then removes applications, removes the old solo
 		// recruitment with unknown3=16, and either re-adds it as the current team or removes
 		// the full team's recruitment. This is a disabled planner: callers must dispatch nothing.
+		_instanceGroups.TryGetValue(player.ObjectId, out var trackedInstanceGroup);
+		var instanceGroupPlayerMatches = instanceGroup is null || instanceGroup.PlayerObjectId == player.ObjectId;
+		var instanceGroupMemberCount = instanceGroup?.MemberCount
+			?? (trackedInstanceGroup is null ? 0 : currentTeam.Size);
+		var instanceGroupMinMembers = instanceGroup?.MinMembers
+			?? trackedInstanceGroup?.MinMembers
+			?? 0;
+		var shouldRemoveInstanceGroup = instanceGroupPlayerMatches
+			&& (trackedInstanceGroup is not null || instanceGroup is not null)
+			&& instanceGroupMemberCount >= instanceGroupMinMembers;
+		FindGroupInstanceGroupState? removedInstanceGroup = null;
+		if (shouldRemoveInstanceGroup)
+			_instanceGroups.Remove(player.ObjectId, out removedInstanceGroup);
+
 		var instanceGroupRemoval = new FindGroupInstanceGroupRemovalPlan(
-			instanceGroup is not null
-				&& instanceGroup.PlayerObjectId == player.ObjectId
-				&& instanceGroup.MemberCount >= instanceGroup.MinMembers,
-			"instanceGroups.remove(player.getObjectId()) when members >= minMembers");
+			shouldRemoveInstanceGroup,
+			"instanceGroups.remove(player.getObjectId()) when members >= minMembers",
+			removedInstanceGroup);
 		var applicationRemoval = RemoveApplication(player);
 		var soloRecruitmentRemoval = RemoveRecruitment(
 			player.ObjectId,
@@ -673,7 +686,8 @@ public sealed record FindGroupInstanceGroupJoinState(
 
 public sealed record FindGroupInstanceGroupRemovalPlan(
 	bool ShouldRemove,
-	string JavaSource);
+	string JavaSource,
+	FindGroupInstanceGroupState? RemovedInstanceGroup = null);
 
 public sealed record FindGroupRecruitmentMutationPlan(
 	FindGroupRecruitmentPlanStatus Status,

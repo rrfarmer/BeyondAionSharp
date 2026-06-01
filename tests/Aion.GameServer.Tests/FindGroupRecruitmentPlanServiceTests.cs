@@ -351,6 +351,38 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void OnJoinedTeam_RemovesRegisteredInstanceGroupWhenCurrentTeamReachesMinMembersLikeJavaProxy()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(2001, "Applicant", "ELYOS", "RANGER", 45);
+		service.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: "Entry", minMembers: 3, nowEpochSeconds: 222);
+		var belowThresholdTeam = CreateTeamSubject(9001, "Leader", size: 2, minLevel: 40, maxLevel: 50);
+		var reachedThresholdTeam = CreateTeamSubject(9001, "Leader", size: 3, minLevel: 40, maxLevel: 50);
+
+		var belowThreshold = service.OnJoinedTeam(
+			player,
+			belowThresholdTeam,
+			isLeader: false,
+			isFull: false,
+			nowEpochSeconds: 333,
+			serverId: 5);
+		var reachedThreshold = service.OnJoinedTeam(
+			player,
+			reachedThresholdTeam,
+			isLeader: false,
+			isFull: false,
+			nowEpochSeconds: 334,
+			serverId: 5);
+
+		Assert.False(belowThreshold.InstanceGroupRemoval.ShouldRemove);
+		Assert.Null(belowThreshold.InstanceGroupRemoval.RemovedInstanceGroup);
+		Assert.True(reachedThreshold.InstanceGroupRemoval.ShouldRemove);
+		Assert.NotNull(reachedThreshold.InstanceGroupRemoval.RemovedInstanceGroup);
+		Assert.Equal(0x11223344, reachedThreshold.InstanceGroupRemoval.RemovedInstanceGroup!.InstanceMaskId);
+		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 400).InstanceGroups);
+	}
+
+	[Fact]
 	public void RegisterInstanceGroup_StoresEntryThenPlansJavaAction14Packet()
 	{
 		var service = new FindGroupRecruitmentPlanService();
