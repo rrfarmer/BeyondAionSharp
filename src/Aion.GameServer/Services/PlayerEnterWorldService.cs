@@ -21,6 +21,8 @@ public sealed class PlayerEnterWorldService
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly Action<RepurchaseStateRemovePlan>? _repurchaseStateRemovePlanObserver;
+	private readonly FindGroupRecruitmentPlanService? _findGroupService;
+	private readonly Action<FindGroupLogoutCleanupPlan>? _findGroupLogoutCleanupPlanObserver;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -33,7 +35,9 @@ public sealed class PlayerEnterWorldService
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
 		GameServerRuntimeContext? runtimeContext = null,
-		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null)
+		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null,
+		FindGroupRecruitmentPlanService? findGroupService = null,
+		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -43,6 +47,8 @@ public sealed class PlayerEnterWorldService
 		_connectionRegistry = connectionRegistry;
 		_runtimeContext = runtimeContext;
 		_repurchaseStateRemovePlanObserver = repurchaseStateRemovePlanObserver;
+		_findGroupService = findGroupService;
+		_findGroupLogoutCleanupPlanObserver = findGroupLogoutCleanupPlanObserver;
 		_logger = logger;
 	}
 
@@ -776,6 +782,7 @@ public sealed class PlayerEnterWorldService
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
+		RecordFindGroupLogoutCleanup(player);
 		await ClearPendingQuestionResponsesAsync(player);
 		RecordLogoutRepurchaseStateRemoval(player);
 		var lastOnline = DateTime.Now;
@@ -788,6 +795,18 @@ public sealed class PlayerEnterWorldService
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
 			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
+	private void RecordFindGroupLogoutCleanup(Player player)
+	{
+		if (_findGroupLogoutCleanupPlanObserver == null)
+			return;
+
+		// Java parity: PlayerLeaveWorldService.leaveWorld calls FindGroupService.onLogout(player)
+		// before ResponseRequester.denyAll and before broader logout side effects. This hook records
+		// the disabled cleanup plan only; it does not send packets or enable live CM_FIND_GROUP dispatch.
+		var findGroupService = _findGroupService ?? new FindGroupRecruitmentPlanService();
+		_findGroupLogoutCleanupPlanObserver(findGroupService.OnLogout(player));
 	}
 
 	private void RecordLogoutRepurchaseStateRemoval(Player player)

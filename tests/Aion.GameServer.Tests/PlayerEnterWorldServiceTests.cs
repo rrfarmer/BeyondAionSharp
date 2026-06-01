@@ -411,6 +411,50 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_RecordsFindGroupLogoutCleanupBeforeQuestionDenyLikeJava()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		Assert.True(player.ResponseRequester.PutRequest(
+			901,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.Unknown)));
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.AddRecruitment(player, "Solo", groupType: 1, nowEpochSeconds: 100);
+		findGroupService.AddApplication(player, "Apply", groupType: 2, classId: 5, level: 65, nowEpochSeconds: 101);
+		findGroupService.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: "Entry", minMembers: 6, nowEpochSeconds: 102);
+		var responseCountsObservedByFindGroupCleanup = new List<int>();
+		var findGroupCleanupPlans = new List<FindGroupLogoutCleanupPlan>();
+		var service = CreateService(
+			repository,
+			world,
+			out _,
+			findGroupService: findGroupService,
+			findGroupLogoutCleanupPlanObserver: plan =>
+			{
+				responseCountsObservedByFindGroupCleanup.Add(player.ResponseRequester.Count);
+				findGroupCleanupPlans.Add(plan);
+			});
+
+		await service.LeaveWorldAsync(player);
+
+		var cleanup = Assert.Single(findGroupCleanupPlans);
+		Assert.Equal([1], responseCountsObservedByFindGroupCleanup);
+		Assert.Equal(player.ObjectId, cleanup.PlayerObjectId);
+		Assert.NotNull(cleanup.RemovedRecruitment);
+		Assert.NotNull(cleanup.RemovedApplication);
+		Assert.NotNull(cleanup.RemovedInstanceGroup);
+		Assert.Empty(cleanup.DirectPacketIntents);
+		Assert.False(cleanup.DispatchLiveSideEffects);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Empty(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 201).Applications);
+		Assert.Empty(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 202).InstanceGroups);
+		Assert.Equal(0, player.ResponseRequester.Count);
+	}
+
+	[Fact]
 	public void CreateLogoutCraftCooldownSavePlan_RecordsJavaLogoutStoreBoundaryWithoutWriting()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
@@ -1022,7 +1066,9 @@ public sealed class PlayerEnterWorldServiceTests
 		out CapturingConnectionRegistry registry,
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		GameServerRuntimeContext? runtimeContext = null,
-		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null)
+		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null,
+		FindGroupRecruitmentPlanService? findGroupService = null,
+		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -1038,7 +1084,9 @@ public sealed class PlayerEnterWorldServiceTests
 			creaturePvpZoneCounterService,
 			registry,
 			runtimeContext,
-			repurchaseStateRemovePlanObserver);
+			repurchaseStateRemovePlanObserver,
+			findGroupService,
+			findGroupLogoutCleanupPlanObserver);
 	}
 
 	private static PlayerEnterWorldService CreateService(
