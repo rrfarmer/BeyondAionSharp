@@ -180,6 +180,13 @@ public sealed class CmBuyItemSideEffectOutcomePlanServiceTests
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 		Assert.False(outcome.IsLive);
 		Assert.Contains(outcome.RepurchaseOutcomePlan.Steps, step => step.Kind == RepurchaseOutcomeStepKind.RemoveRepurchaseItems);
+		Assert.Equal(
+			[
+				RepurchaseSuccessOperationKind.DecreaseKinah,
+				RepurchaseSuccessOperationKind.AddItem,
+				RepurchaseSuccessOperationKind.RemoveRepurchaseItem,
+			],
+			outcome.RepurchaseOutcomePlan.SuccessOperations.Select(operation => operation.Kind));
 		Assert.Null(outcome.RepurchaseOutcomePlan.StateItemRemovalPlan);
 	}
 

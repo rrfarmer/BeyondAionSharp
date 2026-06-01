@@ -254,6 +254,20 @@ public sealed class RepurchasePlanServiceTests
 
 		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
 		Assert.True(outcome.WouldRemoveRepurchaseItems);
+		Assert.Equal(
+			[
+				RepurchaseSuccessOperationKind.DecreaseKinah,
+				RepurchaseSuccessOperationKind.AddItem,
+				RepurchaseSuccessOperationKind.RemoveRepurchaseItem,
+			],
+			outcome.SuccessOperations.Select(operation => operation.Kind));
+		Assert.All(outcome.SuccessOperations, operation =>
+		{
+			Assert.Equal(repurchaseItem.ObjectId, operation.ItemObjectId);
+			Assert.True(operation.WouldRun);
+			Assert.False(operation.DidRun);
+			Assert.Contains("RepurchaseService.repurchaseFromShop", operation.JavaSource, StringComparison.Ordinal);
+		});
 		var stateRemoval = Assert.IsType<RepurchaseStateItemRemovalPlan>(outcome.StateItemRemovalPlan);
 		Assert.Equal(RepurchaseStateItemRemovalPlanStatus.SnapshotUpdated, stateRemoval.Status);
 		Assert.Equal([repurchaseItem.ObjectId], stateRemoval.RemovedItemObjectIds);
@@ -278,6 +292,7 @@ public sealed class RepurchasePlanServiceTests
 
 		Assert.Equal(RepurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.Status);
 		Assert.True(outcome.WouldRemoveRepurchaseItems);
+		Assert.Equal(3, outcome.SuccessOperations.Count);
 		Assert.Null(outcome.StateItemRemovalPlan);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
 	}

@@ -50,8 +50,22 @@ public enum RepurchaseOutcomeStepKind
 	CommitSideEffectBoundary,
 }
 
+public enum RepurchaseSuccessOperationKind
+{
+	DecreaseKinah,
+	AddItem,
+	RemoveRepurchaseItem,
+}
+
 public sealed record RepurchaseOutcomeStepPlan(
 	RepurchaseOutcomeStepKind Kind,
+	bool WouldRun,
+	bool DidRun,
+	string JavaSource);
+
+public sealed record RepurchaseSuccessOperationPlan(
+	int ItemObjectId,
+	RepurchaseSuccessOperationKind Kind,
 	bool WouldRun,
 	bool DidRun,
 	string JavaSource);
@@ -60,6 +74,7 @@ public sealed record RepurchaseOutcomePlan(
 	RepurchaseOutcomePlanStatus Status,
 	RepurchasePlan? RepurchasePlan,
 	RepurchaseStateItemRemovalPlan? StateItemRemovalPlan,
+	IReadOnlyList<RepurchaseSuccessOperationPlan> SuccessOperations,
 	IReadOnlyList<RepurchaseOutcomeStepPlan> Steps,
 	bool WouldWritePersistence,
 	bool DidWritePersistence,
@@ -334,6 +349,7 @@ public static class RepurchaseOutcomePlanService
 		var wouldSendPackets = wouldMutatePlayerInventory || wouldMutateKinah || repurchasePlan.Messages.Count > 0;
 		var wouldWriteAuditLog = repurchasePlan.AuditMessages.Count > 0;
 		var wouldCommitBoundary = wouldWritePersistence || wouldSendPackets || wouldWriteAuditLog;
+		var successOperations = CreateSuccessOperations(repurchasePlan);
 
 		if (!wouldCommitBoundary)
 			return CreateTerminalPlan(
@@ -374,6 +390,7 @@ public static class RepurchaseOutcomePlanService
 			RepurchaseOutcomePlanStatus.DisabledNoTransaction,
 			repurchasePlan,
 			stateItemRemovalPlan,
+			successOperations,
 			steps,
 			wouldWritePersistence,
 			DidWritePersistence: false,
@@ -403,6 +420,7 @@ public static class RepurchaseOutcomePlanService
 			status,
 			repurchasePlan,
 			StateItemRemovalPlan: null,
+			SuccessOperations: Array.Empty<RepurchaseSuccessOperationPlan>(),
 			Steps: Array.Empty<RepurchaseOutcomeStepPlan>(),
 			WouldWritePersistence: false,
 			DidWritePersistence: false,
@@ -427,4 +445,32 @@ public static class RepurchaseOutcomePlanService
 		RepurchaseOutcomeStepKind kind,
 		string javaSource) =>
 		new(kind, WouldRun: true, DidRun: false, javaSource);
+
+	private static IReadOnlyList<RepurchaseSuccessOperationPlan> CreateSuccessOperations(RepurchasePlan repurchasePlan)
+	{
+		var operations = new List<RepurchaseSuccessOperationPlan>();
+		foreach (var itemObjectId in repurchasePlan.RepurchasedItemObjectIds)
+		{
+			operations.Add(Disabled(
+				itemObjectId,
+				RepurchaseSuccessOperationKind.DecreaseKinah,
+				"RepurchaseService.repurchaseFromShop -> player.getInventory().tryDecreaseKinah(repurchaseItem.getRepurchasePrice())"));
+			operations.Add(Disabled(
+				itemObjectId,
+				RepurchaseSuccessOperationKind.AddItem,
+				"RepurchaseService.repurchaseFromShop -> ItemService.addItem(player, repurchaseItem)"));
+			operations.Add(Disabled(
+				itemObjectId,
+				RepurchaseSuccessOperationKind.RemoveRepurchaseItem,
+				"RepurchaseService.repurchaseFromShop -> items.remove(repurchaseItem)"));
+		}
+
+		return operations;
+	}
+
+	private static RepurchaseSuccessOperationPlan Disabled(
+		int itemObjectId,
+		RepurchaseSuccessOperationKind kind,
+		string javaSource) =>
+		new(itemObjectId, kind, WouldRun: true, DidRun: false, javaSource);
 }
