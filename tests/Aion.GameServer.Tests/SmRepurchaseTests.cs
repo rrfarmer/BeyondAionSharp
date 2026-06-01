@@ -19,6 +19,8 @@ public sealed class SmRepurchaseTests
 	public void WritePayload_WritesEmptyRepurchaseListHeader()
 	{
 		var payload = SerializeUnencryptedPayload(new SmRepurchase(targetObjectId: 9001, items: []));
+		Assert.Equal(Convert.FromHexString("29230000010000000000"), payload);
+
 		using var reader = new PacketBuffer(payload);
 
 		Assert.Equal(9001, reader.ReadD());
