@@ -21,9 +21,9 @@ public sealed class CmQuestionResponse : GameClientPacket
 		QuestionId = buffer.ReadD();
 		Response = buffer.ReadC();
 		buffer.ReadC();
-		buffer.ReadH();
+		buffer.ReadSignedH();
 		SenderObjectId = buffer.ReadD();
 		buffer.ReadD();
-		buffer.ReadH();
+		buffer.ReadSignedH();
 	}
 }
