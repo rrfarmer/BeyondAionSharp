@@ -78,6 +78,25 @@ public sealed class CmBuyItemTests
 		Assert.Null(packet.AuditItem);
 	}
 
+	[Fact]
+	public void ReadFrom_UnsignedAmountHighBitAuditsAsJavaReadUhValueBeforeReadingItems()
+	{
+		var packet = new CmBuyItem(51, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(SellerObjectId);
+		buffer.WriteH(13);
+		buffer.WriteH(0xFFFF);
+		buffer.WriteD(101);
+		buffer.WriteQ(1);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.True(packet.IsAudit);
+		Assert.Equal(65535, packet.Amount);
+		Assert.Empty(packet.Items);
+		Assert.Null(packet.AuditItem);
+	}
+
 	[Theory]
 	[InlineData(2)]
 	[InlineData(13)]
