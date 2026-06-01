@@ -14,6 +14,6 @@ public sealed class CmPing : GameClientPacket
 	protected override void ReadPayload(PacketBuffer buffer)
 	{
 		// Java parity: network/aion/clientpackets/CM_PING.readImpl.
-		Unknown = buffer.ReadH();
+		Unknown = buffer.ReadSignedH();
 	}
 }

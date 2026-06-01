@@ -1,0 +1,63 @@
+using Aion.Commons.Network;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ClientPackets;
+
+namespace Aion.GameServer.Tests;
+
+public sealed class CmPingSignedUnknownTests
+{
+	[Fact]
+	public void TryCreatePacket_RegistersJavaPingOpcodeAsAuthedAndInGame()
+	{
+		Assert.IsType<CmPing>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(44, buffer => buffer.WriteH(0xffff)),
+				GameConnectionState.Authed));
+
+		Assert.IsType<CmPing>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(44, buffer => buffer.WriteH(0xffff)),
+				GameConnectionState.InGame));
+
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(
+			CreateClientPayload(44, buffer => buffer.WriteH(0xffff)),
+			GameConnectionState.Connected));
+	}
+
+	[Fact]
+	public void ReadFrom_HighBitUnknownReadsAsSignedShortForDiagnosticParity()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteH(0xffff);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.Equal(-1, packet.Unknown);
+	}
+
+	private static CmPing CreatePacket()
+	{
+		return new CmPing(44, new HashSet<GameConnectionState> { GameConnectionState.Authed, GameConnectionState.InGame });
+	}
+
+	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writeBody)
+	{
+		using var body = new PacketBuffer();
+		writeBody(body);
+		var bodyBytes = body.ToArray();
+
+		var encodedOpcode = EncodeClientPacketOpcode(opcode);
+		using var payload = new PacketBuffer(5 + bodyBytes.Length);
+		payload.WriteH(encodedOpcode);
+		payload.WriteC(0x65);
+		payload.WriteH((ushort)~encodedOpcode);
+		payload.WriteB(bodyBytes);
+		return payload.ToArray();
+	}
+
+	private static int EncodeClientPacketOpcode(int opcode)
+	{
+		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+}
