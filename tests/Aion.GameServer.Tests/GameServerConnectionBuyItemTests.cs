@@ -775,6 +775,99 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Empty(fixture.SentPackets);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreHydratesListedItemPurchaseDiagnostics()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		activePlayer.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 8001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 20_000,
+				OwnerId = activePlayer.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		var sellerPlayer = new Player
+		{
+			ObjectId = 9101,
+			Name = "StoreSeller",
+			Race = activePlayer.Race,
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 10, 0, 0, 0),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 3001,
+					ItemId = 100000001,
+					Count = 1,
+					OwnerId = 9101,
+					Location = 0,
+					Slot = 1,
+				},
+			],
+			PrivateStoreItems =
+			[
+				new PrivateStoreListedItemSummary(
+					StoreIndex: 0,
+					ItemObjectId: 3001,
+					ItemId: 100000001,
+					Count: 1,
+					PricePerItem: 10_000,
+					ItemName: "Practice Sword"),
+			],
+		};
+		membership.UpsertKnownPlayers(
+			activePlayer.ObjectId,
+			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(9001));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(0, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner, plan.Status);
+		Assert.NotNull(plan.PrivateStoreBoughtItemsPlan);
+		var boughtItemsPlan = plan.PrivateStoreBoughtItemsPlan;
+		Assert.Equal(PrivateStoreBoughtItemsPlanStatus.PlanCreated, boughtItemsPlan.Status);
+		var boughtItem = Assert.Single(boughtItemsPlan.BoughtItems);
+		Assert.Equal((0, 3001, 100000001, 1L, 10_000L), (boughtItem.StoreIndex, boughtItem.ItemObjectId, boughtItem.ItemId, boughtItem.Count, boughtItem.PricePerItem));
+		Assert.NotNull(plan.PrivateStorePurchasePlan);
+		var purchasePlan = plan.PrivateStorePurchasePlan;
+		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, purchasePlan.Status);
+		Assert.Equal([3001], purchasePlan.SellerDeletedItemObjectIds);
+		Assert.Single(purchasePlan.BuyerAddedItems);
+		Assert.Equal(10_000, purchasePlan.BuyerKinahUpdate!.Count);
+		Assert.Equal(10_000, purchasePlan.SellerKinahUpdate!.Count);
+		Assert.True(purchasePlan.ShouldCloseSellerStore);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
+		Assert.Equal(PrivateStoreLiveExecutorFacadeStatus.DisabledNoSideEffects, outcome.PrivateStoreFacadePlan!.Status);
+		Assert.Equal(PrivateStorePurchaseOutcomePlanStatus.DisabledNoTransaction, outcome.PrivateStoreOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.WouldMutateBuyerInventory);
+		Assert.True(outcome.WouldMutateKinah);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.True(outcome.WouldWriteExchangeLog);
+		Assert.True(outcome.WouldCommitTransactionBoundary);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
 	private static Player CreatePlayer() =>
 		new()
 		{
@@ -871,6 +964,12 @@ public sealed class GameServerConnectionBuyItemTests
 			AcquisitionType: acquisitionType,
 			AcquisitionItemId: acquisitionItemId,
 			AcquisitionItemCount: acquisitionItemCount);
+	}
+
+	private static Func<int> Sequence(int first)
+	{
+		var next = first - 1;
+		return () => ++next;
 	}
 
 	internal static Task InvokeProcessPacketAsyncForAdapterTests(GameServerConnection connection, byte[] payload) =>

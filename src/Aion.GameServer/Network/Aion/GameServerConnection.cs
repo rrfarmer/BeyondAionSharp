@@ -3982,6 +3982,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var sellForApToShopPlan = ResolveBuyItemSellForApToShopPlan(player, packet, sellActionFacts);
 		var buyFromShopTradeTemplate = ResolveBuyItemBuyFromShopTradeTemplate(player, packet, targetKind);
 		var buyTransactionPlan = ResolveBuyItemBuyTransactionPlan(player, packet, targetKind, buyFromShopTradeTemplate);
+		var privateStoreItems = ResolveBuyItemPrivateStoreItems(player, packet, targetKind);
+		var privateStorePurchasePlan = ResolveBuyItemPrivateStorePurchasePlan(player, packet, targetKind, privateStoreItems);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
@@ -3994,9 +3996,82 @@ public sealed class GameServerConnection : BaseClientConnection
 				SellTemplate: buyFromShopTradeTemplate,
 				BuyTransactionPlan: buyTransactionPlan,
 				SellToShopPlan: sellToShopPlan,
-				SellForApToShopPlan: sellForApToShopPlan));
+				SellForApToShopPlan: sellForApToShopPlan,
+				PrivateStoreItems: privateStoreItems,
+				PrivateStorePurchasePlan: privateStorePurchasePlan));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
 		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
+	}
+
+	private IReadOnlyList<PrivateStoreListedItemSummary>? ResolveBuyItemPrivateStoreItems(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Player
+			|| packet.TradeActionId != 0
+			|| _world == null
+			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			|| gameObject is not Player seller)
+			return null;
+
+		// Java parity: PrivateStoreService.getBoughtItems snapshots
+		// seller.getStore().getSoldItems().values() into an array, relying on
+		// LinkedHashMap insertion order for packet index lookup.
+		return seller.PrivateStoreItems;
+	}
+
+	private PrivateStorePurchasePlan? ResolveBuyItemPrivateStorePurchasePlan(
+		Player? buyer,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		IReadOnlyList<PrivateStoreListedItemSummary>? privateStoreItems)
+	{
+		if (buyer == null
+			|| targetKind != CmBuyItemRunTargetKind.Player
+			|| packet.TradeActionId != 0
+			|| privateStoreItems == null
+			|| _world == null
+			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			|| gameObject is not Player seller)
+			return null;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return null;
+
+		var boughtItemsPlan = PrivateStoreBoughtItemsPlanService.CreatePlan(packet.Items, privateStoreItems);
+		if (boughtItemsPlan.Status != PrivateStoreBoughtItemsPlanStatus.PlanCreated)
+			return null;
+
+		return PrivateStorePurchasePlanService.CreatePlan(
+			seller.IsOnline,
+			buyer.IsOnline,
+			string.Equals(seller.Race, buyer.Race, StringComparison.OrdinalIgnoreCase),
+			buyer,
+			seller,
+			buyer.InventoryItems,
+			seller.InventoryItems,
+			boughtItemsPlan.BoughtItems,
+			CreateRemainingPrivateStoreItemObjectIds(privateStoreItems, boughtItemsPlan.BoughtItems),
+			itemTemplates,
+			_buyItemDiagnosticObjectIdProvider ?? (() => 0));
+	}
+
+	private static IReadOnlyList<int> CreateRemainingPrivateStoreItemObjectIds(
+		IReadOnlyList<PrivateStoreListedItemSummary> storeItems,
+		IReadOnlyList<PrivateStorePurchaseItemRequest> boughtItems)
+	{
+		var boughtCountsByObjectId = new Dictionary<int, long>();
+		foreach (var boughtItem in boughtItems)
+			boughtCountsByObjectId[boughtItem.ItemObjectId] = boughtCountsByObjectId.GetValueOrDefault(boughtItem.ItemObjectId) + boughtItem.Count;
+
+		return storeItems
+			.Where(storeItem => storeItem.Count - boughtCountsByObjectId.GetValueOrDefault(storeItem.ItemObjectId) > 0)
+			.Select(storeItem => storeItem.ItemObjectId)
+			.ToArray();
 	}
 
 	private CmBuyItemSellActionFactAdapterPlan? ResolveBuyItemSellActionFacts(

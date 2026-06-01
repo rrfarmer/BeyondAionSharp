@@ -802,6 +802,10 @@ public sealed class Player
 
 	public IReadOnlyList<PlayerBlockedUser> BlockedUsers { get; set; } = Array.Empty<PlayerBlockedUser>();
 
+	// Java parity: Player.getStore().getSoldItems() preserves insertion order
+	// for PrivateStoreService.getBoughtItems index-based CM_BUY_ITEM action 0 lookup.
+	public IReadOnlyList<PrivateStoreListedItemSummary> PrivateStoreItems { get; set; } = Array.Empty<PrivateStoreListedItemSummary>();
+
 	public PlayerAbyssRank AbyssRank { get; set; } = PlayerAbyssRank.Default();
 
 	public PlayerSettings Settings { get; set; } = new();
