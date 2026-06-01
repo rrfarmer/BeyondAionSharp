@@ -510,6 +510,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleInviteToGroupAsync(_activePlayer, inviteToGroup);
 				break;
+			case CmViewPlayerDetails:
+				// Java parity: network/aion/clientpackets/CM_VIEW_PLAYER_DETAILS.runImpl sends equipment details or denial; deferred.
+				break;
 			case CmDuelRequest duelRequest:
 				if (_activePlayer != null)
 					await HandleDuelRequestAsync(_activePlayer, duelRequest);

@@ -6691,6 +6691,17 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesViewPlayerDetailsPacket()
+	{
+		var packet = Assert.IsType<CmViewPlayerDetails>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(100, buffer => buffer.WriteD(7001)), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(7001, packet.TargetObjectId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(100, buffer => buffer.WriteD(7001)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesLevelReadyInGame()
 	{
 		Assert.IsType<CmLevelReady>(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(9, _ => { }), GameConnectionState.InGame));

@@ -73,6 +73,7 @@ public static class GameClientPacketFactory
 		Register(95, states => new CmHouseTeleportBack(95, states), GameConnectionState.InGame);
 		Register(96, states => new CmPlayerStatusInfo(96, states), GameConnectionState.InGame);
 		Register(97, states => new CmInviteToGroup(97, states), GameConnectionState.InGame);
+		Register(100, states => new CmViewPlayerDetails(100, states), GameConnectionState.InGame);
 		Register(103, states => new CmPingRequest(103, states), GameConnectionState.InGame);
 		Register(107, states => new CmClientCommandRoll(107, states), GameConnectionState.InGame);
 		Register(110, states => new CmMarkFriendList(110, states), GameConnectionState.InGame);
