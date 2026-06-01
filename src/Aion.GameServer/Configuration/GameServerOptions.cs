@@ -229,6 +229,7 @@ public sealed class GameServerOptions
 			{
 				CooldownRate = GetIntWithEnvironment(loader, "gameserver.instance.cooldown_rate", 1),
 				CooldownRateExcludedMaps = GetIntSetWithEnvironment(loader, "gameserver.instance.cooldown_rate.excluded_maps", string.Empty),
+				FormInstanceGroupAnywhere = GetBoolWithEnvironment(loader, "gameserver.instance_group.form_anywhere", false),
 			},
 			Administration = new GameServerAdministrationOptions
 			{
@@ -592,6 +593,9 @@ public sealed class GameServerInstanceOptions
 	public int CooldownRate { get; init; } = 1;
 
 	public IReadOnlySet<int> CooldownRateExcludedMaps { get; init; } = new HashSet<int>();
+
+	// Java parity: configs/main/GroupConfig.FORM_INSTANCE_GROUP_ANYWHERE.
+	public bool FormInstanceGroupAnywhere { get; init; }
 }
 
 public sealed class GameServerRateOptions

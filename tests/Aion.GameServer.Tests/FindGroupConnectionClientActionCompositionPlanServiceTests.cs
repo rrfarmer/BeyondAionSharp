@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -402,12 +403,71 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
 	}
 
+	[Fact]
+	public async Task CreateDisabledPlan_UsesGameServerOptionsForFormInstanceGroupAnywhere()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		SetActivePlayer(fixture.Connection, player);
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [700001]),
+		]);
+		var options = new GameServerOptions
+		{
+			Instance = new GameServerInstanceOptions { FormInstanceGroupAnywhere = true },
+		};
+		var service = CreateService(fixture.World, autoGroups: autoGroups, options: options);
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(10));
+
+		var plan = service.CreateDisabledPlan(fixture.Connection, packet, nowEpochSeconds: 200);
+
+		var showPlan = plan.ClientActionPlan!.InstanceGroupClientShowPlan!;
+		Assert.True(showPlan.FormInstanceGroupAnywhere);
+		Assert.Equal([302], showPlan.EnabledInstanceMaskIds);
+		Assert.NotNull(showPlan.EnableRegisterForInstancesIntent);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
+	[Fact]
+	public async Task CreateDisabledPlan_ExplicitFormInstanceGroupAnywhereOverridesOptions()
+	{
+		await using var fixture = await ConnectionFixture.CreateAsync();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		SetActivePlayer(fixture.Connection, player);
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [700001]),
+		]);
+		var options = new GameServerOptions
+		{
+			Instance = new GameServerInstanceOptions { FormInstanceGroupAnywhere = true },
+		};
+		var service = CreateService(fixture.World, autoGroups: autoGroups, options: options);
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(10));
+
+		var plan = service.CreateDisabledPlan(
+			fixture.Connection,
+			packet,
+			nowEpochSeconds: 200,
+			formInstanceGroupAnywhere: false);
+
+		var showPlan = plan.ClientActionPlan!.InstanceGroupClientShowPlan!;
+		Assert.False(showPlan.FormInstanceGroupAnywhere);
+		Assert.Null(showPlan.EnabledInstanceMaskIds);
+		Assert.Null(showPlan.EnableRegisterForInstancesIntent);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.ClientActionPlan.DispatchLiveSideEffects);
+	}
+
 	private static FindGroupConnectionClientActionCompositionPlanService CreateService(
 		GameWorld world,
 		FindGroupRecruitmentPlanService? findGroupService = null,
 		PlayerGroupRuntime? groupRuntime = null,
 		PlayerAllianceRuntime? allianceRuntime = null,
-		AutoGroupTable? autoGroups = null)
+		AutoGroupTable? autoGroups = null,
+		GameServerOptions? options = null)
 	{
 		findGroupService ??= new FindGroupRecruitmentPlanService();
 		return new FindGroupConnectionClientActionCompositionPlanService(
@@ -415,7 +475,8 @@ public sealed class FindGroupConnectionClientActionCompositionPlanServiceTests
 			world,
 			groupRuntime,
 			allianceRuntime,
-			autoGroups);
+			autoGroups,
+			options);
 	}
 
 	private static CmFindGroup CreateFindGroupPacket(Action<PacketBuffer> writePayload)

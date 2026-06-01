@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -13,19 +14,22 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 	private readonly PlayerGroupRuntime? _groupRuntime;
 	private readonly PlayerAllianceRuntime? _allianceRuntime;
 	private readonly AutoGroupTable? _autoGroups;
+	private readonly GameServerOptions? _options;
 
 	public FindGroupConnectionClientActionCompositionPlanService(
 		FindGroupClientActionPlanService planner,
 		GameWorld? world = null,
 		PlayerGroupRuntime? groupRuntime = null,
 		PlayerAllianceRuntime? allianceRuntime = null,
-		AutoGroupTable? autoGroups = null)
+		AutoGroupTable? autoGroups = null,
+		GameServerOptions? options = null)
 	{
 		_planner = planner;
 		_world = world;
 		_groupRuntime = groupRuntime;
 		_allianceRuntime = allianceRuntime;
 		_autoGroups = autoGroups;
+		_options = options;
 	}
 
 	public FindGroupConnectionClientActionCompositionPlan CreateDisabledPlan(
@@ -35,7 +39,7 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 		Func<int, Player?>? resolvePlayer = null,
 		FindGroupRecruitmentSubject? currentTeam = null,
 		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null,
-		bool formInstanceGroupAnywhere = false,
+		bool? formInstanceGroupAnywhere = null,
 		IReadOnlyList<int>? targetNpcInstanceMaskIds = null,
 		IReadOnlyList<int>? allRecruitableInstanceMaskIds = null)
 	{
@@ -58,7 +62,7 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 		Func<int, Player?>? resolvePlayer = null,
 		FindGroupRecruitmentSubject? currentTeam = null,
 		IReadOnlyList<FindGroupInstanceGroupMemberState>? currentMembers = null,
-		bool formInstanceGroupAnywhere = false,
+		bool? formInstanceGroupAnywhere = null,
 		IReadOnlyList<int>? targetNpcInstanceMaskIds = null,
 		IReadOnlyList<int>? allRecruitableInstanceMaskIds = null)
 	{
@@ -74,13 +78,14 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 		currentMembers ??= ResolveCurrentMembers(activePlayer);
 		targetNpcInstanceMaskIds ??= ResolveTargetNpcInstanceMaskIds(activePlayer);
 		allRecruitableInstanceMaskIds ??= _autoGroups?.GetRecruitableInstanceMaskIds();
+		var resolvedFormInstanceGroupAnywhere = formInstanceGroupAnywhere ?? _options?.Instance.FormInstanceGroupAnywhere ?? false;
 		var facts = new FindGroupClientActionRuntimeFacts(
 			activePlayer,
 			nowEpochSeconds,
 			resolvePlayer ?? ResolveWorldPlayer,
 			currentTeam,
 			currentMembers,
-			formInstanceGroupAnywhere,
+			resolvedFormInstanceGroupAnywhere,
 			targetNpcInstanceMaskIds,
 			allRecruitableInstanceMaskIds);
 		return FindGroupConnectionClientActionCompositionPlan.Composed(
