@@ -87,6 +87,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmBuyItemSideEffectOutcomePlan>? _cmBuyItemSideEffectOutcomePlanObserver;
 	private readonly Action<PrivateStoreCreatePlan>? _privateStoreCreatePlanObserver;
 	private readonly Action<PrivateStoreNameOpenCompositionPlan>? _privateStoreNameOpenCompositionPlanObserver;
+	private readonly Action<GroupDataExchangeHandlerCompositionPlan>? _groupDataExchangeHandlerCompositionPlanObserver;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
@@ -168,6 +169,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<CmBuyItemSideEffectOutcomePlan>? cmBuyItemSideEffectOutcomePlanObserver = null,
 		Action<PrivateStoreCreatePlan>? privateStoreCreatePlanObserver = null,
 		Action<PrivateStoreNameOpenCompositionPlan>? privateStoreNameOpenCompositionPlanObserver = null,
+		Action<GroupDataExchangeHandlerCompositionPlan>? groupDataExchangeHandlerCompositionPlanObserver = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
@@ -222,6 +224,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmBuyItemSideEffectOutcomePlanObserver = cmBuyItemSideEffectOutcomePlanObserver;
 		_privateStoreCreatePlanObserver = privateStoreCreatePlanObserver;
 		_privateStoreNameOpenCompositionPlanObserver = privateStoreNameOpenCompositionPlanObserver;
+		_groupDataExchangeHandlerCompositionPlanObserver = groupDataExchangeHandlerCompositionPlanObserver;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
@@ -457,8 +460,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmLegionWarehouseKinah:
 				// Java parity: network/aion/clientpackets/CM_LEGION_WH_KINAH.runImpl mutates player/legion Kinah and history; deferred.
 				break;
-			case CmGroupDataExchange:
-				// Java parity: network/aion/clientpackets/CM_GROUP_DATA_EXCHANGE.runImpl broadcasts client data to nearby/group/team recipients; deferred.
+			case CmGroupDataExchange groupDataExchange:
+				await HandleGroupDataExchangeAsync(groupDataExchange);
 				break;
 			case CmFindGroup:
 				// Java parity: network/aion/clientpackets/CM_FIND_GROUP.runImpl dispatches FindGroupService actions; deferred.
@@ -4195,6 +4198,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			plan,
 			player?.ObjectId,
 			repurchaseStateSnapshots));
+	}
+
+	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)
+	{
+		if (_groupDataExchangeHandlerCompositionPlanObserver == null)
+			return;
+
+		var plan = await GroupDataExchangeHandlerCompositionPlanService.CreateDisabledPlanAsync(
+			_activePlayer,
+			packet.Action,
+			packet.GroupType,
+			packet.Unknown2,
+			packet.Data,
+			_playerGroupRuntime,
+			_playerAllianceRuntime,
+			_playerLeagueRuntime,
+			_connectionRegistry);
+		_groupDataExchangeHandlerCompositionPlanObserver.Invoke(plan);
 	}
 
 	private static PrivateStoreCreatePlan CreatePrivateStoreCreatePlan(CmPrivateStore packet, Player player)
