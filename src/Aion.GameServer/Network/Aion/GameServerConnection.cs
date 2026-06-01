@@ -815,6 +815,16 @@ public sealed class GameServerConnection : BaseClientConnection
 					}
 				}
 				break;
+			case CmPrivateStore:
+				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE.runImpl closes the private store when no
+				// items are listed, otherwise calls PrivateStoreService.createStoreWithItems. Live store mutation,
+				// validation, packet fanout, and persistence remain deferred; this unit is parser-only.
+				break;
+			case CmPrivateStoreName:
+				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE_NAME.runImpl calls
+				// PrivateStoreService.openPrivateStore(activePlayer, name). Existing C# open-plan diagnostics
+				// remain non-live; handler wiring is deferred until store state mutation is ported.
+				break;
 			case CmBrokerList brokerList:
 				if (_activePlayer != null)
 				{

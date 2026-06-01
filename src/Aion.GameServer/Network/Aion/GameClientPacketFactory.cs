@@ -75,6 +75,8 @@ public static class GameClientPacketFactory
 		Register(112, states => new CmFriendDelete(112, states), GameConnectionState.InGame);
 		Register(114, states => new CmDuelRequest(114, states), GameConnectionState.InGame);
 		Register(117, states => new CmBrokerSellWindow(117, states), GameConnectionState.InGame);
+		Register(119, states => new CmPrivateStore(119, states), GameConnectionState.InGame);
+		Register(120, states => new CmPrivateStoreName(120, states), GameConnectionState.InGame);
 		Register(123, states => new CmBrokerList(123, states), GameConnectionState.InGame);
 		Register(124, states => new CmBrokerSearch(124, states), GameConnectionState.InGame);
 		Register(125, states => new CmBrokerRegistered(125, states), GameConnectionState.InGame);
