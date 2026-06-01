@@ -13,6 +13,7 @@ public sealed class SmFindGroup : GameServerPacket
 	private readonly byte _unknown2;
 	private readonly byte _unknown3;
 	private readonly bool _showEnterInstanceMessage;
+	private readonly int _lastUpdate;
 	private readonly IReadOnlyList<int> _instanceMaskIds;
 	private readonly FindGroupInstanceGroupWindowSnapshot? _instanceGroupWindow;
 	private readonly FindGroupInstanceApplicantSnapshot? _instanceApplicant;
@@ -28,6 +29,7 @@ public sealed class SmFindGroup : GameServerPacket
 		byte unknown2 = 0,
 		byte unknown3 = 0,
 		bool showEnterInstanceMessage = false,
+		int lastUpdate = 0,
 		IReadOnlyList<int>? instanceMaskIds = null,
 		FindGroupInstanceGroupWindowSnapshot? instanceGroupWindow = null,
 		FindGroupInstanceApplicantSnapshot? instanceApplicant = null,
@@ -43,6 +45,7 @@ public sealed class SmFindGroup : GameServerPacket
 		_unknown2 = unknown2;
 		_unknown3 = unknown3;
 		_showEnterInstanceMessage = showEnterInstanceMessage;
+		_lastUpdate = lastUpdate;
 		_instanceMaskIds = instanceMaskIds ?? [];
 		_instanceGroupWindow = instanceGroupWindow;
 		_instanceApplicant = instanceApplicant;
@@ -85,6 +88,12 @@ public sealed class SmFindGroup : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_FIND_GROUP(Player instanceApplicant), action 11.
 		return new SmFindGroup(11, instanceApplicant: instanceApplicant);
+	}
+
+	public static SmFindGroup ShowInstanceGroups(int lastUpdate, IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> instanceGroups)
+	{
+		// Java parity: network/aion/serverpackets/SM_FIND_GROUP action 10 showInstanceGroups.
+		return new SmFindGroup(10, lastUpdate: lastUpdate, instanceGroups: instanceGroups);
 	}
 
 	public static SmFindGroup RegisterInstanceGroup(IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot> instanceGroups)
@@ -138,6 +147,30 @@ public sealed class SmFindGroup : GameServerPacket
 				var instanceGroup = _instanceGroupWindow ?? throw new InvalidOperationException("Instance group window snapshot is required.");
 				buffer.WriteD(instanceGroup.GroupEntryId);
 				buffer.WriteD(instanceGroup.InstanceMaskId);
+				break;
+			case 10:
+				buffer.WriteH(_instanceGroups.Count);
+				buffer.WriteH(_instanceGroups.Count);
+				buffer.WriteD(_lastUpdate);
+				foreach (var group in _instanceGroups)
+				{
+					buffer.WriteD(group.GroupEntryId);
+					buffer.WriteD(group.InstanceMaskId);
+					buffer.WriteD(1);
+					buffer.WriteC(group.MemberCount);
+					buffer.WriteC(group.MinMembers);
+					buffer.WriteH(0);
+					buffer.WriteD(group.RecruiterObjectId);
+					buffer.WriteD(1);
+					buffer.WriteD(0);
+					buffer.WriteC(group.MinLevel);
+					buffer.WriteC(group.MaxLevel);
+					buffer.WriteH(0);
+					buffer.WriteD(group.LastUpdate);
+					buffer.WriteD(0);
+					buffer.WriteS(group.RecruiterName);
+					buffer.WriteS(group.Message);
+				}
 				break;
 			case 11:
 				var applicant = _instanceApplicant ?? throw new InvalidOperationException("Instance applicant snapshot is required.");
