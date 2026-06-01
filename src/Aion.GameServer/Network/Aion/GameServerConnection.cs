@@ -635,6 +635,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_SUMMON_MOVE.runImpl mutates summon/mercenary movement,
 				// updates world position/last-move state, and may broadcast SM_MOVE. Live summon movement remains unported.
 				break;
+			case CmSummonEmotion:
+				// Java parity: network/aion/clientpackets/CM_SUMMON_EMOTION.runImpl mutates summon/mercenary emotion state
+				// for selected emotions and broadcasts SM_EMOTION. Live summon emotion handling remains unported.
+				break;
 			case CmSummonCastSpell summonCastSpell:
 				if (_activePlayer != null)
 					await HandleSummonCastSpellAsync(_activePlayer, summonCastSpell);

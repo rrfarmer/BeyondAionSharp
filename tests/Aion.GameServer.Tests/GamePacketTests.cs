@@ -5779,6 +5779,28 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesSummonEmotion()
+	{
+		var summonEmotion = Assert.IsType<CmSummonEmotion>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					202,
+					b =>
+					{
+						b.WriteD(8103);
+						b.WriteC(255);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+
+		Assert.Equal(8103, summonEmotion.SummonObjectId);
+		Assert.Equal(255, summonEmotion.EmotionTypeId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(202, b => b.WriteD(8103)), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesSummonAttack()
 	{
 		var summonAttack = Assert.IsType<CmSummonAttack>(
