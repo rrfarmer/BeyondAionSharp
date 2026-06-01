@@ -664,6 +664,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmBuyItem buyItem:
 				HandleBuyItem(_activePlayer, buyItem);
 				break;
+			case CmBuyTradeInTrade:
+				// Java parity: network/aion/clientpackets/CM_BUY_TRADE_IN_TRADE.runImpl calls TradeService.performBuyFromTradeInTrade when count >= 1.
+				// Live trade-in validation, inventory mutation, persistence, and packet send side effects remain unported.
+				break;
 			case CmSelectDecomposable selectDecomposable:
 				if (_activePlayer != null)
 					await HandleSelectDecomposableAsync(_activePlayer, selectDecomposable);
