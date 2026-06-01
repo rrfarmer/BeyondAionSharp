@@ -86,6 +86,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<CmBuyItemHandlerCompositionPlan>? _cmBuyItemHandlerCompositionPlanObserver;
 	private readonly Action<CmBuyItemSideEffectOutcomePlan>? _cmBuyItemSideEffectOutcomePlanObserver;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
+	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly PlayerSummonCastSpellService _summonCastSpellService;
 	private readonly PlayerSummonSkillExecutionService _summonSkillExecutionService;
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
@@ -158,7 +159,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<CmCraftStartCompositionPlan>? cmCraftStartCompositionPlanObserver = null,
 		Action<CmBuyItemHandlerCompositionPlan>? cmBuyItemHandlerCompositionPlanObserver = null,
 		Action<CmBuyItemSideEffectOutcomePlan>? cmBuyItemSideEffectOutcomePlanObserver = null,
-		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null)
+		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
+		TradeListTable? buyItemTradeLists = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -205,6 +207,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmBuyItemHandlerCompositionPlanObserver = cmBuyItemHandlerCompositionPlanObserver;
 		_cmBuyItemSideEffectOutcomePlanObserver = cmBuyItemSideEffectOutcomePlanObserver;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
+		_buyItemTradeLists = buyItemTradeLists;
 		_summonCastSpellService = new PlayerSummonCastSpellService();
 		_summonSkillExecutionService = new PlayerSummonSkillExecutionService();
 		_riftPortalInteractionService = riftPortalInteractionService
@@ -3961,13 +3964,43 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
+		var sellActionFacts = ResolveBuyItemSellActionFacts(player, packet, targetKind);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
 				PlayerPresent: player != null,
-				TargetKind: targetKind));
+				TargetKind: targetKind,
+				PurchaseTemplate: sellActionFacts?.PurchaseTemplate));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
 		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(plan));
+	}
+
+	private CmBuyItemSellActionFactAdapterPlan? ResolveBuyItemSellActionFacts(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId
+			|| _world == null
+			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			|| gameObject is not IWorldNpcObject npc)
+			return null;
+
+		var tradeLists = _buyItemTradeLists ?? _runtimeContext?.DataManager?.StaticData.TradeLists;
+		if (tradeLists == null)
+			return null;
+
+		// Java parity: CM_BUY_ITEM.runImpl action 1 uses npc.getNpcId() for
+		// getPurchaseTemplate. Function flags still use the existing diagnostic
+		// defaults until NPC function facts are safely exposed to this socket path.
+		return CmBuyItemSellActionFactAdapterService.CreatePlan(
+			new CmBuyItemSellActionFactAdapterInput(
+				NpcId: npc.TemplateId,
+				NpcCanBuy: true,
+				NpcCanPurchase: false),
+			tradeLists);
 	}
 
 	private CmBuyItemRunTargetKind ResolveBuyItemTargetKind(Player? player, int sellerObjectId)
