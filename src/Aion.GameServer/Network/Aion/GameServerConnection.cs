@@ -454,6 +454,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmLootItem lootItem:
 				await HandleLootItemAsync(lootItem);
 				break;
+			case CmMoveItem:
+				// Java parity: network/aion/clientpackets/CM_MOVE_ITEM.runImpl calls ItemMoveService.moveItem.
+				// Inventory/warehouse move side effects remain unported; keep this parser-only for now.
+				break;
 			case CmSubzoneChange:
 				if (_activePlayer != null)
 				{

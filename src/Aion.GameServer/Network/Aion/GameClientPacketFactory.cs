@@ -94,6 +94,7 @@ public static class GameClientPacketFactory
 		Register(153, states => new CmRestoreCharacter(153, states), GameConnectionState.Authed);
 		Register(154, states => new CmStartLoot(154, states), GameConnectionState.InGame);
 		Register(155, states => new CmLootItem(155, states), GameConnectionState.InGame);
+		Register(156, states => new CmMoveItem(156, states), GameConnectionState.InGame);
 		Register(158, states => new CmShowBlockList(158, states), GameConnectionState.InGame);
 		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
 		Register(163, states => new CmSubzoneChange(163, states), GameConnectionState.InGame);
