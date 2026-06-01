@@ -11,6 +11,7 @@ public static class GameClientPacketFactory
 	static GameClientPacketFactory()
 	{
 		// Java parity: network/aion/AionClientPacketFactory opcode registration table.
+		Register(0, states => new CmVersionCheck(0, states), GameConnectionState.Connected);
 		Register(3, states => new CmQuit(3, states), GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(4, states => new CmMayQuit(4, states), GameConnectionState.InGame);
 		Register(5, states => new CmRevive(5, states), GameConnectionState.InGame);
