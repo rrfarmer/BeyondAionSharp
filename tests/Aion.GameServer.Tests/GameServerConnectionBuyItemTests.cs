@@ -91,6 +91,79 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopHydratesDisabledBuyTransactionPlan()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(501, Items: [new GoodsListItemSummary(1001)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(
+					1001,
+					price: 500,
+					requiredAbyssPoints: 1_000,
+					acquisitionType: "AP",
+					acquisitionItemId: 186000001,
+					acquisitionItemCount: 3)));
+		var player = CreatePlayer();
+		player.AbyssRank = player.AbyssRank with { Ap = 2_500 };
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+			new InventoryItem
+			{
+				ObjectId = 3002,
+				ItemId = 186000001,
+				Count = 6,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 1,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedBuyFromShopPlanner, plan.Status);
+		var dispatch = Assert.IsType<CmBuyItemBuyFromShopDispatchDescriptor>(plan.BuyFromShopPlan!.Dispatch);
+		Assert.True(dispatch.UseKinah);
+		Assert.NotNull(dispatch.TradeTemplate);
+		var transactionPlan = Assert.IsType<TradeBuyTransactionPlan>(dispatch.BuyTransactionPlan);
+		Assert.Equal(TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction, transactionPlan.Status);
+		Assert.Equal(500, transactionPlan.RequiredKinah);
+		Assert.Equal(1_000, transactionPlan.RequiredAbyssPoints);
+		Assert.Equal(new TradeBuyTransactionRequiredItem(186000001, 6), Assert.Single(transactionPlan.RequiredItems));
+		Assert.False(transactionPlan.ShouldDispatchLiveSideEffects);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.BuyFromShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeBuyTransactionOutcomePlanStatus.DisabledNoTransaction, outcome.BuyFromShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionRecordsMissingSellOutcomeWithoutSideEffects()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();
@@ -685,6 +758,14 @@ public sealed class GameServerConnectionBuyItemTests
 			purchaseLists);
 	}
 
+	private static TradeListTable CreateBuyTradeLists(params TradeListTemplateSummary[] tradeLists)
+	{
+		return new TradeListTable(
+			tradeLists,
+			Array.Empty<TradeListTemplateSummary>(),
+			Array.Empty<TradeListTemplateSummary>());
+	}
+
 	private static GoodsListTable CreateGoodsLists(params GoodsListSummary[] purchaseLists)
 	{
 		return new GoodsListTable(
@@ -693,12 +774,28 @@ public sealed class GameServerConnectionBuyItemTests
 			purchaseLists);
 	}
 
+	private static GoodsListTable CreateBuyGoodsLists(params GoodsListSummary[] tradeLists)
+	{
+		return new GoodsListTable(
+			tradeLists,
+			Array.Empty<GoodsListSummary>(),
+			Array.Empty<GoodsListSummary>());
+	}
+
 	private static ItemTemplateTable CreateItemTemplates(params ItemTemplateSummary[] templates)
 	{
 		return new ItemTemplateTable(templates);
 	}
 
-	private static ItemTemplateSummary Template(int itemId, long price, int requiredAbyssPoints = 0, int mask = 0, int maxStackCount = 1)
+	private static ItemTemplateSummary Template(
+		int itemId,
+		long price,
+		int requiredAbyssPoints = 0,
+		int mask = 0,
+		int maxStackCount = 1,
+		string acquisitionType = "",
+		int acquisitionItemId = 0,
+		int acquisitionItemCount = 0)
 	{
 		return new ItemTemplateSummary(
 			itemId,
@@ -713,7 +810,10 @@ public sealed class GameServerConnectionBuyItemTests
 			MaxStackCount: maxStackCount,
 			Price: price,
 			ValidEquipmentSlots: 0,
-			RequiredAbyssPoints: requiredAbyssPoints);
+			RequiredAbyssPoints: requiredAbyssPoints,
+			AcquisitionType: acquisitionType,
+			AcquisitionItemId: acquisitionItemId,
+			AcquisitionItemCount: acquisitionItemCount);
 	}
 
 	internal static Task InvokeProcessPacketAsyncForAdapterTests(GameServerConnection connection, byte[] payload) =>

@@ -1170,6 +1170,10 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(new ItemApExtractActionInfo(0.5f, "ARMOR"), staticData.ItemTemplates.GetItemTemplate(165005001)?.ApExtractAction);
 		Assert.True(staticData.ItemTemplates.GetItemTemplate(100000363)?.CanApExtract);
 		Assert.Equal(4900, staticData.ItemTemplates.GetItemTemplate(100000363)?.RequiredAbyssPoints);
+		Assert.Equal("AP", staticData.ItemTemplates.GetItemTemplate(100000363)?.AcquisitionType);
+		Assert.Equal("ABYSS", staticData.ItemTemplates.GetItemTemplate(100000367)?.AcquisitionType);
+		Assert.Equal(186000031, staticData.ItemTemplates.GetItemTemplate(100000367)?.AcquisitionItemId);
+		Assert.Equal(6, staticData.ItemTemplates.GetItemTemplate(100000367)?.AcquisitionItemCount);
 		Assert.Equal(new ItemDyeActionInfo(null, 0, false), staticData.ItemTemplates.GetItemTemplate(169100000)?.DyeAction);
 		Assert.Equal(new ItemDyeActionInfo(0xc22626, 0, false), staticData.ItemTemplates.GetItemTemplate(169120000)?.DyeAction);
 		Assert.Equal(new ItemAnimationActionInfo(1, 2, 3, 4, null, 60), staticData.ItemTemplates.GetItemTemplate(188500000)?.AnimationAction);

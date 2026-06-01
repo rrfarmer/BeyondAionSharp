@@ -3980,6 +3980,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var sellActionFacts = ResolveBuyItemSellActionFacts(player, packet, targetKind, npcTradeFunctionFacts);
 		var sellToShopPlan = ResolveBuyItemSellToShopPlan(player, packet, targetKind, sellActionFacts);
 		var sellForApToShopPlan = ResolveBuyItemSellForApToShopPlan(player, packet, sellActionFacts);
+		var buyFromShopTradeTemplate = ResolveBuyItemBuyFromShopTradeTemplate(player, packet, targetKind);
+		var buyTransactionPlan = ResolveBuyItemBuyTransactionPlan(player, packet, targetKind, buyFromShopTradeTemplate);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
@@ -3989,6 +3991,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				NpcCanPurchase: npcTradeFunctionFacts?.NpcCanPurchase ?? false,
 				NpcCanSell: npcTradeFunctionFacts?.NpcCanSell ?? true,
 				PurchaseTemplate: sellActionFacts?.PurchaseTemplate,
+				SellTemplate: buyFromShopTradeTemplate,
+				BuyTransactionPlan: buyTransactionPlan,
 				SellToShopPlan: sellToShopPlan,
 				SellForApToShopPlan: sellForApToShopPlan));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
@@ -4137,6 +4141,116 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			sellActionFacts.PurchaseTemplate,
 			goodsLists);
+	}
+
+	private TradeListTemplateSummary? ResolveBuyItemBuyFromShopTradeTemplate(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| !IsBuyFromShopTradeAction(packet.TradeActionId)
+			|| _world == null
+			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			|| gameObject is not IWorldNpcObject npc)
+			return null;
+
+		var tradeLists = _buyItemTradeLists ?? _runtimeContext?.DataManager?.StaticData.TradeLists;
+		return tradeLists?.GetTradeListTemplate(npc.TemplateId);
+	}
+
+	private TradeBuyTransactionPlan? ResolveBuyItemBuyTransactionPlan(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		TradeListTemplateSummary? tradeTemplate)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| tradeTemplate == null
+			|| !IsBuyFromShopTradeAction(packet.TradeActionId))
+			return null;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		var goodsLists = _buyItemGoodsLists ?? staticData?.GoodsLists;
+		if (itemTemplates == null || goodsLists == null)
+			return null;
+
+		// Java parity: TradeService.performBuyTransaction receives packet item
+		// ids/counts through TradeList, then validates those ids against the NPC
+		// trade goods lists before any live inventory/AP/Kinah mutation.
+		var allowedGoodsItemIds = CreateBuyItemAllowedGoodsItemIds(tradeTemplate, goodsLists);
+		var tradeItems = packet.Items
+			.Select(item =>
+			{
+				var template = itemTemplates.GetItemTemplate(item.ItemObjectId);
+				return new TradeBuyTransactionItemRequest(
+					item.ItemObjectId,
+					item.Count,
+					template?.Price ?? 0,
+					template?.RequiredAbyssPoints ?? 0,
+					template?.AcquisitionType ?? string.Empty,
+					template?.AcquisitionItemId ?? 0,
+					template?.AcquisitionItemCount ?? 0,
+					IsAllowedByNpcGoodsList: allowedGoodsItemIds.Contains(item.ItemObjectId),
+					LimitedItemCanBuy: true);
+			})
+			.ToArray();
+
+		return TradeBuyTransactionPlanService.CreatePlan(
+			new TradeBuyTransactionInput(
+				TradeItems: tradeItems,
+				TradeTemplate: tradeTemplate,
+				UseKinah: ShouldUseKinahForBuyTransaction(tradeTemplate.NpcType),
+				PlayerCanTrade: CanTrade(player),
+				AvailableKinah: GetInventoryItemCount(player.InventoryItems, InventoryItemFactory.KinahItemId),
+				CurrentAbyssPoints: player.AbyssRank.Ap,
+				FreeSlots: InventoryCapacity.GetFreeCubeSlots(player, itemTemplates),
+				AvailableRequiredItems: CreateInventoryItemCountByItemId(player.InventoryItems),
+				VendorBuyModifier: PricesService.GetVendorBuyModifier(_options.Prices)));
+	}
+
+	private static IReadOnlySet<int> CreateBuyItemAllowedGoodsItemIds(
+		TradeListTemplateSummary tradeTemplate,
+		GoodsListTable goodsLists)
+	{
+		var allowed = new HashSet<int>();
+		foreach (var goodsListId in tradeTemplate.GoodsListIds)
+		{
+			var goodsList = goodsLists.GetGoodsListById(goodsListId);
+			if (goodsList == null)
+				continue;
+			foreach (var item in goodsList.ItemSummaries)
+				allowed.Add(item.Id);
+		}
+		return allowed;
+	}
+
+	private static IReadOnlyDictionary<int, long> CreateInventoryItemCountByItemId(IReadOnlyList<InventoryItem> inventoryItems)
+	{
+		var counts = new Dictionary<int, long>();
+		foreach (var item in inventoryItems.Where(item => item.Location == 0 && !item.IsEquipped))
+			counts[item.ItemId] = counts.GetValueOrDefault(item.ItemId) + item.Count;
+		return counts;
+	}
+
+	private static long GetInventoryItemCount(IReadOnlyList<InventoryItem> inventoryItems, int itemId)
+	{
+		return inventoryItems
+			.Where(item => item.Location == 0 && !item.IsEquipped && item.ItemId == itemId)
+			.Sum(item => item.Count);
+	}
+
+	private static bool ShouldUseKinahForBuyTransaction(string npcType)
+	{
+		return npcType is "NORMAL" or "ABYSS_KINAH";
+	}
+
+	private static bool IsBuyFromShopTradeAction(int tradeActionId)
+	{
+		return tradeActionId is 13 or 14 or 15 or 16;
 	}
 
 	private static bool IsItemTemplateSellable(ItemTemplateSummary template)

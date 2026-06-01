@@ -2034,8 +2034,11 @@ public sealed class StaticData
 
 			if (reader.Depth == 3 && reader.LocalName == "acquisition" && currentItemTemplate != null)
 			{
-				// Java parity: model/templates/item/Acquisition.getRequiredAp consumed by ApExtractAction.act.
+				// Java parity: model/templates/item/Acquisition is consumed by AP extraction and TradeList.calculateAbyssRewardBuyList.
 				currentItemTemplate.RequiredAbyssPoints = ReadIntAttribute(reader, "ap");
+				currentItemTemplate.AcquisitionType = reader.GetAttribute("type") ?? string.Empty;
+				currentItemTemplate.AcquisitionItemId = ReadIntAttribute(reader, "item");
+				currentItemTemplate.AcquisitionItemCount = ReadIntAttribute(reader, "count");
 				continue;
 			}
 
@@ -4258,6 +4261,12 @@ public sealed class StaticData
 
 		public int RequiredAbyssPoints { get; set; }
 
+		public string AcquisitionType { get; set; } = string.Empty;
+
+		public int AcquisitionItemId { get; set; }
+
+		public int AcquisitionItemCount { get; set; }
+
 		public ItemDyeActionInfo? DyeAction { get; set; }
 
 		public ItemAnimationActionInfo? AnimationAction { get; set; }
@@ -4419,6 +4428,9 @@ public sealed class StaticData
 				ApExtractAction,
 				ExpExtractAction,
 				RequiredAbyssPoints,
+				AcquisitionType,
+				AcquisitionItemId,
+				AcquisitionItemCount,
 				HasHouseObjectAction,
 				HouseObjectTemplateId,
 				HasHouseDecorateAction,
