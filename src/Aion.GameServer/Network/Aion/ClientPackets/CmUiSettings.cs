@@ -19,7 +19,7 @@ public sealed class CmUiSettings : GameClientPacket
 	{
 		// Java parity: network/aion/clientpackets/CM_UI_SETTINGS.readImpl.
 		SettingsType = buffer.ReadC();
-		buffer.ReadH();
+		buffer.ReadSignedH();
 		DeclaredSize = buffer.ReadH();
 		Data = buffer.ReadRemaining();
 	}
