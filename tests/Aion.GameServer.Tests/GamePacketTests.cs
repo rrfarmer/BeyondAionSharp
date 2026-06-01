@@ -5691,6 +5691,94 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesSummonMove()
+	{
+		var movementType = (byte)(MovementMask.Position | MovementMask.Manual | MovementMask.Absolute | MovementMask.Glide | MovementMask.Vehicle);
+		var summonMove = Assert.IsType<CmSummonMove>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					201,
+					b =>
+					{
+						b.WriteD(8101);
+						b.WriteF(10.5f);
+						b.WriteF(11.5f);
+						b.WriteF(12.5f);
+						b.WriteC(91);
+						b.WriteC(movementType);
+						b.WriteF(20.5f);
+						b.WriteF(21.5f);
+						b.WriteF(22.5f);
+						b.WriteC(2);
+						b.WriteD(301);
+						b.WriteD(302);
+						b.WriteF(30.5f);
+						b.WriteF(31.5f);
+						b.WriteF(32.5f);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+
+		Assert.Equal(8101, summonMove.SummonObjectId);
+		Assert.Equal(10.5f, summonMove.X);
+		Assert.Equal(11.5f, summonMove.Y);
+		Assert.Equal(12.5f, summonMove.Z);
+		Assert.Equal(91, summonMove.Heading);
+		Assert.Equal(movementType, summonMove.Type);
+		Assert.True(summonMove.HasManualPosition);
+		Assert.True(summonMove.IsAbsolute);
+		Assert.True(summonMove.IsGliding);
+		Assert.True(summonMove.IsVehicle);
+		Assert.Equal(20.5f, summonMove.TargetX);
+		Assert.Equal(21.5f, summonMove.TargetY);
+		Assert.Equal(22.5f, summonMove.TargetZ);
+		Assert.Equal(2, summonMove.GlideFlag);
+		Assert.Equal(301, summonMove.VehicleUnknown1);
+		Assert.Equal(302, summonMove.VehicleUnknown2);
+		Assert.Equal(30.5f, summonMove.VehicleX);
+		Assert.Equal(31.5f, summonMove.VehicleY);
+		Assert.Equal(32.5f, summonMove.VehicleZ);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(201, b => b.WriteD(8101)), GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesSummonMoveManualPositionWithoutVectorTail()
+	{
+		var movementType = (byte)(MovementMask.Position | MovementMask.Manual);
+		var summonMove = Assert.IsType<CmSummonMove>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(
+					201,
+					b =>
+					{
+						b.WriteD(8102);
+						b.WriteF(40.5f);
+						b.WriteF(41.5f);
+						b.WriteF(42.5f);
+						b.WriteC(13);
+						b.WriteC(movementType);
+					}
+				),
+				GameConnectionState.InGame
+			)
+		);
+
+		Assert.Equal(8102, summonMove.SummonObjectId);
+		Assert.Equal(40.5f, summonMove.X);
+		Assert.Equal(41.5f, summonMove.Y);
+		Assert.Equal(42.5f, summonMove.Z);
+		Assert.Equal(13, summonMove.Heading);
+		Assert.Equal(movementType, summonMove.Type);
+		Assert.True(summonMove.HasManualPosition);
+		Assert.False(summonMove.IsAbsolute);
+		Assert.Equal(0, summonMove.TargetX);
+		Assert.Equal(0, summonMove.TargetY);
+		Assert.Equal(0, summonMove.TargetZ);
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesSummonAttack()
 	{
 		var summonAttack = Assert.IsType<CmSummonAttack>(
