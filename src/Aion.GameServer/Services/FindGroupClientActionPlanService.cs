@@ -144,6 +144,8 @@ public sealed class FindGroupClientActionPlanService
 					action.Message ?? string.Empty,
 					nowEpochSeconds,
 					currentMembers)),
+			// Java parity: CM_FIND_GROUP.readImpl parses actions 20 and 25, but runImpl has no
+			// corresponding branch, so this disabled composer must not plan a live side effect.
 			20 or 25 => FindGroupClientActionPlan.NoRunImpl(action.Action),
 			_ => FindGroupClientActionPlan.Unknown(action.Action),
 		};

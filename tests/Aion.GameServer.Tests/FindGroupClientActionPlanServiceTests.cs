@@ -219,10 +219,8 @@ public sealed class FindGroupClientActionPlanServiceTests
 			nowEpochSeconds: 501);
 		var unknown = service.Plan(player, new FindGroupClientAction(99), nowEpochSeconds: 502);
 
-		Assert.Equal(FindGroupClientActionPlanKind.ParsedButNoRunImpl, enterPrepareWindow.Kind);
-		Assert.False(enterPrepareWindow.DispatchLiveSideEffects);
-		Assert.Equal(FindGroupClientActionPlanKind.ParsedButNoRunImpl, ban.Kind);
-		Assert.False(ban.DispatchLiveSideEffects);
+		AssertNoRunImplPlan(enterPrepareWindow, action: 20);
+		AssertNoRunImplPlan(ban, action: 25);
 		Assert.Equal(FindGroupClientActionPlanKind.UnknownAction, unknown.Kind);
 		Assert.False(unknown.DispatchLiveSideEffects);
 	}
@@ -242,5 +240,21 @@ public sealed class FindGroupClientActionPlanServiceTests
 			PlayerClass = playerClass,
 			Level = level,
 		};
+	}
+
+	private static void AssertNoRunImplPlan(FindGroupClientActionPlan plan, int action)
+	{
+		Assert.Equal(action, plan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.ParsedButNoRunImpl, plan.Kind);
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Null(plan.RecruitmentMutationPlan);
+		Assert.Null(plan.RecruitmentShowPlan);
+		Assert.Null(plan.ApplicationMutationPlan);
+		Assert.Null(plan.ApplicationShowPlan);
+		Assert.Null(plan.InstanceGroupMutationPlan);
+		Assert.Null(plan.InstanceGroupShowPlan);
+		Assert.Null(plan.InstanceGroupClientShowPlan);
+		Assert.Null(plan.InstanceGroupMemberInfoPlan);
+		Assert.Null(plan.InstanceApplicationPlan);
 	}
 }
