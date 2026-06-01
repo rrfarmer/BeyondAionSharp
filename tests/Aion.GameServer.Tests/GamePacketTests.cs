@@ -6957,6 +6957,29 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesAutoGroupPacket()
+	{
+		var autoGroup = Assert.IsType<CmAutoGroup>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(200, buffer =>
+			{
+				buffer.WriteD(300260000);
+				buffer.WriteC(100);
+				buffer.WriteC(1);
+			}), GameConnectionState.InGame)
+		);
+
+		Assert.Equal(300260000, autoGroup.InstanceMaskId);
+		Assert.Equal(100, autoGroup.WindowId);
+		Assert.Equal(1, autoGroup.EntryRequestId);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(CreateClientPayload(200, buffer =>
+		{
+			buffer.WriteD(1);
+			buffer.WriteC(101);
+			buffer.WriteC(0);
+		}), GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ClientPacketFactory_ParsesGroupDistributionPacket()
 	{
 		var distribution = Assert.IsType<CmGroupDistribution>(

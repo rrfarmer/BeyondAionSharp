@@ -138,6 +138,7 @@ public static class GameClientPacketFactory
 		Register(194, states => new CmShowRestrictions(194, states), GameConnectionState.InGame);
 		Register(196, states => new CmShowMap(196, states), GameConnectionState.InGame);
 		Register(197, states => new CmAppearance(197, states), GameConnectionState.InGame);
+		Register(200, states => new CmAutoGroup(200, states), GameConnectionState.InGame);
 		Register(201, states => new CmSummonMove(201, states), GameConnectionState.InGame);
 		Register(202, states => new CmSummonEmotion(202, states), GameConnectionState.InGame);
 		Register(203, states => new CmSummonAttack(203, states), GameConnectionState.InGame);
