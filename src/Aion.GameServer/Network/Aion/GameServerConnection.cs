@@ -4255,10 +4255,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleFindGroupAsync(CmFindGroup findGroup)
 	{
-		// Java parity: CM_FIND_GROUP action 2/6 mutation-post branches call
-		// FindGroupService.addRecruitment/addApplication, then directly send the posted
-		// system message followed by the refreshed SM_FIND_GROUP list to the active player.
-		if (_activePlayer == null || findGroup.Action is not (2 or 6))
+		// Java parity: CM_FIND_GROUP action 0/4 show-list and action 2/6 mutation-post
+		// branches use direct sends to the active player.
+		if (_activePlayer == null || findGroup.Action is not (0 or 2 or 4 or 6))
 			return;
 
 		var plan = CreateDisabledFindGroupBoundaryPlan(findGroup, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds());

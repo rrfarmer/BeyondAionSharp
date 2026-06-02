@@ -83,6 +83,55 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionZeroAndFourSendRaceFilteredShowLists()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var elyosRecruiter = CreatePlayer(2002, "ElyosRecruiter", "ELYOS");
+		var asmodianRecruiter = CreatePlayer(3003, "AsmodianRecruiter", "ASMODIANS");
+		var elyosApplicant = CreatePlayer(4004, "ElyosApplicant", "ELYOS");
+		var asmodianApplicant = CreatePlayer(5005, "AsmodianApplicant", "ASMODIANS");
+		findGroupService.AddRecruitment(elyosRecruiter, "Elyos recruit", groupType: 2, nowEpochSeconds: 100);
+		findGroupService.AddRecruitment(asmodianRecruiter, "Asmo recruit", groupType: 3, nowEpochSeconds: 101);
+		findGroupService.AddApplication(elyosApplicant, "Elyos apply", groupType: 4, classId: 10, level: 65, nowEpochSeconds: 102);
+		findGroupService.AddApplication(asmodianApplicant, "Asmo apply", groupType: 5, classId: 7, level: 64, nowEpochSeconds: 103);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet));
+
+		SetActivePlayer(fixture.Connection, CreatePlayer(9001, "ElyosViewer", "ELYOS"));
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(77, buffer => buffer.WriteC(0)));
+
+		var recruitmentPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(0, ReadPrivateField<int>(recruitmentPacket, "_action"));
+		var recruitments = ReadPrivateField<IReadOnlyList<FindGroupRecruitmentSnapshot>>(recruitmentPacket, "_recruitments");
+		var recruitment = Assert.Single(recruitments);
+		Assert.Equal(elyosRecruiter.ObjectId, recruitment.ObjectId);
+		Assert.Equal("Elyos recruit", recruitment.Message);
+		Assert.Equal("ElyosRecruiter", recruitment.RecruiterName);
+		Assert.Equal(2, recruitment.GroupType);
+
+		sentPackets.Clear();
+		SetActivePlayer(fixture.Connection, CreatePlayer(9002, "AsmodianViewer", "ASMODIANS"));
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(77, buffer => buffer.WriteC(4)));
+
+		var applicationPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(4, ReadPrivateField<int>(applicationPacket, "_action"));
+		var applications = ReadPrivateField<IReadOnlyList<FindGroupApplicationSnapshot>>(applicationPacket, "_applications");
+		var application = Assert.Single(applications);
+		Assert.Equal(asmodianApplicant.ObjectId, application.PlayerObjectId);
+		Assert.Equal("Asmo apply", application.Message);
+		Assert.Equal("AsmodianApplicant", application.PlayerName);
+		Assert.Equal(5, application.GroupType);
+		Assert.Equal(7, application.ClassId);
+		Assert.Equal(64, application.Level);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -1699,6 +1748,13 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		var stateField = typeof(GameServerConnection).GetField("_state", BindingFlags.Instance | BindingFlags.NonPublic);
 		Assert.NotNull(stateField);
 		stateField.SetValue(connection, GameConnectionState.InGame);
+	}
+
+	private static T ReadPrivateField<T>(object target, string fieldName)
+	{
+		var field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(field);
+		return Assert.IsAssignableFrom<T>(field.GetValue(target));
 	}
 
 	private sealed class ConnectionFixture : IAsyncDisposable
