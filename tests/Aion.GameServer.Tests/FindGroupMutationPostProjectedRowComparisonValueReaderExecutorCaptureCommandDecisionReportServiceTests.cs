@@ -29,6 +29,13 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit
 			&& row.IsPrimaryDecision
 			&& row.CommandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.ExecutorConsistencyAudit
+			&& row.CurrentEvidence.Contains("captureExecutionBlockerSummaryRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("captureAcceptanceMatrixRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("liveCapturePreflightRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("runtimeComparisonHandoffRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("consistencyAuditRowEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("ExecutorEvidenceBridge", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("ResultEmissionBlocker", StringComparison.Ordinal)
 			&& !row.ShouldRunCommand);
 		Assert.Contains(report.Rows, row =>
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows

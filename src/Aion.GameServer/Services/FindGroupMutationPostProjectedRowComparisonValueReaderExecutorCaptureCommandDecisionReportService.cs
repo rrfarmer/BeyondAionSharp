@@ -69,8 +69,9 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		executionBlockerSummary ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryService.Create();
 
 		var selectedKind = CommandKindFor(executionBlockerSummary.PrimaryBlockingField);
+		var captureExecutionBlockerSummaryRows = CaptureExecutionBlockerSummaryRowEvidence(executionBlockerSummary);
 		var rows = executionBlockerSummary.Rows
-			.Select(row => Row(row, executionBlockerSummary.PrimaryBlockingEvidenceField))
+			.Select(row => Row(row, executionBlockerSummary.PrimaryBlockingEvidenceField, captureExecutionBlockerSummaryRows))
 			.ToArray();
 		var status = StatusFor(executionBlockerSummary.Status, executionBlockerSummary.PrimaryBlockingField);
 
@@ -98,7 +99,8 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionReportRow Row(
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryRow row,
-		string selectedEvidenceField)
+		string selectedEvidenceField,
+		string captureExecutionBlockerSummaryRows)
 	{
 		var commandKind = CommandKindFor(row.Field);
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionReportRow(
@@ -113,8 +115,16 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			row.BlocksExecutableImplementation,
 			row.BlocksVerifiedParity,
 			row.RequiredEvidence,
-			row.CurrentEvidence,
+			$"{row.CurrentEvidence}; captureExecutionBlockerSummaryRows={captureExecutionBlockerSummaryRows}",
 			NotesFor(row, commandKind));
+	}
+
+	private static string CaptureExecutionBlockerSummaryRowEvidence(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummary executionBlockerSummary)
+	{
+		return executionBlockerSummary.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", executionBlockerSummary.Rows.Select(row => $"{row.Field}={row.CurrentEvidence}"));
 	}
 
 	private static string NotesFor(
