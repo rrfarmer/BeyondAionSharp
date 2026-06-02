@@ -50,6 +50,13 @@ public sealed class FindGroupConcurrentMutationOrderingReadinessServiceTests
 				&& evidence.Detail.Contains("CM_FIND_GROUP-created state", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("group disband cleanup", StringComparison.Ordinal));
 		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupConcurrentMutationOrderingEvidenceKind.CSharpDeterministicSharedSingletonTraceProjection
+				&& evidence.Status == FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("FindGroupSharedSingletonInterleavingTraceService", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("logout-before-joined-team", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("joined-team-before-logout-before-disband", StringComparison.Ordinal));
+		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("ConcurrentDictionary storage shape alone", StringComparison.Ordinal));
 	}

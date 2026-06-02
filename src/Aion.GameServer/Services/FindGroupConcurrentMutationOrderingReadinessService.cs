@@ -34,6 +34,10 @@ public static class FindGroupConcurrentMutationOrderingReadinessService
 					"C# focused tests now cover deterministic shared-singleton caller orders where CM_FIND_GROUP-created state is removed by logout before joined-team cleanup, and where joined-team re-adds a team recruitment that logout does not remove until group disband cleanup.",
 					FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable),
 				new FindGroupConcurrentMutationOrderingEvidence(
+					FindGroupConcurrentMutationOrderingEvidenceKind.CSharpDeterministicSharedSingletonTraceProjection,
+					"C# FindGroupSharedSingletonInterleavingTraceService projects deterministic non-live trace rows for logout-before-joined-team and joined-team-before-logout-before-disband caller order.",
+					FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable),
+				new FindGroupConcurrentMutationOrderingEvidence(
 					FindGroupConcurrentMutationOrderingEvidenceKind.LiveSingletonCallerInterleaving,
 					"No live evidence proves CM_FIND_GROUP, logout, joined-team, and disband callers interleave against the same singleton state with Java-equivalent multi-step outcomes.",
 					FindGroupConcurrentMutationOrderingEvidenceStatus.Blocked),
@@ -64,6 +68,7 @@ public enum FindGroupConcurrentMutationOrderingEvidenceKind
 	CSharpSequentialOnJoinedTeamTests,
 	CSharpBasicConcurrentStoreTests,
 	CSharpDeterministicSharedSingletonInterleavingTests,
+	CSharpDeterministicSharedSingletonTraceProjection,
 	LiveSingletonCallerInterleaving,
 	RuntimeComparison,
 }

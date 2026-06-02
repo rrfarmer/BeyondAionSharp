@@ -71,7 +71,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("leader solo recruitment re-add before full-team recruitment removal", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("ConcurrentDictionary-backed recruitment, application, and instance-group state stores", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConcurrentMutationOrderingReadinessService", StringComparison.Ordinal));
-		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("deterministic shared-singleton interleaving evidence", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("deterministic shared-singleton interleaving trace projection evidence", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("Concurrent mutation ordering remains blocked", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchAuditService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));

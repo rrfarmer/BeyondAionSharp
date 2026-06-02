@@ -26,6 +26,7 @@ public sealed class FindGroupSharedSingletonInterleavingTests
 		var logout = service.OnLogout(player);
 		WithTeam(player, PlayerTeamMembership.Group, team.ObjectId);
 		var joined = service.OnJoinedTeam(player, team, isLeader: true, isFull: true, nowEpochSeconds: 200, serverId: 5);
+		var trace = FindGroupSharedSingletonInterleavingTraceService.CreateLogoutBeforeJoinedTeamTrace(logout, joined);
 
 		Assert.NotNull(logout.RemovedRecruitment);
 		Assert.NotNull(logout.RemovedApplication);
@@ -38,6 +39,30 @@ public sealed class FindGroupSharedSingletonInterleavingTests
 		Assert.Empty(service.ShowRecruitments("ELYOS", nowEpochSeconds: 300).Recruitments);
 		Assert.Empty(service.ShowApplications("ELYOS", nowEpochSeconds: 301).Applications);
 		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 302).InstanceGroups);
+		Assert.False(trace.IsLiveRuntimeTrace);
+		Assert.Equal(FindGroupSharedSingletonInterleavingTraceKind.LogoutBeforeJoinedTeam, trace.Kind);
+		Assert.Collection(
+			trace.Steps,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSharedSingletonCaller.LogoutCleanup, step.Caller);
+				Assert.Equal(player.ObjectId, step.SubjectObjectId);
+				Assert.Contains("recruitment=Removed", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("application=Removed", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("instanceGroup=Removed", step.Outcome, StringComparison.Ordinal);
+				Assert.Equal("FindGroupService.onLogout(player)", step.JavaSource);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSharedSingletonCaller.JoinedTeamCleanup, step.Caller);
+				Assert.Equal(player.ObjectId, step.SubjectObjectId);
+				Assert.Contains("application=Missing", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("soloRecruitment=Missing", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("fullTeamRecruitmentRemoval=Missing", step.Outcome, StringComparison.Ordinal);
+				Assert.Equal("FindGroupService.onJoinedTeam(player)", step.JavaSource);
+			});
 	}
 
 	[Fact]
@@ -62,6 +87,12 @@ public sealed class FindGroupSharedSingletonInterleavingTests
 		var joined = service.OnJoinedTeam(player, team, isLeader: true, isFull: false, nowEpochSeconds: 200, serverId: 5);
 		var logout = service.OnLogout(player);
 		var disbandRemoval = service.RemoveRecruitment(team.ObjectId, serverId: 5, unknown1: 0, unknown2: 0, unknown3: 0);
+		var trace = FindGroupSharedSingletonInterleavingTraceService.CreateJoinedTeamBeforeLogoutBeforeDisbandTrace(
+			player.ObjectId,
+			team.ObjectId,
+			joined,
+			logout,
+			disbandRemoval);
 
 		Assert.False(joined.InstanceGroupRemoval.ShouldRemove);
 		Assert.Equal(FindGroupApplicationPlanStatus.Removed, joined.ApplicationRemoval.Status);
@@ -77,6 +108,35 @@ public sealed class FindGroupSharedSingletonInterleavingTests
 		Assert.Empty(service.ShowRecruitments("ELYOS", nowEpochSeconds: 300).Recruitments);
 		Assert.Empty(service.ShowApplications("ELYOS", nowEpochSeconds: 301).Applications);
 		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 302).InstanceGroups);
+		Assert.False(trace.IsLiveRuntimeTrace);
+		Assert.Equal(FindGroupSharedSingletonInterleavingTraceKind.JoinedTeamBeforeLogoutBeforeDisband, trace.Kind);
+		Assert.Collection(
+			trace.Steps,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSharedSingletonCaller.JoinedTeamCleanup, step.Caller);
+				Assert.Equal(player.ObjectId, step.SubjectObjectId);
+				Assert.Contains("application=Removed", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("soloRecruitment=Removed", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("teamRecruitmentAdd=Added", step.Outcome, StringComparison.Ordinal);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSharedSingletonCaller.LogoutCleanup, step.Caller);
+				Assert.Equal(player.ObjectId, step.SubjectObjectId);
+				Assert.Contains("recruitment=Missing", step.Outcome, StringComparison.Ordinal);
+				Assert.Contains("instanceGroup=Removed", step.Outcome, StringComparison.Ordinal);
+			},
+			step =>
+			{
+				Assert.Equal(3, step.Sequence);
+				Assert.Equal(FindGroupSharedSingletonCaller.DisbandCleanup, step.Caller);
+				Assert.Equal(team.ObjectId, step.SubjectObjectId);
+				Assert.Equal("recruitment=Removed", step.Outcome);
+				Assert.Equal("FindGroupService.removeRecruitment(team)", step.JavaSource);
+			});
 	}
 
 	private static Player CreatePlayer(int objectId, string name, string race, string playerClass, int level)
