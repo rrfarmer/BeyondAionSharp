@@ -17,6 +17,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.Equal("aion.findGroupMutationPost.serverEpochSeconds", report.TimestampProperty);
 		Assert.Equal(1700000000, report.DeterministicServerEpochSeconds);
 		Assert.Equal("-Daion.findGroupMutationPost.serverEpochSeconds=1700000000", report.ExpectedTimestampCommandFragment);
+		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.ExecutorConsistencyAudit, report.CommandDecisionSelectedKind);
+		Assert.Equal("executorConsistencyAuditAccepted", report.CommandDecisionSelectedEvidenceField);
+		Assert.True(report.CommandDecisionDefersJavaCaptureBeforeConsistency);
 		Assert.Equal(Enum.GetValues<FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider>(), report.Rows.Select(row => row.Provider));
 		Assert.All(report.Rows, row =>
 		{
@@ -31,6 +34,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			&& !row.RequiresArtifactRoot);
 		Assert.Contains(report.Rows, row =>
 			row.Provider == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider.LiveCapturePreflightRunbook
+			&& row.RequiresArtifactRoot);
+		Assert.Contains(report.Rows, row =>
+			row.Provider == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider.JavaArtifactRootValidationCommandReport
 			&& row.RequiresArtifactRoot);
 		Assert.Contains("runtime evidence", report.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Contains("comparison remain missing", report.ExecutionDecision, StringComparison.Ordinal);
@@ -75,6 +81,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReportStatus.ConsistentRuntimeEvidenceMissing, report.Status);
 		Assert.Equal(artifactRoot, report.ArtifactRoot);
+		Assert.True(report.CommandDecisionDefersJavaCaptureBeforeConsistency);
 		Assert.Contains(report.Rows, row =>
 			row.Provider == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider.JavaArtifactCaptureRunbook
 			&& !row.RequiresArtifactRoot

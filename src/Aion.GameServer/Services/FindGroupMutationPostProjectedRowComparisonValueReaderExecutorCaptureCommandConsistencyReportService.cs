@@ -10,7 +10,6 @@ public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptur
 {
 	JavaArtifactCaptureRunbook,
 	LiveCapturePreflightRunbook,
-	CaptureExecutionBlockerSummary,
 	JavaArtifactRootValidationCommandReport,
 }
 
@@ -34,6 +33,9 @@ public sealed record FindGroupMutationPostProjectedRowComparisonValueReaderExecu
 	int DeterministicServerEpochSeconds,
 	string ExpectedTimestampCommandFragment,
 	bool AllProvidersConsistent,
+	FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind CommandDecisionSelectedKind,
+	string CommandDecisionSelectedEvidenceField,
+	bool CommandDecisionDefersJavaCaptureBeforeConsistency,
 	bool CanRunRuntimeComparison,
 	bool CanClaimVerifiedParity,
 	string ExecutionDecision,
@@ -53,7 +55,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		string artifactRoot = FindGroupMutationPostJavaTraceArtifactFileReportService.DefaultArtifactRoot,
 		FindGroupMutationPostJavaArtifactCaptureRunbook? javaCaptureRunbook = null,
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContract? liveCapturePreflight = null,
-		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummary? executionBlockerSummary = null,
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionReport? commandDecisionReport = null,
 		FindGroupMutationPostJavaArtifactRootValidationCommandReport? artifactRootValidationReport = null)
 	{
 		javaCaptureRunbook ??= FindGroupMutationPostJavaArtifactCaptureRunbookService.Create();
@@ -64,8 +66,9 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 
 		liveCapturePreflight ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContractService.Create(
 			javaCaptureRunbook: javaCaptureRunbook);
-		executionBlockerSummary ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryService.Create(
-			liveCapturePreflight: liveCapturePreflight);
+		commandDecisionReport ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionReportService.Create(
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryService.Create(
+				liveCapturePreflight: liveCapturePreflight));
 		artifactRootValidationReport ??= FindGroupMutationPostJavaArtifactRootValidationCommandReportService.Create(artifactRoot);
 
 		var timestampProperty = FindGroupMutationPostJavaArtifactCaptureRunbookService.ServerEpochSecondsProperty;
@@ -91,14 +94,6 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				expectedTimestampCommandFragment),
 			Row(
 				3,
-				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider.CaptureExecutionBlockerSummary,
-				executionBlockerSummary.SmallestNextEvidenceCommand,
-				requiresArtifactRoot: true,
-				artifactRoot,
-				timestampProperty,
-				expectedTimestampCommandFragment),
-			Row(
-				4,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider.JavaArtifactRootValidationCommandReport,
 				artifactRootValidationReport.JavaCaptureCommand,
 				requiresArtifactRoot: true,
@@ -119,6 +114,10 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			deterministicTimestamp,
 			expectedTimestampCommandFragment,
 			allProvidersConsistent,
+			commandDecisionReport.SelectedCommandKind,
+			commandDecisionReport.SelectedEvidenceField,
+			commandDecisionReport.SelectedCommandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.ExecutorConsistencyAudit
+				&& string.Equals(commandDecisionReport.SelectedEvidenceField, "executorConsistencyAuditAccepted", StringComparison.Ordinal),
 			CanRunRuntimeComparison: false,
 			CanClaimVerifiedParity: false,
 			DecisionFor(status),
