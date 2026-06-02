@@ -1835,6 +1835,23 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player.IsTrading)
 			return;
 
+		if (packet.DialogActionId == CmDialogSelect.OpenInstanceRecruit)
+		{
+			var portalPlan = _findGroupConnectionClientActionCompositionPlanService
+				?.CreatePortalInstanceGroupShowPlan(player, packet.TargetObjectId);
+			if (portalPlan?.EnableRegisterForInstancesIntent?.Packet != null)
+				await SendPacketAsync(portalPlan.EnableRegisterForInstancesIntent.Packet);
+			return;
+		}
+
+		if (packet.DialogActionId == CmDialogSelect.Select1_1
+			&& _findGroupConnectionClientActionCompositionPlanService
+				?.ShouldShowOpenInstanceRecruitDialog(player, packet.TargetObjectId) == true)
+		{
+			await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 1182));
+			return;
+		}
+
 		if (_portalEntryInteractionService != null)
 		{
 			var staticData = _runtimeContext?.DataManager?.StaticData;
@@ -1862,15 +1879,6 @@ public sealed class GameServerConnection : BaseClientConnection
 					cancellationToken: cancellationToken));
 			if (portalResult.Handled)
 				return;
-		}
-
-		if (packet.DialogActionId == CmDialogSelect.OpenInstanceRecruit)
-		{
-			var portalPlan = _findGroupConnectionClientActionCompositionPlanService
-				?.CreatePortalInstanceGroupShowPlan(player, packet.TargetObjectId);
-			if (portalPlan?.EnableRegisterForInstancesIntent?.Packet != null)
-				await SendPacketAsync(portalPlan.EnableRegisterForInstancesIntent.Packet);
-			return;
 		}
 
 		if (packet.DialogActionId == CmDialogSelect.Recovery)

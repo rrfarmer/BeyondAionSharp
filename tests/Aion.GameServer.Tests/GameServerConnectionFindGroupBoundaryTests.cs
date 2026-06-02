@@ -731,6 +731,52 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_SelectOneOneShowsOpenInstanceRecruitDialog()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var portalNpc = CreateNpc(0x04050607, templateId: 700001);
+		var missingPortalNpc = CreateNpc(0x04050608, templateId: 700099);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(portalNpc.ObjectId, portalNpc));
+		Assert.True(world.TryAddObject(missingPortalNpc.ObjectId, missingPortalNpc));
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [portalNpc.TemplateId]),
+		]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			autoGroups: autoGroups,
+			world: world);
+		SetActivePlayer(fixture.Connection, viewer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(portalNpc.ObjectId, CmDialogSelect.Select1_1));
+
+		var dialogPacket = Assert.IsType<SmDialogWindow>(Assert.Single(sentPackets));
+		Assert.Equal(portalNpc.ObjectId, ReadPrivateField<int>(dialogPacket, "_targetObjectId"));
+		Assert.Equal(1182, ReadPrivateField<int>(dialogPacket, "_dialogPageId"));
+
+		sentPackets.Clear();
+		viewer.TeamMembership = PlayerTeamMembership.Group;
+		viewer.CurrentTeamId = 0x01020309;
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(portalNpc.ObjectId, CmDialogSelect.Select1_1));
+		Assert.Empty(sentPackets);
+
+		viewer.TeamMembership = PlayerTeamMembership.None;
+		viewer.CurrentTeamId = 0;
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(missingPortalNpc.ObjectId, CmDialogSelect.Select1_1));
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionFifteenAndSeventeenHandleInstanceGroupInfoAndUpdates()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -2433,6 +2479,21 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		buffer.WriteH(~encodedOpcode);
 		writePayload(buffer);
 		return buffer.ToArray();
+	}
+
+	private static byte[] CreateDialogSelectPayload(int targetObjectId, int dialogActionId)
+	{
+		return CreateClientPayload(
+			54,
+			buffer =>
+			{
+				buffer.WriteD(targetObjectId);
+				buffer.WriteH(dialogActionId);
+				buffer.WriteH(0);
+				buffer.WriteH(0);
+				buffer.WriteD(0);
+				buffer.WriteH(0);
+			});
 	}
 
 	private static async Task InvokeProcessPacketAsync(GameServerConnection connection, byte[] payload)

@@ -115,6 +115,18 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			_autoGroups.GetRecruitableInstanceMaskIds(npc.TemplateId));
 	}
 
+	public bool ShouldShowOpenInstanceRecruitDialog(Player? activePlayer, int targetObjectId)
+	{
+		// Java parity: PortalDialogAI SELECT1_1 sends SM_DIALOG_WINDOW(..., 1182)
+		// only when !player.isInTeam() and the portal NPC has recruitable mask ids.
+		return activePlayer is { IsInTeam: false }
+			&& _autoGroups != null
+			&& _world != null
+			&& _world.TryGetObject(targetObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject npc
+			&& _autoGroups.GetRecruitableInstanceMaskIds(npc.TemplateId) != null;
+	}
+
 	private Player? ResolveWorldPlayer(int objectId)
 	{
 		// Java parity: FindGroupService.sendInstanceApplication and sendInstanceApplicationResult
