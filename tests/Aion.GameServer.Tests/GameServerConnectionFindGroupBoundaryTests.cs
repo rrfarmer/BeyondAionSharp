@@ -132,6 +132,106 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionOneAndFiveBroadcastRemovalPacketsToSameRacePlayers()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		var elyosViewer = CreatePlayer(0x01020305, "ElyosViewer", "ELYOS");
+		var asmodianViewer = CreatePlayer(0x01020306, "AsmodianViewer", "ASMODIANS");
+		var applicant = CreatePlayer(0x02030405, "Applicant", "ASMODIANS");
+		var asmodianPeer = CreatePlayer(0x02030406, "AsmodianPeer", "ASMODIANS");
+		var registry = new CapturingConnectionRegistry([recruiter, elyosViewer, asmodianViewer, applicant, asmodianPeer]);
+		findGroupService.AddRecruitment(recruiter, "Need healer", groupType: 2, nowEpochSeconds: 100);
+		findGroupService.AddApplication(
+			applicant,
+			message: "Need group",
+			groupType: 4,
+			classId: 7,
+			level: 64,
+			nowEpochSeconds: 101);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+
+		SetActivePlayer(fixture.Connection, recruiter);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(1);
+					buffer.WriteD(recruiter.ObjectId);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+				}));
+
+		var recruitmentBroadcast = Assert.Single(registry.WorldBroadcasts);
+		var recruitmentPacket = Assert.IsType<SmFindGroup>(recruitmentBroadcast.Packet);
+		Assert.Equal(1, ReadPrivateField<int>(recruitmentPacket, "_action"));
+		Assert.Equal(recruiter.ObjectId, ReadPrivateField<int>(recruitmentPacket, "_idToDelete"));
+		Assert.Equal((byte)5, ReadPrivateField<byte>(recruitmentPacket, "_serverId"));
+		Assert.Equal((byte)6, ReadPrivateField<byte>(recruitmentPacket, "_unknown1"));
+		Assert.Equal((byte)7, ReadPrivateField<byte>(recruitmentPacket, "_unknown2"));
+		Assert.Equal((byte)8, ReadPrivateField<byte>(recruitmentPacket, "_unknown3"));
+		Assert.Equal([recruiter.ObjectId, elyosViewer.ObjectId], recruitmentBroadcast.RecipientObjectIds);
+		Assert.DoesNotContain(asmodianViewer.ObjectId, recruitmentBroadcast.RecipientObjectIds);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 102).Recruitments);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(1);
+					buffer.WriteD(recruiter.ObjectId);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+				}));
+		Assert.Single(registry.WorldBroadcasts);
+
+		SetActivePlayer(fixture.Connection, applicant);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(5);
+					buffer.WriteD(0x7F7F7F7F);
+				}));
+
+		Assert.Equal(2, registry.WorldBroadcasts.Count);
+		var applicationBroadcast = registry.WorldBroadcasts[1];
+		var applicationPacket = Assert.IsType<SmFindGroup>(applicationBroadcast.Packet);
+		Assert.Equal(5, ReadPrivateField<int>(applicationPacket, "_action"));
+		Assert.Equal(applicant.ObjectId, ReadPrivateField<int>(applicationPacket, "_idToDelete"));
+		Assert.Equal([asmodianViewer.ObjectId, applicant.ObjectId, asmodianPeer.ObjectId], applicationBroadcast.RecipientObjectIds);
+		Assert.DoesNotContain(elyosViewer.ObjectId, applicationBroadcast.RecipientObjectIds);
+		Assert.Empty(findGroupService.ShowApplications("ASMODIANS", nowEpochSeconds: 102).Applications);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(5);
+					buffer.WriteD(0x7F7F7F7F);
+				}));
+		Assert.Equal(2, registry.WorldBroadcasts.Count);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();

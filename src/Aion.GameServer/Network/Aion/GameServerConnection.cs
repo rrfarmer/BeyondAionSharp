@@ -4256,17 +4256,20 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleFindGroupAsync(CmFindGroup findGroup)
 	{
 		// Java parity: CM_FIND_GROUP action 0/4 show-list and action 2/6 mutation-post
-		// branches use direct sends to the active player.
-		if (_activePlayer == null || findGroup.Action is not (0 or 2 or 4 or 6))
+		// branches use direct sends to the active player; action 1/5 removal branches
+		// use PacketSendUtility.broadcastToWorld(packet, p -> p.getRace() == race).
+		if (_activePlayer == null || findGroup.Action is not (0 or 1 or 2 or 4 or 5 or 6))
 			return;
 
 		var plan = CreateDisabledFindGroupBoundaryPlan(findGroup, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 		if (plan?.Status != FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects
-			|| plan.IntentPlan.WorldBroadcastIntents.Count != 0
 			|| plan.InvitePlan != null)
 		{
 			return;
 		}
+
+		if (plan.IntentPlan.WorldBroadcastIntents.Count != 0 && _connectionRegistry == null)
+			return;
 
 		foreach (var intent in plan.IntentPlan.DirectPacketIntents)
 		{
@@ -4276,6 +4279,16 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var intent in plan.IntentPlan.DirectPacketIntents)
 			await SendPacketAsync(intent.Packet);
+
+		foreach (var intent in plan.IntentPlan.WorldBroadcastIntents)
+		{
+			if (intent is null)
+				continue;
+
+			await _connectionRegistry!.BroadcastToWorldAsync(
+				intent.Packet,
+				player => string.Equals(player.Race, intent.Race, StringComparison.Ordinal));
+		}
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)
