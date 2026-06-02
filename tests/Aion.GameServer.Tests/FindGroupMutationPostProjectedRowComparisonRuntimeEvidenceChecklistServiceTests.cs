@@ -87,6 +87,14 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.Notes.Contains("intake preflight remains blocked", StringComparison.Ordinal)
 			&& !row.HasRuntimeEvidence);
 		Assert.Contains(checklist.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching
+			&& row.ProviderStatus == FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveScaffold
+			&& row.ExistingProvider.Contains("FindGroupMutationPostJavaCSharpRowPairingReadinessReportService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonDryRunContractService", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("action/mutation pairing readiness", StringComparison.Ordinal)
+			&& row.Notes.Contains("row pairing readiness", StringComparison.Ordinal)
+			&& !row.HasRuntimeEvidence);
+		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RegistrySendObservation
 			&& row.ExistingProvider.Contains("FindGroupMutationPostRegistryObservationTraceContractService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("posted system-message and refreshed-list registry sends", StringComparison.Ordinal));
