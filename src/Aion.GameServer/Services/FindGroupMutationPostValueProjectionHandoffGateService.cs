@@ -120,16 +120,19 @@ public static class FindGroupMutationPostValueProjectionHandoffGateService
 		FindGroupMutationPostJavaCSharpRowPairingReadinessReport rowPairing)
 	{
 		var ready = rowPairing.CanFeedValueProjection;
+		var rowEvidence = rowPairing.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", rowPairing.Rows.Select(row => $"action{row.Action}={row.CurrentEvidence}"));
 		return new FindGroupMutationPostValueProjectionHandoffGateRow(
 			1,
 			FindGroupMutationPostValueProjectionHandoffGateStage.RowPairingReadiness,
 			ready ? FindGroupMutationPostValueProjectionHandoffGateStageStatus.ReadyForRuntimeInput : FindGroupMutationPostValueProjectionHandoffGateStageStatus.Blocked,
 			HasExpectedShape: rowPairing.Rows.Count == 2,
 			BlocksValueProjection: !ready,
-			$"status={rowPairing.Status}; action2Pair={rowPairing.HasActionTwoPair}; action6Pair={rowPairing.HasActionSixPair}; canFeedValueProjection={rowPairing.CanFeedValueProjection}",
+			$"status={rowPairing.Status}; action2Pair={rowPairing.HasActionTwoPair}; action6Pair={rowPairing.HasActionSixPair}; canFeedValueProjection={rowPairing.CanFeedValueProjection}; rowPairingEvidence={rowEvidence}",
 			ready
-				? "Action 2/Recruitment and action 6/Application row identities can feed future value projection planning."
-				: "Value projection cannot start until both Java/C# action-mutation row pairs are ready.");
+				? "Action 2/Recruitment and action 6/Application row identities can feed future value projection planning through the accepted-boundary-row handoff."
+				: "Value projection cannot start until both Java/C# action-mutation row pairs are ready through the accepted-boundary-row handoff.");
 	}
 
 	private static FindGroupMutationPostValueProjectionHandoffGateRow ValueContractRow(

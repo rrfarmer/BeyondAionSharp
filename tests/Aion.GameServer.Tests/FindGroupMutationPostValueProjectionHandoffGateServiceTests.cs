@@ -24,6 +24,11 @@ public sealed class FindGroupMutationPostValueProjectionHandoffGateServiceTests
 		Assert.False(gate.CanClaimVerifiedParity);
 		Assert.Equal(Enum.GetValues<FindGroupMutationPostValueProjectionHandoffGateStage>(), gate.Rows.Select(row => row.Stage));
 		Assert.Contains("row pairing readiness", gate.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(gate.Rows, row =>
+			row.Stage == FindGroupMutationPostValueProjectionHandoffGateStage.RowPairingReadiness
+			&& row.Evidence.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", StringComparison.Ordinal)
+			&& row.Evidence.Contains("requiredBoundaryFields=action,mutationKind,boundaryAccepted", StringComparison.Ordinal)
+			&& row.Notes.Contains("accepted-boundary-row handoff", StringComparison.Ordinal));
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", gate.TraceName);
 		Assert.Contains("addRecruitment/addApplication", gate.JavaSource, StringComparison.Ordinal);
 	}
@@ -39,7 +44,10 @@ public sealed class FindGroupMutationPostValueProjectionHandoffGateServiceTests
 		Assert.Contains(gate.Rows, row =>
 			row.Stage == FindGroupMutationPostValueProjectionHandoffGateStage.RowPairingReadiness
 			&& row.Status == FindGroupMutationPostValueProjectionHandoffGateStageStatus.ReadyForRuntimeInput
-			&& !row.BlocksValueProjection);
+			&& !row.BlocksValueProjection
+			&& row.Evidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("accepted-boundary-row handoff", StringComparison.Ordinal));
 		Assert.Contains(gate.Rows, row =>
 			row.Stage == FindGroupMutationPostValueProjectionHandoffGateStage.ValueContract
 			&& row.Status == FindGroupMutationPostValueProjectionHandoffGateStageStatus.Blocked
@@ -128,7 +136,7 @@ public sealed class FindGroupMutationPostValueProjectionHandoffGateServiceTests
 			HasActionMutationPairingIdentity: true,
 			CanFeedValueProjection: true,
 			FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.ReadyForValueProjection,
-			$"action={action}",
+			$"action={action}; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True; requiredBoundaryFields=action,mutationKind,boundaryAccepted",
 			"test pair");
 
 	private static FindGroupMutationPostProjectedRowComparisonExecutorSkeleton PairedExecutorSkeleton() =>
