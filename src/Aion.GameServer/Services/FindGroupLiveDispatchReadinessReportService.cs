@@ -57,7 +57,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"FindGroupRecruitmentPlanService.OnJoinedTeam preserves Java mutation priority for leader solo recruitment re-add before full-team recruitment removal.",
 				"FindGroupRecruitmentPlanService uses ConcurrentDictionary-backed recruitment, application, and instance-group state stores to mirror Java FindGroupService ConcurrentHashMap declarations.",
 				"FindGroupConcurrentMutationOrderingReadinessService separates Java ConcurrentHashMap/method-order review and C# focused sequential/concurrent-store plus deterministic shared-singleton interleaving evidence from the still-missing live singleton interleaving proof.",
-				"FindGroupInstanceApplicationDirectDispatchPlanService can compose action 11 direct SM_FIND_GROUP applicant packet and declined action 12 SM_MESSAGE whisper dispatch evidence without sending packets.",
+				"FindGroupInstanceApplicationDirectDispatchPlanService can compose action 11 direct SM_FIND_GROUP applicant packet, action 11 missing-recipient no-send evidence, and declined action 12 SM_MESSAGE whisper dispatch evidence without sending packets.",
 				"FindGroupInstanceApplicationInviteDispatchPlanService can compose action 12 group/alliance invite request-service results without sending packets.",
 				"FindGroupSideEffectDispatchAuditService can audit direct packet and world-broadcast intents without calling the live connection registry.",
 				"FindGroupSideEffectDispatchExecutorService can execute direct packet and race-filtered world-broadcast intents through IGameClientConnectionRegistry when explicitly invoked, and records execution order for future live-boundary audits.",
