@@ -36,6 +36,76 @@ public sealed class PeriodicInstanceRegistrationServiceTests
 	}
 
 	[Fact]
+	public void CreateScheduledOpenRegistrationBroadcastPlan_StoresCloseTaskIntentLikeJava()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		var schedule = PeriodicInstanceRegistrationService.CreateDefaultSchedulePlan(autoGroupEnabled: true)
+			.Entries.Single(entry => entry.MaskId == 107);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000, minLevel: 46, maxLevel: 65)]);
+		var eligible = CreatePlayer(objectId: 1001, level: 50);
+
+		var plan = service.CreateScheduledOpenRegistrationBroadcastPlan(schedule, autoGroups, [eligible]);
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.Opened, plan.Status);
+		Assert.True(service.IsRegistrationOpen(107));
+		var intent = Assert.IsType<PeriodicInstanceRegistrationCloseTaskIntent>(service.GetCloseTaskIntent(107));
+		Assert.Equal(107, intent.MaskId);
+		Assert.Equal(TimeSpan.FromMinutes(60), intent.Delay);
+		var broadcast = Assert.Single(plan.PlayerBroadcasts);
+		Assert.Collection(
+			broadcast.Packets,
+			packet => Assert.IsType<SmAutoGroup>(packet),
+			packet =>
+			{
+				var openingMessage = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1401730, openingMessage.MessageId);
+			});
+	}
+
+	[Fact]
+	public void CreateScheduledOpenRegistrationBroadcastPlan_DuplicateOpenDoesNotReplaceCloseTaskIntentLikeJava()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		var schedule = new PeriodicInstanceRegistrationScheduleEntry(
+			107,
+			["0 0 0,20 ? * MON,WED,SAT"],
+			RegistrationPeriodMinutes: 60,
+			CloseDelay: TimeSpan.FromMinutes(60),
+			OpeningMessageId: 1401730);
+		var duplicateSchedule = schedule with { CloseDelay = TimeSpan.FromMinutes(30), RegistrationPeriodMinutes = 30 };
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000, minLevel: 46, maxLevel: 65)]);
+		var player = CreatePlayer(level: 50);
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.Opened,
+			service.CreateScheduledOpenRegistrationBroadcastPlan(schedule, autoGroups, [player]).Status);
+		var duplicate = service.CreateScheduledOpenRegistrationBroadcastPlan(duplicateSchedule, autoGroups, [player]);
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.AlreadyOpen, duplicate.Status);
+		Assert.Empty(duplicate.PlayerBroadcasts);
+		Assert.Equal(TimeSpan.FromMinutes(60), service.GetCloseTaskIntent(107)?.Delay);
+	}
+
+	[Fact]
+	public void CreateCloseRegistrationBroadcastPlan_ClearsScheduledCloseTaskIntentLikeJava()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		var schedule = PeriodicInstanceRegistrationService.CreateDefaultSchedulePlan(autoGroupEnabled: true)
+			.Entries.Single(entry => entry.MaskId == 108);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(108, 300120000, minLevel: 46, maxLevel: 65)]);
+		var player = CreatePlayer(level: 50);
+		service.CreateScheduledOpenRegistrationBroadcastPlan(schedule, autoGroups, [player]);
+		Assert.True(service.HasCloseTaskIntent(108));
+
+		var close = service.CreateCloseRegistrationBroadcastPlan(108, autoGroups, [player]);
+		var duplicateClose = service.CreateCloseRegistrationBroadcastPlan(108, autoGroups, [player]);
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.Closed, close.Status);
+		Assert.False(service.HasCloseTaskIntent(108));
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.NotOpen, duplicateClose.Status);
+		Assert.False(service.HasCloseTaskIntent(108));
+	}
+
+	[Fact]
 	public void CreateOpeningMessageForMaskId_ReturnsJavaScheduledOpeningMessages()
 	{
 		Assert.Equal(1400252, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(1)?.MessageId);

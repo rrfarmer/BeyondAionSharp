@@ -9,6 +9,7 @@ public sealed class PeriodicInstanceRegistrationService
 {
 	private readonly object _sync = new();
 	private readonly HashSet<int> _openedRegistrations = [];
+	private readonly Dictionary<int, PeriodicInstanceRegistrationCloseTaskIntent> _closeTaskIntentsByMaskId = [];
 
 	public bool OpenRegistration(int maskId)
 	{
@@ -26,6 +27,18 @@ public sealed class PeriodicInstanceRegistrationService
 	{
 		lock (_sync)
 			return _openedRegistrations.Contains(maskId);
+	}
+
+	public bool HasCloseTaskIntent(int maskId)
+	{
+		lock (_sync)
+			return _closeTaskIntentsByMaskId.ContainsKey(maskId);
+	}
+
+	public PeriodicInstanceRegistrationCloseTaskIntent? GetCloseTaskIntent(int maskId)
+	{
+		lock (_sync)
+			return _closeTaskIntentsByMaskId.TryGetValue(maskId, out var intent) ? intent : null;
 	}
 
 	public static SmSystemMessage? CreateOpeningMessageForMaskId(int maskId)
@@ -86,6 +99,30 @@ public sealed class PeriodicInstanceRegistrationService
 			openingMessage);
 	}
 
+	public PeriodicInstanceRegistrationBroadcastPlan CreateScheduledOpenRegistrationBroadcastPlan(
+		PeriodicInstanceRegistrationScheduleEntry scheduleEntry,
+		AutoGroupTable? autoGroups,
+		IReadOnlyList<Player> players)
+	{
+		lock (_sync)
+		{
+			if (!_openedRegistrations.Add(scheduleEntry.MaskId))
+				return PeriodicInstanceRegistrationBroadcastPlan.AlreadyOpen(scheduleEntry.MaskId);
+
+			_closeTaskIntentsByMaskId[scheduleEntry.MaskId] = new PeriodicInstanceRegistrationCloseTaskIntent(
+				scheduleEntry.MaskId,
+				scheduleEntry.CloseDelay);
+		}
+
+		return CreateRegistrationBroadcastPlan(
+			scheduleEntry.MaskId,
+			autoGroups,
+			players,
+			isClosed: false,
+			status: PeriodicInstanceRegistrationBroadcastStatus.Opened,
+			CreateOpeningMessageForMaskId(scheduleEntry.MaskId));
+	}
+
 	public async Task<PeriodicInstanceRegistrationBroadcastDispatchResult> OpenRegistrationAndBroadcastAsync(
 		int maskId,
 		AutoGroupTable? autoGroups,
@@ -108,6 +145,8 @@ public sealed class PeriodicInstanceRegistrationService
 		{
 			if (!_openedRegistrations.Remove(maskId))
 				return PeriodicInstanceRegistrationBroadcastPlan.NotOpen(maskId);
+
+			_closeTaskIntentsByMaskId.Remove(maskId);
 		}
 
 		return CreateRegistrationBroadcastPlan(
@@ -307,6 +346,10 @@ public sealed record PeriodicInstanceRegistrationScheduleEntry(
 	long RegistrationPeriodMinutes,
 	TimeSpan CloseDelay,
 	int OpeningMessageId);
+
+public sealed record PeriodicInstanceRegistrationCloseTaskIntent(
+	int MaskId,
+	TimeSpan Delay);
 
 public enum PeriodicInstanceRegistrationBroadcastStatus
 {
