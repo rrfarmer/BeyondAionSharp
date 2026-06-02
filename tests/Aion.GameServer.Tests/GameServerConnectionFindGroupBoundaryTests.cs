@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -741,6 +742,94 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 
 		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
 		Assert.Equal(1400361, ReadPrivateField<int>(message, "_messageId"));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_BeshmundirsWalkInstanceEntryMovesNonLeaderWhenGroupMemberInside()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS");
+		leader.Position = new WorldPosition(300170000, 1, 2, 3, 0, InstanceId: 7);
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS");
+		var groups = new PlayerGroupRuntime();
+		groups.CreateOrUpdateGroup(0x0708090A, [leader, member]);
+		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForPortalTest(
+			worldMaps: [new WorldMapSummary(300170000, IsInstance: true, TwinCount: 1)],
+			instanceCooltimes: new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(
+					Id: 8,
+					WorldId: 300170000,
+					Race: "PC_ALL",
+					MaxCount: 5,
+					MaxMemberLight: 6,
+					MaxMemberDark: 6,
+					CoolTimeType: "RELATIVE",
+					EntCoolTime: 30),
+			]),
+			portalPaths: new PortalPathTable(
+				Array.Empty<PortalPathSummary>(),
+				new Dictionary<int, int>(),
+				[
+					new PortalPathSummary(
+						PortalPathSource.Use,
+						NpcId: 730231,
+						ScrollName: string.Empty,
+						Dialog: 0,
+						LocId: 1701,
+						SiegeId: 0,
+						Race: "PC_ALL",
+						MinLevel: 0,
+						MinRank: 0,
+						Kinah: 0,
+						TitleId: 0,
+						ErrGroup: 0,
+						ErrLevel: 0),
+				],
+				Array.Empty<PortalPathSummary>()),
+			portalLocs: new PortalLocTable([new PortalLocSummary(300170000, LocId: 1701, 10, 20, 30, 90)]))));
+		var registeredInstance = runtimeContext.WorldMapStates.AddWorldMapInstance(300170000, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registeredInstance);
+		registeredInstance.RegisterTeamId(0x0708090A);
+		registeredInstance.AddPlayer(leader.ObjectId);
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			world,
+			NullLogger<PlayerEnterWorldService>.Instance);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService: null,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			playerGroupRuntime: groups,
+			world: world,
+			runtimeContext: runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetActivePlayer(fixture.Connection, member);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(walkNpc.ObjectId, CmDialogSelect.InstanceEntry));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var teleport = Assert.IsType<SmTeleportLoc>(packet);
+				Assert.Equal(
+					new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 7),
+					ReadPrivateField<WorldPosition>(teleport, "_destination"));
+				Assert.Equal(new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 7), member.PendingTeleport?.Destination);
+			},
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+		Assert.True(registeredInstance.IsRegistered(member.ObjectId));
+		Assert.Equal(new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 7), registeredInstance.StartPosition);
+		Assert.True(member.PortalCooldowns.ContainsKey(300170000));
+		Assert.NotNull(repository.SavedPortalCooldowns);
 	}
 
 	[Theory]
@@ -2829,6 +2918,84 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			AiName: aiName);
 	}
 
+	private static DataManager CreateDataManagerForTest(StaticData staticData)
+	{
+		var constructor = typeof(DataManager).GetConstructor(
+			BindingFlags.Instance | BindingFlags.NonPublic,
+			binder: null,
+			[typeof(StaticData)],
+			modifiers: null);
+		Assert.NotNull(constructor);
+		return (DataManager)constructor!.Invoke([staticData]);
+	}
+
+	private static StaticData CreateStaticDataForPortalTest(
+		IReadOnlyList<WorldMapSummary> worldMaps,
+		InstanceCooltimeTable instanceCooltimes,
+		PortalPathTable portalPaths,
+		PortalLocTable portalLocs)
+	{
+		var emptySkillTemplates = new SkillTemplateTable(Array.Empty<SkillTemplateSummary>());
+		var constructor = typeof(StaticData).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+		return (StaticData)constructor.Invoke(
+		[
+			string.Empty,
+			Array.Empty<string>(),
+			new Dictionary<string, int>(),
+			Array.Empty<string>(),
+			worldMaps,
+			new FlightZoneTable(Array.Empty<FlightZoneSummary>()),
+			new CreaturePvpZoneTable(Array.Empty<CreaturePvpZoneSummary>()),
+			new PlayerExperienceTable(Array.Empty<long>()),
+			new ItemTemplateTable(Array.Empty<ItemTemplateSummary>()),
+			new CosmeticItemTable(Array.Empty<CosmeticItemSummary>()),
+			new DecomposableItemTable(Array.Empty<DecomposableItemSummary>()),
+			new AssemblyItemTable(Array.Empty<AssemblyItemSummary>()),
+			new ItemPurificationTable(Array.Empty<ItemPurificationSummary>()),
+			new ItemRestrictionCleanupTable(Array.Empty<ItemRestrictionCleanupSummary>()),
+			new RideTable(Array.Empty<RideInfoSummary>()),
+			new ItemRandomBonusTable(Array.Empty<ItemRandomBonusSummary>()),
+			new ItemSetTable(Array.Empty<ItemSetSummary>()),
+			new EnchantTable(Array.Empty<EnchantGroupSummary>()),
+			new TemperingTable(Array.Empty<TemperingGroupSummary>()),
+			new WalkerTemplateTable(Array.Empty<WalkerTemplateSummary>()),
+			new WalkerVersionTable(new Dictionary<string, string>()),
+			new RiftLocationTable(Array.Empty<RiftLocationSummary>()),
+			new VortexLocationTable(Array.Empty<VortexLocationSummary>()),
+			new NpcTemplateTable(Array.Empty<NpcTemplateSummary>()),
+			new NpcSpawnTable(Array.Empty<NpcSpawnSummary>()),
+			new NpcRiftSpawnTable(Array.Empty<NpcRiftSpawnSummary>()),
+			new NpcFactionTable(Array.Empty<NpcFactionSummary>()),
+			new TradeListTable(Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>()),
+			new GoodsListTable(Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>()),
+			new CustomNpcDropTable(Array.Empty<CustomNpcDropSummary>()),
+			new QuestDropTable(Array.Empty<QuestDropSummary>()),
+			new QuestUpdateItemTable(Array.Empty<int>()),
+			new GlobalDropTable(Array.Empty<GlobalDropRuleSummary>()),
+			new EventDropTable(Array.Empty<EventTemplateSummary>()),
+			GlobalNpcExclusionTable.Empty,
+			emptySkillTemplates,
+			new NpcSkillTable(Array.Empty<NpcSkillListSummary>()),
+			new PetSkillTable(Array.Empty<PetSkillSummary>()),
+			new TitleTemplateTable(Array.Empty<TitleTemplateSummary>()),
+			new RecipeTemplateTable(Array.Empty<RecipeTemplateSummary>()),
+			new HousingTemplateTable(Array.Empty<HousingAddressSummary>(), Array.Empty<HousingBuildingSummary>()),
+			new HousingObjectTemplateTable(Array.Empty<HousingObjectTemplateSummary>()),
+			instanceCooltimes,
+			portalPaths,
+			portalLocs,
+			new AutoGroupTable(Array.Empty<AutoGroupSummary>()),
+			new PlayerInitialDataTable(new Dictionary<string, PlayerCreationData>(), new Dictionary<string, PlayerSpawnLocation>()),
+			new SkillTreeTable(Array.Empty<SkillLearnSummary>(), emptySkillTemplates),
+			new StorageExpansionTemplateTable(Array.Empty<StorageExpansionTemplateSummary>()),
+			new StorageExpansionTemplateTable(Array.Empty<StorageExpansionTemplateSummary>()),
+			new NearbyQuestTemplateTable(Array.Empty<NearbyQuestTemplateSummary>()),
+			new QuestFinishRewardProjectionLookupTable(Array.Empty<(int QuestId, QuestFinishRewardProjectionLookupEntry Entry)>()),
+			new QuestBonusItemGroupTable(Array.Empty<QuestBonusItemGroupProjection>()),
+			null,
+		]);
+	}
+
 	private static void SetActivePlayer(GameServerConnection connection, Player player)
 	{
 		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -2867,7 +3034,9 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			PlayerAllianceRuntime? playerAllianceRuntime = null,
 			GameServerOptions? options = null,
 			AutoGroupTable? autoGroups = null,
-			GameWorld? world = null)
+			GameWorld? world = null,
+			GameServerRuntimeContext? runtimeContext = null,
+			PlayerEnterWorldService? playerEnterWorldService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -2898,6 +3067,8 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 						"find-group-boundary-test",
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 						options: options ?? new GameServerOptions(),
+						runtimeContext: runtimeContext,
+						playerEnterWorldService: playerEnterWorldService,
 						connectionRegistry: connectionRegistry,
 						sentPacketObserver: sentPacketObserver,
 						crypt: crypt,

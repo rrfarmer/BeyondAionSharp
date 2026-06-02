@@ -1855,6 +1855,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.InstanceDungeonCantEnterNotOpened());
 				return;
 			}
+
+			await HandleBeshmundirsWalkMoveToInstanceAsync(player, packet.TargetObjectId);
+			return;
 		}
 
 		if (IsBeshmundirsWalkDifficultySelection(packet.DialogActionId)
@@ -4449,6 +4452,59 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmDialogWindow(targetObjectId, 4762));
+	}
+
+	private async Task HandleBeshmundirsWalkMoveToInstanceAsync(Player player, int targetObjectId)
+	{
+		// Java parity: BeshmundirsWalkAI.moveToInstance resolves DataManager.PORTAL2_DATA.getPortalUsePath(getNpcId(), player)
+		// and then calls PortalService.port(portalPath, player, getOwner(), difficult).
+		if (_playerEnterWorldService == null
+			|| _runtimeContext?.DataManager?.StaticData is not { } staticData
+			|| _world == null
+			|| !_world.TryGetObject(targetObjectId, out var gameObject)
+			|| gameObject is not IWorldNpcObject npc)
+		{
+			return;
+		}
+
+		var portalPath = staticData.PortalPaths.GetPortalUsePath(npc.TemplateId, player.Race);
+		if (portalPath == null)
+			return;
+
+		var now = DateTimeOffset.Now;
+		var preparation = await _playerEnterWorldService.PreparePortalEntryAsync(
+			player,
+			portalPath,
+			staticData.PortalLocs,
+			staticData.InstanceCooltimes,
+			_runtimeContext.WorldMapStates,
+			staticData.ItemTemplates,
+			now,
+			npc.ObjectId,
+			npcIsDialogNpc: npc.Template.IsDialogNpc);
+		if (preparation.Status == PortalEntryPreparationStatus.ValidationRejected)
+		{
+			if (preparation.EntryPlan.FailurePacket != null)
+				await SendPacketAsync(preparation.EntryPlan.FailurePacket);
+			return;
+		}
+
+		if (preparation.Status is not PortalEntryPreparationStatus.Ready
+			and not PortalEntryPreparationStatus.UnsupportedTeamPortal)
+		{
+			return;
+		}
+
+		foreach (var packet in preparation.Packets)
+			await SendPacketAsync(packet);
+
+		await QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			staticData,
+			_runtimeContext.WorldMapStates,
+			staticData.InstanceCooltimes,
+			now);
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)
