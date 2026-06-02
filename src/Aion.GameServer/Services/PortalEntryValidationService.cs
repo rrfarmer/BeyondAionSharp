@@ -917,7 +917,8 @@ public sealed record PortalTeamEntryPlan(
 	PortalTeamEntryDisposition Disposition,
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	bool Reenter,
-	bool FanoutSupported);
+	bool FanoutSupported,
+	byte DifficultyId = 0);
 
 public enum PortalTeamEntryKind
 {

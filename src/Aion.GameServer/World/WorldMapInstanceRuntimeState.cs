@@ -8,12 +8,13 @@ public sealed class WorldMapInstanceRuntimeState
 	private readonly HashSet<int> _questIds = new();
 	private bool _hasPendingNearbyQuestRefresh;
 
-	public WorldMapInstanceRuntimeState(int instanceId, int ownerId = 0, int maxPlayers = 0)
+	public WorldMapInstanceRuntimeState(int instanceId, int ownerId = 0, int maxPlayers = 0, byte difficultyId = 0)
 	{
 		// Java parity: WorldMap.getWorldMapInstance/addInstance normalize instance id 0 to 1.
 		InstanceId = instanceId == 0 ? 1 : instanceId;
 		OwnerId = ownerId;
 		MaxPlayers = maxPlayers;
+		DifficultyId = difficultyId;
 	}
 
 	public int InstanceId { get; }
@@ -21,6 +22,8 @@ public sealed class WorldMapInstanceRuntimeState
 	public int OwnerId { get; }
 
 	public int MaxPlayers { get; }
+
+	public byte DifficultyId { get; }
 
 	public bool IsPersonal => OwnerId != 0;
 

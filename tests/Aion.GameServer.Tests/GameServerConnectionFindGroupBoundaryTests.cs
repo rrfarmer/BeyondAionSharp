@@ -839,6 +839,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Equal(walkNpc.ObjectId, pending.NpcObjectId);
 		Assert.Equal(dialogActionId, pending.DialogActionId);
 		Assert.Equal(expectedPathL10nId, pending.PathL10nId);
+		Assert.Equal(2, pending.DifficultyId);
 	}
 
 	[Fact]
@@ -953,6 +954,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		var allocatedInstance = runtimeContext.WorldMapStates.GetRegisteredInstance(300170000, 0x0708090A);
 		Assert.NotNull(allocatedInstance);
 		Assert.Equal(2, allocatedInstance.InstanceId);
+		Assert.Equal(2, allocatedInstance.DifficultyId);
 		Assert.Equal(0x0708090A, allocatedInstance.RegisteredTeamId);
 		Assert.True(allocatedInstance.IsRegistered(leader.ObjectId));
 		Assert.Equal(new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 2), allocatedInstance.StartPosition);

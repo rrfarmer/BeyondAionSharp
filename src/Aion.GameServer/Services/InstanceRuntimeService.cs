@@ -10,7 +10,8 @@ public static class InstanceRuntimeService
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
 		int ownerId = 0,
-		int maxPlayers = 0)
+		int maxPlayers = 0,
+		byte difficultyId = 0)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance validates instance maps before allocating via WorldMapInstanceFactory.
 		var map = worldMaps.GetMap(worldId)
@@ -18,17 +19,23 @@ public static class InstanceRuntimeService
 		if (!map.Summary.IsInstance)
 			throw new UnsupportedOperationException($"Invalid call for next available instance of {worldId}");
 
-		return map.CreateNextWorldMapInstance(ownerId, maxPlayers);
+		return map.CreateNextWorldMapInstance(ownerId, maxPlayers, difficultyId);
 	}
 
 	public static WorldMapInstanceRuntimeState GetNextAvailableInstanceForPlayer(
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
 		int playerObjectId,
-		int maxPlayers = 0)
+		int maxPlayers = 0,
+		byte difficultyId = 0)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance(worldId, player) creates an instance and registers the player object id.
-		var instance = GetNextAvailableInstance(worldMaps, worldId, ownerId: 0, maxPlayers);
+		var instance = GetNextAvailableInstance(
+			worldMaps,
+			worldId,
+			ownerId: 0,
+			maxPlayers: maxPlayers,
+			difficultyId: difficultyId);
 		instance.Register(playerObjectId);
 		return instance;
 	}
@@ -37,33 +44,36 @@ public static class InstanceRuntimeService
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
 		Player player,
-		InstanceCooltimeTable instanceCooltimes)
+		InstanceCooltimeTable instanceCooltimes,
+		byte difficultyId = 0)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance(worldId, player) derives max players from InstanceCooltimeData.getMaxMemberCount.
 		var maxPlayers = instanceCooltimes.GetMaxMemberCount(worldId, player.Race);
-		return GetNextAvailableInstanceForPlayer(worldMaps, worldId, player.ObjectId, maxPlayers);
+		return GetNextAvailableInstanceForPlayer(worldMaps, worldId, player.ObjectId, maxPlayers, difficultyId);
 	}
 
 	public static WorldMapInstanceRuntimeState GetOrRegisterInstance(
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
 		int playerObjectId,
-		int maxPlayers = 0)
+		int maxPlayers = 0,
+		byte difficultyId = 0)
 	{
 		// Java parity: InstanceService.getOrRegisterInstance returns a registered instance or creates/registers a new one.
 		return worldMaps.GetRegisteredInstance(worldId, playerObjectId)
-			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, playerObjectId, maxPlayers);
+			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, playerObjectId, maxPlayers, difficultyId);
 	}
 
 	public static WorldMapInstanceRuntimeState GetOrRegisterInstance(
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
 		Player player,
-		InstanceCooltimeTable instanceCooltimes)
+		InstanceCooltimeTable instanceCooltimes,
+		byte difficultyId = 0)
 	{
 		// Java parity: InstanceService.getOrRegisterInstance(worldId, player) reuses existing registration before allocating a player-scoped instance.
 		return worldMaps.GetRegisteredInstance(worldId, player.ObjectId)
-			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, player, instanceCooltimes);
+			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, player, instanceCooltimes, difficultyId);
 	}
 
 	public static InstancePortalRuntimePlan CreatePortalTransferInstance(
@@ -71,10 +81,11 @@ public static class InstanceRuntimeService
 		Player player,
 		WorldPosition portalLocation,
 		int ownerId = 0,
-		int maxPlayers = 0)
+		int maxPlayers = 0,
+		byte difficultyId = 0)
 	{
 		// Java parity: PortalService.port creates the next instance, registers requester, then PortalService.transfer sets startPos.
-		var instance = GetNextAvailableInstance(worldMaps, portalLocation.WorldId, ownerId, maxPlayers);
+		var instance = GetNextAvailableInstance(worldMaps, portalLocation.WorldId, ownerId, maxPlayers, difficultyId);
 		instance.Register(player.ObjectId);
 		var startPosition = portalLocation with { InstanceId = instance.InstanceId };
 		instance.SetStartPositionIfMissing(startPosition);

@@ -96,11 +96,12 @@ public sealed class WorldMapRuntimeStateTests
 			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
 		]);
 
-		var instance = table.AddWorldMapInstance(300030000, 7, ownerId: 1001, maxPlayers: 2);
+		var instance = table.AddWorldMapInstance(300030000, 7, ownerId: 1001, maxPlayers: 2, difficultyId: 2);
 
 		Assert.NotNull(instance);
 		Assert.Equal(7, instance.InstanceId);
 		Assert.Equal(1001, instance.OwnerId);
+		Assert.Equal(2, instance.DifficultyId);
 		Assert.True(instance.IsPersonal);
 		Assert.False(instance.IsFull);
 		instance.Register(1001);
@@ -234,7 +235,7 @@ public sealed class WorldMapRuntimeStateTests
 			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 3),
 		]);
 
-		var instance = table.CreateNextWorldMapInstance(300030000, ownerId: 1001, maxPlayers: 6);
+		var instance = table.CreateNextWorldMapInstance(300030000, ownerId: 1001, maxPlayers: 6, difficultyId: 2);
 		var second = table.CreateNextWorldMapInstance(300030000);
 		var nonInstanceNext = table.CreateNextWorldMapInstance(210010000);
 
@@ -242,6 +243,7 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Equal(2, instance.InstanceId);
 		Assert.Equal(1001, instance.OwnerId);
 		Assert.Equal(6, instance.MaxPlayers);
+		Assert.Equal(2, instance.DifficultyId);
 		Assert.NotNull(second);
 		Assert.Equal(3, second.InstanceId);
 		Assert.NotNull(nonInstanceNext);
@@ -262,7 +264,8 @@ public sealed class WorldMapRuntimeStateTests
 			table,
 			300030000,
 			playerObjectId: 1001,
-			maxPlayers: 3);
+			maxPlayers: 3,
+			difficultyId: 2);
 		var reused = InstanceRuntimeService.GetOrRegisterInstance(
 			table,
 			300030000,
@@ -275,6 +278,7 @@ public sealed class WorldMapRuntimeStateTests
 			maxPlayers: 3);
 
 		Assert.Equal(2, created.InstanceId);
+		Assert.Equal(2, created.DifficultyId);
 		Assert.True(created.IsRegistered(1001));
 		Assert.Same(created, reused);
 		Assert.NotSame(created, other);

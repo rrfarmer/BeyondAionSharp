@@ -390,7 +390,7 @@ public sealed record GroupPortalTransferPlan(
 	{
 		return new GroupPortalAllocationPlan(
 			portalLoc?.WorldId,
-			DifficultyId: null,
+			teamPlan.DifficultyId == 0 ? null : teamPlan.DifficultyId,
 			teamPlan.MaxPlayers,
 			IntendedRegisteredTeamId: state == GroupPortalAllocationState.WouldAllocateAndRegisterTeam ? teamPlan.TeamId : null,
 			state,

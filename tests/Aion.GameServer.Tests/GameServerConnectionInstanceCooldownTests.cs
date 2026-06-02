@@ -617,7 +617,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			PortalTeamEntryDisposition.FreshInstanceAllocationNeeded,
 			RegisteredInstance: null,
 			Reenter: false,
-			FanoutSupported: false);
+			FanoutSupported: false,
+			DifficultyId: 2);
 		var preparation = PortalEntryPreparationResult.Ready(
 			PortalEntryPlanResult.UnsupportedTeamPortal(portalLoc, teamPlan),
 			requirementApplication: null,
@@ -640,6 +641,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.NotNull(allocatedInstance);
 		Assert.Equal(2, allocatedInstance.InstanceId);
 		Assert.Equal(6, allocatedInstance.MaxPlayers);
+		Assert.Equal(2, allocatedInstance.DifficultyId);
 		Assert.Equal(88001, allocatedInstance.RegisteredTeamId);
 		Assert.True(allocatedInstance.IsRegistered(88001));
 		Assert.True(allocatedInstance.IsRegistered(1001));
@@ -667,7 +669,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(GroupPortalCapacityState.WouldPassCapacityGuard, groupPlan.CapacityPlan.State);
 		Assert.Equal(GroupPortalCapacityBlockedReason.GroupFanoutNotImplemented, groupPlan.CapacityPlan.BlockedReason);
 		Assert.Equal(300030000, groupPlan.AllocationPlan.TargetWorldId);
-		Assert.Null(groupPlan.AllocationPlan.DifficultyId);
+		Assert.Equal((byte)2, groupPlan.AllocationPlan.DifficultyId);
 		Assert.Equal(6, groupPlan.AllocationPlan.MaxPlayers);
 		Assert.Null(groupPlan.AllocationPlan.IntendedRegisteredTeamId);
 		Assert.Equal(GroupPortalAllocationState.NotNeededRegisteredTeamInstance, groupPlan.AllocationPlan.State);

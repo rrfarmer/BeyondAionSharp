@@ -4441,7 +4441,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			new QuestionResponseRequest(
 				targetObjectId,
 				QuestionResponseRequestKind.BeshmundirDifficultyEnter,
-				new PendingBeshmundirDifficultyEnterRequest(targetObjectId, dialogActionId, pathL10nId))))
+				new PendingBeshmundirDifficultyEnterRequest(
+					targetObjectId,
+					dialogActionId,
+					pathL10nId,
+					DifficultyId: 2))))
 		{
 			await SendPacketAsync(new SmQuestionWindow(
 				SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm,
@@ -4454,7 +4458,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmDialogWindow(targetObjectId, 4762));
 	}
 
-	private async Task HandleBeshmundirsWalkMoveToInstanceAsync(Player player, int targetObjectId)
+	private async Task HandleBeshmundirsWalkMoveToInstanceAsync(Player player, int targetObjectId, byte difficultyId = 0)
 	{
 		// Java parity: BeshmundirsWalkAI.moveToInstance resolves DataManager.PORTAL2_DATA.getPortalUsePath(getNpcId(), player)
 		// and then calls PortalService.port(portalPath, player, getOwner(), difficult).
@@ -4500,11 +4504,27 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await QueuePortalContinueTransferAsync(
 			player,
-			preparation,
+			ApplyBeshmundirDifficulty(preparation, difficultyId),
 			staticData,
 			_runtimeContext.WorldMapStates,
 			staticData.InstanceCooltimes,
 			now);
+	}
+
+	private static PortalEntryPreparationResult ApplyBeshmundirDifficulty(
+		PortalEntryPreparationResult preparation,
+		byte difficultyId)
+	{
+		if (difficultyId == 0 || preparation.EntryPlan.TeamPlan == null)
+			return preparation;
+
+		return preparation with
+		{
+			EntryPlan = preparation.EntryPlan with
+			{
+				TeamPlan = preparation.EntryPlan.TeamPlan with { DifficultyId = difficultyId },
+			},
+		};
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)
@@ -7605,7 +7625,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			// Java parity: PortalService.port group branch calls InstanceService.getNextAvailableInstance(mapId, difficult, maxPlayers),
 			// then WorldMapInstance.registerTeam(group), before falling through to the same transfer helper.
-			registeredInstance = worldMapStates.CreateNextWorldMapInstance(portalLoc.WorldId, maxPlayers: teamPlan.MaxPlayers);
+			registeredInstance = worldMapStates.CreateNextWorldMapInstance(
+				portalLoc.WorldId,
+				maxPlayers: teamPlan.MaxPlayers,
+				difficultyId: teamPlan.DifficultyId);
 			if (registeredInstance == null)
 			{
 				return PortalContinueTransferResult.UnsupportedTeamPortal(
@@ -10944,7 +10967,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		await HandleBeshmundirsWalkMoveToInstanceAsync(responder, pending.NpcObjectId);
+		await HandleBeshmundirsWalkMoveToInstanceAsync(responder, pending.NpcObjectId, pending.DifficultyId);
 	}
 
 	private async Task BroadcastActionAnimationAsync(Player player, SmActionAnimation packet)
