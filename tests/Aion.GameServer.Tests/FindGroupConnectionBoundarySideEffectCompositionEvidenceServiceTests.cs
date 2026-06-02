@@ -12,6 +12,60 @@ namespace Aion.GameServer.Tests;
 public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServiceTests
 {
 	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionOneWorldBroadcastWithRaceFilter()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		var sameRace = CreatePlayer(0x01020305, "SameRace", "ELYOS");
+		var otherRace = CreatePlayer(0x01020306, "OtherRace", "ASMODIANS");
+		registry.WorldPlayers.AddRange([sameRace, otherRace]);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.AddRecruitment(
+			recruiter,
+			message: "Need healer",
+			groupType: 2,
+			nowEpochSeconds: 0x01020305);
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(findGroupService));
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(1);
+				buffer.WriteD(recruiter.ObjectId);
+				buffer.WriteC(5);
+				buffer.WriteC(6);
+				buffer.WriteC(7);
+				buffer.WriteC(8);
+			});
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			recruiter,
+			packet,
+			nowEpochSeconds: 0x01020306);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(1, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.RemoveRecruitment, evidence.IntentPlan.ClientActionKind);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		Assert.False(evidence.IntentPlan.IsCmFindGroupBoundaryWired);
+		Assert.Empty(evidence.IntentPlan.DirectPacketIntents);
+		var intent = Assert.Single(evidence.IntentPlan.WorldBroadcastIntents);
+		Assert.Equal("ELYOS", intent.Race);
+		Assert.Equal("PacketSendUtility.broadcastToWorld(..., p -> p.getRace() == recruitment.getRace())", intent.JavaSource);
+		Assert.Empty(evidence.ExecutionPlan.DirectPackets);
+		var broadcast = Assert.Single(evidence.ExecutionPlan.WorldBroadcasts);
+		Assert.Equal("ELYOS", broadcast.Race);
+		Assert.Equal(nameof(SmFindGroup), broadcast.PacketType);
+		Assert.Equal("p -> p.getRace() == recorded race", broadcast.JavaFilter);
+		Assert.Equal(1, broadcast.SentCount);
+		var recorded = Assert.Single(registry.WorldBroadcasts);
+		Assert.Equal([sameRace.ObjectId], recorded.RecipientObjectIds);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 0x01020307).Recruitments);
+	}
+
+	[Fact]
 	public async Task ExecuteOptInAsync_ComposesParsedActionFifteenPlanAndExecutorResult()
 	{
 		var registry = new FakeGameClientConnectionRegistry();
