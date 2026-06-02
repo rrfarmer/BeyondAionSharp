@@ -339,6 +339,71 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionTwoAndSixRowsFeedJavaCSharpValueComparison()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var recruiter = CreatePlayer(2002, "Recruiter", "ELYOS");
+		var applicant = CreatePlayer(4004, "Applicant", "ASMODIANS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet));
+
+		var actionTwoRow = await CaptureLiveMutationPostRowAsync(
+			fixture.Connection,
+			sentPackets,
+			recruiter,
+			nowEpochSeconds: 101,
+			buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteS("Need healer");
+				buffer.WriteC(3);
+			});
+		var actionSixRow = await CaptureLiveMutationPostRowAsync(
+			fixture.Connection,
+			sentPackets,
+			applicant,
+			nowEpochSeconds: 102,
+			buffer =>
+			{
+				buffer.WriteC(6);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteS("Need group");
+				buffer.WriteC(2);
+				buffer.WriteC(5);
+				buffer.WriteC(65);
+			});
+		var javaArtifacts = ShapeValidJavaArtifactsForLiveComparisonFixture();
+
+		var report = FindGroupMutationPostProjectedRowValueComparisonExecutorService.Compare(
+			javaArtifacts,
+			[actionTwoRow, actionSixRow]);
+
+		Assert.Equal(FindGroupMutationPostProjectedRowValueComparisonStatus.Compared, report.Status);
+		Assert.True(report.IsLive);
+		Assert.True(report.HasActionTwoJavaRow);
+		Assert.True(report.HasActionSixJavaRow);
+		Assert.True(report.HasActionTwoAcceptedCSharpRow);
+		Assert.True(report.HasActionSixAcceptedCSharpRow);
+		Assert.True(report.AllComparedFieldsMatched);
+		Assert.False(report.CanClaimVerifiedParity);
+		Assert.Equal(18, report.Rows.Count);
+		Assert.All(report.Rows, row => Assert.Equal(FindGroupMutationPostProjectedRowValueComparisonResultKind.Matched, row.ResultKind));
+		Assert.Contains(report.Rows, row =>
+			row.Action == 2
+			&& row.FieldName == "visibleEntryObjectIdsAfterMutation"
+			&& row.JavaValue == "[2002]"
+			&& row.CSharpValue == "[2002]");
+		Assert.Contains(report.Rows, row =>
+			row.Action == 6
+			&& row.FieldName == "postedSystemMessageId"
+			&& row.JavaValue == "1400393"
+			&& row.CSharpValue == "1400393");
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_ActionSixCanProduceOrderedOptInPostedMessageBeforeShowListTrace()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -1526,6 +1591,90 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Equal(FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.Created, observed.Status);
 		Assert.Contains("ProcessPacketAsync-observed", observed.Reason, StringComparison.Ordinal);
 		return observed.Export;
+	}
+
+	private static FindGroupMutationPostJavaTraceArtifactDirectoryReport ShapeValidJavaArtifactsForLiveComparisonFixture()
+	{
+		return new FindGroupMutationPostJavaTraceArtifactDirectoryReport(
+			FindGroupMutationPostJavaTraceArtifactDirectoryStatus.AllExpectedArtifactsShapeValid,
+			FindGroupMutationPostJavaTraceArtifactFileReportService.DefaultArtifactRoot,
+			[
+				ShapeValidJavaArtifactFile(JavaTraceRow(
+					action: 2,
+					mutationKind: "Recruitment",
+					activePlayerObjectId: 2002,
+					activePlayerRace: "ELYOS",
+					mutatedEntryObjectId: 2002,
+					postedSystemMessageId: 1400392,
+					refreshedListAction: 0,
+					visibleEntryObjectIdsAfterMutation: [2002])),
+				ShapeValidJavaArtifactFile(JavaTraceRow(
+					action: 6,
+					mutationKind: "Application",
+					activePlayerObjectId: 4004,
+					activePlayerRace: "ASMODIANS",
+					mutatedEntryObjectId: 4004,
+					postedSystemMessageId: 1400393,
+					refreshedListAction: 4,
+					visibleEntryObjectIdsAfterMutation: [4004])),
+			],
+			HasGeneratedJavaArtifacts: true,
+			HasAllExpectedFiles: true,
+			HasOnlyShapeValidArtifacts: true,
+			ReadyForRuntimeComparison: false,
+			"shape-valid Java artifact rows for live ProcessPacketAsync comparison");
+	}
+
+	private static FindGroupMutationPostJavaTraceArtifactDirectoryFileRow ShapeValidJavaArtifactFile(
+		FindGroupMutationPostJavaTraceArtifactValidationTraceRow row)
+	{
+		return new FindGroupMutationPostJavaTraceArtifactDirectoryFileRow(
+			row.Action,
+			FindGroupMutationPostJavaTraceArtifactFileReportService.FileNameForAction(row.Action),
+					FindGroupMutationPostJavaTraceArtifactDirectoryFileStatus.ShapeValid,
+					new FindGroupMutationPostJavaTraceArtifactValidationReport(
+						[],
+						IsValid: true,
+						new FindGroupMutationPostJavaTraceArtifactMetadata(
+							SchemaVersion: 1,
+							TraceName: "cm-find-group-direct-mutation-post-boundary",
+							[row])),
+			"shape-valid Java artifact row matching the live boundary fixture identity");
+	}
+
+	private static FindGroupMutationPostJavaTraceArtifactValidationTraceRow JavaTraceRow(
+		int action,
+		string mutationKind,
+		int activePlayerObjectId,
+		string activePlayerRace,
+		int mutatedEntryObjectId,
+		int postedSystemMessageId,
+		int refreshedListAction,
+		IReadOnlyList<int> visibleEntryObjectIdsAfterMutation)
+	{
+		return new FindGroupMutationPostJavaTraceArtifactValidationTraceRow(
+			SchemaVersion: 1,
+			TraceName: "cm-find-group-direct-mutation-post-boundary",
+			TraceSource: "Java",
+			action,
+			mutationKind,
+			postedSystemMessageId,
+			refreshedListAction,
+			BoundaryAccepted: true,
+			activePlayerObjectId,
+			activePlayerRace,
+			ServerEpochSeconds: 1700000000,
+			mutatedEntryObjectId,
+			StateMutationRecordedBeforeDirectPackets: true,
+			PostedSystemMessageRecipientObjectId: activePlayerObjectId,
+			PostedSystemMessageType: "SmSystemMessage",
+			RefreshedListRecipientObjectId: activePlayerObjectId,
+			RefreshedListPacketType: "SmFindGroup",
+			visibleEntryObjectIdsAfterMutation,
+			ExecutorInvokedFromBoundary: false,
+			RegistrySendsObservedInOrder: false,
+			WorldBroadcastCount: 0,
+			InviteDispatchCount: 0);
 	}
 
 	private static Player CreatePlayer(int objectId, string name, string race)
