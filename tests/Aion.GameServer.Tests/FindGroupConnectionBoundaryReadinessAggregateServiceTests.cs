@@ -14,6 +14,7 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 		Assert.Contains("CmFindGroup", report.CSharpBoundary, StringComparison.Ordinal);
 		Assert.Contains("CM_FIND_GROUP.runImpl", report.JavaBoundary, StringComparison.Ordinal);
 		Assert.Equal(FindGroupLiveDispatchReadinessStatus.BlockedPendingLiveDispatchReview, report.LiveDispatchReadiness.Status);
+		Assert.Equal(FindGroupLifecycleSingletonWiringReadinessStatus.BlockedPendingSingletonWiring, report.LifecycleSingletonReadiness.Status);
 		Assert.Contains(
 			report.Components,
 			component => component.Name == "Connection boundary"
@@ -62,6 +63,12 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 				&& component.Evidence.Contains("ConcurrentDictionary state stores matching Java ConcurrentHashMap", StringComparison.Ordinal)
 				&& component.CSharpSource.Contains("FindGroupRecruitmentPlanService", StringComparison.Ordinal)
 				&& component.JavaSource.Contains("onLogout/onJoinedTeam", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Components,
+			component => component.Name == "Lifecycle singleton wiring"
+				&& component.Status == FindGroupConnectionBoundaryComponentStatus.PartialEvidence
+				&& component.Evidence.Contains("group/alliance disband recruitment removal", StringComparison.Ordinal)
+				&& component.CSharpSource.Contains("FindGroupLifecycleSingletonWiringReadinessService", StringComparison.Ordinal));
 	}
 
 	[Fact]

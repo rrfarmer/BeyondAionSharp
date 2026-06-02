@@ -5,12 +5,14 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 	public static FindGroupConnectionBoundaryReadinessAggregate CreateReport()
 	{
 		var liveDispatchReadiness = FindGroupLiveDispatchReadinessReportService.CreateReport();
+		var lifecycleSingletonReadiness = FindGroupLifecycleSingletonWiringReadinessService.CreateReport();
 
 		return new FindGroupConnectionBoundaryReadinessAggregate(
 			FindGroupConnectionBoundaryReadinessStatus.BlockedPendingBoundaryWiring,
 			"GameServerConnection.ProcessPacketAsync case CmFindGroup",
 			"network/aion/clientpackets/CM_FIND_GROUP.runImpl -> services/findgroup/FindGroupService",
 			liveDispatchReadiness,
+			lifecycleSingletonReadiness,
 			[
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Connection boundary",
@@ -54,6 +56,12 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					FindGroupConnectionBoundaryComponentStatus.PartialEvidence,
 					"PlayerEnterWorldService; PlayerGroupInviteRequestService; PlayerAllianceInviteRequestService; FindGroupJoinedTeamLifecycleRecorder; FindGroupRecruitmentPlanService",
 					"FindGroupService.onLogout/onJoinedTeam"),
+				new FindGroupConnectionBoundaryComponentReadiness(
+					"Lifecycle singleton wiring",
+					"FindGroupLifecycleSingletonWiringReadinessService enumerates Java singleton call sites for CM_FIND_GROUP, logout cleanup, group/alliance joined-team cleanup, and group/alliance disband recruitment removal; current C# evidence remains observer-only or missing-hook.",
+					FindGroupConnectionBoundaryComponentStatus.PartialEvidence,
+					"FindGroupLifecycleSingletonWiringReadinessService",
+					"FindGroupService.getInstance call sites"),
 			],
 			[
 				"Do not enable live CmFindGroup dispatch until direct packet sends, world race-filter fanout, action 11 instance application dispatch, declined action 12 whisper dispatch, action 12 invite dispatch, and lifecycle singleton wiring are all reviewed together.",
@@ -82,12 +90,14 @@ public sealed record FindGroupConnectionBoundaryReadinessAggregate(
 	string CSharpBoundary,
 	string JavaBoundary,
 	FindGroupLiveDispatchReadinessReport LiveDispatchReadiness,
+	FindGroupLifecycleSingletonWiringReadinessReport LifecycleSingletonReadiness,
 	IReadOnlyList<FindGroupConnectionBoundaryComponentReadiness> Components,
 	IReadOnlyList<string> NextLiveDispatchRequirements)
 {
 	public bool IsReadyForLiveDispatch =>
 		Status == FindGroupConnectionBoundaryReadinessStatus.Ready
 		&& LiveDispatchReadiness.IsReadyForLiveDispatch
+		&& LifecycleSingletonReadiness.IsReadyForLiveSingletonWiring
 		&& Components.All(component => component.Status == FindGroupConnectionBoundaryComponentStatus.Ready);
 }
 
