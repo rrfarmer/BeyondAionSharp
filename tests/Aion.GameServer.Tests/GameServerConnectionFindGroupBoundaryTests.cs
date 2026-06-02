@@ -257,6 +257,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	public async Task CreateDisabledFindGroupBoundaryPlan_ActionTwelveAcceptAllianceUsesConnectionResolverAndRuntimesWithoutLiveDispatch()
 	{
 		var sentPackets = new List<GameServerPacket>();
+		var trace = new List<string>();
 		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS");
 		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
 		var findGroupService = new FindGroupRecruitmentPlanService();
@@ -283,6 +284,9 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			});
 
 		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+		trace.Add($"accepted disabled CM_FIND_GROUP action {plan?.IntentPlan.Action}");
+		if (plan?.InvitePlan?.AllianceInviteRequest != null)
+			trace.Add($"1:InviteRequest:Alliance:{plan.InvitePlan.AllianceInviteRequest.QuestionWindow?.Code}");
 
 		Assert.NotNull(plan);
 		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan!.Status);
@@ -302,6 +306,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Equal(responder.ObjectId, plan.InvitePlan.AllianceInviteRequest?.Request?.RequesterObjectId);
 		Assert.Equal(applicant.ObjectId, plan.InvitePlan.AllianceInviteRequest?.Request?.RequestTargetObjectId);
 		Assert.Equal(SmQuestionWindow.AllianceInvite, plan.InvitePlan.AllianceInviteRequest?.QuestionWindow?.Code);
+		Assert.Equal(["accepted disabled CM_FIND_GROUP action 12", "1:InviteRequest:Alliance:70000"], trace);
 		Assert.Equal(1, applicant.ResponseRequester.Count);
 		Assert.NotNull(applicant.PendingAllianceInviteRequest);
 		Assert.Empty(sentPackets);

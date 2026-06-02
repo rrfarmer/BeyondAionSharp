@@ -36,7 +36,7 @@ public static class FindGroupLiveDispatchGoNoGoChecklistService
 			new FindGroupLiveDispatchGoNoGoChecklistItem(
 				FindGroupLiveDispatchGoNoGoChecklistItemKind.ActionTwelveInviteDispatch,
 				"Action 12 group/alliance invite dispatch",
-				"Disabled evidence exists for accepted group/alliance invite requests, an action 12 boundary-acceptance-before-group-invite trace, missing applicant/state branches, and missing inviter/invited failure results.",
+				"Disabled evidence exists for accepted group/alliance invite requests, action 12 boundary-acceptance-before-group/alliance-invite traces, missing applicant/state branches, and missing inviter/invited failure results.",
 				FindGroupLiveDispatchGoNoGoChecklistItemStatus.EvidenceAvailable,
 				"Prove live invite request mutation and packet/question ordering before enabling action 12 live dispatch."),
 			new FindGroupLiveDispatchGoNoGoChecklistItem(

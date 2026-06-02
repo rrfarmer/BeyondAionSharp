@@ -40,7 +40,7 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupService.sendInstanceApplication/sendInstanceApplicationResult declined branch"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Action 12 invite executor",
-					"FindGroupInstanceApplicationInviteDispatchPlanService can compose group/alliance invite request-service results without live packet dispatch, and disabled boundary tests record action 12 acceptance before the opt-in group invite request.",
+					"FindGroupInstanceApplicationInviteDispatchPlanService can compose group/alliance invite request-service results without live packet dispatch, and disabled boundary tests record action 12 acceptance before the opt-in group/alliance invite requests.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
 					"FindGroupInstanceApplicationInviteDispatchPlanService",
 					"FindGroupService.sendInstanceApplicationResult"),
