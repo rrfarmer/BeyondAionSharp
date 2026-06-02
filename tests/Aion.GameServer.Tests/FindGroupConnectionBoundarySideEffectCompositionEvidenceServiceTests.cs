@@ -592,6 +592,24 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 			Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
 			Assert.Equal(nameof(SmFindGroup), direct.PacketType);
 		});
+		Assert.Collection(
+			evidence.ExecutionPlan.ExecutionOrder,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(viewer.ObjectId, step.RecipientObjectId);
+				Assert.Equal(nameof(SmFindGroup), step.PacketType);
+				Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(instanceMaskIds))", step.JavaSource);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(viewer.ObjectId, step.RecipientObjectId);
+				Assert.Equal(nameof(SmFindGroup), step.PacketType);
+				Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", step.JavaSource);
+			});
 		Assert.Equal([viewer.ObjectId, viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
 	}
 
