@@ -75,7 +75,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("records execution order", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupDirectPacketBoundaryTraceReadinessService", StringComparison.Ordinal));
-		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 0/4/8/9/10/11/13/15 disabled-boundary acceptance", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 0/4/8/9/10/11/13/15/17 disabled-boundary acceptance", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupDirectPacketTriggerOrderingReadinessService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupWorldBroadcastFanoutReadinessService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("disabled action 1/5 boundary fanout trace evidence", StringComparison.Ordinal));

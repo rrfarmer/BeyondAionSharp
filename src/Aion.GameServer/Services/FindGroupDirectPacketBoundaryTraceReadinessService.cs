@@ -42,6 +42,10 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 					"Java CM_FIND_GROUP action 15 synchronously calls FindGroupService.showInstanceGroupMembersInfo(player, playerOrTeamId), which sends SM_FIND_GROUP action 16 directly to the triggering player when the instance group exists.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
+					FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionSeventeenDirectSend,
+					"Java CM_FIND_GROUP action 17 synchronously calls FindGroupService.updateInstanceGroup(player, message), which updates the active player's instance group when present and sends SM_FIND_GROUP action 10 directly to the triggering player.",
+					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed),
+				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionZeroComposition,
 					"C# GameServerConnection.CreateDisabledFindGroupBoundaryPlan can compose action 0 as a direct SmFindGroup intent for the active player without invoking live socket sends.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
@@ -74,8 +78,12 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 					"C# GameServerConnection.CreateDisabledFindGroupBoundaryPlan can compose action 15 as a direct SmFindGroup action 16 member-info intent for the active player without invoking live socket sends.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
+					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionSeventeenComposition,
+					"C# GameServerConnection.CreateDisabledFindGroupBoundaryPlan can compose action 17 existing update as a direct SmFindGroup action 10 updated show-list intent and missing update as no side effects without invoking live socket sends.",
+					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
+				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpOptInRegistryExecutionTrace,
-					"C# focused tests can record disabled CM_FIND_GROUP action 0/4/8/9/10/11/13/15 acceptance before opt-in registry direct sends of SmFindGroup to the Java-selected recipient.",
+					"C# focused tests can record disabled CM_FIND_GROUP action 0/4/8/9/10/11/13/15/17 acceptance before opt-in registry direct sends of SmFindGroup to the Java-selected recipient.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.LiveProcessPacketAsyncTrace,
@@ -88,7 +96,7 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 			],
 			[
 				"Do not claim live direct-packet parity from the disabled helper plus opt-in executor trace.",
-				"Before enabling live CmFindGroup direct actions, add a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 4, 8, 9, 10, 11, 13, and 15.",
+				"Before enabling live CmFindGroup direct actions, add a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 4, 8, 9, 10, 11, 13, 15, and 17.",
 				"Keep the disabled boundary helper available as the reviewed composition surface for future live wiring.",
 			]);
 	}
@@ -110,6 +118,7 @@ public enum FindGroupDirectPacketBoundaryTraceEvidenceKind
 	JavaActionElevenDirectSend,
 	JavaActionThirteenDirectSend,
 	JavaActionFifteenDirectSend,
+	JavaActionSeventeenDirectSend,
 	CSharpDisabledBoundaryActionZeroComposition,
 	CSharpDisabledBoundaryActionFourComposition,
 	CSharpDisabledBoundaryActionEightComposition,
@@ -118,6 +127,7 @@ public enum FindGroupDirectPacketBoundaryTraceEvidenceKind
 	CSharpDisabledBoundaryActionElevenComposition,
 	CSharpDisabledBoundaryActionThirteenComposition,
 	CSharpDisabledBoundaryActionFifteenComposition,
+	CSharpDisabledBoundaryActionSeventeenComposition,
 	CSharpOptInRegistryExecutionTrace,
 	LiveProcessPacketAsyncTrace,
 	LiveSocketComparison,

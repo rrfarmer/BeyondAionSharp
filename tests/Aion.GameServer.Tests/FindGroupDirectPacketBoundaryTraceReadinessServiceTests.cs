@@ -77,6 +77,12 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("SM_FIND_GROUP action 16", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionSeventeenDirectSend
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed
+				&& evidence.Detail.Contains("updateInstanceGroup(player, message)", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("SM_FIND_GROUP action 10", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionZeroComposition
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("CreateDisabledFindGroupBoundaryPlan", StringComparison.Ordinal));
@@ -117,9 +123,15 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("action 15", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionSeventeenComposition
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("action 17 existing update", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("missing update as no side effects", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpOptInRegistryExecutionTrace
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
-				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/9/10/11/13/15 acceptance", StringComparison.Ordinal));
+				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/9/10/11/13/15/17 acceptance", StringComparison.Ordinal));
 	}
 
 	[Fact]
