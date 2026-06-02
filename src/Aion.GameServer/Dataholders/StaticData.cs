@@ -33,6 +33,7 @@ public sealed class StaticData
 		VortexLocationTable vortexLocations,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
+		StaticDoorTable staticDoors,
 		NpcRiftSpawnTable npcRiftSpawns,
 		NpcFactionTable npcFactions,
 		TradeListTable tradeLists,
@@ -88,6 +89,7 @@ public sealed class StaticData
 		VortexLocations = vortexLocations;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
+		StaticDoors = staticDoors;
 		NpcRiftSpawns = npcRiftSpawns;
 		NpcFactions = npcFactions;
 		TradeLists = tradeLists;
@@ -170,6 +172,8 @@ public sealed class StaticData
 	public NpcTemplateTable NpcTemplates { get; }
 
 	public NpcSpawnTable NpcSpawns { get; }
+
+	public StaticDoorTable StaticDoors { get; }
 
 	public NpcRiftSpawnTable NpcRiftSpawns { get; }
 
@@ -264,6 +268,7 @@ public sealed class StaticData
 		var vortexLocations = new List<VortexLocationSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
+		var staticDoors = new List<StaticDoorSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
 		var npcFactions = new List<NpcFactionSummary>();
 		var tradeLists = new List<TradeListTemplateSummary>();
@@ -345,6 +350,7 @@ public sealed class StaticData
 		int currentNpcRiftSpawnGroupIndex = 0;
 		int currentNpcRiftSpawnGroupDepth = -1;
 		int currentNpcRiftSpawnSpotDepth = -1;
+		int currentStaticDoorWorldId = 0;
 		string currentWalkerParentRouteId = string.Empty;
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		NpcSkillListBuilder? currentNpcSkillList = null;
@@ -615,6 +621,9 @@ public sealed class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 					currentNpcSpawnMapId = 0;
+
+				if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
+					currentStaticDoorWorldId = 0;
 
 				if (reader.Depth == 2 && reader.LocalName == "skill_template" && currentSkillTemplate != null)
 				{
@@ -999,6 +1008,29 @@ public sealed class StaticData
 			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
 			{
 				currentNpcSpawnMapId = ReadRequiredIntAttribute(reader, "map_id");
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
+			{
+				currentStaticDoorWorldId = ReadRequiredIntAttribute(reader, "world");
+				continue;
+			}
+
+			if (currentStaticDoorWorldId != 0
+				&& reader.Depth == 3
+				&& reader.LocalName == "staticdoor"
+				&& elementPath.GetValueOrDefault(2) == "world")
+			{
+				// Java parity: dataholders/StaticDoorData indexes StaticDoorTemplate entries by world and static door id.
+				staticDoors.Add(new StaticDoorSummary(
+					currentStaticDoorWorldId,
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadIntAttribute(reader, "keyid"),
+					ReadFloatAttribute(reader, "x"),
+					ReadFloatAttribute(reader, "y"),
+					ReadFloatAttribute(reader, "z"),
+					ReadIntAttribute(reader, "state")));
 				continue;
 			}
 
@@ -2731,6 +2763,7 @@ public sealed class StaticData
 			new VortexLocationTable(vortexLocations.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
+			new StaticDoorTable(staticDoors.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
 			new NpcFactionTable(npcFactions.AsReadOnly()),
 			new TradeListTable(

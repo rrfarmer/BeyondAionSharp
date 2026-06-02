@@ -1176,6 +1176,30 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcsForInstance_SetsStaticDoorStateLikeJavaStaticDoorSpawnManager()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var service = CreateService(world, staticPlaceables);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, difficultyId: 2);
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203040, x: 2, difficultId: 2)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203040)]);
+		var staticDoors = new StaticDoorTable(
+		[
+			new StaticDoorSummary(210010000, StaticId: 33, KeyId: 0, X: 1, Y: 2, Z: 3, State: 1),
+			new StaticDoorSummary(210010000, StaticId: 34, KeyId: 185000044, X: 4, Y: 5, Z: 6, State: 10),
+			new StaticDoorSummary(220010000, StaticId: 35, KeyId: 0, X: 7, Y: 8, Z: 9, State: 1),
+		]);
+
+		var result = service.SpawnWorldNpcsForInstance(instance, 210010000, spawns, templates, staticDoors);
+
+		Assert.Equal(new WorldNpcSpawnResult(1, 0), result);
+		Assert.Equal(true, staticPlaceables.GetDoorState(210010000, 7, 33));
+		Assert.Equal(false, staticPlaceables.GetDoorState(210010000, 7, 34));
+		Assert.Null(staticPlaceables.GetDoorState(220010000, 7, 35));
+	}
+
+	[Fact]
 	public void SpawnWorldNpcs_AppliesTemplateAndSpawnStatesLikeJava()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

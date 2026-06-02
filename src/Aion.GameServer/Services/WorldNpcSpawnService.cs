@@ -371,11 +371,13 @@ public sealed class WorldNpcSpawnService : GameEngine
 		int mapId,
 		NpcSpawnTable spawns,
 		NpcTemplateTable npcTemplates,
+		StaticDoorTable? staticDoors = null,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: SpawnEngine.spawnInstance(instance, difficultId, ownerId) filters by difficulty and spawns into instance.getInstanceId().
 		ArgumentNullException.ThrowIfNull(instance);
 
+		SpawnStaticDoorsForInstance(instance, mapId, staticDoors);
 		return SpawnWorldNpcs(
 			new NpcSpawnTable(spawns.GetSpawnsForMap(mapId)),
 			npcTemplates,
@@ -389,6 +391,19 @@ public sealed class WorldNpcSpawnService : GameEngine
 			instanceId: instance.InstanceId,
 			changedMapIds: null,
 			cancellationToken: cancellationToken);
+	}
+
+	private void SpawnStaticDoorsForInstance(
+		global::Aion.GameServer.World.WorldMapInstanceRuntimeState instance,
+		int mapId,
+		StaticDoorTable? staticDoors)
+	{
+		if (_staticPlaceables == null || staticDoors == null)
+			return;
+
+		// Java parity: StaticDoorSpawnManager.spawnTemplate(instance) seeds GeoService door state for every static door.
+		foreach (var door in staticDoors.GetStaticDoors(mapId))
+			_staticPlaceables.SetDoorState(mapId, instance.InstanceId, door.StaticId, door.IsOpen);
 	}
 
 	public async ValueTask<TemporarySpawnHourChangeResult> ProcessTemporarySpawnHourChangeAsync(

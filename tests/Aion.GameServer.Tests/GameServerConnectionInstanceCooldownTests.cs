@@ -786,6 +786,12 @@ public sealed class GameServerConnectionInstanceCooldownTests
 				<npc_templates>
 					<npc_template npc_id="203040" name="instance_npc" name_id="203040" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="GENERAL" type="GENERAL" />
 				</npc_templates>
+				<staticdoor_templates>
+					<world world="300030000">
+						<staticdoor id="33" x="1" y="2" z="3" state="1" />
+						<staticdoor id="34" keyid="185000044" x="4" y="5" z="6" state="10" />
+					</world>
+				</staticdoor_templates>
 				<spawns>
 					<spawn_map map_id="300030000">
 						<spawn npc_id="203040" respawn_time="295" difficult_id="1">
@@ -803,10 +809,14 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			""");
 		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
 		var spawnService = new WorldNpcSpawnService(
 			new GameServerRuntimeContext(),
 			world,
 			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager: null,
+			staticPlaceables,
 			NullLogger<WorldNpcSpawnService>.Instance);
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
@@ -871,6 +881,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			Assert.Equal(300030000, npc.Position.WorldId);
 			Assert.Equal(2, npc.Position.InstanceId);
 		});
+		Assert.Equal(true, staticPlaceables.GetDoorState(300030000, 2, 33));
+		Assert.Equal(false, staticPlaceables.GetDoorState(300030000, 2, 34));
 	}
 
 	[Fact]
