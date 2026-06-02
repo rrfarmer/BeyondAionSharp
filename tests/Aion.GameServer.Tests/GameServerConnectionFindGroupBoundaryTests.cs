@@ -202,6 +202,80 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionSixCanProduceOrderedOptInPostedMessageBeforeShowListTrace()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var trace = new List<string>();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var registry = new CapturingConnectionRegistry([applicant]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, applicant);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(6);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteS("Need group");
+				buffer.WriteC(2);
+				buffer.WriteC(5);
+				buffer.WriteC(65);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+		trace.Add($"accepted disabled CM_FIND_GROUP action {plan?.IntentPlan.Action}");
+		var executorPlan = await new FindGroupSideEffectDispatchExecutorService(registry)
+			.ExecuteAsync(plan!.IntentPlan.DirectPacketIntents, plan.IntentPlan.WorldBroadcastIntents);
+		foreach (var step in executorPlan.ExecutionOrder)
+			trace.Add($"{step.Sequence}:{step.Kind}:{step.RecipientObjectId}:{step.PacketType}");
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(FindGroupClientActionPlanKind.AddApplication, plan.IntentPlan.ClientActionKind);
+		Assert.Collection(
+			plan.IntentPlan.DirectPacketIntents,
+			intent =>
+			{
+				Assert.Equal(applicant.ObjectId, intent.RecipientObjectId);
+				Assert.Equal(nameof(SmSystemMessage), intent.Packet.GetType().Name);
+				Assert.Equal(1400393, Assert.IsType<SmSystemMessage>(intent.Packet).MessageId);
+				Assert.Equal("SM_SYSTEM_MESSAGE.STR_PARTY_MATCH_SEEK_PARTY_POSTED", intent.JavaSource);
+			},
+			intent =>
+			{
+				Assert.Equal(applicant.ObjectId, intent.RecipientObjectId);
+				Assert.Equal(nameof(SmFindGroup), intent.Packet.GetType().Name);
+				Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(4, applications))", intent.JavaSource);
+			});
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.Equal(
+			[
+				"accepted disabled CM_FIND_GROUP action 6",
+				"1:DirectPacket:16909060:SmSystemMessage",
+				"2:DirectPacket:16909060:SmFindGroup",
+			],
+			trace);
+		Assert.Equal([nameof(SmSystemMessage), nameof(SmFindGroup)], executorPlan.DirectPackets.Select(packet => packet.PacketType));
+		Assert.All(executorPlan.DirectPackets, direct => Assert.True(direct.Sent));
+		Assert.Equal([applicant.ObjectId, applicant.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
+		Assert.True(executorPlan.DispatchLiveSideEffects);
+		Assert.Contains("Opt-in executor only", executorPlan.BoundaryNote, StringComparison.Ordinal);
+		var snapshot = Assert.Single(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 102).Applications);
+		Assert.Equal(applicant.ObjectId, snapshot.PlayerObjectId);
+		Assert.Equal("Need group", snapshot.Message);
+		Assert.Equal(2, snapshot.GroupType);
+		Assert.Equal(5, snapshot.ClassId);
+		Assert.Equal(65, snapshot.Level);
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_ActionEightCanProduceOrderedOptInDirectPacketTrace()
 	{
 		var sentPackets = new List<GameServerPacket>();
