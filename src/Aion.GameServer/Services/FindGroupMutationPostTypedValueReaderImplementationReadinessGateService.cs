@@ -188,8 +188,12 @@ public static class FindGroupMutationPostTypedValueReaderImplementationReadiness
 
 	private static FindGroupMutationPostTypedValueReaderImplementationReadinessGateRow IntakeRow(
 		FindGroupMutationPostRuntimeRowValueEvidenceIntakeGate intake,
-		bool ready) =>
-		new(
+		bool ready)
+	{
+		var intakeRowEvidence = intake.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", intake.Rows.Select(row => $"{row.Stage}={row.CurrentEvidence}"));
+		return new(
 			1,
 			FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.RuntimeRowValueIntake,
 			ReaderKind: null,
@@ -207,8 +211,9 @@ public static class FindGroupMutationPostTypedValueReaderImplementationReadiness
 			JavaReaderFunction: string.Empty,
 			CSharpReaderFunction: string.Empty,
 			"Runtime-backed Java artifact rows, accepted C# boundary rows, and runtime row values must exist before reader implementation can proceed.",
-			$"status={intake.Status}; hasJavaRuntimeRows={intake.HasJavaRuntimeArtifactRows}; hasAcceptedCSharpRows={intake.HasAcceptedCSharpTraceRows}; hasRuntimeRowValues={intake.HasRuntimeRowValues}; canReadJavaValues={intake.CanReadJavaValues}; canReadCSharpValues={intake.CanReadCSharpValues}",
-			"Runtime row intake remains a gate; it does not implement or execute readers.");
+			$"status={intake.Status}; hasJavaRuntimeRows={intake.HasJavaRuntimeArtifactRows}; hasAcceptedCSharpRows={intake.HasAcceptedCSharpTraceRows}; hasRuntimeRowValues={intake.HasRuntimeRowValues}; canReadJavaValues={intake.CanReadJavaValues}; canReadCSharpValues={intake.CanReadCSharpValues}; runtimeRowValueIntakeRows={intakeRowEvidence}",
+			"Runtime row intake preserves value-projection and accepted-boundary-row handoff evidence; it does not implement or execute readers.");
+	}
 
 	private static FindGroupMutationPostTypedValueReaderImplementationReadinessGateRow RunbookRow(
 		FindGroupMutationPostProjectedRowComparisonValueReaderImplementationRunbookContract runbook,

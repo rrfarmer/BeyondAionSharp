@@ -28,6 +28,11 @@ public sealed class FindGroupMutationPostTypedValueReaderImplementationReadiness
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", gate.TraceName);
 		Assert.Contains("addRecruitment/addApplication", gate.JavaSource, StringComparison.Ordinal);
 		Assert.Contains("runtime row value intake", gate.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(gate.Rows, row =>
+			row.Stage == FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.RuntimeRowValueIntake
+			&& row.Evidence.Contains("valueProjectionHandoffRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", StringComparison.Ordinal)
+			&& row.Notes.Contains("accepted-boundary-row handoff evidence", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -41,7 +46,11 @@ public sealed class FindGroupMutationPostTypedValueReaderImplementationReadiness
 		Assert.Contains(gate.Rows, row =>
 			row.Stage == FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.RuntimeRowValueIntake
 			&& row.Status == FindGroupMutationPostTypedValueReaderImplementationReadinessGateStageStatus.ReadyForImplementationInput
-			&& row.HasRuntimeRows);
+			&& row.HasRuntimeRows
+			&& row.Evidence.Contains("valueProjectionHandoffRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("accepted-boundary-row handoff evidence", StringComparison.Ordinal));
 		Assert.Contains(gate.Rows, row =>
 			row.Stage == FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.ImplementationRunbook
 			&& row.Status == FindGroupMutationPostTypedValueReaderImplementationReadinessGateStageStatus.Blocked
@@ -157,7 +166,7 @@ public sealed class FindGroupMutationPostTypedValueReaderImplementationReadiness
 					HasRuntimeEvidence: true,
 					BlocksValueReaders: true,
 					"runtime row values",
-					"hasRuntimeRows=True",
+					"hasRuntimeRows=True; valueProjectionHandoffRows=ValueProjectionHandoff=status=ReadyForRuntimeValuesProjectionBlocked; rowPairingEvidence=action2=action=2; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True; requiredBoundaryFields=action,mutationKind,boundaryAccepted",
 					"test intake"),
 			],
 			HasValueProjectionHandoff: true,
