@@ -5,6 +5,42 @@ public sealed class AutoGroupTable
 	private readonly IReadOnlyDictionary<int, AutoGroupSummary> _autoGroupsByMaskId;
 	private readonly IReadOnlyDictionary<int, IReadOnlyList<int>> _recruitableInstanceMaskIdsByPortalNpcId;
 	private readonly IReadOnlyList<int> _recruitableInstanceMaskIds;
+	private static readonly int[] JavaAutoGroupTypeMaskOrder =
+	[
+		1,
+		2,
+		3,
+		21,
+		22,
+		23,
+		24,
+		25,
+		26,
+		27,
+		28,
+		29,
+		30,
+		31,
+		32,
+		33,
+		34,
+		35,
+		38,
+		39,
+		40,
+		41,
+		42,
+		43,
+		44,
+		45,
+		101,
+		102,
+		103,
+		107,
+		108,
+		109,
+		111,
+	];
 
 	public AutoGroupTable(IEnumerable<AutoGroupSummary> autoGroups)
 	{
@@ -44,6 +80,24 @@ public sealed class AutoGroupTable
 	public AutoGroupSummary? GetTemplateByInstanceMaskId(int maskId)
 	{
 		return _autoGroupsByMaskId.TryGetValue(maskId, out var autoGroup) ? autoGroup : null;
+	}
+
+	public AutoGroupSummary? GetAutoGroupForNpc(int playerLevel, int portalNpcId)
+	{
+		// Java parity: model/autogroup/AutoGroupType.getAutoGroup(level, npcId)
+		// iterates enum constants in declaration order.
+		foreach (var maskId in JavaAutoGroupTypeMaskOrder)
+		{
+			if (_autoGroupsByMaskId.TryGetValue(maskId, out var autoGroup)
+				&& playerLevel >= autoGroup.MinLevel
+				&& playerLevel <= autoGroup.MaxLevel
+				&& autoGroup.NpcIds.Contains(portalNpcId))
+			{
+				return autoGroup;
+			}
+		}
+
+		return null;
 	}
 
 	public IReadOnlyList<int>? GetRecruitableInstanceMaskIds(int portalNpcId)

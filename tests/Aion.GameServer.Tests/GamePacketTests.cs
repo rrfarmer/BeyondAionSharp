@@ -20,6 +20,34 @@ namespace Aion.GameServer.Tests;
 public class GamePacketTests
 {
 	[Fact]
+	public void SmAutoGroup_WritesJavaWindowZeroPayload()
+	{
+		var payload = SerializeUnencryptedPayload(
+			new SmAutoGroup(new AutoGroupSummary(
+				MaskId: 21,
+				InstanceMapId: 300260000,
+				NameId: 140001,
+				TitleId: 140002,
+				MinLevel: 46,
+				MaxLevel: 65,
+				RegisterQuick: true,
+				RegisterGroup: true,
+				RegisterNew: false,
+				NpcIds: [700001])));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(21, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(300260000, reader.ReadD());
+		Assert.Equal(140001, reader.ReadD());
+		Assert.Equal(140002, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void TeleportAnimation_PreservesJavaIdsAndDefaultMappings()
 	{
 		Assert.Equal(0, TeleportAnimation.None.Id);

@@ -777,6 +777,62 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_InstancePartyMatchSendsAutoGroupThenDialogClose()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		viewer.Level = 50;
+		var portalNpc = CreateNpc(0x04050607, templateId: 700001);
+		var missingPortalNpc = CreateNpc(0x04050608, templateId: 700099);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(portalNpc.ObjectId, portalNpc));
+		Assert.True(world.TryAddObject(missingPortalNpc.ObjectId, missingPortalNpc));
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(21, 300260000, 140001, 140002, 46, 65, true, true, false, [portalNpc.TemplateId]),
+			new AutoGroupSummary(22, 300270000, 140003, 140004, 56, 65, true, true, false, [portalNpc.TemplateId]),
+		]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			autoGroups: autoGroups,
+			world: world);
+		SetActivePlayer(fixture.Connection, viewer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(portalNpc.ObjectId, CmDialogSelect.InstancePartyMatch));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var autoGroupPacket = Assert.IsType<SmAutoGroup>(packet);
+				Assert.Equal(21, ReadPrivateField<int>(autoGroupPacket, "_maskId"));
+				Assert.Equal(0, ReadPrivateField<int>(autoGroupPacket, "_windowId"));
+				Assert.Equal(300260000, ReadPrivateField<int>(autoGroupPacket, "_mapId"));
+				Assert.Equal(140001, ReadPrivateField<int>(autoGroupPacket, "_messageId"));
+				Assert.Equal(140002, ReadPrivateField<int>(autoGroupPacket, "_titleId"));
+			},
+			packet =>
+			{
+				var dialogPacket = Assert.IsType<SmDialogWindow>(packet);
+				Assert.Equal(portalNpc.ObjectId, ReadPrivateField<int>(dialogPacket, "_targetObjectId"));
+				Assert.Equal(0, ReadPrivateField<int>(dialogPacket, "_dialogPageId"));
+			});
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(missingPortalNpc.ObjectId, CmDialogSelect.InstancePartyMatch));
+
+		var closeOnlyPacket = Assert.IsType<SmDialogWindow>(Assert.Single(sentPackets));
+		Assert.Equal(missingPortalNpc.ObjectId, ReadPrivateField<int>(closeOnlyPacket, "_targetObjectId"));
+		Assert.Equal(0, ReadPrivateField<int>(closeOnlyPacket, "_dialogPageId"));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionFifteenAndSeventeenHandleInstanceGroupInfoAndUpdates()
 	{
 		var sentPackets = new List<GameServerPacket>();

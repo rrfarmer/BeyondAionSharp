@@ -127,6 +127,19 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			&& _autoGroups.GetRecruitableInstanceMaskIds(npc.TemplateId) != null;
 	}
 
+	public AutoGroupSummary? ResolvePortalInstancePartyMatch(Player? activePlayer, int targetObjectId)
+	{
+		// Java parity: PortalDialogAI INSTANCE_PARTY_MATCH calls
+		// AutoGroupType.getAutoGroup(player.getLevel(), getNpcId()).
+		return activePlayer != null
+			&& _autoGroups != null
+			&& _world != null
+			&& _world.TryGetObject(targetObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject npc
+				? _autoGroups.GetAutoGroupForNpc(activePlayer.Level, npc.TemplateId)
+				: null;
+	}
+
 	private Player? ResolveWorldPlayer(int objectId)
 	{
 		// Java parity: FindGroupService.sendInstanceApplication and sendInstanceApplicationResult

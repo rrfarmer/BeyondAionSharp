@@ -1835,6 +1835,16 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player.IsTrading)
 			return;
 
+		if (packet.DialogActionId == CmDialogSelect.InstancePartyMatch)
+		{
+			var autoGroup = _findGroupConnectionClientActionCompositionPlanService
+				?.ResolvePortalInstancePartyMatch(player, packet.TargetObjectId);
+			if (autoGroup != null)
+				await SendPacketAsync(new SmAutoGroup(autoGroup));
+			await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 0));
+			return;
+		}
+
 		if (packet.DialogActionId == CmDialogSelect.OpenInstanceRecruit)
 		{
 			var portalPlan = _findGroupConnectionClientActionCompositionPlanService

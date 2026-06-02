@@ -11,6 +11,7 @@ public sealed class CmDialogSelect : GameClientPacket
 	public const int CombineTask = 58;
 	public const int BuyAgain = 70;
 	public const int ChargeItemMulti = 76;
+	public const int InstancePartyMatch = 77;
 	public const int TradeIn = 78;
 	public const int ChargeItemMulti2 = 95;
 	public const int OpenInstanceRecruit = 105;
