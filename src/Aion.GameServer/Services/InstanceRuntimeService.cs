@@ -102,15 +102,18 @@ public static class InstanceRuntimeService
 	public static InstanceDestroyRuntimePlan DestroyInstance(
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
-		int instanceId)
+		int instanceId,
+		Action<int, int>? temporarySpawnCleanup = null)
 	{
-		// Java parity: InstanceService.destroyInstance removes the WorldMapInstance before calling onInstanceDestroy.
+		// Java parity: InstanceService.destroyInstance removes the WorldMapInstance, unregisters temporary spawns,
+		// then calls instance.getInstanceHandler().onInstanceDestroy().
 		if (!worldMaps.TryGetWorldMapInstance(worldId, instanceId, out var instance) || instance == null)
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
 		if (!worldMaps.RemoveWorldMapInstance(worldId, instanceId))
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
+		temporarySpawnCleanup?.Invoke(worldId, instance.InstanceId);
 		var notified = instance.NotifyInstanceDestroyed();
 		return new InstanceDestroyRuntimePlan(
 			worldId,

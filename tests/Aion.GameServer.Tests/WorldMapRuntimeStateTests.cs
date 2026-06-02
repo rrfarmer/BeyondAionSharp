@@ -227,10 +227,21 @@ public sealed class WorldMapRuntimeStateTests
 		var handler = new RecordingInstanceLifecycleHandler(
 			instance => table.InstanceExists(300030000, instance.InstanceId));
 		var instance = table.CreateNextWorldMapInstance(300030000, instanceHandler: handler);
+		var cleanupObservedInstanceExists = new List<bool>();
 		Assert.NotNull(instance);
 		Assert.True(table.InstanceExists(300030000, instance.InstanceId));
 
-		var plan = InstanceRuntimeService.DestroyInstance(table, 300030000, instance.InstanceId);
+		var plan = InstanceRuntimeService.DestroyInstance(
+			table,
+			300030000,
+			instance.InstanceId,
+			(mapId, cleanedInstanceId) =>
+			{
+				Assert.Equal(300030000, mapId);
+				Assert.Equal(instance.InstanceId, cleanedInstanceId);
+				cleanupObservedInstanceExists.Add(table.InstanceExists(mapId, cleanedInstanceId));
+				Assert.Empty(handler.DestroyedInstances);
+			});
 		var duplicate = InstanceRuntimeService.DestroyInstance(table, 300030000, instance.InstanceId);
 
 		Assert.True(plan.Removed);
@@ -240,6 +251,7 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.True(instance.InstanceDestroyNotified);
 		var destroyed = Assert.Single(handler.DestroyedInstances);
 		Assert.Same(instance, destroyed);
+		Assert.Equal([false], cleanupObservedInstanceExists);
 		Assert.False(handler.InstanceExistsAtDestroy.Single());
 		Assert.False(duplicate.Removed);
 		Assert.False(duplicate.DestroyHandlerNotified);

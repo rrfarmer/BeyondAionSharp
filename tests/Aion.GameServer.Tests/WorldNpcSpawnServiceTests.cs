@@ -1308,6 +1308,34 @@ public sealed class WorldNpcSpawnServiceTests
 		Assert.Equal([2, 3], world.GetNpcs().Select(npc => npc.Position.X).OrderBy(x => x).ToArray());
 	}
 
+	[Fact]
+	public async Task UnregisterTemporarySpawnsForInstance_RemovesOnlyDestroyedInstanceTrackingLikeJavaTemporarySpawnEngine()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var groupSchedule = TemporarySpawnSchedule.FromAttributes(null, "0.*.*", "1.*.*");
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203030, groupTemporarySchedule: groupSchedule)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203030)]);
+		var firstInstance = new WorldMapInstanceRuntimeState(instanceId: 7, difficultyId: 0);
+		var secondInstance = new WorldMapInstanceRuntimeState(instanceId: 8, difficultyId: 0);
+
+		var firstSpawn = service.SpawnWorldNpcsForInstance(firstInstance, 210010000, spawns, templates);
+		var secondSpawn = service.SpawnWorldNpcsForInstance(secondInstance, 210010000, spawns, templates);
+		var unregistered = service.UnregisterTemporarySpawnsForInstance(210010000, firstInstance.InstanceId);
+		var hourChange = await service.ProcessTemporarySpawnHourChangeAsync(
+			spawns,
+			templates,
+			[210010000],
+			gameMinutes: 60,
+			serverDayOfWeek: DayOfWeek.Friday);
+
+		Assert.Equal(new WorldNpcSpawnResult(1, 0), firstSpawn);
+		Assert.Equal(new WorldNpcSpawnResult(1, 0), secondSpawn);
+		Assert.Equal(1, unregistered);
+		Assert.Equal(new TemporarySpawnHourChangeResult(0, 1, 1), hourChange);
+		Assert.Equal([7], world.GetNpcs().Select(npc => npc.Position.InstanceId).ToArray());
+	}
+
 	private static WorldNpcSpawnService CreateService(GameWorld world)
 	{
 		return new WorldNpcSpawnService(

@@ -32,7 +32,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly Action<int>? _npcLifeStatsClear;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly ILogger<WorldNpcSpawnService> _logger;
-	private readonly ConcurrentDictionary<NpcSpawnSummary, int> _temporarySpawnObjectIds = new();
+	private readonly ConcurrentDictionary<TemporarySpawnKey, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
 	private readonly ConcurrentDictionary<int, WorldNpc> _inactiveWalkerVariants = new();
 	private readonly ConcurrentDictionary<int, PendingWorldNpcRespawn> _pendingRespawns = new();
@@ -398,6 +398,23 @@ public sealed class WorldNpcSpawnService : GameEngine
 			cancellationToken: cancellationToken);
 	}
 
+	public int UnregisterTemporarySpawnsForInstance(int mapId, int instanceId)
+	{
+		// Java parity: spawnengine/TemporarySpawnEngine.onInstanceDestroy removes spawned temporary objects
+		// from tracking for the destroyed WorldMapInstance before InstanceService deletes visible objects.
+		var removed = 0;
+		foreach (var key in _temporarySpawnObjectIds.Keys.ToArray())
+		{
+			if (key.Spawn.MapId != mapId || key.InstanceId != instanceId)
+				continue;
+
+			if (_temporarySpawnObjectIds.TryRemove(key, out _))
+				removed++;
+		}
+
+		return removed;
+	}
+
 	private void SpawnStaticDoorsForInstance(
 		global::Aion.GameServer.World.WorldMapInstanceRuntimeState instance,
 		int mapId,
@@ -528,7 +545,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 				if (temporarySpawnMode == TemporarySpawnEvaluationMode.HourlySpawn
 					&& groupKey.PoolSize > 0
-					&& groupSpawns.Any(spawn => _temporarySpawnObjectIds.ContainsKey(spawn)))
+					&& groupSpawns.Any(spawn => HasTemporarySpawnObject(spawn, instanceId)))
 				{
 					skipped += groupSpawns.Length;
 					continue;
@@ -540,8 +557,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 					var objectId = SpawnStaticObject(spawn, staticTemplate, instanceId);
 					if (objectId.HasValue)
 					{
-						if (spawn.GroupTemporarySchedule != null)
-							_temporarySpawnObjectIds[spawn] = objectId.Value;
+						TrackTemporarySpawnObject(spawn, instanceId, objectId.Value);
 						changedMapIds?.Add(spawn.MapId);
 					}
 					else
@@ -575,7 +591,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 			if (temporarySpawnMode == TemporarySpawnEvaluationMode.HourlySpawn
 				&& groupKey.PoolSize > 0
-				&& groupSpawns.Any(spawn => _temporarySpawnObjectIds.ContainsKey(spawn)))
+				&& groupSpawns.Any(spawn => HasTemporarySpawnObject(spawn, instanceId)))
 			{
 				skipped += groupSpawns.Length;
 				continue;
@@ -593,7 +609,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			foreach (var spawn in SelectActivePoolSpots(activeSpawns))
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				if (spawn.GroupTemporarySchedule != null && _temporarySpawnObjectIds.ContainsKey(spawn))
+				if (IsTemporarySpawn(spawn) && HasTemporarySpawnObject(spawn, instanceId))
 				{
 					skipped++;
 					continue;
@@ -603,8 +619,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 				if (objectId.HasValue)
 				{
 					spawned++;
-					if (spawn.GroupTemporarySchedule != null)
-						_temporarySpawnObjectIds[spawn] = objectId.Value;
+					TrackTemporarySpawnObject(spawn, instanceId, objectId.Value);
 					changedMapIds?.Add(spawn.MapId);
 				}
 				else
@@ -703,7 +718,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return null;
 		}
 
-		_spawnedWorldNpcs[objectId] = new SpawnedWorldNpcRegistration(spawn, template);
+		_spawnedWorldNpcs[objectId] = new SpawnedWorldNpcRegistration(spawn, template, instanceId);
 		RevalidateNpcCreaturePvpZones(worldNpc);
 		// Java parity: spawnengine/VisibleObjectSpawner creates a fresh Npc/NpcAI/NpcLifeStats runtime on spawn.
 		_npcAiStates?.Clear(objectId);
@@ -981,8 +996,11 @@ public sealed class WorldNpcSpawnService : GameEngine
 			return ValueTask.CompletedTask;
 
 		var newObjectId = SpawnNpc(pendingRespawn.Registration.Spawn, pendingRespawn.Registration.Template);
-		if (newObjectId.HasValue && pendingRespawn.Registration.Spawn.GroupTemporarySchedule != null)
-			_temporarySpawnObjectIds[pendingRespawn.Registration.Spawn] = newObjectId.Value;
+		if (newObjectId.HasValue)
+			TrackTemporarySpawnObject(
+				pendingRespawn.Registration.Spawn,
+				pendingRespawn.Registration.InstanceId,
+				newObjectId.Value);
 		if (newObjectId.HasValue)
 		{
 			RefreshWalkerSpawnPlansFromStaticData([pendingRespawn.Registration.Spawn.MapId]);
@@ -1020,13 +1038,14 @@ public sealed class WorldNpcSpawnService : GameEngine
 		var despawned = 0;
 		foreach (var pair in _temporarySpawnObjectIds.ToArray())
 		{
-			var spawn = pair.Key;
+			var key = pair.Key;
+			var spawn = key.Spawn;
 			var schedule = spawn.SpotTemporarySchedule ?? spawn.GroupTemporarySchedule;
 			if (schedule == null || !schedule.CanDespawn(gameMinutes, serverDayOfWeek))
 				continue;
 
-			if (_temporarySpawnObjectIds.TryRemove(spawn, out var objectId)
-				&& TryDespawnWorldNpc(objectId))
+			if (_temporarySpawnObjectIds.TryRemove(key, out var objectId)
+				&& TryDespawnTemporaryObject(objectId))
 			{
 				changedMapIds.Add(spawn.MapId);
 				despawned++;
@@ -1034,6 +1053,36 @@ public sealed class WorldNpcSpawnService : GameEngine
 		}
 
 		return despawned;
+	}
+
+	private bool TryDespawnTemporaryObject(int objectId)
+	{
+		if (!_world.TryGetObject(objectId, out var gameObject))
+			return false;
+
+		if (gameObject is WorldNpc)
+			return TryDespawnWorldNpc(objectId);
+
+		if (gameObject is not WorldStaticObject staticObject)
+			return false;
+
+		if (!_world.TryRemoveObject(objectId, out _))
+			return false;
+
+		_staticPlaceables?.DespawnPlaceableObject(staticObject.Position.WorldId, staticObject.StaticId);
+		_idFactory.ReleaseId(objectId);
+		return true;
+	}
+
+	private void TrackTemporarySpawnObject(NpcSpawnSummary spawn, int instanceId, int objectId)
+	{
+		if (IsTemporarySpawn(spawn))
+			_temporarySpawnObjectIds[new TemporarySpawnKey(spawn, instanceId)] = objectId;
+	}
+
+	private bool HasTemporarySpawnObject(NpcSpawnSummary spawn, int instanceId)
+	{
+		return _temporarySpawnObjectIds.ContainsKey(new TemporarySpawnKey(spawn, instanceId));
 	}
 
 	private async ValueTask RefreshNpcVisibilityAsync(IReadOnlySet<int> changedMapIds, CancellationToken cancellationToken)
@@ -1219,6 +1268,11 @@ public sealed class WorldNpcSpawnService : GameEngine
 			: schedule.IsInSpawnTime(gameMinutes, serverDayOfWeek);
 	}
 
+	private static bool IsTemporarySpawn(NpcSpawnSummary spawn)
+	{
+		return spawn.GroupTemporarySchedule != null || spawn.SpotTemporarySchedule != null;
+	}
+
 	private static NpcSpawnGroupKey CreateSpawnGroupKey(NpcSpawnSummary spawn)
 	{
 		// Java parity: SpawnsData unique direct spawn groups are keyed by map, npc_id, and custom flag.
@@ -1249,7 +1303,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 		HourlySpawn,
 	}
 
-	private readonly record struct SpawnedWorldNpcRegistration(NpcSpawnSummary Spawn, NpcTemplateSummary Template);
+	private readonly record struct TemporarySpawnKey(NpcSpawnSummary Spawn, int InstanceId);
+
+	private readonly record struct SpawnedWorldNpcRegistration(NpcSpawnSummary Spawn, NpcTemplateSummary Template, int InstanceId);
 
 	private sealed class PendingWorldNpcRespawn
 	{
