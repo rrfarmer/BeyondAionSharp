@@ -646,6 +646,9 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroupsUpdate, evidence.IntentPlan.ClientActionKind);
 		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
 		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
+		Assert.DoesNotContain(
+			evidence.IntentPlan.DirectPacketIntents,
+			intent => intent.JavaSource.Contains("instanceMaskIds", StringComparison.Ordinal));
 		var intent = Assert.Single(evidence.IntentPlan.DirectPacketIntents);
 		Assert.Equal(viewer.ObjectId, intent.RecipientObjectId);
 		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", intent.JavaSource);
@@ -653,6 +656,12 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.True(direct.Sent);
 		Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
 		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		var step = Assert.Single(evidence.ExecutionPlan.ExecutionOrder);
+		Assert.Equal(1, step.Sequence);
+		Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+		Assert.Equal(viewer.ObjectId, step.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), step.PacketType);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", step.JavaSource);
 		Assert.Equal([viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
 	}
 
