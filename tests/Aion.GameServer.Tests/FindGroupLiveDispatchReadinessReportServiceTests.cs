@@ -22,7 +22,8 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 				Assert.Contains(FindGroupClientActionRuntimeRequirement.ActivePlayer, action.Requirements);
 				Assert.Contains(FindGroupClientActionRuntimeRequirement.FindGroupStateStore, action.Requirements);
 			});
-		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("GameServerConnection still defers CmFindGroup", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("mutation-post actions 2 and 6", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("remaining runImpl actions", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("real-client runtime comparison", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("without requiring an observer", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("onJoinedTeam plans", StringComparison.Ordinal));
@@ -77,7 +78,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("records execution order", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupDirectPacketBoundaryTraceReadinessService", StringComparison.Ordinal));
-		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 0/2/4/6/8/9/10/11/13/15/17 disabled-boundary acceptance", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("actions 2 and 6 also have focused ProcessPacketAsync send-order tests", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupDirectPacketTriggerOrderingReadinessService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupWorldBroadcastFanoutReadinessService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("disabled action 1/5 boundary fanout trace evidence", StringComparison.Ordinal));
@@ -96,6 +97,6 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupLiveDispatchDryRunPlanService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("required live-wiring executors and result surfaces", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupLifecycleSingletonWiringReadinessService", StringComparison.Ordinal));
-		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("CM_FIND_GROUP is not wired", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("broader CM_FIND_GROUP actions remain unwired", StringComparison.Ordinal));
 	}
 }

@@ -516,8 +516,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmGroupDataExchange groupDataExchange:
 				await HandleGroupDataExchangeAsync(groupDataExchange);
 				break;
-			case CmFindGroup:
-				// Java parity: network/aion/clientpackets/CM_FIND_GROUP.runImpl dispatches FindGroupService actions; deferred.
+			case CmFindGroup findGroup:
+				await HandleFindGroupAsync(findGroup);
 				break;
 			case CmGfWebshopTokenRequest:
 				// Java parity: network/aion/clientpackets/CM_GF_WEBSHOP_TOKEN_REQUEST.runImpl sends an empty token response.
@@ -4251,6 +4251,32 @@ public sealed class GameServerConnection : BaseClientConnection
 			plan,
 			player?.ObjectId,
 			repurchaseStateSnapshots));
+	}
+
+	private async Task HandleFindGroupAsync(CmFindGroup findGroup)
+	{
+		// Java parity: CM_FIND_GROUP action 2/6 mutation-post branches call
+		// FindGroupService.addRecruitment/addApplication, then directly send the posted
+		// system message followed by the refreshed SM_FIND_GROUP list to the active player.
+		if (_activePlayer == null || findGroup.Action is not (2 or 6))
+			return;
+
+		var plan = CreateDisabledFindGroupBoundaryPlan(findGroup, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+		if (plan?.Status != FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects
+			|| plan.IntentPlan.WorldBroadcastIntents.Count != 0
+			|| plan.InvitePlan != null)
+		{
+			return;
+		}
+
+		foreach (var intent in plan.IntentPlan.DirectPacketIntents)
+		{
+			if (intent.RecipientObjectId != _activePlayer.ObjectId)
+				return;
+		}
+
+		foreach (var intent in plan.IntentPlan.DirectPacketIntents)
+			await SendPacketAsync(intent.Packet);
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)

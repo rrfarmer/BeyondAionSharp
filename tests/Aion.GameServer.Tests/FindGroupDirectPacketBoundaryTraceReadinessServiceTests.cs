@@ -19,7 +19,8 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.LiveProcessPacketAsyncTrace
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.Blocked
-				&& evidence.Detail.Contains("still defers CmFindGroup", StringComparison.Ordinal));
+				&& evidence.Detail.Contains("focused action 2/6 boundary send-order evidence", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("remaining direct-packet actions", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -187,10 +188,9 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpMutationPostLiveBoundaryTraceScaffold
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
-				&& evidence.Detail.Contains("FindGroupDirectPacketMutationPostLiveBoundaryTraceScaffoldService", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("ProcessPacketAsync wires", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("actions 2 and 6", StringComparison.Ordinal)
-				&& evidence.Detail.Contains("posted-system-message-before-refreshed-show-list", StringComparison.Ordinal)
-				&& evidence.Detail.Contains("without wiring ProcessPacketAsync", StringComparison.Ordinal));
+				&& evidence.Detail.Contains("posted-system-message-before-refreshed-show-list", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpMutationPostTraceSchema
@@ -227,7 +227,7 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 			item => item.Contains("show-list export projection helper", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
-			item => item.Contains("mutation-post action 2/6 scaffold", StringComparison.Ordinal));
+			item => item.Contains("mutation-post action 2/6 ProcessPacketAsync tests", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("mutation-post trace schema", StringComparison.Ordinal));

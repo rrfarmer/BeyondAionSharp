@@ -83,6 +83,43 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet));
+		SetActivePlayer(fixture.Connection, recruiter);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(2);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteS("Need healer");
+					buffer.WriteC(3);
+				}));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var systemMessage = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400392, systemMessage.MessageId);
+			},
+			packet => Assert.IsType<SmFindGroup>(packet));
+		var snapshot = Assert.Single(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 102).Recruitments);
+		Assert.Equal(recruiter.ObjectId, snapshot.ObjectId);
+		Assert.Equal("Need healer", snapshot.Message);
+		Assert.Equal(3, snapshot.GroupType);
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_ActionTwoCanProduceOrderedOptInPostedMessageBeforeShowListTrace()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -199,6 +236,47 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Empty(sentPackets);
 		Assert.True(executorPlan.DispatchLiveSideEffects);
 		Assert.Contains("Opt-in executor only", executorPlan.BoundaryNote, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_ActionSixAddApplicationSendsPostedMessageThenShowList()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet));
+		SetActivePlayer(fixture.Connection, applicant);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(6);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteS("Need group");
+					buffer.WriteC(2);
+					buffer.WriteC(5);
+					buffer.WriteC(65);
+				}));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var systemMessage = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400393, systemMessage.MessageId);
+			},
+			packet => Assert.IsType<SmFindGroup>(packet));
+		var snapshot = Assert.Single(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 102).Applications);
+		Assert.Equal(applicant.ObjectId, snapshot.PlayerObjectId);
+		Assert.Equal("Need group", snapshot.Message);
+		Assert.Equal(2, snapshot.GroupType);
+		Assert.Equal(5, snapshot.ClassId);
+		Assert.Equal(65, snapshot.Level);
 	}
 
 	[Fact]
@@ -1353,6 +1431,15 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		buffer.WriteH(~encodedOpcode);
 		writePayload(buffer);
 		return buffer.ToArray();
+	}
+
+	private static async Task InvokeProcessPacketAsync(GameServerConnection connection, byte[] payload)
+	{
+		var method = typeof(GameServerConnection).GetMethod("ProcessPacketAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		using var packet = new PacketBuffer(payload);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [packet]));
+		await task;
 	}
 
 	private static Player CreatePlayer(int objectId, string name, string race)
