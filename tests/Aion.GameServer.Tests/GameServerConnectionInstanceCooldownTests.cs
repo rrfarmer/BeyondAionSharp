@@ -1280,6 +1280,57 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			packet => Assert.IsType<SmPlayerSpawn>(packet));
 	}
 
+	[Fact]
+	public async Task HandleTeleportAnimationDoneAsync_SendsLeaveInstanceResetWarningBeforeSpawnLikeJavaSpawnTask()
+	{
+		var worldMaps = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1),
+		]);
+		var oldInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 2, maxPlayers: 6);
+		Assert.NotNull(oldInstance);
+		oldInstance.Register(1001);
+		oldInstance.AddPlayer(1001);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetWorldMapStates(worldMaps);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions
+			{
+				Instance = new GameServerInstanceOptions
+				{
+					DestroyDelaySeconds = 900,
+					SoloDestroyDelaySeconds = 300,
+				},
+			},
+			runtimeContext: runtimeContext);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(300030000, 1, 1, 1, 0, InstanceId: 2),
+		};
+		var destination = new WorldPosition(210010000, 10, 20, 30, 90);
+
+		await pair.Connection.QueueDelayedTeleportAsync(player, destination);
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.NotNull(completed);
+		Assert.Equal(destination, player.Position);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400045, message.MessageId);
+				Assert.Equal(["15"], message.Parameters);
+			},
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet));
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -1330,9 +1381,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			GameServerOptions options,
-			PlayerEnterWorldService? playerEnterWorldService,
+			PlayerEnterWorldService? playerEnterWorldService = null,
 			WorldNpcSpawnService? worldNpcSpawnService = null,
-			InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null)
+			InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null,
+			GameServerRuntimeContext? runtimeContext = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1352,6 +1404,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 					"instance-cooldown-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: options,
+					runtimeContext: runtimeContext,
 					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt,

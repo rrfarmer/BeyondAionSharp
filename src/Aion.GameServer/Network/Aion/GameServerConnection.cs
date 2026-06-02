@@ -7442,14 +7442,40 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 		}
 
+		var queuedTeleport = player.PendingTeleport;
+		if (queuedTeleport != null
+			&& (player.Position.WorldId != queuedTeleport.Destination.WorldId
+				|| player.Position.InstanceId != queuedTeleport.Destination.InstanceId))
+			await SendInstanceLeaveMessageIfNeededAsync(player, player.Position);
+
+		// Java parity: CM_TELEPORT_ANIMATION_DONE.runImpl executes TeleportService.SpawnTask.run; SpawnTask mutates World.setPosition before spawn packets and zone callbacks.
 		var teleport = PlayerTeleportService.CompletePendingTeleport(player);
 		if (teleport == null)
 			return null;
 
-		// Java parity: CM_TELEPORT_ANIMATION_DONE.runImpl executes TeleportService.SpawnTask.run; SpawnTask mutates World.setPosition before spawn packets and zone callbacks.
 		RevalidatePlayerCreaturePvpZones(player, staticData);
 		await SendDelayedTeleportCompletionPacketsAsync(player, teleport, staticData);
 		return teleport;
+	}
+
+	private async Task SendInstanceLeaveMessageIfNeededAsync(Player player, WorldPosition previousPosition)
+	{
+		var worldMapStates = _runtimeContext?.WorldMapStates;
+		if (worldMapStates == null
+			|| !worldMapStates.TryGetWorldMapInstance(previousPosition.WorldId, previousPosition.InstanceId, out var instance)
+			|| instance == null)
+			return;
+
+		var plan = InstanceLeaveMessageService.CreateLeaveMessagePlan(
+			instance,
+			_options.Instance.SoloDestroyDelaySeconds,
+			_options.Instance.DestroyDelaySeconds,
+			registeredTeamHasNoMembers: InstanceRegisteredTeamDisbandService.IsRegisteredTeamDisbanded(
+				instance,
+				_playerGroupRuntime,
+				_playerAllianceRuntime));
+		if (plan.Packet != null)
+			await SendPacketAsync(plan.Packet);
 	}
 
 	private static bool ShouldFallbackDelayedTeleportToCurrentSpawn(Player player, WorldMapRuntimeStateTable? worldMapStates)
