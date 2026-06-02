@@ -87,8 +87,10 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationPlanContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorBlockedOutputPreviewContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeEvidenceIntakeContractService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorMaterializationPreflightContractService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("blocked-output preview", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("runtime-evidence intake", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("materialization preflight", StringComparison.Ordinal)
 			&& row.Notes.Contains("cannot materialize", StringComparison.Ordinal));
 	}
 
