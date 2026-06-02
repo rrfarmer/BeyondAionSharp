@@ -701,6 +701,45 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void InstanceRuntimeService_SchedulesAutoDestroyOnNewInstancesLikeJavaGetNextAvailableInstance()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+		]);
+		var scheduled = new List<(int WorldId, int InstanceId, bool IsPlayerRegisteredAtSchedule)>();
+
+		var direct = InstanceRuntimeService.GetNextAvailableInstance(
+			table,
+			300030000,
+			emptyInstanceScheduler: (worldId, instance) =>
+				scheduled.Add((worldId, instance.InstanceId, instance.IsRegistered(1001))));
+		var manual = InstanceRuntimeService.GetNextAvailableInstance(
+			table,
+			300030000,
+			autoDestroy: false,
+			emptyInstanceScheduler: (worldId, instance) =>
+				scheduled.Add((worldId, instance.InstanceId, instance.IsRegistered(1001))));
+		var player = InstanceRuntimeService.GetNextAvailableInstanceForPlayer(
+			table,
+			300030000,
+			playerObjectId: 1001,
+			emptyInstanceScheduler: (worldId, instance) =>
+				scheduled.Add((worldId, instance.InstanceId, instance.IsRegistered(1001))));
+
+		Assert.Equal(2, direct.InstanceId);
+		Assert.Equal(3, manual.InstanceId);
+		Assert.Equal(4, player.InstanceId);
+		Assert.True(player.IsRegistered(1001));
+		Assert.Equal(
+			[
+				(300030000, 2, false),
+				(300030000, 4, false),
+			],
+			scheduled);
+	}
+
+	[Fact]
 	public void InstanceCooltimeTable_MatchesJavaRaceSpecificMaxMemberLookup()
 	{
 		var cooltimes = new InstanceCooltimeTable(
