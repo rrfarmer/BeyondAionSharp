@@ -25,6 +25,8 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 			Assert.False(row.HasShapeValidJavaArtifact);
 			Assert.False(row.CanFeedValueProjection);
 			Assert.Equal(FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.BlockedMissingShapeValidJavaArtifact, row.Status);
+			Assert.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", row.CurrentEvidence, StringComparison.Ordinal);
+			Assert.Contains("requiredBoundaryFields=action,mutationKind,boundaryAccepted", row.CurrentEvidence, StringComparison.Ordinal);
 		});
 		Assert.Contains("explicit-root Java action 2/6 artifacts", report.ExecutionDecision, StringComparison.Ordinal);
 	}
@@ -46,8 +48,9 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 			Assert.True(row.HasShapeValidJavaArtifact);
 			Assert.False(row.HasAcceptedCSharpBoundaryRow);
 			Assert.Equal(FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.BlockedMissingAcceptedCSharpBoundaryRow, row.Status);
+			Assert.Contains("csharpHandoffCanFeedJavaArtifactPairing=False", row.CurrentEvidence, StringComparison.Ordinal);
 		});
-		Assert.Contains("accepted C# live-boundary rows", report.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains("accepted-boundary-row handoff", report.ExecutionDecision, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -55,9 +58,9 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 	{
 		using var root = JavaArtifactRoot();
 		var javaSummary = FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummaryService.Create(root.Path);
-		var csharpIntake = AcceptedCSharpIntake(LiveRow(2), LiveRow(6));
+		var csharpHandoff = AcceptedCSharpHandoff(LiveRow(2), LiveRow(6));
 
-		var report = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create(javaSummary, csharpIntake);
+		var report = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create(javaSummary, csharpHandoff);
 
 		Assert.Equal(FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.ReadyForValueProjectionRuntimeComparisonBlocked, report.Status);
 		Assert.True(report.HasShapeValidJavaArtifacts);
@@ -71,7 +74,8 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 		Assert.Contains(report.Rows, row =>
 			row.Action == 2
 			&& row.ExpectedMutationKind == FindGroupDirectPacketMutationPostTraceMutationKind.Recruitment
-			&& row.Status == FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.ReadyForValueProjection);
+			&& row.Status == FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.ReadyForValueProjection
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal));
 		Assert.Contains(report.Rows, row =>
 			row.Action == 6
 			&& row.ExpectedMutationKind == FindGroupDirectPacketMutationPostTraceMutationKind.Application
@@ -85,9 +89,9 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 	{
 		using var root = JavaArtifactRoot();
 		var javaSummary = FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummaryService.Create(root.Path);
-		var csharpIntake = AcceptedCSharpIntake(LiveRow(2));
+		var csharpHandoff = AcceptedCSharpHandoff(LiveRow(2));
 
-		var report = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create(javaSummary, csharpIntake);
+		var report = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create(javaSummary, csharpHandoff);
 
 		Assert.Equal(FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedCSharpBoundaryRowsMissing, report.Status);
 		Assert.False(report.HasAcceptedCSharpBoundaryRows);
@@ -110,9 +114,9 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 	{
 		using var root = JavaArtifactRoot(actionSixJson: ActionSixArtifactJson.Replace("\"mutationKind\": \"Application\"", "\"mutationKind\": \"Recruitment\"", StringComparison.Ordinal));
 		var javaSummary = FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummaryService.Create(root.Path);
-		var csharpIntake = AcceptedCSharpIntake(LiveRow(2), LiveRow(6));
+		var csharpHandoff = AcceptedCSharpHandoff(LiveRow(2), LiveRow(6));
 
-		var report = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create(javaSummary, csharpIntake);
+		var report = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create(javaSummary, csharpHandoff);
 
 		Assert.Equal(FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedJavaArtifactsMissingOrInvalid, report.Status);
 		Assert.False(report.HasShapeValidJavaArtifacts);
@@ -125,11 +129,12 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 			&& row.Status == FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.BlockedMissingShapeValidJavaArtifact);
 	}
 
-	private static FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflight AcceptedCSharpIntake(
+	private static FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReport AcceptedCSharpHandoff(
 		params FindGroupDirectPacketMutationPostBoundaryTraceExport[] rows)
 	{
 		var guardedResult = FindGroupMutationPostGuardedFixtureResultContractService.Create(candidateRows: rows);
-		return FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightService.Create(guardedResult);
+		var intake = FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightService.Create(guardedResult);
+		return FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReportService.Create(intake);
 	}
 
 	private static FindGroupDirectPacketMutationPostBoundaryTraceExport LiveRow(int action) =>

@@ -51,20 +51,21 @@ public sealed record FindGroupMutationPostJavaCSharpRowPairingReadinessReport(
 /// <summary>
 /// Java parity breadcrumb: non-live action/mutation row-pairing readiness for
 /// CM_FIND_GROUP action 2/6 mutation-post artifacts. It consumes explicit-root
-/// Java post-capture shape validation plus accepted C# boundary-row intake, but
-/// it does not project values, compare rows, execute sends, or prove parity.
+/// Java post-capture shape validation plus accepted C# boundary-row handoff
+/// evidence, but it does not project values, compare rows, execute sends, or
+/// prove parity.
 /// </summary>
 public static class FindGroupMutationPostJavaCSharpRowPairingReadinessReportService
 {
 	public static FindGroupMutationPostJavaCSharpRowPairingReadinessReport Create(
 		FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummary? javaSummary = null,
-		FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflight? csharpIntake = null)
+		FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReport? csharpBoundaryHandoff = null)
 	{
 		javaSummary ??= FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummaryService.Create(string.Empty);
-		csharpIntake ??= FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightService.Create();
+		csharpBoundaryHandoff ??= FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReportService.Create();
 		var schema = FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSchema();
 		var rows = schema.SupportedActions
-			.Select((action, index) => CreateRow(index + 1, action, javaSummary, csharpIntake))
+			.Select((action, index) => CreateRow(index + 1, action, javaSummary, csharpBoundaryHandoff))
 			.ToArray();
 		var hasJavaArtifacts = rows.All(row => row.HasShapeValidJavaArtifact);
 		var hasCSharpRows = rows.All(row => row.HasAcceptedCSharpBoundaryRow);
@@ -93,18 +94,19 @@ public static class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 		int order,
 		FindGroupDirectPacketMutationPostActionSchema action,
 		FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummary javaSummary,
-		FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflight csharpIntake)
+		FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReport csharpBoundaryHandoff)
 	{
 		var javaRow = javaSummary.Rows.SingleOrDefault(row => row.Action == action.Action);
 		var hasJavaArtifact = javaRow?.IsShapeValid == true;
 		var hasCSharpRow = action.Action == 2
-			? csharpIntake.HasActionTwoAcceptedRow
-			: csharpIntake.HasActionSixAcceptedRow;
+			? csharpBoundaryHandoff.HasActionTwoAcceptedRow
+			: csharpBoundaryHandoff.HasActionSixAcceptedRow;
 		var hasPairingIdentity = hasJavaArtifact
 			&& hasCSharpRow
-			&& csharpIntake.HasJavaArtifactPairingIdentity;
+			&& csharpBoundaryHandoff.CanFeedJavaArtifactPairing;
 		var canFeedValueProjection = hasJavaArtifact && hasCSharpRow && hasPairingIdentity;
 		var status = DetermineRowStatus(hasJavaArtifact, hasCSharpRow, hasPairingIdentity);
+		var requiredBoundaryFields = string.Join(",", csharpBoundaryHandoff.RequiredAcceptedBoundaryRowFields);
 
 		return new FindGroupMutationPostJavaCSharpRowPairingReadinessRow(
 			order,
@@ -118,10 +120,10 @@ public static class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 			hasPairingIdentity,
 			canFeedValueProjection,
 			status,
-			$"javaStatus={javaRow?.FileStatus.ToString() ?? "MissingFile"}; javaShape={hasJavaArtifact}; csharpAccepted={hasCSharpRow}; csharpPairingIdentity={csharpIntake.HasJavaArtifactPairingIdentity}; expectedMutation={action.MutationKind}",
+			$"javaStatus={javaRow?.FileStatus.ToString() ?? "MissingFile"}; javaShape={hasJavaArtifact}; csharpAccepted={hasCSharpRow}; csharpHandoffStatus={csharpBoundaryHandoff.Status}; csharpHandoffCanFeedJavaArtifactPairing={csharpBoundaryHandoff.CanFeedJavaArtifactPairing}; requiredBoundaryFields={requiredBoundaryFields}; expectedMutation={action.MutationKind}",
 			status == FindGroupMutationPostJavaCSharpRowPairingReadinessRowStatus.ReadyForValueProjection
-				? "Java artifact and C# boundary row share action/mutation identity; value projection and runtime comparison remain separate future work."
-				: "Action cannot feed value projection until shape-valid Java artifact and accepted C# boundary row share action/mutation identity.");
+				? "Java artifact and accepted-boundary-row handoff share action/mutation identity; value projection and runtime comparison remain separate future work."
+				: "Action cannot feed value projection until shape-valid Java artifact and accepted-boundary-row handoff share action/mutation identity.");
 	}
 
 	private static FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus DetermineStatus(
@@ -162,8 +164,8 @@ public static class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 		return status switch
 		{
 			FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedJavaArtifactsMissingOrInvalid => "Java/C# row pairing is blocked until both explicit-root Java action 2/6 artifacts are present and shape-valid.",
-			FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedCSharpBoundaryRowsMissing => "Java/C# row pairing is blocked until accepted C# live-boundary rows exist for actions 2 and 6.",
-			FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedPairingIdentityMissing => "Java/C# row pairing is blocked until accepted C# rows prove Java artifact pairing identity by action and mutation kind.",
+			FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedCSharpBoundaryRowsMissing => "Java/C# row pairing is blocked until the accepted-boundary-row handoff reports accepted C# live-boundary rows for actions 2 and 6.",
+			FindGroupMutationPostJavaCSharpRowPairingReadinessReportStatus.BlockedPairingIdentityMissing => "Java/C# row pairing is blocked until the accepted-boundary-row handoff proves Java artifact pairing identity by action and mutation kind.",
 			_ => "Java/C# action 2/6 rows can feed future value projection by action/mutation identity, but value projection, runtime comparison, result emission, and verified parity remain blocked.",
 		};
 	}
