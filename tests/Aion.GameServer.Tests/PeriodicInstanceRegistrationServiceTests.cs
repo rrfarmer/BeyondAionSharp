@@ -180,6 +180,37 @@ public sealed class PeriodicInstanceRegistrationServiceTests
 	}
 
 	[Fact]
+	public async Task CloseRegistrationAndBroadcastAsync_StopsLookingPartyRegistrationsAfterCloseBroadcastLikeJava()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		var lookingParties = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(108, 300120000, minLevel: 46, maxLevel: 65)]);
+		var eligible = CreatePlayer(objectId: 2001, level: 50);
+		var queuedMember = CreatePlayer(objectId: 3001, level: 50);
+		var registry = new RecordingConnectionRegistry([eligible, queuedMember]);
+		var operations = new List<string>();
+		Assert.True(service.OpenRegistration(108));
+		lookingParties.RegisterLookingParty(108, [queuedMember.ObjectId]);
+		registry.OnPacketSent = delivery =>
+		{
+			var autoGroup = Assert.IsType<SmAutoGroup>(delivery.Packet);
+			operations.Add($"send:{delivery.PlayerObjectId}:window:{autoGroup.WindowId}");
+		};
+
+		var result = await service.CloseRegistrationAndBroadcastAsync(
+			108,
+			autoGroups,
+			registry,
+			lookingParties);
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.Closed, result.Plan.Status);
+		Assert.Equal(2, result.SentPackets);
+		Assert.True(result.StoppedRegistrationsByMaskId);
+		Assert.Equal(0, lookingParties.GetLookingPartyCount(108));
+		Assert.Equal(["send:2001:window:6", "send:3001:window:6", "send:3001:window:2"], operations);
+	}
+
+	[Fact]
 	public void CreateOpenRegistrationBroadcastPlan_MutatesOnceAndSendsEntryIconPlusOpeningMessageToLevelRangeLikeJava()
 	{
 		var service = new PeriodicInstanceRegistrationService();

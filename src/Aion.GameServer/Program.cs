@@ -141,6 +141,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftScheduleService>();
 			services.AddSingleton<InstanceDestroyWorkflowService>();
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
+			services.AddSingleton<AutoGroupLookingPartyRegistrationService>();
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
 			services.AddSingleton(
 				serviceProvider =>

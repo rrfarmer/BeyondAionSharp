@@ -84,6 +84,36 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmAutoGroup_WritesJavaCancelRegistrationWindowPayload()
+	{
+		var payload = SerializeUnencryptedPayload(
+			new SmAutoGroup(
+				new AutoGroupSummary(
+					MaskId: 107,
+					InstanceMapId: 300110000,
+					NameId: 140107,
+					TitleId: 150107,
+					MinLevel: 46,
+					MaxLevel: 65,
+					RegisterQuick: true,
+					RegisterGroup: true,
+					RegisterNew: true,
+					NpcIds: []),
+				windowId: 2));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(107, reader.ReadD());
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(300110000, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(string.Empty, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void TeleportAnimation_PreservesJavaIdsAndDefaultMappings()
 	{
 		Assert.Equal(0, TeleportAnimation.None.Id);
