@@ -1849,6 +1849,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 4762));
 				return;
 			}
+
+			if (!IsBeshmundirsWalkGroupMemberInInstance(player))
+			{
+				await SendPacketAsync(SmSystemMessage.InstanceDungeonCantEnterNotOpened());
+				return;
+			}
 		}
 
 		if (packet.DialogActionId == CmDialogSelect.InstancePartyMatch)
@@ -4400,6 +4406,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& _world.TryGetObject(targetObjectId, out var gameObject)
 			&& gameObject is IWorldNpcObject npc
 			&& string.Equals(npc.AiName, "beshmundirswalk", StringComparison.Ordinal);
+	}
+
+	private bool IsBeshmundirsWalkGroupMemberInInstance(Player player)
+	{
+		// Java parity: BeshmundirsWalkAI.isAGroupMemberInInstance checks group members for world 300170000.
+		return _playerGroupRuntime.GetMemberObjectIds(player.CurrentTeamId)
+			.Select(memberObjectId => _playerGroupRuntime.GetMember(player.CurrentTeamId, memberObjectId)?.Player)
+			.Any(member => member?.Position.WorldId == 300170000);
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)

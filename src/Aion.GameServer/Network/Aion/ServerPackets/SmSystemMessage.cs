@@ -290,6 +290,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400766, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage InstanceDungeonCantEnterNotOpened()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_DUNGEON_CANT_ENTER_NOT_OPENED.
+		return new SmSystemMessage(1400361);
+	}
+
 	public static SmSystemMessage MentorStart()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_START.
