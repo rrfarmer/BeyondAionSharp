@@ -144,6 +144,22 @@ public sealed record PortalContinueTransferResult(
 			null);
 	}
 
+	public static PortalContinueTransferResult FromRegisteredTeamInstance(
+		InstancePortalTransferResult transfer,
+		WorldMapInstanceRuntimeState instance,
+		PortalTeamEntryPlan teamPlan,
+		GroupPortalTransferPlan? groupTransferPlan)
+	{
+		return new PortalContinueTransferResult(
+			PortalContinueTransferKind.RegisteredInstance,
+			transfer.Teleport,
+			transfer.Cooldown,
+			null,
+			instance,
+			teamPlan,
+			groupTransferPlan);
+	}
+
 	public static PortalContinueTransferResult AllocatedInstance(AllocatedInstancePortalTransferResult transfer)
 	{
 		return new PortalContinueTransferResult(

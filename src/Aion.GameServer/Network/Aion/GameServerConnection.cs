@@ -7458,12 +7458,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (portalLoc == null || instanceCooltimes == null || worldMapStates == null)
 			return null;
 		if (preparation.EntryPlan.TeamPlan != null)
-			return PortalContinueTransferResult.UnsupportedTeamPortal(
+			return await QueuePortalTeamContinueTransferAsync(
+				player,
 				preparation.EntryPlan.TeamPlan,
 				portalLoc,
-				player,
+				staticData,
 				instanceCooltimes,
-				_options,
 				now ?? DateTimeOffset.Now);
 		if (preparation.EntryPlan.Action != PortalEntryPlanAction.Continue)
 			return null;
@@ -7516,6 +7516,52 @@ public sealed class GameServerConnection : BaseClientConnection
 			TeleportAnimation.FadeOutBeam,
 			staticData);
 		return PortalContinueTransferResult.OpenWorld(teleport);
+	}
+
+	private async Task<PortalContinueTransferResult> QueuePortalTeamContinueTransferAsync(
+		Player player,
+		PortalTeamEntryPlan teamPlan,
+		PortalLocSummary portalLoc,
+		StaticData? staticData,
+		InstanceCooltimeTable instanceCooltimes,
+		DateTimeOffset now)
+	{
+		var groupPlan = GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, player, instanceCooltimes, _options, now);
+		if (teamPlan.Kind != PortalTeamEntryKind.Group
+			|| teamPlan.RegisteredInstance == null
+			|| groupPlan?.CapacityPlan.State != GroupPortalCapacityState.WouldPassCapacityGuard)
+		{
+			return PortalContinueTransferResult.UnsupportedTeamPortal(
+				teamPlan,
+				portalLoc,
+				player,
+				instanceCooltimes,
+				_options,
+				now);
+		}
+
+		var destination = new WorldPosition(
+			portalLoc.WorldId,
+			portalLoc.X,
+			portalLoc.Y,
+			portalLoc.Z,
+			portalLoc.Heading,
+			teamPlan.RegisteredInstance.InstanceId);
+		teamPlan.RegisteredInstance.SetStartPositionIfMissing(destination);
+		teamPlan.RegisteredInstance.Register(player.ObjectId);
+		var transfer = await QueueInstancePortalTransferAsync(
+			player,
+			destination,
+			teamPlan.Reenter,
+			instanceCooltimes,
+			TeleportAnimation.FadeOutBeam,
+			staticData,
+			now);
+		return PortalContinueTransferResult.FromRegisteredTeamInstance(
+			transfer,
+			teamPlan.RegisteredInstance,
+			teamPlan,
+			groupPlan);
 	}
 
 	internal async Task<InstanceEntranceCooldownResult> ApplyInstanceEntranceCooldownAsync(

@@ -386,7 +386,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 	}
 
 	[Fact]
-	public async Task QueuePortalContinueTransferAsync_UnsupportedTeamPlanReturnsBlockedResultWithoutPackets()
+	public async Task QueuePortalContinueTransferAsync_RegisteredGroupInstanceTransfersAndAppliesCooldown()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
@@ -443,9 +443,12 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
 
 		Assert.NotNull(result);
-		Assert.Equal(PortalContinueTransferKind.UnsupportedTeamPortal, result.Kind);
-		Assert.Null(result.Teleport);
-		Assert.Null(result.Cooldown);
+		Assert.Equal(PortalContinueTransferKind.RegisteredInstance, result.Kind);
+		Assert.NotNull(result.Teleport);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), result.Teleport.PendingTeleport.Destination);
+		Assert.NotNull(result.Cooldown);
+		Assert.True(result.Cooldown.Added);
+		Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(100_000).AddMinutes(30).ToUnixTimeMilliseconds(), result.Cooldown.ReuseTimeMillis);
 		Assert.Same(registeredInstance, result.RegisteredInstance);
 		Assert.Same(teamPlan, result.TeamPlan);
 		var groupPlan = result.GroupTransferPlan;
@@ -486,15 +489,18 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.True(groupPlan.ExecutionPlan.WouldAddCooldown);
 		Assert.Equal(GroupPortalExecutionState.WouldTransferToRegisteredInstance, groupPlan.ExecutionPlan.State);
 		Assert.Equal(GroupPortalExecutionBlockedReason.GroupFanoutNotImplemented, groupPlan.ExecutionPlan.BlockedReason);
-		Assert.Null(registeredInstance.StartPosition);
-		Assert.False(registeredInstance.IsRegistered(1001));
-		Assert.Empty(pair.SentPackets);
-		Assert.Null(player.PendingTeleport);
-		Assert.Null(repository.SavedPortalCooldowns);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), registeredInstance.StartPosition);
+		Assert.True(registeredInstance.IsRegistered(1001));
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), player.PendingTeleport?.Destination);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+		Assert.NotNull(repository.SavedPortalCooldowns);
 	}
 
 	[Fact]
-	public async Task QueuePortalContinueTransferAsync_RegisteredGroupReentryPreviewSkipsCooldownWithoutSaving()
+	public async Task QueuePortalContinueTransferAsync_RegisteredGroupReentryTransfersWithoutCooldown()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
@@ -550,6 +556,13 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
 
 		Assert.NotNull(result);
+		Assert.Equal(PortalContinueTransferKind.RegisteredInstance, result.Kind);
+		Assert.Same(registeredInstance, result.RegisteredInstance);
+		Assert.Same(teamPlan, result.TeamPlan);
+		Assert.NotNull(result.Teleport);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), result.Teleport.PendingTeleport.Destination);
+		Assert.NotNull(result.Cooldown);
+		Assert.False(result.Cooldown.Added);
 		var groupPlan = Assert.IsType<GroupPortalTransferPlan>(result.GroupTransferPlan);
 		Assert.Equal(GroupPortalExecutionState.WouldTransferToRegisteredInstance, groupPlan.ExecutionPlan.State);
 		Assert.True(groupPlan.ExecutionPlan.Reenter);
@@ -557,11 +570,11 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Null(groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
 		Assert.Null(groupPlan.ExecutionPlan.InstanceCooldownRate);
 		Assert.False(groupPlan.ExecutionPlan.WouldAddCooldown);
-		Assert.Empty(pair.SentPackets);
-		Assert.Null(player.PendingTeleport);
+		Assert.Collection(pair.SentPackets, packet => Assert.IsType<SmTeleportLoc>(packet));
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), player.PendingTeleport?.Destination);
 		Assert.Null(repository.SavedPortalCooldowns);
-		Assert.Null(registeredInstance.StartPosition);
-		Assert.False(registeredInstance.IsRegistered(1001));
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 7), registeredInstance.StartPosition);
+		Assert.True(registeredInstance.IsRegistered(1001));
 	}
 
 	[Fact]
