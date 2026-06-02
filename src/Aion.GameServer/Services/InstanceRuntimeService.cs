@@ -103,10 +103,11 @@ public static class InstanceRuntimeService
 		WorldMapRuntimeStateTable worldMaps,
 		int worldId,
 		int instanceId,
-		Action<int, int>? temporarySpawnCleanup = null)
+		Action<int, int>? temporarySpawnCleanup = null,
+		Func<int, int, int>? nonPlayerObjectCleanup = null)
 	{
 		// Java parity: InstanceService.destroyInstance removes the WorldMapInstance, unregisters temporary spawns,
-		// then calls instance.getInstanceHandler().onInstanceDestroy().
+		// deletes non-player visible objects, then calls instance.getInstanceHandler().onInstanceDestroy().
 		if (!worldMaps.TryGetWorldMapInstance(worldId, instanceId, out var instance) || instance == null)
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
@@ -114,6 +115,7 @@ public static class InstanceRuntimeService
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
 		temporarySpawnCleanup?.Invoke(worldId, instance.InstanceId);
+		var deletedNonPlayerObjects = nonPlayerObjectCleanup?.Invoke(worldId, instance.InstanceId) ?? 0;
 		var notified = instance.NotifyInstanceDestroyed();
 		return new InstanceDestroyRuntimePlan(
 			worldId,
@@ -121,6 +123,7 @@ public static class InstanceRuntimeService
 			instance,
 			Removed: true,
 			DestroyHandlerNotified: notified,
+			DeletedNonPlayerObjectCount: deletedNonPlayerObjects,
 			"InstanceService.destroyInstance removes map instance before instance.getInstanceHandler().onInstanceDestroy()");
 	}
 }
@@ -143,6 +146,7 @@ public sealed record InstanceDestroyRuntimePlan(
 	WorldMapInstanceRuntimeState? Instance,
 	bool Removed,
 	bool DestroyHandlerNotified,
+	int DeletedNonPlayerObjectCount,
 	string JavaSource)
 {
 	public static InstanceDestroyRuntimePlan Missing(int worldId, int instanceId)
@@ -153,6 +157,7 @@ public sealed record InstanceDestroyRuntimePlan(
 			null,
 			Removed: false,
 			DestroyHandlerNotified: false,
+			DeletedNonPlayerObjectCount: 0,
 			"InstanceService.destroyInstance is a no-op for unknown or already removed modeled instances");
 	}
 }

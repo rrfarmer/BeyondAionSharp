@@ -228,6 +228,7 @@ public sealed class WorldMapRuntimeStateTests
 			instance => table.InstanceExists(300030000, instance.InstanceId));
 		var instance = table.CreateNextWorldMapInstance(300030000, instanceHandler: handler);
 		var cleanupObservedInstanceExists = new List<bool>();
+		var objectCleanupObservedHandlerCount = new List<int>();
 		Assert.NotNull(instance);
 		Assert.True(table.InstanceExists(300030000, instance.InstanceId));
 
@@ -241,17 +242,26 @@ public sealed class WorldMapRuntimeStateTests
 				Assert.Equal(instance.InstanceId, cleanedInstanceId);
 				cleanupObservedInstanceExists.Add(table.InstanceExists(mapId, cleanedInstanceId));
 				Assert.Empty(handler.DestroyedInstances);
+			},
+			(mapId, cleanedInstanceId) =>
+			{
+				Assert.Equal(300030000, mapId);
+				Assert.Equal(instance.InstanceId, cleanedInstanceId);
+				objectCleanupObservedHandlerCount.Add(handler.DestroyedInstances.Count);
+				return 3;
 			});
 		var duplicate = InstanceRuntimeService.DestroyInstance(table, 300030000, instance.InstanceId);
 
 		Assert.True(plan.Removed);
 		Assert.True(plan.DestroyHandlerNotified);
+		Assert.Equal(3, plan.DeletedNonPlayerObjectCount);
 		Assert.Same(instance, plan.Instance);
 		Assert.False(table.InstanceExists(300030000, instance.InstanceId));
 		Assert.True(instance.InstanceDestroyNotified);
 		var destroyed = Assert.Single(handler.DestroyedInstances);
 		Assert.Same(instance, destroyed);
 		Assert.Equal([false], cleanupObservedInstanceExists);
+		Assert.Equal([0], objectCleanupObservedHandlerCount);
 		Assert.False(handler.InstanceExistsAtDestroy.Single());
 		Assert.False(duplicate.Removed);
 		Assert.False(duplicate.DestroyHandlerNotified);

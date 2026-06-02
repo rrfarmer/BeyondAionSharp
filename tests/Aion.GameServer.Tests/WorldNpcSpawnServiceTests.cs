@@ -1233,6 +1233,45 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void DeleteNonPlayerObjectsForInstance_RemovesNpcAndStaticObjectsButKeepsPlayersLikeJavaInstanceDestroy()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var service = CreateService(world, staticPlaceables);
+		var firstInstance = new WorldMapInstanceRuntimeState(instanceId: 7, difficultyId: 0);
+		var secondInstance = new WorldMapInstanceRuntimeState(instanceId: 8, difficultyId: 0);
+		var spawns = new NpcSpawnTable([CreateSpawn(210010000, 203040, x: 2)]);
+		var templates = new NpcTemplateTable([CreateTemplate(203040)]);
+		var staticTemplate = new ItemTemplateSummary(400001, "static_object", 0, 0, 1, "STATIC_OBJECT", "ITEM", "COMMON", "PC_ALL", 1, 0, 0);
+		var staticObject = new WorldStaticObject(
+			8001,
+			400001,
+			staticTemplate,
+			new WorldPosition(210010000, 4, 5, 6, 0, InstanceId: 7),
+			StaticId: 107);
+		var player = new Player
+		{
+			ObjectId = 9001,
+			Position = new WorldPosition(210010000, 1, 1, 1, 0, InstanceId: 7),
+		};
+
+		service.SpawnWorldNpcsForInstance(firstInstance, 210010000, spawns, templates);
+		service.SpawnWorldNpcsForInstance(secondInstance, 210010000, spawns, templates);
+		Assert.True(world.TryAddObject(staticObject.ObjectId, staticObject));
+		staticPlaceables.SpawnPlaceableObject(staticObject.Position.WorldId, staticObject.StaticId);
+		Assert.True(world.TryAddObject(player.ObjectId, player));
+
+		var deleted = service.DeleteNonPlayerObjectsForInstance(210010000, firstInstance.InstanceId);
+
+		Assert.Equal(2, deleted);
+		Assert.Equal([8], world.GetNpcs().Select(npc => npc.Position.InstanceId).ToArray());
+		Assert.Empty(world.GetStaticObjects());
+		Assert.Equal(0, staticPlaceables.GetSpawnCount(210010000, 107));
+		Assert.True(world.TryGetObject(player.ObjectId, out var remainingPlayer));
+		Assert.Same(player, remainingPlayer);
+	}
+
+	[Fact]
 	public void SpawnWorldNpcs_AppliesTemplateAndSpawnStatesLikeJava()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

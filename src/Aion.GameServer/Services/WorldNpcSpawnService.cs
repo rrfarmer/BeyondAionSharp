@@ -415,6 +415,25 @@ public sealed class WorldNpcSpawnService : GameEngine
 		return removed;
 	}
 
+	public int DeleteNonPlayerObjectsForInstance(int mapId, int instanceId)
+	{
+		// Java parity: InstanceService.destroyInstance deletes every non-player VisibleObject in the destroyed instance.
+		var deleted = 0;
+		foreach (var npc in _world.GetNpcs(mapId).OfType<WorldNpc>().Where(npc => npc.Position.InstanceId == instanceId).ToArray())
+		{
+			if (TryDespawnWorldNpc(npc.ObjectId))
+				deleted++;
+		}
+
+		foreach (var staticObject in _world.GetStaticObjects(mapId).Where(staticObject => staticObject.Position.InstanceId == instanceId).ToArray())
+		{
+			if (TryDespawnStaticObject(staticObject.ObjectId))
+				deleted++;
+		}
+
+		return deleted;
+	}
+
 	private void SpawnStaticDoorsForInstance(
 		global::Aion.GameServer.World.WorldMapInstanceRuntimeState instance,
 		int mapId,
@@ -1063,10 +1082,12 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (gameObject is WorldNpc)
 			return TryDespawnWorldNpc(objectId);
 
-		if (gameObject is not WorldStaticObject staticObject)
-			return false;
+		return gameObject is WorldStaticObject && TryDespawnStaticObject(objectId);
+	}
 
-		if (!_world.TryRemoveObject(objectId, out _))
+	private bool TryDespawnStaticObject(int objectId)
+	{
+		if (!_world.TryRemoveObject(objectId, out var gameObject) || gameObject is not WorldStaticObject staticObject)
 			return false;
 
 		_staticPlaceables?.DespawnPlaceableObject(staticObject.Position.WorldId, staticObject.StaticId);
