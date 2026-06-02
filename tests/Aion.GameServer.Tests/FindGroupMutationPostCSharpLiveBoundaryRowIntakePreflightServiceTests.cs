@@ -18,6 +18,22 @@ public sealed class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 		Assert.False(preflight.CanClaimVerifiedParity);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", preflight.TraceName);
 		Assert.Contains("addRecruitment/addApplication", preflight.JavaSource, StringComparison.Ordinal);
+		Assert.Equal(
+			[
+				"action",
+				"mutationKind",
+				"boundaryAccepted",
+				"executorInvokedFromBoundary",
+				"registrySendsObservedInOrder",
+				"postedSystemMessageId",
+				"refreshedFindGroupAction",
+				"worldBroadcastCount",
+				"inviteDispatchCount",
+				"activePlayerObjectId",
+				"mutatedEntryObjectId",
+				"visibleEntryObjectIdsAfterMutation",
+			],
+			preflight.RequiredAcceptedBoundaryRowFields);
 		Assert.Equal(Enum.GetValues<FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate>(), preflight.Rows.Select(row => row.Gate));
 		Assert.All(preflight.Rows, row =>
 		{
@@ -129,8 +145,8 @@ public sealed class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 		Assert.Contains(preflight.Rows, row =>
 			row.Gate == FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate.PostedSystemMessageBeforeRefreshedList
 			&& !row.Satisfied
-			&& row.RequiredEvidence.Contains("SmSystemMessage 1400392", StringComparison.Ordinal)
-			&& row.RequiredEvidence.Contains("SmFindGroup action 4", StringComparison.Ordinal));
+			&& row.RequiredEvidence.Contains("postedSystemMessageId=1400392", StringComparison.Ordinal)
+			&& row.RequiredEvidence.Contains("refreshedFindGroupAction=4", StringComparison.Ordinal));
 	}
 
 	private static FindGroupDirectPacketMutationPostBoundaryTraceExport LiveRow(int action) =>

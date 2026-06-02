@@ -33,6 +33,7 @@ public sealed record FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightRo
 public sealed record FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflight(
 	FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightStatus Status,
 	IReadOnlyList<FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightRow> Rows,
+	IReadOnlyList<string> RequiredAcceptedBoundaryRowFields,
 	int AcceptedLiveRowCount,
 	bool HasActionTwoAcceptedRow,
 	bool HasActionSixAcceptedRow,
@@ -64,6 +65,21 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 		guardedFixtureResult ??= FindGroupMutationPostGuardedFixtureResultContractService.Create();
 		var schema = FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSchema();
 		var acceptedRows = guardedFixtureResult.AcceptedLiveRows;
+		var requiredAcceptedBoundaryRowFields = new[]
+		{
+			"action",
+			"mutationKind",
+			"boundaryAccepted",
+			"executorInvokedFromBoundary",
+			"registrySendsObservedInOrder",
+			"postedSystemMessageId",
+			"refreshedFindGroupAction",
+			"worldBroadcastCount",
+			"inviteDispatchCount",
+			"activePlayerObjectId",
+			"mutatedEntryObjectId",
+			"visibleEntryObjectIdsAfterMutation",
+		};
 		var hasActionTwo = acceptedRows.Any(row => row.Action == 2);
 		var hasActionSix = acceptedRows.Any(row => row.Action == 6);
 		var hasBothRows = hasActionTwo && hasActionSix;
@@ -98,7 +114,7 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 			FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate.BoundaryAccepted,
 			action: null,
 			hasBoundaryAcceptance,
-			"Every accepted row must have boundaryAccepted=true from the guarded GameServerConnection boundary.",
+			"Every accepted row must have boundaryAccepted=true from the guarded GameServerConnection boundary field boundaryAccepted.",
 			$"boundaryRows={acceptedRows.Count(row => row.BoundaryAccepted)}; acceptedRows={acceptedRows.Count}",
 			"CM_FIND_GROUP.runImpl is invoked only after AionClientPacket boundary acceptance.",
 			"Disabled plan rows are shape inputs only and cannot satisfy this gate.");
@@ -106,7 +122,7 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 			FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate.ExecutorInvokedFromBoundary,
 			action: null,
 			hasExecutorObservation,
-			"Every accepted row must have executorInvokedFromBoundary=true.",
+			"Every accepted row must have executorInvokedFromBoundary=true in the accepted boundary row.",
 			$"executorRows={acceptedRows.Count(row => row.ExecutorInvokedFromBoundary)}; acceptedRows={acceptedRows.Count}",
 			"FindGroupService.addRecruitment/addApplication sends packets from the CM_FIND_GROUP boundary call.",
 			"Opt-in executor calls outside the guarded boundary remain insufficient.");
@@ -114,7 +130,7 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 			FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate.RegistrySendsObservedInOrder,
 			action: null,
 			hasRegistryObservation,
-			"Every accepted row must have registrySendsObservedInOrder=true.",
+			"Every accepted row must have registrySendsObservedInOrder=true in the accepted boundary row.",
 			$"registryRows={acceptedRows.Count(row => row.RegistrySendsObservedInOrder)}; acceptedRows={acceptedRows.Count}",
 			"Java PacketSendUtility.sendPacket observes posted system message before refreshed SM_FIND_GROUP.",
 			"Registry observation must come from live send observation, not intent ordering alone.");
@@ -122,7 +138,7 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 			FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate.PostedSystemMessageBeforeRefreshedList,
 			action: null,
 			hasPostedBeforeRefreshedOrdering,
-			"Action 2 requires SmSystemMessage 1400392 before SmFindGroup action 0; action 6 requires SmSystemMessage 1400393 before SmFindGroup action 4.",
+			"Action 2 requires postedSystemMessageId=1400392 before refreshedFindGroupAction=0; action 6 requires postedSystemMessageId=1400393 before refreshedFindGroupAction=4.",
 			$"acceptedRows={acceptedRows.Count}; contractStatus={guardedFixtureResult.Status}",
 			"FindGroupService.addRecruitment/addApplication call PacketSendUtility.sendPacket before showRecruitments/showApplications.",
 			"The guarded fixture result contract accepts only rows with Java-shaped posted/refreshed packet fields.");
@@ -146,7 +162,7 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 			FindGroupMutationPostCSharpLiveBoundaryRowIntakeGate.JavaArtifactPairingIdentity,
 			action: null,
 			hasJavaArtifactPairingIdentity,
-			"Accepted C# rows must pair to Java artifacts by action and mutation kind.",
+			"Accepted C# rows must pair to Java artifacts by action, mutationKind, activePlayerObjectId, mutatedEntryObjectId, and visibleEntryObjectIdsAfterMutation.",
 			$"action2={hasActionTwo}; action6={hasActionSix}; pairingRows={acceptedRows.Count(row => schema.SupportedActions.Any(action => action.Action == row.Action && action.MutationKind == row.MutationKind))}",
 			schema.JavaSource,
 			"Value comparison can only start after Java artifacts and accepted C# rows share action/mutation identity.");
@@ -159,6 +175,7 @@ public static class FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightSer
 		return new FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflight(
 			status,
 			rows,
+			requiredAcceptedBoundaryRowFields,
 			acceptedRows.Count,
 			hasActionTwo,
 			hasActionSix,
