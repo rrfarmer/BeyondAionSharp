@@ -756,46 +756,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
-		var runtimeContext = new GameServerRuntimeContext();
-		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForPortalTest(
-			worldMaps: [new WorldMapSummary(300170000, IsInstance: true, TwinCount: 1)],
-			instanceCooltimes: new InstanceCooltimeTable(
-			[
-				new InstanceCooltimeSummary(
-					Id: 8,
-					WorldId: 300170000,
-					Race: "PC_ALL",
-					MaxCount: 5,
-					MaxMemberLight: 6,
-					MaxMemberDark: 6,
-					CoolTimeType: "RELATIVE",
-					EntCoolTime: 30),
-			]),
-			portalPaths: new PortalPathTable(
-				Array.Empty<PortalPathSummary>(),
-				new Dictionary<int, int>(),
-				[
-					new PortalPathSummary(
-						PortalPathSource.Use,
-						NpcId: 730231,
-						ScrollName: string.Empty,
-						Dialog: 0,
-						LocId: 1701,
-						SiegeId: 0,
-						Race: "PC_ALL",
-						MinLevel: 0,
-						MinRank: 0,
-						Kinah: 0,
-						TitleId: 0,
-						ErrGroup: 0,
-						ErrLevel: 0),
-				],
-				Array.Empty<PortalPathSummary>()),
-			portalLocs: new PortalLocTable([new PortalLocSummary(300170000, LocId: 1701, 10, 20, 30, 90)]))));
-		var registeredInstance = runtimeContext.WorldMapStates.AddWorldMapInstance(300170000, instanceId: 7, maxPlayers: 6);
-		Assert.NotNull(registeredInstance);
-		registeredInstance.RegisterTeamId(0x0708090A);
-		registeredInstance.AddPlayer(leader.ObjectId);
+		var runtimeContext = CreateBeshmundirPortalRuntimeContext(0x0708090A, leader.ObjectId, out var registeredInstance);
 		var repository = new EmptyPlayerEnterWorldRepository();
 		var playerEnterWorldService = new PlayerEnterWorldService(
 			new GameServerOptions(),
@@ -878,6 +839,64 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Equal(walkNpc.ObjectId, pending.NpcObjectId);
 		Assert.Equal(dialogActionId, pending.DialogActionId);
 		Assert.Equal(expectedPathL10nId, pending.PathL10nId);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_BeshmundirsWalkDifficultyAcceptMovesResponderWhenRegisteredInstanceExists()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS");
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS");
+		member.Position = new WorldPosition(300170000, 1, 2, 3, 0, InstanceId: 7);
+		var groups = new PlayerGroupRuntime();
+		groups.CreateOrUpdateGroup(0x0708090A, [leader, member]);
+		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
+		var runtimeContext = CreateBeshmundirPortalRuntimeContext(0x0708090A, member.ObjectId, out var registeredInstance);
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			world,
+			NullLogger<PlayerEnterWorldService>.Instance);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService: null,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			playerGroupRuntime: groups,
+			world: world,
+			runtimeContext: runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(walkNpc.ObjectId, CmDialogSelect.SelectNone1));
+		Assert.Equal(2, sentPackets.Count);
+		sentPackets.Clear();
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateQuestionResponsePayload(
+				SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm,
+				response: 1,
+				senderObjectId: walkNpc.ObjectId));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var teleport = Assert.IsType<SmTeleportLoc>(packet);
+				Assert.Equal(
+					new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 7),
+					ReadPrivateField<WorldPosition>(teleport, "_destination"));
+				Assert.Equal(new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 7), leader.PendingTeleport?.Destination);
+			},
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+		Assert.Equal(0, leader.ResponseRequester.Count);
+		Assert.True(registeredInstance.IsRegistered(leader.ObjectId));
+		Assert.True(leader.PortalCooldowns.ContainsKey(300170000));
+		Assert.NotNull(repository.SavedPortalCooldowns);
 	}
 
 	[Fact]
@@ -2764,6 +2783,22 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			});
 	}
 
+	private static byte[] CreateQuestionResponsePayload(int questionId, int response, int senderObjectId)
+	{
+		return CreateClientPayload(
+			50,
+			buffer =>
+			{
+				buffer.WriteD(questionId);
+				buffer.WriteC(response);
+				buffer.WriteC(0);
+				buffer.WriteH(0);
+				buffer.WriteD(senderObjectId);
+				buffer.WriteD(0);
+				buffer.WriteH(0);
+			});
+	}
+
 	private static async Task InvokeProcessPacketAsync(GameServerConnection connection, byte[] payload)
 	{
 		var method = typeof(GameServerConnection).GetMethod("ProcessPacketAsync", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -2927,6 +2962,53 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			modifiers: null);
 		Assert.NotNull(constructor);
 		return (DataManager)constructor!.Invoke([staticData]);
+	}
+
+	private static GameServerRuntimeContext CreateBeshmundirPortalRuntimeContext(
+		int teamId,
+		int registeredMemberObjectId,
+		out WorldMapInstanceRuntimeState registeredInstance)
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForPortalTest(
+			worldMaps: [new WorldMapSummary(300170000, IsInstance: true, TwinCount: 1)],
+			instanceCooltimes: new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(
+					Id: 8,
+					WorldId: 300170000,
+					Race: "PC_ALL",
+					MaxCount: 5,
+					MaxMemberLight: 6,
+					MaxMemberDark: 6,
+					CoolTimeType: "RELATIVE",
+					EntCoolTime: 30),
+			]),
+			portalPaths: new PortalPathTable(
+				Array.Empty<PortalPathSummary>(),
+				new Dictionary<int, int>(),
+				[
+					new PortalPathSummary(
+						PortalPathSource.Use,
+						NpcId: 730231,
+						ScrollName: string.Empty,
+						Dialog: 0,
+						LocId: 1701,
+						SiegeId: 0,
+						Race: "PC_ALL",
+						MinLevel: 0,
+						MinRank: 0,
+						Kinah: 0,
+						TitleId: 0,
+						ErrGroup: 0,
+						ErrLevel: 0),
+				],
+				Array.Empty<PortalPathSummary>()),
+			portalLocs: new PortalLocTable([new PortalLocSummary(300170000, LocId: 1701, 10, 20, 30, 90)]))));
+		registeredInstance = runtimeContext.WorldMapStates.AddWorldMapInstance(300170000, instanceId: 7, maxPlayers: 6)!;
+		registeredInstance.RegisterTeamId(teamId);
+		registeredInstance.AddPlayer(registeredMemberObjectId);
+		return runtimeContext;
 	}
 
 	private static StaticData CreateStaticDataForPortalTest(

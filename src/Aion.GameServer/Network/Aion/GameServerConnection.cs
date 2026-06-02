@@ -9606,7 +9606,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (packet.QuestionId == SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm)
 		{
-			HandleBeshmundirDifficultyQuestionResponse(responder, packet);
+			await HandleBeshmundirDifficultyQuestionResponseAsync(responder, packet);
 			return;
 		}
 
@@ -10883,14 +10883,20 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(packet);
 	}
 
-	private static void HandleBeshmundirDifficultyQuestionResponse(Player responder, CmQuestionResponse packet)
+	private async Task HandleBeshmundirDifficultyQuestionResponseAsync(Player responder, CmQuestionResponse packet)
 	{
 		// Java parity breadcrumb: BeshmundirsWalkAI AIRequest.acceptRequest calls moveToInstance
 		// with difficulty 2 for registered request 902050; the alternate difficulty branch is not
 		// reached by the currently registered question id in Java source.
-		// The shared PortalService.port team-instance movement remains a later parity unit; this
-		// handler preserves ResponseRequester removal semantics for the registered request.
-		responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		var dispatch = responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.BeshmundirDifficultyEnter
+			|| !dispatch.Accepted
+			|| dispatch.Request.Payload is not PendingBeshmundirDifficultyEnterRequest pending)
+		{
+			return;
+		}
+
+		await HandleBeshmundirsWalkMoveToInstanceAsync(responder, pending.NpcObjectId);
 	}
 
 	private async Task BroadcastActionAnimationAsync(Player player, SmActionAnimation packet)
