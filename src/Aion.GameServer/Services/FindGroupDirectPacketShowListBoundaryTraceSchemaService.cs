@@ -69,6 +69,98 @@ public static class FindGroupDirectPacketShowListBoundaryTraceSchemaService
 			InviteDispatchCount: 0);
 	}
 
+	public static FindGroupDirectPacketShowListBoundaryTraceExportProjection CreateExportFromDisabledPlan(
+		FindGroupConnectionClientActionCompositionPlan compositionPlan)
+	{
+		var action = compositionPlan.Action.Action;
+		if (action is not 0 and not 4)
+		{
+			return Failed(
+				FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.UnsupportedAction,
+				action,
+				"Only CM_FIND_GROUP actions 0 and 4 are supported by the show-list trace schema.");
+		}
+
+		if (compositionPlan.Status != FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan
+			|| compositionPlan.ActivePlayer == null)
+		{
+			return Failed(
+				FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.MissingActivePlayer,
+				action,
+				"Disabled boundary plan did not include the active player required by Java CM_FIND_GROUP.runImpl.");
+		}
+
+		if (compositionPlan.ClientActionPlan == null)
+		{
+			return Failed(
+				FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.MissingClientActionPlan,
+				action,
+				"Disabled boundary plan did not include a client action plan.");
+		}
+
+		if (compositionPlan.ShouldDispatchLiveSideEffects || compositionPlan.ClientActionPlan.DispatchLiveSideEffects)
+		{
+			return Failed(
+				FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.LiveSideEffectsRequested,
+				action,
+				"Show-list export projection only accepts disabled non-live boundary plans.");
+		}
+
+		var intentPlan = FindGroupConnectionBoundarySideEffectCompositionEvidenceService.CreateIntentPlan(compositionPlan);
+		if (intentPlan.DirectPacketIntents.Count != 1
+			|| intentPlan.WorldBroadcastIntents.Count != 0
+			|| intentPlan.InviteIntent != null)
+		{
+			return Failed(
+				FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.UnexpectedSideEffectShape,
+				action,
+				"Show-list export projection requires exactly one direct packet and no world broadcast or invite intent.");
+		}
+
+		var activePlayer = compositionPlan.ActivePlayer;
+		var directIntent = intentPlan.DirectPacketIntents[0];
+		var visibleEntryIds = action == 0
+			? compositionPlan.ClientActionPlan.RecruitmentShowPlan?.Recruitments.Select(recruitment => recruitment.ObjectId).ToArray()
+			: compositionPlan.ClientActionPlan.ApplicationShowPlan?.Applications.Select(application => application.PlayerObjectId).ToArray();
+		var serverEpochSeconds = action == 0
+			? compositionPlan.ClientActionPlan.RecruitmentShowPlan?.LastUpdate
+			: compositionPlan.ClientActionPlan.ApplicationShowPlan?.LastUpdate;
+
+		if (visibleEntryIds == null || serverEpochSeconds == null)
+		{
+			return Failed(
+				FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.MissingShowListPlan,
+				action,
+				"Disabled boundary plan did not include the Java-equivalent show-list plan for the requested action.");
+		}
+
+		var schema = CreateSchema();
+		var mapping = schema.SupportedActions.Single(item => item.Action == action);
+		var export = new FindGroupDirectPacketShowListBoundaryTraceExport(
+			SchemaVersion,
+			schema.TraceName,
+			FindGroupDirectPacketShowListTraceSource.CSharp,
+			action,
+			BoundaryAccepted: true,
+			activePlayer.ObjectId,
+			activePlayer.Race,
+			serverEpochSeconds.Value,
+			mapping.ListKind,
+			visibleEntryIds,
+			directIntent.RecipientObjectId,
+			DirectPacketType: "SmFindGroup",
+			DirectPacketAction: action,
+			ExecutorInvokedFromBoundary: false,
+			RegistrySendObserved: false,
+			WorldBroadcastCount: 0,
+			InviteDispatchCount: 0);
+
+		return new FindGroupDirectPacketShowListBoundaryTraceExportProjection(
+			FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus.Created,
+			export,
+			"Projected from a disabled CM_FIND_GROUP boundary plan; executor and registry observations remain false.");
+	}
+
 	private static FindGroupDirectPacketShowListActionSchema Action(
 		int action,
 		FindGroupDirectPacketShowListTraceListKind listKind,
@@ -81,6 +173,15 @@ public static class FindGroupDirectPacketShowListBoundaryTraceSchemaService
 	private static FindGroupDirectPacketShowListBoundaryTraceField Field(string name, string requirement)
 	{
 		return new FindGroupDirectPacketShowListBoundaryTraceField(name, requirement);
+	}
+
+	private static FindGroupDirectPacketShowListBoundaryTraceExportProjection Failed(
+		FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus status,
+		int action,
+		string reason)
+	{
+		var export = CreateSampleExport(action is 0 or 4 ? action : 0);
+		return new FindGroupDirectPacketShowListBoundaryTraceExportProjection(status, export with { Action = action }, reason);
 	}
 }
 
@@ -132,3 +233,19 @@ public sealed record FindGroupDirectPacketShowListBoundaryTraceExport(
 	bool RegistrySendObserved,
 	int WorldBroadcastCount,
 	int InviteDispatchCount);
+
+public enum FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus
+{
+	Created,
+	UnsupportedAction,
+	MissingActivePlayer,
+	MissingClientActionPlan,
+	LiveSideEffectsRequested,
+	UnexpectedSideEffectShape,
+	MissingShowListPlan,
+}
+
+public sealed record FindGroupDirectPacketShowListBoundaryTraceExportProjection(
+	FindGroupDirectPacketShowListBoundaryTraceExportProjectionStatus Status,
+	FindGroupDirectPacketShowListBoundaryTraceExport Export,
+	string Reason);

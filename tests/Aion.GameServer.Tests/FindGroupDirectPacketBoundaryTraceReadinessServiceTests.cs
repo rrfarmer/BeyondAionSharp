@@ -178,6 +178,13 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("without capturing live traffic", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpShowListTraceExportProjection
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("schema version 1 C# exports", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("disabled action 0 and 4 boundary plans", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("without invoking the executor", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpMutationPostLiveBoundaryTraceScaffold
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("FindGroupDirectPacketMutationPostLiveBoundaryTraceScaffoldService", StringComparison.Ordinal)
@@ -200,6 +207,9 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("show-list trace schema", StringComparison.Ordinal));
+		Assert.Contains(
+			report.NextRequiredEvidence,
+			item => item.Contains("show-list export projection helper", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("mutation-post action 2/6 scaffold", StringComparison.Ordinal));
