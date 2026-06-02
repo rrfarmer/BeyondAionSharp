@@ -4518,14 +4518,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		PortalEntryPreparationResult preparation,
 		byte difficultyId)
 	{
-		if (difficultyId == 0 || preparation.EntryPlan.TeamPlan == null)
+		if (difficultyId == 0)
 			return preparation;
 
 		return preparation with
 		{
 			EntryPlan = preparation.EntryPlan with
 			{
-				TeamPlan = preparation.EntryPlan.TeamPlan with { DifficultyId = difficultyId },
+				DifficultyId = difficultyId,
+				TeamPlan = preparation.EntryPlan.TeamPlan == null
+					? null
+					: preparation.EntryPlan.TeamPlan with { DifficultyId = difficultyId },
 			},
 		};
 	}
@@ -7584,9 +7587,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				instanceCooltimes,
 				ownerId: IsPersonalWorld(portalLoc.WorldId) ? player.ObjectId : 0,
 				maxPlayers: maxPlayers,
-				TeleportAnimation.FadeOutBeam,
-				staticData,
-				now);
+				animation: TeleportAnimation.FadeOutBeam,
+				staticData: staticData,
+				now: now,
+				difficultyId: preparation.EntryPlan.DifficultyId);
 			return PortalContinueTransferResult.AllocatedInstance(transfer);
 		}
 

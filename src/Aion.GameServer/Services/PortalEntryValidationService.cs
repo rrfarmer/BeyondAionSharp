@@ -895,12 +895,14 @@ public sealed record PortalEntryPlanResult(
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	bool Reenter,
 	PortalTeamEntryPlan? TeamPlan,
-	GameServerPacket? FailurePacket)
+	GameServerPacket? FailurePacket,
+	byte DifficultyId = 0)
 {
 	public static PortalEntryPlanResult Allowed(
 		PortalLocSummary portalLoc,
 		WorldMapInstanceRuntimeState? registeredInstance,
-		bool reenter)
+		bool reenter,
+		byte difficultyId = 0)
 	{
 		return new PortalEntryPlanResult(
 			true,
@@ -910,7 +912,8 @@ public sealed record PortalEntryPlanResult(
 			registeredInstance,
 			reenter,
 			null,
-			null);
+			null,
+			difficultyId);
 	}
 
 	public static PortalEntryPlanResult SameInstanceTeleport(

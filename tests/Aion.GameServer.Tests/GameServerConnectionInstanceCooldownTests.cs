@@ -349,7 +349,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		]);
 		var portalLoc = new PortalLocSummary(300030000, LocId: 1, 10, 20, 30, 90);
 		var preparation = PortalEntryPreparationResult.Ready(
-			PortalEntryPlanResult.Allowed(portalLoc, registeredInstance: null, reenter: false),
+			PortalEntryPlanResult.Allowed(portalLoc, registeredInstance: null, reenter: false, difficultyId: 2),
 			requirementApplication: null,
 			Array.Empty<GameServerPacket>());
 		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
@@ -365,6 +365,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(PortalContinueTransferKind.AllocatedInstance, result.Kind);
 		Assert.NotNull(result.AllocatedRuntimePlan);
 		Assert.Equal(2, result.AllocatedRuntimePlan.Instance.InstanceId);
+		Assert.Equal(2, result.AllocatedRuntimePlan.Instance.DifficultyId);
 		Assert.True(result.AllocatedRuntimePlan.Instance.IsRegistered(player.ObjectId));
 		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 2), result.Teleport!.PendingTeleport.Destination);
 		Assert.NotNull(result.Cooldown);

@@ -3116,6 +3116,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			new VortexLocationTable(Array.Empty<VortexLocationSummary>()),
 			new NpcTemplateTable(Array.Empty<NpcTemplateSummary>()),
 			new NpcSpawnTable(Array.Empty<NpcSpawnSummary>()),
+			new StaticDoorTable(Array.Empty<StaticDoorSummary>()),
 			new NpcRiftSpawnTable(Array.Empty<NpcRiftSpawnSummary>()),
 			new NpcFactionTable(Array.Empty<NpcFactionSummary>()),
 			new TradeListTable(Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>()),
