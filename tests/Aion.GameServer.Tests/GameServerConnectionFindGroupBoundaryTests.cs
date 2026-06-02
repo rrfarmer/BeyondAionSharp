@@ -636,6 +636,99 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionTwelveHandlesInstanceApplicationResults()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS");
+		var groupApplicant = CreatePlayer(0x01020304, "GroupApplicant", "ELYOS");
+		var allianceApplicant = CreatePlayer(0x01020308, "AllianceApplicant", "ELYOS");
+		var declinedApplicant = CreatePlayer(0x01020309, "DeclinedApplicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var registry = new CapturingConnectionRegistry([responder, groupApplicant, allianceApplicant, declinedApplicant]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			playerGroupRuntime: new PlayerGroupRuntime(),
+			playerAllianceRuntime: new PlayerAllianceRuntime());
+		SetActivePlayer(fixture.Connection, responder);
+
+		findGroupService.RegisterInstanceGroup(responder, 0x11223344, "Group entry", minMembers: 6, nowEpochSeconds: 100);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(12);
+					buffer.WriteD(groupApplicant.ObjectId);
+					buffer.WriteC(1);
+				}));
+
+		Assert.Equal([responder.ObjectId, groupApplicant.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+		Assert.IsType<SmSystemMessage>(registry.DirectSends[0].Packet);
+		var groupQuestion = Assert.IsType<SmQuestionWindow>(registry.DirectSends[1].Packet);
+		Assert.Equal(SmQuestionWindow.PartyInvite, groupQuestion.Code);
+		Assert.Equal(1, groupApplicant.ResponseRequester.Count);
+		Assert.Empty(sentPackets);
+
+		registry.DirectSends.Clear();
+		findGroupService.RegisterInstanceGroup(responder, 0x11223344, "Alliance entry", minMembers: 7, nowEpochSeconds: 101);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(12);
+					buffer.WriteD(allianceApplicant.ObjectId);
+					buffer.WriteC(1);
+				}));
+
+		Assert.Equal([responder.ObjectId, allianceApplicant.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+		Assert.IsType<SmSystemMessage>(registry.DirectSends[0].Packet);
+		var allianceQuestion = Assert.IsType<SmQuestionWindow>(registry.DirectSends[1].Packet);
+		Assert.Equal(SmQuestionWindow.AllianceInvite, allianceQuestion.Code);
+		Assert.Equal(1, allianceApplicant.ResponseRequester.Count);
+		Assert.NotNull(allianceApplicant.PendingAllianceInviteRequest);
+		Assert.Empty(sentPackets);
+
+		registry.DirectSends.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(12);
+					buffer.WriteD(declinedApplicant.ObjectId);
+					buffer.WriteC(0);
+				}));
+
+		var declineSend = Assert.Single(registry.DirectSends);
+		Assert.Equal(declinedApplicant.ObjectId, declineSend.RecipientObjectId);
+		Assert.IsType<SmMessage>(declineSend.Packet);
+		Assert.Equal(0, declinedApplicant.ResponseRequester.Count);
+		Assert.Empty(sentPackets);
+
+		registry.DirectSends.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(12);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteC(1);
+				}));
+
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();

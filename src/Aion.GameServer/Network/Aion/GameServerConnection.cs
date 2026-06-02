@@ -4261,16 +4261,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		// action 3/7 update branches mutate state without packet side effects;
 		// action 8/9/10/13/15/17 instance-group branches use direct sends when
 		// the Java branch composes a packet; action 11 sends directly to a
-		// non-active online recruiter resolved by playerOrTeamId.
-		if (_activePlayer == null || findGroup.Action is not (0 or 1 or 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9 or 10 or 11 or 13 or 15 or 17))
+		// non-active online recruiter resolved by playerOrTeamId; action 12
+		// sends decline whispers or dispatches group/alliance invite requests.
+		if (_activePlayer == null || findGroup.Action is not (0 or 1 or 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9 or 10 or 11 or 12 or 13 or 15 or 17))
 			return;
 
 		var plan = CreateDisabledFindGroupBoundaryPlan(findGroup, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-		if (plan?.Status != FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects
-			|| plan.InvitePlan != null)
+		if (plan?.Status != FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects)
 		{
 			return;
 		}
+
+		if (plan.InvitePlan != null && findGroup.Action != 12)
+			return;
 
 		if (plan.IntentPlan.WorldBroadcastIntents.Count != 0 && _connectionRegistry == null)
 			return;
@@ -4280,7 +4283,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (intent.RecipientObjectId == _activePlayer.ObjectId)
 				continue;
 
-			if (findGroup.Action != 11 || _connectionRegistry == null)
+			if (findGroup.Action is not (11 or 12) || _connectionRegistry == null)
 				return;
 		}
 
@@ -4292,6 +4295,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				await _connectionRegistry!.SendPacketToPlayerAsync(intent.RecipientObjectId, intent.Packet);
 		}
 
+		if (findGroup.Action == 12 && plan.InvitePlan != null)
+			await SendFindGroupInstanceInvitePlanAsync(plan.InvitePlan);
+
 		foreach (var intent in plan.IntentPlan.WorldBroadcastIntents)
 		{
 			if (intent is null)
@@ -4300,6 +4306,47 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry!.BroadcastToWorldAsync(
 				intent.Packet,
 				player => string.Equals(player.Race, intent.Race, StringComparison.Ordinal));
+		}
+	}
+
+	private async Task SendFindGroupInstanceInvitePlanAsync(
+		FindGroupInstanceApplicationInviteDispatchPlan invitePlan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: FindGroupService.sendInstanceApplicationResult invokes
+		// PlayerGroupService.inviteToGroup or PlayerAllianceService.inviteToAlliance.
+		if (invitePlan.GroupInviteRequest != null)
+		{
+			await SendGroupInvitePacketAsync(
+				invitePlan.GroupInviteRequest.Request.InviterObjectId,
+				invitePlan.GroupInviteRequest.InviterMessage,
+				cancellationToken);
+			if (invitePlan.GroupInviteRequest.QuestionWindow != null && invitePlan.InviteIntent != null)
+				await SendGroupInvitePacketAsync(
+					invitePlan.InviteIntent.InvitedObjectId,
+					invitePlan.GroupInviteRequest.QuestionWindow,
+					cancellationToken);
+		}
+
+		if (invitePlan.AllianceInviteRequest != null)
+		{
+			if (invitePlan.AllianceInviteRequest.RejectionMessage != null && invitePlan.InviteIntent != null)
+				await SendGroupInvitePacketAsync(
+					invitePlan.InviteIntent.InviterObjectId,
+					invitePlan.AllianceInviteRequest.RejectionMessage,
+					cancellationToken);
+
+			foreach (var message in invitePlan.AllianceInviteRequest.RequesterMessages)
+			{
+				if (invitePlan.InviteIntent != null)
+					await SendGroupInvitePacketAsync(invitePlan.InviteIntent.InviterObjectId, message, cancellationToken);
+			}
+
+			if (invitePlan.AllianceInviteRequest.QuestionWindow != null && invitePlan.AllianceInviteRequest.Request != null)
+				await SendGroupInvitePacketAsync(
+					invitePlan.AllianceInviteRequest.Request.RequestTargetObjectId,
+					invitePlan.AllianceInviteRequest.QuestionWindow,
+					cancellationToken);
 		}
 	}
 
