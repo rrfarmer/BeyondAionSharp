@@ -76,6 +76,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
+	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
@@ -163,6 +164,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
+		AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
@@ -227,6 +229,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
+		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
@@ -505,8 +508,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmAbyssRankingPlayers:
 				// Java parity: network/aion/clientpackets/CM_ABYSS_RANKING_PLAYERS.runImpl resolves race-specific player ranking cache; deferred.
 				break;
-			case CmAutoGroup:
-				// Java parity: network/aion/clientpackets/CM_AUTO_GROUP.runImpl dispatches AutoGroupService/PeriodicInstanceManager actions; deferred.
+			case CmAutoGroup autoGroup:
+				if (_activePlayer != null)
+					await HandleAutoGroupAsync(_activePlayer, autoGroup);
 				break;
 			case CmFusionWeapons:
 				// Java parity: network/aion/clientpackets/CM_FUSION_WEAPONS.runImpl validates armsfusion NPC targeting before service dispatch; deferred.
@@ -1467,6 +1471,29 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/serverpackets/SM_ACCOUNT_PROPERTIES uses AdminConfig.GM_PANEL.
 		return new SmAccountProperties(_accessLevel >= _options.Administration.GmPanelAccessLevel);
+	}
+
+	private async Task HandleAutoGroupAsync(Player player, CmAutoGroup packet)
+	{
+		// Java parity: CM_AUTO_GROUP.runImpl window 100 resolves EntryRequestType.getTypeById
+		// before AutoGroupService.startLooking. Other windows remain deferred.
+		if (packet.WindowId != 100)
+			return;
+
+		var entryRequestType = AutoGroupEntryRequestTypeParser.GetTypeById(packet.EntryRequestId);
+		if (entryRequestType == null)
+			return;
+
+		var result = _autoGroupLookingPartyRegistrations.StartLooking(
+			player,
+			packet.InstanceMaskId,
+			entryRequestType.Value,
+			_runtimeContext?.DataManager?.StaticData.AutoGroups,
+			_playerGroupRuntime,
+			_playerAllianceRuntime);
+
+		if (result.GuardPlan?.DenialMessage != null)
+			await SendPacketAsync(result.GuardPlan.DenialMessage);
 	}
 
 	private AbyssPointsAddOptions CreateAbyssPointsOptions(long currentLegionContributionPoints = 0)

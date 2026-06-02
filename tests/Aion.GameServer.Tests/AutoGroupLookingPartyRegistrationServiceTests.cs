@@ -10,6 +10,106 @@ namespace Aion.GameServer.Tests;
 public sealed class AutoGroupLookingPartyRegistrationServiceTests
 {
 	[Fact]
+	public void EntryRequestTypeParser_MatchesJavaEntryRequestTypeIds()
+	{
+		Assert.Equal(AutoGroupEntryRequestType.NewGroupEntry, AutoGroupEntryRequestTypeParser.GetTypeById(0));
+		Assert.Equal(AutoGroupEntryRequestType.QuickGroupEntry, AutoGroupEntryRequestTypeParser.GetTypeById(1));
+		Assert.Equal(AutoGroupEntryRequestType.GroupEntry, AutoGroupEntryRequestTypeParser.GetTypeById(2));
+		Assert.Null(AutoGroupEntryRequestTypeParser.GetTypeById(3));
+	}
+
+	[Fact]
+	public void StartLooking_RegistersSoloPlayerForValidJavaWindowHundredRequest()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var player = CreatePlayer(objectId: 1001, level: 50);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = service.StartLooking(
+			player,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups);
+
+		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
+		Assert.True(result.RegisteredQueue);
+		Assert.Equal(AutoGroupEntryRequestType.GroupEntry, result.EntryRequestType);
+		Assert.Equal([1001], result.Registration?.MemberObjectIds);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_RegistersCurrentGroupMembersLikeJavaCreateMembers()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var member = CreatePlayer(objectId: 1002, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, member]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = service.StartLooking(
+			leader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
+		Assert.Equal([1001, 1002], result.Registration?.MemberObjectIds);
+		Assert.True(service.IsSearching(1002, 107));
+	}
+
+	[Fact]
+	public void StartLooking_DuplicateMemberRegistrationIsNoOpLikeJavaAlreadyRegisteredBranch()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var player = CreatePlayer(objectId: 1001, level: 50);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		service.StartLooking(player, 107, AutoGroupEntryRequestType.GroupEntry, autoGroups);
+
+		var result = service.StartLooking(player, 107, AutoGroupEntryRequestType.QuickGroupEntry, autoGroups);
+
+		Assert.Equal(AutoGroupStartLookingStatus.AlreadyRegistered, result.Status);
+		Assert.False(result.RegisteredQueue);
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_LevelGuardBlocksBeforeQueueMutationLikeJavaCanRegister()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var player = CreatePlayer(objectId: 1001, level: 45);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = service.StartLooking(player, 107, AutoGroupEntryRequestType.GroupEntry, autoGroups);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByCommonGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedLevelOutOfRange, result.GuardPlan?.Status);
+		Assert.NotNull(result.GuardPlan?.DenialMessage);
+		Assert.False(service.IsSearching(1001, 107));
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_MissingAutoGroupIsNoOpLikeJavaNullTypeBranch()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var player = CreatePlayer(objectId: 1001, level: 50);
+
+		var result = service.StartLooking(
+			player,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups: null);
+
+		Assert.Equal(AutoGroupStartLookingStatus.MissingAutoGroup, result.Status);
+		Assert.False(result.RegisteredQueue);
+		Assert.False(service.IsSearching(1001, 107));
+	}
+
+	[Fact]
 	public async Task StopRegistrationsByMaskId_RemovesMaskQueueAndSendsCancelWindowLikeJava()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();
@@ -108,6 +208,17 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 			RegisterGroup: true,
 			RegisterNew: true,
 			NpcIds: []);
+	}
+
+	private static Player CreatePlayer(int objectId, int level)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = $"Player{objectId}",
+			Race = "ELYOS",
+			Level = level,
+		};
 	}
 
 	private static void AssertCancelWindow(PacketDelivery delivery, int playerObjectId)
