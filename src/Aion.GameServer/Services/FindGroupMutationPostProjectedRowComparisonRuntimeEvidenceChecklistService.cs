@@ -132,9 +132,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Existing Java artifact files, hook scaffolds, artifact-root command reports, capture-command consistency reports, explicit-root dry-run command reports, and post-capture validator summaries are shape evidence only until generated from runtime capture."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.CSharpLiveBoundaryRow => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostCSharpTraceRowFixtureReportService, FindGroupMutationPostGuardedFixtureResultContractService, GameServerConnection.CreateDisabledFindGroupBoundaryPlan",
-				"Capture action 2/6 rows from the guarded live C# CM_FIND_GROUP boundary with boundary acceptance, executor invocation, and registry observation true.",
-				"Disabled boundary projections exercise shape but are rejected as non-live."),
+				"FindGroupMutationPostCSharpTraceRowFixtureReportService, FindGroupMutationPostGuardedFixtureResultContractService, FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightService, GameServerConnection.CreateDisabledFindGroupBoundaryPlan",
+				"Capture action 2/6 rows from the guarded live C# CM_FIND_GROUP boundary with boundary acceptance, executor invocation, registry observation true, posted/refreshed ordering, zero broadcasts, zero invites, and Java artifact pairing identity.",
+				"Disabled boundary projections exercise shape but are rejected as non-live; intake preflight remains blocked until accepted C# action 2/6 boundary rows exist."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.BoundaryExecutorInvocation => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostGuardedLiveBoundaryFixtureSkeletonService, FindGroupMutationPostComparisonInputEnvelopeService",
