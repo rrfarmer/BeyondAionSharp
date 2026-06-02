@@ -345,6 +345,113 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionOneAndThreeUseCurrentTeamId()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS");
+		var sameRace = CreatePlayer(0x01020305, "SameRace", "ELYOS");
+		var otherRace = CreatePlayer(0x01020306, "OtherRace", "ASMODIANS");
+		var teamId = 0x03040506;
+		leader.TeamMembership = PlayerTeamMembership.Group;
+		leader.CurrentTeamId = teamId;
+		leader.CurrentTeamMemberObjectIds = [leader.ObjectId];
+		findGroupService.AddRecruitment(
+			leader,
+			"Old team recruit",
+			groupType: 2,
+			nowEpochSeconds: 100,
+			currentTeam: new FindGroupRecruitmentSubject(
+				teamId,
+				leader.Race,
+				IsSoloPlayer: false,
+				leader.Name,
+				Size: 1,
+				leader.Level,
+				leader.Level,
+				FindGroupRecruitmentSubject.ToJavaClassId(leader.PlayerClass)));
+		var registry = new CapturingConnectionRegistry([leader, sameRace, otherRace]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, leader);
+
+		var beforeRecruitmentUpdate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(3);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+					buffer.WriteS("New team recruit");
+					buffer.WriteC(4);
+				}));
+		var afterRecruitmentUpdate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+		var recruitment = Assert.Single(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 102).Recruitments);
+		Assert.Equal(teamId, recruitment.ObjectId);
+		Assert.Equal("New team recruit", recruitment.Message);
+		Assert.Equal(4, recruitment.GroupType);
+		Assert.InRange(recruitment.LastUpdate, beforeRecruitmentUpdate, afterRecruitmentUpdate);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(sentPackets);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(1);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+				}));
+
+		var recruitmentBroadcast = Assert.Single(registry.WorldBroadcasts);
+		var recruitmentPacket = Assert.IsType<SmFindGroup>(recruitmentBroadcast.Packet);
+		Assert.Equal(1, ReadPrivateField<int>(recruitmentPacket, "_action"));
+		Assert.Equal(teamId, ReadPrivateField<int>(recruitmentPacket, "_idToDelete"));
+		Assert.Equal((byte)5, ReadPrivateField<byte>(recruitmentPacket, "_serverId"));
+		Assert.Equal((byte)6, ReadPrivateField<byte>(recruitmentPacket, "_unknown1"));
+		Assert.Equal((byte)7, ReadPrivateField<byte>(recruitmentPacket, "_unknown2"));
+		Assert.Equal((byte)8, ReadPrivateField<byte>(recruitmentPacket, "_unknown3"));
+		Assert.Equal([leader.ObjectId, sameRace.ObjectId], recruitmentBroadcast.RecipientObjectIds);
+		Assert.DoesNotContain(otherRace.ObjectId, recruitmentBroadcast.RecipientObjectIds);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 103).Recruitments);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(3);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+					buffer.WriteS("Missing team recruit");
+					buffer.WriteC(5);
+				}));
+
+		Assert.Single(registry.WorldBroadcasts);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionEightAndNineMutateInstanceGroupsWithDirectPackets()
 	{
 		var sentPackets = new List<GameServerPacket>();
