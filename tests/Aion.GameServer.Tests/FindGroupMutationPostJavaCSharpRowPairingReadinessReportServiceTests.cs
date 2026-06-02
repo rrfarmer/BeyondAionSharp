@@ -17,6 +17,8 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 		Assert.False(report.CanFeedValueProjection);
 		Assert.False(report.CanRunRuntimeComparison);
 		Assert.False(report.CanClaimVerifiedParity);
+		Assert.Contains("commandDecisionRowsEvidence=", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("captureExecutionBlockerSummaryRows=", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", report.TraceName);
 		Assert.Contains("addRecruitment/addApplication", report.JavaSource, StringComparison.Ordinal);
 		Assert.Equal([2, 6], report.Rows.Select(row => row.Action));
@@ -71,6 +73,14 @@ public sealed class FindGroupMutationPostJavaCSharpRowPairingReadinessReportServ
 		Assert.True(report.CanFeedValueProjection);
 		Assert.False(report.CanRunRuntimeComparison);
 		Assert.False(report.CanClaimVerifiedParity);
+		Assert.Contains("allProvidersConsistent=True", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("selectedKind=ExecutorConsistencyAudit", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("captureAcceptanceMatrixRows=", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("liveCapturePreflightRows=", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("runtimeComparisonHandoffRows=", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("consistencyAuditRowEvidence=", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("ResultEmissionBlocker", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("JavaArtifactRootValidationCommandReport=consistent:True", report.JavaPostCaptureDryRunCommandConsistencyEvidence, StringComparison.Ordinal);
 		Assert.Contains(report.Rows, row =>
 			row.Action == 2
 			&& row.ExpectedMutationKind == FindGroupDirectPacketMutationPostTraceMutationKind.Recruitment

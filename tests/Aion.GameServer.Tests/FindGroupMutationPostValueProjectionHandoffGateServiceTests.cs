@@ -105,6 +105,7 @@ public sealed class FindGroupMutationPostValueProjectionHandoffGateServiceTests
 				PairRow(2, 6, FindGroupDirectPacketMutationPostTraceMutationKind.Application),
 			],
 			ArtifactRoot: "test-root",
+			JavaPostCaptureDryRunCommandConsistencyEvidence: "commandDecisionRowsEvidence=test",
 			HasShapeValidJavaArtifacts: true,
 			HasAcceptedCSharpBoundaryRows: true,
 			HasActionTwoPair: true,
