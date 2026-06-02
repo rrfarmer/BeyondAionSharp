@@ -23,8 +23,8 @@ public static class FindGroupDirectPacketTriggerOrderingReadinessService
 					"C# FindGroupSideEffectDispatchExecutorService preserves direct-intent order when explicitly invoked by controlled evidence tests.",
 					FindGroupDirectPacketTriggerOrderingEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketTriggerOrderingEvidence(
-					FindGroupDirectPacketTriggerOrderingEvidenceKind.CSharpDisabledBoundaryActionZeroFourTrace,
-					"C# focused tests record disabled CM_FIND_GROUP action 0/4 boundary acceptance before opt-in registry execution of the direct SmFindGroup packet to the active player.",
+					FindGroupDirectPacketTriggerOrderingEvidenceKind.CSharpDisabledBoundaryActionZeroFourEightTrace,
+					"C# focused tests record disabled CM_FIND_GROUP action 0/4/8 boundary acceptance before opt-in registry execution of the direct SmFindGroup packet to the active player.",
 					FindGroupDirectPacketTriggerOrderingEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketTriggerOrderingEvidence(
 					FindGroupDirectPacketTriggerOrderingEvidenceKind.CSharpTriggerBoundaryWiring,
@@ -54,7 +54,7 @@ public enum FindGroupDirectPacketTriggerOrderingEvidenceKind
 	JavaTriggerBeforeRunImpl,
 	JavaSequentialSendPacketCalls,
 	CSharpOptInExecutorOrder,
-	CSharpDisabledBoundaryActionZeroFourTrace,
+	CSharpDisabledBoundaryActionZeroFourEightTrace,
 	CSharpTriggerBoundaryWiring,
 	LiveSocketOrderingComparison,
 }
