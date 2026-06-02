@@ -35,6 +35,7 @@ public sealed record FindGroupMutationPostProjectedRowComparisonValueReaderExecu
 	bool AllProvidersConsistent,
 	FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind CommandDecisionSelectedKind,
 	string CommandDecisionSelectedEvidenceField,
+	string CommandDecisionRowsEvidence,
 	bool CommandDecisionDefersJavaCaptureBeforeConsistency,
 	bool CanRunRuntimeComparison,
 	bool CanClaimVerifiedParity,
@@ -74,6 +75,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		var timestampProperty = FindGroupMutationPostJavaArtifactCaptureRunbookService.ServerEpochSecondsProperty;
 		var deterministicTimestamp = FindGroupMutationPostJavaArtifactCaptureRunbookService.DeterministicServerEpochSeconds;
 		var expectedTimestampCommandFragment = $"-D{timestampProperty}={deterministicTimestamp}";
+		var commandDecisionRowsEvidence = CommandDecisionRowEvidence(commandDecisionReport);
 		var rows = new[]
 		{
 			Row(
@@ -116,6 +118,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			allProvidersConsistent,
 			commandDecisionReport.SelectedCommandKind,
 			commandDecisionReport.SelectedEvidenceField,
+			commandDecisionRowsEvidence,
 			commandDecisionReport.SelectedCommandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.ExecutorConsistencyAudit
 				&& string.Equals(commandDecisionReport.SelectedEvidenceField, "executorConsistencyAuditAccepted", StringComparison.Ordinal),
 			CanRunRuntimeComparison: false,
@@ -124,6 +127,14 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			liveCapturePreflight.TraceName,
 			liveCapturePreflight.JavaSource,
 			IsLive: false);
+	}
+
+	private static string CommandDecisionRowEvidence(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionReport commandDecisionReport)
+	{
+		return commandDecisionReport.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", commandDecisionReport.Rows.Select(row => $"{row.Field}={row.CurrentEvidence}"));
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReportRow Row(

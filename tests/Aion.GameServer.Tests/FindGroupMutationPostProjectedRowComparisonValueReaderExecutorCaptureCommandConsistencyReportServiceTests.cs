@@ -19,6 +19,13 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.Equal("-Daion.findGroupMutationPost.serverEpochSeconds=1700000000", report.ExpectedTimestampCommandFragment);
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.ExecutorConsistencyAudit, report.CommandDecisionSelectedKind);
 		Assert.Equal("executorConsistencyAuditAccepted", report.CommandDecisionSelectedEvidenceField);
+		Assert.Contains("captureExecutionBlockerSummaryRows=", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
+		Assert.Contains("captureAcceptanceMatrixRows=", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
+		Assert.Contains("liveCapturePreflightRows=", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
+		Assert.Contains("runtimeComparisonHandoffRows=", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
+		Assert.Contains("consistencyAuditRowEvidence=", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
+		Assert.Contains("ExecutorEvidenceBridge", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
+		Assert.Contains("ResultEmissionBlocker", report.CommandDecisionRowsEvidence, StringComparison.Ordinal);
 		Assert.True(report.CommandDecisionDefersJavaCaptureBeforeConsistency);
 		Assert.Equal(Enum.GetValues<FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandProvider>(), report.Rows.Select(row => row.Provider));
 		Assert.All(report.Rows, row =>
