@@ -345,6 +345,95 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionEightAndNineMutateInstanceGroupsWithDirectPackets()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var active = CreatePlayer(0x01020304, "Active", "ELYOS");
+		var remaining = CreatePlayer(0x01020305, "Remaining", "ELYOS");
+		var otherRace = CreatePlayer(0x01020306, "OtherRace", "ASMODIANS");
+		var registry = new CapturingConnectionRegistry([active]);
+		findGroupService.RegisterInstanceGroup(remaining, 0x11223345, "Remaining", minMembers: 2, nowEpochSeconds: 100);
+		findGroupService.RegisterInstanceGroup(otherRace, 0x11223346, "Other", minMembers: 4, nowEpochSeconds: 100);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, active);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(8);
+					buffer.WriteD(0x11223344);
+					buffer.WriteC(0);
+					buffer.WriteS("Entry");
+					buffer.WriteC(6);
+				}));
+
+		var registerPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(14, ReadPrivateField<int>(registerPacket, "_action"));
+		var registeredGroups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(registerPacket, "_instanceGroups");
+		var registeredGroup = Assert.Single(registeredGroups);
+		Assert.Equal(active.ObjectId, registeredGroup.GroupEntryId);
+		Assert.Equal(0x11223344, registeredGroup.InstanceMaskId);
+		Assert.Equal(active.ObjectId, registeredGroup.RecruiterObjectId);
+		Assert.Equal(6, registeredGroup.MinMembers);
+		Assert.Equal("Entry", registeredGroup.Message);
+		var storedActiveGroup = Assert.Single(
+			findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 101).InstanceGroups,
+			group => group.GroupEntryId == active.ObjectId);
+		Assert.Equal("Entry", storedActiveGroup.Message);
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(9);
+					buffer.WriteD(active.ObjectId);
+					buffer.WriteD(0x11223344);
+				}));
+
+		var removedRefreshPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(10, ReadPrivateField<int>(removedRefreshPacket, "_action"));
+		var refreshedGroups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(removedRefreshPacket, "_instanceGroups");
+		var refreshedGroup = Assert.Single(refreshedGroups);
+		Assert.Equal(remaining.ObjectId, refreshedGroup.GroupEntryId);
+		Assert.Equal(0x11223345, refreshedGroup.InstanceMaskId);
+		Assert.Equal("Remaining", refreshedGroup.Message);
+		Assert.DoesNotContain(
+			findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 102).InstanceGroups,
+			group => group.GroupEntryId == active.ObjectId);
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(9);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteD(0x11223344);
+				}));
+
+		var missingRefreshPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(10, ReadPrivateField<int>(missingRefreshPacket, "_action"));
+		var missingRefreshGroups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(missingRefreshPacket, "_instanceGroups");
+		var missingRefreshGroup = Assert.Single(missingRefreshGroups);
+		Assert.Equal(remaining.ObjectId, missingRefreshGroup.GroupEntryId);
+		Assert.DoesNotContain(otherRace.ObjectId, missingRefreshGroups.Select(group => group.GroupEntryId));
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();
