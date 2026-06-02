@@ -2,6 +2,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -138,6 +139,27 @@ public sealed class FindGroupDirectPacketMutationPostBoundaryTraceExportProjecti
 		Assert.False(projection.Export.BoundaryAccepted);
 	}
 
+	[Fact]
+	public void CreateExportFromLiveBoundaryObservation_RequiresPostedMessageBeforeFindGroup()
+	{
+		var projected = FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSampleExport(2) with
+		{
+			BoundaryAccepted = true,
+			ActivePlayerObjectId = 0x01020304,
+			ActivePlayerRace = "ELYOS",
+			PostedSystemMessageRecipientObjectId = 0x01020304,
+			RefreshedListRecipientObjectId = 0x01020304,
+		};
+
+		var projection = FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateExportFromLiveBoundaryObservation(
+			projected,
+			[SmFindGroup.ShowRecruitments(0, []), new SmSystemMessage(1400392)]);
+
+		Assert.Equal(FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.MissingBoundarySendObservation, projection.Status);
+		Assert.False(projection.Export.ExecutorInvokedFromBoundary);
+		Assert.False(projection.Export.RegistrySendsObservedInOrder);
+	}
+
 	private static FindGroupConnectionClientActionCompositionPlan CreateCompositionPlan(
 		FindGroupRecruitmentPlanService findGroupService,
 		Player player,
@@ -169,4 +191,5 @@ public sealed class FindGroupDirectPacketMutationPostBoundaryTraceExportProjecti
 			Level = level,
 		};
 	}
+
 }

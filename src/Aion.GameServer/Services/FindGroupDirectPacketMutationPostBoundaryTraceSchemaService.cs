@@ -1,3 +1,6 @@
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public static class FindGroupDirectPacketMutationPostBoundaryTraceSchemaService
@@ -177,6 +180,58 @@ public static class FindGroupDirectPacketMutationPostBoundaryTraceSchemaService
 			"Projected from a disabled CM_FIND_GROUP boundary plan; executor and registry ordering observations remain false.");
 	}
 
+	public static FindGroupDirectPacketMutationPostBoundaryTraceExportProjection CreateExportFromLiveBoundaryObservation(
+		FindGroupDirectPacketMutationPostBoundaryTraceExport projectedBoundaryRow,
+		IReadOnlyList<GameServerPacket> observedPackets)
+	{
+		var schema = CreateSchema();
+		var mapping = schema.SupportedActions.SingleOrDefault(item => item.Action == projectedBoundaryRow.Action);
+		if (mapping == null)
+		{
+			return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.UnsupportedAction,
+				projectedBoundaryRow,
+				"Only CM_FIND_GROUP actions 2 and 6 are supported by the mutation-post trace schema.");
+		}
+
+		if (!projectedBoundaryRow.BoundaryAccepted)
+		{
+			return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.MissingLiveBoundaryAcceptance,
+				projectedBoundaryRow,
+				"Live mutation-post row materialization requires a boundary-accepted projected row.");
+		}
+
+		if (observedPackets.Count != 2
+			|| observedPackets[0] is not SmSystemMessage postedMessage
+			|| observedPackets[1] is not SmFindGroup)
+		{
+			return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.MissingBoundarySendObservation,
+				projectedBoundaryRow,
+				"Live mutation-post row materialization requires exactly SmSystemMessage followed by SmFindGroup observed from ProcessPacketAsync.");
+		}
+
+		if (postedMessage.MessageId != mapping.PostedSystemMessageId)
+		{
+			return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.UnexpectedObservedPacketShape,
+				projectedBoundaryRow,
+				"Observed posted system message id did not match Java CM_FIND_GROUP mutation-post mapping.");
+		}
+
+		return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+			FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.Created,
+			projectedBoundaryRow with
+			{
+				ExecutorInvokedFromBoundary = true,
+				RegistrySendsObservedInOrder = true,
+				WorldBroadcastCount = 0,
+				InviteDispatchCount = 0,
+			},
+			"Materialized from ProcessPacketAsync-observed direct packet order: SmSystemMessage before SmFindGroup.");
+	}
+
 	private static FindGroupDirectPacketMutationPostActionSchema Action(
 		int action,
 		FindGroupDirectPacketMutationPostTraceMutationKind mutationKind,
@@ -308,6 +363,9 @@ public enum FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus
 	LiveSideEffectsRequested,
 	UnexpectedSideEffectShape,
 	MissingMutationPlan,
+	MissingLiveBoundaryAcceptance,
+	MissingBoundarySendObservation,
+	UnexpectedObservedPacketShape,
 }
 
 public sealed record FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(

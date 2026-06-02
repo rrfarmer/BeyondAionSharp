@@ -280,6 +280,65 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionTwoAndSixCanMaterializeAcceptedMutationPostBoundaryRows()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		var applicant = CreatePlayer(0x01020305, "Applicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet));
+
+		var actionTwoRow = await CaptureLiveMutationPostRowAsync(
+			fixture.Connection,
+			sentPackets,
+			recruiter,
+			nowEpochSeconds: 101,
+			buffer =>
+			{
+				buffer.WriteC(2);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteS("Need healer");
+				buffer.WriteC(3);
+			});
+		var actionSixRow = await CaptureLiveMutationPostRowAsync(
+			fixture.Connection,
+			sentPackets,
+			applicant,
+			nowEpochSeconds: 102,
+			buffer =>
+			{
+				buffer.WriteC(6);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteS("Need group");
+				buffer.WriteC(2);
+				buffer.WriteC(5);
+				buffer.WriteC(65);
+			});
+
+		var guarded = FindGroupMutationPostGuardedFixtureResultContractService.Create(
+			candidateRows: [actionTwoRow, actionSixRow]);
+		var intake = FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightService.Create(guarded);
+		var handoff = FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReportService.Create(intake);
+
+		Assert.Equal(FindGroupMutationPostGuardedFixtureResultContractStatus.ReadyForComparisonHandoff, guarded.Status);
+		Assert.Equal(FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReportStatus.ReadyForJavaArtifactPairingRuntimeComparisonBlocked, handoff.Status);
+		Assert.Equal(2, handoff.AcceptedLiveRowCount);
+		Assert.True(handoff.HasActionTwoAcceptedRow);
+		Assert.True(handoff.HasActionSixAcceptedRow);
+		Assert.True(handoff.CanFeedJavaArtifactPairing);
+		Assert.False(handoff.CanRunRuntimeComparison);
+		Assert.False(handoff.CanClaimVerifiedParity);
+		Assert.All(guarded.AcceptedLiveRows, row =>
+		{
+			Assert.True(row.BoundaryAccepted);
+			Assert.True(row.ExecutorInvokedFromBoundary);
+			Assert.True(row.RegistrySendsObservedInOrder);
+		});
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_ActionSixCanProduceOrderedOptInPostedMessageBeforeShowListTrace()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -1440,6 +1499,33 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		using var packet = new PacketBuffer(payload);
 		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [packet]));
 		await task;
+	}
+
+	private static async Task<FindGroupDirectPacketMutationPostBoundaryTraceExport> CaptureLiveMutationPostRowAsync(
+		GameServerConnection connection,
+		List<GameServerPacket> sentPackets,
+		Player player,
+		int nowEpochSeconds,
+		Action<PacketBuffer> writePayload)
+	{
+		var packet = CreateFindGroupPacket(writePayload);
+		var previewService = new FindGroupRecruitmentPlanService();
+		var compositionPlan = new FindGroupConnectionClientActionCompositionPlanService(
+				new FindGroupClientActionPlanService(previewService))
+			.CreateDisabledPlan(player, packet, nowEpochSeconds);
+		var projected = FindGroupDirectPacketMutationPostBoundaryTraceSchemaService
+			.CreateExportFromDisabledPlan(compositionPlan);
+		Assert.Equal(FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.Created, projected.Status);
+
+		sentPackets.Clear();
+		SetActivePlayer(connection, player);
+		await InvokeProcessPacketAsync(connection, CreateClientPayload(77, writePayload));
+
+		var observed = FindGroupDirectPacketMutationPostBoundaryTraceSchemaService
+			.CreateExportFromLiveBoundaryObservation(projected.Export, sentPackets);
+		Assert.Equal(FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.Created, observed.Status);
+		Assert.Contains("ProcessPacketAsync-observed", observed.Reason, StringComparison.Ordinal);
+		return observed.Export;
 	}
 
 	private static Player CreatePlayer(int objectId, string name, string race)
