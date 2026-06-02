@@ -81,6 +81,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.False(plan.IsCmFindGroupBoundaryWired);
 		Assert.Equal(12, plan.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.NotNull(plan.IntentPlan.InviteIntent);
 		Assert.Equal(FindGroupInstanceInviteKind.Group, plan.IntentPlan.InviteIntent!.Kind);
 		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
@@ -134,6 +135,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.False(plan.IsCmFindGroupBoundaryWired);
 		Assert.Equal(12, plan.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedAllianceInvite, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.NotNull(plan.IntentPlan.InviteIntent);
 		Assert.Equal(FindGroupInstanceInviteKind.Alliance, plan.IntentPlan.InviteIntent!.Kind);
 		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
@@ -183,6 +185,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.False(plan.IsCmFindGroupBoundaryWired);
 		Assert.Equal(12, plan.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.Declined, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.Null(plan.IntentPlan.InviteIntent);
 		Assert.Null(plan.InvitePlan);
 		var intent = Assert.Single(plan.IntentPlan.DirectPacketIntents);
@@ -233,6 +236,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.False(plan.IsCmFindGroupBoundaryWired);
 		Assert.Equal(12, plan.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.MissingApplicant, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.Null(plan.IntentPlan.InviteIntent);
 		Assert.Null(plan.InvitePlan);
 		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
@@ -273,6 +277,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.False(plan.IsCmFindGroupBoundaryWired);
 		Assert.Equal(12, plan.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.MissingInstanceGroup, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.Null(plan.IntentPlan.InviteIntent);
 		Assert.Null(plan.InvitePlan);
 		Assert.Empty(plan.IntentPlan.DirectPacketIntents);

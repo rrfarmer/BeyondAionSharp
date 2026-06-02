@@ -160,6 +160,7 @@ public sealed class FindGroupConnectionBoundaryDispatchAdapterServiceTests
 		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.BlockedMissingInviteRuntime, plan.Status);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 		Assert.NotNull(plan.IntentPlan.InviteIntent);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.Equal(FindGroupInstanceInviteKind.Group, plan.IntentPlan.InviteIntent!.Kind);
 		Assert.Null(plan.InvitePlan);
 	}
@@ -190,6 +191,7 @@ public sealed class FindGroupConnectionBoundaryDispatchAdapterServiceTests
 		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan.Status);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 		Assert.NotNull(plan.IntentPlan.InviteIntent);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.NotNull(plan.InvitePlan);
 		Assert.Equal(FindGroupInstanceApplicationInviteDispatchStatus.GroupInvitePlanned, plan.InvitePlan!.Status);
 		Assert.Equal(GroupInviteRequestStatus.Requested, plan.InvitePlan.GroupInviteRequest?.Status);
