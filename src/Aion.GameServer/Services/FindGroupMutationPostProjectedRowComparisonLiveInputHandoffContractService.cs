@@ -184,10 +184,11 @@ public static class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 			"FindGroupService.addRecruitment/addApplication",
 			IsLive: false);
 		var design = FindGroupMutationPostProjectedRowComparisonValueReaderDesignContractService.Create(gate);
+		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
 		var skeleton = FindGroupMutationPostProjectedRowComparisonValueReaderSkeletonService.Create(design);
 		var blockedReport = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		return FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, skeleton, blockedReport);
+		return FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, blockedReport);
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonLiveInputRequirementRow ValueReaderSummaryRow(
@@ -202,7 +203,7 @@ public static class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 				: FindGroupMutationPostProjectedRowComparisonLiveInputRequirementStatus.BlockedSummaryNotReady,
 			IsRuntimeEvidence: false,
 			BlocksLiveComparison: !hasSummary,
-			"Non-live value-reader readiness summary linking design contract, reader skeleton, and blocked-result report.",
+			"Non-live value-reader readiness summary linking design contract, typed-reader preflight, reader skeleton, and blocked-result report.",
 			$"status={valueReaderReadinessSummary.Status}; stages={valueReaderReadinessSummary.Stages.Count}; canReadValues={valueReaderReadinessSummary.CanReadValues}; canCompareValues={valueReaderReadinessSummary.CanCompareValues}; canEmitComparisonResult={valueReaderReadinessSummary.CanEmitComparisonResult}",
 			hasSummary
 				? "Value-reader metadata chain is present, but it reads no Java/C# values and is not runtime evidence."

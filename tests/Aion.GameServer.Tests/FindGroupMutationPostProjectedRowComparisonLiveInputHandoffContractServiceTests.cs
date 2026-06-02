@@ -58,6 +58,8 @@ public sealed class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary
 			&& row.Status == FindGroupMutationPostProjectedRowComparisonLiveInputRequirementStatus.SatisfiedByNonLiveMetadata
 			&& row.RequiredArtifact.Contains("value-reader readiness summary", StringComparison.Ordinal)
+			&& row.RequiredArtifact.Contains("typed-reader preflight", StringComparison.Ordinal)
+			&& row.Evidence.Contains("stages=4", StringComparison.Ordinal)
 			&& row.Evidence.Contains("canReadValues=False", StringComparison.Ordinal)
 			&& row.Notes.Contains("reads no Java/C# values", StringComparison.Ordinal));
 		Assert.Contains(contract.Requirements, row =>

@@ -19,7 +19,8 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 		Assert.False(summary.CanReadValues);
 		Assert.False(summary.CanCompareValues);
 		Assert.False(summary.CanEmitComparisonResult);
-		Assert.Equal(3, summary.Stages.Count);
+		Assert.True(summary.HasPreflightContract);
+		Assert.Equal(4, summary.Stages.Count);
 		Assert.Contains("design/runtime-evidence readiness", summary.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", summary.TraceName);
 		Assert.Contains("addRecruitment/addApplication", summary.JavaSource, StringComparison.Ordinal);
@@ -33,6 +34,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 		Assert.Equal(
 			[
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.DesignContract,
+				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.PreflightContract,
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.ReaderSkeleton,
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.BlockedResultReport,
 			],
@@ -42,6 +44,15 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Blocked
 			&& stage.HasExpectedShape
 			&& stage.BlocksValueReading
+			&& stage.Evidence.Contains("canReadJavaValues=False", StringComparison.Ordinal)
+			&& stage.Evidence.Contains("canReadCSharpValues=False", StringComparison.Ordinal));
+		Assert.Contains(summary.Stages, stage =>
+			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.PreflightContract
+			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Blocked
+			&& stage.HasExpectedShape
+			&& stage.BlocksValueReading
+			&& stage.Evidence.Contains("readerKinds=6", StringComparison.Ordinal)
+			&& stage.Evidence.Contains("hasSchemaV1TypeMap=True", StringComparison.Ordinal)
 			&& stage.Evidence.Contains("canReadJavaValues=False", StringComparison.Ordinal)
 			&& stage.Evidence.Contains("canReadCSharpValues=False", StringComparison.Ordinal));
 		Assert.Contains(summary.Stages, stage =>
@@ -56,10 +67,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	public void Create_JavaOnlyRowsBlockAtMissingAcceptedRows()
 	{
 		var design = ReadyDesignContract();
+		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
 		var skeleton = ValueReaderSkeleton(design, hasJava: true, hasCSharp: false);
 		var report = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, skeleton, report);
+		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, report);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStatus.BlockedMissingAcceptedRows, summary.Status);
 		Assert.False(summary.HasAllPairedRows);
@@ -76,10 +88,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	public void Create_PairedRowsStillBlockAtReaderImplementation()
 	{
 		var design = ReadyDesignContract();
+		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
 		var skeleton = ValueReaderSkeleton(design, hasJava: true, hasCSharp: true);
 		var report = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, skeleton, report);
+		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, report);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStatus.BlockedReaderImplementationDeferred, summary.Status);
 		Assert.True(summary.HasAllPairedRows);
@@ -87,6 +100,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 		Assert.False(summary.CanCompareValues);
 		Assert.False(summary.CanEmitComparisonResult);
 		Assert.Contains("reader implementation is intentionally deferred", summary.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(summary.Stages, stage =>
+			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.PreflightContract
+			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Deferred
+			&& stage.BlocksValueReading
+			&& stage.Evidence.Contains("status=BlockedTypedReadersDeferred", StringComparison.Ordinal));
 		Assert.Contains(summary.Stages, stage =>
 			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.ReaderSkeleton
 			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Deferred
@@ -98,10 +116,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	public void Create_BlockedReportStageCarriesReaderBlockerCountsWithoutReading()
 	{
 		var design = ReadyDesignContract();
+		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
 		var skeleton = ValueReaderSkeleton(design, hasJava: true, hasCSharp: true);
 		var report = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, skeleton, report);
+		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, report);
 
 		Assert.Contains(summary.Stages, stage =>
 			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.BlockedResultReport
