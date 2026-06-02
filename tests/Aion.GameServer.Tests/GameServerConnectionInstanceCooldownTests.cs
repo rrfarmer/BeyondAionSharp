@@ -160,8 +160,43 @@ public sealed class GameServerConnectionInstanceCooldownTests
 	}
 
 	[Fact]
-	public async Task QueueAllocatedInstancePortalTransferAsync_AllocatesRegistersAndTransfers()
+	public async Task QueueAllocatedInstancePortalTransferAsync_AllocatesRegistersSpawnsAndTransfersLikeJavaInstanceService()
 	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_templates>
+					<npc_template npc_id="203040" name="instance_npc" name_id="203040" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="GENERAL" type="GENERAL" />
+				</npc_templates>
+				<spawns>
+					<spawn_map map_id="300030000">
+						<spawn npc_id="203040" respawn_time="295" difficult_id="1">
+							<spot x="1" y="2" z="3" />
+						</spawn>
+						<spawn npc_id="203040" respawn_time="295" difficult_id="2">
+							<spot x="4" y="5" z="6" />
+						</spawn>
+						<spawn npc_id="203040" respawn_time="295">
+							<spot x="7" y="8" z="9" />
+						</spawn>
+					</spawn_map>
+				</spawns>
+			</static_data>
+			""");
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var spawnService = new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			gameTimeService: null,
+			threadPoolManager: null,
+			staticPlaceables: null,
+			NullLogger<WorldNpcSpawnService>.Instance);
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
 			new GameServerOptions
@@ -173,7 +208,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 				new GameServerOptions(),
 				repository,
 				new GameWorld(NullLogger<GameWorld>.Instance),
-				NullLogger<PlayerEnterWorldService>.Instance));
+				NullLogger<PlayerEnterWorldService>.Instance),
+			worldNpcSpawnService: spawnService);
 		var player = new Player
 		{
 			ObjectId = 1001,
@@ -201,17 +237,27 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			cooltimes,
 			ownerId: player.ObjectId,
 			maxPlayers: 6,
-			TeleportAnimation.FadeOutBeam,
-			staticData: null,
-			now);
+			animation: TeleportAnimation.FadeOutBeam,
+			staticData: staticData,
+			now: now,
+			difficultyId: 2);
 
 		Assert.Equal(2, result.RuntimePlan.Instance.InstanceId);
 		Assert.Equal(player.ObjectId, result.RuntimePlan.Instance.OwnerId);
 		Assert.Equal(6, result.RuntimePlan.Instance.MaxPlayers);
+		Assert.Equal(2, result.RuntimePlan.Instance.DifficultyId);
 		Assert.True(result.RuntimePlan.Instance.IsRegistered(player.ObjectId));
 		Assert.Equal(portalLocation with { InstanceId = 2 }, result.RuntimePlan.Destination);
 		Assert.Equal(result.RuntimePlan.Destination, result.Transfer.Teleport.PendingTeleport.Destination);
 		Assert.True(result.Transfer.Cooldown.Added);
+		var npcs = world.GetNpcs().OrderBy(npc => npc.Position.X).ToArray();
+		Assert.Equal([4, 7], npcs.Select(npc => (int)npc.Position.X).ToArray());
+		foreach (var npc in npcs)
+		{
+			Assert.Equal(300030000, npc.Position.WorldId);
+			Assert.Equal(2, npc.Position.InstanceId);
+		}
+
 		Assert.Collection(
 			pair.SentPackets,
 			packet => Assert.IsType<SmTeleportLoc>(packet),
