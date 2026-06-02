@@ -45,6 +45,26 @@ public sealed class PeriodicInstanceRegistrationService
 		};
 	}
 
+	public static PeriodicInstanceRegistrationSchedulePlan CreateDefaultSchedulePlan(bool autoGroupEnabled)
+	{
+		// Java parity: PeriodicInstanceManager constructor checks
+		// AutoGroupConfig.AUTO_GROUP_ENABLE before scheduling registrations.
+		if (!autoGroupEnabled)
+			return new PeriodicInstanceRegistrationSchedulePlan(false, Array.Empty<PeriodicInstanceRegistrationScheduleEntry>());
+
+		return new PeriodicInstanceRegistrationSchedulePlan(
+			true,
+			[
+				CreateScheduleEntry(1, ["0 0 0,12,20 ? * *"], 60),
+				CreateScheduleEntry(2, ["0 0 0,12,20 ? * *"], 60),
+				CreateScheduleEntry(3, ["0 0 0,12,20 ? * *"], 60),
+				CreateScheduleEntry(107, ["0 0 0,20 ? * MON,WED,SAT"], 60),
+				CreateScheduleEntry(108, ["0 0 12,19 ? * *"], 60),
+				CreateScheduleEntry(109, ["0 0 0,12 ? * SUN"], 60),
+				CreateScheduleEntry(111, ["0 0 23 ? * *"], 60),
+			]);
+	}
+
 	public PeriodicInstanceRegistrationBroadcastPlan CreateOpenRegistrationBroadcastPlan(
 		int maskId,
 		AutoGroupTable? autoGroups,
@@ -202,6 +222,21 @@ public sealed class PeriodicInstanceRegistrationService
 		return players;
 	}
 
+	private static PeriodicInstanceRegistrationScheduleEntry CreateScheduleEntry(
+		int maskId,
+		IReadOnlyList<string> cronExpressions,
+		long registrationPeriodMinutes)
+	{
+		var openingMessage = CreateOpeningMessageForMaskId(maskId)
+			?? throw new InvalidOperationException($"Missing Java periodic registration opening message for mask {maskId}.");
+		return new PeriodicInstanceRegistrationScheduleEntry(
+			maskId,
+			cronExpressions,
+			registrationPeriodMinutes,
+			TimeSpan.FromMinutes(registrationPeriodMinutes),
+			openingMessage.MessageId);
+	}
+
 	private static async Task<int> SendBroadcastPlanAsync(
 		PeriodicInstanceRegistrationBroadcastPlan plan,
 		IGameClientConnectionRegistry connectionRegistry,
@@ -261,6 +296,17 @@ public sealed record PeriodicInstanceRegistrationBroadcastDispatchResult(
 	PeriodicInstanceRegistrationBroadcastPlan Plan,
 	int SentPackets,
 	bool StoppedRegistrationsByMaskId);
+
+public sealed record PeriodicInstanceRegistrationSchedulePlan(
+	bool AutoGroupEnabled,
+	IReadOnlyList<PeriodicInstanceRegistrationScheduleEntry> Entries);
+
+public sealed record PeriodicInstanceRegistrationScheduleEntry(
+	int MaskId,
+	IReadOnlyList<string> CronExpressions,
+	long RegistrationPeriodMinutes,
+	TimeSpan CloseDelay,
+	int OpeningMessageId);
 
 public enum PeriodicInstanceRegistrationBroadcastStatus
 {

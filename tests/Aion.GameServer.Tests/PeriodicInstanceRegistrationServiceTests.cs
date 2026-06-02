@@ -10,6 +10,32 @@ namespace Aion.GameServer.Tests;
 public sealed class PeriodicInstanceRegistrationServiceTests
 {
 	[Fact]
+	public void CreateDefaultSchedulePlan_ReturnsNoEntriesWhenJavaAutoGroupDisabled()
+	{
+		var plan = PeriodicInstanceRegistrationService.CreateDefaultSchedulePlan(autoGroupEnabled: false);
+
+		Assert.False(plan.AutoGroupEnabled);
+		Assert.Empty(plan.Entries);
+	}
+
+	[Fact]
+	public void CreateDefaultSchedulePlan_ReturnsJavaPeriodicRegistrationSchedules()
+	{
+		var plan = PeriodicInstanceRegistrationService.CreateDefaultSchedulePlan(autoGroupEnabled: true);
+
+		Assert.True(plan.AutoGroupEnabled);
+		Assert.Collection(
+			plan.Entries,
+			entry => AssertScheduleEntry(entry, 1, "0 0 0,12,20 ? * *", 60, 1400252),
+			entry => AssertScheduleEntry(entry, 2, "0 0 0,12,20 ? * *", 60, 1400628),
+			entry => AssertScheduleEntry(entry, 3, "0 0 0,12,20 ? * *", 60, 1401398),
+			entry => AssertScheduleEntry(entry, 107, "0 0 0,20 ? * MON,WED,SAT", 60, 1401730),
+			entry => AssertScheduleEntry(entry, 108, "0 0 12,19 ? * *", 60, 1401947),
+			entry => AssertScheduleEntry(entry, 109, "0 0 0,12 ? * SUN", 60, 1402032),
+			entry => AssertScheduleEntry(entry, 111, "0 0 23 ? * *", 60, 1402192));
+	}
+
+	[Fact]
 	public void CreateOpeningMessageForMaskId_ReturnsJavaScheduledOpeningMessages()
 	{
 		Assert.Equal(1400252, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(1)?.MessageId);
@@ -237,6 +263,20 @@ public sealed class PeriodicInstanceRegistrationServiceTests
 			Race = "ELYOS",
 			Level = level,
 		};
+	}
+
+	private static void AssertScheduleEntry(
+		PeriodicInstanceRegistrationScheduleEntry entry,
+		int maskId,
+		string cronExpression,
+		long registrationPeriodMinutes,
+		int openingMessageId)
+	{
+		Assert.Equal(maskId, entry.MaskId);
+		Assert.Equal([cronExpression], entry.CronExpressions);
+		Assert.Equal(registrationPeriodMinutes, entry.RegistrationPeriodMinutes);
+		Assert.Equal(TimeSpan.FromMinutes(registrationPeriodMinutes), entry.CloseDelay);
+		Assert.Equal(openingMessageId, entry.OpeningMessageId);
 	}
 
 	private sealed class RecordingConnectionRegistry(IReadOnlyList<Player> onlinePlayers) : IGameClientConnectionRegistry
