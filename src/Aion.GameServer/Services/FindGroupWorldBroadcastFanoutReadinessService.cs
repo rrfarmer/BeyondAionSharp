@@ -32,6 +32,10 @@ public static class FindGroupWorldBroadcastFanoutReadinessService
 					"C# focused tests record disabled CM_FIND_GROUP action 1 boundary acceptance before opt-in world-broadcast execution, including same-race recipients and opposite-race exclusion.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
 				new FindGroupWorldBroadcastFanoutEvidence(
+					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpDisabledBoundaryActionFiveFanoutTrace,
+					"C# focused tests record disabled CM_FIND_GROUP action 5 boundary acceptance before opt-in world-broadcast execution, including same-race recipients and opposite-race exclusion.",
+					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
+				new FindGroupWorldBroadcastFanoutEvidence(
 					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpLiveBoundaryWiring,
 					"C# GameServerConnection.ProcessPacketAsync still defers CmFindGroup and does not invoke world-broadcast fanout from the triggering client packet.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.Blocked),
@@ -61,6 +65,7 @@ public enum FindGroupWorldBroadcastFanoutEvidenceKind
 	CSharpRegistryRaceFilter,
 	CSharpOptInExecutorOrder,
 	CSharpDisabledBoundaryActionOneFanoutTrace,
+	CSharpDisabledBoundaryActionFiveFanoutTrace,
 	CSharpLiveBoundaryWiring,
 	LiveRuntimeComparison,
 }
