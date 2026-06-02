@@ -1017,6 +1017,7 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, evidence.IntentPlan.CompositionStatus);
 		Assert.Equal(15, evidence.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroupMembersInfo, evidence.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Shown, evidence.IntentPlan.InstanceGroupMemberInfoStatus);
 		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
 		Assert.False(evidence.IntentPlan.IsCmFindGroupBoundaryWired);
 		Assert.False(evidence.IsCmFindGroupBoundaryWired);
@@ -1030,6 +1031,42 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
 		Assert.Contains("not by GameServerConnection.CmFindGroup", evidence.BoundaryNote, StringComparison.Ordinal);
 		Assert.Equal([viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+	}
+
+	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionFifteenMissingInstanceGroupWithoutSideEffects()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var viewer = CreatePlayer(0x01020307, "Viewer", "ELYOS");
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(new FindGroupRecruitmentPlanService()));
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(15);
+				buffer.WriteD(0x01020304);
+				buffer.WriteD(0x11223344);
+			});
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			viewer,
+			packet,
+			nowEpochSeconds: 0x01020305);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan, evidence.IntentPlan.CompositionStatus);
+		Assert.Equal(15, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.ShowInstanceGroupMembersInfo, evidence.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Missing, evidence.IntentPlan.InstanceGroupMemberInfoStatus);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(evidence.IntentPlan.DirectPacketIntents);
+		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
+		Assert.Empty(evidence.ExecutionPlan.DirectPackets);
+		Assert.Empty(evidence.ExecutionPlan.WorldBroadcasts);
+		Assert.Empty(evidence.ExecutionPlan.ExecutionOrder);
+		Assert.Empty(registry.DirectSends);
 	}
 
 	[Fact]
