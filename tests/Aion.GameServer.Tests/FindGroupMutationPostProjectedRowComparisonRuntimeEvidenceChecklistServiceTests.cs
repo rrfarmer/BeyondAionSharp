@@ -99,9 +99,13 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching
 			&& row.ProviderStatus == FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveScaffold
+			&& row.ExistingProvider.Contains("FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReportService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostJavaCSharpRowPairingReadinessReportService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonDryRunContractService", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("accepted-boundary-row handoff", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("Java/C# row-pairing readiness report", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("action/mutation pairing readiness", StringComparison.Ordinal)
+			&& row.Notes.Contains("Accepted-boundary-row handoff", StringComparison.Ordinal)
 			&& row.Notes.Contains("row pairing readiness", StringComparison.Ordinal)
 			&& !row.HasRuntimeEvidence);
 		Assert.Contains(checklist.Rows, row =>
