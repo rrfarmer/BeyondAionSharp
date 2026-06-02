@@ -434,6 +434,71 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionTenAndThirteenSendInstanceGroupShowLists()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var recruiter = CreatePlayer(0x01020305, "Recruiter", "ELYOS");
+		var otherRace = CreatePlayer(0x01020306, "OtherRace", "ASMODIANS");
+		var registry = new CapturingConnectionRegistry([viewer]);
+		var options = new GameServerOptions
+		{
+			Instance = new GameServerInstanceOptions { FormInstanceGroupAnywhere = true },
+		};
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [700001]),
+			new AutoGroupSummary(303, 300120000, 0, 0, 0, 0, false, false, false, [700002]),
+		]);
+		findGroupService.RegisterInstanceGroup(recruiter, 0x11223344, "Entry", minMembers: 3, nowEpochSeconds: 100);
+		findGroupService.RegisterInstanceGroup(otherRace, 0x11223345, "Other", minMembers: 2, nowEpochSeconds: 100);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			options: options,
+			autoGroups: autoGroups);
+		SetActivePlayer(fixture.Connection, viewer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(77, buffer => buffer.WriteC(10)));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var maskPacket = Assert.IsType<SmFindGroup>(packet);
+				Assert.Equal(26, ReadPrivateField<int>(maskPacket, "_action"));
+				Assert.Equal([302, 303], ReadPrivateField<IReadOnlyList<int>>(maskPacket, "_instanceMaskIds"));
+			},
+			packet =>
+			{
+				var showPacket = Assert.IsType<SmFindGroup>(packet);
+				Assert.Equal(10, ReadPrivateField<int>(showPacket, "_action"));
+				var groups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(showPacket, "_instanceGroups");
+				var group = Assert.Single(groups);
+				Assert.Equal(recruiter.ObjectId, group.GroupEntryId);
+				Assert.Equal("Entry", group.Message);
+			});
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(77, buffer => buffer.WriteC(13)));
+
+		var updatePacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(10, ReadPrivateField<int>(updatePacket, "_action"));
+		var updateGroups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(updatePacket, "_instanceGroups");
+		var updateGroup = Assert.Single(updateGroups);
+		Assert.Equal(recruiter.ObjectId, updateGroup.GroupEntryId);
+		Assert.DoesNotContain(otherRace.ObjectId, updateGroups.Select(group => group.GroupEntryId));
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();

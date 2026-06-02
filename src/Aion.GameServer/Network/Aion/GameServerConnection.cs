@@ -4259,8 +4259,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		// branches use direct sends to the active player; action 1/5 removal branches
 		// use PacketSendUtility.broadcastToWorld(packet, p -> p.getRace() == race);
 		// action 3/7 update branches mutate state without packet side effects;
-		// action 8/9 instance-group register/remove branches use direct sends.
-		if (_activePlayer == null || findGroup.Action is not (0 or 1 or 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9))
+		// action 8/9/10/13 instance-group branches use direct sends.
+		if (_activePlayer == null || findGroup.Action is not (0 or 1 or 2 or 3 or 4 or 5 or 6 or 7 or 8 or 9 or 10 or 13))
 			return;
 
 		var plan = CreateDisabledFindGroupBoundaryPlan(findGroup, (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
