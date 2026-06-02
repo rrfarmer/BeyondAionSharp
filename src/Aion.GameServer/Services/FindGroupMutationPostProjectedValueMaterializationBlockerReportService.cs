@@ -136,6 +136,9 @@ public static class FindGroupMutationPostProjectedValueMaterializationBlockerRep
 		var requiredFields = requiresProjectedValues
 			? equalityRows.Select(row => row.FieldName).Distinct(StringComparer.Ordinal).ToArray()
 			: [];
+		var projectedValueRowEvidence = projectedValueRows.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", projectedValueRows.Rows.Select(row => $"{row.FieldName}={row.Evidence}"));
 
 		return new FindGroupMutationPostProjectedValueMaterializationBlockerRow(
 			preflightRow.Order,
@@ -154,7 +157,7 @@ public static class FindGroupMutationPostProjectedValueMaterializationBlockerRep
 			HasUnreadProjectedValues: unreadEqualityCount > 0,
 			CanMaterializeOutput: false,
 			CanEmitResult: false,
-			$"reportStatus={reportStatus}; projectedValueStatus={projectedValueRows.Status}; materializationPreflightStatus={preflightRow.Status}; unreadEqualityFields={unreadEqualityCount}; ignoredRuntimeContextFields={contextRows.Count}; canMaterializePreflightRow={preflightRow.CanMaterializeOutput}; canEmitPreflightRow={preflightRow.CanEmitResult}",
+			$"reportStatus={reportStatus}; projectedValueStatus={projectedValueRows.Status}; materializationPreflightStatus={preflightRow.Status}; unreadEqualityFields={unreadEqualityCount}; ignoredRuntimeContextFields={contextRows.Count}; canMaterializePreflightRow={preflightRow.CanMaterializeOutput}; canEmitPreflightRow={preflightRow.CanEmitResult}; projectedValueRows={projectedValueRowEvidence}",
 			RequiredEvidenceFor(preflightRow.OutputKind, unreadEqualityCount),
 			NotesFor(preflightRow.OutputKind));
 	}
