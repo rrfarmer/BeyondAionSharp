@@ -799,14 +799,15 @@ public sealed class PlayerEnterWorldService
 
 	private void RecordFindGroupLogoutCleanup(Player player)
 	{
-		if (_findGroupLogoutCleanupPlanObserver == null)
+		if (_findGroupService == null && _findGroupLogoutCleanupPlanObserver == null)
 			return;
 
 		// Java parity: PlayerLeaveWorldService.leaveWorld calls FindGroupService.onLogout(player)
 		// before ResponseRequester.denyAll and before broader logout side effects. This hook records
 		// the disabled cleanup plan only; it does not send packets or enable live CM_FIND_GROUP dispatch.
 		var findGroupService = _findGroupService ?? new FindGroupRecruitmentPlanService();
-		_findGroupLogoutCleanupPlanObserver(findGroupService.OnLogout(player));
+		var plan = findGroupService.OnLogout(player);
+		_findGroupLogoutCleanupPlanObserver?.Invoke(plan);
 	}
 
 	private void RecordLogoutRepurchaseStateRemoval(Player player)

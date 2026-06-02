@@ -44,11 +44,11 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"PacketSendUtility.broadcastToWorld race-filter fanout is planned but not executed from the CM_FIND_GROUP boundary.",
 				"Action 11 instance application and declined action 12 direct packet dispatch have connection-adjacent disabled executor evidence but are not invoked from the CM_FIND_GROUP boundary.",
 				"Action 12 group/alliance invite request dispatch has connection-adjacent disabled executor evidence but is not invoked from the CM_FIND_GROUP boundary.",
-				"FindGroupService lifecycle hooks now have observer-only evidence for logout and invite joined-team paths, but they are not wired as a live singleton across all team/logout callers.",
+				"FindGroupService lifecycle hooks now have production singleton graph evidence for logout, joined-team, and disband cleanup, but CM_FIND_GROUP is not wired to that graph.",
 				"No encrypted socket or real-client runtime comparison has verified live packet order, visibility filtering, or service concurrency.",
 			],
 			[
-				"PlayerEnterWorldService.LeaveWorldAsync can record disabled FindGroupService.onLogout cleanup before pending question denial.",
+				"PlayerEnterWorldService.LeaveWorldAsync uses the injected shared FindGroupService-equivalent cleanup before pending question denial without requiring an observer.",
 				"PlayerGroupInviteRequestService and PlayerAllianceInviteRequestService can expose disabled FindGroupService.onJoinedTeam plans after accepted invite membership mutation.",
 				"FindGroupRecruitmentPlanService.OnJoinedTeam removes stored instance-group registration when current-team size reaches minMembers.",
 				"FindGroupRecruitmentPlanService uses ConcurrentDictionary-backed recruitment, application, and instance-group state stores to mirror Java FindGroupService ConcurrentHashMap declarations.",
@@ -58,7 +58,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"FindGroupSideEffectDispatchExecutorService can execute direct packet and race-filtered world-broadcast intents through IGameClientConnectionRegistry when explicitly invoked.",
 				"FindGroupConnectionBoundarySideEffectCompositionEvidenceService can compose parsed CmFindGroup planner output, including action 0/4 show-list direct packets, action 2/3/6/7 recruitment/application mutation evidence, action 8/9/17 instance-group mutation packets, action 10/13 instance-group show direct packets, action 11/12 instance-application direct/invite intents, and action 1/5 world-broadcast intents, with opt-in executor results without wiring GameServerConnection.",
 				"FindGroupConnectionBoundaryDispatchAdapterService can compose a non-live boundary result with direct packet intents, world-broadcast intents, optional action 12 invite plans, parsed-only no-op status, and missing-runtime status without wiring GameServerConnection.",
-				"FindGroupLifecycleSingletonWiringReadinessService enumerates Java FindGroupService.getInstance call sites and keeps live singleton wiring blocked until all lifecycle callers share one C# state store.",
+				"FindGroupLifecycleSingletonWiringReadinessService enumerates Java FindGroupService.getInstance call sites and keeps live singleton wiring blocked until CM_FIND_GROUP also uses the shared C# state store.",
 			],
 			"Java sources reviewed: CM_FIND_GROUP.runImpl and services/findgroup/FindGroupService.");
 	}

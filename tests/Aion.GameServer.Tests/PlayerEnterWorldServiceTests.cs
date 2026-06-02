@@ -455,6 +455,32 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_UsesInjectedFindGroupLogoutCleanupWithoutObserverLikeJavaSingleton()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.AddRecruitment(player, "Solo", groupType: 1, nowEpochSeconds: 100);
+		findGroupService.AddApplication(player, "Apply", groupType: 2, classId: 5, level: 65, nowEpochSeconds: 101);
+		findGroupService.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: "Entry", minMembers: 6, nowEpochSeconds: 102);
+		var service = CreateService(
+			repository,
+			world,
+			out _,
+			findGroupService: findGroupService);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Empty(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 201).Applications);
+		Assert.Empty(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 202).InstanceGroups);
+		Assert.Equal(1, repository.SaveLogoutCalls);
+	}
+
+	[Fact]
 	public void CreateLogoutCraftCooldownSavePlan_RecordsJavaLogoutStoreBoundaryWithoutWriting()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));

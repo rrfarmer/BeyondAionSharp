@@ -24,7 +24,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 			});
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("GameServerConnection still defers CmFindGroup", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("real-client runtime comparison", StringComparison.Ordinal));
-		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("onLogout cleanup", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("without requiring an observer", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("onJoinedTeam plans", StringComparison.Ordinal));
 	}
 
@@ -78,6 +78,6 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 1/5 world-broadcast intents", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConnectionBoundaryDispatchAdapterService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupLifecycleSingletonWiringReadinessService", StringComparison.Ordinal));
-		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("not wired as a live singleton", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("CM_FIND_GROUP is not wired", StringComparison.Ordinal));
 	}
 }

@@ -12,8 +12,8 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.Equal(FindGroupLifecycleSingletonWiringReadinessStatus.BlockedPendingSingletonWiring, report.Status);
 		Assert.False(report.IsReadyForLiveSingletonWiring);
 		Assert.Contains("FindGroupService.SingletonHolder", report.JavaSource, StringComparison.Ordinal);
-		Assert.Contains(report.Blockers, blocker => blocker.Contains("CM_FIND_GROUP planning and logout cleanup", StringComparison.Ordinal));
-		Assert.Contains(report.Blockers, blocker => blocker.Contains("observer-only/fallback-only lifecycle gaps", StringComparison.Ordinal));
+		Assert.Contains(report.Blockers, blocker => blocker.Contains("CM_FIND_GROUP planning", StringComparison.Ordinal));
+		Assert.Contains(report.Blockers, blocker => blocker.Contains("fallback-only boundary gaps", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -46,8 +46,8 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.LogoutCleanup
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialObserverOnly
-				&& callSite.CSharpEvidence.Contains("normal DI does not yet prove the same", StringComparison.Ordinal));
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialProductionSingletonGraph
+				&& callSite.CSharpEvidence.Contains("without requiring an observer", StringComparison.Ordinal));
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.GroupJoin

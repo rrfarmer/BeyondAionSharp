@@ -17,8 +17,8 @@ public static class FindGroupLifecycleSingletonWiringReadinessService
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.LogoutCleanup,
 				"PlayerLeaveWorldService.leaveWorld calls FindGroupService.getInstance().onLogout(player) before ResponseRequester.denyAll().",
-				"PlayerEnterWorldService.LeaveWorldAsync can record disabled cleanup before question denial when an observer is supplied, but normal DI does not yet prove the same FindGroupRecruitmentPlanService singleton is shared by all callers.",
-				FindGroupLifecycleSingletonCallSiteStatus.PartialObserverOnly,
+				"PlayerEnterWorldService.LeaveWorldAsync uses the injected shared FindGroupRecruitmentPlanService before question denial without requiring an observer; live CM_FIND_GROUP wiring remains blocked.",
+				FindGroupLifecycleSingletonCallSiteStatus.PartialProductionSingletonGraph,
 				RequiresSharedSingleton: true),
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.GroupJoin,
@@ -50,9 +50,9 @@ public static class FindGroupLifecycleSingletonWiringReadinessService
 			FindGroupLifecycleSingletonWiringReadinessStatus.BlockedPendingSingletonWiring,
 			callSites,
 			[
-				"Route GameServerConnection CM_FIND_GROUP planning and logout cleanup through the shared FindGroupRecruitmentPlanService before live dispatch is enabled.",
-				"Remove remaining observer-only/fallback-only lifecycle gaps before claiming Java singleton lifetime parity.",
-				"Prove Java order for logout before question denial, joined-team cleanup after membership mutation, and disband recruitment removal before team removal.",
+				"Route GameServerConnection CM_FIND_GROUP planning through the shared FindGroupRecruitmentPlanService before live dispatch is enabled.",
+				"Remove remaining fallback-only boundary gaps before claiming Java singleton lifetime parity.",
+				"Prove live packet order, race fanout, and connection-registry behavior before enabling CM_FIND_GROUP dispatch.",
 			],
 			"Java sources reviewed: FindGroupService.SingletonHolder, CM_FIND_GROUP.runImpl, PlayerLeaveWorldService.leaveWorld, PlayerGroupService.addPlayerToGroup/disband, PlayerAllianceService.addPlayerToAlliance/disband.");
 	}
