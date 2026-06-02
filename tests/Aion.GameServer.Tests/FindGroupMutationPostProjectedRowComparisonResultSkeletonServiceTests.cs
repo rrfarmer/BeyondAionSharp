@@ -83,6 +83,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonResultSkeletonSer
 		var readyDryRun = new FindGroupMutationPostProjectedRowComparisonDryRunContract(
 			FindGroupMutationPostProjectedRowComparisonDryRunStatus.ReadyForFutureExecutor,
 			Actions: [],
+			AcceptedCSharpRows: [],
 			Fields:
 			[
 				new FindGroupMutationPostProjectedRowComparisonDryRunField(
@@ -103,10 +104,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonResultSkeletonSer
 			],
 			HasExecutionBlockerReport: true,
 			HasResultContract: true,
+			HasGuardedFixtureResultContract: true,
 			ShouldCompareRows: true,
-			"future executor may compare",
-			"cm-find-group-direct-mutation-post-boundary",
-			"FindGroupService.addRecruitment/addApplication",
+			ExecutionDecision: "future executor may compare",
+			TraceName: "cm-find-group-direct-mutation-post-boundary",
+			JavaSource: "FindGroupService.addRecruitment/addApplication",
 			IsLive: false);
 
 		var skeleton = FindGroupMutationPostProjectedRowComparisonResultSkeletonService.Create(readyDryRun);

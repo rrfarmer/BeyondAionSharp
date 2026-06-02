@@ -13,7 +13,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		Assert.False(contract.IsLive);
 		Assert.True(contract.HasExecutionBlockerReport);
 		Assert.True(contract.HasResultContract);
+		Assert.True(contract.HasGuardedFixtureResultContract);
 		Assert.False(contract.ShouldCompareRows);
+		Assert.Empty(contract.AcceptedCSharpRows);
 		Assert.Contains("Comparison not executed", contract.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", contract.TraceName);
 		Assert.Contains("addRecruitment/addApplication", contract.JavaSource, StringComparison.Ordinal);
@@ -107,12 +109,63 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 			"cm-find-group-direct-mutation-post-boundary",
 			"FindGroupService.addRecruitment/addApplication",
 			IsLive: false);
+		var guardedFixture = FindGroupMutationPostGuardedFixtureResultContractService.Create(
+			candidateRows:
+			[
+				LiveCSharpRow(2),
+				LiveCSharpRow(6),
+			]);
 
-		var contract = FindGroupMutationPostProjectedRowComparisonDryRunContractService.Create(readyReport);
+		var contract = FindGroupMutationPostProjectedRowComparisonDryRunContractService.Create(
+			readyReport,
+			guardedFixtureResultContract: guardedFixture);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonDryRunStatus.ReadyForFutureExecutor, contract.Status);
 		Assert.True(contract.ShouldCompareRows);
+		Assert.Equal(2, contract.AcceptedCSharpRows.Count);
+		Assert.Equal([2, 6], contract.AcceptedCSharpRows.Select(row => row.Action));
 		Assert.Contains("future executor may compare", contract.ExecutionDecision, StringComparison.Ordinal);
 		Assert.False(contract.IsLive);
 	}
+
+	[Fact]
+	public void Create_ProjectsAcceptedGuardedCSharpRowsAsFutureExecutorInputs()
+	{
+		var guardedFixture = FindGroupMutationPostGuardedFixtureResultContractService.Create(
+			candidateRows:
+			[
+				LiveCSharpRow(2),
+				FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSampleExport(6),
+			]);
+
+		var contract = FindGroupMutationPostProjectedRowComparisonDryRunContractService.Create(
+			guardedFixtureResultContract: guardedFixture);
+
+		var accepted = Assert.Single(contract.AcceptedCSharpRows);
+		Assert.Equal(1, accepted.Order);
+		Assert.Equal(2, accepted.Action);
+		Assert.Equal(FindGroupDirectPacketMutationPostTraceMutationKind.Recruitment, accepted.MutationKind);
+		Assert.Equal(FindGroupMutationPostGuardedFixtureCandidateRowStatus.AcceptedLiveBoundaryRow, accepted.GuardedStatus);
+		Assert.True(accepted.IsAcceptedLiveBoundaryEvidence);
+		Assert.Contains("action/mutationKind/activePlayerObjectId/mutatedEntryObjectId", accepted.RequiredRowIdentity, StringComparison.Ordinal);
+		Assert.Contains("boundary=True", accepted.Evidence, StringComparison.Ordinal);
+		Assert.Contains("Accepted C# row", accepted.PlannedInputSource, StringComparison.Ordinal);
+		Assert.False(contract.ShouldCompareRows);
+	}
+
+	private static FindGroupDirectPacketMutationPostBoundaryTraceExport LiveCSharpRow(int action) =>
+		FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSampleExport(action) with
+		{
+			BoundaryAccepted = true,
+			ActivePlayerObjectId = action == 2 ? 1001 : 1002,
+			ActivePlayerRace = "ELYOS",
+			ServerEpochSeconds = 123,
+			MutatedEntryObjectId = action == 2 ? 2001 : 2002,
+			StateMutationRecordedBeforeDirectPackets = true,
+			PostedSystemMessageRecipientObjectId = action == 2 ? 1001 : 1002,
+			RefreshedListRecipientObjectId = action == 2 ? 1001 : 1002,
+			VisibleEntryObjectIdsAfterMutation = [action == 2 ? 2001 : 2002],
+			ExecutorInvokedFromBoundary = true,
+			RegistrySendsObservedInOrder = true,
+		};
 }
