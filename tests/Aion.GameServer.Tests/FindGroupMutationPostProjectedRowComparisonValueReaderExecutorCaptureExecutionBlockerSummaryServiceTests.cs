@@ -50,6 +50,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			&& row.Reason == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerReason.MissingCSharpBoundaryEvidence
 			&& row.NextEvidenceCommand.Contains("csharp boundary command", StringComparison.Ordinal));
 		Assert.Contains(summary.Rows, row =>
+			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.BoundaryExecutorObservation
+			&& row.BlocksRuntimeComparison
+			&& row.Reason == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerReason.MissingExecutorObservation
+			&& row.RequiredEvidence.Contains("executorInvokedFromBoundary", StringComparison.Ordinal)
+			&& row.Notes.Contains("same boundary path", StringComparison.Ordinal));
+		Assert.Contains(summary.Rows, row =>
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.RegistrySendObservation
 			&& row.BlocksRuntimeComparison
 			&& row.Reason == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerReason.MissingRegistryObservation

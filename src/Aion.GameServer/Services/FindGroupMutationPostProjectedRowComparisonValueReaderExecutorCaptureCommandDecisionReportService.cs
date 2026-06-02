@@ -114,9 +114,26 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			row.BlocksVerifiedParity,
 			row.RequiredEvidence,
 			row.CurrentEvidence,
-			commandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.JavaArtifactCapture
-				? "Java capture is only selectable after executor consistency evidence is accepted; this report still does not run Maven."
-				: row.Notes);
+			NotesFor(row, commandKind));
+	}
+
+	private static string NotesFor(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryRow row,
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind commandKind)
+	{
+		return row.Field switch
+		{
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows
+				or FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactShapeValidation =>
+				"Java capture is only selectable after executor consistency evidence is accepted; this report still does not run Maven.",
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.BoundaryExecutorObservation =>
+				"Boundary executor observation proves the guarded CM_FIND_GROUP boundary invoked the side-effect executor after packet acceptance; it does not prove posted/refreshed registry send ordering.",
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.RegistrySendObservation =>
+				"Registry send observation proves the posted system message and refreshed SM_FIND_GROUP list were observed through direct registry sends in Java order; it does not prove the boundary invoked the executor.",
+			_ => commandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.CSharpBoundaryCapture
+				? row.Notes + " This C# capture decision remains distinct from executor-observation and registry-send observation gates."
+				: row.Notes,
+		};
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind CommandKindFor(

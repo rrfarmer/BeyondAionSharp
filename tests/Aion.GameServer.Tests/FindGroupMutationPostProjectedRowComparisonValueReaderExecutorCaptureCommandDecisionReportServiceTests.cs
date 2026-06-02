@@ -35,6 +35,16 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			&& !row.IsPrimaryDecision
 			&& row.CommandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.JavaArtifactCapture
 			&& row.Notes.Contains("only selectable after executor consistency", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.BoundaryExecutorObservation
+			&& row.CommandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.CSharpBoundaryCapture
+			&& row.Notes.Contains("invoked the side-effect executor after packet acceptance", StringComparison.Ordinal)
+			&& row.Notes.Contains("does not prove posted/refreshed registry send ordering", StringComparison.Ordinal));
+		Assert.Contains(report.Rows, row =>
+			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.RegistrySendObservation
+			&& row.CommandKind == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandDecisionKind.CSharpBoundaryCapture
+			&& row.Notes.Contains("direct registry sends in Java order", StringComparison.Ordinal)
+			&& row.Notes.Contains("does not prove the boundary invoked the executor", StringComparison.Ordinal));
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", report.TraceName);
 		Assert.Contains("addRecruitment/addApplication", report.JavaSource, StringComparison.Ordinal);
 	}
