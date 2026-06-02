@@ -7519,6 +7519,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				preparation.EntryPlan.TeamPlan,
 				portalLoc,
 				staticData,
+				worldMapStates,
 				instanceCooltimes,
 				now ?? DateTimeOffset.Now);
 		if (preparation.EntryPlan.Action != PortalEntryPlanAction.Continue)
@@ -7579,16 +7580,63 @@ public sealed class GameServerConnection : BaseClientConnection
 		PortalTeamEntryPlan teamPlan,
 		PortalLocSummary portalLoc,
 		StaticData? staticData,
+		WorldMapRuntimeStateTable worldMapStates,
 		InstanceCooltimeTable instanceCooltimes,
 		DateTimeOffset now)
 	{
 		var groupPlan = GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, player, instanceCooltimes, _options, now);
-		if (teamPlan.Kind != PortalTeamEntryKind.Group
-			|| teamPlan.RegisteredInstance == null
-			|| groupPlan?.CapacityPlan.State != GroupPortalCapacityState.WouldPassCapacityGuard)
+		if (teamPlan.Kind != PortalTeamEntryKind.Group || groupPlan == null)
 		{
 			return PortalContinueTransferResult.UnsupportedTeamPortal(
 				teamPlan,
+				portalLoc,
+				player,
+				instanceCooltimes,
+				_options,
+				now);
+		}
+
+		var registeredInstance = teamPlan.RegisteredInstance;
+		var transferTeamPlan = teamPlan;
+		var transferGroupPlan = groupPlan;
+		if (registeredInstance == null
+			&& teamPlan.Disposition == PortalTeamEntryDisposition.FreshInstanceAllocationNeeded
+			&& teamPlan.TeamId > 0)
+		{
+			// Java parity: PortalService.port group branch calls InstanceService.getNextAvailableInstance(mapId, difficult, maxPlayers),
+			// then WorldMapInstance.registerTeam(group), before falling through to the same transfer helper.
+			registeredInstance = worldMapStates.CreateNextWorldMapInstance(portalLoc.WorldId, maxPlayers: teamPlan.MaxPlayers);
+			if (registeredInstance == null)
+			{
+				return PortalContinueTransferResult.UnsupportedTeamPortal(
+					teamPlan,
+					portalLoc,
+					player,
+					instanceCooltimes,
+					_options,
+					now);
+			}
+
+			registeredInstance.RegisterTeamId(teamPlan.TeamId);
+			transferTeamPlan = teamPlan with
+			{
+				Disposition = PortalTeamEntryDisposition.RegisteredInstanceTransfer,
+				RegisteredInstance = registeredInstance,
+			};
+			transferGroupPlan = GroupPortalTransferPlan.FromTeamPlan(
+				transferTeamPlan,
+				portalLoc,
+				player,
+				instanceCooltimes,
+				_options,
+				now);
+		}
+
+		if (registeredInstance == null
+			|| transferGroupPlan?.CapacityPlan.State != GroupPortalCapacityState.WouldPassCapacityGuard)
+		{
+			return PortalContinueTransferResult.UnsupportedTeamPortal(
+				transferTeamPlan,
 				portalLoc,
 				player,
 				instanceCooltimes,
@@ -7602,22 +7650,22 @@ public sealed class GameServerConnection : BaseClientConnection
 			portalLoc.Y,
 			portalLoc.Z,
 			portalLoc.Heading,
-			teamPlan.RegisteredInstance.InstanceId);
-		teamPlan.RegisteredInstance.SetStartPositionIfMissing(destination);
-		teamPlan.RegisteredInstance.Register(player.ObjectId);
+			registeredInstance.InstanceId);
+		registeredInstance.SetStartPositionIfMissing(destination);
+		registeredInstance.Register(player.ObjectId);
 		var transfer = await QueueInstancePortalTransferAsync(
 			player,
 			destination,
-			teamPlan.Reenter,
+			transferTeamPlan.Reenter,
 			instanceCooltimes,
 			TeleportAnimation.FadeOutBeam,
 			staticData,
 			now);
 		return PortalContinueTransferResult.FromRegisteredTeamInstance(
 			transfer,
-			teamPlan.RegisteredInstance,
-			teamPlan,
-			groupPlan);
+			registeredInstance,
+			transferTeamPlan,
+			transferGroupPlan);
 	}
 
 	internal async Task<InstanceEntranceCooldownResult> ApplyInstanceEntranceCooldownAsync(

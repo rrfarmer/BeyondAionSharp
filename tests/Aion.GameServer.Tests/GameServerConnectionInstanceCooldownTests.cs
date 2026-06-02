@@ -578,7 +578,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 	}
 
 	[Fact]
-	public async Task QueuePortalContinueTransferAsync_GroupPlanWithoutRegisteredInstanceRecordsAllocationNeededWithoutPackets()
+	public async Task QueuePortalContinueTransferAsync_GroupPlanWithoutRegisteredInstanceAllocatesRegistersTeamAndTransfers()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
@@ -631,51 +631,69 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
 
 		Assert.NotNull(result);
-		Assert.Equal(PortalContinueTransferKind.UnsupportedTeamPortal, result.Kind);
-		Assert.Null(result.Teleport);
-		Assert.Null(result.Cooldown);
-		Assert.Null(result.RegisteredInstance);
-		Assert.Same(teamPlan, result.TeamPlan);
+		Assert.Equal(PortalContinueTransferKind.RegisteredInstance, result.Kind);
+		Assert.NotNull(result.Teleport);
+		Assert.NotNull(result.Cooldown);
+		Assert.True(result.Cooldown.Added);
+		Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(100_000).AddMinutes(30).ToUnixTimeMilliseconds(), result.Cooldown.ReuseTimeMillis);
+		var allocatedInstance = result.RegisteredInstance;
+		Assert.NotNull(allocatedInstance);
+		Assert.Equal(2, allocatedInstance.InstanceId);
+		Assert.Equal(6, allocatedInstance.MaxPlayers);
+		Assert.Equal(88001, allocatedInstance.RegisteredTeamId);
+		Assert.True(allocatedInstance.IsRegistered(88001));
+		Assert.True(allocatedInstance.IsRegistered(1001));
+		Assert.Same(allocatedInstance, worldMaps.GetRegisteredInstance(300030000, 88001));
+		Assert.NotSame(teamPlan, result.TeamPlan);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.TeamPlan!.Disposition);
+		Assert.Same(allocatedInstance, result.TeamPlan.RegisteredInstance);
 		var groupPlan = result.GroupTransferPlan;
 		Assert.NotNull(groupPlan);
 		Assert.Equal(88001, groupPlan.TeamId);
 		Assert.Equal([1001, 1002], groupPlan.MemberObjectIds);
 		Assert.Equal(6, groupPlan.MaxPlayers);
-		Assert.Equal(GroupPortalTransferState.FreshInstanceAllocationNeeded, groupPlan.State);
-		Assert.Null(groupPlan.RegisteredInstance);
+		Assert.Equal(GroupPortalTransferState.RegisteredInstanceTransfer, groupPlan.State);
+		Assert.Same(allocatedInstance, groupPlan.RegisteredInstance);
 		Assert.Equal(GroupPortalTransferBlockedReason.GroupFanoutNotImplemented, groupPlan.BlockedReason);
-		Assert.Equal([1001, 1002], groupPlan.MemberInstanceScanPlan.CandidateObjectIds);
+		Assert.Empty(groupPlan.MemberInstanceScanPlan.CandidateObjectIds);
 		Assert.Equal(
-			GroupPortalMemberInstanceScanState.WouldScanMemberObjectIds,
+			GroupPortalMemberInstanceScanState.NotNeededRegisteredTeamInstance,
 			groupPlan.MemberInstanceScanPlan.State);
 		Assert.Equal(
-			GroupPortalMemberInstanceScanBlockedReason.LiveGroupAggregateNotPorted,
+			GroupPortalMemberInstanceScanBlockedReason.RegisteredTeamInstanceAlreadyResolved,
 			groupPlan.MemberInstanceScanPlan.BlockedReason);
 		Assert.Equal(6, groupPlan.CapacityPlan.MaxPlayers);
-		Assert.Null(groupPlan.CapacityPlan.CurrentPlayerCount);
-		Assert.Equal(GroupPortalCapacityState.UnknownUntilInstanceAllocated, groupPlan.CapacityPlan.State);
-		Assert.Equal(GroupPortalCapacityBlockedReason.InstanceAllocationNotPorted, groupPlan.CapacityPlan.BlockedReason);
+		Assert.Equal(0, groupPlan.CapacityPlan.CurrentPlayerCount);
+		Assert.Equal(GroupPortalCapacityState.WouldPassCapacityGuard, groupPlan.CapacityPlan.State);
+		Assert.Equal(GroupPortalCapacityBlockedReason.GroupFanoutNotImplemented, groupPlan.CapacityPlan.BlockedReason);
 		Assert.Equal(300030000, groupPlan.AllocationPlan.TargetWorldId);
 		Assert.Null(groupPlan.AllocationPlan.DifficultyId);
 		Assert.Equal(6, groupPlan.AllocationPlan.MaxPlayers);
-		Assert.Equal(88001, groupPlan.AllocationPlan.IntendedRegisteredTeamId);
-		Assert.Equal(GroupPortalAllocationState.WouldAllocateAndRegisterTeam, groupPlan.AllocationPlan.State);
-		Assert.Equal(GroupPortalAllocationBlockedReason.InstanceAllocationNotPorted, groupPlan.AllocationPlan.BlockedReason);
-		Assert.False(worldMaps.GetMap(300030000)!.TryGetWorldMapInstance(instanceId: 2, out _));
-		Assert.Null(groupPlan.ExecutionPlan.TargetInstanceId);
-		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90), groupPlan.ExecutionPlan.StartPosition);
+		Assert.Null(groupPlan.AllocationPlan.IntendedRegisteredTeamId);
+		Assert.Equal(GroupPortalAllocationState.NotNeededRegisteredTeamInstance, groupPlan.AllocationPlan.State);
+		Assert.Equal(
+			GroupPortalAllocationBlockedReason.RegisteredTeamInstanceAlreadyResolved,
+			groupPlan.AllocationPlan.BlockedReason);
+		Assert.True(worldMaps.GetMap(300030000)!.TryGetWorldMapInstance(instanceId: 2, out var storedInstance));
+		Assert.Same(allocatedInstance, storedInstance);
+		Assert.Equal(2, groupPlan.ExecutionPlan.TargetInstanceId);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 2), groupPlan.ExecutionPlan.StartPosition);
 		Assert.Equal(1001, groupPlan.ExecutionPlan.PlayerObjectIdToRegister);
 		Assert.False(groupPlan.ExecutionPlan.Reenter);
 		Assert.Equal(TeleportAnimation.FadeOutBeam, groupPlan.ExecutionPlan.TeleportAnimation);
-		Assert.Equal(GroupPortalCooldownPreviewState.UnknownUntilTransfer, groupPlan.ExecutionPlan.CooldownState);
-		Assert.Null(groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
-		Assert.Null(groupPlan.ExecutionPlan.InstanceCooldownRate);
-		Assert.Null(groupPlan.ExecutionPlan.WouldAddCooldown);
-		Assert.Equal(GroupPortalExecutionState.BlockedUntilInstanceAllocation, groupPlan.ExecutionPlan.State);
-		Assert.Equal(GroupPortalExecutionBlockedReason.InstanceAllocationNotPorted, groupPlan.ExecutionPlan.BlockedReason);
-		Assert.Empty(pair.SentPackets);
-		Assert.Null(player.PendingTeleport);
-		Assert.Null(repository.SavedPortalCooldowns);
+		Assert.Equal(GroupPortalCooldownPreviewState.WouldAddCooldown, groupPlan.ExecutionPlan.CooldownState);
+		Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(100_000).AddMinutes(30).ToUnixTimeMilliseconds(), groupPlan.ExecutionPlan.CooldownReuseTimeMillis);
+		Assert.Equal(1, groupPlan.ExecutionPlan.InstanceCooldownRate);
+		Assert.True(groupPlan.ExecutionPlan.WouldAddCooldown);
+		Assert.Equal(GroupPortalExecutionState.WouldTransferToRegisteredInstance, groupPlan.ExecutionPlan.State);
+		Assert.Equal(GroupPortalExecutionBlockedReason.GroupFanoutNotImplemented, groupPlan.ExecutionPlan.BlockedReason);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 2), allocatedInstance.StartPosition);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 2), player.PendingTeleport?.Destination);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+		Assert.NotNull(repository.SavedPortalCooldowns);
 	}
 
 	[Fact]
