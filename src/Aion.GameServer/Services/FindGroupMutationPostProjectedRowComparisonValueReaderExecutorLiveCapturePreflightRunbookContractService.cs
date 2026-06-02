@@ -252,7 +252,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 	}
 
 	public static string JavaCaptureCommand(string artifactRoot = FindGroupMutationPostJavaTraceArtifactFileReportService.DefaultArtifactRoot) =>
-		$"mvn -pl game-server -am test \"-Dtest={FindGroupMutationPostJavaArtifactCaptureRunbookService.FixtureClassName}\" \"-D{FindGroupMutationPostJavaArtifactCaptureRunbookService.CaptureFlag}=true\" \"-D{JavaArtifactRootProperty}={artifactRoot}\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
+		$"mvn -pl game-server -am test \"-Dtest={FindGroupMutationPostJavaArtifactCaptureRunbookService.FixtureClassName}\" \"-D{FindGroupMutationPostJavaArtifactCaptureRunbookService.CaptureFlag}=true\" \"-D{FindGroupMutationPostJavaArtifactCaptureRunbookService.ServerEpochSecondsProperty}={FindGroupMutationPostJavaArtifactCaptureRunbookService.DeterministicServerEpochSeconds}\" \"-D{JavaArtifactRootProperty}={artifactRoot}\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStatus StatusFor(
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContract runtimeComparisonHandoff)

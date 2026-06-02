@@ -117,7 +117,7 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureImplementationReadin
 		Assert.Contains("zero broadcast/invite counts", validation.RequiredWork, StringComparison.Ordinal);
 		Assert.Contains("live C# rows", validation.Notes, StringComparison.Ordinal);
 		Assert.Equal(
-			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
+			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Daion.findGroupMutationPost.serverEpochSeconds=1700000000\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
 			readiness.FocusedMavenCommand);
 		Assert.Equal(readiness.FocusedMavenCommand, maven.Target);
 		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureImplementationTaskStatus.DesignOnly, maven.Status);

@@ -90,7 +90,7 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureRunbookServiceTests
 		var runbook = FindGroupMutationPostJavaArtifactCaptureRunbookService.Create();
 
 		Assert.Equal(
-			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
+			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Daion.findGroupMutationPost.serverEpochSeconds=1700000000\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
 			runbook.FocusedMavenCommand);
 		Assert.Contains(runbook.Steps, step =>
 			step.Kind == FindGroupMutationPostJavaArtifactCaptureRunbookStepKind.FocusedMavenCommand

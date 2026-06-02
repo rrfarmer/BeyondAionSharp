@@ -50,7 +50,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStatus.BlockedCaptureEvidenceMissing, runbook.Status);
 		Assert.Equal(
-			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Daion.findGroupMutationPost.artifactRoot=parity-artifacts/find-group/mutation-post/java\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
+			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Daion.findGroupMutationPost.serverEpochSeconds=1700000000\" \"-Daion.findGroupMutationPost.artifactRoot=parity-artifacts/find-group/mutation-post/java\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
 			runbook.JavaCaptureCommand);
 		Assert.Contains(runbook.Rows, row =>
 			row.Step == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactCapture

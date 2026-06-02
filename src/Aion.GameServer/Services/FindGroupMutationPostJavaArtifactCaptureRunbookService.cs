@@ -70,6 +70,8 @@ public static class FindGroupMutationPostJavaArtifactCaptureRunbookService
 {
 	public const string FixtureClassName = "FindGroupMutationPostTraceCaptureTest";
 	public const string CaptureFlag = "aion.findGroupMutationPost.capture";
+	public const string ServerEpochSecondsProperty = "aion.findGroupMutationPost.serverEpochSeconds";
+	public const int DeterministicServerEpochSeconds = 1700000000;
 
 	public static FindGroupMutationPostJavaArtifactCaptureRunbook Create()
 	{
@@ -185,7 +187,7 @@ public static class FindGroupMutationPostJavaArtifactCaptureRunbookService
 	}
 
 	public static string FocusedMavenCommand() =>
-		$"mvn -pl game-server -am test \"-Dtest={FixtureClassName}\" \"-D{CaptureFlag}=true\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
+		$"mvn -pl game-server -am test \"-Dtest={FixtureClassName}\" \"-D{CaptureFlag}=true\" \"-D{ServerEpochSecondsProperty}={DeterministicServerEpochSeconds}\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
 
 	private static void Add(
 		ICollection<FindGroupMutationPostJavaArtifactCaptureRunbookStep> steps,
