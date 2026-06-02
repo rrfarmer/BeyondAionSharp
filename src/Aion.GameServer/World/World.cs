@@ -65,6 +65,21 @@ public sealed class World
 			.ToArray();
 	}
 
+	public IReadOnlyList<WorldStaticObject> GetStaticObjects()
+	{
+		// Java parity: World stores StaticObject visible objects separately from NPC object scans.
+		return _objects.Values.OfType<WorldStaticObject>().ToArray();
+	}
+
+	public IReadOnlyList<WorldStaticObject> GetStaticObjects(int worldId)
+	{
+		// Java parity: WorldMapInstance visible-object scans are scoped to the player's world map.
+		return _objects.Values
+			.OfType<WorldStaticObject>()
+			.Where(staticObject => staticObject.Position.WorldId == worldId)
+			.ToArray();
+	}
+
 	public IReadOnlyList<Player> GetPlayers()
 	{
 		// Java parity: WorldMapInstance stores visible Player objects for KnownList scans.

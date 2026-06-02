@@ -285,6 +285,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			staticData.NpcSpawns,
 			staticData.NpcTemplates,
 			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
+			staticData.ItemTemplates,
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
 			TemporarySpawnEvaluationMode.Startup,
@@ -331,6 +332,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			spawns,
 			npcTemplates,
 			allowedMapIds,
+			staticObjectTemplates: null,
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
 			TemporarySpawnEvaluationMode.Startup,
@@ -355,6 +357,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			spawns,
 			npcTemplates,
 			allowedMapIds,
+			staticObjectTemplates: null,
 			gameMinutes,
 			serverDayOfWeek,
 			TemporarySpawnEvaluationMode.Startup,
@@ -372,6 +375,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		NpcSpawnTable spawns,
 		NpcTemplateTable npcTemplates,
 		StaticDoorTable? staticDoors = null,
+		ItemTemplateTable? itemTemplates = null,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: SpawnEngine.spawnInstance(instance, difficultId, ownerId) filters by difficulty and spawns into instance.getInstanceId().
@@ -382,6 +386,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			new NpcSpawnTable(spawns.GetSpawnsForMap(mapId)),
 			npcTemplates,
 			[mapId],
+			itemTemplates,
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
 			TemporarySpawnEvaluationMode.Startup,
@@ -440,6 +445,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			spawns,
 			npcTemplates,
 			allowedMapIds,
+			staticObjectTemplates: null,
 			gameMinutes,
 			serverDayOfWeek,
 			TemporarySpawnEvaluationMode.HourlySpawn,
@@ -459,6 +465,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		NpcSpawnTable spawns,
 		NpcTemplateTable npcTemplates,
 		IEnumerable<int>? allowedMapIds,
+		ItemTemplateTable? staticObjectTemplates,
 		int gameMinutes,
 		DayOfWeek serverDayOfWeek,
 		TemporarySpawnEvaluationMode temporarySpawnMode,
@@ -494,6 +501,55 @@ public sealed class WorldNpcSpawnService : GameEngine
 			if (groupKey.DifficultId != 0 && groupKey.DifficultId != difficultId)
 			{
 				skipped += groupSpawns.Length;
+				continue;
+			}
+
+			if (IsStaticObjectSpawn(groupKey))
+			{
+				if (staticObjectTemplates == null)
+				{
+					skipped += groupSpawns.Length;
+					continue;
+				}
+
+				var staticTemplate = staticObjectTemplates.GetItemTemplate(groupKey.NpcId);
+				if (staticTemplate == null)
+				{
+					skipped += groupSpawns.Length;
+					continue;
+				}
+
+				if (groupKey.TemporarySchedule != null
+					&& !IsTemporaryScheduleActive(groupKey.TemporarySchedule, gameMinutes, serverDayOfWeek, temporarySpawnMode))
+				{
+					skipped += groupSpawns.Length;
+					continue;
+				}
+
+				if (temporarySpawnMode == TemporarySpawnEvaluationMode.HourlySpawn
+					&& groupKey.PoolSize > 0
+					&& groupSpawns.Any(spawn => _temporarySpawnObjectIds.ContainsKey(spawn)))
+				{
+					skipped += groupSpawns.Length;
+					continue;
+				}
+
+				foreach (var spawn in SelectActivePoolSpots(groupSpawns))
+				{
+					cancellationToken.ThrowIfCancellationRequested();
+					var objectId = SpawnStaticObject(spawn, staticTemplate, instanceId);
+					if (objectId.HasValue)
+					{
+						if (spawn.GroupTemporarySchedule != null)
+							_temporarySpawnObjectIds[spawn] = objectId.Value;
+						changedMapIds?.Add(spawn.MapId);
+					}
+					else
+					{
+						skipped++;
+					}
+				}
+
 				continue;
 			}
 
@@ -611,6 +667,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			new NpcSpawnTable(spawns.GetSpawnsForMap(mapId)),
 			npcTemplates,
 			[mapId],
+			staticObjectTemplates: null,
 			_gameTimeService?.GameMinutes ?? 0,
 			DateTimeOffset.Now.DayOfWeek,
 			TemporarySpawnEvaluationMode.Startup,
@@ -654,6 +711,27 @@ public sealed class WorldNpcSpawnService : GameEngine
 		if (worldNpc.Template.MaxHp > 0)
 			_npcLifeStatsInitialize?.Invoke(worldNpc);
 		_staticPlaceables?.SpawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
+		return objectId;
+	}
+
+	private int? SpawnStaticObject(NpcSpawnSummary spawn, ItemTemplateSummary template, int instanceId)
+	{
+		var objectId = _idFactory.NextId();
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading, instanceId);
+		var staticObject = new WorldStaticObject(
+			objectId,
+			template.TemplateId,
+			template,
+			position,
+			spawn.StaticId,
+			position);
+		if (!_world.TryAddObject(objectId, staticObject))
+		{
+			_idFactory.ReleaseId(objectId);
+			return null;
+		}
+
+		_staticPlaceables?.SpawnPlaceableObject(staticObject.Position.WorldId, staticObject.StaticId);
 		return objectId;
 	}
 
@@ -1122,6 +1200,12 @@ public sealed class WorldNpcSpawnService : GameEngine
 		// Java parity: this first C# pass mirrors SpawnEngine's ordinary spawnObject branch only.
 		return string.IsNullOrEmpty(spawn.Handler)
 			&& spawn.NpcId is <= 400000 or >= 499999;
+	}
+
+	private static bool IsStaticObjectSpawn(NpcSpawnGroupKey spawn)
+	{
+		// Java parity: SpawnEngine handler type STATIC delegates to StaticObjectSpawnManager.spawnTemplate.
+		return string.Equals(spawn.Handler, "STATIC", StringComparison.OrdinalIgnoreCase);
 	}
 
 	private static bool IsTemporaryScheduleActive(

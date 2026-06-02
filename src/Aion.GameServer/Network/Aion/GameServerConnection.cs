@@ -7655,7 +7655,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					portalLoc.WorldId,
 					staticData.NpcSpawns,
 					staticData.NpcTemplates,
-					staticData.StaticDoors);
+					staticData.StaticDoors,
+					staticData.ItemTemplates);
 			transferTeamPlan = teamPlan with
 			{
 				Disposition = PortalTeamEntryDisposition.RegisteredInstanceTransfer,

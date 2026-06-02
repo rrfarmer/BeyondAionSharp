@@ -1200,6 +1200,39 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcsForInstance_MaterializesStaticHandlerObjectsLikeJavaStaticObjectSpawnManager()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var staticPlaceables = new StaticPlaceableStateService();
+		var service = CreateService(world, staticPlaceables);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, difficultyId: 2);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 400001, x: 4, y: 5, z: 6, heading: 7, difficultId: 2, handler: "STATIC", staticId: 107),
+		]);
+		var itemTemplates = new ItemTemplateTable(
+		[
+			new ItemTemplateSummary(400001, "static_object", 0, 0, 1, "STATIC_OBJECT", "ITEM", "COMMON", "PC_ALL", 1, 0, 0),
+		]);
+
+		var result = service.SpawnWorldNpcsForInstance(
+			instance,
+			210010000,
+			spawns,
+			new NpcTemplateTable([]),
+			itemTemplates: itemTemplates);
+
+		Assert.Equal(new WorldNpcSpawnResult(0, 0), result);
+		Assert.Empty(world.GetNpcs());
+		var staticObject = Assert.Single(world.GetStaticObjects());
+		Assert.Equal(400001, staticObject.TemplateId);
+		Assert.Equal("static_object", staticObject.Template.Name);
+		Assert.Equal(new WorldPosition(210010000, 4, 5, 6, 7, InstanceId: 7), staticObject.Position);
+		Assert.Equal(107, staticObject.StaticId);
+		Assert.Equal(1, staticPlaceables.GetSpawnCount(210010000, 107));
+	}
+
+	[Fact]
 	public void SpawnWorldNpcs_AppliesTemplateAndSpawnStatesLikeJava()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
