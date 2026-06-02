@@ -29,7 +29,7 @@ public static class FindGroupWorldBroadcastFanoutReadinessService
 					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
 				new FindGroupWorldBroadcastFanoutEvidence(
 					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpDisabledBoundaryActionOneFanoutTrace,
-					"C# focused tests record disabled CM_FIND_GROUP action 1 boundary acceptance before opt-in world-broadcast execution, including same-race recipients and opposite-race exclusion.",
+					"C# focused tests record disabled CM_FIND_GROUP action 1 removed-branch boundary acceptance before opt-in world-broadcast execution, including same-race recipients and opposite-race exclusion, plus missing-branch no-send status evidence.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
 				new FindGroupWorldBroadcastFanoutEvidence(
 					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpDisabledBoundaryActionFiveFanoutTrace,

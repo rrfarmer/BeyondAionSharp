@@ -901,6 +901,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 		Assert.False(plan.IsCmFindGroupBoundaryWired);
 		Assert.Equal(FindGroupClientActionPlanKind.RemoveRecruitment, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, plan.IntentPlan.RecruitmentStatus);
 		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
 		var intent = Assert.Single(plan.IntentPlan.WorldBroadcastIntents);
 		Assert.Equal("ELYOS", intent.Race);
@@ -915,6 +916,55 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Empty(registry.DirectSends);
 		Assert.Empty(sentPackets);
 		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 102).Recruitments);
+	}
+
+	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionOneMissingRecruitmentRecordsNoSideEffects()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var trace = new List<string>();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		var sameRace = CreatePlayer(0x01020305, "SameRace", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var registry = new CapturingConnectionRegistry([recruiter, sameRace]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, recruiter);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(1);
+				buffer.WriteD(recruiter.ObjectId);
+				buffer.WriteC(5);
+				buffer.WriteC(6);
+				buffer.WriteC(7);
+				buffer.WriteC(8);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+		trace.Add($"accepted disabled CM_FIND_GROUP action {plan?.IntentPlan.Action}");
+		var executorPlan = await new FindGroupSideEffectDispatchExecutorService(registry)
+			.ExecuteAsync(plan!.IntentPlan.DirectPacketIntents, plan.IntentPlan.WorldBroadcastIntents);
+		foreach (var step in executorPlan.ExecutionOrder)
+			trace.Add($"{step.Sequence}:{step.Kind}:{step.RecipientObjectId}:{step.PacketType}");
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.NoSideEffects, plan.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(FindGroupClientActionPlanKind.RemoveRecruitment, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Missing, plan.IntentPlan.RecruitmentStatus);
+		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.Equal(["accepted disabled CM_FIND_GROUP action 1"], trace);
+		Assert.Empty(executorPlan.DirectPackets);
+		Assert.Empty(executorPlan.WorldBroadcasts);
+		Assert.Empty(executorPlan.ExecutionOrder);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
 	}
 
 	[Fact]
