@@ -5,6 +5,15 @@ public static class FindGroupLiveDispatchGoNoGoChecklistService
 	public static FindGroupLiveDispatchGoNoGoChecklist CreateChecklist()
 	{
 		var aggregate = FindGroupConnectionBoundaryReadinessAggregateService.CreateReport();
+		var requiredLiveDispatchGateKinds = new[]
+		{
+			FindGroupLiveDispatchGoNoGoChecklistItemKind.ConnectionBoundaryWiring,
+			FindGroupLiveDispatchGoNoGoChecklistItemKind.SharedSingletonLifecycle,
+			FindGroupLiveDispatchGoNoGoChecklistItemKind.DirectPacketDispatch,
+			FindGroupLiveDispatchGoNoGoChecklistItemKind.WorldBroadcastDispatch,
+			FindGroupLiveDispatchGoNoGoChecklistItemKind.ActionTwelveInviteDispatch,
+			FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison,
+		};
 		var items = new[]
 		{
 			new FindGroupLiveDispatchGoNoGoChecklistItem(
@@ -57,6 +66,8 @@ public static class FindGroupLiveDispatchGoNoGoChecklistService
 			FindGroupLiveDispatchGoNoGoStatus.Blocked,
 			aggregate,
 			items,
+			requiredLiveDispatchGateKinds,
+			"Do not wire GameServerConnection.ProcessPacketAsync case CmFindGroup until every required live-dispatch gate is present and ready. Parsed-only actions 20/25 are ready no-ops but do not satisfy live side-effect gates.",
 			"Java sources reviewed: CM_FIND_GROUP.runImpl, FindGroupService.SingletonHolder, FindGroupService sendPacket/broadcast/invite call sites.");
 	}
 }
@@ -89,11 +100,25 @@ public sealed record FindGroupLiveDispatchGoNoGoChecklist(
 	FindGroupLiveDispatchGoNoGoStatus Status,
 	FindGroupConnectionBoundaryReadinessAggregate BoundaryReadiness,
 	IReadOnlyList<FindGroupLiveDispatchGoNoGoChecklistItem> Items,
+	IReadOnlyList<FindGroupLiveDispatchGoNoGoChecklistItemKind> RequiredLiveDispatchGateKinds,
+	string LiveWiringDecision,
 	string JavaSource)
 {
+	public bool HasAllRequiredLiveDispatchGates =>
+		RequiredLiveDispatchGateKinds.All(required => Items.Any(item => item.Kind == required));
+
+	public IReadOnlyList<FindGroupLiveDispatchGoNoGoChecklistItemKind> BlockingRequiredGateKinds =>
+		Items
+			.Where(item => RequiredLiveDispatchGateKinds.Contains(item.Kind)
+				&& item.Status != FindGroupLiveDispatchGoNoGoChecklistItemStatus.Ready)
+			.Select(item => item.Kind)
+			.ToArray();
+
 	public bool IsReadyForLiveDispatch =>
 		Status == FindGroupLiveDispatchGoNoGoStatus.Ready
 		&& BoundaryReadiness.IsReadyForLiveDispatch
+		&& HasAllRequiredLiveDispatchGates
+		&& BlockingRequiredGateKinds.Count == 0
 		&& Items.All(item => item.Status == FindGroupLiveDispatchGoNoGoChecklistItemStatus.Ready);
 }
 
