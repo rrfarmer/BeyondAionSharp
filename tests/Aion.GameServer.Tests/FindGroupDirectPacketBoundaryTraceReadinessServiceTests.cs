@@ -53,6 +53,12 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("directly to that recruiter", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionFifteenDirectSend
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed
+				&& evidence.Detail.Contains("showInstanceGroupMembersInfo(player, playerOrTeamId)", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("SM_FIND_GROUP action 16", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionZeroComposition
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("CreateDisabledFindGroupBoundaryPlan", StringComparison.Ordinal));
@@ -73,9 +79,14 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("action 11", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionFifteenComposition
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("action 15", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpOptInRegistryExecutionTrace
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
-				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/11 acceptance", StringComparison.Ordinal));
+				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/11/15 acceptance", StringComparison.Ordinal));
 	}
 
 	[Fact]
