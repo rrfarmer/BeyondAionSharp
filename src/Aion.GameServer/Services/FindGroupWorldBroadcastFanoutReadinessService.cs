@@ -28,6 +28,10 @@ public static class FindGroupWorldBroadcastFanoutReadinessService
 					"C# FindGroupSideEffectDispatchExecutorService applies the recorded race filter and records world-broadcast execution order when explicitly invoked.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
 				new FindGroupWorldBroadcastFanoutEvidence(
+					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpDisabledBoundaryActionOneFanoutTrace,
+					"C# focused tests record disabled CM_FIND_GROUP action 1 boundary acceptance before opt-in world-broadcast execution, including same-race recipients and opposite-race exclusion.",
+					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
+				new FindGroupWorldBroadcastFanoutEvidence(
 					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpLiveBoundaryWiring,
 					"C# GameServerConnection.ProcessPacketAsync still defers CmFindGroup and does not invoke world-broadcast fanout from the triggering client packet.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.Blocked),
@@ -56,6 +60,7 @@ public enum FindGroupWorldBroadcastFanoutEvidenceKind
 	JavaFindGroupRaceFilter,
 	CSharpRegistryRaceFilter,
 	CSharpOptInExecutorOrder,
+	CSharpDisabledBoundaryActionOneFanoutTrace,
 	CSharpLiveBoundaryWiring,
 	LiveRuntimeComparison,
 }

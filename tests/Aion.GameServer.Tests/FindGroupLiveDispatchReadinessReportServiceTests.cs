@@ -78,6 +78,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 0 disabled-boundary acceptance", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupDirectPacketTriggerOrderingReadinessService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupWorldBroadcastFanoutReadinessService", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("disabled action 1 boundary fanout trace evidence", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("Direct packet trigger ordering remains blocked", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("World-broadcast fanout remains blocked", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConnectionBoundarySideEffectCompositionEvidenceService", StringComparison.Ordinal));

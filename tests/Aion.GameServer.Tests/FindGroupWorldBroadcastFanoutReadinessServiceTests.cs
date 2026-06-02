@@ -50,6 +50,12 @@ public sealed class FindGroupWorldBroadcastFanoutReadinessServiceTests
 			evidence => evidence.Kind == FindGroupWorldBroadcastFanoutEvidenceKind.CSharpOptInExecutorOrder
 				&& evidence.Status == FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("explicitly invoked", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupWorldBroadcastFanoutEvidenceKind.CSharpDisabledBoundaryActionOneFanoutTrace
+				&& evidence.Status == FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 1 boundary acceptance", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("opposite-race exclusion", StringComparison.Ordinal));
 	}
 
 	[Fact]
