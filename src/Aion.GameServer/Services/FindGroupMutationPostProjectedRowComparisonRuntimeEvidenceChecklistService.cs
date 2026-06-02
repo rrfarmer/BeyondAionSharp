@@ -147,9 +147,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Registry observation contract names required sends but does not observe live sends."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueProjection => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostValueProjectionHandoffGateService, FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateService, FindGroupMutationPostProjectedRowComparisonValueContractService, FindGroupMutationPostComparisonKeyProjectionMetadataService",
-				"Read projected Java and C# values for every equality field after accepted live Java/C# rows are paired and the runtime-row-value evidence intake gate has Java artifact rows, accepted C# boundary rows, and runtime row values.",
-				"Value-projection handoff, runtime-row-value evidence intake, and value contracts name fields and required rows but deliberately do not read values."),
+				"FindGroupMutationPostValueProjectionHandoffGateService, FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateService, FindGroupMutationPostProjectedRowComparisonValueContractService, FindGroupMutationPostComparisonKeyProjectionMetadataService, FindGroupMutationPostValueReaderProjectedValueRowContractService",
+				"Read projected Java and C# values for every equality field after accepted live Java/C# rows are paired and the runtime-row-value evidence intake gate has Java artifact rows, accepted C# boundary rows, runtime row values, and projected-value row contract shape.",
+				"Value-projection handoff, runtime-row-value evidence intake, value contracts, and projected-value row contracts name fields and required rows but deliberately do not read values."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostJavaCSharpRowPairingReadinessReportService, FindGroupMutationPostProjectedRowComparisonDryRunContractService, FindGroupMutationPostProjectedRowComparisonExecutorSkeletonService",
