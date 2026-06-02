@@ -40,7 +40,7 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupService.sendInstanceApplication/sendInstanceApplicationResult declined branch"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Action 12 invite executor",
-					"FindGroupInstanceApplicationInviteDispatchPlanService can compose group/alliance invite request-service results without live packet dispatch, and disabled boundary tests record action 12 acceptance before the opt-in group/alliance invite requests.",
+					"FindGroupInstanceApplicationInviteDispatchPlanService can compose group/alliance invite request-service results without live packet dispatch, disabled boundary tests record action 12 acceptance before the opt-in group/alliance invite requests, and missing-runtime adapter evidence blocks before request mutation.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
 					"FindGroupInstanceApplicationInviteDispatchPlanService",
 					"FindGroupService.sendInstanceApplicationResult"),
@@ -52,7 +52,7 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupService PacketSendUtility.sendPacket/broadcastToWorld call sites"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Non-live dispatch adapter",
-					"FindGroupConnectionBoundaryDispatchAdapterService can compose direct packet intents, world-broadcast intents, optional action 12 invite plans, parsed-only no-op status, and missing-runtime status without invoking live sends.",
+					"FindGroupConnectionBoundaryDispatchAdapterService can compose direct packet intents, world-broadcast intents, optional action 12 invite plans, parsed-only no-op status, and missing-runtime no-mutation status without invoking live sends.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
 					"FindGroupConnectionBoundaryDispatchAdapterService",
 					"CM_FIND_GROUP.runImpl"),

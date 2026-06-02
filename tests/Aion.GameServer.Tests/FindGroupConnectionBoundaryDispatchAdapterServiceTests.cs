@@ -163,6 +163,8 @@ public sealed class FindGroupConnectionBoundaryDispatchAdapterServiceTests
 		Assert.Equal(FindGroupInstanceApplicationPlanStatus.AcceptedGroupInvite, plan.IntentPlan.InstanceApplicationStatus);
 		Assert.Equal(FindGroupInstanceInviteKind.Group, plan.IntentPlan.InviteIntent!.Kind);
 		Assert.Null(plan.InvitePlan);
+		Assert.Equal(0, applicant.ResponseRequester.Count);
+		Assert.Null(applicant.PendingAllianceInviteRequest);
 	}
 
 	[Fact]

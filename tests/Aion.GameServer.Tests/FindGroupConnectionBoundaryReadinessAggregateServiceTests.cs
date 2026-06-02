@@ -42,6 +42,7 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 			report.Components,
 			component => component.Name == "Action 12 invite executor"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
+				&& component.Evidence.Contains("missing-runtime adapter evidence blocks before request mutation", StringComparison.Ordinal)
 				&& component.JavaSource.Contains("sendInstanceApplicationResult", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,
@@ -61,7 +62,7 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 			report.Components,
 			component => component.Name == "Non-live dispatch adapter"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
-				&& component.Evidence.Contains("missing-runtime status", StringComparison.Ordinal)
+				&& component.Evidence.Contains("missing-runtime no-mutation status", StringComparison.Ordinal)
 				&& component.CSharpSource.Contains("FindGroupConnectionBoundaryDispatchAdapterService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,

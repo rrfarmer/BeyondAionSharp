@@ -56,6 +56,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupInstanceApplicationDirectDispatchPlanService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 11 missing-recipient no-send evidence", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupInstanceApplicationInviteDispatchPlanService", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("missing-runtime evidence blocks before request mutation", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -90,6 +91,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 11/12 instance-application direct/invite intents", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 1/5 world-broadcast intents", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConnectionBoundaryDispatchAdapterService", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("missing-runtime no-mutation status", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("CreateDisabledFindGroupBoundaryPlan", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupLifecycleSingletonWiringReadinessService", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("CM_FIND_GROUP is not wired", StringComparison.Ordinal));
