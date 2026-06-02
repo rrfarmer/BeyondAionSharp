@@ -12,8 +12,8 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.Equal(FindGroupLifecycleSingletonWiringReadinessStatus.BlockedPendingSingletonWiring, report.Status);
 		Assert.False(report.IsReadyForLiveSingletonWiring);
 		Assert.Contains("FindGroupService.SingletonHolder", report.JavaSource, StringComparison.Ordinal);
-		Assert.Contains(report.Blockers, blocker => blocker.Contains("one shared FindGroupRecruitmentPlanService singleton", StringComparison.Ordinal));
-		Assert.Contains(report.Blockers, blocker => blocker.Contains("production DI singleton registration", StringComparison.Ordinal));
+		Assert.Contains(report.Blockers, blocker => blocker.Contains("CM_FIND_GROUP planning and logout cleanup", StringComparison.Ordinal));
+		Assert.Contains(report.Blockers, blocker => blocker.Contains("observer-only/fallback-only lifecycle gaps", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -51,22 +51,22 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.GroupJoin
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialInjectedConnectionWiring
-				&& callSite.CSharpEvidence.Contains("injected PlayerGroupInviteRequestService", StringComparison.Ordinal));
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialProductionSingletonGraph
+				&& callSite.CSharpEvidence.Contains("PlayerGroupInviteRequestService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.AllianceJoin
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialInjectedConnectionWiring
-				&& callSite.CSharpEvidence.Contains("injected PlayerAllianceInviteRequestService", StringComparison.Ordinal));
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialProductionSingletonGraph
+				&& callSite.CSharpEvidence.Contains("PlayerAllianceInviteRequestService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.GroupDisbandRecruitmentRemoval
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialNonLivePlanOnly
-				&& callSite.CSharpEvidence.Contains("RemoveRecruitment(teamId)", StringComparison.Ordinal));
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialProductionSingletonGraph
+				&& callSite.CSharpEvidence.Contains("team-keyed recruitment", StringComparison.Ordinal));
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.AllianceDisbandRecruitmentRemoval
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialNonLivePlanOnly
-				&& callSite.CSharpEvidence.Contains("RemoveRecruitment(allianceId)", StringComparison.Ordinal));
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialProductionSingletonGraph
+				&& callSite.CSharpEvidence.Contains("alliance-keyed recruitment", StringComparison.Ordinal));
 	}
 }
