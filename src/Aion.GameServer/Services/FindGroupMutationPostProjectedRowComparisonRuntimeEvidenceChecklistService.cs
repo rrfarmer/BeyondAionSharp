@@ -101,6 +101,7 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 		return requirement.Requirement switch
 		{
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ProjectedRowReadinessSummary => FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveMetadata,
+			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary => FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveMetadata,
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.LiveDispatchGuard => FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.LiveDispatchDisabled,
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RuntimeSocketComparison => FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ComparisonNotExecuted,
 			_ => mapping.HasExistingProvider
@@ -119,6 +120,11 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"FindGroupMutationPostProjectedRowComparisonReadinessSummaryService",
 				"Keep readiness summary current while runtime evidence is collected.",
 				"Summary metadata exists, but it is not runtime evidence."),
+			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary => new RuntimeEvidenceMapping(
+				HasExistingProvider: true,
+				"FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService",
+				"Keep value-reader readiness summary current while runtime value-reader evidence is collected.",
+				"Value-reader summary metadata exists, but it is not runtime evidence and reads no values."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostTraceCaptureTest, FindGroupMutationPostTraceCaptureHooks, FindGroupMutationPostTraceCaptureInMemoryArtifactBridge, FindGroupMutationPostJavaTraceArtifactDirectoryReportService",

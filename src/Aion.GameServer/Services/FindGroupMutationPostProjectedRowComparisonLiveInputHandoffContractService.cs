@@ -9,6 +9,7 @@ public enum FindGroupMutationPostProjectedRowComparisonLiveInputHandoffStatus
 public enum FindGroupMutationPostProjectedRowComparisonLiveInputRequirement
 {
 	ProjectedRowReadinessSummary,
+	ValueReaderReadinessSummary,
 	JavaRuntimeTraceArtifact,
 	CSharpLiveBoundaryRow,
 	BoundaryExecutorInvocation,
@@ -60,9 +61,11 @@ public sealed record FindGroupMutationPostProjectedRowComparisonLiveInputHandoff
 public static class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffContractService
 {
 	public static FindGroupMutationPostProjectedRowComparisonLiveInputHandoffContract Create(
-		FindGroupMutationPostProjectedRowComparisonReadinessSummary? readinessSummary = null)
+		FindGroupMutationPostProjectedRowComparisonReadinessSummary? readinessSummary = null,
+		FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummary? valueReaderReadinessSummary = null)
 	{
 		readinessSummary ??= FindGroupMutationPostProjectedRowComparisonReadinessSummaryService.Create();
+		valueReaderReadinessSummary ??= CreateDefaultValueReaderReadinessSummary();
 		var summaryReadyForRuntimeInputs = readinessSummary.Status == FindGroupMutationPostProjectedRowComparisonReadinessSummaryStatus.BlockedValueProjectionDeferred
 			|| readinessSummary.Status == FindGroupMutationPostProjectedRowComparisonReadinessSummaryStatus.BlockedResultEmissionUnavailable;
 		var status = summaryReadyForRuntimeInputs
@@ -71,58 +74,59 @@ public static class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 		var rows = new[]
 		{
 			SummaryRow(readinessSummary, summaryReadyForRuntimeInputs),
+			ValueReaderSummaryRow(valueReaderReadinessSummary),
 			RuntimeRow(
-				2,
+				3,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact,
 				summaryReadyForRuntimeInputs,
 				"Runtime-backed Java action 2/6 mutation-post trace rows from CM_FIND_GROUP.readImpl/runImpl and FindGroupService.addRecruitment/addApplication.",
 				$"readinessStatus={readinessSummary.Status}; javaSource={readinessSummary.JavaSource}",
 				"Shape-valid repository Java artifacts are metadata only; comparison needs runtime-backed Java rows."),
 			RuntimeRow(
-				3,
+				4,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.CSharpLiveBoundaryRow,
 				summaryReadyForRuntimeInputs,
 				"Accepted C# live boundary rows for action 2 and action 6 with boundary acceptance, active player, mutation state, direct packet, and side-effect guard fields.",
 				$"hasAllPairedInputs={readinessSummary.HasAllPairedInputs}; canCompareRows={readinessSummary.CanCompareRows}",
 				"Disabled C# projections and synthetic rows are not live boundary evidence."),
 			RuntimeRow(
-				4,
+				5,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.BoundaryExecutorInvocation,
 				summaryReadyForRuntimeInputs,
 				"Evidence that the guarded comparison input was produced by the CM_FIND_GROUP boundary executor after packet acceptance.",
 				$"canProjectValues={readinessSummary.CanProjectValues}",
 				"Executor metadata is not enough; future rows must prove boundary-driven execution."),
 			RuntimeRow(
-				5,
+				6,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RegistrySendObservation,
 				summaryReadyForRuntimeInputs,
 				"Observed active-player registry sends in Java order: posted SM_SYSTEM_MESSAGE before refreshed SM_FIND_GROUP, zero broadcasts, zero invite dispatches.",
 				"expected direct sends per action=2; expected broadcast count=0; expected invite count=0",
 				"Registry observation is required before direct-packet parity can be compared."),
 			RuntimeRow(
-				6,
+				7,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueProjection,
 				summaryReadyForRuntimeInputs,
 				"Projected Java and C# values for every required equality field in the result contract.",
 				$"canProjectValues={readinessSummary.CanProjectValues}",
 				"Value-source metadata names fields only; it does not read values."),
 			RuntimeRow(
-				7,
+				8,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching,
 				summaryReadyForRuntimeInputs,
 				"Matched row keys for action, mutationKind, activePlayerObjectId, and mutatedEntryObjectId across Java and C# rows.",
 				$"hasAllPairedInputs={readinessSummary.HasAllPairedInputs}",
 				"Paired readiness is metadata until live Java/C# row identities are inspected."),
 			RuntimeRow(
-				8,
+				9,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ResultEmission,
 				summaryReadyForRuntimeInputs,
 				"Real comparison output rows for Matched, MissingJavaRow, MissingCSharpRow, FieldMismatch, and IgnoredRuntimeContext when applicable.",
 				$"canEmitResults={readinessSummary.CanEmitResults}",
 				"Blocked-result rows describe output shapes but cannot emit results."),
-			LiveDispatchGuardRow(9, summaryReadyForRuntimeInputs),
+			LiveDispatchGuardRow(10, summaryReadyForRuntimeInputs),
 			RuntimeRow(
-				10,
+				11,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RuntimeSocketComparison,
 				summaryReadyForRuntimeInputs,
 				"Deterministic Java/C# runtime or socket comparison showing equivalent action 2/6 mutation, packet, and side-effect observations.",
@@ -161,6 +165,48 @@ public static class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 			summaryReadyForRuntimeInputs
 				? "Metadata chain is present, but runtime artifacts are still required."
 				: "Complete the projected-row readiness summary gates before collecting runtime inputs.");
+	}
+
+	private static FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummary CreateDefaultValueReaderReadinessSummary()
+	{
+		var gate = new FindGroupMutationPostProjectedRowComparisonExecutionReadinessGateReport(
+			FindGroupMutationPostProjectedRowComparisonExecutionReadinessGateStatus.BlockedComparatorNotAllowed,
+			[],
+			HasLiveInputHandoff: true,
+			HasRuntimeEvidenceChecklist: true,
+			HasRuntimeEvidence: true,
+			CanImplementComparator: false,
+			CanExecuteComparator: false,
+			CanClaimVerifiedParity: false,
+			CanEnableLiveDispatch: false,
+			"Runtime evidence remains non-live metadata; value-reader implementation is deferred.",
+			"cm-find-group-direct-mutation-post-boundary",
+			"FindGroupService.addRecruitment/addApplication",
+			IsLive: false);
+		var design = FindGroupMutationPostProjectedRowComparisonValueReaderDesignContractService.Create(gate);
+		var skeleton = FindGroupMutationPostProjectedRowComparisonValueReaderSkeletonService.Create(design);
+		var blockedReport = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
+
+		return FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, skeleton, blockedReport);
+	}
+
+	private static FindGroupMutationPostProjectedRowComparisonLiveInputRequirementRow ValueReaderSummaryRow(
+		FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummary valueReaderReadinessSummary)
+	{
+		var hasSummary = valueReaderReadinessSummary.Stages.Count > 0;
+		return new FindGroupMutationPostProjectedRowComparisonLiveInputRequirementRow(
+			2,
+			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary,
+			hasSummary
+				? FindGroupMutationPostProjectedRowComparisonLiveInputRequirementStatus.SatisfiedByNonLiveMetadata
+				: FindGroupMutationPostProjectedRowComparisonLiveInputRequirementStatus.BlockedSummaryNotReady,
+			IsRuntimeEvidence: false,
+			BlocksLiveComparison: !hasSummary,
+			"Non-live value-reader readiness summary linking design contract, reader skeleton, and blocked-result report.",
+			$"status={valueReaderReadinessSummary.Status}; stages={valueReaderReadinessSummary.Stages.Count}; canReadValues={valueReaderReadinessSummary.CanReadValues}; canCompareValues={valueReaderReadinessSummary.CanCompareValues}; canEmitComparisonResult={valueReaderReadinessSummary.CanEmitComparisonResult}",
+			hasSummary
+				? "Value-reader metadata chain is present, but it reads no Java/C# values and is not runtime evidence."
+				: "Complete the value-reader readiness summary before collecting value-reader runtime inputs.");
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonLiveInputRequirementRow RuntimeRow(

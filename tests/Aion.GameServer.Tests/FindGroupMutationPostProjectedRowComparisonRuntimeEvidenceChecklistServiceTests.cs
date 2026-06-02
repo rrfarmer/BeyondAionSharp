@@ -45,6 +45,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 		var checklist = FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistService.Create();
 
 		Assert.Contains(checklist.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary
+			&& row.ProviderStatus == FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveMetadata
+			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("value-reader readiness summary", StringComparison.Ordinal)
+			&& row.Notes.Contains("reads no values", StringComparison.Ordinal));
+		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact
 			&& row.ProviderStatus == FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveScaffold
 			&& row.ExistingProvider.Contains("FindGroupMutationPostTraceCaptureTest", StringComparison.Ordinal)

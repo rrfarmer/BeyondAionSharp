@@ -21,7 +21,8 @@ public sealed class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 		Assert.All(contract.Requirements, row =>
 		{
 			Assert.False(row.IsRuntimeEvidence);
-			Assert.True(row.BlocksLiveComparison);
+			if (row.Status != FindGroupMutationPostProjectedRowComparisonLiveInputRequirementStatus.SatisfiedByNonLiveMetadata)
+				Assert.True(row.BlocksLiveComparison);
 		});
 	}
 
@@ -33,6 +34,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 		Assert.Equal(
 			[
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ProjectedRowReadinessSummary,
+				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.CSharpLiveBoundaryRow,
 				FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.BoundaryExecutorInvocation,
@@ -52,6 +54,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonLiveInputHandoffC
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RegistrySendObservation
 			&& row.RequiredArtifact.Contains("posted SM_SYSTEM_MESSAGE before refreshed SM_FIND_GROUP", StringComparison.Ordinal)
 			&& row.RequiredArtifact.Contains("zero broadcasts", StringComparison.Ordinal));
+		Assert.Contains(contract.Requirements, row =>
+			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary
+			&& row.Status == FindGroupMutationPostProjectedRowComparisonLiveInputRequirementStatus.SatisfiedByNonLiveMetadata
+			&& row.RequiredArtifact.Contains("value-reader readiness summary", StringComparison.Ordinal)
+			&& row.Evidence.Contains("canReadValues=False", StringComparison.Ordinal)
+			&& row.Notes.Contains("reads no Java/C# values", StringComparison.Ordinal));
 		Assert.Contains(contract.Requirements, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RuntimeSocketComparison
 			&& row.Notes.Contains("verified parity", StringComparison.Ordinal));
