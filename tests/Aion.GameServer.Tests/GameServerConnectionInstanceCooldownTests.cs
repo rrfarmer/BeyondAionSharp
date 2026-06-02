@@ -9,6 +9,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using GameWorld = Aion.GameServer.World.World;
 using Aion.GameServer.World;
@@ -189,28 +190,40 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			""");
 		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var context = new GameServerRuntimeContext();
 		var spawnService = new WorldNpcSpawnService(
-			new GameServerRuntimeContext(),
+			context,
 			world,
 			new IDFactory(),
 			gameTimeService: null,
 			threadPoolManager: null,
 			staticPlaceables: null,
 			NullLogger<WorldNpcSpawnService>.Instance);
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var emptyInstanceCheckerService = CreateEmptyInstanceCheckerService(context, world, spawnService, threadPoolManager);
 		var instanceHandler = new RecordingInstanceLifecycleHandler(() => world.GetNpcs().Count);
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
 			new GameServerOptions
 			{
 				Membership = new GameServerMembershipOptions { InstancesCooldown = 10 },
-				Instance = new GameServerInstanceOptions { CooldownRate = 1 },
+				Instance = new GameServerInstanceOptions
+				{
+					CooldownRate = 1,
+					DestroyDelaySeconds = 900,
+					SoloDestroyDelaySeconds = 300,
+				},
 			},
 			new PlayerEnterWorldService(
 				new GameServerOptions(),
 				repository,
 				new GameWorld(NullLogger<GameWorld>.Instance),
 				NullLogger<PlayerEnterWorldService>.Instance),
-			worldNpcSpawnService: spawnService);
+			worldNpcSpawnService: spawnService,
+			emptyInstanceCheckerService: emptyInstanceCheckerService);
 		var player = new Player
 		{
 			ObjectId = 1001,
@@ -223,6 +236,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		[
 			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
 		]);
+		context.SetWorldMapStates(worldMaps);
 		var cooltimes = new InstanceCooltimeTable(
 		[
 			new InstanceCooltimeSummary(8, 300030000, "PC_ALL", MaxCount: 5, CoolTimeType: "RELATIVE", EntCoolTime: 30),
@@ -248,6 +262,12 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.Equal(player.ObjectId, result.RuntimePlan.Instance.OwnerId);
 		Assert.Equal(6, result.RuntimePlan.Instance.MaxPlayers);
 		Assert.Equal(2, result.RuntimePlan.Instance.DifficultyId);
+		Assert.NotNull(result.RuntimePlan.Instance.EmptyInstanceTask);
+		var observation = Assert.Single(observations);
+		Assert.Equal(ThreadPoolScheduleKind.FixedRate, observation.Kind);
+		Assert.Equal(TimeSpan.FromSeconds(60), observation.Delay);
+		Assert.Equal(TimeSpan.FromSeconds(60), observation.Period);
+		Assert.True(result.RuntimePlan.Instance.CancelEmptyInstanceTask());
 		Assert.True(result.RuntimePlan.Instance.IsRegistered(player.ObjectId));
 		Assert.True(result.RuntimePlan.Instance.InstanceCreateNotified);
 		Assert.Equal(portalLocation with { InstanceId = 2 }, result.RuntimePlan.Destination);
@@ -1268,6 +1288,23 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		return frame[7..];
 	}
 
+	private static InstanceEmptyInstanceCheckerService CreateEmptyInstanceCheckerService(
+		GameServerRuntimeContext context,
+		GameWorld world,
+		WorldNpcSpawnService spawnService,
+		ThreadPoolManager threadPoolManager)
+	{
+		var walkerRouteWalking = new WorldNpcWalkerRouteWalkingService(
+			context,
+			world,
+			new WorldNpcWalkerSpawnPlanCacheService(),
+			new WorldNpcWalkerRouteService(),
+			new WorldNpcWalkerMovementStateService(),
+			new WorldNpcWalkerMovementBroadcastService(world, new NullConnectionRegistry()));
+		var destroyWorkflow = new InstanceDestroyWorkflowService(context, world, spawnService, walkerRouteWalking);
+		return new InstanceEmptyInstanceCheckerService(threadPoolManager, destroyWorkflow);
+	}
+
 	private sealed class TestConnectionPair : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
@@ -1294,7 +1331,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		public static async Task<TestConnectionPair> CreateAsync(
 			GameServerOptions options,
 			PlayerEnterWorldService? playerEnterWorldService,
-			WorldNpcSpawnService? worldNpcSpawnService = null)
+			WorldNpcSpawnService? worldNpcSpawnService = null,
+			InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1317,7 +1355,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt,
-					worldNpcSpawnService: worldNpcSpawnService);
+					worldNpcSpawnService: worldNpcSpawnService,
+					emptyInstanceCheckerService: emptyInstanceCheckerService);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}
 			finally
@@ -1372,6 +1411,75 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		public void Dispose()
 		{
 			Directory.Delete(Path, recursive: true);
+		}
+	}
+
+	private sealed class NullConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
 		}
 	}
 }

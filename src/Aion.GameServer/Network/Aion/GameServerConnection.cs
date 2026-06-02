@@ -70,6 +70,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PortalEntryInteractionService? _portalEntryInteractionService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly WorldNpcSpawnService? _worldNpcSpawnService;
+	private readonly InstanceEmptyInstanceCheckerService? _emptyInstanceCheckerService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
@@ -186,7 +187,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
 		PriceInfluenceRates? buyItemPriceInfluenceRates = null,
-		WorldNpcSpawnService? worldNpcSpawnService = null)
+		WorldNpcSpawnService? worldNpcSpawnService = null,
+		InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -216,6 +218,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_dialogSelectPlanObserver = dialogSelectPlanObserver;
 		_worldNpcLootService = worldNpcLootService;
 		_worldNpcSpawnService = worldNpcSpawnService;
+		_emptyInstanceCheckerService = emptyInstanceCheckerService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
@@ -7778,6 +7781,22 @@ public sealed class GameServerConnection : BaseClientConnection
 		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: PortalService.port allocates/registers the instance before PortalService.transfer teleports and adds cooldown.
+		Action<int, WorldMapInstanceRuntimeState>? emptyInstanceScheduler = null;
+		if (_emptyInstanceCheckerService != null)
+		{
+			emptyInstanceScheduler = (worldId, instance) =>
+			{
+				var delayPlan = InstanceServiceFormulaService.CreateDestroyDelayPlan(
+					instance.MaxPlayers,
+					_options.Instance.SoloDestroyDelaySeconds,
+					_options.Instance.DestroyDelaySeconds);
+				_emptyInstanceCheckerService.Schedule(
+					worldId,
+					instance,
+					TimeSpan.FromSeconds(delayPlan.DestroyDelaySeconds));
+			};
+		}
+
 		var runtimePlan = InstanceRuntimeService.CreatePortalTransferInstance(
 			worldMapStates,
 			player,
@@ -7785,7 +7804,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			ownerId,
 			maxPlayers,
 			difficultyId,
-			instanceHandler);
+			instanceHandler,
+			emptyInstanceScheduler: emptyInstanceScheduler);
 		if (staticData != null && _worldNpcSpawnService != null)
 		{
 			// Java parity: InstanceService.getNextAvailableInstance spawns instance objects before PortalService.transfer teleports.

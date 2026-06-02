@@ -50,6 +50,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly VortexLocationService? _vortexLocationService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
 	private readonly WorldNpcSpawnService? _worldNpcSpawnService;
+	private readonly InstanceEmptyInstanceCheckerService? _emptyInstanceCheckerService;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
@@ -99,7 +100,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
 		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
 		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null,
-		WorldNpcSpawnService? worldNpcSpawnService = null)
+		WorldNpcSpawnService? worldNpcSpawnService = null,
+		InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -138,6 +140,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_vortexLocationService = vortexLocationService;
 		_worldNpcLootService = worldNpcLootService;
 		_worldNpcSpawnService = worldNpcSpawnService;
+		_emptyInstanceCheckerService = emptyInstanceCheckerService;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
@@ -196,7 +199,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				playerGroupInviteRequestService: _playerGroupInviteRequestService,
 				playerAllianceInviteRequestService: _playerAllianceInviteRequestService,
 				findGroupConnectionClientActionCompositionPlanService: _findGroupConnectionClientActionCompositionPlanService,
-				findGroupConnectionBoundaryDispatchAdapterService: _findGroupConnectionBoundaryDispatchAdapterService);
+				findGroupConnectionBoundaryDispatchAdapterService: _findGroupConnectionBoundaryDispatchAdapterService,
+				emptyInstanceCheckerService: _emptyInstanceCheckerService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

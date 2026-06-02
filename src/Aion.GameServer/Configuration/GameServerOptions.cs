@@ -230,6 +230,8 @@ public sealed class GameServerOptions
 			{
 				CooldownRate = GetIntWithEnvironment(loader, "gameserver.instance.cooldown_rate", 1),
 				CooldownRateExcludedMaps = GetIntSetWithEnvironment(loader, "gameserver.instance.cooldown_rate.excluded_maps", string.Empty),
+				DestroyDelaySeconds = GetIntWithEnvironment(loader, "gameserver.instance.destroy_delay_seconds", 600),
+				SoloDestroyDelaySeconds = GetIntWithEnvironment(loader, "gameserver.instance.solo.destroy_delay_seconds", 600),
 				FormInstanceGroupAnywhere = GetBoolWithEnvironment(loader, "gameserver.instance_group.form_anywhere", false),
 			},
 			Administration = new GameServerAdministrationOptions
@@ -597,6 +599,12 @@ public sealed class GameServerInstanceOptions
 	public int CooldownRate { get; init; } = 1;
 
 	public IReadOnlySet<int> CooldownRateExcludedMaps { get; init; } = new HashSet<int>();
+
+	// Java parity: configs/main/InstanceConfig.INSTANCE_DESTROY_DELAY_SECONDS.
+	public int DestroyDelaySeconds { get; init; } = 600;
+
+	// Java parity: configs/main/InstanceConfig.SOLO_INSTANCE_DESTROY_DELAY_SECONDS.
+	public int SoloDestroyDelaySeconds { get; init; } = 600;
 
 	// Java parity: configs/main/GroupConfig.FORM_INSTANCE_GROUP_ANYWHERE.
 	public bool FormInstanceGroupAnywhere { get; init; }
