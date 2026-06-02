@@ -255,8 +255,12 @@ public static class FindGroupMutationPostValueReaderFunctionExecutionPreflightSe
 
 	private static FindGroupMutationPostValueReaderFunctionExecutionPreflightRow ReaderGateRow(
 		FindGroupMutationPostTypedValueReaderImplementationReadinessGate gate,
-		bool ready) =>
-		new(
+		bool ready)
+	{
+		var typedReaderGateRows = gate.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", gate.Rows.Select(row => $"{row.Stage}={row.Evidence}"));
+		return new(
 			1,
 			FindGroupMutationPostValueReaderFunctionExecutionPreflightStage.ReaderImplementationGate,
 			ready ? FindGroupMutationPostValueReaderFunctionExecutionPreflightStageStatus.ReadyForInvocationInput : FindGroupMutationPostValueReaderFunctionExecutionPreflightStageStatus.Blocked,
@@ -274,8 +278,9 @@ public static class FindGroupMutationPostValueReaderFunctionExecutionPreflightSe
 			CanCompareValues: false,
 			CanEmitResults: false,
 			"Typed-reader implementation gate must be ready for reader function planning before invocation preconditions can be evaluated.",
-			$"status={gate.Status}; hasRuntimeRows={gate.HasRuntimeRows}; hasReaderFunctionPlan={gate.HasReaderFunctionPlan}; canReadJavaValues={gate.CanReadJavaValues}; canReadCSharpValues={gate.CanReadCSharpValues}",
-			"Reader function names are metadata only and no functions are invoked.");
+			$"status={gate.Status}; hasRuntimeRows={gate.HasRuntimeRows}; hasReaderFunctionPlan={gate.HasReaderFunctionPlan}; canReadJavaValues={gate.CanReadJavaValues}; canReadCSharpValues={gate.CanReadCSharpValues}; typedReaderGateRows={typedReaderGateRows}",
+			"Reader function names are metadata only; typed-reader gate evidence is preserved, but no functions are invoked.");
+	}
 
 	private static FindGroupMutationPostValueReaderFunctionExecutionPreflightRow ComparatorPreflightRow(
 		FindGroupMutationPostProjectedRowComparisonValueReaderComparatorPreflightContract comparator,
