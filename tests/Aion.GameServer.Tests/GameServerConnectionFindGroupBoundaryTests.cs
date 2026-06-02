@@ -900,6 +900,68 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_BeshmundirsWalkDifficultyAcceptAllocatesGroupInstanceWhenNoneRegistered()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS");
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS");
+		var groups = new PlayerGroupRuntime();
+		groups.CreateOrUpdateGroup(0x0708090A, [leader, member]);
+		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
+		var runtimeContext = CreateBeshmundirPortalRuntimeContextWithoutRegisteredInstance();
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			world,
+			NullLogger<PlayerEnterWorldService>.Instance);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService: null,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			playerGroupRuntime: groups,
+			world: world,
+			runtimeContext: runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(walkNpc.ObjectId, CmDialogSelect.SelectNone1));
+		Assert.Equal(2, sentPackets.Count);
+		sentPackets.Clear();
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateQuestionResponsePayload(
+				SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm,
+				response: 1,
+				senderObjectId: walkNpc.ObjectId));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var teleport = Assert.IsType<SmTeleportLoc>(packet);
+				Assert.Equal(
+					new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 2),
+					ReadPrivateField<WorldPosition>(teleport, "_destination"));
+				Assert.Equal(new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 2), leader.PendingTeleport?.Destination);
+			},
+			packet => Assert.IsType<SmInstanceInfo>(packet));
+		var allocatedInstance = runtimeContext.WorldMapStates.GetRegisteredInstance(300170000, 0x0708090A);
+		Assert.NotNull(allocatedInstance);
+		Assert.Equal(2, allocatedInstance.InstanceId);
+		Assert.Equal(0x0708090A, allocatedInstance.RegisteredTeamId);
+		Assert.True(allocatedInstance.IsRegistered(leader.ObjectId));
+		Assert.Equal(new WorldPosition(300170000, 10, 20, 30, 90, InstanceId: 2), allocatedInstance.StartPosition);
+		Assert.Equal(0, leader.ResponseRequester.Count);
+		Assert.True(leader.PortalCooldowns.ContainsKey(300170000));
+		Assert.NotNull(repository.SavedPortalCooldowns);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_OpenInstanceRecruitSendsPortalMaskListOnly()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -2969,6 +3031,15 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		int registeredMemberObjectId,
 		out WorldMapInstanceRuntimeState registeredInstance)
 	{
+		var runtimeContext = CreateBeshmundirPortalRuntimeContextWithoutRegisteredInstance();
+		registeredInstance = runtimeContext.WorldMapStates.AddWorldMapInstance(300170000, instanceId: 7, maxPlayers: 6)!;
+		registeredInstance.RegisterTeamId(teamId);
+		registeredInstance.AddPlayer(registeredMemberObjectId);
+		return runtimeContext;
+	}
+
+	private static GameServerRuntimeContext CreateBeshmundirPortalRuntimeContextWithoutRegisteredInstance()
+	{
 		var runtimeContext = new GameServerRuntimeContext();
 		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForPortalTest(
 			worldMaps: [new WorldMapSummary(300170000, IsInstance: true, TwinCount: 1)],
@@ -3005,9 +3076,6 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 				],
 				Array.Empty<PortalPathSummary>()),
 			portalLocs: new PortalLocTable([new PortalLocSummary(300170000, LocId: 1701, 10, 20, 30, 90)]))));
-		registeredInstance = runtimeContext.WorldMapStates.AddWorldMapInstance(300170000, instanceId: 7, maxPlayers: 6)!;
-		registeredInstance.RegisterTeamId(teamId);
-		registeredInstance.AddPlayer(registeredMemberObjectId);
 		return runtimeContext;
 	}
 
