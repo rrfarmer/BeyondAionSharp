@@ -53,11 +53,23 @@ public static class FindGroupRuntimeComparisonPreflightContractService
 			Scenario("parsed-only-no-run", [20, 25], "Parsed Java readImpl actions with no runImpl branch and no side effects."),
 			Scenario("shared-singleton-lifecycle", [], "Interleavings with logout cleanup, joined-team cleanup, and group/alliance disband cleanup sharing the same FindGroup singleton."),
 		};
+		var fixtureRows = new[]
+		{
+			new FindGroupRuntimeComparisonFixtureContractRow(
+				"mutation-post-actions-2-6",
+				Actions: [2, 6],
+				TraceName: "cm-find-group-direct-mutation-post-boundary",
+				JavaSource: "CM_FIND_GROUP.runImpl actions 2/6; FindGroupService.addRecruitment/addApplication",
+				CSharpProjectionSource: "FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateExportFromDisabledPlan",
+				"Compare action 2 and 6 mutation-post traces using schema version 1 fields: mutated entry id, posted system message id, refreshed show-list action, visible entry ids after mutation, and false executor/registry observations until live capture exists.",
+				FindGroupRuntimeComparisonFixtureContractStatus.BlockedPendingJavaAndLiveCSharpTrace),
+		};
 
 		return new FindGroupRuntimeComparisonPreflightContract(
 			FindGroupRuntimeComparisonPreflightStatus.BlockedPendingLiveDispatchAndTraceHarness,
 			fields,
 			scenarios,
+			fixtureRows,
 			ShouldInvokeLiveSideEffects: false,
 			IsCmFindGroupBoundaryWired: false,
 			RequiresJavaRuntimeTrace: true,
@@ -104,10 +116,17 @@ public enum FindGroupRuntimeComparisonTraceFieldKind
 	EncryptedSocketFrames,
 }
 
+public enum FindGroupRuntimeComparisonFixtureContractStatus
+{
+	BlockedPendingJavaAndLiveCSharpTrace,
+	ReadyForRuntimeComparison,
+}
+
 public sealed record FindGroupRuntimeComparisonPreflightContract(
 	FindGroupRuntimeComparisonPreflightStatus Status,
 	IReadOnlyList<FindGroupRuntimeComparisonTraceField> RequiredTraceFields,
 	IReadOnlyList<FindGroupRuntimeComparisonScenario> RequiredScenarios,
+	IReadOnlyList<FindGroupRuntimeComparisonFixtureContractRow> RequiredFixtureRows,
 	bool ShouldInvokeLiveSideEffects,
 	bool IsCmFindGroupBoundaryWired,
 	bool RequiresJavaRuntimeTrace,
@@ -125,7 +144,9 @@ public sealed record FindGroupRuntimeComparisonPreflightContract(
 		&& RequiresCSharpRuntimeTrace
 		&& RequiresEncryptedSocketCapture
 		&& RequiredTraceFields.Count > 0
-		&& RequiredScenarios.Count > 0;
+		&& RequiredScenarios.Count > 0
+		&& RequiredFixtureRows.Count > 0
+		&& RequiredFixtureRows.All(row => row.Status == FindGroupRuntimeComparisonFixtureContractStatus.ReadyForRuntimeComparison);
 }
 
 public sealed record FindGroupRuntimeComparisonTraceField(
@@ -137,3 +158,12 @@ public sealed record FindGroupRuntimeComparisonScenario(
 	string Name,
 	IReadOnlyList<int> Actions,
 	string Requirement);
+
+public sealed record FindGroupRuntimeComparisonFixtureContractRow(
+	string Name,
+	IReadOnlyList<int> Actions,
+	string TraceName,
+	string JavaSource,
+	string CSharpProjectionSource,
+	string Requirement,
+	FindGroupRuntimeComparisonFixtureContractStatus Status);

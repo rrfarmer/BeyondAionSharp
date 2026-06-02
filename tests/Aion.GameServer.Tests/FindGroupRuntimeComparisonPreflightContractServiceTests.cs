@@ -67,6 +67,25 @@ public sealed class FindGroupRuntimeComparisonPreflightContractServiceTests
 		AssertScenario(contract, "shared-singleton-lifecycle", [], "logout cleanup");
 	}
 
+	[Fact]
+	public void Create_AddsMutationPostFixtureRowWithoutMarkingRuntimeComparisonReady()
+	{
+		var contract = FindGroupRuntimeComparisonPreflightContractService.Create();
+
+		var row = Assert.Single(contract.RequiredFixtureRows);
+		Assert.Equal("mutation-post-actions-2-6", row.Name);
+		Assert.Equal([2, 6], row.Actions);
+		Assert.Equal("cm-find-group-direct-mutation-post-boundary", row.TraceName);
+		Assert.Contains("FindGroupService.addRecruitment/addApplication", row.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("CreateExportFromDisabledPlan", row.CSharpProjectionSource, StringComparison.Ordinal);
+		Assert.Contains("posted system message id", row.Requirement, StringComparison.Ordinal);
+		Assert.Contains("refreshed show-list action", row.Requirement, StringComparison.Ordinal);
+		Assert.Equal(
+			FindGroupRuntimeComparisonFixtureContractStatus.BlockedPendingJavaAndLiveCSharpTrace,
+			row.Status);
+		Assert.False(contract.IsReadyForRuntimeComparison);
+	}
+
 	private static void AssertScenario(
 		FindGroupRuntimeComparisonPreflightContract contract,
 		string name,
