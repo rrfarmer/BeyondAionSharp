@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using System.Threading;
 
 namespace Aion.GameServer.Services;
@@ -10,17 +11,20 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 	private readonly PlayerGroupRuntime _playerGroups;
 	private readonly PlayerAllianceRuntime _playerAlliances;
 	private readonly Func<int, int, InstanceDestroyWorkflowResult>? _destroyInstance;
+	private readonly Func<Player, IReadOnlyList<SmAutoGroup>>? _createOpenRegistrationPackets;
 	private readonly bool _autoGroupEnabled;
 
 	public AutoGroupInstanceLeaveRuntimeService(
 		PlayerGroupRuntime playerGroups,
 		PlayerAllianceRuntime playerAlliances,
 		Func<int, int, InstanceDestroyWorkflowResult>? destroyInstance = null,
+		Func<Player, IReadOnlyList<SmAutoGroup>>? createOpenRegistrationPackets = null,
 		bool autoGroupEnabled = true)
 	{
 		_playerGroups = playerGroups;
 		_playerAlliances = playerAlliances;
 		_destroyInstance = destroyInstance;
+		_createOpenRegistrationPackets = createOpenRegistrationPackets;
 		_autoGroupEnabled = autoGroupEnabled;
 	}
 
@@ -77,6 +81,7 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				state?.CreateSnapshot(),
 				removedFromRegistry,
 				DestroyWorkflowResult: null,
+				OpenRegistrationPackets: Array.Empty<SmAutoGroup>(),
 				"AutoGroupService.onLeaveInstance live adapter slice -> planner, unregister, team cleanup, registry removal when destroyIfPossible is true");
 		}
 
@@ -85,6 +90,9 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 			var destroyResult = _destroyInstance(keyToDestroy.WorldId, keyToDestroy.InstanceId);
 			result = result with { DestroyWorkflowResult = destroyResult };
 		}
+
+		if (result.Plan.WouldCheckOpenRegistrations && _createOpenRegistrationPackets != null)
+			result = result with { OpenRegistrationPackets = _createOpenRegistrationPackets(player) };
 
 		return result;
 	}
@@ -125,6 +133,7 @@ public sealed record AutoGroupInstanceRuntimeResult(
 	AutoGroupInstanceRuntimeSnapshot? SnapshotAfterLeave,
 	bool RemovedFromRegistry,
 	InstanceDestroyWorkflowResult? DestroyWorkflowResult,
+	IReadOnlyList<SmAutoGroup> OpenRegistrationPackets,
 	string JavaSource);
 
 public sealed record AutoGroupInstanceRuntimeSnapshot(

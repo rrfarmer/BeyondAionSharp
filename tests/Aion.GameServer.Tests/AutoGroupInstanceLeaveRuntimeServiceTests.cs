@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
@@ -122,7 +123,25 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	[Fact]
 	public void OnLeaveInstance_MissingOrUnregisteredInstanceOnlyPlansOpenRegistrationRefresh()
 	{
-		var service = new AutoGroupInstanceLeaveRuntimeService(new PlayerGroupRuntime(), new PlayerAllianceRuntime());
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime(),
+			createOpenRegistrationPackets: _ =>
+			[
+				new Aion.GameServer.Network.Aion.ServerPackets.SmAutoGroup(
+					new AutoGroupSummary(
+						107,
+						300110000,
+						NameId: 140107,
+						TitleId: 150107,
+						MinLevel: 46,
+						MaxLevel: 65,
+						RegisterQuick: true,
+						RegisterGroup: true,
+						RegisterNew: true,
+						NpcIds: []),
+					Aion.GameServer.Network.Aion.ServerPackets.SmAutoGroup.EntryIconWindowId),
+			]);
 		var player = CreatePlayer(1001);
 		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
 			300110000,
@@ -137,8 +156,10 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 		Assert.Equal(AutoGroupInstanceLeaveStatus.NoAutoInstanceForMap, missing.Plan.Status);
 		Assert.True(missing.Plan.WouldCheckOpenRegistrations);
 		Assert.False(missing.RemovedFromRegistry);
+		Assert.Equal([107], missing.OpenRegistrationPackets.Select(packet => packet.MaskId));
 		Assert.Equal(AutoGroupInstanceLeaveStatus.PlayerNotRegistered, unregistered.Plan.Status);
 		Assert.True(unregistered.Plan.WouldCheckOpenRegistrations);
+		Assert.Equal([107], unregistered.OpenRegistrationPackets.Select(packet => packet.MaskId));
 		Assert.Contains(2002, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
 	}
 

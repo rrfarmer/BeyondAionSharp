@@ -7485,11 +7485,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(plan.Packet);
 
 		// Java parity: InstanceService.onLeaveInstance invokes AutoGroupService after reset-warning packet selection.
-		_autoGroupInstanceLeaveRuntimeService.OnLeaveInstance(
+		var autoGroupLeave = _autoGroupInstanceLeaveRuntimeService.OnLeaveInstance(
 			player,
 			previousPosition.WorldId,
 			previousPosition.InstanceId,
 			onlinePlayersInsideAfterLeave: Math.Max(0, instance.PlayerCount - 1));
+		foreach (var packet in autoGroupLeave.OpenRegistrationPackets)
+			await SendPacketAsync(packet);
 	}
 
 	private static bool ShouldFallbackDelayedTeleportToCurrentSpawn(Player player, WorldMapRuntimeStateTable? worldMapStates)

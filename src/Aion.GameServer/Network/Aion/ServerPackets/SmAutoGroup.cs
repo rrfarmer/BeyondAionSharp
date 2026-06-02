@@ -17,6 +17,10 @@ public sealed class SmAutoGroup : GameServerPacket
 	private readonly bool _close;
 	private readonly string _name;
 
+	public int MaskId => _maskId;
+
+	public int WindowId => _windowId;
+
 	public SmAutoGroup(AutoGroupSummary autoGroup)
 		: this(autoGroup, windowId: 0, requestTypeId: 0, close: false, name: string.Empty)
 	{

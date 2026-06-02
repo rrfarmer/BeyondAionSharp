@@ -48,6 +48,42 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmAutoGroup_WritesJavaEntryIconOpenAndClosePayload()
+	{
+		var autoGroup = new AutoGroupSummary(
+			MaskId: 107,
+			InstanceMapId: 300110000,
+			NameId: 140107,
+			TitleId: 150107,
+			MinLevel: 46,
+			MaxLevel: 65,
+			RegisterQuick: true,
+			RegisterGroup: true,
+			RegisterNew: true,
+			NpcIds: []);
+
+		var openPayload = SerializeUnencryptedPayload(new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: false));
+		var closePayload = SerializeUnencryptedPayload(new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: true));
+
+		AssertEntryIconPayload(openPayload, closeFlag: 1);
+		AssertEntryIconPayload(closePayload, closeFlag: 0);
+
+		static void AssertEntryIconPayload(byte[] payload, int closeFlag)
+		{
+			using var reader = new PacketBuffer(payload);
+			Assert.Equal(107, reader.ReadD());
+			Assert.Equal(SmAutoGroup.EntryIconWindowId, reader.ReadC());
+			Assert.Equal(300110000, reader.ReadD());
+			Assert.Equal(140107, reader.ReadD());
+			Assert.Equal(150107, reader.ReadD());
+			Assert.Equal(closeFlag, reader.ReadD());
+			Assert.Equal(0, (int)reader.ReadC());
+			Assert.Equal(string.Empty, reader.ReadS());
+			Assert.Equal(0, reader.Remaining);
+		}
+	}
+
+	[Fact]
 	public void TeleportAnimation_PreservesJavaIdsAndDefaultMappings()
 	{
 		Assert.Equal(0, TeleportAnimation.None.Id);

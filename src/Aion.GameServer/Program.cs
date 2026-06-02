@@ -141,11 +141,22 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftScheduleService>();
 			services.AddSingleton<InstanceDestroyWorkflowService>();
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
+			services.AddSingleton<PeriodicInstanceRegistrationService>();
 			services.AddSingleton(
-				serviceProvider => new AutoGroupInstanceLeaveRuntimeService(
-					serviceProvider.GetRequiredService<PlayerGroupRuntime>(),
-					serviceProvider.GetRequiredService<PlayerAllianceRuntime>(),
-					serviceProvider.GetRequiredService<InstanceDestroyWorkflowService>().DestroyInstance));
+				serviceProvider =>
+				{
+					var runtimeContext = serviceProvider.GetRequiredService<GameServerRuntimeContext>();
+					var registrations = serviceProvider.GetRequiredService<PeriodicInstanceRegistrationService>();
+					return new AutoGroupInstanceLeaveRuntimeService(
+						serviceProvider.GetRequiredService<PlayerGroupRuntime>(),
+						serviceProvider.GetRequiredService<PlayerAllianceRuntime>(),
+						serviceProvider.GetRequiredService<InstanceDestroyWorkflowService>().DestroyInstance,
+						player => registrations.CreateOpenRegistrationPackets(
+							player,
+							runtimeContext.DataManager?.StaticData.AutoGroups,
+							runtimeContext.DataManager?.StaticData.InstanceCooltimes,
+							DateTimeOffset.UtcNow));
+				});
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();
