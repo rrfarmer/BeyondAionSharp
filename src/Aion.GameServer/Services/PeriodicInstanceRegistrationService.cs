@@ -49,6 +49,19 @@ public sealed class PeriodicInstanceRegistrationService
 			openingMessage);
 	}
 
+	public async Task<PeriodicInstanceRegistrationBroadcastDispatchResult> OpenRegistrationAndBroadcastAsync(
+		int maskId,
+		AutoGroupTable? autoGroups,
+		IGameClientConnectionRegistry connectionRegistry,
+		SmSystemMessage? openingMessage = null,
+		CancellationToken cancellationToken = default)
+	{
+		var players = GetOnlinePlayers(connectionRegistry);
+		var plan = CreateOpenRegistrationBroadcastPlan(maskId, autoGroups, players, openingMessage);
+		var sentPackets = await SendBroadcastPlanAsync(plan, connectionRegistry, cancellationToken);
+		return new PeriodicInstanceRegistrationBroadcastDispatchResult(plan, sentPackets, StoppedRegistrationsByMaskId: false);
+	}
+
 	public PeriodicInstanceRegistrationBroadcastPlan CreateCloseRegistrationBroadcastPlan(
 		int maskId,
 		AutoGroupTable? autoGroups,
@@ -67,6 +80,26 @@ public sealed class PeriodicInstanceRegistrationService
 			isClosed: true,
 			status: PeriodicInstanceRegistrationBroadcastStatus.Closed,
 			openingMessage: null);
+	}
+
+	public async Task<PeriodicInstanceRegistrationBroadcastDispatchResult> CloseRegistrationAndBroadcastAsync(
+		int maskId,
+		AutoGroupTable? autoGroups,
+		IGameClientConnectionRegistry connectionRegistry,
+		Func<int, CancellationToken, ValueTask>? stopRegistrationsByMaskId = null,
+		CancellationToken cancellationToken = default)
+	{
+		var players = GetOnlinePlayers(connectionRegistry);
+		var plan = CreateCloseRegistrationBroadcastPlan(maskId, autoGroups, players);
+		var sentPackets = await SendBroadcastPlanAsync(plan, connectionRegistry, cancellationToken);
+		var stoppedRegistrations = false;
+		if (plan.WouldStopRegistrationsByMaskId && stopRegistrationsByMaskId != null)
+		{
+			await stopRegistrationsByMaskId(maskId, cancellationToken);
+			stoppedRegistrations = true;
+		}
+
+		return new PeriodicInstanceRegistrationBroadcastDispatchResult(plan, sentPackets, stoppedRegistrations);
 	}
 
 	public IReadOnlyList<SmAutoGroup> CreateOpenRegistrationPackets(
@@ -144,6 +177,32 @@ public sealed class PeriodicInstanceRegistrationService
 			WouldStopRegistrationsByMaskId: isClosed,
 			PlayerBroadcasts: broadcasts);
 	}
+
+	private static IReadOnlyList<Player> GetOnlinePlayers(IGameClientConnectionRegistry connectionRegistry)
+	{
+		var players = new List<Player>();
+		connectionRegistry.ForEachOnlinePlayer(players.Add);
+		return players;
+	}
+
+	private static async Task<int> SendBroadcastPlanAsync(
+		PeriodicInstanceRegistrationBroadcastPlan plan,
+		IGameClientConnectionRegistry connectionRegistry,
+		CancellationToken cancellationToken)
+	{
+		var sentPackets = 0;
+		foreach (var broadcast in plan.PlayerBroadcasts)
+		{
+			foreach (var packet in broadcast.Packets)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				if (await connectionRegistry.SendPacketToPlayerAsync(broadcast.PlayerObjectId, packet))
+					sentPackets++;
+			}
+		}
+
+		return sentPackets;
+	}
 }
 
 public sealed record PeriodicInstanceRegistrationBroadcastPlan(
@@ -180,6 +239,11 @@ public sealed record PeriodicInstanceRegistrationBroadcastPlan(
 public sealed record PeriodicInstanceRegistrationPlayerBroadcast(
 	int PlayerObjectId,
 	IReadOnlyList<GameServerPacket> Packets);
+
+public sealed record PeriodicInstanceRegistrationBroadcastDispatchResult(
+	PeriodicInstanceRegistrationBroadcastPlan Plan,
+	int SentPackets,
+	bool StoppedRegistrationsByMaskId);
 
 public enum PeriodicInstanceRegistrationBroadcastStatus
 {

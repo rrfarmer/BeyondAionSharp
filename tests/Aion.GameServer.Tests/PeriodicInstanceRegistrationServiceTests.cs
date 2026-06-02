@@ -1,12 +1,75 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
 
 public sealed class PeriodicInstanceRegistrationServiceTests
 {
+	[Fact]
+	public async Task OpenRegistrationAndBroadcastAsync_SendsPlannedPacketsToOnlineLevelRangeLikeJavaWorldFanout()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000, minLevel: 46, maxLevel: 65)]);
+		var eligible = CreatePlayer(objectId: 1001, level: 50);
+		var lowLevel = CreatePlayer(objectId: 1002, level: 45);
+		var registry = new RecordingConnectionRegistry([eligible, lowLevel]);
+		var openingMessage = new SmSystemMessage(1401234);
+
+		var result = await service.OpenRegistrationAndBroadcastAsync(107, autoGroups, registry, openingMessage);
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.Opened, result.Plan.Status);
+		Assert.Equal(2, result.SentPackets);
+		Assert.False(result.StoppedRegistrationsByMaskId);
+		Assert.Collection(
+			registry.SentPackets,
+			delivery =>
+			{
+				Assert.Equal(eligible.ObjectId, delivery.PlayerObjectId);
+				var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
+				Assert.False(packet.IsClosed);
+				Assert.Equal(SmAutoGroup.EntryIconWindowId, packet.WindowId);
+			},
+			delivery =>
+			{
+				Assert.Equal(eligible.ObjectId, delivery.PlayerObjectId);
+				Assert.Equal(openingMessage, delivery.Packet);
+			});
+	}
+
+	[Fact]
+	public async Task CloseRegistrationAndBroadcastAsync_SendsClosePacketsBeforeStopRegistrationsLikeJava()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(108, 300120000, minLevel: 46, maxLevel: 65)]);
+		var eligible = CreatePlayer(objectId: 2001, level: 50);
+		var registry = new RecordingConnectionRegistry([eligible]);
+		var operations = new List<string>();
+		Assert.True(service.OpenRegistration(108));
+		registry.OnPacketSent = delivery => operations.Add($"send:{delivery.PlayerObjectId}:{delivery.Packet.GetType().Name}");
+
+		var result = await service.CloseRegistrationAndBroadcastAsync(
+			108,
+			autoGroups,
+			registry,
+			(maskId, _) =>
+			{
+				operations.Add($"stop:{maskId}");
+				return ValueTask.CompletedTask;
+			});
+
+		Assert.Equal(PeriodicInstanceRegistrationBroadcastStatus.Closed, result.Plan.Status);
+		Assert.Equal(1, result.SentPackets);
+		Assert.True(result.StoppedRegistrationsByMaskId);
+		var delivery = Assert.Single(registry.SentPackets);
+		var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
+		Assert.True(packet.IsClosed);
+		Assert.Equal(["send:2001:SmAutoGroup", "stop:108"], operations);
+	}
+
 	[Fact]
 	public void CreateOpenRegistrationBroadcastPlan_MutatesOnceAndSendsEntryIconPlusOpeningMessageToLevelRangeLikeJava()
 	{
@@ -162,4 +225,87 @@ public sealed class PeriodicInstanceRegistrationServiceTests
 			Level = level,
 		};
 	}
+
+	private sealed class RecordingConnectionRegistry(IReadOnlyList<Player> onlinePlayers) : IGameClientConnectionRegistry
+	{
+		public List<PacketDelivery> SentPackets { get; } = [];
+
+		public Action<PacketDelivery>? OnPacketSent { get; set; }
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = onlinePlayers.FirstOrDefault(candidate => candidate.Name == playerName);
+			return player != null;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+			foreach (var player in onlinePlayers)
+				action(player);
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			if (!onlinePlayers.Any(player => player.ObjectId == playerObjectId))
+				return Task.FromResult(false);
+
+			var delivery = new PacketDelivery(playerObjectId, packet);
+			SentPackets.Add(delivery);
+			OnPacketSent?.Invoke(delivery);
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
 }
