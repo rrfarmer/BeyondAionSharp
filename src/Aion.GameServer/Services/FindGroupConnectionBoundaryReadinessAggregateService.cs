@@ -37,10 +37,10 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupInstanceApplicationInviteDispatchPlanService",
 					"FindGroupService.sendInstanceApplicationResult"),
 				new FindGroupConnectionBoundaryComponentReadiness(
-					"Side-effect dispatch audit",
-					"FindGroupSideEffectDispatchAuditService can audit direct sendPacket and broadcastToWorld intents without using the connection registry.",
+					"Side-effect dispatch audit and executor",
+					"FindGroupSideEffectDispatchAuditService can audit direct sendPacket and broadcastToWorld intents; FindGroupSideEffectDispatchExecutorService can execute them through IGameClientConnectionRegistry only when explicitly invoked.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
-					"FindGroupSideEffectDispatchAuditService",
+					"FindGroupSideEffectDispatchAuditService; FindGroupSideEffectDispatchExecutorService",
 					"FindGroupService PacketSendUtility.sendPacket/broadcastToWorld call sites"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Lifecycle observers",

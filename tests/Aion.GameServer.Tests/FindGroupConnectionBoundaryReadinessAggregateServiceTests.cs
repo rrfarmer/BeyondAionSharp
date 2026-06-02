@@ -43,10 +43,11 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 				&& component.JavaSource.Contains("sendInstanceApplication", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,
-			component => component.Name == "Side-effect dispatch audit"
+			component => component.Name == "Side-effect dispatch audit and executor"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
 				&& component.Evidence.Contains("sendPacket", StringComparison.Ordinal)
-				&& component.Evidence.Contains("broadcastToWorld", StringComparison.Ordinal));
+				&& component.Evidence.Contains("broadcastToWorld", StringComparison.Ordinal)
+				&& component.CSharpSource.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,
 			component => component.Name == "Lifecycle observers"
