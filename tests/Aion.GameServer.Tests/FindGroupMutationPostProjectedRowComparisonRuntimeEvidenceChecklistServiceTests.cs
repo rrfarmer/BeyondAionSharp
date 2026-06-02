@@ -99,6 +99,13 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ExistingProvider.Contains("FindGroupMutationPostRegistryObservationTraceContractService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("posted system-message and refreshed-list registry sends", StringComparison.Ordinal));
 		Assert.Contains(checklist.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueProjection
+			&& row.ExistingProvider.Contains("FindGroupMutationPostValueProjectionHandoffGateService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueContractService", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("value-projection handoff gate", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("runtime row values", StringComparison.Ordinal)
+			&& row.Notes.Contains("deliberately do not read values", StringComparison.Ordinal));
+		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ResultEmission
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderResultSchemaContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderComparatorPreflightContractService", StringComparison.Ordinal)
