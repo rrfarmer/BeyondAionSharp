@@ -52,7 +52,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderImplementationReadinessChecklistService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderImplementationRunbookContractService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostTypedValueReaderImplementationReadinessGateService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("implementation runbook", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("typed-reader implementation gate", StringComparison.Ordinal)
 			&& row.Notes.Contains("reads no values", StringComparison.Ordinal));
 		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact
