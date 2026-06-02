@@ -30,6 +30,15 @@ public sealed class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", contract.TraceName);
 		Assert.Contains("addRecruitment/addApplication", contract.JavaSource, StringComparison.Ordinal);
 		Assert.Contains("function execution preflight", contract.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(contract.Rows, row =>
+			row.FieldName == "activePlayerObjectId"
+			&& row.Status == FindGroupMutationPostValueReaderProjectedValueRowStatus.BlockedFunctionExecutionPreflightNotReady
+			&& row.Evidence.Contains("functionPreflightRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("typedReaderGateRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("runtimeRowValueIntakeRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", StringComparison.Ordinal)
+			&& row.JavaValue == "<not-read>"
+			&& row.CSharpValue == "<not-read>");
 	}
 
 	[Fact]
@@ -44,6 +53,11 @@ public sealed class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 			row.FieldName == "activePlayerObjectId"
 			&& row.Status == FindGroupMutationPostValueReaderProjectedValueRowStatus.BlockedExecutorImplementationPlanNotReady
 			&& row.Blocker.Contains("executor implementation plan", StringComparison.Ordinal)
+			&& row.Evidence.Contains("functionPreflightRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("typedReaderGateRows=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("runtimeRowValueIntakeRows=RuntimeRowValueIntake", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.Evidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
 			&& row.JavaValue == "<not-read>"
 			&& row.CSharpValue == "<not-read>");
 	}
@@ -138,12 +152,19 @@ public sealed class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 		new(
 			FindGroupMutationPostTypedValueReaderImplementationReadinessGateStatus.ReadyForReaderImplementationBlocked,
 			[
-				ReaderGateRow(1, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.Int32ScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.Int32Scalar, "ReadJavaInt32Scalar", "ReadCSharpInt32Scalar"),
-				ReaderGateRow(2, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.BooleanScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.BooleanScalar, "ReadJavaBooleanScalar", "ReadCSharpBooleanScalar"),
-				ReaderGateRow(3, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.OrderedInt32ListReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.OrderedInt32List, "ReadJavaOrderedInt32List", "ReadCSharpOrderedInt32List", PreservesCollectionOrder: true),
-				ReaderGateRow(4, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.StringScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.StringScalar, "ReadJavaStringScalar", "ReadCSharpStringScalar"),
-				ReaderGateRow(5, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.EnumStringScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.EnumStringScalar, "ReadJavaEnumStringScalar", "ReadCSharpEnumStringScalar"),
-				ReaderGateRow(6, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.MismatchContextAttachment, FindGroupMutationPostProjectedRowComparisonValueReaderKind.IgnoredRuntimeContext, "AttachJavaMismatchContext", "AttachCSharpMismatchContext", RequiresReaders: false),
+				ReaderGateRow(
+					1,
+					FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.RuntimeRowValueIntake,
+					readerKind: null,
+					javaFunction: string.Empty,
+					csharpFunction: string.Empty,
+					evidence: "runtimeRowValueIntakeRows=RuntimeRowValueIntake=status=ReadyForRuntimeRowsValueReadersBlocked; valueProjectionHandoffRows=ValueProjectionHandoff=status=ReadyForRuntimeValuesProjectionBlocked; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True"),
+				ReaderGateRow(2, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.Int32ScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.Int32Scalar, "ReadJavaInt32Scalar", "ReadCSharpInt32Scalar"),
+				ReaderGateRow(3, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.BooleanScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.BooleanScalar, "ReadJavaBooleanScalar", "ReadCSharpBooleanScalar"),
+				ReaderGateRow(4, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.OrderedInt32ListReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.OrderedInt32List, "ReadJavaOrderedInt32List", "ReadCSharpOrderedInt32List", PreservesCollectionOrder: true),
+				ReaderGateRow(5, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.StringScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.StringScalar, "ReadJavaStringScalar", "ReadCSharpStringScalar"),
+				ReaderGateRow(6, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.EnumStringScalarReader, FindGroupMutationPostProjectedRowComparisonValueReaderKind.EnumStringScalar, "ReadJavaEnumStringScalar", "ReadCSharpEnumStringScalar"),
+				ReaderGateRow(7, FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage.MismatchContextAttachment, FindGroupMutationPostProjectedRowComparisonValueReaderKind.IgnoredRuntimeContext, "AttachJavaMismatchContext", "AttachCSharpMismatchContext", RequiresReaders: false),
 			],
 			HasRuntimeRowValueIntake: true,
 			HasImplementationRunbook: true,
@@ -167,11 +188,12 @@ public sealed class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 	private static FindGroupMutationPostTypedValueReaderImplementationReadinessGateRow ReaderGateRow(
 		int order,
 		FindGroupMutationPostTypedValueReaderImplementationReadinessGateStage stage,
-		FindGroupMutationPostProjectedRowComparisonValueReaderKind readerKind,
+		FindGroupMutationPostProjectedRowComparisonValueReaderKind? readerKind,
 		string javaFunction,
 		string csharpFunction,
 		bool PreservesCollectionOrder = false,
-		bool RequiresReaders = true) =>
+		bool RequiresReaders = true,
+		string? evidence = null) =>
 		new(
 			order,
 			stage,
@@ -190,7 +212,7 @@ public sealed class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 			javaFunction,
 			csharpFunction,
 			"planned reader function",
-			"reader function evidence",
+			evidence ?? "reader function evidence",
 			"test reader row");
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorReadinessGateReport ReadyExecutorGate() =>

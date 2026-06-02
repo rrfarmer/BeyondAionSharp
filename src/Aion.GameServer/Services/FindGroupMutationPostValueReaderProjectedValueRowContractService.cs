@@ -144,6 +144,9 @@ public static class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 		var rowStatus = RowStatusFor(field, contractStatus);
 		var javaReaderFunction = JavaReaderFunctionFor(field.ReaderKind);
 		var csharpReaderFunction = CSharpReaderFunctionFor(field.ReaderKind);
+		var functionPreflightRows = functionExecutionPreflight.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", functionExecutionPreflight.Rows.Select(row => $"{row.Stage}={row.Evidence}"));
 
 		return new FindGroupMutationPostValueReaderProjectedValueRow(
 			field.Order,
@@ -170,7 +173,7 @@ public static class FindGroupMutationPostValueReaderProjectedValueRowContractSer
 			CanEmitResult: false,
 			BlockerFor(rowStatus, field),
 			"CM_FIND_GROUP.runImpl action 2 -> FindGroupService.addRecruitment; action 6 -> FindGroupService.addApplication",
-			$"functionPreflightStatus={functionExecutionPreflight.Status}; executorPlanStatus={executorImplementationPlan.Status}; fieldStatus={field.Status}; javaJsonPath={field.JavaJsonPath}; csharpAccessor={field.CSharpAccessor}; valueType={field.ExpectedClrType}",
+			$"functionPreflightStatus={functionExecutionPreflight.Status}; executorPlanStatus={executorImplementationPlan.Status}; fieldStatus={field.Status}; javaJsonPath={field.JavaJsonPath}; csharpAccessor={field.CSharpAccessor}; valueType={field.ExpectedClrType}; functionPreflightRows={functionPreflightRows}",
 			NotesFor(field));
 	}
 
