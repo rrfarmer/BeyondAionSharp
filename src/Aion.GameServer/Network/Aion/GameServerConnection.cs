@@ -1857,6 +1857,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
+		if (IsBeshmundirsWalkDifficultySelection(packet.DialogActionId)
+			&& IsBeshmundirsWalkTarget(packet.TargetObjectId))
+		{
+			await HandleBeshmundirsWalkDifficultySelectionAsync(player, packet.TargetObjectId, packet.DialogActionId);
+			return;
+		}
+
 		if (packet.DialogActionId == CmDialogSelect.InstancePartyMatch)
 		{
 			var autoGroup = _findGroupConnectionClientActionCompositionPlanService
@@ -4414,6 +4421,34 @@ public sealed class GameServerConnection : BaseClientConnection
 		return _playerGroupRuntime.GetMemberObjectIds(player.CurrentTeamId)
 			.Select(memberObjectId => _playerGroupRuntime.GetMember(player.CurrentTeamId, memberObjectId)?.Player)
 			.Any(member => member?.Position.WorldId == 300170000);
+	}
+
+	private static bool IsBeshmundirsWalkDifficultySelection(int dialogActionId)
+	{
+		return dialogActionId is CmDialogSelect.SelectNone1 or CmDialogSelect.SelectNone2;
+	}
+
+	private async Task HandleBeshmundirsWalkDifficultySelectionAsync(Player player, int targetObjectId, int dialogActionId)
+	{
+		// Java parity: BeshmundirsWalkAI SELECT_NONE_1/2 registers
+		// SM_QUESTION_WINDOW.STR_INSTANCE_DUNGEON_WITH_DIFFICULTY_ENTER_CONFIRM, then reopens dialog 4762.
+		var pathL10nId = dialogActionId == CmDialogSelect.SelectNone1 ? 902051 : 902052;
+		if (player.ResponseRequester.PutRequest(
+			SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm,
+			new QuestionResponseRequest(
+				targetObjectId,
+				QuestionResponseRequestKind.BeshmundirDifficultyEnter,
+				new PendingBeshmundirDifficultyEnterRequest(targetObjectId, dialogActionId, pathL10nId))))
+		{
+			await SendPacketAsync(new SmQuestionWindow(
+				SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm,
+				targetObjectId,
+				rangeOrCooldownSeconds: 5,
+				"300170000",
+				ChatUtil.L10n(pathL10nId)!));
+		}
+
+		await SendPacketAsync(new SmDialogWindow(targetObjectId, 4762));
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)
@@ -9467,6 +9502,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm)
+		{
+			HandleBeshmundirDifficultyQuestionResponse(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
@@ -10738,6 +10779,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, packet, includeSourcePlayer: true);
 		else
 			await SendPacketAsync(packet);
+	}
+
+	private static void HandleBeshmundirDifficultyQuestionResponse(Player responder, CmQuestionResponse packet)
+	{
+		// Java parity breadcrumb: BeshmundirsWalkAI AIRequest.acceptRequest calls moveToInstance
+		// with difficulty 2 for registered request 902050; the alternate difficulty branch is not
+		// reached by the currently registered question id in Java source.
+		// The shared PortalService.port team-instance movement remains a later parity unit; this
+		// handler preserves ResponseRequester removal semantics for the registered request.
+		responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
 	}
 
 	private async Task BroadcastActionAnimationAsync(Player player, SmActionAnimation packet)

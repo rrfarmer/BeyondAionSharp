@@ -23,6 +23,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 	public const int CraftAddSkillConfirm = 900852;
 	public const int TeleportToNpcConfirm = 905097;
 	public const int SummonPartyAcceptRequest = 901721;
+	public const int InstanceDungeonWithDifficultyEnterConfirm = 902050;
 	private const int MaxParameterCount = 3;
 
 	private readonly int _code;

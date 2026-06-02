@@ -743,6 +743,54 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Equal(1400361, ReadPrivateField<int>(message, "_messageId"));
 	}
 
+	[Theory]
+	[InlineData(CmDialogSelect.SelectNone1, 902051)]
+	[InlineData(CmDialogSelect.SelectNone2, 902052)]
+	public async Task ProcessPacketAsync_BeshmundirsWalkDifficultySelectionRegistersQuestionAndReopensDialog(
+		int dialogActionId,
+		int expectedPathL10nId)
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS");
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS");
+		var groups = new PlayerGroupRuntime();
+		groups.CreateOrUpdateGroup(0x0708090A, [leader, member]);
+		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService: null,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			playerGroupRuntime: groups,
+			world: world);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(walkNpc.ObjectId, dialogActionId));
+
+		Assert.Equal(2, sentPackets.Count);
+		var question = Assert.IsType<SmQuestionWindow>(sentPackets[0]);
+		Assert.Equal(SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm, question.Code);
+		Assert.Equal(walkNpc.ObjectId, ReadPrivateField<int>(question, "_senderObjectId"));
+		Assert.Equal(5, ReadPrivateField<int>(question, "_rangeOrCooldownSeconds"));
+		Assert.Equal(
+			["300170000", Aion.GameServer.Utils.ChatUtil.L10n(expectedPathL10nId)!],
+			ReadPrivateField<IReadOnlyList<string>>(question, "_parameters"));
+		var dialog = Assert.IsType<SmDialogWindow>(sentPackets[1]);
+		Assert.Equal(walkNpc.ObjectId, ReadPrivateField<int>(dialog, "_targetObjectId"));
+		Assert.Equal(4762, ReadPrivateField<int>(dialog, "_dialogPageId"));
+		Assert.Equal(1, leader.ResponseRequester.Count);
+		var dispatch = leader.ResponseRequester.Respond(SmQuestionWindow.InstanceDungeonWithDifficultyEnterConfirm, responseCode: 1);
+		Assert.NotNull(dispatch);
+		Assert.True(dispatch!.Accepted);
+		Assert.Equal(QuestionResponseRequestKind.BeshmundirDifficultyEnter, dispatch.Request.Kind);
+		var pending = Assert.IsType<PendingBeshmundirDifficultyEnterRequest>(dispatch.Request.Payload);
+		Assert.Equal(walkNpc.ObjectId, pending.NpcObjectId);
+		Assert.Equal(dialogActionId, pending.DialogActionId);
+		Assert.Equal(expectedPathL10nId, pending.PathL10nId);
+	}
+
 	[Fact]
 	public async Task ProcessPacketAsync_OpenInstanceRecruitSendsPortalMaskListOnly()
 	{

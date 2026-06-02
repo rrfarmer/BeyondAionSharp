@@ -17,6 +17,8 @@ public sealed class CmDialogSelect : GameClientPacket
 	public const int ChargeItemMulti2 = 95;
 	public const int OpenInstanceRecruit = 105;
 	public const int Select1_1 = 1012;
+	public const int SelectNone1 = 4763;
+	public const int SelectNone2 = 4848;
 
 	public CmDialogSelect(int opCode, IReadOnlySet<GameConnectionState> validStates)
 		: base(opCode, validStates)
