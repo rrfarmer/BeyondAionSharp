@@ -30,6 +30,30 @@ public sealed class FindGroupMutationPostJavaTraceArtifactValidatorServiceTests
 	}
 
 	[Fact]
+	public void Validate_AcceptsDeterministicJavaFixtureScenarioArtifact()
+	{
+		var report = FindGroupMutationPostJavaTraceArtifactValidatorService.Validate(DeterministicJavaFixtureScenarioArtifactJson);
+
+		Assert.True(report.IsValid);
+		Assert.Empty(report.Issues);
+		Assert.NotNull(report.Metadata);
+		Assert.Equal(1, report.Metadata.SchemaVersion);
+		Assert.Equal("cm-find-group-direct-mutation-post-boundary", report.Metadata.TraceName);
+		Assert.Contains(report.Metadata.TraceRows, row =>
+			row.Action == 2
+			&& row.TraceSource == "Java"
+			&& row.MutationKind == "Recruitment"
+			&& row.PostedSystemMessageId == 1400392
+			&& row.RefreshedListAction == 0);
+		Assert.Contains(report.Metadata.TraceRows, row =>
+			row.Action == 6
+			&& row.TraceSource == "Java"
+			&& row.MutationKind == "Application"
+			&& row.PostedSystemMessageId == 1400393
+			&& row.RefreshedListAction == 4);
+	}
+
+	[Fact]
 	public void Validate_RejectsUnsupportedSchemaVersion()
 	{
 		var report = FindGroupMutationPostJavaTraceArtifactValidatorService.Validate(
@@ -158,6 +182,64 @@ public sealed class FindGroupMutationPostJavaTraceArtifactValidatorServiceTests
 		      "visibleEntryObjectIdsAfterMutation": [16909061],
 		      "executorInvokedFromBoundary": true,
 		      "registrySendsObservedInOrder": true,
+		      "worldBroadcastCount": 0,
+		      "inviteDispatchCount": 0
+		    }
+		  ]
+		}
+		""";
+
+	private const string DeterministicJavaFixtureScenarioArtifactJson =
+		"""
+		{
+		  "schemaVersion": 1,
+		  "traceName": "cm-find-group-direct-mutation-post-boundary",
+		  "traces": [
+		    {
+		      "schemaVersion": 1,
+		      "traceName": "cm-find-group-direct-mutation-post-boundary",
+		      "traceSource": "Java",
+		      "action": 2,
+		      "boundaryAccepted": true,
+		      "activePlayerObjectId": 1001,
+		      "activePlayerRace": "ELYOS",
+		      "serverEpochSeconds": 123456,
+		      "mutationKind": "Recruitment",
+		      "mutatedEntryObjectId": 2002,
+		      "stateMutationRecordedBeforeDirectPackets": true,
+		      "postedSystemMessageRecipientObjectId": 1001,
+		      "postedSystemMessageType": "SmSystemMessage",
+		      "postedSystemMessageId": 1400392,
+		      "refreshedListRecipientObjectId": 1001,
+		      "refreshedListPacketType": "SmFindGroup",
+		      "refreshedListAction": 0,
+		      "visibleEntryObjectIdsAfterMutation": [2002],
+		      "executorInvokedFromBoundary": false,
+		      "registrySendsObservedInOrder": false,
+		      "worldBroadcastCount": 0,
+		      "inviteDispatchCount": 0
+		    },
+		    {
+		      "schemaVersion": 1,
+		      "traceName": "cm-find-group-direct-mutation-post-boundary",
+		      "traceSource": "Java",
+		      "action": 6,
+		      "boundaryAccepted": true,
+		      "activePlayerObjectId": 4004,
+		      "activePlayerRace": "ASMODIANS",
+		      "serverEpochSeconds": 456789,
+		      "mutationKind": "Application",
+		      "mutatedEntryObjectId": 4004,
+		      "stateMutationRecordedBeforeDirectPackets": true,
+		      "postedSystemMessageRecipientObjectId": 4004,
+		      "postedSystemMessageType": "SmSystemMessage",
+		      "postedSystemMessageId": 1400393,
+		      "refreshedListRecipientObjectId": 4004,
+		      "refreshedListPacketType": "SmFindGroup",
+		      "refreshedListAction": 4,
+		      "visibleEntryObjectIdsAfterMutation": [4004],
+		      "executorInvokedFromBoundary": false,
+		      "registrySendsObservedInOrder": false,
 		      "worldBroadcastCount": 0,
 		      "inviteDispatchCount": 0
 		    }
