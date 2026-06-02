@@ -14,8 +14,7 @@ public sealed class FindGroupJoinedTeamLifecycleRecorder(
 		int teamId)
 	{
 		// Java parity: PlayerGroupEnteredEvent.handleEvent calls PlayerGroupService.addPlayerToGroup,
-		// which records FindGroupService.onJoinedTeam before entered-packet fanout. This recorder
-		// intentionally keeps live find-group dispatch disabled.
+		// which records FindGroupService.onJoinedTeam before entered-packet fanout.
 		var members = ResolveGroupMembers(groupRuntime, teamId);
 		var subject = CreateSubject(teamId, members, groupRuntime.GetDescriptor(teamId)?.LeaderObjectId);
 		var plan = findGroupService.OnJoinedTeam(
@@ -35,8 +34,7 @@ public sealed class FindGroupJoinedTeamLifecycleRecorder(
 		int allianceId)
 	{
 		// Java parity: PlayerAllianceEnteredEvent.handleEvent calls PlayerAllianceService.addPlayerToAlliance,
-		// which records FindGroupService.onJoinedTeam before entered-packet fanout. This recorder
-		// intentionally keeps live find-group dispatch disabled.
+		// which records FindGroupService.onJoinedTeam before entered-packet fanout.
 		var members = ResolveAllianceMembers(allianceRuntime, allianceId);
 		var subject = CreateSubject(allianceId, members, allianceRuntime.GetDescriptor(allianceId)?.LeaderObjectId);
 		var plan = findGroupService.OnJoinedTeam(

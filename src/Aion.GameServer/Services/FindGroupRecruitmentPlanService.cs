@@ -571,7 +571,7 @@ public sealed class FindGroupRecruitmentPlanService
 		// Java parity: FindGroupService.onJoinedTeam first removes a qualifying server-wide
 		// instance-group registration, then removes applications, removes the old solo
 		// recruitment with unknown3=16, and either re-adds it as the current team or removes
-		// the full team's recruitment. This is a disabled planner: callers must dispatch nothing.
+		// the full team's recruitment. Callers decide whether to dispatch the planned side effects.
 		_instanceGroups.TryGetValue(player.ObjectId, out var trackedInstanceGroup);
 		var instanceGroupPlayerMatches = instanceGroup is null || instanceGroup.PlayerObjectId == player.ObjectId;
 		var instanceGroupMemberCount = instanceGroup?.MemberCount

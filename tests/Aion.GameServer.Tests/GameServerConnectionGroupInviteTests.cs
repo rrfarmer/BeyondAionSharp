@@ -128,6 +128,7 @@ public sealed class GameServerConnectionGroupInviteTests
 		var invited = CreatePlayer(1002, "Invited");
 		registry.OnlinePlayers.AddRange([inviter, invited]);
 		findGroupService.AddRecruitment(inviter, "Need one", groupType: 3, nowEpochSeconds: 100);
+		findGroupService.AddApplication(invited, "Looking", groupType: 3, classId: 2, level: invited.Level, nowEpochSeconds: 101);
 		inviteService.SendInvite(inviter, invited);
 		await using var pair = await TestConnectionPair.CreateAsync(
 			registry,
@@ -147,6 +148,12 @@ public sealed class GameServerConnectionGroupInviteTests
 		Assert.Equal("Need one", recruitment.Message);
 		Assert.Equal(0, findGroupService.ShowRecruitments(inviter.Race, nowEpochSeconds: 202)
 			.Recruitments.Count(recruitment => recruitment.ObjectId == inviter.ObjectId));
+		Assert.Equal(0, findGroupService.ShowApplications(invited.Race, nowEpochSeconds: 203)
+			.Applications.Count(application => application.PlayerObjectId == invited.ObjectId));
+		Assert.Equal(2, registry.WorldBroadcasts.Count);
+		Assert.All(registry.WorldBroadcasts, broadcast => Assert.Equal([inviter.ObjectId, invited.ObjectId], broadcast.RecipientObjectIds));
+		Assert.IsType<SmSystemMessage>(registry.SentPackets[0].Packet);
+		Assert.IsType<SmFindGroup>(registry.SentPackets[1].Packet);
 	}
 
 	[Fact]
@@ -344,6 +351,7 @@ public sealed class GameServerConnectionGroupInviteTests
 		var invited = CreatePlayer(1002, "Invited");
 		registry.OnlinePlayers.AddRange([inviter, invited]);
 		findGroupService.AddRecruitment(inviter, "Force forming", groupType: 12, nowEpochSeconds: 250);
+		findGroupService.AddApplication(invited, "Need force", groupType: 12, classId: 2, level: invited.Level, nowEpochSeconds: 251);
 		inviteService.SendInvite(inviter, invited, groups, alliances, objectId => objectId == inviter.ObjectId ? inviter : invited);
 		await using var pair = await TestConnectionPair.CreateAsync(
 			registry,
@@ -364,6 +372,12 @@ public sealed class GameServerConnectionGroupInviteTests
 		Assert.Equal("Force forming", recruitment.Message);
 		Assert.Equal(0, findGroupService.ShowRecruitments(inviter.Race, nowEpochSeconds: 302)
 			.Recruitments.Count(recruitment => recruitment.ObjectId == inviter.ObjectId));
+		Assert.Equal(0, findGroupService.ShowApplications(invited.Race, nowEpochSeconds: 303)
+			.Applications.Count(application => application.PlayerObjectId == invited.ObjectId));
+		Assert.Equal(2, registry.WorldBroadcasts.Count);
+		Assert.All(registry.WorldBroadcasts, broadcast => Assert.Equal([inviter.ObjectId, invited.ObjectId], broadcast.RecipientObjectIds));
+		Assert.IsType<SmSystemMessage>(registry.SentPackets[0].Packet);
+		Assert.IsType<SmFindGroup>(registry.SentPackets[1].Packet);
 	}
 
 	[Fact]
@@ -539,6 +553,7 @@ public sealed class GameServerConnectionGroupInviteTests
 	{
 		public List<Player> OnlinePlayers { get; } = [];
 		public List<SentPacketRecord> SentPackets { get; } = [];
+		public List<WorldBroadcastRecord> WorldBroadcasts { get; } = [];
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
@@ -568,7 +583,12 @@ public sealed class GameServerConnectionGroupInviteTests
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
 		{
-			return Task.FromResult(0);
+			var recipients = OnlinePlayers
+				.Where(player => filter == null || filter(player))
+				.Select(player => player.ObjectId)
+				.ToArray();
+			WorldBroadcasts.Add(new WorldBroadcastRecord(packet, recipients));
+			return Task.FromResult(recipients.Length);
 		}
 
 		public Task<int> BroadcastToVisiblePlayersAsync(
@@ -611,4 +631,5 @@ public sealed class GameServerConnectionGroupInviteTests
 	}
 
 	private sealed record SentPacketRecord(int PlayerObjectId, GameServerPacket Packet);
+	private sealed record WorldBroadcastRecord(GameServerPacket Packet, IReadOnlyList<int> RecipientObjectIds);
 }

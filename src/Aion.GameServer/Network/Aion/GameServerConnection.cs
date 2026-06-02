@@ -9673,6 +9673,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (result.Status == GroupInviteResponseStatus.Denied && result.Request != null && result.DenyMessage != null)
 			await SendGroupInvitePacketAsync(result.Request.InviterObjectId, result.DenyMessage);
 
+		if (result.Status == GroupInviteResponseStatus.Accepted)
+			await DispatchFindGroupJoinedTeamPlansAsync(result.FindGroupJoinedTeamPlans);
+
 		if (result.Status == GroupInviteResponseStatus.Accepted && result.EnteredPacketPlan != null)
 			await SendGroupEnteredPlanAsync(result.EnteredPacketPlan);
 
@@ -9701,6 +9704,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (result.Status == AllianceInviteResponseStatus.Accepted)
 		{
+			await DispatchFindGroupJoinedTeamPlansAsync(result.FindGroupJoinedTeamPlans);
+
 			foreach (var enteredPlan in result.EnteredPlans)
 			{
 				foreach (var intent in enteredPlan.PacketIntents.OrderBy(intent => intent.Sequence))
@@ -9713,6 +9718,54 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return result;
+	}
+
+	private async Task DispatchFindGroupJoinedTeamPlansAsync(IReadOnlyList<FindGroupJoinedTeamPlan> plans)
+	{
+		if (_connectionRegistry == null)
+			return;
+
+		foreach (var plan in plans)
+			await DispatchFindGroupJoinedTeamPlanAsync(plan);
+	}
+
+	private async Task DispatchFindGroupJoinedTeamPlanAsync(FindGroupJoinedTeamPlan plan)
+	{
+		await DispatchFindGroupWorldBroadcastIntentAsync(plan.ApplicationRemoval.WorldBroadcastIntent);
+		await DispatchFindGroupWorldBroadcastIntentAsync(plan.SoloRecruitmentRemoval.WorldBroadcastIntent);
+
+		if (plan.TeamRecruitmentAdd != null)
+			await DispatchFindGroupRecruitmentAddAsync(plan.TeamRecruitmentAdd);
+		else if (plan.FullTeamRecruitmentRemoval != null)
+			await DispatchFindGroupWorldBroadcastIntentAsync(plan.FullTeamRecruitmentRemoval.WorldBroadcastIntent);
+	}
+
+	private async Task DispatchFindGroupRecruitmentAddAsync(FindGroupRecruitmentMutationPlan plan)
+	{
+		foreach (var intent in plan.DirectPacketIntents)
+			await _connectionRegistry!.SendPacketToPlayerAsync(intent.RecipientObjectId, intent.Packet);
+
+		var showPlan = plan.ShowRecruitmentsPlan;
+		if (showPlan == null)
+			return;
+
+		var recipientObjectId = plan.DirectPacketIntents.FirstOrDefault()?.RecipientObjectId;
+		if (recipientObjectId is null)
+			return;
+
+		await _connectionRegistry!.SendPacketToPlayerAsync(
+			recipientObjectId.Value,
+			showPlan.Packet);
+	}
+
+	private async Task DispatchFindGroupWorldBroadcastIntentAsync(FindGroupWorldBroadcastIntent? intent)
+	{
+		if (intent == null)
+			return;
+
+		await _connectionRegistry!.BroadcastToWorldAsync(
+			intent.Packet,
+			player => string.Equals(player.Race, intent.Race, StringComparison.Ordinal));
 	}
 
 	private async Task<DuelResponsePlan> HandleDuelAcceptQuestionResponseAsync(
