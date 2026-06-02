@@ -41,7 +41,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				return AutoGroupStartLookingResult.AlreadyRegistered(maskId, entryRequestType);
 			}
 
-			var registration = new AutoGroupLookingPartyRegistration(maskId, memberObjectIds);
+			var registration = new AutoGroupLookingPartyRegistration(maskId, player.ObjectId, memberObjectIds);
 			if (parties == null)
 			{
 				parties = [];
@@ -60,7 +60,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		if (memberObjectIds.Count == 0)
 			throw new ArgumentException("At least one member object id is required.", nameof(memberObjectIds));
 
-		var registration = new AutoGroupLookingPartyRegistration(maskId, memberObjectIds.ToArray());
+		var registration = new AutoGroupLookingPartyRegistration(maskId, memberObjectIds.First(), memberObjectIds.ToArray());
 		lock (_sync)
 		{
 			if (!_lookingPartiesByMaskId.TryGetValue(maskId, out var parties))
@@ -86,6 +86,67 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		lock (_sync)
 			return _lookingPartiesByMaskId.TryGetValue(maskId, out var parties)
 				&& parties.Any(party => party.MemberObjectIds.Contains(playerObjectId));
+	}
+
+	public async Task<AutoGroupCancelRegistrationResult> CancelRegistrationAsync(
+		int playerObjectId,
+		int maskId,
+		AutoGroupTable? autoGroups,
+		IGameClientConnectionRegistry connectionRegistry,
+		CancellationToken cancellationToken = default)
+	{
+		AutoGroupLookingPartyRegistration? removedParty = null;
+		var removedMemberOnly = false;
+		lock (_sync)
+		{
+			if (!_lookingPartiesByMaskId.TryGetValue(maskId, out var parties))
+				return AutoGroupCancelRegistrationResult.NoRegistration(maskId, playerObjectId);
+
+			var party = parties.FirstOrDefault(candidate => candidate.MemberObjectIds.Contains(playerObjectId));
+			if (party == null)
+				return AutoGroupCancelRegistrationResult.NoRegistration(maskId, playerObjectId);
+
+			if (party.LeaderObjectId == playerObjectId)
+			{
+				parties.Remove(party);
+				if (parties.Count == 0)
+					_lookingPartiesByMaskId.Remove(maskId);
+				removedParty = party;
+			}
+			else
+			{
+				var remainingMemberObjectIds = party.MemberObjectIds
+					.Where(memberObjectId => memberObjectId != playerObjectId)
+					.ToArray();
+				var index = parties.IndexOf(party);
+				parties[index] = party with { MemberObjectIds = remainingMemberObjectIds };
+				removedMemberOnly = true;
+			}
+		}
+
+		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
+		var recipients = removedParty?.MemberObjectIds ?? [playerObjectId];
+		var sentPackets = 0;
+		if (autoGroup != null)
+		{
+			foreach (var recipientObjectId in recipients)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				if (await connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, new SmAutoGroup(autoGroup, windowId: 2)))
+					sentPackets++;
+			}
+		}
+
+		return new AutoGroupCancelRegistrationResult(
+			maskId,
+			playerObjectId,
+			removedParty != null
+				? AutoGroupCancelRegistrationStatus.LeaderPartyRemoved
+				: AutoGroupCancelRegistrationStatus.MemberRemoved,
+			removedParty?.MemberObjectIds ?? [playerObjectId],
+			sentPackets,
+			HasAutoGroupData: autoGroup != null,
+			RemovedMemberOnly: removedMemberOnly);
 	}
 
 	public async Task<AutoGroupStopRegistrationsByMaskIdResult> StopRegistrationsByMaskIdAsync(
@@ -160,6 +221,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 
 public sealed record AutoGroupLookingPartyRegistration(
 	int MaskId,
+	int LeaderObjectId,
 	IReadOnlyList<int> MemberObjectIds);
 
 public sealed record AutoGroupStopRegistrationsByMaskIdResult(
@@ -168,6 +230,35 @@ public sealed record AutoGroupStopRegistrationsByMaskIdResult(
 	IReadOnlyList<int> RemovedMemberObjectIds,
 	int SentPackets,
 	bool HasAutoGroupData);
+
+public sealed record AutoGroupCancelRegistrationResult(
+	int MaskId,
+	int PlayerObjectId,
+	AutoGroupCancelRegistrationStatus Status,
+	IReadOnlyList<int> NotifiedMemberObjectIds,
+	int SentPackets,
+	bool HasAutoGroupData,
+	bool RemovedMemberOnly)
+{
+	public static AutoGroupCancelRegistrationResult NoRegistration(int maskId, int playerObjectId)
+	{
+		return new AutoGroupCancelRegistrationResult(
+			maskId,
+			playerObjectId,
+			AutoGroupCancelRegistrationStatus.NoRegistration,
+			Array.Empty<int>(),
+			SentPackets: 0,
+			HasAutoGroupData: false,
+			RemovedMemberOnly: false);
+	}
+}
+
+public enum AutoGroupCancelRegistrationStatus
+{
+	NoRegistration,
+	LeaderPartyRemoved,
+	MemberRemoved,
+}
 
 public sealed record AutoGroupStartLookingResult(
 	AutoGroupStartLookingStatus Status,

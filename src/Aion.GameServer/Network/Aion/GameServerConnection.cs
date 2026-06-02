@@ -1475,25 +1475,39 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleAutoGroupAsync(Player player, CmAutoGroup packet)
 	{
-		// Java parity: CM_AUTO_GROUP.runImpl window 100 resolves EntryRequestType.getTypeById
-		// before AutoGroupService.startLooking. Other windows remain deferred.
-		if (packet.WindowId != 100)
-			return;
+		switch (packet.WindowId)
+		{
+			case 100:
+			{
+				// Java parity: CM_AUTO_GROUP.runImpl window 100 resolves EntryRequestType.getTypeById
+				// before AutoGroupService.startLooking. Other windows remain deferred.
+				var entryRequestType = AutoGroupEntryRequestTypeParser.GetTypeById(packet.EntryRequestId);
+				if (entryRequestType == null)
+					return;
 
-		var entryRequestType = AutoGroupEntryRequestTypeParser.GetTypeById(packet.EntryRequestId);
-		if (entryRequestType == null)
-			return;
+				var result = _autoGroupLookingPartyRegistrations.StartLooking(
+					player,
+					packet.InstanceMaskId,
+					entryRequestType.Value,
+					_runtimeContext?.DataManager?.StaticData.AutoGroups,
+					_playerGroupRuntime,
+					_playerAllianceRuntime);
 
-		var result = _autoGroupLookingPartyRegistrations.StartLooking(
-			player,
-			packet.InstanceMaskId,
-			entryRequestType.Value,
-			_runtimeContext?.DataManager?.StaticData.AutoGroups,
-			_playerGroupRuntime,
-			_playerAllianceRuntime);
-
-		if (result.GuardPlan?.DenialMessage != null)
-			await SendPacketAsync(result.GuardPlan.DenialMessage);
+				if (result.GuardPlan?.DenialMessage != null)
+					await SendPacketAsync(result.GuardPlan.DenialMessage);
+				break;
+			}
+			case 101:
+				if (_connectionRegistry != null)
+				{
+					await _autoGroupLookingPartyRegistrations.CancelRegistrationAsync(
+						player.ObjectId,
+						packet.InstanceMaskId,
+						_runtimeContext?.DataManager?.StaticData.AutoGroups,
+						_connectionRegistry);
+				}
+				break;
+		}
 	}
 
 	private AbyssPointsAddOptions CreateAbyssPointsOptions(long currentLegionContributionPoints = 0)

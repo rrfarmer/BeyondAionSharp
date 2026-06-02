@@ -195,6 +195,67 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Fact]
+	public async Task CancelRegistration_LeaderRemovesWholePartyAndSendsCancelWindowLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001, 1002]);
+		var registry = new RecordingConnectionRegistry([1001, 1002]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = await service.CancelRegistrationAsync(1001, 107, autoGroups, registry);
+
+		Assert.Equal(AutoGroupCancelRegistrationStatus.LeaderPartyRemoved, result.Status);
+		Assert.False(result.RemovedMemberOnly);
+		Assert.Equal([1001, 1002], result.NotifiedMemberObjectIds);
+		Assert.Equal(2, result.SentPackets);
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+		Assert.False(service.IsSearching(1002, 107));
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => AssertCancelWindow(delivery, 1001),
+			delivery => AssertCancelWindow(delivery, 1002));
+	}
+
+	[Fact]
+	public async Task CancelRegistration_MemberRemovesOnlyMemberAndSendsCancelWindowLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001, 1002, 1003]);
+		var registry = new RecordingConnectionRegistry([1001, 1002, 1003]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = await service.CancelRegistrationAsync(1002, 107, autoGroups, registry);
+
+		Assert.Equal(AutoGroupCancelRegistrationStatus.MemberRemoved, result.Status);
+		Assert.True(result.RemovedMemberOnly);
+		Assert.Equal([1002], result.NotifiedMemberObjectIds);
+		Assert.Equal(1, result.SentPackets);
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.False(service.IsSearching(1002, 107));
+		Assert.True(service.IsSearching(1003, 107));
+		var delivery = Assert.Single(registry.SentPackets);
+		AssertCancelWindow(delivery, 1002);
+	}
+
+	[Fact]
+	public async Task CancelRegistration_MissingEntryIsNoOpLikeJavaNullSearchEntry()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001]);
+		var registry = new RecordingConnectionRegistry([1001, 1002]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = await service.CancelRegistrationAsync(1002, 107, autoGroups, registry);
+
+		Assert.Equal(AutoGroupCancelRegistrationStatus.NoRegistration, result.Status);
+		Assert.Empty(result.NotifiedMemberObjectIds);
+		Assert.Equal(0, result.SentPackets);
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+		Assert.Empty(registry.SentPackets);
+	}
+
 	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId)
 	{
 		return new AutoGroupSummary(
