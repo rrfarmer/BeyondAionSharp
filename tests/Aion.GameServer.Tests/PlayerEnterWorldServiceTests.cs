@@ -481,6 +481,45 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_RemovesFindGroupStateCreatedByDisabledClientActionPlannerLikeJavaSingleton()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var clientActionPlanner = new FindGroupClientActionPlanService(findGroupService);
+		var addRecruitment = clientActionPlanner.Plan(
+			player,
+			new FindGroupClientAction(Action: 2, Message: "Solo", GroupType: 1),
+			nowEpochSeconds: 100);
+		var addApplication = clientActionPlanner.Plan(
+			player,
+			new FindGroupClientAction(Action: 6, Message: "Apply", GroupType: 2, ClassId: 5, Level: 65),
+			nowEpochSeconds: 101);
+		var registerInstance = clientActionPlanner.Plan(
+			player,
+			new FindGroupClientAction(Action: 8, InstanceMaskId: 0x11223344, Message: "Entry", MinMembers: 6),
+			nowEpochSeconds: 102);
+		var service = CreateService(
+			repository,
+			world,
+			out _,
+			findGroupService: findGroupService);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal(FindGroupClientActionPlanKind.AddRecruitment, addRecruitment.Kind);
+		Assert.Equal(FindGroupClientActionPlanKind.AddApplication, addApplication.Kind);
+		Assert.Equal(FindGroupClientActionPlanKind.RegisterInstanceGroup, registerInstance.Kind);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Empty(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 201).Applications);
+		Assert.Empty(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 202).InstanceGroups);
+		Assert.Equal(1, repository.SaveLogoutCalls);
+	}
+
+	[Fact]
 	public void CreateLogoutCraftCooldownSavePlan_RecordsJavaLogoutStoreBoundaryWithoutWriting()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
