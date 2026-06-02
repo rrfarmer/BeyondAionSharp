@@ -50,6 +50,7 @@ public sealed record FindGroupMutationPostArtifactComparisonPreflightReport(
 	bool HasJavaArtifactTargets,
 	bool HasShapeValidJavaArtifacts,
 	bool HasComparisonKeyProjection,
+	bool HasCSharpTraceRowShapeInputs,
 	bool HasLiveCSharpTraceRows,
 	bool HasRegistryObservation,
 	bool HasComparisonExecution,
@@ -76,6 +77,7 @@ public static class FindGroupMutationPostArtifactComparisonPreflightService
 		FindGroupMutationPostJavaTraceArtifactDirectoryReport? javaArtifacts = null,
 		FindGroupMutationPostComparisonKeyProjectionMetadata? keyProjection = null,
 		FindGroupMutationPostRegistryObservationTraceContract? registryContract = null,
+		FindGroupMutationPostCSharpTraceRowFixtureReport? csharpFixtureReport = null,
 		bool hasLiveCSharpTraceRows = false,
 		bool hasRegistryObservation = false,
 		bool comparisonExecuted = false,
@@ -85,11 +87,15 @@ public static class FindGroupMutationPostArtifactComparisonPreflightService
 		javaArtifacts ??= FindGroupMutationPostJavaTraceArtifactDirectoryReportService.Create(fileTargets.ArtifactRoot);
 		keyProjection ??= FindGroupMutationPostComparisonKeyProjectionMetadataService.Create();
 		registryContract ??= FindGroupMutationPostRegistryObservationTraceContractService.Create();
+		var hasCSharpTraceRowShapeInputs = csharpFixtureReport?.HasActionTwoCSharpRow == true
+			&& csharpFixtureReport.HasActionSixCSharpRow;
+		hasLiveCSharpTraceRows = hasLiveCSharpTraceRows
+			|| (csharpFixtureReport?.HasActionTwoLiveCSharpRow == true && csharpFixtureReport.HasActionSixLiveCSharpRow);
 
 		var rows = new List<FindGroupMutationPostArtifactComparisonPreflightRow>();
 		AddJavaArtifactTargets(rows, fileTargets);
 		AddJavaArtifactReader(rows, javaArtifacts);
-		AddCSharpLiveRows(rows, hasLiveCSharpTraceRows);
+		AddCSharpLiveRows(rows, hasLiveCSharpTraceRows, hasCSharpTraceRowShapeInputs);
 		AddComparisonKeyProjection(rows, keyProjection);
 		AddRegistryObservation(rows, registryContract, hasRegistryObservation);
 		AddComparisonExecution(rows, javaArtifacts, keyProjection, hasLiveCSharpTraceRows, hasRegistryObservation, comparisonExecuted, hasMatchingComparisonResult);
@@ -103,6 +109,7 @@ public static class FindGroupMutationPostArtifactComparisonPreflightService
 			HasJavaArtifactTargets: fileTargets.HasActionTwoTarget && fileTargets.HasActionSixTarget && fileTargets.UsesStableTraceName,
 			HasShapeValidJavaArtifacts: javaArtifacts.Status == FindGroupMutationPostJavaTraceArtifactDirectoryStatus.AllExpectedArtifactsShapeValid,
 			HasComparisonKeyProjection: keyProjection.Fields.Count > 0 && keyProjection.Actions.SequenceEqual([2, 6]),
+			HasCSharpTraceRowShapeInputs: hasCSharpTraceRowShapeInputs,
 			HasLiveCSharpTraceRows: hasLiveCSharpTraceRows,
 			HasRegistryObservation: hasRegistryObservation,
 			HasComparisonExecution: comparisonExecuted,
@@ -201,7 +208,8 @@ public static class FindGroupMutationPostArtifactComparisonPreflightService
 
 	private static void AddCSharpLiveRows(
 		ICollection<FindGroupMutationPostArtifactComparisonPreflightRow> rows,
-		bool hasLiveCSharpTraceRows)
+		bool hasLiveCSharpTraceRows,
+		bool hasCSharpTraceRowShapeInputs)
 	{
 		Add(rows,
 			FindGroupMutationPostArtifactComparisonPreflightGate.CSharpLiveTraceRows,
@@ -209,7 +217,7 @@ public static class FindGroupMutationPostArtifactComparisonPreflightService
 				? FindGroupMutationPostArtifactComparisonPreflightGateStatus.SatisfiedByLiveEvidence
 				: FindGroupMutationPostArtifactComparisonPreflightGateStatus.BlockedMissingLiveCSharpRows,
 			blocks: !hasLiveCSharpTraceRows,
-			$"hasLiveCSharpTraceRows={hasLiveCSharpTraceRows}",
+			$"hasCSharpTraceRowShapeInputs={hasCSharpTraceRowShapeInputs}; hasLiveCSharpTraceRows={hasLiveCSharpTraceRows}",
 			"CM_FIND_GROUP.runImpl action 2/6 live boundary execution",
 			"GameServerConnection.ProcessPacketAsync live CmFindGroup trace rows",
 			"Live C# rows must come from the real boundary, not disabled boundary-plan projection.");

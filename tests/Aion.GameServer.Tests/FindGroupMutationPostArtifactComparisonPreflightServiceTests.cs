@@ -14,6 +14,7 @@ public sealed class FindGroupMutationPostArtifactComparisonPreflightServiceTests
 		Assert.True(report.HasJavaArtifactTargets);
 		Assert.False(report.HasShapeValidJavaArtifacts);
 		Assert.True(report.HasComparisonKeyProjection);
+		Assert.False(report.HasCSharpTraceRowShapeInputs);
 		Assert.False(report.HasLiveCSharpTraceRows);
 		Assert.False(report.HasRegistryObservation);
 		Assert.False(report.HasComparisonExecution);
@@ -23,6 +24,35 @@ public sealed class FindGroupMutationPostArtifactComparisonPreflightServiceTests
 		Assert.True(report.NeedsRegistryObservation);
 		Assert.True(report.NeedsComparisonExecution);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", report.TraceName);
+	}
+
+	[Fact]
+	public void Create_WithRepositoryJavaArtifactsAndDisabledCSharpFixtureRowsKeepsLiveRowsBlocked()
+	{
+		var javaArtifacts = RepositoryJavaArtifacts();
+		var csharpFixture = FindGroupMutationPostCSharpTraceRowFixtureReportService.Create(
+			[
+				FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSampleExport(2),
+				FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSampleExport(6),
+			],
+			javaArtifacts);
+
+		var report = FindGroupMutationPostArtifactComparisonPreflightService.Create(
+			javaArtifacts: javaArtifacts,
+			csharpFixtureReport: csharpFixture);
+
+		Assert.Equal(FindGroupMutationPostArtifactComparisonPreflightStatus.BlockedMissingLiveCSharpRows, report.Status);
+		Assert.True(report.HasShapeValidJavaArtifacts);
+		Assert.True(report.HasCSharpTraceRowShapeInputs);
+		Assert.False(report.HasLiveCSharpTraceRows);
+		Assert.False(report.NeedsGeneratedJavaArtifacts);
+		Assert.True(report.NeedsLiveCSharpTraceRows);
+		Assert.Contains(report.Rows, row =>
+			row.Gate == FindGroupMutationPostArtifactComparisonPreflightGate.CSharpLiveTraceRows
+			&& row.Status == FindGroupMutationPostArtifactComparisonPreflightGateStatus.BlockedMissingLiveCSharpRows
+			&& row.Evidence.Contains("hasCSharpTraceRowShapeInputs=True", StringComparison.Ordinal)
+			&& row.Evidence.Contains("hasLiveCSharpTraceRows=False", StringComparison.Ordinal)
+			&& row.Notes.Contains("not disabled boundary-plan projection", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -162,4 +192,24 @@ public sealed class FindGroupMutationPostArtifactComparisonPreflightServiceTests
 							RefreshedListAction: action == 2 ? 0 : 4)
 					])),
 			"shape-valid only");
+
+	private static FindGroupMutationPostJavaTraceArtifactDirectoryReport RepositoryJavaArtifacts()
+	{
+		var root = FindRepositoryRoot();
+		return FindGroupMutationPostJavaTraceArtifactDirectoryReportService.Create(
+			Path.Combine(root, "parity-artifacts", "find-group", "mutation-post", "java"));
+	}
+
+	private static string FindRepositoryRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "docs", "csharp-port.md")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new InvalidOperationException("Repository root could not be located.");
+	}
 }
