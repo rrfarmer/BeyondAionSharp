@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
@@ -41,6 +42,59 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		Assert.Equal(nameof(SmFindGroup), intent.Packet.GetType().Name);
 		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
 		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionTwelveAcceptUsesConnectionResolverAndRuntimesWithoutLiveDispatch()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS");
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(
+			responder,
+			instanceMaskId: 0x11223344,
+			message: "Entry",
+			minMembers: 6,
+			nowEpochSeconds: 100);
+		var registry = new CapturingConnectionRegistry([applicant]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			playerGroupRuntime: new PlayerGroupRuntime(),
+			playerAllianceRuntime: new PlayerAllianceRuntime());
+		SetActivePlayer(fixture.Connection, responder);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(12);
+				buffer.WriteD(applicant.ObjectId);
+				buffer.WriteC(1);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan!.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(12, plan.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.NotNull(plan.IntentPlan.InviteIntent);
+		Assert.Equal(FindGroupInstanceInviteKind.Group, plan.IntentPlan.InviteIntent!.Kind);
+		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.NotNull(plan.InvitePlan);
+		Assert.Equal(FindGroupInstanceApplicationInviteDispatchStatus.GroupInvitePlanned, plan.InvitePlan!.Status);
+		Assert.False(plan.InvitePlan.DispatchLiveSideEffects);
+		Assert.Equal(GroupInviteRequestStatus.Requested, plan.InvitePlan.GroupInviteRequest?.Status);
+		Assert.Equal(responder.ObjectId, plan.InvitePlan.GroupInviteRequest?.Request.InviterObjectId);
+		Assert.Equal(SmQuestionWindow.PartyInvite, plan.InvitePlan.GroupInviteRequest?.QuestionWindow?.Code);
+		Assert.Equal(1, applicant.ResponseRequester.Count);
+		Assert.Empty(sentPackets);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
 	}
 
 	[Fact]
@@ -112,7 +166,10 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 
 		public static async Task<ConnectionFixture> CreateAsync(
 			FindGroupRecruitmentPlanService? findGroupService,
-			Action<GameServerPacket>? sentPacketObserver = null)
+			Action<GameServerPacket>? sentPacketObserver = null,
+			IGameClientConnectionRegistry? connectionRegistry = null,
+			PlayerGroupRuntime? playerGroupRuntime = null,
+			PlayerAllianceRuntime? playerAllianceRuntime = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -140,8 +197,11 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 						"find-group-boundary-test",
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 						options: new GameServerOptions(),
+						connectionRegistry: connectionRegistry,
 						sentPacketObserver: sentPacketObserver,
 						crypt: crypt,
+						playerGroupRuntime: playerGroupRuntime,
+						playerAllianceRuntime: playerAllianceRuntime,
 						findGroupConnectionClientActionCompositionPlanService: compositionService,
 						findGroupConnectionBoundaryDispatchAdapterService: dispatchAdapterService));
 			}
@@ -155,6 +215,84 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		{
 			await Connection.DisposeAsync();
 			_client.Dispose();
+		}
+	}
+
+	private sealed class CapturingConnectionRegistry(IReadOnlyList<Player> onlinePlayers) : IGameClientConnectionRegistry
+	{
+		public List<(int RecipientObjectId, GameServerPacket Packet)> DirectSends { get; } = [];
+
+		public List<(GameServerPacket Packet, IReadOnlyList<int> RecipientObjectIds)> WorldBroadcasts { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = onlinePlayers.FirstOrDefault(candidate => string.Equals(candidate.Name, playerName, StringComparison.OrdinalIgnoreCase));
+			return player != null;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+			foreach (var player in onlinePlayers)
+				action(player);
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			DirectSends.Add((playerObjectId, packet));
+			return Task.FromResult(onlinePlayers.Any(player => player.ObjectId == playerObjectId));
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			var recipients = onlinePlayers.Where(player => filter?.Invoke(player) != false).Select(player => player.ObjectId).ToArray();
+			WorldBroadcasts.Add((packet, recipients));
+			return Task.FromResult(recipients.Length);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
 		}
 	}
 }
