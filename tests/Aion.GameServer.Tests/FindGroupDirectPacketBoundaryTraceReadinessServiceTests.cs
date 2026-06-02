@@ -169,6 +169,13 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("FindGroupDirectPacketShowListLiveBoundaryTraceScaffoldService", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("actions 0 and 4", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("without wiring ProcessPacketAsync", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpShowListTraceSchema
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("FindGroupDirectPacketShowListBoundaryTraceSchemaService", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("schema version 1", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("without capturing live traffic", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -182,6 +189,9 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("show-list action 0/4 scaffold", StringComparison.Ordinal));
+		Assert.Contains(
+			report.NextRequiredEvidence,
+			item => item.Contains("show-list trace schema", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("ordered trace contract", StringComparison.Ordinal));
