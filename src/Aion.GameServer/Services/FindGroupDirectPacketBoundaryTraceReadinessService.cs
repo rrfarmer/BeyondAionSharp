@@ -30,6 +30,10 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 					"Java CM_FIND_GROUP action 11 synchronously calls FindGroupService.sendInstanceApplication(player, playerOrTeamId), which resolves the recruiter and sends SM_FIND_GROUP applicant details directly to that recruiter.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
+					FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionThirteenDirectSend,
+					"Java CM_FIND_GROUP action 13 synchronously calls FindGroupService.showInstanceGroups(player, true), which skips the action 26 mask-list branch and sends the SM_FIND_GROUP action 10 show-list packet directly to the triggering player.",
+					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed),
+				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionFifteenDirectSend,
 					"Java CM_FIND_GROUP action 15 synchronously calls FindGroupService.showInstanceGroupMembersInfo(player, playerOrTeamId), which sends SM_FIND_GROUP action 16 directly to the triggering player when the instance group exists.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed),
@@ -54,12 +58,16 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 					"C# GameServerConnection.CreateDisabledFindGroupBoundaryPlan can compose action 11 as a direct SmFindGroup applicant intent for the resolved recruiter without invoking live socket sends.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
+					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionThirteenComposition,
+					"C# GameServerConnection.CreateDisabledFindGroupBoundaryPlan can compose action 13 as a direct SmFindGroup action 10 show-list intent without an action 26 mask-list intent, even when form-anywhere is enabled, without invoking live socket sends.",
+					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
+				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionFifteenComposition,
 					"C# GameServerConnection.CreateDisabledFindGroupBoundaryPlan can compose action 15 as a direct SmFindGroup action 16 member-info intent for the active player without invoking live socket sends.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpOptInRegistryExecutionTrace,
-					"C# focused tests can record disabled CM_FIND_GROUP action 0/4/8/10/11/15 acceptance before opt-in registry direct sends of SmFindGroup to the Java-selected recipient.",
+					"C# focused tests can record disabled CM_FIND_GROUP action 0/4/8/10/11/13/15 acceptance before opt-in registry direct sends of SmFindGroup to the Java-selected recipient.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.LiveProcessPacketAsyncTrace,
@@ -72,7 +80,7 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 			],
 			[
 				"Do not claim live direct-packet parity from the disabled helper plus opt-in executor trace.",
-				"Before enabling live CmFindGroup direct actions, add a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 4, 8, 10, 11, and 15.",
+				"Before enabling live CmFindGroup direct actions, add a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 4, 8, 10, 11, 13, and 15.",
 				"Keep the disabled boundary helper available as the reviewed composition surface for future live wiring.",
 			]);
 	}
@@ -91,12 +99,14 @@ public enum FindGroupDirectPacketBoundaryTraceEvidenceKind
 	JavaActionEightDirectSend,
 	JavaActionTenDirectSend,
 	JavaActionElevenDirectSend,
+	JavaActionThirteenDirectSend,
 	JavaActionFifteenDirectSend,
 	CSharpDisabledBoundaryActionZeroComposition,
 	CSharpDisabledBoundaryActionFourComposition,
 	CSharpDisabledBoundaryActionEightComposition,
 	CSharpDisabledBoundaryActionTenComposition,
 	CSharpDisabledBoundaryActionElevenComposition,
+	CSharpDisabledBoundaryActionThirteenComposition,
 	CSharpDisabledBoundaryActionFifteenComposition,
 	CSharpOptInRegistryExecutionTrace,
 	LiveProcessPacketAsyncTrace,
