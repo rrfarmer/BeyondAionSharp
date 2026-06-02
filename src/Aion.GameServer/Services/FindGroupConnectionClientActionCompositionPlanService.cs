@@ -94,6 +94,27 @@ public sealed class FindGroupConnectionClientActionCompositionPlanService
 			facts.ComposeDisabledPlan(_planner, action));
 	}
 
+	public FindGroupPortalInstanceGroupShowPlan? CreatePortalInstanceGroupShowPlan(
+		Player? activePlayer,
+		int targetObjectId)
+	{
+		// Java parity: data/handlers/ai/portals/PortalDialogAI.onDialogSelect and
+		// data/handlers/ai/instance/beshmundirTemple/BeshmundirsWalkAI.onDialogSelect
+		// call FindGroupService.showInstanceGroups(player, getOwner()) for OPEN_INSTANCE_RECRUIT.
+		if (activePlayer == null
+			|| _autoGroups == null
+			|| _world == null
+			|| !_world.TryGetObject(targetObjectId, out var gameObject)
+			|| gameObject is not IWorldNpcObject npc)
+		{
+			return null;
+		}
+
+		return _planner.ShowInstanceGroupsForPortal(
+			activePlayer,
+			_autoGroups.GetRecruitableInstanceMaskIds(npc.TemplateId));
+	}
+
 	private Player? ResolveWorldPlayer(int objectId)
 	{
 		// Java parity: FindGroupService.sendInstanceApplication and sendInstanceApplicationResult

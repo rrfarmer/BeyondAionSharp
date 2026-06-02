@@ -1864,6 +1864,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 		}
 
+		if (packet.DialogActionId == CmDialogSelect.OpenInstanceRecruit)
+		{
+			var portalPlan = _findGroupConnectionClientActionCompositionPlanService
+				?.CreatePortalInstanceGroupShowPlan(player, packet.TargetObjectId);
+			if (portalPlan?.EnableRegisterForInstancesIntent?.Packet != null)
+				await SendPacketAsync(portalPlan.EnableRegisterForInstancesIntent.Packet);
+			return;
+		}
+
 		if (packet.DialogActionId == CmDialogSelect.Recovery)
 		{
 			if (NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, packet.TargetObjectId, CmDialogSelect.Recovery, _world) !=

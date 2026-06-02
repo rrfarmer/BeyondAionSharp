@@ -150,6 +150,13 @@ public sealed class FindGroupClientActionPlanService
 			_ => FindGroupClientActionPlan.Unknown(action.Action),
 		};
 	}
+
+	public FindGroupPortalInstanceGroupShowPlan ShowInstanceGroupsForPortal(
+		Player player,
+		IReadOnlyList<int>? portalNpcInstanceMaskIds)
+	{
+		return _findGroupService.ShowInstanceGroupsForPortal(player, portalNpcInstanceMaskIds);
+	}
 }
 
 public sealed record FindGroupClientAction(

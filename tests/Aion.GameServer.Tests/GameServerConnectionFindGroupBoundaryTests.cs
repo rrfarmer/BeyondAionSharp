@@ -669,6 +669,68 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_OpenInstanceRecruitSendsPortalMaskListOnly()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var portalNpc = CreateNpc(0x04050607, templateId: 700001);
+		var missingPortalNpc = CreateNpc(0x04050608, templateId: 700099);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(portalNpc.ObjectId, portalNpc));
+		Assert.True(world.TryAddObject(missingPortalNpc.ObjectId, missingPortalNpc));
+		var registry = new CapturingConnectionRegistry([viewer]);
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [portalNpc.TemplateId]),
+			new AutoGroupSummary(303, 300120000, 0, 0, 0, 0, false, false, false, [700002]),
+		]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			autoGroups: autoGroups,
+			world: world);
+		SetActivePlayer(fixture.Connection, viewer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				54,
+				buffer =>
+				{
+					buffer.WriteD(portalNpc.ObjectId);
+					buffer.WriteH(CmDialogSelect.OpenInstanceRecruit);
+					buffer.WriteH(0);
+					buffer.WriteH(0);
+					buffer.WriteD(0);
+					buffer.WriteH(0);
+				}));
+
+		var maskPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(26, ReadPrivateField<int>(maskPacket, "_action"));
+		Assert.Equal([302], ReadPrivateField<IReadOnlyList<int>>(maskPacket, "_instanceMaskIds"));
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				54,
+				buffer =>
+				{
+					buffer.WriteD(missingPortalNpc.ObjectId);
+					buffer.WriteH(CmDialogSelect.OpenInstanceRecruit);
+					buffer.WriteH(0);
+					buffer.WriteH(0);
+					buffer.WriteD(0);
+					buffer.WriteH(0);
+				}));
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionFifteenAndSeventeenHandleInstanceGroupInfoAndUpdates()
 	{
 		var sentPackets = new List<GameServerPacket>();
