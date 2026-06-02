@@ -84,6 +84,42 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	}
 
 	[Fact]
+	public void OnLeaveInstance_InvokesDestroyWorkflowAfterRemovingAutoGroupRegistryLikeJavaDestroyIfPossible()
+	{
+		var player = CreatePlayer(1001);
+		AutoGroupInstanceLeaveRuntimeService? service = null;
+		var destroyCalls = new List<(int WorldId, int InstanceId, bool RegistryAlreadyRemoved)>();
+		service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime(),
+			(worldId, instanceId) =>
+			{
+				destroyCalls.Add((worldId, instanceId, service!.GetSnapshot(worldId, instanceId) == null));
+				return new InstanceDestroyWorkflowResult(
+					InstanceDestroyRuntimePlan.Missing(worldId, instanceId),
+					UnregisteredTemporarySpawnCount: 0,
+					WalkerCleanup: null,
+					"test destroy callback");
+			});
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.FreeForAllArena,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [player.ObjectId]));
+
+		var result = service.OnLeaveInstance(player, 300110000, 2, onlinePlayersInsideAfterLeave: 0);
+
+		Assert.True(result.Plan.WouldDestroyInstance);
+		Assert.True(result.RemovedFromRegistry);
+		Assert.NotNull(result.DestroyWorkflowResult);
+		var call = Assert.Single(destroyCalls);
+		Assert.Equal(300110000, call.WorldId);
+		Assert.Equal(2, call.InstanceId);
+		Assert.True(call.RegistryAlreadyRemoved);
+	}
+
+	[Fact]
 	public void OnLeaveInstance_MissingOrUnregisteredInstanceOnlyPlansOpenRegistrationRefresh()
 	{
 		var service = new AutoGroupInstanceLeaveRuntimeService(new PlayerGroupRuntime(), new PlayerAllianceRuntime());

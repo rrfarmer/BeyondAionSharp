@@ -9,15 +9,18 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 	private readonly Dictionary<AutoGroupInstanceRuntimeKey, AutoGroupInstanceRuntimeState> _instancesByKey = [];
 	private readonly PlayerGroupRuntime _playerGroups;
 	private readonly PlayerAllianceRuntime _playerAlliances;
+	private readonly Func<int, int, InstanceDestroyWorkflowResult>? _destroyInstance;
 	private readonly bool _autoGroupEnabled;
 
 	public AutoGroupInstanceLeaveRuntimeService(
 		PlayerGroupRuntime playerGroups,
 		PlayerAllianceRuntime playerAlliances,
+		Func<int, int, InstanceDestroyWorkflowResult>? destroyInstance = null,
 		bool autoGroupEnabled = true)
 	{
 		_playerGroups = playerGroups;
 		_playerAlliances = playerAlliances;
+		_destroyInstance = destroyInstance;
 		_autoGroupEnabled = autoGroupEnabled;
 	}
 
@@ -42,6 +45,8 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 		int instanceId,
 		int onlinePlayersInsideAfterLeave)
 	{
+		AutoGroupInstanceRuntimeResult result;
+		AutoGroupInstanceRuntimeKey? destroyKey = null;
 		lock (_sync)
 		{
 			var key = new AutoGroupInstanceRuntimeKey(worldId, instanceId);
@@ -61,14 +66,27 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				_playerAlliances.RemoveMember(player);
 
 			if (state != null && plan.WouldDestroyInstance)
+			{
 				removedFromRegistry = _instancesByKey.Remove(key);
+				if (removedFromRegistry)
+					destroyKey = key;
+			}
 
-			return new AutoGroupInstanceRuntimeResult(
+			result = new AutoGroupInstanceRuntimeResult(
 				plan,
 				state?.CreateSnapshot(),
 				removedFromRegistry,
+				DestroyWorkflowResult: null,
 				"AutoGroupService.onLeaveInstance live adapter slice -> planner, unregister, team cleanup, registry removal when destroyIfPossible is true");
 		}
+
+		if (destroyKey is { } keyToDestroy && _destroyInstance != null)
+		{
+			var destroyResult = _destroyInstance(keyToDestroy.WorldId, keyToDestroy.InstanceId);
+			result = result with { DestroyWorkflowResult = destroyResult };
+		}
+
+		return result;
 	}
 
 	public AutoGroupInstanceRuntimeSnapshot? GetSnapshot(int worldId, int instanceId)
@@ -106,6 +124,7 @@ public sealed record AutoGroupInstanceRuntimeResult(
 	AutoGroupInstanceLeavePlan Plan,
 	AutoGroupInstanceRuntimeSnapshot? SnapshotAfterLeave,
 	bool RemovedFromRegistry,
+	InstanceDestroyWorkflowResult? DestroyWorkflowResult,
 	string JavaSource);
 
 public sealed record AutoGroupInstanceRuntimeSnapshot(
