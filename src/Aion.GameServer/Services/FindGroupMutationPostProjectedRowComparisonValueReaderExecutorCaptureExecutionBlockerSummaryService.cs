@@ -71,8 +71,9 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		liveCapturePreflight ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContractService.Create();
 		acceptanceMatrix ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixContractService.Create(liveCapturePreflight);
 
+		var captureAcceptanceMatrixRows = CaptureAcceptanceMatrixRowEvidence(acceptanceMatrix);
 		var rows = acceptanceMatrix.Rows
-			.Select(row => CreateRow(row, liveCapturePreflight))
+			.Select(row => CreateRow(row, liveCapturePreflight, captureAcceptanceMatrixRows))
 			.ToArray();
 		var status = StatusFor(acceptanceMatrix);
 		var primaryBlocker = rows.FirstOrDefault(row => row.BlocksRuntimeComparison)
@@ -98,7 +99,8 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryRow CreateRow(
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixRow matrixRow,
-		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContract liveCapturePreflight)
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContract liveCapturePreflight,
+		string captureAcceptanceMatrixRows)
 	{
 		var runbookRow = liveCapturePreflight.Rows.FirstOrDefault(row => row.Step == matrixRow.SourceStep);
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryRow(
@@ -113,10 +115,18 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			matrixRow.EvidenceField,
 			runbookRow?.Command ?? "No focused evidence command is available for this acceptance field.",
 			matrixRow.RequiredEvidence,
-			matrixRow.CurrentEvidence,
+			$"{matrixRow.CurrentEvidence}; captureAcceptanceMatrixRows={captureAcceptanceMatrixRows}",
 			matrixRow.BlocksRuntimeComparison
 				? matrixRow.RuntimeComparisonBlocker
 				: matrixRow.RuntimeComparisonBlocker + " This row does not block runtime comparison start, but it still blocks executable implementation and verified parity.");
+	}
+
+	private static string CaptureAcceptanceMatrixRowEvidence(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixContract acceptanceMatrix)
+	{
+		return acceptanceMatrix.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", acceptanceMatrix.Rows.Select(row => $"{row.Field}={row.CurrentEvidence}"));
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryStatus StatusFor(
