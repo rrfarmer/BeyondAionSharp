@@ -55,7 +55,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"FindGroupInstanceApplicationInviteDispatchPlanService can compose action 12 group/alliance invite request-service results without sending packets.",
 				"FindGroupSideEffectDispatchAuditService can audit direct packet and world-broadcast intents without calling the live connection registry.",
 				"FindGroupSideEffectDispatchExecutorService can execute direct packet and race-filtered world-broadcast intents through IGameClientConnectionRegistry when explicitly invoked.",
-				"FindGroupConnectionBoundarySideEffectCompositionEvidenceService can compose parsed CmFindGroup planner output, including action 0/4 show-list direct packets, action 8/9/17 instance-group mutation packets, action 10/13 instance-group show direct packets, and action 1/5 world-broadcast intents, with opt-in executor results without wiring GameServerConnection.",
+				"FindGroupConnectionBoundarySideEffectCompositionEvidenceService can compose parsed CmFindGroup planner output, including action 0/4 show-list direct packets, action 8/9/17 instance-group mutation packets, action 10/13 instance-group show direct packets, action 11/12 instance-application direct/invite intents, and action 1/5 world-broadcast intents, with opt-in executor results without wiring GameServerConnection.",
 			],
 			"Java sources reviewed: CM_FIND_GROUP.runImpl and services/findgroup/FindGroupService.");
 	}
