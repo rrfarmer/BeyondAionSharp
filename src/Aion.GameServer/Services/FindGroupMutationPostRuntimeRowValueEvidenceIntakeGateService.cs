@@ -134,6 +134,9 @@ public static class FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateServic
 		FindGroupMutationPostValueProjectionHandoffGate handoff,
 		bool ready)
 	{
+		var handoffRowEvidence = handoff.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", handoff.Rows.Select(row => $"{row.Stage}={row.Evidence}"));
 		return new FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateRow(
 			1,
 			FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStage.ValueProjectionHandoff,
@@ -144,8 +147,8 @@ public static class FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateServic
 			HasRuntimeEvidence: handoff.HasRuntimeRowValues,
 			BlocksValueReaders: !ready,
 			"Value-projection handoff must reach runtime-row-value evidence intake after paired Java/C# rows, value mappings, and value-reader readiness are complete.",
-			$"status={handoff.Status}; hasRuntimeRowValues={handoff.HasRuntimeRowValues}; canStartValueProjection={handoff.CanStartValueProjection}",
-			"Handoff metadata is necessary but cannot read Java JSON or C# trace-export values.");
+			$"status={handoff.Status}; hasRuntimeRowValues={handoff.HasRuntimeRowValues}; canStartValueProjection={handoff.CanStartValueProjection}; valueProjectionHandoffRows={handoffRowEvidence}",
+			"Handoff metadata preserves row-pairing and accepted-boundary-row evidence, but cannot read Java JSON or C# trace-export values.");
 	}
 
 	private static FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateRow JavaRuntimeRow(

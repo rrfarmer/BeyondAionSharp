@@ -27,6 +27,11 @@ public sealed class FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateServic
 		Assert.Contains("addRecruitment/addApplication", gate.JavaSource, StringComparison.Ordinal);
 		Assert.Equal(Enum.GetValues<FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStage>(), gate.Rows.Select(row => row.Stage).Distinct());
 		Assert.Contains("value-projection handoff", gate.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(gate.Rows, row =>
+			row.Stage == FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStage.ValueProjectionHandoff
+			&& row.CurrentEvidence.Contains("rowPairingEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", StringComparison.Ordinal)
+			&& row.Notes.Contains("accepted-boundary-row evidence", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -41,7 +46,10 @@ public sealed class FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateServic
 		Assert.Contains(gate.Rows, row =>
 			row.Stage == FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStage.ValueProjectionHandoff
 			&& row.Status == FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStageStatus.ReadyForRuntimeInput
-			&& !row.BlocksValueReaders);
+			&& !row.BlocksValueReaders
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
+			&& row.Notes.Contains("accepted-boundary-row evidence", StringComparison.Ordinal));
 		Assert.Contains(gate.Rows, row =>
 			row.Stage == FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStage.JavaRuntimeArtifactRows
 			&& row.Status == FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateStageStatus.Blocked
@@ -127,7 +135,7 @@ public sealed class FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateServic
 					FindGroupMutationPostValueProjectionHandoffGateStageStatus.Blocked,
 					HasExpectedShape: true,
 					BlocksValueProjection: true,
-					"hasRuntimeRowValues=False",
+					"hasRuntimeRowValues=False; rowPairingEvidence=action2=action=2; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True; requiredBoundaryFields=action,mutationKind,boundaryAccepted",
 					"runtime values missing"),
 			],
 			HasRowPairingReadiness: true,
