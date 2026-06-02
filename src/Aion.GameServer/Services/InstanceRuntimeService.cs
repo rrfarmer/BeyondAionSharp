@@ -146,6 +146,23 @@ public static class InstanceRuntimeService
 				"TeleportService.moveToInstanceExit(player, player.getWorldId(), player.getRace())"))
 			.ToArray();
 	}
+
+	public static InstanceExitResolutionPlan ResolveInstanceExit(
+		InstanceExitTable instanceExits,
+		WorldMapRuntimeStateTable worldMaps,
+		int worldId,
+		string race)
+	{
+		// Java parity: TeleportService.moveToInstanceExit uses the race-specific InstanceExit only
+		// when InstanceService.instanceExists(exitWorld, 1); otherwise it falls back to bind location.
+		var exit = instanceExits.GetInstanceExit(worldId, race);
+		if (exit == null)
+			return InstanceExitResolutionPlan.BindFallback(worldId, race, "No instance exit found for race/world");
+
+		return worldMaps.InstanceExists(exit.ExitWorldId, 1)
+			? InstanceExitResolutionPlan.ExitDestination(worldId, race, exit, exit.ToWorldPosition())
+			: InstanceExitResolutionPlan.BindFallback(worldId, race, "Exit world instance 1 does not exist");
+	}
 }
 
 public sealed class UnsupportedOperationException : InvalidOperationException
@@ -189,3 +206,47 @@ public sealed record InstancePlayerForcedExitPlan(
 	string Race,
 	SmSystemMessage ForceLeaveMessage,
 	string MoveToInstanceExitJavaSource);
+
+public sealed record InstanceExitResolutionPlan(
+	InstanceExitResolutionStatus Status,
+	int SourceWorldId,
+	string Race,
+	InstanceExitSummary? Exit,
+	WorldPosition? Destination,
+	string JavaSource,
+	string? FallbackReason)
+{
+	public static InstanceExitResolutionPlan ExitDestination(
+		int sourceWorldId,
+		string race,
+		InstanceExitSummary exit,
+		WorldPosition destination)
+	{
+		return new InstanceExitResolutionPlan(
+			InstanceExitResolutionStatus.ExitDestination,
+			sourceWorldId,
+			race,
+			exit,
+			destination,
+			"TeleportService.moveToInstanceExit -> teleportTo(exitWorld, x, y, z, h)",
+			null);
+	}
+
+	public static InstanceExitResolutionPlan BindFallback(int sourceWorldId, string race, string reason)
+	{
+		return new InstanceExitResolutionPlan(
+			InstanceExitResolutionStatus.BindLocationFallback,
+			sourceWorldId,
+			race,
+			null,
+			null,
+			"TeleportService.moveToInstanceExit -> moveToBindLocation",
+			reason);
+	}
+}
+
+public enum InstanceExitResolutionStatus
+{
+	ExitDestination,
+	BindLocationFallback,
+}

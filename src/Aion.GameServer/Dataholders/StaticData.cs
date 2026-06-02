@@ -52,6 +52,7 @@ public sealed class StaticData
 		HousingTemplateTable housingTemplates,
 		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
+		InstanceExitTable instanceExits,
 		PortalPathTable portalPaths,
 		PortalLocTable portalLocs,
 		AutoGroupTable autoGroups,
@@ -108,6 +109,7 @@ public sealed class StaticData
 		HousingTemplates = housingTemplates;
 		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
+		InstanceExits = instanceExits;
 		PortalPaths = portalPaths;
 		PortalLocs = portalLocs;
 		AutoGroups = autoGroups;
@@ -211,6 +213,8 @@ public sealed class StaticData
 
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
+	public InstanceExitTable InstanceExits { get; }
+
 	public PortalPathTable PortalPaths { get; }
 
 	public PortalLocTable PortalLocs { get; }
@@ -300,6 +304,7 @@ public sealed class StaticData
 		var housingParts = new List<HousingPartSummary>();
 		var housingObjectTemplates = new List<HousingObjectTemplateSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
+		var instanceExits = new List<InstanceExitSummary>();
 		var portalUsePaths = new List<PortalPathSummary>();
 		var portalDialogPaths = new List<PortalPathSummary>();
 		var portalScrollPaths = new List<PortalPathSummary>();
@@ -876,6 +881,21 @@ public sealed class StaticData
 				if (reader.IsEmptyElement)
 					currentPortalPathParent = null;
 
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "instance_exit")
+			{
+				// Java parity: model/templates/portal/InstanceExit scalar JAXB attributes, race defaults to PC_ALL.
+				instanceExits.Add(
+					new InstanceExitSummary(
+						ReadRequiredIntAttribute(reader, "instance_id"),
+						ReadRequiredIntAttribute(reader, "exit_world"),
+						reader.GetAttribute("race") ?? "PC_ALL",
+						ReadFloatAttribute(reader, "x"),
+						ReadFloatAttribute(reader, "y"),
+						ReadFloatAttribute(reader, "z"),
+						(byte)ReadIntAttribute(reader, "h")));
 				continue;
 			}
 
@@ -2814,6 +2834,7 @@ public sealed class StaticData
 				housingParts.AsReadOnly()),
 			new HousingObjectTemplateTable(housingObjectTemplates.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
+			new InstanceExitTable(instanceExits.AsReadOnly()),
 			new PortalPathTable(
 				portalDialogPaths.AsReadOnly(),
 				portalDialogTeleportIds,

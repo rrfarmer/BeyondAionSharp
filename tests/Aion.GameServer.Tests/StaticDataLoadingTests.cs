@@ -655,6 +655,43 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsInstanceExitSummariesWithJavaRaceFallbacks()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<instance_exits>
+					<instance_exit instance_id="300030000" exit_world="210020000" race="ELYOS" x="330" y="2732.1643" z="263.4721" />
+					<instance_exit instance_id="300030000" exit_world="220020000" race="ASMODIANS" x="264.6885" y="2366.3713" z="445.1222" h="29" />
+					<instance_exit instance_id="300080000" exit_world="400010000" x="2784.99" y="2664.03" z="1486.7" />
+				</instance_exits>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+
+		Assert.Equal(3, staticData.InstanceExits.Count);
+		var elyosExit = staticData.InstanceExits.GetInstanceExit(300030000, "ELYOS");
+		Assert.NotNull(elyosExit);
+		Assert.Equal(210020000, elyosExit.ExitWorldId);
+		Assert.Equal("ELYOS", elyosExit.Race);
+		Assert.Equal(330f, elyosExit.X);
+		Assert.Equal((byte)0, elyosExit.Heading);
+		var asmodianExit = staticData.InstanceExits.GetInstanceExit(300030000, "ASMODIANS");
+		Assert.NotNull(asmodianExit);
+		Assert.Equal(220020000, asmodianExit.ExitWorldId);
+		Assert.Equal((byte)29, asmodianExit.Heading);
+		var pcAllExit = staticData.InstanceExits.GetInstanceExit(300080000, "ELYOS");
+		Assert.NotNull(pcAllExit);
+		Assert.Equal("PC_ALL", pcAllExit.Race);
+		Assert.Null(staticData.InstanceExits.GetInstanceExit(1, "ELYOS"));
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsRegularNpcSpawnSpotSummaries()
 	{
 		using var temp = TempDirectory.Create();

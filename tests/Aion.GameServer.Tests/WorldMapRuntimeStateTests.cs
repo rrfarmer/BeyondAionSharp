@@ -291,6 +291,39 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Contains("moveToInstanceExit", plan.MoveToInstanceExitJavaSource, StringComparison.Ordinal);
 	}
 
+	[Fact]
+	public void InstanceRuntimeService_ResolveInstanceExitUsesRaceExitAndFallsBackToBindLikeJavaTeleportService()
+	{
+		var instanceExits = new InstanceExitTable(
+		[
+			new InstanceExitSummary(300030000, 210020000, "ELYOS", 330, 2732.1643f, 263.4721f, 0),
+			new InstanceExitSummary(300030000, 220020000, "ASMODIANS", 264.6885f, 2366.3713f, 445.1222f, 29),
+			new InstanceExitSummary(300080000, 400010000, "PC_ALL", 2784.99f, 2664.03f, 1486.7f, 0),
+		]);
+		var worldMaps = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(210020000, IsInstance: false, TwinCount: 1),
+			new WorldMapSummary(220020000, IsInstance: false, TwinCount: 1),
+			new WorldMapSummary(400010000, IsInstance: false, TwinCount: 1),
+		]);
+
+		var elyos = InstanceRuntimeService.ResolveInstanceExit(instanceExits, worldMaps, 300030000, "ELYOS");
+		worldMaps.RemoveWorldMapInstance(220020000, 1);
+		var missingExitWorld = InstanceRuntimeService.ResolveInstanceExit(instanceExits, worldMaps, 300030000, "ASMODIANS");
+		var pcAll = InstanceRuntimeService.ResolveInstanceExit(instanceExits, worldMaps, 300080000, "ELYOS");
+		var missingExit = InstanceRuntimeService.ResolveInstanceExit(instanceExits, worldMaps, 123, "ELYOS");
+
+		Assert.Equal(InstanceExitResolutionStatus.ExitDestination, elyos.Status);
+		Assert.Equal(new WorldPosition(210020000, 330, 2732.1643f, 263.4721f, 0), elyos.Destination);
+		Assert.Equal("ELYOS", elyos.Exit?.Race);
+		Assert.Equal(InstanceExitResolutionStatus.BindLocationFallback, missingExitWorld.Status);
+		Assert.Equal("Exit world instance 1 does not exist", missingExitWorld.FallbackReason);
+		Assert.Equal(InstanceExitResolutionStatus.ExitDestination, pcAll.Status);
+		Assert.Equal("PC_ALL", pcAll.Exit?.Race);
+		Assert.Equal(InstanceExitResolutionStatus.BindLocationFallback, missingExit.Status);
+		Assert.Equal("No instance exit found for race/world", missingExit.FallbackReason);
+	}
+
 	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
 	{
 		private readonly Func<WorldMapInstanceRuntimeState, bool>? _instanceExistsAtDestroy;
