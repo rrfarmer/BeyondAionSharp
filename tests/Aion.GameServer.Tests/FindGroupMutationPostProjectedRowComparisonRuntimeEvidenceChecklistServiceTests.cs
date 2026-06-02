@@ -90,9 +90,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ProviderStatus == FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveScaffold
 			&& row.ExistingProvider.Contains("FindGroupMutationPostGuardedFixtureResultContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostCSharpLiveBoundaryRowIntakePreflightService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostCSharpAcceptedBoundaryRowHandoffReportService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("guarded live C# CM_FIND_GROUP boundary", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("accepted-boundary-row handoff report", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("Java artifact pairing identity", StringComparison.Ordinal)
-			&& row.Notes.Contains("intake preflight remains blocked", StringComparison.Ordinal)
+			&& row.Notes.Contains("intake preflight and accepted-boundary-row handoff remain blocked", StringComparison.Ordinal)
 			&& !row.HasRuntimeEvidence);
 		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching
