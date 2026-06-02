@@ -63,8 +63,12 @@ public static class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		AddShowApplicationsIntent(intents, activePlayerObjectId, clientPlan.ApplicationMutationPlan?.ShowApplicationsPlan);
 		AddShowApplicationsIntent(intents, activePlayerObjectId, clientPlan.ApplicationShowPlan);
 		AddRange(intents, clientPlan.InstanceGroupMutationPlan?.DirectPacketIntents);
+		AddShowInstanceGroupsIntent(intents, activePlayerObjectId, clientPlan.InstanceGroupMutationPlan?.ShowInstanceGroupsPlan);
 		if (clientPlan.InstanceGroupClientShowPlan?.EnableRegisterForInstancesIntent != null)
 			intents.Add(clientPlan.InstanceGroupClientShowPlan.EnableRegisterForInstancesIntent);
+		AddShowInstanceGroupsIntent(intents, activePlayerObjectId, clientPlan.InstanceGroupClientShowPlan?.ShowInstanceGroupsPlan);
+		if (clientPlan.InstanceGroupClientShowPlan == null)
+			AddShowInstanceGroupsIntent(intents, activePlayerObjectId, clientPlan.InstanceGroupShowPlan);
 		AddRange(intents, clientPlan.InstanceGroupMemberInfoPlan?.DirectPacketIntents);
 		AddRange(intents, clientPlan.InstanceApplicationPlan?.DirectPacketIntents);
 		return intents;
@@ -96,6 +100,20 @@ public static class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 			activePlayerObjectId.Value,
 			plan.Packet,
 			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(4, applications))"));
+	}
+
+	private static void AddShowInstanceGroupsIntent(
+		ICollection<FindGroupDirectPacketIntent> intents,
+		int? activePlayerObjectId,
+		FindGroupInstanceGroupShowPlan? plan)
+	{
+		if (activePlayerObjectId == null || plan == null)
+			return;
+
+		intents.Add(new FindGroupDirectPacketIntent(
+			activePlayerObjectId.Value,
+			plan.Packet,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))"));
 	}
 
 	private static IReadOnlyList<FindGroupWorldBroadcastIntent> CollectWorldBroadcastIntents(FindGroupClientActionPlan clientPlan)
