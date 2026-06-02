@@ -257,6 +257,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		var sourceRow = liveCapturePreflight.Rows.FirstOrDefault(row => row.Step == sourceStep);
 		var sourceRequirement = sourceRow?.SourceRequirement
 			?? FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutableImplementation;
+		var liveCapturePreflightRows = LiveCapturePreflightRowEvidence(liveCapturePreflight);
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixRow(
 			order,
 			field,
@@ -272,9 +273,17 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			BlocksVerifiedParity: true,
 			evidenceField,
 			requiredEvidence,
-			$"{currentEvidence}; sourceStatus={sourceRow?.Status.ToString() ?? "Missing"}; sourceCanAcceptEvidence={sourceRow?.CanAcceptEvidence.ToString() ?? "False"}; sourceCanRunCommand={sourceRow?.CanRunCommand.ToString() ?? "False"}; matrixStatus={matrixStatus}",
+			$"{currentEvidence}; sourceStatus={sourceRow?.Status.ToString() ?? "Missing"}; sourceCanAcceptEvidence={sourceRow?.CanAcceptEvidence.ToString() ?? "False"}; sourceCanRunCommand={sourceRow?.CanRunCommand.ToString() ?? "False"}; matrixStatus={matrixStatus}; liveCapturePreflightRows={liveCapturePreflightRows}",
 			runtimeComparisonBlocker,
 			sourceRow?.AcceptanceGate ?? "Source preflight row is missing.");
+	}
+
+	private static string LiveCapturePreflightRowEvidence(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContract liveCapturePreflight)
+	{
+		return liveCapturePreflight.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", liveCapturePreflight.Rows.Select(row => $"{row.Step}={row.CurrentEvidence}"));
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus FieldStatusFor(

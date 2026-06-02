@@ -58,6 +58,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.MissingExecutorConsistencyAuditEvidence
 			&& row.SourceRequirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit
 			&& row.RuntimeComparisonBlocker.Contains("consistency blockers", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("liveCapturePreflightRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("runtimeComparisonHandoffRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("consistencyAuditRowEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("executorEvidenceBridgeRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
 			&& row.BlocksRuntimeComparison);
 		Assert.Contains(matrix.Rows, row =>
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows
@@ -121,6 +127,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutableImplementationGate
 			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.ExecutableImplementationDeferred
 			&& !row.BlocksRuntimeComparison
+			&& row.CurrentEvidence.Contains("liveCapturePreflightRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("runtimeComparisonHandoffRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
 			&& row.RuntimeComparisonBlocker.Contains("must stay blocked", StringComparison.Ordinal));
 	}
 
@@ -170,8 +179,14 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			"test command",
 			"test artifact root",
 			$"test acceptance gate for {step}",
-			"test current evidence",
+			CurrentEvidenceFor(step),
 			"test notes");
+
+	private static string CurrentEvidenceFor(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep step) =>
+		step == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutorConsistencyAudit
+			? "runtimeComparisonHandoffRows=ExecutorConsistencyAudit=consistencyAuditRowEvidence=ExecutorEvidenceBridge=executorEvidenceBridgeRows=ResultEmissionBlocker=resultEmissionBlockerRows=Matched=materializationBlockerEvidence=projectedValueRows=activePlayerObjectId; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True"
+			: "test current evidence";
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement RequirementFor(
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep step) =>
