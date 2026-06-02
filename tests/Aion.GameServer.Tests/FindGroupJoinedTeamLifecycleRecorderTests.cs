@@ -54,6 +54,48 @@ public sealed class FindGroupJoinedTeamLifecycleRecorderTests
 		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 400).Recruitments);
 	}
 
+	[Fact]
+	public void RecordAllianceJoin_UsesRuntimeMembersAfterAllianceMutationLikeJavaAddPlayerOrdering()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(2001, "AllianceLeader", "RANGER");
+		var invited = CreatePlayer(2024, "AllianceInvited", "CLERIC");
+		runtime.CreateAlliance(9001, leader);
+		for (var objectId = 2002; objectId <= 2023; objectId++)
+			runtime.AddMember(9001, CreatePlayer(objectId, $"AllianceMember{objectId}", "GLADIATOR"));
+		runtime.AddMember(9001, invited);
+		findGroupService.AddRecruitment(
+			leader,
+			"Alliance post",
+			groupType: 8,
+			nowEpochSeconds: 200,
+			new FindGroupRecruitmentSubject(
+				9001,
+				"ELYOS",
+				IsSoloPlayer: false,
+				leader.Name,
+				Size: 24,
+				MinLevel: 45,
+				MaxLevel: 65,
+				ClassId: 5));
+		var recorder = new FindGroupJoinedTeamLifecycleRecorder(findGroupService, () => 333, serverId: 5);
+
+		var plan = recorder.RecordAllianceJoin(invited, runtime, allianceId: 9001);
+
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Missing, plan.SoloRecruitmentRemoval.Status);
+		Assert.Null(plan.TeamRecruitmentAdd);
+		Assert.NotNull(plan.FullTeamRecruitmentRemoval);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, plan.FullTeamRecruitmentRemoval!.Status);
+		Assert.Equal(9001, plan.FullTeamRecruitmentRemoval.RemovedRecruitment?.ObjectId);
+		Assert.NotNull(plan.FullTeamRecruitmentRemoval.WorldBroadcastIntent);
+		Assert.Equal(
+			"PacketSendUtility.broadcastToWorld(..., p -> p.getRace() == recruitment.getRace())",
+			plan.FullTeamRecruitmentRemoval.WorldBroadcastIntent!.JavaSource);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 400).Recruitments);
+	}
+
 	private static Player CreatePlayer(int objectId, string name, string playerClass)
 	{
 		return new Player
