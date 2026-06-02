@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
@@ -126,6 +127,25 @@ public static class InstanceRuntimeService
 			DeletedNonPlayerObjectCount: deletedNonPlayerObjects,
 			"InstanceService.destroyInstance removes map instance before instance.getInstanceHandler().onInstanceDestroy()");
 	}
+
+	public static IReadOnlyList<InstancePlayerForcedExitPlan> CreatePlayerForcedExitPlans(
+		IEnumerable<Player> players,
+		int worldId,
+		int instanceId)
+	{
+		// Java parity: InstanceService.destroyInstance sends STR_MSG_LEAVE_INSTANCE_FORCE(0)
+		// then calls TeleportService.moveToInstanceExit(player, player.getWorldId(), player.getRace()).
+		return players
+			.Where(player => player.Position.WorldId == worldId && player.Position.InstanceId == instanceId)
+			.Select(player => new InstancePlayerForcedExitPlan(
+				player.ObjectId,
+				player.Position.WorldId,
+				player.Position.InstanceId,
+				player.Race,
+				SmSystemMessage.LeaveInstanceForce(0),
+				"TeleportService.moveToInstanceExit(player, player.getWorldId(), player.getRace())"))
+			.ToArray();
+	}
 }
 
 public sealed class UnsupportedOperationException : InvalidOperationException
@@ -161,3 +181,11 @@ public sealed record InstanceDestroyRuntimePlan(
 			"InstanceService.destroyInstance is a no-op for unknown or already removed modeled instances");
 	}
 }
+
+public sealed record InstancePlayerForcedExitPlan(
+	int PlayerObjectId,
+	int WorldId,
+	int InstanceId,
+	string Race,
+	SmSystemMessage ForceLeaveMessage,
+	string MoveToInstanceExitJavaSource);

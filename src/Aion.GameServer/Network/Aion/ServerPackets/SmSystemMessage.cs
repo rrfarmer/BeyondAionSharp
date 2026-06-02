@@ -26,6 +26,8 @@ public sealed class SmSystemMessage : GameServerPacket
 
 	public int MessageId => _messageId;
 
+	public IReadOnlyList<string?> Parameters => _parameters;
+
 	public static SmSystemMessage DialogTooFarToTalk()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_DIALOG_TOO_FAR_TO_TALK.
@@ -642,6 +644,12 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE_NOT_PARTY.
 		return new SmSystemMessage(1400042);
+	}
+
+	public static SmSystemMessage LeaveInstanceForce(int minutes)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE_FORCE(int).
+		return new SmSystemMessage(1400046, minutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
 	public static SmSystemMessage EnterOnlyUnionDon()

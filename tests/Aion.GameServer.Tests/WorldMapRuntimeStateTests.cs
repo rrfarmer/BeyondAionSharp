@@ -269,6 +269,28 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Single(handler.DestroyedInstances);
 	}
 
+	[Fact]
+	public void InstanceRuntimeService_CreatePlayerForcedExitPlansSendsForceMessageAndMoveToInstanceExitLikeJava()
+	{
+		var players = new[]
+		{
+			new Player { ObjectId = 1001, Race = "ELYOS", Position = new WorldPosition(300030000, 1, 1, 1, 0, InstanceId: 7) },
+			new Player { ObjectId = 1002, Race = "ASMODIANS", Position = new WorldPosition(300030000, 2, 2, 2, 0, InstanceId: 8) },
+			new Player { ObjectId = 1003, Race = "ELYOS", Position = new WorldPosition(210010000, 3, 3, 3, 0, InstanceId: 7) },
+		};
+
+		var plans = InstanceRuntimeService.CreatePlayerForcedExitPlans(players, 300030000, instanceId: 7);
+
+		var plan = Assert.Single(plans);
+		Assert.Equal(1001, plan.PlayerObjectId);
+		Assert.Equal(300030000, plan.WorldId);
+		Assert.Equal(7, plan.InstanceId);
+		Assert.Equal("ELYOS", plan.Race);
+		Assert.Equal(1400046, plan.ForceLeaveMessage.MessageId);
+		Assert.Equal(["0"], plan.ForceLeaveMessage.Parameters);
+		Assert.Contains("moveToInstanceExit", plan.MoveToInstanceExitJavaSource, StringComparison.Ordinal);
+	}
+
 	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
 	{
 		private readonly Func<WorldMapInstanceRuntimeState, bool>? _instanceExistsAtDestroy;
