@@ -25,7 +25,10 @@ public sealed class FindGroupMutationPostProjectedValueExecutorEvidenceBridgeSer
 		Assert.Contains(bridge.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.ResultEmissionBlocker
 			&& row.Status == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRowStatus.BlockedResultEmissionBlockerNotReady
-			&& row.CurrentEvidence.Contains("canEmitAnyResult=False", StringComparison.Ordinal));
+			&& row.CurrentEvidence.Contains("canEmitAnyResult=False", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -36,6 +39,13 @@ public sealed class FindGroupMutationPostProjectedValueExecutorEvidenceBridgeSer
 			EvidenceSummary(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorEvidenceSummaryStatus.BlockedUpstreamMetadataNotReady));
 
 		Assert.Equal(FindGroupMutationPostProjectedValueExecutorEvidenceBridgeStatus.BlockedEvidenceSummaryNotReady, bridge.Status);
+		Assert.Contains(bridge.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.ResultEmissionBlocker
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
+			&& !bridge.CanEmitResults);
 		Assert.Contains(bridge.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.EvidenceSummary
 			&& row.Status == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRowStatus.BlockedEvidenceSummaryNotReady
@@ -58,6 +68,9 @@ public sealed class FindGroupMutationPostProjectedValueExecutorEvidenceBridgeSer
 			&& row.Status == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRowStatus.BlockedExecutableImplementationDisabled
 			&& row.BlocksExecutableImplementation
 			&& row.BlocksRuntimeComparison
+			&& bridge.Rows.Any(resultRow =>
+				resultRow.Requirement == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.ResultEmissionBlocker
+				&& resultRow.CurrentEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal))
 			&& row.CurrentEvidence.Contains("resultEmissionBlocked=5", StringComparison.Ordinal)
 			&& row.CurrentEvidence.Contains("summaryBlocksImplementation=5", StringComparison.Ordinal)
 			&& row.RequiredEvidence.Contains("row identity pairing", StringComparison.Ordinal));
@@ -135,7 +148,7 @@ public sealed class FindGroupMutationPostProjectedValueExecutorEvidenceBridgeSer
 			HasEmissionGateRow: true,
 			CanMaterializeOutput: false,
 			CanEmitResult: false,
-			"test blocking evidence",
+			"materializationBlockerEvidence=projectedValueRows=activePlayerObjectId=functionPreflightRows=ReaderImplementationGate=status=ReadyForFunctionExecutionBlocked; typedReaderGateRows=RuntimeRowValueIntake=runtimeRowValueIntakeRows=RuntimeRowValueIntake=status=ReadyForRuntimeRowsValueReadersBlocked; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True",
 			"test required evidence",
 			"test notes");
 

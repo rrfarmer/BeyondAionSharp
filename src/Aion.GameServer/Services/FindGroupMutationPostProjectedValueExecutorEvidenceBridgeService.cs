@@ -113,8 +113,12 @@ public static class FindGroupMutationPostProjectedValueExecutorEvidenceBridgeSer
 		int order,
 		FindGroupMutationPostProjectedValueExecutorEvidenceBridgeStatus bridgeStatus,
 		FindGroupMutationPostProjectedValueResultEmissionBlockerReport resultEmissionBlocker,
-		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorEvidenceSummaryContract evidenceSummary) =>
-		new(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorEvidenceSummaryContract evidenceSummary)
+	{
+		var resultEmissionBlockerRows = resultEmissionBlocker.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", resultEmissionBlocker.Rows.Select(row => $"{row.OutputKind}={row.BlockingEvidence}"));
+		return new(
 			order,
 			FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.ResultEmissionBlocker,
 			bridgeStatus == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeStatus.BlockedResultEmissionBlockerNotReady
@@ -128,8 +132,9 @@ public static class FindGroupMutationPostProjectedValueExecutorEvidenceBridgeSer
 			resultEmissionBlocker.Status.ToString(),
 			evidenceSummary.Status.ToString(),
 			"Projected-value result-emission blocker must show every output kind is blocked by value projection, row decisions, context attachment, materialization, or runtime comparison before executor implementation can be audited.",
-			$"outputKinds={resultEmissionBlocker.OutputKindCount}; emittableOutputs={resultEmissionBlocker.EmittableOutputCount}; canEmitAnyResult={resultEmissionBlocker.CanEmitAnyResult}; canRunRuntimeComparison={resultEmissionBlocker.CanRunRuntimeComparison}; canClaimVerifiedParity={resultEmissionBlocker.CanClaimVerifiedParity}",
+			$"outputKinds={resultEmissionBlocker.OutputKindCount}; emittableOutputs={resultEmissionBlocker.EmittableOutputCount}; canEmitAnyResult={resultEmissionBlocker.CanEmitAnyResult}; canRunRuntimeComparison={resultEmissionBlocker.CanRunRuntimeComparison}; canClaimVerifiedParity={resultEmissionBlocker.CanClaimVerifiedParity}; resultEmissionBlockerRows={resultEmissionBlockerRows}",
 			"Output blockers are metadata only; they do not emit result rows.");
+	}
 
 	private static FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRow EvidenceSummaryRow(
 		int order,
