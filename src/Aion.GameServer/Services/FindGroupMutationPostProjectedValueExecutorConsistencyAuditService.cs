@@ -227,8 +227,10 @@ public static class FindGroupMutationPostProjectedValueExecutorConsistencyAuditS
 	private static FindGroupMutationPostProjectedValueExecutorConsistencyAuditRow ExecutorEvidenceBridgeRow(
 		int order,
 		FindGroupMutationPostProjectedValueExecutorConsistencyAuditStatus auditStatus,
-		FindGroupMutationPostProjectedValueExecutorEvidenceBridge executorEvidenceBridge) =>
-		new(
+		FindGroupMutationPostProjectedValueExecutorEvidenceBridge executorEvidenceBridge)
+	{
+		var executorEvidenceBridgeRows = BridgeRowEvidence(executorEvidenceBridge);
+		return new(
 			order,
 			FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ExecutorEvidenceBridge,
 			auditStatus == FindGroupMutationPostProjectedValueExecutorConsistencyAuditStatus.BlockedExecutorEvidenceBridgeNotReady
@@ -243,14 +245,17 @@ public static class FindGroupMutationPostProjectedValueExecutorConsistencyAuditS
 			BlocksVerifiedParity: true,
 			executorEvidenceBridge.Status.ToString(),
 			"Executor evidence bridge must keep implementation, execution, result emission, runtime comparison, and verified parity disabled.",
-			$"rows={executorEvidenceBridge.Rows.Count}; hasAnyRuntimeEvidence={executorEvidenceBridge.HasAnyRuntimeEvidence}; canWriteExecutableExecutor={executorEvidenceBridge.CanWriteExecutableExecutor}; canExecuteExecutor={executorEvidenceBridge.CanExecuteExecutor}; canEmitResults={executorEvidenceBridge.CanEmitResults}; canRunRuntimeComparison={executorEvidenceBridge.CanRunRuntimeComparison}; canClaimVerifiedParity={executorEvidenceBridge.CanClaimVerifiedParity}",
+			$"rows={executorEvidenceBridge.Rows.Count}; hasAnyRuntimeEvidence={executorEvidenceBridge.HasAnyRuntimeEvidence}; canWriteExecutableExecutor={executorEvidenceBridge.CanWriteExecutableExecutor}; canExecuteExecutor={executorEvidenceBridge.CanExecuteExecutor}; canEmitResults={executorEvidenceBridge.CanEmitResults}; canRunRuntimeComparison={executorEvidenceBridge.CanRunRuntimeComparison}; canClaimVerifiedParity={executorEvidenceBridge.CanClaimVerifiedParity}; executorEvidenceBridgeRows={executorEvidenceBridgeRows}",
 			"Bridge readiness is still blocked metadata and must not enable executor implementation.");
+	}
 
 	private static FindGroupMutationPostProjectedValueExecutorConsistencyAuditRow RuntimeComparisonAndLiveDispatchRow(
 		int order,
 		FindGroupMutationPostProjectedValueExecutorConsistencyAuditStatus auditStatus,
-		FindGroupMutationPostProjectedValueExecutorEvidenceBridge executorEvidenceBridge) =>
-		new(
+		FindGroupMutationPostProjectedValueExecutorEvidenceBridge executorEvidenceBridge)
+	{
+		var executorEvidenceBridgeRows = BridgeRowEvidence(executorEvidenceBridge);
+		return new(
 			order,
 			FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.RuntimeComparisonAndLiveDispatch,
 			FindGroupMutationPostProjectedValueExecutorConsistencyAuditRowStatus.BlockedRuntimeComparisonMissing,
@@ -263,8 +268,16 @@ public static class FindGroupMutationPostProjectedValueExecutorConsistencyAuditS
 			BlocksVerifiedParity: true,
 			auditStatus.ToString(),
 			"Runtime comparison and live dispatch require deterministic Java/C# runtime evidence after value reads, row identity, materialization, emission, and executor implementation evidence exist.",
-			$"bridgeStatus={executorEvidenceBridge.Status}; bridgeRuntimeRows={executorEvidenceBridge.Rows.Count(row => row.Requirement == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.RuntimeComparisonHandoff)}; canRunRuntimeComparison={executorEvidenceBridge.CanRunRuntimeComparison}; canClaimVerifiedParity={executorEvidenceBridge.CanClaimVerifiedParity}",
+			$"bridgeStatus={executorEvidenceBridge.Status}; bridgeRuntimeRows={executorEvidenceBridge.Rows.Count(row => row.Requirement == FindGroupMutationPostProjectedValueExecutorEvidenceBridgeRequirement.RuntimeComparisonHandoff)}; canRunRuntimeComparison={executorEvidenceBridge.CanRunRuntimeComparison}; canClaimVerifiedParity={executorEvidenceBridge.CanClaimVerifiedParity}; executorEvidenceBridgeRows={executorEvidenceBridgeRows}",
 			"Live dispatch and verified parity remain blocked even when the metadata chain is internally consistent.");
+	}
+
+	private static string BridgeRowEvidence(FindGroupMutationPostProjectedValueExecutorEvidenceBridge executorEvidenceBridge)
+	{
+		return executorEvidenceBridge.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", executorEvidenceBridge.Rows.Select(row => $"{row.Requirement}={row.CurrentEvidence}"));
+	}
 
 	private static string DecisionFor(FindGroupMutationPostProjectedValueExecutorConsistencyAuditStatus status)
 	{

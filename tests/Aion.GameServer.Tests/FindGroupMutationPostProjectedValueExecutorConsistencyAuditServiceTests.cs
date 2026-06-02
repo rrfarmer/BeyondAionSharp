@@ -30,6 +30,12 @@ public sealed class FindGroupMutationPostProjectedValueExecutorConsistencyAuditS
 			&& row.Status == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRowStatus.BlockedMaterializationUnavailable
 			&& row.CurrentEvidence.Contains("unreadEqualityFields=38", StringComparison.Ordinal)
 			&& row.BlocksVerifiedParity);
+		Assert.Contains(audit.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ExecutorEvidenceBridge
+			&& row.CurrentEvidence.Contains("executorEvidenceBridgeRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -86,9 +92,18 @@ public sealed class FindGroupMutationPostProjectedValueExecutorConsistencyAuditS
 			Assert.True(row.BlocksVerifiedParity);
 		});
 		Assert.Contains(audit.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ExecutorEvidenceBridge
+			&& row.CurrentEvidence.Contains("executorEvidenceBridgeRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal));
+		Assert.Contains(audit.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.RuntimeComparisonAndLiveDispatch
 			&& row.Status == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRowStatus.BlockedRuntimeComparisonMissing
 			&& row.CurrentEvidence.Contains("bridgeRuntimeRows=1", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("executorEvidenceBridgeRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
 			&& row.Notes.Contains("verified parity remain blocked", StringComparison.Ordinal));
 	}
 
@@ -303,7 +318,7 @@ public sealed class FindGroupMutationPostProjectedValueExecutorConsistencyAuditS
 			FindGroupMutationPostProjectedValueResultEmissionBlockerReportStatus.BlockedResultEmissionUnavailable.ToString(),
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorEvidenceSummaryStatus.BlockedRuntimeEvidenceMissing.ToString(),
 			"test required bridge evidence",
-			"test current bridge evidence",
+			"resultEmissionBlockerRows=Matched=materializationBlockerEvidence=projectedValueRows=activePlayerObjectId=functionPreflightRows=ReaderImplementationGate=status=ReadyForFunctionExecutionBlocked; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True",
 			"test bridge notes");
 
 	private static T[] OutputRows<T>(Func<int, FindGroupMutationPostProjectedRowComparisonDryRunOutputKind, T> factory) =>
