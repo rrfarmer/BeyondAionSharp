@@ -499,6 +499,92 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionFifteenAndSeventeenHandleInstanceGroupInfoAndUpdates()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var recruiter = CreatePlayer(0x01020305, "Recruiter", "ELYOS");
+		var registry = new CapturingConnectionRegistry([viewer, recruiter]);
+		findGroupService.RegisterInstanceGroup(recruiter, 0x11223344, "Old entry", minMembers: 3, nowEpochSeconds: 100);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+
+		SetActivePlayer(fixture.Connection, viewer);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(15);
+					buffer.WriteD(recruiter.ObjectId);
+					buffer.WriteD(0x11223344);
+				}));
+
+		var memberInfoPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(16, ReadPrivateField<int>(memberInfoPacket, "_action"));
+		var memberInfo = ReadPrivateField<FindGroupInstanceGroupMemberInfoSnapshot>(memberInfoPacket, "_memberInfo");
+		var member = Assert.Single(memberInfo.Members);
+		Assert.Equal(recruiter.ObjectId, member.PlayerObjectId);
+		Assert.Equal("Recruiter", member.Name);
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(15);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteD(0x11223344);
+				}));
+		Assert.Empty(sentPackets);
+
+		SetActivePlayer(fixture.Connection, recruiter);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(17);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteD(0x11223344);
+					buffer.WriteS("New entry");
+				}));
+
+		var updateListPacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(10, ReadPrivateField<int>(updateListPacket, "_action"));
+		var groups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(updateListPacket, "_instanceGroups");
+		var group = Assert.Single(groups);
+		Assert.Equal(recruiter.ObjectId, group.GroupEntryId);
+		Assert.Equal("New entry", group.Message);
+		Assert.Equal("New entry", Assert.Single(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 101).InstanceGroups).Message);
+
+		sentPackets.Clear();
+		findGroupService.RemoveInstanceGroup(recruiter, nowEpochSeconds: 102);
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(17);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteD(0x11223344);
+					buffer.WriteS("Missing entry");
+				}));
+
+		Assert.Empty(sentPackets);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();
