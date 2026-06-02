@@ -30,6 +30,12 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		Assert.Same(
 			provider.GetRequiredService<PlayerAllianceInviteRequestService>(),
 			GetPrivateField<PlayerAllianceInviteRequestService>(socketServer, "_playerAllianceInviteRequestService"));
+		Assert.Same(
+			provider.GetRequiredService<FindGroupConnectionClientActionCompositionPlanService>(),
+			GetPrivateField<FindGroupConnectionClientActionCompositionPlanService>(socketServer, "_findGroupConnectionClientActionCompositionPlanService"));
+		Assert.Same(
+			provider.GetRequiredService<FindGroupConnectionBoundaryDispatchAdapterService>(),
+			GetPrivateField<FindGroupConnectionBoundaryDispatchAdapterService>(socketServer, "_findGroupConnectionBoundaryDispatchAdapterService"));
 	}
 
 	[Fact]

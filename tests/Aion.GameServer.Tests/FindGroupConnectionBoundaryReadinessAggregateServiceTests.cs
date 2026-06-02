@@ -20,6 +20,12 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 			component => component.Name == "Connection boundary"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.Blocked
 				&& component.Evidence.Contains("still defers CmFindGroup", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Components,
+			component => component.Name == "Connection adapter consumer"
+				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
+				&& component.Evidence.Contains("without live sends", StringComparison.Ordinal)
+				&& component.CSharpSource.Contains("CreateDisabledFindGroupBoundaryPlan", StringComparison.Ordinal));
 	}
 
 	[Fact]

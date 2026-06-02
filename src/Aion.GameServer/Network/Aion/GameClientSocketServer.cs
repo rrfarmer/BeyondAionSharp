@@ -54,6 +54,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
+	private readonly FindGroupConnectionClientActionCompositionPlanService? _findGroupConnectionClientActionCompositionPlanService;
+	private readonly FindGroupConnectionBoundaryDispatchAdapterService? _findGroupConnectionBoundaryDispatchAdapterService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -93,7 +95,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
-		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null)
+		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
+		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
+		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -136,6 +140,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
+		_findGroupConnectionClientActionCompositionPlanService = findGroupConnectionClientActionCompositionPlanService;
+		_findGroupConnectionBoundaryDispatchAdapterService = findGroupConnectionBoundaryDispatchAdapterService;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -184,7 +190,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				playerGroupRuntime: _playerGroupRuntime,
 				playerAllianceRuntime: _playerAllianceRuntime,
 				playerGroupInviteRequestService: _playerGroupInviteRequestService,
-				playerAllianceInviteRequestService: _playerAllianceInviteRequestService);
+				playerAllianceInviteRequestService: _playerAllianceInviteRequestService,
+				findGroupConnectionClientActionCompositionPlanService: _findGroupConnectionClientActionCompositionPlanService,
+				findGroupConnectionBoundaryDispatchAdapterService: _findGroupConnectionBoundaryDispatchAdapterService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

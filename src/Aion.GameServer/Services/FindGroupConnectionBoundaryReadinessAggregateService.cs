@@ -21,6 +21,12 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"dotnetConversion/src/Aion.GameServer/Network/Aion/GameServerConnection.cs case CmFindGroup",
 					"network/aion/clientpackets/CM_FIND_GROUP.runImpl"),
 				new FindGroupConnectionBoundaryComponentReadiness(
+					"Connection adapter consumer",
+					"GameServerConnection can consume injected FindGroupConnectionClientActionCompositionPlanService and FindGroupConnectionBoundaryDispatchAdapterService to compose disabled CmFindGroup boundary plans without live sends.",
+					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
+					"GameServerConnection.CreateDisabledFindGroupBoundaryPlan; GameClientSocketServer",
+					"network/aion/clientpackets/CM_FIND_GROUP.runImpl"),
+				new FindGroupConnectionBoundaryComponentReadiness(
 					"Client action planner",
 					"FindGroupConnectionClientActionCompositionPlanService can compose disabled action plans from active-player, team, world, auto-group, and config facts.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,

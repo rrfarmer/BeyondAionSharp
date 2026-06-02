@@ -90,6 +90,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<PrivateStoreCreatePlan>? _privateStoreCreatePlanObserver;
 	private readonly Action<PrivateStoreNameOpenCompositionPlan>? _privateStoreNameOpenCompositionPlanObserver;
 	private readonly Action<GroupDataExchangeHandlerCompositionPlan>? _groupDataExchangeHandlerCompositionPlanObserver;
+	private readonly FindGroupConnectionClientActionCompositionPlanService? _findGroupConnectionClientActionCompositionPlanService;
+	private readonly FindGroupConnectionBoundaryDispatchAdapterService? _findGroupConnectionBoundaryDispatchAdapterService;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
@@ -174,6 +176,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<PrivateStoreCreatePlan>? privateStoreCreatePlanObserver = null,
 		Action<PrivateStoreNameOpenCompositionPlan>? privateStoreNameOpenCompositionPlanObserver = null,
 		Action<GroupDataExchangeHandlerCompositionPlan>? groupDataExchangeHandlerCompositionPlanObserver = null,
+		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
+		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
@@ -231,6 +235,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_privateStoreCreatePlanObserver = privateStoreCreatePlanObserver;
 		_privateStoreNameOpenCompositionPlanObserver = privateStoreNameOpenCompositionPlanObserver;
 		_groupDataExchangeHandlerCompositionPlanObserver = groupDataExchangeHandlerCompositionPlanObserver;
+		_findGroupConnectionClientActionCompositionPlanService = findGroupConnectionClientActionCompositionPlanService;
+		_findGroupConnectionBoundaryDispatchAdapterService = findGroupConnectionBoundaryDispatchAdapterService;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
@@ -260,6 +266,47 @@ public sealed class GameServerConnection : BaseClientConnection
 	internal Player? ActivePlayer => _activePlayer;
 
 	public GameConnectionState State => _state;
+
+	internal FindGroupConnectionBoundaryDispatchAdapterPlan? CreateDisabledFindGroupBoundaryPlan(
+		CmFindGroup packet,
+		int nowEpochSeconds,
+		Func<int, Player?>? resolvePlayer = null)
+	{
+		// Java parity: network/aion/clientpackets/CM_FIND_GROUP.runImpl dispatches
+		// FindGroupService.getInstance() actions. This non-live consumer composes the
+		// connection boundary shape without invoking ProcessPacketAsync live sends.
+		if (_findGroupConnectionClientActionCompositionPlanService == null
+			|| _findGroupConnectionBoundaryDispatchAdapterService == null)
+		{
+			return null;
+		}
+
+		var resolvedPlayer = resolvePlayer ?? ResolveOnlinePlayerByObjectId;
+		var compositionPlan = _findGroupConnectionClientActionCompositionPlanService.CreateDisabledPlan(
+			this,
+			packet,
+			nowEpochSeconds,
+			resolvedPlayer);
+		return _findGroupConnectionBoundaryDispatchAdapterService.CreateDisabledPlan(
+			compositionPlan,
+			resolvedPlayer,
+			_playerGroupRuntime,
+			_playerAllianceRuntime);
+	}
+
+	private Player? ResolveOnlinePlayerByObjectId(int objectId)
+	{
+		if (_activePlayer?.ObjectId == objectId)
+			return _activePlayer;
+
+		Player? resolvedPlayer = null;
+		_connectionRegistry?.ForEachOnlinePlayer(player =>
+		{
+			if (resolvedPlayer == null && player.ObjectId == objectId)
+				resolvedPlayer = player;
+		});
+		return resolvedPlayer;
+	}
 
 	internal static int GetGeneralInfoWarehouseRestrictionFlag(
 		int itemId,
