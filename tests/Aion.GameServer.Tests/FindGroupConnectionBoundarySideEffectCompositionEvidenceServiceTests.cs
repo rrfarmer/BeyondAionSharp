@@ -210,6 +210,89 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 	}
 
 	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionEightRegisterInstanceGroupAsDirectPacket()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		registry.OnlineDirectRecipients.Add(recruiter.ObjectId);
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(new FindGroupRecruitmentPlanService()));
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(8);
+				buffer.WriteD(0x11223344);
+				buffer.WriteC(0);
+				buffer.WriteS("Entry");
+				buffer.WriteC(3);
+			});
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			recruiter,
+			packet,
+			nowEpochSeconds: 0x01020305);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(8, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.RegisterInstanceGroup, evidence.IntentPlan.ClientActionKind);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
+		var intent = Assert.Single(evidence.IntentPlan.DirectPacketIntents);
+		Assert.Equal(recruiter.ObjectId, intent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(14, List.of(instanceGroup)))", intent.JavaSource);
+		var direct = Assert.Single(evidence.ExecutionPlan.DirectPackets);
+		Assert.True(direct.Sent);
+		Assert.Equal(recruiter.ObjectId, direct.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		Assert.Equal([recruiter.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+	}
+
+	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionNineRemoveInstanceGroupAsUpdatedShowList()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var removed = CreatePlayer(0x01020304, "Removed", "ELYOS");
+		var remaining = CreatePlayer(0x01020307, "Remaining", "ELYOS");
+		registry.OnlineDirectRecipients.Add(removed.ObjectId);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(removed, 0x11223344, "Removed", minMembers: 3, nowEpochSeconds: 0x01020305);
+		findGroupService.RegisterInstanceGroup(remaining, 0x11223345, "Remaining", minMembers: 2, nowEpochSeconds: 0x01020305);
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(findGroupService));
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(9);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteD(0x11223344);
+			});
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			removed,
+			packet,
+			nowEpochSeconds: 0x01020306);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(9, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.RemoveInstanceGroup, evidence.IntentPlan.ClientActionKind);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
+		var intent = Assert.Single(evidence.IntentPlan.DirectPacketIntents);
+		Assert.Equal(removed.ObjectId, intent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", intent.JavaSource);
+		var direct = Assert.Single(evidence.ExecutionPlan.DirectPackets);
+		Assert.True(direct.Sent);
+		Assert.Equal(removed.ObjectId, direct.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		var remainingSnapshot = Assert.Single(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 0x01020307).InstanceGroups);
+		Assert.Equal(remaining.ObjectId, remainingSnapshot.GroupEntryId);
+	}
+
+	[Fact]
 	public async Task ExecuteOptInAsync_ComposesParsedActionTenInstanceGroupShowWithEnableRegisterPacket()
 	{
 		var registry = new FakeGameClientConnectionRegistry();
@@ -314,6 +397,52 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
 		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
 		Assert.Equal([viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+	}
+
+	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionSeventeenUpdateInstanceGroupAsUpdatedShowList()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		registry.OnlineDirectRecipients.Add(recruiter.ObjectId);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(
+			recruiter,
+			instanceMaskId: 0x11223344,
+			message: "Old",
+			minMembers: 3,
+			nowEpochSeconds: 0x01020305);
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(findGroupService));
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(17);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteD(0x11223344);
+				buffer.WriteS("New");
+			});
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			recruiter,
+			packet,
+			nowEpochSeconds: 0x01020306);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(17, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.UpdateInstanceGroup, evidence.IntentPlan.ClientActionKind);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		var intent = Assert.Single(evidence.IntentPlan.DirectPacketIntents);
+		Assert.Equal(recruiter.ObjectId, intent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", intent.JavaSource);
+		var direct = Assert.Single(evidence.ExecutionPlan.DirectPackets);
+		Assert.True(direct.Sent);
+		Assert.Equal(recruiter.ObjectId, direct.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		var snapshot = Assert.Single(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 0x01020307).InstanceGroups);
+		Assert.Equal("New", snapshot.Message);
 	}
 
 	[Fact]
