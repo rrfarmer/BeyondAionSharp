@@ -295,6 +295,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		string notes,
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus stepStatus)
 	{
+		var runtimeComparisonHandoffRows = RuntimeComparisonHandoffRowEvidence(runtimeComparisonHandoff);
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookRow(
 			order,
 			step,
@@ -311,8 +312,15 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			command,
 			artifactRoot,
 			acceptanceGate,
-			$"{currentEvidence}; handoffStatus={runtimeComparisonHandoff.Status}; canStartRuntimeComparison={runtimeComparisonHandoff.CanStartRuntimeComparison}; canStartExecutableImplementation={runtimeComparisonHandoff.CanStartExecutableImplementation}; canClaimVerifiedParity={runtimeComparisonHandoff.CanClaimVerifiedParity}",
+			$"{currentEvidence}; handoffStatus={runtimeComparisonHandoff.Status}; canStartRuntimeComparison={runtimeComparisonHandoff.CanStartRuntimeComparison}; canStartExecutableImplementation={runtimeComparisonHandoff.CanStartExecutableImplementation}; canClaimVerifiedParity={runtimeComparisonHandoff.CanClaimVerifiedParity}; runtimeComparisonHandoffRows={runtimeComparisonHandoffRows}",
 			notes);
+	}
+
+	private static string RuntimeComparisonHandoffRowEvidence(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContract runtimeComparisonHandoff)
+	{
+		return runtimeComparisonHandoff.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", runtimeComparisonHandoff.Rows.Select(row => $"{row.Requirement}={row.CurrentEvidence}"));
 	}
 
 	private static string DecisionFor(
