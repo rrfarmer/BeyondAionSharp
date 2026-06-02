@@ -42,7 +42,45 @@ public sealed class FindGroupSideEffectDispatchExecutorServiceTests
 		Assert.Equal(1001, direct.RecipientObjectId);
 		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
 		Assert.Equal([1001], registry.DirectSends.Select(send => send.RecipientObjectId));
+		var step = Assert.Single(plan.ExecutionOrder);
+		Assert.Equal(1, step.Sequence);
+		Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+		Assert.Equal(1001, step.RecipientObjectId);
 		Assert.Empty(plan.WorldBroadcasts);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_PreservesDirectIntentOrderLikeSequentialJavaSendPacketCalls()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		registry.OnlineDirectRecipients.UnionWith([1001, 1002]);
+		var service = new FindGroupSideEffectDispatchExecutorService(registry);
+		var first = new FindGroupDirectPacketIntent(
+			1001,
+			SmFindGroup.RemoveApplication(1001),
+			"PacketSendUtility.sendPacket(first, packet)");
+		var second = new FindGroupDirectPacketIntent(
+			1002,
+			SmFindGroup.RemoveApplication(1002),
+			"PacketSendUtility.sendPacket(second, packet)");
+
+		var plan = await service.ExecuteAsync([first, second]);
+
+		Assert.Equal([1001, 1002], registry.DirectSends.Select(send => send.RecipientObjectId));
+		Assert.Collection(
+			plan.ExecutionOrder,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(1001, step.RecipientObjectId);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(1002, step.RecipientObjectId);
+			});
 	}
 
 	[Fact]
@@ -111,6 +149,52 @@ public sealed class FindGroupSideEffectDispatchExecutorServiceTests
 		Assert.Equal("p -> p.getRace() == recorded race", broadcast.JavaFilter);
 		var recorded = Assert.Single(registry.WorldBroadcasts);
 		Assert.Equal([elyos.ObjectId], recorded.RecipientObjectIds);
+		var step = Assert.Single(plan.ExecutionOrder);
+		Assert.Equal(1, step.Sequence);
+		Assert.Equal(FindGroupSideEffectDispatchExecutionKind.WorldBroadcast, step.Kind);
+		Assert.Null(step.RecipientObjectId);
+	}
+
+	[Fact]
+	public async Task ExecuteAsync_RecordsDirectPacketsBeforeWorldBroadcastsForFutureBoundaryAudit()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		registry.OnlineDirectRecipients.Add(1001);
+		registry.WorldPlayers.AddRange(
+		[
+			CreatePlayer(1001, "ElyosOne", "ELYOS"),
+			CreatePlayer(1002, "ElyosTwo", "ELYOS"),
+			CreatePlayer(1003, "Asmo", "ASMODIANS"),
+		]);
+		var directIntent = new FindGroupDirectPacketIntent(
+			1001,
+			SmFindGroup.RemoveApplication(1001),
+			"PacketSendUtility.sendPacket(player, packet)");
+		var broadcastIntent = new FindGroupWorldBroadcastIntent(
+			"ELYOS",
+			SmFindGroup.RemoveRecruitment(1001, 5, 0, 0, 0),
+			"PacketSendUtility.broadcastToWorld(packet, p -> p.getRace() == recruitment.getRace())");
+
+		var plan = await new FindGroupSideEffectDispatchExecutorService(registry)
+			.ExecuteAsync([directIntent], [broadcastIntent]);
+
+		Assert.Equal([1001], registry.DirectSends.Select(send => send.RecipientObjectId));
+		var broadcast = Assert.Single(registry.WorldBroadcasts);
+		Assert.Equal([1001, 1002], broadcast.RecipientObjectIds);
+		Assert.Collection(
+			plan.ExecutionOrder,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(1001, step.RecipientObjectId);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.WorldBroadcast, step.Kind);
+				Assert.Null(step.RecipientObjectId);
+			});
 	}
 
 	[Fact]
@@ -126,6 +210,7 @@ public sealed class FindGroupSideEffectDispatchExecutorServiceTests
 		Assert.True(plan.DispatchLiveSideEffects);
 		Assert.Empty(plan.DirectPackets);
 		Assert.Empty(plan.WorldBroadcasts);
+		Assert.Empty(plan.ExecutionOrder);
 		Assert.Empty(registry.WorldBroadcasts);
 	}
 

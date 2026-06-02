@@ -14,9 +14,17 @@ public sealed class FindGroupSideEffectDispatchExecutorService(IGameClientConnec
 		// for race-filtered world fanout. This executor is opt-in and is not wired into
 		// GameServerConnection's CM_FIND_GROUP branch.
 		var directResults = new List<FindGroupDirectPacketDispatchExecution>();
+		var executionOrder = new List<FindGroupSideEffectDispatchExecutionStep>();
+		var sequence = 0;
 		foreach (var intent in directPacketIntents ?? [])
 		{
 			var sent = await connectionRegistry.SendPacketToPlayerAsync(intent.RecipientObjectId, intent.Packet);
+			executionOrder.Add(new FindGroupSideEffectDispatchExecutionStep(
+				++sequence,
+				FindGroupSideEffectDispatchExecutionKind.DirectPacket,
+				intent.RecipientObjectId,
+				intent.Packet.GetType().Name,
+				intent.JavaSource));
 			directResults.Add(new FindGroupDirectPacketDispatchExecution(
 				intent.RecipientObjectId,
 				intent.Packet.GetType().Name,
@@ -33,6 +41,12 @@ public sealed class FindGroupSideEffectDispatchExecutorService(IGameClientConnec
 			var sentCount = await connectionRegistry.BroadcastToWorldAsync(
 				intent.Packet,
 				player => string.Equals(player.Race, intent.Race, StringComparison.Ordinal));
+			executionOrder.Add(new FindGroupSideEffectDispatchExecutionStep(
+				++sequence,
+				FindGroupSideEffectDispatchExecutionKind.WorldBroadcast,
+				RecipientObjectId: null,
+				intent.Packet.GetType().Name,
+				intent.JavaSource));
 			worldBroadcastResults.Add(new FindGroupWorldBroadcastDispatchExecution(
 				intent.Race,
 				intent.Packet.GetType().Name,
@@ -44,6 +58,7 @@ public sealed class FindGroupSideEffectDispatchExecutorService(IGameClientConnec
 		return new FindGroupSideEffectDispatchExecutionPlan(
 			directResults,
 			worldBroadcastResults,
+			executionOrder,
 			DispatchLiveSideEffects: true,
 			"Opt-in executor only; CM_FIND_GROUP live boundary remains deferred.");
 	}
@@ -52,8 +67,22 @@ public sealed class FindGroupSideEffectDispatchExecutorService(IGameClientConnec
 public sealed record FindGroupSideEffectDispatchExecutionPlan(
 	IReadOnlyList<FindGroupDirectPacketDispatchExecution> DirectPackets,
 	IReadOnlyList<FindGroupWorldBroadcastDispatchExecution> WorldBroadcasts,
+	IReadOnlyList<FindGroupSideEffectDispatchExecutionStep> ExecutionOrder,
 	bool DispatchLiveSideEffects,
 	string BoundaryNote);
+
+public enum FindGroupSideEffectDispatchExecutionKind
+{
+	DirectPacket,
+	WorldBroadcast,
+}
+
+public sealed record FindGroupSideEffectDispatchExecutionStep(
+	int Sequence,
+	FindGroupSideEffectDispatchExecutionKind Kind,
+	int? RecipientObjectId,
+	string PacketType,
+	string JavaSource);
 
 public sealed record FindGroupDirectPacketDispatchExecution(
 	int RecipientObjectId,
