@@ -41,6 +41,15 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		TimeSpan period,
 		CancellationToken cancellationToken = default)
 	{
+		return ScheduleAtFixedRateTask(action, initialDelay, period, cancellationToken).Completion;
+	}
+
+	public ScheduledTask ScheduleAtFixedRateTask(
+		Func<CancellationToken, ValueTask> action,
+		TimeSpan initialDelay,
+		TimeSpan period,
+		CancellationToken cancellationToken = default)
+	{
 		// Java parity: utils/ThreadPoolManager.scheduleAtFixedRate.
 		if (Volatile.Read(ref _isShutdown) != 0)
 			throw new InvalidOperationException("ThreadPoolManager is shut down.");
@@ -49,7 +58,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		var task = Task.Run(() => RunFixedRateAsync(action, initialDelay, period, linkedTokenSource), CancellationToken.None);
 		_scheduledTasks.Add(task);
 		_scheduleObserver?.Invoke(new ThreadPoolScheduleObservation(ThreadPoolScheduleKind.FixedRate, initialDelay, period));
-		return task;
+		return new ScheduledTask(task, linkedTokenSource);
 	}
 
 	public async Task ShutdownAsync(TimeSpan gracePeriod = default)

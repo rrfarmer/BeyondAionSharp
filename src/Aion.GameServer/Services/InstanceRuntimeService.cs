@@ -115,6 +115,7 @@ public static class InstanceRuntimeService
 		if (!worldMaps.TryGetWorldMapInstance(worldId, instanceId, out var instance) || instance == null)
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
+		var canceledEmptyInstanceTask = instance.CancelEmptyInstanceTask();
 		if (!worldMaps.RemoveWorldMapInstance(worldId, instanceId))
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
@@ -130,8 +131,9 @@ public static class InstanceRuntimeService
 			Removed: true,
 			DestroyHandlerNotified: notified,
 			DeletedNonPlayerObjectCount: deletedNonPlayerObjects,
-			forcedExitTeleportPlans,
-			"InstanceService.destroyInstance removes map instance before instance.getInstanceHandler().onInstanceDestroy()");
+			CanceledEmptyInstanceTask: canceledEmptyInstanceTask,
+			ForcedExitTeleportPlans: forcedExitTeleportPlans,
+			JavaSource: "InstanceService.destroyInstance removes map instance before instance.getInstanceHandler().onInstanceDestroy()");
 	}
 
 	public static IReadOnlyList<InstancePlayerForcedExitPlan> CreatePlayerForcedExitPlans(
@@ -235,6 +237,7 @@ public sealed record InstanceDestroyRuntimePlan(
 	bool Removed,
 	bool DestroyHandlerNotified,
 	int DeletedNonPlayerObjectCount,
+	bool CanceledEmptyInstanceTask,
 	IReadOnlyList<InstancePlayerForcedExitTeleportPlan> ForcedExitTeleportPlans,
 	string JavaSource)
 {
@@ -247,8 +250,9 @@ public sealed record InstanceDestroyRuntimePlan(
 			Removed: false,
 			DestroyHandlerNotified: false,
 			DeletedNonPlayerObjectCount: 0,
-			Array.Empty<InstancePlayerForcedExitTeleportPlan>(),
-			"InstanceService.destroyInstance is a no-op for unknown or already removed modeled instances");
+			CanceledEmptyInstanceTask: false,
+			ForcedExitTeleportPlans: Array.Empty<InstancePlayerForcedExitTeleportPlan>(),
+			JavaSource: "InstanceService.destroyInstance is a no-op for unknown or already removed modeled instances");
 	}
 }
 

@@ -140,6 +140,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftInformerService>();
 			services.AddSingleton<RiftScheduleService>();
 			services.AddSingleton<InstanceDestroyWorkflowService>();
+			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();

@@ -1,3 +1,5 @@
+using Aion.GameServer.Utils;
+
 namespace Aion.GameServer.World;
 
 public sealed class WorldMapInstanceRuntimeState
@@ -9,6 +11,8 @@ public sealed class WorldMapInstanceRuntimeState
 	private bool _hasPendingNearbyQuestRefresh;
 	private bool _instanceCreateNotified;
 	private bool _instanceDestroyNotified;
+	private ScheduledTask? _emptyInstanceTask;
+	private DateTimeOffset _lastPlayerLeaveTime = DateTimeOffset.UnixEpoch;
 
 	public WorldMapInstanceRuntimeState(
 		int instanceId,
@@ -76,6 +80,24 @@ public sealed class WorldMapInstanceRuntimeState
 	}
 
 	public bool IsFull => MaxPlayers > 0 && PlayerCount >= MaxPlayers;
+
+	public DateTimeOffset LastPlayerLeaveTime
+	{
+		get
+		{
+			lock (_sync)
+				return _lastPlayerLeaveTime;
+		}
+	}
+
+	public ScheduledTask? EmptyInstanceTask
+	{
+		get
+		{
+			lock (_sync)
+				return _emptyInstanceTask;
+		}
+	}
 
 	public IReadOnlySet<int> RegisteredObjectIds
 	{
@@ -150,11 +172,33 @@ public sealed class WorldMapInstanceRuntimeState
 			_playerObjectIds.Add(objectId);
 	}
 
-	public void RemovePlayer(int objectId)
+	public void RemovePlayer(int objectId, DateTimeOffset? now = null)
 	{
-		// Java parity: WorldMapInstance.removeObject removes players from worldMapPlayers.
+		// Java parity: WorldMapInstance.removeObject(Player) records lastPlayerLeaveTime and removes players from worldMapPlayers.
 		lock (_sync)
+		{
+			_lastPlayerLeaveTime = now ?? DateTimeOffset.UtcNow;
 			_playerObjectIds.Remove(objectId);
+		}
+	}
+
+	public void SetEmptyInstanceTask(ScheduledTask emptyInstanceTask)
+	{
+		// Java parity: WorldMapInstance.setEmptyInstanceTask stores the Future returned by scheduleAtFixedRate.
+		lock (_sync)
+			_emptyInstanceTask = emptyInstanceTask;
+	}
+
+	public bool CancelEmptyInstanceTask()
+	{
+		ScheduledTask? task;
+		lock (_sync)
+		{
+			task = _emptyInstanceTask;
+			_emptyInstanceTask = null;
+		}
+
+		return task?.Cancel() ?? false;
 	}
 
 	public bool RegisterQuestStartIds(IEnumerable<int> questIds)
