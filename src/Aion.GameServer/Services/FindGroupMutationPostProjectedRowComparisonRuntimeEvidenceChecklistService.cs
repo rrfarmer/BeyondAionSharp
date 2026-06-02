@@ -157,9 +157,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Paired readiness remains metadata until runtime row keys are inspected."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ResultEmission => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostProjectedRowComparisonResultSkeletonService, FindGroupMutationPostProjectedRowComparisonBlockedResultReportService",
-				"Emit real Matched, MissingJavaRow, MissingCSharpRow, FieldMismatch, and IgnoredRuntimeContext rows from projected comparison.",
-				"Result skeletons describe output rows but cannot materialize them."),
+				"FindGroupMutationPostProjectedRowComparisonResultSkeletonService, FindGroupMutationPostProjectedRowComparisonBlockedResultReportService, FindGroupMutationPostProjectedRowComparisonValueReaderResultSchemaContractService",
+				"Emit real Matched, MissingJavaRow, MissingCSharpRow, FieldMismatch, and IgnoredRuntimeContext rows from projected comparison using the value-reader result schema.",
+				"Result skeletons and value-reader result schema describe output rows but cannot materialize them."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.LiveDispatchGuard => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"GameServerConnection.ProcessPacketAsync CmFindGroup guard, FindGroupLiveDispatchGoNoGoChecklistService",
