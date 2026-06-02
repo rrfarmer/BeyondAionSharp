@@ -17,8 +17,8 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.False(matrix.CanRunRuntimeComparison);
 		Assert.False(matrix.CanStartExecutableImplementation);
 		Assert.False(matrix.CanClaimVerifiedParity);
-		Assert.Equal(10, matrix.RequiredEvidenceFieldCount);
-		Assert.Equal(11, matrix.MissingEvidenceFieldCount);
+		Assert.Equal(11, matrix.RequiredEvidenceFieldCount);
+		Assert.Equal(12, matrix.MissingEvidenceFieldCount);
 		Assert.Equal(0, matrix.RuntimeComparisonBlockerCount);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", matrix.TraceName);
 		Assert.Contains("addRecruitment/addApplication", matrix.JavaSource, StringComparison.Ordinal);
@@ -50,8 +50,15 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			Runbook(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStatus.BlockedCaptureEvidenceMissing));
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixStatus.BlockedAcceptanceEvidenceMissing, matrix.Status);
-		Assert.Equal(10, matrix.RuntimeComparisonBlockerCount);
+		Assert.Equal(11, matrix.RuntimeComparisonBlockerCount);
 		Assert.Contains("Java artifact, C# boundary, value projection, materialization, emission, and runtime comparison evidence fields are missing", matrix.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(matrix.Rows, row =>
+			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit
+			&& row.EvidenceField == "executorConsistencyAuditAccepted"
+			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.MissingExecutorConsistencyAuditEvidence
+			&& row.SourceRequirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit
+			&& row.RuntimeComparisonBlocker.Contains("consistency blockers", StringComparison.Ordinal)
+			&& row.BlocksRuntimeComparison);
 		Assert.Contains(matrix.Rows, row =>
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows
 			&& row.EvidenceField == "javaArtifactRowsPresent"
@@ -170,6 +177,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep step) =>
 		step switch
 		{
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutorConsistencyAudit => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactCapture => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactValidation => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.CSharpGuardedBoundaryCapture => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.CSharpBoundaryRows,

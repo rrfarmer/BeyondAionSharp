@@ -9,6 +9,7 @@ public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCa
 
 public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep
 {
+	ExecutorConsistencyAudit,
 	JavaArtifactCapture,
 	JavaArtifactValidation,
 	CSharpGuardedBoundaryCapture,
@@ -24,6 +25,7 @@ public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCa
 public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus
 {
 	BlockedRuntimeComparisonHandoffNotReady,
+	BlockedExecutorConsistencyAuditMissing,
 	BlockedMissingJavaArtifacts,
 	BlockedMissingCSharpLiveRows,
 	BlockedMissingExecutorObservation,
@@ -99,6 +101,19 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		{
 			Row(
 				1,
+				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutorConsistencyAudit,
+				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit,
+				status,
+				runtimeComparisonHandoff,
+				provider: "FindGroupMutationPostProjectedValueExecutorConsistencyAuditService",
+				command: "dotnet test dotnetConversion\\tests\\Aion.GameServer.Tests\\Aion.GameServer.Tests.csproj --filter \"FullyQualifiedName~FindGroupMutationPostProjectedValueExecutorConsistencyAuditServiceTests|FullyQualifiedName~FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractServiceTests\" --no-restore",
+				artifactRoot: "not applicable",
+				acceptanceGate: "Runtime-comparison handoff must carry an explicit internally consistent projected-value executor consistency audit before capture evidence commands can be accepted.",
+				currentEvidence: $"handoffHasExecutorConsistencyAudit={runtimeComparisonHandoff.HasExecutorConsistencyAudit}; handoffStatus={runtimeComparisonHandoff.Status}",
+				notes: "This preflight row is metadata only; it prevents capture blockers from hiding an upstream consistency-audit blocker.",
+				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedExecutorConsistencyAuditMissing),
+			Row(
+				2,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactCapture,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows,
 				status,
@@ -111,7 +126,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Command is a capture preflight target only; generated rows still need C# boundary rows and comparison.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingJavaArtifacts),
 			Row(
-				2,
+				3,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactValidation,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows,
 				status,
@@ -124,7 +139,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Validation checks schema and action mapping only; it does not prove live C# behavior.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingJavaArtifacts),
 			Row(
-				3,
+				4,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.CSharpGuardedBoundaryCapture,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.CSharpBoundaryRows,
 				status,
@@ -137,7 +152,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Guarded fixture must not enable production ProcessPacketAsync CmFindGroup dispatch.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingCSharpLiveRows),
 			Row(
-				4,
+				5,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.BoundaryExecutorObservation,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.BoundaryExecutorObservation,
 				status,
@@ -150,7 +165,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Executor calls outside the guarded boundary remain insufficient.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingExecutorObservation),
 			Row(
-				5,
+				6,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RegistrySendObservation,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.RegistrySendObservation,
 				status,
@@ -163,7 +178,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Registry send ordering is required before side-effect parity can be compared.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingRegistryObservation),
 			Row(
-				6,
+				7,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RowIdentityAndValueProjection,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ValueProjection,
 				status,
@@ -176,7 +191,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Value projection remains blocked until both Java and C# runtime row sources exist.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingValueProjection),
 			Row(
-				7,
+				8,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ResultMaterialization,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.Materialization,
 				status,
@@ -189,7 +204,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Ignored runtime context can attach only to a parent missing-row or field-mismatch result.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingMaterializedResults),
 			Row(
-				8,
+				9,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ResultEmission,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ResultEmission,
 				status,
@@ -202,7 +217,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "Result emission remains disabled until materialized runtime-backed comparison rows exist.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingResultEmission),
 			Row(
-				9,
+				10,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RuntimeComparisonExecution,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.RuntimeComparison,
 				status,
@@ -215,7 +230,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				notes: "This is the final evidence gate before any verified parity claim.",
 				stepStatus: FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingRuntimeComparison),
 			Row(
-				10,
+				11,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutableImplementationGate,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutableImplementation,
 				status,

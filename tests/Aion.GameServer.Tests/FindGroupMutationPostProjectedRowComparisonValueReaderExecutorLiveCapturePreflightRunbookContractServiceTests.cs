@@ -53,6 +53,13 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Daion.findGroupMutationPost.serverEpochSeconds=1700000000\" \"-Daion.findGroupMutationPost.artifactRoot=parity-artifacts/find-group/mutation-post/java\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
 			runbook.JavaCaptureCommand);
 		Assert.Contains(runbook.Rows, row =>
+			row.Step == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutorConsistencyAudit
+			&& row.SourceRequirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit
+			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedExecutorConsistencyAuditMissing
+			&& row.Provider.Contains("FindGroupMutationPostProjectedValueExecutorConsistencyAuditService", StringComparison.Ordinal)
+			&& row.Command.Contains("FindGroupMutationPostProjectedValueExecutorConsistencyAuditServiceTests", StringComparison.Ordinal)
+			&& row.AcceptanceGate.Contains("internally consistent", StringComparison.Ordinal));
+		Assert.Contains(runbook.Rows, row =>
 			row.Step == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactCapture
 			&& row.SourceRequirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows
 			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStepStatus.BlockedMissingJavaArtifacts

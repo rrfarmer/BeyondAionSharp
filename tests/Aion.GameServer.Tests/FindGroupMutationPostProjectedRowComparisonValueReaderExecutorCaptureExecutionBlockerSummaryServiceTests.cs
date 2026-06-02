@@ -5,7 +5,7 @@ namespace Aion.GameServer.Tests;
 public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryServiceTests
 {
 	[Fact]
-	public void Create_DefaultSummaryBlocksRuntimeComparisonAndNamesJavaCaptureCommand()
+	public void Create_DefaultSummaryBlocksRuntimeComparisonAndNamesConsistencyAuditCommand()
 	{
 		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryService.Create();
 
@@ -15,12 +15,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.False(summary.CanStartExecutableImplementation);
 		Assert.False(summary.CanClaimVerifiedParity);
 		Assert.Equal(0, summary.BlockingRuntimeComparisonCount);
-		Assert.Equal(11, summary.BlockingExecutableImplementationCount);
-		Assert.Equal(11, summary.BlockingVerifiedParityCount);
-		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows, summary.PrimaryBlockingField);
-		Assert.Equal("javaArtifactRowsPresent", summary.PrimaryBlockingEvidenceField);
-		Assert.Contains("FindGroupMutationPostTraceCaptureTest", summary.SmallestNextEvidenceCommand, StringComparison.Ordinal);
-		Assert.Contains("aion.findGroupMutationPost.capture=true", summary.SmallestNextEvidenceCommand, StringComparison.Ordinal);
+		Assert.Equal(12, summary.BlockingExecutableImplementationCount);
+		Assert.Equal(12, summary.BlockingVerifiedParityCount);
+		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit, summary.PrimaryBlockingField);
+		Assert.Equal("executorConsistencyAuditAccepted", summary.PrimaryBlockingEvidenceField);
+		Assert.Contains("FindGroupMutationPostProjectedValueExecutorConsistencyAuditServiceTests", summary.SmallestNextEvidenceCommand, StringComparison.Ordinal);
+		Assert.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractServiceTests", summary.SmallestNextEvidenceCommand, StringComparison.Ordinal);
 		Assert.Contains("must not start", summary.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Contains("smallest next evidence command", summary.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", summary.TraceName);
@@ -36,9 +36,14 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryService.Create(matrix, runbook);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerSummaryStatus.BlockedAcceptanceEvidenceMissing, summary.Status);
-		Assert.Equal(10, summary.BlockingRuntimeComparisonCount);
-		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows, summary.PrimaryBlockingField);
-		Assert.Contains("java capture command", summary.SmallestNextEvidenceCommand, StringComparison.Ordinal);
+		Assert.Equal(11, summary.BlockingRuntimeComparisonCount);
+		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit, summary.PrimaryBlockingField);
+		Assert.Contains("command for ExecutorConsistencyAudit", summary.SmallestNextEvidenceCommand, StringComparison.Ordinal);
+		Assert.Contains(summary.Rows, row =>
+			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit
+			&& row.BlocksRuntimeComparison
+			&& row.Reason == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerReason.MissingExecutorConsistencyAuditEvidence
+			&& row.EvidenceField == "executorConsistencyAuditAccepted");
 		Assert.Contains(summary.Rows, row =>
 			row.Field == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.CSharpBoundaryRows
 			&& row.BlocksRuntimeComparison
@@ -49,7 +54,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			&& row.BlocksRuntimeComparison
 			&& row.Reason == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureExecutionBlockerReason.MissingRegistryObservation
 			&& row.RequiredEvidence.Contains("Posted SmSystemMessage", StringComparison.Ordinal));
-		Assert.Contains("first runtime blocker is javaArtifactRowsPresent", summary.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains("first runtime blocker is executorConsistencyAuditAccepted", summary.ExecutionDecision, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -153,6 +158,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep step) =>
 		step switch
 		{
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutorConsistencyAudit => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactCapture => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactValidation => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.JavaArtifactRows,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.CSharpGuardedBoundaryCapture => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.CSharpBoundaryRows,

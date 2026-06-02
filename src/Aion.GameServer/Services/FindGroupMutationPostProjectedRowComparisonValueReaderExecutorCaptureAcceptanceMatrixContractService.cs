@@ -9,6 +9,7 @@ public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptur
 
 public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField
 {
+	ExecutorConsistencyAudit,
 	JavaArtifactRows,
 	JavaArtifactShapeValidation,
 	CSharpBoundaryRows,
@@ -25,6 +26,7 @@ public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptur
 public enum FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus
 {
 	BlockedLiveCapturePreflightNotReady,
+	MissingExecutorConsistencyAuditEvidence,
 	MissingJavaArtifactEvidence,
 	MissingCSharpBoundaryEvidence,
 	MissingExecutorObservation,
@@ -90,6 +92,16 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		{
 			MatrixRow(
 				1,
+				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit,
+				liveCapturePreflight,
+				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutorConsistencyAudit,
+				status,
+				"executorConsistencyAuditAccepted",
+				"Runtime-comparison handoff carries an explicit internally consistent projected-value executor consistency audit.",
+				"Executor consistency audit has not been accepted as a visible capture preflight evidence field.",
+				"Runtime comparison cannot execute while consistency blockers are hidden behind upstream handoff status."),
+			MatrixRow(
+				2,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactCapture,
@@ -99,7 +111,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Java runtime artifact rows are absent; checked-in shape artifacts are not enough.",
 				"Runtime comparison cannot execute without Java source-of-truth rows."),
 			MatrixRow(
-				2,
+				3,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactShapeValidation,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.JavaArtifactValidation,
@@ -109,7 +121,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Generated Java artifacts have not been accepted as runtime-backed shape-valid rows.",
 				"Runtime comparison cannot trust Java row inputs until validation passes."),
 			MatrixRow(
-				3,
+				4,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.CSharpBoundaryRows,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.CSharpGuardedBoundaryCapture,
@@ -119,7 +131,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Accepted live C# boundary rows are missing.",
 				"Runtime comparison cannot execute with disabled C# projections only."),
 			MatrixRow(
-				4,
+				5,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.BoundaryExecutorObservation,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.BoundaryExecutorObservation,
@@ -129,7 +141,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Boundary executor observation is missing.",
 				"Runtime comparison cannot prove the C# row came from the same boundary path without executor observation."),
 			MatrixRow(
-				5,
+				6,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.RegistrySendObservation,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RegistrySendObservation,
@@ -139,7 +151,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Registry send ordering is missing.",
 				"Runtime comparison cannot validate direct packet side effects until registry sends are observed."),
 			MatrixRow(
-				6,
+				7,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.RowIdentityMatching,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RowIdentityAndValueProjection,
@@ -149,7 +161,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Row identity matching is missing.",
 				"Runtime comparison cannot select Matched or missing-row results until row identities are paired."),
 			MatrixRow(
-				7,
+				8,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ValueProjection,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RowIdentityAndValueProjection,
@@ -159,7 +171,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Projected Java/C# values are missing.",
 				"Runtime comparison cannot evaluate equality or field mismatch results until values are projected."),
 			MatrixRow(
-				8,
+				9,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ResultMaterialization,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ResultMaterialization,
@@ -169,7 +181,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Materialized comparison result rows are missing.",
 				"Runtime comparison cannot emit or verify output rows until materialization exists."),
 			MatrixRow(
-				9,
+				10,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ResultEmission,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ResultEmission,
@@ -179,7 +191,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Result emission is missing.",
 				"Runtime comparison cannot claim output evidence until result rows are emitted."),
 			MatrixRow(
-				10,
+				11,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.RuntimeComparisonExecution,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.RuntimeComparisonExecution,
@@ -189,7 +201,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 				"Runtime comparison has not executed.",
 				"Verified parity is impossible without deterministic runtime comparison evidence."),
 			MatrixRow(
-				11,
+				12,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutableImplementationGate,
 				liveCapturePreflight,
 				FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookStep.ExecutableImplementationGate,
@@ -274,6 +286,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 
 		return field switch
 		{
+			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.ExecutorConsistencyAudit => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.MissingExecutorConsistencyAuditEvidence,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactRows => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.MissingJavaArtifactEvidence,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.JavaArtifactShapeValidation => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.MissingJavaArtifactEvidence,
 			FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixField.CSharpBoundaryRows => FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureAcceptanceMatrixFieldStatus.MissingCSharpBoundaryEvidence,
