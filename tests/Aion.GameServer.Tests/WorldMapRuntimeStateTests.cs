@@ -217,13 +217,61 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Same(instance, notified);
 	}
 
+	[Fact]
+	public void InstanceRuntimeService_DestroyInstanceRemovesThenNotifiesLikeJavaInstanceService()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+		]);
+		var handler = new RecordingInstanceLifecycleHandler(
+			instance => table.InstanceExists(300030000, instance.InstanceId));
+		var instance = table.CreateNextWorldMapInstance(300030000, instanceHandler: handler);
+		Assert.NotNull(instance);
+		Assert.True(table.InstanceExists(300030000, instance.InstanceId));
+
+		var plan = InstanceRuntimeService.DestroyInstance(table, 300030000, instance.InstanceId);
+		var duplicate = InstanceRuntimeService.DestroyInstance(table, 300030000, instance.InstanceId);
+
+		Assert.True(plan.Removed);
+		Assert.True(plan.DestroyHandlerNotified);
+		Assert.Same(instance, plan.Instance);
+		Assert.False(table.InstanceExists(300030000, instance.InstanceId));
+		Assert.True(instance.InstanceDestroyNotified);
+		var destroyed = Assert.Single(handler.DestroyedInstances);
+		Assert.Same(instance, destroyed);
+		Assert.False(handler.InstanceExistsAtDestroy.Single());
+		Assert.False(duplicate.Removed);
+		Assert.False(duplicate.DestroyHandlerNotified);
+		Assert.Null(duplicate.Instance);
+		Assert.Single(handler.DestroyedInstances);
+	}
+
 	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
 	{
+		private readonly Func<WorldMapInstanceRuntimeState, bool>? _instanceExistsAtDestroy;
+
+		public RecordingInstanceLifecycleHandler(Func<WorldMapInstanceRuntimeState, bool>? instanceExistsAtDestroy = null)
+		{
+			_instanceExistsAtDestroy = instanceExistsAtDestroy;
+		}
+
 		public List<WorldMapInstanceRuntimeState> CreatedInstances { get; } = new();
+
+		public List<WorldMapInstanceRuntimeState> DestroyedInstances { get; } = new();
+
+		public List<bool> InstanceExistsAtDestroy { get; } = new();
 
 		public void OnInstanceCreate(WorldMapInstanceRuntimeState instance)
 		{
 			CreatedInstances.Add(instance);
+		}
+
+		public void OnInstanceDestroy(WorldMapInstanceRuntimeState instance)
+		{
+			DestroyedInstances.Add(instance);
+			if (_instanceExistsAtDestroy != null)
+				InstanceExistsAtDestroy.Add(_instanceExistsAtDestroy(instance));
 		}
 	}
 

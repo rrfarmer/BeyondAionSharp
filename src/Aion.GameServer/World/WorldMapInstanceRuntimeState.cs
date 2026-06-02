@@ -8,6 +8,7 @@ public sealed class WorldMapInstanceRuntimeState
 	private readonly HashSet<int> _questIds = new();
 	private bool _hasPendingNearbyQuestRefresh;
 	private bool _instanceCreateNotified;
+	private bool _instanceDestroyNotified;
 
 	public WorldMapInstanceRuntimeState(
 		int instanceId,
@@ -40,6 +41,15 @@ public sealed class WorldMapInstanceRuntimeState
 		{
 			lock (_sync)
 				return _instanceCreateNotified;
+		}
+	}
+
+	public bool InstanceDestroyNotified
+	{
+		get
+		{
+			lock (_sync)
+				return _instanceDestroyNotified;
 		}
 	}
 
@@ -209,6 +219,21 @@ public sealed class WorldMapInstanceRuntimeState
 
 		// Java parity: services/instance/InstanceService.getNextAvailableInstance calls instance.getInstanceHandler().onInstanceCreate().
 		InstanceHandler.OnInstanceCreate(this);
+		return true;
+	}
+
+	public bool NotifyInstanceDestroyed()
+	{
+		lock (_sync)
+		{
+			if (_instanceDestroyNotified)
+				return false;
+
+			_instanceDestroyNotified = true;
+		}
+
+		// Java parity: services/instance/InstanceService.destroyInstance calls instance.getInstanceHandler().onInstanceDestroy().
+		InstanceHandler.OnInstanceDestroy(this);
 		return true;
 	}
 }

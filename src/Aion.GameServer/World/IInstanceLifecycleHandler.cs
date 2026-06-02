@@ -3,6 +3,10 @@ namespace Aion.GameServer.World;
 public interface IInstanceLifecycleHandler
 {
 	void OnInstanceCreate(WorldMapInstanceRuntimeState instance);
+
+	void OnInstanceDestroy(WorldMapInstanceRuntimeState instance)
+	{
+	}
 }
 
 public sealed class GeneralInstanceLifecycleHandler : IInstanceLifecycleHandler
@@ -16,5 +20,10 @@ public sealed class GeneralInstanceLifecycleHandler : IInstanceLifecycleHandler
 	public void OnInstanceCreate(WorldMapInstanceRuntimeState instance)
 	{
 		// Java parity: instance/handlers/GeneralInstanceHandler.onInstanceCreate is a no-op.
+	}
+
+	public void OnInstanceDestroy(WorldMapInstanceRuntimeState instance)
+	{
+		// Java parity: instance/handlers/GeneralInstanceHandler.onInstanceDestroy is a no-op.
 	}
 }

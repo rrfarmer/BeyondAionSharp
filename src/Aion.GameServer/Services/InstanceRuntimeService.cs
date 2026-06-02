@@ -98,6 +98,28 @@ public static class InstanceRuntimeService
 		instance.SetStartPositionIfMissing(startPosition);
 		return new InstancePortalRuntimePlan(instance, startPosition);
 	}
+
+	public static InstanceDestroyRuntimePlan DestroyInstance(
+		WorldMapRuntimeStateTable worldMaps,
+		int worldId,
+		int instanceId)
+	{
+		// Java parity: InstanceService.destroyInstance removes the WorldMapInstance before calling onInstanceDestroy.
+		if (!worldMaps.TryGetWorldMapInstance(worldId, instanceId, out var instance) || instance == null)
+			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
+
+		if (!worldMaps.RemoveWorldMapInstance(worldId, instanceId))
+			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
+
+		var notified = instance.NotifyInstanceDestroyed();
+		return new InstanceDestroyRuntimePlan(
+			worldId,
+			instance.InstanceId,
+			instance,
+			Removed: true,
+			DestroyHandlerNotified: notified,
+			"InstanceService.destroyInstance removes map instance before instance.getInstanceHandler().onInstanceDestroy()");
+	}
 }
 
 public sealed class UnsupportedOperationException : InvalidOperationException
@@ -111,3 +133,23 @@ public sealed class UnsupportedOperationException : InvalidOperationException
 public sealed record InstancePortalRuntimePlan(
 	WorldMapInstanceRuntimeState Instance,
 	WorldPosition Destination);
+
+public sealed record InstanceDestroyRuntimePlan(
+	int WorldId,
+	int InstanceId,
+	WorldMapInstanceRuntimeState? Instance,
+	bool Removed,
+	bool DestroyHandlerNotified,
+	string JavaSource)
+{
+	public static InstanceDestroyRuntimePlan Missing(int worldId, int instanceId)
+	{
+		return new InstanceDestroyRuntimePlan(
+			worldId,
+			instanceId == 0 ? 1 : instanceId,
+			null,
+			Removed: false,
+			DestroyHandlerNotified: false,
+			"InstanceService.destroyInstance is a no-op for unknown or already removed modeled instances");
+	}
+}
