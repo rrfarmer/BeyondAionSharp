@@ -1448,6 +1448,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CraftRecipeLearn(155000001, "Kahrun"), 1330061, "[recipe_ex:155000001;Kahrun]");
 		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkill("skill"), 1330062, "skill");
 		AssertSystemMessage(SmSystemMessage.CraftRecipeCantLearnSkillPoint(), 1330063);
+		AssertSystemMessage(SmSystemMessage.LeaveInstance(5), 1400044, "5");
+		AssertSystemMessage(SmSystemMessage.LeaveInstanceParty(15), 1400045, "15");
+		AssertSystemMessage(SmSystemMessage.LeaveInstanceForce(0), 1400046, "0");
 		AssertSystemMessage(SmSystemMessage.CombineCannotFindRecipe(), 1330043);
 		AssertSystemMessage(SmSystemMessage.CombineCantUse("skill"), 1330042, "skill");
 		AssertSystemMessage(SmSystemMessage.CombineOutOfSkillPoint("skill"), 1330044, "skill");

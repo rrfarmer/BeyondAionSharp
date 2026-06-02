@@ -646,6 +646,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400042);
 	}
 
+	public static SmSystemMessage LeaveInstance(int minutes)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE(int).
+		return new SmSystemMessage(1400044, minutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage LeaveInstanceParty(int minutes)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE_PARTY(int).
+		return new SmSystemMessage(1400045, minutes.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage LeaveInstanceForce(int minutes)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE_FORCE(int).
