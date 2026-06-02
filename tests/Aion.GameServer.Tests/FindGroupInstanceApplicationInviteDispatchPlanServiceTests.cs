@@ -89,6 +89,31 @@ public sealed class FindGroupInstanceApplicationInviteDispatchPlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_MissingResponderSkipsWithoutQuestionMutation()
+	{
+		var service = new FindGroupInstanceApplicationInviteDispatchPlanService();
+		var invited = CreatePlayer(1002, "Applicant");
+		var intent = new FindGroupInstanceInviteIntent(
+			FindGroupInstanceInviteKind.Group,
+			1001,
+			invited.ObjectId,
+			"PlayerGroupService.inviteToGroup(responder, applicant)");
+
+		var plan = service.CreateDisabledPlan(
+			intent,
+			Resolve(invited),
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+
+		Assert.Equal(FindGroupInstanceApplicationInviteDispatchStatus.SkippedMissingPlayer, plan.Status);
+		Assert.True(plan.MissingInviter);
+		Assert.False(plan.MissingInvited);
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Equal(0, invited.ResponseRequester.Count);
+		Assert.Null(invited.PendingAllianceInviteRequest);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_MissingIntentSkipsWithoutLiveDispatch()
 	{
 		var service = new FindGroupInstanceApplicationInviteDispatchPlanService();

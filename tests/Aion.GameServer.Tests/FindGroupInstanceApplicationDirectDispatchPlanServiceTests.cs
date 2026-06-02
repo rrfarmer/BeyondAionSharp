@@ -74,6 +74,30 @@ public sealed class FindGroupInstanceApplicationDirectDispatchPlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_DeclinedActionTwelveMissingApplicantRecipientRecordsFailureWithoutLiveDispatch()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var responder = CreatePlayer(0x01020307, "Responder");
+		var applicant = CreatePlayer(0x01020304, "Applicant");
+		var applicationPlan = findGroupService.SendInstanceApplicationResult(
+			responder,
+			applicant,
+			applicant.ObjectId,
+			instanceApplicationReply: 0);
+
+		var plan = FindGroupInstanceApplicationDirectDispatchPlanService.CreateDisabledPlan(
+			applicationPlan,
+			Resolve(responder));
+
+		Assert.Equal(FindGroupInstanceApplicationDirectDispatchStatus.SkippedMissingRecipient, plan.Status);
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Same(applicationPlan, plan.ApplicationPlan);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.Declined, plan.ApplicationPlan!.Status);
+		Assert.Equal([applicant.ObjectId], plan.MissingRecipientObjectIds);
+		Assert.Empty(plan.DirectPackets);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_MissingDirectPacketIntentSkipsWithoutLiveDispatch()
 	{
 		var findGroupService = new FindGroupRecruitmentPlanService();
