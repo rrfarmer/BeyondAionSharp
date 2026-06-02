@@ -691,6 +691,33 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_BeshmundirsWalkInstanceEntryShowsPathDialogForGroupLeader()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var leader = CreatePlayer(0x01020304, "Leader", "ELYOS");
+		var member = CreatePlayer(0x01020305, "Member", "ELYOS");
+		var groups = new PlayerGroupRuntime();
+		groups.CreateOrUpdateGroup(0x0708090A, [leader, member]);
+		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService: null,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			playerGroupRuntime: groups,
+			world: world);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(walkNpc.ObjectId, CmDialogSelect.InstanceEntry));
+
+		var dialog = Assert.IsType<SmDialogWindow>(Assert.Single(sentPackets));
+		Assert.Equal(walkNpc.ObjectId, ReadPrivateField<int>(dialog, "_targetObjectId"));
+		Assert.Equal(4762, ReadPrivateField<int>(dialog, "_dialogPageId"));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_OpenInstanceRecruitSendsPortalMaskListOnly()
 	{
 		var sentPackets = new List<GameServerPacket>();

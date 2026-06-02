@@ -1836,11 +1836,19 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		if (packet.DialogActionId == CmDialogSelect.InstanceEntry
-			&& player.TeamMembership != PlayerTeamMembership.Group
 			&& IsBeshmundirsWalkTarget(packet.TargetObjectId))
 		{
-			await SendPacketAsync(SmSystemMessage.EnterOnlyPartyDon());
-			return;
+			if (player.TeamMembership != PlayerTeamMembership.Group)
+			{
+				await SendPacketAsync(SmSystemMessage.EnterOnlyPartyDon());
+				return;
+			}
+
+			if (_playerGroupRuntime.IsLeader(player.CurrentTeamId, player))
+			{
+				await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 4762));
+				return;
+			}
 		}
 
 		if (packet.DialogActionId == CmDialogSelect.InstancePartyMatch)
