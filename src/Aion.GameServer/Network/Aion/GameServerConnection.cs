@@ -69,6 +69,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
 	private readonly PortalEntryInteractionService? _portalEntryInteractionService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
+	private readonly WorldNpcSpawnService? _worldNpcSpawnService;
 	private readonly Func<Player, int, bool>? _isKnownNpc;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
@@ -184,7 +185,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		GoodsListTable? buyItemGoodsLists = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
-		PriceInfluenceRates? buyItemPriceInfluenceRates = null)
+		PriceInfluenceRates? buyItemPriceInfluenceRates = null,
+		WorldNpcSpawnService? worldNpcSpawnService = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -213,6 +215,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_sentPacketObserver = sentPacketObserver;
 		_dialogSelectPlanObserver = dialogSelectPlanObserver;
 		_worldNpcLootService = worldNpcLootService;
+		_worldNpcSpawnService = worldNpcSpawnService;
 		_isKnownNpc = isKnownNpc;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
@@ -7646,6 +7649,12 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (teamPlan.Kind is PortalTeamEntryKind.Group or PortalTeamEntryKind.Alliance or PortalTeamEntryKind.League)
 				registeredInstance.RegisterTeamId(teamPlan.TeamId);
+			if (staticData != null && _worldNpcSpawnService != null)
+				_worldNpcSpawnService.SpawnWorldNpcsForInstance(
+					registeredInstance,
+					portalLoc.WorldId,
+					staticData.NpcSpawns,
+					staticData.NpcTemplates);
 			transferTeamPlan = teamPlan with
 			{
 				Disposition = PortalTeamEntryDisposition.RegisteredInstanceTransfer,

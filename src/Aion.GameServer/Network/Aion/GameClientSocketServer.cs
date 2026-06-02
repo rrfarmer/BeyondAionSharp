@@ -49,6 +49,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly RiftPortalUseService? _riftPortalUseService;
 	private readonly VortexLocationService? _vortexLocationService;
 	private readonly WorldNpcLootService? _worldNpcLootService;
+	private readonly WorldNpcSpawnService? _worldNpcSpawnService;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
@@ -97,7 +98,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
 		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
-		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null)
+		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null,
+		WorldNpcSpawnService? worldNpcSpawnService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -135,6 +137,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_riftPortalUseService = riftPortalUseService;
 		_vortexLocationService = vortexLocationService;
 		_worldNpcLootService = worldNpcLootService;
+		_worldNpcSpawnService = worldNpcSpawnService;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
@@ -185,6 +188,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				riftPortalUseService: _riftPortalUseService,
 				vortexLocationService: _vortexLocationService,
 				worldNpcLootService: _worldNpcLootService,
+				worldNpcSpawnService: _worldNpcSpawnService,
 				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId),
 				creaturePvpZoneCounterService: _creaturePvpZoneCounterService,
 				playerGroupRuntime: _playerGroupRuntime,

@@ -9,6 +9,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using GameWorld = Aion.GameServer.World.World;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -773,6 +774,106 @@ public sealed class GameServerConnectionInstanceCooldownTests
 	}
 
 	[Fact]
+	public async Task QueuePortalContinueTransferAsync_FreshGroupAllocationSpawnsDifficultyFilteredNpcsLikeJavaInstanceService()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<npc_templates>
+					<npc_template npc_id="203040" name="instance_npc" name_id="203040" level="1" rank="NORMAL" rating="NORMAL" race="ELYOS" tribe="GENERAL" type="GENERAL" />
+				</npc_templates>
+				<spawns>
+					<spawn_map map_id="300030000">
+						<spawn npc_id="203040" respawn_time="295" difficult_id="1">
+							<spot x="1" y="2" z="3" />
+						</spawn>
+						<spawn npc_id="203040" respawn_time="295" difficult_id="2">
+							<spot x="4" y="5" z="6" />
+						</spawn>
+						<spawn npc_id="203040" respawn_time="295">
+							<spot x="7" y="8" z="9" />
+						</spawn>
+					</spawn_map>
+				</spawns>
+			</static_data>
+			""");
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var spawnService = new WorldNpcSpawnService(
+			new GameServerRuntimeContext(),
+			world,
+			new IDFactory(),
+			NullLogger<WorldNpcSpawnService>.Instance);
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions(),
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance),
+			worldNpcSpawnService: spawnService);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1)]);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				Id: 8,
+				WorldId: 300030000,
+				Race: "PC_ALL",
+				MaxCount: 5,
+				MaxMemberLight: 6,
+				MaxMemberDark: 6,
+				CoolTimeType: "RELATIVE",
+				EntCoolTime: 30),
+		]);
+		var portalLoc = new PortalLocSummary(300030000, LocId: 1, 10, 20, 30, 90);
+		var teamPlan = new PortalTeamEntryPlan(
+			PortalTeamEntryKind.Group,
+			TeamId: 88001,
+			MemberObjectIds: [1001, 1002],
+			MaxPlayers: 6,
+			PortalTeamEntryDisposition.FreshInstanceAllocationNeeded,
+			RegisteredInstance: null,
+			Reenter: false,
+			FanoutSupported: false,
+			DifficultyId: 2);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.UnsupportedTeamPortal(portalLoc, teamPlan),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+
+		var result = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			staticData: staticData,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		var allocatedInstance = Assert.IsType<WorldMapInstanceRuntimeState>(result?.RegisteredInstance);
+		Assert.Equal(2, allocatedInstance.InstanceId);
+		Assert.Equal(2, allocatedInstance.DifficultyId);
+		var npcs = world.GetNpcs().OrderBy(npc => npc.Position.X).ToArray();
+		Assert.Equal([4, 7], npcs.Select(npc => (int)npc.Position.X).ToArray());
+		Assert.All(npcs, npc =>
+		{
+			Assert.Equal(300030000, npc.Position.WorldId);
+			Assert.Equal(2, npc.Position.InstanceId);
+		});
+	}
+
+	[Fact]
 	public async Task QueuePortalContinueTransferAsync_AlliancePlanWithoutRegisteredInstanceAllocatesRegistersTeamAndTransfers()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1127,7 +1228,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			GameServerOptions options,
-			PlayerEnterWorldService? playerEnterWorldService)
+			PlayerEnterWorldService? playerEnterWorldService,
+			WorldNpcSpawnService? worldNpcSpawnService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1149,7 +1251,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 					options: options,
 					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
-					crypt: crypt);
+					crypt: crypt,
+					worldNpcSpawnService: worldNpcSpawnService);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}
 			finally
@@ -1162,6 +1265,28 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		{
 			await Connection.DisposeAsync();
 			_client.Dispose();
+		}
+	}
+
+	private sealed class TempDirectory : IDisposable
+	{
+		private TempDirectory(string path)
+		{
+			Path = path;
+		}
+
+		public string Path { get; }
+
+		public static TempDirectory Create()
+		{
+			var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"aion-instance-cooldown-{Guid.NewGuid():N}");
+			Directory.CreateDirectory(path);
+			return new TempDirectory(path);
+		}
+
+		public void Dispose()
+		{
+			Directory.Delete(Path, recursive: true);
 		}
 	}
 }
