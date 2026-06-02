@@ -156,6 +156,12 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpOptInRegistryExecutionTrace
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/2/4/6/8/9/10/11/13/15/17 acceptance", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpLiveBoundaryTraceContract
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("FindGroupDirectPacketLiveBoundaryTraceContractService", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("without wiring ProcessPacketAsync", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -168,7 +174,7 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 			item => item.Contains("disabled helper plus opt-in executor trace", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
-			item => item.Contains("ProcessPacketAsync boundary trace", StringComparison.Ordinal));
+			item => item.Contains("ordered trace contract", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("reviewed composition surface", StringComparison.Ordinal));

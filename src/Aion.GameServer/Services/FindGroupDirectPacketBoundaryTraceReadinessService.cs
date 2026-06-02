@@ -102,6 +102,10 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 					"C# focused tests can record disabled CM_FIND_GROUP action 0/2/4/6/8/9/10/11/13/15/17 acceptance before opt-in registry direct sends to the Java-selected recipient.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
+					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpLiveBoundaryTraceContract,
+					"C# FindGroupDirectPacketLiveBoundaryTraceContractService defines the ordered live-boundary trace milestones for direct packet actions without wiring ProcessPacketAsync or invoking live sends.",
+					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
+				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.LiveProcessPacketAsyncTrace,
 					"C# GameServerConnection.ProcessPacketAsync still defers CmFindGroup, so no live boundary trace proves the direct packet is emitted from the triggering client-packet path.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Blocked),
@@ -112,7 +116,7 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 			],
 			[
 				"Do not claim live direct-packet parity from the disabled helper plus opt-in executor trace.",
-				"Before enabling live CmFindGroup direct actions, add a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 2, 4, 6, 8, 9, 10, 11, 13, 15, and 17.",
+				"Before enabling live CmFindGroup direct actions, implement the ordered trace contract through a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 2, 4, 6, 8, 9, 10, 11, 13, 15, and 17.",
 				"Keep the disabled boundary helper available as the reviewed composition surface for future live wiring.",
 			]);
 	}
@@ -149,6 +153,7 @@ public enum FindGroupDirectPacketBoundaryTraceEvidenceKind
 	CSharpDisabledBoundaryActionFifteenComposition,
 	CSharpDisabledBoundaryActionSeventeenComposition,
 	CSharpOptInRegistryExecutionTrace,
+	CSharpLiveBoundaryTraceContract,
 	LiveProcessPacketAsyncTrace,
 	LiveSocketComparison,
 }
