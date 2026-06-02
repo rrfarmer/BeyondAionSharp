@@ -9,8 +9,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 	{
 		var handoff = FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractService.Create();
 
-		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffStatus.BlockedImplementationAuditNotReady, handoff.Status);
+		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffStatus.BlockedExecutorConsistencyAuditNotReady, handoff.Status);
 		Assert.False(handoff.IsLive);
+		Assert.True(handoff.HasExecutorConsistencyAudit);
 		Assert.True(handoff.HasImplementationReadinessAudit);
 		Assert.False(handoff.HasAnyRuntimeEvidence);
 		Assert.False(handoff.CanStartExecutableImplementation);
@@ -22,7 +23,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.False(handoff.CanClaimVerifiedParity);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", handoff.TraceName);
 		Assert.Contains("addRecruitment/addApplication", handoff.JavaSource, StringComparison.Ordinal);
-		Assert.Contains("implementation readiness audit metadata is ready", handoff.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains("executor consistency audit metadata is internally consistent", handoff.ExecutionDecision, StringComparison.Ordinal);
 	}
 
 	[Fact]
@@ -34,18 +35,35 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.All(handoff.Rows, row =>
 		{
 			Assert.True(row.HasImplementationReadinessAudit);
+			Assert.True(row.HasExecutorConsistencyAudit);
 			Assert.False(row.HasRuntimeEvidence);
 			Assert.True(row.RequiredBeforeExecutableImplementation);
 			Assert.True(row.RequiredBeforeVerifiedParity);
 			Assert.False(row.CanStartExecutableImplementation);
-			Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRowStatus.BlockedImplementationAuditNotReady, row.Status);
+			Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRowStatus.BlockedExecutorConsistencyAuditNotReady, row.Status);
 		});
+	}
+
+	[Fact]
+	public void Create_ConsistentAuditStillBlocksUntilImplementationAuditIsReady()
+	{
+		var handoff = FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractService.Create(
+			ConsistencyAudit(),
+			Audit(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAuditStatus.BlockedEvidenceSummaryNotReady));
+
+		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffStatus.BlockedImplementationAuditNotReady, handoff.Status);
+		Assert.Contains("implementation readiness audit metadata is ready", handoff.ExecutionDecision, StringComparison.Ordinal);
+		Assert.Contains(handoff.Rows, row =>
+			row.Requirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit
+			&& row.HasExecutorConsistencyAudit
+			&& row.CurrentEvidence.Contains("consistencyAuditStatus=ConsistentBlockedReadiness", StringComparison.Ordinal));
 	}
 
 	[Fact]
 	public void Create_RuntimeMissingHandoffNamesJavaCSharpValueMaterializationAndEmissionEvidence()
 	{
 		var handoff = FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractService.Create(
+			ConsistencyAudit(),
 			Audit(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAuditStatus.BlockedRuntimeEvidenceMissing));
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffStatus.BlockedRuntimeEvidenceMissing, handoff.Status);
@@ -77,6 +95,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 	public void Create_ReadyShapedAuditStillDefersExecutableImplementationAndParity()
 	{
 		var handoff = FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractService.Create(
+			ConsistencyAudit(),
 			Audit(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAuditStatus.BlockedExecutableImplementationNotAllowed));
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffStatus.BlockedExecutableImplementationDeferred, handoff.Status);
@@ -97,6 +116,54 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRowStatus.BlockedExecutableImplementationDeferred
 			&& row.CurrentEvidence.Contains("canWriteExecutableExecutor=False", StringComparison.Ordinal));
 	}
+
+	private static FindGroupMutationPostProjectedValueExecutorConsistencyAudit ConsistencyAudit() =>
+		new(
+			FindGroupMutationPostProjectedValueExecutorConsistencyAuditStatus.ConsistentBlockedReadiness,
+			[
+				ConsistencyRow(1, FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.MaterializationBlocker),
+				ConsistencyRow(2, FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ResultEmissionGate),
+				ConsistencyRow(3, FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ResultEmissionBlocker),
+				ConsistencyRow(4, FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.EvidenceSummary),
+				ConsistencyRow(5, FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ExecutorEvidenceBridge),
+				ConsistencyRow(6, FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.RuntimeComparisonAndLiveDispatch),
+			],
+			HasMaterializationBlockerReport: true,
+			HasResultEmissionGate: true,
+			HasResultEmissionBlockerReport: true,
+			HasEvidenceSummary: true,
+			HasExecutorEvidenceBridge: true,
+			CanMaterializeOutputs: false,
+			CanEmitResults: false,
+			CanWriteExecutableExecutor: false,
+			CanRunRuntimeComparison: false,
+			CanEnableLiveDispatch: false,
+			CanClaimVerifiedParity: false,
+			"Executor consistency audit remains blocked.",
+			"cm-find-group-direct-mutation-post-boundary",
+			"FindGroupService.addRecruitment/addApplication",
+			IsLive: false);
+
+	private static FindGroupMutationPostProjectedValueExecutorConsistencyAuditRow ConsistencyRow(
+		int order,
+		FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement requirement) =>
+		new(
+			order,
+			requirement,
+			requirement == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.RuntimeComparisonAndLiveDispatch
+				? FindGroupMutationPostProjectedValueExecutorConsistencyAuditRowStatus.BlockedRuntimeComparisonMissing
+				: FindGroupMutationPostProjectedValueExecutorConsistencyAuditRowStatus.ConsistentBlocked,
+			HasProvider: true,
+			BlocksMaterialization: true,
+			BlocksResultEmission: true,
+			BlocksExecutableImplementation: true,
+			BlocksRuntimeComparison: true,
+			BlocksLiveDispatch: true,
+			BlocksVerifiedParity: true,
+			"test provider",
+			"test required evidence",
+			"test current evidence",
+			"test notes");
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAudit Audit(
 		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAuditStatus status) =>
