@@ -85,6 +85,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonResultSkeletonSer
 			Actions: [],
 			AcceptedJavaRows: [],
 			AcceptedCSharpRows: [],
+			PairedRowReadiness: [],
 			Fields:
 			[
 				new FindGroupMutationPostProjectedRowComparisonDryRunField(

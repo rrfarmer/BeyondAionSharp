@@ -60,11 +60,23 @@ public sealed record FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJa
 	string Evidence,
 	string PlannedInputSource);
 
+public sealed record FindGroupMutationPostProjectedRowComparisonDryRunPairedRowReadiness(
+	int Order,
+	int Action,
+	FindGroupDirectPacketMutationPostTraceMutationKind MutationKind,
+	string RequiredRowIdentity,
+	bool HasAcceptedJavaRow,
+	bool HasAcceptedCSharpRow,
+	bool IsReadyForFutureComparisonInput,
+	string Evidence,
+	string Notes);
+
 public sealed record FindGroupMutationPostProjectedRowComparisonDryRunContract(
 	FindGroupMutationPostProjectedRowComparisonDryRunStatus Status,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAction> Actions,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference> AcceptedJavaRows,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAcceptedCSharpRowReference> AcceptedCSharpRows,
+	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunPairedRowReadiness> PairedRowReadiness,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunField> Fields,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunOutputKind> OutputKinds,
 	bool HasExecutionBlockerReport,
@@ -115,6 +127,9 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		var acceptedRows = guardedFixtureResultContract.AcceptedLiveRows
 			.Select((row, index) => CreateAcceptedCSharpRowReference(index + 1, row, resultContract))
 			.ToArray();
+		var pairedReadiness = actions
+			.Select((action, index) => CreatePairedRowReadiness(index + 1, action, acceptedJavaRows, acceptedRows))
+			.ToArray();
 		var fields = resultContract.Fields
 			.Select((field, index) => CreateField(index + 1, field))
 			.ToArray();
@@ -127,6 +142,7 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 			actions,
 			acceptedJavaRows,
 			acceptedRows,
+			pairedReadiness,
 			fields,
 			[
 				FindGroupMutationPostProjectedRowComparisonDryRunOutputKind.Matched,
@@ -144,6 +160,36 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 			resultContract.TraceName,
 			resultContract.JavaSource,
 			IsLive: false);
+	}
+
+	private static FindGroupMutationPostProjectedRowComparisonDryRunPairedRowReadiness CreatePairedRowReadiness(
+		int order,
+		FindGroupMutationPostProjectedRowComparisonDryRunAction action,
+		IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference> acceptedJavaRows,
+		IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAcceptedCSharpRowReference> acceptedCSharpRows)
+	{
+		var hasJavaRow = acceptedJavaRows.Any(row => row.Action == action.Action
+			&& row.MutationKind == action.MutationKind.ToString()
+			&& row.RequiredRowIdentity == action.RequiredRowIdentity
+			&& row.IsShapeValidJavaArtifact);
+		var hasCSharpRow = acceptedCSharpRows.Any(row => row.Action == action.Action
+			&& row.MutationKind == action.MutationKind
+			&& row.RequiredRowIdentity == action.RequiredRowIdentity
+			&& row.IsAcceptedLiveBoundaryEvidence);
+		var readiness = hasJavaRow && hasCSharpRow;
+
+		return new FindGroupMutationPostProjectedRowComparisonDryRunPairedRowReadiness(
+			order,
+			action.Action,
+			action.MutationKind,
+			action.RequiredRowIdentity,
+			hasJavaRow,
+			hasCSharpRow,
+			readiness,
+			$"action={action.Action}; mutationKind={action.MutationKind}; hasJavaRow={hasJavaRow}; hasCSharpRow={hasCSharpRow}; requiredIdentity={action.RequiredRowIdentity}",
+			readiness
+				? "Both accepted row references exist for a future executor input, but this dry-run still does not compare Java/C# values."
+				: "Future executor input is incomplete; this dry-run still does not compare Java/C# values.");
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference CreateAcceptedJavaRowReference(

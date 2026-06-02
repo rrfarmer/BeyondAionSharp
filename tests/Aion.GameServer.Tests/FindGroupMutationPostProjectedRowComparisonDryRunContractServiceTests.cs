@@ -18,6 +18,14 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		Assert.False(contract.ShouldCompareRows);
 		Assert.Empty(contract.AcceptedJavaRows);
 		Assert.Empty(contract.AcceptedCSharpRows);
+		Assert.Equal([2, 6], contract.PairedRowReadiness.Select(row => row.Action));
+		Assert.All(contract.PairedRowReadiness, row =>
+		{
+			Assert.False(row.HasAcceptedJavaRow);
+			Assert.False(row.HasAcceptedCSharpRow);
+			Assert.False(row.IsReadyForFutureComparisonInput);
+			Assert.Contains("does not compare Java/C# values", row.Notes, StringComparison.Ordinal);
+		});
 		Assert.Contains("Comparison not executed", contract.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", contract.TraceName);
 		Assert.Contains("addRecruitment/addApplication", contract.JavaSource, StringComparison.Ordinal);
@@ -127,6 +135,16 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		Assert.True(contract.ShouldCompareRows);
 		Assert.Equal(2, contract.AcceptedJavaRows.Count);
 		Assert.Equal(2, contract.AcceptedCSharpRows.Count);
+		Assert.Equal(2, contract.PairedRowReadiness.Count);
+		Assert.All(contract.PairedRowReadiness, row =>
+		{
+			Assert.True(row.HasAcceptedJavaRow);
+			Assert.True(row.HasAcceptedCSharpRow);
+			Assert.True(row.IsReadyForFutureComparisonInput);
+			Assert.Contains("hasJavaRow=True", row.Evidence, StringComparison.Ordinal);
+			Assert.Contains("hasCSharpRow=True", row.Evidence, StringComparison.Ordinal);
+			Assert.Contains("still does not compare Java/C# values", row.Notes, StringComparison.Ordinal);
+		});
 		Assert.Equal([2, 6], contract.AcceptedCSharpRows.Select(row => row.Action));
 		Assert.Contains("future executor may compare", contract.ExecutionDecision, StringComparison.Ordinal);
 		Assert.False(contract.IsLive);
@@ -157,6 +175,13 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 			&& row.MutationKind == "Application"
 			&& row.Evidence.Contains("posted=1400393", StringComparison.Ordinal)
 			&& row.Evidence.Contains("refreshed=4", StringComparison.Ordinal));
+		Assert.All(contract.PairedRowReadiness, row =>
+		{
+			Assert.True(row.HasAcceptedJavaRow);
+			Assert.False(row.HasAcceptedCSharpRow);
+			Assert.False(row.IsReadyForFutureComparisonInput);
+			Assert.Contains("hasCSharpRow=False", row.Evidence, StringComparison.Ordinal);
+		});
 		Assert.False(contract.ShouldCompareRows);
 	}
 
@@ -182,6 +207,16 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		Assert.Contains("action/mutationKind/activePlayerObjectId/mutatedEntryObjectId", accepted.RequiredRowIdentity, StringComparison.Ordinal);
 		Assert.Contains("boundary=True", accepted.Evidence, StringComparison.Ordinal);
 		Assert.Contains("Accepted C# row", accepted.PlannedInputSource, StringComparison.Ordinal);
+		Assert.Contains(contract.PairedRowReadiness, row =>
+			row.Action == 2
+			&& !row.HasAcceptedJavaRow
+			&& row.HasAcceptedCSharpRow
+			&& !row.IsReadyForFutureComparisonInput);
+		Assert.Contains(contract.PairedRowReadiness, row =>
+			row.Action == 6
+			&& !row.HasAcceptedJavaRow
+			&& !row.HasAcceptedCSharpRow
+			&& !row.IsReadyForFutureComparisonInput);
 		Assert.False(contract.ShouldCompareRows);
 	}
 
