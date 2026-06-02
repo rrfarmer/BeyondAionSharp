@@ -46,6 +46,32 @@ public sealed class FindGroupSideEffectDispatchExecutorServiceTests
 	}
 
 	[Fact]
+	public async Task ExecuteAsync_SendsActionFifteenMemberInfoIntentThroughConnectionRegistry()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var viewer = CreatePlayer(0x01020307, "Viewer", "ELYOS");
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		recruiter.Position = new WorldPosition(300110000, 0, 0, 0, 0);
+		registry.OnlineDirectRecipients.Add(viewer.ObjectId);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(recruiter, 0x11223344, "Entry", minMembers: 3, nowEpochSeconds: 0x01020305);
+		var memberInfoPlan = findGroupService.ShowInstanceGroupMembersInfo(
+			viewer,
+			recruiter.ObjectId,
+			nowEpochSeconds: 0x01020305);
+
+		var plan = await new FindGroupSideEffectDispatchExecutorService(registry)
+			.ExecuteAsync(memberInfoPlan.DirectPacketIntents);
+
+		var direct = Assert.Single(plan.DirectPackets);
+		Assert.True(direct.Sent);
+		Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(16, List.of(instanceGroup)))", direct.JavaSource);
+		Assert.Equal([viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+	}
+
+	[Fact]
 	public async Task ExecuteAsync_MissingDirectRecipientRecordsUnsentResult()
 	{
 		var registry = new FakeGameClientConnectionRegistry();
