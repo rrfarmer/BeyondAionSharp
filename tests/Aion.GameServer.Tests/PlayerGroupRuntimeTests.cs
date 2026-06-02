@@ -133,6 +133,31 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void RemoveMemberWithLeavePlan_DisbandRemovesRecruitmentCreatedByDisabledClientActionPlannerLikeJavaSingleton()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var clientActionPlanner = new FindGroupClientActionPlanService(findGroupService);
+		var runtime = new PlayerGroupRuntime(findGroupService, serverId: 5);
+		var leader = new Player { ObjectId = 1001, Name = "Leader", Race = "ELYOS", PlayerClass = "RANGER", Level = 65, IsOnline = true };
+		var member = new Player { ObjectId = 1002, Name = "Member", Race = "ELYOS", PlayerClass = "CLERIC", Level = 63, IsOnline = true };
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+		var addPlan = clientActionPlanner.Plan(
+			leader,
+			new FindGroupClientAction(Action: 2, Message: "Team recruitment", GroupType: 4),
+			nowEpochSeconds: 100,
+			currentTeam: new FindGroupRecruitmentSubject(99001, "ELYOS", IsSoloPlayer: false, "Leader", Size: 2, MinLevel: 63, MaxLevel: 65, ClassId: 5));
+
+		var plan = Assert.IsType<PlayerGroupLeavePlan>(runtime.RemoveMemberWithLeavePlan(member));
+
+		Assert.Equal(FindGroupClientActionPlanKind.AddRecruitment, addPlan.Kind);
+		Assert.True(plan.WouldDisband);
+		Assert.NotNull(plan.FindGroupRecruitmentRemoval);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, plan.FindGroupRecruitmentRemoval!.Status);
+		Assert.Equal(99001, plan.FindGroupRecruitmentRemoval.RemovedRecruitment?.ObjectId);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+	}
+
+	[Fact]
 	public void AddMember_RefreshesSnapshotForExistingMembersAndNewMember()
 	{
 		var runtime = new PlayerGroupRuntime();
