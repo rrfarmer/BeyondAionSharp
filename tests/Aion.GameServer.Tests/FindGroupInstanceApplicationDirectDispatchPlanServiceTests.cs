@@ -29,6 +29,33 @@ public sealed class FindGroupInstanceApplicationDirectDispatchPlanServiceTests
 	}
 
 	[Fact]
+	public void CreateDisabledPlan_DeclinedActionTwelveWhisperIntentIsPlannedWithoutLiveDispatch()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var responder = CreatePlayer(0x01020307, "Responder");
+		var applicant = CreatePlayer(0x01020304, "Applicant");
+		var applicationPlan = findGroupService.SendInstanceApplicationResult(
+			responder,
+			applicant,
+			applicant.ObjectId,
+			instanceApplicationReply: 0);
+
+		var plan = FindGroupInstanceApplicationDirectDispatchPlanService.CreateDisabledPlan(
+			applicationPlan,
+			Resolve(responder, applicant));
+
+		Assert.Equal(FindGroupInstanceApplicationDirectDispatchStatus.DirectPacketPlanned, plan.Status);
+		Assert.False(plan.DispatchLiveSideEffects);
+		Assert.Equal(FindGroupInstanceApplicationPlanStatus.Declined, applicationPlan.Status);
+		var direct = Assert.Single(plan.DirectPackets);
+		Assert.Equal(applicant.ObjectId, direct.RecipientObjectId);
+		Assert.Equal("SmMessage", direct.PacketType);
+		Assert.Equal(
+			"PacketSendUtility.sendPacket(applicant, new SM_MESSAGE(responder, ChatUtil.l10n(1400217), ChatType.WHISPER))",
+			direct.JavaSource);
+	}
+
+	[Fact]
 	public void CreateDisabledPlan_MissingRecipientSkipsWithoutLiveDispatch()
 	{
 		var findGroupService = new FindGroupRecruitmentPlanService();

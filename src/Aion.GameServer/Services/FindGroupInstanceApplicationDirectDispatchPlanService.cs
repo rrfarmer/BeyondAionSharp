@@ -8,9 +8,10 @@ public static class FindGroupInstanceApplicationDirectDispatchPlanService
 		FindGroupInstanceApplicationPlan? applicationPlan,
 		Func<int, Player?> resolvePlayer)
 	{
-		// Java parity: FindGroupService.sendInstanceApplication resolves the recruiter with
-		// World.getPlayer(playerOrTeamId), then sends SM_FIND_GROUP(applicant). This disabled
-		// executor verifies the connection-adjacent recipient boundary without sending packets.
+		// Java parity: FindGroupService.sendInstanceApplication and the declined
+		// sendInstanceApplicationResult branch both resolve a player through World.getPlayer(...)
+		// before sending a direct packet. This disabled executor verifies the
+		// connection-adjacent recipient boundary without sending packets.
 		if (applicationPlan is null)
 			return FindGroupInstanceApplicationDirectDispatchPlan.SkippedMissingPlan();
 

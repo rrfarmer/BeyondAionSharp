@@ -25,11 +25,11 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupConnectionClientActionCompositionPlanService",
 					"CM_FIND_GROUP.runImpl action switch"),
 				new FindGroupConnectionBoundaryComponentReadiness(
-					"Action 11 direct packet executor",
-					"FindGroupInstanceApplicationDirectDispatchPlanService can compose direct SM_FIND_GROUP applicant packet dispatch evidence without live connection-registry sends.",
+					"Instance application direct packet executor",
+					"FindGroupInstanceApplicationDirectDispatchPlanService can compose direct SM_FIND_GROUP applicant packet and declined SM_MESSAGE whisper dispatch evidence without live connection-registry sends.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
 					"FindGroupInstanceApplicationDirectDispatchPlanService",
-					"FindGroupService.sendInstanceApplication"),
+					"FindGroupService.sendInstanceApplication/sendInstanceApplicationResult declined branch"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Action 12 invite executor",
 					"FindGroupInstanceApplicationInviteDispatchPlanService can compose group/alliance invite request-service results without live packet dispatch.",
@@ -50,7 +50,7 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupService.onLogout/onJoinedTeam"),
 			],
 			[
-				"Do not enable live CmFindGroup dispatch until direct packet sends, world race-filter fanout, action 11 instance application dispatch, action 12 invite dispatch, and lifecycle singleton wiring are all reviewed together.",
+				"Do not enable live CmFindGroup dispatch until direct packet sends, world race-filter fanout, action 11 instance application dispatch, declined action 12 whisper dispatch, action 12 invite dispatch, and lifecycle singleton wiring are all reviewed together.",
 				"Any future live executor must prove packet order, race visibility filters, connection-registry behavior, and service concurrency against Java.",
 				"Actions 20 and 25 remain parsed-only because Java readImpl parses them but runImpl has no branch.",
 			]);
