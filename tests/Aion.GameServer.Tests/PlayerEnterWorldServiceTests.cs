@@ -1016,6 +1016,47 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
 	}
 
+	[Theory]
+	[InlineData(2, 0)]
+	[InlineData(0, 10)]
+	public async Task PreparePortalEntry_DerivesGroupRequirementBypassFromJavaAccountThresholds(
+		int accessLevel,
+		int accountMembership)
+	{
+		var player = CreatePlayer();
+		player.AccessLevel = (byte)accessLevel;
+		player.AccountMembership = (byte)accountMembership;
+		player.Level = 25;
+		player.TeamMembership = PlayerTeamMembership.Group;
+		player.CurrentTeamId = 88001;
+		player.CurrentTeamMemberObjectIds = [1001, 1002, 1003];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var worldMaps = CreateWorldMaps();
+		var registered = worldMaps.AddWorldMapInstance(PortalWorldId, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registered);
+		registered.Register(1002);
+
+		var result = await service.PreparePortalEntryAsync(
+			player,
+			CreatePortalPath(),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6),
+			worldMaps,
+			CreateItemTemplates(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryPreparationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.EntryPlan.TeamPlan);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.EntryPlan.TeamPlan.Disposition);
+		Assert.True(result.EntryPlan.TeamPlan.RegisteredInstanceFromMemberScan);
+		Assert.Same(registered, result.EntryPlan.TeamPlan.RegisteredInstance);
+		Assert.False(registered.IsRegistered(88001));
+		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
+	}
+
 	[Fact]
 	public async Task SaveIdianPolishBurnMutation_PersistsOnlyExhaustedBurnDeletes()
 	{

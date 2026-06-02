@@ -21,12 +21,14 @@ public class GameServerOptionsTests
 		Assert.Equal(10, options.Membership.StigmaSlotQuest);
 		Assert.Equal(10, options.Membership.StigmaAutoLearn);
 		Assert.Equal(10, options.Membership.InstancesCooldown);
+		Assert.Equal(10, options.Membership.InstancesGroupRequirement);
 		Assert.Equal(1, options.Instance.CooldownRate);
 		Assert.Empty(options.Instance.CooldownRateExcludedMaps);
 		Assert.False(options.Instance.FormInstanceGroupAnywhere);
 		Assert.Equal(1, options.Administration.UnrestrictedItemTradeAccessLevel);
 		Assert.Equal(2, options.Administration.GmPanelAccessLevel);
 		Assert.Equal(1, options.Administration.FreeFlightAccessLevel);
+		Assert.Equal(2, options.Administration.InstanceEnterAllAccessLevel);
 		Assert.Contains(10000001, options.Administration.OperationalItemIds);
 		Assert.Contains(10000002, options.Administration.OperationalItemIds);
 		Assert.Equal([75f, 75f], options.Rates.ManastoneChances);
@@ -161,6 +163,8 @@ public class GameServerOptionsTests
 				gameserver.prices.vendor.buymod = 125
 				gameserver.prices.vendor.sellmod = 22
 				gameserver.instance_group.form_anywhere = true
+				gameserver.instances.group.requirement = 7
+				gameserver.administration.instance.enter_all = 4
 				gameserver.timezone = UTC
 				"""
 			);
@@ -189,6 +193,8 @@ public class GameServerOptionsTests
 			Assert.Equal(125, options.Prices.VendorBuyModifier);
 			Assert.Equal(22, options.Prices.VendorSellModifier);
 			Assert.True(options.Instance.FormInstanceGroupAnywhere);
+			Assert.Equal(7, options.Membership.InstancesGroupRequirement);
+			Assert.Equal(4, options.Administration.InstanceEnterAllAccessLevel);
 			Assert.Equal("UTC", options.Core.TimeZoneId);
 			Assert.Equal(TimeZoneInfo.Utc, options.Core.GetTimeZone());
 		}

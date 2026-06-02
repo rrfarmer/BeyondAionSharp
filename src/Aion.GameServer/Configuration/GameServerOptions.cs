@@ -224,6 +224,7 @@ public sealed class GameServerOptions
 				StigmaSlotQuest = GetByteWithEnvironment(loader, "gameserver.quest.stigma.slot", 10),
 				StigmaAutoLearn = GetByteWithEnvironment(loader, "gameserver.autolearn.stigma", 10),
 				InstancesCooldown = GetByteWithEnvironment(loader, "gameserver.instances.cooldown", 10),
+				InstancesGroupRequirement = GetByteWithEnvironment(loader, "gameserver.instances.group.requirement", 10),
 			},
 			Instance = new GameServerInstanceOptions
 			{
@@ -236,6 +237,7 @@ public sealed class GameServerOptions
 				UnrestrictedItemTradeAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.unrestricted_itemtrade", 1),
 				GmPanelAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.gm_panel", 2),
 				FreeFlightAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.flight.free_fly", 1),
+				InstanceEnterAllAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.instance.enter_all", 2),
 				OperationalItemIds = LoadOperationalItemIds(startDirectory),
 			},
 			Rates = new GameServerRateOptions
@@ -586,6 +588,8 @@ public sealed class GameServerMembershipOptions
 	public byte StigmaAutoLearn { get; init; } = 10;
 
 	public byte InstancesCooldown { get; init; } = 10;
+
+	public byte InstancesGroupRequirement { get; init; } = 10;
 }
 
 public sealed class GameServerInstanceOptions
@@ -661,6 +665,8 @@ public sealed class GameServerAdministrationOptions
 	public int GmPanelAccessLevel { get; init; } = 2;
 
 	public int FreeFlightAccessLevel { get; init; } = 1;
+
+	public int InstanceEnterAllAccessLevel { get; init; } = 2;
 
 	public IReadOnlySet<int> OperationalItemIds { get; init; } = new HashSet<int>();
 }

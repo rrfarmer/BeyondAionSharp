@@ -745,6 +745,7 @@ public sealed class PlayerEnterWorldService
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: services/teleport/PortalService.port supported solo/open-world guard + required-item side-effect boundary.
+		var effectiveBypassGroupRequirement = bypassGroupRequirement || HasInstanceGroupRequirementBypass(player);
 		var entryPlan = PortalEntryValidationService.ValidatePortalEntryPlan(
 			player,
 			portalPath,
@@ -758,7 +759,7 @@ public sealed class PlayerEnterWorldService
 			bypassRaceRequirement,
 			bypassTitleRequirement,
 			bypassQuestRequirement,
-			bypassGroupRequirement,
+			effectiveBypassGroupRequirement,
 			siegeOwnerMatchesPlayerRace,
 			npcIsDialogNpc);
 		if (!entryPlan.CanEnter)
@@ -779,6 +780,14 @@ public sealed class PlayerEnterWorldService
 
 		player.InventoryItems = application.InventoryItems;
 		return PortalEntryPreparationResult.Ready(entryPlan, application, application.Packets);
+	}
+
+	private bool HasInstanceGroupRequirementBypass(Player player)
+	{
+		// Java parity: PortalService.port sets instanceGroupReq false when
+		// Player.hasAccess(AdminConfig.INSTANCE_ENTER_ALL) or Player.hasPermission(MembershipConfig.INSTANCES_GROUP_REQ).
+		return player.AccessLevel >= _options.Administration.InstanceEnterAllAccessLevel
+			|| player.AccountMembership >= _options.Membership.InstancesGroupRequirement;
 	}
 
 	public async Task LeaveWorldAsync(Player player, CancellationToken cancellationToken = default)
