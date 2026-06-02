@@ -56,7 +56,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.Contains(handoff.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutorConsistencyAudit
 			&& row.HasExecutorConsistencyAudit
-			&& row.CurrentEvidence.Contains("consistencyAuditStatus=ConsistentBlockedReadiness", StringComparison.Ordinal));
+			&& row.CurrentEvidence.Contains("consistencyAuditStatus=ConsistentBlockedReadiness", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("consistencyAuditRowEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("executorEvidenceBridgeRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("resultEmissionBlockerRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -110,6 +114,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		Assert.Contains(handoff.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.RuntimeComparison
 			&& row.Status == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRowStatus.BlockedRuntimeComparisonMissing
+			&& row.CurrentEvidence.Contains("consistencyAuditRowEvidence=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("executorEvidenceBridgeRows=", StringComparison.Ordinal)
+			&& row.CurrentEvidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
 			&& row.Notes.Contains("final objective evidence gate", StringComparison.Ordinal));
 		Assert.Contains(handoff.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRequirement.ExecutableImplementation
@@ -162,7 +169,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			BlocksVerifiedParity: true,
 			"test provider",
 			"test required evidence",
-			"test current evidence",
+			requirement == FindGroupMutationPostProjectedValueExecutorConsistencyAuditRequirement.ExecutorEvidenceBridge
+				? "executorEvidenceBridgeRows=ResultEmissionBlocker=resultEmissionBlockerRows=Matched=materializationBlockerEvidence=projectedValueRows=activePlayerObjectId; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True"
+				: "test current evidence",
 			"test notes");
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAudit Audit(

@@ -292,6 +292,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 		string notes,
 		bool requiresRuntimeComparisonStart)
 	{
+		var consistencyAuditRowEvidence = ConsistencyAuditRowEvidence(executorConsistencyAudit);
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRow(
 			order,
 			requirement,
@@ -304,8 +305,15 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderExecut
 			RequiredBeforeVerifiedParity: true,
 			CanStartExecutableImplementation: false,
 			requiredEvidence,
-			$"{currentEvidence} consistencyAuditStatus={executorConsistencyAudit.Status}; consistencyAuditRows={executorConsistencyAudit.Rows.Count}; consistencyCanRunRuntimeComparison={executorConsistencyAudit.CanRunRuntimeComparison}; consistencyCanClaimVerifiedParity={executorConsistencyAudit.CanClaimVerifiedParity}; auditStatus={implementationReadinessAudit.Status}; auditRows={implementationReadinessAudit.Rows.Count}; hasAnyRuntimeEvidence={implementationReadinessAudit.HasAnyRuntimeEvidence}; canWriteExecutableExecutor={implementationReadinessAudit.CanWriteExecutableExecutor}; canExecuteExecutor={implementationReadinessAudit.CanExecuteExecutor}; canClaimVerifiedParity={implementationReadinessAudit.CanClaimVerifiedParity}",
+			$"{currentEvidence} consistencyAuditStatus={executorConsistencyAudit.Status}; consistencyAuditRows={executorConsistencyAudit.Rows.Count}; consistencyCanRunRuntimeComparison={executorConsistencyAudit.CanRunRuntimeComparison}; consistencyCanClaimVerifiedParity={executorConsistencyAudit.CanClaimVerifiedParity}; consistencyAuditRowEvidence={consistencyAuditRowEvidence}; auditStatus={implementationReadinessAudit.Status}; auditRows={implementationReadinessAudit.Rows.Count}; hasAnyRuntimeEvidence={implementationReadinessAudit.HasAnyRuntimeEvidence}; canWriteExecutableExecutor={implementationReadinessAudit.CanWriteExecutableExecutor}; canExecuteExecutor={implementationReadinessAudit.CanExecuteExecutor}; canClaimVerifiedParity={implementationReadinessAudit.CanClaimVerifiedParity}",
 			notes);
+	}
+
+	private static string ConsistencyAuditRowEvidence(FindGroupMutationPostProjectedValueExecutorConsistencyAudit executorConsistencyAudit)
+	{
+		return executorConsistencyAudit.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", executorConsistencyAudit.Rows.Select(row => $"{row.Requirement}={row.CurrentEvidence}"));
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffRowStatus RowStatusFor(
