@@ -11,6 +11,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -601,6 +602,68 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		var updateGroup = Assert.Single(updateGroups);
 		Assert.Equal(recruiter.ObjectId, updateGroup.GroupEntryId);
 		Assert.DoesNotContain(otherRace.ObjectId, updateGroups.Select(group => group.GroupEntryId));
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_ActionTenUsesTargetNpcMaskLookup()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var recruiter = CreatePlayer(0x01020305, "Recruiter", "ELYOS");
+		var portalNpc = CreateNpc(0x04050607, templateId: 700001);
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(portalNpc.ObjectId, portalNpc));
+		viewer.TargetObjectId = portalNpc.ObjectId;
+		var registry = new CapturingConnectionRegistry([viewer]);
+		var options = new GameServerOptions
+		{
+			Instance = new GameServerInstanceOptions { FormInstanceGroupAnywhere = true },
+		};
+		var autoGroups = new AutoGroupTable(
+		[
+			new AutoGroupSummary(302, 300110000, 0, 0, 0, 0, false, false, false, [portalNpc.TemplateId]),
+			new AutoGroupSummary(303, 300120000, 0, 0, 0, 0, false, false, false, [700002]),
+		]);
+		findGroupService.RegisterInstanceGroup(recruiter, 0x11223344, "Entry", minMembers: 3, nowEpochSeconds: 100);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			options: options,
+			autoGroups: autoGroups,
+			world: world);
+		SetActivePlayer(fixture.Connection, viewer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(77, buffer => buffer.WriteC(10)));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var maskPacket = Assert.IsType<SmFindGroup>(packet);
+				Assert.Equal(26, ReadPrivateField<int>(maskPacket, "_action"));
+				Assert.Equal([302], ReadPrivateField<IReadOnlyList<int>>(maskPacket, "_instanceMaskIds"));
+			},
+			packet =>
+			{
+				var showPacket = Assert.IsType<SmFindGroup>(packet);
+				Assert.Equal(10, ReadPrivateField<int>(showPacket, "_action"));
+				var groups = ReadPrivateField<IReadOnlyList<FindGroupInstanceGroupRegistrationSnapshot>>(showPacket, "_instanceGroups");
+				Assert.Equal(recruiter.ObjectId, Assert.Single(groups).GroupEntryId);
+			});
+
+		sentPackets.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(77, buffer => buffer.WriteC(13)));
+
+		var updatePacket = Assert.IsType<SmFindGroup>(Assert.Single(sentPackets));
+		Assert.Equal(10, ReadPrivateField<int>(updatePacket, "_action"));
 		Assert.Empty(registry.DirectSends);
 		Assert.Empty(registry.WorldBroadcasts);
 	}
@@ -2443,6 +2506,16 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		};
 	}
 
+	private static WorldNpc CreateNpc(int objectId, int templateId)
+	{
+		var template = new NpcTemplateSummary(templateId, "portal_npc", 0, 65, "NORMAL", "NORMAL", "NONE", "NONE", "NPC");
+		return new WorldNpc(
+			objectId,
+			templateId,
+			template,
+			new WorldPosition(210010000, 12, 22, 33, 0));
+	}
+
 	private static void SetActivePlayer(GameServerConnection connection, Player player)
 	{
 		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -2480,7 +2553,8 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 			PlayerGroupRuntime? playerGroupRuntime = null,
 			PlayerAllianceRuntime? playerAllianceRuntime = null,
 			GameServerOptions? options = null,
-			AutoGroupTable? autoGroups = null)
+			AutoGroupTable? autoGroups = null,
+			GameWorld? world = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -2497,6 +2571,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 					? null
 					: new FindGroupConnectionClientActionCompositionPlanService(
 						new FindGroupClientActionPlanService(findGroupService),
+						world: world,
 						autoGroups: autoGroups,
 						options: options);
 				var dispatchAdapterService = findGroupService == null
@@ -2513,6 +2588,7 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 						connectionRegistry: connectionRegistry,
 						sentPacketObserver: sentPacketObserver,
 						crypt: crypt,
+						world: world,
 						playerGroupRuntime: playerGroupRuntime,
 						playerAllianceRuntime: playerAllianceRuntime,
 						findGroupConnectionClientActionCompositionPlanService: compositionService,
