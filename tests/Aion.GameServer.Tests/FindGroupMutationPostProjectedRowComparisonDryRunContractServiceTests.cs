@@ -13,8 +13,10 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		Assert.False(contract.IsLive);
 		Assert.True(contract.HasExecutionBlockerReport);
 		Assert.True(contract.HasResultContract);
+		Assert.True(contract.HasJavaArtifactDirectoryReport);
 		Assert.True(contract.HasGuardedFixtureResultContract);
 		Assert.False(contract.ShouldCompareRows);
+		Assert.Empty(contract.AcceptedJavaRows);
 		Assert.Empty(contract.AcceptedCSharpRows);
 		Assert.Contains("Comparison not executed", contract.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", contract.TraceName);
@@ -118,14 +120,44 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 
 		var contract = FindGroupMutationPostProjectedRowComparisonDryRunContractService.Create(
 			readyReport,
+			javaArtifacts: ShapeValidJavaArtifacts(),
 			guardedFixtureResultContract: guardedFixture);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonDryRunStatus.ReadyForFutureExecutor, contract.Status);
 		Assert.True(contract.ShouldCompareRows);
+		Assert.Equal(2, contract.AcceptedJavaRows.Count);
 		Assert.Equal(2, contract.AcceptedCSharpRows.Count);
 		Assert.Equal([2, 6], contract.AcceptedCSharpRows.Select(row => row.Action));
 		Assert.Contains("future executor may compare", contract.ExecutionDecision, StringComparison.Ordinal);
 		Assert.False(contract.IsLive);
+	}
+
+	[Fact]
+	public void Create_ProjectsShapeValidJavaRowsAsFutureExecutorInputs()
+	{
+		var contract = FindGroupMutationPostProjectedRowComparisonDryRunContractService.Create(
+			javaArtifacts: ShapeValidJavaArtifacts());
+
+		Assert.Equal(2, contract.AcceptedJavaRows.Count);
+		Assert.Equal([2, 6], contract.AcceptedJavaRows.Select(row => row.Action));
+		Assert.All(contract.AcceptedJavaRows, row =>
+		{
+			Assert.True(row.IsShapeValidJavaArtifact);
+			Assert.Contains("action/mutationKind/activePlayerObjectId/mutatedEntryObjectId", row.RequiredRowIdentity, StringComparison.Ordinal);
+			Assert.Contains("Shape-valid Java artifact row", row.PlannedInputSource, StringComparison.Ordinal);
+			Assert.Contains("status=ShapeValid", row.Evidence, StringComparison.Ordinal);
+		});
+		Assert.Contains(contract.AcceptedJavaRows, row =>
+			row.Action == 2
+			&& row.MutationKind == "Recruitment"
+			&& row.Evidence.Contains("posted=1400392", StringComparison.Ordinal)
+			&& row.Evidence.Contains("refreshed=0", StringComparison.Ordinal));
+		Assert.Contains(contract.AcceptedJavaRows, row =>
+			row.Action == 6
+			&& row.MutationKind == "Application"
+			&& row.Evidence.Contains("posted=1400393", StringComparison.Ordinal)
+			&& row.Evidence.Contains("refreshed=4", StringComparison.Ordinal));
+		Assert.False(contract.ShouldCompareRows);
 	}
 
 	[Fact]
@@ -152,6 +184,43 @@ public sealed class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		Assert.Contains("Accepted C# row", accepted.PlannedInputSource, StringComparison.Ordinal);
 		Assert.False(contract.ShouldCompareRows);
 	}
+
+	private static FindGroupMutationPostJavaTraceArtifactDirectoryReport ShapeValidJavaArtifacts() =>
+		new(
+			FindGroupMutationPostJavaTraceArtifactDirectoryStatus.AllExpectedArtifactsShapeValid,
+			FindGroupMutationPostJavaTraceArtifactFileReportService.DefaultArtifactRoot,
+			[
+				ShapeValidFile(2),
+				ShapeValidFile(6),
+			],
+			HasGeneratedJavaArtifacts: true,
+			HasAllExpectedFiles: true,
+			HasOnlyShapeValidArtifacts: true,
+			ReadyForRuntimeComparison: false,
+			"shape-valid only");
+
+	private static FindGroupMutationPostJavaTraceArtifactDirectoryFileRow ShapeValidFile(int action) =>
+		new(
+			action,
+			FindGroupMutationPostJavaTraceArtifactFileReportService.FileNameForAction(action),
+			FindGroupMutationPostJavaTraceArtifactDirectoryFileStatus.ShapeValid,
+			new FindGroupMutationPostJavaTraceArtifactValidationReport(
+				[],
+				IsValid: true,
+				new FindGroupMutationPostJavaTraceArtifactMetadata(
+					SchemaVersion: 1,
+					TraceName: "cm-find-group-direct-mutation-post-boundary",
+					[
+						new FindGroupMutationPostJavaTraceArtifactValidationTraceRow(
+							SchemaVersion: 1,
+							TraceName: "cm-find-group-direct-mutation-post-boundary",
+							TraceSource: "Java",
+							action,
+							MutationKind: action == 2 ? "Recruitment" : "Application",
+							PostedSystemMessageId: action == 2 ? 1400392 : 1400393,
+							RefreshedListAction: action == 2 ? 0 : 4)
+					])),
+			"shape-valid only");
 
 	private static FindGroupDirectPacketMutationPostBoundaryTraceExport LiveCSharpRow(int action) =>
 		FindGroupDirectPacketMutationPostBoundaryTraceSchemaService.CreateSampleExport(action) with

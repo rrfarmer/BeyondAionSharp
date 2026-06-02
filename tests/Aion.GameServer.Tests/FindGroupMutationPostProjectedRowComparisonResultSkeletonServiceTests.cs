@@ -83,6 +83,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonResultSkeletonSer
 		var readyDryRun = new FindGroupMutationPostProjectedRowComparisonDryRunContract(
 			FindGroupMutationPostProjectedRowComparisonDryRunStatus.ReadyForFutureExecutor,
 			Actions: [],
+			AcceptedJavaRows: [],
 			AcceptedCSharpRows: [],
 			Fields:
 			[
@@ -104,6 +105,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonResultSkeletonSer
 			],
 			HasExecutionBlockerReport: true,
 			HasResultContract: true,
+			HasJavaArtifactDirectoryReport: true,
 			HasGuardedFixtureResultContract: true,
 			ShouldCompareRows: true,
 			ExecutionDecision: "future executor may compare",

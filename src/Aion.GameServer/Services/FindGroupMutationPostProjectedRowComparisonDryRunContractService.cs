@@ -51,14 +51,25 @@ public sealed record FindGroupMutationPostProjectedRowComparisonDryRunAcceptedCS
 	string Evidence,
 	string PlannedInputSource);
 
+public sealed record FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference(
+	int Order,
+	int Action,
+	string MutationKind,
+	string RequiredRowIdentity,
+	bool IsShapeValidJavaArtifact,
+	string Evidence,
+	string PlannedInputSource);
+
 public sealed record FindGroupMutationPostProjectedRowComparisonDryRunContract(
 	FindGroupMutationPostProjectedRowComparisonDryRunStatus Status,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAction> Actions,
+	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference> AcceptedJavaRows,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunAcceptedCSharpRowReference> AcceptedCSharpRows,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunField> Fields,
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonDryRunOutputKind> OutputKinds,
 	bool HasExecutionBlockerReport,
 	bool HasResultContract,
+	bool HasJavaArtifactDirectoryReport,
 	bool HasGuardedFixtureResultContract,
 	bool ShouldCompareRows,
 	string ExecutionDecision,
@@ -76,10 +87,12 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 	public static FindGroupMutationPostProjectedRowComparisonDryRunContract Create(
 		FindGroupMutationPostComparisonExecutionBlockerReport? blockerReport = null,
 		FindGroupMutationPostComparisonExecutionResultContract? resultContract = null,
+		FindGroupMutationPostJavaTraceArtifactDirectoryReport? javaArtifacts = null,
 		FindGroupMutationPostGuardedFixtureResultContract? guardedFixtureResultContract = null)
 	{
 		blockerReport ??= FindGroupMutationPostComparisonExecutionBlockerReportService.Create();
 		resultContract ??= FindGroupMutationPostComparisonExecutionResultContractService.Create();
+		javaArtifacts ??= FindGroupMutationPostJavaTraceArtifactDirectoryReportService.Create();
 		guardedFixtureResultContract ??= FindGroupMutationPostGuardedFixtureResultContractService.Create();
 
 		var actions = resultContract.Actions
@@ -91,6 +104,13 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 				action.ExpectedPostedSystemMessageId,
 				action.ExpectedRefreshedListAction,
 				$"Emit {FindGroupMutationPostProjectedRowComparisonDryRunOutputKind.Matched} only when all required equality fields match for action={action.Action}."))
+			.ToArray();
+		var acceptedJavaRows = javaArtifacts.Files
+			.Where(file => file.Status == FindGroupMutationPostJavaTraceArtifactDirectoryFileStatus.ShapeValid)
+			.SelectMany(file => file.ValidationReport?.Metadata?.TraceRows
+				.Where(row => row.Action == file.Action)
+				.Select(row => CreateAcceptedJavaRowReference(file, row, resultContract)) ?? [])
+			.Select((row, index) => row with { Order = index + 1 })
 			.ToArray();
 		var acceptedRows = guardedFixtureResultContract.AcceptedLiveRows
 			.Select((row, index) => CreateAcceptedCSharpRowReference(index + 1, row, resultContract))
@@ -105,6 +125,7 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 		return new FindGroupMutationPostProjectedRowComparisonDryRunContract(
 			status,
 			actions,
+			acceptedJavaRows,
 			acceptedRows,
 			fields,
 			[
@@ -116,12 +137,29 @@ public static class FindGroupMutationPostProjectedRowComparisonDryRunContractSer
 			],
 			HasExecutionBlockerReport: blockerReport.Rows.Count > 0 || blockerReport.ShouldExecuteComparison,
 			HasResultContract: resultContract.Fields.Count > 0,
+			HasJavaArtifactDirectoryReport: javaArtifacts.Files.Count > 0,
 			HasGuardedFixtureResultContract: guardedFixtureResultContract.Requirements.Count > 0,
 			ShouldCompareRows: blockerReport.ShouldExecuteComparison,
 			blockerReport.ExecutionDecision,
 			resultContract.TraceName,
 			resultContract.JavaSource,
 			IsLive: false);
+	}
+
+	private static FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference CreateAcceptedJavaRowReference(
+		FindGroupMutationPostJavaTraceArtifactDirectoryFileRow file,
+		FindGroupMutationPostJavaTraceArtifactValidationTraceRow row,
+		FindGroupMutationPostComparisonExecutionResultContract resultContract)
+	{
+		var action = resultContract.Actions.Single(item => item.Action == row.Action);
+		return new FindGroupMutationPostProjectedRowComparisonDryRunAcceptedJavaRowReference(
+			Order: 0,
+			row.Action,
+			row.MutationKind,
+			action.RowIdentityFields,
+			IsShapeValidJavaArtifact: true,
+			$"path={file.Path}; action={row.Action}; mutationKind={row.MutationKind}; posted={row.PostedSystemMessageId}; refreshed={row.RefreshedListAction}; status={file.Status}",
+			"Shape-valid Java artifact row from FindGroupMutationPostJavaTraceArtifactDirectoryReportService; future executor may use this row only after blocker report allows comparison.");
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonDryRunAcceptedCSharpRowReference CreateAcceptedCSharpRowReference(
