@@ -48,11 +48,12 @@ public sealed record FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceC
 public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistService
 {
 	public static FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklist Create(
-		FindGroupMutationPostProjectedRowComparisonLiveInputHandoffContract? liveInputHandoff = null)
+		FindGroupMutationPostProjectedRowComparisonLiveInputHandoffContract? liveInputHandoff = null,
+		FindGroupMutationPostJavaCSharpRowPairingReadinessReport? rowPairingReadinessReport = null)
 	{
 		liveInputHandoff ??= FindGroupMutationPostProjectedRowComparisonLiveInputHandoffContractService.Create();
 		var rows = liveInputHandoff.Requirements
-			.Select(CreateRow)
+			.Select(requirement => CreateRow(requirement, rowPairingReadinessReport))
 			.ToArray();
 		var status = liveInputHandoff.Status == FindGroupMutationPostProjectedRowComparisonLiveInputHandoffStatus.BlockedSummaryNotReady
 			? FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistStatus.BlockedSummaryNotReady
@@ -73,9 +74,11 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistRow CreateRow(
-		FindGroupMutationPostProjectedRowComparisonLiveInputRequirementRow requirement)
+		FindGroupMutationPostProjectedRowComparisonLiveInputRequirementRow requirement,
+		FindGroupMutationPostJavaCSharpRowPairingReadinessReport? rowPairingReadinessReport)
 	{
 		var mapping = MappingFor(requirement.Requirement);
+		var rowPairingEvidence = RowPairingEvidenceFor(requirement.Requirement, rowPairingReadinessReport);
 		return new FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistRow(
 			requirement.Order,
 			requirement.Requirement,
@@ -85,8 +88,19 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			BlocksVerifiedParity: true,
 			mapping.ExistingProvider,
 			mapping.RequiredNextEvidence,
-			$"{requirement.Evidence}; handoffStatus={requirement.Status}; handoffRuntimeEvidence={requirement.IsRuntimeEvidence}",
+			$"{requirement.Evidence}; handoffStatus={requirement.Status}; handoffRuntimeEvidence={requirement.IsRuntimeEvidence}{rowPairingEvidence}",
 			mapping.Notes);
+	}
+
+	private static string RowPairingEvidenceFor(
+		FindGroupMutationPostProjectedRowComparisonLiveInputRequirement requirement,
+		FindGroupMutationPostJavaCSharpRowPairingReadinessReport? rowPairingReadinessReport)
+	{
+		if (requirement != FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching
+			|| rowPairingReadinessReport is null)
+			return string.Empty;
+
+		return $"; rowPairingStatus={rowPairingReadinessReport.Status}; rowPairingCanFeedValueProjection={rowPairingReadinessReport.CanFeedValueProjection}; rowPairingEvidence={rowPairingReadinessReport.JavaPostCaptureDryRunCommandConsistencyEvidence}";
 	}
 
 	private static FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus StatusFor(

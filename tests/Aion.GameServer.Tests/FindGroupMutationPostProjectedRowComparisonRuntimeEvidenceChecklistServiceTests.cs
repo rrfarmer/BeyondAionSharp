@@ -82,7 +82,10 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 	[Fact]
 	public void Create_CSharpBoundaryAndRegistryRowsStayNonLive()
 	{
-		var checklist = FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistService.Create(ReadyRuntimeHandoff());
+		var rowPairingReadinessReport = FindGroupMutationPostJavaCSharpRowPairingReadinessReportService.Create();
+		var checklist = FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistService.Create(
+			ReadyRuntimeHandoff(),
+			rowPairingReadinessReport);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceChecklistStatus.BlockedRuntimeEvidenceMissing, checklist.Status);
 		Assert.Contains(checklist.Rows, row =>
@@ -107,6 +110,10 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.RequiredNextEvidence.Contains("action/mutation pairing readiness", StringComparison.Ordinal)
 			&& row.Notes.Contains("Accepted-boundary-row handoff", StringComparison.Ordinal)
 			&& row.Notes.Contains("row pairing readiness", StringComparison.Ordinal)
+			&& row.Evidence.Contains("rowPairingStatus=BlockedJavaArtifactsMissingOrInvalid", StringComparison.Ordinal)
+			&& row.Evidence.Contains("rowPairingCanFeedValueProjection=False", StringComparison.Ordinal)
+			&& row.Evidence.Contains("commandDecisionRowsEvidence=", StringComparison.Ordinal)
+			&& row.Evidence.Contains("captureExecutionBlockerSummaryRows=", StringComparison.Ordinal)
 			&& !row.HasRuntimeEvidence);
 		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RegistrySendObservation
