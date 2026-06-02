@@ -157,9 +157,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Paired readiness remains metadata until runtime row keys are inspected."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ResultEmission => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostProjectedRowComparisonResultSkeletonService, FindGroupMutationPostProjectedRowComparisonBlockedResultReportService, FindGroupMutationPostProjectedRowComparisonValueReaderResultSchemaContractService, FindGroupMutationPostProjectedRowComparisonValueReaderComparatorPreflightContractService, FindGroupMutationPostProjectedRowComparisonValueReaderExecutorReadinessGateService",
-				"Emit real Matched, MissingJavaRow, MissingCSharpRow, FieldMismatch, and IgnoredRuntimeContext rows from projected comparison using the value-reader result schema, comparator preflight, and executor readiness gate.",
-				"Result skeletons, value-reader result schema, comparator preflight, and executor readiness gate describe output and blockers but cannot materialize them."),
+				"FindGroupMutationPostProjectedRowComparisonResultSkeletonService, FindGroupMutationPostProjectedRowComparisonBlockedResultReportService, FindGroupMutationPostProjectedRowComparisonValueReaderResultSchemaContractService, FindGroupMutationPostProjectedRowComparisonValueReaderComparatorPreflightContractService, FindGroupMutationPostProjectedRowComparisonValueReaderExecutorReadinessGateService, FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationPlanContractService",
+				"Emit real Matched, MissingJavaRow, MissingCSharpRow, FieldMismatch, and IgnoredRuntimeContext rows from projected comparison using the value-reader result schema, comparator preflight, executor readiness gate, and executor implementation plan.",
+				"Result skeletons, value-reader result schema, comparator preflight, executor readiness gate, and executor implementation plan describe output and blockers but cannot materialize them."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.LiveDispatchGuard => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"GameServerConnection.ProcessPacketAsync CmFindGroup guard, FindGroupLiveDispatchGoNoGoChecklistService",
