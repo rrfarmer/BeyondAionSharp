@@ -324,6 +324,47 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Equal("No instance exit found for race/world", missingExit.FallbackReason);
 	}
 
+	[Fact]
+	public void InstanceRuntimeService_CreatePlayerForcedExitResolutionPlansComposesMessageAndExitLikeJavaDestroy()
+	{
+		var players = new[]
+		{
+			new Player { ObjectId = 1001, Race = "ELYOS", Position = new WorldPosition(300030000, 1, 1, 1, 0, InstanceId: 7) },
+			new Player { ObjectId = 1002, Race = "ASMODIANS", Position = new WorldPosition(300030000, 2, 2, 2, 0, InstanceId: 7) },
+			new Player { ObjectId = 1003, Race = "ELYOS", Position = new WorldPosition(300030000, 3, 3, 3, 0, InstanceId: 8) },
+		};
+		var instanceExits = new InstanceExitTable(
+		[
+			new InstanceExitSummary(300030000, 210020000, "ELYOS", 330, 2732.1643f, 263.4721f, 0),
+			new InstanceExitSummary(300030000, 220020000, "ASMODIANS", 264.6885f, 2366.3713f, 445.1222f, 29),
+		]);
+		var worldMaps = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(210020000, IsInstance: false, TwinCount: 1),
+			new WorldMapSummary(220020000, IsInstance: false, TwinCount: 1),
+		]);
+		worldMaps.RemoveWorldMapInstance(220020000, 1);
+
+		var plans = InstanceRuntimeService.CreatePlayerForcedExitResolutionPlans(
+			players,
+			300030000,
+			7,
+			instanceExits,
+			worldMaps);
+
+		Assert.Equal(2, plans.Count);
+		var elyos = plans.Single(plan => plan.ForcedExit.PlayerObjectId == 1001);
+		Assert.Equal(1400046, elyos.ForcedExit.ForceLeaveMessage.MessageId);
+		Assert.Equal(["0"], elyos.ForcedExit.ForceLeaveMessage.Parameters);
+		Assert.Equal(InstanceExitResolutionStatus.ExitDestination, elyos.ExitResolution.Status);
+		Assert.Equal(new WorldPosition(210020000, 330, 2732.1643f, 263.4721f, 0), elyos.ExitResolution.Destination);
+		var asmodian = plans.Single(plan => plan.ForcedExit.PlayerObjectId == 1002);
+		Assert.Equal(1400046, asmodian.ForcedExit.ForceLeaveMessage.MessageId);
+		Assert.Equal(InstanceExitResolutionStatus.BindLocationFallback, asmodian.ExitResolution.Status);
+		Assert.Equal("Exit world instance 1 does not exist", asmodian.ExitResolution.FallbackReason);
+		Assert.All(plans, plan => Assert.Contains("destroyInstance", plan.JavaSource, StringComparison.Ordinal));
+	}
+
 	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
 	{
 		private readonly Func<WorldMapInstanceRuntimeState, bool>? _instanceExistsAtDestroy;

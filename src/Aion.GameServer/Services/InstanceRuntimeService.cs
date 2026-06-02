@@ -163,6 +163,23 @@ public static class InstanceRuntimeService
 			? InstanceExitResolutionPlan.ExitDestination(worldId, race, exit, exit.ToWorldPosition())
 			: InstanceExitResolutionPlan.BindFallback(worldId, race, "Exit world instance 1 does not exist");
 	}
+
+	public static IReadOnlyList<InstancePlayerForcedExitResolutionPlan> CreatePlayerForcedExitResolutionPlans(
+		IEnumerable<Player> players,
+		int worldId,
+		int instanceId,
+		InstanceExitTable instanceExits,
+		WorldMapRuntimeStateTable worldMaps)
+	{
+		// Java parity: InstanceService.destroyInstance sends the forced-leave packet before
+		// InstanceService.moveToExitPoint resolves TeleportService.moveToInstanceExit for each player.
+		return CreatePlayerForcedExitPlans(players, worldId, instanceId)
+			.Select(plan => new InstancePlayerForcedExitResolutionPlan(
+				plan,
+				ResolveInstanceExit(instanceExits, worldMaps, plan.WorldId, plan.Race),
+				"InstanceService.destroyInstance -> send STR_MSG_LEAVE_INSTANCE_FORCE(0) -> moveToExitPoint"))
+			.ToArray();
+	}
 }
 
 public sealed class UnsupportedOperationException : InvalidOperationException
@@ -206,6 +223,11 @@ public sealed record InstancePlayerForcedExitPlan(
 	string Race,
 	SmSystemMessage ForceLeaveMessage,
 	string MoveToInstanceExitJavaSource);
+
+public sealed record InstancePlayerForcedExitResolutionPlan(
+	InstancePlayerForcedExitPlan ForcedExit,
+	InstanceExitResolutionPlan ExitResolution,
+	string JavaSource);
 
 public sealed record InstanceExitResolutionPlan(
 	InstanceExitResolutionStatus Status,
