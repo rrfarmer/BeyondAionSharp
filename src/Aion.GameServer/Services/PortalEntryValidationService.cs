@@ -645,6 +645,22 @@ public static class PortalEntryValidationService
 		bool groupRequirementBypassed)
 	{
 		// Java parity: services/teleport/PortalService.port preserves team id/member context before group/alliance transfer fanout.
+		if (maxPlayers is 3 or 6
+			&& player.TeamMembership == PlayerTeamMembership.None
+			&& groupRequirementBypassed)
+		{
+			var registeredInstance = worldMaps.GetRegisteredInstance(worldId, player.ObjectId);
+			return new PortalTeamEntryPlan(
+				PortalTeamEntryKind.PlayerObject,
+				player.ObjectId,
+				Array.Empty<int>(),
+				maxPlayers,
+				GetTeamEntryDisposition(registeredInstance),
+				registeredInstance,
+				IsRegisteredReentry(player, worldId, registeredInstance),
+				FanoutSupported: false);
+		}
+
 		if (maxPlayers is 3 or 6 && player.TeamMembership == PlayerTeamMembership.Group)
 		{
 			var groupSnapshot = PlayerGroupSnapshotResolver.Resolve(player);
@@ -954,6 +970,7 @@ public sealed record PortalTeamEntryPlan(
 
 public enum PortalTeamEntryKind
 {
+	PlayerObject,
 	Group,
 	Alliance,
 	League,

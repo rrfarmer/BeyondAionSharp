@@ -219,10 +219,10 @@ public sealed record GroupPortalTransferPlan(
 		GameServerOptions? options = null,
 		DateTimeOffset? now = null)
 	{
-		if (teamPlan.Kind != PortalTeamEntryKind.Group)
+		if (teamPlan.Kind is not (PortalTeamEntryKind.Group or PortalTeamEntryKind.PlayerObject))
 			return null;
 
-		// Java parity: services/teleport/PortalService.port group branch after checkAndRemoveRequiredItems.
+		// Java parity: services/teleport/PortalService.port group-sized branch after checkAndRemoveRequiredItems.
 		if (teamPlan.TeamId <= 0)
 		{
 			return new GroupPortalTransferPlan(
@@ -278,6 +278,14 @@ public sealed record GroupPortalTransferPlan(
 	{
 		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer)
 		{
+			if (teamPlan.Kind == PortalTeamEntryKind.PlayerObject)
+			{
+				return CreateMemberInstanceScanPlan(
+					teamPlan,
+					GroupPortalMemberInstanceScanState.NotNeededRegisteredPlayerObjectInstance,
+					GroupPortalMemberInstanceScanBlockedReason.RegisteredPlayerObjectInstanceAlreadyResolved);
+			}
+
 			if (teamPlan.RegisteredInstanceFromMemberScan)
 			{
 				return CreateMemberInstanceScanPlan(
@@ -294,6 +302,14 @@ public sealed record GroupPortalTransferPlan(
 
 		if (teamPlan.MemberObjectIds.Count == 0)
 		{
+			if (teamPlan.Kind == PortalTeamEntryKind.PlayerObject)
+			{
+				return CreateMemberInstanceScanPlan(
+					teamPlan,
+					GroupPortalMemberInstanceScanState.NotNeededPlayerObjectRegistration,
+					GroupPortalMemberInstanceScanBlockedReason.PlayerObjectRegistrationPath);
+			}
+
 			return CreateMemberInstanceScanPlan(
 				teamPlan,
 				GroupPortalMemberInstanceScanState.BlockedNoMemberCandidates,
@@ -376,6 +392,16 @@ public sealed record GroupPortalTransferPlan(
 
 		if (transferState == GroupPortalTransferState.FreshInstanceAllocationNeeded)
 		{
+			if (teamPlan.Kind == PortalTeamEntryKind.PlayerObject)
+			{
+				// Java parity: PortalService.port with !instanceGroupReq and no group allocates an instance without registerTeam.
+				return CreateAllocationPlan(
+					teamPlan,
+					portalLoc,
+					GroupPortalAllocationState.WouldAllocatePlayerObjectInstance,
+					GroupPortalAllocationBlockedReason.InstanceAllocationNotPorted);
+			}
+
 			// Java parity: PortalService.port group allocation calls InstanceService.getNextAvailableInstance(mapId, difficult, maxPlayers), then registerTeam(group).
 			return CreateAllocationPlan(
 				teamPlan,
@@ -578,6 +604,8 @@ public enum GroupPortalTransferBlockedReason
 public enum GroupPortalMemberInstanceScanState
 {
 	NotNeededRegisteredTeamInstance,
+	NotNeededRegisteredPlayerObjectInstance,
+	NotNeededPlayerObjectRegistration,
 	WouldScanMemberObjectIds,
 	FoundRegisteredMemberInstance,
 	BlockedInvalidTeamId,
@@ -587,6 +615,8 @@ public enum GroupPortalMemberInstanceScanState
 public enum GroupPortalMemberInstanceScanBlockedReason
 {
 	RegisteredTeamInstanceAlreadyResolved,
+	RegisteredPlayerObjectInstanceAlreadyResolved,
+	PlayerObjectRegistrationPath,
 	LiveGroupAggregateNotPorted,
 	RegisteredMemberInstanceResolved,
 	MissingTeamId,
@@ -613,6 +643,7 @@ public enum GroupPortalAllocationState
 {
 	NotNeededRegisteredTeamInstance,
 	WouldAllocateAndRegisterTeam,
+	WouldAllocatePlayerObjectInstance,
 	BlockedInvalidTeamId,
 }
 

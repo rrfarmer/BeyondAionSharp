@@ -773,6 +773,89 @@ public sealed class GameServerConnectionInstanceCooldownTests
 	}
 
 	[Fact]
+	public async Task QueuePortalContinueTransferAsync_GroupBypassWithoutGroupAllocatesPlayerObjectInstance()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions(),
+			new PlayerEnterWorldService(
+				new GameServerOptions(),
+				repository,
+				new GameWorld(NullLogger<GameWorld>.Instance),
+				NullLogger<PlayerEnterWorldService>.Instance));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(110010000, 1, 1, 1, 0),
+		};
+		var worldMaps = new WorldMapRuntimeStateTable([new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1)]);
+		var cooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				Id: 8,
+				WorldId: 300030000,
+				Race: "PC_ALL",
+				MaxCount: 5,
+				MaxMemberLight: 6,
+				MaxMemberDark: 6,
+				CoolTimeType: "RELATIVE",
+				EntCoolTime: 30),
+		]);
+		var portalLoc = new PortalLocSummary(300030000, LocId: 1, 10, 20, 30, 90);
+		var teamPlan = new PortalTeamEntryPlan(
+			PortalTeamEntryKind.PlayerObject,
+			TeamId: 1001,
+			MemberObjectIds: [],
+			MaxPlayers: 6,
+			PortalTeamEntryDisposition.FreshInstanceAllocationNeeded,
+			RegisteredInstance: null,
+			Reenter: false,
+			FanoutSupported: false);
+		var preparation = PortalEntryPreparationResult.Ready(
+			PortalEntryPlanResult.UnsupportedTeamPortal(portalLoc, teamPlan),
+			requirementApplication: null,
+			Array.Empty<GameServerPacket>());
+
+		var result = await pair.Connection.QueuePortalContinueTransferAsync(
+			player,
+			preparation,
+			worldMapStates: worldMaps,
+			instanceCooltimes: cooltimes,
+			now: DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		Assert.NotNull(result);
+		Assert.Equal(PortalContinueTransferKind.RegisteredInstance, result.Kind);
+		var allocatedInstance = result.RegisteredInstance;
+		Assert.NotNull(allocatedInstance);
+		Assert.Equal(2, allocatedInstance.InstanceId);
+		Assert.Equal(6, allocatedInstance.MaxPlayers);
+		Assert.Null(allocatedInstance.RegisteredTeamId);
+		Assert.True(allocatedInstance.IsRegistered(1001));
+		Assert.Same(allocatedInstance, worldMaps.GetRegisteredInstance(300030000, 1001));
+		Assert.NotSame(teamPlan, result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.PlayerObject, result.TeamPlan!.Kind);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.TeamPlan.Disposition);
+		Assert.Same(allocatedInstance, result.TeamPlan.RegisteredInstance);
+		var groupPlan = result.GroupTransferPlan;
+		Assert.NotNull(groupPlan);
+		Assert.Equal(1001, groupPlan.TeamId);
+		Assert.Empty(groupPlan.MemberObjectIds);
+		Assert.Equal(GroupPortalTransferState.RegisteredInstanceTransfer, groupPlan.State);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanState.NotNeededRegisteredPlayerObjectInstance,
+			groupPlan.MemberInstanceScanPlan.State);
+		Assert.Equal(
+			GroupPortalMemberInstanceScanBlockedReason.RegisteredPlayerObjectInstanceAlreadyResolved,
+			groupPlan.MemberInstanceScanPlan.BlockedReason);
+		Assert.Null(groupPlan.AllocationPlan.IntendedRegisteredTeamId);
+		Assert.Equal(GroupPortalAllocationState.NotNeededRegisteredTeamInstance, groupPlan.AllocationPlan.State);
+		Assert.Equal(new WorldPosition(300030000, 10, 20, 30, 90, InstanceId: 2), player.PendingTeleport?.Destination);
+		Assert.NotNull(repository.SavedPortalCooldowns);
+	}
+
+	[Fact]
 	public async Task QueuePortalContinueTransferAsync_GroupPlanWithoutTeamIdRecordsMissingTeamIdWithoutPackets()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

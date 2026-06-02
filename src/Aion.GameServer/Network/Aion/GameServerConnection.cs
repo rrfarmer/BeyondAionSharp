@@ -7605,7 +7605,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		DateTimeOffset now)
 	{
 		var groupPlan = GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, player, instanceCooltimes, _options, now);
-		if (teamPlan.Kind != PortalTeamEntryKind.Group || groupPlan == null)
+		if (teamPlan.Kind is not (PortalTeamEntryKind.Group or PortalTeamEntryKind.PlayerObject) || groupPlan == null)
 		{
 			return PortalContinueTransferResult.UnsupportedTeamPortal(
 				teamPlan,
@@ -7624,7 +7624,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& teamPlan.TeamId > 0)
 		{
 			// Java parity: PortalService.port group branch calls InstanceService.getNextAvailableInstance(mapId, difficult, maxPlayers),
-			// then WorldMapInstance.registerTeam(group), before falling through to the same transfer helper.
+			// then, for actual groups, WorldMapInstance.registerTeam(group), before falling through to the same transfer helper.
+			// The !instanceGroupReq/no-group branch allocates through the same path but does not register a team id.
 			registeredInstance = worldMapStates.CreateNextWorldMapInstance(
 				portalLoc.WorldId,
 				maxPlayers: teamPlan.MaxPlayers,
@@ -7640,7 +7641,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					now);
 			}
 
-			registeredInstance.RegisterTeamId(teamPlan.TeamId);
+			if (teamPlan.Kind == PortalTeamEntryKind.Group)
+				registeredInstance.RegisterTeamId(teamPlan.TeamId);
 			transferTeamPlan = teamPlan with
 			{
 				Disposition = PortalTeamEntryDisposition.RegisteredInstanceTransfer,

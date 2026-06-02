@@ -1058,6 +1058,36 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task PreparePortalEntry_GroupBypassWithoutGroupCreatesPlayerObjectPlanLikeJava()
+	{
+		var player = CreatePlayer();
+		player.AccountMembership = 10;
+		player.Level = 25;
+		player.TeamMembership = PlayerTeamMembership.None;
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = await service.PreparePortalEntryAsync(
+			player,
+			CreatePortalPath(),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6),
+			CreateWorldMaps(),
+			CreateItemTemplates(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryPreparationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.EntryPlan.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.PlayerObject, result.EntryPlan.TeamPlan.Kind);
+		Assert.Equal(player.ObjectId, result.EntryPlan.TeamPlan.TeamId);
+		Assert.Equal(PortalTeamEntryDisposition.FreshInstanceAllocationNeeded, result.EntryPlan.TeamPlan.Disposition);
+		Assert.Null(result.EntryPlan.TeamPlan.RegisteredInstance);
+		Assert.Equal(0, repository.SaveAssemblyItemActionMutationCalls);
+	}
+
+	[Fact]
 	public async Task SaveIdianPolishBurnMutation_PersistsOnlyExhaustedBurnDeletes()
 	{
 		var player = CreatePlayer();
