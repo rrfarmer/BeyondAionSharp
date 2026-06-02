@@ -59,6 +59,8 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 			report.Components,
 			component => component.Name == "Lifecycle observers"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.PartialEvidence
+				&& component.Evidence.Contains("ConcurrentDictionary state stores matching Java ConcurrentHashMap", StringComparison.Ordinal)
+				&& component.CSharpSource.Contains("FindGroupRecruitmentPlanService", StringComparison.Ordinal)
 				&& component.JavaSource.Contains("onLogout/onJoinedTeam", StringComparison.Ordinal));
 	}
 

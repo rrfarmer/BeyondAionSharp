@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -7,9 +8,9 @@ namespace Aion.GameServer.Services;
 
 public sealed class FindGroupRecruitmentPlanService
 {
-	private readonly Dictionary<int, FindGroupRecruitmentState> _recruitments = [];
-	private readonly Dictionary<int, FindGroupApplicationState> _applications = [];
-	private readonly Dictionary<int, FindGroupInstanceGroupState> _instanceGroups = [];
+	private readonly ConcurrentDictionary<int, FindGroupRecruitmentState> _recruitments = [];
+	private readonly ConcurrentDictionary<int, FindGroupApplicationState> _applications = [];
+	private readonly ConcurrentDictionary<int, FindGroupInstanceGroupState> _instanceGroups = [];
 
 	public FindGroupRecruitmentMutationPlan AddRecruitment(
 		Player player,
@@ -94,7 +95,7 @@ public sealed class FindGroupRecruitmentPlanService
 		byte unknown2,
 		byte unknown3)
 	{
-		if (!_recruitments.Remove(playerOrTeamId, out var removed))
+		if (!_recruitments.TryRemove(playerOrTeamId, out var removed))
 		{
 			return new FindGroupRecruitmentMutationPlan(
 				FindGroupRecruitmentPlanStatus.Missing,
@@ -201,7 +202,7 @@ public sealed class FindGroupRecruitmentPlanService
 
 	public FindGroupApplicationMutationPlan RemoveApplication(Player player)
 	{
-		if (!_applications.Remove(player.ObjectId, out var removed))
+		if (!_applications.TryRemove(player.ObjectId, out var removed))
 		{
 			return new FindGroupApplicationMutationPlan(
 				FindGroupApplicationPlanStatus.Missing,
@@ -307,7 +308,7 @@ public sealed class FindGroupRecruitmentPlanService
 
 	public FindGroupInstanceGroupMutationPlan RemoveInstanceGroup(Player player, int nowEpochSeconds)
 	{
-		_instanceGroups.Remove(player.ObjectId, out var removed);
+		_instanceGroups.TryRemove(player.ObjectId, out var removed);
 
 		return new FindGroupInstanceGroupMutationPlan(
 			removed is null ? FindGroupInstanceGroupPlanStatus.Missing : FindGroupInstanceGroupPlanStatus.Removed,
@@ -433,9 +434,9 @@ public sealed class FindGroupRecruitmentPlanService
 	{
 		// Java parity: FindGroupService.onLogout removes entries keyed by player.getObjectId()
 		// from all three maps and sends no packets.
-		_recruitments.Remove(player.ObjectId, out var removedRecruitment);
-		_applications.Remove(player.ObjectId, out var removedApplication);
-		_instanceGroups.Remove(player.ObjectId, out var removedInstanceGroup);
+		_recruitments.TryRemove(player.ObjectId, out var removedRecruitment);
+		_applications.TryRemove(player.ObjectId, out var removedApplication);
+		_instanceGroups.TryRemove(player.ObjectId, out var removedInstanceGroup);
 
 		return new FindGroupLogoutCleanupPlan(
 			player.ObjectId,
@@ -583,7 +584,7 @@ public sealed class FindGroupRecruitmentPlanService
 			&& instanceGroupMemberCount >= instanceGroupMinMembers;
 		FindGroupInstanceGroupState? removedInstanceGroup = null;
 		if (shouldRemoveInstanceGroup)
-			_instanceGroups.Remove(player.ObjectId, out removedInstanceGroup);
+			_instanceGroups.TryRemove(player.ObjectId, out removedInstanceGroup);
 
 		var instanceGroupRemoval = new FindGroupInstanceGroupRemovalPlan(
 			shouldRemoveInstanceGroup,

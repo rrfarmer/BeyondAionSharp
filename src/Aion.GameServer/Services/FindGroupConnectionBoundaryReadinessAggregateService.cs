@@ -50,9 +50,9 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"CM_FIND_GROUP.runImpl"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Lifecycle observers",
-					"Logout cleanup and joined-team observer evidence exists, but the C# port has not wired FindGroupService as a live singleton across all callers.",
+					"Logout cleanup and joined-team observer evidence exists, and FindGroupRecruitmentPlanService uses ConcurrentDictionary state stores matching Java ConcurrentHashMap shape; the C# port still has not wired FindGroupService as a live singleton across all callers.",
 					FindGroupConnectionBoundaryComponentStatus.PartialEvidence,
-					"PlayerEnterWorldService; PlayerGroupInviteRequestService; PlayerAllianceInviteRequestService; FindGroupJoinedTeamLifecycleRecorder",
+					"PlayerEnterWorldService; PlayerGroupInviteRequestService; PlayerAllianceInviteRequestService; FindGroupJoinedTeamLifecycleRecorder; FindGroupRecruitmentPlanService",
 					"FindGroupService.onLogout/onJoinedTeam"),
 			],
 			[

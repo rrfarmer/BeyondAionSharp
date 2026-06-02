@@ -66,6 +66,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("LeaveWorldAsync", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("PlayerGroupInviteRequestService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("current-team size reaches minMembers", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("ConcurrentDictionary-backed recruitment, application, and instance-group state stores", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchAuditService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConnectionBoundarySideEffectCompositionEvidenceService", StringComparison.Ordinal));

@@ -647,6 +647,34 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void ConcurrentMutations_UseJavaConcurrentHashMapStyleStateStores()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var players = Enumerable.Range(0, 64)
+			.Select(index => CreatePlayer(0x01030000 + index, $"Player{index}", "ELYOS", "RANGER", 65))
+			.ToArray();
+
+		Parallel.ForEach(
+			players,
+			player =>
+			{
+				service.AddRecruitment(player, $"Recruit {player.ObjectId}", groupType: 1, nowEpochSeconds: player.ObjectId);
+				service.AddApplication(player, $"Apply {player.ObjectId}", groupType: 2, classId: 5, level: 65, nowEpochSeconds: player.ObjectId);
+				service.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: $"Entry {player.ObjectId}", minMembers: 6, nowEpochSeconds: player.ObjectId);
+			});
+
+		Assert.Equal(players.Length, service.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments.Count);
+		Assert.Equal(players.Length, service.ShowApplications("ELYOS", nowEpochSeconds: 201).Applications.Count);
+		Assert.Equal(players.Length, service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 202).InstanceGroups.Count);
+
+		Parallel.ForEach(players, player => service.OnLogout(player));
+
+		Assert.Empty(service.ShowRecruitments("ELYOS", nowEpochSeconds: 203).Recruitments);
+		Assert.Empty(service.ShowApplications("ELYOS", nowEpochSeconds: 204).Applications);
+		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 205).InstanceGroups);
+	}
+
+	[Fact]
 	public void SendInstanceApplicationResult_AcceptPlansGroupInviteWhenMinMembersAtMostSix()
 	{
 		var service = new FindGroupRecruitmentPlanService();
