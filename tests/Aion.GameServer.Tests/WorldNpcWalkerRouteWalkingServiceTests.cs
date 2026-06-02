@@ -679,6 +679,67 @@ public sealed class WorldNpcWalkerRouteWalkingServiceTests
 	}
 
 	[Fact]
+	public async Task OnInstanceDestroy_RemovesOnlyDestroyedInstanceWalkerStateLikeJavaWalkerFormator()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-instance-destroy-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextWithWalkerDataAsync(tempPath, pool: 2, formation: "SQUARE", rows: "2");
+			var world = new GameWorld(NullLogger<GameWorld>.Instance);
+			var first = CreateNpc(1, new WorldPosition(210010000, 0, 0, 0, 0, InstanceId: 7), walkerId: "route-a", walkerIndex: 1);
+			var second = CreateNpc(2, new WorldPosition(210010000, 0, 0, 0, 0, InstanceId: 7), walkerId: "route-a", walkerIndex: 2);
+			var third = CreateNpc(3, new WorldPosition(220010000, 0, 0, 0, 0, InstanceId: 8), walkerId: "route-a", walkerIndex: 1);
+			var fourth = CreateNpc(4, new WorldPosition(220010000, 0, 0, 0, 0, InstanceId: 8), walkerId: "route-a", walkerIndex: 2);
+			Assert.True(world.TryAddObject(first.ObjectId, first));
+			Assert.True(world.TryAddObject(second.ObjectId, second));
+			Assert.True(world.TryAddObject(third.ObjectId, third));
+			Assert.True(world.TryAddObject(fourth.ObjectId, fourth));
+			var cache = CreateCache(context, [first, second, third, fourth]);
+			var registry = new CapturingConnectionRegistry();
+			var aiStates = new WorldNpcAiStateService();
+			var service = CreateService(context, world, cache, registry, aiStates: aiStates);
+			var firstStart = await service.StartRouteWalkingAsync(first.ObjectId);
+			var secondStart = await service.StartRouteWalkingAsync(third.ObjectId);
+			Assert.True(firstStart.Started);
+			Assert.True(secondStart.Started);
+			Assert.Equal(4, service.ActiveStateCount);
+			Assert.Equal(2, service.ActiveFormationStateCount);
+
+			var cleanup = service.OnInstanceDestroy(210010000, 7);
+
+			Assert.Equal(210010000, cleanup.WorldId);
+			Assert.Equal(7, cleanup.InstanceId);
+			Assert.Equal(2, cleanup.RemovedActiveStateCount);
+			Assert.Equal(1, cleanup.RemovedFormationStateCount);
+			Assert.Equal([1, 2], cleanup.RemovedObjectIds.OrderBy(objectId => objectId).ToArray());
+			Assert.Equal(2, service.ActiveStateCount);
+			Assert.Equal(1, service.ActiveFormationStateCount);
+			Assert.False(service.TryGetActiveState(first.ObjectId, out _));
+			Assert.False(service.TryGetActiveState(second.ObjectId, out _));
+			Assert.True(service.TryGetActiveState(third.ObjectId, out _));
+			Assert.True(service.TryGetActiveState(fourth.ObjectId, out _));
+			Assert.True(aiStates.TryGetState(first.ObjectId, out var firstAiState));
+			Assert.NotNull(firstAiState);
+			Assert.Equal(WorldNpcAiState.Idle, firstAiState.State);
+			Assert.True(aiStates.TryGetState(third.ObjectId, out var thirdAiState));
+			Assert.NotNull(thirdAiState);
+			Assert.Equal(WorldNpcAiState.Walking, thirdAiState.State);
+			Assert.Contains("WalkerFormator.onInstanceDestroy", cleanup.JavaSource, StringComparison.Ordinal);
+		}
+		finally
+		{
+			try
+			{
+				Directory.Delete(tempPath, recursive: true);
+			}
+			catch
+			{
+			}
+		}
+	}
+
+	[Fact]
 	public async Task StartRouteWalkingAsync_DoesNotRestartAlreadyActiveWalker()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-walk-start-active-" + Guid.NewGuid().ToString("N"));

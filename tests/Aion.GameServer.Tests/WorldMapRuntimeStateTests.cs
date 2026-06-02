@@ -229,6 +229,8 @@ public sealed class WorldMapRuntimeStateTests
 		var instance = table.CreateNextWorldMapInstance(300030000, instanceHandler: handler);
 		var cleanupObservedInstanceExists = new List<bool>();
 		var objectCleanupObservedHandlerCount = new List<int>();
+		var walkerCleanupObservedHandlerCount = new List<int>();
+		var callbackOrder = new List<string>();
 		Assert.NotNull(instance);
 		Assert.True(table.InstanceExists(300030000, instance.InstanceId));
 
@@ -238,6 +240,7 @@ public sealed class WorldMapRuntimeStateTests
 			instance.InstanceId,
 			(mapId, cleanedInstanceId) =>
 			{
+				callbackOrder.Add("temporary");
 				Assert.Equal(300030000, mapId);
 				Assert.Equal(instance.InstanceId, cleanedInstanceId);
 				cleanupObservedInstanceExists.Add(table.InstanceExists(mapId, cleanedInstanceId));
@@ -245,10 +248,18 @@ public sealed class WorldMapRuntimeStateTests
 			},
 			(mapId, cleanedInstanceId) =>
 			{
+				callbackOrder.Add("non-player");
 				Assert.Equal(300030000, mapId);
 				Assert.Equal(instance.InstanceId, cleanedInstanceId);
 				objectCleanupObservedHandlerCount.Add(handler.DestroyedInstances.Count);
 				return 3;
+			},
+			(mapId, cleanedInstanceId) =>
+			{
+				callbackOrder.Add("walker");
+				Assert.Equal(300030000, mapId);
+				Assert.Equal(instance.InstanceId, cleanedInstanceId);
+				walkerCleanupObservedHandlerCount.Add(handler.DestroyedInstances.Count);
 			});
 		var duplicate = InstanceRuntimeService.DestroyInstance(table, 300030000, instance.InstanceId);
 
@@ -262,6 +273,8 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.Same(instance, destroyed);
 		Assert.Equal([false], cleanupObservedInstanceExists);
 		Assert.Equal([0], objectCleanupObservedHandlerCount);
+		Assert.Equal([1], walkerCleanupObservedHandlerCount);
+		Assert.Equal(["temporary", "non-player", "walker"], callbackOrder);
 		Assert.False(handler.InstanceExistsAtDestroy.Single());
 		Assert.False(duplicate.Removed);
 		Assert.False(duplicate.DestroyHandlerNotified);

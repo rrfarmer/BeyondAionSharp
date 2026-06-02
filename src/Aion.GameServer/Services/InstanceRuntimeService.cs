@@ -105,10 +105,12 @@ public static class InstanceRuntimeService
 		int worldId,
 		int instanceId,
 		Action<int, int>? temporarySpawnCleanup = null,
-		Func<int, int, int>? nonPlayerObjectCleanup = null)
+		Func<int, int, int>? nonPlayerObjectCleanup = null,
+		Action<int, int>? walkerFormationCleanup = null)
 	{
 		// Java parity: InstanceService.destroyInstance removes the WorldMapInstance, unregisters temporary spawns,
-		// deletes non-player visible objects, then calls instance.getInstanceHandler().onInstanceDestroy().
+		// deletes non-player visible objects, calls instance.getInstanceHandler().onInstanceDestroy(),
+		// then calls WalkerFormator.onInstanceDestroy(worldId, instanceId).
 		if (!worldMaps.TryGetWorldMapInstance(worldId, instanceId, out var instance) || instance == null)
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
@@ -118,6 +120,7 @@ public static class InstanceRuntimeService
 		temporarySpawnCleanup?.Invoke(worldId, instance.InstanceId);
 		var deletedNonPlayerObjects = nonPlayerObjectCleanup?.Invoke(worldId, instance.InstanceId) ?? 0;
 		var notified = instance.NotifyInstanceDestroyed();
+		walkerFormationCleanup?.Invoke(worldId, instance.InstanceId);
 		return new InstanceDestroyRuntimePlan(
 			worldId,
 			instance.InstanceId,

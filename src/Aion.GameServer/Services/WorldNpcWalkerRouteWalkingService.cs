@@ -63,6 +63,40 @@ public sealed class WorldNpcWalkerRouteWalkingService
 		return _activeStates.TryGetValue(objectId, out state);
 	}
 
+	public WorldNpcWalkerInstanceDestroyCleanupResult OnInstanceDestroy(int worldId, int instanceId)
+	{
+		// Java parity: WalkerFormator.onInstanceDestroy(worldId, instanceId) clears the instance-scoped
+		// walker formation cache after InstanceService.destroyInstance notifies the instance handler.
+		var removedObjectIds = _activeStates.Keys
+			.Where(objectId => IsObjectInInstance(objectId, worldId, instanceId))
+			.ToArray();
+		var removedFormationKeys = new HashSet<WorldNpcWalkerFormationKey>();
+		foreach (var objectId in removedObjectIds)
+		{
+			_activeStates.TryRemove(objectId, out _);
+			CancelPendingRestTask(objectId);
+			CancelPendingArrivalTask(objectId);
+			CancelPendingMovementTickTask(objectId);
+			_npcAiStates?.StopWalking(objectId);
+			if (_formationKeysByObjectId.TryRemove(objectId, out var formationKey))
+				removedFormationKeys.Add(formationKey);
+		}
+
+		var removedFormationStateCount = 0;
+		foreach (var formationKey in removedFormationKeys)
+		{
+			if (_formationStates.TryRemove(formationKey, out _))
+				removedFormationStateCount++;
+		}
+
+		return new WorldNpcWalkerInstanceDestroyCleanupResult(
+			worldId,
+			instanceId,
+			removedObjectIds,
+			removedFormationStateCount,
+			"WalkerFormator.onInstanceDestroy(worldId, instanceId) -> WalkerFormationsCache.onInstanceDestroy");
+	}
+
 	public async Task<WorldNpcWalkerRouteWalkingWorldStartResult> StartWorldRouteWalkingAsync(
 		int worldId,
 		CancellationToken cancellationToken = default)
@@ -470,6 +504,14 @@ public sealed class WorldNpcWalkerRouteWalkingService
 			scheduledTask.Cancel();
 	}
 
+	private bool IsObjectInInstance(int objectId, int worldId, int instanceId)
+	{
+		return _world.TryGetObject(objectId, out var gameObject)
+			&& gameObject is WorldNpc npc
+			&& npc.Position.WorldId == worldId
+			&& npc.Position.InstanceId == instanceId;
+	}
+
 	private void CancelPendingRestTasks(IReadOnlyList<WorldNpcWalkerMovementState> states)
 	{
 		foreach (var state in states)
@@ -819,4 +861,14 @@ public enum WorldNpcWalkerRouteWalkingTargetReachedStatus
 	MissingWorldPlan,
 	NotActiveWalker,
 	MissingMovementTarget,
+}
+
+public sealed record WorldNpcWalkerInstanceDestroyCleanupResult(
+	int WorldId,
+	int InstanceId,
+	IReadOnlyList<int> RemovedObjectIds,
+	int RemovedFormationStateCount,
+	string JavaSource)
+{
+	public int RemovedActiveStateCount => RemovedObjectIds.Count;
 }
