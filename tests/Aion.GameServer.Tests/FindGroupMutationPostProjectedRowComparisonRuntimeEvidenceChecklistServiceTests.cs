@@ -92,6 +92,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorEvidenceSummaryContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorImplementationReadinessAuditService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorRuntimeComparisonHandoffContractService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContractService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("blocked-output preview", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("runtime-evidence intake", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("materialization preflight", StringComparison.Ordinal)
@@ -99,6 +100,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.RequiredNextEvidence.Contains("evidence summary", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("implementation readiness audit", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("runtime comparison handoff", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("live-capture preflight runbook", StringComparison.Ordinal)
 			&& row.Notes.Contains("cannot materialize", StringComparison.Ordinal));
 	}
 
