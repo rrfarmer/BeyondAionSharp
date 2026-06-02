@@ -20,7 +20,8 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 		Assert.False(summary.CanCompareValues);
 		Assert.False(summary.CanEmitComparisonResult);
 		Assert.True(summary.HasPreflightContract);
-		Assert.Equal(4, summary.Stages.Count);
+		Assert.True(summary.HasMismatchContextPreflightContract);
+		Assert.Equal(5, summary.Stages.Count);
 		Assert.Contains("design/runtime-evidence readiness", summary.ExecutionDecision, StringComparison.Ordinal);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", summary.TraceName);
 		Assert.Contains("addRecruitment/addApplication", summary.JavaSource, StringComparison.Ordinal);
@@ -35,6 +36,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 			[
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.DesignContract,
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.PreflightContract,
+				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.MismatchContextPreflightContract,
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.ReaderSkeleton,
 				FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.BlockedResultReport,
 			],
@@ -56,6 +58,15 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 			&& stage.Evidence.Contains("canReadJavaValues=False", StringComparison.Ordinal)
 			&& stage.Evidence.Contains("canReadCSharpValues=False", StringComparison.Ordinal));
 		Assert.Contains(summary.Stages, stage =>
+			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.MismatchContextPreflightContract
+			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Blocked
+			&& stage.HasExpectedShape
+			&& stage.BlocksValueReading
+			&& stage.Evidence.Contains("runtimeContextFields=traceSource/serverEpochSeconds", StringComparison.Ordinal)
+			&& stage.Evidence.Contains("MissingJavaRow/MissingCSharpRow/FieldMismatch", StringComparison.Ordinal)
+			&& stage.Evidence.Contains("canReadContextValues=False", StringComparison.Ordinal)
+			&& stage.Evidence.Contains("canAttachContext=False", StringComparison.Ordinal));
+		Assert.Contains(summary.Stages, stage =>
 			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.BlockedResultReport
 			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Blocked
 			&& stage.HasExpectedShape
@@ -68,10 +79,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	{
 		var design = ReadyDesignContract();
 		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
+		var mismatchContextPreflight = FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContractService.Create(preflight);
 		var skeleton = ValueReaderSkeleton(design, hasJava: true, hasCSharp: false);
 		var report = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, report);
+		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, mismatchContextPreflight, skeleton, report);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStatus.BlockedMissingAcceptedRows, summary.Status);
 		Assert.False(summary.HasAllPairedRows);
@@ -89,10 +101,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	{
 		var design = ReadyDesignContract();
 		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
+		var mismatchContextPreflight = FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContractService.Create(preflight);
 		var skeleton = ValueReaderSkeleton(design, hasJava: true, hasCSharp: true);
 		var report = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, report);
+		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, mismatchContextPreflight, skeleton, report);
 
 		Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStatus.BlockedReaderImplementationDeferred, summary.Status);
 		Assert.True(summary.HasAllPairedRows);
@@ -106,6 +119,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 			&& stage.BlocksValueReading
 			&& stage.Evidence.Contains("status=BlockedTypedReadersDeferred", StringComparison.Ordinal));
 		Assert.Contains(summary.Stages, stage =>
+			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.MismatchContextPreflightContract
+			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Deferred
+			&& stage.BlocksValueReading
+			&& stage.Evidence.Contains("status=BlockedContextAttachmentDeferred", StringComparison.Ordinal));
+		Assert.Contains(summary.Stages, stage =>
 			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.ReaderSkeleton
 			&& stage.Status == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Deferred
 			&& !stage.BlocksValueReading
@@ -117,10 +135,11 @@ public sealed class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	{
 		var design = ReadyDesignContract();
 		var preflight = FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(design);
+		var mismatchContextPreflight = FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContractService.Create(preflight);
 		var skeleton = ValueReaderSkeleton(design, hasJava: true, hasCSharp: true);
 		var report = FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, skeleton, report);
+		var summary = FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService.Create(design, preflight, mismatchContextPreflight, skeleton, report);
 
 		Assert.Contains(summary.Stages, stage =>
 			stage.Stage == FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.BlockedResultReport

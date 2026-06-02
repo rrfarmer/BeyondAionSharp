@@ -11,6 +11,7 @@ public enum FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage
 {
 	DesignContract,
 	PreflightContract,
+	MismatchContextPreflightContract,
 	ReaderSkeleton,
 	BlockedResultReport,
 }
@@ -36,6 +37,7 @@ public sealed record FindGroupMutationPostProjectedRowComparisonValueReaderReadi
 	IReadOnlyList<FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStageRow> Stages,
 	bool HasDesignContract,
 	bool HasPreflightContract,
+	bool HasMismatchContextPreflightContract,
 	bool HasValueReaderSkeleton,
 	bool HasBlockedResultReport,
 	bool HasRequiredFieldMappings,
@@ -51,27 +53,30 @@ public sealed record FindGroupMutationPostProjectedRowComparisonValueReaderReadi
 /// <summary>
 /// Java parity breadcrumb: non-live staged readiness summary for future
 /// CM_FIND_GROUP action 2/6 value reading. It links the design, typed-reader
-/// preflight, skeleton, and blocked-result report, but it never reads values or
-/// emits comparison rows.
+/// preflight, mismatch-context preflight, skeleton, and blocked-result report,
+/// but it never reads values or emits comparison rows.
 /// </summary>
 public static class FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService
 {
 	public static FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummary Create(
 		FindGroupMutationPostProjectedRowComparisonValueReaderDesignContract? designContract = null,
 		FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContract? preflightContract = null,
+		FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContract? mismatchContextPreflightContract = null,
 		FindGroupMutationPostProjectedRowComparisonValueReaderSkeleton? skeleton = null,
 		FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReport? blockedReport = null)
 	{
 		designContract ??= FindGroupMutationPostProjectedRowComparisonValueReaderDesignContractService.Create();
 		preflightContract ??= FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService.Create(designContract);
+		mismatchContextPreflightContract ??= FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContractService.Create(preflightContract);
 		skeleton ??= FindGroupMutationPostProjectedRowComparisonValueReaderSkeletonService.Create(designContract);
 		blockedReport ??= FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReportService.Create(skeleton);
 
-		var status = DetermineStatus(designContract, preflightContract, skeleton);
+		var status = DetermineStatus(designContract, preflightContract, mismatchContextPreflightContract, skeleton);
 		var stages = new[]
 		{
 			DesignStage(designContract),
 			PreflightStage(preflightContract),
+			MismatchContextPreflightStage(mismatchContextPreflightContract),
 			SkeletonStage(skeleton),
 			BlockedReportStage(blockedReport),
 		};
@@ -81,6 +86,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 			stages,
 			HasDesignContract: designContract.Fields.Count > 0,
 			HasPreflightContract: preflightContract.Fields.Count > 0,
+			HasMismatchContextPreflightContract: mismatchContextPreflightContract.Fields.Count > 0,
 			HasValueReaderSkeleton: skeleton.Attempts.Count > 0,
 			HasBlockedResultReport: blockedReport.Rows.Count > 0,
 			designContract.HasRequiredFieldMappings,
@@ -97,10 +103,12 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStatus DetermineStatus(
 		FindGroupMutationPostProjectedRowComparisonValueReaderDesignContract designContract,
 		FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContract preflightContract,
+		FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContract mismatchContextPreflightContract,
 		FindGroupMutationPostProjectedRowComparisonValueReaderSkeleton skeleton)
 	{
 		if (designContract.Status == FindGroupMutationPostProjectedRowComparisonValueReaderDesignStatus.BlockedExecutionGateNotReady
 			|| preflightContract.Status == FindGroupMutationPostProjectedRowComparisonValueReaderPreflightStatus.BlockedDesignNotReady
+			|| mismatchContextPreflightContract.Status == FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightStatus.BlockedPreflightNotReady
 			|| skeleton.Status == FindGroupMutationPostProjectedRowComparisonValueReaderSkeletonStatus.BlockedDesignNotReady)
 			return FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStatus.BlockedDesignNotReady;
 
@@ -138,13 +146,27 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 			preflightContract.ExecutionDecision);
 	}
 
+	private static FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStageRow MismatchContextPreflightStage(
+		FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContract mismatchContextPreflightContract)
+	{
+		var deferred = mismatchContextPreflightContract.Status == FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightStatus.BlockedContextAttachmentDeferred;
+		return new FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStageRow(
+			3,
+			FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.MismatchContextPreflightContract,
+			deferred ? FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Deferred : FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Blocked,
+			HasExpectedShape: mismatchContextPreflightContract.Fields.Count > 0 && mismatchContextPreflightContract.AllowedTriggers.Count == 3,
+			BlocksValueReading: true,
+			$"status={mismatchContextPreflightContract.Status}; fields={mismatchContextPreflightContract.Fields.Count}; runtimeContextFields={string.Join("/", mismatchContextPreflightContract.RuntimeContextFieldNames)}; allowedTriggers={string.Join("/", mismatchContextPreflightContract.AllowedTriggers)}; canReadContextValues={mismatchContextPreflightContract.CanReadContextValues}; canAttachContext={mismatchContextPreflightContract.CanAttachContext}",
+			mismatchContextPreflightContract.ExecutionDecision);
+	}
+
 	private static FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStageRow SkeletonStage(
 		FindGroupMutationPostProjectedRowComparisonValueReaderSkeleton skeleton)
 	{
 		var deferred = skeleton.Status == FindGroupMutationPostProjectedRowComparisonValueReaderSkeletonStatus.BlockedReaderImplementationDeferred;
 		var readyForFutureInput = skeleton.Status == FindGroupMutationPostProjectedRowComparisonValueReaderSkeletonStatus.BlockedMissingAcceptedRows;
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStageRow(
-			3,
+			4,
 			FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.ReaderSkeleton,
 			deferred
 				? FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Deferred
@@ -161,7 +183,7 @@ public static class FindGroupMutationPostProjectedRowComparisonValueReaderReadin
 		FindGroupMutationPostProjectedRowComparisonValueReaderBlockedResultReport blockedReport)
 	{
 		return new FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryStageRow(
-			4,
+			5,
 			FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStage.BlockedResultReport,
 			FindGroupMutationPostProjectedRowComparisonValueReaderReadinessStageStatus.Blocked,
 			HasExpectedShape: blockedReport.Rows.Count == 4,

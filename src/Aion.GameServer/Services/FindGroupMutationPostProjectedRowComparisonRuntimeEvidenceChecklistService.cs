@@ -122,9 +122,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Summary metadata exists, but it is not runtime evidence."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueReaderReadinessSummary => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService, FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService",
-				"Keep value-reader readiness summary and typed-reader preflight current while runtime value-reader evidence is collected.",
-				"Value-reader summary metadata and preflight metadata exist, but this is not runtime evidence and reads no values."),
+				"FindGroupMutationPostProjectedRowComparisonValueReaderReadinessSummaryService, FindGroupMutationPostProjectedRowComparisonValueReaderPreflightContractService, FindGroupMutationPostProjectedRowComparisonValueReaderMismatchContextPreflightContractService",
+				"Keep value-reader readiness summary, typed-reader preflight, and mismatch-context preflight current while runtime value-reader evidence is collected.",
+				"Value-reader summary, typed-reader preflight, and mismatch-context metadata exist, but this is not runtime evidence and reads no values."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostTraceCaptureTest, FindGroupMutationPostTraceCaptureHooks, FindGroupMutationPostTraceCaptureInMemoryArtifactBridge, FindGroupMutationPostJavaTraceArtifactDirectoryReportService",
