@@ -7657,6 +7657,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					staticData.NpcTemplates,
 					staticData.StaticDoors,
 					staticData.ItemTemplates);
+			registeredInstance.NotifyInstanceCreated();
 			transferTeamPlan = teamPlan with
 			{
 				Disposition = PortalTeamEntryDisposition.RegisteredInstanceTransfer,
@@ -7769,7 +7770,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		TeleportAnimation? animation = null,
 		StaticData? staticData = null,
 		DateTimeOffset? now = null,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: PortalService.port allocates/registers the instance before PortalService.transfer teleports and adds cooldown.
 		var runtimePlan = InstanceRuntimeService.CreatePortalTransferInstance(
@@ -7778,7 +7780,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			portalLocation,
 			ownerId,
 			maxPlayers,
-			difficultyId);
+			difficultyId,
+			instanceHandler);
 		if (staticData != null && _worldNpcSpawnService != null)
 		{
 			// Java parity: InstanceService.getNextAvailableInstance spawns instance objects before PortalService.transfer teleports.
@@ -7790,6 +7793,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				staticData.StaticDoors,
 				staticData.ItemTemplates);
 		}
+		runtimePlan.Instance.NotifyInstanceCreated();
 
 		var transfer = await QueueInstancePortalTransferAsync(
 			player,

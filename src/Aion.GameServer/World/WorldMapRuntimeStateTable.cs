@@ -68,20 +68,31 @@ public sealed class WorldMapRuntimeStateTable
 		return true;
 	}
 
-	public WorldMapInstanceRuntimeState? AddWorldMapInstance(int mapId, int instanceId, int ownerId = 0, int maxPlayers = 0, byte difficultyId = 0)
+	public WorldMapInstanceRuntimeState? AddWorldMapInstance(
+		int mapId,
+		int instanceId,
+		int ownerId = 0,
+		int maxPlayers = 0,
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		if (!_statesByMapId.TryGetValue(mapId, out var state))
 			return null;
 
-		return state.AddWorldMapInstance(instanceId, ownerId, maxPlayers, difficultyId);
+		return state.AddWorldMapInstance(instanceId, ownerId, maxPlayers, difficultyId, instanceHandler);
 	}
 
-	public WorldMapInstanceRuntimeState? CreateNextWorldMapInstance(int mapId, int ownerId = 0, int maxPlayers = 0, byte difficultyId = 0)
+	public WorldMapInstanceRuntimeState? CreateNextWorldMapInstance(
+		int mapId,
+		int ownerId = 0,
+		int maxPlayers = 0,
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		if (!_statesByMapId.TryGetValue(mapId, out var state))
 			return null;
 
-		return state.CreateNextWorldMapInstance(ownerId, maxPlayers, difficultyId);
+		return state.CreateNextWorldMapInstance(ownerId, maxPlayers, difficultyId, instanceHandler);
 	}
 
 	public bool TryGetWorldMapInstance(int mapId, int instanceId, out WorldMapInstanceRuntimeState? instance)

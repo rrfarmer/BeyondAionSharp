@@ -203,6 +203,31 @@ public sealed class WorldMapRuntimeStateTests
 	}
 
 	[Fact]
+	public void WorldMapInstanceRuntimeState_NotifiesInstanceCreateOnceLikeJavaInstanceService()
+	{
+		var handler = new RecordingInstanceLifecycleHandler();
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, maxPlayers: 6, instanceHandler: handler);
+
+		Assert.False(instance.InstanceCreateNotified);
+		Assert.True(instance.NotifyInstanceCreated());
+		Assert.False(instance.NotifyInstanceCreated());
+
+		Assert.True(instance.InstanceCreateNotified);
+		var notified = Assert.Single(handler.CreatedInstances);
+		Assert.Same(instance, notified);
+	}
+
+	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
+	{
+		public List<WorldMapInstanceRuntimeState> CreatedInstances { get; } = new();
+
+		public void OnInstanceCreate(WorldMapInstanceRuntimeState instance)
+		{
+			CreatedInstances.Add(instance);
+		}
+	}
+
+	[Fact]
 	public void NearbyQuestCandidateProjectionService_RegistersNpcStartQuestIdsLikeJavaWorldMapInstance()
 	{
 		var table = new QuestNpcStartTable();

@@ -11,7 +11,8 @@ public static class InstanceRuntimeService
 		int worldId,
 		int ownerId = 0,
 		int maxPlayers = 0,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance validates instance maps before allocating via WorldMapInstanceFactory.
 		var map = worldMaps.GetMap(worldId)
@@ -19,7 +20,7 @@ public static class InstanceRuntimeService
 		if (!map.Summary.IsInstance)
 			throw new UnsupportedOperationException($"Invalid call for next available instance of {worldId}");
 
-		return map.CreateNextWorldMapInstance(ownerId, maxPlayers, difficultyId);
+		return map.CreateNextWorldMapInstance(ownerId, maxPlayers, difficultyId, instanceHandler);
 	}
 
 	public static WorldMapInstanceRuntimeState GetNextAvailableInstanceForPlayer(
@@ -27,7 +28,8 @@ public static class InstanceRuntimeService
 		int worldId,
 		int playerObjectId,
 		int maxPlayers = 0,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance(worldId, player) creates an instance and registers the player object id.
 		var instance = GetNextAvailableInstance(
@@ -35,7 +37,8 @@ public static class InstanceRuntimeService
 			worldId,
 			ownerId: 0,
 			maxPlayers: maxPlayers,
-			difficultyId: difficultyId);
+			difficultyId: difficultyId,
+			instanceHandler: instanceHandler);
 		instance.Register(playerObjectId);
 		return instance;
 	}
@@ -45,11 +48,12 @@ public static class InstanceRuntimeService
 		int worldId,
 		Player player,
 		InstanceCooltimeTable instanceCooltimes,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance(worldId, player) derives max players from InstanceCooltimeData.getMaxMemberCount.
 		var maxPlayers = instanceCooltimes.GetMaxMemberCount(worldId, player.Race);
-		return GetNextAvailableInstanceForPlayer(worldMaps, worldId, player.ObjectId, maxPlayers, difficultyId);
+		return GetNextAvailableInstanceForPlayer(worldMaps, worldId, player.ObjectId, maxPlayers, difficultyId, instanceHandler);
 	}
 
 	public static WorldMapInstanceRuntimeState GetOrRegisterInstance(
@@ -57,11 +61,12 @@ public static class InstanceRuntimeService
 		int worldId,
 		int playerObjectId,
 		int maxPlayers = 0,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: InstanceService.getOrRegisterInstance returns a registered instance or creates/registers a new one.
 		return worldMaps.GetRegisteredInstance(worldId, playerObjectId)
-			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, playerObjectId, maxPlayers, difficultyId);
+			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, playerObjectId, maxPlayers, difficultyId, instanceHandler);
 	}
 
 	public static WorldMapInstanceRuntimeState GetOrRegisterInstance(
@@ -69,11 +74,12 @@ public static class InstanceRuntimeService
 		int worldId,
 		Player player,
 		InstanceCooltimeTable instanceCooltimes,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: InstanceService.getOrRegisterInstance(worldId, player) reuses existing registration before allocating a player-scoped instance.
 		return worldMaps.GetRegisteredInstance(worldId, player.ObjectId)
-			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, player, instanceCooltimes, difficultyId);
+			?? GetNextAvailableInstanceForPlayer(worldMaps, worldId, player, instanceCooltimes, difficultyId, instanceHandler);
 	}
 
 	public static InstancePortalRuntimePlan CreatePortalTransferInstance(
@@ -82,10 +88,11 @@ public static class InstanceRuntimeService
 		WorldPosition portalLocation,
 		int ownerId = 0,
 		int maxPlayers = 0,
-		byte difficultyId = 0)
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: PortalService.port creates the next instance, registers requester, then PortalService.transfer sets startPos.
-		var instance = GetNextAvailableInstance(worldMaps, portalLocation.WorldId, ownerId, maxPlayers, difficultyId);
+		var instance = GetNextAvailableInstance(worldMaps, portalLocation.WorldId, ownerId, maxPlayers, difficultyId, instanceHandler);
 		instance.Register(player.ObjectId);
 		var startPosition = portalLocation with { InstanceId = instance.InstanceId };
 		instance.SetStartPositionIfMissing(startPosition);

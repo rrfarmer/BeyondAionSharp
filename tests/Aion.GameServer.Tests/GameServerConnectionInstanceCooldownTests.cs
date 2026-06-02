@@ -197,6 +197,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			threadPoolManager: null,
 			staticPlaceables: null,
 			NullLogger<WorldNpcSpawnService>.Instance);
+		var instanceHandler = new RecordingInstanceLifecycleHandler(() => world.GetNpcs().Count);
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var pair = await TestConnectionPair.CreateAsync(
 			new GameServerOptions
@@ -240,13 +241,15 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			animation: TeleportAnimation.FadeOutBeam,
 			staticData: staticData,
 			now: now,
-			difficultyId: 2);
+			difficultyId: 2,
+			instanceHandler: instanceHandler);
 
 		Assert.Equal(2, result.RuntimePlan.Instance.InstanceId);
 		Assert.Equal(player.ObjectId, result.RuntimePlan.Instance.OwnerId);
 		Assert.Equal(6, result.RuntimePlan.Instance.MaxPlayers);
 		Assert.Equal(2, result.RuntimePlan.Instance.DifficultyId);
 		Assert.True(result.RuntimePlan.Instance.IsRegistered(player.ObjectId));
+		Assert.True(result.RuntimePlan.Instance.InstanceCreateNotified);
 		Assert.Equal(portalLocation with { InstanceId = 2 }, result.RuntimePlan.Destination);
 		Assert.Equal(result.RuntimePlan.Destination, result.Transfer.Teleport.PendingTeleport.Destination);
 		Assert.True(result.Transfer.Cooldown.Added);
@@ -258,6 +261,9 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			Assert.Equal(2, npc.Position.InstanceId);
 		}
 
+		var createdInstance = Assert.Single(instanceHandler.CreatedInstances);
+		Assert.Same(result.RuntimePlan.Instance, createdInstance);
+		Assert.Equal(2, instanceHandler.NpcCountsAtCreate.Single());
 		Assert.Collection(
 			pair.SentPackets,
 			packet => Assert.IsType<SmTeleportLoc>(packet),
@@ -1323,6 +1329,26 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		{
 			await Connection.DisposeAsync();
 			_client.Dispose();
+		}
+	}
+
+	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
+	{
+		private readonly Func<int> _getNpcCount;
+
+		public RecordingInstanceLifecycleHandler(Func<int> getNpcCount)
+		{
+			_getNpcCount = getNpcCount;
+		}
+
+		public List<WorldMapInstanceRuntimeState> CreatedInstances { get; } = new();
+
+		public List<int> NpcCountsAtCreate { get; } = new();
+
+		public void OnInstanceCreate(WorldMapInstanceRuntimeState instance)
+		{
+			CreatedInstances.Add(instance);
+			NpcCountsAtCreate.Add(_getNpcCount());
 		}
 	}
 

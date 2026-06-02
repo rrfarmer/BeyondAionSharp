@@ -7,14 +7,21 @@ public sealed class WorldMapInstanceRuntimeState
 	private readonly HashSet<int> _playerObjectIds = new();
 	private readonly HashSet<int> _questIds = new();
 	private bool _hasPendingNearbyQuestRefresh;
+	private bool _instanceCreateNotified;
 
-	public WorldMapInstanceRuntimeState(int instanceId, int ownerId = 0, int maxPlayers = 0, byte difficultyId = 0)
+	public WorldMapInstanceRuntimeState(
+		int instanceId,
+		int ownerId = 0,
+		int maxPlayers = 0,
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: WorldMap.getWorldMapInstance/addInstance normalize instance id 0 to 1.
 		InstanceId = instanceId == 0 ? 1 : instanceId;
 		OwnerId = ownerId;
 		MaxPlayers = maxPlayers;
 		DifficultyId = difficultyId;
+		InstanceHandler = instanceHandler ?? GeneralInstanceLifecycleHandler.Instance;
 	}
 
 	public int InstanceId { get; }
@@ -24,6 +31,17 @@ public sealed class WorldMapInstanceRuntimeState
 	public int MaxPlayers { get; }
 
 	public byte DifficultyId { get; }
+
+	public IInstanceLifecycleHandler InstanceHandler { get; }
+
+	public bool InstanceCreateNotified
+	{
+		get
+		{
+			lock (_sync)
+				return _instanceCreateNotified;
+		}
+	}
 
 	public bool IsPersonal => OwnerId != 0;
 
@@ -177,6 +195,21 @@ public sealed class WorldMapInstanceRuntimeState
 			_hasPendingNearbyQuestRefresh = false;
 			return true;
 		}
+	}
+
+	public bool NotifyInstanceCreated()
+	{
+		lock (_sync)
+		{
+			if (_instanceCreateNotified)
+				return false;
+
+			_instanceCreateNotified = true;
+		}
+
+		// Java parity: services/instance/InstanceService.getNextAvailableInstance calls instance.getInstanceHandler().onInstanceCreate().
+		InstanceHandler.OnInstanceCreate(this);
+		return true;
 	}
 }
 

@@ -80,20 +80,29 @@ public sealed class WorldMapRuntimeState
 		return Interlocked.Increment(ref _nextInstanceId);
 	}
 
-	public WorldMapInstanceRuntimeState CreateNextWorldMapInstance(int ownerId = 0, int maxPlayers = 0, byte difficultyId = 0)
+	public WorldMapInstanceRuntimeState CreateNextWorldMapInstance(
+		int ownerId = 0,
+		int maxPlayers = 0,
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: WorldMapInstanceFactory.createWorldMapInstance uses WorldMap.getNextInstanceId, then WorldMap.addInstance.
-		return AddWorldMapInstance(GetNextInstanceId(), ownerId, maxPlayers, difficultyId);
+		return AddWorldMapInstance(GetNextInstanceId(), ownerId, maxPlayers, difficultyId, instanceHandler);
 	}
 
-	public WorldMapInstanceRuntimeState AddWorldMapInstance(int instanceId, int ownerId = 0, int maxPlayers = 0, byte difficultyId = 0)
+	public WorldMapInstanceRuntimeState AddWorldMapInstance(
+		int instanceId,
+		int ownerId = 0,
+		int maxPlayers = 0,
+		byte difficultyId = 0,
+		IInstanceLifecycleHandler? instanceHandler = null)
 	{
 		// Java parity: WorldMap.addInstance stores the instance by normalized id.
 		var normalizedInstanceId = NormalizeInstanceId(instanceId);
 		lock (_instanceLock)
 		{
 			_removedInstanceIds.Remove(normalizedInstanceId);
-			var instance = new WorldMapInstanceRuntimeState(normalizedInstanceId, ownerId, maxPlayers, difficultyId);
+			var instance = new WorldMapInstanceRuntimeState(normalizedInstanceId, ownerId, maxPlayers, difficultyId, instanceHandler);
 			_instances[normalizedInstanceId] = instance;
 			return instance;
 		}
