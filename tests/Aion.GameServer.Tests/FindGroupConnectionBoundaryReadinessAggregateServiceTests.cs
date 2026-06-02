@@ -38,6 +38,11 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 				&& component.JavaSource.Contains("sendInstanceApplicationResult", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,
+			component => component.Name == "Action 11 direct packet executor"
+				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
+				&& component.JavaSource.Contains("sendInstanceApplication", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Components,
 			component => component.Name == "Side-effect dispatch audit"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
 				&& component.Evidence.Contains("sendPacket", StringComparison.Ordinal)
@@ -56,6 +61,7 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 
 		Assert.Contains(report.LiveDispatchReadiness.GlobalBlockers, blocker => blocker.Contains("Direct PacketSendUtility.sendPacket", StringComparison.Ordinal));
 		Assert.Contains(report.LiveDispatchReadiness.GlobalBlockers, blocker => blocker.Contains("broadcastToWorld", StringComparison.Ordinal));
+		Assert.Contains(report.LiveDispatchReadiness.GlobalBlockers, blocker => blocker.Contains("Action 11 instance application direct packet dispatch", StringComparison.Ordinal));
 		Assert.Contains(report.LiveDispatchReadiness.GlobalBlockers, blocker => blocker.Contains("Action 12 group/alliance invite request dispatch", StringComparison.Ordinal));
 		Assert.Contains(report.NextLiveDispatchRequirements, requirement => requirement.Contains("Do not enable live CmFindGroup dispatch", StringComparison.Ordinal));
 		Assert.Contains(report.NextLiveDispatchRequirements, requirement => requirement.Contains("packet order", StringComparison.Ordinal));
