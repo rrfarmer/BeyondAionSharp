@@ -83,7 +83,8 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ResultEmission
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderResultSchemaContractService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderComparatorPreflightContractService", StringComparison.Ordinal)
-			&& row.RequiredNextEvidence.Contains("comparator preflight", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorReadinessGateService", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("executor readiness gate", StringComparison.Ordinal)
 			&& row.Notes.Contains("cannot materialize", StringComparison.Ordinal));
 	}
 
