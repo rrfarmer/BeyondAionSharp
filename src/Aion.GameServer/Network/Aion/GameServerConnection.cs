@@ -7793,7 +7793,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				_emptyInstanceCheckerService.Schedule(
 					worldId,
 					instance,
-					TimeSpan.FromSeconds(delayPlan.DestroyDelaySeconds));
+					TimeSpan.FromSeconds(delayPlan.DestroyDelaySeconds),
+					registeredTeamDisbanded: registeredInstance => InstanceRegisteredTeamDisbandService.IsRegisteredTeamDisbanded(
+						registeredInstance,
+						_playerGroupRuntime,
+						_playerAllianceRuntime));
 			};
 		}
 
