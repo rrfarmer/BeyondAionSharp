@@ -1288,7 +1288,8 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
 			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1),
 		]);
-		var oldInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 2, maxPlayers: 6);
+		var instanceHandler = new RecordingInstanceLifecycleHandler(() => 0);
+		var oldInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 2, maxPlayers: 6, instanceHandler: instanceHandler);
 		Assert.NotNull(oldInstance);
 		oldInstance.Register(1001);
 		oldInstance.AddPlayer(1001);
@@ -1318,6 +1319,9 @@ public sealed class GameServerConnectionInstanceCooldownTests
 
 		Assert.NotNull(completed);
 		Assert.Equal(destination, player.Position);
+		var leftPlayer = Assert.Single(instanceHandler.LeftPlayers);
+		Assert.Same(player, leftPlayer);
+		Assert.Equal(new WorldPosition(300030000, 1, 1, 1, 0, InstanceId: 2), Assert.Single(instanceHandler.PositionsAtLeave));
 		Assert.Collection(
 			pair.SentPackets,
 			packet => Assert.IsType<SmTeleportLoc>(packet),
@@ -1438,10 +1442,20 @@ public sealed class GameServerConnectionInstanceCooldownTests
 
 		public List<int> NpcCountsAtCreate { get; } = new();
 
+		public List<Player> LeftPlayers { get; } = new();
+
+		public List<WorldPosition> PositionsAtLeave { get; } = new();
+
 		public void OnInstanceCreate(WorldMapInstanceRuntimeState instance)
 		{
 			CreatedInstances.Add(instance);
 			NpcCountsAtCreate.Add(_getNpcCount());
+		}
+
+		public void OnLeaveInstance(Player player)
+		{
+			LeftPlayers.Add(player);
+			PositionsAtLeave.Add(player.Position);
 		}
 	}
 
