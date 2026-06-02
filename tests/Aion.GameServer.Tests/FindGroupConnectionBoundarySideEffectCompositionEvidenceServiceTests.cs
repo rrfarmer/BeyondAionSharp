@@ -156,6 +156,24 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Equal(2, evidence.ExecutionPlan.DirectPackets.Count);
 		Assert.All(evidence.ExecutionPlan.DirectPackets, direct => Assert.True(direct.Sent));
 		Assert.Equal([nameof(SmSystemMessage), nameof(SmFindGroup)], evidence.ExecutionPlan.DirectPackets.Select(direct => direct.PacketType));
+		Assert.Collection(
+			evidence.ExecutionPlan.ExecutionOrder,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(recruiter.ObjectId, step.RecipientObjectId);
+				Assert.Equal(nameof(SmSystemMessage), step.PacketType);
+				Assert.Equal("SM_SYSTEM_MESSAGE.STR_PARTY_MATCH_OFFER_PARTY_POSTED", step.JavaSource);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(recruiter.ObjectId, step.RecipientObjectId);
+				Assert.Equal(nameof(SmFindGroup), step.PacketType);
+				Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(0, recruitments))", step.JavaSource);
+			});
 		Assert.Equal([recruiter.ObjectId, recruiter.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
 		var snapshot = Assert.Single(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 0x01020306).Recruitments);
 		Assert.Equal("Need healer", snapshot.Message);
@@ -355,6 +373,24 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Equal(2, evidence.ExecutionPlan.DirectPackets.Count);
 		Assert.All(evidence.ExecutionPlan.DirectPackets, direct => Assert.True(direct.Sent));
 		Assert.Equal([nameof(SmSystemMessage), nameof(SmFindGroup)], evidence.ExecutionPlan.DirectPackets.Select(direct => direct.PacketType));
+		Assert.Collection(
+			evidence.ExecutionPlan.ExecutionOrder,
+			step =>
+			{
+				Assert.Equal(1, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(applicant.ObjectId, step.RecipientObjectId);
+				Assert.Equal(nameof(SmSystemMessage), step.PacketType);
+				Assert.Equal("SM_SYSTEM_MESSAGE.STR_PARTY_MATCH_SEEK_PARTY_POSTED", step.JavaSource);
+			},
+			step =>
+			{
+				Assert.Equal(2, step.Sequence);
+				Assert.Equal(FindGroupSideEffectDispatchExecutionKind.DirectPacket, step.Kind);
+				Assert.Equal(applicant.ObjectId, step.RecipientObjectId);
+				Assert.Equal(nameof(SmFindGroup), step.PacketType);
+				Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(4, applications))", step.JavaSource);
+			});
 		Assert.Equal([applicant.ObjectId, applicant.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
 		var snapshot = Assert.Single(findGroupService.ShowApplications("ELYOS", nowEpochSeconds: 0x01020306).Applications);
 		Assert.Equal("Need group", snapshot.Message);
