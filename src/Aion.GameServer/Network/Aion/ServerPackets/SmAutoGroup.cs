@@ -21,6 +21,8 @@ public sealed class SmAutoGroup : GameServerPacket
 
 	public int WindowId => _windowId;
 
+	public bool IsClosed => _close;
+
 	public SmAutoGroup(AutoGroupSummary autoGroup)
 		: this(autoGroup, windowId: 0, requestTypeId: 0, close: false, name: string.Empty)
 	{
