@@ -20,7 +20,7 @@ public static class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		}
 
 		var clientPlan = compositionPlan.ClientActionPlan;
-		var directPacketIntents = CollectDirectPacketIntents(clientPlan);
+		var directPacketIntents = CollectDirectPacketIntents(clientPlan, compositionPlan.ActivePlayer?.ObjectId);
 		var worldBroadcastIntents = CollectWorldBroadcastIntents(clientPlan);
 
 		return new FindGroupConnectionBoundarySideEffectIntentPlan(
@@ -51,17 +51,51 @@ public static class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 			"Executor was invoked by controlled evidence code, not by GameServerConnection.CmFindGroup.");
 	}
 
-	private static IReadOnlyList<FindGroupDirectPacketIntent> CollectDirectPacketIntents(FindGroupClientActionPlan clientPlan)
+	private static IReadOnlyList<FindGroupDirectPacketIntent> CollectDirectPacketIntents(
+		FindGroupClientActionPlan clientPlan,
+		int? activePlayerObjectId)
 	{
 		var intents = new List<FindGroupDirectPacketIntent>();
 		AddRange(intents, clientPlan.RecruitmentMutationPlan?.DirectPacketIntents);
+		AddShowRecruitmentsIntent(intents, activePlayerObjectId, clientPlan.RecruitmentMutationPlan?.ShowRecruitmentsPlan);
+		AddShowRecruitmentsIntent(intents, activePlayerObjectId, clientPlan.RecruitmentShowPlan);
 		AddRange(intents, clientPlan.ApplicationMutationPlan?.DirectPacketIntents);
+		AddShowApplicationsIntent(intents, activePlayerObjectId, clientPlan.ApplicationMutationPlan?.ShowApplicationsPlan);
+		AddShowApplicationsIntent(intents, activePlayerObjectId, clientPlan.ApplicationShowPlan);
 		AddRange(intents, clientPlan.InstanceGroupMutationPlan?.DirectPacketIntents);
 		if (clientPlan.InstanceGroupClientShowPlan?.EnableRegisterForInstancesIntent != null)
 			intents.Add(clientPlan.InstanceGroupClientShowPlan.EnableRegisterForInstancesIntent);
 		AddRange(intents, clientPlan.InstanceGroupMemberInfoPlan?.DirectPacketIntents);
 		AddRange(intents, clientPlan.InstanceApplicationPlan?.DirectPacketIntents);
 		return intents;
+	}
+
+	private static void AddShowRecruitmentsIntent(
+		ICollection<FindGroupDirectPacketIntent> intents,
+		int? activePlayerObjectId,
+		FindGroupRecruitmentShowPlan? plan)
+	{
+		if (activePlayerObjectId == null || plan == null)
+			return;
+
+		intents.Add(new FindGroupDirectPacketIntent(
+			activePlayerObjectId.Value,
+			plan.Packet,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(0, recruitments))"));
+	}
+
+	private static void AddShowApplicationsIntent(
+		ICollection<FindGroupDirectPacketIntent> intents,
+		int? activePlayerObjectId,
+		FindGroupApplicationShowPlan? plan)
+	{
+		if (activePlayerObjectId == null || plan == null)
+			return;
+
+		intents.Add(new FindGroupDirectPacketIntent(
+			activePlayerObjectId.Value,
+			plan.Packet,
+			"PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(4, applications))"));
 	}
 
 	private static IReadOnlyList<FindGroupWorldBroadcastIntent> CollectWorldBroadcastIntents(FindGroupClientActionPlan clientPlan)

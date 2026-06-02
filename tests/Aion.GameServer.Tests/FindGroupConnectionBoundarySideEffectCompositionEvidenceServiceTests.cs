@@ -12,6 +12,51 @@ namespace Aion.GameServer.Tests;
 public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServiceTests
 {
 	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionZeroRecruitmentShowAsDirectPacket()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var otherRace = CreatePlayer(0x01020305, "OtherRace", "ASMODIANS");
+		registry.OnlineDirectRecipients.Add(viewer.ObjectId);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.AddRecruitment(
+			viewer,
+			message: "Need healer",
+			groupType: 2,
+			nowEpochSeconds: 0x01020305);
+		findGroupService.AddRecruitment(
+			otherRace,
+			message: "Other",
+			groupType: 3,
+			nowEpochSeconds: 0x01020305);
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(findGroupService));
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(0));
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			viewer,
+			packet,
+			nowEpochSeconds: 0x01020306);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(0, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.ShowRecruitments, evidence.IntentPlan.ClientActionKind);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		Assert.False(evidence.IntentPlan.IsCmFindGroupBoundaryWired);
+		var intent = Assert.Single(evidence.IntentPlan.DirectPacketIntents);
+		Assert.Equal(viewer.ObjectId, intent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(0, recruitments))", intent.JavaSource);
+		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
+		var direct = Assert.Single(evidence.ExecutionPlan.DirectPackets);
+		Assert.True(direct.Sent);
+		Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		Assert.Equal([viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
+	}
+
+	[Fact]
 	public async Task ExecuteOptInAsync_ComposesParsedActionOneWorldBroadcastWithRaceFilter()
 	{
 		var registry = new FakeGameClientConnectionRegistry();
@@ -63,6 +108,54 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		var recorded = Assert.Single(registry.WorldBroadcasts);
 		Assert.Equal([sameRace.ObjectId], recorded.RecipientObjectIds);
 		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 0x01020307).Recruitments);
+	}
+
+	[Fact]
+	public async Task ExecuteOptInAsync_ComposesParsedActionFourApplicationShowAsDirectPacket()
+	{
+		var registry = new FakeGameClientConnectionRegistry();
+		var viewer = CreatePlayer(0x01020304, "Viewer", "ELYOS");
+		var otherRace = CreatePlayer(0x01020305, "OtherRace", "ASMODIANS");
+		registry.OnlineDirectRecipients.Add(viewer.ObjectId);
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.AddApplication(
+			viewer,
+			message: "Need group",
+			groupType: 2,
+			classId: 5,
+			level: 65,
+			nowEpochSeconds: 0x01020305);
+		findGroupService.AddApplication(
+			otherRace,
+			message: "Other",
+			groupType: 3,
+			classId: 5,
+			level: 60,
+			nowEpochSeconds: 0x01020305);
+		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
+			new FindGroupClientActionPlanService(findGroupService));
+		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(4));
+
+		var compositionPlan = compositionService.CreateDisabledPlan(
+			viewer,
+			packet,
+			nowEpochSeconds: 0x01020306);
+		var evidence = await FindGroupConnectionBoundarySideEffectCompositionEvidenceService.ExecuteOptInAsync(
+			compositionPlan,
+			new FindGroupSideEffectDispatchExecutorService(registry));
+
+		Assert.Equal(4, evidence.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.ShowApplications, evidence.IntentPlan.ClientActionKind);
+		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
+		var intent = Assert.Single(evidence.IntentPlan.DirectPacketIntents);
+		Assert.Equal(viewer.ObjectId, intent.RecipientObjectId);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(4, applications))", intent.JavaSource);
+		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
+		var direct = Assert.Single(evidence.ExecutionPlan.DirectPackets);
+		Assert.True(direct.Sent);
+		Assert.Equal(viewer.ObjectId, direct.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), direct.PacketType);
+		Assert.Equal([viewer.ObjectId], registry.DirectSends.Select(send => send.RecipientObjectId));
 	}
 
 	[Fact]
