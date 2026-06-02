@@ -147,9 +147,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Registry observation contract names required sends but does not observe live sends."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueProjection => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostValueProjectionHandoffGateService, FindGroupMutationPostProjectedRowComparisonValueContractService, FindGroupMutationPostComparisonKeyProjectionMetadataService",
-				"Read projected Java and C# values for every equality field after accepted live Java/C# rows are paired and the value-projection handoff gate has runtime row values.",
-				"Value-projection handoff and value contracts name fields but deliberately do not read values."),
+				"FindGroupMutationPostValueProjectionHandoffGateService, FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateService, FindGroupMutationPostProjectedRowComparisonValueContractService, FindGroupMutationPostComparisonKeyProjectionMetadataService",
+				"Read projected Java and C# values for every equality field after accepted live Java/C# rows are paired and the runtime-row-value evidence intake gate has Java artifact rows, accepted C# boundary rows, and runtime row values.",
+				"Value-projection handoff, runtime-row-value evidence intake, and value contracts name fields and required rows but deliberately do not read values."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.RowIdentityMatching => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostJavaCSharpRowPairingReadinessReportService, FindGroupMutationPostProjectedRowComparisonDryRunContractService, FindGroupMutationPostProjectedRowComparisonExecutorSkeletonService",

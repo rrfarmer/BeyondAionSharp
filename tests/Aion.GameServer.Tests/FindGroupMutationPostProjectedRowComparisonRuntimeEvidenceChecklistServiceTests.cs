@@ -101,9 +101,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ValueProjection
 			&& row.ExistingProvider.Contains("FindGroupMutationPostValueProjectionHandoffGateService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostRuntimeRowValueEvidenceIntakeGateService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueContractService", StringComparison.Ordinal)
-			&& row.RequiredNextEvidence.Contains("value-projection handoff gate", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("runtime-row-value evidence intake gate", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("accepted C# boundary rows", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("runtime row values", StringComparison.Ordinal)
+			&& row.Notes.Contains("required rows", StringComparison.Ordinal)
 			&& row.Notes.Contains("deliberately do not read values", StringComparison.Ordinal));
 		Assert.Contains(checklist.Rows, row =>
 			row.Requirement == FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.ResultEmission
