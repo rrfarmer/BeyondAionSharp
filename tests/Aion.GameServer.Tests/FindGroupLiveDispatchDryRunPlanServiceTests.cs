@@ -60,8 +60,8 @@ public sealed class FindGroupLiveDispatchDryRunPlanServiceTests
 			plan,
 			FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison,
 			"runtime comparison harness",
-			"runtime trace or socket comparison artifact",
-			"No encrypted socket");
+			"FindGroupRuntimeComparisonPreflightContract",
+			"preflight trace fields and scenarios");
 	}
 
 	[Fact]

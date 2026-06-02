@@ -35,7 +35,8 @@ public sealed class FindGroupLiveDispatchGoNoGoChecklistServiceTests
 			checklist.Items,
 			item => item.Kind == FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison
 				&& item.Status == FindGroupLiveDispatchGoNoGoChecklistItemStatus.Blocked
-				&& item.NextRequiredEvidence.Contains("runtime or socket-level evidence", StringComparison.Ordinal));
+				&& item.Evidence.Contains("FindGroupRuntimeComparisonPreflightContractService", StringComparison.Ordinal)
+				&& item.NextRequiredEvidence.Contains("preflight contract", StringComparison.Ordinal));
 		Assert.DoesNotContain(FindGroupLiveDispatchGoNoGoChecklistItemKind.ParsedOnlyNoRunActions, checklist.BlockingRequiredGateKinds);
 	}
 
@@ -93,7 +94,7 @@ public sealed class FindGroupLiveDispatchGoNoGoChecklistServiceTests
 		Assert.Contains(blockedItems, item => item.NextRequiredEvidence.Contains("packet order", StringComparison.Ordinal));
 		Assert.Contains(blockedItems, item => item.NextRequiredEvidence.Contains("race visibility filtering", StringComparison.Ordinal));
 		Assert.Contains(blockedItems, item => item.NextRequiredEvidence.Contains("invite request mutation", StringComparison.Ordinal));
-		Assert.Contains(blockedItems, item => item.NextRequiredEvidence.Contains("runtime or socket-level evidence", StringComparison.Ordinal));
+		Assert.Contains(blockedItems, item => item.NextRequiredEvidence.Contains("preflight contract", StringComparison.Ordinal));
 	}
 
 	[Fact]

@@ -40,8 +40,8 @@ public static class FindGroupLiveDispatchDryRunPlanService
 			new FindGroupLiveDispatchDryRunGatePlan(
 				FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison,
 				"Future encrypted socket or real-client runtime comparison harness",
-				"Java/C# runtime trace or socket comparison artifact",
-				"No encrypted socket or real-client comparison has verified live CM_FIND_GROUP packet order, fanout, singleton concurrency, or client-observable behavior.",
+				"FindGroupRuntimeComparisonPreflightContract plus Java/C# runtime trace or socket comparison artifact",
+				"No encrypted socket or real-client comparison has verified live CM_FIND_GROUP packet order, fanout, singleton concurrency, or client-observable behavior; preflight trace fields and scenarios are now explicit.",
 				BlocksLiveWiring: true),
 		};
 

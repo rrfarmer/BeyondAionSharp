@@ -57,9 +57,9 @@ public static class FindGroupLiveDispatchGoNoGoChecklistService
 			new FindGroupLiveDispatchGoNoGoChecklistItem(
 				FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison,
 				"Runtime/socket comparison",
-				"No encrypted socket or real-client comparison has verified live CM_FIND_GROUP packet order, visibility filtering, service concurrency, or client-observable behavior.",
+				"No encrypted socket or real-client comparison has verified live CM_FIND_GROUP packet order, visibility filtering, service concurrency, or client-observable behavior. FindGroupRuntimeComparisonPreflightContractService now enumerates the required trace fields and scenarios.",
 				FindGroupLiveDispatchGoNoGoChecklistItemStatus.Blocked,
-				"Add runtime or socket-level evidence before claiming live parity."),
+				"Capture and compare Java/C# runtime or socket-level traces for the preflight contract before claiming live parity."),
 		};
 
 		return new FindGroupLiveDispatchGoNoGoChecklist(
