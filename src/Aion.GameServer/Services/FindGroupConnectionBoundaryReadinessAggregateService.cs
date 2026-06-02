@@ -43,6 +43,12 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupSideEffectDispatchAuditService; FindGroupSideEffectDispatchExecutorService; FindGroupConnectionBoundarySideEffectCompositionEvidenceService",
 					"FindGroupService PacketSendUtility.sendPacket/broadcastToWorld call sites"),
 				new FindGroupConnectionBoundaryComponentReadiness(
+					"Non-live dispatch adapter",
+					"FindGroupConnectionBoundaryDispatchAdapterService can compose direct packet intents, world-broadcast intents, optional action 12 invite plans, parsed-only no-op status, and missing-runtime status without invoking live sends.",
+					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
+					"FindGroupConnectionBoundaryDispatchAdapterService",
+					"CM_FIND_GROUP.runImpl"),
+				new FindGroupConnectionBoundaryComponentReadiness(
 					"Lifecycle observers",
 					"Logout cleanup and joined-team observer evidence exists, but the C# port has not wired FindGroupService as a live singleton across all callers.",
 					FindGroupConnectionBoundaryComponentStatus.PartialEvidence,

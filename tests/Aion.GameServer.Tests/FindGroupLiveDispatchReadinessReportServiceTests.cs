@@ -75,6 +75,7 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 10/13 instance-group show direct packets", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 11/12 instance-application direct/invite intents", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 1/5 world-broadcast intents", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConnectionBoundaryDispatchAdapterService", StringComparison.Ordinal));
 		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("not wired as a live singleton", StringComparison.Ordinal));
 	}
 }

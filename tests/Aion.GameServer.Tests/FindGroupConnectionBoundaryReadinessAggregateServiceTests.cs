@@ -51,6 +51,12 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 				&& component.CSharpSource.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,
+			component => component.Name == "Non-live dispatch adapter"
+				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
+				&& component.Evidence.Contains("missing-runtime status", StringComparison.Ordinal)
+				&& component.CSharpSource.Contains("FindGroupConnectionBoundaryDispatchAdapterService", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Components,
 			component => component.Name == "Lifecycle observers"
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.PartialEvidence
 				&& component.JavaSource.Contains("onLogout/onJoinedTeam", StringComparison.Ordinal));
