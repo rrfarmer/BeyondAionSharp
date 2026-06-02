@@ -59,7 +59,9 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ProviderStatus == FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceProviderStatus.ExistingNonLiveScaffold
 			&& row.ExistingProvider.Contains("FindGroupMutationPostTraceCaptureTest", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostJavaTraceArtifactDirectoryReportService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostJavaArtifactRootValidationCommandReportService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("capture-enabled Java", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("artifact-root validation command report", StringComparison.Ordinal)
 			&& row.Notes.Contains("shape evidence only", StringComparison.Ordinal));
 	}
 

@@ -127,9 +127,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Value-reader summary, typed-reader preflight, mismatch-context, implementation checklist, and implementation runbook metadata exist, but this is not runtime evidence and reads no values."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostTraceCaptureTest, FindGroupMutationPostTraceCaptureHooks, FindGroupMutationPostTraceCaptureInMemoryArtifactBridge, FindGroupMutationPostJavaTraceArtifactDirectoryReportService",
-				"Run a capture-enabled Java fixture or runtime capture that writes action 2/6 artifacts from real hook rows, then validate them through the C# artifact reader.",
-				"Existing Java artifact files and hook scaffolds are shape evidence only until generated from runtime capture."),
+				"FindGroupMutationPostTraceCaptureTest, FindGroupMutationPostTraceCaptureHooks, FindGroupMutationPostTraceCaptureInMemoryArtifactBridge, FindGroupMutationPostJavaTraceArtifactDirectoryReportService, FindGroupMutationPostJavaArtifactRootValidationCommandReportService",
+				"Run a capture-enabled Java fixture or runtime capture that writes action 2/6 artifacts from real hook rows, then validate them through the C# artifact reader and artifact-root validation command report.",
+				"Existing Java artifact files, hook scaffolds, and artifact-root command reports are shape evidence only until generated from runtime capture."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.CSharpLiveBoundaryRow => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostCSharpTraceRowFixtureReportService, FindGroupMutationPostGuardedFixtureResultContractService, GameServerConnection.CreateDisabledFindGroupBoundaryPlan",
