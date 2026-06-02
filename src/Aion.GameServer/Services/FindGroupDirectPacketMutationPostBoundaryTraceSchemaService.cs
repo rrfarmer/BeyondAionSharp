@@ -83,6 +83,100 @@ public static class FindGroupDirectPacketMutationPostBoundaryTraceSchemaService
 			InviteDispatchCount: 0);
 	}
 
+	public static FindGroupDirectPacketMutationPostBoundaryTraceExportProjection CreateExportFromDisabledPlan(
+		FindGroupConnectionClientActionCompositionPlan compositionPlan)
+	{
+		var action = compositionPlan.Action.Action;
+		if (action is not 2 and not 6)
+		{
+			return Failed(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.UnsupportedAction,
+				action,
+				"Only CM_FIND_GROUP actions 2 and 6 are supported by the mutation-post trace schema.");
+		}
+
+		if (compositionPlan.Status != FindGroupConnectionClientActionCompositionStatus.ComposedDisabledPlan
+			|| compositionPlan.ActivePlayer == null)
+		{
+			return Failed(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.MissingActivePlayer,
+				action,
+				"Disabled boundary plan did not include the active player required by Java CM_FIND_GROUP.runImpl.");
+		}
+
+		if (compositionPlan.ClientActionPlan == null)
+		{
+			return Failed(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.MissingClientActionPlan,
+				action,
+				"Disabled boundary plan did not include a client action plan.");
+		}
+
+		if (compositionPlan.ShouldDispatchLiveSideEffects || compositionPlan.ClientActionPlan.DispatchLiveSideEffects)
+		{
+			return Failed(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.LiveSideEffectsRequested,
+				action,
+				"Mutation-post export projection only accepts disabled non-live boundary plans.");
+		}
+
+		var intentPlan = FindGroupConnectionBoundarySideEffectCompositionEvidenceService.CreateIntentPlan(compositionPlan);
+		if (intentPlan.DirectPacketIntents.Count != 2
+			|| intentPlan.WorldBroadcastIntents.Count != 0
+			|| intentPlan.InviteIntent != null)
+		{
+			return Failed(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.UnexpectedSideEffectShape,
+				action,
+				"Mutation-post export projection requires exactly two direct packets and no world broadcast or invite intent.");
+		}
+
+		var clientPlan = compositionPlan.ClientActionPlan;
+		var activePlayer = compositionPlan.ActivePlayer;
+		var schema = CreateSchema();
+		var mapping = schema.SupportedActions.Single(item => item.Action == action);
+		var postedIntent = intentPlan.DirectPacketIntents[0];
+		var refreshedIntent = intentPlan.DirectPacketIntents[1];
+
+		var mutation = CreateMutationProjectionFacts(action, clientPlan);
+		if (mutation == null)
+		{
+			return Failed(
+				FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.MissingMutationPlan,
+				action,
+				"Disabled boundary plan did not include the Java-equivalent added mutation and refreshed show-list plan.");
+		}
+
+		var export = new FindGroupDirectPacketMutationPostBoundaryTraceExport(
+			SchemaVersion,
+			schema.TraceName,
+			FindGroupDirectPacketMutationPostTraceSource.CSharp,
+			action,
+			BoundaryAccepted: true,
+			activePlayer.ObjectId,
+			activePlayer.Race,
+			mutation.ServerEpochSeconds,
+			mapping.MutationKind,
+			mutation.MutatedEntryObjectId,
+			StateMutationRecordedBeforeDirectPackets: true,
+			postedIntent.RecipientObjectId,
+			PostedSystemMessageType: "SmSystemMessage",
+			mapping.PostedSystemMessageId,
+			refreshedIntent.RecipientObjectId,
+			RefreshedListPacketType: "SmFindGroup",
+			mapping.RefreshedShowListAction,
+			mutation.VisibleEntryObjectIdsAfterMutation,
+			ExecutorInvokedFromBoundary: false,
+			RegistrySendsObservedInOrder: false,
+			WorldBroadcastCount: 0,
+			InviteDispatchCount: 0);
+
+		return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+			FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus.Created,
+			export,
+			"Projected from a disabled CM_FIND_GROUP boundary plan; executor and registry ordering observations remain false.");
+	}
+
 	private static FindGroupDirectPacketMutationPostActionSchema Action(
 		int action,
 		FindGroupDirectPacketMutationPostTraceMutationKind mutationKind,
@@ -103,6 +197,49 @@ public static class FindGroupDirectPacketMutationPostBoundaryTraceSchemaService
 	private static FindGroupDirectPacketMutationPostBoundaryTraceField Field(string name, string requirement)
 	{
 		return new FindGroupDirectPacketMutationPostBoundaryTraceField(name, requirement);
+	}
+
+	private static FindGroupDirectPacketMutationPostProjectionFacts? CreateMutationProjectionFacts(
+		int action,
+		FindGroupClientActionPlan clientPlan)
+	{
+		if (action == 2)
+		{
+			var mutation = clientPlan.RecruitmentMutationPlan;
+			if (mutation?.Status != FindGroupRecruitmentPlanStatus.Added
+				|| mutation.CurrentRecruitment == null
+				|| mutation.ShowRecruitmentsPlan == null)
+			{
+				return null;
+			}
+
+			return new FindGroupDirectPacketMutationPostProjectionFacts(
+				mutation.CurrentRecruitment.ObjectId,
+				mutation.ShowRecruitmentsPlan.LastUpdate,
+				mutation.ShowRecruitmentsPlan.Recruitments.Select(recruitment => recruitment.ObjectId).ToArray());
+		}
+
+		var applicationMutation = clientPlan.ApplicationMutationPlan;
+		if (applicationMutation?.Status != FindGroupApplicationPlanStatus.Added
+			|| applicationMutation.CurrentApplication == null
+			|| applicationMutation.ShowApplicationsPlan == null)
+		{
+			return null;
+		}
+
+		return new FindGroupDirectPacketMutationPostProjectionFacts(
+			applicationMutation.CurrentApplication.PlayerObjectId,
+			applicationMutation.ShowApplicationsPlan.LastUpdate,
+			applicationMutation.ShowApplicationsPlan.Applications.Select(application => application.PlayerObjectId).ToArray());
+	}
+
+	private static FindGroupDirectPacketMutationPostBoundaryTraceExportProjection Failed(
+		FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus status,
+		int action,
+		string reason)
+	{
+		var export = CreateSampleExport(action is 2 or 6 ? action : 2);
+		return new FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(status, export with { Action = action }, reason);
 	}
 }
 
@@ -161,3 +298,24 @@ public sealed record FindGroupDirectPacketMutationPostBoundaryTraceExport(
 	bool RegistrySendsObservedInOrder,
 	int WorldBroadcastCount,
 	int InviteDispatchCount);
+
+public enum FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus
+{
+	Created,
+	UnsupportedAction,
+	MissingActivePlayer,
+	MissingClientActionPlan,
+	LiveSideEffectsRequested,
+	UnexpectedSideEffectShape,
+	MissingMutationPlan,
+}
+
+public sealed record FindGroupDirectPacketMutationPostBoundaryTraceExportProjection(
+	FindGroupDirectPacketMutationPostBoundaryTraceExportProjectionStatus Status,
+	FindGroupDirectPacketMutationPostBoundaryTraceExport Export,
+	string Reason);
+
+sealed record FindGroupDirectPacketMutationPostProjectionFacts(
+	int MutatedEntryObjectId,
+	int ServerEpochSeconds,
+	IReadOnlyList<int> VisibleEntryObjectIdsAfterMutation);

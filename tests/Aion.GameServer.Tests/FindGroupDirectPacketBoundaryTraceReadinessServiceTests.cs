@@ -199,6 +199,13 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("schema version 1", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("action 2 and 6 mutation-post", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("without capturing live traffic", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpMutationPostTraceExportProjection
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("schema version 1 C# exports", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("disabled action 2 and 6 boundary plans", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("without invoking the executor", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -224,6 +231,9 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("mutation-post trace schema", StringComparison.Ordinal));
+		Assert.Contains(
+			report.NextRequiredEvidence,
+			item => item.Contains("mutation-post export projection helper", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("ordered trace contract", StringComparison.Ordinal));
