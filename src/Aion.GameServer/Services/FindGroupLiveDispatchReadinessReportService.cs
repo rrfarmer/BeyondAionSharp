@@ -45,6 +45,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"Action 11 instance application and declined action 12 direct packet dispatch have connection-adjacent disabled executor evidence but are not invoked from the CM_FIND_GROUP boundary.",
 				"Action 12 group/alliance invite request dispatch has connection-adjacent disabled executor evidence but is not invoked from the CM_FIND_GROUP boundary.",
 				"FindGroupService lifecycle hooks now have production singleton graph evidence for logout, joined-team, and disband cleanup, but CM_FIND_GROUP is not wired to that graph.",
+				"Direct packet trigger ordering remains blocked: opt-in executor order exists, but no live boundary test proves outgoing packets are ordered relative to the triggering CM_FIND_GROUP client packet.",
 				"No encrypted socket or real-client runtime comparison has verified live packet order, visibility filtering, or service concurrency.",
 			],
 			[
@@ -57,6 +58,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"FindGroupInstanceApplicationInviteDispatchPlanService can compose action 12 group/alliance invite request-service results without sending packets.",
 				"FindGroupSideEffectDispatchAuditService can audit direct packet and world-broadcast intents without calling the live connection registry.",
 				"FindGroupSideEffectDispatchExecutorService can execute direct packet and race-filtered world-broadcast intents through IGameClientConnectionRegistry when explicitly invoked, and records execution order for future live-boundary audits.",
+				"FindGroupDirectPacketTriggerOrderingReadinessService separates Java synchronous runImpl/sendPacket review and C# opt-in executor ordering from the still-missing live ProcessPacketAsync trigger-order proof.",
 				"FindGroupConnectionBoundarySideEffectCompositionEvidenceService can compose parsed CmFindGroup planner output, including action 0/4 show-list direct packets, action 2/3/6/7 recruitment/application mutation evidence, action 8/9/17 instance-group mutation packets, action 10/13 instance-group show direct packets, action 11/12 instance-application direct/invite intents, and action 1/5 world-broadcast intents, with opt-in executor results without wiring GameServerConnection.",
 				"FindGroupConnectionBoundaryDispatchAdapterService can compose a non-live boundary result with direct packet intents, world-broadcast intents, optional action 12 invite plans, parsed-only no-op status, and missing-runtime status without wiring GameServerConnection.",
 				"GameServerConnection.CreateDisabledFindGroupBoundaryPlan can consume injected composition and dispatch adapter services to produce a non-live CmFindGroup boundary plan without executing packet sends.",

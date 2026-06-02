@@ -71,6 +71,8 @@ public sealed class FindGroupLiveDispatchReadinessReportServiceTests
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchAuditService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("records execution order", StringComparison.Ordinal));
+		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupDirectPacketTriggerOrderingReadinessService", StringComparison.Ordinal));
+		Assert.Contains(report.GlobalBlockers, blocker => blocker.Contains("Direct packet trigger ordering remains blocked", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("FindGroupConnectionBoundarySideEffectCompositionEvidenceService", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 0/4 show-list direct packets", StringComparison.Ordinal));
 		Assert.Contains(report.ObserverEvidence, evidence => evidence.Contains("action 2/3/6/7 recruitment/application mutation evidence", StringComparison.Ordinal));
