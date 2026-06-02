@@ -140,7 +140,22 @@ public static class FindGroupMutationPostJavaTraceArtifactValidatorService
 			GetInt(trace, "action") ?? 0,
 			GetString(trace, "mutationKind") ?? string.Empty,
 			GetInt(trace, "postedSystemMessageId") ?? 0,
-			GetInt(trace, "refreshedListAction") ?? 0);
+			GetInt(trace, "refreshedListAction") ?? 0,
+			GetBool(trace, "boundaryAccepted") ?? false,
+			GetInt(trace, "activePlayerObjectId") ?? 0,
+			GetString(trace, "activePlayerRace") ?? string.Empty,
+			GetInt(trace, "serverEpochSeconds") ?? 0,
+			GetInt(trace, "mutatedEntryObjectId") ?? 0,
+			GetBool(trace, "stateMutationRecordedBeforeDirectPackets") ?? false,
+			GetInt(trace, "postedSystemMessageRecipientObjectId") ?? 0,
+			GetString(trace, "postedSystemMessageType") ?? string.Empty,
+			GetInt(trace, "refreshedListRecipientObjectId") ?? 0,
+			GetString(trace, "refreshedListPacketType") ?? string.Empty,
+			GetIntArray(trace, "visibleEntryObjectIdsAfterMutation"),
+			GetBool(trace, "executorInvokedFromBoundary") ?? false,
+			GetBool(trace, "registrySendsObservedInOrder") ?? false,
+			GetInt(trace, "worldBroadcastCount") ?? 0,
+			GetInt(trace, "inviteDispatchCount") ?? 0);
 	}
 
 	private static int? GetInt(JsonElement element, string propertyName)
@@ -155,6 +170,31 @@ public static class FindGroupMutationPostJavaTraceArtifactValidatorService
 		return element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
 			? property.GetString()
 			: null;
+	}
+
+	private static bool? GetBool(JsonElement element, string propertyName)
+	{
+		if (!element.TryGetProperty(propertyName, out var property))
+			return null;
+
+		return property.ValueKind switch
+		{
+			JsonValueKind.True => true,
+			JsonValueKind.False => false,
+			_ => null,
+		};
+	}
+
+	private static IReadOnlyList<int> GetIntArray(JsonElement element, string propertyName)
+	{
+		if (!element.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
+			return [];
+
+		return property
+			.EnumerateArray()
+			.Where(item => item.ValueKind == JsonValueKind.Number && item.TryGetInt32(out _))
+			.Select(item => item.GetInt32())
+			.ToArray();
 	}
 
 	private static void Add(
@@ -200,7 +240,22 @@ public sealed record FindGroupMutationPostJavaTraceArtifactValidationTraceRow(
 	int Action,
 	string MutationKind,
 	int PostedSystemMessageId,
-	int RefreshedListAction);
+	int RefreshedListAction,
+	bool BoundaryAccepted = false,
+	int ActivePlayerObjectId = 0,
+	string ActivePlayerRace = "",
+	int ServerEpochSeconds = 0,
+	int MutatedEntryObjectId = 0,
+	bool StateMutationRecordedBeforeDirectPackets = false,
+	int PostedSystemMessageRecipientObjectId = 0,
+	string PostedSystemMessageType = "",
+	int RefreshedListRecipientObjectId = 0,
+	string RefreshedListPacketType = "",
+	IReadOnlyList<int>? VisibleEntryObjectIdsAfterMutation = null,
+	bool ExecutorInvokedFromBoundary = false,
+	bool RegistrySendsObservedInOrder = false,
+	int WorldBroadcastCount = 0,
+	int InviteDispatchCount = 0);
 
 public sealed record FindGroupMutationPostJavaTraceArtifactMetadata(
 	int SchemaVersion,
