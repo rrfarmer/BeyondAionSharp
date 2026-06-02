@@ -103,6 +103,7 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.RequiredNextEvidence.Contains("runtime comparison handoff", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("live-capture preflight runbook", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("capture acceptance matrix", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("capture execution blocker summary", StringComparison.Ordinal)
 			&& row.Notes.Contains("cannot materialize", StringComparison.Ordinal));
 	}
 
