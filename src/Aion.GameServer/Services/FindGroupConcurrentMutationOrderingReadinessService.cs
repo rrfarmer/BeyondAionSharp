@@ -30,6 +30,10 @@ public static class FindGroupConcurrentMutationOrderingReadinessService
 					"C# focused tests exercise concurrent add/logout operations across the three stores, matching the broad Java ConcurrentHashMap storage shape.",
 					FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable),
 				new FindGroupConcurrentMutationOrderingEvidence(
+					FindGroupConcurrentMutationOrderingEvidenceKind.CSharpDeterministicSharedSingletonInterleavingTests,
+					"C# focused tests now cover deterministic shared-singleton caller orders where CM_FIND_GROUP-created state is removed by logout before joined-team cleanup, and where joined-team re-adds a team recruitment that logout does not remove until group disband cleanup.",
+					FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable),
+				new FindGroupConcurrentMutationOrderingEvidence(
 					FindGroupConcurrentMutationOrderingEvidenceKind.LiveSingletonCallerInterleaving,
 					"No live evidence proves CM_FIND_GROUP, logout, joined-team, and disband callers interleave against the same singleton state with Java-equivalent multi-step outcomes.",
 					FindGroupConcurrentMutationOrderingEvidenceStatus.Blocked),
@@ -40,7 +44,7 @@ public static class FindGroupConcurrentMutationOrderingReadinessService
 			],
 			[
 				"Do not claim Java-equivalent live concurrency from ConcurrentDictionary storage shape alone.",
-				"Before live CmFindGroup dispatch, add focused tests or runtime traces for interleavings between CM_FIND_GROUP actions, logout cleanup, joined-team cleanup, and disband cleanup on the same shared service.",
+				"Before live CmFindGroup dispatch, add live boundary tests or runtime traces for interleavings between CM_FIND_GROUP actions, logout cleanup, joined-team cleanup, and disband cleanup on the same shared service.",
 				"Preserve Java method-order evidence for onJoinedTeam without introducing extra synchronization unless a parity review justifies it.",
 			]);
 	}
@@ -59,6 +63,7 @@ public enum FindGroupConcurrentMutationOrderingEvidenceKind
 	CSharpConcurrentDictionaryShape,
 	CSharpSequentialOnJoinedTeamTests,
 	CSharpBasicConcurrentStoreTests,
+	CSharpDeterministicSharedSingletonInterleavingTests,
 	LiveSingletonCallerInterleaving,
 	RuntimeComparison,
 }

@@ -44,6 +44,12 @@ public sealed class FindGroupConcurrentMutationOrderingReadinessServiceTests
 				&& evidence.Status == FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("concurrent add/logout operations", StringComparison.Ordinal));
 		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupConcurrentMutationOrderingEvidenceKind.CSharpDeterministicSharedSingletonInterleavingTests
+				&& evidence.Status == FindGroupConcurrentMutationOrderingEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("CM_FIND_GROUP-created state", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("group disband cleanup", StringComparison.Ordinal));
+		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("ConcurrentDictionary storage shape alone", StringComparison.Ordinal));
 	}
@@ -71,6 +77,6 @@ public sealed class FindGroupConcurrentMutationOrderingReadinessServiceTests
 				&& evidence.Detail.Contains("concurrent player actions", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
-			item => item.Contains("interleavings between CM_FIND_GROUP actions", StringComparison.Ordinal));
+			item => item.Contains("live boundary tests or runtime traces", StringComparison.Ordinal));
 	}
 }
