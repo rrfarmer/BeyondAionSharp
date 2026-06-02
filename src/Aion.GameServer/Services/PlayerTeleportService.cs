@@ -278,6 +278,14 @@ public sealed record GroupPortalTransferPlan(
 	{
 		if (transferState == GroupPortalTransferState.RegisteredInstanceTransfer)
 		{
+			if (teamPlan.RegisteredInstanceFromMemberScan)
+			{
+				return CreateMemberInstanceScanPlan(
+					teamPlan,
+					GroupPortalMemberInstanceScanState.FoundRegisteredMemberInstance,
+					GroupPortalMemberInstanceScanBlockedReason.RegisteredMemberInstanceResolved);
+			}
+
 			return CreateMemberInstanceScanPlan(
 				teamPlan,
 				GroupPortalMemberInstanceScanState.NotNeededRegisteredTeamInstance,
@@ -304,7 +312,8 @@ public sealed record GroupPortalTransferPlan(
 		GroupPortalMemberInstanceScanState state,
 		GroupPortalMemberInstanceScanBlockedReason blockedReason)
 	{
-		var candidates = state == GroupPortalMemberInstanceScanState.WouldScanMemberObjectIds
+		var candidates = state is GroupPortalMemberInstanceScanState.WouldScanMemberObjectIds
+			or GroupPortalMemberInstanceScanState.FoundRegisteredMemberInstance
 			? teamPlan.MemberObjectIds
 			: Array.Empty<int>();
 		return new GroupPortalMemberInstanceScanPlan(candidates, state, blockedReason);
@@ -570,6 +579,7 @@ public enum GroupPortalMemberInstanceScanState
 {
 	NotNeededRegisteredTeamInstance,
 	WouldScanMemberObjectIds,
+	FoundRegisteredMemberInstance,
 	BlockedInvalidTeamId,
 	BlockedNoMemberCandidates,
 }
@@ -578,6 +588,7 @@ public enum GroupPortalMemberInstanceScanBlockedReason
 {
 	RegisteredTeamInstanceAlreadyResolved,
 	LiveGroupAggregateNotPorted,
+	RegisteredMemberInstanceResolved,
 	MissingTeamId,
 	NoMemberObjectIds,
 }

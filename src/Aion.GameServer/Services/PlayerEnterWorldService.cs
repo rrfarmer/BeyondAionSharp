@@ -739,6 +739,7 @@ public sealed class PlayerEnterWorldService
 		bool bypassRaceRequirement = false,
 		bool bypassTitleRequirement = false,
 		bool bypassQuestRequirement = false,
+		bool bypassGroupRequirement = false,
 		bool siegeOwnerMatchesPlayerRace = true,
 		bool npcIsDialogNpc = true,
 		CancellationToken cancellationToken = default)
@@ -757,6 +758,7 @@ public sealed class PlayerEnterWorldService
 			bypassRaceRequirement,
 			bypassTitleRequirement,
 			bypassQuestRequirement,
+			bypassGroupRequirement,
 			siegeOwnerMatchesPlayerRace,
 			npcIsDialogNpc);
 		if (!entryPlan.CanEnter)

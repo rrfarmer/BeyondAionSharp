@@ -1496,6 +1496,48 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidatePortalEntryPlan_GroupBypassScansMemberSoloRegistrationsLikeJava()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 25,
+			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			TeamMembership = PlayerTeamMembership.Group,
+			CurrentTeamId = 88001,
+			CurrentTeamMemberObjectIds = [1001, 1002, 1003],
+		};
+		var worldMaps = CreateWorldMaps();
+		var registered = worldMaps.AddWorldMapInstance(WorldId, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(registered);
+		registered.Register(1002);
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 6, maxCount: 1),
+			worldMaps,
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001,
+			bypassGroupRequirement: true);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.Group, result.TeamPlan.Kind);
+		Assert.Equal(88001, result.TeamPlan.TeamId);
+		Assert.Equal([1001, 1002, 1003], result.TeamPlan.MemberObjectIds);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.TeamPlan.Disposition);
+		Assert.Same(registered, result.TeamPlan.RegisteredInstance);
+		Assert.True(result.TeamPlan.RegisteredInstanceFromMemberScan);
+		Assert.False(result.TeamPlan.Reenter);
+		Assert.False(result.TeamPlan.FanoutSupported);
+		Assert.False(registered.IsRegistered(88001));
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_GroupMemberMarksReenterOnlyWhenPlayerObjectIsRegisteredLikeJava()
 	{
 		var player = new Player

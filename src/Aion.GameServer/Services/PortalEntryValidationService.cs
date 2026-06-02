@@ -23,6 +23,7 @@ public static class PortalEntryValidationService
 		bool bypassRaceRequirement = false,
 		bool bypassTitleRequirement = false,
 		bool bypassQuestRequirement = false,
+		bool bypassGroupRequirement = false,
 		bool siegeOwnerMatchesPlayerRace = true,
 		bool npcIsDialogNpc = true)
 	{
@@ -61,13 +62,13 @@ public static class PortalEntryValidationService
 			if (!validation.CanEnter)
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
 
-			validation = ValidatePlayerSize(player, portalPath, maxPlayers, npcObjectId);
+			validation = ValidatePlayerSize(player, portalPath, maxPlayers, npcObjectId, bypassGroupRequirement);
 			if (!validation.CanEnter)
 				return PortalEntryPlanResult.Rejected(validation.Status, loc, validation.FailurePacket!);
 		}
 
 		if (maxPlayers != 0 && maxPlayers != 1)
-			return PortalEntryPlanResult.UnsupportedTeamPortal(loc, CreateUnsupportedTeamPlan(player, loc.WorldId, maxPlayers, worldMaps));
+			return PortalEntryPlanResult.UnsupportedTeamPortal(loc, CreateUnsupportedTeamPlan(player, loc.WorldId, maxPlayers, worldMaps, bypassGroupRequirement));
 
 		var instanceValidation = ValidateCooldownForRegisteredInstance(
 			player,
@@ -351,9 +352,13 @@ public static class PortalEntryValidationService
 		Player player,
 		PortalPathSummary portalPath,
 		int maxPlayers,
-		int npcObjectId = 0)
+		int npcObjectId = 0,
+		bool bypassGroupRequirement = false)
 	{
 		// Java parity: services/teleport/PortalService.checkPlayerSize.
+		if (bypassGroupRequirement)
+			return PortalEntryValidationResult.Allowed();
+
 		if (maxPlayers is 3 or 6)
 		{
 			if (player.TeamMembership == PlayerTeamMembership.Group)
@@ -636,7 +641,8 @@ public static class PortalEntryValidationService
 		Player player,
 		int worldId,
 		int maxPlayers,
-		WorldMapRuntimeStateTable worldMaps)
+		WorldMapRuntimeStateTable worldMaps,
+		bool groupRequirementBypassed)
 	{
 		// Java parity: services/teleport/PortalService.port preserves team id/member context before group/alliance transfer fanout.
 		if (maxPlayers is 3 or 6 && player.TeamMembership == PlayerTeamMembership.Group)
@@ -645,6 +651,13 @@ public static class PortalEntryValidationService
 			var teamId = groupSnapshot?.TeamId ?? 0;
 			var memberObjectIds = groupSnapshot?.MemberObjectIds ?? Array.Empty<int>();
 			var registeredInstance = teamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, teamId);
+			var registeredInstanceFromMemberScan = false;
+			if (registeredInstance == null && groupRequirementBypassed)
+			{
+				registeredInstance = FindRegisteredMemberInstance(worldMaps, worldId, memberObjectIds);
+				registeredInstanceFromMemberScan = registeredInstance != null;
+			}
+
 			return new PortalTeamEntryPlan(
 				PortalTeamEntryKind.Group,
 				teamId,
@@ -653,7 +666,8 @@ public static class PortalEntryValidationService
 				GetTeamEntryDisposition(registeredInstance),
 				registeredInstance,
 				IsRegisteredReentry(player, worldId, registeredInstance),
-				FanoutSupported: false);
+				FanoutSupported: false,
+				RegisteredInstanceFromMemberScan: registeredInstanceFromMemberScan);
 		}
 
 		if (maxPlayers > 6 && maxPlayers <= 24 && player.TeamMembership == PlayerTeamMembership.Alliance)
@@ -668,6 +682,23 @@ public static class PortalEntryValidationService
 				registeredInstance,
 				IsRegisteredReentry(player, worldId, registeredInstance),
 				FanoutSupported: false);
+		}
+
+		return null;
+	}
+
+	private static WorldMapInstanceRuntimeState? FindRegisteredMemberInstance(
+		WorldMapRuntimeStateTable worldMaps,
+		int worldId,
+		IReadOnlyList<int> memberObjectIds)
+	{
+		// Java parity: PortalService.port scans group.getMembers() and reuses the first solo-registered member instance
+		// only when default group requirement is disabled.
+		foreach (var memberObjectId in memberObjectIds)
+		{
+			var registeredInstance = worldMaps.GetRegisteredInstance(worldId, memberObjectId);
+			if (registeredInstance != null)
+				return registeredInstance;
 		}
 
 		return null;
@@ -918,7 +949,8 @@ public sealed record PortalTeamEntryPlan(
 	WorldMapInstanceRuntimeState? RegisteredInstance,
 	bool Reenter,
 	bool FanoutSupported,
-	byte DifficultyId = 0);
+	byte DifficultyId = 0,
+	bool RegisteredInstanceFromMemberScan = false);
 
 public enum PortalTeamEntryKind
 {
