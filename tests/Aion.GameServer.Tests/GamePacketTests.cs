@@ -317,6 +317,13 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.GetExp2VitalMakeupBonus(240, 20, 30), 1400350, "240", "20", "30");
 		AssertSystemMessage(SmSystemMessage.LevelLimitQuestNotFinished(), 1400545);
 		AssertSystemMessage(SmSystemMessage.InstanceDungeonOpenedForSelf(300030000), 1400640, "300030000");
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdab1Dredgion(), 1400252);
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdDredgion02(), 1400628);
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdDredgion03(), 1401398);
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdKamar(), 1401730);
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdLdf5Under01War(), 1401947);
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdF5TdWar(), 1402032);
+		AssertSystemMessage(SmSystemMessage.InstanceOpenIdLdf5FortressRe(), 1402192);
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");

@@ -28,6 +28,23 @@ public sealed class PeriodicInstanceRegistrationService
 			return _openedRegistrations.Contains(maskId);
 	}
 
+	public static SmSystemMessage? CreateOpeningMessageForMaskId(int maskId)
+	{
+		// Java parity: PeriodicInstanceManager constructor passes these
+		// SM_SYSTEM_MESSAGE helpers to scheduleRegistration for each mask id.
+		return maskId switch
+		{
+			1 => SmSystemMessage.InstanceOpenIdab1Dredgion(),
+			2 => SmSystemMessage.InstanceOpenIdDredgion02(),
+			3 => SmSystemMessage.InstanceOpenIdDredgion03(),
+			107 => SmSystemMessage.InstanceOpenIdKamar(),
+			108 => SmSystemMessage.InstanceOpenIdLdf5Under01War(),
+			109 => SmSystemMessage.InstanceOpenIdF5TdWar(),
+			111 => SmSystemMessage.InstanceOpenIdLdf5FortressRe(),
+			_ => null,
+		};
+	}
+
 	public PeriodicInstanceRegistrationBroadcastPlan CreateOpenRegistrationBroadcastPlan(
 		int maskId,
 		AutoGroupTable? autoGroups,

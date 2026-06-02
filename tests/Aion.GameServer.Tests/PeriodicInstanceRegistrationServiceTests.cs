@@ -10,6 +10,19 @@ namespace Aion.GameServer.Tests;
 public sealed class PeriodicInstanceRegistrationServiceTests
 {
 	[Fact]
+	public void CreateOpeningMessageForMaskId_ReturnsJavaScheduledOpeningMessages()
+	{
+		Assert.Equal(1400252, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(1)?.MessageId);
+		Assert.Equal(1400628, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(2)?.MessageId);
+		Assert.Equal(1401398, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(3)?.MessageId);
+		Assert.Equal(1401730, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(107)?.MessageId);
+		Assert.Equal(1401947, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(108)?.MessageId);
+		Assert.Equal(1402032, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(109)?.MessageId);
+		Assert.Equal(1402192, PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(111)?.MessageId);
+		Assert.Null(PeriodicInstanceRegistrationService.CreateOpeningMessageForMaskId(999));
+	}
+
+	[Fact]
 	public async Task OpenRegistrationAndBroadcastAsync_SendsPlannedPacketsToOnlineLevelRangeLikeJavaWorldFanout()
 	{
 		var service = new PeriodicInstanceRegistrationService();

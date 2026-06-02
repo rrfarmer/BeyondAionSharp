@@ -274,6 +274,48 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400640, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage InstanceOpenIdab1Dredgion()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDAB1_DREADGION.
+		return new SmSystemMessage(1400252);
+	}
+
+	public static SmSystemMessage InstanceOpenIdDredgion02()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDDREADGION_02.
+		return new SmSystemMessage(1400628);
+	}
+
+	public static SmSystemMessage InstanceOpenIdDredgion03()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDDREADGION_03.
+		return new SmSystemMessage(1401398);
+	}
+
+	public static SmSystemMessage InstanceOpenIdKamar()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDKamar.
+		return new SmSystemMessage(1401730);
+	}
+
+	public static SmSystemMessage InstanceOpenIdLdf5Under01War()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDLDF5_Under_01_War.
+		return new SmSystemMessage(1401947);
+	}
+
+	public static SmSystemMessage InstanceOpenIdF5TdWar()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDF5_TD_war.
+		return new SmSystemMessage(1402032);
+	}
+
+	public static SmSystemMessage InstanceOpenIdLdf5FortressRe()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDLDF5_Fortress_Re.
+		return new SmSystemMessage(1402192);
+	}
+
 	public static SmSystemMessage CannotMakeInstanceCoolTime()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_MAKE_INSTANCE_COOL_TIME.
