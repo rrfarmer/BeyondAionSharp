@@ -33,6 +33,7 @@ public sealed record FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandRe
 	string JavaTestSelector,
 	string JavaCaptureCommand,
 	string CSharpValidatorCommand,
+	string CommandConsistencyEvidence,
 	IReadOnlyList<string> ExpectedArtifactPaths,
 	bool UsesExplicitRoot,
 	bool UsesRepositoryArtifactRoot,
@@ -68,6 +69,7 @@ public static class FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandRep
 		consistencyReport ??= FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReportService.Create(artifactRoot);
 
 		var command = JavaCaptureCommand(artifactRoot);
+		var commandConsistencyEvidence = CommandConsistencyEvidenceFor(consistencyReport);
 		var usesExplicitRoot = !string.IsNullOrWhiteSpace(artifactRoot);
 		var usesRepositoryArtifactRoot = string.Equals(
 			artifactRoot,
@@ -140,6 +142,7 @@ public static class FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandRep
 			JavaTestSelector,
 			command,
 			rootValidationReport.CSharpValidatorCommand,
+			commandConsistencyEvidence,
 			expectedArtifactPaths,
 			usesExplicitRoot,
 			usesRepositoryArtifactRoot,
@@ -157,6 +160,16 @@ public static class FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandRep
 
 	public static string JavaCaptureCommand(string artifactRoot) =>
 		$"mvn -pl game-server -am test \"-Dtest={JavaTestSelector}\" \"-D{FindGroupMutationPostJavaArtifactCaptureRunbookService.CaptureFlag}=true\" \"-D{FindGroupMutationPostJavaArtifactCaptureRunbookService.ServerEpochSecondsProperty}={FindGroupMutationPostJavaArtifactCaptureRunbookService.DeterministicServerEpochSeconds}\" \"-D{FindGroupMutationPostProjectedRowComparisonValueReaderExecutorLiveCapturePreflightRunbookContractService.JavaArtifactRootProperty}={artifactRoot}\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
+
+	private static string CommandConsistencyEvidenceFor(
+		FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReport consistencyReport)
+	{
+		var providerRows = consistencyReport.Rows.Count == 0
+			? "none"
+			: string.Join(" | ", consistencyReport.Rows.Select(row => $"{row.Provider}=consistent:{row.IsConsistent};requiresArtifactRoot:{row.RequiresArtifactRoot};captureFlag:{row.HasCaptureFlag};timestamp:{row.HasDeterministicTimestampValue};artifactRoot:{row.HasExpectedArtifactRoot}"));
+
+		return $"status={consistencyReport.Status}; allProvidersConsistent={consistencyReport.AllProvidersConsistent}; selectedKind={consistencyReport.CommandDecisionSelectedKind}; selectedEvidenceField={consistencyReport.CommandDecisionSelectedEvidenceField}; commandDecisionRowsEvidence={consistencyReport.CommandDecisionRowsEvidence}; providerRows={providerRows}";
+	}
 
 	private static FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandGateRow GateRow(
 		int order,
