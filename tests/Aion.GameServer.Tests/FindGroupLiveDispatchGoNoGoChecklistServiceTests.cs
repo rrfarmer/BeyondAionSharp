@@ -46,6 +46,7 @@ public sealed class FindGroupLiveDispatchGoNoGoChecklistServiceTests
 			checklist.Items,
 			item => item.Kind == FindGroupLiveDispatchGoNoGoChecklistItemKind.ActionTwelveInviteDispatch
 				&& item.Status == FindGroupLiveDispatchGoNoGoChecklistItemStatus.EvidenceAvailable
+				&& item.Evidence.Contains("boundary-acceptance-before-group-invite trace", StringComparison.Ordinal)
 				&& item.Evidence.Contains("missing inviter/invited failure results", StringComparison.Ordinal));
 	}
 
