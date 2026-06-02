@@ -126,6 +126,7 @@ public static class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 	{
 		blockerRowsByOutputKind.TryGetValue(outputKind, out var blockerRow);
 		gateRowsByOutputKind.TryGetValue(outputKind, out var gateRow);
+		var materializationBlockerEvidence = blockerRow?.BlockingEvidence ?? "none";
 
 		return new FindGroupMutationPostProjectedValueResultEmissionBlockerRow(
 			OrderFor(outputKind, blockerRowsByOutputKind, gateRowsByOutputKind),
@@ -143,7 +144,7 @@ public static class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 			HasEmissionGateRow: gateRow != null,
 			CanMaterializeOutput: false,
 			CanEmitResult: false,
-			$"reportStatus={reportStatus}; materializationBlockerStatus={blockerRow?.Status}; emissionGateStatus={gateRow?.Status}; hasMaterializationBlockerRow={blockerRow != null}; hasEmissionGateRow={gateRow != null}; gateCanEmitResult={gateRow?.CanEmitResult}",
+			$"reportStatus={reportStatus}; materializationBlockerStatus={blockerRow?.Status}; emissionGateStatus={gateRow?.Status}; hasMaterializationBlockerRow={blockerRow != null}; hasEmissionGateRow={gateRow != null}; gateCanEmitResult={gateRow?.CanEmitResult}; materializationBlockerEvidence={materializationBlockerEvidence}",
 			RequiredEvidenceFor(outputKind, blockerRow, gateRow),
 			NotesFor(outputKind, gateRow));
 	}

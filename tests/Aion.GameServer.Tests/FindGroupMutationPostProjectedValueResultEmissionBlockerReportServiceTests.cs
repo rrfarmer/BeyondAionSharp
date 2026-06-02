@@ -33,6 +33,9 @@ public sealed class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 			Assert.True(row.HasEmissionGateRow);
 			Assert.False(row.CanMaterializeOutput);
 			Assert.False(row.CanEmitResult);
+			Assert.Contains("materializationBlockerEvidence=", row.BlockingEvidence, StringComparison.Ordinal);
+			Assert.Contains("projectedValueRows=", row.BlockingEvidence, StringComparison.Ordinal);
+			Assert.Contains("csharpHandoffStatus=BlockedMissingAcceptedBoundaryRows", row.BlockingEvidence, StringComparison.Ordinal);
 		});
 	}
 
@@ -50,6 +53,10 @@ public sealed class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 			&& row.MaterializationBlockerStatus == FindGroupMutationPostProjectedValueMaterializationBlockerRowStatus.BlockedValueProjectionUnavailable
 			&& row.EmissionGateStatus == FindGroupMutationPostProjectedRowComparisonValueReaderExecutorResultEmissionGateRowStatus.BlockedMaterializationPreflightNotReady
 			&& row.RequiredEmissionConditions.Any(condition => condition.Contains("Every schema equality field", StringComparison.Ordinal))
+			&& row.BlockingEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal)
+			&& row.BlockingEvidence.Contains("projectedValueRows=", StringComparison.Ordinal)
+			&& row.BlockingEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
+			&& row.BlockingEvidence.Contains("csharpHandoffCanFeedJavaArtifactPairing=True", StringComparison.Ordinal)
 			&& !row.CanEmitResult);
 	}
 
@@ -69,6 +76,9 @@ public sealed class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 			&& row.RequiresRuntimeComparison
 			&& !row.RequiresParentResult
 			&& row.RequiredProjectedFieldNames.SequenceEqual(["activePlayerObjectId", "message", "groupType"])
+			&& row.BlockingEvidence.Contains("materializationBlockerEvidence=", StringComparison.Ordinal)
+			&& row.BlockingEvidence.Contains("projectedValueRows=", StringComparison.Ordinal)
+			&& row.BlockingEvidence.Contains("csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked", StringComparison.Ordinal)
 			&& row.RequiredEvidence.Contains("all values equal", StringComparison.Ordinal)
 			&& row.RequiredEvidence.Contains("No ignored runtime context", StringComparison.Ordinal)
 			&& row.Notes.Contains("projected values are placeholders", StringComparison.Ordinal));
@@ -133,6 +143,7 @@ public sealed class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 			Assert.Equal(FindGroupMutationPostProjectedRowComparisonValueReaderExecutorResultEmissionGateRowStatus.BlockedResultEmissionDisabled, row.EmissionGateStatus);
 			Assert.False(row.CanEmitResult);
 			Assert.Contains("gateCanEmitResult=False", row.BlockingEvidence, StringComparison.Ordinal);
+			Assert.Contains("materializationBlockerEvidence=", row.BlockingEvidence, StringComparison.Ordinal);
 		});
 	}
 
@@ -188,7 +199,7 @@ public sealed class FindGroupMutationPostProjectedValueResultEmissionBlockerRepo
 			HasUnreadProjectedValues: true,
 			CanMaterializeOutput: false,
 			CanEmitResult: false,
-			"test blocker evidence",
+			"projectedValueRows=activePlayerObjectId=functionPreflightRows=ReaderImplementationGate=status=ReadyForFunctionExecutionBlocked; typedReaderGateRows=RuntimeRowValueIntake=runtimeRowValueIntakeRows=RuntimeRowValueIntake=status=ReadyForRuntimeRowsValueReadersBlocked; csharpHandoffStatus=ReadyForJavaArtifactPairingRuntimeComparisonBlocked; csharpHandoffCanFeedJavaArtifactPairing=True",
 			RequiredEvidenceFor(outputKind),
 			"test materialization blocker notes");
 
