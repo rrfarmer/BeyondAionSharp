@@ -117,6 +117,39 @@ public sealed class GameServerConnectionGroupInviteTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_GroupInviteAcceptUsesInjectedFindGroupRecorder()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var recorder = new FindGroupJoinedTeamLifecycleRecorder(findGroupService, () => 200, serverId: 7);
+		var groups = new PlayerGroupRuntime(findGroupService, serverId: 7);
+		var inviteService = new PlayerGroupInviteRequestService(recorder);
+		var inviter = CreatePlayer(1001, "Inviter");
+		var invited = CreatePlayer(1002, "Invited");
+		registry.OnlinePlayers.AddRange([inviter, invited]);
+		findGroupService.AddRecruitment(inviter, "Need one", groupType: 3, nowEpochSeconds: 100);
+		inviteService.SendInvite(inviter, invited);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry,
+			groups,
+			idFactory: new IDFactory(),
+			playerGroupInviteRequestService: inviteService);
+
+		await pair.Connection.HandleQuestionResponseAsync(invited, CreateQuestionResponse(SmQuestionWindow.PartyInvite, response: 1));
+
+		var groupSnapshot = invited.CurrentGroupSnapshot;
+		Assert.NotNull(groupSnapshot);
+		var teamId = groupSnapshot.TeamId;
+		var recruitments = findGroupService.ShowRecruitments(inviter.Race, nowEpochSeconds: 201).Recruitments;
+		var recruitment = Assert.Single(recruitments);
+		Assert.Equal(teamId, recruitment.ObjectId);
+		Assert.False(recruitment.IsSoloPlayer);
+		Assert.Equal("Need one", recruitment.Message);
+		Assert.Equal(0, findGroupService.ShowRecruitments(inviter.Race, nowEpochSeconds: 202)
+			.Recruitments.Count(recruitment => recruitment.ObjectId == inviter.ObjectId));
+	}
+
+	[Fact]
 	public async Task HandleInviteToGroupAsync_LeagueInviteTypeTargetsAllianceLeaderAndRegistersQuestion()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -299,6 +332,41 @@ public sealed class GameServerConnectionGroupInviteTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_AllianceInviteAcceptUsesInjectedFindGroupRecorder()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var recorder = new FindGroupJoinedTeamLifecycleRecorder(findGroupService, () => 300, serverId: 7);
+		var groups = new PlayerGroupRuntime(findGroupService, serverId: 7);
+		var alliances = new PlayerAllianceRuntime(findGroupService, serverId: 7);
+		var inviteService = new PlayerAllianceInviteRequestService(recorder);
+		var inviter = CreatePlayer(1001, "Inviter");
+		var invited = CreatePlayer(1002, "Invited");
+		registry.OnlinePlayers.AddRange([inviter, invited]);
+		findGroupService.AddRecruitment(inviter, "Force forming", groupType: 12, nowEpochSeconds: 250);
+		inviteService.SendInvite(inviter, invited, groups, alliances, objectId => objectId == inviter.ObjectId ? inviter : invited);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			registry,
+			groups,
+			idFactory: new IDFactory(),
+			alliances: alliances,
+			playerAllianceInviteRequestService: inviteService);
+
+		await pair.Connection.HandleQuestionResponseAsync(invited, CreateQuestionResponse(SmQuestionWindow.AllianceInvite, response: 1));
+
+		var allianceSnapshot = invited.CurrentAllianceSnapshot;
+		Assert.NotNull(allianceSnapshot);
+		var allianceId = allianceSnapshot.AllianceId;
+		var recruitments = findGroupService.ShowRecruitments(inviter.Race, nowEpochSeconds: 301).Recruitments;
+		var recruitment = Assert.Single(recruitments);
+		Assert.Equal(allianceId, recruitment.ObjectId);
+		Assert.False(recruitment.IsSoloPlayer);
+		Assert.Equal("Force forming", recruitment.Message);
+		Assert.Equal(0, findGroupService.ShowRecruitments(inviter.Race, nowEpochSeconds: 302)
+			.Recruitments.Count(recruitment => recruitment.ObjectId == inviter.ObjectId));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_AllianceInviteAcceptMergesRequesterAndInvitedGroupsLikeJavaCollectPlayersToAdd()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -422,7 +490,9 @@ public sealed class GameServerConnectionGroupInviteTests
 			Action<GameServerPacket>? sentPacketObserver = null,
 			IDFactory? idFactory = null,
 			PlayerAllianceRuntime? alliances = null,
-			PlayerLeagueRuntime? leagues = null)
+			PlayerLeagueRuntime? leagues = null,
+			PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
+			PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -447,6 +517,8 @@ public sealed class GameServerConnectionGroupInviteTests
 					playerGroupRuntime: groups,
 					playerAllianceRuntime: alliances,
 					playerLeagueRuntime: leagues,
+					playerGroupInviteRequestService: playerGroupInviteRequestService,
+					playerAllianceInviteRequestService: playerAllianceInviteRequestService,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection);
 			}

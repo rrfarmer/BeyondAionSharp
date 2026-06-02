@@ -74,6 +74,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
+	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
+	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
 	private readonly PlayerDuelRequestService _playerDuelRequestService;
 	private readonly PlayerExchangeRequestService _playerExchangeRequestService;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
@@ -156,6 +158,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
+		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
+		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
 		PlayerDuelRequestService? playerDuelRequestService = null,
 		PlayerExchangeRequestService? playerExchangeRequestService = null,
 		PlayerShowBrandCommandPlanner? showBrandCommandPlanner = null,
@@ -210,6 +214,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
+		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
+		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
 		_playerDuelRequestService = playerDuelRequestService ?? new PlayerDuelRequestService();
 		_playerExchangeRequestService = playerExchangeRequestService ?? new PlayerExchangeRequestService();
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
@@ -9321,7 +9327,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.InviteType != 0)
 			return null;
 
-		var result = new PlayerGroupInviteRequestService().SendInvite(inviter, invited);
+		var result = _playerGroupInviteRequestService.SendInvite(inviter, invited);
 		await SendPacketAsync(result.InviterMessage, cancellationToken);
 		if (result.QuestionWindow != null)
 			await _connectionRegistry.SendPacketToPlayerAsync(invited.ObjectId, result.QuestionWindow);
@@ -9424,7 +9430,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		CancellationToken cancellationToken)
 	{
 		// Java parity: CM_INVITE_TO_GROUP invite type 12 dispatches PlayerAllianceService.inviteToAlliance.
-		var result = new PlayerAllianceInviteRequestService().SendInvite(
+		var result = _playerAllianceInviteRequestService.SendInvite(
 			inviter,
 			invited,
 			_playerGroupRuntime,
@@ -9485,8 +9491,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Player invited,
 		CmQuestionResponse packet)
 	{
-		var service = new PlayerGroupInviteRequestService();
-		var result = service.HandleResponse(
+		var result = _playerGroupInviteRequestService.HandleResponse(
 			invited,
 			packet.QuestionId,
 			packet.Response,
@@ -9507,7 +9512,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Player responder,
 		CmQuestionResponse packet)
 	{
-		var result = new PlayerAllianceInviteRequestService().HandleResponse(
+		var result = _playerAllianceInviteRequestService.HandleResponse(
 			responder,
 			packet.QuestionId,
 			packet.Response,

@@ -13,7 +13,7 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.False(report.IsReadyForLiveSingletonWiring);
 		Assert.Contains("FindGroupService.SingletonHolder", report.JavaSource, StringComparison.Ordinal);
 		Assert.Contains(report.Blockers, blocker => blocker.Contains("one shared FindGroupRecruitmentPlanService singleton", StringComparison.Ordinal));
-		Assert.Contains(report.Blockers, blocker => blocker.Contains("Replace current observer-only constructors/new service fallbacks", StringComparison.Ordinal));
+		Assert.Contains(report.Blockers, blocker => blocker.Contains("production DI singleton registration", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -51,8 +51,13 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.GroupJoin
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialObserverOnly
-				&& callSite.CSharpEvidence.Contains("constructs the service without a recorder", StringComparison.Ordinal));
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialInjectedConnectionWiring
+				&& callSite.CSharpEvidence.Contains("injected PlayerGroupInviteRequestService", StringComparison.Ordinal));
+		Assert.Contains(
+			report.CallSites,
+			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.AllianceJoin
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialInjectedConnectionWiring
+				&& callSite.CSharpEvidence.Contains("injected PlayerAllianceInviteRequestService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.GroupDisbandRecruitmentRemoval

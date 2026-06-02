@@ -52,6 +52,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
+	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -89,7 +91,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		WorldNpcLootService? worldNpcLootService = null,
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
-		PlayerAllianceRuntime? playerAllianceRuntime = null)
+		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
+		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -130,6 +134,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
+		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -176,7 +182,9 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				isKnownNpc: (player, npcObjectId) => _npcVisibilityService.IsKnownNpc(player, npcObjectId),
 				creaturePvpZoneCounterService: _creaturePvpZoneCounterService,
 				playerGroupRuntime: _playerGroupRuntime,
-				playerAllianceRuntime: _playerAllianceRuntime);
+				playerAllianceRuntime: _playerAllianceRuntime,
+				playerGroupInviteRequestService: _playerGroupInviteRequestService,
+				playerAllianceInviteRequestService: _playerAllianceInviteRequestService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}

@@ -23,14 +23,14 @@ public static class FindGroupLifecycleSingletonWiringReadinessService
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.GroupJoin,
 				"PlayerGroupService.addPlayerToGroup calls FindGroupService.getInstance().onJoinedTeam(invited) after group membership mutation.",
-				"PlayerGroupInviteRequestService can use FindGroupJoinedTeamLifecycleRecorder when injected, but GameServerConnection currently constructs the service without a recorder.",
-				FindGroupLifecycleSingletonCallSiteStatus.PartialObserverOnly,
+				"GameServerConnection can consume an injected PlayerGroupInviteRequestService with a shared FindGroupJoinedTeamLifecycleRecorder; production DI singleton registration and CM_FIND_GROUP wiring remain blocked.",
+				FindGroupLifecycleSingletonCallSiteStatus.PartialInjectedConnectionWiring,
 				RequiresSharedSingleton: true),
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.AllianceJoin,
 				"PlayerAllianceService.addPlayerToAlliance calls FindGroupService.getInstance().onJoinedTeam(invited) after alliance membership mutation.",
-				"PlayerAllianceInviteRequestService can use FindGroupJoinedTeamLifecycleRecorder when injected, but GameServerConnection currently constructs the service without a recorder.",
-				FindGroupLifecycleSingletonCallSiteStatus.PartialObserverOnly,
+				"GameServerConnection can consume an injected PlayerAllianceInviteRequestService with a shared FindGroupJoinedTeamLifecycleRecorder; production DI singleton registration and CM_FIND_GROUP wiring remain blocked.",
+				FindGroupLifecycleSingletonCallSiteStatus.PartialInjectedConnectionWiring,
 				RequiresSharedSingleton: true),
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.GroupDisbandRecruitmentRemoval,
@@ -52,7 +52,7 @@ public static class FindGroupLifecycleSingletonWiringReadinessService
 			[
 				"Register one shared FindGroupRecruitmentPlanService singleton before live CM_FIND_GROUP dispatch or lifecycle cleanup is enabled.",
 				"Route GameServerConnection CM_FIND_GROUP planning, logout cleanup, group joined-team cleanup, alliance joined-team cleanup, and team disband recruitment removal through that same singleton.",
-				"Replace current observer-only constructors/new service fallbacks with injected runtime services before claiming Java singleton lifetime parity.",
+				"Complete production DI singleton registration and remove remaining observer-only/fallback-only lifecycle gaps before claiming Java singleton lifetime parity.",
 				"Prove Java order for logout before question denial, joined-team cleanup after membership mutation, and disband recruitment removal before team removal.",
 			],
 			"Java sources reviewed: FindGroupService.SingletonHolder, CM_FIND_GROUP.runImpl, PlayerLeaveWorldService.leaveWorld, PlayerGroupService.addPlayerToGroup/disband, PlayerAllianceService.addPlayerToAlliance/disband.");
@@ -79,6 +79,7 @@ public enum FindGroupLifecycleSingletonCallSiteStatus
 {
 	PartialObserverOnly,
 	PartialNonLivePlanOnly,
+	PartialInjectedConnectionWiring,
 	BlockedMissingLiveBoundaryWiring,
 	BlockedMissingLifecycleHook,
 	Ready,
