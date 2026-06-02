@@ -43,6 +43,15 @@ public sealed class FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSum
 		Assert.False(summary.HasOnlyShapeValidArtifacts);
 		Assert.Contains("commandSuppliedArtifactRootPropertyWritesGuardedArtifacts", summary.JavaCaptureCommand, StringComparison.Ordinal);
 		Assert.Contains($"-Daion.findGroupMutationPost.artifactRoot={artifactRoot}", summary.JavaCaptureCommand, StringComparison.Ordinal);
+		Assert.Contains("allProvidersConsistent=True", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("selectedKind=ExecutorConsistencyAudit", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("commandDecisionRowsEvidence=", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("captureExecutionBlockerSummaryRows=", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("captureAcceptanceMatrixRows=", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("liveCapturePreflightRows=", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("runtimeComparisonHandoffRows=", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("consistencyAuditRowEvidence=", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+		Assert.Contains("JavaArtifactRootValidationCommandReport=consistent:True", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
 		Assert.Equal([2, 6], summary.Rows.Select(row => row.Action));
 		Assert.All(summary.Rows, row =>
 		{
@@ -135,6 +144,8 @@ public sealed class FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSum
 			Assert.False(summary.HasAcceptedLiveCSharpBoundaryRows);
 			Assert.False(summary.CanRunRuntimeComparison);
 			Assert.False(summary.CanClaimVerifiedParity);
+			Assert.Contains("ResultEmissionBlocker", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
+			Assert.Contains("JavaArtifactCaptureRunbook=consistent:True", summary.DryRunCommandConsistencyEvidence, StringComparison.Ordinal);
 			Assert.All(summary.Rows, row =>
 			{
 				Assert.True(row.HasFile);
