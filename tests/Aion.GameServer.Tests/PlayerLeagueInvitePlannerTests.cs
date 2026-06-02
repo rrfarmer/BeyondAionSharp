@@ -197,6 +197,8 @@ public sealed class PlayerLeagueInvitePlannerTests
 		Assert.Equal([88001], createdLeague.AllianceIdsByPosition);
 		Assert.Equal([88001, 88002], leagues.GetAllianceIdsByPosition(77099));
 		Assert.Equal(PlayerGroupLootRuleType.FreeForAll, leagues.GetLootRules(77099)?.LootRule);
+		Assert.Equal(77099, inviter.CurrentAllianceSnapshot?.LeagueId);
+		Assert.Equal(77099, invitedLeader.CurrentAllianceSnapshot?.LeagueId);
 		Assert.Null(responsePlan.DenyPlan);
 	}
 

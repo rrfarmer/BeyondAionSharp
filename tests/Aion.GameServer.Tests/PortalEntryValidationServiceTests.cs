@@ -1377,6 +1377,135 @@ public sealed class PortalEntryValidationServiceTests
 	}
 
 	[Fact]
+	public void ValidatePortalEntryPlan_AllianceMemberUsesAllianceObjectIdLikeJavaDefaultBranch()
+	{
+		var snapshot = new PlayerAllianceSnapshot(
+			AllianceId: 88001,
+			LeaderObjectId: 1001,
+			MemberObjectIds: [1001, 1002],
+			MemberObjectIdsByGroupId: new Dictionary<int, IReadOnlyList<int>> { [1000] = [1001, 1002] },
+			ViceCaptainObjectIds: [],
+			PlayerAllianceTeamType.Alliance,
+			PlayerGroupLootRules.Default());
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 25,
+			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			TeamMembership = PlayerTeamMembership.Alliance,
+			CurrentTeamId = 88001,
+			CurrentTeamMemberObjectIds = [1001, 1002],
+			CurrentAllianceSnapshot = snapshot,
+		};
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 24, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.Alliance, result.TeamPlan.Kind);
+		Assert.Equal(88001, result.TeamPlan.TeamId);
+		Assert.Equal([1001, 1002], result.TeamPlan.MemberObjectIds);
+		Assert.Equal(24, result.TeamPlan.MaxPlayers);
+		Assert.Equal(PortalTeamEntryDisposition.FreshInstanceAllocationNeeded, result.TeamPlan.Disposition);
+		Assert.Null(result.TeamPlan.RegisteredInstance);
+		Assert.False(result.TeamPlan.Reenter);
+		Assert.False(result.TeamPlan.FanoutSupported);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_AllianceMemberInLeagueUsesLeagueObjectIdLikeJavaDefaultBranch()
+	{
+		var snapshot = new PlayerAllianceSnapshot(
+			AllianceId: 88001,
+			LeaderObjectId: 1001,
+			MemberObjectIds: [1001, 1002],
+			MemberObjectIdsByGroupId: new Dictionary<int, IReadOnlyList<int>> { [1000] = [1001, 1002] },
+			ViceCaptainObjectIds: [],
+			PlayerAllianceTeamType.Alliance,
+			PlayerGroupLootRules.Default(),
+			LeagueId: 77001);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 25,
+			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			TeamMembership = PlayerTeamMembership.Alliance,
+			CurrentTeamId = 88001,
+			CurrentTeamMemberObjectIds = [1001, 1002],
+			CurrentAllianceSnapshot = snapshot,
+		};
+		var worldMaps = CreateWorldMaps();
+		var registered = worldMaps.AddWorldMapInstance(WorldId, instanceId: 7, maxPlayers: 24);
+		Assert.NotNull(registered);
+		registered.RegisterTeamId(77001);
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 24, maxCount: 1),
+			worldMaps,
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.League, result.TeamPlan.Kind);
+		Assert.Equal(77001, result.TeamPlan.TeamId);
+		Assert.Equal([1001, 1002], result.TeamPlan.MemberObjectIds);
+		Assert.Equal(PortalTeamEntryDisposition.RegisteredInstanceTransfer, result.TeamPlan.Disposition);
+		Assert.Same(registered, result.TeamPlan.RegisteredInstance);
+		Assert.False(result.TeamPlan.Reenter);
+		Assert.False(result.TeamPlan.FanoutSupported);
+	}
+
+	[Fact]
+	public void ValidatePortalEntryPlan_AllianceBypassWithoutAllianceUsesPlayerObjectIdLikeJavaDefaultBranch()
+	{
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Level = 25,
+			Position = new WorldPosition(210010000, 10, 20, 30, 0),
+			TeamMembership = PlayerTeamMembership.None,
+		};
+
+		var result = PortalEntryValidationService.ValidatePortalEntryPlan(
+			player,
+			CreatePortalPath(minLevel: 25),
+			CreatePortalLocs(),
+			CreatePortalCooltimes(maxPlayers: 24, maxCount: 1),
+			CreateWorldMaps(),
+			DateTimeOffset.FromUnixTimeMilliseconds(100_000),
+			npcObjectId: 4001,
+			bypassGroupRequirement: true);
+
+		Assert.False(result.CanEnter);
+		Assert.Equal(PortalEntryValidationStatus.UnsupportedTeamPortal, result.Status);
+		Assert.NotNull(result.TeamPlan);
+		Assert.Equal(PortalTeamEntryKind.PlayerObject, result.TeamPlan.Kind);
+		Assert.Equal(1001, result.TeamPlan.TeamId);
+		Assert.Empty(result.TeamPlan.MemberObjectIds);
+		Assert.Equal(24, result.TeamPlan.MaxPlayers);
+		Assert.Equal(PortalTeamEntryDisposition.FreshInstanceAllocationNeeded, result.TeamPlan.Disposition);
+		Assert.Null(result.TeamPlan.RegisteredInstance);
+		Assert.False(result.TeamPlan.Reenter);
+		Assert.False(result.TeamPlan.FanoutSupported);
+	}
+
+	[Fact]
 	public void ValidatePortalEntryPlan_GroupMemberStopsWithBlockedTeamPlanBeforeFanout()
 	{
 		var player = new Player

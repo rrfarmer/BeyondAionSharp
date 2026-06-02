@@ -219,10 +219,13 @@ public sealed record GroupPortalTransferPlan(
 		GameServerOptions? options = null,
 		DateTimeOffset? now = null)
 	{
-		if (teamPlan.Kind is not (PortalTeamEntryKind.Group or PortalTeamEntryKind.PlayerObject))
+		if (teamPlan.Kind is not (PortalTeamEntryKind.Group
+			or PortalTeamEntryKind.Alliance
+			or PortalTeamEntryKind.League
+			or PortalTeamEntryKind.PlayerObject))
 			return null;
 
-		// Java parity: services/teleport/PortalService.port group-sized branch after checkAndRemoveRequiredItems.
+		// Java parity: services/teleport/PortalService.port team-sized branches after checkAndRemoveRequiredItems.
 		if (teamPlan.TeamId <= 0)
 		{
 			return new GroupPortalTransferPlan(
@@ -286,6 +289,14 @@ public sealed record GroupPortalTransferPlan(
 					GroupPortalMemberInstanceScanBlockedReason.RegisteredPlayerObjectInstanceAlreadyResolved);
 			}
 
+			if (teamPlan.Kind is PortalTeamEntryKind.Alliance or PortalTeamEntryKind.League)
+			{
+				return CreateMemberInstanceScanPlan(
+					teamPlan,
+					GroupPortalMemberInstanceScanState.NotNeededRegisteredTeamInstance,
+					GroupPortalMemberInstanceScanBlockedReason.RegisteredTeamInstanceAlreadyResolved);
+			}
+
 			if (teamPlan.RegisteredInstanceFromMemberScan)
 			{
 				return CreateMemberInstanceScanPlan(
@@ -308,6 +319,14 @@ public sealed record GroupPortalTransferPlan(
 					teamPlan,
 					GroupPortalMemberInstanceScanState.NotNeededPlayerObjectRegistration,
 					GroupPortalMemberInstanceScanBlockedReason.PlayerObjectRegistrationPath);
+			}
+
+			if (teamPlan.Kind is PortalTeamEntryKind.Alliance or PortalTeamEntryKind.League)
+			{
+				return CreateMemberInstanceScanPlan(
+					teamPlan,
+					GroupPortalMemberInstanceScanState.NotNeededRegisteredTeamInstance,
+					GroupPortalMemberInstanceScanBlockedReason.RegisteredTeamInstanceAlreadyResolved);
 			}
 
 			return CreateMemberInstanceScanPlan(

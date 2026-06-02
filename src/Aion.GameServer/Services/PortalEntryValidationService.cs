@@ -686,13 +686,30 @@ public static class PortalEntryValidationService
 				RegisteredInstanceFromMemberScan: registeredInstanceFromMemberScan);
 		}
 
-		if (maxPlayers > 6 && maxPlayers <= 24 && player.TeamMembership == PlayerTeamMembership.Alliance)
+		if (maxPlayers > 6)
 		{
-			var registeredInstance = player.CurrentTeamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, player.CurrentTeamId);
+			if (player.TeamMembership != PlayerTeamMembership.Alliance && !groupRequirementBypassed)
+				return null;
+
+			var allianceSnapshot = player.CurrentAllianceSnapshot;
+			var leagueId = allianceSnapshot?.LeagueId ?? 0;
+			var teamKind = player.TeamMembership == PlayerTeamMembership.Alliance
+				? leagueId > 0 ? PortalTeamEntryKind.League : PortalTeamEntryKind.Alliance
+				: PortalTeamEntryKind.PlayerObject;
+			var teamId = teamKind switch
+			{
+				PortalTeamEntryKind.League => leagueId,
+				PortalTeamEntryKind.Alliance => allianceSnapshot?.AllianceId ?? player.CurrentTeamId,
+				_ => player.ObjectId,
+			};
+			var memberObjectIds = teamKind == PortalTeamEntryKind.PlayerObject
+				? Array.Empty<int>()
+				: allianceSnapshot?.MemberObjectIds ?? player.CurrentTeamMemberObjectIds;
+			var registeredInstance = teamId == 0 ? null : worldMaps.GetRegisteredInstance(worldId, teamId);
 			return new PortalTeamEntryPlan(
-				PortalTeamEntryKind.Alliance,
-				player.CurrentTeamId,
-				player.CurrentTeamMemberObjectIds,
+				teamKind,
+				teamId,
+				memberObjectIds,
 				maxPlayers,
 				GetTeamEntryDisposition(registeredInstance),
 				registeredInstance,

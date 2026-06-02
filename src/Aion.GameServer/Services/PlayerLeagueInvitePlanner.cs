@@ -304,6 +304,11 @@ public sealed class PlayerLeagueInvitePlanner
 			requesterLeague.LeagueId,
 			invitedAllianceId,
 			allianceRuntime);
+		if (joinPlan != null)
+		{
+			allianceRuntime.SetLeagueId(requesterAllianceId, requesterLeague.LeagueId);
+			allianceRuntime.SetLeagueId(invitedAllianceId, requesterLeague.LeagueId);
+		}
 
 		return new PlayerLeagueInviteAcceptPlan(
 			requesterAllianceId,
@@ -352,6 +357,11 @@ public sealed class PlayerLeagueInvitePlanner
 			createdLeague.LeagueId,
 			invitedAllianceId,
 			allianceRuntime);
+		if (joinPlan != null)
+		{
+			allianceRuntime.SetLeagueId(requesterAllianceId, createdLeague.LeagueId);
+			allianceRuntime.SetLeagueId(invitedAllianceId, createdLeague.LeagueId);
+		}
 
 		return new PlayerLeagueInviteAcceptPlan(
 			requesterAllianceId,

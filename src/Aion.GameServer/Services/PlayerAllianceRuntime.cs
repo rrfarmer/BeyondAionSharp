@@ -8,6 +8,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly Lock _sync = new();
 	private readonly Dictionary<int, List<PlayerAllianceMember>> _membersByAllianceId = [];
 	private readonly Dictionary<int, PlayerAllianceDescriptor> _descriptorsByAllianceId = [];
+	private readonly Dictionary<int, int> _leagueIdByAllianceId = [];
 	private readonly Dictionary<int, List<int>> _viceCaptainObjectIdsByAllianceId = [];
 	private readonly Dictionary<int, int> _allianceReadyStatusByAllianceId = [];
 	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByAllianceId = [];
@@ -46,6 +47,7 @@ public sealed class PlayerAllianceRuntime
 			};
 			_membersByAllianceId[allianceId] = members;
 			_descriptorsByAllianceId[allianceId] = descriptor;
+			_leagueIdByAllianceId.Remove(allianceId);
 			_viceCaptainObjectIdsByAllianceId[allianceId] = [];
 			_allianceReadyStatusByAllianceId[allianceId] = 0;
 			_targetObjectIdsByBrandIdByAllianceId[allianceId] = [];
@@ -112,6 +114,7 @@ public sealed class PlayerAllianceRuntime
 			{
 				_membersByAllianceId.Remove(allianceId);
 				_descriptorsByAllianceId.Remove(allianceId);
+				_leagueIdByAllianceId.Remove(allianceId);
 				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
 				_allianceReadyStatusByAllianceId.Remove(allianceId);
 				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
@@ -187,6 +190,7 @@ public sealed class PlayerAllianceRuntime
 			{
 				_membersByAllianceId.Remove(allianceId);
 				_descriptorsByAllianceId.Remove(allianceId);
+				_leagueIdByAllianceId.Remove(allianceId);
 				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
 				_allianceReadyStatusByAllianceId.Remove(allianceId);
 				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
@@ -204,6 +208,7 @@ public sealed class PlayerAllianceRuntime
 
 				_membersByAllianceId.Remove(allianceId);
 				_descriptorsByAllianceId.Remove(allianceId);
+				_leagueIdByAllianceId.Remove(allianceId);
 				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
 				_allianceReadyStatusByAllianceId.Remove(allianceId);
 				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
@@ -232,6 +237,27 @@ public sealed class PlayerAllianceRuntime
 				&& _descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor)
 					? CreateSnapshot(allianceId, members, descriptor)
 					: null;
+	}
+
+	public PlayerAllianceSnapshot? SetLeagueId(int allianceId, int leagueId)
+	{
+		// Java parity: model/team/alliance/PlayerAlliance.setLeague updates the live League pointer used by PortalService.port.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThan(leagueId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+				return null;
+
+			if (leagueId == 0)
+				_leagueIdByAllianceId.Remove(allianceId);
+			else
+				_leagueIdByAllianceId[allianceId] = leagueId;
+
+			return ApplySnapshot(allianceId, members, descriptor);
+		}
 	}
 
 	public PlayerAllianceDescriptor? GetDescriptor(int allianceId)
@@ -669,6 +695,7 @@ public sealed class PlayerAllianceRuntime
 		var viceCaptainIds = _viceCaptainObjectIdsByAllianceId.TryGetValue(allianceId, out var currentViceCaptains)
 			? currentViceCaptains.ToArray()
 			: Array.Empty<int>();
+		var leagueId = _leagueIdByAllianceId.GetValueOrDefault(allianceId);
 
 		return new PlayerAllianceSnapshot(
 			allianceId,
@@ -677,7 +704,8 @@ public sealed class PlayerAllianceRuntime
 			memberObjectIdsByGroupId,
 			viceCaptainIds,
 			descriptor.TeamType,
-			descriptor.LootRules);
+			descriptor.LootRules,
+			leagueId);
 	}
 
 	private IReadOnlyDictionary<int, int> GetBrandSnapshot(int allianceId)

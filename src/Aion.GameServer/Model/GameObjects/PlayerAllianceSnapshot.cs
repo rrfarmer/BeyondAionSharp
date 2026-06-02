@@ -9,7 +9,8 @@ public sealed record PlayerAllianceSnapshot(
 	IReadOnlyDictionary<int, IReadOnlyList<int>> MemberObjectIdsByGroupId,
 	IReadOnlyList<int> ViceCaptainObjectIds,
 	PlayerAllianceTeamType TeamType,
-	PlayerGroupLootRules LootRules)
+	PlayerGroupLootRules LootRules,
+	int LeagueId = 0)
 {
 	public int AllianceGroupSize => MemberObjectIds.Count;
 

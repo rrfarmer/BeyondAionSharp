@@ -7605,7 +7605,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		DateTimeOffset now)
 	{
 		var groupPlan = GroupPortalTransferPlan.FromTeamPlan(teamPlan, portalLoc, player, instanceCooltimes, _options, now);
-		if (teamPlan.Kind is not (PortalTeamEntryKind.Group or PortalTeamEntryKind.PlayerObject) || groupPlan == null)
+		if (teamPlan.Kind is not (PortalTeamEntryKind.Group
+			or PortalTeamEntryKind.Alliance
+			or PortalTeamEntryKind.League
+			or PortalTeamEntryKind.PlayerObject) || groupPlan == null)
 		{
 			return PortalContinueTransferResult.UnsupportedTeamPortal(
 				teamPlan,
@@ -7641,7 +7644,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					now);
 			}
 
-			if (teamPlan.Kind == PortalTeamEntryKind.Group)
+			if (teamPlan.Kind is PortalTeamEntryKind.Group or PortalTeamEntryKind.Alliance or PortalTeamEntryKind.League)
 				registeredInstance.RegisterTeamId(teamPlan.TeamId);
 			transferTeamPlan = teamPlan with
 			{
