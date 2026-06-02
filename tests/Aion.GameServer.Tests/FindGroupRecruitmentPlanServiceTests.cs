@@ -710,6 +710,40 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void ShowPlans_ReturnMaterializedSnapshotsLikeJavaStreamToList()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS", "RANGER", 65);
+		service.AddRecruitment(player, "Recruit original", groupType: 1, nowEpochSeconds: 100);
+		service.AddApplication(player, "Apply original", groupType: 2, classId: 5, level: 65, nowEpochSeconds: 101);
+		service.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: "Entry original", minMembers: 6, nowEpochSeconds: 102);
+
+		var recruitmentShow = service.ShowRecruitments("ELYOS", nowEpochSeconds: 200);
+		var applicationShow = service.ShowApplications("ELYOS", nowEpochSeconds: 201);
+		var instanceGroupShow = service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 202);
+
+		service.UpdateRecruitment(player, "Recruit changed", groupType: 3, nowEpochSeconds: 300);
+		service.UpdateApplication(player, "Apply changed", groupType: 4, classId: 10, level: 66, nowEpochSeconds: 301);
+		service.UpdateInstanceGroup(player, "Entry changed", nowEpochSeconds: 302);
+		service.OnLogout(player);
+
+		var recruitment = Assert.Single(recruitmentShow.Recruitments);
+		Assert.Equal("Recruit original", recruitment.Message);
+		Assert.Equal(1, recruitment.GroupType);
+		Assert.Equal(100, recruitment.LastUpdate);
+		var application = Assert.Single(applicationShow.Applications);
+		Assert.Equal("Apply original", application.Message);
+		Assert.Equal(2, application.GroupType);
+		Assert.Equal(101, application.LastUpdate);
+		var instanceGroup = Assert.Single(instanceGroupShow.InstanceGroups);
+		Assert.Equal("Entry original", instanceGroup.Message);
+		Assert.Equal(102, instanceGroup.LastUpdate);
+		Assert.Empty(service.ShowRecruitments("ELYOS", nowEpochSeconds: 400).Recruitments);
+		Assert.Empty(service.ShowApplications("ELYOS", nowEpochSeconds: 401).Applications);
+		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 402).InstanceGroups);
+	}
+
+	[Fact]
 	public void SendInstanceApplicationResult_AcceptPlansGroupInviteWhenMinMembersAtMostSix()
 	{
 		var service = new FindGroupRecruitmentPlanService();
