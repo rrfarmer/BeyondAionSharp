@@ -54,8 +54,8 @@ public sealed class FindGroupLiveDispatchDryRunPlanServiceTests
 			plan,
 			FindGroupLiveDispatchGoNoGoChecklistItemKind.ActionTwelveInviteDispatch,
 			"FindGroupInstanceApplicationInviteDispatchPlanService.CreateDisabledPlan",
-			"FindGroupInstanceApplicationInviteDispatchPlan",
-			"live invite request mutation");
+			"FindGroupActionTwelveInviteLiveBoundaryTraceContract",
+			"declined-whisper dispatch");
 		AssertGate(
 			plan,
 			FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison,

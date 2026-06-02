@@ -34,8 +34,8 @@ public static class FindGroupLiveDispatchDryRunPlanService
 			new FindGroupLiveDispatchDryRunGatePlan(
 				FindGroupLiveDispatchGoNoGoChecklistItemKind.ActionTwelveInviteDispatch,
 				"FindGroupInstanceApplicationInviteDispatchPlanService.CreateDisabledPlan",
-				"FindGroupInstanceApplicationInviteDispatchPlan group/alliance request result and missing-player status",
-				"Disabled action 12 invite plans and failure results exist, but live invite request mutation and packet/question ordering remain unverified.",
+				"FindGroupActionTwelveInviteLiveBoundaryTraceContract plus FindGroupInstanceApplicationInviteDispatchPlan group/alliance request result and missing-player status",
+				"Disabled action 12 invite plans, failure results, and an ordered live-boundary trace contract exist, but live invite request mutation, declined-whisper dispatch, and packet/question ordering remain unverified.",
 				BlocksLiveWiring: true),
 			new FindGroupLiveDispatchDryRunGatePlan(
 				FindGroupLiveDispatchGoNoGoChecklistItemKind.RuntimeComparison,

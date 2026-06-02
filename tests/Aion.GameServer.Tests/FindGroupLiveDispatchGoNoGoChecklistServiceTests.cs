@@ -60,7 +60,10 @@ public sealed class FindGroupLiveDispatchGoNoGoChecklistServiceTests
 			item => item.Kind == FindGroupLiveDispatchGoNoGoChecklistItemKind.ActionTwelveInviteDispatch
 				&& item.Status == FindGroupLiveDispatchGoNoGoChecklistItemStatus.EvidenceAvailable
 				&& item.Evidence.Contains("boundary-acceptance-before-group/alliance-invite traces", StringComparison.Ordinal)
-				&& item.Evidence.Contains("missing inviter/invited failure results", StringComparison.Ordinal));
+				&& item.Evidence.Contains("missing inviter/invited failure results", StringComparison.Ordinal)
+				&& item.Evidence.Contains("non-live ordered trace contract", StringComparison.Ordinal)
+				&& item.NextRequiredEvidence.Contains("FindGroupActionTwelveInviteLiveBoundaryTraceContractService", StringComparison.Ordinal)
+				&& item.NextRequiredEvidence.Contains("declined-whisper dispatch", StringComparison.Ordinal));
 	}
 
 	[Fact]
