@@ -1154,6 +1154,28 @@ public sealed class WorldNpcSpawnServiceTests
 	}
 
 	[Fact]
+	public void SpawnWorldNpcsForInstance_FiltersByDifficultyAndUsesInstanceIdLikeJavaSpawnInstance()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		var service = CreateService(world);
+		var instance = new WorldMapInstanceRuntimeState(instanceId: 7, difficultyId: 2);
+		var spawns = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203040, x: 1, difficultId: 1),
+			CreateSpawn(210010000, 203040, x: 2, difficultId: 2),
+			CreateSpawn(210010000, 203040, x: 3),
+		]);
+		var templates = new NpcTemplateTable([CreateTemplate(203040)]);
+
+		var result = service.SpawnWorldNpcsForInstance(instance, 210010000, spawns, templates);
+
+		Assert.Equal(new WorldNpcSpawnResult(2, 1), result);
+		var npcs = world.GetNpcs().OrderBy(npc => npc.Position.X).ToArray();
+		Assert.Equal([2, 3], npcs.Select(npc => (int)npc.Position.X).ToArray());
+		Assert.All(npcs, npc => Assert.Equal(7, npc.Position.InstanceId));
+	}
+
+	[Fact]
 	public void SpawnWorldNpcs_AppliesTemplateAndSpawnStatesLikeJava()
 	{
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);

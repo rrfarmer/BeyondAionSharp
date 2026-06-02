@@ -291,8 +291,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 			includeAlwaysOn: true,
 			includeTemporary: true,
 			difficultId: 0,
+			instanceId: 1,
 			changedMapIds: null,
-			cancellationToken);
+			cancellationToken: cancellationToken);
 		await StartNpcWalkingForWorldsAsync(
 			staticData.WorldMaps.Where(map => !map.IsInstance).Select(map => map.MapId),
 			cancellationToken);
@@ -336,8 +337,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 			includeAlwaysOn: true,
 			includeTemporary: true,
 			difficultId: 0,
+			instanceId: 1,
 			changedMapIds: null,
-			cancellationToken);
+			cancellationToken: cancellationToken);
 	}
 
 	public WorldNpcSpawnResult SpawnWorldNpcs(
@@ -358,9 +360,35 @@ public sealed class WorldNpcSpawnService : GameEngine
 			TemporarySpawnEvaluationMode.Startup,
 			includeAlwaysOn: true,
 			includeTemporary: true,
-			difficultId,
+			difficultId: difficultId,
+			instanceId: 1,
 			changedMapIds: null,
-			cancellationToken);
+			cancellationToken: cancellationToken);
+	}
+
+	public WorldNpcSpawnResult SpawnWorldNpcsForInstance(
+		global::Aion.GameServer.World.WorldMapInstanceRuntimeState instance,
+		int mapId,
+		NpcSpawnTable spawns,
+		NpcTemplateTable npcTemplates,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: SpawnEngine.spawnInstance(instance, difficultId, ownerId) filters by difficulty and spawns into instance.getInstanceId().
+		ArgumentNullException.ThrowIfNull(instance);
+
+		return SpawnWorldNpcs(
+			new NpcSpawnTable(spawns.GetSpawnsForMap(mapId)),
+			npcTemplates,
+			[mapId],
+			_gameTimeService?.GameMinutes ?? 0,
+			DateTimeOffset.Now.DayOfWeek,
+			TemporarySpawnEvaluationMode.Startup,
+			includeAlwaysOn: true,
+			includeTemporary: true,
+			difficultId: instance.DifficultyId,
+			instanceId: instance.InstanceId,
+			changedMapIds: null,
+			cancellationToken: cancellationToken);
 	}
 
 	public async ValueTask<TemporarySpawnHourChangeResult> ProcessTemporarySpawnHourChangeAsync(
@@ -403,8 +431,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 			includeAlwaysOn: false,
 			includeTemporary: true,
 			difficultId: 0,
-			changedMapIds,
-			cancellationToken);
+			instanceId: 1,
+			changedMapIds: changedMapIds,
+			cancellationToken: cancellationToken);
 
 		await StartNpcWalkingForWorldsAsync(changedMapIds, cancellationToken);
 		await RefreshNpcVisibilityAsync(changedMapIds, cancellationToken);
@@ -421,6 +450,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		bool includeAlwaysOn,
 		bool includeTemporary,
 		byte difficultId,
+		int instanceId,
 		ISet<int>? changedMapIds,
 		CancellationToken cancellationToken = default)
 	{
@@ -498,7 +528,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 					continue;
 				}
 
-				var objectId = SpawnNpc(spawn, template);
+				var objectId = SpawnNpc(spawn, template, instanceId);
 				if (objectId.HasValue)
 				{
 					spawned++;
@@ -572,14 +602,15 @@ public sealed class WorldNpcSpawnService : GameEngine
 			includeAlwaysOn: true,
 			includeTemporary: true,
 			difficultId: 0,
+			instanceId: 1,
 			changedMapIds: null,
-			cancellationToken);
+			cancellationToken: cancellationToken);
 	}
 
-	private int? SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template)
+	private int? SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template, int instanceId = 1)
 	{
 		var objectId = _idFactory.NextId();
-		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading, instanceId);
 		var worldNpc = new WorldNpc(
 			objectId,
 			template.TemplateId,
