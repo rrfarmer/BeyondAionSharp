@@ -127,9 +127,9 @@ public static class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 				"Value-reader summary, typed-reader preflight, mismatch-context, implementation checklist, and implementation runbook metadata exist, but this is not runtime evidence and reads no values."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.JavaRuntimeTraceArtifact => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
-				"FindGroupMutationPostTraceCaptureTest, FindGroupMutationPostTraceCaptureHooks, FindGroupMutationPostTraceCaptureInMemoryArtifactBridge, FindGroupMutationPostJavaTraceArtifactDirectoryReportService, FindGroupMutationPostJavaArtifactRootValidationCommandReportService, FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReportService",
-				"Run a capture-enabled Java fixture or runtime capture that writes action 2/6 artifacts from real hook rows, then validate them through the C# artifact reader, artifact-root validation command report, and capture-command consistency report.",
-				"Existing Java artifact files, hook scaffolds, artifact-root command reports, and capture-command consistency reports are shape evidence only until generated from runtime capture."),
+				"FindGroupMutationPostTraceCaptureTest, FindGroupMutationPostTraceCaptureHooks, FindGroupMutationPostTraceCaptureInMemoryArtifactBridge, FindGroupMutationPostJavaTraceArtifactDirectoryReportService, FindGroupMutationPostJavaArtifactRootValidationCommandReportService, FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReportService, FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandReportService",
+				"Run a capture-enabled Java fixture or runtime capture that writes action 2/6 artifacts from real hook rows, then validate them through the C# artifact reader, artifact-root validation command report, capture-command consistency report, and explicit-root dry-run command report.",
+				"Existing Java artifact files, hook scaffolds, artifact-root command reports, capture-command consistency reports, and explicit-root dry-run command reports are shape evidence only until generated from runtime capture."),
 			FindGroupMutationPostProjectedRowComparisonLiveInputRequirement.CSharpLiveBoundaryRow => new RuntimeEvidenceMapping(
 				HasExistingProvider: true,
 				"FindGroupMutationPostCSharpTraceRowFixtureReportService, FindGroupMutationPostGuardedFixtureResultContractService, GameServerConnection.CreateDisabledFindGroupBoundaryPlan",
