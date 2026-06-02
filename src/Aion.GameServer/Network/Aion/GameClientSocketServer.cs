@@ -54,6 +54,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
 	private readonly FindGroupConnectionClientActionCompositionPlanService? _findGroupConnectionClientActionCompositionPlanService;
@@ -96,6 +97,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
 		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
@@ -144,6 +146,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
+			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
 		_findGroupConnectionClientActionCompositionPlanService = findGroupConnectionClientActionCompositionPlanService;
@@ -196,6 +200,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				creaturePvpZoneCounterService: _creaturePvpZoneCounterService,
 				playerGroupRuntime: _playerGroupRuntime,
 				playerAllianceRuntime: _playerAllianceRuntime,
+				autoGroupInstanceLeaveRuntimeService: _autoGroupInstanceLeaveRuntimeService,
 				playerGroupInviteRequestService: _playerGroupInviteRequestService,
 				playerAllianceInviteRequestService: _playerAllianceInviteRequestService,
 				findGroupConnectionClientActionCompositionPlanService: _findGroupConnectionClientActionCompositionPlanService,

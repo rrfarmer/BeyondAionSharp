@@ -1335,6 +1335,79 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			packet => Assert.IsType<SmPlayerSpawn>(packet));
 	}
 
+	[Fact]
+	public async Task HandleTeleportAnimationDoneAsync_InvokesAutoGroupLeaveAfterResetWarningLikeJavaInstanceService()
+	{
+		var worldMaps = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 1),
+		]);
+		var oldInstance = worldMaps.AddWorldMapInstance(300030000, instanceId: 2, maxPlayers: 6);
+		Assert.NotNull(oldInstance);
+		oldInstance.Register(1001);
+		oldInstance.AddPlayer(1001);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetWorldMapStates(worldMaps);
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "Character",
+			Race = "ELYOS",
+			Position = new WorldPosition(300030000, 1, 1, 1, 0, InstanceId: 2),
+		};
+		var teammate = new Player
+		{
+			ObjectId = 1002,
+			Name = "Teammate",
+			Race = "ELYOS",
+			Position = new WorldPosition(300030000, 2, 2, 2, 0, InstanceId: 2),
+		};
+		groups.CreateOrUpdateGroup(9001, [player, teammate], PlayerGroupType.AutoGroup);
+		var autoGroupLeaveRuntime = new AutoGroupInstanceLeaveRuntimeService(groups, alliances);
+		autoGroupLeaveRuntime.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300030000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [player.ObjectId, teammate.ObjectId]));
+		await using var pair = await TestConnectionPair.CreateAsync(
+			new GameServerOptions
+			{
+				Instance = new GameServerInstanceOptions
+				{
+					DestroyDelaySeconds = 900,
+					SoloDestroyDelaySeconds = 300,
+				},
+			},
+			runtimeContext: runtimeContext,
+			playerGroupRuntime: groups,
+			playerAllianceRuntime: alliances,
+			autoGroupInstanceLeaveRuntimeService: autoGroupLeaveRuntime);
+		var destination = new WorldPosition(210010000, 10, 20, 30, 90);
+
+		await pair.Connection.QueueDelayedTeleportAsync(player, destination);
+		var completed = await pair.Connection.HandleTeleportAnimationDoneAsync(player);
+
+		Assert.NotNull(completed);
+		Assert.Equal(destination, player.Position);
+		Assert.Equal(PlayerTeamMembership.None, player.TeamMembership);
+		Assert.False(groups.HasMember(9001, player.ObjectId));
+		Assert.True(groups.HasMember(9001, teammate.ObjectId));
+		var snapshot = autoGroupLeaveRuntime.GetSnapshot(300030000, 2);
+		Assert.NotNull(snapshot);
+		Assert.DoesNotContain(player.ObjectId, snapshot.RegisteredPlayerObjectIds);
+		Assert.Contains(teammate.ObjectId, snapshot.RegisteredPlayerObjectIds);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmTeleportLoc>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => Assert.IsType<SmChannelInfo>(packet),
+			packet => Assert.IsType<SmPlayerSpawn>(packet));
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -1388,7 +1461,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			PlayerEnterWorldService? playerEnterWorldService = null,
 			WorldNpcSpawnService? worldNpcSpawnService = null,
 			InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null,
-			GameServerRuntimeContext? runtimeContext = null)
+			GameServerRuntimeContext? runtimeContext = null,
+			PlayerGroupRuntime? playerGroupRuntime = null,
+			PlayerAllianceRuntime? playerAllianceRuntime = null,
+			AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1412,6 +1488,9 @@ public sealed class GameServerConnectionInstanceCooldownTests
 					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt,
+					playerGroupRuntime: playerGroupRuntime,
+					playerAllianceRuntime: playerAllianceRuntime,
+					autoGroupInstanceLeaveRuntimeService: autoGroupInstanceLeaveRuntimeService,
 					worldNpcSpawnService: worldNpcSpawnService,
 					emptyInstanceCheckerService: emptyInstanceCheckerService);
 				return new TestConnectionPair(client, connection, sentPackets);

@@ -141,6 +141,10 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftScheduleService>();
 			services.AddSingleton<InstanceDestroyWorkflowService>();
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
+			services.AddSingleton(
+				serviceProvider => new AutoGroupInstanceLeaveRuntimeService(
+					serviceProvider.GetRequiredService<PlayerGroupRuntime>(),
+					serviceProvider.GetRequiredService<PlayerAllianceRuntime>()));
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();

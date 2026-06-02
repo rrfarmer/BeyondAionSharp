@@ -75,6 +75,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
@@ -161,6 +162,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
@@ -223,6 +225,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
+			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
@@ -7479,6 +7483,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				_playerAllianceRuntime));
 		if (plan.Packet != null)
 			await SendPacketAsync(plan.Packet);
+
+		// Java parity: InstanceService.onLeaveInstance invokes AutoGroupService after reset-warning packet selection.
+		_autoGroupInstanceLeaveRuntimeService.OnLeaveInstance(
+			player,
+			previousPosition.WorldId,
+			previousPosition.InstanceId,
+			onlinePlayersInsideAfterLeave: Math.Max(0, instance.PlayerCount - 1));
 	}
 
 	private static bool ShouldFallbackDelayedTeleportToCurrentSpawn(Player player, WorldMapRuntimeStateTable? worldMapStates)
