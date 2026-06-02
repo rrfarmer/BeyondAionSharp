@@ -114,6 +114,10 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 					"C# FindGroupDirectPacketShowListBoundaryTraceSchemaService defines schema version 1 for future Java/C# action 0 and 4 show-list boundary trace exports without capturing live traffic.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
 				new FindGroupDirectPacketBoundaryTraceEvidence(
+					FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpMutationPostLiveBoundaryTraceScaffold,
+					"C# FindGroupDirectPacketMutationPostLiveBoundaryTraceScaffoldService scopes mutating direct-packet actions 2 and 6 to posted-system-message-before-refreshed-show-list trace milestones without wiring ProcessPacketAsync or invoking live sends.",
+					FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable),
+				new FindGroupDirectPacketBoundaryTraceEvidence(
 					FindGroupDirectPacketBoundaryTraceEvidenceKind.LiveProcessPacketAsyncTrace,
 					"C# GameServerConnection.ProcessPacketAsync still defers CmFindGroup, so no live boundary trace proves the direct packet is emitted from the triggering client-packet path.",
 					FindGroupDirectPacketBoundaryTraceEvidenceStatus.Blocked),
@@ -126,6 +130,7 @@ public static class FindGroupDirectPacketBoundaryTraceReadinessService
 				"Do not claim live direct-packet parity from the disabled helper plus opt-in executor trace.",
 				"Use the show-list action 0/4 scaffold as the first low-risk direct-packet trace candidate, then expand to mutating direct-packet actions only after boundary ordering is proven.",
 				"Use the show-list trace schema as the stable export shape for future Java/C# action 0 and 4 trace comparisons.",
+				"Use the mutation-post action 2/6 scaffold to prove posted system message ordering, singleton mutation ordering, and refreshed show-list ordering before expanding to other mutating direct actions.",
 				"Before enabling live CmFindGroup direct actions, implement the ordered trace contract through a ProcessPacketAsync boundary trace or runtime/socket comparison for actions 0, 2, 4, 6, 8, 9, 10, 11, 13, 15, and 17.",
 				"Keep the disabled boundary helper available as the reviewed composition surface for future live wiring.",
 			]);
@@ -166,6 +171,7 @@ public enum FindGroupDirectPacketBoundaryTraceEvidenceKind
 	CSharpLiveBoundaryTraceContract,
 	CSharpShowListLiveBoundaryTraceScaffold,
 	CSharpShowListTraceSchema,
+	CSharpMutationPostLiveBoundaryTraceScaffold,
 	LiveProcessPacketAsyncTrace,
 	LiveSocketComparison,
 }
