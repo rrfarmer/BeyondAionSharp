@@ -9,6 +9,7 @@ public sealed class CmDialogSelect : GameClientPacket
 	public const int ExtendInventory = 47;
 	public const int ExtendCharWarehouse = 48;
 	public const int CombineTask = 58;
+	public const int InstanceEntry = 65;
 	public const int BuyAgain = 70;
 	public const int ChargeItemMulti = 76;
 	public const int InstancePartyMatch = 77;

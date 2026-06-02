@@ -1835,6 +1835,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player.IsTrading)
 			return;
 
+		if (packet.DialogActionId == CmDialogSelect.InstanceEntry
+			&& player.TeamMembership != PlayerTeamMembership.Group
+			&& IsBeshmundirsWalkTarget(packet.TargetObjectId))
+		{
+			await SendPacketAsync(SmSystemMessage.EnterOnlyPartyDon());
+			return;
+		}
+
 		if (packet.DialogActionId == CmDialogSelect.InstancePartyMatch)
 		{
 			var autoGroup = _findGroupConnectionClientActionCompositionPlanService
@@ -4375,6 +4383,15 @@ public sealed class GameServerConnection : BaseClientConnection
 					invitePlan.AllianceInviteRequest.QuestionWindow,
 					cancellationToken);
 		}
+	}
+
+	private bool IsBeshmundirsWalkTarget(int targetObjectId)
+	{
+		// Java parity: data/handlers/ai/instance/beshmundirTemple/BeshmundirsWalkAI.onDialogSelect.
+		return _world != null
+			&& _world.TryGetObject(targetObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject npc
+			&& string.Equals(npc.AiName, "beshmundirswalk", StringComparison.Ordinal);
 	}
 
 	private async Task HandleGroupDataExchangeAsync(CmGroupDataExchange packet)

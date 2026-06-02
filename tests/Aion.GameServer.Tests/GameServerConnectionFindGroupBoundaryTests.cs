@@ -669,6 +669,28 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_BeshmundirsWalkInstanceEntryRejectsSoloPlayer()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var soloPlayer = CreatePlayer(0x01020304, "Solo", "ELYOS");
+		var walkNpc = CreateNpc(0x04050607, templateId: 730231, aiName: "beshmundirswalk");
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		Assert.True(world.TryAddObject(walkNpc.ObjectId, walkNpc));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService: null,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			world: world);
+		SetActivePlayer(fixture.Connection, soloPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateDialogSelectPayload(walkNpc.ObjectId, CmDialogSelect.InstanceEntry));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
+		Assert.Equal(1390256, ReadPrivateField<int>(message, "_messageId"));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_OpenInstanceRecruitSendsPortalMaskListOnly()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -2685,14 +2707,25 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 		};
 	}
 
-	private static WorldNpc CreateNpc(int objectId, int templateId)
+	private static WorldNpc CreateNpc(int objectId, int templateId, string aiName = "")
 	{
-		var template = new NpcTemplateSummary(templateId, "portal_npc", 0, 65, "NORMAL", "NORMAL", "NONE", "NONE", "NPC");
+		var template = new NpcTemplateSummary(
+			templateId,
+			"portal_npc",
+			0,
+			65,
+			"NORMAL",
+			"NORMAL",
+			"NONE",
+			"NONE",
+			"NPC",
+			AiName: aiName);
 		return new WorldNpc(
 			objectId,
 			templateId,
 			template,
-			new WorldPosition(210010000, 12, 22, 33, 0));
+			new WorldPosition(210010000, 12, 22, 33, 0),
+			AiName: aiName);
 	}
 
 	private static void SetActivePlayer(GameServerConnection connection, Player player)
