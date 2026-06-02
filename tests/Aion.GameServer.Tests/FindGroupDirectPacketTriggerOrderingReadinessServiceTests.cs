@@ -45,9 +45,9 @@ public sealed class FindGroupDirectPacketTriggerOrderingReadinessServiceTests
 				&& evidence.Detail.Contains("controlled evidence tests", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
-			evidence => evidence.Kind == FindGroupDirectPacketTriggerOrderingEvidenceKind.CSharpDisabledBoundaryActionZeroFourEightElevenFifteenTrace
+			evidence => evidence.Kind == FindGroupDirectPacketTriggerOrderingEvidenceKind.CSharpDisabledBoundaryActionZeroFourEightTenElevenFifteenTrace
 				&& evidence.Status == FindGroupDirectPacketTriggerOrderingEvidenceStatus.EvidenceAvailable
-				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/11/15 boundary acceptance", StringComparison.Ordinal));
+				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/10/11/15 boundary acceptance", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketTriggerOrderingEvidenceKind.LiveSocketOrderingComparison
