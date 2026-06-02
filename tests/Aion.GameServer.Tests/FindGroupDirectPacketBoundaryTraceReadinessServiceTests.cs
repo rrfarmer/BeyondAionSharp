@@ -47,6 +47,12 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("SM_FIND_GROUP action 14", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionNineDirectSend
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed
+				&& evidence.Detail.Contains("removeInstanceGroup(player)", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("always sends the SM_FIND_GROUP action 10", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.JavaActionTenDirectSend
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.Reviewed
 				&& evidence.Detail.Contains("showInstanceGroups(player, false)", StringComparison.Ordinal)
@@ -86,6 +92,11 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 				&& evidence.Detail.Contains("action 8", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Evidence,
+			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionNineComposition
+				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("removed and missing outcomes", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpDisabledBoundaryActionTenComposition
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
 				&& evidence.Detail.Contains("action 26 mask-list intent first", StringComparison.Ordinal));
@@ -108,7 +119,7 @@ public sealed class FindGroupDirectPacketBoundaryTraceReadinessServiceTests
 			report.Evidence,
 			evidence => evidence.Kind == FindGroupDirectPacketBoundaryTraceEvidenceKind.CSharpOptInRegistryExecutionTrace
 				&& evidence.Status == FindGroupDirectPacketBoundaryTraceEvidenceStatus.EvidenceAvailable
-				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/10/11/13/15 acceptance", StringComparison.Ordinal));
+				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 0/4/8/9/10/11/13/15 acceptance", StringComparison.Ordinal));
 	}
 
 	[Fact]

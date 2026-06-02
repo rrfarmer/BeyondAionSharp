@@ -187,6 +187,113 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionNineRemovedCanProduceOrderedOptInDirectPacketTrace()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var trace = new List<string>();
+		var removed = CreatePlayer(0x01020304, "Removed", "ELYOS");
+		var remaining = CreatePlayer(0x01020307, "Remaining", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(removed, 0x11223344, "Removed", minMembers: 3, nowEpochSeconds: 100);
+		findGroupService.RegisterInstanceGroup(remaining, 0x11223345, "Remaining", minMembers: 2, nowEpochSeconds: 100);
+		var registry = new CapturingConnectionRegistry([removed]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, removed);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(9);
+				buffer.WriteD(removed.ObjectId);
+				buffer.WriteD(0x11223344);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+		trace.Add($"accepted disabled CM_FIND_GROUP action {plan?.IntentPlan.Action}");
+		var executorPlan = await new FindGroupSideEffectDispatchExecutorService(registry)
+			.ExecuteAsync(plan!.IntentPlan.DirectPacketIntents, plan.IntentPlan.WorldBroadcastIntents);
+		foreach (var step in executorPlan.ExecutionOrder)
+			trace.Add($"{step.Sequence}:{step.Kind}:{step.RecipientObjectId}:{step.PacketType}");
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(FindGroupClientActionPlanKind.RemoveInstanceGroup, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Removed, plan.IntentPlan.InstanceGroupStatus);
+		var intent = Assert.Single(plan.IntentPlan.DirectPacketIntents);
+		Assert.Equal(removed.ObjectId, intent.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), intent.Packet.GetType().Name);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", intent.JavaSource);
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.Equal(["accepted disabled CM_FIND_GROUP action 9", "1:DirectPacket:16909060:SmFindGroup"], trace);
+		var directSend = Assert.Single(registry.DirectSends);
+		Assert.Equal(removed.ObjectId, directSend.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), directSend.Packet.GetType().Name);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
+		Assert.True(executorPlan.DispatchLiveSideEffects);
+		Assert.Contains("Opt-in executor only", executorPlan.BoundaryNote, StringComparison.Ordinal);
+		var stored = Assert.Single(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 102).InstanceGroups);
+		Assert.Equal(remaining.ObjectId, stored.GroupEntryId);
+	}
+
+	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionNineMissingCanProduceOrderedOptInDirectPacketTrace()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var trace = new List<string>();
+		var player = CreatePlayer(0x01020304, "Player", "ELYOS");
+		var remaining = CreatePlayer(0x01020307, "Remaining", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(remaining, 0x11223345, "Remaining", minMembers: 2, nowEpochSeconds: 100);
+		var registry = new CapturingConnectionRegistry([player]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, player);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(9);
+				buffer.WriteD(0x7F7F7F7F);
+				buffer.WriteD(0x11223344);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+		trace.Add($"accepted disabled CM_FIND_GROUP action {plan?.IntentPlan.Action}");
+		var executorPlan = await new FindGroupSideEffectDispatchExecutorService(registry)
+			.ExecuteAsync(plan!.IntentPlan.DirectPacketIntents, plan.IntentPlan.WorldBroadcastIntents);
+		foreach (var step in executorPlan.ExecutionOrder)
+			trace.Add($"{step.Sequence}:{step.Kind}:{step.RecipientObjectId}:{step.PacketType}");
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(FindGroupClientActionPlanKind.RemoveInstanceGroup, plan.IntentPlan.ClientActionKind);
+		Assert.Equal(FindGroupInstanceGroupPlanStatus.Missing, plan.IntentPlan.InstanceGroupStatus);
+		var intent = Assert.Single(plan.IntentPlan.DirectPacketIntents);
+		Assert.Equal(player.ObjectId, intent.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), intent.Packet.GetType().Name);
+		Assert.Equal("PacketSendUtility.sendPacket(player, new SM_FIND_GROUP(10, instanceGroups))", intent.JavaSource);
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.Equal(["accepted disabled CM_FIND_GROUP action 9", "1:DirectPacket:16909060:SmFindGroup"], trace);
+		var directSend = Assert.Single(registry.DirectSends);
+		Assert.Equal(player.ObjectId, directSend.RecipientObjectId);
+		Assert.Equal(nameof(SmFindGroup), directSend.Packet.GetType().Name);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
+		Assert.True(executorPlan.DispatchLiveSideEffects);
+		Assert.Contains("Opt-in executor only", executorPlan.BoundaryNote, StringComparison.Ordinal);
+		var stored = Assert.Single(findGroupService.ShowInstanceGroups("ELYOS", nowEpochSeconds: 102).InstanceGroups);
+		Assert.Equal(remaining.ObjectId, stored.GroupEntryId);
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_ActionTenCanProduceOrderedOptInDirectPacketTrace()
 	{
 		var sentPackets = new List<GameServerPacket>();
