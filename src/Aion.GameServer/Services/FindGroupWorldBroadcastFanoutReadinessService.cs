@@ -36,6 +36,10 @@ public static class FindGroupWorldBroadcastFanoutReadinessService
 					"C# focused tests record disabled CM_FIND_GROUP action 5 removed-branch boundary acceptance before opt-in world-broadcast execution, including same-race recipients and opposite-race exclusion, plus missing-branch no-send status evidence.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
 				new FindGroupWorldBroadcastFanoutEvidence(
+					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpLiveBoundaryTraceContract,
+					"C# FindGroupWorldBroadcastLiveBoundaryTraceContractService defines the ordered live-boundary trace milestones for actions 1 and 5 without wiring ProcessPacketAsync or invoking live broadcasts.",
+					FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable),
+				new FindGroupWorldBroadcastFanoutEvidence(
 					FindGroupWorldBroadcastFanoutEvidenceKind.CSharpLiveBoundaryWiring,
 					"C# GameServerConnection.ProcessPacketAsync still defers CmFindGroup and does not invoke world-broadcast fanout from the triggering client packet.",
 					FindGroupWorldBroadcastFanoutEvidenceStatus.Blocked),
@@ -46,7 +50,7 @@ public static class FindGroupWorldBroadcastFanoutReadinessService
 			],
 			[
 				"Do not claim live world-broadcast parity from opt-in executor race-filter evidence alone.",
-				"Before enabling live CmFindGroup actions 1 and 5, add a live boundary trace proving same-race recipients, opposite-race exclusion, and broadcast ordering from the triggering client packet.",
+				"Before enabling live CmFindGroup actions 1 and 5, implement the ordered trace contract through a live boundary trace proving same-race recipients, opposite-race exclusion, missing-branch no-send outcomes, and broadcast ordering from the triggering client packet.",
 				"Keep direct packet ordering and action 12 invite dispatch as separate gates.",
 			]);
 	}
@@ -66,6 +70,7 @@ public enum FindGroupWorldBroadcastFanoutEvidenceKind
 	CSharpOptInExecutorOrder,
 	CSharpDisabledBoundaryActionOneFanoutTrace,
 	CSharpDisabledBoundaryActionFiveFanoutTrace,
+	CSharpLiveBoundaryTraceContract,
 	CSharpLiveBoundaryWiring,
 	LiveRuntimeComparison,
 }

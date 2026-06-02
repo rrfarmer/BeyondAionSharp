@@ -64,6 +64,12 @@ public sealed class FindGroupWorldBroadcastFanoutReadinessServiceTests
 				&& evidence.Detail.Contains("disabled CM_FIND_GROUP action 5 removed-branch boundary acceptance", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("same-race recipients", StringComparison.Ordinal)
 				&& evidence.Detail.Contains("missing-branch no-send status evidence", StringComparison.Ordinal));
+		Assert.Contains(
+			report.Evidence,
+			evidence => evidence.Kind == FindGroupWorldBroadcastFanoutEvidenceKind.CSharpLiveBoundaryTraceContract
+				&& evidence.Status == FindGroupWorldBroadcastFanoutEvidenceStatus.EvidenceAvailable
+				&& evidence.Detail.Contains("FindGroupWorldBroadcastLiveBoundaryTraceContractService", StringComparison.Ordinal)
+				&& evidence.Detail.Contains("without wiring ProcessPacketAsync", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -82,6 +88,9 @@ public sealed class FindGroupWorldBroadcastFanoutReadinessServiceTests
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("same-race recipients", StringComparison.Ordinal));
+		Assert.Contains(
+			report.NextRequiredEvidence,
+			item => item.Contains("missing-branch no-send outcomes", StringComparison.Ordinal));
 		Assert.Contains(
 			report.NextRequiredEvidence,
 			item => item.Contains("action 12 invite dispatch as separate gates", StringComparison.Ordinal));
