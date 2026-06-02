@@ -35,14 +35,14 @@ public static class FindGroupLifecycleSingletonWiringReadinessService
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.GroupDisbandRecruitmentRemoval,
 				"PlayerGroupService.disband calls FindGroupService.getInstance().removeRecruitment(group) before removing the group.",
-				"PlayerGroupRuntime leave/disband planning does not yet expose a FindGroupRecruitmentPlanService.RemoveRecruitment(teamId) hook.",
-				FindGroupLifecycleSingletonCallSiteStatus.BlockedMissingLifecycleHook,
+				"PlayerGroupRuntime leave/disband planning can expose a non-live FindGroupRecruitmentPlanService.RemoveRecruitment(teamId) plan when a find-group service is supplied, but normal live singleton wiring is not proven.",
+				FindGroupLifecycleSingletonCallSiteStatus.PartialNonLivePlanOnly,
 				RequiresSharedSingleton: true),
 			new FindGroupLifecycleSingletonCallSiteReadiness(
 				FindGroupLifecycleSingletonCallSite.AllianceDisbandRecruitmentRemoval,
 				"PlayerAllianceService.disband calls FindGroupService.getInstance().removeRecruitment(alliance) before alliance disband events.",
-				"PlayerAllianceRuntime leave/disband planning does not yet expose a FindGroupRecruitmentPlanService.RemoveRecruitment(allianceId) hook.",
-				FindGroupLifecycleSingletonCallSiteStatus.BlockedMissingLifecycleHook,
+				"PlayerAllianceRuntime leave/disband planning can expose a non-live FindGroupRecruitmentPlanService.RemoveRecruitment(allianceId) plan when a find-group service is supplied, but normal live singleton wiring is not proven.",
+				FindGroupLifecycleSingletonCallSiteStatus.PartialNonLivePlanOnly,
 				RequiresSharedSingleton: true),
 		};
 
@@ -78,6 +78,7 @@ public enum FindGroupLifecycleSingletonCallSite
 public enum FindGroupLifecycleSingletonCallSiteStatus
 {
 	PartialObserverOnly,
+	PartialNonLivePlanOnly,
 	BlockedMissingLiveBoundaryWiring,
 	BlockedMissingLifecycleHook,
 	Ready,

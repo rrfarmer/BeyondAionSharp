@@ -39,7 +39,7 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 	}
 
 	[Fact]
-	public void CreateReport_RecordsObserverOnlyAndMissingHookGaps()
+	public void CreateReport_RecordsObserverOnlyAndNonLivePlanGaps()
 	{
 		var report = FindGroupLifecycleSingletonWiringReadinessService.CreateReport();
 
@@ -56,12 +56,12 @@ public sealed class FindGroupLifecycleSingletonWiringReadinessServiceTests
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.GroupDisbandRecruitmentRemoval
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.BlockedMissingLifecycleHook
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialNonLivePlanOnly
 				&& callSite.CSharpEvidence.Contains("RemoveRecruitment(teamId)", StringComparison.Ordinal));
 		Assert.Contains(
 			report.CallSites,
 			callSite => callSite.CallSite == FindGroupLifecycleSingletonCallSite.AllianceDisbandRecruitmentRemoval
-				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.BlockedMissingLifecycleHook
+				&& callSite.Status == FindGroupLifecycleSingletonCallSiteStatus.PartialNonLivePlanOnly
 				&& callSite.CSharpEvidence.Contains("RemoveRecruitment(allianceId)", StringComparison.Ordinal));
 	}
 }

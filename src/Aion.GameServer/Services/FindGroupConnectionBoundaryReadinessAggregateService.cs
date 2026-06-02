@@ -58,7 +58,7 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupService.onLogout/onJoinedTeam"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Lifecycle singleton wiring",
-					"FindGroupLifecycleSingletonWiringReadinessService enumerates Java singleton call sites for CM_FIND_GROUP, logout cleanup, group/alliance joined-team cleanup, and group/alliance disband recruitment removal; current C# evidence remains observer-only or missing-hook.",
+					"FindGroupLifecycleSingletonWiringReadinessService enumerates Java singleton call sites for CM_FIND_GROUP, logout cleanup, group/alliance joined-team cleanup, and group/alliance disband recruitment removal; current C# lifecycle evidence remains observer-only or non-live plan-only.",
 					FindGroupConnectionBoundaryComponentStatus.PartialEvidence,
 					"FindGroupLifecycleSingletonWiringReadinessService",
 					"FindGroupService.getInstance call sites"),

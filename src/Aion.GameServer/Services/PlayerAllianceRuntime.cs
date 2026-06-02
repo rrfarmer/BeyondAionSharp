@@ -16,6 +16,14 @@ public sealed class PlayerAllianceRuntime
 	private readonly PlayerAllianceViceCaptainAssignmentPlanner _viceCaptainAssignmentPlanner = new();
 	private readonly PlayerAllianceLeaderChangePlanner _leaderChangePlanner = new();
 	private readonly PlayerAllianceLeaveWorkflowPlanner _leaveWorkflowPlanner = new();
+	private readonly FindGroupRecruitmentPlanService? _findGroupService;
+	private readonly byte _serverId;
+
+	public PlayerAllianceRuntime(FindGroupRecruitmentPlanService? findGroupService = null, byte serverId = 0)
+	{
+		_findGroupService = findGroupService;
+		_serverId = serverId;
+	}
 
 	public PlayerAllianceSnapshot CreateAlliance(
 		int allianceId,
@@ -185,6 +193,9 @@ public sealed class PlayerAllianceRuntime
 			}
 			else if (plan.AllianceLeavePlan.WouldDisband)
 			{
+				// Java parity: PlayerAllianceService.disband calls FindGroupService.removeRecruitment(alliance)
+				// before alliance disband events clear the remaining member state.
+				var findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(allianceId, _serverId, unknown1: 0, unknown2: 0, unknown3: 0);
 				foreach (var remainingMember in members)
 				{
 					remainingMember.ClearAllianceGroup();
@@ -196,6 +207,7 @@ public sealed class PlayerAllianceRuntime
 				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
 				_allianceReadyStatusByAllianceId.Remove(allianceId);
 				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+				plan = plan with { FindGroupRecruitmentRemoval = findGroupRecruitmentRemoval };
 			}
 			else
 			{

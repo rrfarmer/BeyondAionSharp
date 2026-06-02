@@ -118,7 +118,8 @@ public sealed record PlayerAllianceLeaveWorkflowPlan(
 	int LeavedPlayerObjectId,
 	PlayerAllianceLeavedPlan AllianceLeavePlan,
 	PlayerBaseLeaveSideEffectPlan BaseLeavePlan,
-	IReadOnlyList<PlayerAllianceLeaveWorkflowStep> Steps);
+	IReadOnlyList<PlayerAllianceLeaveWorkflowStep> Steps,
+	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval = null);
 
 public enum PlayerAllianceLeaveWorkflowStepKind
 {

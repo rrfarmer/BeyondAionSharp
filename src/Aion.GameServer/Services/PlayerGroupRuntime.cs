@@ -11,6 +11,14 @@ public sealed class PlayerGroupRuntime
 	private readonly Dictionary<int, PlayerGroupDescriptor> _descriptorsByTeamId = [];
 	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByTeamId = [];
 	private readonly PlayerBaseLeavePlanner _baseLeavePlanner = new();
+	private readonly FindGroupRecruitmentPlanService? _findGroupService;
+	private readonly byte _serverId;
+
+	public PlayerGroupRuntime(FindGroupRecruitmentPlanService? findGroupService = null, byte serverId = 0)
+	{
+		_findGroupService = findGroupService;
+		_serverId = serverId;
+	}
 
 	public PlayerGroupSnapshot CreateOrUpdateGroup(
 		int teamId,
@@ -210,6 +218,7 @@ public sealed class PlayerGroupRuntime
 			var wouldDisband = descriptor.TeamType != PlayerGroupType.AutoGroup && runtimeMembers.Count == 1;
 			var packetIntents = CreateGroupLeavePacketIntents(runtimeMembers, leavePacketPlan, member.Name, reason, banPersonName);
 			PlayerGroupLeaderChangePlan? leaderChangePlan = null;
+			FindGroupRecruitmentMutationPlan? findGroupRecruitmentRemoval = null;
 
 			if (runtimeMembers.Count == 0)
 			{
@@ -219,6 +228,9 @@ public sealed class PlayerGroupRuntime
 			}
 			else if (wouldDisband)
 			{
+				// Java parity: PlayerGroupService.disband calls FindGroupService.removeRecruitment(group)
+				// before removing the group and replaying disband leave packets.
+				findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(teamId, _serverId, unknown1: 0, unknown2: 0, unknown3: 0);
 				// Java parity: GroupDisbandEvent replays PlayerGroupLeavedEvent with DISBAND for the last member before the original base leave packet.
 				AppendGroupDisbandPacketIntents(packetIntents, runtimeMembers);
 				foreach (var remainingMember in runtimeMembers)
@@ -254,7 +266,8 @@ public sealed class PlayerGroupRuntime
 				leaderChangePlan,
 				wouldDisband,
 				wasMentor,
-				baseLeavePlan.WouldNotifyEventServiceOnLeftTeam);
+				baseLeavePlan.WouldNotifyEventServiceOnLeftTeam,
+				findGroupRecruitmentRemoval);
 		}
 	}
 

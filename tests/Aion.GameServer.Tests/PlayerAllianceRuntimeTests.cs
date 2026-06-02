@@ -102,6 +102,33 @@ public sealed class PlayerAllianceRuntimeTests
 	}
 
 	[Fact]
+	public void RemoveMemberWithLeaveWorkflow_DisbandRemovesFindGroupAllianceRecruitmentLikeJava()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var runtime = new PlayerAllianceRuntime(findGroupService, serverId: 5);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var member = CreatePlayer(1002, "Member", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, member);
+		findGroupService.AddRecruitment(
+			leader,
+			"Alliance recruitment",
+			groupType: 8,
+			nowEpochSeconds: 100,
+			new FindGroupRecruitmentSubject(88001, "ELYOS", IsSoloPlayer: false, "Leader", Size: 2, MinLevel: 45, MaxLevel: 45, ClassId: 5));
+
+		var plan = Assert.IsType<PlayerAllianceLeaveWorkflowPlan>(runtime.RemoveMemberWithLeaveWorkflow(member));
+
+		Assert.True(plan.AllianceLeavePlan.WouldDisband);
+		Assert.NotNull(plan.FindGroupRecruitmentRemoval);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, plan.FindGroupRecruitmentRemoval!.Status);
+		Assert.Equal(88001, plan.FindGroupRecruitmentRemoval.RemovedRecruitment?.ObjectId);
+		Assert.NotNull(plan.FindGroupRecruitmentRemoval.WorldBroadcastIntent);
+		Assert.Contains("broadcastToWorld", plan.FindGroupRecruitmentRemoval.WorldBroadcastIntent!.JavaSource, StringComparison.Ordinal);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+	}
+
+	[Fact]
 	public void Snapshot_CreatesAllianceInfoPlanForExistingPlanners()
 	{
 		var runtime = new PlayerAllianceRuntime();

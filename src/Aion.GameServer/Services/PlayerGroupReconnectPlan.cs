@@ -93,7 +93,8 @@ public sealed record PlayerGroupLeavePlan(
 	PlayerGroupLeaderChangePlan? LeaderChangePlan,
 	bool WouldDisband,
 	bool WouldStopMentoring,
-	bool WouldInvokeEventServiceOnLeftTeam);
+	bool WouldInvokeEventServiceOnLeftTeam,
+	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval = null);
 
 public sealed record PlayerGroupLeavePacketIntent(
 	int Sequence,
