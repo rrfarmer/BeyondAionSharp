@@ -29,6 +29,7 @@ public sealed class FindGroupMutationPostComparisonExecutionBlockerReportService
 			[
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.JavaRows, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByShapeValidJavaRows),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.CSharpRows, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByLiveCSharpRows),
+				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract, FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingLiveCSharpRows),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.ReadinessAggregate, FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingReadiness),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.ResultContract, FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingReadiness),
 			],
@@ -38,6 +39,7 @@ public sealed class FindGroupMutationPostComparisonExecutionBlockerReportService
 			HasActionSixJavaRow: true,
 			HasActionTwoLiveCSharpRow: true,
 			HasActionSixLiveCSharpRow: true,
+			HasGuardedFixtureResultContract: true,
 			HasProjectionMetadata: true,
 			HasReadinessAggregate: true,
 			HasResultContract: true,
@@ -49,6 +51,10 @@ public sealed class FindGroupMutationPostComparisonExecutionBlockerReportService
 		var report = FindGroupMutationPostComparisonExecutionBlockerReportService.Create(envelope);
 
 		Assert.Equal(FindGroupMutationPostComparisonExecutionBlockerReportStatus.BlockedMissingReadiness, report.Status);
+		Assert.Contains(report.Rows, row =>
+			row.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract
+			&& row.Reason == FindGroupMutationPostComparisonExecutionBlockerReason.MissingGuardedFixtureResultContract
+			&& row.BlocksExecution);
 		Assert.Contains(report.Rows, row =>
 			row.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.ReadinessAggregate
 			&& row.Reason == FindGroupMutationPostComparisonExecutionBlockerReason.MissingReadinessAggregate
@@ -74,6 +80,7 @@ public sealed class FindGroupMutationPostComparisonExecutionBlockerReportService
 			HasActionSixJavaRow: true,
 			HasActionTwoLiveCSharpRow: false,
 			HasActionSixLiveCSharpRow: false,
+			HasGuardedFixtureResultContract: true,
 			HasProjectionMetadata: true,
 			HasReadinessAggregate: true,
 			HasResultContract: true,
@@ -100,6 +107,7 @@ public sealed class FindGroupMutationPostComparisonExecutionBlockerReportService
 			[
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.JavaRows, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByShapeValidJavaRows),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.CSharpRows, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByLiveCSharpRows),
+				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByLiveCSharpRows),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.ProjectionMetadata, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByNonLiveMetadata),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.ReadinessAggregate, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByNonLiveMetadata),
 				Gate(FindGroupMutationPostComparisonInputEnvelopeGate.ResultContract, FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByReadyContract),
@@ -110,6 +118,7 @@ public sealed class FindGroupMutationPostComparisonExecutionBlockerReportService
 			HasActionSixJavaRow: true,
 			HasActionTwoLiveCSharpRow: true,
 			HasActionSixLiveCSharpRow: true,
+			HasGuardedFixtureResultContract: true,
 			HasProjectionMetadata: true,
 			HasReadinessAggregate: true,
 			HasResultContract: true,

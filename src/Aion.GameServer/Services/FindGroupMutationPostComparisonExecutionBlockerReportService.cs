@@ -12,6 +12,7 @@ public enum FindGroupMutationPostComparisonExecutionBlockerReason
 {
 	MissingJavaRows,
 	MissingLiveCSharpRows,
+	MissingGuardedFixtureResultContract,
 	MissingProjectionMetadata,
 	MissingReadinessAggregate,
 	MissingResultContract,
@@ -95,7 +96,10 @@ public static class FindGroupMutationPostComparisonExecutionBlockerReportService
 		var reason = gate.Status switch
 		{
 			FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingJavaRows => FindGroupMutationPostComparisonExecutionBlockerReason.MissingJavaRows,
-			FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingLiveCSharpRows => FindGroupMutationPostComparisonExecutionBlockerReason.MissingLiveCSharpRows,
+			FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingLiveCSharpRows =>
+				gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract
+					? FindGroupMutationPostComparisonExecutionBlockerReason.MissingGuardedFixtureResultContract
+					: FindGroupMutationPostComparisonExecutionBlockerReason.MissingLiveCSharpRows,
 			FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingReadiness => ReasonForReadinessGate(gate.Gate),
 			_ => FindGroupMutationPostComparisonExecutionBlockerReason.ReadyNoBlocker,
 		};
@@ -117,6 +121,7 @@ public static class FindGroupMutationPostComparisonExecutionBlockerReportService
 	{
 		return gate switch
 		{
+			FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract => FindGroupMutationPostComparisonExecutionBlockerReason.MissingGuardedFixtureResultContract,
 			FindGroupMutationPostComparisonInputEnvelopeGate.ProjectionMetadata => FindGroupMutationPostComparisonExecutionBlockerReason.MissingProjectionMetadata,
 			FindGroupMutationPostComparisonInputEnvelopeGate.ResultContract => FindGroupMutationPostComparisonExecutionBlockerReason.MissingResultContract,
 			_ => FindGroupMutationPostComparisonExecutionBlockerReason.MissingReadinessAggregate,

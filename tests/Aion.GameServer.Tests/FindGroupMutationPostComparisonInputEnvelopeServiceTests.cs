@@ -17,6 +17,7 @@ public sealed class FindGroupMutationPostComparisonInputEnvelopeServiceTests
 		Assert.False(envelope.HasActionSixLiveCSharpRow);
 		Assert.True(envelope.HasProjectionMetadata);
 		Assert.True(envelope.HasReadinessAggregate);
+		Assert.True(envelope.HasGuardedFixtureResultContract);
 		Assert.True(envelope.HasResultContract);
 		Assert.False(envelope.ReadyForComparisonExecution);
 		Assert.Equal("cm-find-group-direct-mutation-post-boundary", envelope.TraceName);
@@ -57,6 +58,10 @@ public sealed class FindGroupMutationPostComparisonInputEnvelopeServiceTests
 			gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.CSharpRows
 			&& gate.Status == FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingLiveCSharpRows
 			&& gate.Notes.Contains("not disabled sample projections", StringComparison.Ordinal));
+		Assert.Contains(envelope.Gates, gate =>
+			gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract
+			&& gate.Status == FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingLiveCSharpRows
+			&& gate.Evidence.Contains("acceptedRows=0", StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -69,6 +74,10 @@ public sealed class FindGroupMutationPostComparisonInputEnvelopeServiceTests
 		Assert.Equal(FindGroupMutationPostComparisonInputEnvelopeStatus.BlockedMissingReadiness, envelope.Status);
 		Assert.True(envelope.HasActionTwoLiveCSharpRow);
 		Assert.True(envelope.HasActionSixLiveCSharpRow);
+		Assert.Contains(envelope.Gates, gate =>
+			gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract
+			&& gate.Status == FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByLiveCSharpRows
+			&& gate.Evidence.Contains("acceptedRows=2", StringComparison.Ordinal));
 		Assert.Contains(envelope.Gates, gate =>
 			gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.ReadinessAggregate
 			&& gate.Status == FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingReadiness
@@ -111,6 +120,31 @@ public sealed class FindGroupMutationPostComparisonInputEnvelopeServiceTests
 			gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.ResultContract
 			&& gate.Evidence.Contains("differenceKinds=", StringComparison.Ordinal)
 			&& gate.Notes.Contains("mismatch reports", StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public void Create_BadShapeRowsDoNotEnterLiveHandoffThroughBooleanFlagsAlone()
+	{
+		var envelope = FindGroupMutationPostComparisonInputEnvelopeService.Create(
+			javaArtifacts: ShapeValidJavaArtifacts(),
+			csharpRows:
+			[
+				LiveCSharpRow(2) with { PostedSystemMessageId = 1400393 },
+				LiveCSharpRow(6),
+			]);
+
+		Assert.Equal(FindGroupMutationPostComparisonInputEnvelopeStatus.BlockedMissingLiveCSharpRows, envelope.Status);
+		Assert.False(envelope.HasActionTwoLiveCSharpRow);
+		Assert.True(envelope.HasActionSixLiveCSharpRow);
+		Assert.Contains(envelope.CSharpRows, row =>
+			row.Action == 2
+			&& !row.IsShapeValid
+			&& !row.IsLiveEvidence
+			&& row.Evidence.Contains("RejectedUnexpectedPacketShape", StringComparison.Ordinal));
+		Assert.Contains(envelope.Gates, gate =>
+			gate.Gate == FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract
+			&& gate.Evidence.Contains("action2Live=False", StringComparison.Ordinal)
+			&& gate.Evidence.Contains("action6Live=True", StringComparison.Ordinal));
 	}
 
 	private static FindGroupMutationPostJavaTraceArtifactDirectoryReport ShapeValidJavaArtifacts() =>

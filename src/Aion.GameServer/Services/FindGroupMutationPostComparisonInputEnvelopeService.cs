@@ -12,6 +12,7 @@ public enum FindGroupMutationPostComparisonInputEnvelopeGate
 {
 	JavaRows,
 	CSharpRows,
+	GuardedFixtureResultContract,
 	ProjectionMetadata,
 	ReadinessAggregate,
 	ResultContract,
@@ -57,6 +58,7 @@ public sealed record FindGroupMutationPostComparisonInputEnvelope(
 	bool HasActionSixJavaRow,
 	bool HasActionTwoLiveCSharpRow,
 	bool HasActionSixLiveCSharpRow,
+	bool HasGuardedFixtureResultContract,
 	bool HasProjectionMetadata,
 	bool HasReadinessAggregate,
 	bool HasResultContract,
@@ -77,19 +79,24 @@ public static class FindGroupMutationPostComparisonInputEnvelopeService
 		IReadOnlyList<FindGroupDirectPacketMutationPostBoundaryTraceExport>? csharpRows = null,
 		FindGroupMutationPostComparisonKeyProjectionMetadata? keyProjection = null,
 		FindGroupMutationPostTraceRowReadinessAggregate? readiness = null,
+		FindGroupMutationPostGuardedFixtureResultContract? guardedFixtureResultContract = null,
 		FindGroupMutationPostComparisonExecutionResultContract? resultContract = null)
 	{
 		javaArtifacts ??= FindGroupMutationPostJavaTraceArtifactDirectoryReportService.Create();
 		csharpRows ??= [];
 		keyProjection ??= FindGroupMutationPostComparisonKeyProjectionMetadataService.Create();
 		readiness ??= FindGroupMutationPostTraceRowReadinessAggregateService.Create();
+		guardedFixtureResultContract ??= FindGroupMutationPostGuardedFixtureResultContractService.Create(candidateRows: csharpRows);
 		resultContract ??= FindGroupMutationPostComparisonExecutionResultContractService.Create(keyProjection, readiness);
 
 		var javaRowRefs = CreateJavaRowReferences(javaArtifacts);
-		var csharpRowRefs = csharpRows.Select(CreateCSharpRowReference).ToArray();
+		var csharpRowRefs = csharpRows
+			.Select((row, index) => CreateCSharpRowReference(row, guardedFixtureResultContract.CandidateRows.ElementAtOrDefault(index)))
+			.ToArray();
 		var gates = new List<FindGroupMutationPostComparisonInputEnvelopeGateRow>();
 		AddJavaRows(gates, javaArtifacts, javaRowRefs);
 		AddCSharpRows(gates, csharpRowRefs);
+		AddGuardedFixtureResultContract(gates, guardedFixtureResultContract);
 		AddProjectionMetadata(gates, keyProjection);
 		AddReadiness(gates, readiness);
 		AddResultContract(gates, resultContract);
@@ -106,6 +113,7 @@ public static class FindGroupMutationPostComparisonInputEnvelopeService
 			HasActionSixJavaRow: javaRowRefs.Any(row => row.Action == 6 && row.IsShapeValid),
 			HasActionTwoLiveCSharpRow: csharpRowRefs.Any(row => row.Action == 2 && row.IsLiveEvidence),
 			HasActionSixLiveCSharpRow: csharpRowRefs.Any(row => row.Action == 6 && row.IsLiveEvidence),
+			HasGuardedFixtureResultContract: guardedFixtureResultContract.Requirements.Count > 0,
 			HasProjectionMetadata: keyProjection.Fields.Count > 0,
 			HasReadinessAggregate: readiness.Rows.Count > 0 || readiness.ReadyForRuntimeComparison,
 			HasResultContract: resultContract.Fields.Count > 0,
@@ -146,12 +154,10 @@ public static class FindGroupMutationPostComparisonInputEnvelopeService
 	}
 
 	private static FindGroupMutationPostComparisonInputEnvelopeRowReference CreateCSharpRowReference(
-		FindGroupDirectPacketMutationPostBoundaryTraceExport row)
+		FindGroupDirectPacketMutationPostBoundaryTraceExport row,
+		FindGroupMutationPostGuardedFixtureCandidateRow? candidateRow)
 	{
-		var isLiveEvidence = row.TraceSource == FindGroupDirectPacketMutationPostTraceSource.CSharp
-			&& row.BoundaryAccepted
-			&& row.ExecutorInvokedFromBoundary
-			&& row.RegistrySendsObservedInOrder;
+		var isLiveEvidence = candidateRow?.IsLiveBoundaryEvidence == true;
 
 		return new FindGroupMutationPostComparisonInputEnvelopeRowReference(
 			row.TraceSource,
@@ -159,9 +165,9 @@ public static class FindGroupMutationPostComparisonInputEnvelopeService
 			row.MutationKind.ToString(),
 			row.PostedSystemMessageId,
 			row.RefreshedListAction,
-			IsShapeValid: true,
+			IsShapeValid: candidateRow?.IsShapeValid == true,
 			isLiveEvidence,
-			$"boundaryAccepted={row.BoundaryAccepted}; executor={row.ExecutorInvokedFromBoundary}; registry={row.RegistrySendsObservedInOrder}; source={row.TraceSource}");
+			$"boundaryAccepted={row.BoundaryAccepted}; executor={row.ExecutorInvokedFromBoundary}; registry={row.RegistrySendsObservedInOrder}; source={row.TraceSource}; guardedStatus={candidateRow?.Status}");
 	}
 
 	private static void AddJavaRows(
@@ -218,6 +224,22 @@ public static class FindGroupMutationPostComparisonInputEnvelopeService
 			keyProjection.JavaSource,
 			"FindGroupMutationPostComparisonKeyProjectionMetadata",
 			"Projection metadata defines the row keys but does not compare rows.");
+	}
+
+	private static void AddGuardedFixtureResultContract(
+		ICollection<FindGroupMutationPostComparisonInputEnvelopeGateRow> gates,
+		FindGroupMutationPostGuardedFixtureResultContract contract)
+	{
+		Add(gates,
+			FindGroupMutationPostComparisonInputEnvelopeGate.GuardedFixtureResultContract,
+			contract.ReadyForComparisonHandoff
+				? FindGroupMutationPostComparisonInputEnvelopeGateStatus.SatisfiedByLiveCSharpRows
+				: FindGroupMutationPostComparisonInputEnvelopeGateStatus.BlockedMissingLiveCSharpRows,
+			blocks: !contract.ReadyForComparisonHandoff,
+			$"status={contract.Status}; acceptedRows={contract.AcceptedLiveRows.Count}; action2Live={contract.HasActionTwoLiveRow}; action6Live={contract.HasActionSixLiveRow}; sendsPacketsByDefault={contract.ShouldSendPacketsByDefault}",
+			contract.JavaSource,
+			"FindGroupMutationPostGuardedFixtureResultContract",
+			"Guarded fixture result contract must accept action 2 and 6 live boundary rows before C# rows can enter comparison handoff.");
 	}
 
 	private static void AddReadiness(
