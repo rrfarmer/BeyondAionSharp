@@ -13,6 +13,7 @@ public enum FindGroupMutationPostTraceRowReadinessBlocker
 {
 	JavaCaptureRunbook,
 	CSharpLiveTraceRowFixturePlan,
+	GuardedLiveBoundaryFixtureSkeleton,
 	RegistryObservationContract,
 	ArtifactComparisonPreflight,
 }
@@ -44,11 +45,14 @@ public sealed record FindGroupMutationPostTraceRowReadinessAggregate(
 	IReadOnlyList<FindGroupMutationPostTraceRowReadinessRow> Rows,
 	bool HasJavaCaptureRunbook,
 	bool HasCSharpLiveTraceRowFixturePlan,
+	bool HasGuardedLiveBoundaryFixtureSkeleton,
 	bool HasRegistryObservationContract,
 	bool HasArtifactComparisonPreflight,
 	bool NeedsJavaFixture,
 	bool NeedsJavaInstrumentation,
 	bool NeedsGeneratedJavaArtifacts,
+	bool HasCSharpTraceRowShapeInputs,
+	bool NeedsGuardedBoundaryFixture,
 	bool NeedsCSharpLiveRows,
 	bool NeedsRegistryObservation,
 	bool NeedsComparisonExecution,
@@ -67,6 +71,7 @@ public static class FindGroupMutationPostTraceRowReadinessAggregateService
 	public static FindGroupMutationPostTraceRowReadinessAggregate Create(
 		FindGroupMutationPostJavaArtifactCaptureRunbook? javaRunbook = null,
 		FindGroupMutationPostCSharpLiveTraceRowFixturePlan? csharpFixturePlan = null,
+		FindGroupMutationPostGuardedLiveBoundaryFixtureSkeleton? guardedFixtureSkeleton = null,
 		FindGroupMutationPostRegistryObservationTraceContract? registryContract = null,
 		FindGroupMutationPostArtifactComparisonPreflightReport? comparisonPreflight = null)
 	{
@@ -74,10 +79,12 @@ public static class FindGroupMutationPostTraceRowReadinessAggregateService
 		csharpFixturePlan ??= FindGroupMutationPostCSharpLiveTraceRowFixturePlanService.Create();
 		registryContract ??= FindGroupMutationPostRegistryObservationTraceContractService.Create();
 		comparisonPreflight ??= FindGroupMutationPostArtifactComparisonPreflightService.Create();
+		guardedFixtureSkeleton ??= FindGroupMutationPostGuardedLiveBoundaryFixtureSkeletonService.Create(csharpFixturePlan, comparisonPreflight);
 
 		var rows = new List<FindGroupMutationPostTraceRowReadinessRow>();
 		AddJavaRunbook(rows, javaRunbook);
 		AddCSharpFixturePlan(rows, csharpFixturePlan);
+		AddGuardedFixtureSkeleton(rows, guardedFixtureSkeleton);
 		AddRegistryContract(rows, registryContract);
 		AddComparisonPreflight(rows, comparisonPreflight);
 
@@ -89,13 +96,16 @@ public static class FindGroupMutationPostTraceRowReadinessAggregateService
 			rowArray,
 			HasJavaCaptureRunbook: javaRunbook.Steps.Count > 0,
 			HasCSharpLiveTraceRowFixturePlan: csharpFixturePlan.Steps.Count > 0,
+			HasGuardedLiveBoundaryFixtureSkeleton: guardedFixtureSkeleton.Steps.Count > 0,
 			HasRegistryObservationContract: registryContract.Requirements.Count > 0,
 			HasArtifactComparisonPreflight: comparisonPreflight.Rows.Count > 0,
 			NeedsJavaFixture: javaRunbook.RequiresJavaFixture,
 			NeedsJavaInstrumentation: javaRunbook.RequiresJavaInstrumentation,
 			NeedsGeneratedJavaArtifacts: javaRunbook.RequiresGeneratedArtifacts || comparisonPreflight.NeedsGeneratedJavaArtifacts,
-			NeedsCSharpLiveRows: csharpFixturePlan.RequiresLiveBoundaryFixture || comparisonPreflight.NeedsLiveCSharpTraceRows,
-			NeedsRegistryObservation: registryContract.RequiresRegistrySendsObservedInOrder || comparisonPreflight.NeedsRegistryObservation,
+			HasCSharpTraceRowShapeInputs: comparisonPreflight.HasCSharpTraceRowShapeInputs || guardedFixtureSkeleton.HasCSharpShapeInputs,
+			NeedsGuardedBoundaryFixture: guardedFixtureSkeleton.Status == FindGroupMutationPostGuardedLiveBoundaryFixtureSkeletonStatus.BlockedPendingGuardedBoundaryFixture,
+			NeedsCSharpLiveRows: csharpFixturePlan.RequiresLiveBoundaryFixture || guardedFixtureSkeleton.HasLiveCSharpRows == false || comparisonPreflight.NeedsLiveCSharpTraceRows,
+			NeedsRegistryObservation: guardedFixtureSkeleton.RecordsMissingRegistryObservation || registryContract.RequiresRegistrySendsObservedInOrder || comparisonPreflight.NeedsRegistryObservation,
 			NeedsComparisonExecution: comparisonPreflight.NeedsComparisonExecution,
 			ReadyForRuntimeComparison: status == FindGroupMutationPostTraceRowReadinessStatus.Ready,
 			javaRunbook.TraceName,
@@ -165,6 +175,24 @@ public static class FindGroupMutationPostTraceRowReadinessAggregateService
 			plan.JavaSource,
 			"FindGroupMutationPostCSharpLiveTraceRowFixturePlan",
 			"C# live trace rows must come from a guarded real connection boundary fixture before comparison can proceed.");
+	}
+
+	private static void AddGuardedFixtureSkeleton(
+		ICollection<FindGroupMutationPostTraceRowReadinessRow> rows,
+		FindGroupMutationPostGuardedLiveBoundaryFixtureSkeleton skeleton)
+	{
+		var status = skeleton.Status == FindGroupMutationPostGuardedLiveBoundaryFixtureSkeletonStatus.BlockedPendingGuardedBoundaryFixture
+			? FindGroupMutationPostTraceRowReadinessRowStatus.BlockedMissingCSharpLiveFixture
+			: FindGroupMutationPostTraceRowReadinessRowStatus.SatisfiedByNonLiveMetadata;
+
+		Add(rows,
+			FindGroupMutationPostTraceRowReadinessBlocker.GuardedLiveBoundaryFixtureSkeleton,
+			status,
+			blocks: skeleton.Steps.Any(step => step.BlocksRuntimeComparison) || !skeleton.HasLiveCSharpRows,
+			$"fixture={skeleton.FixtureClassName}; traceGuard={FindGroupMutationPostGuardedLiveBoundaryFixtureSkeletonService.TraceGuardName}; actions={string.Join("/", skeleton.Actions)}; productionDispatch={skeleton.IsProductionCmFindGroupDispatchEnabled}; sendsPackets={skeleton.ShouldSendPackets}; csharpShapeInputs={skeleton.HasCSharpShapeInputs}; liveRows={skeleton.HasLiveCSharpRows}; missingExecutor={skeleton.RecordsMissingExecutorObservation}; missingRegistry={skeleton.RecordsMissingRegistryObservation}",
+			skeleton.JavaSource,
+			"FindGroupMutationPostGuardedLiveBoundaryFixtureSkeleton",
+			"Guarded boundary fixture skeleton exists, but live rows still require guarded boundary execution plus executor and registry observations.");
 	}
 
 	private static void AddRegistryContract(
