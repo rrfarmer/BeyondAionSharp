@@ -1,7 +1,10 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
 
@@ -432,6 +435,85 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.All(plans, plan => Assert.Contains("moveToInstanceExit", plan.JavaSource, StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void InstanceDestroyWorkflowService_DestroyInstanceComposesRuntimeCallbacksLikeJavaInstanceService()
+	{
+		var table = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1),
+			new WorldMapSummary(210020000, IsInstance: false, TwinCount: 1),
+		]);
+		var handler = new RecordingInstanceLifecycleHandler(
+			instance => table.InstanceExists(300030000, instance.InstanceId));
+		var instance = table.AddWorldMapInstance(300030000, instanceId: 7, instanceHandler: handler);
+		Assert.NotNull(instance);
+		var context = new GameServerRuntimeContext();
+		context.SetWorldMapStates(table);
+		var world = new Aion.GameServer.World.World(NullLogger<Aion.GameServer.World.World>.Instance);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Race = "ELYOS",
+			Position = new WorldPosition(300030000, 1, 2, 3, 4, InstanceId: instance.InstanceId),
+		};
+		var npc = new WorldNpc(
+			ObjectId: 2001,
+			TemplateId: 203000,
+			Template: new NpcTemplateSummary(
+				203000,
+				"instance-npc",
+				NameId: 203000,
+				Level: 1,
+				Rank: "NORMAL",
+				Rating: "NORMAL",
+				Race: "ELYOS",
+				Tribe: "GENERAL",
+				Type: "GENERAL"),
+			Position: new WorldPosition(300030000, 5, 6, 7, 8, InstanceId: instance.InstanceId));
+		Assert.True(world.TryAddObject(player.ObjectId, player));
+		Assert.True(world.TryAddObject(npc.ObjectId, npc));
+		var spawnService = new WorldNpcSpawnService(
+			context,
+			world,
+			new IDFactory(),
+			NullLogger<WorldNpcSpawnService>.Instance);
+		var walkerRouteWalking = new WorldNpcWalkerRouteWalkingService(
+			context,
+			world,
+			new WorldNpcWalkerSpawnPlanCacheService(),
+			new WorldNpcWalkerRouteService(),
+			new WorldNpcWalkerMovementStateService(),
+			new WorldNpcWalkerMovementBroadcastService(world, new NullConnectionRegistry()));
+		var service = new InstanceDestroyWorkflowService(context, world, spawnService, walkerRouteWalking);
+		var instanceExits = new InstanceExitTable(
+		[
+			new InstanceExitSummary(300030000, 210020000, "ELYOS", 330, 2732.1643f, 263.4721f, 0),
+		]);
+		var playerInitialData = new PlayerInitialDataTable(
+			new Dictionary<string, PlayerCreationData>(),
+			new Dictionary<string, PlayerSpawnLocation>());
+
+		var result = service.DestroyInstance(300030000, instance.InstanceId, instanceExits, playerInitialData);
+
+		Assert.True(result.DestroyPlan.Removed);
+		Assert.True(result.DestroyPlan.DestroyHandlerNotified);
+		Assert.Equal(1, result.DestroyPlan.DeletedNonPlayerObjectCount);
+		Assert.Empty(result.WalkerCleanup!.RemovedObjectIds);
+		Assert.Equal(0, result.WalkerCleanup.RemovedFormationStateCount);
+		Assert.False(table.InstanceExists(300030000, instance.InstanceId));
+		Assert.True(world.TryGetObject(player.ObjectId, out var remainingPlayer));
+		Assert.Same(player, remainingPlayer);
+		Assert.False(world.TryGetObject(npc.ObjectId, out _));
+		var forcedExit = Assert.Single(result.DestroyPlan.ForcedExitTeleportPlans);
+		Assert.Equal(player.ObjectId, forcedExit.ForcedExitResolution.ForcedExit.PlayerObjectId);
+		Assert.Equal(InstanceExitResolutionStatus.ExitDestination, forcedExit.ForcedExitResolution.ExitResolution.Status);
+		Assert.Equal(new WorldPosition(210020000, 330, 2732.1643f, 263.4721f, 0), forcedExit.Destination);
+		Assert.Single(handler.DestroyedInstances);
+		Assert.False(handler.InstanceExistsAtDestroy.Single());
+		Assert.Contains("TemporarySpawnEngine.onInstanceDestroy", result.JavaSource, StringComparison.Ordinal);
+		Assert.Contains("WalkerFormator.onInstanceDestroy", result.JavaSource, StringComparison.Ordinal);
+	}
+
 	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
 	{
 		private readonly Func<WorldMapInstanceRuntimeState, bool>? _instanceExistsAtDestroy;
@@ -457,6 +539,75 @@ public sealed class WorldMapRuntimeStateTests
 			DestroyedInstances.Add(instance);
 			if (_instanceExistsAtDestroy != null)
 				InstanceExistsAtDestroy.Add(_instanceExistsAtDestroy(instance));
+		}
+	}
+
+	private sealed class NullConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
 		}
 	}
 

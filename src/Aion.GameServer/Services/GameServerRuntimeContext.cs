@@ -16,4 +16,9 @@ public sealed class GameServerRuntimeContext
 		DataManager = dataManager;
 		WorldMapStates = new WorldMapRuntimeStateTable(dataManager.StaticData.WorldMaps);
 	}
+
+	public void SetWorldMapStates(WorldMapRuntimeStateTable worldMapStates)
+	{
+		WorldMapStates = worldMapStates;
+	}
 }

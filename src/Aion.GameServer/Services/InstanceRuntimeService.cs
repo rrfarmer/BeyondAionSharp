@@ -106,10 +106,11 @@ public static class InstanceRuntimeService
 		int instanceId,
 		Action<int, int>? temporarySpawnCleanup = null,
 		Func<int, int, int>? nonPlayerObjectCleanup = null,
-		Action<int, int>? walkerFormationCleanup = null)
+		Action<int, int>? walkerFormationCleanup = null,
+		Func<int, int, IReadOnlyList<InstancePlayerForcedExitTeleportPlan>>? playerForcedExitPlanning = null)
 	{
 		// Java parity: InstanceService.destroyInstance removes the WorldMapInstance, unregisters temporary spawns,
-		// deletes non-player visible objects, calls instance.getInstanceHandler().onInstanceDestroy(),
+		// plans player forced exits, deletes non-player visible objects, calls instance.getInstanceHandler().onInstanceDestroy(),
 		// then calls WalkerFormator.onInstanceDestroy(worldId, instanceId).
 		if (!worldMaps.TryGetWorldMapInstance(worldId, instanceId, out var instance) || instance == null)
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
@@ -118,6 +119,7 @@ public static class InstanceRuntimeService
 			return InstanceDestroyRuntimePlan.Missing(worldId, instanceId);
 
 		temporarySpawnCleanup?.Invoke(worldId, instance.InstanceId);
+		var forcedExitTeleportPlans = playerForcedExitPlanning?.Invoke(worldId, instance.InstanceId) ?? Array.Empty<InstancePlayerForcedExitTeleportPlan>();
 		var deletedNonPlayerObjects = nonPlayerObjectCleanup?.Invoke(worldId, instance.InstanceId) ?? 0;
 		var notified = instance.NotifyInstanceDestroyed();
 		walkerFormationCleanup?.Invoke(worldId, instance.InstanceId);
@@ -128,6 +130,7 @@ public static class InstanceRuntimeService
 			Removed: true,
 			DestroyHandlerNotified: notified,
 			DeletedNonPlayerObjectCount: deletedNonPlayerObjects,
+			forcedExitTeleportPlans,
 			"InstanceService.destroyInstance removes map instance before instance.getInstanceHandler().onInstanceDestroy()");
 	}
 
@@ -232,6 +235,7 @@ public sealed record InstanceDestroyRuntimePlan(
 	bool Removed,
 	bool DestroyHandlerNotified,
 	int DeletedNonPlayerObjectCount,
+	IReadOnlyList<InstancePlayerForcedExitTeleportPlan> ForcedExitTeleportPlans,
 	string JavaSource)
 {
 	public static InstanceDestroyRuntimePlan Missing(int worldId, int instanceId)
@@ -243,6 +247,7 @@ public sealed record InstanceDestroyRuntimePlan(
 			Removed: false,
 			DestroyHandlerNotified: false,
 			DeletedNonPlayerObjectCount: 0,
+			Array.Empty<InstancePlayerForcedExitTeleportPlan>(),
 			"InstanceService.destroyInstance is a no-op for unknown or already removed modeled instances");
 	}
 }
