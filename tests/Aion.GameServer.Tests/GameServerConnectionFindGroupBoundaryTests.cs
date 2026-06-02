@@ -232,6 +232,119 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionThreeAndSevenUpdateRowsWithoutPacketSideEffects()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var recruiter = CreatePlayer(0x01020304, "Recruiter", "ELYOS");
+		var applicant = CreatePlayer(0x02030405, "Applicant", "ASMODIANS");
+		var registry = new CapturingConnectionRegistry([recruiter, applicant]);
+		findGroupService.AddRecruitment(recruiter, "Old recruit", groupType: 2, nowEpochSeconds: 100);
+		findGroupService.AddApplication(
+			applicant,
+			message: "Old application",
+			groupType: 4,
+			classId: 7,
+			level: 64,
+			nowEpochSeconds: 101);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+
+		SetActivePlayer(fixture.Connection, recruiter);
+		var beforeRecruitmentUpdate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(3);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+					buffer.WriteS("New recruit");
+					buffer.WriteC(3);
+				}));
+		var afterRecruitmentUpdate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+		var recruitment = Assert.Single(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 102).Recruitments);
+		Assert.Equal(recruiter.ObjectId, recruitment.ObjectId);
+		Assert.Equal("New recruit", recruitment.Message);
+		Assert.Equal(3, recruitment.GroupType);
+		Assert.InRange(recruitment.LastUpdate, beforeRecruitmentUpdate, afterRecruitmentUpdate);
+
+		findGroupService.RemoveRecruitment(recruiter, serverId: 5, unknown1: 6, unknown2: 7, unknown3: 8);
+		registry.WorldBroadcasts.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(3);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteC(5);
+					buffer.WriteC(6);
+					buffer.WriteC(7);
+					buffer.WriteC(8);
+					buffer.WriteS("Missing recruit");
+					buffer.WriteC(4);
+				}));
+
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 103).Recruitments);
+
+		SetActivePlayer(fixture.Connection, applicant);
+		var beforeApplicationUpdate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(7);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteS("New application");
+					buffer.WriteC(5);
+					buffer.WriteC(8);
+					buffer.WriteC(65);
+				}));
+		var afterApplicationUpdate = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+		var application = Assert.Single(findGroupService.ShowApplications("ASMODIANS", nowEpochSeconds: 104).Applications);
+		Assert.Equal(applicant.ObjectId, application.PlayerObjectId);
+		Assert.Equal("New application", application.Message);
+		Assert.Equal(5, application.GroupType);
+		Assert.Equal(8, application.ClassId);
+		Assert.Equal(65, application.Level);
+		Assert.InRange(application.LastUpdate, beforeApplicationUpdate, afterApplicationUpdate);
+
+		findGroupService.RemoveApplication(applicant);
+		registry.WorldBroadcasts.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(7);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteS("Missing application");
+					buffer.WriteC(6);
+					buffer.WriteC(9);
+					buffer.WriteC(66);
+				}));
+
+		Assert.Empty(findGroupService.ShowApplications("ASMODIANS", nowEpochSeconds: 105).Applications);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();
