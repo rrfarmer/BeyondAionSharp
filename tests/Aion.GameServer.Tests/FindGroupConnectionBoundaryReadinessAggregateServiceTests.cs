@@ -47,6 +47,7 @@ public sealed class FindGroupConnectionBoundaryReadinessAggregateServiceTests
 				&& component.Status == FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable
 				&& component.Evidence.Contains("sendPacket", StringComparison.Ordinal)
 				&& component.Evidence.Contains("broadcastToWorld", StringComparison.Ordinal)
+				&& component.Evidence.Contains("parsed CmFindGroup plans", StringComparison.Ordinal)
 				&& component.CSharpSource.Contains("FindGroupSideEffectDispatchExecutorService", StringComparison.Ordinal));
 		Assert.Contains(
 			report.Components,

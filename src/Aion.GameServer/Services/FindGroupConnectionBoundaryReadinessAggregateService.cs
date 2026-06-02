@@ -38,9 +38,9 @@ public static class FindGroupConnectionBoundaryReadinessAggregateService
 					"FindGroupService.sendInstanceApplicationResult"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Side-effect dispatch audit and executor",
-					"FindGroupSideEffectDispatchAuditService can audit direct sendPacket and broadcastToWorld intents; FindGroupSideEffectDispatchExecutorService can execute them through IGameClientConnectionRegistry only when explicitly invoked.",
+					"FindGroupSideEffectDispatchAuditService can audit direct sendPacket and broadcastToWorld intents; FindGroupSideEffectDispatchExecutorService can execute them through IGameClientConnectionRegistry only when explicitly invoked; FindGroupConnectionBoundarySideEffectCompositionEvidenceService can compose parsed CmFindGroup plans with opt-in executor results.",
 					FindGroupConnectionBoundaryComponentStatus.EvidenceAvailable,
-					"FindGroupSideEffectDispatchAuditService; FindGroupSideEffectDispatchExecutorService",
+					"FindGroupSideEffectDispatchAuditService; FindGroupSideEffectDispatchExecutorService; FindGroupConnectionBoundarySideEffectCompositionEvidenceService",
 					"FindGroupService PacketSendUtility.sendPacket/broadcastToWorld call sites"),
 				new FindGroupConnectionBoundaryComponentReadiness(
 					"Lifecycle observers",
