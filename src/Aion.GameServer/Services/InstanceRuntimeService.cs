@@ -180,6 +180,34 @@ public static class InstanceRuntimeService
 				"InstanceService.destroyInstance -> send STR_MSG_LEAVE_INSTANCE_FORCE(0) -> moveToExitPoint"))
 			.ToArray();
 	}
+
+	public static IReadOnlyList<InstancePlayerForcedExitTeleportPlan> CreatePlayerForcedExitTeleportPlans(
+		IEnumerable<Player> players,
+		int worldId,
+		int instanceId,
+		InstanceExitTable instanceExits,
+		WorldMapRuntimeStateTable worldMaps,
+		PlayerInitialDataTable playerInitialData)
+	{
+		// Java parity: TeleportService.moveToInstanceExit either teleports to the instance exit
+		// or calls moveToBindLocation, which resolves the player's bind point or initial race spawn.
+		var playerList = players.ToArray();
+		var playersByObjectId = playerList.ToDictionary(player => player.ObjectId);
+		return CreatePlayerForcedExitResolutionPlans(playerList, worldId, instanceId, instanceExits, worldMaps)
+			.Select(plan =>
+			{
+				var bindFallback = plan.ExitResolution.Status == InstanceExitResolutionStatus.BindLocationFallback
+					? PlayerTeleportService.ResolveBindLocation(playersByObjectId[plan.ForcedExit.PlayerObjectId], playerInitialData)
+					: null;
+				var destination = plan.ExitResolution.Destination ?? bindFallback?.Destination;
+				return new InstancePlayerForcedExitTeleportPlan(
+					plan,
+					bindFallback,
+					destination,
+					"InstanceService.destroyInstance -> moveToExitPoint -> TeleportService.moveToInstanceExit");
+			})
+			.ToArray();
+	}
 }
 
 public sealed class UnsupportedOperationException : InvalidOperationException
@@ -227,6 +255,12 @@ public sealed record InstancePlayerForcedExitPlan(
 public sealed record InstancePlayerForcedExitResolutionPlan(
 	InstancePlayerForcedExitPlan ForcedExit,
 	InstanceExitResolutionPlan ExitResolution,
+	string JavaSource);
+
+public sealed record InstancePlayerForcedExitTeleportPlan(
+	InstancePlayerForcedExitResolutionPlan ForcedExitResolution,
+	BindLocationResolutionPlan? BindFallback,
+	WorldPosition? Destination,
 	string JavaSource);
 
 public sealed record InstanceExitResolutionPlan(

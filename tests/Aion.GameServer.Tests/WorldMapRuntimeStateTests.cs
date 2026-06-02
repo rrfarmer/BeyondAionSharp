@@ -365,6 +365,60 @@ public sealed class WorldMapRuntimeStateTests
 		Assert.All(plans, plan => Assert.Contains("destroyInstance", plan.JavaSource, StringComparison.Ordinal));
 	}
 
+	[Fact]
+	public void InstanceRuntimeService_CreatePlayerForcedExitTeleportPlansComposesBindFallbackDestinationLikeJava()
+	{
+		var players = new[]
+		{
+			new Player { ObjectId = 1001, Race = "ELYOS", Position = new WorldPosition(300030000, 1, 1, 1, 0, InstanceId: 7) },
+			new Player
+			{
+				ObjectId = 1002,
+				Race = "ASMODIANS",
+				Position = new WorldPosition(300030000, 2, 2, 2, 0, InstanceId: 7),
+				BindPoint = new PlayerBindPoint(220010000, 100, 200, 300, 44),
+			},
+			new Player { ObjectId = 1003, Race = "ELYOS", Position = new WorldPosition(300030000, 3, 3, 3, 0, InstanceId: 8) },
+		};
+		var instanceExits = new InstanceExitTable(
+		[
+			new InstanceExitSummary(300030000, 210020000, "ELYOS", 330, 2732.1643f, 263.4721f, 0),
+			new InstanceExitSummary(300030000, 220020000, "ASMODIANS", 264.6885f, 2366.3713f, 445.1222f, 29),
+		]);
+		var worldMaps = new WorldMapRuntimeStateTable(
+		[
+			new WorldMapSummary(210020000, IsInstance: false, TwinCount: 1),
+			new WorldMapSummary(220020000, IsInstance: false, TwinCount: 1),
+		]);
+		worldMaps.RemoveWorldMapInstance(220020000, 1);
+		var initialData = new PlayerInitialDataTable(
+			new Dictionary<string, PlayerCreationData>(),
+			new Dictionary<string, PlayerSpawnLocation>
+			{
+				["ASMODIANS"] = new PlayerSpawnLocation(220010000, 1, 2, 3, 32),
+			});
+
+		var plans = InstanceRuntimeService.CreatePlayerForcedExitTeleportPlans(
+			players,
+			300030000,
+			7,
+			instanceExits,
+			worldMaps,
+			initialData);
+
+		Assert.Equal(2, plans.Count);
+		var elyos = plans.Single(plan => plan.ForcedExitResolution.ForcedExit.PlayerObjectId == 1001);
+		Assert.Equal(InstanceExitResolutionStatus.ExitDestination, elyos.ForcedExitResolution.ExitResolution.Status);
+		Assert.Null(elyos.BindFallback);
+		Assert.Equal(new WorldPosition(210020000, 330, 2732.1643f, 263.4721f, 0), elyos.Destination);
+		var asmodian = plans.Single(plan => plan.ForcedExitResolution.ForcedExit.PlayerObjectId == 1002);
+		Assert.Equal(InstanceExitResolutionStatus.BindLocationFallback, asmodian.ForcedExitResolution.ExitResolution.Status);
+		Assert.NotNull(asmodian.BindFallback);
+		Assert.Equal(BindLocationResolutionStatus.PlayerBindPoint, asmodian.BindFallback.Status);
+		Assert.Equal(new WorldPosition(220010000, 100, 200, 300, 44, InstanceId: 1), asmodian.Destination);
+		Assert.All(plans, plan => Assert.Contains("moveToInstanceExit", plan.JavaSource, StringComparison.Ordinal));
+	}
+
 	private sealed class RecordingInstanceLifecycleHandler : IInstanceLifecycleHandler
 	{
 		private readonly Func<WorldMapInstanceRuntimeState, bool>? _instanceExistsAtDestroy;
