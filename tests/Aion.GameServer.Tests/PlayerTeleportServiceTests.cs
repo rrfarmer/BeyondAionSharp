@@ -1,4 +1,5 @@
 using Aion.GameServer.Controllers.Movement;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
@@ -8,6 +9,60 @@ namespace Aion.GameServer.Tests;
 
 public sealed class PlayerTeleportServiceTests
 {
+	[Fact]
+	public void ResolveBindLocationUsesPlayerBindPointBeforeInitialSpawnLikeJavaMoveToBindLocation()
+	{
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Position = new WorldPosition(300030000, 1, 2, 3, 4, InstanceId: 7),
+			BindPoint = new PlayerBindPoint(210010000, 10, 20, 30, 40),
+		};
+		var initialData = CreateInitialData(new PlayerSpawnLocation(220010000, 100, 200, 300, 50));
+
+		var plan = PlayerTeleportService.ResolveBindLocation(player, initialData);
+
+		Assert.Equal(BindLocationResolutionStatus.PlayerBindPoint, plan.Status);
+		Assert.Equal(new WorldPosition(210010000, 10, 20, 30, 40, InstanceId: 1), plan.Destination);
+		Assert.Contains("getBindPoint", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void ResolveBindLocationUsesInitialSpawnWhenPlayerHasNoBindPointLikeJavaMoveToBindLocation()
+	{
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Position = new WorldPosition(210010000, 1, 2, 3, 4, InstanceId: 7),
+		};
+		var initialData = CreateInitialData(new PlayerSpawnLocation(210010000, 1212.9423f, 1044.8516f, 140.75568f, 32));
+
+		var plan = PlayerTeleportService.ResolveBindLocation(player, initialData);
+
+		Assert.Equal(BindLocationResolutionStatus.InitialSpawnLocation, plan.Status);
+		Assert.Equal(new WorldPosition(210010000, 1212.9423f, 1044.8516f, 140.75568f, 32, InstanceId: 7), plan.Destination);
+		Assert.Contains("getSpawnLocation", plan.JavaSource, StringComparison.Ordinal);
+	}
+
+	[Fact]
+	public void ResolveBindLocationRecordsMissingInitialSpawnWhenModeledDataIsUnavailable()
+	{
+		var player = new Player
+		{
+			Race = "ELYOS",
+			Position = new WorldPosition(300030000, 1, 2, 3, 4, InstanceId: 7),
+		};
+		var initialData = new PlayerInitialDataTable(
+			new Dictionary<string, PlayerCreationData>(),
+			new Dictionary<string, PlayerSpawnLocation>());
+
+		var plan = PlayerTeleportService.ResolveBindLocation(player, initialData);
+
+		Assert.Equal(BindLocationResolutionStatus.MissingInitialSpawn, plan.Status);
+		Assert.Null(plan.Destination);
+		Assert.Contains("getSpawnLocation", plan.JavaSource, StringComparison.Ordinal);
+	}
+
 	[Fact]
 	public void TeleportToKiskPositionUpdatesAuthoritativePositionAndResetsMovement()
 	{
@@ -108,5 +163,15 @@ public sealed class PlayerTeleportServiceTests
 		player.Movement.IsJumping = true;
 		player.Movement.FlightDistance = 88;
 		return player;
+	}
+
+	private static PlayerInitialDataTable CreateInitialData(PlayerSpawnLocation elyosSpawn)
+	{
+		return new PlayerInitialDataTable(
+			new Dictionary<string, PlayerCreationData>(),
+			new Dictionary<string, PlayerSpawnLocation>
+			{
+				["ELYOS"] = elyosSpawn,
+			});
 	}
 }

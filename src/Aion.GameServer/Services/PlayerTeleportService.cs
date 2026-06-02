@@ -10,6 +10,47 @@ namespace Aion.GameServer.Services;
 
 public static class PlayerTeleportService
 {
+	public static BindLocationResolutionPlan ResolveBindLocation(Player player, PlayerInitialDataTable playerInitialData)
+	{
+		// Java parity: TeleportService.moveToBindLocation uses player.getBindPoint() when present,
+		// otherwise DataManager.PLAYER_INITIAL_DATA.getSpawnLocation(player.getRace()).
+		if (player.BindPoint != null)
+		{
+			var bindPoint = player.BindPoint;
+			var destination = CreateTeleportToWorldDestination(
+				player,
+				bindPoint.MapId,
+				bindPoint.X,
+				bindPoint.Y,
+				bindPoint.Z,
+				bindPoint.Heading);
+			return new BindLocationResolutionPlan(
+				BindLocationResolutionStatus.PlayerBindPoint,
+				destination,
+				"TeleportService.moveToBindLocation -> player.getBindPoint()");
+		}
+
+		var spawn = playerInitialData.GetSpawnLocation(player.Race);
+		if (spawn == null)
+		{
+			return new BindLocationResolutionPlan(
+				BindLocationResolutionStatus.MissingInitialSpawn,
+				null,
+				"TeleportService.moveToBindLocation -> DataManager.PLAYER_INITIAL_DATA.getSpawnLocation(player.getRace())");
+		}
+
+		return new BindLocationResolutionPlan(
+			BindLocationResolutionStatus.InitialSpawnLocation,
+			CreateTeleportToWorldDestination(
+				player,
+				spawn.MapId,
+				spawn.X,
+				spawn.Y,
+				spawn.Z,
+				(byte)spawn.Heading),
+			"TeleportService.moveToBindLocation -> DataManager.PLAYER_INITIAL_DATA.getSpawnLocation(player.getRace())");
+	}
+
 	public static PlayerTeleportResult TeleportToKiskPosition(Player player, WorldPosition destination)
 	{
 		// Java parity: services/teleport/TeleportService.teleportTo(Player, WorldPosition) from PlayerReviveService.kiskRevive.
@@ -90,6 +131,32 @@ public static class PlayerTeleportService
 		movement.IsJumping = false;
 		movement.FlightDistance = 0;
 	}
+
+	private static WorldPosition CreateTeleportToWorldDestination(
+		Player player,
+		int worldId,
+		float x,
+		float y,
+		float z,
+		byte heading)
+	{
+		// Java parity: TeleportService.teleportTo(player, worldId, x, y, z, h)
+		// delegates with instance 1 when crossing worlds; otherwise it keeps player.getInstanceId().
+		var instanceId = player.Position.WorldId != worldId ? 1 : player.Position.InstanceId;
+		return new WorldPosition(worldId, x, y, z, heading, instanceId);
+	}
+}
+
+public sealed record BindLocationResolutionPlan(
+	BindLocationResolutionStatus Status,
+	WorldPosition? Destination,
+	string JavaSource);
+
+public enum BindLocationResolutionStatus
+{
+	PlayerBindPoint,
+	InitialSpawnLocation,
+	MissingInitialSpawn,
 }
 
 public sealed record PlayerTeleportResult(
