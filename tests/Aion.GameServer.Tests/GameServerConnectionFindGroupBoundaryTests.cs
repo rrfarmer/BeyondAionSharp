@@ -153,6 +153,50 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionTwelveDeclineComposesWhisperIntentWithoutLiveDispatch()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS");
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var registry = new CapturingConnectionRegistry([applicant]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			playerGroupRuntime: new PlayerGroupRuntime(),
+			playerAllianceRuntime: new PlayerAllianceRuntime());
+		SetActivePlayer(fixture.Connection, responder);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(12);
+				buffer.WriteD(applicant.ObjectId);
+				buffer.WriteC(0);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan!.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(12, plan.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.Null(plan.IntentPlan.InviteIntent);
+		Assert.Null(plan.InvitePlan);
+		var intent = Assert.Single(plan.IntentPlan.DirectPacketIntents);
+		Assert.Equal(applicant.ObjectId, intent.RecipientObjectId);
+		Assert.Equal(nameof(SmMessage), intent.Packet.GetType().Name);
+		Assert.Contains("ChatUtil.l10n(1400217)", intent.JavaSource, StringComparison.Ordinal);
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.Equal(0, applicant.ResponseRequester.Count);
+		Assert.Empty(sentPackets);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_UnconfiguredConnectionPreservesDeferredBoundary()
 	{
 		await using var fixture = await ConnectionFixture.CreateAsync(findGroupService: null);
