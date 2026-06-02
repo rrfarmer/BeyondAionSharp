@@ -9,7 +9,7 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureImplementationReadin
 	{
 		var readiness = FindGroupMutationPostJavaArtifactCaptureImplementationReadinessService.Create();
 
-		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureImplementationReadinessStatus.BlockedMissingJavaFixture, readiness.Status);
+		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureImplementationReadinessStatus.BlockedMissingJavaInstrumentation, readiness.Status);
 		Assert.False(readiness.IsLive);
 		Assert.True(readiness.RequiresJavaFixture);
 		Assert.True(readiness.RequiresJavaInstrumentation);
@@ -55,9 +55,9 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureImplementationReadin
 		var scenarios = Single(readiness, FindGroupMutationPostJavaArtifactCaptureImplementationTaskKind.FixtureScenarios);
 
 		Assert.Contains("FindGroupMutationPostTraceCaptureTest.java", fixture.Target, StringComparison.Ordinal);
-		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureImplementationTaskStatus.BlockedMissingJavaFixture, fixture.Status);
+		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureImplementationTaskStatus.DesignOnly, fixture.Status);
 		Assert.Contains("capture disabled unless", fixture.RequiredWork, StringComparison.Ordinal);
-		Assert.Contains("Do not change Java gameplay behavior", fixture.Notes, StringComparison.Ordinal);
+		Assert.Contains("Fixture scaffold exists", fixture.Notes, StringComparison.Ordinal);
 		Assert.True(readiness.HasActionTwoScenario);
 		Assert.True(readiness.HasActionSixScenario);
 		Assert.Contains("action 2 recruitment", scenarios.RequiredWork, StringComparison.Ordinal);
@@ -117,7 +117,7 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureImplementationReadin
 		Assert.Contains("zero broadcast/invite counts", validation.RequiredWork, StringComparison.Ordinal);
 		Assert.Contains("live C# rows", validation.Notes, StringComparison.Ordinal);
 		Assert.Equal(
-			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
+			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
 			readiness.FocusedMavenCommand);
 		Assert.Equal(readiness.FocusedMavenCommand, maven.Target);
 		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureImplementationTaskStatus.DesignOnly, maven.Status);

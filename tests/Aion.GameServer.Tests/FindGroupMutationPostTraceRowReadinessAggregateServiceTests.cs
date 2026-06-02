@@ -50,7 +50,7 @@ public sealed class FindGroupMutationPostTraceRowReadinessAggregateServiceTests
 
 		Assert.Contains(aggregate.Rows, row =>
 			row.Blocker == FindGroupMutationPostTraceRowReadinessBlocker.JavaCaptureRunbook
-			&& row.Status == FindGroupMutationPostTraceRowReadinessRowStatus.BlockedMissingJavaFixture
+			&& row.Status == FindGroupMutationPostTraceRowReadinessRowStatus.BlockedMissingJavaInstrumentation
 			&& row.BlocksRuntimeComparison
 			&& row.Evidence.Contains("FindGroupMutationPostTraceCaptureTest", StringComparison.Ordinal)
 			&& row.Evidence.Contains("artifacts=2", StringComparison.Ordinal)

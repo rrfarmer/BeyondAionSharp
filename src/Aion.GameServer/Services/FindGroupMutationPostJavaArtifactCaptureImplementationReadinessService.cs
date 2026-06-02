@@ -3,6 +3,7 @@ namespace Aion.GameServer.Services;
 public enum FindGroupMutationPostJavaArtifactCaptureImplementationReadinessStatus
 {
 	BlockedMissingJavaFixture,
+	BlockedMissingJavaInstrumentation,
 	ReadyForJavaImplementation,
 }
 
@@ -78,12 +79,12 @@ public static class FindGroupMutationPostJavaArtifactCaptureImplementationReadin
 
 		Add(tasks,
 			FindGroupMutationPostJavaArtifactCaptureImplementationTaskKind.FixtureClass,
-			FindGroupMutationPostJavaArtifactCaptureImplementationTaskStatus.BlockedMissingJavaFixture,
-			$"game-server/src/test/java/.../{runbook.FixtureClassName}.java",
+			FindGroupMutationPostJavaArtifactCaptureImplementationTaskStatus.DesignOnly,
+			$"game-server/test/com/aionemu/gameserver/services/findgroup/{runbook.FixtureClassName}.java",
 			"Create the gated Java fixture class and keep capture disabled unless the system property flag is true.",
 			"CM_FIND_GROUP.readImpl/runImpl; FindGroupService.addRecruitment/addApplication",
 			$"Focused Maven command discovers and runs {runbook.FixtureClassName} without broad test selection.",
-			"Do not change Java gameplay behavior while adding the test fixture.");
+			"Fixture scaffold exists; Java runtime instrumentation and artifact writing are still blocked.");
 
 		Add(tasks,
 			FindGroupMutationPostJavaArtifactCaptureImplementationTaskKind.FixtureScenarios,
@@ -151,7 +152,7 @@ public static class FindGroupMutationPostJavaArtifactCaptureImplementationReadin
 		var taskArray = tasks.ToArray();
 
 		return new FindGroupMutationPostJavaArtifactCaptureImplementationReadiness(
-			FindGroupMutationPostJavaArtifactCaptureImplementationReadinessStatus.BlockedMissingJavaFixture,
+			FindGroupMutationPostJavaArtifactCaptureImplementationReadinessStatus.BlockedMissingJavaInstrumentation,
 			taskArray,
 			runbook.FixtureClassName,
 			runbook.CaptureFlag,

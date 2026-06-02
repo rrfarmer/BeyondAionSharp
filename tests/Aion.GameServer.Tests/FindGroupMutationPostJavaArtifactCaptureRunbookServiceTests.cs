@@ -9,7 +9,7 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureRunbookServiceTests
 	{
 		var runbook = FindGroupMutationPostJavaArtifactCaptureRunbookService.Create();
 
-		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaFixture, runbook.Status);
+		Assert.Equal(FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaInstrumentation, runbook.Status);
 		Assert.False(runbook.IsLive);
 		Assert.True(runbook.RequiresJavaFixture);
 		Assert.True(runbook.RequiresJavaInstrumentation);
@@ -30,9 +30,9 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureRunbookServiceTests
 		Assert.Equal(Enumerable.Range(1, runbook.Steps.Count), runbook.Steps.Select(step => step.Order));
 		Assert.Contains(runbook.Steps, step =>
 			step.Kind == FindGroupMutationPostJavaArtifactCaptureRunbookStepKind.JavaFixtureClass
-			&& step.Status == FindGroupMutationPostJavaArtifactCaptureRunbookStepStatus.BlockedMissingJavaFixture
+			&& step.Status == FindGroupMutationPostJavaArtifactCaptureRunbookStepStatus.DesignOnly
 			&& step.Target.Contains("FindGroupMutationPostTraceCaptureTest.java", StringComparison.Ordinal)
-			&& step.Notes.Contains("does not exist yet", StringComparison.Ordinal));
+			&& step.Notes.Contains("Maven-runnable", StringComparison.Ordinal));
 		Assert.Contains(runbook.Steps, step =>
 			step.Kind == FindGroupMutationPostJavaArtifactCaptureRunbookStepKind.ClientPacketRunImplHook
 			&& step.JavaSource == "CM_FIND_GROUP.runImpl"
@@ -90,7 +90,7 @@ public sealed class FindGroupMutationPostJavaArtifactCaptureRunbookServiceTests
 		var runbook = FindGroupMutationPostJavaArtifactCaptureRunbookService.Create();
 
 		Assert.Equal(
-			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
+			"mvn -pl game-server -am test \"-Dtest=FindGroupMutationPostTraceCaptureTest\" \"-Daion.findGroupMutationPost.capture=true\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"",
 			runbook.FocusedMavenCommand);
 		Assert.Contains(runbook.Steps, step =>
 			step.Kind == FindGroupMutationPostJavaArtifactCaptureRunbookStepKind.FocusedMavenCommand

@@ -3,6 +3,7 @@ namespace Aion.GameServer.Services;
 public enum FindGroupMutationPostJavaArtifactCaptureRunbookStatus
 {
 	BlockedMissingJavaFixture,
+	BlockedMissingJavaInstrumentation,
 	ReadyForImplementationDesignOnly,
 }
 
@@ -80,11 +81,11 @@ public static class FindGroupMutationPostJavaArtifactCaptureRunbookService
 
 		Add(steps,
 			FindGroupMutationPostJavaArtifactCaptureRunbookStepKind.JavaFixtureClass,
-			FindGroupMutationPostJavaArtifactCaptureRunbookStepStatus.BlockedMissingJavaFixture,
-			$"game-server/src/test/java/.../{FixtureClassName}.java",
+			FindGroupMutationPostJavaArtifactCaptureRunbookStepStatus.DesignOnly,
+			$"game-server/test/com/aionemu/gameserver/services/findgroup/{FixtureClassName}.java",
 			"Create a narrow Java fixture that exercises CM_FIND_GROUP action 2 and 6 against deterministic players/state and writes artifacts only when the capture flag is enabled.",
 			"CM_FIND_GROUP.readImpl/runImpl; FindGroupService.addRecruitment/addApplication",
-			"Fixture does not exist yet; do not run the planned Maven command as proof until it is implemented.");
+			"Fixture scaffold exists and is Maven-runnable; it does not capture runtime behavior or write artifacts yet.");
 
 		Add(steps,
 			FindGroupMutationPostJavaArtifactCaptureRunbookStepKind.ClientPacketPayloadHook,
@@ -161,7 +162,7 @@ public static class FindGroupMutationPostJavaArtifactCaptureRunbookService
 		var stepArray = steps.ToArray();
 
 		return new FindGroupMutationPostJavaArtifactCaptureRunbook(
-			FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaFixture,
+			FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaInstrumentation,
 			stepArray,
 			FixtureClassName,
 			CaptureFlag,
@@ -184,7 +185,7 @@ public static class FindGroupMutationPostJavaArtifactCaptureRunbookService
 	}
 
 	public static string FocusedMavenCommand() =>
-		$"mvn -pl game-server -am test \"-Dtest={FixtureClassName}\" \"-D{CaptureFlag}=true\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
+		$"mvn -pl game-server -am test \"-Dtest={FixtureClassName}\" \"-D{CaptureFlag}=true\" \"-Dmaven.test.skip=false\" \"-Dsurefire.failIfNoSpecifiedTests=false\"";
 
 	private static void Add(
 		ICollection<FindGroupMutationPostJavaArtifactCaptureRunbookStep> steps,

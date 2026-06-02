@@ -132,9 +132,12 @@ public static class FindGroupMutationPostTraceRowReadinessAggregateService
 		ICollection<FindGroupMutationPostTraceRowReadinessRow> rows,
 		FindGroupMutationPostJavaArtifactCaptureRunbook runbook)
 	{
-		var status = runbook.Status == FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaFixture
-			? FindGroupMutationPostTraceRowReadinessRowStatus.BlockedMissingJavaFixture
-			: FindGroupMutationPostTraceRowReadinessRowStatus.SatisfiedByNonLiveMetadata;
+		var status = runbook.Status switch
+		{
+			FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaFixture => FindGroupMutationPostTraceRowReadinessRowStatus.BlockedMissingJavaFixture,
+			FindGroupMutationPostJavaArtifactCaptureRunbookStatus.BlockedMissingJavaInstrumentation => FindGroupMutationPostTraceRowReadinessRowStatus.BlockedMissingJavaInstrumentation,
+			_ => FindGroupMutationPostTraceRowReadinessRowStatus.SatisfiedByNonLiveMetadata,
+		};
 
 		Add(rows,
 			FindGroupMutationPostTraceRowReadinessBlocker.JavaCaptureRunbook,
