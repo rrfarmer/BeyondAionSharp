@@ -1523,6 +1523,17 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 5));
 				break;
 			}
+			case 103:
+			{
+				var cancelEnter = _autoGroupInstanceLeaveRuntimeService.CancelEnter(player, packet.InstanceMaskId);
+				if (cancelEnter.Status != AutoGroupInstanceCancelEnterStatus.Unregistered)
+					return;
+
+				var autoGroup = _runtimeContext?.DataManager?.StaticData.AutoGroups.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
+				if (autoGroup != null)
+					await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 2));
+				break;
+			}
 		}
 	}
 

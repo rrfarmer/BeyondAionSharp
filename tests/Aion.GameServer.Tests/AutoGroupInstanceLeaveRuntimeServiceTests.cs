@@ -68,6 +68,59 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	}
 
 	[Fact]
+	public void CancelEnter_UnregistersPlayerLikeJavaAutoGroupService()
+	{
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var player = CreatePlayer(1001);
+		var teammate = CreatePlayer(1002);
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [player.ObjectId, teammate.ObjectId],
+			InstanceMaskId: 107));
+
+		var result = service.CancelEnter(player, 107);
+
+		Assert.Equal(AutoGroupInstanceCancelEnterStatus.Unregistered, result.Status);
+		Assert.Equal(1, result.RegisteredPlayerCountAfterCancel);
+		Assert.NotNull(result.Snapshot);
+		Assert.DoesNotContain(player.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
+		Assert.Contains(teammate.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
+		Assert.DoesNotContain(player.ObjectId, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
+	public void CancelEnter_MissingMaskOrUnregisteredPlayerIsNoOpLikeJavaGetAutoInstanceNull()
+	{
+		var groups = new PlayerGroupRuntime();
+		var alliances = new PlayerAllianceRuntime();
+		var player = CreatePlayer(1001);
+		var teammate = CreatePlayer(1002);
+		groups.CreateOrUpdateGroup(9001, [player, teammate], PlayerGroupType.AutoGroup);
+		var service = new AutoGroupInstanceLeaveRuntimeService(groups, alliances);
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [teammate.ObjectId],
+			InstanceMaskId: 107));
+
+		var missingMask = service.CancelEnter(player, 108);
+		var unregisteredPlayer = service.CancelEnter(player, 107);
+
+		Assert.Equal(AutoGroupInstanceCancelEnterStatus.NoAutoInstance, missingMask.Status);
+		Assert.Equal(AutoGroupInstanceCancelEnterStatus.NoAutoInstance, unregisteredPlayer.Status);
+		Assert.Equal(PlayerTeamMembership.Group, player.TeamMembership);
+		Assert.True(groups.HasMember(9001, player.ObjectId));
+		Assert.Contains(teammate.ObjectId, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
 	public void OnLeaveInstance_UnregistersAndRemovesGroupForJavaAutoPvpInstance()
 	{
 		var groups = new PlayerGroupRuntime();
