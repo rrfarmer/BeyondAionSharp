@@ -1069,14 +1069,26 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 		Assert.Empty(registry.DirectSends);
 	}
 
-	[Fact]
-	public async Task ExecuteOptInAsync_LeavesParsedButNoRunImplActionWithoutSideEffects()
+	[Theory]
+	[InlineData(20)]
+	[InlineData(25)]
+	public async Task ExecuteOptInAsync_LeavesParsedButNoRunImplActionWithoutSideEffects(int action)
 	{
 		var registry = new FakeGameClientConnectionRegistry();
 		var player = CreatePlayer(0x01020307, "Player", "ELYOS");
 		var compositionService = new FindGroupConnectionClientActionCompositionPlanService(
 			new FindGroupClientActionPlanService(new FindGroupRecruitmentPlanService()));
-		var packet = CreateFindGroupPacket(buffer => buffer.WriteC(20));
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(action);
+				if (action == 25)
+				{
+					buffer.WriteD(0x11121314);
+					buffer.WriteD(0x21222324);
+					buffer.WriteD(0x31323334);
+				}
+			});
 
 		var compositionPlan = compositionService.CreateDisabledPlan(
 			player,
@@ -1086,13 +1098,14 @@ public sealed class FindGroupConnectionBoundarySideEffectCompositionEvidenceServ
 			compositionPlan,
 			new FindGroupSideEffectDispatchExecutorService(registry));
 
-		Assert.Equal(20, evidence.IntentPlan.Action);
+		Assert.Equal(action, evidence.IntentPlan.Action);
 		Assert.Equal(FindGroupClientActionPlanKind.ParsedButNoRunImpl, evidence.IntentPlan.ClientActionKind);
 		Assert.False(evidence.IntentPlan.ShouldDispatchLiveSideEffects);
 		Assert.Empty(evidence.IntentPlan.DirectPacketIntents);
 		Assert.Empty(evidence.IntentPlan.WorldBroadcastIntents);
 		Assert.Empty(evidence.ExecutionPlan.DirectPackets);
 		Assert.Empty(evidence.ExecutionPlan.WorldBroadcasts);
+		Assert.Empty(evidence.ExecutionPlan.ExecutionOrder);
 		Assert.Empty(registry.DirectSends);
 		Assert.Empty(registry.WorldBroadcasts);
 	}
