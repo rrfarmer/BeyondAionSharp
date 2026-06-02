@@ -98,6 +98,61 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task CreateDisabledFindGroupBoundaryPlan_ActionTwelveAcceptAllianceUsesConnectionResolverAndRuntimesWithoutLiveDispatch()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS");
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		findGroupService.RegisterInstanceGroup(
+			responder,
+			instanceMaskId: 0x11223344,
+			message: "Entry",
+			minMembers: 7,
+			nowEpochSeconds: 100);
+		var registry = new CapturingConnectionRegistry([applicant]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry,
+			playerGroupRuntime: new PlayerGroupRuntime(),
+			playerAllianceRuntime: new PlayerAllianceRuntime());
+		SetActivePlayer(fixture.Connection, responder);
+		var packet = CreateFindGroupPacket(
+			buffer =>
+			{
+				buffer.WriteC(12);
+				buffer.WriteD(applicant.ObjectId);
+				buffer.WriteC(1);
+			});
+
+		var plan = fixture.Connection.CreateDisabledFindGroupBoundaryPlan(packet, nowEpochSeconds: 101);
+
+		Assert.NotNull(plan);
+		Assert.Equal(FindGroupConnectionBoundaryDispatchAdapterStatus.ComposedDisabledSideEffects, plan!.Status);
+		Assert.False(plan.ShouldDispatchLiveSideEffects);
+		Assert.False(plan.IsCmFindGroupBoundaryWired);
+		Assert.Equal(12, plan.IntentPlan.Action);
+		Assert.Equal(FindGroupClientActionPlanKind.SendInstanceApplicationResult, plan.IntentPlan.ClientActionKind);
+		Assert.NotNull(plan.IntentPlan.InviteIntent);
+		Assert.Equal(FindGroupInstanceInviteKind.Alliance, plan.IntentPlan.InviteIntent!.Kind);
+		Assert.Empty(plan.IntentPlan.DirectPacketIntents);
+		Assert.Empty(plan.IntentPlan.WorldBroadcastIntents);
+		Assert.NotNull(plan.InvitePlan);
+		Assert.Equal(FindGroupInstanceApplicationInviteDispatchStatus.AllianceInvitePlanned, plan.InvitePlan!.Status);
+		Assert.False(plan.InvitePlan.DispatchLiveSideEffects);
+		Assert.Equal(AllianceInviteRequestStatus.Requested, plan.InvitePlan.AllianceInviteRequest?.Status);
+		Assert.Equal(responder.ObjectId, plan.InvitePlan.AllianceInviteRequest?.Request?.RequesterObjectId);
+		Assert.Equal(applicant.ObjectId, plan.InvitePlan.AllianceInviteRequest?.Request?.RequestTargetObjectId);
+		Assert.Equal(SmQuestionWindow.AllianceInvite, plan.InvitePlan.AllianceInviteRequest?.QuestionWindow?.Code);
+		Assert.Equal(1, applicant.ResponseRequester.Count);
+		Assert.NotNull(applicant.PendingAllianceInviteRequest);
+		Assert.Empty(sentPackets);
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+	}
+
+	[Fact]
 	public async Task CreateDisabledFindGroupBoundaryPlan_UnconfiguredConnectionPreservesDeferredBoundary()
 	{
 		await using var fixture = await ConnectionFixture.CreateAsync(findGroupService: null);
