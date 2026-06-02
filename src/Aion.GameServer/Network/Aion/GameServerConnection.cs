@@ -1507,6 +1507,22 @@ public sealed class GameServerConnection : BaseClientConnection
 						_connectionRegistry);
 				}
 				break;
+			case 102:
+			{
+				var pressEnter = _autoGroupInstanceLeaveRuntimeService.PressEnter(player, packet.InstanceMaskId);
+				if (pressEnter.Status != AutoGroupInstancePressEnterStatus.ReadyToEnter)
+					return;
+
+				var staticData = _runtimeContext?.DataManager?.StaticData;
+				var instanceCooltimes = staticData?.InstanceCooltimes
+					?? new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>());
+				await ApplyInstanceEntranceCooldownAsync(player, pressEnter.WorldId, reenter: false, instanceCooltimes);
+
+				var autoGroup = staticData?.AutoGroups.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
+				if (autoGroup != null)
+					await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 5));
+				break;
+			}
 		}
 	}
 

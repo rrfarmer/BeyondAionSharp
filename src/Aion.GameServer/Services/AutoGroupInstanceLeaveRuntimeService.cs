@@ -35,6 +35,7 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 			var state = new AutoGroupInstanceRuntimeState(
 				registration.WorldId,
 				registration.InstanceId,
+				registration.InstanceMaskId,
 				registration.InstanceKind,
 				registration.QuickRegistrationAllowed,
 				registration.RegisteredPlayerObjectIds);
@@ -97,6 +98,39 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 		return result;
 	}
 
+	public AutoGroupInstancePressEnterResult PressEnter(Player player, int instanceMaskId)
+	{
+		lock (_sync)
+		{
+			var state = _instancesByKey.Values.FirstOrDefault(candidate =>
+				candidate.InstanceMaskId == instanceMaskId && candidate.IsRegistered(player.ObjectId));
+			if (state == null)
+				return AutoGroupInstancePressEnterResult.Missing(instanceMaskId, player.ObjectId);
+
+			var removedGroup = false;
+			var removedAlliance = false;
+			if (player.TeamMembership == PlayerTeamMembership.Group)
+			{
+				removedGroup = _playerGroups.RemoveMember(player) != null;
+			}
+			if (player.TeamMembership == PlayerTeamMembership.Alliance)
+			{
+				removedAlliance = _playerAlliances.RemoveMember(player) != null;
+			}
+
+			return new AutoGroupInstancePressEnterResult(
+				instanceMaskId,
+				player.ObjectId,
+				AutoGroupInstancePressEnterStatus.ReadyToEnter,
+				state.WorldId,
+				state.Key.InstanceId,
+				removedGroup,
+				removedAlliance,
+				state.CreateSnapshot(),
+				"AutoGroupService.pressEnter -> getAutoInstance(player, mask) -> remove PlayerGroup/PlayerAlliance -> AutoInstance.onPressEnter -> SM_AUTO_GROUP(mask, 5)");
+		}
+	}
+
 	public AutoGroupInstanceRuntimeSnapshot? GetSnapshot(int worldId, int instanceId)
 	{
 		lock (_sync)
@@ -126,7 +160,8 @@ public sealed record AutoGroupInstanceRuntimeRegistration(
 	int InstanceId,
 	AutoGroupInstanceKind InstanceKind,
 	bool QuickRegistrationAllowed,
-	IReadOnlyCollection<int> RegisteredPlayerObjectIds);
+	IReadOnlyCollection<int> RegisteredPlayerObjectIds,
+	int InstanceMaskId = 0);
 
 public sealed record AutoGroupInstanceRuntimeResult(
 	AutoGroupInstanceLeavePlan Plan,
@@ -139,9 +174,42 @@ public sealed record AutoGroupInstanceRuntimeResult(
 public sealed record AutoGroupInstanceRuntimeSnapshot(
 	int WorldId,
 	int InstanceId,
+	int InstanceMaskId,
 	AutoGroupInstanceKind InstanceKind,
 	bool QuickRegistrationAllowed,
 	IReadOnlySet<int> RegisteredPlayerObjectIds);
+
+public sealed record AutoGroupInstancePressEnterResult(
+	int InstanceMaskId,
+	int PlayerObjectId,
+	AutoGroupInstancePressEnterStatus Status,
+	int WorldId,
+	int InstanceId,
+	bool RemovedGroup,
+	bool RemovedAlliance,
+	AutoGroupInstanceRuntimeSnapshot? Snapshot,
+	string JavaSource)
+{
+	public static AutoGroupInstancePressEnterResult Missing(int instanceMaskId, int playerObjectId)
+	{
+		return new AutoGroupInstancePressEnterResult(
+			instanceMaskId,
+			playerObjectId,
+			AutoGroupInstancePressEnterStatus.NoAutoInstance,
+			WorldId: 0,
+			InstanceId: 0,
+			RemovedGroup: false,
+			RemovedAlliance: false,
+			Snapshot: null,
+			"AutoGroupService.pressEnter -> getAutoInstance returned null");
+	}
+}
+
+public enum AutoGroupInstancePressEnterStatus
+{
+	NoAutoInstance,
+	ReadyToEnter,
+}
 
 public readonly record struct AutoGroupInstanceRuntimeKey(int WorldId, int InstanceId);
 
@@ -152,17 +220,24 @@ internal sealed class AutoGroupInstanceRuntimeState
 	public AutoGroupInstanceRuntimeState(
 		int worldId,
 		int instanceId,
+		int instanceMaskId,
 		AutoGroupInstanceKind instanceKind,
 		bool quickRegistrationAllowed,
 		IEnumerable<int> registeredPlayerObjectIds)
 	{
+		WorldId = worldId;
 		Key = new AutoGroupInstanceRuntimeKey(worldId, instanceId == 0 ? 1 : instanceId);
+		InstanceMaskId = instanceMaskId;
 		InstanceKind = instanceKind;
 		QuickRegistrationAllowed = quickRegistrationAllowed;
 		_registeredPlayerObjectIds = registeredPlayerObjectIds.ToHashSet();
 	}
 
+	public int WorldId { get; }
+
 	public AutoGroupInstanceRuntimeKey Key { get; }
+
+	public int InstanceMaskId { get; }
 
 	public AutoGroupInstanceKind InstanceKind { get; }
 
@@ -188,11 +263,14 @@ internal sealed class AutoGroupInstanceRuntimeState
 
 	public bool Unregister(int playerObjectId) => _registeredPlayerObjectIds.Remove(playerObjectId);
 
+	public bool IsRegistered(int playerObjectId) => _registeredPlayerObjectIds.Contains(playerObjectId);
+
 	public AutoGroupInstanceRuntimeSnapshot CreateSnapshot()
 	{
 		return new AutoGroupInstanceRuntimeSnapshot(
 			Key.WorldId,
 			Key.InstanceId,
+			InstanceMaskId,
 			InstanceKind,
 			QuickRegistrationAllowed,
 			_registeredPlayerObjectIds.ToHashSet());
