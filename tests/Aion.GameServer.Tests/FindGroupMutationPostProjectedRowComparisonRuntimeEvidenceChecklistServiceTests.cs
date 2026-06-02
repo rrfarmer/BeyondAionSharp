@@ -62,10 +62,12 @@ public sealed class FindGroupMutationPostProjectedRowComparisonRuntimeEvidenceCh
 			&& row.ExistingProvider.Contains("FindGroupMutationPostJavaArtifactRootValidationCommandReportService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostProjectedRowComparisonValueReaderExecutorCaptureCommandConsistencyReportService", StringComparison.Ordinal)
 			&& row.ExistingProvider.Contains("FindGroupMutationPostExplicitRootJavaCaptureDryRunCommandReportService", StringComparison.Ordinal)
+			&& row.ExistingProvider.Contains("FindGroupMutationPostExplicitRootJavaPostCaptureValidatorSummaryService", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("capture-enabled Java", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("artifact-root validation command report", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("capture-command consistency report", StringComparison.Ordinal)
 			&& row.RequiredNextEvidence.Contains("explicit-root dry-run command report", StringComparison.Ordinal)
+			&& row.RequiredNextEvidence.Contains("post-capture validator summary", StringComparison.Ordinal)
 			&& row.Notes.Contains("shape evidence only", StringComparison.Ordinal));
 	}
 
