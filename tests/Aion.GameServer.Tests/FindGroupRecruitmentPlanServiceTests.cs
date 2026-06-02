@@ -2,7 +2,6 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -779,7 +778,7 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
-	public void SendInstanceApplicationResult_DeclinePlansLocalizedWhisper()
+	public void SendInstanceApplicationResult_DeclinePlansLocalizedWhisperWithJavaPacketPayload()
 	{
 		var service = new FindGroupRecruitmentPlanService();
 		var responder = CreatePlayer(0x01020307, "Responder", "ELYOS", "GLADIATOR", 65);
@@ -793,7 +792,8 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 		Assert.Equal(applicant.ObjectId, direct.RecipientObjectId);
 		Assert.Equal("PacketSendUtility.sendPacket(applicant, new SM_MESSAGE(responder, ChatUtil.l10n(1400217), ChatType.WHISPER))", direct.JavaSource);
 		Assert.Equal(
-			SerializeUnencryptedPayload(new SmMessage(responder, ChatUtil.L10n(1400217)!, 4)),
+			// Java SM_MESSAGE.writeImpl: chatType, active-player race filter, sender id, sender name, localized message.
+			Convert.FromHexString("04010703020152006500730070006F006E006400650072000000240033BB2A000000"),
 			SerializeUnencryptedPayload(direct.Packet));
 	}
 
