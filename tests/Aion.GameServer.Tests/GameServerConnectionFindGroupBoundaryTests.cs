@@ -585,6 +585,57 @@ public sealed class GameServerConnectionFindGroupBoundaryTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ActionElevenSendsInstanceApplicationToTarget()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var applicant = CreatePlayer(0x01020304, "Applicant", "ELYOS");
+		var recruiter = CreatePlayer(0x01020307, "Recruiter", "ELYOS");
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var registry = new CapturingConnectionRegistry([applicant, recruiter]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			findGroupService,
+			sentPacketObserver: packet => sentPackets.Add(packet),
+			connectionRegistry: registry);
+		SetActivePlayer(fixture.Connection, applicant);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(11);
+					buffer.WriteD(recruiter.ObjectId);
+					buffer.WriteD(0x11223344);
+				}));
+
+		var directSend = Assert.Single(registry.DirectSends);
+		Assert.Equal(recruiter.ObjectId, directSend.RecipientObjectId);
+		var packet = Assert.IsType<SmFindGroup>(directSend.Packet);
+		Assert.Equal(11, ReadPrivateField<int>(packet, "_action"));
+		var instanceApplicant = ReadPrivateField<FindGroupInstanceApplicantSnapshot>(packet, "_instanceApplicant");
+		Assert.Equal(applicant.ObjectId, instanceApplicant.PlayerObjectId);
+		Assert.Equal("Applicant", instanceApplicant.Name);
+		Assert.Empty(sentPackets);
+
+		registry.DirectSends.Clear();
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				77,
+				buffer =>
+				{
+					buffer.WriteC(11);
+					buffer.WriteD(0x7F7F7F7F);
+					buffer.WriteD(0x11223344);
+				}));
+
+		Assert.Empty(registry.DirectSends);
+		Assert.Empty(registry.WorldBroadcasts);
+		Assert.Empty(sentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_ActionTwoAddRecruitmentSendsPostedMessageThenShowList()
 	{
 		var sentPackets = new List<GameServerPacket>();
