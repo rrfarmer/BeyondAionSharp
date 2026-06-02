@@ -302,6 +302,41 @@ public sealed class FindGroupRecruitmentPlanServiceTests
 	}
 
 	[Fact]
+	public void OnJoinedTeam_LeaderSoloRecruitmentReaddTakesPriorityOverFullTeamRemovalLikeJava()
+	{
+		var service = new FindGroupRecruitmentPlanService();
+		var player = WithTeam(CreatePlayer(2001, "Leader", "ELYOS", "RANGER", 55), PlayerTeamMembership.Group, teamId: 9001);
+		var team = CreateTeamSubject(9001, "Leader", size: 6, minLevel: 50, maxLevel: 55);
+		service.RegisterInstanceGroup(player, instanceMaskId: 0x11223344, message: "Entry", minMembers: 6, nowEpochSeconds: 200);
+		service.AddApplication(player, "Need team", groupType: 3, classId: 5, level: 55, nowEpochSeconds: 201);
+		service.AddRecruitment(player, "Solo leader post", groupType: 6, nowEpochSeconds: 202);
+		service.AddRecruitment(
+			player,
+			"Existing full team post",
+			groupType: 9,
+			nowEpochSeconds: 203,
+			team);
+
+		var plan = service.OnJoinedTeam(player, team, isLeader: true, isFull: true, nowEpochSeconds: 333, serverId: 5);
+
+		Assert.True(plan.InstanceGroupRemoval.ShouldRemove);
+		Assert.NotNull(plan.InstanceGroupRemoval.RemovedInstanceGroup);
+		Assert.Equal(FindGroupApplicationPlanStatus.Removed, plan.ApplicationRemoval.Status);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, plan.SoloRecruitmentRemoval.Status);
+		Assert.NotNull(plan.TeamRecruitmentAdd);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Added, plan.TeamRecruitmentAdd!.Status);
+		Assert.Null(plan.FullTeamRecruitmentRemoval);
+		Assert.Empty(service.ShowApplications("ELYOS", nowEpochSeconds: 400).Applications);
+		Assert.Empty(service.ShowInstanceGroups("ELYOS", nowEpochSeconds: 401).InstanceGroups);
+		var recruitment = Assert.Single(service.ShowRecruitments("ELYOS", nowEpochSeconds: 402).Recruitments);
+		Assert.Equal(9001, recruitment.ObjectId);
+		Assert.False(recruitment.IsSoloPlayer);
+		Assert.Equal("Solo leader post", recruitment.Message);
+		Assert.Equal(6, recruitment.GroupType);
+		Assert.Equal(333, recruitment.LastUpdate);
+	}
+
+	[Fact]
 	public void OnJoinedTeam_RemovesFullTeamRecruitmentWhenNoSoloRecruitmentWasRemoved()
 	{
 		var service = new FindGroupRecruitmentPlanService();

@@ -51,6 +51,7 @@ public static class FindGroupLiveDispatchReadinessReportService
 				"PlayerEnterWorldService.LeaveWorldAsync uses the injected shared FindGroupService-equivalent cleanup before pending question denial without requiring an observer.",
 				"PlayerGroupInviteRequestService and PlayerAllianceInviteRequestService can expose disabled FindGroupService.onJoinedTeam plans after accepted invite membership mutation.",
 				"FindGroupRecruitmentPlanService.OnJoinedTeam removes stored instance-group registration when current-team size reaches minMembers.",
+				"FindGroupRecruitmentPlanService.OnJoinedTeam preserves Java mutation priority for leader solo recruitment re-add before full-team recruitment removal.",
 				"FindGroupRecruitmentPlanService uses ConcurrentDictionary-backed recruitment, application, and instance-group state stores to mirror Java FindGroupService ConcurrentHashMap declarations.",
 				"FindGroupInstanceApplicationDirectDispatchPlanService can compose action 11 direct SM_FIND_GROUP applicant packet and declined action 12 SM_MESSAGE whisper dispatch evidence without sending packets.",
 				"FindGroupInstanceApplicationInviteDispatchPlanService can compose action 12 group/alliance invite request-service results without sending packets.",
