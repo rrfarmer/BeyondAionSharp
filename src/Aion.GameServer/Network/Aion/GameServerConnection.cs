@@ -996,8 +996,9 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
 				}
 				break;
-			case CmReplaceItem:
-				// Java parity: network/aion/clientpackets/CM_REPLACE_ITEM.runImpl -> ItemMoveService.switchItemsInStorages; deferred until item slot-swap is ported.
+			case CmReplaceItem replaceItem:
+				if (_activePlayer != null)
+					await HandleReplaceItemAsync(_activePlayer, replaceItem);
 				break;
 			case CmGroupLoot:
 				// Java parity: network/aion/clientpackets/CM_GROUP_LOOT.runImpl -> DropDistributionService.handleRollOrBid; deferred until drop distribution is ported.
@@ -2967,6 +2968,47 @@ public sealed class GameServerConnection : BaseClientConnection
 				SmWarehouseAddItem.AllSlot));
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 		}
+	}
+
+	private async Task HandleReplaceItemAsync(Player player, CmReplaceItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_REPLACE_ITEM.runImpl -> ItemMoveService.switchItemsInStorages.
+		// Restrictions (trading/shutdown) are checked like CM_MOVE_ITEM.
+		if (player.IsTrading)
+			return;
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.SourceItemObjectId && i.Location == packet.SourceStorageType);
+		if (sourceItem == null)
+			return;
+
+		var replaceItem = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.ReplaceItemObjectId && i.Location == packet.ReplaceStorageType);
+		if (replaceItem == null)
+			return;
+
+		if (packet.SourceStorageType != packet.ReplaceStorageType)
+		{
+			// Java parity: cross-storage switch requires StorageType add/remove — deferred until cross-storage item swap is ported.
+			return;
+		}
+
+		// Same-storage: swap slot values only (no storage change).
+		// Java parity: ItemMoveService.switchItemsInStorages same-storage path swaps equipmentSlot, no add/remove packets needed.
+		var sourceOldSlot = sourceItem.Slot;
+		var replaceOldSlot = replaceItem.Slot;
+		if (sourceOldSlot == replaceOldSlot)
+			return;
+
+		sourceItem.Slot = replaceOldSlot;
+		replaceItem.Slot = sourceOldSlot;
+
+		if (_playerEnterWorldService != null)
+		{
+			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, sourceItem.ObjectId, replaceOldSlot);
+			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, sourceOldSlot);
+		}
+		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
 	}
 
 	private void HandleCloseDialog(Player player, CmCloseDialog packet)
