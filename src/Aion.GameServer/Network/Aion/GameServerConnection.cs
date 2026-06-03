@@ -1533,6 +1533,14 @@ public sealed class GameServerConnection : BaseClientConnection
 					{
 						await SendAutoGroupSuccessfulRegistrationAsync(player, result.Registration, autoGroup, entryRequestType.Value);
 						await BroadcastAutoGroupBattlegroundRegistrationAnnouncementAsync(result.BattlegroundAnnouncement);
+						if (result.QueueMatchPlan?.Status == AutoGroupQueueMatchPlanStatus.Ready && _connectionRegistry != null)
+						{
+							var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(result.QueueMatchPlan);
+							await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
+								readyMatchPlan,
+								autoGroups,
+								_connectionRegistry);
+						}
 					}
 				}
 				break;

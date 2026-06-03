@@ -673,6 +673,137 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public async Task ApplyReadyMatchPlan_RemovesMatchedQueuesAndSendsCleanupBeforeReadyWindowLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable(
+		[
+			CreateAutoGroup(107, 300110000),
+			CreateAutoGroup(108, 300120000),
+		]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		service.RegisterLookingParty(
+			107,
+			[2001, 2002],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(1));
+		service.RegisterLookingParty(
+			108,
+			[1001, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(2));
+		var registry = new RecordingConnectionRegistry([1001, 1002, 2001, 2002, 3001]);
+		var readyPlan = service.CreateReadyMatchPlan(service.CreateQueueMatchPlan(107, autoGroups, cooltimes));
+
+		var result = await service.ApplyReadyMatchPlanAsync(readyPlan, autoGroups, registry);
+
+		Assert.Equal(AutoGroupApplyReadyMatchStatus.Applied, result.Status);
+		Assert.Equal(2, result.RemovedMatchedPartyCount);
+		Assert.Equal(6, result.SentWindowPackets);
+		Assert.True(result.WouldApplyPenalties);
+		Assert.False(result.WouldRecheckQueueForNewMatches);
+		Assert.False(service.IsSearching(1001, 107));
+		Assert.False(service.IsSearching(2001, 107));
+		Assert.False(service.IsSearching(1001, 108));
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+		Assert.Equal(0, service.GetLookingPartyCount(108));
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => AssertAutoGroupWindow(delivery, 1001, 108, 2),
+			delivery => AssertAutoGroupWindow(delivery, 3001, 108, 2),
+			delivery => AssertAutoGroupWindow(delivery, 1001, 107, 4),
+			delivery => AssertAutoGroupWindow(delivery, 1002, 107, 4),
+			delivery => AssertAutoGroupWindow(delivery, 2001, 107, 4),
+			delivery => AssertAutoGroupWindow(delivery, 2002, 107, 4));
+	}
+
+	[Fact]
+	public async Task ApplyReadyMatchPlan_MutatesMemberCleanupAndKeepsLeaderEntryLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable(
+		[
+			CreateAutoGroup(107, 300110000),
+			CreateAutoGroup(108, 300120000),
+		]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		service.RegisterLookingParty(
+			107,
+			[2001, 2002],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(1));
+		service.RegisterLookingParty(
+			108,
+			[3001, 1002, 2002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(2));
+		var registry = new RecordingConnectionRegistry([1001, 1002, 2001, 2002, 3001]);
+		var readyPlan = service.CreateReadyMatchPlan(service.CreateQueueMatchPlan(107, autoGroups, cooltimes));
+
+		var result = await service.ApplyReadyMatchPlanAsync(readyPlan, autoGroups, registry);
+
+		Assert.Equal(AutoGroupApplyReadyMatchStatus.Applied, result.Status);
+		Assert.Equal(2, result.RemovedMatchedPartyCount);
+		Assert.True(result.WouldApplyPenalties);
+		Assert.True(result.WouldRecheckQueueForNewMatches);
+		Assert.False(service.IsSearching(1002, 108));
+		Assert.False(service.IsSearching(2002, 108));
+		Assert.True(service.IsSearching(3001, 108));
+		Assert.Equal(1, service.GetLookingPartyCount(108));
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => AssertAutoGroupWindow(delivery, 1001, 107, 4),
+			delivery => AssertAutoGroupWindow(delivery, 1002, 108, 2),
+			delivery => AssertAutoGroupWindow(delivery, 1002, 107, 4),
+			delivery => AssertAutoGroupWindow(delivery, 2001, 107, 4),
+			delivery => AssertAutoGroupWindow(delivery, 2002, 108, 2),
+			delivery => AssertAutoGroupWindow(delivery, 2002, 107, 4));
+	}
+
+	[Fact]
+	public async Task ApplyReadyMatchPlan_NotReadyDoesNotMutateOrSendPackets()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			DateTimeOffset.FromUnixTimeSeconds(1));
+		var registry = new RecordingConnectionRegistry([1001, 1002]);
+		var readyPlan = service.CreateReadyMatchPlan(service.CreateQueueMatchPlan(107, autoGroups, cooltimes));
+
+		var result = await service.ApplyReadyMatchPlanAsync(readyPlan, autoGroups, registry);
+
+		Assert.Equal(AutoGroupApplyReadyMatchStatus.NotReady, result.Status);
+		Assert.Equal(0, result.RemovedMatchedPartyCount);
+		Assert.Equal(0, result.SentWindowPackets);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
 	public async Task StopRegistrationsByMaskId_RemovesMaskQueueAndSendsCancelWindowLikeJava()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();
@@ -879,6 +1010,14 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
 		Assert.Equal(107, packet.MaskId);
 		Assert.Equal(2, packet.WindowId);
+	}
+
+	private static void AssertAutoGroupWindow(PacketDelivery delivery, int playerObjectId, int maskId, int windowId)
+	{
+		Assert.Equal(playerObjectId, delivery.PlayerObjectId);
+		var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
+		Assert.Equal(maskId, packet.MaskId);
+		Assert.Equal(windowId, packet.WindowId);
 	}
 
 	private sealed class RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds) : IGameClientConnectionRegistry

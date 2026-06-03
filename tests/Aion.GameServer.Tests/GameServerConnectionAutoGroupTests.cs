@@ -318,6 +318,75 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupReadyMatchSendsWindowFourAndRemovesQueuesLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		var asmoLeader = new Player
+		{
+			ObjectId = 2001,
+			Name = "AsmoLeader",
+			Race = "ASMODIANS",
+			Level = 50,
+		};
+		var asmoMember = new Player
+		{
+			ObjectId = 2002,
+			Name = "AsmoMember",
+			Race = "ASMODIANS",
+			Level = 50,
+		};
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(77, [asmoLeader, asmoMember]);
+		var registry = new RecordingConnectionRegistry([1001, 1002, 2001, 2002]);
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			[CreateAutoGroup(107, 300110000)],
+			new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1, MaxMemberLight: 2, MaxMemberDark: 2),
+			]));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			groupRuntime);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, asmoLeader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+
+		Assert.Empty(sentPackets);
+		Assert.False(autoGroupRegistrations.IsSearching(1001, 107));
+		Assert.False(autoGroupRegistrations.IsSearching(2001, 107));
+		Assert.Equal(0, autoGroupRegistrations.GetLookingPartyCount(107));
+		Assert.Equal([2001, 2001, 2001, 2002, 2002, 2002, 1001, 1002, 2001, 2002], registry.SentPackets.Select(delivery => delivery.PlayerObjectId));
+		AssertFanoutPacketOrder(registry.SentPackets.Take(3).Select(delivery => delivery.Packet).ToArray());
+		AssertFanoutPacketOrder(registry.SentPackets.Skip(3).Take(3).Select(delivery => delivery.Packet).ToArray());
+		AssertReadyWindow(registry.SentPackets[6], 1001, 107);
+		AssertReadyWindow(registry.SentPackets[7], 1002, 107);
+		AssertReadyWindow(registry.SentPackets[8], 2001, 107);
+		AssertReadyWindow(registry.SentPackets[9], 2002, 107);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -487,6 +556,14 @@ public sealed class GameServerConnectionAutoGroupTests
 			});
 	}
 
+	private static void AssertReadyWindow(PacketDelivery delivery, int playerObjectId, int maskId)
+	{
+		Assert.Equal(playerObjectId, delivery.PlayerObjectId);
+		var autoGroup = Assert.IsType<SmAutoGroup>(delivery.Packet);
+		Assert.Equal(maskId, autoGroup.MaskId);
+		Assert.Equal(4, autoGroup.WindowId);
+	}
+
 	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId)
 	{
 		return new AutoGroupSummary(
@@ -504,8 +581,15 @@ public sealed class GameServerConnectionAutoGroupTests
 
 	private static GameServerRuntimeContext CreateAutoGroupRuntimeContext(params AutoGroupSummary[] autoGroups)
 	{
+		return CreateAutoGroupRuntimeContext(autoGroups, new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>()));
+	}
+
+	private static GameServerRuntimeContext CreateAutoGroupRuntimeContext(
+		IReadOnlyList<AutoGroupSummary> autoGroups,
+		InstanceCooltimeTable instanceCooltimes)
+	{
 		var runtimeContext = new GameServerRuntimeContext();
-		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForAutoGroups(autoGroups)));
+		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForAutoGroups(autoGroups, instanceCooltimes)));
 		return runtimeContext;
 	}
 
@@ -520,7 +604,9 @@ public sealed class GameServerConnectionAutoGroupTests
 		return (DataManager)constructor!.Invoke([staticData]);
 	}
 
-	private static StaticData CreateStaticDataForAutoGroups(IReadOnlyList<AutoGroupSummary> autoGroups)
+	private static StaticData CreateStaticDataForAutoGroups(
+		IReadOnlyList<AutoGroupSummary> autoGroups,
+		InstanceCooltimeTable? instanceCooltimes = null)
 	{
 		var emptySkillTemplates = new SkillTemplateTable(Array.Empty<SkillTemplateSummary>());
 		var constructor = typeof(StaticData).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
@@ -569,7 +655,7 @@ public sealed class GameServerConnectionAutoGroupTests
 			new RecipeTemplateTable(Array.Empty<RecipeTemplateSummary>()),
 			new HousingTemplateTable(Array.Empty<HousingAddressSummary>(), Array.Empty<HousingBuildingSummary>()),
 			new HousingObjectTemplateTable(Array.Empty<HousingObjectTemplateSummary>()),
-			new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>()),
+			instanceCooltimes ?? new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>()),
 			new InstanceExitTable(Array.Empty<InstanceExitSummary>()),
 			new PortalPathTable(Array.Empty<PortalPathSummary>(), new Dictionary<int, int>(), Array.Empty<PortalPathSummary>(), Array.Empty<PortalPathSummary>()),
 			new PortalLocTable(Array.Empty<PortalLocSummary>()),
