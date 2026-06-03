@@ -660,6 +660,8 @@ public sealed class GameServerConnectionAutoGroupTests
 		var first = scheduler.ScheduleRefreshes([intent], registry);
 		var duplicate = scheduler.ScheduleRefreshes([intent], registry);
 		var sent = await scheduler.ExecuteRefreshAsync(1001, registry);
+		var offlineRegistry = new RecordingConnectionRegistry(Array.Empty<Player>());
+		var offlineSent = await scheduler.ExecuteRefreshAsync(9001, offlineRegistry);
 
 		Assert.Equal([1001], first.ScheduledPlayerObjectIds);
 		Assert.Empty(first.AlreadyPendingPlayerObjectIds);
@@ -670,9 +672,24 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
 		Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
 		Assert.Equal(2, sent);
-		Assert.Equal([107, 108], registry.SentPackets
-			.Select(delivery => Assert.IsType<SmAutoGroup>(delivery.Packet).MaskId)
-			.OrderBy(maskId => maskId));
+		Assert.Collection(
+			registry.SentPackets.OrderBy(delivery => Assert.IsType<SmAutoGroup>(delivery.Packet).MaskId),
+			delivery =>
+			{
+				var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
+				Assert.Equal(107, packet.MaskId);
+				Assert.Equal(SmAutoGroup.EntryIconWindowId, packet.WindowId);
+				Assert.False(packet.IsClosed);
+			},
+			delivery =>
+			{
+				var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
+				Assert.Equal(108, packet.MaskId);
+				Assert.Equal(SmAutoGroup.EntryIconWindowId, packet.WindowId);
+				Assert.False(packet.IsClosed);
+			});
+		Assert.Equal(0, offlineSent);
+		Assert.Empty(offlineRegistry.SentPackets);
 	}
 
 	[Fact]
