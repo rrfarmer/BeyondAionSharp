@@ -23,6 +23,10 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 	private const int ExpectedRealDataExtendedRewardTemplates = 235;
 	private const int ExpectedRealDataBonusTemplates = 782;
 	private const int ExpectedRealDataQuestWorkItemTemplates = 1630;
+	private const int ExpectedRealDataCannotShareTemplates = 4876;
+	private const int ExpectedRealDataAllianceTargetTemplates = 159;
+	private const int ExpectedRealDataAreaTargetTemplates = 30;
+	private const int ExpectedRealDataLeagueTargetTemplates = 59;
 
 	[Fact]
 	public void Extract_ReadsNearbyPredicateQuestTemplateFieldsLikeJavaQuestTemplate()
@@ -32,7 +36,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 				<quest id="1001" minlevel_permitted="19" maxlevel_permitted="45" race_permitted="ELYOS" rank="4"
 				       max_repeat_count="3" combineskill="40001" combine_skillpoint="199" npcfaction_id="12"
 				       category="TASK" mentor_type="MENTOR" repeat_cycle="Mon Wed"
-				       can_report="true" reward_repeat_count="2">
+				       can_report="true" reward_repeat_count="2" cannot_share="true" target="ALLIANCE">
 					<class_permitted>
 						GLADIATOR CLERIC
 					</class_permitted>
@@ -98,6 +102,8 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.True(template.HasExtendedRewards);
 		Assert.True(template.HasBonus);
 		Assert.True(template.HasQuestWorkItems);
+		Assert.True(template.CannotShare);
+		Assert.Equal("ALLIANCE", template.Target);
 	}
 
 	[Fact]
@@ -138,6 +144,8 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.False(template.HasExtendedRewards);
 		Assert.False(template.HasBonus);
 		Assert.False(template.HasQuestWorkItems);
+		Assert.False(template.CannotShare);
+		Assert.Equal("NONE", template.Target);
 	}
 
 	[Fact]
@@ -217,6 +225,10 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(ExpectedRealDataExtendedRewardTemplates, templates.Count(template => template.HasExtendedRewards));
 		Assert.Equal(ExpectedRealDataBonusTemplates, templates.Count(template => template.HasBonus));
 		Assert.Equal(ExpectedRealDataQuestWorkItemTemplates, templates.Count(template => template.HasQuestWorkItems));
+		Assert.Equal(ExpectedRealDataCannotShareTemplates, templates.Count(template => template.CannotShare));
+		Assert.Equal(ExpectedRealDataAllianceTargetTemplates, templates.Count(template => template.Target == "ALLIANCE"));
+		Assert.Equal(ExpectedRealDataAreaTargetTemplates, templates.Count(template => template.Target == "AREA"));
+		Assert.Equal(ExpectedRealDataLeagueTargetTemplates, templates.Count(template => template.Target == "LEAGUE"));
 		Assert.Equal(ExpectedRealDataTemplates, new NearbyQuestTemplateTable(templates).Count);
 	}
 

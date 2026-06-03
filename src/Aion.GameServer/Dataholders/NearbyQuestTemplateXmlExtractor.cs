@@ -59,7 +59,11 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			HasRewards: HasChild(quest, "rewards"),
 			HasExtendedRewards: HasChild(quest, "extended_rewards"),
 			HasBonus: HasChild(quest, "bonus"),
-			HasQuestWorkItems: HasChild(quest, "quest_work_items"));
+			HasQuestWorkItems: HasChild(quest, "quest_work_items"),
+			// Java parity: QuestTemplate.cannotShare (@XmlAttribute cannot_share, default false) and
+			// QuestTemplate.target (@XmlAttribute target, QuestTarget enum, default NONE). Both back CM_QUEST_SHARE.
+			CannotShare: ReadBoolAttribute(quest, "cannot_share"),
+			Target: ReadStringAttribute(quest, "target", defaultValue: "NONE"));
 	}
 
 	private static IReadOnlyList<NearbyQuestInventoryItem> ReadInventoryItems(XElement quest)

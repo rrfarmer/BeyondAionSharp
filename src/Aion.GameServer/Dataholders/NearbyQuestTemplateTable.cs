@@ -44,7 +44,9 @@ public sealed record NearbyQuestTemplateSummary(
 	bool HasRewards = false,
 	bool HasExtendedRewards = false,
 	bool HasBonus = false,
-	bool HasQuestWorkItems = false)
+	bool HasQuestWorkItems = false,
+	bool CannotShare = false,
+	string Target = "NONE")
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
 
