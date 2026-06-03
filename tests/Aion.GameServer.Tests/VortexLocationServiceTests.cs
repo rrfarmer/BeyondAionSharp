@@ -518,6 +518,112 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderAddPlayerTransitionPlan_RecordsFirstDefenderWithoutAllianceMutation()
+	{
+		var planner = new VortexDefenderAddPlayerTransitionPlanService();
+		var player = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1004, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(player);
+
+		Assert.Equal(VortexDefenderAddPlayerTransitionPlanStatus.RecordFirstDefender, plan.Status);
+		Assert.Same(player, plan.Player);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Missing, plan.DefenderAlliance);
+		Assert.Empty(plan.ExistingDefenderObjectIds);
+		Assert.False(plan.WouldAddToExistingAlliance);
+		Assert.False(plan.WouldCreateDefenderAlliance);
+		Assert.Null(plan.CreatedAllianceTeamType);
+		Assert.True(plan.WouldPutParticipant);
+		Assert.Empty(plan.RemovalPlans);
+		Assert.False(plan.WouldWarn);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+		Assert.Equal("services/vortex/Invasion.addPlayer(player, false)", plan.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderAddPlayerTransitionPlan_AddsToExistingNonDisbandedAlliance()
+	{
+		var planner = new VortexDefenderAddPlayerTransitionPlanService();
+		var player = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1004, IsInGroup: true, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(
+			player,
+			existingDefenders: [new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: false)],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexDefenderAddPlayerTransitionPlanStatus.AddToExistingAlliance, plan.Status);
+		Assert.Equal([1001], plan.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, plan.DefenderAlliance);
+		Assert.True(plan.WouldAddToExistingAlliance);
+		Assert.False(plan.WouldCreateDefenderAlliance);
+		Assert.Null(plan.CreatedAllianceTeamType);
+		Assert.True(plan.WouldPutParticipant);
+		Assert.Empty(plan.RemovalPlans);
+		Assert.False(plan.WouldWarn);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
+	public void DefenderAddPlayerTransitionPlan_CreatesDefenceAllianceForSecondDefender()
+	{
+		var planner = new VortexDefenderAddPlayerTransitionPlanService();
+		var player = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1004, IsInGroup: true, IsInAlliance: true);
+		var otherPlayer = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: true);
+
+		var plan = planner.CreatePlan(
+			player,
+			existingDefenders: [otherPlayer],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Missing);
+
+		Assert.Equal(VortexDefenderAddPlayerTransitionPlanStatus.CreateDefenderAlliance, plan.Status);
+		Assert.Equal([1001], plan.ExistingDefenderObjectIds);
+		Assert.False(plan.WouldAddToExistingAlliance);
+		Assert.True(plan.WouldCreateDefenderAlliance);
+		Assert.Equal(PlayerAllianceTeamType.AllianceDefence, plan.CreatedAllianceTeamType);
+		Assert.True(plan.WouldPutParticipant);
+		Assert.False(plan.WouldWarn);
+		Assert.Equal([1004, 1001], plan.RemovalPlans.Select(removal => removal.PlayerObjectId).ToArray());
+		Assert.Equal([true, false], plan.RemovalPlans.Select(removal => removal.WouldRemoveGroup).ToArray());
+		Assert.Equal([false, true], plan.RemovalPlans.Select(removal => removal.WouldRemoveAlliance).ToArray());
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
+	public void DefenderAddPlayerTransitionPlan_TooManyDefendersWithoutAllianceWarnsAndSkipsParticipantPut()
+	{
+		var planner = new VortexDefenderAddPlayerTransitionPlanService();
+		var player = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1004, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(
+			player,
+			existingDefenders:
+			[
+				new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: false),
+				new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false),
+			],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Disbanded);
+
+		Assert.Equal(VortexDefenderAddPlayerTransitionPlanStatus.MissingAllianceTooManyParticipants, plan.Status);
+		Assert.Equal([1001, 1002], plan.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Disbanded, plan.DefenderAlliance);
+		Assert.False(plan.WouldAddToExistingAlliance);
+		Assert.False(plan.WouldCreateDefenderAlliance);
+		Assert.Null(plan.CreatedAllianceTeamType);
+		Assert.False(plan.WouldPutParticipant);
+		Assert.True(plan.WouldWarn);
+		Assert.Equal("Couldn't add defender:1004 to defenders (alliance not initialized). Current participants: 2", plan.WarningMessage);
+		Assert.Empty(plan.RemovalPlans);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public void DefenderInvitationAcceptancePlan_GroupResponderRemovesGroupBeforeAddingDefender()
 	{
 		var planner = new VortexDefenderInvitationAcceptancePlanService();

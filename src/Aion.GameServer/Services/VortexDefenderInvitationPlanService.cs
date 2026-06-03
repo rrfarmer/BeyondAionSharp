@@ -94,9 +94,11 @@ public sealed record VortexDefenderInvitationPlan(
 
 public sealed record VortexDefenderAllianceSnapshot(
 	bool Exists,
-	bool IsFull)
+	bool IsFull,
+	bool IsDisbanded = false)
 {
 	public static VortexDefenderAllianceSnapshot Missing { get; } = new(Exists: false, IsFull: false);
 	public static VortexDefenderAllianceSnapshot Open { get; } = new(Exists: true, IsFull: false);
 	public static VortexDefenderAllianceSnapshot Full { get; } = new(Exists: true, IsFull: true);
+	public static VortexDefenderAllianceSnapshot Disbanded { get; } = new(Exists: true, IsFull: false, IsDisbanded: true);
 }
