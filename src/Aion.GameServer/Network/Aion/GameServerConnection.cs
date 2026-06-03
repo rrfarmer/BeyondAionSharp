@@ -1513,6 +1513,19 @@ public sealed class GameServerConnection : BaseClientConnection
 			_connectionRegistry == null
 				? null
 				: new PlayerVisualStatsUpdateService(_connectionRegistry, _runtimeContext, _gameTimeService));
+
+		// Java parity: CM_LEVEL_READY.runImpl -> PlayerController.updateNearbyQuests -> SM_NEARBY_QUESTS.
+		// Sends quest markers for quests available on the player's current map/instance.
+		var worldMapStates = _runtimeContext?.WorldMapStates;
+		if (worldMapStates != null && staticData?.NearbyQuestTemplates != null)
+		{
+			worldMapStates.TryGetWorldMapInstance(player.Position.WorldId, player.Position.InstanceId, out var mapInstance);
+			var nearbyPlan = NearbyQuestRefreshPlanService.CreatePlan(player, mapInstance, staticData.NearbyQuestTemplates);
+			var packetPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(nearbyPlan);
+			if (packetPlan.Packet != null)
+				await SendPacketAsync(packetPlan.Packet);
+		}
+
 		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 	}
 
