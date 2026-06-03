@@ -289,6 +289,57 @@ public sealed class VortexDefenderAcceptanceParticipantRuntimeReportService
 	}
 }
 
+public sealed class VortexDefenderAcceptanceRuntimeObserverService
+{
+	private readonly VortexDefenderInvitationResponseRuntimeAdapterService _adapter = new();
+	private readonly VortexDefenderAcceptanceParticipantRuntimeReportService _participantReporter = new();
+
+	public VortexDefenderAcceptanceRuntimeObserverReport Observe(
+		int locationId,
+		Player responder,
+		int questionId,
+		int responseCode,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null,
+		IReadOnlyList<int>? currentDefenderObjectIds = null)
+	{
+		ArgumentNullException.ThrowIfNull(responder);
+
+		var transition = _adapter.HandleResponseWithAcceptanceTransition(
+			responder, questionId, responseCode, existingDefenders, defenderAlliance);
+		var participantReport = _participantReporter.CreateReport(
+			locationId, transition, currentDefenderObjectIds);
+
+		return new VortexDefenderAcceptanceRuntimeObserverReport(
+			locationId,
+			responder.ObjectId,
+			transition,
+			participantReport,
+			JavaSource: "model/gameobjects/player/ResponseRequester.respond -> services/vortex/Invasion.updateDefenders.RequestResponseHandler.acceptRequest -> services/vortex/Invasion.addPlayer(player, false) -> defenders.put(player.getObjectId(), player)");
+	}
+}
+
+public sealed record VortexDefenderAcceptanceRuntimeObserverReport(
+	int LocationId,
+	int ResponderObjectId,
+	VortexDefenderInvitationAcceptanceTransitionRuntimeReport TransitionReport,
+	VortexDefenderAcceptanceParticipantRuntimeReport ParticipantReport,
+	string JavaSource)
+{
+	public bool Accepted => TransitionReport.Accepted;
+	public bool Denied => TransitionReport.Denied;
+	public bool WouldRecordParticipant => ParticipantReport.WouldRecordParticipant;
+	public bool WouldPutParticipant => ParticipantReport.WouldPutParticipant;
+	public bool WouldWarn => ParticipantReport.WouldWarn;
+	public IReadOnlyList<int> DefenderObjectIdsBefore => ParticipantReport.DefenderObjectIdsBefore;
+	public IReadOnlyList<int> DefenderObjectIdsAfter => ParticipantReport.DefenderObjectIdsAfter;
+	public VortexDefenderAcceptanceParticipantRuntimeReportStatus ParticipantStatus => ParticipantReport.Status;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
+	public bool ShouldSendLivePacket => false;
+}
+
 public enum VortexDefenderInvitationAcceptancePlanStatus
 {
 	AcceptancePlanned,
