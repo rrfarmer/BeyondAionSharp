@@ -1318,6 +1318,139 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task LeavePlayerWorldAsync_AutoGroupLogoutMemberCleanupGuardsSameMaskRecursiveRecheckLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var registrationTime = DateTimeOffset.UtcNow.AddSeconds(-10);
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[1001, 7001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			registrationTime);
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[2001],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			registrationTime.AddSeconds(1));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[3001, 1001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			registrationTime.AddSeconds(2));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[4001],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			registrationTime.AddSeconds(3));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[5001, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			registrationTime.AddSeconds(4));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[6001],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			registrationTime.AddSeconds(5));
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			[CreateAutoGroup(107, 300110000)],
+			new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1, MaxMemberLight: 1, MaxMemberDark: 1),
+			]));
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var player = new Player
+		{
+			ObjectId = 7001,
+			Name = "LogoutSameMaskGuardMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var events = new List<string>();
+		var registry = new RecordingConnectionRegistry(
+			[1001, 2001, 3001, 4001, 5001, 6001],
+			delivery =>
+			{
+				if (delivery.Packet is SmAutoGroup autoGroup)
+					events.Add($"packet:{delivery.PlayerObjectId}:{autoGroup.MaskId}:{autoGroup.WindowId}");
+			});
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observation =>
+			{
+				observations.Add(observation);
+				events.Add("schedule");
+			});
+		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
+			threadPoolManager,
+			new PeriodicInstanceRegistrationService(),
+			runtimeContext);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			autoGroupInstanceLeaveRuntimeService: runtimeService,
+			autoGroupPenaltyRefreshScheduler: penaltyRefreshScheduler);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.Empty(sentPackets);
+		Assert.Equal(2, autoGroupRegistrations.GetLookingPartyCount(107));
+		Assert.True(autoGroupRegistrations.IsSearching(5001, 107));
+		Assert.True(autoGroupRegistrations.IsSearching(6001, 107));
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(1001));
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(3001));
+		Assert.False(penaltyRefreshScheduler.HasPendingRefresh(5001));
+		Assert.Collection(
+			observations,
+			observation =>
+			{
+				Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+				Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
+			},
+			observation =>
+			{
+				Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+				Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
+			});
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => AssertCancelWindow(delivery, 1001, 107),
+			delivery => AssertCancelWindow(delivery, 3001, 107),
+			delivery => AssertReadyWindow(delivery, 3001, 107),
+			delivery => AssertReadyWindow(delivery, 4001, 107),
+			delivery => AssertReadyWindow(delivery, 1001, 107),
+			delivery => AssertReadyWindow(delivery, 2001, 107));
+		Assert.Equal(
+			[
+				"packet:1001:107:2",
+				"schedule",
+				"packet:3001:107:2",
+				"schedule",
+				"packet:3001:107:4",
+				"packet:4001:107:4",
+				"packet:1001:107:4",
+				"packet:2001:107:4",
+			],
+			events);
+		Assert.Equal([1001, 2001], runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Equal([3001, 4001], runtimeService.GetSnapshot(300110000, 3)!.RegisteredPlayerObjectIds);
+		Assert.Null(runtimeService.GetSnapshot(300110000, 4));
+	}
+
+	[Fact]
 	public async Task LeavePlayerWorldAsync_AutoGroupDisabledLeavesQueuedSearchEntryLikeJavaConfigGuard()
 	{
 		var sentPackets = new List<GameServerPacket>();
