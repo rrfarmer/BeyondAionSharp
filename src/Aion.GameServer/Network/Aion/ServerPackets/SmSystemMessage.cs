@@ -2491,6 +2491,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401474);
 	}
 
+	public static SmSystemMessage InvasionDefenderKick()
+	{
+		// Java parity: services/vortex/Invasion.kickPlayer -> new SM_SYSTEM_MESSAGE(1401476) for defenders.
+		return new SmSystemMessage(1401476);
+	}
+
 	public static SmSystemMessage HousingOrderOpenDoor()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_ORDER_OPEN_DOOR.

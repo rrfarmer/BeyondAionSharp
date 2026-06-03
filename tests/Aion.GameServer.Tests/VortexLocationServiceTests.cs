@@ -90,6 +90,7 @@ public sealed class VortexLocationServiceTests
 			Assert.False(runtime.IsInvaderPlayer(invader));
 			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
 			Assert.Empty(snapshot.InvaderObjectIds);
+			Assert.Empty(snapshot.DefenderObjectIds);
 			Assert.Empty(snapshot.PassedPlayerObjectIds);
 		}
 		finally
@@ -163,6 +164,68 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task RemoveDefenderPlayer_ForOnlineDefender_SendsDefenderKickWithoutTeleportLikeJava()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-kick-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId);
+			var originalPosition = defender.Position;
+			runtime.StartInvasion(location);
+			Assert.True(runtime.AddDefender(location.Id, defender));
+			Assert.True(runtime.IsDefenderPlayer(defender));
+
+			var removal = runtime.RemoveDefenderPlayer(defender);
+
+			Assert.True(removal.Removed);
+			Assert.Equal(1004, removal.PlayerObjectId);
+			Assert.Equal(location.Id, removal.LocationId);
+			Assert.False(removal.RemovedPassedPlayer);
+			Assert.True(removal.WasOnline);
+			Assert.Equal([1401476], (removal.SystemMessages ?? []).Select(message => message.MessageId).ToArray());
+			Assert.Equal(originalPosition, defender.Position);
+			Assert.False(runtime.IsDefenderPlayer(defender));
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.Empty(snapshot.DefenderObjectIds);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RemoveDefenderPlayer_ForOfflineDefender_RemovesDefenderWithoutMessagesLikeJavaOnlineGate()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-offline-kick-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var defender = CreatePlayer(1004, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location);
+			Assert.True(runtime.AddDefender(location.Id, defender));
+
+			var removal = runtime.RemoveDefenderPlayer(defender);
+
+			Assert.True(removal.Removed);
+			Assert.False(removal.WasOnline);
+			Assert.Empty(removal.SystemMessages ?? []);
+			Assert.False(runtime.IsDefenderPlayer(defender));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task AddInvaderFromPassedPortal_PromotesOnlyRecordedPortalPassLikeJavaZoneEntry()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-invader-zone-entry-" + Guid.NewGuid().ToString("N"));
@@ -191,6 +254,7 @@ public sealed class VortexLocationServiceTests
 			Assert.True(duplicate.WasAlreadyInvader);
 			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
 			Assert.Equal([1002], snapshot.InvaderObjectIds);
+			Assert.Empty(snapshot.DefenderObjectIds);
 			Assert.Equal([1002], snapshot.PassedPlayerObjectIds);
 		}
 		finally

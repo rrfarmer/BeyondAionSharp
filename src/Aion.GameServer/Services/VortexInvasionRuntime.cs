@@ -37,6 +37,19 @@ public sealed class VortexInvasionRuntime
 		}
 	}
 
+	public bool AddDefender(int vortexLocationId, Player player)
+	{
+		ArgumentNullException.ThrowIfNull(player);
+
+		lock (_sync)
+		{
+			if (!_activeInvasions.TryGetValue(vortexLocationId, out var state))
+				return false;
+
+			return state.DefenderObjectIds.Add(player.ObjectId);
+		}
+	}
+
 	public bool RecordPortalPass(VortexLocationSummary location, Player player)
 	{
 		ArgumentNullException.ThrowIfNull(location);
@@ -92,6 +105,14 @@ public sealed class VortexInvasionRuntime
 			return _activeInvasions.Values.Any(state => state.InvaderObjectIds.Contains(player.ObjectId));
 	}
 
+	public bool IsDefenderPlayer(Player player)
+	{
+		ArgumentNullException.ThrowIfNull(player);
+
+		lock (_sync)
+			return _activeInvasions.Values.Any(state => state.DefenderObjectIds.Contains(player.ObjectId));
+	}
+
 	public VortexInvaderRemovalResult RemoveInvaderPlayer(Player player)
 	{
 		ArgumentNullException.ThrowIfNull(player);
@@ -142,6 +163,44 @@ public sealed class VortexInvasionRuntime
 			JavaSource: "services/VortexService.removeInvaderPlayer");
 	}
 
+	public VortexDefenderRemovalResult RemoveDefenderPlayer(Player player)
+	{
+		ArgumentNullException.ThrowIfNull(player);
+
+		lock (_sync)
+		{
+			foreach (var state in _activeInvasions.Values.OrderBy(state => state.LocationId))
+			{
+				if (!state.DefenderObjectIds.Remove(player.ObjectId))
+					continue;
+
+				// Java parity: services/vortex/Invasion.kickPlayer(player, false) removes the
+				// defender participant and sends only the defender kick system message when online.
+				var removedPassedPlayer = state.PassedPlayerObjectIds.Remove(player.ObjectId);
+				var systemMessages = player.IsOnline
+					? new[] { SmSystemMessage.InvasionDefenderKick() }
+					: Array.Empty<SmSystemMessage>();
+
+				return new VortexDefenderRemovalResult(
+					Removed: true,
+					PlayerObjectId: player.ObjectId,
+					LocationId: state.LocationId,
+					RemovedPassedPlayer: removedPassedPlayer,
+					WasOnline: player.IsOnline,
+					JavaSource: "services/VortexService.removeDefenderPlayer -> services/vortex/Invasion.kickPlayer",
+					SystemMessages: systemMessages);
+			}
+		}
+
+		return new VortexDefenderRemovalResult(
+			Removed: false,
+			PlayerObjectId: player.ObjectId,
+			LocationId: 0,
+			RemovedPassedPlayer: false,
+			WasOnline: player.IsOnline,
+			JavaSource: "services/VortexService.removeDefenderPlayer");
+	}
+
 	public VortexInvasionSnapshot? GetSnapshot(int vortexLocationId)
 	{
 		lock (_sync)
@@ -170,6 +229,7 @@ public sealed class VortexInvasionRuntime
 		public WorldPosition StartPoint { get; } = startPoint;
 		public int InvasionWorldId => StartPoint.WorldId;
 		public HashSet<int> InvaderObjectIds { get; } = [];
+		public HashSet<int> DefenderObjectIds { get; } = [];
 		public HashSet<int> PassedPlayerObjectIds { get; } = [];
 
 		public VortexInvasionSnapshot ToSnapshot()
@@ -179,6 +239,7 @@ public sealed class VortexInvasionRuntime
 				HomePoint,
 				StartPoint,
 				InvaderObjectIds.Order().ToArray(),
+				DefenderObjectIds.Order().ToArray(),
 				PassedPlayerObjectIds.Order().ToArray());
 		}
 	}
@@ -189,6 +250,7 @@ public sealed record VortexInvasionSnapshot(
 	WorldPosition HomePoint,
 	WorldPosition StartPoint,
 	IReadOnlyList<int> InvaderObjectIds,
+	IReadOnlyList<int> DefenderObjectIds,
 	IReadOnlyList<int> PassedPlayerObjectIds);
 
 public sealed record VortexInvaderRemovalResult(
@@ -209,3 +271,12 @@ public sealed record VortexInvaderJoinResult(
 	bool HadPassedPortal,
 	bool WasAlreadyInvader,
 	string JavaSource);
+
+public sealed record VortexDefenderRemovalResult(
+	bool Removed,
+	int PlayerObjectId,
+	int LocationId,
+	bool RemovedPassedPlayer,
+	bool WasOnline,
+	string JavaSource,
+	IReadOnlyList<SmSystemMessage>? SystemMessages = null);

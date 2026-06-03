@@ -1683,6 +1683,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.InvasionInvaderKick(), 1401452);
 		AssertSystemMessage(SmSystemMessage.InvasionDirectPortalOpenNotice(), 1401454);
 		AssertSystemMessage(SmSystemMessage.InvasionDirectPortalOutCompulsion(), 1401474);
+		AssertSystemMessage(SmSystemMessage.InvasionDefenderKick(), 1401476);
 		AssertSystemMessage(SmSystemMessage.HousingOrderOpenDoor(), 1401379);
 		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorWithoutFriends(), 1401380);
 		AssertSystemMessage(SmSystemMessage.HousingOrderCloseDoorAll(), 1401381);
