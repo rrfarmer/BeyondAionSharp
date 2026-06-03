@@ -384,6 +384,10 @@ public sealed class GameServerConnectionAutoGroupTests
 		AssertReadyWindow(registry.SentPackets[7], 1002, 107);
 		AssertReadyWindow(registry.SentPackets[8], 2001, 107);
 		AssertReadyWindow(registry.SentPackets[9], 2002, 107);
+		Assert.True(runtimeContext.WorldMapStates.TryGetWorldMapInstance(300110000, 2, out var allocatedInstance));
+		Assert.NotNull(allocatedInstance);
+		Assert.Equal(4, allocatedInstance!.MaxPlayers);
+		Assert.True(allocatedInstance.InstanceCreateNotified);
 
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
@@ -628,13 +632,18 @@ public sealed class GameServerConnectionAutoGroupTests
 	{
 		var emptySkillTemplates = new SkillTemplateTable(Array.Empty<SkillTemplateSummary>());
 		var constructor = typeof(StaticData).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+		var worldMaps = autoGroups
+			.Select(autoGroup => new WorldMapSummary(autoGroup.InstanceMapId, IsInstance: true, TwinCount: 1))
+			.GroupBy(worldMap => worldMap.MapId)
+			.Select(group => group.Last())
+			.ToArray();
 		return (StaticData)constructor.Invoke(
 		[
 			string.Empty,
 			Array.Empty<string>(),
 			new Dictionary<string, int>(),
 			Array.Empty<string>(),
-			Array.Empty<WorldMapSummary>(),
+			worldMaps,
 			new FlightZoneTable(Array.Empty<FlightZoneSummary>()),
 			new CreaturePvpZoneTable(Array.Empty<CreaturePvpZoneSummary>()),
 			new PlayerExperienceTable(Array.Empty<long>()),

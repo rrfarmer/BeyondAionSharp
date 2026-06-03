@@ -16,6 +16,7 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 		groups.CreateOrUpdateGroup(9001, [player, teammate], PlayerGroupType.AutoGroup);
 		var service = new AutoGroupInstanceLeaveRuntimeService(groups, alliances);
 		var readyEnterStartTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		var startInstanceTime = readyEnterStartTime.AddMilliseconds(-5);
 		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
 			300110000,
 			2,
@@ -23,7 +24,8 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 			QuickRegistrationAllowed: true,
 			RegisteredPlayerObjectIds: [player.ObjectId, teammate.ObjectId],
 			InstanceMaskId: 107,
-			ReadyEnterStartTime: readyEnterStartTime));
+			ReadyEnterStartTime: readyEnterStartTime,
+			StartInstanceTime: startInstanceTime));
 
 		var result = service.PressEnter(player, 107);
 
@@ -38,6 +40,7 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 		Assert.NotNull(result.Snapshot);
 		Assert.Equal(107, result.Snapshot.InstanceMaskId);
 		Assert.Equal(readyEnterStartTime, result.Snapshot.ReadyEnterStartTime);
+		Assert.Equal(startInstanceTime, result.Snapshot.StartInstanceTime);
 		Assert.Contains(player.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
 		Assert.Contains(teammate.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
 	}

@@ -230,15 +230,19 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		IGameClientConnectionRegistry connectionRegistry,
 		Action<AutoGroupInstanceRuntimeRegistration>? registerRuntimeInstance = null,
 		DateTimeOffset? readyEnterStartTime = null,
+		Func<AutoGroupInstanceRuntimeRegistration, AutoGroupInstanceRuntimeRegistration>? materializeRuntimeInstance = null,
 		CancellationToken cancellationToken = default)
 	{
 		if (readyMatchPlan.Status != AutoGroupReadyMatchPlanStatus.Ready)
 			return AutoGroupApplyReadyMatchResult.NotReady(readyMatchPlan);
 
-		var runtimeRegistration = CreateRuntimeRegistrationIntent(
+		var runtimeRegistrationIntent = CreateRuntimeRegistrationIntent(
 			readyMatchPlan,
 			autoGroups,
 			readyEnterStartTime ?? DateTimeOffset.UtcNow);
+		var runtimeRegistration = runtimeRegistrationIntent == null
+			? null
+			: materializeRuntimeInstance?.Invoke(runtimeRegistrationIntent) ?? runtimeRegistrationIntent;
 		List<AutoGroupAdditionalRegistrationCleanupIntent> cleanupIntents = [];
 		List<AutoGroupWindowDeliveryIntent> windowDeliveries = [];
 		var removedMatchedPartyCount = 0;

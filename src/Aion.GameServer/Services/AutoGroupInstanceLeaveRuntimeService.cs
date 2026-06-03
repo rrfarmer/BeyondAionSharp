@@ -39,7 +39,8 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				registration.InstanceKind,
 				registration.QuickRegistrationAllowed,
 				registration.RegisteredPlayerObjectIds,
-				registration.ReadyEnterStartTime);
+				registration.ReadyEnterStartTime,
+				registration.StartInstanceTime);
 			_instancesByKey[state.Key] = state;
 			return state.CreateSnapshot();
 		}
@@ -187,7 +188,8 @@ public sealed record AutoGroupInstanceRuntimeRegistration(
 	bool QuickRegistrationAllowed,
 	IReadOnlyCollection<int> RegisteredPlayerObjectIds,
 	int InstanceMaskId = 0,
-	DateTimeOffset? ReadyEnterStartTime = null);
+	DateTimeOffset? ReadyEnterStartTime = null,
+	DateTimeOffset? StartInstanceTime = null);
 
 public sealed record AutoGroupInstanceRuntimeResult(
 	AutoGroupInstanceLeavePlan Plan,
@@ -204,7 +206,8 @@ public sealed record AutoGroupInstanceRuntimeSnapshot(
 	AutoGroupInstanceKind InstanceKind,
 	bool QuickRegistrationAllowed,
 	IReadOnlySet<int> RegisteredPlayerObjectIds,
-	DateTimeOffset? ReadyEnterStartTime);
+	DateTimeOffset? ReadyEnterStartTime,
+	DateTimeOffset? StartInstanceTime);
 
 public sealed record AutoGroupInstancePressEnterResult(
 	int InstanceMaskId,
@@ -281,7 +284,8 @@ internal sealed class AutoGroupInstanceRuntimeState
 		AutoGroupInstanceKind instanceKind,
 		bool quickRegistrationAllowed,
 		IEnumerable<int> registeredPlayerObjectIds,
-		DateTimeOffset? readyEnterStartTime = null)
+		DateTimeOffset? readyEnterStartTime = null,
+		DateTimeOffset? startInstanceTime = null)
 	{
 		WorldId = worldId;
 		Key = new AutoGroupInstanceRuntimeKey(worldId, instanceId == 0 ? 1 : instanceId);
@@ -289,6 +293,7 @@ internal sealed class AutoGroupInstanceRuntimeState
 		InstanceKind = instanceKind;
 		QuickRegistrationAllowed = quickRegistrationAllowed;
 		ReadyEnterStartTime = readyEnterStartTime;
+		StartInstanceTime = startInstanceTime;
 		_registeredPlayerObjectIds = registeredPlayerObjectIds.ToHashSet();
 	}
 
@@ -303,6 +308,8 @@ internal sealed class AutoGroupInstanceRuntimeState
 	public bool QuickRegistrationAllowed { get; }
 
 	public DateTimeOffset? ReadyEnterStartTime { get; }
+
+	public DateTimeOffset? StartInstanceTime { get; }
 
 	public AutoGroupInstanceLeaveFacts CreateLeaveFacts(
 		Player player,
@@ -337,6 +344,7 @@ internal sealed class AutoGroupInstanceRuntimeState
 			InstanceKind,
 			QuickRegistrationAllowed,
 			_registeredPlayerObjectIds.ToHashSet(),
-			ReadyEnterStartTime);
+			ReadyEnterStartTime,
+			StartInstanceTime);
 	}
 }

@@ -1540,7 +1540,8 @@ public sealed class GameServerConnection : BaseClientConnection
 								readyMatchPlan,
 								autoGroups,
 								_connectionRegistry,
-								registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration));
+								registerRuntimeInstance: registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration),
+								materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance);
 						}
 					}
 				}
@@ -1597,6 +1598,38 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: CM_AUTO_GROUP.runImpl window 105 only contains a commented-out
 				// DredgionRegService.failedEnterDredgion call and has no active side effect.
 				break;
+		}
+	}
+
+	private AutoGroupInstanceRuntimeRegistration MaterializeAutoGroupReadyMatchRuntimeInstance(
+		AutoGroupInstanceRuntimeRegistration registration)
+	{
+		var worldMapStates = _runtimeContext?.WorldMapStates;
+		if (worldMapStates == null)
+			return registration;
+
+		try
+		{
+			// Java parity: AutoGroupService.createNewInstance calls InstanceService.getNextAvailableInstance(...)
+			// before AutoInstance.onInstanceCreate(instance) stores the map instance and startInstanceTime.
+			var instance = InstanceRuntimeService.GetNextAvailableInstance(
+				worldMapStates,
+				registration.WorldId,
+				ownerId: 0,
+				maxPlayers: registration.RegisteredPlayerObjectIds.Count,
+				difficultyId: 0,
+				instanceHandler: null,
+				autoDestroy: false);
+			instance.NotifyInstanceCreated();
+			return registration with
+			{
+				InstanceId = instance.InstanceId,
+				StartInstanceTime = registration.ReadyEnterStartTime ?? DateTimeOffset.UtcNow,
+			};
+		}
+		catch (InvalidOperationException)
+		{
+			return registration;
 		}
 	}
 
