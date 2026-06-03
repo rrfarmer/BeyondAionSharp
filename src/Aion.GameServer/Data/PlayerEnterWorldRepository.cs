@@ -327,6 +327,13 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem targetItem,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemCrossStorageMoveMutationAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -930,6 +937,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int playerObjectId,
 		InventoryItem sourceItem,
 		InventoryItem targetItem,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemCrossStorageMoveMutationAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int newLocation,
+		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1896,6 +1913,37 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save item merge mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemCrossStorageMoveMutationAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/InventoryDAO.store updates item_location and slot after ItemMoveService.moveItem cross-storage.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE inventory SET item_location = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = newLocation },
+					new MySqlParameter { Value = newSlot },
+					new MySqlParameter { Value = itemObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save cross-storage item move for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

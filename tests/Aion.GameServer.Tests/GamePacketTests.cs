@@ -8804,6 +8804,24 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmDeleteItem_MoveDeleteTypeMatchesJava()
+	{
+		// Java parity: ItemPacketService.ItemDeleteType.MOVE = 0x14.
+		Assert.Equal(0x14, SmDeleteItem.MoveDeleteType);
+	}
+
+	[Fact]
+	public void InventoryItem_LocationIsSettable_ModelLevelJavaParity()
+	{
+		// Java parity: item.setItemLocation mutates location after cross-storage move.
+		var item = new InventoryItem { ObjectId = 5001, ItemId = 100004, Count = 1, Location = 0 };
+
+		item.Location = 2; // move to account warehouse
+
+		Assert.Equal(2, item.Location);
+	}
+
+	[Fact]
 	public void ItemSplitService_MergeStacksLogic_FreeCountClampedToMaxStack()
 	{
 		// Java parity: ItemSplitService.mergeStacks — freeCount = maxStackCount - targetCount; merge clamped to freeCount.

@@ -3334,6 +3334,16 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveItemCrossStorageMoveMutationAsync(
+			int playerObjectId,
+			int itemObjectId,
+			int newLocation,
+			long newSlot,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,

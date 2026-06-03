@@ -57,7 +57,8 @@ public sealed class InventoryItem
 	// Java parity: model/gameobjects/Item.setEquipmentSlot mutates slot in place.
 	public long Slot { get; set; }
 
-	public int Location { get; init; }
+	// Java parity: item.setItemLocation mutates storage type (location) in place after cross-storage move.
+	public int Location { get; set; }
 
 	public int Enchant { get; init; }
 

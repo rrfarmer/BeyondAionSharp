@@ -2683,24 +2683,99 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE_ITEM.runImpl -> ItemMoveService.moveItem.
-		if (packet.Source != packet.Destination)
+		var item = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.ItemObjectId && i.Location == packet.Source);
+		if (item == null)
+			return;
+
+		if (packet.Source == packet.Destination)
 		{
-			// Cross-storage moves involve ItemRestrictionService, LegionService, stack merging, and
-			// multi-packet side effects. Deferred until those systems are ported.
+			// Same-storage slot reordering.
+			// Java parity: ItemMoveService.moveInSameStorage — updates slot and marks item dirty; no response packet.
+			if (item.Slot == packet.Slot)
+				return;
+			item.Slot = packet.Slot;
+			if (_playerEnterWorldService != null)
+				await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, item.ObjectId, packet.Slot);
+			// No response packet: the client already updated its UI before sending this packet.
 			return;
 		}
 
-		// Same-storage slot reordering.
-		// Java parity: ItemMoveService.moveInSameStorage — updates slot and marks item dirty; no response packet.
-		var item = player.InventoryItems.FirstOrDefault(
-			i => i.ObjectId == packet.ItemObjectId && i.Location == packet.Source);
-		if (item == null || item.Slot == packet.Slot)
+		// Cross-storage move (cube ↔ regular/account warehouse).
+		// Java parity: ItemMoveService.moveItem cross-storage — ItemRestrictionService checks, then remove/add.
+		// Legion warehouse and trading checks remain deferred.
+		if (packet.Destination == 3 || packet.Source == 3)
+		{
+			// Legion warehouse requires LegionService and permission checks; deferred.
+			return;
+		}
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var template = templates?.GetItemTemplate(item.ItemId);
+		if (template == null)
 			return;
 
+		// Java parity: ItemRestrictionService.isItemRestrictedTo — check storability for destination.
+		if (packet.Destination == 1 /* regular warehouse */ && !template.IsStorableInWarehouse)
+		{
+			await SendPacketAsync(SmSystemMessage.WarehouseCantDepositItem());
+			return;
+		}
+		if (packet.Destination == 2 /* account warehouse */ && !item.IsStorableInAccountWarehouse(template))
+		{
+			await SendPacketAsync(SmSystemMessage.WarehouseCantAccountDeposit());
+			return;
+		}
+
+		// Mutate item location and slot in memory.
+		var oldLocation = item.Location;
+		var oldSlot = item.Slot;
+		item.Location = packet.Destination;
 		item.Slot = packet.Slot;
+
 		if (_playerEnterWorldService != null)
-			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, item.ObjectId, packet.Slot);
-		// No response packet: the client already updated its UI before sending this packet.
+		{
+			var saved = await _playerEnterWorldService.SaveItemCrossStorageMoveMutationAsync(
+				player, item.ObjectId, packet.Destination, packet.Slot);
+			if (!saved)
+			{
+				// Rollback in-memory changes.
+				item.Location = oldLocation;
+				item.Slot = oldSlot;
+				return;
+			}
+		}
+
+		// Java parity: sendItemDeletePacket for source storage.
+		if (oldLocation == 0 /* cube */)
+		{
+			// Java parity: SM_DELETE_ITEM(objectId, MOVE=0x14) + SM_CUBE_UPDATE for cube source.
+			await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.MoveDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+		}
+		else
+		{
+			// Java parity: SM_DELETE_WAREHOUSE_ITEM(storageTypeId, objectId, MOVE=0x14) + SM_CUBE_UPDATE for warehouse source.
+			await SendPacketAsync(new SmDeleteWarehouseItem(oldLocation, item.ObjectId, SmDeleteItem.MoveDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+		}
+
+		// Java parity: sendStorageUpdatePacket for destination storage.
+		if (packet.Destination == 0 /* cube */)
+		{
+			// Java parity: SM_INVENTORY_ADD_ITEM(item, ITEM_COLLECT) + SM_CUBE_UPDATE.
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(item, template));
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+		}
+		else
+		{
+			// Java parity: SM_WAREHOUSE_ADD_ITEM(item, warehouseType, ITEM_COLLECT) + SM_CUBE_UPDATE.
+			await SendPacketAsync(new SmWarehouseAddItem(
+				packet.Destination,
+				[new SmWarehouseAddItem.WarehousePacketItem(item, template)],
+				SmWarehouseAddItem.AllSlot));
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+		}
 	}
 
 	private void HandleCloseDialog(Player player, CmCloseDialog packet)

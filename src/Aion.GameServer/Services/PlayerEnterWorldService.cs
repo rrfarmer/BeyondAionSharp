@@ -274,6 +274,17 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemMergeMutationAsync(player.ObjectId, sourceItem, targetItem, cancellationToken);
 	}
 
+	public Task<bool> SaveItemCrossStorageMoveMutationAsync(
+		Player player,
+		int itemObjectId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemMoveService.moveItem cross-storage — item row item_location and slot updated.
+		return _repository.SaveItemCrossStorageMoveMutationAsync(player.ObjectId, itemObjectId, newLocation, newSlot, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,
