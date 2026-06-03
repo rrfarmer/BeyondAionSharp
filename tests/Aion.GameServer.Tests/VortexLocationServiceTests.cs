@@ -460,6 +460,121 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StartCoordinator_RuntimeDefenderUpdateRunsAfterStartGuardAndCarriesSideEffectMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-runtime-defenders-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService());
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			var occupiedDefender = CreatePlayer(1006, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			var existingDefender = CreatePlayer(1007, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			var existingRequest = new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown);
+			Assert.True(occupiedDefender.ResponseRequester.PutRequest(SmQuestionWindow.VortexDefenderInvitation, existingRequest));
+
+			var report = coordinator.StartInvasionWithRuntimeDefenderUpdate(
+				location,
+				[invader, defender, occupiedDefender, existingDefender],
+				existingDefenders: [new VortexDefenderAddPlayerSnapshot(existingDefender.ObjectId, IsInGroup: false, IsInAlliance: false)],
+				defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+			Assert.Equal(VortexStartInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Started);
+			Assert.True(report.HasSideEffectPlan);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			Assert.True(report.SideEffectPlan.HasDefenderAllianceUpdateRuntimeReport);
+			Assert.False(report.SideEffectPlan.HasDefenderAllianceUpdatePlan);
+			Assert.False(report.SideEffectPlan.HasDefenderInvitationBatchPlan);
+			Assert.Equal(3, report.SideEffectPlan.DefenderRuntimeUpdatePlayerCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderRuntimeSkippedZonePlayerCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderRuntimeRegisteredCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderRuntimeRejectedCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderRuntimeSkippedRegistrationCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderRuntimeRequestStoredCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderRuntimeQuestionWindowIntentCount);
+			var defenderRuntime = Assert.IsType<VortexDefenderAllianceUpdateRuntimeReport>(
+				report.SideEffectPlan.DefenderAllianceUpdateRuntimeReport);
+			Assert.Equal([1004, 1006, 1007], defenderRuntime.DefenderObjectIds);
+			Assert.Equal([1002], defenderRuntime.SkippedObjectIds);
+			Assert.Equal([1004, 1006, 1007], defenderRuntime.BatchReport.DefenderObjectIds);
+			Assert.Equal([1007], defenderRuntime.BatchReport.ExistingDefenderObjectIds);
+			Assert.Equal(VortexDefenderAllianceSnapshot.Open, defenderRuntime.BatchReport.DefenderAlliance);
+			Assert.Equal(0, invader.ResponseRequester.Count);
+			Assert.Equal(1, defender.ResponseRequester.Count);
+			Assert.Equal(1, occupiedDefender.ResponseRequester.Count);
+			Assert.Equal(0, existingDefender.ResponseRequester.Count);
+			Assert.False(defenderRuntime.ShouldSendLivePacket);
+			Assert.False(defenderRuntime.ShouldExecuteLiveCallback);
+			Assert.False(defenderRuntime.ShouldMutateLiveGroup);
+			Assert.False(defenderRuntime.ShouldMutateLiveAlliance);
+			Assert.False(defenderRuntime.ShouldMutateLiveDefenders);
+			Assert.Equal(
+				[
+					VortexStartInvasionSideEffectStepKind.SetActiveVortex,
+					VortexStartInvasionSideEffectStepKind.DespawnExistingVortexNpcs,
+					VortexStartInvasionSideEffectStepKind.InitRiftGenerator,
+					VortexStartInvasionSideEffectStepKind.UpdateDefenderAlliance,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+
+			var dispatch = Assert.IsType<QuestionResponseDispatch>(
+				occupiedDefender.ResponseRequester.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 1));
+			Assert.Same(existingRequest, dispatch.Request);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StartCoordinator_RuntimeDefenderUpdateSkipsWhenJavaStartGuardFails()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-runtime-defenders-guard-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService());
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			runtime.StartInvasionWithResult(location);
+
+			var report = coordinator.StartInvasionWithRuntimeDefenderUpdate(
+				location,
+				[defender],
+				defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+			Assert.Equal(VortexStartInvasionCoordinatorStatus.AlreadyStarted, report.Status);
+			Assert.False(report.Started);
+			Assert.False(report.HasSideEffectPlan);
+			Assert.Empty(report.SideEffectPlan.OrderedSteps);
+			Assert.False(report.SideEffectPlan.HasDefenderAllianceUpdateRuntimeReport);
+			Assert.Equal(0, report.SideEffectPlan.DefenderRuntimeUpdatePlayerCount);
+			Assert.Equal(0, report.SideEffectPlan.DefenderRuntimeRegisteredCount);
+			Assert.Equal(0, report.SideEffectPlan.DefenderRuntimeRequestStoredCount);
+			Assert.Equal(0, defender.ResponseRequester.Count);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task StartCoordinator_DuplicateStartSkipsStaticSelectorAndPreservesRuntimeState()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-guard-" + Guid.NewGuid().ToString("N"));

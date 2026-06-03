@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
 
@@ -41,6 +42,7 @@ public sealed class VortexStartInvasionCoordinatorService
 	private readonly VortexInvasionRuntime _runtime;
 	private readonly VortexStartInvasionSideEffectPlanService _sideEffectPlanner;
 	private readonly IVortexInvasionSpawnSnapshotSelector _invasionSpawnSelector;
+	private readonly VortexDefenderAllianceUpdateRuntimeAdapterService _defenderAllianceUpdateRuntimeAdapter = new();
 
 	public VortexStartInvasionCoordinatorService(
 		VortexInvasionRuntime runtime,
@@ -132,19 +134,52 @@ public sealed class VortexStartInvasionCoordinatorService
 			invasionSpawnSelector);
 	}
 
+	public VortexStartInvasionCoordinatorReport StartInvasionWithRuntimeDefenderUpdate(
+		VortexLocationSummary location,
+		IReadOnlyList<Player>? locationPlayers,
+		RiftPortalState? activePortal = null,
+		IReadOnlyList<VortexStartSpawnedNpcSnapshot>? spawnedNpcs = null,
+		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null,
+		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null,
+		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+	{
+		ArgumentNullException.ThrowIfNull(location);
+
+		var startResult = _runtime.StartInvasionWithResult(location, activePortal);
+		var runtimeReport = startResult.Started
+			? _defenderAllianceUpdateRuntimeAdapter.UpdateAlliance(
+				location,
+				locationPlayers,
+				existingDefenders,
+				defenderAlliance)
+			: null;
+
+		return CreateReport(
+			startResult,
+			spawnedNpcs,
+			invasionSpawns,
+			defenderAllianceUpdatePlan,
+			defenderInvitationBatchPlan,
+			runtimeReport);
+	}
+
 	private VortexStartInvasionCoordinatorReport CreateReport(
 		VortexStartInvasionResult startResult,
 		IReadOnlyList<VortexStartSpawnedNpcSnapshot>? spawnedNpcs = null,
 		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null,
 		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null,
-		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null)
+		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null,
+		VortexDefenderAllianceUpdateRuntimeReport? defenderAllianceUpdateRuntimeReport = null)
 	{
 		var sideEffectPlan = _sideEffectPlanner.CreatePlan(
 			startResult,
 			spawnedNpcs,
 			invasionSpawns,
 			defenderAllianceUpdatePlan,
-			defenderInvitationBatchPlan);
+			defenderInvitationBatchPlan,
+			defenderAllianceUpdateRuntimeReport);
 		return VortexStartInvasionCoordinatorReport.From(startResult, sideEffectPlan);
 	}
 }

@@ -11,7 +11,8 @@ public sealed class VortexStartInvasionSideEffectPlanService
 		IReadOnlyList<VortexStartSpawnedNpcSnapshot>? spawnedNpcs = null,
 		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null,
 		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null,
-		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null)
+		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null,
+		VortexDefenderAllianceUpdateRuntimeReport? defenderAllianceUpdateRuntimeReport = null)
 	{
 		ArgumentNullException.ThrowIfNull(startResult);
 
@@ -54,9 +55,17 @@ public sealed class VortexStartInvasionSideEffectPlanService
 			DefenderRequestNotStoredCount: defenderInvitationBatchPlan?.RequestNotStoredCount ?? 0,
 			AlreadyDefenderUpdateCount: defenderInvitationBatchPlan?.AlreadyDefenderCount ?? 0,
 			DefenderAllianceFullUpdateCount: defenderInvitationBatchPlan?.AllianceFullCount ?? 0,
+			DefenderRuntimeUpdatePlayerCount: defenderAllianceUpdateRuntimeReport?.DefenderUpdatePlayerCount ?? 0,
+			DefenderRuntimeSkippedZonePlayerCount: defenderAllianceUpdateRuntimeReport?.SkippedZonePlayerCount ?? 0,
+			DefenderRuntimeRegisteredCount: defenderAllianceUpdateRuntimeReport?.RegisteredCount ?? 0,
+			DefenderRuntimeRejectedCount: defenderAllianceUpdateRuntimeReport?.RejectedCount ?? 0,
+			DefenderRuntimeSkippedRegistrationCount: defenderAllianceUpdateRuntimeReport?.SkippedRegistrationCount ?? 0,
+			DefenderRuntimeRequestStoredCount: defenderAllianceUpdateRuntimeReport?.RequestStoredCount ?? 0,
+			DefenderRuntimeQuestionWindowIntentCount: defenderAllianceUpdateRuntimeReport?.QuestionWindowIntentCount ?? 0,
 			StartResult: startResult,
 			DefenderAllianceUpdatePlan: defenderAllianceUpdatePlan,
 			DefenderInvitationBatchPlan: defenderInvitationBatchPlan,
+			DefenderAllianceUpdateRuntimeReport: defenderAllianceUpdateRuntimeReport,
 			JavaSource: "services/vortex/Invasion.startInvasion");
 	}
 }
@@ -115,15 +124,24 @@ public sealed record VortexStartInvasionSideEffectPlan(
 	int DefenderRequestNotStoredCount = 0,
 	int AlreadyDefenderUpdateCount = 0,
 	int DefenderAllianceFullUpdateCount = 0,
+	int DefenderRuntimeUpdatePlayerCount = 0,
+	int DefenderRuntimeSkippedZonePlayerCount = 0,
+	int DefenderRuntimeRegisteredCount = 0,
+	int DefenderRuntimeRejectedCount = 0,
+	int DefenderRuntimeSkippedRegistrationCount = 0,
+	int DefenderRuntimeRequestStoredCount = 0,
+	int DefenderRuntimeQuestionWindowIntentCount = 0,
 	VortexStartInvasionResult? StartResult = null,
 	VortexDefenderAllianceUpdatePlan? DefenderAllianceUpdatePlan = null,
 	VortexDefenderInvitationBatchPlan? DefenderInvitationBatchPlan = null,
+	VortexDefenderAllianceUpdateRuntimeReport? DefenderAllianceUpdateRuntimeReport = null,
 	string JavaSource = "")
 {
 	public IReadOnlyList<VortexStartInvasionSideEffectStep> OrderedSteps => Steps ?? [];
 	public bool ShouldExecuteLiveSideEffects => false;
 	public bool HasDefenderAllianceUpdatePlan => DefenderAllianceUpdatePlan is not null;
 	public bool HasDefenderInvitationBatchPlan => DefenderInvitationBatchPlan is not null;
+	public bool HasDefenderAllianceUpdateRuntimeReport => DefenderAllianceUpdateRuntimeReport is not null;
 }
 
 public sealed record VortexStartInvasionSideEffectStep(
