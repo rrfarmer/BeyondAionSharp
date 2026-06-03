@@ -835,6 +835,9 @@ public sealed class PlayerEnterWorldService
 		if (!plan.IsPlanned)
 			return;
 
+		var membersByObjectId = _playerGroupRuntime
+			.GetMemberPlayers(plan.TeamId)
+			.ToDictionary(member => member.ObjectId);
 		var leaderChangePlan = plan.LeaderChangePlan;
 		if (plan.FallbackLeaderObjectId.HasValue)
 			leaderChangePlan = _playerGroupRuntime.ChangeLeader(plan.TeamId, plan.FallbackLeaderObjectId.Value) ?? leaderChangePlan;
@@ -843,7 +846,7 @@ public sealed class PlayerEnterWorldService
 		{
 			foreach (var intent in leaderChangePlan.PacketIntents)
 			{
-				if (intent.RecipientObjectId == player.ObjectId)
+				if (ShouldSkipTeamLogoutRecipient(intent.RecipientObjectId, membersByObjectId, player.ObjectId))
 					continue;
 
 				await _connectionRegistry.SendPacketToPlayerAsync(
@@ -857,7 +860,7 @@ public sealed class PlayerEnterWorldService
 
 		foreach (var intent in plan.PacketIntents)
 		{
-			if (intent.RecipientObjectId == player.ObjectId)
+			if (ShouldSkipTeamLogoutRecipient(intent.RecipientObjectId, membersByObjectId, player.ObjectId))
 				continue;
 
 			await _connectionRegistry.SendPacketToPlayerAsync(
@@ -972,6 +975,17 @@ public sealed class PlayerEnterWorldService
 	}
 
 	private static bool ShouldSkipAllianceLogoutRecipient(
+		int recipientObjectId,
+		IReadOnlyDictionary<int, Player> membersByObjectId,
+		int disconnectedPlayerObjectId)
+	{
+		if (recipientObjectId == disconnectedPlayerObjectId)
+			return true;
+
+		return !membersByObjectId.TryGetValue(recipientObjectId, out var recipient) || !recipient.IsOnline;
+	}
+
+	private static bool ShouldSkipTeamLogoutRecipient(
 		int recipientObjectId,
 		IReadOnlyDictionary<int, Player> membersByObjectId,
 		int disconnectedPlayerObjectId)

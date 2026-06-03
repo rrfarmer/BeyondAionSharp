@@ -548,6 +548,96 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_SkipsOfflineGroupRecipientsDuringDisconnectedFanoutLikeJavaPacketSendUtility()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Disconnected");
+		player.IsOnline = true;
+		var leader = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Leader",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var offlineOther = new Player
+		{
+			ObjectId = 2002,
+			AccountId = 21,
+			Name = "OfflineOther",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = false,
+			Position = new WorldPosition(210010000, 8, 9, 10, 16),
+		};
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(99001, [leader, player, offlineOther]);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world, out var registry, playerGroupRuntime: groupRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal([2001, 2001], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == offlineOther.ObjectId);
+		AssertGroupOfflineMessage(registry.SentPackets[0], 2001, "Disconnected");
+		Assert.IsType<SmGroupMemberInfo>(registry.SentPackets[1].Packet);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_SkipsOfflineGroupRecipientsDuringLeaderChangeLikeJavaPacketSendUtility()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Leader");
+		player.IsOnline = true;
+		var fallback = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Fallback",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var offlineOther = new Player
+		{
+			ObjectId = 2002,
+			AccountId = 21,
+			Name = "OfflineOther",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = false,
+			Position = new WorldPosition(210010000, 8, 9, 10, 16),
+		};
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(99001, [player, fallback, offlineOther]);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world, out var registry, playerGroupRuntime: groupRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal([2001, 2001, 2001, 2001], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == offlineOther.ObjectId);
+		Assert.IsType<SmGroupInfo>(registry.SentPackets[0].Packet);
+		AssertGroupSystemMessage(registry.SentPackets[1], 2001, 1300155);
+		AssertGroupOfflineMessage(registry.SentPackets[2], 2001, "Leader");
+		Assert.IsType<SmGroupMemberInfo>(registry.SentPackets[3].Packet);
+		var descriptor = Assert.IsType<PlayerGroupDescriptor>(groupRuntime.GetDescriptor(99001));
+		Assert.Equal(fallback.ObjectId, descriptor.LeaderObjectId);
+	}
+
+	[Fact]
 	public async Task LeaveWorld_DisbandGroupWhenNoMembersRemainOnlineLikeJavaLogout()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Leader");
