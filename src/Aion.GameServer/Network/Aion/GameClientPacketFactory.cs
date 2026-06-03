@@ -22,6 +22,7 @@ public static class GameClientPacketFactory
 		Register(11, states => new CmObjectSearch(11, states), GameConnectionState.InGame);
 		Register(12, states => new CmCustomSettings(12, states), GameConnectionState.InGame);
 		Register(15, states => new CmTeleportAnimationDone(15, states), GameConnectionState.InGame);
+		Register(16, states => new CmLegionSendEmblemInfo(16, states), GameConnectionState.InGame);
 		Register(17, states => new CmPositionSelf(17, states), GameConnectionState.InGame);
 		Register(18, states => new CmTimeCheck(18, states), GameConnectionState.Connected, GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(19, states => new CmGather(19, states), GameConnectionState.InGame);
@@ -30,6 +31,7 @@ public static class GameClientPacketFactory
 		Register(23, states => new CmOpenStaticDoor(23, states), GameConnectionState.InGame);
 		Register(27, states => new CmChatMessagePublic(27, states), GameConnectionState.InGame);
 		Register(28, states => new CmChatMessageWhisper(28, states), GameConnectionState.InGame);
+		Register(29, states => new CmLegionDominionRequestRanking(29, states), GameConnectionState.InGame);
 		Register(30, states => new CmHouseScript(30, states), GameConnectionState.InGame);
 		Register(31, states => new CmTargetSelect(31, states), GameConnectionState.InGame);
 		Register(32, states => new CmAttack(32, states), GameConnectionState.InGame);
@@ -40,10 +42,13 @@ public static class GameClientPacketFactory
 		Register(38, states => new CmEquipItem(38, states), GameConnectionState.InGame);
 		Register(39, states => new CmChatPlayerInfo(39, states), GameConnectionState.InGame);
 		Register(40, states => new CmPlayerListener(40, states), GameConnectionState.InGame);
+		Register(41, states => new CmBuilderCommand(41, states), GameConnectionState.InGame);
+		Register(42, states => new CmBuilderControl(42, states), GameConnectionState.InGame);
 		Register(43, states => new CmEmotion(43, states), GameConnectionState.InGame);
 		Register(44, states => new CmPing(44, states), GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(45, states => new CmLegion(45, states), GameConnectionState.InGame);
 		Register(46, states => new CmInstanceLeave(46, states), GameConnectionState.InGame);
+		Register(47, states => new CmLegionSendEmblem(47, states), GameConnectionState.InGame);
 		Register(48, states => new CmMove(48, states), GameConnectionState.InGame);
 		Register(49, states => new CmMoveInAir(49, states), GameConnectionState.InGame);
 		Register(50, states => new CmQuestionResponse(50, states), GameConnectionState.InGame);
@@ -51,7 +56,9 @@ public static class GameClientPacketFactory
 		Register(52, states => new CmShowDialog(52, states), GameConnectionState.InGame);
 		Register(53, states => new CmCloseDialog(53, states), GameConnectionState.InGame);
 		Register(54, states => new CmDialogSelect(54, states), GameConnectionState.InGame);
+		Register(55, states => new CmLegionHistory(55, states), GameConnectionState.InGame);
 		Register(58, states => new CmSetNote(58, states), GameConnectionState.InGame);
+		Register(59, states => new CmLegionModifyEmblem(59, states), GameConnectionState.InGame);
 		Register(61, states => new CmChatGroupInfo(61, states), GameConnectionState.InGame);
 		Register(62, states => new CmCheckPak(62, states), GameConnectionState.InGame);
 		Register(63, states => new CmExchangeRequest(63, states), GameConnectionState.InGame);
@@ -125,8 +132,12 @@ public static class GameClientPacketFactory
 		Register(156, states => new CmMoveItem(156, states), GameConnectionState.InGame);
 		Register(157, states => new CmSplitItem(157, states), GameConnectionState.InGame);
 		Register(158, states => new CmShowBlockList(158, states), GameConnectionState.InGame);
+		Register(159, states => new CmPlayerSearch(159, states), GameConnectionState.InGame);
+		Register(160, states => new CmLegionUploadInfo(160, states), GameConnectionState.InGame);
+		Register(161, states => new CmLegionUploadEmblem(161, states), GameConnectionState.InGame);
 		Register(162, states => new CmReadExpressMail(162, states), GameConnectionState.InGame);
 		Register(163, states => new CmSubzoneChange(163, states), GameConnectionState.InGame);
+		Register(164, states => new CmQuestShare(164, states), GameConnectionState.InGame);
 		Register(166, states => new CmBlockAdd(166, states), GameConnectionState.InGame);
 		Register(167, states => new CmBlockDelete(167, states), GameConnectionState.InGame);
 		Register(170, states => new CmFriendStatus(170, states), GameConnectionState.InGame);
@@ -137,6 +148,7 @@ public static class GameClientPacketFactory
 		Register(177, states => new CmCheckNickname(177, states), GameConnectionState.Authed);
 		Register(178, states => new CmReplaceItem(178, states), GameConnectionState.InGame);
 		Register(179, states => new CmBlockSetReason(179, states), GameConnectionState.InGame);
+		Register(180, states => new CmDebugCommand(180, states), GameConnectionState.InGame);
 		Register(181, states => new CmShowBrand(181, states), GameConnectionState.InGame);
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
 		Register(184, states => new CmGroupLoot(184, states), GameConnectionState.InGame);

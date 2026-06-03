@@ -750,6 +750,39 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_LEGION.runImpl dispatches LegionService by exOpcode.
 				// Legion mutation and membership side effects remain unported; keep this parser-only for now.
 				break;
+			case CmLegionSendEmblemInfo:
+				// Java parity: CM_LEGION_SEND_EMBLEM_INFO.runImpl -> LegionService.getLegion(legionId) -> SM_LEGION_SEND_EMBLEM; deferred.
+				break;
+			case CmLegionSendEmblem:
+				// Java parity: CM_LEGION_SEND_EMBLEM.runImpl -> LegionService data dispatch; deferred.
+				break;
+			case CmLegionHistory:
+				// Java parity: CM_LEGION_HISTORY.runImpl -> SM_LEGION_HISTORY(page, type); deferred until legion history is ported.
+				break;
+			case CmLegionModifyEmblem:
+				// Java parity: CM_LEGION_MODIFY_EMBLEM.runImpl -> LegionService.updateEmblem; deferred.
+				break;
+			case CmLegionUploadInfo:
+				// Java parity: CM_LEGION_UPLOAD_INFO.runImpl sends emblem info to LegionService; deferred.
+				break;
+			case CmLegionUploadEmblem:
+				// Java parity: CM_LEGION_UPLOAD_EMBLEM.runImpl sends binary emblem data to LegionService; deferred.
+				break;
+			case CmLegionDominionRequestRanking:
+				// Java parity: CM_LEGION_DOMINION_REQUEST_RANKING.runImpl dispatches DominionService; deferred.
+				break;
+			case CmQuestShare:
+				// Java parity: CM_QUEST_SHARE.runImpl -> QuestService.checkStartConditions + SM_QUEST_ACTION to group; deferred until quest engine is ported.
+				break;
+			case CmBuilderCommand:
+				// Java parity: CM_BUILDER_COMMAND.runImpl logs //// prefixed command to ADMINAUDIT_LOG; deferred until admin command pipeline is ported.
+				break;
+			case CmBuilderControl:
+				// Java parity: CM_BUILDER_CONTROL.runImpl — no Java side effect defined; logged only.
+				break;
+			case CmDebugCommand:
+				// Java parity: CM_DEBUG_COMMAND.runImpl logs //// prefixed command to ADMINAUDIT_LOG; deferred.
+				break;
 			case CmInstanceLeave:
 				// Java parity: network/aion/clientpackets/CM_INSTANCE_LEAVE.runImpl delegates to the live instance handler; deferred.
 				break;
@@ -997,6 +1030,9 @@ public sealed class GameServerConnection : BaseClientConnection
 					await HandleFriendStatusAsync(_activePlayer, friendStatus);
 					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
 				}
+				break;
+			case CmPlayerSearch:
+				// Java parity: CM_PLAYER_SEARCH.runImpl -> World.getAllPlayers() filter -> SM_PLAYER_SEARCH; deferred until world player list is accessible.
 				break;
 			case CmReplaceItem replaceItem:
 				if (_activePlayer != null)
