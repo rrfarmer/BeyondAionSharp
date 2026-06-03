@@ -351,6 +351,80 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void PeaceSpawnSelection_SelectsJavaPeaceRowsForVortexLocation()
+	{
+		var selector = new VortexPeaceSpawnSnapshotSelectionService();
+		var table = new NpcVortexSpawnTable(
+			[
+				CreateVortexSpawn(0, 0, 0, VortexStateType.Peace, 831500, "peace-a"),
+				CreateVortexSpawn(0, 0, 1, VortexStateType.Invasion, 831600, "invasion-a"),
+				CreateVortexSpawn(0, 1, 0, VortexStateType.Peace, 831501, "peace-b"),
+				CreateVortexSpawn(1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+			]);
+
+		var selected = selector.SelectPeaceSpawns(0, table);
+
+		Assert.Equal(2, selected.Count);
+		Assert.All(selected, snapshot => Assert.Equal(VortexStateType.Peace, snapshot.State));
+		Assert.Equal([831500, 831501], selected.Select(snapshot => snapshot.Spawn.NpcId).ToArray());
+		Assert.Equal(["peace-a", "peace-b"], selected.Select(snapshot => snapshot.Spawn.Anchor).ToArray());
+		Assert.Equal([210060000, 210060000], selected.Select(snapshot => snapshot.Spawn.MapId).ToArray());
+		Assert.DoesNotContain(selected, snapshot => snapshot.Spawn.NpcId == 831600);
+		Assert.DoesNotContain(selected, snapshot => snapshot.Spawn.NpcId == 831700);
+	}
+
+	[Fact]
+	public async Task PeaceSpawnSelection_FeedsStopPlanWithoutLiveSpawnExecution()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-peace-spawn-selection-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var planner = new VortexStopInvasionSideEffectPlanService();
+			var selector = new VortexPeaceSpawnSnapshotSelectionService();
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "peace-a"),
+				]);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+
+			var stop = runtime.StopInvasion(location.Id);
+			var peaceSpawns = selector.SelectPeaceSpawns(location.Id, table);
+			var plan = planner.CreatePlan(stop, peaceSpawns: peaceSpawns);
+
+			Assert.Equal(VortexStopInvasionSideEffectPlanStatus.Planned, plan.Status);
+			Assert.False(plan.ShouldExecuteLiveSideEffects);
+			Assert.Equal(1, plan.PeaceSpawnCount);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+				],
+				plan.OrderedSteps.Select(step => step.Kind).ToArray());
+			var spawnStep = Assert.Single(plan.OrderedSteps, step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc);
+			Assert.Equal(831500, spawnStep.NpcId);
+			Assert.Equal(VortexStateType.Peace, spawnStep.VortexState);
+			Assert.Equal("peace-a", spawnStep.Spawn?.Anchor);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public void PeaceSpawnSnapshot_RejectsInvasionVortexRows()
+	{
+		var invasionSpawn = CreateVortexSpawn(0, 0, 0, VortexStateType.Invasion, 831600, "invasion-a");
+
+		Assert.Throws<ArgumentException>(() => VortexStopPeaceSpawnSnapshot.FromVortexSpawn(invasionSpawn));
+	}
+
+	[Fact]
 	public void StopSnapshotRequest_NormalizesMissingGroupsWithoutLiveLookup()
 	{
 		var invader = CreatePlayer(1002, isOnline: true, worldId: 210060000);
@@ -927,6 +1001,41 @@ public sealed class VortexLocationServiceTests
 			"",
 			0,
 			"",
+			Custom: false,
+			GroupTemporarySchedule: null,
+			SpotTemporarySchedule: null);
+	}
+
+	private static NpcVortexSpawnSummary CreateVortexSpawn(
+		int vortexLocationId,
+		int spawnGroupIndex,
+		int spotIndex,
+		VortexStateType stateType,
+		int npcId,
+		string anchor)
+	{
+		return new NpcVortexSpawnSummary(
+			MapId: 210060000,
+			VortexLocationId: vortexLocationId,
+			SpawnGroupIndex: spawnGroupIndex,
+			SpotIndex: spotIndex,
+			StateType: stateType,
+			NpcId: npcId,
+			X: 129.5f + spotIndex,
+			Y: 228.25f + spotIndex,
+			Z: 337.75f + spotIndex,
+			Heading: (byte)(45 + spotIndex),
+			RespawnSeconds: 30,
+			PoolSize: 0,
+			DifficultId: 0,
+			Handler: "VORTEX",
+			StaticId: 0,
+			RandomWalkRange: 0,
+			WalkerId: string.Empty,
+			WalkerIndex: 0,
+			Anchor: anchor,
+			State: 0,
+			AiName: string.Empty,
 			Custom: false,
 			GroupTemporarySchedule: null,
 			SpotTemporarySchedule: null);

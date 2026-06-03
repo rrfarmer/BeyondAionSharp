@@ -68,6 +68,24 @@ public sealed class VortexStopInvasionSideEffectPlanService
 	}
 }
 
+public sealed class VortexPeaceSpawnSnapshotSelectionService
+{
+	public IReadOnlyList<VortexStopPeaceSpawnSnapshot> SelectPeaceSpawns(
+		int vortexLocationId,
+		NpcVortexSpawnTable vortexSpawns)
+	{
+		ArgumentNullException.ThrowIfNull(vortexSpawns);
+
+		// Java parity: services/VortexService.spawn(loc, VortexStateType.PEACE)
+		// scans DataManager.SPAWNS_DATA.getVortexSpawnsByLocId(loc.getId()) and
+		// selects only VortexSpawnTemplate rows whose stateType is PEACE.
+		return vortexSpawns
+			.GetSpawnsForVortexLocation(vortexLocationId, VortexStateType.Peace)
+			.Select(VortexStopPeaceSpawnSnapshot.FromVortexSpawn)
+			.ToArray();
+	}
+}
+
 public enum VortexStopInvasionSideEffectPlanStatus
 {
 	MissingInvasion,
@@ -214,5 +232,36 @@ public sealed record VortexStopPeaceSpawnSnapshot(
 	{
 		ArgumentNullException.ThrowIfNull(spawn);
 		return new VortexStopPeaceSpawnSnapshot(spawn, VortexStateType.Peace);
+	}
+
+	public static VortexStopPeaceSpawnSnapshot FromVortexSpawn(NpcVortexSpawnSummary spawn)
+	{
+		ArgumentNullException.ThrowIfNull(spawn);
+		if (spawn.StateType != VortexStateType.Peace)
+			throw new ArgumentException("Only PEACE Vortex spawn rows can become stop PEACE spawn snapshots.", nameof(spawn));
+
+		return new VortexStopPeaceSpawnSnapshot(
+			new NpcSpawnSummary(
+				spawn.MapId,
+				spawn.NpcId,
+				spawn.X,
+				spawn.Y,
+				spawn.Z,
+				spawn.Heading,
+				spawn.RespawnSeconds,
+				spawn.PoolSize,
+				spawn.DifficultId,
+				spawn.Handler,
+				spawn.StaticId,
+				spawn.RandomWalkRange,
+				spawn.WalkerId,
+				spawn.WalkerIndex,
+				spawn.Anchor,
+				spawn.State,
+				spawn.AiName,
+				spawn.Custom,
+				spawn.GroupTemporarySchedule,
+				spawn.SpotTemporarySchedule),
+			VortexStateType.Peace);
 	}
 }
