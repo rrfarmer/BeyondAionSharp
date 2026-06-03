@@ -313,7 +313,8 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 			Action<VortexDefenderInvitationResponseConsumptionReport>? vortexReportObserver = null,
 			Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexAcceptanceObserver = null,
 			VortexInvasionRuntime? vortexInvasionRuntime = null,
-			Func<int, Player?>? worldPlayerLookup = null)
+			Func<int, Player?>? worldPlayerLookup = null,
+			VortexLocationService? defenderAcceptanceVortexLocationService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -338,6 +339,7 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 					vortexDefenderAcceptanceObserver: vortexAcceptanceObserver,
 					vortexInvasionRuntime: vortexInvasionRuntime,
 					worldPlayerLookup: worldPlayerLookup,
+					defenderAcceptanceVortexLocationService: defenderAcceptanceVortexLocationService,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}

@@ -2266,6 +2266,43 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task FindDefenderLocationId_WorldPositionFallbackResolvesLocationFromVortexLocationServiceWhenNotInRuntime()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-world-position-fallback-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location0 = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var locationService = new VortexLocationService(context);
+			var runtime = new VortexInvasionRuntime();
+			runtime.StartInvasion(location0);
+			// Other player is a defender, but responder is not in the runtime.
+			var otherDefender = CreatePlayer(1001, isOnline: true, location0.InvasionWorldId);
+			Assert.True(runtime.AddDefender(location0.Id, otherDefender));
+			var responder = CreatePlayer(1004, isOnline: true, location0.InvasionWorldId);
+
+			// FindDefenderLocationId returns null (responder not in defenders map).
+			Assert.Null(runtime.FindDefenderLocationId(responder.ObjectId));
+			// World-position fallback: responder is in Theobomos (location0).
+			var location = locationService.GetLocationByWorld(location0.InvasionWorldId);
+			var fallbackLocationId = location?.Id;
+
+			Assert.NotNull(location);
+			Assert.Equal(location0.Id, fallbackLocationId);
+			// Verify the chain: runtime returns null → service returns location0.Id
+			var resolvedId = runtime.FindDefenderLocationId(responder.ObjectId)
+				?? locationService.GetLocationByWorld(responder.Position.WorldId)?.Id
+				?? 0;
+			Assert.Equal(location0.Id, resolvedId);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task DefenderAcceptanceInputResolver_DerivesExistingDefenderSnapshotsFromRuntimeSnapshot()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-acceptance-input-resolver-" + Guid.NewGuid().ToString("N"));
