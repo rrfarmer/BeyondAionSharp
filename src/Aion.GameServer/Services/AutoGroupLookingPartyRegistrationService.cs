@@ -229,12 +229,16 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		AutoGroupTable? autoGroups,
 		IGameClientConnectionRegistry connectionRegistry,
 		Action<AutoGroupInstanceRuntimeRegistration>? registerRuntimeInstance = null,
+		DateTimeOffset? readyEnterStartTime = null,
 		CancellationToken cancellationToken = default)
 	{
 		if (readyMatchPlan.Status != AutoGroupReadyMatchPlanStatus.Ready)
 			return AutoGroupApplyReadyMatchResult.NotReady(readyMatchPlan);
 
-		var runtimeRegistration = CreateRuntimeRegistrationIntent(readyMatchPlan, autoGroups);
+		var runtimeRegistration = CreateRuntimeRegistrationIntent(
+			readyMatchPlan,
+			autoGroups,
+			readyEnterStartTime ?? DateTimeOffset.UtcNow);
 		List<AutoGroupAdditionalRegistrationCleanupIntent> cleanupIntents = [];
 		List<AutoGroupWindowDeliveryIntent> windowDeliveries = [];
 		var removedMatchedPartyCount = 0;
@@ -754,7 +758,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 
 	private static AutoGroupInstanceRuntimeRegistration? CreateRuntimeRegistrationIntent(
 		AutoGroupReadyMatchPlan readyMatchPlan,
-		AutoGroupTable? autoGroups)
+		AutoGroupTable? autoGroups,
+		DateTimeOffset readyEnterStartTime)
 	{
 		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(readyMatchPlan.QueueMatchPlan.MaskId);
 		if (autoGroup == null)
@@ -766,7 +771,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			GetInstanceKind(autoGroup),
 			autoGroup.RegisterQuick,
 			readyMatchPlan.ReadyWindowRecipientObjectIds,
-			autoGroup.MaskId);
+			autoGroup.MaskId,
+			readyEnterStartTime);
 	}
 
 	private static AutoGroupInstanceKind GetInstanceKind(AutoGroupSummary autoGroup)
@@ -1118,7 +1124,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 			sentWindowPackets,
 			additionalRegistrationCleanupIntents.Any(intent => intent.WouldPenaliseParty || intent.WouldPenalisePlayer),
 			additionalRegistrationCleanupIntents.Any(intent => intent.WouldRecheckQueueForNewMatches),
-			"AutoGroupService.createNewInstance live slice -> remove matched entries, searchAndRemoveAdditionalRegistrations(id), send cleanup windows and SM_AUTO_GROUP(maskId, 4); instance allocation/startEnterTime/penalty scheduling remain deferred");
+			"AutoGroupService.createNewInstance live slice -> remove matched entries, set startEnterTime, searchAndRemoveAdditionalRegistrations(id), send cleanup windows and SM_AUTO_GROUP(maskId, 4); instance allocation/penalty scheduling remain deferred");
 	}
 }
 

@@ -38,7 +38,8 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				registration.InstanceMaskId,
 				registration.InstanceKind,
 				registration.QuickRegistrationAllowed,
-				registration.RegisteredPlayerObjectIds);
+				registration.RegisteredPlayerObjectIds,
+				registration.ReadyEnterStartTime);
 			_instancesByKey[state.Key] = state;
 			return state.CreateSnapshot();
 		}
@@ -185,7 +186,8 @@ public sealed record AutoGroupInstanceRuntimeRegistration(
 	AutoGroupInstanceKind InstanceKind,
 	bool QuickRegistrationAllowed,
 	IReadOnlyCollection<int> RegisteredPlayerObjectIds,
-	int InstanceMaskId = 0);
+	int InstanceMaskId = 0,
+	DateTimeOffset? ReadyEnterStartTime = null);
 
 public sealed record AutoGroupInstanceRuntimeResult(
 	AutoGroupInstanceLeavePlan Plan,
@@ -201,7 +203,8 @@ public sealed record AutoGroupInstanceRuntimeSnapshot(
 	int InstanceMaskId,
 	AutoGroupInstanceKind InstanceKind,
 	bool QuickRegistrationAllowed,
-	IReadOnlySet<int> RegisteredPlayerObjectIds);
+	IReadOnlySet<int> RegisteredPlayerObjectIds,
+	DateTimeOffset? ReadyEnterStartTime);
 
 public sealed record AutoGroupInstancePressEnterResult(
 	int InstanceMaskId,
@@ -277,13 +280,15 @@ internal sealed class AutoGroupInstanceRuntimeState
 		int instanceMaskId,
 		AutoGroupInstanceKind instanceKind,
 		bool quickRegistrationAllowed,
-		IEnumerable<int> registeredPlayerObjectIds)
+		IEnumerable<int> registeredPlayerObjectIds,
+		DateTimeOffset? readyEnterStartTime = null)
 	{
 		WorldId = worldId;
 		Key = new AutoGroupInstanceRuntimeKey(worldId, instanceId == 0 ? 1 : instanceId);
 		InstanceMaskId = instanceMaskId;
 		InstanceKind = instanceKind;
 		QuickRegistrationAllowed = quickRegistrationAllowed;
+		ReadyEnterStartTime = readyEnterStartTime;
 		_registeredPlayerObjectIds = registeredPlayerObjectIds.ToHashSet();
 	}
 
@@ -296,6 +301,8 @@ internal sealed class AutoGroupInstanceRuntimeState
 	public AutoGroupInstanceKind InstanceKind { get; }
 
 	public bool QuickRegistrationAllowed { get; }
+
+	public DateTimeOffset? ReadyEnterStartTime { get; }
 
 	public AutoGroupInstanceLeaveFacts CreateLeaveFacts(
 		Player player,
@@ -329,6 +336,7 @@ internal sealed class AutoGroupInstanceRuntimeState
 			InstanceMaskId,
 			InstanceKind,
 			QuickRegistrationAllowed,
-			_registeredPlayerObjectIds.ToHashSet());
+			_registeredPlayerObjectIds.ToHashSet(),
+			ReadyEnterStartTime);
 	}
 }

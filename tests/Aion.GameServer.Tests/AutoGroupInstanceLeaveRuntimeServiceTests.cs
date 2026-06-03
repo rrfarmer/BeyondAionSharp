@@ -15,13 +15,15 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 		var teammate = CreatePlayer(1002);
 		groups.CreateOrUpdateGroup(9001, [player, teammate], PlayerGroupType.AutoGroup);
 		var service = new AutoGroupInstanceLeaveRuntimeService(groups, alliances);
+		var readyEnterStartTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
 		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
 			300110000,
 			2,
 			AutoGroupInstanceKind.PvpRaceInstance,
 			QuickRegistrationAllowed: true,
 			RegisteredPlayerObjectIds: [player.ObjectId, teammate.ObjectId],
-			InstanceMaskId: 107));
+			InstanceMaskId: 107,
+			ReadyEnterStartTime: readyEnterStartTime));
 
 		var result = service.PressEnter(player, 107);
 
@@ -35,6 +37,7 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 		Assert.True(groups.HasMember(9001, teammate.ObjectId));
 		Assert.NotNull(result.Snapshot);
 		Assert.Equal(107, result.Snapshot.InstanceMaskId);
+		Assert.Equal(readyEnterStartTime, result.Snapshot.ReadyEnterStartTime);
 		Assert.Contains(player.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
 		Assert.Contains(teammate.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
 	}
