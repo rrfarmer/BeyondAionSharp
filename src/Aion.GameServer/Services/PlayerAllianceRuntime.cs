@@ -19,12 +19,18 @@ public sealed class PlayerAllianceRuntime
 	private readonly PlayerAllianceLeaveWorkflowPlanner _leaveWorkflowPlanner = new();
 	private readonly PlayerBaseLeavePlanner _baseLeavePlanner = new();
 	private readonly FindGroupRecruitmentPlanService? _findGroupService;
+	private readonly Action? _startOfflineTimeoutCheck;
 	private readonly byte _serverId;
+	private int _offlineTimeoutCheckStarted;
 
-	public PlayerAllianceRuntime(FindGroupRecruitmentPlanService? findGroupService = null, byte serverId = 0)
+	public PlayerAllianceRuntime(
+		FindGroupRecruitmentPlanService? findGroupService = null,
+		byte serverId = 0,
+		Action? startOfflineTimeoutCheck = null)
 	{
 		_findGroupService = findGroupService;
 		_serverId = serverId;
+		_startOfflineTimeoutCheck = startOfflineTimeoutCheck;
 	}
 
 	public PlayerAllianceSnapshot CreateAlliance(
@@ -35,6 +41,8 @@ public sealed class PlayerAllianceRuntime
 	{
 		// Java parity: model/team/alliance/PlayerAlliance constructor creates groups 1000..1003, then addMember places leader in first open group.
 		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+		PlayerAllianceSnapshot snapshot;
+		var shouldStartOfflineTimeoutCheck = false;
 
 		lock (_sync)
 		{
@@ -53,8 +61,16 @@ public sealed class PlayerAllianceRuntime
 			_allianceReadyStatusByAllianceId[allianceId] = 0;
 			_targetObjectIdsByBrandIdByAllianceId[allianceId] = [];
 
-			return ApplySnapshot(allianceId, members, descriptor);
+			snapshot = ApplySnapshot(allianceId, members, descriptor);
+			shouldStartOfflineTimeoutCheck = Interlocked.CompareExchange(ref _offlineTimeoutCheckStarted, 1, 0) == 0;
 		}
+
+		// Java parity: PlayerAllianceService.createAlliance starts the scheduled offline checker once
+		// through offlineCheckStarted.compareAndSet(false, true), after the alliance is created.
+		if (shouldStartOfflineTimeoutCheck)
+			_startOfflineTimeoutCheck?.Invoke();
+
+		return snapshot;
 	}
 
 	public PlayerAllianceSnapshot AddMember(int allianceId, Player member)

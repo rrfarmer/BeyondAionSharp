@@ -45,6 +45,36 @@ public sealed class PlayerAllianceRuntimeTests
 	}
 
 	[Fact]
+	public void CreateAlliance_StartsOfflineTimeoutCheckOnceLikeJavaAtomicBoolean()
+	{
+		var startCount = 0;
+		var runtime = new PlayerAllianceRuntime(startOfflineTimeoutCheck: () => startCount++);
+		var firstLeader = CreatePlayer(1001, "FirstLeader", worldId: 210010000);
+		var secondLeader = CreatePlayer(2001, "SecondLeader", worldId: 220010000);
+		var autoLeader = CreatePlayer(3001, "AutoLeader", worldId: 230010000);
+
+		runtime.CreateAlliance(88001, firstLeader);
+		runtime.CreateAlliance(88002, secondLeader);
+		runtime.CreateAlliance(88003, autoLeader, PlayerAllianceTeamType.AutoAlliance);
+
+		Assert.Equal(1, startCount);
+	}
+
+	[Fact]
+	public void CreateAlliance_DuplicateDoesNotStartOfflineTimeoutCheckAgainLikeJavaFailedCreate()
+	{
+		var startCount = 0;
+		var runtime = new PlayerAllianceRuntime(startOfflineTimeoutCheck: () => startCount++);
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var duplicateLeader = CreatePlayer(1002, "Duplicate", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+
+		Assert.Throws<InvalidOperationException>(() => runtime.CreateAlliance(88001, duplicateLeader));
+
+		Assert.Equal(1, startCount);
+	}
+
+	[Fact]
 	public void AddMember_FillsAllianceGroupsInJavaOrderAndCapsAtSixPerGroup()
 	{
 		var runtime = new PlayerAllianceRuntime();
