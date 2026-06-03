@@ -34,7 +34,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameServerRuntimeContext>();
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
-			services.AddFindGroupSingletonGraph();
+			services.AddFindGroupSingletonGraphWithAllianceOfflineTimeoutScheduler();
 			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
 			services.AddSingleton<IStaticPlaceableStateService, StaticPlaceableStateService>();
 			services.AddSingleton<IWorldNpcWalkerSpawnPlanCacheService, WorldNpcWalkerSpawnPlanCacheService>();

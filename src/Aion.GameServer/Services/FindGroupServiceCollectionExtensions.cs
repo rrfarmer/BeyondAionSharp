@@ -5,6 +5,15 @@ namespace Aion.GameServer.Services;
 
 public static class FindGroupServiceCollectionExtensions
 {
+	public static IServiceCollection AddFindGroupSingletonGraphWithAllianceOfflineTimeoutScheduler(
+		this IServiceCollection services)
+	{
+		// Java parity: PlayerAllianceService.createAlliance starts initializeOfflineCheck once,
+		// and initializeOfflineCheck schedules OfflinePlayerAllianceChecker on ThreadPoolManager.
+		return services.AddFindGroupSingletonGraph(
+			serviceProvider => () => serviceProvider.GetRequiredService<PlayerAllianceOfflineTimeoutScheduler>().Start());
+	}
+
 	public static IServiceCollection AddFindGroupSingletonGraph(
 		this IServiceCollection services,
 		Func<IServiceProvider, Action?>? createAllianceOfflineTimeoutStartCallback = null)

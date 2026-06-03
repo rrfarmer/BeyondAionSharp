@@ -117,12 +117,12 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 	}
 
 	[Fact]
-	public async Task AddFindGroupSingletonGraph_CanWireAllianceTimeoutSchedulerCallbackOnceLikeJavaCreateAlliance()
+	public async Task AddFindGroupSingletonGraphWithAllianceOfflineTimeoutScheduler_StartsOnceLikeJavaCreateAlliance()
 	{
 		var observations = new List<ThreadPoolScheduleObservation>();
 		await using var provider = CreateServices(
 			includeSocketServer: true,
-			includeAllianceOfflineTimeoutSchedulerCallback: true,
+			useAllianceOfflineTimeoutSchedulerGraph: true,
 			scheduleObserver: observations.Add).BuildServiceProvider();
 		var allianceRuntime = provider.GetRequiredService<PlayerAllianceRuntime>();
 		var firstLeader = CreatePlayer(1001, "FirstLeader");
@@ -142,7 +142,7 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 
 	private static IServiceCollection CreateServices(
 		bool includeSocketServer = false,
-		bool includeAllianceOfflineTimeoutSchedulerCallback = false,
+		bool useAllianceOfflineTimeoutSchedulerGraph = false,
 		Action<ThreadPoolScheduleObservation>? scheduleObserver = null)
 	{
 		var services = new ServiceCollection();
@@ -157,7 +157,7 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 					MaxOnlinePlayers = 100,
 				},
 			});
-		if (scheduleObserver != null || includeAllianceOfflineTimeoutSchedulerCallback)
+		if (scheduleObserver != null || useAllianceOfflineTimeoutSchedulerGraph)
 		{
 			services.AddSingleton(
 				serviceProvider => new ThreadPoolManager(
@@ -166,10 +166,10 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		}
 
 		services.AddSingleton<GamePacketProcessor<string>>(_ => new GamePacketProcessor<string>((_, _) => Task.CompletedTask));
-		services.AddFindGroupSingletonGraph(
-			includeAllianceOfflineTimeoutSchedulerCallback
-				? serviceProvider => () => serviceProvider.GetRequiredService<PlayerAllianceOfflineTimeoutScheduler>().Start()
-				: null);
+		if (useAllianceOfflineTimeoutSchedulerGraph)
+			services.AddFindGroupSingletonGraphWithAllianceOfflineTimeoutScheduler();
+		else
+			services.AddFindGroupSingletonGraph();
 		if (includeSocketServer)
 		{
 			services.AddSingleton<GameClientSocketServer>();
