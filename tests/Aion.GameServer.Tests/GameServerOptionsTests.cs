@@ -27,6 +27,7 @@ public class GameServerOptionsTests
 		Assert.Equal(600, options.Instance.DestroyDelaySeconds);
 		Assert.Equal(600, options.Instance.SoloDestroyDelaySeconds);
 		Assert.False(options.Instance.FormInstanceGroupAnywhere);
+		Assert.True(options.AutoGroup.Enabled);
 		Assert.Equal(1, options.Administration.UnrestrictedItemTradeAccessLevel);
 		Assert.Equal(2, options.Administration.GmPanelAccessLevel);
 		Assert.Equal(1, options.Administration.FreeFlightAccessLevel);
@@ -168,6 +169,7 @@ public class GameServerOptionsTests
 				gameserver.instance.destroy_delay_seconds = 900
 				gameserver.instance.solo.destroy_delay_seconds = 300
 				gameserver.instances.group.requirement = 7
+				gameserver.autogroup.enable = false
 				gameserver.administration.instance.enter_all = 4
 				gameserver.timezone = UTC
 				"""
@@ -200,6 +202,7 @@ public class GameServerOptionsTests
 			Assert.Equal(900, options.Instance.DestroyDelaySeconds);
 			Assert.Equal(300, options.Instance.SoloDestroyDelaySeconds);
 			Assert.Equal(7, options.Membership.InstancesGroupRequirement);
+			Assert.False(options.AutoGroup.Enabled);
 			Assert.Equal(4, options.Administration.InstanceEnterAllAccessLevel);
 			Assert.Equal("UTC", options.Core.TimeZoneId);
 			Assert.Equal(TimeZoneInfo.Utc, options.Core.GetTimeZone());

@@ -29,6 +29,8 @@ public sealed class GameServerOptions
 
 	public GameServerInstanceOptions Instance { get; init; } = new();
 
+	public GameServerAutoGroupOptions AutoGroup { get; init; } = new();
+
 	public GameServerAdministrationOptions Administration { get; init; } = new();
 
 	public GameServerRateOptions Rates { get; init; } = new();
@@ -233,6 +235,10 @@ public sealed class GameServerOptions
 				DestroyDelaySeconds = GetIntWithEnvironment(loader, "gameserver.instance.destroy_delay_seconds", 600),
 				SoloDestroyDelaySeconds = GetIntWithEnvironment(loader, "gameserver.instance.solo.destroy_delay_seconds", 600),
 				FormInstanceGroupAnywhere = GetBoolWithEnvironment(loader, "gameserver.instance_group.form_anywhere", false),
+			},
+			AutoGroup = new GameServerAutoGroupOptions
+			{
+				Enabled = GetBoolWithEnvironment(loader, "gameserver.autogroup.enable", true),
 			},
 			Administration = new GameServerAdministrationOptions
 			{
@@ -608,6 +614,12 @@ public sealed class GameServerInstanceOptions
 
 	// Java parity: configs/main/GroupConfig.FORM_INSTANCE_GROUP_ANYWHERE.
 	public bool FormInstanceGroupAnywhere { get; init; }
+}
+
+public sealed class GameServerAutoGroupOptions
+{
+	// Java parity: configs/main/AutoGroupConfig.AUTO_GROUP_ENABLE.
+	public bool Enabled { get; init; } = true;
 }
 
 public sealed class GameServerRateOptions

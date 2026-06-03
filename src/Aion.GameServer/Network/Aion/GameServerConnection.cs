@@ -1478,6 +1478,14 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleAutoGroupAsync(Player player, CmAutoGroup packet)
 	{
+		if (!_options.AutoGroup.Enabled)
+		{
+			// Java parity: CM_AUTO_GROUP.runImpl checks AutoGroupConfig.AUTO_GROUP_ENABLE
+			// before window dispatch and sends PacketSendUtility.sendMessage.
+			await SendPacketAsync(new SmMessage("Auto Group is disabled"));
+			return;
+		}
+
 		switch (packet.WindowId)
 		{
 			case 100:
