@@ -701,8 +701,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_ATREIAN_PASSPORT.runImpl calls AtreianPassportService.takeReward.
 				// Reward execution/account passport mutation remain unported; keep this parser-only for now.
 				break;
-			case CmObjectSearch:
-				// Java parity: network/aion/clientpackets/CM_OBJECT_SEARCH.runImpl searches DataManager.SPAWNS_DATA; deferred until spawn search data is ported.
+			case CmObjectSearch objectSearch:
+				if (_activePlayer != null)
+					await HandleObjectSearchAsync(_activePlayer, objectSearch);
 				break;
 			case CmPlayerListener:
 				// Java parity: network/aion/clientpackets/CM_PLAYER_LISTENER.runImpl dispatches WebRewardService when enabled; deferred until web rewards are ported.
@@ -3010,6 +3011,25 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, sourceOldSlot);
 		}
 		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
+	}
+
+	private async Task HandleObjectSearchAsync(Player player, CmObjectSearch packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_OBJECT_SEARCH.runImpl -> SpawnsData.getNearestSpawnByNpcId -> SM_SHOW_NPC_ON_MAP.
+		// Simplified: uses GetFirstSpawnByNpcId (current map preferred) instead of full race-aware nearest-spawn search.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null)
+			return;
+
+		var spawn = staticData.NpcSpawns.GetFirstSpawnByNpcId(player.Position.WorldId, packet.NpcId);
+		if (spawn == null)
+		{
+			// Java parity: SM_SYSTEM_MESSAGE.STR_FIND_POS_UNKNOWN_NAME() has message id 1300747.
+			await SendPacketAsync(new SmSystemMessage(1300747));
+			return;
+		}
+
+		await SendPacketAsync(new SmShowNpcOnMap(player, packet.NpcId, spawn.MapId, spawn.X, spawn.Y, spawn.Z));
 	}
 
 	private async Task HandleDistributionSettingsAsync(Player player, CmDistributionSettings packet)
