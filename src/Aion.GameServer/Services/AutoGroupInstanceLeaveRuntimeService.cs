@@ -211,6 +211,18 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				: null;
 	}
 
+	public IReadOnlyList<int> GetActiveInstanceMaskIds()
+	{
+		lock (_sync)
+		{
+			// Java parity: AutoGroupService.onLogout iterates autoInstances.values()
+			// and delegates cancelEnter(player, autoInstance.template.maskId).
+			return _instancesByKey.Values
+				.Select(state => state.InstanceMaskId)
+				.ToArray();
+		}
+	}
+
 	private AutoGroupInstanceLeaveFacts CreateMissingInstanceFacts(Player player)
 	{
 		return new AutoGroupInstanceLeaveFacts(

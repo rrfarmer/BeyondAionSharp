@@ -132,6 +132,32 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	}
 
 	[Fact]
+	public void GetActiveInstanceMaskIds_ReturnsRegisteredAutoInstanceMasksLikeJavaValuesLoop()
+	{
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001],
+			InstanceMaskId: 107));
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300120000,
+			3,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2001],
+			InstanceMaskId: 108));
+
+		var masks = service.GetActiveInstanceMaskIds();
+
+		Assert.Equal([107, 108], masks.Order());
+	}
+
+	[Fact]
 	public void TryAddOpenQuickEntry_AddsQuickPlayerWithinMaximumJoinWindowLikeJavaCheckInstances()
 	{
 		var service = new AutoGroupInstanceLeaveRuntimeService(

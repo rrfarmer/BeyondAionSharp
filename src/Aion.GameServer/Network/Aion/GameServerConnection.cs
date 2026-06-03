@@ -1585,38 +1585,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 			case 103:
 			{
-				var cancelEnter = _autoGroupInstanceLeaveRuntimeService.CancelEnter(player, packet.InstanceMaskId);
-				if (cancelEnter.Status != AutoGroupInstanceCancelEnterStatus.Unregistered)
-					return;
-				ScheduleAutoGroupPenaltyRefreshes(cancelEnter.PenaltyRefreshIntents);
-
 				var staticData = _runtimeContext?.DataManager?.StaticData;
-				var autoGroups = staticData?.AutoGroups;
-				if (_connectionRegistry != null
-					&& cancelEnter.Snapshot?.QuickRegistrationAllowed == true
-					&& cancelEnter.RegisteredPlayerCountAfterCancel > 0)
-				{
-					var refill = _autoGroupLookingPartyRegistrations.TryRefillQueuedQuickEntry(
-						packet.InstanceMaskId,
-						autoGroups,
-						staticData?.InstanceCooltimes,
-						request => _autoGroupInstanceLeaveRuntimeService.TryAddOpenQuickEntry(request));
-					if (refill != null)
-					{
-						foreach (var delivery in refill.WindowDeliveries)
-						{
-							var deliveryAutoGroup = autoGroups?.GetTemplateByInstanceMaskId(delivery.MaskId);
-							if (deliveryAutoGroup != null)
-								await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
-						}
-
-						ScheduleAutoGroupPenaltyRefreshes(refill.PenaltyRefreshIntents);
-					}
-				}
-
-				var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
-				if (autoGroup != null)
-					await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 2));
+				await ApplyAutoGroupCancelEnterAsync(player, packet.InstanceMaskId, staticData?.AutoGroups, staticData?.InstanceCooltimes);
 				break;
 			}
 			case 104:
@@ -1634,6 +1604,44 @@ public sealed class GameServerConnection : BaseClientConnection
 				// DredgionRegService.failedEnterDredgion call and has no active side effect.
 				break;
 		}
+	}
+
+	private async Task ApplyAutoGroupCancelEnterAsync(
+		Player player,
+		int instanceMaskId,
+		AutoGroupTable? autoGroups,
+		InstanceCooltimeTable? instanceCooltimes)
+	{
+		var cancelEnter = _autoGroupInstanceLeaveRuntimeService.CancelEnter(player, instanceMaskId);
+		if (cancelEnter.Status != AutoGroupInstanceCancelEnterStatus.Unregistered)
+			return;
+		ScheduleAutoGroupPenaltyRefreshes(cancelEnter.PenaltyRefreshIntents);
+
+		if (_connectionRegistry != null
+			&& cancelEnter.Snapshot?.QuickRegistrationAllowed == true
+			&& cancelEnter.RegisteredPlayerCountAfterCancel > 0)
+		{
+			var refill = _autoGroupLookingPartyRegistrations.TryRefillQueuedQuickEntry(
+				instanceMaskId,
+				autoGroups,
+				instanceCooltimes,
+				request => _autoGroupInstanceLeaveRuntimeService.TryAddOpenQuickEntry(request));
+			if (refill != null)
+			{
+				foreach (var delivery in refill.WindowDeliveries)
+				{
+					var deliveryAutoGroup = autoGroups?.GetTemplateByInstanceMaskId(delivery.MaskId);
+					if (deliveryAutoGroup != null)
+						await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
+				}
+
+				ScheduleAutoGroupPenaltyRefreshes(refill.PenaltyRefreshIntents);
+			}
+		}
+
+		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(instanceMaskId);
+		if (autoGroup != null)
+			await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 2));
 	}
 
 	private void ScheduleAutoGroupPenaltyRefreshes(IReadOnlyList<AutoGroupPenaltyRefreshIntent> penaltyRefreshIntents)
@@ -11032,7 +11040,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			var logoutCleanup = _autoGroupLookingPartyRegistrations.CleanupSearchEntriesOnLogout(
 				player.ObjectId,
 				staticData?.AutoGroups,
-				staticData?.InstanceCooltimes);
+				staticData?.InstanceCooltimes,
+				_autoGroupInstanceLeaveRuntimeService.GetActiveInstanceMaskIds());
+			foreach (var cancelIntent in logoutCleanup.StartEnterCancelIntents)
+				await ApplyAutoGroupCancelEnterAsync(player, cancelIntent.InstanceMaskId, staticData?.AutoGroups, staticData?.InstanceCooltimes);
 			if (_connectionRegistry != null)
 			{
 				foreach (var queueRecheckPlan in logoutCleanup.QueueRecheckPlans)

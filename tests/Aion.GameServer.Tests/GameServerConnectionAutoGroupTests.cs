@@ -713,6 +713,83 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task LeavePlayerWorldAsync_StartEnterLogoutConsumesCancelEnterIntentsLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			startEnterTime: DateTimeOffset.UtcNow.AddSeconds(-30));
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			CreateAutoGroup(107, 300110000),
+			CreateAutoGroup(108, 300120000));
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001, 1002],
+			InstanceMaskId: 107));
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300120000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [3001],
+			InstanceMaskId: 108));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "StartEnterLogout",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var registry = new RecordingConnectionRegistry([player, new Player
+		{
+			ObjectId = 1002,
+			Name = "RemainingReady",
+			Race = "ELYOS",
+			Level = 50,
+		}]);
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
+			threadPoolManager,
+			new PeriodicInstanceRegistrationService(),
+			runtimeContext);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			autoGroupInstanceLeaveRuntimeService: runtimeService,
+			autoGroupPenaltyRefreshScheduler: penaltyRefreshScheduler);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		var cancelWindow = Assert.IsType<SmAutoGroup>(Assert.Single(sentPackets));
+		Assert.Equal(107, cancelWindow.MaskId);
+		Assert.Equal(2, cancelWindow.WindowId);
+		Assert.DoesNotContain(1001, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Contains(1002, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Contains(3001, runtimeService.GetSnapshot(300120000, 2)!.RegisteredPlayerObjectIds);
+		Assert.True(autoGroupRegistrations.IsSearching(1001, 107));
+		Assert.True(autoGroupRegistrations.IsSearching(1002, 107));
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(1001));
+		var observation = Assert.Single(observations);
+		Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+		Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
+		Assert.DoesNotContain(registry.SentPackets, delivery => delivery.PlayerObjectId == 1001 && delivery.Packet is SmAutoGroup);
+	}
+
+	[Fact]
 	public async Task LeavePlayerWorldAsync_AutoGroupLogoutQueueRecheckAppliesReadyMatchLikeJava()
 	{
 		var sentPackets = new List<GameServerPacket>();
