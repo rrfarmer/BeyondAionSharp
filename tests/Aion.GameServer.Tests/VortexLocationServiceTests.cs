@@ -655,6 +655,132 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void InvaderPassedPortalUpdatePlan_BlocksWhenInactiveOrNoPassedPlayerLikeJavaZoneEntry()
+	{
+		var planner = new VortexInvaderPassedPortalUpdatePlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var inactive = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: false,
+			passedPlayerObjectIds: new HashSet<int> { 1002 });
+		var missingPass = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			passedPlayerObjectIds: new HashSet<int>());
+
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.InactiveVortex, inactive.Status);
+		Assert.True(inactive.IsNewZonePlayer);
+		Assert.False(inactive.HasActiveInvasion);
+		Assert.True(inactive.HadPassedPortal);
+		Assert.False(inactive.HasInvaderUpdatePlan);
+		Assert.False(inactive.WouldCallAddPlayer);
+		Assert.False(inactive.ShouldMutateLiveInvaders);
+		Assert.Equal("model/vortex/VortexLocation.onEnterZone", inactive.JavaSource);
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.MissingPassedPlayer, missingPass.Status);
+		Assert.True(missingPass.HasActiveInvasion);
+		Assert.False(missingPass.HadPassedPortal);
+		Assert.Empty(missingPass.PassedPlayerObjectIds);
+		Assert.False(missingPass.HasInvaderUpdatePlan);
+		Assert.False(missingPass.WouldCallAddPlayer);
+	}
+
+	[Fact]
+	public void InvaderPassedPortalUpdatePlan_BlocksNonNewZonePlayerOrNonInvaderRace()
+	{
+		var planner = new VortexInvaderPassedPortalUpdatePlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var existingZonePlayer = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			isNewZonePlayer: false);
+		var defenderRace = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			isInvaderRace: false);
+
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.NotNewZonePlayer, existingZonePlayer.Status);
+		Assert.False(existingZonePlayer.IsNewZonePlayer);
+		Assert.True(existingZonePlayer.HadPassedPortal);
+		Assert.False(existingZonePlayer.HasInvaderUpdatePlan);
+		Assert.False(existingZonePlayer.WouldCallAddPlayer);
+		Assert.False(existingZonePlayer.ShouldRecordZonePlayer);
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.NonInvaderRace, defenderRace.Status);
+		Assert.False(defenderRace.IsInvaderRace);
+		Assert.True(defenderRace.HadPassedPortal);
+		Assert.False(defenderRace.HasInvaderUpdatePlan);
+		Assert.False(defenderRace.WouldCallAddPlayer);
+	}
+
+	[Fact]
+	public void InvaderPassedPortalUpdatePlan_SkipsExistingInvaderBeforeAddPlayer()
+	{
+		var planner = new VortexInvaderPassedPortalUpdatePlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			existingInvaders: [invader],
+			invaderAlliance: VortexInvaderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.AlreadyInvader, plan.Status);
+		Assert.Equal(0, plan.LocationId);
+		Assert.Equal(1002, plan.PlayerObjectId);
+		Assert.Equal([1002], plan.PassedPlayerObjectIds);
+		Assert.Equal([1002], plan.ExistingInvaderObjectIds);
+		Assert.Equal(VortexInvaderAllianceSnapshot.Open, plan.InvaderAlliance);
+		Assert.True(plan.HadPassedPortal);
+		Assert.True(plan.HasInvaderUpdatePlan);
+		Assert.Equal(VortexInvaderUpdateAddPlayerPlanStatus.AlreadyInvader, plan.InvaderUpdatePlan?.Status);
+		Assert.False(plan.WouldCallAddPlayer);
+		Assert.False(plan.ShouldMutateLiveInvaders);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.Equal("model/vortex/VortexLocation.onEnterZone -> services/vortex/Invasion.addPlayer(player, true)", plan.JavaSource);
+	}
+
+	[Fact]
+	public void InvaderPassedPortalUpdatePlan_SelectsInvaderAddPlanForPassedNewInvader()
+	{
+		var planner = new VortexInvaderPassedPortalUpdatePlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002, 1003 },
+			existingInvaders: [],
+			invaderAlliance: VortexInvaderAllianceSnapshot.Missing);
+
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.UpdatePlanned, plan.Status);
+		Assert.Equal([1002, 1003], plan.PassedPlayerObjectIds);
+		Assert.Empty(plan.ExistingInvaderObjectIds);
+		Assert.True(plan.IsNewZonePlayer);
+		Assert.True(plan.HasActiveInvasion);
+		Assert.True(plan.IsInvaderRace);
+		Assert.True(plan.HadPassedPortal);
+		Assert.True(plan.HasInvaderUpdatePlan);
+		Assert.Equal(VortexInvaderUpdateAddPlayerPlanStatus.RecordFirstInvader, plan.InvaderUpdatePlan?.Status);
+		Assert.True(plan.WouldCallAddPlayer);
+		Assert.True(plan.InvaderUpdatePlan?.WouldPutParticipant);
+		Assert.False(plan.ShouldRecordZonePlayer);
+		Assert.False(plan.ShouldMutateLiveInvaders);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+	}
+
+	[Fact]
 	public void DefenderAddPlayerTransitionPlan_RecordsFirstDefenderWithoutAllianceMutation()
 	{
 		var planner = new VortexDefenderAddPlayerTransitionPlanService();
