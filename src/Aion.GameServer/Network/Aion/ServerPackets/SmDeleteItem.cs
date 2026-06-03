@@ -10,6 +10,8 @@ public sealed class SmDeleteItem : GameServerPacket
 	public const int DiscardDeleteType = 0x15;
 	// Java parity: services/item/ItemPacketService.ItemDeleteType.MOVE = 0x14
 	public const int MoveDeleteType = 0x14;
+	// Java parity: services/item/ItemPacketService.ItemDeleteType.PUT_TO_EXCHANGE = 0x26 (full-stack item moved to exchange window).
+	public const int PutToExchangeDeleteType = 0x26;
 
 	private readonly int _itemObjectId;
 	private readonly int _deleteType;

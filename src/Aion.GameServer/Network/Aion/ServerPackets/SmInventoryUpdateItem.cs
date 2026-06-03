@@ -8,6 +8,12 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 {
 	public const int PacketOpCode = 29;
 	public const int StatsChange = 0x00;
+	// Java parity: ItemPacketService.ItemUpdateType.PLAYER_EXCHANGE_GET = 0x21 (player receives items from completed trade).
+	public const int PlayerExchangeGet = 0x21;
+	// Java parity: ItemPacketService.ItemUpdateType.INC_PLAYER_EXCHANGE_GET_BACK = 0x23 (player gets items back on exchange cancel).
+	public const int PlayerExchangeGetBack = 0x23;
+	// Java parity: ItemPacketService.ItemUpdateType.PUT_TO_EXCHANGE = 0x25 (partial-stack item put into exchange window, update).
+	public const int PutToExchange = 0x25;
 	public const int IncreaseItemCollect = 0x19;
 	public const int IncreaseKinahCollect = 0x1A;
 	public const int IncreaseKinahQuest = 0x32;
