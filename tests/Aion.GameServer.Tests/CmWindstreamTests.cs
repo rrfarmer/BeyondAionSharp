@@ -340,6 +340,26 @@ public sealed class CmWindstreamTests
 		Assert.Equal(2, table.Count);
 	}
 
+	[Fact]
+	public void SmInstanceCountInfo_WritesMapIdInstanceIdAndSoloFlag()
+	{
+		// Java parity: SM_INSTANCE_COUNT_INFO.writeImpl: writeD(mapId) writeD(instanceId) writeD(1).
+		var packet = new SmInstanceCountInfo(mapId: 300030000, instanceId: 2);
+		using var buf = new PacketBuffer(SerializeUnencryptedPayload(packet));
+
+		Assert.Equal(300030000, buf.ReadD()); // mapId
+		Assert.Equal(2, buf.ReadD()); // instanceId
+		Assert.Equal(1, buf.ReadD()); // solo flag hardcoded
+		Assert.Equal(0, buf.Remaining);
+	}
+
+	[Fact]
+	public void SmInstanceCountInfo_OpcodeIs147()
+	{
+		// Java parity: ServerPacketsOpcodes line 165 -> addPacketOpcode(147, SM_INSTANCE_COUNT_INFO.class).
+		Assert.Equal(147, SmInstanceCountInfo.PacketOpCode);
+	}
+
 	private static CmWindstream CreatePacket(int state = 0, int teleportId = 0, int distance = 0)
 	{
 		var packet = new CmWindstream(70, new HashSet<GameConnectionState> { GameConnectionState.InGame });

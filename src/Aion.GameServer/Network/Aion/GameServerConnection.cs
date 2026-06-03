@@ -1488,6 +1488,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(new SmHouseObjects(spawnedObjects));
 		}
 
+		// Java parity: CM_LEVEL_READY.runImpl sends SM_INSTANCE_COUNT_INFO when player.isInInstance().
+		// isInInstance() checks WorldMap.isInstanceType(); C# uses WorldMapSummary.IsInstance flag.
+		if (staticData?.WorldMaps.Any(m => m.MapId == player.Position.WorldId && m.IsInstance) == true)
+			await SendPacketAsync(new SmInstanceCountInfo(player.Position.WorldId, player.Position.InstanceId));
+
 		await SendPacketAsync(new SmPlayerInfo(player, staticData?.PlayerExperienceTable));
 		player.PortAnimation = ArrivalAnimation.None;
 		await SendPacketAsync(CreateAccountPropertiesPacket());
