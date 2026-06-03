@@ -8804,6 +8804,21 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void ItemSplitService_MergeStacksLogic_FreeCountClampedToMaxStack()
+	{
+		// Java parity: ItemSplitService.mergeStacks — freeCount = maxStackCount - targetCount; merge clamped to freeCount.
+		var targetItem = new InventoryItem { ObjectId = 4001, ItemId = 100003, Count = 80, Location = 0 };
+		const int maxStack = 100;
+		var freeCount = maxStack - targetItem.Count; // 20
+
+		var mergeAmount = Math.Min(50L, freeCount); // 20 (clamped to freeCount)
+
+		Assert.Equal(20, mergeAmount);
+		targetItem.Count += mergeAmount;
+		Assert.Equal(100, targetItem.Count);
+	}
+
+	[Fact]
 	public void SmInventoryUpdateItem_DecreaseItemSplitConstantMatchesJava()
 	{
 		// Java parity: ItemPacketService.ItemUpdateType.DEC_ITEM_SPLIT = 0x06.

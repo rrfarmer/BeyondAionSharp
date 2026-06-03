@@ -3325,6 +3325,15 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveItemMergeMutationAsync(
+			int playerObjectId,
+			InventoryItem sourceItem,
+			InventoryItem targetItem,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,

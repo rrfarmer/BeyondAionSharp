@@ -321,6 +321,12 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem newItem,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemMergeMutationAsync(
+		int playerObjectId,
+		InventoryItem sourceItem,
+		InventoryItem targetItem,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -915,6 +921,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int playerObjectId,
 		InventoryItem sourceItem,
 		InventoryItem newItem,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemMergeMutationAsync(
+		int playerObjectId,
+		InventoryItem sourceItem,
+		InventoryItem targetItem,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1853,6 +1868,34 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save item split mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemMergeMutationAsync(
+		int playerObjectId,
+		InventoryItem sourceItem,
+		InventoryItem targetItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemSplitService.mergeStacks — decreases source count and increases target count atomically.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItem, cancellationToken))
+				return false;
+			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, targetItem, cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item merge mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

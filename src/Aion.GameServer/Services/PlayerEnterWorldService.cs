@@ -264,6 +264,16 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemSplitMutationAsync(player.ObjectId, sourceItem, newItem, cancellationToken);
 	}
 
+	public Task<bool> SaveItemMergeMutationAsync(
+		Player player,
+		InventoryItem sourceItem,
+		InventoryItem targetItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemSplitService.mergeStacks decreases source and increases target count atomically.
+		return _repository.SaveItemMergeMutationAsync(player.ObjectId, sourceItem, targetItem, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

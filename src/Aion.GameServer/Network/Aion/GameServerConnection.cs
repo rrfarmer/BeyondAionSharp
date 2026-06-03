@@ -2652,7 +2652,31 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 		else if (targetItem.ItemId == sourceItem.ItemId)
 		{
-			// Java parity: mergeStacks path — cross-stack merge within same storage; deferred until IStorage merge semantics are ported.
+			// Java parity: ItemSplitService.mergeStacks — merge split amount into existing same-item stack.
+			var freeCount = template.MaxStackCount - targetItem.Count;
+			if (freeCount <= 0 || sourceItem.Count < packet.ItemAmount)
+				return;
+
+			var actualMergeAmount = Math.Min(packet.ItemAmount, freeCount);
+			sourceItem.Count -= actualMergeAmount;
+			targetItem.Count += actualMergeAmount;
+
+			if (_playerEnterWorldService != null)
+			{
+				var saved = await _playerEnterWorldService.SaveItemMergeMutationAsync(player, sourceItem, targetItem);
+				if (!saved)
+				{
+					// Rollback in-memory changes.
+					sourceItem.Count += actualMergeAmount;
+					targetItem.Count -= actualMergeAmount;
+					return;
+				}
+			}
+
+			// Java parity: destStorage.increaseItemCount -> SM_INVENTORY_UPDATE_ITEM with INC_ITEM_MERGE.
+			await SendPacketAsync(new SmInventoryUpdateItem(targetItem, template, SmInventoryUpdateItem.IncreaseItemMerge));
+			// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, SmInventoryUpdateItem.DecreaseItemSplit));
 		}
 	}
 
