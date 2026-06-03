@@ -9649,15 +9649,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
-		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(player);
+		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(
+			player,
+			deferDisbandCleanup: alliance.LeagueId != 0);
 		if (plan == null)
 			return null;
 
-		foreach (var intent in plan.AllianceLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
-			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
-
-		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
-			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		await SendAllianceLeaveWorkflowAsync(plan, alliance.LeagueId, cancellationToken);
 
 		return plan;
 	}
@@ -9699,17 +9697,100 @@ public sealed class GameServerConnection : BaseClientConnection
 		var plan = _playerAllianceRuntime.RemoveMemberWithLeaveWorkflow(
 			bannedMember.Player,
 			PlayerAllianceLeaveReason.Ban,
-			player.Name);
+			player.Name,
+			deferDisbandCleanup: alliance.LeagueId != 0);
 		if (plan == null)
 			return null;
 
-		foreach (var intent in plan.AllianceLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
-			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		await SendAllianceLeaveWorkflowAsync(plan, alliance.LeagueId, cancellationToken);
+
+		return plan;
+	}
+
+	private async Task SendAllianceLeaveWorkflowAsync(
+		PlayerAllianceLeaveWorkflowPlan plan,
+		int leagueId,
+		CancellationToken cancellationToken)
+	{
+		if (leagueId != 0 && plan.AllianceLeavePlan.WouldDisband)
+		{
+			var (preDisbandIntents, disbandIntents, postDisbandIntents) = SplitAllianceDisbandIntents(plan);
+			foreach (var intent in preDisbandIntents)
+				await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+			if (plan.AllianceLeavePlan.WouldBroadcastLeague)
+			{
+				var leagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfoExceptAlliance(
+					leagueId,
+					plan.AllianceId,
+					_playerAllianceRuntime);
+				if (leagueBroadcastPlan != null)
+				{
+					foreach (var intent in leagueBroadcastPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+						await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+				}
+			}
+
+			var leagueLeavePlan = _playerLeagueRuntime.RemoveAlliance(plan.AllianceId, _playerAllianceRuntime);
+			foreach (var intent in leagueLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+			_playerAllianceRuntime.CompleteDeferredDisbandAfterLeaveWorkflow(plan.AllianceId);
+
+			foreach (var intent in disbandIntents)
+				await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+			foreach (var intent in postDisbandIntents)
+				await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
+		else
+		{
+			foreach (var intent in plan.AllianceLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
 
 		foreach (var intent in plan.BaseLeavePlan.PacketIntents.OrderBy(intent => intent.Sequence))
 			await SendAllianceLeavePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+	}
 
-		return plan;
+	private static (
+		IReadOnlyList<PlayerAlliancePacketIntent> PreDisbandIntents,
+		IReadOnlyList<PlayerAlliancePacketIntent> DisbandIntents,
+		IReadOnlyList<PlayerAlliancePacketIntent> PostDisbandIntents) SplitAllianceDisbandIntents(PlayerAllianceLeaveWorkflowPlan plan)
+	{
+		// Java parity: PlayerAllianceLeavedEvent sends normal leave fanout, then PlayerAllianceService.disband(..., true)
+		// emits league-left before AllianceDisbandEvent, then BAN sends STR_FORCE_BAN_ME before base PlayerLeavedEvent.
+		const int partyAllianceDispersedMessageId = 1300201;
+		const int forceBanMeMessageId = 1300979;
+
+		var orderedIntents = plan.AllianceLeavePlan.PacketIntents
+			.OrderBy(intent => intent.Sequence)
+			.ToArray();
+		var disbandStartIndex = Array.FindIndex(
+			orderedIntents,
+			intent => intent.Kind == PlayerAlliancePacketIntentKind.SystemMessage
+				&& intent.SystemMessage?.MessageId == partyAllianceDispersedMessageId);
+		if (disbandStartIndex < 0)
+			return (orderedIntents, [], []);
+
+		var postDisbandStartIndex = Array.FindIndex(
+			orderedIntents,
+			disbandStartIndex,
+			intent => intent.Kind == PlayerAlliancePacketIntentKind.SystemMessage
+				&& intent.SystemMessage?.MessageId == forceBanMeMessageId);
+
+		if (postDisbandStartIndex < 0)
+		{
+			return (
+				orderedIntents.Take(disbandStartIndex).ToArray(),
+				orderedIntents.Skip(disbandStartIndex).ToArray(),
+				[]);
+		}
+
+		return (
+			orderedIntents.Take(disbandStartIndex).ToArray(),
+			orderedIntents.Skip(disbandStartIndex).Take(postDisbandStartIndex - disbandStartIndex).ToArray(),
+			orderedIntents.Skip(postDisbandStartIndex).ToArray());
 	}
 
 	private async Task SendAllianceLeavePacketAsync(

@@ -1646,6 +1646,80 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceLeaveTwoMemberInLeagueDisbandsWithLeagueLeftBeforeDisbandLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var leaver = new Player { ObjectId = 1002, Name = "Leaver", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var otherLeader = new Player { ObjectId = 2001, Name = "OtherLeader", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, leaver);
+		alliances.CreateAlliance(88002, otherLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		alliances.SetLeagueId(88001, 77001);
+		alliances.SetLeagueId(88002, 77001);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leaver,
+			CreatePacket(commandCode: 14, selectedObjectId: 0));
+
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, leaver.TeamMembership);
+		Assert.Empty(alliances.GetMemberObjectIds(88001));
+		Assert.Null(leagues.ResolveByAllianceId(88001));
+		Assert.Null(leagues.ResolveByAllianceId(88002));
+		Assert.Equal([1001, 1001, 1001, 2001, 2001, 2001, 1001, 2001, 1001, 1001, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.Equal(1300978, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmAllianceMemberInfo>(send.Packet),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				230010000,
+				expectedLeagueRows:
+				[
+					new PlayerAllianceInfoLeagueRow(0, 88001, 1, string.Empty, 0),
+					new PlayerAllianceInfoLeagueRow(1, 88002, 1, "OtherLeader", 230010000),
+				]),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				230010000,
+				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				"Leader",
+				expectedLeagueRows: [new PlayerAllianceInfoLeagueRow(0, 88002, 1, "OtherLeader", 230010000)]),
+			send => Assert.Equal(1400588, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88001,
+				1001,
+				210010000,
+				PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
+				"Leader",
+				expectedLeagueId: 0,
+				expectedLeagueRows: []),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				230010000,
+				PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+				expectedLeagueId: 0,
+				expectedLeagueRows: []),
+			send => Assert.Equal(1300201, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet));
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceLeaveTwoMemberAllianceSkipsOfflineRemainingDisbandPacketsLikeJava()
 	{
 		var registry = new CapturingConnectionRegistry();
@@ -1861,6 +1935,81 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 			send => Assert.Equal(1300980, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
 			send => Assert.IsType<SmAllianceMemberInfo>(send.Packet),
 			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => Assert.Equal(1300201, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet),
+			send => Assert.Equal(1300979, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmLeaveGroupMember>(send.Packet));
+	}
+
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceBanTwoMemberInLeagueDisbandsWithLeagueLeftBeforeDisbandLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var banned = new Player { ObjectId = 1002, Name = "Banned", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var otherLeader = new Player { ObjectId = 2001, Name = "OtherLeader", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, banned);
+		alliances.CreateAlliance(88002, otherLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		alliances.SetLeagueId(88001, 77001);
+		alliances.SetLeagueId(88002, 77001);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 16, selectedObjectId: banned.ObjectId));
+
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, banned.TeamMembership);
+		Assert.Empty(alliances.GetMemberObjectIds(88001));
+		Assert.Null(leagues.ResolveByAllianceId(88001));
+		Assert.Null(leagues.ResolveByAllianceId(88002));
+		Assert.Equal([1001, 1001, 1001, 2001, 2001, 2001, 1001, 2001, 1001, 1001, 1002, 1002], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => Assert.Equal(1300980, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => Assert.IsType<SmAllianceMemberInfo>(send.Packet),
+			send => Assert.IsType<SmAllianceInfo>(send.Packet),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				230010000,
+				expectedLeagueRows:
+				[
+					new PlayerAllianceInfoLeagueRow(0, 88001, 1, string.Empty, 0),
+					new PlayerAllianceInfoLeagueRow(1, 88002, 1, "OtherLeader", 230010000),
+				]),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				230010000,
+				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				"Leader",
+				expectedLeagueRows: [new PlayerAllianceInfoLeagueRow(0, 88002, 1, "OtherLeader", 230010000)]),
+			send => Assert.Equal(1400588, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88001,
+				1001,
+				210010000,
+				PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
+				"Leader",
+				expectedLeagueId: 0,
+				expectedLeagueRows: []),
+			send => AssertLeagueAllianceInfoPacket(
+				send,
+				88002,
+				2001,
+				230010000,
+				PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+				expectedLeagueId: 0,
+				expectedLeagueRows: []),
 			send => Assert.Equal(1300201, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),
 			send => Assert.IsType<SmLeaveGroupMember>(send.Packet),
 			send => Assert.Equal(1300979, Assert.IsType<SmSystemMessage>(send.Packet).MessageId),

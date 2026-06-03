@@ -135,7 +135,8 @@ public sealed class PlayerAllianceRuntime
 	public PlayerAllianceLeaveWorkflowPlan? RemoveMemberWithLeaveWorkflow(
 		Player member,
 		PlayerAllianceLeaveReason reason = PlayerAllianceLeaveReason.Leave,
-		string banPersonName = "")
+		string banPersonName = "",
+		bool deferDisbandCleanup = false)
 	{
 		// Java parity: model/team/alliance/events/PlayerAllianceLeavedEvent removes the member, fanouts alliance leave packets, then runs base PlayerLeavedEvent.
 		lock (_sync)
@@ -160,6 +161,7 @@ public sealed class PlayerAllianceRuntime
 				throw new InvalidOperationException("Alliance member is already removed.");
 
 			var wasLeader = descriptor.LeaderObjectId == member.ObjectId;
+			var wasInLeague = _leagueIdByAllianceId.GetValueOrDefault(allianceId) != 0;
 			var currentViceCaptainIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
 
 			members.Remove(removedMember);
@@ -184,7 +186,7 @@ public sealed class PlayerAllianceRuntime
 				descriptor.TeamType,
 				wasLeader,
 				shouldDisband,
-				isInLeague: false,
+				isInLeague: wasInLeague,
 				wasRegisteredToTeamInstance: false);
 
 			if (members.Count == 0)
@@ -201,6 +203,9 @@ public sealed class PlayerAllianceRuntime
 				// Java parity: PlayerAllianceService.disband calls FindGroupService.removeRecruitment(alliance)
 				// before alliance disband events clear the remaining member state.
 				var findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(allianceId, _serverId, unknown1: 0, unknown2: 0, unknown3: 0);
+				if (deferDisbandCleanup && wasInLeague)
+					return plan with { FindGroupRecruitmentRemoval = findGroupRecruitmentRemoval };
+
 				foreach (var remainingMember in members)
 				{
 					remainingMember.ClearAllianceGroup();
@@ -227,6 +232,33 @@ public sealed class PlayerAllianceRuntime
 			}
 
 			return plan;
+		}
+	}
+
+	public bool CompleteDeferredDisbandAfterLeaveWorkflow(int allianceId)
+	{
+		// Java parity: PlayerAllianceService.disband(alliance, true) notifies the league before AllianceDisbandEvent
+		// replays DISBAND leaves for the remaining alliance members and clears the alliance map entry.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members))
+				return false;
+
+			foreach (var remainingMember in members)
+			{
+				remainingMember.ClearAllianceGroup();
+				ClearAlliance(remainingMember.Player);
+			}
+
+			_membersByAllianceId.Remove(allianceId);
+			_descriptorsByAllianceId.Remove(allianceId);
+			_leagueIdByAllianceId.Remove(allianceId);
+			_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+			_allianceReadyStatusByAllianceId.Remove(allianceId);
+			_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+			return true;
 		}
 	}
 

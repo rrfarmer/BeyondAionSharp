@@ -200,6 +200,38 @@ public sealed class PlayerLeagueRuntime
 		}
 	}
 
+	public PlayerLeagueBroadcastPlan? BroadcastAllianceInfoExceptAlliance(
+		int leagueId,
+		int skippedAllianceId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: model/team/league/League.broadcast(skippedAlliance) sends SM_ALLIANCE_INFO(targetAlliance, skippedAlliance)
+		// to every other alliance while leaving the skipped alliance row present with blank captain name/world fields.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leagueId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(skippedAllianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByLeagueId.TryGetValue(leagueId, out var members))
+				return null;
+
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateBroadcastPacketIntents(
+				leagueId,
+				sortedAllianceIds,
+				skippedAllianceId,
+				skippedPlayerObjectId: null,
+				allianceRuntime);
+
+			return new PlayerLeagueBroadcastPlan(
+				leagueId,
+				skippedAllianceId,
+				SkippedPlayerObjectId: null,
+				sortedAllianceIds,
+				intents);
+		}
+	}
+
 	public PlayerLeagueAllianceInfoFanoutPlan? CreateAllianceInfoFanout(
 		int leagueId,
 		int allianceId,
@@ -703,7 +735,7 @@ public sealed class PlayerLeagueRuntime
 						activePlayerMapId,
 						leagueId: leagueId,
 						leagueLootRules: GetLeagueLootRules(leagueId),
-						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
+						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime, skippedAllianceId: skippedAllianceId))));
 			}
 		}
 
@@ -1017,7 +1049,8 @@ public sealed class PlayerLeagueRuntime
 	private static IReadOnlyList<PlayerAllianceInfoLeagueRow> CreateLeagueRows(
 		IReadOnlyList<int> sortedAllianceIds,
 		PlayerAllianceRuntime allianceRuntime,
-		IReadOnlyDictionary<int, int>? leaguePositionsByAllianceId = null)
+		IReadOnlyDictionary<int, int>? leaguePositionsByAllianceId = null,
+		int? skippedAllianceId = null)
 	{
 		// Java parity: SM_ALLIANCE_INFO constructor appends one league row for each captain in League.getCaptains().
 		var rows = new List<PlayerAllianceInfoLeagueRow>();
@@ -1034,8 +1067,8 @@ public sealed class PlayerLeagueRuntime
 					: position,
 				allianceId,
 				snapshot.MemberObjectIds.Count,
-				leader.Name,
-				leader.Player.Position.WorldId));
+				allianceId == skippedAllianceId ? string.Empty : leader.Name,
+				allianceId == skippedAllianceId ? 0 : leader.Player.Position.WorldId));
 		}
 
 		return rows;
