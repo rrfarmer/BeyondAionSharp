@@ -140,99 +140,107 @@ public sealed class PlayerAllianceRuntime
 	{
 		// Java parity: model/team/alliance/events/PlayerAllianceLeavedEvent removes the member, fanouts alliance leave packets, then runs base PlayerLeavedEvent.
 		lock (_sync)
+			return RemoveMemberWithLeaveWorkflowCore(member, reason, banPersonName, deferDisbandCleanup);
+	}
+
+	private PlayerAllianceLeaveWorkflowPlan? RemoveMemberWithLeaveWorkflowCore(
+		Player member,
+		PlayerAllianceLeaveReason reason = PlayerAllianceLeaveReason.Leave,
+		string banPersonName = "",
+		bool deferDisbandCleanup = false)
+	{
+		// Caller must hold _sync.
+		var allianceId = member.CurrentAllianceSnapshot?.AllianceId
+			?? (member.TeamMembership == PlayerTeamMembership.Alliance ? member.CurrentTeamId : 0);
+		if (allianceId == 0)
 		{
-			var allianceId = member.CurrentAllianceSnapshot?.AllianceId
-				?? (member.TeamMembership == PlayerTeamMembership.Alliance ? member.CurrentTeamId : 0);
-			if (allianceId == 0)
-			{
-				ClearAlliance(member);
-				return null;
-			}
-
-			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
-				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
-			{
-				ClearAlliance(member);
-				return null;
-			}
-
-			var removedMember = members.FirstOrDefault(existing => existing.ObjectId == member.ObjectId);
-			if (removedMember == null)
-				throw new InvalidOperationException("Alliance member is already removed.");
-
-			var wasLeader = descriptor.LeaderObjectId == member.ObjectId;
-			var wasInLeague = _leagueIdByAllianceId.GetValueOrDefault(allianceId) != 0;
-			var currentViceCaptainIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
-
-			members.Remove(removedMember);
-			removedMember.ClearAllianceGroup();
 			ClearAlliance(member);
-
-			var viceCaptainIdsAfterLeave = currentViceCaptainIds
-				.Where(objectId => objectId != member.ObjectId)
-				.ToList();
-			_viceCaptainObjectIdsByAllianceId[allianceId] = viceCaptainIdsAfterLeave;
-
-			var shouldDisband = descriptor.TeamType != PlayerAllianceTeamType.AutoAlliance && members.Count == 1;
-			var plan = _leaveWorkflowPlanner.CreateLeaveWorkflowPlan(
-				allianceId,
-				descriptor.LeaderObjectId,
-				members.Select(existing => existing.Player).ToArray(),
-				member,
-				currentViceCaptainIds,
-				reason,
-				banPersonName,
-				descriptor.LootRules,
-				descriptor.TeamType,
-				wasLeader,
-				shouldDisband,
-				isInLeague: wasInLeague,
-				wasRegisteredToTeamInstance: false);
-
-			if (members.Count == 0)
-			{
-				_membersByAllianceId.Remove(allianceId);
-				_descriptorsByAllianceId.Remove(allianceId);
-				_leagueIdByAllianceId.Remove(allianceId);
-				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
-				_allianceReadyStatusByAllianceId.Remove(allianceId);
-				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
-			}
-			else if (plan.AllianceLeavePlan.WouldDisband)
-			{
-				// Java parity: PlayerAllianceService.disband calls FindGroupService.removeRecruitment(alliance)
-				// before alliance disband events clear the remaining member state.
-				var findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(allianceId, _serverId, unknown1: 0, unknown2: 0, unknown3: 0);
-				if (deferDisbandCleanup && wasInLeague)
-					return plan with { FindGroupRecruitmentRemoval = findGroupRecruitmentRemoval };
-
-				foreach (var remainingMember in members)
-				{
-					remainingMember.ClearAllianceGroup();
-					ClearAlliance(remainingMember.Player);
-				}
-
-				_membersByAllianceId.Remove(allianceId);
-				_descriptorsByAllianceId.Remove(allianceId);
-				_leagueIdByAllianceId.Remove(allianceId);
-				_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
-				_allianceReadyStatusByAllianceId.Remove(allianceId);
-				_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
-				plan = plan with { FindGroupRecruitmentRemoval = findGroupRecruitmentRemoval };
-			}
-			else
-			{
-				if (wasLeader)
-				{
-					descriptor = descriptor with { LeaderObjectId = members[0].ObjectId };
-					_descriptorsByAllianceId[allianceId] = descriptor;
-				}
-
-				ApplySnapshot(allianceId, members, descriptor);
-			}
-
-			return plan;
+			return null;
 		}
+
+		if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+			|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+		{
+			ClearAlliance(member);
+			return null;
+		}
+
+		var removedMember = members.FirstOrDefault(existing => existing.ObjectId == member.ObjectId);
+		if (removedMember == null)
+			throw new InvalidOperationException("Alliance member is already removed.");
+
+		var wasLeader = descriptor.LeaderObjectId == member.ObjectId;
+		var wasInLeague = _leagueIdByAllianceId.GetValueOrDefault(allianceId) != 0;
+		var currentViceCaptainIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
+
+		members.Remove(removedMember);
+		removedMember.ClearAllianceGroup();
+		ClearAlliance(member);
+
+		var viceCaptainIdsAfterLeave = currentViceCaptainIds
+			.Where(objectId => objectId != member.ObjectId)
+			.ToList();
+		_viceCaptainObjectIdsByAllianceId[allianceId] = viceCaptainIdsAfterLeave;
+
+		var shouldDisband = descriptor.TeamType != PlayerAllianceTeamType.AutoAlliance && members.Count == 1;
+		var plan = _leaveWorkflowPlanner.CreateLeaveWorkflowPlan(
+			allianceId,
+			descriptor.LeaderObjectId,
+			members.Select(existing => existing.Player).ToArray(),
+			member,
+			currentViceCaptainIds,
+			reason,
+			banPersonName,
+			descriptor.LootRules,
+			descriptor.TeamType,
+			wasLeader,
+			shouldDisband,
+			isInLeague: wasInLeague,
+			wasRegisteredToTeamInstance: false);
+
+		if (members.Count == 0)
+		{
+			_membersByAllianceId.Remove(allianceId);
+			_descriptorsByAllianceId.Remove(allianceId);
+			_leagueIdByAllianceId.Remove(allianceId);
+			_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+			_allianceReadyStatusByAllianceId.Remove(allianceId);
+			_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+		}
+		else if (plan.AllianceLeavePlan.WouldDisband)
+		{
+			// Java parity: PlayerAllianceService.disband calls FindGroupService.removeRecruitment(alliance)
+			// before alliance disband events clear the remaining member state.
+			var findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(allianceId, _serverId, unknown1: 0, unknown2: 0, unknown3: 0);
+			if (deferDisbandCleanup && wasInLeague)
+				return plan with { FindGroupRecruitmentRemoval = findGroupRecruitmentRemoval };
+
+			foreach (var remainingMember in members)
+			{
+				remainingMember.ClearAllianceGroup();
+				ClearAlliance(remainingMember.Player);
+			}
+
+			_membersByAllianceId.Remove(allianceId);
+			_descriptorsByAllianceId.Remove(allianceId);
+			_leagueIdByAllianceId.Remove(allianceId);
+			_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+			_allianceReadyStatusByAllianceId.Remove(allianceId);
+			_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+			plan = plan with { FindGroupRecruitmentRemoval = findGroupRecruitmentRemoval };
+		}
+		else
+		{
+			if (wasLeader)
+			{
+				descriptor = descriptor with { LeaderObjectId = members[0].ObjectId };
+				_descriptorsByAllianceId[allianceId] = descriptor;
+			}
+
+			ApplySnapshot(allianceId, members, descriptor);
+		}
+
+		return plan;
 	}
 
 	public bool CompleteDeferredDisbandAfterLeaveWorkflow(int allianceId)
@@ -430,6 +438,50 @@ public sealed class PlayerAllianceRuntime
 			member.UpdateLastOnlineTime(now);
 			return true;
 		}
+	}
+
+	public PlayerAllianceOfflineTimeoutPlan? RemoveNextExpiredOfflineMemberWithLeaveWorkflow(
+		DateTimeOffset now,
+		int allianceRemoveTimeSeconds = 600)
+	{
+		// Java parity: PlayerAllianceService.OfflinePlayerAllianceChecker fires LEAVE_TIMEOUT for expired offline members.
+		ArgumentOutOfRangeException.ThrowIfNegative(allianceRemoveTimeSeconds);
+
+		lock (_sync)
+		{
+			var nowMillis = now.ToUnixTimeMilliseconds();
+			foreach (var allianceEntry in _membersByAllianceId.ToArray())
+			{
+				var allianceId = allianceEntry.Key;
+				if (!_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+					continue;
+
+				var kickDelaySeconds = GetOfflineKickDelaySeconds(descriptor.TeamType, allianceRemoveTimeSeconds);
+				foreach (var member in allianceEntry.Value.ToArray())
+				{
+					if (member.IsOnline || !IsExpired(member.LastOnlineTimeMillis, kickDelaySeconds, nowMillis))
+						continue;
+
+					var wasInLeague = _leagueIdByAllianceId.GetValueOrDefault(allianceId) != 0;
+					var leaveWorkflowPlan = RemoveMemberWithLeaveWorkflowCore(
+						member.Player,
+						PlayerAllianceLeaveReason.LeaveTimeout,
+						deferDisbandCleanup: wasInLeague);
+					if (leaveWorkflowPlan == null)
+						return null;
+
+					return new PlayerAllianceOfflineTimeoutPlan(
+						allianceId,
+						member.ObjectId,
+						kickDelaySeconds,
+						wasInLeague,
+						descriptor.TeamType.IsOffence(),
+						leaveWorkflowPlan);
+				}
+			}
+		}
+
+		return null;
 	}
 
 	public bool IsViceCaptain(int allianceId, int objectId)
@@ -735,6 +787,17 @@ public sealed class PlayerAllianceRuntime
 		}
 
 		throw new InvalidOperationException("Player alliance has no open Java alliance group.");
+	}
+
+	private static int GetOfflineKickDelaySeconds(PlayerAllianceTeamType teamType, int allianceRemoveTimeSeconds)
+	{
+		// Java parity: OfflinePlayerAllianceChecker uses 60 seconds for auto alliances, otherwise GroupConfig.ALLIANCE_REMOVE_TIME.
+		return teamType.IsAutoTeam() ? 60 : allianceRemoveTimeSeconds;
+	}
+
+	private static bool IsExpired(long lastOnlineTimeMillis, int kickDelaySeconds, long nowMillis)
+	{
+		return lastOnlineTimeMillis + kickDelaySeconds * 1000L <= nowMillis;
 	}
 
 	private static IReadOnlyList<PlayerAllianceReadyCheckPacketIntent> CreateReadyCheckIntents(

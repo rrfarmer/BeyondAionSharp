@@ -131,6 +131,112 @@ public sealed class PlayerAllianceRuntimeTests
 	}
 
 	[Fact]
+	public void RemoveNextExpiredOfflineMemberWithLeaveWorkflow_DispatchesTimeoutWithoutLeagueBroadcastLikeJava()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var timedOut = CreatePlayer(1002, "TimedOut", worldId: 220010000);
+		timedOut.IsOnline = false;
+		runtime.CreateAlliance(88001, leader, PlayerAllianceTeamType.AllianceOffence);
+		runtime.AddMember(88001, timedOut);
+		runtime.SetLeagueId(88001, 77001);
+		runtime.UpdateMemberLastOnlineTime(timedOut, DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		var timeoutPlan = Assert.IsType<PlayerAllianceOfflineTimeoutPlan>(
+			runtime.RemoveNextExpiredOfflineMemberWithLeaveWorkflow(
+				DateTimeOffset.FromUnixTimeMilliseconds(700_000),
+				allianceRemoveTimeSeconds: 600));
+
+		Assert.Equal(88001, timeoutPlan.AllianceId);
+		Assert.Equal(1002, timeoutPlan.TimedOutPlayerObjectId);
+		Assert.Equal(600, timeoutPlan.KickDelaySeconds);
+		Assert.True(timeoutPlan.WasInLeague);
+		Assert.True(timeoutPlan.WouldRemoveOffenceInvader);
+		Assert.False(runtime.HasMember(88001, 1002));
+		Assert.Equal(PlayerTeamMembership.None, timedOut.TeamMembership);
+		var workflow = timeoutPlan.LeaveWorkflowPlan;
+		Assert.Equal(88001, workflow.AllianceId);
+		Assert.Equal(1002, workflow.LeavedPlayerObjectId);
+		Assert.Equal(
+			[PlayerAllianceLeaveWorkflowStepKind.AllianceLeave, PlayerAllianceLeaveWorkflowStepKind.BaseLeave],
+			workflow.Steps.Select(step => step.Kind).ToArray());
+		Assert.Equal(PlayerAllianceLeaveReason.LeaveTimeout, workflow.AllianceLeavePlan.Reason);
+		Assert.True(workflow.AllianceLeavePlan.WouldDisband);
+		Assert.False(workflow.AllianceLeavePlan.WouldBroadcastLeague);
+		Assert.False(workflow.BaseLeavePlan.IsOnline);
+		Assert.Empty(workflow.BaseLeavePlan.PacketIntents);
+		Assert.True(workflow.BaseLeavePlan.WouldNotifyEventServiceOnLeftTeam);
+		Assert.Collection(
+			workflow.AllianceLeavePlan.PacketIntents,
+			intent =>
+			{
+				Assert.Equal(0, intent.Sequence);
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerAlliancePacketIntentKind.SystemMessage, intent.Kind);
+				Assert.Equal(1300203, intent.SystemMessage?.MessageId);
+			},
+			intent =>
+			{
+				Assert.Equal(1, intent.Sequence);
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerAlliancePacketIntentKind.MemberInfo, intent.Kind);
+				Assert.Equal("TimedOut", intent.MemberInfoPlan?.PrefixSnapshot.Name);
+			},
+			intent =>
+			{
+				Assert.Equal(2, intent.Sequence);
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerAlliancePacketIntentKind.AllianceInfo, intent.Kind);
+				Assert.Equal(1, intent.AllianceInfoPlan?.LeagueId);
+			},
+			intent =>
+			{
+				Assert.Equal(3, intent.Sequence);
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerAlliancePacketIntentKind.SystemMessage, intent.Kind);
+				Assert.Equal(1300201, intent.SystemMessage?.MessageId);
+			},
+			intent =>
+			{
+				Assert.Equal(4, intent.Sequence);
+				Assert.Equal(1001, intent.RecipientObjectId);
+				Assert.Equal(PlayerAlliancePacketIntentKind.LeaveGroupMember, intent.Kind);
+			});
+		Assert.NotNull(runtime.GetDescriptor(88001));
+
+		Assert.True(runtime.CompleteDeferredDisbandAfterLeaveWorkflow(88001));
+		Assert.Null(runtime.GetDescriptor(88001));
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+	}
+
+	[Fact]
+	public void RemoveNextExpiredOfflineMemberWithLeaveWorkflow_UsesSixtySecondAutoAllianceDelayLikeJava()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var timedOut = CreatePlayer(1002, "TimedOut", worldId: 220010000);
+		timedOut.IsOnline = false;
+		runtime.CreateAlliance(88001, leader, PlayerAllianceTeamType.AutoAlliance);
+		runtime.AddMember(88001, timedOut);
+		runtime.UpdateMemberLastOnlineTime(timedOut, DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		Assert.Null(runtime.RemoveNextExpiredOfflineMemberWithLeaveWorkflow(
+			DateTimeOffset.FromUnixTimeMilliseconds(159_999),
+			allianceRemoveTimeSeconds: 600));
+
+		var timeoutPlan = Assert.IsType<PlayerAllianceOfflineTimeoutPlan>(
+			runtime.RemoveNextExpiredOfflineMemberWithLeaveWorkflow(
+				DateTimeOffset.FromUnixTimeMilliseconds(160_000),
+				allianceRemoveTimeSeconds: 600));
+
+		Assert.Equal(60, timeoutPlan.KickDelaySeconds);
+		Assert.False(timeoutPlan.LeaveWorkflowPlan.AllianceLeavePlan.WouldDisband);
+		Assert.False(timeoutPlan.WouldRemoveOffenceInvader);
+		Assert.Equal([1001], runtime.GetMemberObjectIds(88001));
+		Assert.Equal(PlayerTeamMembership.None, timedOut.TeamMembership);
+	}
+
+	[Fact]
 	public void RemoveMemberWithLeaveWorkflow_DisbandRemovesFindGroupAllianceRecruitmentLikeJava()
 	{
 		var findGroupService = new FindGroupRecruitmentPlanService();

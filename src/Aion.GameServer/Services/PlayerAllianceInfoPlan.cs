@@ -29,6 +29,18 @@ public enum PlayerAllianceTeamType
 
 public static class PlayerAllianceTeamTypeExtensions
 {
+	public static bool IsAutoTeam(this PlayerAllianceTeamType teamType)
+	{
+		// Java parity: model/team/TeamType.isAutoTeam.
+		return teamType == PlayerAllianceTeamType.AutoAlliance;
+	}
+
+	public static bool IsOffence(this PlayerAllianceTeamType teamType)
+	{
+		// Java parity: model/team/TeamType.isOffence.
+		return teamType == PlayerAllianceTeamType.AllianceOffence;
+	}
+
 	public static (int Type, int SubType) ToJavaPacketFields(this PlayerAllianceTeamType teamType)
 	{
 		// Java parity: model/team/TeamType.getType/getSubType for alliance variants.
@@ -120,6 +132,14 @@ public sealed record PlayerAllianceLeaveWorkflowPlan(
 	PlayerBaseLeaveSideEffectPlan BaseLeavePlan,
 	IReadOnlyList<PlayerAllianceLeaveWorkflowStep> Steps,
 	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval = null);
+
+public sealed record PlayerAllianceOfflineTimeoutPlan(
+	int AllianceId,
+	int TimedOutPlayerObjectId,
+	int KickDelaySeconds,
+	bool WasInLeague,
+	bool WouldRemoveOffenceInvader,
+	PlayerAllianceLeaveWorkflowPlan LeaveWorkflowPlan);
 
 public sealed record PlayerAllianceDisconnectedDisbandPlan(
 	int AllianceId,
