@@ -2615,6 +2615,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (template == null)
 			return;
 
+		// Java parity: ItemSplitService.splitItem — kinah branch (moveKinah) before general split logic.
+		// Java parity: ItemTemplate.isKinah() checks itemId == ItemId.KINAH (182400001).
+		const int KinahItemId = 182400001;
+		if (sourceItem.ItemId == KinahItemId)
+		{
+			await HandleKinahMoveAsync(player, sourceItem, packet.SourceStorageType, packet.DestinationStorageType, packet.ItemAmount, templates!, template);
+			return;
+		}
+
 		if (targetItem == null)
 		{
 			// Split into empty slot (same or cross storage).
@@ -2672,20 +2681,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 			}
 
+			// Java parity: sourceStorage.decreaseItemCount uses DEC_ITEM_SPLIT for same-storage, DEC_ITEM_SPLIT_MOVE for cross-storage.
+			var sourceDecreaseType = packet.SourceStorageType == packet.DestinationStorageType
+				? SmInventoryUpdateItem.DecreaseItemSplit
+				: SmInventoryUpdateItem.DecreaseItemSplitMove;
+
 			if (packet.SourceStorageType == 0 /* cube source */)
-			{
-				// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
-				await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template,
-					packet.SourceStorageType == packet.DestinationStorageType
-						? SmInventoryUpdateItem.DecreaseItemSplit
-						: SmInventoryUpdateItem.DecreaseItemSplit));
-			}
+				await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, sourceDecreaseType));
 			else
-			{
-				// Java parity: warehouse source sends SM_WAREHOUSE_UPDATE_ITEM(player, item, storageType, DEC_ITEM_SPLIT).
-				await SendPacketAsync(new SmWarehouseUpdateItem(
-					sourceItem, template, packet.SourceStorageType, SmInventoryUpdateItem.DecreaseItemSplit));
-			}
+				await SendPacketAsync(new SmWarehouseUpdateItem(sourceItem, template, packet.SourceStorageType, sourceDecreaseType));
 			// Java parity: SM_CUBE_UPDATE.cubeSize after split.
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 
@@ -2727,6 +2731,64 @@ public sealed class GameServerConnection : BaseClientConnection
 			// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
 			await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, SmInventoryUpdateItem.DecreaseItemSplit));
 		}
+	}
+
+	private async Task HandleKinahMoveAsync(
+		Player player,
+		InventoryItem sourceKinah,
+		int sourceStorageType,
+		int destinationStorageType,
+		long moveAmount,
+		ItemTemplateTable itemTemplates,
+		ItemTemplateSummary kinahTemplate)
+	{
+		// Java parity: ItemSplitService.moveKinah — moves kinah between cube and account warehouse.
+		// Only cube (0) ↔ account warehouse (2) is supported; regular/legion warehouse kinah not handled.
+		if ((sourceStorageType == 0 && destinationStorageType != 2)
+			|| (sourceStorageType == 2 && destinationStorageType != 0))
+			return;
+
+		if (sourceKinah.Count < moveAmount)
+			return;
+
+		const int KinahItemId = 182400001;
+		var destKinah = player.InventoryItems.FirstOrDefault(
+			i => i.ItemId == KinahItemId && i.Location == destinationStorageType);
+		if (destKinah == null)
+			return;
+
+		// Java parity: checksum validation prevents arithmetic overflow issues.
+		var newSourceCount = sourceKinah.Count - moveAmount;
+		var newDestCount = destKinah.Count + moveAmount;
+		if (newSourceCount + newDestCount != sourceKinah.Count + destKinah.Count)
+			return;
+
+		sourceKinah.Count = newSourceCount;
+		destKinah.Count = newDestCount;
+
+		if (_playerEnterWorldService != null)
+		{
+			var saved = await _playerEnterWorldService.SaveItemMergeMutationAsync(player, sourceKinah, destKinah);
+			if (!saved)
+			{
+				// Rollback in-memory changes.
+				sourceKinah.Count += moveAmount;
+				destKinah.Count -= moveAmount;
+				return;
+			}
+		}
+
+		// Java parity: source.decreaseKinah(splitAmount, DEC_ITEM_SPLIT) — update source kinah in UI.
+		if (sourceStorageType == 0 /* cube */)
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceKinah, kinahTemplate, SmInventoryUpdateItem.DecreaseItemSplit));
+		else
+			await SendPacketAsync(new SmWarehouseUpdateItem(sourceKinah, kinahTemplate, sourceStorageType, SmInventoryUpdateItem.DecreaseItemSplit));
+
+		// Java parity: destination.increaseKinah(splitAmount, INC_KINAH_MERGE) — update dest kinah in UI.
+		if (destinationStorageType == 0 /* cube */)
+			await SendPacketAsync(new SmInventoryUpdateItem(destKinah, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahMerge));
+		else
+			await SendPacketAsync(new SmWarehouseUpdateItem(destKinah, kinahTemplate, destinationStorageType, SmInventoryUpdateItem.IncreaseKinahMerge));
 	}
 
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)

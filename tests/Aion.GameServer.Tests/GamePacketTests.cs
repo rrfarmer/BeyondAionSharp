@@ -8804,6 +8804,14 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmInventoryUpdateItem_KinahAndSplitMoveConstantsMatchJava()
+	{
+		// Java parity: ItemPacketService.ItemUpdateType values.
+		Assert.Equal(0x05, SmInventoryUpdateItem.IncreaseKinahMerge); // INC_KINAH_MERGE
+		Assert.Equal(0x0A, SmInventoryUpdateItem.DecreaseItemSplitMove); // DEC_ITEM_SPLIT_MOVE
+	}
+
+	[Fact]
 	public void SmWarehouseUpdateItem_SerializesObjectIdTypeAndUpdateType()
 	{
 		// Java parity: SM_WAREHOUSE_UPDATE_ITEM.writeImpl — object ID, warehouse type, GENERAL_INFO blob, sendable update type.
