@@ -268,6 +268,111 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StartCoordinator_StaticInvasionSpawnsEnrichPlanOnlyAfterStartGuardSucceeds()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var portal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			var selector = new CountingInvasionSpawnSelector();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService(),
+				selector);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Invasion, 831600, "static-invasion"),
+					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.Invasion, 831700, "other-location"),
+				]);
+
+			var report = coordinator.StartInvasion(
+				location,
+				portal,
+				VortexStartInvasionSnapshotRequest.Empty,
+				table);
+
+			Assert.Equal(VortexStartInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Started);
+			Assert.True(report.HasSideEffectPlan);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			Assert.Equal(1, selector.CallCount);
+			Assert.Equal([location.Id], selector.LocationIds);
+			Assert.Same(portal, report.StartResult.Snapshot.ActivePortal);
+			Assert.Equal(1, report.SideEffectPlan.InvasionSpawnCount);
+			Assert.Equal(
+				[
+					VortexStartInvasionSideEffectStepKind.SetActiveVortex,
+					VortexStartInvasionSideEffectStepKind.DespawnExistingVortexNpcs,
+					VortexStartInvasionSideEffectStepKind.SpawnInvasionNpc,
+					VortexStartInvasionSideEffectStepKind.InitRiftGenerator,
+					VortexStartInvasionSideEffectStepKind.UpdateDefenderAlliance,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			Assert.Equal(831600, Assert.IsType<NpcSpawnSummary>(
+				report.SideEffectPlan.OrderedSteps.Single(step => step.Kind == VortexStartInvasionSideEffectStepKind.SpawnInvasionNpc).Spawn).NpcId);
+			Assert.Equal(
+				"services/VortexService.startInvasion -> services/vortex/DimensionalVortex.start -> services/vortex/Invasion.startInvasion",
+				report.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StartCoordinator_DuplicateStartSkipsStaticSelectorAndPreservesRuntimeState()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-guard-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var initialPortal = CreateVortexPortal(location);
+			var replacementPortal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			runtime.StartInvasion(location, initialPortal);
+			var selector = new CountingInvasionSpawnSelector();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService(),
+				selector);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "ignored"),
+				]);
+
+			var report = coordinator.StartInvasion(
+				location,
+				replacementPortal,
+				VortexStartInvasionSnapshotRequest.Empty,
+				table);
+
+			Assert.Equal(VortexStartInvasionCoordinatorStatus.AlreadyStarted, report.Status);
+			Assert.False(report.Started);
+			Assert.False(report.HasSideEffectPlan);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.Empty(report.SideEffectPlan.OrderedSteps);
+			Assert.Equal(0, selector.CallCount);
+			Assert.Empty(selector.LocationIds);
+			Assert.Same(initialPortal, report.StartResult.Snapshot.ActivePortal);
+			Assert.Same(initialPortal, Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id)).ActivePortal);
+			Assert.Equal("services/VortexService.startInvasion", report.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task SetAndClearActivePortal_ModelsJavaSpawnAndDespawnControllerReference()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-clear-" + Guid.NewGuid().ToString("N"));
@@ -1502,6 +1607,24 @@ public sealed class VortexLocationServiceTests
 			CallCount++;
 			_locationIds.Add(vortexLocationId);
 			return _selector.SelectPeaceSpawns(vortexLocationId, vortexSpawns);
+		}
+	}
+
+	private sealed class CountingInvasionSpawnSelector : IVortexInvasionSpawnSnapshotSelector
+	{
+		private readonly VortexInvasionSpawnSnapshotSelectionService _selector = new();
+		private readonly List<int> _locationIds = [];
+
+		public int CallCount { get; private set; }
+		public IReadOnlyList<int> LocationIds => _locationIds;
+
+		public IReadOnlyList<VortexStartInvasionSpawnSnapshot> SelectInvasionSpawns(
+			int vortexLocationId,
+			NpcVortexSpawnTable vortexSpawns)
+		{
+			CallCount++;
+			_locationIds.Add(vortexLocationId);
+			return _selector.SelectInvasionSpawns(vortexLocationId, vortexSpawns);
 		}
 	}
 
