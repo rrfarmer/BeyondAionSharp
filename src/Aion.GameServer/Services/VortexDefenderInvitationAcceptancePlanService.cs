@@ -210,6 +210,85 @@ public sealed class VortexDefenderInvitationResponseRuntimeAdapterService
 	}
 }
 
+public sealed class VortexDefenderAcceptanceParticipantRuntimeReportService
+{
+	public VortexDefenderAcceptanceParticipantRuntimeReport CreateReport(
+		int locationId,
+		VortexDefenderInvitationAcceptanceTransitionRuntimeReport transitionReport,
+		IReadOnlyList<int>? currentDefenderObjectIds = null)
+	{
+		ArgumentNullException.ThrowIfNull(transitionReport);
+
+		var addPlayerPlan = transitionReport.UpdateDefendersPlan?.AddPlayerPlan;
+		var before = (currentDefenderObjectIds ?? transitionReport.UpdateDefendersPlan?.ExistingDefenderObjectIds ?? []).ToArray();
+		if (addPlayerPlan?.WouldWarn == true)
+		{
+			return CreateReport(
+				VortexDefenderAcceptanceParticipantRuntimeReportStatus.WarningNoParticipantPut,
+				locationId,
+				transitionReport,
+				addPlayerPlan,
+				before,
+				before,
+				wouldRecordParticipant: false);
+		}
+
+		if (addPlayerPlan is null || !transitionReport.WouldPutParticipant)
+		{
+			return CreateReport(
+				VortexDefenderAcceptanceParticipantRuntimeReportStatus.NoParticipantMutation,
+				locationId,
+				transitionReport,
+				addPlayerPlan,
+				before,
+				before,
+				wouldRecordParticipant: false);
+		}
+
+		if (before.Contains(transitionReport.ResponderObjectId))
+		{
+			return CreateReport(
+				VortexDefenderAcceptanceParticipantRuntimeReportStatus.AlreadyParticipant,
+				locationId,
+				transitionReport,
+				addPlayerPlan,
+				before,
+				before,
+				wouldRecordParticipant: false);
+		}
+
+		return CreateReport(
+			VortexDefenderAcceptanceParticipantRuntimeReportStatus.ParticipantWouldBeRecorded,
+			locationId,
+			transitionReport,
+			addPlayerPlan,
+			before,
+			[.. before, transitionReport.ResponderObjectId],
+			wouldRecordParticipant: true);
+	}
+
+	private static VortexDefenderAcceptanceParticipantRuntimeReport CreateReport(
+		VortexDefenderAcceptanceParticipantRuntimeReportStatus status,
+		int locationId,
+		VortexDefenderInvitationAcceptanceTransitionRuntimeReport transitionReport,
+		VortexDefenderAddPlayerTransitionPlan? addPlayerPlan,
+		IReadOnlyList<int> defenderObjectIdsBefore,
+		IReadOnlyList<int> defenderObjectIdsAfter,
+		bool wouldRecordParticipant)
+	{
+		return new VortexDefenderAcceptanceParticipantRuntimeReport(
+			status,
+			locationId,
+			transitionReport.ResponderObjectId,
+			defenderObjectIdsBefore,
+			defenderObjectIdsAfter,
+			transitionReport,
+			addPlayerPlan,
+			wouldRecordParticipant,
+			JavaSource: "services/vortex/Invasion.addPlayer(player, false) -> defenders.put(player.getObjectId(), player)");
+	}
+}
+
 public enum VortexDefenderInvitationAcceptancePlanStatus
 {
 	AcceptancePlanned,
@@ -229,6 +308,14 @@ public enum VortexDefenderInvitationResponseConsumptionReportStatus
 	PayloadMissing,
 	Denied,
 	Accepted,
+}
+
+public enum VortexDefenderAcceptanceParticipantRuntimeReportStatus
+{
+	NoParticipantMutation,
+	ParticipantWouldBeRecorded,
+	AlreadyParticipant,
+	WarningNoParticipantPut,
 }
 
 public sealed record VortexDefenderInvitationAcceptancePlan(
@@ -307,6 +394,29 @@ public sealed record VortexDefenderInvitationAcceptanceTransitionRuntimeReport(
 	public bool ShouldMutateLiveGroup => false;
 	public bool ShouldMutateLiveAlliance => false;
 	public bool ShouldMutateLiveDefenders => false;
+}
+
+public sealed record VortexDefenderAcceptanceParticipantRuntimeReport(
+	VortexDefenderAcceptanceParticipantRuntimeReportStatus Status,
+	int LocationId,
+	int ResponderObjectId,
+	IReadOnlyList<int> DefenderObjectIdsBefore,
+	IReadOnlyList<int> DefenderObjectIdsAfter,
+	VortexDefenderInvitationAcceptanceTransitionRuntimeReport TransitionReport,
+	VortexDefenderAddPlayerTransitionPlan? AddPlayerPlan,
+	bool WouldRecordParticipant,
+	string JavaSource)
+{
+	public bool HasAddPlayerPlan => AddPlayerPlan is not null;
+	public bool WouldPutParticipant => AddPlayerPlan?.WouldPutParticipant == true;
+	public bool WouldWarn => AddPlayerPlan?.WouldWarn == true;
+	public bool AlreadyParticipant => Status == VortexDefenderAcceptanceParticipantRuntimeReportStatus.AlreadyParticipant;
+	public bool WouldAddToExistingAlliance => AddPlayerPlan?.WouldAddToExistingAlliance == true;
+	public bool WouldCreateDefenderAlliance => AddPlayerPlan?.WouldCreateDefenderAlliance == true;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
+	public bool ShouldSendLivePacket => false;
 }
 
 public sealed record VortexDefenderInvitationResponderSnapshot(

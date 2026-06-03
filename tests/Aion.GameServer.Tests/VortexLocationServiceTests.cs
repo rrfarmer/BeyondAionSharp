@@ -2097,6 +2097,175 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task DefenderAcceptanceParticipantRuntimeReport_RecordsAcceptedParticipantWithoutMutatingRuntime()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-accepted-participant-report-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			runtime.StartInvasion(location);
+			var adapter = new VortexDefenderInvitationResponseRuntimeAdapterService();
+			var reporter = new VortexDefenderAcceptanceParticipantRuntimeReportService();
+			var responder = CreatePlayer(1004, isOnline: true, worldId: location.InvasionWorldId);
+			responder.TeamMembership = PlayerTeamMembership.Group;
+			var existingDefender = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: true);
+			var pendingRequest = new PendingVortexDefenderInvitationRequest(
+				RequesterObjectId: responder.ObjectId,
+				QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+				DefenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+				ExistingDefenderObjectIds: [existingDefender.PlayerObjectId]);
+			Assert.True(responder.ResponseRequester.PutRequest(
+				SmQuestionWindow.VortexDefenderInvitation,
+				new QuestionResponseRequest(
+					responder.ObjectId,
+					QuestionResponseRequestKind.VortexDefenderInvitation,
+					pendingRequest)));
+
+			var transition = adapter.HandleResponseWithAcceptanceTransition(
+				responder,
+				SmQuestionWindow.VortexDefenderInvitation,
+				responseCode: 7,
+				existingDefenders: [existingDefender]);
+			var beforeSnapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			var report = reporter.CreateReport(
+				location.Id,
+				transition);
+			var afterSnapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+
+			Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.ParticipantWouldBeRecorded, report.Status);
+			Assert.Equal(location.Id, report.LocationId);
+			Assert.Equal(1004, report.ResponderObjectId);
+			Assert.Equal([1001], report.DefenderObjectIdsBefore);
+			Assert.Equal([1001, 1004], report.DefenderObjectIdsAfter);
+			Assert.True(report.WouldRecordParticipant);
+			Assert.True(report.HasAddPlayerPlan);
+			Assert.True(report.WouldPutParticipant);
+			Assert.True(report.WouldCreateDefenderAlliance);
+			Assert.False(report.WouldAddToExistingAlliance);
+			Assert.False(report.WouldWarn);
+			Assert.Same(transition, report.TransitionReport);
+			Assert.Same(transition.UpdateDefendersPlan?.AddPlayerPlan, report.AddPlayerPlan);
+			Assert.Empty(beforeSnapshot.DefenderObjectIds);
+			Assert.Empty(afterSnapshot.DefenderObjectIds);
+			Assert.Equal(PlayerTeamMembership.Group, responder.TeamMembership);
+			Assert.False(report.ShouldMutateLiveGroup);
+			Assert.False(report.ShouldMutateLiveAlliance);
+			Assert.False(report.ShouldMutateLiveDefenders);
+			Assert.False(report.ShouldSendLivePacket);
+			Assert.Equal(
+				"services/vortex/Invasion.addPlayer(player, false) -> defenders.put(player.getObjectId(), player)",
+				report.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public void DefenderAcceptanceParticipantRuntimeReport_PreservesNoMutationForDeniedMissingFullAllianceAndWarn()
+	{
+		var adapter = new VortexDefenderInvitationResponseRuntimeAdapterService();
+		var reporter = new VortexDefenderAcceptanceParticipantRuntimeReportService();
+		var deniedResponder = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var missingResponder = CreatePlayer(1006, isOnline: true, worldId: 210060000);
+		var fullResponder = CreatePlayer(1007, isOnline: true, worldId: 210060000);
+		var warnResponder = CreatePlayer(1008, isOnline: true, worldId: 210060000);
+		var deniedRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: deniedResponder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			ExistingDefenderObjectIds: [1001]);
+		var fullRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: fullResponder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Full,
+			ExistingDefenderObjectIds: [1001]);
+		var warnRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: warnResponder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+			ExistingDefenderObjectIds: [1001, 1002]);
+		Assert.True(deniedResponder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(deniedResponder.ObjectId, QuestionResponseRequestKind.VortexDefenderInvitation, deniedRequest)));
+		Assert.True(fullResponder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(fullResponder.ObjectId, QuestionResponseRequestKind.VortexDefenderInvitation, fullRequest)));
+		Assert.True(warnResponder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(warnResponder.ObjectId, QuestionResponseRequestKind.VortexDefenderInvitation, warnRequest)));
+
+		var denied = reporter.CreateReport(
+			locationId: 0,
+			adapter.HandleResponseWithAcceptanceTransition(
+				deniedResponder,
+				SmQuestionWindow.VortexDefenderInvitation,
+				responseCode: 0),
+			currentDefenderObjectIds: [1001]);
+		var missing = reporter.CreateReport(
+			locationId: 0,
+			adapter.HandleResponseWithAcceptanceTransition(
+				missingResponder,
+				SmQuestionWindow.VortexDefenderInvitation,
+				responseCode: 1),
+			currentDefenderObjectIds: [1001]);
+		var full = reporter.CreateReport(
+			locationId: 0,
+			adapter.HandleResponseWithAcceptanceTransition(
+				fullResponder,
+				SmQuestionWindow.VortexDefenderInvitation,
+				responseCode: 1,
+				defenderAlliance: VortexDefenderAllianceSnapshot.Full),
+			currentDefenderObjectIds: [1001]);
+		var warn = reporter.CreateReport(
+			locationId: 0,
+			adapter.HandleResponseWithAcceptanceTransition(
+				warnResponder,
+				SmQuestionWindow.VortexDefenderInvitation,
+				responseCode: 1,
+				existingDefenders:
+				[
+					new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: false),
+					new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false),
+				]),
+			currentDefenderObjectIds: [1001, 1002]);
+
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.NoParticipantMutation, denied.Status);
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.NoParticipantMutation, missing.Status);
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.NoParticipantMutation, full.Status);
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.WarningNoParticipantPut, warn.Status);
+		Assert.Equal([1001], denied.DefenderObjectIdsBefore);
+		Assert.Equal([1001], denied.DefenderObjectIdsAfter);
+		Assert.Equal([1001], missing.DefenderObjectIdsBefore);
+		Assert.Equal([1001], missing.DefenderObjectIdsAfter);
+		Assert.Equal([1001], full.DefenderObjectIdsBefore);
+		Assert.Equal([1001], full.DefenderObjectIdsAfter);
+		Assert.Equal([1001, 1002], warn.DefenderObjectIdsBefore);
+		Assert.Equal([1001, 1002], warn.DefenderObjectIdsAfter);
+		Assert.False(denied.WouldRecordParticipant);
+		Assert.False(missing.WouldRecordParticipant);
+		Assert.False(full.WouldRecordParticipant);
+		Assert.False(warn.WouldRecordParticipant);
+		Assert.False(denied.HasAddPlayerPlan);
+		Assert.False(missing.HasAddPlayerPlan);
+		Assert.False(full.HasAddPlayerPlan);
+		Assert.True(warn.HasAddPlayerPlan);
+		Assert.True(warn.WouldWarn);
+		Assert.False(warn.WouldPutParticipant);
+		foreach (var report in new[] { denied, missing, full, warn })
+		{
+			Assert.False(report.ShouldMutateLiveGroup);
+			Assert.False(report.ShouldMutateLiveAlliance);
+			Assert.False(report.ShouldMutateLiveDefenders);
+			Assert.False(report.ShouldSendLivePacket);
+		}
+	}
+
+	[Fact]
 	public void DefenderInvitationBatchPlan_ComposesOneInvitationPlanPerDefenderUpdateCandidate()
 	{
 		var updatePlan = new VortexDefenderAllianceUpdatePlan(
