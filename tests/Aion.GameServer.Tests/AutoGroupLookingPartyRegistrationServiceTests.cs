@@ -176,6 +176,91 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void StartLooking_GroupEntryRejectsOutOfLevelMemberLikeJavaEnterMember()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var underleveledMember = CreatePlayer(objectId: 1002, level: 45);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, underleveledMember]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = service.StartLooking(
+			leader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedMemberCannotEnter, result.GuardPlan?.Status);
+		Assert.Equal(1400187, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(["Player1002"], result.GuardPlan?.DenialMessage?.Parameters);
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_GroupEntryRejectsCooldownMemberLikeJavaEnterMember()
+	{
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(100_000);
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var cooldownMember = CreatePlayer(objectId: 1002, level: 50);
+		cooldownMember.PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
+		{
+			[300110000] = new PlayerPortalCooldown(300110000, ReuseTimeMillis: 200_000, EntryCount: 1),
+		};
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, cooldownMember]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var instanceCooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1, MaxMemberLight: 6, MaxMemberDark: 6),
+		]);
+
+		var result = service.StartLooking(
+			leader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime,
+			instanceCooltimes: instanceCooltimes,
+			now: now);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedMemberCannotEnter, result.GuardPlan?.Status);
+		Assert.Equal(1400187, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(["Player1002"], result.GuardPlan?.DenialMessage?.Parameters);
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_GroupEntryRejectsSearchingMemberLikeJavaEnterMember()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var searchingMember = CreatePlayer(objectId: 1002, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, searchingMember]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		service.RegisterLookingParty(107, [searchingMember.ObjectId]);
+
+		var result = service.StartLooking(
+			leader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedMemberCannotEnter, result.GuardPlan?.Status);
+		Assert.Equal(1400187, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(["Player1002"], result.GuardPlan?.DenialMessage?.Parameters);
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+		Assert.False(service.IsSearching(leader.ObjectId, 107));
+	}
+
+	[Fact]
 	public void StartLooking_LevelGuardBlocksBeforeQueueMutationLikeJavaCanRegister()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();

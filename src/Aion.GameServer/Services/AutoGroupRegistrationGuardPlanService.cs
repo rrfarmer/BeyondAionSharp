@@ -11,6 +11,7 @@ public enum AutoGroupRegistrationGuardPlanStatus
 	BlockedEntryUnsupported,
 	BlockedNotLeader,
 	BlockedTooManyMembers,
+	BlockedMemberCannotEnter,
 }
 
 public sealed record AutoGroupRegistrationGuardPlan(

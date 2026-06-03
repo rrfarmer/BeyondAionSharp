@@ -355,6 +355,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400194);
 	}
 
+	public static SmSystemMessage CantInstanceEnterMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_ENTER_MEMBER(memberName).
+		return new SmSystemMessage(1400187, memberName);
+	}
+
 	public static SmSystemMessage MentorCantEnter(int worldId)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_CANT_ENTER(worldId).

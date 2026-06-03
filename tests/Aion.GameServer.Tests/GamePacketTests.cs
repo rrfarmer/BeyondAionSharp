@@ -391,6 +391,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CantInstanceTooManyMembers(3, 300110000), 1400180, "3", "300110000");
 		AssertSystemMessage(SmSystemMessage.CantInstanceAlreadyRegistered(300110000), 1400181, "300110000");
 		AssertSystemMessage(SmSystemMessage.CantInstanceNotLeader(), 1400182);
+		AssertSystemMessage(SmSystemMessage.CantInstanceEnterMember("Player1002"), 1400187, "Player1002");
 		AssertSystemMessage(SmSystemMessage.InstanceRegisterSuccess(), 1400194);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);

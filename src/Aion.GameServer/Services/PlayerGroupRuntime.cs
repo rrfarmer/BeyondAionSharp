@@ -393,6 +393,15 @@ public sealed class PlayerGroupRuntime
 				: Array.Empty<int>();
 	}
 
+	public IReadOnlyList<Player> GetMemberPlayers(int teamId)
+	{
+		// Java parity: model/team/GeneralTeam.getMembers exposes the current Player objects for requirement checks.
+		lock (_sync)
+			return _membersByTeamId.TryGetValue(teamId, out var members)
+				? members.Select(member => member.Player).ToArray()
+				: Array.Empty<Player>();
+	}
+
 	public bool IsLeader(int teamId, Player player)
 	{
 		// Java parity: model/team/GeneralTeam.isLeader compares against the leader's Player object.

@@ -293,6 +293,15 @@ public sealed class PlayerAllianceRuntime
 				: Array.Empty<int>();
 	}
 
+	public IReadOnlyList<Player> GetMemberPlayers(int allianceId)
+	{
+		// Java parity: model/team/GeneralTeam.getMembers exposes the current Player objects for requirement checks.
+		lock (_sync)
+			return _membersByAllianceId.TryGetValue(allianceId, out var members)
+				? members.Select(member => member.Player).ToArray()
+				: Array.Empty<Player>();
+	}
+
 	public IReadOnlyList<int> GetMemberObjectIdsByGroupId(int allianceId, int allianceGroupId)
 	{
 		// Java parity: model/team/alliance/PlayerAlliance.getAllianceGroup(groupId).getMembers.
