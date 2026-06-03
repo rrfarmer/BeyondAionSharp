@@ -750,6 +750,18 @@ public class GamePacketTests
 		Assert.Empty(
 			SerializeUnencryptedPayload(SmQuestAction.Update(new PlayerQuestState(100, "COMPLETE", 0x22, 2, 1), suppressForExtraCategory: true))
 		);
+		// Java parity: SM_QUEST_ACTION(questId, sharerId, shareInAlliance) -> ActionType.SHARE.
+		// writeC(5); writeD(questId=100); writeD(sharerId=200); writeD(shareInAlliance?1:0).
+		var questActionShareGroup = SmQuestAction.Share(100, 200, shareInAlliance: false);
+		Assert.Equal(124, questActionShareGroup.OpCode);
+		Assert.Equal(Convert.FromHexString("0564000000C800000000000000"), SerializeUnencryptedPayload(questActionShareGroup));
+		Assert.Equal(
+			Convert.FromHexString("0564000000C800000001000000"),
+			SerializeUnencryptedPayload(SmQuestAction.Share(100, 200, shareInAlliance: true))
+		);
+		Assert.Empty(
+			SerializeUnencryptedPayload(SmQuestAction.Share(100, 200, shareInAlliance: true, suppressForExtraCategory: true))
+		);
 		Assert.Equal(
 			Convert.FromHexString("0100FFFF640000000201"),
 			SerializeUnencryptedPayload(new SmQuestCompletedList(0, [new PlayerQuestState(100, "COMPLETE", 0, 0, 2)]))
