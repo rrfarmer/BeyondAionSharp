@@ -905,7 +905,31 @@ public sealed class PlayerEnterWorldService
 					eventPlayerWasSpecified: false);
 				if (leaderChangePlan != null)
 				{
-					await DispatchAllianceLeaderChangeAsync(leaderChangePlan, members, membersByObjectId, player.ObjectId);
+					PlayerLeagueLeaderChangeTimeoutPlan? leagueTimeoutPlan = null;
+					if (isInLeague && _playerLeagueRuntime != null)
+					{
+						var leagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfo(
+							snapshot.LeagueId,
+							skippedPlayerObjectId: null,
+							_playerAllianceRuntime);
+						if (leagueBroadcastPlan != null)
+							await DispatchLeagueLogoutPacketsAsync(leagueBroadcastPlan.PacketIntents, player.ObjectId);
+
+						leagueTimeoutPlan = _playerLeagueRuntime.CreateAllianceLeaderChangeTimeoutPlan(
+							snapshot.LeagueId,
+							allianceId,
+							leaderChangePlan.NewLeaderObjectId,
+							membersByObjectId.GetValueOrDefault(leaderChangePlan.NewLeaderObjectId)?.Name ?? string.Empty,
+							members.Select(member => member.ObjectId).ToArray(),
+							_playerAllianceRuntime);
+					}
+
+					await DispatchAllianceLeaderChangeAsync(
+						leaderChangePlan,
+						members,
+						membersByObjectId,
+						player.ObjectId,
+						leagueTimeoutPlan);
 				}
 
 				snapshot = _playerAllianceRuntime.GetSnapshot(allianceId) ?? snapshot;
@@ -987,33 +1011,41 @@ public sealed class PlayerEnterWorldService
 		PlayerAllianceLeaderChangePlan plan,
 		IReadOnlyList<Player> members,
 		IReadOnlyDictionary<int, Player> membersByObjectId,
-		int disconnectedPlayerObjectId)
+		int disconnectedPlayerObjectId,
+		PlayerLeagueLeaderChangeTimeoutPlan? leagueTimeoutPlan = null)
 	{
 		var allianceInfoIntents = plan.AllianceInfoIntents.ToDictionary(intent => intent.RecipientObjectId);
 		var systemMessageIntentsByRecipient = plan.SystemMessageIntents
 			.GroupBy(intent => intent.RecipientObjectId)
 			.ToDictionary(group => group.Key, group => group.ToArray());
+		var leagueTimeoutIntentsByTrigger = leagueTimeoutPlan?.TimeoutIntents
+			.GroupBy(intent => intent.TriggeringChangedAllianceMemberObjectId)
+			.ToDictionary(group => group.Key, group => group.ToArray())
+			?? [];
 		foreach (var member in members)
 		{
-			if (ShouldSkipAllianceLogoutRecipient(member.ObjectId, membersByObjectId, disconnectedPlayerObjectId))
-				continue;
-
-			if (allianceInfoIntents.TryGetValue(member.ObjectId, out var allianceInfoIntent))
+			var skipLocalRecipient = ShouldSkipAllianceLogoutRecipient(member.ObjectId, membersByObjectId, disconnectedPlayerObjectId);
+			if (!skipLocalRecipient && allianceInfoIntents.TryGetValue(member.ObjectId, out var allianceInfoIntent))
 			{
 				await _connectionRegistry!.SendPacketToPlayerAsync(
 					allianceInfoIntent.RecipientObjectId,
 					allianceInfoIntent.CreatePacket());
 			}
 
-			if (!systemMessageIntentsByRecipient.TryGetValue(member.ObjectId, out var systemMessageIntents))
-				continue;
-
-			foreach (var intent in systemMessageIntents)
+			if (!skipLocalRecipient && systemMessageIntentsByRecipient.TryGetValue(member.ObjectId, out var systemMessageIntents))
 			{
-				await _connectionRegistry!.SendPacketToPlayerAsync(
-					intent.RecipientObjectId,
-					intent.Message);
+				foreach (var intent in systemMessageIntents)
+				{
+					await _connectionRegistry!.SendPacketToPlayerAsync(
+						intent.RecipientObjectId,
+						intent.Message);
+				}
 			}
+
+			if (leagueTimeoutIntentsByTrigger.TryGetValue(member.ObjectId, out var leagueTimeoutIntents))
+				await DispatchLeagueLogoutPacketsAsync(
+					leagueTimeoutIntents.Select(intent => intent.PacketIntent).ToArray(),
+					disconnectedPlayerObjectId);
 		}
 	}
 

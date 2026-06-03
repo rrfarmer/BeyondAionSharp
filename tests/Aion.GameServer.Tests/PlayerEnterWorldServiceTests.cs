@@ -826,6 +826,75 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_DispatchesAllianceLeaderChangeLeagueTimeoutsForCaptainLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "LeagueLeader");
+		player.IsOnline = true;
+		var fallback = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Fallback",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(220010000, 5, 6, 7, 16),
+		};
+		var leagueMateLeader = new Player
+		{
+			ObjectId = 3001,
+			AccountId = 30,
+			Name = "LeagueMate",
+			PlayerClass = "CLERIC",
+			Race = "ELYOS",
+			Gender = "FEMALE",
+			IsOnline = true,
+			Position = new WorldPosition(230010000, 8, 9, 10, 16),
+		};
+		var allianceRuntime = new PlayerAllianceRuntime();
+		var leagueRuntime = new PlayerLeagueRuntime();
+		allianceRuntime.CreateAlliance(88001, player);
+		allianceRuntime.AddMember(88001, fallback);
+		allianceRuntime.SetViceCaptains(88001, [fallback.ObjectId]);
+		allianceRuntime.CreateAlliance(88002, leagueMateLeader);
+		leagueRuntime.CreateLeague(77001, leaderAllianceId: 88001);
+		leagueRuntime.AddAlliance(77001, allianceId: 88002);
+		allianceRuntime.SetLeagueId(88001, 77001);
+		allianceRuntime.SetLeagueId(88002, 77001);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(
+			repository,
+			world,
+			out var registry,
+			playerAllianceRuntime: allianceRuntime,
+			playerLeagueRuntime: leagueRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal([2001, 3001, 3001, 2001, 2001, 2001, 2001, 2001, 2001, 3001], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		var expectedRows =
+			new[]
+			{
+				new PlayerAllianceInfoLeagueRow(0, 88001, 2, "Fallback", 220010000),
+				new PlayerAllianceInfoLeagueRow(1, 88002, 1, "LeagueMate", 230010000),
+			};
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[0], 88001, 2001, 220010000, expectedAllianceGroupSize: 2, expectedLeagueRows: expectedRows);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[1], 88002, 3001, 230010000, expectedLeagueRows: expectedRows);
+		AssertAllianceSystemMessage(registry.SentPackets[2], 3001, 1400588, "Fallback");
+		AssertAllianceSystemMessage(registry.SentPackets[3], 2001, 1300999);
+		AssertAllianceSystemMessage(registry.SentPackets[4], 2001, 1400587);
+		AssertAllianceOfflineMessage(registry.SentPackets[5], 2001, "LeagueLeader");
+		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[6].Packet);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[7].Packet);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[8], 88001, 2001, 220010000, expectedAllianceGroupSize: 2, expectedLeagueRows: expectedRows);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[9], 88002, 3001, 230010000, expectedLeagueRows: expectedRows);
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
+	}
+
+	[Fact]
 	public async Task LeaveWorld_DisbandAllianceWhenNoMembersRemainOnlineLikeJavaLogout()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Leader");

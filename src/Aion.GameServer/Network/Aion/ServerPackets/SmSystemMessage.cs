@@ -673,6 +673,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400588, playerName);
 	}
 
+	public static SmSystemMessage UnionYouBecomeNewLeaderTimeout()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_YOU_BECOME_NEW_LEADER_TIMEOUT.
+		return new SmSystemMessage(1400587);
+	}
+
 	public static SmSystemMessage UnionChangeLeader(string playerName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_UNION_CHANGE_LEADER(String, String).

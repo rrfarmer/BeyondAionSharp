@@ -492,7 +492,7 @@ public sealed class PlayerAllianceRuntime
 				eventPlayerWasSpecified,
 				descriptor.LootRules,
 				descriptor.TeamType,
-				isInLeague: false);
+				isInLeague: _leagueIdByAllianceId.ContainsKey(allianceId));
 
 			var updatedDescriptor = descriptor with { LeaderObjectId = newLeaderObjectId };
 			_descriptorsByAllianceId[allianceId] = updatedDescriptor;

@@ -109,6 +109,14 @@ public sealed class PlayerLeagueRuntime
 					: null;
 	}
 
+	public int? GetLeaderAllianceId(int leagueId)
+	{
+		lock (_sync)
+			return _leaderAllianceIdByLeagueId.GetValueOrDefault(leagueId) is var leaderAllianceId && leaderAllianceId != 0
+				? leaderAllianceId
+				: null;
+	}
+
 	public IReadOnlyList<int> GetAllianceIdsByPosition(int leagueId)
 	{
 		// Java parity: model/team/league/League.getSortedMembers sorts by LeagueMember.getLeaguePosition.
@@ -188,6 +196,82 @@ public sealed class PlayerLeagueRuntime
 				SkippedAllianceId: null,
 				skippedPlayerObjectId,
 				sortedAllianceIds,
+				intents);
+		}
+	}
+
+	public PlayerLeagueLeaderChangeTimeoutPlan? CreateAllianceLeaderChangeTimeoutPlan(
+		int leagueId,
+		int changedAllianceId,
+		int newLeaderObjectId,
+		string newLeaderName,
+		IReadOnlyList<int> changedAllianceMemberObjectIds,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: ChangeAllianceLeaderEvent.changeLeaderTo sends union timeout messages only when
+		// the new alliance leader is also League.getCaptain(), meaning this alliance is the league leader alliance.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leagueId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(changedAllianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
+				return null;
+
+			var isNewLeaderLeagueCaptain = leaderAllianceId == changedAllianceId;
+			if (!isNewLeaderLeagueCaptain)
+			{
+				return new PlayerLeagueLeaderChangeTimeoutPlan(
+					leagueId,
+					changedAllianceId,
+					newLeaderObjectId,
+					IsNewLeaderLeagueCaptain: false,
+					TimeoutIntents: Array.Empty<PlayerLeagueLeaderChangeTimeoutIntent>());
+			}
+
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = new List<PlayerLeagueLeaderChangeTimeoutIntent>();
+			var sequence = 0;
+			foreach (var triggeringMemberObjectId in changedAllianceMemberObjectIds)
+			{
+				if (triggeringMemberObjectId == newLeaderObjectId)
+				{
+					intents.Add(new PlayerLeagueLeaderChangeTimeoutIntent(
+						triggeringMemberObjectId,
+						new PlayerLeaguePacketIntent(
+							sequence++,
+							newLeaderObjectId,
+							changedAllianceId,
+							PlayerLeaguePacketIntentKind.SystemMessage,
+							SystemMessage: SmSystemMessage.UnionYouBecomeNewLeaderTimeout())));
+					continue;
+				}
+
+				foreach (var allianceId in sortedAllianceIds)
+				{
+					foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+					{
+						if (recipientObjectId == newLeaderObjectId)
+							continue;
+
+						intents.Add(new PlayerLeagueLeaderChangeTimeoutIntent(
+							triggeringMemberObjectId,
+							new PlayerLeaguePacketIntent(
+								sequence++,
+								recipientObjectId,
+								allianceId,
+								PlayerLeaguePacketIntentKind.SystemMessage,
+								SystemMessage: SmSystemMessage.UnionChangeLeaderTimeout(newLeaderName))));
+					}
+				}
+			}
+
+			return new PlayerLeagueLeaderChangeTimeoutPlan(
+				leagueId,
+				changedAllianceId,
+				newLeaderObjectId,
+				IsNewLeaderLeagueCaptain: true,
 				intents);
 		}
 	}
@@ -1054,6 +1138,17 @@ public sealed record PlayerLeagueBroadcastPlan(
 	int? SkippedPlayerObjectId,
 	IReadOnlyList<int> AllianceIdsByPosition,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueLeaderChangeTimeoutPlan(
+	int LeagueId,
+	int ChangedAllianceId,
+	int NewLeaderObjectId,
+	bool IsNewLeaderLeagueCaptain,
+	IReadOnlyList<PlayerLeagueLeaderChangeTimeoutIntent> TimeoutIntents);
+
+public sealed record PlayerLeagueLeaderChangeTimeoutIntent(
+	int TriggeringChangedAllianceMemberObjectId,
+	PlayerLeaguePacketIntent PacketIntent);
 
 public enum PlayerLeaguePacketIntentKind
 {
