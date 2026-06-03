@@ -23,6 +23,7 @@ public sealed class PlayerEnterWorldService
 	private readonly Action<RepurchaseStateRemovePlan>? _repurchaseStateRemovePlanObserver;
 	private readonly FindGroupRecruitmentPlanService? _findGroupService;
 	private readonly Action<FindGroupLogoutCleanupPlan>? _findGroupLogoutCleanupPlanObserver;
+	private readonly PlayerGroupRuntime? _playerGroupRuntime;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -37,7 +38,8 @@ public sealed class PlayerEnterWorldService
 		GameServerRuntimeContext? runtimeContext = null,
 		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null,
 		FindGroupRecruitmentPlanService? findGroupService = null,
-		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null)
+		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
+		PlayerGroupRuntime? playerGroupRuntime = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -49,6 +51,7 @@ public sealed class PlayerEnterWorldService
 		_repurchaseStateRemovePlanObserver = repurchaseStateRemovePlanObserver;
 		_findGroupService = findGroupService;
 		_findGroupLogoutCleanupPlanObserver = findGroupLogoutCleanupPlanObserver;
+		_playerGroupRuntime = playerGroupRuntime;
 		_logger = logger;
 	}
 
@@ -802,10 +805,19 @@ public sealed class PlayerEnterWorldService
 		if (_world.TryRemoveObject(player.ObjectId, out _))
 			ClearPlayerCreaturePvpZones(player.ObjectId);
 		var saved = await _repository.SavePlayerLogoutAsync(player, lastOnline, cancellationToken);
+		RecordGroupLogoutLastOnline(player, lastOnline);
 		if (saved)
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
 			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
+	private void RecordGroupLogoutLastOnline(Player player, DateTime lastOnline)
+	{
+		// Java parity: PlayerLeaveWorldService.leaveWorld calls PlayerGroupService.onPlayerLogout
+		// after the immediate logout persistence band; PlayerGroupService updates the member's
+		// last-online timestamp before PlayerDisconnectedEvent fanout.
+		_playerGroupRuntime?.UpdateMemberLastOnlineTime(player, new DateTimeOffset(lastOnline));
 	}
 
 	private void RecordFindGroupLogoutCleanup(Player player)
