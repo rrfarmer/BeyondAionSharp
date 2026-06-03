@@ -1551,16 +1551,7 @@ public sealed class GameServerConnection : BaseClientConnection
 						}
 
 						if (result.QueueMatchPlan?.Status == AutoGroupQueueMatchPlanStatus.Ready && _connectionRegistry != null)
-						{
-							var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(result.QueueMatchPlan);
-							var applyResult = await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
-								readyMatchPlan,
-								autoGroups,
-								_connectionRegistry,
-								registerRuntimeInstance: registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration),
-								materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance);
-							ScheduleAutoGroupPenaltyRefreshes(applyResult.PenaltyRefreshIntents);
-						}
+							await ApplyAutoGroupReadyMatchPlanAsync(result.QueueMatchPlan, autoGroups, _connectionRegistry);
 					}
 				}
 				break;
@@ -1652,6 +1643,24 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_connectionRegistry != null)
 			_autoGroupPenaltyRefreshScheduler?.ScheduleRefreshes(penaltyRefreshIntents, _connectionRegistry);
+	}
+
+	private async Task ApplyAutoGroupReadyMatchPlanAsync(
+		AutoGroupQueueMatchPlan queueMatchPlan,
+		AutoGroupTable? autoGroups,
+		IGameClientConnectionRegistry connectionRegistry)
+	{
+		if (queueMatchPlan.Status != AutoGroupQueueMatchPlanStatus.Ready)
+			return;
+
+		var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(queueMatchPlan);
+		var applyResult = await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
+			readyMatchPlan,
+			autoGroups,
+			connectionRegistry,
+			registerRuntimeInstance: registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration),
+			materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance);
+		ScheduleAutoGroupPenaltyRefreshes(applyResult.PenaltyRefreshIntents);
 	}
 
 	private AutoGroupInstanceRuntimeRegistration MaterializeAutoGroupReadyMatchRuntimeInstance(
@@ -11018,10 +11027,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		_expirableTaskService?.UnregisterPlayer(player);
 		if (_options.AutoGroup.Enabled)
-			_autoGroupLookingPartyRegistrations.CleanupSearchEntriesOnLogout(
+		{
+			var staticData = _runtimeContext?.DataManager?.StaticData;
+			var logoutCleanup = _autoGroupLookingPartyRegistrations.CleanupSearchEntriesOnLogout(
 				player.ObjectId,
-				_runtimeContext?.DataManager?.StaticData.AutoGroups,
-				_runtimeContext?.DataManager?.StaticData.InstanceCooltimes);
+				staticData?.AutoGroups,
+				staticData?.InstanceCooltimes);
+			if (_connectionRegistry != null)
+			{
+				foreach (var queueRecheckPlan in logoutCleanup.QueueRecheckPlans)
+					await ApplyAutoGroupReadyMatchPlanAsync(queueRecheckPlan, staticData?.AutoGroups, _connectionRegistry);
+			}
+		}
 		SaveOfflineKiskBinding(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		_pendingHouseObjectUse?.Task.Cancel();
