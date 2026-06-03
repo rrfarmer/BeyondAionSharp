@@ -347,6 +347,45 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_PersistsDirtyStorageRowsBeforeClearingLikeJavaInventoryStore()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		var inventoryClean = CreateInventoryItem(3001, location: 0, InventoryItemPersistentState.Updated);
+		var inventoryDirty = CreateInventoryItem(3002, location: 0, InventoryItemPersistentState.UpdateRequired);
+		var warehouseClean = CreateInventoryItem(4001, location: 1, InventoryItemPersistentState.Updated);
+		var warehouseNew = CreateInventoryItem(4002, location: 1, InventoryItemPersistentState.New);
+		var accountWarehouseClean = CreateInventoryItem(5001, location: 2, InventoryItemPersistentState.Updated);
+		var accountWarehouseDeleted = CreateInventoryItem(5002, location: 2, InventoryItemPersistentState.Updated);
+		player.InventoryItems = [inventoryClean, inventoryDirty];
+		player.WarehouseItems = [warehouseClean, warehouseNew];
+		player.AccountWarehouseItems = [accountWarehouseClean];
+		player.TrackDeletedItem(accountWarehouseDeleted);
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+			CaptureAndPersistDirtyItemsOnLogout = true,
+		};
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal(
+			[3001, 3002, 4001, 4002, 5001, 5002],
+			repository.CapturedLogoutDirtyItems.Select(item => item.ObjectId).Order().ToArray());
+		Assert.Empty(player.GetDirtyItemsToUpdate());
+		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Empty(player.DeletedWarehouseItems);
+		Assert.Empty(player.DeletedAccountWarehouseItems);
+		Assert.All(
+			player.InventoryItems.Concat(player.WarehouseItems).Concat(player.AccountWarehouseItems),
+			item => Assert.Equal(InventoryItemPersistentState.Updated, item.PersistentState));
+		Assert.False(world.TryGetObject(player.ObjectId, out _));
+	}
+
+	[Fact]
 	public async Task LeaveWorld_RecordsDisabledRepurchaseStateRemovalWithoutMutatingPlayerItems()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
@@ -1276,6 +1315,22 @@ public sealed class PlayerEnterWorldServiceTests
 		};
 	}
 
+	private static InventoryItem CreateInventoryItem(
+		int objectId,
+		int location,
+		InventoryItemPersistentState persistentState)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = 100000094,
+			Count = 1,
+			OwnerId = 1001,
+			Location = location,
+			PersistentState = persistentState,
+		};
+	}
+
 	private static void SeedPendingQuestionResponses(Player player)
 	{
 		player.PendingFriendRequest = new PendingFriendRequest(2001, "Requester");
@@ -1555,6 +1610,10 @@ public sealed class PlayerEnterWorldServiceTests
 		public int SaveLogoutCalls { get; private set; }
 
 		public Player? SavedLogoutPlayer { get; private set; }
+
+		public bool CaptureAndPersistDirtyItemsOnLogout { get; init; }
+
+		public IReadOnlyList<InventoryItem> CapturedLogoutDirtyItems { get; private set; } = Array.Empty<InventoryItem>();
 
 		public DateTime? LogoutLastOnline { get; private set; }
 
@@ -2435,6 +2494,11 @@ public sealed class PlayerEnterWorldServiceTests
 			SaveLogoutCalls++;
 			SavedLogoutPlayer = player;
 			LogoutLastOnline = lastOnline;
+			if (CaptureAndPersistDirtyItemsOnLogout)
+			{
+				CapturedLogoutDirtyItems = player.GetDirtyItemsToUpdate();
+				player.MarkDirtyItemsPersisted();
+			}
 			return Task.FromResult(true);
 		}
 	}
