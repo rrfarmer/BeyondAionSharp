@@ -393,6 +393,79 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	}
 
 	[Fact]
+	public void DestroyCurrentAutoInstanceIfPossibleOnLogout_ChecksButDoesNotDestroyWhilePlayerStillRegisteredLikeJava()
+	{
+		var player = CreatePlayer(1001);
+		var destroyCalls = new List<(int WorldId, int InstanceId)>();
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime(),
+			(worldId, instanceId) =>
+			{
+				destroyCalls.Add((worldId, instanceId));
+				return new InstanceDestroyWorkflowResult(
+					InstanceDestroyRuntimePlan.Missing(worldId, instanceId),
+					UnregisteredTemporarySpawnCount: 0,
+					WalkerCleanup: null,
+					"test destroy callback");
+			});
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.FreeForAllArena,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [player.ObjectId],
+			InstanceMaskId: 107));
+
+		var result = service.DestroyCurrentAutoInstanceIfPossibleOnLogout(
+			player,
+			300110000,
+			2,
+			onlinePlayersInsideAtLogout: 0);
+
+		Assert.Equal(AutoGroupLogoutCurrentInstanceDestroyStatus.CheckedNotDestroyed, result.Status);
+		Assert.False(result.RemovedFromRegistry);
+		Assert.Null(result.DestroyWorkflowResult);
+		Assert.Empty(destroyCalls);
+		Assert.NotNull(result.Snapshot);
+		Assert.Contains(player.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
+		Assert.Contains(player.ObjectId, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
+	public void DestroyCurrentAutoInstanceIfPossibleOnLogout_MissingOrUnregisteredPlayerIsNoOpLikeJavaGuard()
+	{
+		var player = CreatePlayer(1001);
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.FreeForAllArena,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2002],
+			InstanceMaskId: 107));
+
+		var missing = service.DestroyCurrentAutoInstanceIfPossibleOnLogout(
+			player,
+			300110000,
+			3,
+			onlinePlayersInsideAtLogout: 0);
+		var unregistered = service.DestroyCurrentAutoInstanceIfPossibleOnLogout(
+			player,
+			300110000,
+			2,
+			onlinePlayersInsideAtLogout: 0);
+
+		Assert.Equal(AutoGroupLogoutCurrentInstanceDestroyStatus.NoAutoInstanceForCurrentMap, missing.Status);
+		Assert.Equal(AutoGroupLogoutCurrentInstanceDestroyStatus.PlayerNotRegistered, unregistered.Status);
+		Assert.False(missing.RemovedFromRegistry);
+		Assert.False(unregistered.RemovedFromRegistry);
+		Assert.Contains(2002, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
 	public void OnLeaveInstance_MissingOrUnregisteredInstanceOnlyPlansOpenRegistrationRefresh()
 	{
 		var service = new AutoGroupInstanceLeaveRuntimeService(

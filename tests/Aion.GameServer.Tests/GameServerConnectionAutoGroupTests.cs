@@ -790,6 +790,63 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task LeavePlayerWorldAsync_AutoGroupLogoutDestroyCheckDoesNotUnregisterRegisteredPlayerLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		var worldInstance = runtimeContext.WorldMapStates.AddWorldMapInstance(
+			300110000,
+			2,
+			ownerId: 0,
+			maxPlayers: 1,
+			difficultyId: 0,
+			instanceHandler: null);
+		Assert.NotNull(worldInstance);
+		worldInstance!.AddPlayer(1001);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "LogoutInsideAutoInstance",
+			Race = "ELYOS",
+			Level = 50,
+			Position = new WorldPosition(300110000, 100, 100, 100, 0, InstanceId: 2),
+		};
+		var destroyCalls = new List<(int WorldId, int InstanceId)>();
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime(),
+			(worldId, instanceId) =>
+			{
+				destroyCalls.Add((worldId, instanceId));
+				return new InstanceDestroyWorkflowResult(
+					InstanceDestroyRuntimePlan.Missing(worldId, instanceId),
+					UnregisteredTemporarySpawnCount: 0,
+					WalkerCleanup: null,
+					"test destroy callback");
+			});
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.FreeForAllArena,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [player.ObjectId],
+			InstanceMaskId: 107));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupLookingPartyRegistrations: new AutoGroupLookingPartyRegistrationService(),
+			autoGroupInstanceLeaveRuntimeService: runtimeService);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.Empty(destroyCalls);
+		Assert.True(runtimeContext.WorldMapStates.TryGetWorldMapInstance(300110000, 2, out var retainedInstance));
+		Assert.NotNull(retainedInstance);
+		Assert.Contains(player.ObjectId, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
 	public async Task LeavePlayerWorldAsync_AutoGroupLogoutQueueRecheckAppliesReadyMatchLikeJava()
 	{
 		var sentPackets = new List<GameServerPacket>();

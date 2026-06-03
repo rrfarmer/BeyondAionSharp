@@ -11049,6 +11049,21 @@ public sealed class GameServerConnection : BaseClientConnection
 				foreach (var queueRecheckPlan in logoutCleanup.QueueRecheckPlans)
 					await ApplyAutoGroupReadyMatchPlanAsync(queueRecheckPlan, staticData?.AutoGroups, _connectionRegistry);
 			}
+
+			var position = player.Position;
+			var onlinePlayersInsideAtLogout = 0;
+			if (_runtimeContext?.WorldMapStates.TryGetWorldMapInstance(position.WorldId, position.InstanceId, out var currentInstance) == true
+				&& currentInstance != null)
+			{
+				// Java parity: PlayerLeaveWorldService clears the client connection before AutoGroupService.onLogout,
+				// so the logging-out player no longer counts as an online player for destroyIfPossible.
+				onlinePlayersInsideAtLogout = Math.Max(0, currentInstance.PlayerCount - 1);
+			}
+			_autoGroupInstanceLeaveRuntimeService.DestroyCurrentAutoInstanceIfPossibleOnLogout(
+				player,
+				position.WorldId,
+				position.InstanceId,
+				onlinePlayersInsideAtLogout);
 		}
 		SaveOfflineKiskBinding(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);

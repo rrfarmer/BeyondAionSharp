@@ -211,6 +211,76 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				: null;
 	}
 
+	public AutoGroupLogoutCurrentInstanceDestroyResult DestroyCurrentAutoInstanceIfPossibleOnLogout(
+		Player player,
+		int worldId,
+		int instanceId,
+		int onlinePlayersInsideAtLogout)
+	{
+		AutoGroupLogoutCurrentInstanceDestroyResult result;
+		AutoGroupInstanceRuntimeKey? destroyKey = null;
+		lock (_sync)
+		{
+			if (!_autoGroupEnabled)
+			{
+				return AutoGroupLogoutCurrentInstanceDestroyResult.Disabled(
+					player.ObjectId,
+					worldId,
+					instanceId);
+			}
+
+			var key = new AutoGroupInstanceRuntimeKey(worldId, instanceId);
+			if (!_instancesByKey.TryGetValue(key, out var state))
+			{
+				return AutoGroupLogoutCurrentInstanceDestroyResult.Missing(
+					player.ObjectId,
+					worldId,
+					instanceId);
+			}
+
+			var snapshot = state.CreateSnapshot();
+			if (!state.IsRegistered(player.ObjectId))
+			{
+				return AutoGroupLogoutCurrentInstanceDestroyResult.PlayerNotRegistered(
+					player.ObjectId,
+					worldId,
+					instanceId,
+					snapshot);
+			}
+
+			var canDestroy = state.RegisteredPlayerCount == 0 && Math.Max(0, onlinePlayersInsideAtLogout) == 0;
+			if (canDestroy)
+			{
+				var removed = _instancesByKey.Remove(key);
+				if (removed)
+					destroyKey = key;
+				result = AutoGroupLogoutCurrentInstanceDestroyResult.Destroyed(
+					player.ObjectId,
+					worldId,
+					instanceId,
+					snapshot,
+					removed);
+			}
+			else
+			{
+				result = AutoGroupLogoutCurrentInstanceDestroyResult.CheckedNotDestroyed(
+					player.ObjectId,
+					worldId,
+					instanceId,
+					snapshot,
+					"AutoGroupService.onLogout -> autoInstances.get(player.getWorldMapInstance()) found a registered player; destroyIfPossible returns false unless registeredAGPlayers is empty and no players inside are online.");
+			}
+		}
+
+		if (destroyKey is { } keyToDestroy && _destroyInstance != null)
+		{
+			var destroyResult = _destroyInstance(keyToDestroy.WorldId, keyToDestroy.InstanceId);
+			result = result with { DestroyWorkflowResult = destroyResult };
+		}
+
+		return result;
+	}
+
 	public IReadOnlyList<int> GetActiveInstanceMaskIds()
 	{
 		lock (_sync)
@@ -260,6 +330,111 @@ public sealed record AutoGroupInstanceRuntimeResult(
 	InstanceDestroyWorkflowResult? DestroyWorkflowResult,
 	IReadOnlyList<SmAutoGroup> OpenRegistrationPackets,
 	string JavaSource);
+
+public sealed record AutoGroupLogoutCurrentInstanceDestroyResult(
+	AutoGroupLogoutCurrentInstanceDestroyStatus Status,
+	int PlayerObjectId,
+	int WorldId,
+	int InstanceId,
+	AutoGroupInstanceRuntimeSnapshot? Snapshot,
+	bool RemovedFromRegistry,
+	InstanceDestroyWorkflowResult? DestroyWorkflowResult,
+	string JavaSource)
+{
+	public static AutoGroupLogoutCurrentInstanceDestroyResult Disabled(
+		int playerObjectId,
+		int worldId,
+		int instanceId)
+	{
+		return new AutoGroupLogoutCurrentInstanceDestroyResult(
+			AutoGroupLogoutCurrentInstanceDestroyStatus.AutoGroupDisabled,
+			playerObjectId,
+			worldId,
+			instanceId,
+			Snapshot: null,
+			RemovedFromRegistry: false,
+			DestroyWorkflowResult: null,
+			"PlayerLeaveWorldService.leaveWorld -> AutoGroupService.onLogout skipped because AUTO_GROUP_ENABLE is false");
+	}
+
+	public static AutoGroupLogoutCurrentInstanceDestroyResult Missing(
+		int playerObjectId,
+		int worldId,
+		int instanceId)
+	{
+		return new AutoGroupLogoutCurrentInstanceDestroyResult(
+			AutoGroupLogoutCurrentInstanceDestroyStatus.NoAutoInstanceForCurrentMap,
+			playerObjectId,
+			worldId,
+			instanceId,
+			Snapshot: null,
+			RemovedFromRegistry: false,
+			DestroyWorkflowResult: null,
+			"AutoGroupService.onLogout -> autoInstances.get(player.getWorldMapInstance()) returned null");
+	}
+
+	public static AutoGroupLogoutCurrentInstanceDestroyResult PlayerNotRegistered(
+		int playerObjectId,
+		int worldId,
+		int instanceId,
+		AutoGroupInstanceRuntimeSnapshot snapshot)
+	{
+		return new AutoGroupLogoutCurrentInstanceDestroyResult(
+			AutoGroupLogoutCurrentInstanceDestroyStatus.PlayerNotRegistered,
+			playerObjectId,
+			worldId,
+			instanceId,
+			snapshot,
+			RemovedFromRegistry: false,
+			DestroyWorkflowResult: null,
+			"AutoGroupService.onLogout -> current autoInstance exists but registeredAGPlayers does not contain player");
+	}
+
+	public static AutoGroupLogoutCurrentInstanceDestroyResult CheckedNotDestroyed(
+		int playerObjectId,
+		int worldId,
+		int instanceId,
+		AutoGroupInstanceRuntimeSnapshot snapshot,
+		string javaSource)
+	{
+		return new AutoGroupLogoutCurrentInstanceDestroyResult(
+			AutoGroupLogoutCurrentInstanceDestroyStatus.CheckedNotDestroyed,
+			playerObjectId,
+			worldId,
+			instanceId,
+			snapshot,
+			RemovedFromRegistry: false,
+			DestroyWorkflowResult: null,
+			javaSource);
+	}
+
+	public static AutoGroupLogoutCurrentInstanceDestroyResult Destroyed(
+		int playerObjectId,
+		int worldId,
+		int instanceId,
+		AutoGroupInstanceRuntimeSnapshot snapshot,
+		bool removedFromRegistry)
+	{
+		return new AutoGroupLogoutCurrentInstanceDestroyResult(
+			AutoGroupLogoutCurrentInstanceDestroyStatus.Destroyed,
+			playerObjectId,
+			worldId,
+			instanceId,
+			snapshot,
+			removedFromRegistry,
+			DestroyWorkflowResult: null,
+			"AutoGroupService.onLogout -> destroyIfPossible removed autoInstances entry and called InstanceService.destroyInstance");
+	}
+}
+
+public enum AutoGroupLogoutCurrentInstanceDestroyStatus
+{
+	AutoGroupDisabled,
+	NoAutoInstanceForCurrentMap,
+	PlayerNotRegistered,
+	CheckedNotDestroyed,
+	Destroyed,
+}
 
 public sealed record AutoGroupInstanceRuntimeSnapshot(
 	int WorldId,
