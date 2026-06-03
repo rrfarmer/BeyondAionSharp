@@ -440,6 +440,30 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void StopSnapshotRequest_AppendsSelectedPeaceSpawnsWithoutReplacingSuppliedSnapshots()
+	{
+		var selector = new VortexPeaceSpawnSnapshotSelectionService();
+		var suppliedPeaceSpawn = VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
+			CreateVortexSpawn(0, 9, 0, VortexStateType.Peace, 831499, "supplied-peace"));
+		var request = new VortexStopInvasionSnapshotRequest(
+			PeaceSpawns: [suppliedPeaceSpawn]);
+		var table = new NpcVortexSpawnTable(
+			[
+				CreateVortexSpawn(0, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
+				CreateVortexSpawn(0, 1, 0, VortexStateType.Peace, 831500, "static-peace"),
+				CreateVortexSpawn(1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+			]);
+
+		var enriched = request.WithPeaceSpawns(selector.SelectPeaceSpawns(0, table));
+
+		Assert.Equal([831499], request.PeaceSpawnSnapshots.Select(snapshot => snapshot.Spawn.NpcId).ToArray());
+		Assert.Equal([831499, 831500], enriched.PeaceSpawnSnapshots.Select(snapshot => snapshot.Spawn.NpcId).ToArray());
+		Assert.Equal(["supplied-peace", "static-peace"], enriched.PeaceSpawnSnapshots.Select(snapshot => snapshot.Spawn.Anchor).ToArray());
+		Assert.DoesNotContain(enriched.PeaceSpawnSnapshots, snapshot => snapshot.Spawn.NpcId == 831600);
+		Assert.DoesNotContain(enriched.PeaceSpawnSnapshots, snapshot => snapshot.Spawn.NpcId == 831700);
+	}
+
+	[Fact]
 	public async Task StopCoordinator_ComposesRuntimeStopAndSideEffectPlanWithoutLiveExecution()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-" + Guid.NewGuid().ToString("N"));
@@ -548,6 +572,59 @@ public sealed class VortexLocationServiceTests
 				],
 				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
 			Assert.Equal(VortexStateType.Peace, report.SideEffectPlan.OrderedSteps.Last().VortexState);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StopCoordinator_StaticPeaceSpawnRequestEnrichmentFeedsPlannerWithoutLiveExecution()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-static-peace-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService());
+			var suppliedPeaceSpawn = VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
+				CreateVortexSpawn(location.Id, 9, 0, VortexStateType.Peace, 831499, "supplied-peace"));
+			var request = new VortexStopInvasionSnapshotRequest(
+				PeaceSpawns: [suppliedPeaceSpawn]);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+				]);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+
+			var report = coordinator.StopInvasion(location.Id, request, table);
+
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Stopped);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			Assert.Equal(2, report.SideEffectPlan.PeaceSpawnCount);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			var spawnSteps = report.SideEffectPlan.OrderedSteps
+				.Where(step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc)
+				.ToArray();
+			Assert.Equal([831499, 831500], spawnSteps.Select(step => step.NpcId).ToArray());
+			Assert.Equal(["supplied-peace", "static-peace"], spawnSteps.Select(step => step.Spawn!.Anchor).ToArray());
+			Assert.All(spawnSteps, step => Assert.Equal(VortexStateType.Peace, step.VortexState));
 			Assert.Null(runtime.GetSnapshot(location.Id));
 		}
 		finally
