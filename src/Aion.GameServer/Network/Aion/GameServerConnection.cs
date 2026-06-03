@@ -904,8 +904,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleQuestionResponseAsync(_activePlayer, questionResponse);
 				break;
-			case CmExchangeAddItem:
-				// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_ITEM.runImpl -> ExchangeService.addItem; deferred until exchange item basket is ported.
+			case CmExchangeAddItem exchangeAddItem:
+				if (_activePlayer != null)
+					await HandleExchangeAddItemAsync(_activePlayer, exchangeAddItem);
 				break;
 			case CmExchangeAddKinah exchangeAddKinah:
 				if (_activePlayer != null)
@@ -11196,11 +11197,39 @@ public sealed class GameServerConnection : BaseClientConnection
 		Player activePlayer,
 		CancellationToken cancellationToken = default)
 	{
+		// Java parity: ExchangeService.cancelExchange -> returnItems sends inventory restore packets before clearing exchange.
+		await RestoreExchangeItemsToInventoryUiAsync(activePlayer, cancellationToken);
 		var plan = _playerExchangeRequestService.CancelExchange(activePlayer, TryGetOnlinePlayerByObjectId);
 		foreach (var intent in plan.PacketIntents)
 			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
 
 		return plan;
+	}
+
+	private async Task RestoreExchangeItemsToInventoryUiAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExchangeService.returnItems sends SM_INVENTORY_ADD_ITEM or SM_INVENTORY_UPDATE_ITEM to restore
+		// committed items to inventory display when exchange is cancelled.
+		if (player.ExchangeItems.Count == 0)
+			return;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (templates == null)
+			return;
+
+		foreach (var (itemObjectId, committedCount) in player.ExchangeItems)
+		{
+			var item = player.InventoryItems.FirstOrDefault(i => i.ObjectId == itemObjectId);
+			if (item == null)
+				continue;
+
+			var template = templates.GetItemTemplate(item.ItemId);
+			if (template == null)
+				continue;
+
+			// Java parity: INC_PLAYER_EXCHANGE_GET_BACK (0x23) restores the full stack.
+			await SendPacketAsync(new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.PlayerExchangeGetBack), cancellationToken);
+		}
 	}
 
 	internal async Task<ExchangeLockPlan> HandleExchangeLockAsync(
@@ -11308,6 +11337,66 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(plan.SelfPacket);
 		if (plan.OtherPacket != null && _connectionRegistry != null)
 			await _connectionRegistry.SendPacketToPlayerAsync(partnerObjectId, plan.OtherPacket);
+	}
+
+	private async Task HandleExchangeAddItemAsync(Player player, CmExchangeAddItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_ITEM.runImpl -> ExchangeService.addItem.
+		if (!player.IsTrading || player.IsExchangeLocked)
+			return;
+
+		var partnerObjectId = player.CurrentExchangePartnerObjectId;
+		if (partnerObjectId == 0)
+			return;
+
+		if (player.ExchangeItems.Count >= 18)
+			return; // Java parity: Exchange.isExchangeListFull() caps at 18 items.
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.ItemObjectId && i.Location == CubeStorageId && !i.IsEquipped);
+		if (sourceItem == null)
+			return;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var template = templates?.GetItemTemplate(sourceItem.ItemId);
+		if (template == null)
+			return;
+
+		// Java parity: isItemRestrictedFrom check — non-tradeable items cannot enter exchange.
+		if (!template.IsTradeable)
+			return;
+
+		// Track committed item count.
+		var alreadyCommitted = player.ExchangeItems.GetValueOrDefault(sourceItem.ObjectId, 0L);
+		var requestedCount = Math.Max(1, packet.ItemCount);
+		var available = sourceItem.Count - alreadyCommitted;
+		var countToAdd = Math.Min(available, requestedCount);
+		if (countToAdd <= 0)
+			return;
+
+		var newCommitted = alreadyCommitted + countToAdd;
+		player.ExchangeItems[sourceItem.ObjectId] = newCommitted;
+
+		// Java parity: show reduced inventory count or delete if full stack committed.
+		if (newCommitted >= sourceItem.Count || template.MaxStackCount <= 1)
+		{
+			// Java parity: SM_DELETE_ITEM(objectId, PUT_TO_EXCHANGE) to self.
+			await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId, SmDeleteItem.PutToExchangeDeleteType));
+		}
+		else
+		{
+			// Java parity: fake item showing remaining count via SM_INVENTORY_UPDATE_ITEM(PutToExchange).
+			var remainingCountItem = CopyInventoryItem(sourceItem, count: sourceItem.Count - newCommitted);
+			await SendPacketAsync(new SmInventoryUpdateItem(remainingCountItem, template, SmInventoryUpdateItem.PutToExchange));
+		}
+
+		// Java parity: SM_EXCHANGE_ADD_ITEM(0, item, self) + SM_EXCHANGE_ADD_ITEM(1, item, partner).
+		// The exchange item shown has 'newCommitted' count, matching Java ExchangeItem.getItemCount().
+		var exchangeDisplayItem = CopyInventoryItem(sourceItem, count: newCommitted);
+		await SendPacketAsync(new SmExchangeAddItem(SmExchangeAddItem.ActionSelf, exchangeDisplayItem, template));
+		if (_connectionRegistry != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(partnerObjectId,
+				new SmExchangeAddItem(SmExchangeAddItem.ActionOther, exchangeDisplayItem, template));
 	}
 
 	private async Task SendDuelPacketAsync(

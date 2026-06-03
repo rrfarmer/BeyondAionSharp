@@ -202,6 +202,10 @@ public sealed class Player
 	// Java parity: model/trade/Exchange.kinahCount tracks how much kinah this player has put into the active exchange.
 	public long ExchangeKinah { get; set; }
 
+	// Java parity: model/trade/Exchange.items tracks items committed to the exchange window by this player.
+	// Key = original item objectId, Value = committed count.
+	public Dictionary<int, long> ExchangeItems { get; } = new();
+
 	public int CurrentExchangePartnerObjectId { get; set; }
 
 	private IReadOnlyList<InventoryItem> _inventoryItems = Array.Empty<InventoryItem>();
