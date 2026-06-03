@@ -228,11 +228,13 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		AutoGroupReadyMatchPlan readyMatchPlan,
 		AutoGroupTable? autoGroups,
 		IGameClientConnectionRegistry connectionRegistry,
+		Action<AutoGroupInstanceRuntimeRegistration>? registerRuntimeInstance = null,
 		CancellationToken cancellationToken = default)
 	{
 		if (readyMatchPlan.Status != AutoGroupReadyMatchPlanStatus.Ready)
 			return AutoGroupApplyReadyMatchResult.NotReady(readyMatchPlan);
 
+		var runtimeRegistration = CreateRuntimeRegistrationIntent(readyMatchPlan, autoGroups);
 		List<AutoGroupAdditionalRegistrationCleanupIntent> cleanupIntents = [];
 		List<AutoGroupWindowDeliveryIntent> windowDeliveries = [];
 		var removedMatchedPartyCount = 0;
@@ -257,6 +259,9 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			}
 		}
 
+		if (runtimeRegistration != null)
+			registerRuntimeInstance?.Invoke(runtimeRegistration);
+
 		var sentWindowPackets = 0;
 		foreach (var delivery in windowDeliveries)
 		{
@@ -273,6 +278,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 
 		return AutoGroupApplyReadyMatchResult.Applied(
 			readyMatchPlan,
+			runtimeRegistration,
 			removedMatchedPartyCount,
 			cleanupIntents,
 			windowDeliveries,
@@ -746,6 +752,34 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			+ instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, "ELYOS");
 	}
 
+	private static AutoGroupInstanceRuntimeRegistration? CreateRuntimeRegistrationIntent(
+		AutoGroupReadyMatchPlan readyMatchPlan,
+		AutoGroupTable? autoGroups)
+	{
+		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(readyMatchPlan.QueueMatchPlan.MaskId);
+		if (autoGroup == null)
+			return null;
+
+		return new AutoGroupInstanceRuntimeRegistration(
+			autoGroup.InstanceMapId,
+			InstanceId: 0,
+			GetInstanceKind(autoGroup),
+			autoGroup.RegisterQuick,
+			readyMatchPlan.ReadyWindowRecipientObjectIds,
+			autoGroup.MaskId);
+	}
+
+	private static AutoGroupInstanceKind GetInstanceKind(AutoGroupSummary autoGroup)
+	{
+		if (autoGroup.IsHarmonyArena || autoGroup.IsTrainingHarmonyArena)
+			return AutoGroupInstanceKind.HarmonyArena;
+
+		if (autoGroup.IsPeriodicInstance)
+			return AutoGroupInstanceKind.PvpRaceInstance;
+
+		return AutoGroupInstanceKind.Base;
+	}
+
 	private static void PlanAdditionalRegistrationCleanup(
 		int playerObjectId,
 		IDictionary<int, List<AutoGroupLookingPartyRegistration>> remainingPartiesByMaskId,
@@ -1042,6 +1076,7 @@ public enum AutoGroupAdditionalRegistrationCleanupType
 public sealed record AutoGroupApplyReadyMatchResult(
 	AutoGroupApplyReadyMatchStatus Status,
 	AutoGroupReadyMatchPlan ReadyMatchPlan,
+	AutoGroupInstanceRuntimeRegistration? RuntimeRegistration,
 	int RemovedMatchedPartyCount,
 	IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> AdditionalRegistrationCleanupIntents,
 	IReadOnlyList<AutoGroupWindowDeliveryIntent> WindowDeliveries,
@@ -1055,6 +1090,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 		return new AutoGroupApplyReadyMatchResult(
 			AutoGroupApplyReadyMatchStatus.NotReady,
 			readyMatchPlan,
+			RuntimeRegistration: null,
 			RemovedMatchedPartyCount: 0,
 			Array.Empty<AutoGroupAdditionalRegistrationCleanupIntent>(),
 			Array.Empty<AutoGroupWindowDeliveryIntent>(),
@@ -1066,6 +1102,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 
 	public static AutoGroupApplyReadyMatchResult Applied(
 		AutoGroupReadyMatchPlan readyMatchPlan,
+		AutoGroupInstanceRuntimeRegistration? runtimeRegistration,
 		int removedMatchedPartyCount,
 		IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> additionalRegistrationCleanupIntents,
 		IReadOnlyList<AutoGroupWindowDeliveryIntent> windowDeliveries,
@@ -1074,6 +1111,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 		return new AutoGroupApplyReadyMatchResult(
 			AutoGroupApplyReadyMatchStatus.Applied,
 			readyMatchPlan,
+			runtimeRegistration,
 			removedMatchedPartyCount,
 			additionalRegistrationCleanupIntents,
 			windowDeliveries,

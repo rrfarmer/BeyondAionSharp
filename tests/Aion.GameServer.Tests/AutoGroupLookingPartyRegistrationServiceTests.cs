@@ -703,10 +703,19 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 			baseTime.AddSeconds(2));
 		var registry = new RecordingConnectionRegistry([1001, 1002, 2001, 2002, 3001]);
 		var readyPlan = service.CreateReadyMatchPlan(service.CreateQueueMatchPlan(107, autoGroups, cooltimes));
+		AutoGroupInstanceRuntimeRegistration? registeredRuntime = null;
 
-		var result = await service.ApplyReadyMatchPlanAsync(readyPlan, autoGroups, registry);
+		var result = await service.ApplyReadyMatchPlanAsync(readyPlan, autoGroups, registry, registration => registeredRuntime = registration);
 
 		Assert.Equal(AutoGroupApplyReadyMatchStatus.Applied, result.Status);
+		Assert.NotNull(result.RuntimeRegistration);
+		Assert.Equal(result.RuntimeRegistration, registeredRuntime);
+		Assert.Equal(300110000, result.RuntimeRegistration.WorldId);
+		Assert.Equal(0, result.RuntimeRegistration.InstanceId);
+		Assert.Equal(107, result.RuntimeRegistration.InstanceMaskId);
+		Assert.Equal(AutoGroupInstanceKind.PvpRaceInstance, result.RuntimeRegistration.InstanceKind);
+		Assert.True(result.RuntimeRegistration.QuickRegistrationAllowed);
+		Assert.Equal([1001, 1002, 2001, 2002], result.RuntimeRegistration.RegisteredPlayerObjectIds);
 		Assert.Equal(2, result.RemovedMatchedPartyCount);
 		Assert.Equal(6, result.SentWindowPackets);
 		Assert.True(result.WouldApplyPenalties);

@@ -384,6 +384,24 @@ public sealed class GameServerConnectionAutoGroupTests
 		AssertReadyWindow(registry.SentPackets[7], 1002, 107);
 		AssertReadyWindow(registry.SentPackets[8], 2001, 107);
 		AssertReadyWindow(registry.SentPackets[9], 2002, 107);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(102);
+					buffer.WriteC(0);
+				}));
+
+		var pressEnterWindow = Assert.IsType<SmAutoGroup>(Assert.Single(sentPackets));
+		Assert.Equal(107, pressEnterWindow.MaskId);
+		Assert.Equal(5, pressEnterWindow.WindowId);
+		Assert.Equal(PlayerTeamMembership.None, asmoLeader.TeamMembership);
+		Assert.False(groupRuntime.HasMember(77, asmoLeader.ObjectId));
+		Assert.True(groupRuntime.HasMember(77, asmoMember.ObjectId));
 	}
 
 	[Fact]

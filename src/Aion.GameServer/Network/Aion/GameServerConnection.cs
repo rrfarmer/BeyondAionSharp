@@ -1539,7 +1539,8 @@ public sealed class GameServerConnection : BaseClientConnection
 							await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
 								readyMatchPlan,
 								autoGroups,
-								_connectionRegistry);
+								_connectionRegistry,
+								registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration));
 						}
 					}
 				}
