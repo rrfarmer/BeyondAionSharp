@@ -676,6 +676,67 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task LeavePlayerWorldAsync_AutoGroupEnabledCleansQueuedSearchEntryLikeJavaOnLogout()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		autoGroupRegistrations.RegisterLookingParty(107, [1001, 1002]);
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Name = "LogoutMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var registry = new RecordingConnectionRegistry([player]);
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
+			threadPoolManager,
+			new PeriodicInstanceRegistrationService(),
+			CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000)));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			autoGroupLookingPartyRegistrations: autoGroupRegistrations,
+			connectionRegistry: registry,
+			autoGroupPenaltyRefreshScheduler: penaltyRefreshScheduler);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.True(autoGroupRegistrations.IsSearching(1001, 107));
+		Assert.False(autoGroupRegistrations.IsSearching(1002, 107));
+		Assert.Empty(observations);
+		Assert.DoesNotContain(registry.SentPackets, delivery => delivery.Packet is SmAutoGroup);
+	}
+
+	[Fact]
+	public async Task LeavePlayerWorldAsync_AutoGroupDisabledLeavesQueuedSearchEntryLikeJavaConfigGuard()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		autoGroupRegistrations.RegisterLookingParty(107, [1001]);
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "DisabledLogout",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions { AutoGroup = new GameServerAutoGroupOptions { Enabled = false } },
+			sentPackets.Add,
+			autoGroupLookingPartyRegistrations: autoGroupRegistrations);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.True(autoGroupRegistrations.IsSearching(1001, 107));
+		Assert.Equal(1, autoGroupRegistrations.GetLookingPartyCount(107));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
 	{
 		var sentPackets = new List<GameServerPacket>();

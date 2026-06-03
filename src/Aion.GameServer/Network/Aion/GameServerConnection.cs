@@ -11017,6 +11017,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_chatServer != null)
 			await _chatServer.SendPlayerLogoutAsync(player.ObjectId);
 		_expirableTaskService?.UnregisterPlayer(player);
+		if (_options.AutoGroup.Enabled)
+			_autoGroupLookingPartyRegistrations.CleanupSearchEntriesOnLogout(
+				player.ObjectId,
+				_runtimeContext?.DataManager?.StaticData.AutoGroups,
+				_runtimeContext?.DataManager?.StaticData.InstanceCooltimes);
 		SaveOfflineKiskBinding(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		_pendingHouseObjectUse?.Task.Cancel();
