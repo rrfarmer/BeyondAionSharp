@@ -1040,6 +1040,144 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderZoneEntryUpdatePlan_BlocksBeforeUpdateDefendersLikeJavaZoneEntry()
+	{
+		var planner = new VortexDefenderZoneEntryUpdatePlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var existingZonePlayer = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: true,
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			isNewZonePlayer: false);
+		var inactive = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: false,
+			existingDefenderObjectIds: new HashSet<int> { 1001 });
+		var invaderRace = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: true,
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			isInvaderRace: true);
+
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.NotNewZonePlayer, existingZonePlayer.Status);
+		Assert.False(existingZonePlayer.IsNewZonePlayer);
+		Assert.True(existingZonePlayer.HasActiveInvasion);
+		Assert.Equal([1001], existingZonePlayer.ExistingDefenderObjectIds);
+		Assert.False(existingZonePlayer.WouldCallUpdateDefenders);
+		Assert.False(existingZonePlayer.HasInvitationPlan);
+		Assert.False(existingZonePlayer.ShouldRecordZonePlayer);
+		Assert.Equal("model/vortex/VortexLocation.onEnterZone", existingZonePlayer.JavaSource);
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.InactiveVortex, inactive.Status);
+		Assert.False(inactive.HasActiveInvasion);
+		Assert.False(inactive.WouldCallUpdateDefenders);
+		Assert.False(inactive.HasInvitationPlan);
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.InvaderRace, invaderRace.Status);
+		Assert.True(invaderRace.IsInvaderRace);
+		Assert.False(invaderRace.WouldCallUpdateDefenders);
+		Assert.False(invaderRace.HasInvitationPlan);
+	}
+
+	[Fact]
+	public void DefenderZoneEntryUpdatePlan_SelectsInvitationPlanForNewActiveDefender()
+	{
+		var planner = new VortexDefenderZoneEntryUpdatePlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: true,
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.InvitationPlanned, plan.Status);
+		Assert.Equal(0, plan.LocationId);
+		Assert.Equal(1004, plan.PlayerObjectId);
+		Assert.Equal([1001], plan.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, plan.DefenderAlliance);
+		Assert.True(plan.IsNewZonePlayer);
+		Assert.True(plan.HasActiveInvasion);
+		Assert.False(plan.IsInvaderRace);
+		Assert.True(plan.WouldCallUpdateDefenders);
+		Assert.True(plan.HasInvitationPlan);
+		Assert.Equal(VortexDefenderInvitationPlanStatus.InvitationPlanned, plan.InvitationPlan?.Status);
+		Assert.True(plan.WouldInstallRequest);
+		Assert.True(plan.HasQuestionWindowIntent);
+		Assert.False(plan.ShouldMutateLiveRequest);
+		Assert.False(plan.ShouldSendLivePacket);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.Equal(
+			"model/vortex/VortexLocation.onEnterZone -> services/vortex/Invasion.updateDefenders",
+			plan.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderZoneEntryUpdatePlan_PropagatesExistingDefenderAndFullAllianceGuards()
+	{
+		var planner = new VortexDefenderZoneEntryUpdatePlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var alreadyDefender = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: true,
+			existingDefenderObjectIds: new HashSet<int> { 1004 },
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+		var fullAlliance = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: true,
+			existingDefenderObjectIds: new HashSet<int>(),
+			defenderAlliance: VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.AlreadyDefender, alreadyDefender.Status);
+		Assert.True(alreadyDefender.WouldCallUpdateDefenders);
+		Assert.True(alreadyDefender.HasInvitationPlan);
+		Assert.Equal(VortexDefenderInvitationPlanStatus.AlreadyDefender, alreadyDefender.InvitationPlan?.Status);
+		Assert.False(alreadyDefender.WouldInstallRequest);
+		Assert.False(alreadyDefender.HasQuestionWindowIntent);
+		Assert.Equal([1004], alreadyDefender.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.DefenderAllianceFull, fullAlliance.Status);
+		Assert.True(fullAlliance.WouldCallUpdateDefenders);
+		Assert.True(fullAlliance.HasInvitationPlan);
+		Assert.Equal(VortexDefenderInvitationPlanStatus.AllianceFull, fullAlliance.InvitationPlan?.Status);
+		Assert.False(fullAlliance.WouldInstallRequest);
+		Assert.False(fullAlliance.HasQuestionWindowIntent);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Full, fullAlliance.DefenderAlliance);
+	}
+
+	[Fact]
+	public void DefenderZoneEntryUpdatePlan_RequestSlotUnavailableOmitsQuestionWindow()
+	{
+		var planner = new VortexDefenderZoneEntryUpdatePlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			defender,
+			hasActiveInvasion: true,
+			existingDefenderObjectIds: new HashSet<int>(),
+			defenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+			requestSlotAvailable: false);
+
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.RequestNotStored, plan.Status);
+		Assert.True(plan.WouldCallUpdateDefenders);
+		Assert.True(plan.HasInvitationPlan);
+		Assert.Equal(VortexDefenderInvitationPlanStatus.RequestNotStored, plan.InvitationPlan?.Status);
+		Assert.False(plan.RequestSlotAvailable);
+		Assert.True(plan.WouldInstallRequest);
+		Assert.False(plan.HasQuestionWindowIntent);
+		Assert.False(plan.ShouldMutateLiveRequest);
+		Assert.False(plan.ShouldSendLivePacket);
+	}
+
+	[Fact]
 	public async Task DefenderAllianceUpdatePlan_SelectsOnlyJavaDefenderRaceZonePlayers()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-" + Guid.NewGuid().ToString("N"));
