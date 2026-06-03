@@ -666,14 +666,24 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleDuelRequestAsync(_activePlayer, duelRequest);
 				break;
-			case CmCheckPak:
-				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl only audit-logs suspicious pak status; deferred until audit logging policy is ported.
+			case CmCheckPak checkPak:
+				// Java parity: network/aion/clientpackets/CM_CHECK_PAK.runImpl audit-logs suspicious pak status.
+				if (!string.IsNullOrEmpty(checkPak.PakStatus)
+					&& !checkPak.PakStatus.EndsWith("[1:OK]", StringComparison.Ordinal)
+					&& !checkPak.PakStatus.Contains("File not found", StringComparison.Ordinal))
+				{
+					_logger.LogWarning("Suspicious pak status from {ClientId}: {PakStatus}", _clientId, checkPak.PakStatus);
+				}
 				break;
 			case CmPlayMovieEnd:
 				// Java parity: network/aion/clientpackets/CM_PLAY_MOVIE_END.runImpl dispatches quest and instance movie-end hooks; deferred until those systems are ported.
 				break;
-			case CmShowMap:
-				// Java parity: network/aion/clientpackets/CM_SHOW_MAP.runImpl action 0 dispatches ConquerorAndProtectorService.intruderScan; deferred until that system is ported.
+			case CmShowMap showMap:
+				// Java parity: network/aion/clientpackets/CM_SHOW_MAP.runImpl.
+				// Action 0 = ConquerorAndProtectorService.intruderScan — deferred until conqueror/protector system is ported.
+				// Action 1 = TODO/unknown in Java source.
+				if (showMap.Action != 0 && showMap.Action != 1)
+					_logger.LogWarning("Unknown show map action {Action} from {ClientId}", showMap.Action, _clientId);
 				break;
 			case CmCheckMailUnknown:
 				// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_UNK.runImpl is TODO/no-op.
