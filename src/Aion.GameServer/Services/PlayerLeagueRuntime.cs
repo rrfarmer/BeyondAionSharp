@@ -161,6 +161,37 @@ public sealed class PlayerLeagueRuntime
 		}
 	}
 
+	public PlayerLeagueBroadcastPlan? BroadcastAllianceInfo(
+		int leagueId,
+		int? skippedPlayerObjectId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: model/team/league/League.broadcast(skippedPlayer) sends SM_ALLIANCE_INFO(targetAlliance)
+		// to every league alliance, optionally excluding one disconnected player through Predicates.Players.allExcept.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leagueId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByLeagueId.TryGetValue(leagueId, out var members))
+				return null;
+
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateBroadcastPacketIntents(
+				leagueId,
+				sortedAllianceIds,
+				skippedAllianceId: null,
+				skippedPlayerObjectId,
+				allianceRuntime);
+
+			return new PlayerLeagueBroadcastPlan(
+				leagueId,
+				SkippedAllianceId: null,
+				skippedPlayerObjectId,
+				sortedAllianceIds,
+				intents);
+		}
+	}
+
 	public PlayerLeagueMovePlan? MoveAlliance(
 		int callerAllianceId,
 		int callerObjectId,
@@ -244,6 +275,58 @@ public sealed class PlayerLeagueRuntime
 				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
 				PlayerAllianceInfoPacketPlan.LeagueLeftMeMessageId,
 				allianceRuntime);
+		}
+	}
+
+	public PlayerLeagueLeavePlan? RemoveAllianceAfterAllianceDisband(
+		int allianceId,
+		string removedLeaderName,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: PlayerAllianceService.disband(alliance, false) runs AllianceDisbandEvent first,
+		// then LeagueLeftEvent(LEAVE). The removed alliance has no remaining packet recipients by then.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_leagueIdByAllianceId.TryGetValue(allianceId, out var leagueId)
+				|| !_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leaderAllianceIdByLeagueId.TryGetValue(leagueId, out var leaderAllianceId))
+				return null;
+
+			var leavingMember = members.FirstOrDefault(member => member.AllianceId == allianceId)
+				?? throw new InvalidOperationException($"League member should not be null: {allianceId}");
+			members.Remove(leavingMember);
+			_leagueIdByAllianceId.Remove(allianceId);
+
+			var newLeaderName = ReorganizeAfterRemove(members, ref leaderAllianceId, allianceRuntime);
+			_leaderAllianceIdByLeagueId[leagueId] = leaderAllianceId;
+			var remainingAllianceIds = GetSortedAllianceIds(members);
+			var intents = CreateLeaveAfterAllianceDisbandPacketIntents(
+				leagueId,
+				allianceId,
+				removedLeaderName,
+				remainingAllianceIds,
+				newLeaderName,
+				allianceRuntime);
+			var disbanded = members.Count <= 1;
+
+			if (disbanded)
+			{
+				foreach (var member in members.ToArray())
+					_leagueIdByAllianceId.Remove(member.AllianceId);
+				_membersByLeagueId.Remove(leagueId);
+				_leaderAllianceIdByLeagueId.Remove(leagueId);
+				_lootRulesByLeagueId.Remove(leagueId);
+			}
+
+			return new PlayerLeagueLeavePlan(
+				leagueId,
+				allianceId,
+				newLeaderName,
+				disbanded,
+				remainingAllianceIds,
+				intents);
 		}
 	}
 
@@ -458,6 +541,98 @@ public sealed class PlayerLeagueRuntime
 						? SmSystemMessage.UnionChangeForceNumberMe(selectedCurrentPosition)
 						: SmSystemMessage.UnionChangeForceNumberHim(targetName, selectedCurrentPosition)));
 			}
+		}
+
+		return intents;
+	}
+
+	private IReadOnlyList<PlayerLeaguePacketIntent> CreateBroadcastPacketIntents(
+		int leagueId,
+		IReadOnlyList<int> sortedAllianceIds,
+		int? skippedAllianceId,
+		int? skippedPlayerObjectId,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+		foreach (var allianceId in sortedAllianceIds)
+		{
+			if (allianceId == skippedAllianceId)
+				continue;
+
+			var snapshot = allianceRuntime.GetSnapshot(allianceId)
+				?? throw new InvalidOperationException($"Alliance should not be null: {allianceId}");
+			foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+			{
+				if (recipientObjectId == skippedPlayerObjectId)
+					continue;
+
+				var recipient = allianceRuntime.GetMember(allianceId, recipientObjectId)?.Player;
+				var activePlayerMapId = recipient?.Position.WorldId ?? 0;
+				intents.Add(new PlayerLeaguePacketIntent(
+					sequence++,
+					recipientObjectId,
+					allianceId,
+					PlayerLeaguePacketIntentKind.AllianceInfo,
+					AllianceInfoPlan: snapshot.CreateInfoPacketPlan(
+						activePlayerMapId,
+						leagueId: leagueId,
+						leagueLootRules: GetLeagueLootRules(leagueId),
+						leagueRows: CreateLeagueRows(sortedAllianceIds, allianceRuntime))));
+			}
+		}
+
+		return intents;
+	}
+
+	private IReadOnlyList<PlayerLeaguePacketIntent> CreateLeaveAfterAllianceDisbandPacketIntents(
+		int leagueId,
+		int removedAllianceId,
+		string removedLeaderName,
+		IReadOnlyList<int> remainingAllianceIds,
+		string? newLeaderName,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		var intents = new List<PlayerLeaguePacketIntent>();
+		var sequence = 0;
+		foreach (var allianceId in remainingAllianceIds)
+			AddAllianceInfoIntents(
+				intents,
+				ref sequence,
+				allianceId,
+				PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+				removedLeaderName,
+				leagueId,
+				remainingAllianceIds,
+				allianceRuntime);
+
+		if (newLeaderName != null)
+		{
+			foreach (var allianceId in remainingAllianceIds)
+			{
+				foreach (var recipientObjectId in allianceRuntime.GetMemberObjectIds(allianceId))
+				{
+					intents.Add(new PlayerLeaguePacketIntent(
+						sequence++,
+						recipientObjectId,
+						allianceId,
+						PlayerLeaguePacketIntentKind.SystemMessage,
+						SystemMessage: SmSystemMessage.UnionChangeLeaderTimeout(newLeaderName)));
+				}
+			}
+		}
+
+		if (remainingAllianceIds.Count == 1)
+		{
+			AddAllianceInfoIntents(
+				intents,
+				ref sequence,
+				remainingAllianceIds[0],
+				PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+				string.Empty,
+				leagueId: 0,
+				leagueRowsAllianceIds: [],
+				allianceRuntime);
 		}
 
 		return intents;
@@ -871,6 +1046,13 @@ public sealed record PlayerLeagueLootRulesChangedPlan(
 	int LeagueId,
 	IReadOnlyList<int> AllianceIdsByPosition,
 	PlayerGroupLootRules LootRules,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueBroadcastPlan(
+	int LeagueId,
+	int? SkippedAllianceId,
+	int? SkippedPlayerObjectId,
+	IReadOnlyList<int> AllianceIdsByPosition,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
 
 public enum PlayerLeaguePacketIntentKind

@@ -1,3 +1,4 @@
+using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
@@ -869,6 +870,140 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(PlayerTeamMembership.None, offlineMember.TeamMembership);
 		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
 		Assert.Equal(1, repository.SaveLogoutCalls);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_DispatchesAllianceLeagueBroadcastAfterDisconnectedFanoutLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Disconnected");
+		player.IsOnline = true;
+		var allianceLeader = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "AllianceLeader",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(220010000, 5, 6, 7, 16),
+		};
+		var leagueMateLeader = new Player
+		{
+			ObjectId = 3001,
+			AccountId = 30,
+			Name = "LeagueMate",
+			PlayerClass = "CLERIC",
+			Race = "ELYOS",
+			Gender = "FEMALE",
+			IsOnline = true,
+			Position = new WorldPosition(230010000, 8, 9, 10, 16),
+		};
+		var allianceRuntime = new PlayerAllianceRuntime();
+		var leagueRuntime = new PlayerLeagueRuntime();
+		allianceRuntime.CreateAlliance(88001, allianceLeader);
+		allianceRuntime.AddMember(88001, player);
+		allianceRuntime.CreateAlliance(88002, leagueMateLeader);
+		leagueRuntime.CreateLeague(77001, leaderAllianceId: 88001);
+		leagueRuntime.AddAlliance(77001, allianceId: 88002);
+		allianceRuntime.SetLeagueId(88001, 77001);
+		allianceRuntime.SetLeagueId(88002, 77001);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(
+			repository,
+			world,
+			out var registry,
+			playerAllianceRuntime: allianceRuntime,
+			playerLeagueRuntime: leagueRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal([2001, 2001, 2001, 2001, 3001], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		AssertAllianceOfflineMessage(registry.SentPackets[0], 2001, "Disconnected");
+		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[1].Packet);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[2].Packet);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[3], 88001, 2001, 220010000, expectedAllianceGroupSize: 2);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[4], 88002, 3001, 230010000);
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
+		Assert.Equal([88001, 88002], leagueRuntime.GetAllianceIdsByPosition(77001));
+	}
+
+	[Fact]
+	public async Task LeaveWorld_DisbandAllianceNotifiesLeagueAfterAllianceRemovalLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "LeagueLeader");
+		player.IsOnline = true;
+		var offlineMember = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Offline",
+			PlayerClass = "CLERIC",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = false,
+			Position = new WorldPosition(220010000, 5, 6, 7, 16),
+		};
+		var remainingLeader = new Player
+		{
+			ObjectId = 3001,
+			AccountId = 30,
+			Name = "RemainingLeader",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Gender = "FEMALE",
+			IsOnline = true,
+			Position = new WorldPosition(230010000, 8, 9, 10, 16),
+		};
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var allianceRuntime = new PlayerAllianceRuntime(findGroupService, serverId: 5);
+		var leagueRuntime = new PlayerLeagueRuntime();
+		allianceRuntime.CreateAlliance(88001, player);
+		allianceRuntime.AddMember(88001, offlineMember);
+		allianceRuntime.CreateAlliance(88002, remainingLeader);
+		leagueRuntime.CreateLeague(77001, leaderAllianceId: 88001);
+		leagueRuntime.AddAlliance(77001, allianceId: 88002);
+		allianceRuntime.SetLeagueId(88001, 77001);
+		allianceRuntime.SetLeagueId(88002, 77001);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(
+			repository,
+			world,
+			out var registry,
+			findGroupService: findGroupService,
+			playerAllianceRuntime: allianceRuntime,
+			playerLeagueRuntime: leagueRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal([3001, 3001, 3001], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		AssertLeagueAllianceInfoPacket(
+			registry.SentPackets[0],
+			88002,
+			3001,
+			230010000,
+			PlayerAllianceInfoPacketPlan.LeagueLeftHimMessageId,
+			"LeagueLeader",
+			expectedLeagueRows: [new PlayerAllianceInfoLeagueRow(0, 88002, 1, "RemainingLeader", 230010000)]);
+		AssertAllianceSystemMessage(registry.SentPackets[1], 3001, 1400588, "RemainingLeader");
+		AssertLeagueAllianceInfoPacket(
+			registry.SentPackets[2],
+			88002,
+			3001,
+			230010000,
+			PlayerAllianceInfoPacketPlan.LeagueDispersedMessageId,
+			string.Empty,
+			expectedLeagueId: 0,
+			expectedLeagueRows: []);
+		Assert.Null(allianceRuntime.GetDescriptor(88001));
+		Assert.Empty(leagueRuntime.GetAllianceIdsByPosition(77001));
+		Assert.Null(leagueRuntime.ResolveByAllianceId(88001));
+		Assert.Null(leagueRuntime.ResolveByAllianceId(88002));
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId || packet.PlayerObjectId == offlineMember.ObjectId);
 	}
 
 	[Fact]
@@ -1747,6 +1882,95 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(expectedParameters, message.Parameters);
 	}
 
+	private static void AssertLeagueAllianceInfoPacket(
+		PacketDelivery delivery,
+		int expectedAllianceId,
+		int expectedLeaderObjectId,
+		int expectedActivePlayerMapId,
+		int expectedMessageId = 0,
+		string expectedMessage = "",
+		int expectedLeagueId = 77001,
+		int expectedAllianceGroupSize = 1,
+		IReadOnlyList<PlayerAllianceInfoLeagueRow>? expectedLeagueRows = null)
+	{
+		expectedLeagueRows ??=
+		[
+			new PlayerAllianceInfoLeagueRow(0, 88001, 2, "AllianceLeader", 220010000),
+			new PlayerAllianceInfoLeagueRow(1, 88002, 1, "LeagueMate", 230010000),
+		];
+		Assert.Equal(expectedLeaderObjectId, delivery.PlayerObjectId);
+		var packet = Assert.IsType<SmAllianceInfo>(delivery.Packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedAllianceGroupSize, reader.ReadH());
+		Assert.Equal(expectedAllianceId, reader.ReadD());
+		Assert.Equal(expectedLeaderObjectId, reader.ReadD());
+		Assert.Equal(expectedActivePlayerMapId, reader.ReadD());
+		for (var i = 0; i < 4; i++)
+			Assert.Equal(0, reader.ReadD());
+		AssertDefaultLootRules(reader);
+		Assert.Equal(0x02, reader.ReadD());
+		Assert.Equal(0x00, (int)reader.ReadC());
+		Assert.Equal(0x3F, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedLeagueId, reader.ReadD());
+		for (var i = 0; i < 4; i++)
+		{
+			Assert.Equal(i, reader.ReadD());
+			Assert.Equal(1000 + i, reader.ReadD());
+		}
+
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(expectedMessage, reader.ReadS());
+		if (expectedLeagueRows.Count > 0)
+		{
+			Assert.Equal(expectedLeagueRows.Count, reader.ReadH());
+			AssertLootRules(reader, new PlayerGroupLootRules(
+				PlayerGroupLootRuleType.FreeForAll,
+				Misc: 0,
+				CommonItemAbove: 0,
+				SuperiorItemAbove: 2,
+				HeroicItemAbove: 2,
+				FabledItemAbove: 2,
+				EternalItemAbove: 2,
+				MythicItemAbove: 2));
+			Assert.Equal(0x02, reader.ReadD());
+			foreach (var row in expectedLeagueRows)
+			{
+				Assert.Equal(row.AlliancePosition, reader.ReadD());
+				Assert.Equal(row.AllianceObjectId, reader.ReadD());
+				Assert.Equal(row.MemberCount, reader.ReadD());
+				Assert.Equal(row.CaptainName, reader.ReadS());
+				Assert.Equal(row.CaptainWorldId, reader.ReadD());
+			}
+		}
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertDefaultLootRules(PacketBuffer reader)
+	{
+		AssertLootRules(reader, PlayerGroupLootRules.Default());
+	}
+
+	private static void AssertLootRules(PacketBuffer reader, PlayerGroupLootRules expectedLootRules)
+	{
+		Assert.Equal((int)expectedLootRules.LootRule, reader.ReadD());
+		Assert.Equal(expectedLootRules.Misc, reader.ReadD());
+		Assert.Equal(expectedLootRules.CommonItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.SuperiorItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.HeroicItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.FabledItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.EternalItemAbove, reader.ReadD());
+		Assert.Equal(expectedLootRules.MythicItemAbove, reader.ReadD());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
+
 	private static PlayerEnterWorldService CreateService(
 		CapturingEnterWorldRepository repository,
 		GameWorld world,
@@ -1765,7 +1989,8 @@ public sealed class PlayerEnterWorldServiceTests
 		FindGroupRecruitmentPlanService? findGroupService = null,
 		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
-		PlayerAllianceRuntime? playerAllianceRuntime = null)
+		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		PlayerLeagueRuntime? playerLeagueRuntime = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -1785,7 +2010,8 @@ public sealed class PlayerEnterWorldServiceTests
 			findGroupService,
 			findGroupLogoutCleanupPlanObserver,
 			playerGroupRuntime,
-			playerAllianceRuntime);
+			playerAllianceRuntime,
+			playerLeagueRuntime);
 	}
 
 	private static PlayerEnterWorldService CreateService(

@@ -25,6 +25,7 @@ public sealed class PlayerEnterWorldService
 	private readonly Action<FindGroupLogoutCleanupPlan>? _findGroupLogoutCleanupPlanObserver;
 	private readonly PlayerGroupRuntime? _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime? _playerAllianceRuntime;
+	private readonly PlayerLeagueRuntime? _playerLeagueRuntime;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -41,7 +42,8 @@ public sealed class PlayerEnterWorldService
 		FindGroupRecruitmentPlanService? findGroupService = null,
 		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
-		PlayerAllianceRuntime? playerAllianceRuntime = null)
+		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		PlayerLeagueRuntime? playerLeagueRuntime = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -55,6 +57,7 @@ public sealed class PlayerEnterWorldService
 		_findGroupLogoutCleanupPlanObserver = findGroupLogoutCleanupPlanObserver;
 		_playerGroupRuntime = playerGroupRuntime;
 		_playerAllianceRuntime = playerAllianceRuntime;
+		_playerLeagueRuntime = playerLeagueRuntime;
 		_logger = logger;
 	}
 
@@ -937,7 +940,47 @@ public sealed class PlayerEnterWorldService
 		}
 
 		if (noOnlineMembersRemain)
-			_playerAllianceRuntime.DisbandAfterDisconnectedNoOnlineMembers(allianceId);
+		{
+			var removedLeaderName = membersByObjectId.GetValueOrDefault(descriptor.LeaderObjectId)?.Name ?? player.Name;
+			var disbandPlan = _playerAllianceRuntime.DisbandAfterDisconnectedNoOnlineMembers(allianceId);
+			if (disbandPlan is { WouldNotifyLeagueAfterDisband: true } && _playerLeagueRuntime != null)
+			{
+				var leagueLeavePlan = _playerLeagueRuntime.RemoveAllianceAfterAllianceDisband(
+					allianceId,
+					removedLeaderName,
+					_playerAllianceRuntime);
+				if (leagueLeavePlan != null)
+					await DispatchLeagueLogoutPacketsAsync(leagueLeavePlan.PacketIntents, player.ObjectId);
+			}
+		}
+		else if (isInLeague && _playerLeagueRuntime != null)
+		{
+			var leagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfo(
+				snapshot.LeagueId,
+				skippedPlayerObjectId: player.ObjectId,
+				_playerAllianceRuntime);
+			if (leagueBroadcastPlan != null)
+				await DispatchLeagueLogoutPacketsAsync(leagueBroadcastPlan.PacketIntents, player.ObjectId);
+		}
+	}
+
+	private async Task DispatchLeagueLogoutPacketsAsync(
+		IReadOnlyList<PlayerLeaguePacketIntent> packetIntents,
+		int disconnectedPlayerObjectId)
+	{
+		if (_playerAllianceRuntime == null || _connectionRegistry == null)
+			return;
+
+		foreach (var intent in packetIntents.OrderBy(intent => intent.Sequence))
+		{
+			var member = _playerAllianceRuntime.GetMember(intent.AllianceId, intent.RecipientObjectId);
+			if (member == null || member.ObjectId == disconnectedPlayerObjectId || !member.IsOnline)
+				continue;
+
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				intent.RecipientObjectId,
+				intent.CreatePacket());
+		}
 	}
 
 	private async Task DispatchAllianceLeaderChangeAsync(
