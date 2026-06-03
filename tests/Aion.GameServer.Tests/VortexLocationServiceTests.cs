@@ -284,6 +284,7 @@ public sealed class VortexLocationServiceTests
 				Position: location.HomePoint);
 			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId, location.DefendersRace);
 			var offlineDefender = CreatePlayer(1006, isOnline: false, location.InvasionWorldId, location.DefendersRace);
+			var existingDefender = CreatePlayer(1007, isOnline: true, location.InvasionWorldId, location.DefendersRace);
 			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
 			var table = new NpcVortexSpawnTable(
 				[
@@ -295,17 +296,30 @@ public sealed class VortexLocationServiceTests
 				location,
 				table,
 				[spawnedNpc],
-				[invader, defender, offlineDefender]);
+				[invader, defender, offlineDefender, existingDefender],
+				existingDefenders: [new VortexDefenderAddPlayerSnapshot(1007, IsInGroup: false, IsInAlliance: false)],
+				defenderAlliance: VortexDefenderAllianceSnapshot.Open,
+				defenderRequestSlotsByPlayerObjectId: new Dictionary<int, bool> { [1006] = false });
 
 			Assert.True(request.HasAnySnapshot);
 			Assert.Equal([831500], request.SpawnedNpcSnapshots.Select(npc => npc.NpcId).ToArray());
 			Assert.Equal([831600], request.InvasionSpawnSnapshots.Select(spawn => spawn.Spawn.NpcId).ToArray());
 			var defenderPlan = Assert.IsType<VortexDefenderAllianceUpdatePlan>(request.DefenderAllianceUpdatePlan);
 			Assert.Equal(location.Id, defenderPlan.LocationId);
-			Assert.Equal([1004, 1006], defenderPlan.DefenderObjectIds);
+			Assert.Equal([1004, 1006, 1007], defenderPlan.DefenderObjectIds);
 			Assert.Equal([1002], defenderPlan.SkippedObjectIds);
 			Assert.True(defenderPlan.WouldCallUpdateDefenders);
 			Assert.False(defenderPlan.ShouldMutateLiveAlliance);
+			var batchPlan = Assert.IsType<VortexDefenderInvitationBatchPlan>(request.DefenderInvitationBatchPlan);
+			Assert.Equal([1004, 1006, 1007], batchPlan.DefenderObjectIds);
+			Assert.Equal([1007], batchPlan.ExistingDefenderObjectIds);
+			Assert.Equal(3, batchPlan.InvitationPlanCount);
+			Assert.Equal(1, batchPlan.QuestionWindowIntentCount);
+			Assert.Equal(1, batchPlan.RequestNotStoredCount);
+			Assert.Equal(1, batchPlan.AlreadyDefenderCount);
+			Assert.Equal(0, batchPlan.AllianceFullCount);
+			Assert.False(batchPlan.ShouldMutateLiveRequest);
+			Assert.False(batchPlan.ShouldSendLivePacket);
 		}
 		finally
 		{
@@ -411,11 +425,18 @@ public sealed class VortexLocationServiceTests
 			Assert.False(report.ShouldExecuteLiveSideEffects);
 			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
 			Assert.True(report.SideEffectPlan.HasDefenderAllianceUpdatePlan);
+			Assert.True(report.SideEffectPlan.HasDefenderInvitationBatchPlan);
 			Assert.Same(request.DefenderAllianceUpdatePlan, report.SideEffectPlan.DefenderAllianceUpdatePlan);
+			Assert.Same(request.DefenderInvitationBatchPlan, report.SideEffectPlan.DefenderInvitationBatchPlan);
 			Assert.Equal(1, report.SideEffectPlan.DespawnNpcCount);
 			Assert.Equal(1, report.SideEffectPlan.InvasionSpawnCount);
 			Assert.Equal(1, report.SideEffectPlan.DefenderUpdatePlayerCount);
 			Assert.Equal(1, report.SideEffectPlan.SkippedZonePlayerCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderInvitationPlanCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderQuestionWindowIntentCount);
+			Assert.Equal(0, report.SideEffectPlan.DefenderRequestNotStoredCount);
+			Assert.Equal(0, report.SideEffectPlan.AlreadyDefenderUpdateCount);
+			Assert.Equal(0, report.SideEffectPlan.DefenderAllianceFullUpdateCount);
 			Assert.Equal([1004], Assert.IsType<VortexDefenderAllianceUpdatePlan>(
 				report.SideEffectPlan.DefenderAllianceUpdatePlan).DefenderObjectIds);
 			Assert.Equal(
@@ -1187,6 +1208,94 @@ public sealed class VortexLocationServiceTests
 		Assert.False(plan.ShouldMutateLiveRequest);
 		Assert.False(plan.ShouldSendLivePacket);
 		Assert.Equal("services/vortex/Invasion.updateDefenders", plan.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderInvitationBatchPlan_ComposesOneInvitationPlanPerDefenderUpdateCandidate()
+	{
+		var updatePlan = new VortexDefenderAllianceUpdatePlan(
+			VortexDefenderAllianceUpdatePlanStatus.Planned,
+			LocationId: 0,
+			DefendersRace: "ELYOS",
+			DefenderUpdatePlayers:
+			[
+				new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS"),
+				new VortexZonePlayerSnapshot(PlayerObjectId: 1006, Race: "ELYOS"),
+				new VortexZonePlayerSnapshot(PlayerObjectId: 1007, Race: "ELYOS"),
+			],
+			SkippedPlayers:
+			[
+				new VortexZonePlayerSnapshot(PlayerObjectId: 1002, Race: "ASMODIANS"),
+			],
+			JavaSource: "services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders");
+		var planner = new VortexDefenderInvitationBatchPlanService();
+
+		var batch = planner.CreatePlan(
+			updatePlan,
+			existingDefenders: [new VortexDefenderAddPlayerSnapshot(1007, IsInGroup: false, IsInAlliance: false)],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			requestSlotsByPlayerObjectId: new Dictionary<int, bool> { [1006] = false });
+
+		Assert.Equal(VortexDefenderInvitationBatchPlanStatus.Planned, batch.Status);
+		Assert.Same(updatePlan, batch.UpdatePlan);
+		Assert.Equal(0, batch.LocationId);
+		Assert.Equal([1004, 1006, 1007], batch.DefenderObjectIds);
+		Assert.Equal([1007], batch.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, batch.DefenderAlliance);
+		Assert.Equal(3, batch.InvitationPlanCount);
+		Assert.Equal(1, batch.QuestionWindowIntentCount);
+		Assert.Equal(1, batch.RequestNotStoredCount);
+		Assert.Equal(1, batch.AlreadyDefenderCount);
+		Assert.Equal(0, batch.AllianceFullCount);
+		Assert.True(batch.WouldCallUpdateDefenders);
+		Assert.True(batch.WouldInstallAnyRequest);
+		Assert.True(batch.HasAnyQuestionWindowIntent);
+		Assert.Equal(
+			[
+				VortexDefenderUpdateDefendersPlanStatus.InvitationPlanned,
+				VortexDefenderUpdateDefendersPlanStatus.InvitationRequestNotStored,
+				VortexDefenderUpdateDefendersPlanStatus.InvitationAlreadyDefender,
+			],
+			batch.DefenderInvitationPlans.Select(plan => plan.Status).ToArray());
+		Assert.False(batch.ShouldMutateLiveRequest);
+		Assert.False(batch.ShouldSendLivePacket);
+		Assert.False(batch.ShouldMutateLiveAlliance);
+		Assert.False(batch.ShouldMutateLiveGroup);
+		Assert.False(batch.ShouldMutateLiveDefenders);
+		Assert.Equal(
+			"services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders",
+			batch.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderInvitationBatchPlan_FullAllianceSkipsAllInvitationRequestsLikeJavaFirstGate()
+	{
+		var updatePlan = new VortexDefenderAllianceUpdatePlan(
+			VortexDefenderAllianceUpdatePlanStatus.Planned,
+			LocationId: 0,
+			DefendersRace: "ELYOS",
+			DefenderUpdatePlayers:
+			[
+				new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS"),
+				new VortexZonePlayerSnapshot(PlayerObjectId: 1006, Race: "ELYOS"),
+			],
+			SkippedPlayers: [],
+			JavaSource: "services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders");
+		var planner = new VortexDefenderInvitationBatchPlanService();
+
+		var batch = planner.CreatePlan(updatePlan, defenderAlliance: VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal(2, batch.InvitationPlanCount);
+		Assert.Equal(0, batch.QuestionWindowIntentCount);
+		Assert.Equal(0, batch.RequestNotStoredCount);
+		Assert.Equal(0, batch.AlreadyDefenderCount);
+		Assert.Equal(2, batch.AllianceFullCount);
+		Assert.False(batch.WouldInstallAnyRequest);
+		Assert.False(batch.HasAnyQuestionWindowIntent);
+		Assert.All(batch.DefenderInvitationPlans, plan =>
+			Assert.Equal(VortexDefenderUpdateDefendersPlanStatus.InvitationAllianceFull, plan.Status));
+		Assert.False(batch.ShouldMutateLiveRequest);
+		Assert.False(batch.ShouldSendLivePacket);
 	}
 
 	[Fact]

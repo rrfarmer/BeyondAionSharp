@@ -8,19 +8,26 @@ public sealed class VortexStartInvasionRuntimeSnapshotCollectorService
 {
 	private readonly IVortexInvasionSpawnSnapshotSelector _invasionSpawnSelector;
 	private readonly VortexDefenderAllianceUpdatePlanService _defenderAllianceUpdatePlanner;
+	private readonly VortexDefenderInvitationBatchPlanService _defenderInvitationBatchPlanner;
 
 	public VortexStartInvasionRuntimeSnapshotCollectorService(
 		IVortexInvasionSpawnSnapshotSelector? invasionSpawnSelector = null,
-		VortexDefenderAllianceUpdatePlanService? defenderAllianceUpdatePlanner = null)
+		VortexDefenderAllianceUpdatePlanService? defenderAllianceUpdatePlanner = null,
+		VortexDefenderInvitationBatchPlanService? defenderInvitationBatchPlanner = null)
 	{
 		_invasionSpawnSelector = invasionSpawnSelector ?? new VortexInvasionSpawnSnapshotSelectionService();
 		_defenderAllianceUpdatePlanner = defenderAllianceUpdatePlanner ?? new VortexDefenderAllianceUpdatePlanService();
+		_defenderInvitationBatchPlanner = defenderInvitationBatchPlanner ?? new VortexDefenderInvitationBatchPlanService();
 	}
 
 	public VortexStartInvasionSnapshotRequest Collect(
 		VortexLocationSummary location,
 		IEnumerable<IWorldNpcObject>? spawnedNpcs = null,
-		IEnumerable<Player>? zonePlayers = null)
+		IEnumerable<Player>? zonePlayers = null,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null,
+		IReadOnlyDictionary<int, bool>? defenderRequestSlotsByPlayerObjectId = null,
+		bool defaultDefenderRequestSlotAvailable = true)
 	{
 		ArgumentNullException.ThrowIfNull(location);
 
@@ -35,23 +42,41 @@ public sealed class VortexStartInvasionRuntimeSnapshotCollectorService
 			.Select(VortexZonePlayerSnapshot.FromPlayer)
 			.ToArray();
 		var defenderAllianceUpdatePlan = _defenderAllianceUpdatePlanner.CreatePlan(location, playerSnapshots);
+		var defenderInvitationBatchPlan = _defenderInvitationBatchPlanner.CreatePlan(
+			defenderAllianceUpdatePlan,
+			existingDefenders,
+			defenderAlliance,
+			defenderRequestSlotsByPlayerObjectId,
+			defaultDefenderRequestSlotAvailable);
 
 		return new VortexStartInvasionSnapshotRequest(
 			SpawnedNpcs: collectedSpawnedNpcs,
-			DefenderAllianceUpdatePlan: defenderAllianceUpdatePlan);
+			DefenderAllianceUpdatePlan: defenderAllianceUpdatePlan,
+			DefenderInvitationBatchPlan: defenderInvitationBatchPlan);
 	}
 
 	public VortexStartInvasionSnapshotRequest PrepareWithStaticInvasionSpawns(
 		VortexLocationSummary location,
 		NpcVortexSpawnTable vortexSpawns,
 		IEnumerable<IWorldNpcObject>? spawnedNpcs = null,
-		IEnumerable<Player>? zonePlayers = null)
+		IEnumerable<Player>? zonePlayers = null,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null,
+		IReadOnlyDictionary<int, bool>? defenderRequestSlotsByPlayerObjectId = null,
+		bool defaultDefenderRequestSlotAvailable = true)
 	{
 		ArgumentNullException.ThrowIfNull(vortexSpawns);
 
 		// Java parity: Invasion.startInvasion composes pre-start runtime state
 		// with VortexService.spawn(loc, VortexStateType.INVASION).
-		var request = Collect(location, spawnedNpcs, zonePlayers);
+		var request = Collect(
+			location,
+			spawnedNpcs,
+			zonePlayers,
+			existingDefenders,
+			defenderAlliance,
+			defenderRequestSlotsByPlayerObjectId,
+			defaultDefenderRequestSlotAvailable);
 		return request.WithInvasionSpawns(_invasionSpawnSelector.SelectInvasionSpawns(location.Id, vortexSpawns));
 	}
 }

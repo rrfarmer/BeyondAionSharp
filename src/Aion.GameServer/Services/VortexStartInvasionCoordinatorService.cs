@@ -5,7 +5,8 @@ namespace Aion.GameServer.Services;
 public sealed record VortexStartInvasionSnapshotRequest(
 	IReadOnlyList<VortexStartSpawnedNpcSnapshot>? SpawnedNpcs = null,
 	IReadOnlyList<VortexStartInvasionSpawnSnapshot>? InvasionSpawns = null,
-	VortexDefenderAllianceUpdatePlan? DefenderAllianceUpdatePlan = null)
+	VortexDefenderAllianceUpdatePlan? DefenderAllianceUpdatePlan = null,
+	VortexDefenderInvitationBatchPlan? DefenderInvitationBatchPlan = null)
 {
 	public static VortexStartInvasionSnapshotRequest Empty { get; } = new();
 
@@ -15,7 +16,8 @@ public sealed record VortexStartInvasionSnapshotRequest(
 	public bool HasAnySnapshot =>
 		SpawnedNpcSnapshots.Count > 0 ||
 		InvasionSpawnSnapshots.Count > 0 ||
-		DefenderAllianceUpdatePlan is not null;
+		DefenderAllianceUpdatePlan is not null ||
+		DefenderInvitationBatchPlan is not null;
 
 	public VortexStartInvasionSnapshotRequest WithInvasionSpawns(
 		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns)
@@ -29,7 +31,8 @@ public sealed record VortexStartInvasionSnapshotRequest(
 		return new VortexStartInvasionSnapshotRequest(
 			SpawnedNpcSnapshots,
 			InvasionSpawnSnapshots.Concat(selectedInvasionSpawns).ToArray(),
-			DefenderAllianceUpdatePlan);
+			DefenderAllianceUpdatePlan,
+			DefenderInvitationBatchPlan);
 	}
 }
 
@@ -54,7 +57,8 @@ public sealed class VortexStartInvasionCoordinatorService
 		RiftPortalState? activePortal = null,
 		IReadOnlyList<VortexStartSpawnedNpcSnapshot>? spawnedNpcs = null,
 		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null,
-		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null)
+		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null,
+		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null)
 	{
 		ArgumentNullException.ThrowIfNull(location);
 
@@ -66,7 +70,8 @@ public sealed class VortexStartInvasionCoordinatorService
 			startResult,
 			spawnedNpcs,
 			invasionSpawns,
-			defenderAllianceUpdatePlan);
+			defenderAllianceUpdatePlan,
+			defenderInvitationBatchPlan);
 	}
 
 	public VortexStartInvasionCoordinatorReport StartInvasion(
@@ -80,7 +85,8 @@ public sealed class VortexStartInvasionCoordinatorService
 			activePortal: null,
 			snapshotRequest.SpawnedNpcSnapshots,
 			snapshotRequest.InvasionSpawnSnapshots,
-			snapshotRequest.DefenderAllianceUpdatePlan);
+			snapshotRequest.DefenderAllianceUpdatePlan,
+			snapshotRequest.DefenderInvitationBatchPlan);
 	}
 
 	public VortexStartInvasionCoordinatorReport StartInvasion(
@@ -109,7 +115,8 @@ public sealed class VortexStartInvasionCoordinatorService
 			startResult,
 			enrichedRequest.SpawnedNpcSnapshots,
 			enrichedRequest.InvasionSpawnSnapshots,
-			enrichedRequest.DefenderAllianceUpdatePlan);
+			enrichedRequest.DefenderAllianceUpdatePlan,
+			enrichedRequest.DefenderInvitationBatchPlan);
 	}
 
 	public VortexStartInvasionCoordinatorReport StartInvasion(
@@ -129,13 +136,15 @@ public sealed class VortexStartInvasionCoordinatorService
 		VortexStartInvasionResult startResult,
 		IReadOnlyList<VortexStartSpawnedNpcSnapshot>? spawnedNpcs = null,
 		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null,
-		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null)
+		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null,
+		VortexDefenderInvitationBatchPlan? defenderInvitationBatchPlan = null)
 	{
 		var sideEffectPlan = _sideEffectPlanner.CreatePlan(
 			startResult,
 			spawnedNpcs,
 			invasionSpawns,
-			defenderAllianceUpdatePlan);
+			defenderAllianceUpdatePlan,
+			defenderInvitationBatchPlan);
 		return VortexStartInvasionCoordinatorReport.From(startResult, sideEffectPlan);
 	}
 }
