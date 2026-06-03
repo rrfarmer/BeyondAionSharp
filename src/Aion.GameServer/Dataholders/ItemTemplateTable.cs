@@ -243,8 +243,10 @@ public sealed record ItemTemplateSummary(
 	// Java parity: model/items/ItemMask.*
 	public bool IsSellable => (Mask & SellableMask) == SellableMask;
 	public bool IsStorableInWarehouse => (Mask & StorableInWhMask) == StorableInWhMask;
-	public bool IsStorableInAccountWarehouse => (Mask & StorableInAwhMask) == StorableInAwhMask;
-	public bool IsStorableInLegionWarehouse => (Mask & StorableInLwhMask) == StorableInLwhMask;
+	// Java parity: Item.isStorableInAccWarehouse() also checks !isSoulBound()
+	public bool IsStorableInAccountWarehouse => (Mask & StorableInAwhMask) == StorableInAwhMask && !IsSoulBound;
+	// Java parity: Item.isStorableInLegWarehouse() also checks !isSoulBound()
+	public bool IsStorableInLegionWarehouse => (Mask & StorableInLwhMask) == StorableInLwhMask && !IsSoulBound;
 	public bool IsRemovedOnLogout => (Mask & RemoveLogoutMask) == RemoveLogoutMask;
 	public bool CanCompositeWeapon => (Mask & CanCompositeWeaponMask) == CanCompositeWeaponMask;
 	public bool CanSplit => (Mask & CanSplitMask) == CanSplitMask;

@@ -98,10 +98,15 @@ public sealed class NpcDialogSideEffectServiceTests
 	public void ItemTemplateSummary_ItemMaskPropertiesMatchJavaItemMaskConstants()
 	{
 		// Java parity: model/items/ItemMask constants; each bit maps to a boolean property.
-		var allMask = CreateMinimalItemTemplate(mask: ~0); // all bits set
+		// Note: allMask has SOUL_BOUND set (1<<7), so AWH/LWH storable return false (soulbound guard).
+		var allMask = CreateMinimalItemTemplate(mask: ~0); // all bits set (including SOUL_BOUND)
 		var noMask = CreateMinimalItemTemplate(mask: 0);
+		// AWH/LWH storable without soulbound
+		var awhMask = CreateMinimalItemTemplate(mask: (1 << 4)); // STORABLE_IN_AWH only, not soulbound
+		var lwhMask = CreateMinimalItemTemplate(mask: (1 << 5)); // STORABLE_IN_LWH only, not soulbound
+		var awhSoulBound = CreateMinimalItemTemplate(mask: (1 << 4) | (1 << 7)); // AWH + SOUL_BOUND
 
-		// Existing masks
+		// Existing masks (unaffected by soulbound guard)
 		Assert.True(allMask.IsTradeable);      // 1 << 1
 		Assert.True(allMask.IsBreakable);      // 1 << 6
 		Assert.True(allMask.IsSoulBound);      // 1 << 7
@@ -111,20 +116,26 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.True(allMask.CanApExtract);     // 1 << 16
 		Assert.True(allMask.CanSocketGodstone); // 1 << 10
 		Assert.True(allMask.IsItemDyePermitted); // 1 << 15
-		// New masks added in UOW-2525
-		Assert.True(allMask.IsSellable);                  // 1 << 2
-		Assert.True(allMask.IsStorableInWarehouse);        // 1 << 3
-		Assert.True(allMask.IsStorableInAccountWarehouse); // 1 << 4
-		Assert.True(allMask.IsStorableInLegionWarehouse);  // 1 << 5
-		Assert.True(allMask.IsRemovedOnLogout);            // 1 << 8
-		Assert.True(allMask.CanCompositeWeapon);           // 1 << 11
-		Assert.True(allMask.CanSplit);                     // 1 << 13
-		Assert.True(allMask.IsDeletable);                  // 1 << 14
-		Assert.True(allMask.IsLegionTradeable);            // 1 << 18
+		// Simple mask bits
+		Assert.True(allMask.IsSellable);       // 1 << 2
+		Assert.True(allMask.IsStorableInWarehouse); // 1 << 3 (no soulbound guard)
+		Assert.True(allMask.IsRemovedOnLogout);     // 1 << 8
+		Assert.True(allMask.CanCompositeWeapon);    // 1 << 11
+		Assert.True(allMask.CanSplit);              // 1 << 13
+		Assert.True(allMask.IsDeletable);           // 1 << 14
+		Assert.True(allMask.IsLegionTradeable);     // 1 << 18
+		// AWH/LWH storable: mask bit AND !soulBound (Java parity: Item.isStorableInAccWarehouse/isStorableInLegWarehouse)
+		Assert.True(awhMask.IsStorableInAccountWarehouse);   // bit set, not soulbound → true
+		Assert.True(lwhMask.IsStorableInLegionWarehouse);    // bit set, not soulbound → true
+		Assert.False(awhSoulBound.IsStorableInAccountWarehouse); // bit set BUT soulbound → false
+		Assert.False(allMask.IsStorableInAccountWarehouse);  // bit set BUT allMask has SOUL_BOUND → false
+		Assert.False(allMask.IsStorableInLegionWarehouse);   // same
 		// All false for zero mask
 		Assert.False(noMask.IsBreakable);
 		Assert.False(noMask.IsSellable);
 		Assert.False(noMask.IsStorableInWarehouse);
+		Assert.False(noMask.IsStorableInAccountWarehouse);
+		Assert.False(noMask.IsStorableInLegionWarehouse);
 		Assert.False(noMask.IsRemovedOnLogout);
 		Assert.False(noMask.IsDeletable);
 		Assert.False(noMask.IsLegionTradeable);
