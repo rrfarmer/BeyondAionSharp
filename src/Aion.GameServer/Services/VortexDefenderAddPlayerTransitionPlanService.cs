@@ -2,6 +2,67 @@ using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
 
+public sealed class VortexDefenderAcceptanceInputResolverService
+{
+	// Java parity: Invasion.defAlliance is created only after a second defender joins.
+	// Max PlayerAlliance size in Java is 24 members.
+	public const int DefenderAllianceMaxSize = 24;
+
+	public VortexDefenderAcceptanceInputs Resolve(
+		VortexInvasionSnapshot? snapshot,
+		Func<int, Player?> playerLookup)
+	{
+		ArgumentNullException.ThrowIfNull(playerLookup);
+
+		if (snapshot is null)
+			return VortexDefenderAcceptanceInputs.Empty;
+
+		var existingDefenders = snapshot.DefenderObjectIds
+			.Select(id =>
+			{
+				var player = playerLookup(id);
+				return player is null
+					? new VortexDefenderAddPlayerSnapshot(id, IsInGroup: false, IsInAlliance: false)
+					: VortexDefenderAddPlayerSnapshot.FromPlayer(player);
+			})
+			.ToArray();
+
+		// Java parity approximation: defAlliance is null (Missing) until a second defender joins,
+		// then it is open. Full once it reaches the PlayerAlliance maximum size (24).
+		// C# does not track the live alliance reference; defender count is used as a proxy.
+		var defenderCount = existingDefenders.Length;
+		var allianceSnapshot = defenderCount switch
+		{
+			0 => VortexDefenderAllianceSnapshot.Missing,
+			1 => VortexDefenderAllianceSnapshot.Missing,
+			_ when defenderCount >= DefenderAllianceMaxSize => VortexDefenderAllianceSnapshot.Full,
+			_ => VortexDefenderAllianceSnapshot.Open,
+		};
+
+		return new VortexDefenderAcceptanceInputs(
+			snapshot.LocationId,
+			existingDefenders,
+			allianceSnapshot,
+			JavaSource: "services/vortex/Invasion.defenders / services/vortex/Invasion.defAlliance");
+	}
+}
+
+public sealed record VortexDefenderAcceptanceInputs(
+	int LocationId,
+	IReadOnlyList<VortexDefenderAddPlayerSnapshot> ExistingDefenders,
+	VortexDefenderAllianceSnapshot DefenderAlliance,
+	string JavaSource)
+{
+	public static VortexDefenderAcceptanceInputs Empty { get; } = new(
+		LocationId: 0,
+		ExistingDefenders: [],
+		DefenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+		JavaSource: "services/vortex/Invasion.defenders");
+
+	public int DefenderCount => ExistingDefenders.Count;
+	public bool HasExistingDefenders => ExistingDefenders.Count > 0;
+}
+
 public sealed class VortexDefenderAddPlayerTransitionPlanService
 {
 	public VortexDefenderAddPlayerTransitionPlan CreatePlan(

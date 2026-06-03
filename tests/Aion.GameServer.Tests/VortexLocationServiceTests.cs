@@ -2266,6 +2266,76 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task DefenderAcceptanceInputResolver_DerivesExistingDefenderSnapshotsFromRuntimeSnapshot()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-acceptance-input-resolver-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var defender1 = CreatePlayer(1001, isOnline: true, location.InvasionWorldId);
+			var defender2 = CreatePlayer(1004, isOnline: true, location.InvasionWorldId);
+			defender1.TeamMembership = PlayerTeamMembership.Alliance;
+			defender2.TeamMembership = PlayerTeamMembership.Group;
+			runtime.StartInvasion(location);
+			Assert.True(runtime.AddDefender(location.Id, defender1));
+			Assert.True(runtime.AddDefender(location.Id, defender2));
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			var resolver = new VortexDefenderAcceptanceInputResolverService();
+			var players = new Dictionary<int, Player>
+			{
+				[defender1.ObjectId] = defender1,
+				[defender2.ObjectId] = defender2,
+			};
+
+			// Java parity: Invasion.defenders and defAlliance are read to derive inputs for acceptRequest.
+			var inputs = resolver.Resolve(snapshot, id => players.GetValueOrDefault(id));
+
+			Assert.Equal(location.Id, inputs.LocationId);
+			Assert.Equal(2, inputs.DefenderCount);
+			Assert.True(inputs.HasExistingDefenders);
+			// 2 defenders → alliance should exist and be Open (proxy for non-null defAlliance)
+			Assert.Equal(VortexDefenderAllianceSnapshot.Open, inputs.DefenderAlliance);
+			var d1Snapshot = inputs.ExistingDefenders.Single(d => d.PlayerObjectId == 1001);
+			var d2Snapshot = inputs.ExistingDefenders.Single(d => d.PlayerObjectId == 1004);
+			Assert.False(d1Snapshot.IsInGroup);
+			Assert.True(d1Snapshot.IsInAlliance);
+			Assert.True(d2Snapshot.IsInGroup);
+			Assert.False(d2Snapshot.IsInAlliance);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public void DefenderAcceptanceInputResolver_ReturnsMissingAllianceForZeroOrOneDefender()
+	{
+		var resolver = new VortexDefenderAcceptanceInputResolverService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+
+		var empty = resolver.Resolve(null, _ => null);
+		var singleDefenderSnapshot = new VortexInvasionSnapshot(
+			LocationId: 0,
+			HomePoint: new WorldPosition(120080000, 0, 0, 0, 0),
+			StartPoint: new WorldPosition(210060000, 0, 0, 0, 0),
+			InvaderObjectIds: [],
+			DefenderObjectIds: [1004],
+			PassedPlayerObjectIds: []);
+		var single = resolver.Resolve(singleDefenderSnapshot, id => id == 1004 ? defender : null);
+
+		Assert.Equal(0, empty.DefenderCount);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Missing, empty.DefenderAlliance);
+		Assert.False(empty.HasExistingDefenders);
+		Assert.Equal(1, single.DefenderCount);
+		// Java parity: defAlliance is null until a 2nd defender joins
+		Assert.Equal(VortexDefenderAllianceSnapshot.Missing, single.DefenderAlliance);
+	}
+
+	[Fact]
 	public async Task FindDefenderLocationId_ReturnsLocationIdForActiveDefenderAndNullWhenAbsent()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-find-defender-location-" + Guid.NewGuid().ToString("N"));
