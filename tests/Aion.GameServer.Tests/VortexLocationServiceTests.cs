@@ -344,6 +344,111 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StopCoordinator_ComposesRuntimeStopAndSideEffectPlanWithoutLiveExecution()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService());
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId);
+			var kisk = new PlayerKiskRuntimeState(7101, invader.ObjectId, 831200);
+			var spawnedNpc = new WorldNpc(
+				ObjectId: 7201,
+				TemplateId: 831300,
+				Template: new NpcTemplateSummary(831300, "Vortex spawned", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
+				Position: location.StartPoint);
+			var peaceSpawn = CreatePeaceSpawn(location);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			Assert.True(runtime.AddDefender(location.Id, defender));
+
+			var report = coordinator.StopInvasion(
+				location.Id,
+				[VortexStopInvaderSnapshot.FromPlayer(invader)],
+				[VortexStopInvaderKiskSnapshot.FromRuntimeState(kisk)],
+				[VortexStopSpawnedNpcSnapshot.FromWorldNpc(spawnedNpc)],
+				[VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)]);
+
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Stopped);
+			Assert.True(report.HasSideEffectPlan);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			Assert.Equal(location.Id, report.LocationId);
+			Assert.Equal(location.Id, report.StopResult.LocationId);
+			Assert.Equal(VortexStopInvasionStatus.Stopped, report.StopResult.Status);
+			Assert.Equal(VortexStopInvasionSideEffectPlanStatus.Planned, report.SideEffectPlan.Status);
+			Assert.Equal([1002], Assert.IsType<VortexInvasionSnapshot>(report.StopResult.PreviousSnapshot).InvaderObjectIds);
+			Assert.Equal([1004], Assert.IsType<VortexInvasionSnapshot>(report.StopResult.PreviousSnapshot).DefenderObjectIds);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.KillInvaderKisk,
+					VortexStopInvasionSideEffectStepKind.KickOnlineInvader,
+					VortexStopInvasionSideEffectStepKind.DespawnVortexNpc,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			Assert.Null(runtime.GetSnapshot(location.Id));
+			Assert.False(runtime.IsInvaderPlayer(invader));
+			Assert.False(runtime.IsDefenderPlayer(defender));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StopCoordinator_MissingOrRepeatedStopReturnsNoDispatchGuardReport()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-guard-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService());
+
+			var missing = coordinator.StopInvasion(location.Id);
+			runtime.StartInvasion(location);
+			var stopped = coordinator.StopInvasion(location.Id);
+			var repeated = coordinator.StopInvasion(location.Id);
+
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.MissingInvasion, missing.Status);
+			Assert.False(missing.Stopped);
+			Assert.False(missing.HasSideEffectPlan);
+			Assert.False(missing.ShouldExecuteLiveSideEffects);
+			Assert.Empty(missing.SideEffectPlan.OrderedSteps);
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, stopped.Status);
+			Assert.True(stopped.Stopped);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+				],
+				stopped.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.MissingInvasion, repeated.Status);
+			Assert.False(repeated.Stopped);
+			Assert.False(repeated.HasSideEffectPlan);
+			Assert.Empty(repeated.SideEffectPlan.OrderedSteps);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task RemoveInvaderPlayer_IncludesActivePortalMetadataForRiftEntryUpdatePipeline()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-removal-" + Guid.NewGuid().ToString("N"));
