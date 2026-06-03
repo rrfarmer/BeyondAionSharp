@@ -238,9 +238,11 @@ public sealed record ItemTemplateSummary(
 
 	public bool IsTwoHandWeapon => TwoHandWeaponGroups.Contains(ItemGroup);
 
-	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
+	// Java parity: Item.isTradeable() also checks !isSoulBound()
+	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1) && !IsSoulBound;
 
 	// Java parity: model/items/ItemMask.*
+	// Note: Item.isSellable() does NOT check !isSoulBound() — mask bit only
 	public bool IsSellable => (Mask & SellableMask) == SellableMask;
 	public bool IsStorableInWarehouse => (Mask & StorableInWhMask) == StorableInWhMask;
 	// Java parity: Item.isStorableInAccWarehouse() also checks !isSoulBound()
@@ -251,7 +253,8 @@ public sealed record ItemTemplateSummary(
 	public bool CanCompositeWeapon => (Mask & CanCompositeWeaponMask) == CanCompositeWeaponMask;
 	public bool CanSplit => (Mask & CanSplitMask) == CanSplitMask;
 	public bool IsDeletable => (Mask & DeletableMask) == DeletableMask;
-	public bool IsLegionTradeable => (Mask & LegionTradeableMask) == LegionTradeableMask;
+	// Java parity: Item.isLegionTradeable() also checks !isSoulBound()
+	public bool IsLegionTradeable => (Mask & LegionTradeableMask) == LegionTradeableMask && !IsSoulBound;
 
 	public bool IsLimitOne => (Mask & LimitOneMask) == LimitOneMask;
 

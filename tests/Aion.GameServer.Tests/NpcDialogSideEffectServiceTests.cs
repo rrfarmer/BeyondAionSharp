@@ -106,8 +106,10 @@ public sealed class NpcDialogSideEffectServiceTests
 		var lwhMask = CreateMinimalItemTemplate(mask: (1 << 5)); // STORABLE_IN_LWH only, not soulbound
 		var awhSoulBound = CreateMinimalItemTemplate(mask: (1 << 4) | (1 << 7)); // AWH + SOUL_BOUND
 
-		// Existing masks (unaffected by soulbound guard)
-		Assert.True(allMask.IsTradeable);      // 1 << 1
+		// IsTradeable has soulbound guard; allMask has SOUL_BOUND set → false
+		Assert.False(allMask.IsTradeable);
+		Assert.True(CreateMinimalItemTemplate(mask: 1 << 1).IsTradeable);        // bit set, not soulbound → true
+		Assert.False(CreateMinimalItemTemplate(mask: (1<<1)|(1<<7)).IsTradeable); // bit set, soulbound → false
 		Assert.True(allMask.IsBreakable);      // 1 << 6
 		Assert.True(allMask.IsSoulBound);      // 1 << 7
 		Assert.True(allMask.IsNoEnchant);      // 1 << 9
@@ -123,7 +125,9 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.True(allMask.CanCompositeWeapon);    // 1 << 11
 		Assert.True(allMask.CanSplit);              // 1 << 13
 		Assert.True(allMask.IsDeletable);           // 1 << 14
-		Assert.True(allMask.IsLegionTradeable);     // 1 << 18
+		// IsLegionTradeable has soulbound guard; allMask has SOUL_BOUND → false
+		Assert.False(allMask.IsLegionTradeable);
+		Assert.True(CreateMinimalItemTemplate(mask: 1 << 18).IsLegionTradeable); // bit set, not soulbound → true
 		// AWH/LWH storable: mask bit AND !soulBound (Java parity: Item.isStorableInAccWarehouse/isStorableInLegWarehouse)
 		Assert.True(awhMask.IsStorableInAccountWarehouse);   // bit set, not soulbound → true
 		Assert.True(lwhMask.IsStorableInLegionWarehouse);    // bit set, not soulbound → true
@@ -139,6 +143,8 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.False(noMask.IsRemovedOnLogout);
 		Assert.False(noMask.IsDeletable);
 		Assert.False(noMask.IsLegionTradeable);
+		// IsSellable has NO soulbound guard in Java → mask bit only
+		Assert.True(CreateMinimalItemTemplate(mask: (1<<2)|(1<<7)).IsSellable); // sellable + soulbound → still true
 	}
 
 	[Fact]
