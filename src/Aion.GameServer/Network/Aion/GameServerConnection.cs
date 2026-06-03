@@ -517,14 +517,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmGameguard:
 				// Java parity: network/aion/clientpackets/CM_GAMEGUARD.runImpl delegates to AntiHackService.checkAionBin; deferred.
 				break;
-			case CmGroupDistribution:
-				// Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION.runImpl (amount < 2 / canTrade guards) ->
-				// TeamKinahDistributionEvent. The distribution decision is now ported as a pure, tested planner
-				// (GroupKinahDistributionPlanService) plus the SM_SYSTEM_MESSAGE factories (MsgSplitMeToB/MsgSplitBToMe,
-				// NotEnoughMoney). Live wiring is the next step: resolve the distributor's team online members via the
-				// group/alliance/league runtime, decrease the distributor's cube kinah by amount, increase each online
-				// member's kinah by RewardPerPlayer, then send MsgSplitMeToB to the distributor and MsgSplitBToMe to the
-				// others. Deferred here only because it mutates multiple players' kinah state (multi-player persistence).
+			case CmGroupDistribution groupDistribution:
+				// Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION.runImpl -> TeamKinahDistributionEvent.
+				// The group variant (partyType 1, not in alliance) is live; alliance/league variants remain deferred.
+				if (_activePlayer != null)
+					await HandleGroupDistributionAsync(_activePlayer, groupDistribution.Amount, groupDistribution.PartyType);
 				break;
 			case CmDeleteItem deleteItem:
 				if (_activePlayer != null)
@@ -11404,6 +11401,79 @@ public sealed class GameServerConnection : BaseClientConnection
 			// Java parity: INC_PLAYER_EXCHANGE_GET_BACK (0x23) restores the full stack.
 			await SendExchangePacketAsync(player.ObjectId, new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.PlayerExchangeGetBack), cancellationToken);
 		}
+	}
+
+	private async Task HandleGroupDistributionAsync(Player player, long amount, byte partyType, CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_GROUP_DISTRIBUTION.runImpl. amount < 2 returns immediately.
+		if (amount < 2)
+			return;
+
+		// Java parity: PlayerRestrictions.canTrade(player) gate. canTrade (duel/restriction state) is not modeled in the
+		// port yet; documented omission — it only blocks distribution in transient restricted states.
+
+		// Java parity: partyType 1 routes to PlayerGroupService.distributeKinah when the player is NOT in an alliance
+		// (isInAlliance -> PlayerAllianceService.distributeKinahInGroup). Alliance (2) and league (3) variants are deferred.
+		if (partyType != 1 || player.TeamMembership != PlayerTeamMembership.Group)
+			return;
+
+		var teamId = player.CurrentTeamId;
+		if (teamId == 0)
+			return;
+
+		// Java parity: TeamKinahDistributionEvent — checkCondition (hasMember) + handleEvent decision.
+		var onlineMembers = _playerGroupRuntime.GetOnlineMemberPlayers(teamId);
+		var distributorKinahItem = player.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
+		var distributorKinah = distributorKinahItem?.Count ?? 0L;
+		var plan = GroupKinahDistributionPlanService.Plan(
+			amount, distributorKinah, onlineMembers.Count, _playerGroupRuntime.HasMember(teamId, player.ObjectId));
+
+		if (plan.Outcome == GroupKinahDistributionOutcome.NotEnoughMoney)
+		{
+			// Java parity: STR_NOT_ENOUGH_MONEY to the distributor.
+			await SendToPlayerOrActiveAsync(player.ObjectId, SmSystemMessage.NotEnoughMoney(), cancellationToken);
+			return;
+		}
+
+		if (plan.Outcome != GroupKinahDistributionOutcome.Distribute || distributorKinahItem == null)
+			return;
+
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var kinahTemplate = itemTemplates?.GetItemTemplate(KinahItemId);
+
+		// Java parity: distributor tryDecreaseKinah(amount) -> Storage.decreaseKinah default DEC_KINAH_BUY.
+		var decreased = CopyInventoryItem(distributorKinahItem, count: distributorKinahItem.Count - amount);
+		ReplaceInventoryItemFor(player, decreased);
+		if (kinahTemplate != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(decreased, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy), cancellationToken);
+
+		// Java parity: for each online member -> increaseKinah(rewardPerPlayer) (default INC_KINAH_COLLECT) + split message.
+		// The distributor is part of onlineMembers, so they also receive their share and the ME_TO_B message.
+		foreach (var member in onlineMembers)
+		{
+			var memberKinah = member.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
+			if (memberKinah != null)
+			{
+				var increased = CopyInventoryItem(memberKinah, count: memberKinah.Count + plan.RewardPerPlayer);
+				ReplaceInventoryItemFor(member, increased);
+				if (kinahTemplate != null)
+					await SendToPlayerOrActiveAsync(member.ObjectId, new SmInventoryUpdateItem(increased, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahCollect), cancellationToken);
+			}
+
+			var message = member.ObjectId == player.ObjectId
+				? SmSystemMessage.MsgSplitMeToB(amount, plan.OnlineMemberCount, plan.RewardPerPlayer)
+				: SmSystemMessage.MsgSplitBToMe(player.Name, amount, plan.OnlineMemberCount, plan.RewardPerPlayer);
+			await SendToPlayerOrActiveAsync(member.ObjectId, message, cancellationToken);
+		}
+	}
+
+	private async Task SendToPlayerOrActiveAsync(int recipientObjectId, GameServerPacket packet, CancellationToken cancellationToken = default)
+	{
+		if (_connectionRegistry != null && await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet))
+			return;
+
+		if (_activePlayer?.ObjectId == recipientObjectId)
+			await SendPacketAsync(packet, cancellationToken);
 	}
 
 	private async Task ExecuteExchangeTradeAsync(Player player, CancellationToken cancellationToken = default)

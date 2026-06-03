@@ -507,6 +507,15 @@ public sealed class PlayerGroupRuntime
 				: Array.Empty<Player>();
 	}
 
+	public IReadOnlyList<Player> GetOnlineMemberPlayers(int teamId)
+	{
+		// Java parity: model/team/TemporaryPlayerTeam.getOnlineMembers — members whose Player is currently online.
+		lock (_sync)
+			return _membersByTeamId.TryGetValue(teamId, out var members)
+				? members.Where(member => member.IsOnline).Select(member => member.Player).ToArray()
+				: Array.Empty<Player>();
+	}
+
 	public bool IsLeader(int teamId, Player player)
 	{
 		// Java parity: model/team/GeneralTeam.isLeader compares against the leader's Player object.
