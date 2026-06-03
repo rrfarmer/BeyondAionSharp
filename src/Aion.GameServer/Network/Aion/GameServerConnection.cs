@@ -7737,6 +7737,28 @@ public sealed class GameServerConnection : BaseClientConnection
 			previousPosition.WorldId,
 			previousPosition.InstanceId,
 			onlinePlayersInsideAfterLeave: Math.Max(0, instance.PlayerCount - 1));
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var autoGroups = staticData?.AutoGroups;
+		if (_connectionRegistry != null
+			&& autoGroupLeave.Plan.WouldCheckQuickEntries
+			&& autoGroupLeave.SnapshotAfterLeave?.InstanceMaskId is { } instanceMaskId)
+		{
+			var refill = _autoGroupLookingPartyRegistrations.TryRefillQueuedQuickEntry(
+				instanceMaskId,
+				autoGroups,
+				staticData?.InstanceCooltimes,
+				request => _autoGroupInstanceLeaveRuntimeService.TryAddOpenQuickEntry(request));
+			if (refill != null)
+			{
+				foreach (var delivery in refill.WindowDeliveries)
+				{
+					var deliveryAutoGroup = autoGroups?.GetTemplateByInstanceMaskId(delivery.MaskId);
+					if (deliveryAutoGroup != null)
+						await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
+				}
+			}
+		}
+
 		foreach (var packet in autoGroupLeave.OpenRegistrationPackets)
 			await SendPacketAsync(packet);
 	}
