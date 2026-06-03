@@ -2577,24 +2577,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.ItemAmount <= 0)
 			return;
 
-		if (packet.SourceStorageType != packet.DestinationStorageType)
+		if (packet.SourceStorageType == 3 || packet.DestinationStorageType == 3)
 		{
-			// Cross-storage splits require ItemRestrictionService, LegionService, and kinah special-casing; deferred.
+			// Legion warehouse splits require LegionService and addWHItemHistory; deferred.
 			return;
 		}
 
-		// Same-storage split: only cube (location 0) supported.
-		if (packet.SourceStorageType != 0)
-			return;
-
 		var sourceItem = player.InventoryItems.FirstOrDefault(
-			i => i.ObjectId == packet.SourceItemObjectId && i.Location == 0);
+			i => i.ObjectId == packet.SourceItemObjectId && i.Location == packet.SourceStorageType);
 		if (sourceItem == null)
 			return;
 
 		// Java parity: ItemSplitService.splitItem — targetItem == null branch (split to empty slot).
 		var targetItem = packet.DestinationItemObjectId != 0
-			? player.InventoryItems.FirstOrDefault(i => i.ObjectId == packet.DestinationItemObjectId && i.Location == 0)
+			? player.InventoryItems.FirstOrDefault(i => i.ObjectId == packet.DestinationItemObjectId && i.Location == packet.DestinationStorageType)
 			: null;
 
 		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
@@ -2604,13 +2600,28 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (targetItem == null)
 		{
-			// Split into empty slot.
+			// Split into empty slot (same or cross storage).
 			if (_idFactory == null)
 				return;
 			var newCount = packet.ItemAmount;
 			var remainingCount = sourceItem.Count - newCount;
 			if (sourceItem.Count < newCount || remainingCount == 0)
 				return;
+
+			// Java parity: ItemRestrictionService.isItemRestrictedTo for cross-storage.
+			if (packet.SourceStorageType != packet.DestinationStorageType)
+			{
+				if (packet.DestinationStorageType == 1 && !template.IsStorableInWarehouse)
+				{
+					await SendPacketAsync(SmSystemMessage.WarehouseCantDepositItem());
+					return;
+				}
+				if (packet.DestinationStorageType == 2 && !sourceItem.IsStorableInAccountWarehouse(template))
+				{
+					await SendPacketAsync(SmSystemMessage.WarehouseCantAccountDeposit());
+					return;
+				}
+			}
 
 			var newObjectId = _idFactory.NextId();
 			var newItem = new InventoryItem
@@ -2619,8 +2630,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				ItemId = sourceItem.ItemId,
 				Count = newCount,
 				OwnerId = player.ObjectId,
-				Location = 0,
-				Slot = packet.SlotNumber,
+				Location = packet.DestinationStorageType,
+				// Java parity: cross-storage split does NOT set slot (newItem.setEquipmentSlot only for same-storage).
+				Slot = packet.SourceStorageType == packet.DestinationStorageType ? packet.SlotNumber : 0,
 				TuneCount = 0,
 				PersistentState = InventoryItemPersistentState.New,
 			};
@@ -2643,12 +2655,30 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 			}
 
-			// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, SmInventoryUpdateItem.DecreaseItemSplit));
+			if (packet.SourceStorageType == 0 /* cube source */)
+			{
+				// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
+				await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template,
+					packet.SourceStorageType == packet.DestinationStorageType
+						? SmInventoryUpdateItem.DecreaseItemSplit
+						: SmInventoryUpdateItem.DecreaseItemSplit));
+			}
+			else
+			{
+				// Java parity: warehouse source sends SM_WAREHOUSE_UPDATE_ITEM (deferred; use SM_CUBE_UPDATE as fallback).
+			}
 			// Java parity: SM_CUBE_UPDATE.cubeSize after split.
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-			// Java parity: destStorage.add(newItem) -> SM_INVENTORY_ADD_ITEM with ITEM_COLLECT default.
-			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(newItem, template));
+
+			// Java parity: sendStorageUpdatePacket for destination storage.
+			if (packet.DestinationStorageType == 0 /* cube */)
+				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(newItem, template));
+			else
+				await SendPacketAsync(new SmWarehouseAddItem(
+					packet.DestinationStorageType,
+					[new SmWarehouseAddItem.WarehousePacketItem(newItem, template)],
+					SmInventoryAddItem.ItemCollect));
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 		}
 		else if (targetItem.ItemId == sourceItem.ItemId)
 		{
