@@ -2665,7 +2665,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 			else
 			{
-				// Java parity: warehouse source sends SM_WAREHOUSE_UPDATE_ITEM (deferred; use SM_CUBE_UPDATE as fallback).
+				// Java parity: warehouse source sends SM_WAREHOUSE_UPDATE_ITEM(player, item, storageType, DEC_ITEM_SPLIT).
+				await SendPacketAsync(new SmWarehouseUpdateItem(
+					sourceItem, template, packet.SourceStorageType, SmInventoryUpdateItem.DecreaseItemSplit));
 			}
 			// Java parity: SM_CUBE_UPDATE.cubeSize after split.
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));

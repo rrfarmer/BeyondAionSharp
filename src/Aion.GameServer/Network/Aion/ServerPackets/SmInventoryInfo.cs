@@ -532,6 +532,9 @@ public sealed class SmInventoryInfo : GameServerPacket
 		WriteBlob(buffer, 0x08, payload => payload.WriteD(0));
 	}
 
+	internal static void WriteGeneralInfoBlobForWarehouse(PacketBuffer buffer, InventoryItem item, ItemTemplateSummary template)
+		=> WriteGeneralInfoBlob(buffer, item, template, 0);
+
 	private static void WriteGeneralInfoBlob(
 		PacketBuffer buffer,
 		InventoryItem item,

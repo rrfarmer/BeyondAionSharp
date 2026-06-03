@@ -8804,6 +8804,29 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmWarehouseUpdateItem_SerializesObjectIdTypeAndUpdateType()
+	{
+		// Java parity: SM_WAREHOUSE_UPDATE_ITEM.writeImpl — object ID, warehouse type, GENERAL_INFO blob, sendable update type.
+		// DescriptionId=0 to avoid L10n embedded-null string edge case in ReadS; name=null/empty is valid.
+		var template = new ItemTemplateSummary(200001, "wh_item", 0, 0, 1, "MATERIAL", "NORMAL", "COMMON", "ALL", 1, 0, 0);
+		var item = new InventoryItem { ObjectId = 6001, ItemId = 200001, Count = 5, Location = 1 };
+		const int regularWarehouse = 1;
+
+		var payload = SerializeUnencryptedPayload(
+			new SmWarehouseUpdateItem(item, template, regularWarehouse, SmInventoryUpdateItem.DecreaseItemSplit));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(6001, reader.ReadD());       // objectId
+		Assert.Equal(1, (int)reader.ReadC());     // warehouseType = regular warehouse
+		reader.ReadS();                           // name (null/empty; encoding tested elsewhere)
+		var blobSize = reader.ReadH();
+		Assert.True(blobSize > 0);               // GENERAL_INFO blob present
+		reader.ReadB(blobSize);
+		Assert.Equal(SmInventoryUpdateItem.DecreaseItemSplit, reader.ReadH()); // sendable update type
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmDeleteItem_MoveDeleteTypeMatchesJava()
 	{
 		// Java parity: ItemPacketService.ItemDeleteType.MOVE = 0x14.
