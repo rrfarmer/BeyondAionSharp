@@ -620,6 +620,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmQuestionnaire:
 				// Java parity: network/aion/clientpackets/CM_QUESTIONNAIRE.runImpl dispatches HTMLService rewards; deferred until questionnaire rewards are ported.
 				break;
+			case CmGather gather:
+				// Java parity: network/aion/clientpackets/CM_GATHER.runImpl dispatches start/cancel gathering to Gatherable.getController();
+				// deferred until gathering controller and gatherable world objects are ported.
+				break;
 			case CmStartLoot startLoot:
 				await HandleStartLootAsync(startLoot);
 				break;
