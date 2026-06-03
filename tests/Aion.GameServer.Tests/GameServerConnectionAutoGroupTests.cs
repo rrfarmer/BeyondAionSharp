@@ -45,6 +45,36 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.Equal("Auto Group is disabled", ReadMessage(message));
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupWindow105IsJavaNoOp()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		await using var fixture = await ConnectionFixture.CreateAsync(new GameServerOptions(), sentPackets.Add);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(
+			fixture.Connection,
+			new Player
+			{
+				ObjectId = 1002,
+				Name = "NoOpTester",
+				Race = "ELYOS",
+				Level = 50,
+			});
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(105);
+					buffer.WriteC(0);
+				}));
+
+		Assert.Empty(sentPackets);
+	}
+
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
 	{
 		using var buffer = new PacketBuffer();

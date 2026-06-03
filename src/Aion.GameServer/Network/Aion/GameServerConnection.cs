@@ -1555,6 +1555,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(requestPacket);
 				break;
 			}
+			case 105:
+				// Java parity: CM_AUTO_GROUP.runImpl window 105 only contains a commented-out
+				// DredgionRegService.failedEnterDredgion call and has no active side effect.
+				break;
 		}
 	}
 
