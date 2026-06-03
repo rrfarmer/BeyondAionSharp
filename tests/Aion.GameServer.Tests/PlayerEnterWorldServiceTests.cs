@@ -452,6 +452,39 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_UpdatesAllianceMemberLastOnlineAfterPersistenceBandLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		var teammate = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "AllianceMate",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var allianceRuntime = new PlayerAllianceRuntime();
+		allianceRuntime.CreateAlliance(88001, teammate);
+		allianceRuntime.AddMember(88001, player);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world, out _, playerAllianceRuntime: allianceRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		var logoutLastOnline = Assert.IsType<DateTime>(repository.LogoutLastOnline);
+		var logoutMillis = new DateTimeOffset(logoutLastOnline).ToUnixTimeMilliseconds();
+		Assert.Equal(1, repository.SaveLogoutCalls);
+		Assert.Equal(logoutMillis, allianceRuntime.GetMember(88001, player.ObjectId)?.LastOnlineTimeMillis);
+		Assert.Equal(0, allianceRuntime.GetMember(88001, teammate.ObjectId)?.LastOnlineTimeMillis);
+		Assert.False(world.TryGetObject(player.ObjectId, out _));
+	}
+
+	[Fact]
 	public async Task LeaveWorld_RecordsDisabledRepurchaseStateRemovalWithoutMutatingPlayerItems()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
@@ -1310,7 +1343,8 @@ public sealed class PlayerEnterWorldServiceTests
 		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null,
 		FindGroupRecruitmentPlanService? findGroupService = null,
 		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
-		PlayerGroupRuntime? playerGroupRuntime = null)
+		PlayerGroupRuntime? playerGroupRuntime = null,
+		PlayerAllianceRuntime? playerAllianceRuntime = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -1329,7 +1363,8 @@ public sealed class PlayerEnterWorldServiceTests
 			repurchaseStateRemovePlanObserver,
 			findGroupService,
 			findGroupLogoutCleanupPlanObserver,
-			playerGroupRuntime);
+			playerGroupRuntime,
+			playerAllianceRuntime);
 	}
 
 	private static PlayerEnterWorldService CreateService(

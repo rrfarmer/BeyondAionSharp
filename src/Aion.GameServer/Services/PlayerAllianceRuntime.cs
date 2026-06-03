@@ -328,6 +328,25 @@ public sealed class PlayerAllianceRuntime
 				&& descriptor.IsFull(members.Count);
 	}
 
+	public bool UpdateMemberLastOnlineTime(Player player, DateTimeOffset now)
+	{
+		// Java parity: model/team/alliance/PlayerAllianceService.onPlayerLogout updates PlayerAllianceMember.lastOnlineTime before PlayerDisconnectedEvent.
+		lock (_sync)
+		{
+			var allianceId = player.CurrentAllianceSnapshot?.AllianceId
+				?? (player.TeamMembership == PlayerTeamMembership.Alliance ? player.CurrentTeamId : 0);
+			if (allianceId == 0 || !_membersByAllianceId.TryGetValue(allianceId, out var members))
+				return false;
+
+			var member = members.FirstOrDefault(candidate => candidate.ObjectId == player.ObjectId);
+			if (member == null)
+				return false;
+
+			member.UpdateLastOnlineTime(now);
+			return true;
+		}
+	}
+
 	public bool IsViceCaptain(int allianceId, int objectId)
 	{
 		// Java parity: model/team/alliance/PlayerAlliance.isViceCaptain.

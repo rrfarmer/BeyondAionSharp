@@ -24,6 +24,7 @@ public sealed class PlayerEnterWorldService
 	private readonly FindGroupRecruitmentPlanService? _findGroupService;
 	private readonly Action<FindGroupLogoutCleanupPlan>? _findGroupLogoutCleanupPlanObserver;
 	private readonly PlayerGroupRuntime? _playerGroupRuntime;
+	private readonly PlayerAllianceRuntime? _playerAllianceRuntime;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
@@ -39,7 +40,8 @@ public sealed class PlayerEnterWorldService
 		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null,
 		FindGroupRecruitmentPlanService? findGroupService = null,
 		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
-		PlayerGroupRuntime? playerGroupRuntime = null)
+		PlayerGroupRuntime? playerGroupRuntime = null,
+		PlayerAllianceRuntime? playerAllianceRuntime = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -52,6 +54,7 @@ public sealed class PlayerEnterWorldService
 		_findGroupService = findGroupService;
 		_findGroupLogoutCleanupPlanObserver = findGroupLogoutCleanupPlanObserver;
 		_playerGroupRuntime = playerGroupRuntime;
+		_playerAllianceRuntime = playerAllianceRuntime;
 		_logger = logger;
 	}
 
@@ -818,6 +821,7 @@ public sealed class PlayerEnterWorldService
 		// after the immediate logout persistence band; PlayerGroupService updates the member's
 		// last-online timestamp before PlayerDisconnectedEvent fanout.
 		_playerGroupRuntime?.UpdateMemberLastOnlineTime(player, new DateTimeOffset(lastOnline));
+		_playerAllianceRuntime?.UpdateMemberLastOnlineTime(player, new DateTimeOffset(lastOnline));
 	}
 
 	private void RecordFindGroupLogoutCleanup(Player player)

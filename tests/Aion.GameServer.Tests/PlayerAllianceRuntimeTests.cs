@@ -102,6 +102,35 @@ public sealed class PlayerAllianceRuntimeTests
 	}
 
 	[Fact]
+	public void UpdateMemberLastOnlineTime_UpdatesAllianceMemberLikeJavaLogout()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", worldId: 210010000);
+		var member = CreatePlayer(1002, "Member", worldId: 220010000);
+		runtime.CreateAlliance(88001, leader);
+		runtime.AddMember(88001, member);
+		var now = DateTimeOffset.FromUnixTimeMilliseconds(456_789);
+
+		var updated = runtime.UpdateMemberLastOnlineTime(member, now);
+
+		Assert.True(updated);
+		Assert.Equal(456_789, runtime.GetMember(88001, 1002)?.LastOnlineTimeMillis);
+		Assert.Equal(0, runtime.GetMember(88001, 1001)?.LastOnlineTimeMillis);
+	}
+
+	[Fact]
+	public void UpdateMemberLastOnlineTime_ReturnsFalseForPlayerWithoutRuntimeAlliance()
+	{
+		var runtime = new PlayerAllianceRuntime();
+		var player = CreatePlayer(1001, "Solo", worldId: 210010000);
+
+		var updated = runtime.UpdateMemberLastOnlineTime(player, DateTimeOffset.FromUnixTimeMilliseconds(456_789));
+
+		Assert.False(updated);
+		Assert.Null(runtime.GetMember(88001, 1001));
+	}
+
+	[Fact]
 	public void RemoveMemberWithLeaveWorkflow_DisbandRemovesFindGroupAllianceRecruitmentLikeJava()
 	{
 		var findGroupService = new FindGroupRecruitmentPlanService();
