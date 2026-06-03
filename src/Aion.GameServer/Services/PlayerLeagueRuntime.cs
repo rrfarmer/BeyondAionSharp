@@ -200,6 +200,47 @@ public sealed class PlayerLeagueRuntime
 		}
 	}
 
+	public PlayerLeagueAllianceInfoFanoutPlan? CreateAllianceInfoFanout(
+		int leagueId,
+		int allianceId,
+		int messageId,
+		string message,
+		PlayerAllianceRuntime allianceRuntime)
+	{
+		// Java parity: SM_ALLIANCE_INFO(alliance, messageId, message) includes league rows when alliance.getLeague() is not null.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(leagueId, 0);
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByLeagueId.TryGetValue(leagueId, out var members)
+				|| !_leagueIdByAllianceId.TryGetValue(allianceId, out var allianceLeagueId)
+				|| allianceLeagueId != leagueId)
+				return null;
+
+			var sortedAllianceIds = GetSortedAllianceIds(members);
+			var intents = new List<PlayerLeaguePacketIntent>();
+			var sequence = 0;
+			AddAllianceInfoIntents(
+				intents,
+				ref sequence,
+				allianceId,
+				messageId,
+				message,
+				leagueId,
+				sortedAllianceIds,
+				allianceRuntime);
+
+			return new PlayerLeagueAllianceInfoFanoutPlan(
+				leagueId,
+				allianceId,
+				messageId,
+				message,
+				sortedAllianceIds,
+				intents);
+		}
+	}
+
 	public PlayerLeagueLeaderChangeTimeoutPlan? CreateAllianceLeaderChangeTimeoutPlan(
 		int leagueId,
 		int changedAllianceId,
@@ -1136,6 +1177,14 @@ public sealed record PlayerLeagueBroadcastPlan(
 	int LeagueId,
 	int? SkippedAllianceId,
 	int? SkippedPlayerObjectId,
+	IReadOnlyList<int> AllianceIdsByPosition,
+	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
+
+public sealed record PlayerLeagueAllianceInfoFanoutPlan(
+	int LeagueId,
+	int AllianceId,
+	int MessageId,
+	string Message,
 	IReadOnlyList<int> AllianceIdsByPosition,
 	IReadOnlyList<PlayerLeaguePacketIntent> PacketIntents);
 

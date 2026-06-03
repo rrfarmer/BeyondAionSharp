@@ -9586,15 +9586,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!_playerAllianceRuntime.HasMember(alliance.AllianceId, eventPlayerObjectId))
 			throw CreateInvalidTeamMemberException(player, eventPlayerObjectId);
 
+		var eventPlayer = _playerAllianceRuntime.GetMember(alliance.AllianceId, eventPlayerObjectId)?.Player;
 		var plan = _playerAllianceRuntime.AssignViceCaptain(alliance.AllianceId, eventPlayerObjectId, assignType);
 		if (plan == null)
 			return null;
 
-		if (plan.SystemMessageIntent != null)
-			await SendAllianceViceCaptainPacketAsync(plan.SystemMessageIntent.RecipientObjectId, plan.SystemMessageIntent.Message, cancellationToken);
-
-		foreach (var intent in plan.AllianceInfoIntents)
-			await SendAllianceViceCaptainPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		await DispatchAllianceViceCaptainAssignmentAsync(
+			alliance,
+			plan,
+			assignType,
+			eventPlayer?.Name ?? string.Empty,
+			cancellationToken);
 
 		return plan;
 	}
@@ -9785,24 +9787,70 @@ public sealed class GameServerConnection : BaseClientConnection
 			PlayerAllianceAssignType.DemoteCaptainToViceCaptain);
 		if (demoteOldLeaderPlan != null)
 		{
-			foreach (var intent in demoteOldLeaderPlan.AllianceInfoIntents)
-				await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
-
-			if (leagueId != 0 && demoteOldLeaderPlan.WouldBroadcastLeague)
-			{
-				var demoteLeagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfo(
-					leagueId,
-					skippedPlayerObjectId: null,
-					_playerAllianceRuntime);
-				if (demoteLeagueBroadcastPlan != null)
-				{
-					foreach (var intent in demoteLeagueBroadcastPlan.PacketIntents.OrderBy(intent => intent.Sequence))
-						await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
-				}
-			}
+			var oldLeader = _playerAllianceRuntime.GetMember(alliance.AllianceId, plan.OldLeaderObjectId)?.Player;
+			await DispatchAllianceViceCaptainAssignmentAsync(
+				alliance,
+				demoteOldLeaderPlan,
+				PlayerAllianceAssignType.DemoteCaptainToViceCaptain,
+				oldLeader?.Name ?? string.Empty,
+				cancellationToken);
 		}
 
 		return plan;
+	}
+
+	private async Task DispatchAllianceViceCaptainAssignmentAsync(
+		PlayerAllianceSnapshot alliance,
+		PlayerAllianceViceCaptainAssignmentPlan plan,
+		PlayerAllianceAssignType assignType,
+		string eventPlayerName,
+		CancellationToken cancellationToken)
+	{
+		if (plan.SystemMessageIntent != null)
+			await SendAllianceViceCaptainPacketAsync(plan.SystemMessageIntent.RecipientObjectId, plan.SystemMessageIntent.Message, cancellationToken);
+
+		var leagueInfoPlan = alliance.LeagueId != 0 && plan.WouldBroadcastLeague
+			? _playerLeagueRuntime.CreateAllianceInfoFanout(
+				alliance.LeagueId,
+				alliance.AllianceId,
+				GetAllianceViceCaptainMessageId(assignType),
+				eventPlayerName,
+				_playerAllianceRuntime)
+			: null;
+
+		if (leagueInfoPlan != null)
+		{
+			foreach (var intent in leagueInfoPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+				await SendAllianceViceCaptainPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
+		else
+		{
+			foreach (var intent in plan.AllianceInfoIntents)
+				await SendAllianceViceCaptainPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+		}
+
+		if (alliance.LeagueId != 0 && plan.WouldBroadcastLeague)
+		{
+			var leagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfo(
+				alliance.LeagueId,
+				skippedPlayerObjectId: null,
+				_playerAllianceRuntime);
+			if (leagueBroadcastPlan != null)
+			{
+				foreach (var intent in leagueBroadcastPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+					await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+			}
+		}
+	}
+
+	private static int GetAllianceViceCaptainMessageId(PlayerAllianceAssignType assignType)
+	{
+		return assignType switch
+		{
+			PlayerAllianceAssignType.Promote => PlayerAllianceInfoPacketPlan.ViceCaptainPromoteMessageId,
+			PlayerAllianceAssignType.Demote => PlayerAllianceInfoPacketPlan.ViceCaptainDemoteMessageId,
+			_ => 0,
+		};
 	}
 
 	private async Task DispatchAllianceLeaderChangeSystemMessagesAsync(
