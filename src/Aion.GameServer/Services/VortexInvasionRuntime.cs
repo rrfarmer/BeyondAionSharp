@@ -149,7 +149,8 @@ public sealed class VortexInvasionRuntime
 					WasInInvasionWorld: wasInInvasionWorld,
 					JavaSource: "services/VortexService.removeInvaderPlayer -> services/vortex/Invasion.kickPlayer",
 					SystemMessages: systemMessages,
-					TeleportResult: teleportResult);
+					TeleportResult: teleportResult,
+					PassedPlayerSyncPlan: CreatePassedPlayerSyncPlan(state));
 			}
 		}
 
@@ -188,7 +189,8 @@ public sealed class VortexInvasionRuntime
 					RemovedPassedPlayer: removedPassedPlayer,
 					WasOnline: player.IsOnline,
 					JavaSource: "services/VortexService.removeDefenderPlayer -> services/vortex/Invasion.kickPlayer",
-					SystemMessages: systemMessages);
+					SystemMessages: systemMessages,
+					PassedPlayerSyncPlan: CreatePassedPlayerSyncPlan(state));
 			}
 		}
 
@@ -217,6 +219,17 @@ public sealed class VortexInvasionRuntime
 		state = new VortexInvasionState(location.Id, location.HomePoint, location.StartPoint);
 		_activeInvasions.Add(location.Id, state);
 		return state;
+	}
+
+	private static VortexPassedPlayerSyncPlan CreatePassedPlayerSyncPlan(VortexInvasionState state)
+	{
+		// Java parity: controllers/RVController.syncPassed(true) sets usedEntries to
+		// passedPlayers.size(), then RiftInformer sends SM_RIFT_ANNOUNCE entry updates.
+		return new VortexPassedPlayerSyncPlan(
+			state.LocationId,
+			state.PassedPlayerObjectIds.Count,
+			UsePassedPlayerCount: true,
+			"services/vortex/Invasion.kickPlayer -> controllers/RVController.syncPassed(true)");
 	}
 
 	private sealed class VortexInvasionState(
@@ -262,7 +275,8 @@ public sealed record VortexInvaderRemovalResult(
 	bool WasInInvasionWorld,
 	string JavaSource,
 	IReadOnlyList<SmSystemMessage>? SystemMessages = null,
-	PlayerTeleportResult? TeleportResult = null);
+	PlayerTeleportResult? TeleportResult = null,
+	VortexPassedPlayerSyncPlan? PassedPlayerSyncPlan = null);
 
 public sealed record VortexInvaderJoinResult(
 	bool Added,
@@ -279,4 +293,11 @@ public sealed record VortexDefenderRemovalResult(
 	bool RemovedPassedPlayer,
 	bool WasOnline,
 	string JavaSource,
-	IReadOnlyList<SmSystemMessage>? SystemMessages = null);
+	IReadOnlyList<SmSystemMessage>? SystemMessages = null,
+	VortexPassedPlayerSyncPlan? PassedPlayerSyncPlan = null);
+
+public sealed record VortexPassedPlayerSyncPlan(
+	int LocationId,
+	int PassedPlayerCount,
+	bool UsePassedPlayerCount,
+	string JavaSource);

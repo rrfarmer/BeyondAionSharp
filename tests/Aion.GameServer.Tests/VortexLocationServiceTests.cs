@@ -87,6 +87,7 @@ public sealed class VortexLocationServiceTests
 			Assert.True(removal.WasInInvasionWorld);
 			Assert.Empty(removal.SystemMessages ?? []);
 			Assert.Null(removal.TeleportResult);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 			Assert.False(runtime.IsInvaderPlayer(invader));
 			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
 			Assert.Empty(snapshot.InvaderObjectIds);
@@ -126,6 +127,7 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal(location.HomePoint.X, invader.Movement.TargetX);
 			Assert.Equal(location.HomePoint.Y, invader.Movement.TargetY);
 			Assert.Equal(location.HomePoint.Z, invader.Movement.TargetZ);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 		}
 		finally
 		{
@@ -156,6 +158,7 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal([1401452], (removal.SystemMessages ?? []).Select(message => message.MessageId).ToArray());
 			Assert.Null(removal.TeleportResult);
 			Assert.Equal(originalPosition, invader.Position);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 		}
 		finally
 		{
@@ -188,6 +191,7 @@ public sealed class VortexLocationServiceTests
 			Assert.True(removal.WasOnline);
 			Assert.Equal([1401476], (removal.SystemMessages ?? []).Select(message => message.MessageId).ToArray());
 			Assert.Equal(originalPosition, defender.Position);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 			Assert.False(runtime.IsDefenderPlayer(defender));
 			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
 			Assert.Empty(snapshot.DefenderObjectIds);
@@ -217,7 +221,38 @@ public sealed class VortexLocationServiceTests
 			Assert.True(removal.Removed);
 			Assert.False(removal.WasOnline);
 			Assert.Empty(removal.SystemMessages ?? []);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 			Assert.False(runtime.IsDefenderPlayer(defender));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RemoveInvaderPlayer_PassedSyncPlanUsesRemainingPassedPlayerCountLikeJavaSyncPassedTrue()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-passed-sync-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var removedInvader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+			var remainingPasser = CreatePlayer(1003, isOnline: true, location.InvasionWorldId);
+			runtime.StartInvasion(location);
+			Assert.True(runtime.AddInvader(location.Id, removedInvader));
+			Assert.True(runtime.RecordPortalPass(location, remainingPasser));
+
+			var removal = runtime.RemoveInvaderPlayer(removedInvader);
+
+			Assert.True(removal.Removed);
+			Assert.True(removal.RemovedPassedPlayer);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 1);
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.Equal([1003], snapshot.PassedPlayerObjectIds);
 		}
 		finally
 		{
@@ -261,6 +296,17 @@ public sealed class VortexLocationServiceTests
 		{
 			DeleteTempDirectory(tempPath);
 		}
+	}
+
+	private static void AssertPassedSyncPlan(VortexPassedPlayerSyncPlan? plan, int locationId, int passedPlayerCount)
+	{
+		var syncPlan = Assert.IsType<VortexPassedPlayerSyncPlan>(plan);
+		Assert.Equal(locationId, syncPlan.LocationId);
+		Assert.Equal(passedPlayerCount, syncPlan.PassedPlayerCount);
+		Assert.True(syncPlan.UsePassedPlayerCount);
+		Assert.Equal(
+			"services/vortex/Invasion.kickPlayer -> controllers/RVController.syncPassed(true)",
+			syncPlan.JavaSource);
 	}
 
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(string tempPath)
