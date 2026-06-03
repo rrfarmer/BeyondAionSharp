@@ -543,8 +543,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmOpenStaticDoor:
 				// Java parity: network/aion/clientpackets/CM_OPEN_STATICDOOR.runImpl dispatches StaticDoorService.openStaticDoor; deferred.
 				break;
-			case CmWindstream:
-				// Java parity: network/aion/clientpackets/CM_WINDSTREAM.runImpl mutates flight state and sends emotion/windstream packets; deferred.
+			case CmWindstream windstream:
+				if (_activePlayer != null)
+					await HandleWindstreamAsync(_activePlayer, windstream);
 				break;
 			case CmLegionWarehouseKinah:
 				// Java parity: network/aion/clientpackets/CM_LEGION_WH_KINAH.runImpl mutates player/legion Kinah and history; deferred.
@@ -12560,6 +12561,59 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: network/aion/clientpackets/CM_MOVE_IN_AIR.runImpl position update.
 		player.Movement.FlightDistance = packet.Distance;
 		player.Position = new global::Aion.GameServer.World.WorldPosition(packet.WorldId, packet.X, packet.Y, packet.Z, packet.Heading);
+	}
+
+	private async Task HandleWindstreamAsync(Player player, CmWindstream packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_WINDSTREAM.runImpl.
+		switch (packet.State)
+		{
+			case 0:
+				// Java parity: player.unsetPlayerMode(PlayerMode.RIDE).
+				player.IsInRideMode = false;
+				break;
+			case 1: // entering windstream
+				// Java parity: isUsingFlightTransporterOrWindstream() || !isFlying() guard.
+				if ((player.FlightPathType != null && player.IsInState(PlayerCreatureState.Flying)) || !player.IsFlying())
+					return;
+				player.FlightPathType = PlayerFlightPathType.Windstream;
+				player.SetCreatureState(PlayerCreatureState.Active, enabled: false);
+				player.SetCreatureState(PlayerCreatureState.Gliding, enabled: false);
+				player.SetCreatureState(PlayerCreatureState.Flying, enabled: true);
+				player.UnsetFlyState(PlayerFlyState.Gliding);
+				player.SetFlyState(PlayerFlyState.Flying);
+				await BroadcastEmotionAsync(player, new SmEmotion(player, EmotionType.Windstream, packet.TeleportId, packet.Distance));
+				player.TriggerFpRestore();
+				// QuestEngine.onEnterWindStream deferred until quest engine is ported.
+				return; // don't send SmWindstream for state 1
+			case 2: // leaving windstream (gliding)
+			case 3: // leaving windstream
+				if (!player.IsUsingFlightPath(PlayerFlightPathType.Windstream))
+					return;
+				player.SetCreatureState(PlayerCreatureState.Flying, enabled: false);
+				player.SetCreatureState(PlayerCreatureState.Active, enabled: true);
+				player.UnsetFlyState(PlayerFlyState.Flying);
+				player.UnsetFlyState(PlayerFlyState.Gliding);
+				if (packet.State == 2)
+					player.StartGliding(); // Java: FlyController.switchToGliding — return value ignored per Java source
+				await UpdatePlayerStatsAndSpeedVisuallyAsync(player);
+				player.FlightPathType = null;
+				await BroadcastEmotionAsync(player, new SmEmotion(player,
+					packet.State == 2 ? EmotionType.WindstreamEnd : EmotionType.WindstreamExit));
+				// SM_TRANSFORM if player is transformed: deferred until transform system is ported.
+				break;
+			case 4:
+				break;
+			case 7: // start boost
+			case 8: // end boost
+				await BroadcastEmotionAsync(player, new SmEmotion(player,
+					packet.State == 7 ? EmotionType.WindstreamStartBoost : EmotionType.WindstreamEndBoost));
+				break;
+			default:
+				_logger.LogWarning("Unknown Windstream state #{State} from player {ObjectId}", packet.State, player.ObjectId);
+				return;
+		}
+		await SendPacketAsync(new SmWindstream(packet.State, 1));
 	}
 
 	private async Task HandleReadExpressMailAsync(Player player, CmReadExpressMail packet)
