@@ -99,6 +99,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<VortexDefenderInvitationResponseConsumptionReport>? _vortexDefenderInvitationResponseObserver;
 	private readonly Action<VortexDefenderAcceptanceRuntimeObserverReport>? _vortexDefenderAcceptanceObserver;
 	private readonly VortexInvasionRuntime? _vortexInvasionRuntime;
+	private readonly Func<int, Player?>? _worldPlayerLookup;
 	private readonly FindGroupConnectionClientActionCompositionPlanService? _findGroupConnectionClientActionCompositionPlanService;
 	private readonly FindGroupConnectionBoundaryDispatchAdapterService? _findGroupConnectionBoundaryDispatchAdapterService;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
@@ -192,6 +193,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<VortexDefenderInvitationResponseConsumptionReport>? vortexDefenderInvitationResponseObserver = null,
 		Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexDefenderAcceptanceObserver = null,
 		VortexInvasionRuntime? vortexInvasionRuntime = null,
+		Func<int, Player?>? worldPlayerLookup = null,
 		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
 		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
@@ -263,6 +265,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_vortexDefenderInvitationResponseObserver = vortexDefenderInvitationResponseObserver;
 		_vortexDefenderAcceptanceObserver = vortexDefenderAcceptanceObserver;
 		_vortexInvasionRuntime = vortexInvasionRuntime;
+		_worldPlayerLookup = worldPlayerLookup;
 		_findGroupConnectionClientActionCompositionPlanService = findGroupConnectionClientActionCompositionPlanService;
 		_findGroupConnectionBoundaryDispatchAdapterService = findGroupConnectionBoundaryDispatchAdapterService;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
@@ -10490,11 +10493,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: services/VortexService.removeDefenderPlayer iterates activeInvasions to
 		// find the first invasion containing the defender; use the same lookup for locationId.
 		var locationId = _vortexInvasionRuntime?.FindDefenderLocationId(responder.ObjectId) ?? 0;
+		VortexDefenderAcceptanceInputs? resolvedInputs = null;
+		if (_vortexInvasionRuntime != null && _worldPlayerLookup != null)
+		{
+			var snapshot = locationId != 0
+				? _vortexInvasionRuntime.GetSnapshot(locationId)
+				: null;
+			resolvedInputs = new VortexDefenderAcceptanceInputResolverService().Resolve(snapshot, _worldPlayerLookup);
+		}
 		var observerReport = new VortexDefenderAcceptanceRuntimeObserverService().Observe(
 			locationId,
 			responder,
 			packet.QuestionId,
-			packet.Response);
+			packet.Response,
+			existingDefenders: resolvedInputs?.ExistingDefenders,
+			defenderAlliance: resolvedInputs?.DefenderAlliance);
 		_vortexDefenderAcceptanceObserver?.Invoke(observerReport);
 		_vortexDefenderInvitationResponseObserver?.Invoke(observerReport.TransitionReport.ConsumptionReport);
 	}

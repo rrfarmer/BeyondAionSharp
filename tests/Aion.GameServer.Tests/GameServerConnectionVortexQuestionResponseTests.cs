@@ -120,6 +120,75 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_VortexDefenderAcceptanceObserverUsesResolvedDefenderInputsWhenRuntimeAndLookupAvailable()
+	{
+		const int locationId = 1;
+		const int existingDefenderId = 1001;
+		var acceptanceReports = new List<VortexDefenderAcceptanceRuntimeObserverReport>();
+		var responder = CreatePlayer();
+		var existingDefender = new Player
+		{
+			ObjectId = existingDefenderId,
+			Name = "ExistingDefender",
+			Race = "ELYOS",
+			PlayerClass = "WARRIOR",
+			Gender = "MALE",
+			IsOnline = true,
+			TeamMembership = PlayerTeamMembership.Alliance,
+			Position = new WorldPosition(220050000, 1, 2, 3, 0),
+		};
+		var runtime = new VortexInvasionRuntime();
+		var fakeLocation = new VortexLocationSummary(
+			locationId, DefendersRace: "ELYOS", InvadersRace: "ASMODIANS",
+			HomePoint: new WorldPosition(120080000, 559.4f, 207.8f, 93.5f, 0),
+			ResurrectionPoint: new WorldPosition(220050000, 2237.3f, 2801.5f, 73.3f, 0),
+			StartPoint: new WorldPosition(220050000, 2242.0f, 2797.0f, 75.4f, 0));
+		runtime.StartInvasion(fakeLocation);
+		// existingDefender is already in the invasion; responder is the new accepter not yet in runtime.
+		Assert.True(runtime.AddDefender(locationId, existingDefender));
+		// Both defenders added to runtime; FindDefenderLocationId resolves locationId for the responder.
+		Assert.True(runtime.AddDefender(locationId, responder));
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: responder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+			ExistingDefenderObjectIds: [existingDefenderId]);
+		Assert.True(responder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(
+				responder.ObjectId,
+				QuestionResponseRequestKind.VortexDefenderInvitation,
+				pendingRequest)));
+		var players = new Dictionary<int, Player>
+		{
+			[existingDefenderId] = existingDefender,
+			[responder.ObjectId] = responder,
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(
+			vortexAcceptanceObserver: acceptanceReports.Add,
+			vortexInvasionRuntime: runtime,
+			worldPlayerLookup: id => players.GetValueOrDefault(id));
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			responder,
+			CreateQuestionResponse(SmQuestionWindow.VortexDefenderInvitation, response: 7));
+
+		var report = Assert.Single(acceptanceReports);
+		Assert.True(report.Accepted);
+		Assert.Equal(locationId, report.LocationId);
+		// The resolver sees both existing defenders (1001, 1004) from the runtime snapshot,
+		// so it derives existingDefenders=[1001, 1004] and Open alliance for 2 defenders.
+		// Since the responder (1004) is already in existingDefenders, the participant report
+		// marks AlreadyParticipant and keeps before/after equal — the resolver inputs reached the observer.
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.AlreadyParticipant, report.ParticipantStatus);
+		Assert.False(report.WouldRecordParticipant);
+		// before/after reflect the resolver-derived defender ids (not the pending request list)
+		Assert.True(report.DefenderObjectIdsBefore.Contains(existingDefenderId));
+		Assert.True(report.DefenderObjectIdsBefore.Contains(responder.ObjectId));
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_VortexDefenderAcceptanceObserverUsesRuntimeLocationIdWhenAvailable()
 	{
 		const int expectedLocationId = 1;
@@ -243,7 +312,8 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 		public static async Task<TestConnectionPair> CreateAsync(
 			Action<VortexDefenderInvitationResponseConsumptionReport>? vortexReportObserver = null,
 			Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexAcceptanceObserver = null,
-			VortexInvasionRuntime? vortexInvasionRuntime = null)
+			VortexInvasionRuntime? vortexInvasionRuntime = null,
+			Func<int, Player?>? worldPlayerLookup = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -267,6 +337,7 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 					vortexDefenderInvitationResponseObserver: vortexReportObserver,
 					vortexDefenderAcceptanceObserver: vortexAcceptanceObserver,
 					vortexInvasionRuntime: vortexInvasionRuntime,
+					worldPlayerLookup: worldPlayerLookup,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}
