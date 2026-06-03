@@ -63,6 +63,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
 	private readonly FindGroupConnectionClientActionCompositionPlanService? _findGroupConnectionClientActionCompositionPlanService;
 	private readonly FindGroupConnectionBoundaryDispatchAdapterService? _findGroupConnectionBoundaryDispatchAdapterService;
+	private readonly VortexInvasionRuntime? _vortexInvasionRuntime;
 	private readonly ConcurrentDictionary<string, GameServerConnection> _connections = new();
 	private readonly ConcurrentDictionary<int, GameServerConnection> _playerConnections = new();
 	private long _nextClientId;
@@ -111,7 +112,8 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
 		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null,
 		WorldNpcSpawnService? worldNpcSpawnService = null,
-		InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null)
+		InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null,
+		VortexInvasionRuntime? vortexInvasionRuntime = null)
 		: base(
 			logger,
 			"Aion Game Client Server",
@@ -164,6 +166,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
 		_findGroupConnectionClientActionCompositionPlanService = findGroupConnectionClientActionCompositionPlanService;
 		_findGroupConnectionBoundaryDispatchAdapterService = findGroupConnectionBoundaryDispatchAdapterService;
+		_vortexInvasionRuntime = vortexInvasionRuntime;
 	}
 
 	public IPEndPoint? LocalEndPoint => _listener?.LocalEndpoint as IPEndPoint;
@@ -221,7 +224,10 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				playerAllianceInviteRequestService: _playerAllianceInviteRequestService,
 				findGroupConnectionClientActionCompositionPlanService: _findGroupConnectionClientActionCompositionPlanService,
 				findGroupConnectionBoundaryDispatchAdapterService: _findGroupConnectionBoundaryDispatchAdapterService,
-				emptyInstanceCheckerService: _emptyInstanceCheckerService);
+				emptyInstanceCheckerService: _emptyInstanceCheckerService,
+				vortexInvasionRuntime: _vortexInvasionRuntime,
+				worldPlayerLookup: _world == null ? null : id => _world.TryGetObject(id, out var obj) && obj is Player p ? p : null,
+				defenderAcceptanceVortexLocationService: _vortexLocationService);
 			_connections[clientId] = connection;
 			await connection.RunAsync();
 		}
