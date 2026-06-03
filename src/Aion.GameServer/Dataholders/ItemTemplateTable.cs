@@ -238,23 +238,26 @@ public sealed record ItemTemplateSummary(
 
 	public bool IsTwoHandWeapon => TwoHandWeaponGroups.Contains(ItemGroup);
 
-	// Java parity: Item.isTradeable() also checks !isSoulBound()
-	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1) && !IsSoulBound;
+	// Java parity: ItemTemplate.isTradeable() = mask bit only (no soulbound guard at template level).
+	// Note: Item.isTradeable() also checks !item.isSoulBound() (runtime instance state).
+	// C# ItemTemplateSummary maps to ItemTemplate; runtime soulbound checks use InventoryItem.IsSoulBound.
+	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
 
 	// Java parity: model/items/ItemMask.*
-	// Note: Item.isSellable() does NOT check !isSoulBound() — mask bit only
 	public bool IsSellable => (Mask & SellableMask) == SellableMask;
+	// Java parity: ItemTemplate has no corresponding isStorableIn* methods.
+	// Item.isStorableInAccWarehouse/isStorableInLegWarehouse add !isSoulBound() at runtime instance level.
+	// ItemTemplateSummary provides template-level mask bits; runtime soulbound checks use InventoryItem.IsSoulBound.
 	public bool IsStorableInWarehouse => (Mask & StorableInWhMask) == StorableInWhMask;
-	// Java parity: Item.isStorableInAccWarehouse() also checks !isSoulBound()
-	public bool IsStorableInAccountWarehouse => (Mask & StorableInAwhMask) == StorableInAwhMask && !IsSoulBound;
-	// Java parity: Item.isStorableInLegWarehouse() also checks !isSoulBound()
-	public bool IsStorableInLegionWarehouse => (Mask & StorableInLwhMask) == StorableInLwhMask && !IsSoulBound;
+	public bool IsStorableInAccountWarehouse => (Mask & StorableInAwhMask) == StorableInAwhMask;
+	public bool IsStorableInLegionWarehouse => (Mask & StorableInLwhMask) == StorableInLwhMask;
 	public bool IsRemovedOnLogout => (Mask & RemoveLogoutMask) == RemoveLogoutMask;
 	public bool CanCompositeWeapon => (Mask & CanCompositeWeaponMask) == CanCompositeWeaponMask;
 	public bool CanSplit => (Mask & CanSplitMask) == CanSplitMask;
 	public bool IsDeletable => (Mask & DeletableMask) == DeletableMask;
-	// Java parity: Item.isLegionTradeable() also checks !isSoulBound()
-	public bool IsLegionTradeable => (Mask & LegionTradeableMask) == LegionTradeableMask && !IsSoulBound;
+	// Java parity: ItemTemplate has no isLegionTradeable(). Item.isLegionTradeable() adds !isSoulBound() at runtime.
+	// Template-level mask bit only; runtime soulbound checks use InventoryItem.IsSoulBound.
+	public bool IsLegionTradeable => (Mask & LegionTradeableMask) == LegionTradeableMask;
 
 	public bool IsLimitOne => (Mask & LimitOneMask) == LimitOneMask;
 

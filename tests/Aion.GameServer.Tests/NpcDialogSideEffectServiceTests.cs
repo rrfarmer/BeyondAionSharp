@@ -106,10 +106,9 @@ public sealed class NpcDialogSideEffectServiceTests
 		var lwhMask = CreateMinimalItemTemplate(mask: (1 << 5)); // STORABLE_IN_LWH only, not soulbound
 		var awhSoulBound = CreateMinimalItemTemplate(mask: (1 << 4) | (1 << 7)); // AWH + SOUL_BOUND
 
-		// IsTradeable has soulbound guard; allMask has SOUL_BOUND set → false
-		Assert.False(allMask.IsTradeable);
-		Assert.True(CreateMinimalItemTemplate(mask: 1 << 1).IsTradeable);        // bit set, not soulbound → true
-		Assert.False(CreateMinimalItemTemplate(mask: (1<<1)|(1<<7)).IsTradeable); // bit set, soulbound → false
+		// IsTradeable = template mask bit only (no soulbound guard at template level).
+		// Java: ItemTemplate.isTradeable() = mask bit; Item.isTradeable() adds !isSoulBound() at runtime.
+		Assert.True(allMask.IsTradeable);      // 1 << 1 — template is tradeable regardless of soul-bound template bit
 		Assert.True(allMask.IsBreakable);      // 1 << 6
 		Assert.True(allMask.IsSoulBound);      // 1 << 7
 		Assert.True(allMask.IsNoEnchant);      // 1 << 9
@@ -119,21 +118,20 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.True(allMask.CanSocketGodstone); // 1 << 10
 		Assert.True(allMask.IsItemDyePermitted); // 1 << 15
 		// Simple mask bits
-		Assert.True(allMask.IsSellable);       // 1 << 2
-		Assert.True(allMask.IsStorableInWarehouse); // 1 << 3 (no soulbound guard)
-		Assert.True(allMask.IsRemovedOnLogout);     // 1 << 8
-		Assert.True(allMask.CanCompositeWeapon);    // 1 << 11
-		Assert.True(allMask.CanSplit);              // 1 << 13
-		Assert.True(allMask.IsDeletable);           // 1 << 14
-		// IsLegionTradeable has soulbound guard; allMask has SOUL_BOUND → false
-		Assert.False(allMask.IsLegionTradeable);
-		Assert.True(CreateMinimalItemTemplate(mask: 1 << 18).IsLegionTradeable); // bit set, not soulbound → true
-		// AWH/LWH storable: mask bit AND !soulBound (Java parity: Item.isStorableInAccWarehouse/isStorableInLegWarehouse)
-		Assert.True(awhMask.IsStorableInAccountWarehouse);   // bit set, not soulbound → true
-		Assert.True(lwhMask.IsStorableInLegionWarehouse);    // bit set, not soulbound → true
-		Assert.False(awhSoulBound.IsStorableInAccountWarehouse); // bit set BUT soulbound → false
-		Assert.False(allMask.IsStorableInAccountWarehouse);  // bit set BUT allMask has SOUL_BOUND → false
-		Assert.False(allMask.IsStorableInLegionWarehouse);   // same
+		Assert.True(allMask.IsSellable);                  // 1 << 2
+		Assert.True(allMask.IsStorableInWarehouse);        // 1 << 3
+		Assert.True(allMask.IsStorableInAccountWarehouse); // 1 << 4 — template mask bit only
+		Assert.True(allMask.IsStorableInLegionWarehouse);  // 1 << 5 — template mask bit only
+		Assert.True(allMask.IsRemovedOnLogout);            // 1 << 8
+		Assert.True(allMask.CanCompositeWeapon);           // 1 << 11
+		Assert.True(allMask.CanSplit);                     // 1 << 13
+		Assert.True(allMask.IsDeletable);                  // 1 << 14
+		Assert.True(allMask.IsLegionTradeable);            // 1 << 18 — template mask bit only
+		// All template-level properties return true when bit is set, regardless of SOUL_BOUND bit.
+		// Runtime soulbound checks use InventoryItem.IsSoulBound (not template mask).
+		Assert.True(awhMask.IsStorableInAccountWarehouse);
+		Assert.True(lwhMask.IsStorableInLegionWarehouse);
+		Assert.True(awhSoulBound.IsStorableInAccountWarehouse); // template bit set; runtime soulbound not checked here
 		// All false for zero mask
 		Assert.False(noMask.IsBreakable);
 		Assert.False(noMask.IsSellable);
@@ -143,8 +141,9 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.False(noMask.IsRemovedOnLogout);
 		Assert.False(noMask.IsDeletable);
 		Assert.False(noMask.IsLegionTradeable);
-		// IsSellable has NO soulbound guard in Java → mask bit only
-		Assert.True(CreateMinimalItemTemplate(mask: (1<<2)|(1<<7)).IsSellable); // sellable + soulbound → still true
+		// All template properties are mask-bit-only; soulbound template bit does NOT gate other properties.
+		Assert.True(CreateMinimalItemTemplate(mask: (1<<2)|(1<<7)).IsSellable); // sellable + soulbound mask → still true
+		Assert.True(CreateMinimalItemTemplate(mask: (1<<1)|(1<<7)).IsTradeable); // tradeable + soulbound mask → still true at template level
 	}
 
 	[Fact]
