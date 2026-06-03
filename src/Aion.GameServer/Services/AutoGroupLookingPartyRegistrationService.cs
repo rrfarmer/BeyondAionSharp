@@ -253,6 +253,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		Action<AutoGroupInstanceRuntimeRegistration>? registerRuntimeInstance = null,
 		DateTimeOffset? readyEnterStartTime = null,
 		Func<AutoGroupInstanceRuntimeRegistration, AutoGroupInstanceRuntimeRegistration>? materializeRuntimeInstance = null,
+		Func<AutoGroupAdditionalRegistrationCleanupIntent, Task>? beforeCleanupWindowDeliveryAsync = null,
 		Func<AutoGroupAdditionalRegistrationCleanupIntent, Task>? afterCleanupWindowDeliveryAsync = null,
 		CancellationToken cancellationToken = default)
 	{
@@ -294,9 +295,21 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			registerRuntimeInstance?.Invoke(runtimeRegistration);
 
 		var sentWindowPackets = 0;
+		HashSet<AutoGroupAdditionalRegistrationCleanupIntent>? observedCleanupIntents = null;
 		foreach (var delivery in windowDeliveries)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
+			var cleanupIntent = cleanupIntents.FirstOrDefault(intent =>
+				intent.MaskId == delivery.MaskId
+				&& intent.WindowId == delivery.WindowId
+				&& intent.NotifiedMemberObjectIds.Contains(delivery.PlayerObjectId));
+			if (cleanupIntent != null && beforeCleanupWindowDeliveryAsync != null)
+			{
+				observedCleanupIntents ??= [];
+				if (observedCleanupIntents.Add(cleanupIntent))
+					await beforeCleanupWindowDeliveryAsync(cleanupIntent);
+			}
+
 			var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(delivery.MaskId);
 			if (autoGroup != null
 				&& await connectionRegistry.SendPacketToPlayerAsync(
@@ -306,12 +319,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				sentWindowPackets++;
 			}
 
-			var cleanupIntent = cleanupIntents.FirstOrDefault(intent =>
-				intent.WouldRecheckQueueForNewMatches
-				&& intent.MaskId == delivery.MaskId
-				&& intent.WindowId == delivery.WindowId
-				&& intent.NotifiedMemberObjectIds.Contains(delivery.PlayerObjectId));
-			if (cleanupIntent != null && afterCleanupWindowDeliveryAsync != null)
+			if (cleanupIntent is { WouldRecheckQueueForNewMatches: true } && afterCleanupWindowDeliveryAsync != null)
 				await afterCleanupWindowDeliveryAsync(cleanupIntent);
 		}
 

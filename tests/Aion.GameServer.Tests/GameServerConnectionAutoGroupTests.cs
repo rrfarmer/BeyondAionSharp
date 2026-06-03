@@ -1012,6 +1012,7 @@ public sealed class GameServerConnectionAutoGroupTests
 	public async Task LeavePlayerWorldAsync_AutoGroupLogoutQueueRecheckCleansAdditionalRegistrationsLikeJava()
 	{
 		var sentPackets = new List<GameServerPacket>();
+		var events = new List<string>();
 		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
 		var registrationTime = DateTimeOffset.UtcNow.AddSeconds(-10);
 		autoGroupRegistrations.RegisterLookingParty(
@@ -1048,11 +1049,21 @@ public sealed class GameServerConnectionAutoGroupTests
 			Race = "ELYOS",
 			Level = 50,
 		};
-		var registry = new RecordingConnectionRegistry([1001, 1002, 2001, 2002, 3001]);
+		var registry = new RecordingConnectionRegistry(
+			[1001, 1002, 2001, 2002, 3001],
+			delivery =>
+			{
+				if (delivery.Packet is SmAutoGroup packet)
+					events.Add($"packet:{delivery.PlayerObjectId}:{packet.MaskId}:{packet.WindowId}");
+			});
 		var observations = new List<ThreadPoolScheduleObservation>();
 		await using var threadPoolManager = new ThreadPoolManager(
 			NullLogger<ThreadPoolManager>.Instance,
-			observations.Add);
+			observation =>
+			{
+				observations.Add(observation);
+				events.Add("schedule");
+			});
 		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
 			threadPoolManager,
 			new PeriodicInstanceRegistrationService(),
@@ -1081,6 +1092,18 @@ public sealed class GameServerConnectionAutoGroupTests
 			Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
 			Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
 		});
+		Assert.Equal(
+			[
+				"schedule",
+				"schedule",
+				"packet:1001:108:2",
+				"packet:3001:108:2",
+				"packet:1001:107:4",
+				"packet:1002:107:4",
+				"packet:2001:107:4",
+				"packet:2002:107:4",
+			],
+			events);
 		Assert.Collection(
 			registry.SentPackets,
 			delivery => AssertCancelWindow(delivery, 1001, 108),

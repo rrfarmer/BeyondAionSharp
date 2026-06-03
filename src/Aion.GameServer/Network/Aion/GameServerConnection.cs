@@ -1676,12 +1676,26 @@ public sealed class GameServerConnection : BaseClientConnection
 			connectionRegistry,
 			registerRuntimeInstance: registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration),
 			materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance,
-			afterCleanupWindowDeliveryAsync: async cleanupIntent =>
+			beforeCleanupWindowDeliveryAsync: cleanupIntent =>
 			{
+				if (!cleanupIntent.WouldPenaliseParty)
+					return Task.CompletedTask;
+
 				var immediatePenaltyRefreshes = CreateAutoGroupPenaltyRefreshIntents(cleanupIntent)
 					.Where(intent => scheduledPenaltyRefreshPlayerObjectIds.Add(intent.PlayerObjectId))
 					.ToArray();
 				ScheduleAutoGroupPenaltyRefreshes(immediatePenaltyRefreshes);
+				return Task.CompletedTask;
+			},
+			afterCleanupWindowDeliveryAsync: async cleanupIntent =>
+			{
+				if (cleanupIntent.WouldPenalisePlayer)
+				{
+					var immediatePenaltyRefreshes = CreateAutoGroupPenaltyRefreshIntents(cleanupIntent)
+						.Where(intent => scheduledPenaltyRefreshPlayerObjectIds.Add(intent.PlayerObjectId))
+						.ToArray();
+					ScheduleAutoGroupPenaltyRefreshes(immediatePenaltyRefreshes);
+				}
 
 				if (!cleanupIntent.WouldRecheckQueueForNewMatches || !recheckedMaskIds.Add(cleanupIntent.MaskId))
 					return;
