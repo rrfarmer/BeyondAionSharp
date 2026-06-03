@@ -1394,6 +1394,126 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationResponseConsumptionReport_ConsumesRegistryDispatchLikeJavaRespond()
+	{
+		var registry = new QuestionResponseRegistry();
+		var planner = new VortexDefenderInvitationResponseConsumptionReportService();
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: 1004,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			ExistingDefenderObjectIds: [1001]);
+		var request = new QuestionResponseRequest(
+			RequesterObjectId: 1004,
+			QuestionResponseRequestKind.VortexDefenderInvitation,
+			pendingRequest);
+		var responder = new VortexDefenderInvitationResponderSnapshot(
+			PlayerObjectId: 1004,
+			IsInGroup: true,
+			IsInAlliance: true);
+		Assert.True(registry.PutRequest(SmQuestionWindow.VortexDefenderInvitation, request));
+
+		var denyDispatch = registry.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 0);
+		var deny = planner.CreateReport(
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 0,
+			denyDispatch,
+			responder);
+
+		Assert.Equal(0, registry.Count);
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.Denied, deny.Status);
+		Assert.True(deny.Denied);
+		Assert.False(deny.Accepted);
+		Assert.True(deny.RequestRemovedByRegistry);
+		Assert.True(deny.WouldInvokeHandler);
+		Assert.True(deny.HasVortexPayload);
+		Assert.True(deny.HasDispatchPlan);
+		Assert.False(deny.ShouldRemoveLiveRequest);
+		Assert.False(deny.ShouldMutateLiveGroup);
+		Assert.False(deny.ShouldMutateLiveAlliance);
+		Assert.False(deny.ShouldMutateLiveDefenders);
+		Assert.Equal(
+			"model/gameobjects/player/ResponseRequester.respond -> model/gameobjects/player/RequestResponseHandler.handle",
+			deny.JavaSource);
+		Assert.Equal(VortexDefenderInvitationResponseDispatchPlanStatus.Denied, deny.DispatchPlan?.Status);
+
+		Assert.True(registry.PutRequest(SmQuestionWindow.VortexDefenderInvitation, request));
+		var acceptDispatch = registry.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 7);
+		var accept = planner.CreateReport(
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 7,
+			acceptDispatch,
+			responder);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.Accepted, accept.Status);
+		Assert.True(accept.Accepted);
+		Assert.True(accept.RequestRemovedByRegistry);
+		Assert.True(accept.WouldInvokeHandler);
+		Assert.True(accept.HasDispatchPlan);
+		Assert.Equal(7, accept.ResponseCode);
+		Assert.Equal(VortexDefenderInvitationResponseDispatchPlanStatus.Accepted, accept.DispatchPlan?.Status);
+		Assert.True(accept.DispatchPlan?.HasAcceptancePlan);
+		Assert.False(accept.ShouldRemoveLiveRequest);
+	}
+
+	[Fact]
+	public void DefenderInvitationResponseConsumptionReport_ReportsMissingAndNonVortexDispatches()
+	{
+		var planner = new VortexDefenderInvitationResponseConsumptionReportService();
+		var responder = new VortexDefenderInvitationResponderSnapshot(
+			PlayerObjectId: 1004,
+			IsInGroup: false,
+			IsInAlliance: false);
+		var nonVortexDispatch = new QuestionResponseDispatch(
+			SmQuestionWindow.UnionInviteMe,
+			ResponseCode: 1,
+			Accepted: true,
+			new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite));
+		var missingPayloadDispatch = new QuestionResponseDispatch(
+			SmQuestionWindow.VortexDefenderInvitation,
+			ResponseCode: 1,
+			Accepted: true,
+			new QuestionResponseRequest(1004, QuestionResponseRequestKind.VortexDefenderInvitation));
+
+		var missing = planner.CreateReport(
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 1,
+			dispatch: null,
+			responder);
+		var nonVortex = planner.CreateReport(
+			SmQuestionWindow.UnionInviteMe,
+			responseCode: 1,
+			nonVortexDispatch,
+			responder);
+		var missingPayload = planner.CreateReport(
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 1,
+			missingPayloadDispatch,
+			responder);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.RequestMissing, missing.Status);
+		Assert.False(missing.RequestRemovedByRegistry);
+		Assert.False(missing.WouldInvokeHandler);
+		Assert.False(missing.HasVortexPayload);
+		Assert.False(missing.HasDispatchPlan);
+		Assert.False(missing.ShouldRemoveLiveRequest);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.NonVortexRequest, nonVortex.Status);
+		Assert.True(nonVortex.RequestRemovedByRegistry);
+		Assert.False(nonVortex.WouldInvokeHandler);
+		Assert.False(nonVortex.HasVortexPayload);
+		Assert.False(nonVortex.HasDispatchPlan);
+		Assert.False(nonVortex.ShouldRemoveLiveRequest);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.PayloadMissing, missingPayload.Status);
+		Assert.True(missingPayload.RequestRemovedByRegistry);
+		Assert.False(missingPayload.WouldInvokeHandler);
+		Assert.False(missingPayload.HasVortexPayload);
+		Assert.False(missingPayload.HasDispatchPlan);
+		Assert.False(missingPayload.ShouldRemoveLiveRequest);
+	}
+
+	[Fact]
 	public void DefenderInvitationBatchPlan_ComposesOneInvitationPlanPerDefenderUpdateCandidate()
 	{
 		var updatePlan = new VortexDefenderAllianceUpdatePlan(
