@@ -518,6 +518,92 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationPlan_NewDefenderWithOpenAllianceRecordsQuestionWindowIntent()
+	{
+		var planner = new VortexDefenderInvitationPlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var plan = planner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexDefenderInvitationPlanStatus.InvitationPlanned, plan.Status);
+		Assert.Same(defender, plan.Defender);
+		Assert.Equal([1001], plan.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, plan.Alliance);
+		Assert.Equal(VortexDefenderInvitationPlanService.DefenderQuestionId, plan.RequestId);
+		Assert.Equal(0, plan.QuestionWindowArg1);
+		Assert.Equal(0, plan.QuestionWindowArg2);
+		Assert.True(plan.RequestSlotAvailable);
+		Assert.True(plan.WouldInstallRequest);
+		Assert.True(plan.HasQuestionWindowIntent);
+		Assert.False(plan.ShouldMutateLiveRequest);
+		Assert.False(plan.ShouldSendLivePacket);
+		Assert.Equal("services/vortex/Invasion.updateDefenders", plan.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderInvitationPlan_GuardsExistingDefenderAndFullAllianceLikeJava()
+	{
+		var planner = new VortexDefenderInvitationPlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var alreadyDefender = planner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int> { 1004 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+		var fullAlliance = planner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int>(),
+			alliance: VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal(VortexDefenderInvitationPlanStatus.AlreadyDefender, alreadyDefender.Status);
+		Assert.Equal([1004], alreadyDefender.ExistingDefenderObjectIds);
+		Assert.False(alreadyDefender.WouldInstallRequest);
+		Assert.False(alreadyDefender.HasQuestionWindowIntent);
+		Assert.False(alreadyDefender.ShouldMutateLiveRequest);
+		Assert.False(alreadyDefender.ShouldSendLivePacket);
+		Assert.Null(alreadyDefender.RequestId);
+		Assert.Null(alreadyDefender.QuestionWindowArg1);
+		Assert.Null(alreadyDefender.QuestionWindowArg2);
+
+		Assert.Equal(VortexDefenderInvitationPlanStatus.AllianceFull, fullAlliance.Status);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Full, fullAlliance.Alliance);
+		Assert.False(fullAlliance.WouldInstallRequest);
+		Assert.False(fullAlliance.HasQuestionWindowIntent);
+		Assert.False(fullAlliance.ShouldMutateLiveRequest);
+		Assert.False(fullAlliance.ShouldSendLivePacket);
+		Assert.Null(fullAlliance.RequestId);
+		Assert.Null(fullAlliance.QuestionWindowArg1);
+		Assert.Null(fullAlliance.QuestionWindowArg2);
+	}
+
+	[Fact]
+	public void DefenderInvitationPlan_RequestSlotUnavailableOmitsQuestionWindowLikeJavaPutRequestFalse()
+	{
+		var planner = new VortexDefenderInvitationPlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+
+		var plan = planner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int>(),
+			alliance: VortexDefenderAllianceSnapshot.Missing,
+			requestSlotAvailable: false);
+
+		Assert.Equal(VortexDefenderInvitationPlanStatus.RequestNotStored, plan.Status);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Missing, plan.Alliance);
+		Assert.Equal(VortexDefenderInvitationPlanService.DefenderQuestionId, plan.RequestId);
+		Assert.Equal(0, plan.QuestionWindowArg1);
+		Assert.Equal(0, plan.QuestionWindowArg2);
+		Assert.False(plan.RequestSlotAvailable);
+		Assert.True(plan.WouldInstallRequest);
+		Assert.False(plan.HasQuestionWindowIntent);
+		Assert.False(plan.ShouldMutateLiveRequest);
+		Assert.False(plan.ShouldSendLivePacket);
+	}
+
+	[Fact]
 	public async Task DefenderAllianceUpdatePlan_SelectsOnlyJavaDefenderRaceZonePlayers()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-" + Guid.NewGuid().ToString("N"));
