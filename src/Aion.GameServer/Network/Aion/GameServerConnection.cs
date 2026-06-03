@@ -11132,7 +11132,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				onlinePlayersInsideAtLogout);
 		}
 		SaveOfflineKiskBinding(player);
-		ApplyDeadPlayerLogoutRevive(player);
+		if (IsDead(player))
+			ApplyDeadPlayerLogoutRevive(player);
+		else
+			await ApplyLogoutDuelLossAsync(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		_pendingHouseObjectUse?.Task.Cancel();
 		_pendingHouseObjectUse = null;
@@ -11155,6 +11158,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		_runtimeContext?.Kisks.RegisterOfflineBinding(player.ObjectId, player.BoundKiskObjectId);
+	}
+
+	private async Task<DuelEndPlan> ApplyLogoutDuelLossAsync(Player player)
+	{
+		// Java parity: PlayerLeaveWorldService.leaveWorld calls DuelService.loseDuel(player)
+		// only from the non-dead branch.
+		var plan = _playerDuelRequestService.LoseDuel(player, TryGetOnlinePlayerByObjectId);
+		foreach (var intent in plan.PacketIntents)
+			await SendDuelPacketAsync(intent.RecipientObjectId, intent.Packet);
+		return plan;
 	}
 
 	private void ApplyDeadPlayerLogoutRevive(Player player)

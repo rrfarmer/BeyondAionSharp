@@ -224,6 +224,62 @@ public sealed class GameServerConnectionDuelRequestTests
 	}
 
 	[Fact]
+	public async Task LeavePlayerWorldAsync_NonDeadDuelingPlayerLosesDuelLikeJavaLogoutBranch()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var duelService = new PlayerDuelRequestService();
+		var requester = CreatePlayer(1001, "Requester");
+		var target = CreatePlayer(1002, "Target");
+		registry.OnlinePlayers.AddRange([requester, target]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, duelService);
+		await pair.Connection.HandleDuelRequestAsync(requester, CreateDuelPacket(1002));
+		await pair.Connection.HandleQuestionResponseAsync(target, CreateQuestionResponse(SmQuestionWindow.DuelAcceptRequest, response: 1));
+		registry.SentPackets.Clear();
+
+		await pair.Connection.LeavePlayerWorldAsync(target, notifyPostmanClient: false);
+
+		Assert.False(duelService.IsDueling(requester));
+		Assert.False(duelService.IsDueling(target));
+		Assert.Collection(
+			registry.SentPackets,
+			send =>
+			{
+				Assert.Equal(1002, send.PlayerObjectId);
+				AssertDuelResultPayload(Assert.IsType<SmDuel>(send.Packet), resultId: 0, messageId: 1300099, playerName: "Requester");
+			},
+			send =>
+			{
+				Assert.Equal(1001, send.PlayerObjectId);
+				AssertDuelResultPayload(Assert.IsType<SmDuel>(send.Packet), resultId: 2, messageId: 1300098, playerName: "Target");
+			});
+	}
+
+	[Fact]
+	public async Task LeavePlayerWorldAsync_DeadDuelingPlayerTakesReviveBranchBeforeDuelLossLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var duelService = new PlayerDuelRequestService();
+		var requester = CreatePlayer(1001, "Requester");
+		var target = CreatePlayer(1002, "Target");
+		registry.OnlinePlayers.AddRange([requester, target]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, duelService);
+		await pair.Connection.HandleDuelRequestAsync(requester, CreateDuelPacket(1002));
+		await pair.Connection.HandleQuestionResponseAsync(target, CreateQuestionResponse(SmQuestionWindow.DuelAcceptRequest, response: 1));
+		target.CreatureState = PlayerCreatureState.Dead;
+		target.LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 0);
+		target.BindPoint = new PlayerBindPoint(210010000, 1, 2, 3, 0);
+		registry.SentPackets.Clear();
+
+		await pair.Connection.LeavePlayerWorldAsync(target, notifyPostmanClient: false);
+
+		Assert.True(duelService.IsDueling(requester));
+		Assert.True(duelService.IsDueling(target));
+		Assert.DoesNotContain(registry.SentPackets, send => send.Packet is SmDuel);
+		Assert.False(target.IsInState(PlayerCreatureState.Dead));
+		Assert.True(target.IsInState(PlayerCreatureState.Active));
+	}
+
+	[Fact]
 	public async Task PlayerDuelRequestService_DrawDuelSendsDrawResultsAndRemovesDuel()
 	{
 		var registry = new CapturingConnectionRegistry();
