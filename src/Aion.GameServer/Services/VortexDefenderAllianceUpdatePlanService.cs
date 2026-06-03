@@ -119,6 +119,88 @@ public sealed record VortexDefenderInvitationBatchPlan(
 	public bool ShouldMutateLiveDefenders => false;
 }
 
+public sealed class VortexDefenderInvitationBatchRuntimeAdapterService
+{
+	private readonly VortexDefenderUpdateDefendersRegistrationRuntimeAdapterService _registrationAdapter = new();
+	private readonly VortexDefenderQuestionWindowIntentAdapterService _questionWindowIntentAdapter = new();
+
+	public VortexDefenderInvitationBatchRuntimeReport RegisterInvitations(
+		IReadOnlyList<Player>? defenders,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+	{
+		var defenderPlayers = defenders ?? [];
+		var existingDefenderSnapshots = existingDefenders ?? [];
+		var alliance = defenderAlliance ?? VortexDefenderAllianceSnapshot.Missing;
+		var playerReports = defenderPlayers
+			.Select(defender =>
+			{
+				var registration = _registrationAdapter.RegisterInvitation(
+					defender,
+					existingDefenderSnapshots,
+					alliance);
+				var questionWindowIntent = _questionWindowIntentAdapter.CreateIntent(registration);
+
+				return new VortexDefenderInvitationBatchRuntimePlayerReport(
+					defender.ObjectId,
+					registration,
+					questionWindowIntent);
+			})
+			.ToArray();
+
+		return new VortexDefenderInvitationBatchRuntimeReport(
+			VortexDefenderInvitationBatchRuntimeReportStatus.Planned,
+			existingDefenderSnapshots,
+			alliance,
+			playerReports,
+			JavaSource: "services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders");
+	}
+}
+
+public enum VortexDefenderInvitationBatchRuntimeReportStatus
+{
+	Planned,
+}
+
+public sealed record VortexDefenderInvitationBatchRuntimePlayerReport(
+	int DefenderObjectId,
+	VortexDefenderUpdateDefendersRegistrationRuntimeReport RegistrationReport,
+	VortexDefenderQuestionWindowIntent QuestionWindowIntent)
+{
+	public bool Registered => RegistrationReport.Registered;
+	public bool Rejected => RegistrationReport.Rejected;
+	public bool Skipped => RegistrationReport.Skipped;
+	public bool RequestStoredByRegistry => RegistrationReport.RequestStoredByRegistry;
+	public bool HasQuestionWindowIntent => QuestionWindowIntent.Created;
+	public bool ShouldSendLivePacket => false;
+	public bool ShouldExecuteLiveCallback => false;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
+}
+
+public sealed record VortexDefenderInvitationBatchRuntimeReport(
+	VortexDefenderInvitationBatchRuntimeReportStatus Status,
+	IReadOnlyList<VortexDefenderAddPlayerSnapshot> ExistingDefenders,
+	VortexDefenderAllianceSnapshot DefenderAlliance,
+	IReadOnlyList<VortexDefenderInvitationBatchRuntimePlayerReport> PlayerReports,
+	string JavaSource)
+{
+	public IReadOnlyList<int> DefenderObjectIds => PlayerReports.Select(report => report.DefenderObjectId).ToArray();
+	public IReadOnlyList<int> ExistingDefenderObjectIds => ExistingDefenders.Select(defender => defender.PlayerObjectId).ToArray();
+	public int DefenderCount => PlayerReports.Count;
+	public int RegisteredCount => PlayerReports.Count(report => report.Registered);
+	public int RejectedCount => PlayerReports.Count(report => report.Rejected);
+	public int SkippedCount => PlayerReports.Count(report => report.Skipped);
+	public int RequestStoredCount => PlayerReports.Count(report => report.RequestStoredByRegistry);
+	public int QuestionWindowIntentCount => PlayerReports.Count(report => report.HasQuestionWindowIntent);
+	public bool ShouldSendLivePacket => false;
+	public bool ShouldExecuteLiveCallback => false;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
+}
+
 public sealed record VortexZonePlayerSnapshot(
 	int PlayerObjectId,
 	string Race,

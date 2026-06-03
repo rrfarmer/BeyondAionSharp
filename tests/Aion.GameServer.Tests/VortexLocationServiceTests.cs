@@ -1883,6 +1883,97 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationBatchRuntimeAdapter_RegistersMultipleDefendersAndGatesQuestionWindowIntent()
+	{
+		var adapter = new VortexDefenderInvitationBatchRuntimeAdapterService();
+		var registeredDefender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var occupiedDefender = CreatePlayer(1006, isOnline: true, worldId: 210060000);
+		var existingDefender = CreatePlayer(1007, isOnline: true, worldId: 210060000);
+		var existingRequest = new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown);
+		Assert.True(occupiedDefender.ResponseRequester.PutRequest(SmQuestionWindow.VortexDefenderInvitation, existingRequest));
+
+		var report = adapter.RegisterInvitations(
+			[registeredDefender, occupiedDefender, existingDefender],
+			existingDefenders: [new VortexDefenderAddPlayerSnapshot(existingDefender.ObjectId, IsInGroup: false, IsInAlliance: false)],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexDefenderInvitationBatchRuntimeReportStatus.Planned, report.Status);
+		Assert.Equal([1004, 1006, 1007], report.DefenderObjectIds);
+		Assert.Equal([1007], report.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, report.DefenderAlliance);
+		Assert.Equal(3, report.DefenderCount);
+		Assert.Equal(1, report.RegisteredCount);
+		Assert.Equal(1, report.RejectedCount);
+		Assert.Equal(1, report.SkippedCount);
+		Assert.Equal(1, report.RequestStoredCount);
+		Assert.Equal(1, report.QuestionWindowIntentCount);
+		Assert.Equal(1, registeredDefender.ResponseRequester.Count);
+		Assert.Equal(1, occupiedDefender.ResponseRequester.Count);
+		Assert.Equal(0, existingDefender.ResponseRequester.Count);
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+		Assert.Equal("services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders", report.JavaSource);
+
+		var registered = Assert.Single(report.PlayerReports.Where(playerReport => playerReport.DefenderObjectId == 1004));
+		Assert.True(registered.Registered);
+		Assert.True(registered.HasQuestionWindowIntent);
+		Assert.False(registered.ShouldSendLivePacket);
+		Assert.Equal(VortexDefenderQuestionWindowIntentStatus.Created, registered.QuestionWindowIntent.Status);
+
+		var rejected = Assert.Single(report.PlayerReports.Where(playerReport => playerReport.DefenderObjectId == 1006));
+		Assert.True(rejected.Rejected);
+		Assert.False(rejected.HasQuestionWindowIntent);
+		Assert.Equal(VortexDefenderQuestionWindowIntentStatus.NotCreated, rejected.QuestionWindowIntent.Status);
+		var dispatch = Assert.IsType<QuestionResponseDispatch>(
+			occupiedDefender.ResponseRequester.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 1));
+		Assert.Same(existingRequest, dispatch.Request);
+
+		var skipped = Assert.Single(report.PlayerReports.Where(playerReport => playerReport.DefenderObjectId == 1007));
+		Assert.True(skipped.Skipped);
+		Assert.False(skipped.HasQuestionWindowIntent);
+		Assert.False(skipped.RequestStoredByRegistry);
+	}
+
+	[Fact]
+	public void DefenderInvitationBatchRuntimeAdapter_FullAllianceSkipsAllDefendersWithoutRegistryMutation()
+	{
+		var adapter = new VortexDefenderInvitationBatchRuntimeAdapterService();
+		var firstDefender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var nextDefender = CreatePlayer(1006, isOnline: true, worldId: 210060000);
+
+		var report = adapter.RegisterInvitations(
+			[firstDefender, nextDefender],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal([1004, 1006], report.DefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Full, report.DefenderAlliance);
+		Assert.Equal(2, report.DefenderCount);
+		Assert.Equal(0, report.RegisteredCount);
+		Assert.Equal(0, report.RejectedCount);
+		Assert.Equal(2, report.SkippedCount);
+		Assert.Equal(0, report.RequestStoredCount);
+		Assert.Equal(0, report.QuestionWindowIntentCount);
+		Assert.Equal(0, firstDefender.ResponseRequester.Count);
+		Assert.Equal(0, nextDefender.ResponseRequester.Count);
+		Assert.All(report.PlayerReports, playerReport =>
+		{
+			Assert.True(playerReport.Skipped);
+			Assert.False(playerReport.HasQuestionWindowIntent);
+			Assert.False(playerReport.RequestStoredByRegistry);
+			Assert.False(playerReport.ShouldSendLivePacket);
+			Assert.Equal(VortexDefenderUpdateDefendersPlanStatus.InvitationAllianceFull, playerReport.RegistrationReport.Status);
+		});
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public void DefenderInvitationBatchPlan_FullAllianceSkipsAllInvitationRequestsLikeJavaFirstGate()
 	{
 		var updatePlan = new VortexDefenderAllianceUpdatePlan(
