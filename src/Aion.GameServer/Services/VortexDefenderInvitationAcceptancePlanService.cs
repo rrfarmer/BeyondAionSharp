@@ -307,11 +307,18 @@ public sealed class VortexDefenderAcceptanceRuntimeObserverService
 
 		var transition = _adapter.HandleResponseWithAcceptanceTransition(
 			responder, questionId, responseCode, existingDefenders, defenderAlliance);
+
+		// Java parity: the invitation payload stores LocationId when created by updateAlliance.
+		// Resolve it from the payload when the caller did not supply a concrete locationId.
+		var resolvedLocationId = locationId != 0
+			? locationId
+			: (transition.ConsumptionReport.Request?.Payload as PendingVortexDefenderInvitationRequest)?.LocationId ?? 0;
+
 		var participantReport = _participantReporter.CreateReport(
-			locationId, transition, currentDefenderObjectIds);
+			resolvedLocationId, transition, currentDefenderObjectIds);
 
 		return new VortexDefenderAcceptanceRuntimeObserverReport(
-			locationId,
+			resolvedLocationId,
 			responder.ObjectId,
 			transition,
 			participantReport,

@@ -10493,10 +10493,11 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond; the Vortex
 		// accept callback remains metadata-only until live Vortex team/alliance mutation lands.
-		// Java parity: services/VortexService.removeDefenderPlayer iterates activeInvasions to
-		// find the first invasion containing the defender; use the same lookup for locationId.
-		// Fallback: derive locationId from the responder's current world position via VortexLocationService
-		// when the runtime has not yet registered the player as a defender.
+		// locationId resolution order:
+		//   1. PendingVortexDefenderInvitationRequest.LocationId embedded when invitation was stored (principled)
+		//   2. VortexInvasionRuntime.FindDefenderLocationId (if responder is already in defenders map)
+		//   3. VortexLocationService.GetLocationByWorld(responder world) (zone position approximation)
+		//   4. 0 fallback (observer will self-resolve from payload, see VortexDefenderAcceptanceRuntimeObserverService)
 		var locationId = _vortexInvasionRuntime?.FindDefenderLocationId(responder.ObjectId)
 			?? _defenderAcceptanceVortexLocationService?.GetLocationByWorld(responder.Position.WorldId)?.Id
 			?? 0;
@@ -10506,6 +10507,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			var snapshot = _vortexInvasionRuntime.GetSnapshot(locationId);
 			resolvedInputs = new VortexDefenderAcceptanceInputResolverService().Resolve(snapshot, _worldPlayerLookup);
 		}
+		// Pass locationId=0 when unknown; the observer self-resolves from PendingVortexDefenderInvitationRequest.LocationId.
 		var observerReport = new VortexDefenderAcceptanceRuntimeObserverService().Observe(
 			locationId,
 			responder,

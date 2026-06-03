@@ -2266,6 +2266,58 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationPayload_EmbedsPendingRequestLocationIdWhenRegisteredViaAllianceUpdate()
+	{
+		// Java parity: PendingVortexDefenderInvitationRequest.LocationId was absent before UOW-2521;
+		// the invitation batch adapter now threads the vortex location ID into the stored payload.
+		var batchAdapter = new VortexDefenderInvitationBatchRuntimeAdapterService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		const int expectedLocationId = 1;
+
+		var batchReport = batchAdapter.RegisterInvitations(
+			[defender],
+			existingDefenders: [],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			locationId: expectedLocationId);
+
+		var playerReport = Assert.Single(batchReport.PlayerReports);
+		Assert.True(playerReport.RequestStoredByRegistry);
+		var dispatch = defender.ResponseRequester.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 7);
+		var payload = Assert.IsType<PendingVortexDefenderInvitationRequest>(dispatch?.Request.Payload);
+		Assert.Equal(expectedLocationId, payload.LocationId);
+	}
+
+	[Fact]
+	public void DefenderAcceptanceObserver_SelfResolvesLocationIdFromPendingRequestPayloadWhenCallerPassesZero()
+	{
+		// Java parity: acceptRequest fires in the context of the invasion's location; the payload now
+		// carries LocationId so the observer can resolve it without external runtime lookups.
+		const int expectedLocationId = 7;
+		var batchAdapter = new VortexDefenderInvitationBatchRuntimeAdapterService();
+		var observer = new VortexDefenderAcceptanceRuntimeObserverService();
+		var responder = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		responder.TeamMembership = PlayerTeamMembership.Group;
+
+		// Register invitation with locationId embedded in the payload.
+		batchAdapter.RegisterInvitations(
+			[responder],
+			existingDefenders: [new VortexDefenderAddPlayerSnapshot(1001, IsInGroup: false, IsInAlliance: false)],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+			locationId: expectedLocationId);
+
+		// Call Observe with locationId=0; the observer self-resolves from the payload.
+		var report = observer.Observe(
+			locationId: 0,
+			responder,
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 1);
+
+		Assert.Equal(expectedLocationId, report.LocationId);
+		Assert.True(report.Accepted);
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public async Task FindDefenderLocationId_WorldPositionFallbackResolvesLocationFromVortexLocationServiceWhenNotInRuntime()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-world-position-fallback-" + Guid.NewGuid().ToString("N"));

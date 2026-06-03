@@ -139,7 +139,7 @@ public sealed record VortexDefenderInvitationRequestSlotSnapshot(
 
 public sealed class VortexDefenderInvitationRequestPayloadPlanService
 {
-	public VortexDefenderInvitationRequestPayloadPlan CreatePlan(VortexDefenderInvitationPlan invitationPlan)
+	public VortexDefenderInvitationRequestPayloadPlan CreatePlan(VortexDefenderInvitationPlan invitationPlan, int locationId = 0)
 	{
 		ArgumentNullException.ThrowIfNull(invitationPlan);
 
@@ -159,7 +159,8 @@ public sealed class VortexDefenderInvitationRequestPayloadPlanService
 			invitationPlan.Defender.PlayerObjectId,
 			requestId,
 			invitationPlan.Alliance,
-			invitationPlan.ExistingDefenderObjectIds);
+			invitationPlan.ExistingDefenderObjectIds,
+			locationId);
 		var request = new QuestionResponseRequest(
 			invitationPlan.Defender.PlayerObjectId,
 			QuestionResponseRequestKind.VortexDefenderInvitation,
@@ -186,7 +187,8 @@ public sealed record PendingVortexDefenderInvitationRequest(
 	int RequesterObjectId,
 	int QuestionId,
 	VortexDefenderAllianceSnapshot DefenderAlliance,
-	IReadOnlyList<int> ExistingDefenderObjectIds);
+	IReadOnlyList<int> ExistingDefenderObjectIds,
+	int LocationId = 0);
 
 public sealed record VortexDefenderInvitationRequestPayloadPlan(
 	VortexDefenderInvitationRequestPayloadPlanStatus Status,
@@ -206,11 +208,11 @@ public sealed class VortexDefenderInvitationRegistrationReportService
 {
 	private readonly VortexDefenderInvitationRequestPayloadPlanService _payloadPlanner = new();
 
-	public VortexDefenderInvitationRegistrationReport CreateReport(VortexDefenderInvitationPlan invitationPlan)
+	public VortexDefenderInvitationRegistrationReport CreateReport(VortexDefenderInvitationPlan invitationPlan, int locationId = 0)
 	{
 		ArgumentNullException.ThrowIfNull(invitationPlan);
 
-		var payloadPlan = _payloadPlanner.CreatePlan(invitationPlan);
+		var payloadPlan = _payloadPlanner.CreatePlan(invitationPlan, locationId);
 		var attempted = invitationPlan.WouldInstallRequest;
 		var registered = attempted && invitationPlan.RequestSlotAvailable;
 		var status = registered
@@ -272,14 +274,15 @@ public sealed class VortexDefenderInvitationRegistrationRuntimeAdapterService
 
 	public VortexDefenderInvitationRegistrationRuntimeReport Register(
 		Player defender,
-		VortexDefenderInvitationPlan invitationPlan)
+		VortexDefenderInvitationPlan invitationPlan,
+		int locationId = 0)
 	{
 		ArgumentNullException.ThrowIfNull(defender);
 		ArgumentNullException.ThrowIfNull(invitationPlan);
 
 		var questionId = invitationPlan.RequestId ?? VortexDefenderInvitationPlanService.DefenderQuestionId;
 		var requestSlotAvailableBeforeRegistration = defender.ResponseRequester.IsRequestSlotAvailable(questionId);
-		var payloadPlan = _payloadPlanner.CreatePlan(invitationPlan);
+		var payloadPlan = _payloadPlanner.CreatePlan(invitationPlan, locationId);
 		var attempted = invitationPlan.WouldInstallRequest && payloadPlan.Request is not null;
 		var registered = attempted && defender.ResponseRequester.PutRequest(questionId, payloadPlan.Request);
 		var status = registered

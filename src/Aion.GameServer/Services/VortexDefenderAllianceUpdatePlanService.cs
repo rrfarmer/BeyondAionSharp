@@ -92,7 +92,8 @@ public sealed class VortexDefenderAllianceUpdateRuntimeAdapterService
 		var batchReport = _batchAdapter.RegisterInvitations(
 			defenderPlayers,
 			existingDefenders,
-			defenderAlliance);
+			defenderAlliance,
+			locationId: location.Id);
 
 		return new VortexDefenderAllianceUpdateRuntimeReport(
 			VortexDefenderAllianceUpdateRuntimeReportStatus.Planned,
@@ -190,7 +191,8 @@ public sealed class VortexDefenderInvitationBatchRuntimeAdapterService
 	public VortexDefenderInvitationBatchRuntimeReport RegisterInvitations(
 		IReadOnlyList<Player>? defenders,
 		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
-		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+		VortexDefenderAllianceSnapshot? defenderAlliance = null,
+		int locationId = 0)
 	{
 		var defenderPlayers = defenders ?? [];
 		var existingDefenderSnapshots = existingDefenders ?? [];
@@ -201,7 +203,8 @@ public sealed class VortexDefenderInvitationBatchRuntimeAdapterService
 				var registration = _registrationAdapter.RegisterInvitation(
 					defender,
 					existingDefenderSnapshots,
-					alliance);
+					alliance,
+					locationId);
 				var questionWindowIntent = _questionWindowIntentAdapter.CreateIntent(registration);
 
 				return new VortexDefenderInvitationBatchRuntimePlayerReport(

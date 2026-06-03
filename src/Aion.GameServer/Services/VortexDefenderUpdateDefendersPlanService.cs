@@ -136,7 +136,8 @@ public sealed class VortexDefenderUpdateDefendersRegistrationRuntimeAdapterServi
 	public VortexDefenderUpdateDefendersRegistrationRuntimeReport RegisterInvitation(
 		Player defender,
 		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
-		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+		VortexDefenderAllianceSnapshot? defenderAlliance = null,
+		int locationId = 0)
 	{
 		ArgumentNullException.ThrowIfNull(defender);
 
@@ -148,7 +149,8 @@ public sealed class VortexDefenderUpdateDefendersRegistrationRuntimeAdapterServi
 			requestSlot.RequestSlotAvailable);
 		var registrationReport = _registrationAdapter.Register(
 			defender,
-			updatePlan.InvitationPlan ?? throw new InvalidOperationException("Update-defenders invitation plan was not created."));
+			updatePlan.InvitationPlan ?? throw new InvalidOperationException("Update-defenders invitation plan was not created."),
+			locationId);
 
 		return new VortexDefenderUpdateDefendersRegistrationRuntimeReport(
 			updatePlan.Status,
