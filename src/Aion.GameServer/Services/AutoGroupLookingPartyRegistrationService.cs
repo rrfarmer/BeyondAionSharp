@@ -253,6 +253,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		Action<AutoGroupInstanceRuntimeRegistration>? registerRuntimeInstance = null,
 		DateTimeOffset? readyEnterStartTime = null,
 		Func<AutoGroupInstanceRuntimeRegistration, AutoGroupInstanceRuntimeRegistration>? materializeRuntimeInstance = null,
+		Func<AutoGroupAdditionalRegistrationCleanupIntent, Task>? afterCleanupWindowDeliveryAsync = null,
 		CancellationToken cancellationToken = default)
 	{
 		if (readyMatchPlan.Status != AutoGroupReadyMatchPlanStatus.Ready)
@@ -304,6 +305,14 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			{
 				sentWindowPackets++;
 			}
+
+			var cleanupIntent = cleanupIntents.FirstOrDefault(intent =>
+				intent.WouldRecheckQueueForNewMatches
+				&& intent.MaskId == delivery.MaskId
+				&& intent.WindowId == delivery.WindowId
+				&& intent.NotifiedMemberObjectIds.Contains(delivery.PlayerObjectId));
+			if (cleanupIntent != null && afterCleanupWindowDeliveryAsync != null)
+				await afterCleanupWindowDeliveryAsync(cleanupIntent);
 		}
 
 		return AutoGroupApplyReadyMatchResult.Applied(

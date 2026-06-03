@@ -1551,7 +1551,11 @@ public sealed class GameServerConnection : BaseClientConnection
 						}
 
 						if (result.QueueMatchPlan?.Status == AutoGroupQueueMatchPlanStatus.Ready && _connectionRegistry != null)
-							await ApplyAutoGroupReadyMatchPlanAsync(result.QueueMatchPlan, autoGroups, _connectionRegistry);
+							await ApplyAutoGroupReadyMatchPlanAsync(
+								result.QueueMatchPlan,
+								autoGroups,
+								_runtimeContext?.DataManager?.StaticData.InstanceCooltimes,
+								_connectionRegistry);
 					}
 				}
 				break;
@@ -1656,18 +1660,37 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task ApplyAutoGroupReadyMatchPlanAsync(
 		AutoGroupQueueMatchPlan queueMatchPlan,
 		AutoGroupTable? autoGroups,
-		IGameClientConnectionRegistry connectionRegistry)
+		InstanceCooltimeTable? instanceCooltimes,
+		IGameClientConnectionRegistry connectionRegistry,
+		ISet<int>? recheckedMaskIds = null)
 	{
 		if (queueMatchPlan.Status != AutoGroupQueueMatchPlanStatus.Ready)
 			return;
 
+		recheckedMaskIds ??= new HashSet<int>();
 		var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(queueMatchPlan);
 		var applyResult = await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
 			readyMatchPlan,
 			autoGroups,
 			connectionRegistry,
 			registerRuntimeInstance: registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration),
-			materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance);
+			materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance,
+			afterCleanupWindowDeliveryAsync: async cleanupIntent =>
+			{
+				if (!cleanupIntent.WouldRecheckQueueForNewMatches || !recheckedMaskIds.Add(cleanupIntent.MaskId))
+					return;
+
+				var recheckPlan = _autoGroupLookingPartyRegistrations.CreateQueueMatchPlan(
+					cleanupIntent.MaskId,
+					autoGroups,
+					instanceCooltimes);
+				await ApplyAutoGroupReadyMatchPlanAsync(
+					recheckPlan,
+					autoGroups,
+					instanceCooltimes,
+					connectionRegistry,
+					recheckedMaskIds);
+			});
 		ScheduleAutoGroupPenaltyRefreshes(applyResult.PenaltyRefreshIntents);
 	}
 
@@ -11047,7 +11070,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (_connectionRegistry != null)
 			{
 				foreach (var queueRecheckPlan in logoutCleanup.QueueRecheckPlans)
-					await ApplyAutoGroupReadyMatchPlanAsync(queueRecheckPlan, staticData?.AutoGroups, _connectionRegistry);
+					await ApplyAutoGroupReadyMatchPlanAsync(
+						queueRecheckPlan,
+						staticData?.AutoGroups,
+						staticData?.InstanceCooltimes,
+						_connectionRegistry);
 			}
 
 			var position = player.Position;
