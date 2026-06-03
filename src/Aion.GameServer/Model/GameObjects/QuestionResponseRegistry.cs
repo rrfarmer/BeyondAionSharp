@@ -103,6 +103,7 @@ public enum QuestionResponseRequestKind
 	AllianceInvite,
 	DuelRequest,
 	DuelWithdraw,
+	VortexDefenderInvitation,
 	ExperienceRecovery,
 	ExchangeRequest,
 	RecallInstant,

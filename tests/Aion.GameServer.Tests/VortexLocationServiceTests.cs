@@ -1237,6 +1237,97 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationRequestPayloadPlan_CreatesQuestionResponseRequestOnlyForQuestionWindowIntent()
+	{
+		var invitationPlanner = new VortexDefenderInvitationPlanService();
+		var payloadPlanner = new VortexDefenderInvitationRequestPayloadPlanService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+		var plannedInvitation = invitationPlanner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+		var blockedInvitation = invitationPlanner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int> { 1004 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+
+		var created = payloadPlanner.CreatePlan(plannedInvitation);
+		var notCreated = payloadPlanner.CreatePlan(blockedInvitation);
+
+		Assert.Equal(VortexDefenderInvitationRequestPayloadPlanStatus.Created, created.Status);
+		Assert.True(created.WouldCreateRequest);
+		Assert.False(created.ShouldRegisterLiveRequest);
+		Assert.False(created.ShouldSendLivePacket);
+		Assert.Equal(1004, created.RequesterObjectId);
+		Assert.Equal(1004, created.DefenderObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, created.QuestionId);
+		var request = Assert.IsType<QuestionResponseRequest>(created.Request);
+		Assert.Equal(1004, request.RequesterObjectId);
+		Assert.Equal(QuestionResponseRequestKind.VortexDefenderInvitation, request.Kind);
+		var payload = Assert.IsType<PendingVortexDefenderInvitationRequest>(request.Payload);
+		Assert.Equal(1004, payload.RequesterObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, payload.QuestionId);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, payload.DefenderAlliance);
+		Assert.Equal([1001], payload.ExistingDefenderObjectIds);
+		Assert.Equal(
+			"services/vortex/Invasion.updateDefenders -> model/gameobjects/player/RequestResponseHandler",
+			created.JavaSource);
+
+		Assert.Equal(VortexDefenderInvitationRequestPayloadPlanStatus.NotCreated, notCreated.Status);
+		Assert.False(notCreated.WouldCreateRequest);
+		Assert.Null(notCreated.Request);
+		Assert.False(notCreated.ShouldRegisterLiveRequest);
+	}
+
+	[Fact]
+	public void DefenderInvitationResponseDispatchPlan_MapsZeroToDenyAndNonZeroToAcceptLikeJavaHandle()
+	{
+		var planner = new VortexDefenderInvitationResponseDispatchPlanService();
+		var request = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: 1004,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			ExistingDefenderObjectIds: [1001]);
+		var responder = new VortexDefenderInvitationResponderSnapshot(
+			PlayerObjectId: 1004,
+			IsInGroup: true,
+			IsInAlliance: true);
+
+		var deny = planner.CreatePlan(request, responder, responseCode: 0);
+		var accept = planner.CreatePlan(request, responder, responseCode: 7);
+
+		Assert.Equal(VortexDefenderInvitationResponseDispatchPlanStatus.Denied, deny.Status);
+		Assert.True(deny.Denied);
+		Assert.False(deny.Accepted);
+		Assert.False(deny.HasAcceptancePlan);
+		Assert.Null(deny.AcceptancePlan);
+		Assert.Equal(0, deny.ResponseCode);
+		Assert.Equal(1004, deny.RequesterObjectId);
+		Assert.Equal(1004, deny.ResponderObjectId);
+		Assert.False(deny.ShouldRemoveLiveRequest);
+		Assert.Equal(
+			"model/gameobjects/player/RequestResponseHandler.handle -> model/gameobjects/player/RequestResponseHandler.denyRequest",
+			deny.JavaSource);
+
+		Assert.Equal(VortexDefenderInvitationResponseDispatchPlanStatus.Accepted, accept.Status);
+		Assert.True(accept.Accepted);
+		Assert.False(accept.Denied);
+		Assert.True(accept.HasAcceptancePlan);
+		Assert.Equal(7, accept.ResponseCode);
+		var acceptance = Assert.IsType<VortexDefenderInvitationAcceptancePlan>(accept.AcceptancePlan);
+		Assert.Equal(VortexDefenderInvitationAcceptancePlanStatus.AcceptancePlanned, acceptance.Status);
+		Assert.True(accept.AcceptancePlan?.WouldRemoveGroup);
+		Assert.True(accept.AcceptancePlan?.WouldAddDefender);
+		Assert.False(accept.ShouldRemoveLiveRequest);
+		Assert.False(accept.ShouldMutateLiveGroup);
+		Assert.False(accept.ShouldMutateLiveAlliance);
+		Assert.False(accept.ShouldMutateLiveDefenders);
+		Assert.Equal(
+			"model/gameobjects/player/RequestResponseHandler.handle -> services/vortex/Invasion.updateDefenders.acceptRequest",
+			accept.JavaSource);
+	}
+
+	[Fact]
 	public void DefenderInvitationBatchPlan_ComposesOneInvitationPlanPerDefenderUpdateCandidate()
 	{
 		var updatePlan = new VortexDefenderAllianceUpdatePlan(

@@ -136,3 +136,68 @@ public sealed record VortexDefenderInvitationRequestSlotSnapshot(
 	bool RequestSlotAvailable,
 	int ActiveRequestCount,
 	string JavaSource);
+
+public sealed class VortexDefenderInvitationRequestPayloadPlanService
+{
+	public VortexDefenderInvitationRequestPayloadPlan CreatePlan(VortexDefenderInvitationPlan invitationPlan)
+	{
+		ArgumentNullException.ThrowIfNull(invitationPlan);
+
+		if (!invitationPlan.HasQuestionWindowIntent || invitationPlan.RequestId is not { } requestId)
+		{
+			return new VortexDefenderInvitationRequestPayloadPlan(
+				VortexDefenderInvitationRequestPayloadPlanStatus.NotCreated,
+				invitationPlan.Defender.PlayerObjectId,
+				RequesterObjectId: 0,
+				QuestionId: invitationPlan.RequestId ?? VortexDefenderInvitationPlanService.DefenderQuestionId,
+				Request: null,
+				InvitationPlan: invitationPlan,
+				JavaSource: "services/vortex/Invasion.updateDefenders");
+		}
+
+		var payload = new PendingVortexDefenderInvitationRequest(
+			invitationPlan.Defender.PlayerObjectId,
+			requestId,
+			invitationPlan.Alliance,
+			invitationPlan.ExistingDefenderObjectIds);
+		var request = new QuestionResponseRequest(
+			invitationPlan.Defender.PlayerObjectId,
+			QuestionResponseRequestKind.VortexDefenderInvitation,
+			payload);
+
+		return new VortexDefenderInvitationRequestPayloadPlan(
+			VortexDefenderInvitationRequestPayloadPlanStatus.Created,
+			invitationPlan.Defender.PlayerObjectId,
+			invitationPlan.Defender.PlayerObjectId,
+			requestId,
+			request,
+			invitationPlan,
+			JavaSource: "services/vortex/Invasion.updateDefenders -> model/gameobjects/player/RequestResponseHandler");
+	}
+}
+
+public enum VortexDefenderInvitationRequestPayloadPlanStatus
+{
+	NotCreated,
+	Created,
+}
+
+public sealed record PendingVortexDefenderInvitationRequest(
+	int RequesterObjectId,
+	int QuestionId,
+	VortexDefenderAllianceSnapshot DefenderAlliance,
+	IReadOnlyList<int> ExistingDefenderObjectIds);
+
+public sealed record VortexDefenderInvitationRequestPayloadPlan(
+	VortexDefenderInvitationRequestPayloadPlanStatus Status,
+	int DefenderObjectId,
+	int RequesterObjectId,
+	int QuestionId,
+	QuestionResponseRequest? Request,
+	VortexDefenderInvitationPlan InvitationPlan,
+	string JavaSource)
+{
+	public bool WouldCreateRequest => Status == VortexDefenderInvitationRequestPayloadPlanStatus.Created;
+	public bool ShouldRegisterLiveRequest => false;
+	public bool ShouldSendLivePacket => false;
+}
