@@ -757,6 +757,70 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void TryRefillQueuedQuickEntry_SkipsRejectedQuickPartyAndKeepsItQueuedLikeJavaCheckQueueForQuickEntries()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[2001] = "ASMODIANS",
+			}));
+		service.RegisterLookingParty(
+			107,
+			[2002, 2003],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			startInstanceTime.AddSeconds(-10));
+		service.RegisterLookingParty(
+			107,
+			[1001],
+			"ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			startInstanceTime.AddSeconds(-9));
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+
+		var result = service.TryRefillQueuedQuickEntry(
+			107,
+			autoGroups,
+			cooltimes,
+			request => runtimeService.TryAddOpenQuickEntry(request, startInstanceTime.AddSeconds(1)),
+			startInstanceTime.AddSeconds(1));
+
+		Assert.NotNull(result);
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.Added, result.RuntimeResult.Status);
+		Assert.Equal(1001, result.RuntimeResult.Request.LeaderObjectId);
+		Assert.True(service.IsSearching(2002, 107));
+		Assert.True(service.IsSearching(2003, 107));
+		Assert.False(service.IsSearching(1001, 107));
+		var snapshot = runtimeService.GetSnapshot(300110000, 2)!;
+		Assert.Contains(1001, snapshot.RegisteredPlayerObjectIds);
+		Assert.DoesNotContain(2002, snapshot.RegisteredPlayerObjectIds);
+		Assert.DoesNotContain(2003, snapshot.RegisteredPlayerObjectIds);
+		Assert.Collection(
+			result.WindowDeliveries,
+			delivery =>
+			{
+				Assert.Equal(1001, delivery.PlayerObjectId);
+				Assert.Equal(107, delivery.MaskId);
+				Assert.Equal(4, delivery.WindowId);
+			});
+	}
+
+	[Fact]
 	public void CreateReadyMatchPlan_PlansWindowFourRecipientsAndLeaderCleanupLikeJavaCreateNewInstance()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();

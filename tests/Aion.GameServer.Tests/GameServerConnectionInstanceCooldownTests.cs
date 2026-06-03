@@ -1448,6 +1448,12 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
 		autoGroupRegistrations.RegisterLookingParty(
 			107,
+			[2003, 2004],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			startInstanceTime.AddSeconds(-6));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
 			[1003],
 			"ELYOS",
 			AutoGroupEntryRequestType.QuickGroupEntry,
@@ -1502,6 +1508,10 @@ public sealed class GameServerConnectionInstanceCooldownTests
 		Assert.DoesNotContain(player.ObjectId, snapshot.RegisteredPlayerObjectIds);
 		Assert.Contains(teammate.ObjectId, snapshot.RegisteredPlayerObjectIds);
 		Assert.Contains(1003, snapshot.RegisteredPlayerObjectIds);
+		Assert.DoesNotContain(2003, snapshot.RegisteredPlayerObjectIds);
+		Assert.DoesNotContain(2004, snapshot.RegisteredPlayerObjectIds);
+		Assert.True(autoGroupRegistrations.IsSearching(2003, 107));
+		Assert.True(autoGroupRegistrations.IsSearching(2004, 107));
 		Assert.False(autoGroupRegistrations.IsSearching(1003, 107));
 		Assert.False(autoGroupRegistrations.IsSearching(1003, 108));
 		Assert.False(autoGroupRegistrations.IsSearching(3001, 108));
