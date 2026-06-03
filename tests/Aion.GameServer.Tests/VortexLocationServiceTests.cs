@@ -1341,6 +1341,164 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void LocationLifecyclePlan_RoutesKiskEnterAndLeaveToKiskMembershipPlanner()
+	{
+		var planner = new VortexLocationLifecyclePlanService();
+
+		var enter = planner.CreateEnterPlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Kisk,
+			objectId: 7101,
+			race: "ASMODIANS",
+			isInvaderRace: true,
+			hasActiveInvasion: false);
+		var leave = planner.CreateLeavePlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Kisk,
+			objectId: 7101,
+			race: "ASMODIANS",
+			isInvaderRace: true,
+			hasActiveInvasion: true,
+			isStillInsideLocation: false);
+
+		Assert.Equal(VortexLocationLifecyclePlanStatus.EnterKisk, enter.Status);
+		Assert.Equal(VortexLocationLifecycleEventKind.Enter, enter.EventKind);
+		Assert.True(enter.HasKiskPlan);
+		Assert.Equal(VortexInvaderKiskZoneMembershipPlanStatus.EnterRecordInvaderKisk, enter.KiskPlan?.Status);
+		Assert.False(enter.WouldRecordZonePlayer);
+		Assert.False(enter.ShouldMutateLiveKiskMap);
+		Assert.False(enter.ShouldMutateLiveZonePlayers);
+		Assert.False(enter.HasInvaderEnterPlan);
+		Assert.False(enter.HasDefenderEnterPlan);
+		Assert.Equal(VortexLocationLifecyclePlanStatus.LeaveKisk, leave.Status);
+		Assert.Equal(VortexLocationLifecycleEventKind.Leave, leave.EventKind);
+		Assert.True(leave.HasKiskPlan);
+		Assert.Equal(VortexInvaderKiskZoneMembershipPlanStatus.LeaveRemoveInvaderKisk, leave.KiskPlan?.Status);
+		Assert.False(leave.WouldRemoveZonePlayer);
+		Assert.False(leave.ShouldMutateLiveKiskMap);
+		Assert.False(leave.HasLeavePlan);
+	}
+
+	[Fact]
+	public void LocationLifecyclePlan_RoutesInvaderPlayerEnterToPassedPortalPlanner()
+	{
+		var planner = new VortexLocationLifecyclePlanService();
+
+		var plan = planner.CreateEnterPlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Player,
+			objectId: 1002,
+			race: "ASMODIANS",
+			isInvaderRace: true,
+			hasActiveInvasion: true,
+			isNewZonePlayer: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			existingInvaders: [],
+			invaderAlliance: VortexInvaderAllianceSnapshot.Missing);
+
+		Assert.Equal(VortexLocationLifecyclePlanStatus.EnterInvaderPlayer, plan.Status);
+		Assert.Equal(VortexLocationLifecycleCreatureKind.Player, plan.CreatureKind);
+		Assert.True(plan.WouldRecordZonePlayer);
+		Assert.True(plan.HasInvaderEnterPlan);
+		Assert.Equal(VortexInvaderPassedPortalUpdatePlanStatus.UpdatePlanned, plan.InvaderEnterPlan?.Status);
+		Assert.True(plan.InvaderEnterPlan?.WouldCallAddPlayer);
+		Assert.False(plan.HasKiskPlan);
+		Assert.False(plan.HasDefenderEnterPlan);
+		Assert.False(plan.ShouldMutateLiveZonePlayers);
+		Assert.False(plan.ShouldMutateLiveParticipants);
+		Assert.Equal("model/vortex/VortexLocation.onEnterZone", plan.JavaSource);
+	}
+
+	[Fact]
+	public void LocationLifecyclePlan_RoutesDefenderPlayerEnterToDefenderUpdatePlanner()
+	{
+		var planner = new VortexLocationLifecyclePlanService();
+
+		var plan = planner.CreateEnterPlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Player,
+			objectId: 1004,
+			race: "ELYOS",
+			isInvaderRace: false,
+			hasActiveInvasion: true,
+			isNewZonePlayer: true,
+			existingDefenderObjectIds: new HashSet<int>(),
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexLocationLifecyclePlanStatus.EnterDefenderPlayer, plan.Status);
+		Assert.True(plan.WouldRecordZonePlayer);
+		Assert.True(plan.HasDefenderEnterPlan);
+		Assert.Equal(VortexDefenderZoneEntryUpdatePlanStatus.InvitationPlanned, plan.DefenderEnterPlan?.Status);
+		Assert.True(plan.DefenderEnterPlan?.WouldCallUpdateDefenders);
+		Assert.False(plan.HasKiskPlan);
+		Assert.False(plan.HasInvaderEnterPlan);
+		Assert.False(plan.ShouldMutateLiveZonePlayers);
+		Assert.False(plan.ShouldMutateLiveRequests);
+		Assert.False(plan.ShouldSendLivePacket);
+	}
+
+	[Fact]
+	public void LocationLifecyclePlan_RoutesPlayerLeaveToKickSchedulePlanner()
+	{
+		var planner = new VortexLocationLifecyclePlanService();
+
+		var plan = planner.CreateLeavePlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Player,
+			objectId: 1002,
+			race: "ASMODIANS",
+			isInvaderRace: true,
+			hasActiveInvasion: true,
+			isStillInsideLocation: false,
+			passedPlayerObjectIds: new HashSet<int> { 1002 });
+
+		Assert.Equal(VortexLocationLifecyclePlanStatus.LeavePlayer, plan.Status);
+		Assert.Equal(VortexLocationLifecycleEventKind.Leave, plan.EventKind);
+		Assert.True(plan.WouldRemoveZonePlayer);
+		Assert.True(plan.HasLeavePlan);
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanStatus.InvaderKickScheduled, plan.LeavePlan?.Status);
+		Assert.True(plan.LeavePlan?.WouldScheduleKick);
+		Assert.False(plan.HasKiskPlan);
+		Assert.False(plan.HasInvaderEnterPlan);
+		Assert.False(plan.HasDefenderEnterPlan);
+		Assert.False(plan.ShouldMutateLiveZonePlayers);
+		Assert.False(plan.ShouldScheduleLiveTask);
+	}
+
+	[Fact]
+	public void LocationLifecyclePlan_IgnoresOtherCreatureKindsLikeJavaTypeChecks()
+	{
+		var planner = new VortexLocationLifecyclePlanService();
+
+		var enter = planner.CreateEnterPlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Other,
+			objectId: 9001,
+			race: "NONE",
+			isInvaderRace: false,
+			hasActiveInvasion: true);
+		var leave = planner.CreateLeavePlan(
+			locationId: 0,
+			VortexLocationLifecycleCreatureKind.Other,
+			objectId: 9001,
+			race: "NONE",
+			isInvaderRace: false,
+			hasActiveInvasion: true,
+			isStillInsideLocation: false);
+
+		Assert.Equal(VortexLocationLifecyclePlanStatus.EnterIgnoredCreature, enter.Status);
+		Assert.False(enter.HasKiskPlan);
+		Assert.False(enter.HasInvaderEnterPlan);
+		Assert.False(enter.HasDefenderEnterPlan);
+		Assert.False(enter.WouldRecordZonePlayer);
+		Assert.Equal(VortexLocationLifecyclePlanStatus.LeaveIgnoredCreature, leave.Status);
+		Assert.False(leave.HasKiskPlan);
+		Assert.False(leave.HasLeavePlan);
+		Assert.False(leave.WouldRemoveZonePlayer);
+		Assert.False(leave.ShouldMutateLiveZonePlayers);
+	}
+
+	[Fact]
 	public async Task DefenderAllianceUpdatePlan_SelectsOnlyJavaDefenderRaceZonePlayers()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-" + Guid.NewGuid().ToString("N"));
