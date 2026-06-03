@@ -95,6 +95,31 @@ public sealed class NpcDialogSideEffectServiceTests
 	}
 
 	[Fact]
+	public void PlayerSettings_DeniedStatusConstantsMatchJavaDeniedStatusEnum()
+	{
+		// Java parity: model/gameobjects/player/DeniedStatus enum values.
+		Assert.Equal(1, PlayerSettings.DenyViewDetails);
+		Assert.Equal(2, PlayerSettings.DenyTradeRequests);
+		Assert.Equal(4, PlayerSettings.DenyGroupRequests);
+		Assert.Equal(8, PlayerSettings.DenyGuildRequests);
+		Assert.Equal(16, PlayerSettings.DenyFriendRequests);
+		Assert.Equal(32, PlayerSettings.DenyDuelRequests);
+
+		var allDenied = new PlayerSettings { Deny = 63 }; // all 6 bits set
+		Assert.True(allDenied.DeniesViewDetails());
+		Assert.True(allDenied.DeniesTradeRequests());
+		Assert.True(allDenied.DeniesGroupRequests());
+		Assert.True(allDenied.DeniesGuildRequests());
+		Assert.True(allDenied.DeniesFriendRequests());
+		Assert.True(allDenied.DeniesDuelRequests());
+
+		var viewOnly = new PlayerSettings { Deny = PlayerSettings.DenyViewDetails };
+		Assert.True(viewOnly.DeniesViewDetails());
+		Assert.False(viewOnly.DeniesTradeRequests());
+		Assert.False(viewOnly.DeniesFriendRequests());
+	}
+
+	[Fact]
 	public void InventoryItemExtensions_ComposeTemplateMaskWithInstanceSoulboundLikeJavaItem()
 	{
 		// Java parity: Item.isTradeable/isStorableInAccWarehouse/isStorableInLegWarehouse/isLegionTradeable

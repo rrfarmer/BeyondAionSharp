@@ -46,6 +46,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400340, itemName ?? string.Empty);
 	}
 
+	public static SmSystemMessage RejectedWatch(string playerName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_WATCH(target.getName()).
+		return new SmSystemMessage(1390114, playerName);
+	}
+
 	public static SmSystemMessage CannotGetLoreItem(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CAN_NOT_GET_LORE_ITEM.

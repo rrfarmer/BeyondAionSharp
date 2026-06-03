@@ -657,8 +657,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleInviteToGroupAsync(_activePlayer, inviteToGroup);
 				break;
-			case CmViewPlayerDetails:
-				// Java parity: network/aion/clientpackets/CM_VIEW_PLAYER_DETAILS.runImpl sends equipment details or denial; deferred.
+			case CmViewPlayerDetails viewPlayerDetails:
+				if (_activePlayer != null)
+					await HandleViewPlayerDetailsAsync(_activePlayer, viewPlayerDetails);
 				break;
 			case CmDuelRequest duelRequest:
 				if (_activePlayer != null)
@@ -2487,6 +2488,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return new SmRepurchase(targetObjectId, packetItems);
+	}
+
+	private async Task HandleViewPlayerDetailsAsync(Player player, CmViewPlayerDetails packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_VIEW_PLAYER_DETAILS.runImpl.
+		if (_world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not Player targetPlayer)
+		{
+			return;
+		}
+
+		if (targetPlayer.Settings.DeniesViewDetails())
+		{
+			await SendPacketAsync(SmSystemMessage.RejectedWatch(targetPlayer.Name));
+			return;
+		}
+
+		// Sending SM_VIEW_PLAYER_DETAILS with equipment data deferred until
+		// SM_VIEW_PLAYER_DETAILS packet serialization is ported.
 	}
 
 	private async Task HandleDeleteItemAsync(Player player, CmDeleteItem packet)
