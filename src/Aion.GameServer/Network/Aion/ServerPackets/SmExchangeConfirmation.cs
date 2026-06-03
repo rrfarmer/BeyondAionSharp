@@ -5,6 +5,8 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public sealed class SmExchangeConfirmation : GameServerPacket
 {
 	public const int PacketOpCode = 78;
+	// Java parity: SM_EXCHANGE_CONFIRMATION action values.
+	public const int Success = 0;  // Trade completed (sent after performTrade succeeds)
 	public const int Canceled = 1;
 	public const int Confirmed = 2;
 	public const int Locked = 3;

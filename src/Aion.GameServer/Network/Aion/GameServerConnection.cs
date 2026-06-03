@@ -11121,7 +11121,69 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var intent in plan.PacketIntents)
 			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
 
+		if (plan.Status == ExchangeConfirmStatus.TradeExecutionBlocked)
+			await ExecuteKinahOnlyExchangeAsync(activePlayer, cancellationToken);
+
 		return plan;
+	}
+
+	private async Task ExecuteKinahOnlyExchangeAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExchangeService.performTrade (kinah-only path); exchange item basket deferred until item basket is ported.
+		// This handles the case where both players confirm and no exchange items are tracked on either side.
+		var partner = TryGetOnlinePlayerByObjectId(player.CurrentExchangePartnerObjectId);
+		if (partner == null)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var kinahTemplate = staticData?.ItemTemplates.GetItemTemplate(KinahItemId);
+
+		var playerKinah = player.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
+		var partnerKinah = partner.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
+
+		// Transfer kinah between players: each player's kinah decreases by their ExchangeKinah and increases by partner's ExchangeKinah.
+		var playerNet = partner.ExchangeKinah - player.ExchangeKinah;
+		var partnerNet = player.ExchangeKinah - partner.ExchangeKinah;
+
+		if ((playerNet != 0 || partnerNet != 0) && kinahTemplate != null)
+		{
+			var playerKinahOldCount = playerKinah?.Count ?? 0L;
+			var partnerKinahOldCount = partnerKinah?.Count ?? 0L;
+			var playerKinahNewCount = playerKinahOldCount + playerNet;
+			var partnerKinahNewCount = partnerKinahOldCount + partnerNet;
+
+			if (playerKinahNewCount >= 0 && partnerKinahNewCount >= 0)
+			{
+				if (playerKinah != null)
+				{
+					var playerKinahUpdate = CopyInventoryItem(playerKinah, count: playerKinahNewCount);
+					var playerItems = player.InventoryItems.ToList();
+					ReplaceInventoryItem(playerItems, playerKinahUpdate);
+					player.InventoryItems = playerItems.ToArray();
+					await SendPacketAsync(new SmInventoryUpdateItem(playerKinahUpdate, kinahTemplate,
+						playerNet > 0 ? SmInventoryUpdateItem.PlayerExchangeGet : SmInventoryUpdateItem.DecreaseKinahBuy), cancellationToken);
+				}
+
+				if (partnerKinah != null && _connectionRegistry != null)
+				{
+					var partnerKinahUpdate = CopyInventoryItem(partnerKinah, count: partnerKinahNewCount);
+					var partnerItems = partner.InventoryItems.ToList();
+					ReplaceInventoryItem(partnerItems, partnerKinahUpdate);
+					partner.InventoryItems = partnerItems.ToArray();
+					await _connectionRegistry.SendPacketToPlayerAsync(partner.ObjectId,
+						new SmInventoryUpdateItem(partnerKinahUpdate, kinahTemplate,
+							partnerNet > 0 ? SmInventoryUpdateItem.PlayerExchangeGet : SmInventoryUpdateItem.DecreaseKinahBuy));
+				}
+			}
+		}
+
+		// Java parity: ExchangeService.performTrade sends SM_EXCHANGE_CONFIRMATION(0) to both on success.
+		await SendPacketAsync(new SmExchangeConfirmation(SmExchangeConfirmation.Success), cancellationToken);
+		if (_connectionRegistry != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Success));
+
+		// Java parity: ExchangeService.cleanUpExchanges resets exchange state for both players.
+		_playerExchangeRequestService.CancelExchange(player, TryGetOnlinePlayerByObjectId);
 	}
 
 	private async Task HandleExchangeAddKinahAsync(Player player, CmExchangeAddKinah packet)
