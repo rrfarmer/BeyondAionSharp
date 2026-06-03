@@ -901,8 +901,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleShowDialogAsync(_activePlayer, showDialog);
 				break;
-			case CmCloseDialog:
-				// Java parity: network/aion/clientpackets/CM_CLOSE_DIALOG.runImpl delegates to DialogService.onCloseDialog; deferred.
+			case CmCloseDialog closeDialog:
+				if (_activePlayer != null)
+					HandleCloseDialog(_activePlayer, closeDialog);
 				break;
 			case CmCharacterList characterList:
 				await SendPacketAsync(CreateAccountPropertiesPacket());
@@ -2485,6 +2486,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return new SmRepurchase(targetObjectId, packetItems);
+	}
+
+	private void HandleCloseDialog(Player player, CmCloseDialog packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CLOSE_DIALOG.runImpl delegates to DialogService.onCloseDialog.
+		var isNpcTarget = _world != null
+			&& _world.TryGetObject(packet.TargetObjectId, out var target)
+			&& target is IWorldNpcObject;
+		var plan = new NpcDialogCloseSideEffectPlanService().CreatePlan(
+			player,
+			packet.TargetObjectId,
+			isNpcTarget);
+		if (plan.WouldCloseMailbox)
+			player.MailboxState = PlayerMailboxState.Closed;
+		// AI DIALOG_FINISH event and legion warehouse release remain non-live until AI and legion systems are enabled.
 	}
 
 	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)

@@ -94,6 +94,47 @@ public sealed class NpcDialogSideEffectServiceTests
 		Assert.True(player.IsAbnormalSet(PlayerAbnormalState.Hide));
 	}
 
+	[Fact]
+	public void CloseDialogPlan_PlansMailboxCloseAndAiEventForNpcTargetWithOpenMailbox()
+	{
+		var planner = new NpcDialogCloseSideEffectPlanService();
+		var player = new Player { MailboxState = PlayerMailboxState.Regular };
+
+		var plan = planner.CreatePlan(player, targetObjectId: 5001, isNpcTarget: true);
+
+		Assert.Equal(5001, plan.TargetObjectId);
+		Assert.True(plan.IsNpcTarget);
+		Assert.True(plan.WouldFireDialogFinishAiEvent);
+		Assert.True(plan.WouldCloseMailbox);
+		Assert.False(plan.WouldReleaseLegionWarehouseLock);
+		Assert.False(plan.ShouldMutateLiveAiState);
+		Assert.False(plan.ShouldMutateLiveMailboxState);
+		Assert.False(plan.ShouldMutateLiveLegionWarehouse);
+		Assert.Contains("DialogService.onCloseDialog", plan.JavaSource);
+	}
+
+	[Fact]
+	public void CloseDialogPlan_SkipsMailboxCloseWhenAlreadyClosedAndSkipsAiEventForNonNpcTarget()
+	{
+		var planner = new NpcDialogCloseSideEffectPlanService();
+		var playerClosedMailbox = new Player { MailboxState = PlayerMailboxState.Closed };
+		var playerWithMailbox = new Player { MailboxState = PlayerMailboxState.Express };
+
+		var noNpc = planner.CreatePlan(playerWithMailbox, targetObjectId: 0, isNpcTarget: false);
+		var closedMailbox = planner.CreatePlan(playerClosedMailbox, targetObjectId: 5001, isNpcTarget: true);
+
+		// Non-NPC target: no AI event, but mailbox still closes
+		Assert.False(noNpc.IsNpcTarget);
+		Assert.False(noNpc.WouldFireDialogFinishAiEvent);
+		Assert.True(noNpc.WouldCloseMailbox);
+		Assert.False(noNpc.ShouldMutateLiveAiState);
+		Assert.False(noNpc.ShouldMutateLiveMailboxState);
+		// Already-closed mailbox: mailbox does not close
+		Assert.True(closedMailbox.IsNpcTarget);
+		Assert.True(closedMailbox.WouldFireDialogFinishAiEvent);
+		Assert.False(closedMailbox.WouldCloseMailbox);
+	}
+
 	private static WorldNpc CreateNpc(bool canTalkInvisible)
 	{
 		var template = new NpcTemplateSummary(
