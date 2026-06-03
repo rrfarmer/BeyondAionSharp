@@ -2368,6 +2368,106 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StopRuntimeSnapshotCollector_CapturesJavaStopInputsAndFeedsCoordinatorWithoutLiveExecution()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-runtime-collector-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var collector = new VortexStopInvasionRuntimeSnapshotCollectorService();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService());
+			var onlineInvader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			var offlineInvader = CreatePlayer(1003, isOnline: false, location.InvasionWorldId);
+			var unrelatedPlayer = CreatePlayer(1999, isOnline: true, location.InvasionWorldId);
+			var kisk = new PlayerKiskRuntimeState(7101, onlineInvader.ObjectId, 831200);
+			var spawnedNpc = new WorldNpc(
+				ObjectId: 7201,
+				TemplateId: 831300,
+				Template: new NpcTemplateSummary(831300, "Vortex spawned", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
+				Position: location.StartPoint);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.AddInvader(location.Id, onlineInvader));
+			Assert.True(runtime.AddInvader(location.Id, offlineInvader));
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+
+			var request = collector.Collect(
+				snapshot,
+				players: [onlineInvader, offlineInvader, unrelatedPlayer],
+				invaderKisks: [kisk],
+				spawnedNpcs: [spawnedNpc],
+				invaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[onlineInvader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberDisbandedAfterRemoval,
+					[unrelatedPlayer.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberActive,
+				});
+			var report = coordinator.StopInvasion(location.Id, request);
+
+			Assert.True(request.HasAnySnapshot);
+			Assert.Equal([onlineInvader.ObjectId, offlineInvader.ObjectId], request.InvaderSnapshots.Select(invader => invader.PlayerObjectId).ToArray());
+			Assert.Equal([onlineInvader.ObjectId, offlineInvader.ObjectId], request.PassedPlayerSnapshots.Order().ToArray());
+			Assert.Equal([onlineInvader.ObjectId], request.InvaderAllianceSnapshots.Keys.ToArray());
+			Assert.Equal([kisk.ObjectId], request.InvaderKiskSnapshots.Select(invaderKisk => invaderKisk.KiskObjectId).ToArray());
+			Assert.Equal([spawnedNpc.ObjectId], request.SpawnedNpcSnapshots.Select(npc => npc.ObjectId).ToArray());
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Stopped);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.KillInvaderKisk,
+					VortexStopInvasionSideEffectStepKind.KickOnlineInvader,
+					VortexStopInvasionSideEffectStepKind.DespawnVortexNpc,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
+			Assert.Equal(onlineInvader.ObjectId, kickRemoval.PlayerObjectId);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, kickRemoval.AllianceKickMessageId);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, kickRemoval.DirectPortalOutMessageId);
+			Assert.True(kickRemoval.WouldClearAllianceReference);
+			Assert.True(kickRemoval.WouldRemovePassedPlayer);
+			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 1);
+			Assert.False(kickRemoval.ShouldSendLivePacket);
+			Assert.False(kickRemoval.ShouldTeleportLivePlayer);
+			Assert.False(kickRemoval.ShouldMutateLiveParticipants);
+			Assert.False(kickRemoval.ShouldMutateLivePassedPlayers);
+			Assert.False(kickRemoval.ShouldSyncLivePassedPlayers);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public void StopRuntimeSnapshotCollector_MissingSnapshotReturnsEmptyRequest()
+	{
+		var collector = new VortexStopInvasionRuntimeSnapshotCollectorService();
+		var invader = CreatePlayer(1002, isOnline: true, worldId: 210060000);
+
+		var request = collector.Collect(
+			null,
+			players: [invader],
+			invaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+			{
+				[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberActive,
+			});
+
+		Assert.False(request.HasAnySnapshot);
+		Assert.Empty(request.InvaderSnapshots);
+		Assert.Empty(request.InvaderKiskSnapshots);
+		Assert.Empty(request.SpawnedNpcSnapshots);
+		Assert.Empty(request.InvaderAllianceSnapshots);
+		Assert.Empty(request.PassedPlayerSnapshots);
+	}
+
+	[Fact]
 	public async Task StopCoordinator_ComposesRuntimeStopAndSideEffectPlanWithoutLiveExecution()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-" + Guid.NewGuid().ToString("N"));
