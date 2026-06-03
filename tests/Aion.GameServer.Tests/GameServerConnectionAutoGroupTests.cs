@@ -410,6 +410,82 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupQuickEntryAttachesToOpenRuntimeInstanceLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = DateTimeOffset.UtcNow.AddSeconds(-1);
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[2001] = "ASMODIANS",
+			}));
+		autoGroupRegistrations.RegisterLookingParty(
+			108,
+			[1001, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			startInstanceTime.AddSeconds(-5));
+		var quickPlayer = new Player
+		{
+			ObjectId = 1001,
+			Name = "QuickPlayer",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var registry = new RecordingConnectionRegistry([1001, 3001]);
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			[CreateAutoGroup(107, 300110000), CreateAutoGroup(108, 300120000)],
+			new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1, MaxMemberLight: 2, MaxMemberDark: 2),
+			]));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			autoGroupInstanceLeaveRuntimeService: runtimeService);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, quickPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(1);
+				}));
+
+		Assert.Empty(sentPackets);
+		Assert.False(autoGroupRegistrations.IsSearching(1001, 107));
+		Assert.False(autoGroupRegistrations.IsSearching(1001, 108));
+		Assert.False(autoGroupRegistrations.IsSearching(3001, 108));
+		Assert.Contains(1001, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Equal([1001, 1001, 1001, 1001, 1001, 3001], registry.SentPackets.Select(delivery => delivery.PlayerObjectId));
+		AssertFanoutPacketOrder(registry.SentPackets.Take(3).Select(delivery => delivery.Packet).ToArray());
+		AssertReadyWindow(registry.SentPackets[3], 1001, 107);
+		AssertCancelWindow(registry.SentPackets[4], 1001, 108);
+		AssertCancelWindow(registry.SentPackets[5], 3001, 108);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -587,6 +663,14 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.Equal(4, autoGroup.WindowId);
 	}
 
+	private static void AssertCancelWindow(PacketDelivery delivery, int playerObjectId, int maskId)
+	{
+		Assert.Equal(playerObjectId, delivery.PlayerObjectId);
+		var autoGroup = Assert.IsType<SmAutoGroup>(delivery.Packet);
+		Assert.Equal(maskId, autoGroup.MaskId);
+		Assert.Equal(2, autoGroup.WindowId);
+	}
+
 	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId)
 	{
 		return new AutoGroupSummary(
@@ -717,7 +801,8 @@ public sealed class GameServerConnectionAutoGroupTests
 			GameServerRuntimeContext? runtimeContext = null,
 			AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
 			IGameClientConnectionRegistry? connectionRegistry = null,
-			PlayerGroupRuntime? playerGroupRuntime = null)
+			PlayerGroupRuntime? playerGroupRuntime = null,
+			AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null)
 		{
 			using var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -741,6 +826,7 @@ public sealed class GameServerConnectionAutoGroupTests
 					connectionRegistry: connectionRegistry,
 					sentPacketObserver: sentPacketObserver,
 					playerGroupRuntime: playerGroupRuntime,
+					autoGroupInstanceLeaveRuntimeService: autoGroupInstanceLeaveRuntimeService,
 					autoGroupLookingPartyRegistrations: autoGroupLookingPartyRegistrations,
 					crypt: crypt);
 				return new ConnectionFixture(client, connection);

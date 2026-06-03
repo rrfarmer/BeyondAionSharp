@@ -1497,6 +1497,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					return;
 
 				var autoGroups = _runtimeContext?.DataManager?.StaticData.AutoGroups;
+				var instanceCooltimes = _runtimeContext?.DataManager?.StaticData.InstanceCooltimes;
 				var result = _autoGroupLookingPartyRegistrations.StartLooking(
 					player,
 					packet.InstanceMaskId,
@@ -1504,8 +1505,9 @@ public sealed class GameServerConnection : BaseClientConnection
 					autoGroups,
 					_playerGroupRuntime,
 					_playerAllianceRuntime,
-					_runtimeContext?.DataManager?.StaticData.InstanceCooltimes,
-					announceBattlegroundRegistrations: _options.AutoGroup.AnnounceBattlegroundRegistrations);
+					instanceCooltimes,
+					announceBattlegroundRegistrations: _options.AutoGroup.AnnounceBattlegroundRegistrations,
+					tryAddOpenQuickEntry: request => _autoGroupInstanceLeaveRuntimeService.TryAddOpenQuickEntry(request));
 
 				if (result.GuardPlan != null)
 				{
@@ -1533,6 +1535,16 @@ public sealed class GameServerConnection : BaseClientConnection
 					{
 						await SendAutoGroupSuccessfulRegistrationAsync(player, result.Registration, autoGroup, entryRequestType.Value);
 						await BroadcastAutoGroupBattlegroundRegistrationAnnouncementAsync(result.BattlegroundAnnouncement);
+						if (result.OpenQuickEntry != null && _connectionRegistry != null)
+						{
+							foreach (var delivery in result.OpenQuickEntry.WindowDeliveries)
+							{
+								var deliveryAutoGroup = autoGroups?.GetTemplateByInstanceMaskId(delivery.MaskId);
+								if (deliveryAutoGroup != null)
+									await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
+							}
+						}
+
 						if (result.QueueMatchPlan?.Status == AutoGroupQueueMatchPlanStatus.Ready && _connectionRegistry != null)
 						{
 							var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(result.QueueMatchPlan);

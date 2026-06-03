@@ -544,6 +544,128 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void StartLooking_AttachesQuickEntryToOpenRuntimeInstanceBeforeQueueMatchingLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[2001] = "ASMODIANS",
+			}));
+		service.RegisterLookingParty(
+			108,
+			[1001, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			startInstanceTime.AddSeconds(-5));
+		var player = CreatePlayer(1001, level: 50);
+		var autoGroups = new AutoGroupTable(
+		[
+			CreateAutoGroup(107, 300110000),
+			CreateAutoGroup(108, 300120000),
+		]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+
+		var result = service.StartLooking(
+			player,
+			107,
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			autoGroups,
+			instanceCooltimes: cooltimes,
+			now: startInstanceTime.AddSeconds(1),
+			tryAddOpenQuickEntry: request => runtimeService.TryAddOpenQuickEntry(request, startInstanceTime.AddSeconds(1)));
+
+		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
+		Assert.False(result.RegisteredQueue);
+		Assert.Null(result.QueueMatchPlan);
+		Assert.NotNull(result.OpenQuickEntry);
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.Added, result.OpenQuickEntry.RuntimeResult.Status);
+		Assert.False(service.IsSearching(1001, 107));
+		Assert.False(service.IsSearching(1001, 108));
+		Assert.False(service.IsSearching(3001, 108));
+		Assert.Contains(1001, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Collection(
+			result.OpenQuickEntry.WindowDeliveries,
+			delivery =>
+			{
+				Assert.Equal(1001, delivery.PlayerObjectId);
+				Assert.Equal(107, delivery.MaskId);
+				Assert.Equal(4, delivery.WindowId);
+			},
+			delivery =>
+			{
+				Assert.Equal(1001, delivery.PlayerObjectId);
+				Assert.Equal(108, delivery.MaskId);
+				Assert.Equal(2, delivery.WindowId);
+			},
+			delivery =>
+			{
+				Assert.Equal(3001, delivery.PlayerObjectId);
+				Assert.Equal(108, delivery.MaskId);
+				Assert.Equal(2, delivery.WindowId);
+			});
+		var cleanup = Assert.Single(result.OpenQuickEntry.AdditionalRegistrationCleanupIntents);
+		Assert.Equal(AutoGroupAdditionalRegistrationCleanupType.LeaderPartyRemoval, cleanup.Type);
+		Assert.Equal([1001, 3001], cleanup.NotifiedMemberObjectIds);
+	}
+
+	[Fact]
+	public void StartLooking_FallsBackToQueueMatchWhenOpenRuntimeQuickEntryRejectsLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[2001] = "ASMODIANS",
+			}));
+		var player = CreatePlayer(1001, level: 50);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+
+		var result = service.StartLooking(
+			player,
+			107,
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			autoGroups,
+			instanceCooltimes: cooltimes,
+			now: startInstanceTime.AddMilliseconds(230001),
+			tryAddOpenQuickEntry: request => runtimeService.TryAddOpenQuickEntry(request, startInstanceTime.AddMilliseconds(230001)));
+
+		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
+		Assert.True(result.RegisteredQueue);
+		Assert.Null(result.OpenQuickEntry);
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.NotReady, result.QueueMatchPlan?.Status);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.DoesNotContain(1001, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
 	public void CreateReadyMatchPlan_PlansWindowFourRecipientsAndLeaderCleanupLikeJavaCreateNewInstance()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();

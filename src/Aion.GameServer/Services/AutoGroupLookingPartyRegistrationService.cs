@@ -20,11 +20,13 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		PlayerAllianceRuntime? allianceRuntime = null,
 		InstanceCooltimeTable? instanceCooltimes = null,
 		DateTimeOffset? now = null,
-		bool announceBattlegroundRegistrations = false)
+		bool announceBattlegroundRegistrations = false,
+		Func<AutoGroupOpenQuickEntryRequest, AutoGroupOpenQuickEntryResult>? tryAddOpenQuickEntry = null)
 	{
 		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
 		if (autoGroup == null)
 			return AutoGroupStartLookingResult.MissingAutoGroup(maskId, entryRequestType);
+		var evaluatedAt = now ?? DateTimeOffset.UtcNow;
 
 		var guard = AutoGroupRegistrationGuardPlanService.CreatePlan(
 			player.Level,
@@ -63,7 +65,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				memberObjectIds,
 				player.Race,
 				entryRequestType,
-				now ?? DateTimeOffset.UtcNow);
+				evaluatedAt);
 			if (parties == null)
 			{
 				parties = [];
@@ -77,6 +79,24 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				entryRequestType,
 				parties,
 				announceBattlegroundRegistrations);
+			var openQuickEntry = TryAttachOpenQuickEntry(
+				registration,
+				autoGroup,
+				instanceCooltimes,
+				tryAddOpenQuickEntry,
+				evaluatedAt);
+			if (openQuickEntry != null)
+			{
+				return AutoGroupStartLookingResult.Registered(
+					maskId,
+					entryRequestType,
+					registration,
+					guard,
+					announcement,
+					queueMatchPlan: null,
+					openQuickEntry: openQuickEntry);
+			}
+
 			var queueMatchPlan = CreateQueueMatchPlan(maskId, autoGroups, instanceCooltimes);
 			return AutoGroupStartLookingResult.Registered(maskId, entryRequestType, registration, guard, announcement, queueMatchPlan);
 		}
@@ -760,6 +780,46 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			+ instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, "ELYOS");
 	}
 
+	private AutoGroupOpenQuickEntryAttachment? TryAttachOpenQuickEntry(
+		AutoGroupLookingPartyRegistration registration,
+		AutoGroupSummary autoGroup,
+		InstanceCooltimeTable? instanceCooltimes,
+		Func<AutoGroupOpenQuickEntryRequest, AutoGroupOpenQuickEntryResult>? tryAddOpenQuickEntry,
+		DateTimeOffset readyEnterStartTime)
+	{
+		if (tryAddOpenQuickEntry == null)
+			return null;
+
+		var maxPlayersForRace = instanceCooltimes?.GetMaxMemberCount(autoGroup.InstanceMapId, registration.Race) ?? 0;
+		var request = new AutoGroupOpenQuickEntryRequest(
+			registration.MaskId,
+			registration.LeaderObjectId,
+			registration.MemberObjectIds,
+			registration.Race,
+			registration.EntryRequestType,
+			maxPlayersForRace);
+		var runtimeResult = tryAddOpenQuickEntry(request);
+		if (runtimeResult.Status != AutoGroupOpenQuickEntryStatus.Added)
+			return null;
+
+		var cleanupIntents = new List<AutoGroupAdditionalRegistrationCleanupIntent>();
+		var windowDeliveries = new List<AutoGroupWindowDeliveryIntent>
+		{
+			new(registration.LeaderObjectId, registration.MaskId, WindowId: 4),
+		};
+
+		if (_lookingPartiesByMaskId.TryGetValue(registration.MaskId, out var parties))
+			RemovePartyFromSimulation(_lookingPartiesByMaskId, registration.MaskId, parties, registration);
+
+		ApplyAdditionalRegistrationCleanup(registration.LeaderObjectId, cleanupIntents, windowDeliveries);
+		return new AutoGroupOpenQuickEntryAttachment(
+			runtimeResult,
+			readyEnterStartTime,
+			cleanupIntents,
+			windowDeliveries,
+			"AutoGroupService.checkInstancesForOpenQuickEntries -> removeSearchEntry(lfp), lfp.setStartEnterTime(), SM_AUTO_GROUP(maskId, 4), searchAndRemoveAdditionalRegistrations(leader)");
+	}
+
 	private static AutoGroupInstanceRuntimeRegistration? CreateRuntimeRegistrationIntent(
 		AutoGroupReadyMatchPlan readyMatchPlan,
 		AutoGroupTable? autoGroups,
@@ -1154,6 +1214,13 @@ public sealed record AutoGroupWindowDeliveryIntent(
 	int MaskId,
 	int WindowId);
 
+public sealed record AutoGroupOpenQuickEntryAttachment(
+	AutoGroupOpenQuickEntryResult RuntimeResult,
+	DateTimeOffset ReadyEnterStartTime,
+	IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> AdditionalRegistrationCleanupIntents,
+	IReadOnlyList<AutoGroupWindowDeliveryIntent> WindowDeliveries,
+	string JavaSource);
+
 public sealed record AutoGroupBattlegroundRegistrationAnnouncement(
 	string Message,
 	string RegisteringRace,
@@ -1213,9 +1280,10 @@ public sealed record AutoGroupStartLookingResult(
 	AutoGroupLookingPartyRegistration? Registration,
 	AutoGroupRegistrationGuardPlan? GuardPlan,
 	AutoGroupBattlegroundRegistrationAnnouncement? BattlegroundAnnouncement = null,
-	AutoGroupQueueMatchPlan? QueueMatchPlan = null)
+	AutoGroupQueueMatchPlan? QueueMatchPlan = null,
+	AutoGroupOpenQuickEntryAttachment? OpenQuickEntry = null)
 {
-	public bool RegisteredQueue => Status == AutoGroupStartLookingStatus.Registered;
+	public bool RegisteredQueue => Status == AutoGroupStartLookingStatus.Registered && OpenQuickEntry == null;
 
 	public static AutoGroupStartLookingResult Registered(
 		int maskId,
@@ -1223,7 +1291,8 @@ public sealed record AutoGroupStartLookingResult(
 		AutoGroupLookingPartyRegistration registration,
 		AutoGroupRegistrationGuardPlan guardPlan,
 		AutoGroupBattlegroundRegistrationAnnouncement? battlegroundAnnouncement = null,
-		AutoGroupQueueMatchPlan? queueMatchPlan = null)
+		AutoGroupQueueMatchPlan? queueMatchPlan = null,
+		AutoGroupOpenQuickEntryAttachment? openQuickEntry = null)
 	{
 		return new AutoGroupStartLookingResult(
 			AutoGroupStartLookingStatus.Registered,
@@ -1232,7 +1301,8 @@ public sealed record AutoGroupStartLookingResult(
 			registration,
 			guardPlan,
 			battlegroundAnnouncement,
-			queueMatchPlan);
+			queueMatchPlan,
+			openQuickEntry);
 	}
 
 	public static AutoGroupStartLookingResult MissingAutoGroup(int maskId, AutoGroupEntryRequestType entryRequestType)
