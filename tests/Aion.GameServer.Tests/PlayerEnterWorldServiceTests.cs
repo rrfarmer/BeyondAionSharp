@@ -386,6 +386,40 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_PassesLifeStatsAndCooldownsToRepositoryLikeJavaPersistenceBand()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		player.LifeStats = new PlayerLifeStats(CurrentHp: 321, CurrentMp: 654, CurrentFp: 87);
+		player.SkillCooldowns = new Dictionary<int, long>
+		{
+			[1001] = 1_900_000,
+			[1002] = 2_100_000,
+		};
+		player.ItemCooldowns = new Dictionary<int, PlayerItemCooldown>
+		{
+			[2001] = new(ReuseTimeMillis: 3_900_000, UseDelaySeconds: 60),
+			[2002] = new(ReuseTimeMillis: 4_200_000, UseDelaySeconds: 120),
+		};
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+			CaptureLogoutPersistenceBandFacts = true,
+		};
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal(new PlayerLifeStats(321, 654, 87), repository.CapturedLogoutLifeStats);
+		Assert.Equal(player.SkillCooldowns, repository.CapturedLogoutSkillCooldowns);
+		Assert.Equal(player.ItemCooldowns, repository.CapturedLogoutItemCooldowns);
+		Assert.Equal(player.LastOnline, repository.LogoutLastOnline);
+		Assert.False(world.TryGetObject(player.ObjectId, out _));
+	}
+
+	[Fact]
 	public async Task LeaveWorld_RecordsDisabledRepurchaseStateRemovalWithoutMutatingPlayerItems()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
@@ -1615,6 +1649,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<InventoryItem> CapturedLogoutDirtyItems { get; private set; } = Array.Empty<InventoryItem>();
 
+		public bool CaptureLogoutPersistenceBandFacts { get; init; }
+
+		public PlayerLifeStats? CapturedLogoutLifeStats { get; private set; }
+
+		public IReadOnlyDictionary<int, long> CapturedLogoutSkillCooldowns { get; private set; } = new Dictionary<int, long>();
+
+		public IReadOnlyDictionary<int, PlayerItemCooldown> CapturedLogoutItemCooldowns { get; private set; } = new Dictionary<int, PlayerItemCooldown>();
+
 		public DateTime? LogoutLastOnline { get; private set; }
 
 		public int SaveMacroCalls { get; private set; }
@@ -2498,6 +2540,12 @@ public sealed class PlayerEnterWorldServiceTests
 			{
 				CapturedLogoutDirtyItems = player.GetDirtyItemsToUpdate();
 				player.MarkDirtyItemsPersisted();
+			}
+			if (CaptureLogoutPersistenceBandFacts)
+			{
+				CapturedLogoutLifeStats = player.LifeStats;
+				CapturedLogoutSkillCooldowns = player.SkillCooldowns.ToDictionary(pair => pair.Key, pair => pair.Value);
+				CapturedLogoutItemCooldowns = player.ItemCooldowns.ToDictionary(pair => pair.Key, pair => pair.Value);
 			}
 			return Task.FromResult(true);
 		}
