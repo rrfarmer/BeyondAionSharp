@@ -1289,6 +1289,58 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void InvaderKiskZoneMembershipPlan_EnterRecordsOnlyInvaderRaceKisksLikeJava()
+	{
+		var planner = new VortexInvaderKiskZoneMembershipPlanService();
+		var invaderKisk = new VortexKiskZoneSnapshot(KiskObjectId: 7101, Race: "ASMODIANS");
+		var defenderKisk = new VortexKiskZoneSnapshot(KiskObjectId: 7102, Race: "ELYOS");
+
+		var recorded = planner.CreateEnterPlan(invaderKisk, isInvaderRace: true);
+		var skipped = planner.CreateEnterPlan(defenderKisk, isInvaderRace: false);
+
+		Assert.Equal(VortexInvaderKiskZoneMembershipPlanStatus.EnterRecordInvaderKisk, recorded.Status);
+		Assert.Equal(7101, recorded.KiskObjectId);
+		Assert.Equal("ASMODIANS", recorded.Race);
+		Assert.True(recorded.IsInvaderRace);
+		Assert.True(recorded.WouldRecordInvaderKisk);
+		Assert.False(recorded.WouldRemoveInvaderKisk);
+		Assert.False(recorded.ShouldMutateLiveKiskMap);
+		Assert.False(recorded.ShouldKillOrDespawnKisk);
+		Assert.Equal("model/vortex/VortexLocation.onEnterZone", recorded.JavaSource);
+		Assert.Equal(VortexInvaderKiskZoneMembershipPlanStatus.EnterNonInvaderRace, skipped.Status);
+		Assert.False(skipped.IsInvaderRace);
+		Assert.False(skipped.WouldRecordInvaderKisk);
+		Assert.False(skipped.WouldRemoveInvaderKisk);
+		Assert.False(skipped.ShouldMutateLiveKiskMap);
+	}
+
+	[Fact]
+	public void InvaderKiskZoneMembershipPlan_LeaveRemovesOnlyAfterFullyOutsideLocation()
+	{
+		var planner = new VortexInvaderKiskZoneMembershipPlanService();
+		var kisk = new VortexKiskZoneSnapshot(KiskObjectId: 7101, Race: "ASMODIANS");
+
+		var stillInside = planner.CreateLeavePlan(kisk, isStillInsideLocation: true);
+		var removed = planner.CreateLeavePlan(kisk, isStillInsideLocation: false);
+
+		Assert.Equal(VortexInvaderKiskZoneMembershipPlanStatus.LeaveStillInsideLocation, stillInside.Status);
+		Assert.True(stillInside.IsStillInsideLocation);
+		Assert.Null(stillInside.IsInvaderRace);
+		Assert.False(stillInside.WouldRecordInvaderKisk);
+		Assert.False(stillInside.WouldRemoveInvaderKisk);
+		Assert.False(stillInside.ShouldMutateLiveKiskMap);
+		Assert.Equal("model/vortex/VortexLocation.onLeaveZone", stillInside.JavaSource);
+		Assert.Equal(VortexInvaderKiskZoneMembershipPlanStatus.LeaveRemoveInvaderKisk, removed.Status);
+		Assert.False(removed.IsStillInsideLocation);
+		Assert.Null(removed.IsInvaderRace);
+		Assert.False(removed.WouldRecordInvaderKisk);
+		Assert.True(removed.WouldRemoveInvaderKisk);
+		Assert.False(removed.ShouldMutateLiveKiskMap);
+		Assert.False(removed.ShouldKillOrDespawnKisk);
+		Assert.Equal("model/vortex/VortexLocation.onLeaveZone", removed.JavaSource);
+	}
+
+	[Fact]
 	public async Task DefenderAllianceUpdatePlan_SelectsOnlyJavaDefenderRaceZonePlayers()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-" + Guid.NewGuid().ToString("N"));
