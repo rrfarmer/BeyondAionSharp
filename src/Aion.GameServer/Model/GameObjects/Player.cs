@@ -41,6 +41,13 @@ public sealed class Player
 
 	public string LegionName { get; set; } = string.Empty;
 
+	// Java parity: model/team/legion/LegionMember.getRank() — legion_members.rank stores the LegionRank enum name.
+	// Empty when the player has no legion (LegionId == 0).
+	public string LegionRank { get; set; } = string.Empty;
+
+	// Java parity: model/team/legion/LegionMember.isBrigadeGeneral().
+	public bool IsBrigadeGeneral => Legion.LegionRanks.IsBrigadeGeneral(LegionRank);
+
 	public byte LegionEmblemId { get; set; }
 
 	public byte LegionEmblemType { get; set; }

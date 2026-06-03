@@ -1031,7 +1031,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			command.CommandText = """
 				SELECT id, account_id, name, player_class, race, gender, note, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
-					lm.legion_id, l.level AS legion_level, l.name AS legion_name,
+					lm.legion_id, lm.`rank` AS legion_rank, l.level AS legion_level, l.name AS legion_name,
 					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
 					le.color_a AS legion_emblem_color_a, le.color_r AS legion_emblem_color_r,
 					le.color_g AS legion_emblem_color_g, le.color_b AS legion_emblem_color_b,
@@ -1072,6 +1072,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				Gender = ReadString(reader, "gender"),
 				Note = ReadString(reader, "note"),
 				LegionId = ReadInt(reader, "legion_id"),
+				LegionRank = ReadString(reader, "legion_rank"), // Java parity: LegionMember rank (enum name); empty when no legion.
 				LegionLevel = ReadInt(reader, "legion_level"),
 				LegionName = ReadString(reader, "legion_name"),
 				LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
