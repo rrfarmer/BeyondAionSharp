@@ -84,6 +84,12 @@ public enum VortexStopInvasionSideEffectStepKind
 	SpawnPeaceNpc,
 }
 
+public enum VortexStateType
+{
+	Invasion,
+	Peace,
+}
+
 public sealed record VortexStopInvasionSideEffectPlan(
 	VortexStopInvasionSideEffectPlanStatus Status,
 	int LocationId,
@@ -108,7 +114,7 @@ public sealed record VortexStopInvasionSideEffectStep(
 	bool ShouldTeleportHome = false,
 	WorldPosition? TeleportDestination = null,
 	NpcSpawnSummary? Spawn = null,
-	string VortexState = "",
+	VortexStateType? VortexState = null,
 	string JavaSource = "")
 {
 	public static VortexStopInvasionSideEffectStep ClearActiveVortex(int locationId)
@@ -160,7 +166,7 @@ public sealed record VortexStopInvasionSideEffectStep(
 			VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
 			NpcId: peaceSpawn.Spawn.NpcId,
 			Spawn: peaceSpawn.Spawn,
-			VortexState: "PEACE",
+			VortexState: peaceSpawn.State,
 			JavaSource: "services/vortex/Invasion.stopInvasion -> services/VortexService.spawn(VortexStateType.PEACE)");
 	}
 }
@@ -200,11 +206,13 @@ public sealed record VortexStopSpawnedNpcSnapshot(
 	}
 }
 
-public sealed record VortexStopPeaceSpawnSnapshot(NpcSpawnSummary Spawn)
+public sealed record VortexStopPeaceSpawnSnapshot(
+	NpcSpawnSummary Spawn,
+	VortexStateType State = VortexStateType.Peace)
 {
 	public static VortexStopPeaceSpawnSnapshot FromSpawn(NpcSpawnSummary spawn)
 	{
 		ArgumentNullException.ThrowIfNull(spawn);
-		return new VortexStopPeaceSpawnSnapshot(spawn);
+		return new VortexStopPeaceSpawnSnapshot(spawn, VortexStateType.Peace);
 	}
 }

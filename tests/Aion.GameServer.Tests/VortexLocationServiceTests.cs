@@ -302,7 +302,7 @@ public sealed class VortexLocationServiceTests
 			Assert.False(outsideKick.ShouldTeleportHome);
 			Assert.Null(outsideKick.TeleportDestination);
 			Assert.DoesNotContain(plan.OrderedSteps, step => step.PlayerObjectId == offlineInvader.ObjectId);
-			Assert.Equal("PEACE", plan.OrderedSteps.Last().VortexState);
+			Assert.Equal(VortexStateType.Peace, plan.OrderedSteps.Last().VortexState);
 			Assert.Same(peaceSpawn, plan.OrderedSteps.Last().Spawn);
 		}
 		finally
@@ -341,6 +341,13 @@ public sealed class VortexLocationServiceTests
 		{
 			DeleteTempDirectory(tempPath);
 		}
+	}
+
+	[Fact]
+	public void VortexStateType_MetadataCarriesJavaStatesInOrder()
+	{
+		Assert.Equal([VortexStateType.Invasion, VortexStateType.Peace], Enum.GetValues<VortexStateType>());
+		Assert.Equal(["Invasion", "Peace"], Enum.GetNames<VortexStateType>());
 	}
 
 	[Fact]
