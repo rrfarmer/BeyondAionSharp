@@ -2,6 +2,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;
 
@@ -18,7 +19,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		PlayerGroupRuntime? groupRuntime = null,
 		PlayerAllianceRuntime? allianceRuntime = null,
 		InstanceCooltimeTable? instanceCooltimes = null,
-		DateTimeOffset? now = null)
+		DateTimeOffset? now = null,
+		bool announceBattlegroundRegistrations = false)
 	{
 		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
 		if (autoGroup == null)
@@ -55,7 +57,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				return AutoGroupStartLookingResult.AlreadyRegistered(maskId, entryRequestType);
 			}
 
-			var registration = new AutoGroupLookingPartyRegistration(maskId, player.ObjectId, memberObjectIds);
+			var registration = new AutoGroupLookingPartyRegistration(maskId, player.ObjectId, memberObjectIds, player.Race);
 			if (parties == null)
 			{
 				parties = [];
@@ -63,7 +65,13 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			}
 
 			parties.Add(registration);
-			return AutoGroupStartLookingResult.Registered(maskId, entryRequestType, registration, guard);
+			var announcement = CreateBattlegroundRegistrationAnnouncement(
+				player,
+				autoGroup,
+				entryRequestType,
+				parties,
+				announceBattlegroundRegistrations);
+			return AutoGroupStartLookingResult.Registered(maskId, entryRequestType, registration, guard, announcement);
 		}
 	}
 
@@ -489,12 +497,66 @@ public sealed class AutoGroupLookingPartyRegistrationService
 
 		return [player];
 	}
+
+	private static AutoGroupBattlegroundRegistrationAnnouncement? CreateBattlegroundRegistrationAnnouncement(
+		Player player,
+		AutoGroupSummary autoGroup,
+		AutoGroupEntryRequestType entryRequestType,
+		IReadOnlyCollection<AutoGroupLookingPartyRegistration> parties,
+		bool announceBattlegroundRegistrations)
+	{
+		if (!announceBattlegroundRegistrations
+			|| !autoGroup.IsPeriodicInstance
+			|| entryRequestType != AutoGroupEntryRequestType.GroupEntry
+			|| parties.Count(party => string.Equals(party.Race, player.Race, StringComparison.OrdinalIgnoreCase)) != 1)
+		{
+			return null;
+		}
+
+		var raceL10n = GetRaceL10n(player.Race);
+		var autoGroupL10n = ChatUtil.L10n(autoGroup.NameId);
+		if (raceL10n == null || autoGroupL10n == null)
+			return null;
+
+		return new AutoGroupBattlegroundRegistrationAnnouncement(
+			$"{raceL10n} have registered for {autoGroupL10n}.",
+			player.Race,
+			autoGroup.MinLevel,
+			autoGroup.MaxLevel);
+	}
+
+	private static string? GetRaceL10n(string race)
+	{
+		// Java parity: model/Race implements L10n with ELYOS=900240 and ASMODIANS=900241.
+		if (string.Equals(race, "ELYOS", StringComparison.OrdinalIgnoreCase))
+			return ChatUtil.L10n(900240);
+		if (string.Equals(race, "ASMODIANS", StringComparison.OrdinalIgnoreCase))
+			return ChatUtil.L10n(900241);
+		return null;
+	}
 }
 
 public sealed record AutoGroupLookingPartyRegistration(
 	int MaskId,
 	int LeaderObjectId,
-	IReadOnlyList<int> MemberObjectIds);
+	IReadOnlyList<int> MemberObjectIds,
+	string Race = "");
+
+public sealed record AutoGroupBattlegroundRegistrationAnnouncement(
+	string Message,
+	string RegisteringRace,
+	int MinLevel,
+	int MaxLevel)
+{
+	public const byte BrightYellowCenterChatType = 36;
+
+	public bool ShouldReceive(Player player)
+	{
+		return !string.Equals(player.Race, RegisteringRace, StringComparison.OrdinalIgnoreCase)
+			&& player.Level >= MinLevel
+			&& player.Level <= MaxLevel;
+	}
+}
 
 public sealed record AutoGroupStopRegistrationsByMaskIdResult(
 	int MaskId,
@@ -537,7 +599,8 @@ public sealed record AutoGroupStartLookingResult(
 	int MaskId,
 	AutoGroupEntryRequestType EntryRequestType,
 	AutoGroupLookingPartyRegistration? Registration,
-	AutoGroupRegistrationGuardPlan? GuardPlan)
+	AutoGroupRegistrationGuardPlan? GuardPlan,
+	AutoGroupBattlegroundRegistrationAnnouncement? BattlegroundAnnouncement = null)
 {
 	public bool RegisteredQueue => Status == AutoGroupStartLookingStatus.Registered;
 
@@ -545,14 +608,16 @@ public sealed record AutoGroupStartLookingResult(
 		int maskId,
 		AutoGroupEntryRequestType entryRequestType,
 		AutoGroupLookingPartyRegistration registration,
-		AutoGroupRegistrationGuardPlan guardPlan)
+		AutoGroupRegistrationGuardPlan guardPlan,
+		AutoGroupBattlegroundRegistrationAnnouncement? battlegroundAnnouncement = null)
 	{
 		return new AutoGroupStartLookingResult(
 			AutoGroupStartLookingStatus.Registered,
 			maskId,
 			entryRequestType,
 			registration,
-			guardPlan);
+			guardPlan,
+			battlegroundAnnouncement);
 	}
 
 	public static AutoGroupStartLookingResult MissingAutoGroup(int maskId, AutoGroupEntryRequestType entryRequestType)

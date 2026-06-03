@@ -620,6 +620,9 @@ public sealed class GameServerAutoGroupOptions
 {
 	// Java parity: configs/main/AutoGroupConfig.AUTO_GROUP_ENABLE.
 	public bool Enabled { get; init; } = true;
+
+	// Java parity: configs/main/AutoGroupConfig.ANNOUNCE_BATTLEGROUND_REGISTRATIONS.
+	public bool AnnounceBattlegroundRegistrations { get; init; }
 }
 
 public sealed class GameServerRateOptions

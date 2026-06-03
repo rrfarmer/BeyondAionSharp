@@ -8,6 +8,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -243,6 +244,80 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupGroupEntryBroadcastsBattlegroundAnnouncementAfterSuccessLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var leader = new Player
+		{
+			ObjectId = 1020,
+			Name = "BattleLeader",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var member = new Player
+		{
+			ObjectId = 1021,
+			Name = "BattleMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var opposingEligible = new Player
+		{
+			ObjectId = 2020,
+			Name = "OpposingEligible",
+			Race = "ASMODIANS",
+			Level = 50,
+		};
+		var sameRaceEligible = new Player
+		{
+			ObjectId = 2021,
+			Name = "SameRaceEligible",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var opposingLowLevel = new Player
+		{
+			ObjectId = 2022,
+			Name = "OpposingLowLevel",
+			Race = "ASMODIANS",
+			Level = 30,
+		};
+		var registry = new RecordingConnectionRegistry([leader, member, opposingEligible, sameRaceEligible, opposingLowLevel]);
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		groupRuntime.CreateOrUpdateGroup(77, [leader, member]);
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions { AutoGroup = new GameServerAutoGroupOptions { AnnounceBattlegroundRegistrations = true } },
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			groupRuntime);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+
+		Assert.Empty(sentPackets);
+		Assert.Equal([1020, 1020, 1020, 1021, 1021, 1021], registry.SentPackets.Select(delivery => delivery.PlayerObjectId));
+		var broadcast = Assert.Single(registry.BroadcastPackets);
+		Assert.Equal([opposingEligible.ObjectId], broadcast.RecipientObjectIds);
+		Assert.Equal(
+			$"{ChatUtil.L10n(900240)} have registered for {ChatUtil.L10n(140107)}.",
+			ReadMessage(Assert.IsType<SmMessage>(broadcast.Packet), expectedChatType: 36));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -371,11 +446,11 @@ public sealed class GameServerConnectionAutoGroupTests
 		field.SetValue(connection, state);
 	}
 
-	private static string ReadMessage(SmMessage packet)
+	private static string ReadMessage(SmMessage packet, int expectedChatType = 25)
 	{
 		var payload = SerializeUnencryptedPayload(packet);
 		using var reader = new PacketBuffer(payload);
-		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(expectedChatType, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(string.Empty, reader.ReadS());
@@ -569,9 +644,26 @@ public sealed class GameServerConnectionAutoGroupTests
 		}
 	}
 
-	private sealed class RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds) : IGameClientConnectionRegistry
+	private sealed class RecordingConnectionRegistry : IGameClientConnectionRegistry
 	{
+		private readonly IReadOnlyCollection<int> _onlineObjectIds;
+		private readonly IReadOnlyList<Player> _onlinePlayers;
+
+		public RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds)
+		{
+			_onlineObjectIds = onlineObjectIds;
+			_onlinePlayers = Array.Empty<Player>();
+		}
+
+		public RecordingConnectionRegistry(IReadOnlyList<Player> onlinePlayers)
+		{
+			_onlinePlayers = onlinePlayers;
+			_onlineObjectIds = onlinePlayers.Select(player => player.ObjectId).ToArray();
+		}
+
 		public List<PacketDelivery> SentPackets { get; } = [];
+
+		public List<BroadcastDelivery> BroadcastPackets { get; } = [];
 
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
 		{
@@ -589,11 +681,13 @@ public sealed class GameServerConnectionAutoGroupTests
 
 		public void ForEachOnlinePlayer(Action<Player> action)
 		{
+			foreach (var player in _onlinePlayers)
+				action(player);
 		}
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
-			if (!onlineObjectIds.Contains(playerObjectId))
+			if (!_onlineObjectIds.Contains(playerObjectId))
 				return Task.FromResult(false);
 
 			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
@@ -602,7 +696,12 @@ public sealed class GameServerConnectionAutoGroupTests
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
 		{
-			return Task.FromResult(0);
+			var recipients = _onlinePlayers
+				.Where(player => filter?.Invoke(player) ?? true)
+				.Select(player => player.ObjectId)
+				.ToArray();
+			BroadcastPackets.Add(new BroadcastDelivery(packet, recipients));
+			return Task.FromResult(recipients.Length);
 		}
 
 		public Task<int> BroadcastToVisiblePlayersAsync(
@@ -645,4 +744,6 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
+
+	private sealed record BroadcastDelivery(GameServerPacket Packet, IReadOnlyList<int> RecipientObjectIds);
 }

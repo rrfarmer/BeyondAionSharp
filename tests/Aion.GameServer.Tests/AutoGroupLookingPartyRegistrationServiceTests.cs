@@ -3,6 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -352,6 +353,64 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void StartLooking_GroupEntryPlansBattlegroundAnnouncementForFirstSameRacePeriodicRegistrationLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var player = CreatePlayer(objectId: 1001, level: 50);
+		player.TeamMembership = PlayerTeamMembership.Group;
+		player.CurrentTeamId = 77;
+		player.CurrentTeamMemberObjectIds = [1001, 1002];
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = service.StartLooking(
+			player,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			announceBattlegroundRegistrations: true);
+
+		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
+		var announcement = Assert.IsType<AutoGroupBattlegroundRegistrationAnnouncement>(result.BattlegroundAnnouncement);
+		Assert.Equal($"{ChatUtil.L10n(900240)} have registered for {ChatUtil.L10n(140107)}.", announcement.Message);
+		Assert.Equal("ELYOS", announcement.RegisteringRace);
+		Assert.True(announcement.ShouldReceive(CreatePlayer(objectId: 2001, level: 50, race: "ASMODIANS")));
+		Assert.False(announcement.ShouldReceive(CreatePlayer(objectId: 2002, level: 50, race: "ELYOS")));
+		Assert.False(announcement.ShouldReceive(CreatePlayer(objectId: 2003, level: 30, race: "ASMODIANS")));
+	}
+
+	[Fact]
+	public void StartLooking_SuppressesBattlegroundAnnouncementAfterFirstSameRaceRegistrationLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var first = CreatePlayer(objectId: 1001, level: 50);
+		first.TeamMembership = PlayerTeamMembership.Group;
+		first.CurrentTeamId = 77;
+		first.CurrentTeamMemberObjectIds = [1001, 1002];
+		var second = CreatePlayer(objectId: 1003, level: 50);
+		second.TeamMembership = PlayerTeamMembership.Group;
+		second.CurrentTeamId = 78;
+		second.CurrentTeamMemberObjectIds = [1003, 1004];
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		service.StartLooking(
+			first,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			announceBattlegroundRegistrations: true);
+		var result = service.StartLooking(
+			second,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			announceBattlegroundRegistrations: true);
+
+		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
+		Assert.Null(result.BattlegroundAnnouncement);
+		Assert.Equal(2, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
 	public async Task StopRegistrationsByMaskId_RemovesMaskQueueAndSendsCancelWindowLikeJava()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();
@@ -518,13 +577,13 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 			NpcIds: []);
 	}
 
-	private static Player CreatePlayer(int objectId, int level)
+	private static Player CreatePlayer(int objectId, int level, string race = "ELYOS")
 	{
 		return new Player
 		{
 			ObjectId = objectId,
 			Name = $"Player{objectId}",
-			Race = "ELYOS",
+			Race = race,
 			Level = level,
 		};
 	}

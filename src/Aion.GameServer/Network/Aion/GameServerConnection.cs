@@ -1504,7 +1504,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					autoGroups,
 					_playerGroupRuntime,
 					_playerAllianceRuntime,
-					_runtimeContext?.DataManager?.StaticData.InstanceCooltimes);
+					_runtimeContext?.DataManager?.StaticData.InstanceCooltimes,
+					announceBattlegroundRegistrations: _options.AutoGroup.AnnounceBattlegroundRegistrations);
 
 				if (result.GuardPlan != null)
 				{
@@ -1529,7 +1530,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				{
 					var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
 					if (autoGroup != null)
+					{
 						await SendAutoGroupSuccessfulRegistrationAsync(player, result.Registration, autoGroup, entryRequestType.Value);
+						await BroadcastAutoGroupBattlegroundRegistrationAnnouncementAsync(result.BattlegroundAnnouncement);
+					}
 				}
 				break;
 			}
@@ -1585,6 +1589,21 @@ public sealed class GameServerConnection : BaseClientConnection
 				// DredgionRegService.failedEnterDredgion call and has no active side effect.
 				break;
 		}
+	}
+
+	private async Task BroadcastAutoGroupBattlegroundRegistrationAnnouncementAsync(
+		AutoGroupBattlegroundRegistrationAnnouncement? announcement)
+	{
+		if (announcement == null || _connectionRegistry == null)
+			return;
+
+		await _connectionRegistry.BroadcastToWorldAsync(
+			new SmMessage(
+				senderObjectId: 0,
+				senderName: null,
+				announcement.Message,
+				AutoGroupBattlegroundRegistrationAnnouncement.BrightYellowCenterChatType),
+			announcement.ShouldReceive);
 	}
 
 	private async Task SendAutoGroupSuccessfulRegistrationAsync(
