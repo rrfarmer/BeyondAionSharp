@@ -29,17 +29,10 @@ public sealed class PlayerAllianceDisconnectedPlanner
 				PacketIntents: []);
 		}
 
-		if (disconnectedPlayerObjectId == leaderObjectId)
-		{
-			return new PlayerAllianceDisconnectedPlan(
-				allianceId,
-				disconnectedPlayerObjectId,
-				PlayerAllianceDisconnectedPlanStatus.LeaderDisconnectDeferred,
-				PacketIntents: [],
-				WouldTriggerLeaderChange: true,
-				WouldDisbandIfNoOnlineMembersRemain: noOnlineMembersRemain,
-				WouldBroadcastLeague: isInLeague && !noOnlineMembersRemain);
-		}
+		var disconnectedLeader = disconnectedPlayerObjectId == leaderObjectId;
+		var effectiveLeaderObjectId = disconnectedLeader
+			? SelectFallbackLeaderObjectId(membersBeforeDisconnect, currentViceCaptainObjectIds, disconnectedPlayerObjectId) ?? leaderObjectId
+			: leaderObjectId;
 
 		var actualLootRules = lootRules ?? PlayerGroupLootRules.Default();
 		var memberInfoPlan = PlayerAllianceMemberInfoPacketPlan.FromPlayer(
@@ -69,7 +62,7 @@ public sealed class PlayerAllianceDisconnectedPlanner
 				PlayerAlliancePacketIntentKind.AllianceInfo,
 				AllianceInfoPlan: PlayerAllianceInfoPacketPlan.FromSnapshot(
 					allianceId,
-					leaderObjectId,
+					effectiveLeaderObjectId,
 					allianceGroupSize: membersBeforeDisconnect.Count,
 					activePlayerMapId: member.Position.WorldId,
 					currentViceCaptainObjectIds,
@@ -85,7 +78,27 @@ public sealed class PlayerAllianceDisconnectedPlanner
 			disconnectedPlayerObjectId,
 			PlayerAllianceDisconnectedPlanStatus.Planned,
 			intents,
+			WouldTriggerLeaderChange: disconnectedLeader,
 			WouldDisbandIfNoOnlineMembersRemain: noOnlineMembersRemain,
 			WouldBroadcastLeague: isInLeague && !noOnlineMembersRemain);
+	}
+
+	private static int? SelectFallbackLeaderObjectId(
+		IReadOnlyList<Player> membersBeforeDisconnect,
+		IReadOnlyList<int> currentViceCaptainObjectIds,
+		int disconnectedPlayerObjectId)
+	{
+		// Java parity: ChangeAllianceLeaderEvent.handleEvent prefers an online vice captain,
+		// then the next online non-leader member when eventPlayer is null.
+		foreach (var viceCaptainObjectId in currentViceCaptainObjectIds)
+		{
+			var viceCaptain = membersBeforeDisconnect.FirstOrDefault(member => member.ObjectId == viceCaptainObjectId);
+			if (viceCaptain is { IsOnline: true } && viceCaptain.ObjectId != disconnectedPlayerObjectId)
+				return viceCaptain.ObjectId;
+		}
+
+		return membersBeforeDisconnect
+			.FirstOrDefault(member => member.IsOnline && member.ObjectId != disconnectedPlayerObjectId)
+			?.ObjectId;
 	}
 }

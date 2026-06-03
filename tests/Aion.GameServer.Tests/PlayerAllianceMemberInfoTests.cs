@@ -995,19 +995,45 @@ public sealed class PlayerAllianceMemberInfoTests
 	}
 
 	[Fact]
-	public void DisconnectedPlanner_DefersLeaderDisconnectAndMissingMemberBranches()
+	public void DisconnectedPlanner_PlansLeaderDisconnectFanoutAfterFallbackLeaderLikeJavaEvent()
+	{
+		var planner = new PlayerAllianceDisconnectedPlanner();
+		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
+		leader.IsOnline = false;
+		var viceCaptain = CreateAllianceMember(1002, "ViceCaptain", worldId: 220010000);
+		viceCaptain.IsOnline = true;
+		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
+		other.IsOnline = true;
+
+		var leaderPlan = planner.CreateDisconnectedPlan(
+			88001,
+			leaderObjectId: 1001,
+			[leader, viceCaptain, other],
+			currentViceCaptainObjectIds: [1002],
+			disconnectedPlayerObjectId: 1001,
+			isInLeague: true);
+
+		Assert.Equal(PlayerAllianceDisconnectedPlanStatus.Planned, leaderPlan.Status);
+		Assert.True(leaderPlan.WouldTriggerLeaderChange);
+		Assert.True(leaderPlan.WouldBroadcastLeague);
+		Assert.False(leaderPlan.WouldDisbandIfNoOnlineMembersRemain);
+		Assert.Collection(
+			leaderPlan.PacketIntents,
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 0, recipientObjectId: 1002, expectedMessageId: 1301019),
+			intent => AssertAllianceDisconnectedMemberInfoPacketIntent(intent, sequence: 1, recipientObjectId: 1002, subjectObjectId: 1001),
+			intent => AssertAllianceInfoPacketIntentMetadata(intent, sequence: 2, recipientObjectId: 1002, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1002, expectedActivePlayerMapId: 220010000, expectedPaddedViceCaptainIds: [1002, 0, 0, 0], expectedLeagueId: 1),
+			intent => AssertAllianceSystemPacketIntent(intent, sequence: 3, recipientObjectId: 1003, expectedMessageId: 1301019),
+			intent => AssertAllianceDisconnectedMemberInfoPacketIntent(intent, sequence: 4, recipientObjectId: 1003, subjectObjectId: 1001),
+			intent => AssertAllianceInfoPacketIntentMetadata(intent, sequence: 5, recipientObjectId: 1003, expectedAllianceGroupSize: 3, expectedLeaderObjectId: 1002, expectedActivePlayerMapId: 230010000, expectedPaddedViceCaptainIds: [1002, 0, 0, 0], expectedLeagueId: 1));
+	}
+
+	[Fact]
+	public void DisconnectedPlanner_ReportsMissingMemberBranch()
 	{
 		var planner = new PlayerAllianceDisconnectedPlanner();
 		var leader = CreateAllianceMember(1001, "Leader", worldId: 210010000);
 		var other = CreateAllianceMember(1003, "Other", worldId: 230010000);
 
-		var leaderPlan = planner.CreateDisconnectedPlan(
-			88001,
-			leaderObjectId: 1001,
-			[leader, other],
-			currentViceCaptainObjectIds: [],
-			disconnectedPlayerObjectId: 1001,
-			isInLeague: true);
 		var missingPlan = planner.CreateDisconnectedPlan(
 			88001,
 			leaderObjectId: 1001,
@@ -1015,10 +1041,6 @@ public sealed class PlayerAllianceMemberInfoTests
 			currentViceCaptainObjectIds: [],
 			disconnectedPlayerObjectId: 404);
 
-		Assert.Equal(PlayerAllianceDisconnectedPlanStatus.LeaderDisconnectDeferred, leaderPlan.Status);
-		Assert.True(leaderPlan.WouldTriggerLeaderChange);
-		Assert.True(leaderPlan.WouldBroadcastLeague);
-		Assert.Empty(leaderPlan.PacketIntents);
 		Assert.Equal(PlayerAllianceDisconnectedPlanStatus.DisconnectedMemberMissing, missingPlan.Status);
 		Assert.Empty(missingPlan.PacketIntents);
 	}
