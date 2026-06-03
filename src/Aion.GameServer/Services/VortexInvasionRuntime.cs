@@ -10,14 +10,44 @@ public sealed class VortexInvasionRuntime
 	private readonly Lock _sync = new();
 	private readonly Dictionary<int, VortexInvasionState> _activeInvasions = [];
 
-	public VortexInvasionSnapshot StartInvasion(VortexLocationSummary location)
+	public VortexInvasionSnapshot StartInvasion(
+		VortexLocationSummary location,
+		RiftPortalState? activePortal = null)
 	{
 		ArgumentNullException.ThrowIfNull(location);
 
 		lock (_sync)
 		{
 			var state = GetOrCreateState(location);
+			state.ActivePortal = activePortal;
 			return state.ToSnapshot();
+		}
+	}
+
+	public bool SetActivePortal(int vortexLocationId, RiftPortalState? activePortal)
+	{
+		lock (_sync)
+		{
+			if (!_activeInvasions.TryGetValue(vortexLocationId, out var state))
+				return false;
+
+			// Java parity: RiftManager.spawnRift stores the active RVController on
+			// VortexLocation after Invasion.startInvasion marks the location active.
+			state.ActivePortal = activePortal;
+			return true;
+		}
+	}
+
+	public bool ClearActivePortal(int vortexLocationId)
+	{
+		lock (_sync)
+		{
+			if (!_activeInvasions.TryGetValue(vortexLocationId, out var state))
+				return false;
+
+			// Java parity: VortexService.despawn unsets VortexLocation.vortexController.
+			state.ActivePortal = null;
+			return true;
 		}
 	}
 
@@ -150,7 +180,8 @@ public sealed class VortexInvasionRuntime
 					JavaSource: "services/VortexService.removeInvaderPlayer -> services/vortex/Invasion.kickPlayer",
 					SystemMessages: systemMessages,
 					TeleportResult: teleportResult,
-					PassedPlayerSyncPlan: CreatePassedPlayerSyncPlan(state));
+					PassedPlayerSyncPlan: CreatePassedPlayerSyncPlan(state),
+					ActivePortal: state.ActivePortal);
 			}
 		}
 
@@ -190,7 +221,8 @@ public sealed class VortexInvasionRuntime
 					WasOnline: player.IsOnline,
 					JavaSource: "services/VortexService.removeDefenderPlayer -> services/vortex/Invasion.kickPlayer",
 					SystemMessages: systemMessages,
-					PassedPlayerSyncPlan: CreatePassedPlayerSyncPlan(state));
+					PassedPlayerSyncPlan: CreatePassedPlayerSyncPlan(state),
+					ActivePortal: state.ActivePortal);
 			}
 		}
 
@@ -244,6 +276,7 @@ public sealed class VortexInvasionRuntime
 		public HashSet<int> InvaderObjectIds { get; } = [];
 		public HashSet<int> DefenderObjectIds { get; } = [];
 		public HashSet<int> PassedPlayerObjectIds { get; } = [];
+		public RiftPortalState? ActivePortal { get; set; }
 
 		public VortexInvasionSnapshot ToSnapshot()
 		{
@@ -253,7 +286,8 @@ public sealed class VortexInvasionRuntime
 				StartPoint,
 				InvaderObjectIds.Order().ToArray(),
 				DefenderObjectIds.Order().ToArray(),
-				PassedPlayerObjectIds.Order().ToArray());
+				PassedPlayerObjectIds.Order().ToArray(),
+				ActivePortal);
 		}
 	}
 }
@@ -264,7 +298,11 @@ public sealed record VortexInvasionSnapshot(
 	WorldPosition StartPoint,
 	IReadOnlyList<int> InvaderObjectIds,
 	IReadOnlyList<int> DefenderObjectIds,
-	IReadOnlyList<int> PassedPlayerObjectIds);
+	IReadOnlyList<int> PassedPlayerObjectIds,
+	RiftPortalState? ActivePortal = null)
+{
+	public bool HasActivePortal => ActivePortal != null;
+}
 
 public sealed record VortexInvaderRemovalResult(
 	bool Removed,
@@ -276,7 +314,11 @@ public sealed record VortexInvaderRemovalResult(
 	string JavaSource,
 	IReadOnlyList<SmSystemMessage>? SystemMessages = null,
 	PlayerTeleportResult? TeleportResult = null,
-	VortexPassedPlayerSyncPlan? PassedPlayerSyncPlan = null);
+	VortexPassedPlayerSyncPlan? PassedPlayerSyncPlan = null,
+	RiftPortalState? ActivePortal = null)
+{
+	public bool HasActivePortal => ActivePortal != null;
+}
 
 public sealed record VortexInvaderJoinResult(
 	bool Added,
@@ -294,7 +336,11 @@ public sealed record VortexDefenderRemovalResult(
 	bool WasOnline,
 	string JavaSource,
 	IReadOnlyList<SmSystemMessage>? SystemMessages = null,
-	VortexPassedPlayerSyncPlan? PassedPlayerSyncPlan = null);
+	VortexPassedPlayerSyncPlan? PassedPlayerSyncPlan = null,
+	RiftPortalState? ActivePortal = null)
+{
+	public bool HasActivePortal => ActivePortal != null;
+}
 
 public sealed record VortexPassedPlayerSyncPlan(
 	int LocationId,

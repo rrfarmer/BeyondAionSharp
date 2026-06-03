@@ -62,6 +62,117 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StartInvasion_CanCarryActivePortalReferenceLikeJavaVortexController()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-start-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var portal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+
+			var snapshot = runtime.StartInvasion(location, portal);
+
+			Assert.True(snapshot.HasActivePortal);
+			Assert.Same(portal, snapshot.ActivePortal);
+			Assert.Same(portal, Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id)).ActivePortal);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task SetAndClearActivePortal_ModelsJavaSpawnAndDespawnControllerReference()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-clear-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var portal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			runtime.StartInvasion(location);
+
+			Assert.True(runtime.SetActivePortal(location.Id, portal));
+			var withPortal = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.True(withPortal.HasActivePortal);
+			Assert.Same(portal, withPortal.ActivePortal);
+
+			Assert.True(runtime.ClearActivePortal(location.Id));
+			var cleared = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.False(cleared.HasActivePortal);
+			Assert.Null(cleared.ActivePortal);
+			Assert.False(runtime.SetActivePortal(999, portal));
+			Assert.False(runtime.ClearActivePortal(999));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RemoveInvaderPlayer_IncludesActivePortalMetadataForRiftEntryUpdatePipeline()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-removal-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var portal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location, portal);
+			Assert.True(runtime.AddInvader(location.Id, invader));
+
+			var removal = runtime.RemoveInvaderPlayer(invader);
+
+			Assert.True(removal.Removed);
+			Assert.True(removal.HasActivePortal);
+			Assert.Same(portal, removal.ActivePortal);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RemoveDefenderPlayer_IncludesActivePortalMetadataForRiftEntryUpdatePipeline()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-defender-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var portal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			var defender = CreatePlayer(1004, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location, portal);
+			Assert.True(runtime.AddDefender(location.Id, defender));
+
+			var removal = runtime.RemoveDefenderPlayer(defender);
+
+			Assert.True(removal.Removed);
+			Assert.True(removal.HasActivePortal);
+			Assert.Same(portal, removal.ActivePortal);
+			AssertPassedSyncPlan(removal.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task RemoveInvaderPlayer_RemovesActiveInvaderAndPassedPortalStateLikeJava()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-invasion-runtime-" + Guid.NewGuid().ToString("N"));
@@ -357,6 +468,35 @@ public sealed class VortexLocationServiceTests
 			IsOnline = isOnline,
 			Position = new WorldPosition(worldId, 1, 2, 3, 0),
 		};
+	}
+
+	private static RiftPortalState CreateVortexPortal(VortexLocationSummary location)
+	{
+		var definition = new RiftDefinition(
+			1170,
+			"MARCHUTAN",
+			"MARCHUTAN_AM",
+			"MARCHUTAN_AS",
+			2,
+			45,
+			65,
+			location.InvadersRace,
+			IsVortex: true);
+		var template = new NpcTemplateSummary(831143, "Vortex", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC");
+		var master = new WorldNpc(
+			ObjectId: 7101,
+			TemplateId: 831143,
+			Template: template,
+			Position: location.StartPoint,
+			Anchor: definition.MasterAnchor);
+		var slave = new WorldNpc(
+			ObjectId: 7102,
+			TemplateId: 831144,
+			Template: template,
+			Position: location.HomePoint,
+			Anchor: definition.SlaveAnchor);
+
+		return new RiftPortalState(definition, master, slave, guardsRequested: false, despawnTimeUnixSeconds: 9200);
 	}
 
 	private static void DeleteTempDirectory(string tempPath)
