@@ -544,6 +544,135 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void CreateReadyMatchPlan_PlansWindowFourRecipientsAndLeaderCleanupLikeJavaCreateNewInstance()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		service.RegisterLookingParty(
+			107,
+			[2001, 2002],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(1));
+		service.RegisterLookingParty(
+			108,
+			[1001, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(2));
+
+		var queuePlan = service.CreateQueueMatchPlan(107, autoGroups, cooltimes);
+		var readyPlan = service.CreateReadyMatchPlan(queuePlan);
+
+		Assert.Equal(AutoGroupReadyMatchPlanStatus.Ready, readyPlan.Status);
+		Assert.Equal([1001, 1002, 2001, 2002], readyPlan.ReadyWindowRecipientObjectIds);
+		var cleanup = Assert.Single(readyPlan.AdditionalRegistrationCleanupIntents);
+		Assert.Equal(AutoGroupAdditionalRegistrationCleanupType.LeaderPartyRemoval, cleanup.Type);
+		Assert.Equal(108, cleanup.MaskId);
+		Assert.Equal(1001, cleanup.PlayerObjectId);
+		Assert.Equal(1001, cleanup.LeaderObjectId);
+		Assert.Equal([1001, 3001], cleanup.NotifiedMemberObjectIds);
+		Assert.True(cleanup.WouldPenaliseParty);
+		Assert.False(cleanup.WouldPenalisePlayer);
+		Assert.False(cleanup.WouldRecheckQueueForNewMatches);
+		Assert.Equal(2, cleanup.WindowId);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.True(service.IsSearching(1001, 108));
+		Assert.Equal(2, service.GetLookingPartyCount(107));
+		Assert.Equal(1, service.GetLookingPartyCount(108));
+	}
+
+	[Fact]
+	public void CreateReadyMatchPlan_PlansMemberCleanupAndQueueRecheckLikeJavaSearchAndRemoveAdditionalRegistrations()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		service.RegisterLookingParty(
+			107,
+			[2001, 2002],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(1));
+		service.RegisterLookingParty(
+			108,
+			[3001, 1002, 2002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(2));
+
+		var queuePlan = service.CreateQueueMatchPlan(107, autoGroups, cooltimes);
+		var readyPlan = service.CreateReadyMatchPlan(queuePlan);
+
+		Assert.Equal(AutoGroupReadyMatchPlanStatus.Ready, readyPlan.Status);
+		Assert.Collection(
+			readyPlan.AdditionalRegistrationCleanupIntents,
+			cleanup =>
+			{
+				Assert.Equal(AutoGroupAdditionalRegistrationCleanupType.MemberRemoval, cleanup.Type);
+				Assert.Equal(108, cleanup.MaskId);
+				Assert.Equal(1002, cleanup.PlayerObjectId);
+				Assert.Equal(3001, cleanup.LeaderObjectId);
+				Assert.Equal([1002], cleanup.NotifiedMemberObjectIds);
+				Assert.False(cleanup.WouldPenaliseParty);
+				Assert.True(cleanup.WouldPenalisePlayer);
+				Assert.True(cleanup.WouldRecheckQueueForNewMatches);
+			},
+			cleanup =>
+			{
+				Assert.Equal(AutoGroupAdditionalRegistrationCleanupType.MemberRemoval, cleanup.Type);
+				Assert.Equal(108, cleanup.MaskId);
+				Assert.Equal(2002, cleanup.PlayerObjectId);
+				Assert.Equal(3001, cleanup.LeaderObjectId);
+				Assert.Equal([2002], cleanup.NotifiedMemberObjectIds);
+				Assert.False(cleanup.WouldPenaliseParty);
+				Assert.True(cleanup.WouldPenalisePlayer);
+				Assert.True(cleanup.WouldRecheckQueueForNewMatches);
+			});
+		Assert.True(service.IsSearching(1002, 108));
+		Assert.True(service.IsSearching(2002, 108));
+		Assert.Equal(1, service.GetLookingPartyCount(108));
+	}
+
+	[Fact]
+	public void CreateReadyMatchPlan_NotReadyDoesNotPlanCreateNewInstanceSideEffects()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			DateTimeOffset.FromUnixTimeSeconds(1));
+
+		var queuePlan = service.CreateQueueMatchPlan(107, autoGroups, cooltimes);
+		var readyPlan = service.CreateReadyMatchPlan(queuePlan);
+
+		Assert.Equal(AutoGroupReadyMatchPlanStatus.NotReady, readyPlan.Status);
+		Assert.Empty(readyPlan.MatchedParties);
+		Assert.Empty(readyPlan.ReadyWindowRecipientObjectIds);
+		Assert.Empty(readyPlan.AdditionalRegistrationCleanupIntents);
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.NotReady, readyPlan.QueueMatchPlan.Status);
+	}
+
+	[Fact]
 	public async Task StopRegistrationsByMaskId_RemovesMaskQueueAndSendsCancelWindowLikeJava()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();

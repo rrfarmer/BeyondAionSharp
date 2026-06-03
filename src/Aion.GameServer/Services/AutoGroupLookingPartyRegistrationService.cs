@@ -198,6 +198,32 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		return AutoGroupQueueMatchPlan.NotReady(maskId, autoGroup.InstanceMapId, orderedParties, totalCapacity);
 	}
 
+	public AutoGroupReadyMatchPlan CreateReadyMatchPlan(AutoGroupQueueMatchPlan queueMatchPlan)
+	{
+		if (queueMatchPlan.Status != AutoGroupQueueMatchPlanStatus.Ready)
+			return AutoGroupReadyMatchPlan.NotReady(queueMatchPlan);
+
+		var readyWindowRecipientObjectIds = queueMatchPlan.MatchedMemberObjectIds;
+		var cleanupIntents = new List<AutoGroupAdditionalRegistrationCleanupIntent>();
+		lock (_sync)
+		{
+			var remainingPartiesByMaskId = _lookingPartiesByMaskId.ToDictionary(
+				entry => entry.Key,
+				entry => entry.Value.ToList());
+
+			foreach (var matchedParty in queueMatchPlan.MatchedParties)
+			{
+				if (remainingPartiesByMaskId.TryGetValue(matchedParty.MaskId, out var remainingParties))
+					RemovePartyFromSimulation(remainingPartiesByMaskId, matchedParty.MaskId, remainingParties, matchedParty);
+			}
+
+			foreach (var memberObjectId in readyWindowRecipientObjectIds)
+				PlanAdditionalRegistrationCleanup(memberObjectId, remainingPartiesByMaskId, cleanupIntents);
+		}
+
+		return AutoGroupReadyMatchPlan.Ready(queueMatchPlan, readyWindowRecipientObjectIds, cleanupIntents);
+	}
+
 	public int GetLookingPartyCount(int maskId)
 	{
 		lock (_sync)
@@ -664,6 +690,61 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		return instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, "ASMODIANS")
 			+ instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, "ELYOS");
 	}
+
+	private static void PlanAdditionalRegistrationCleanup(
+		int playerObjectId,
+		IDictionary<int, List<AutoGroupLookingPartyRegistration>> remainingPartiesByMaskId,
+		ICollection<AutoGroupAdditionalRegistrationCleanupIntent> cleanupIntents)
+	{
+		foreach (var maskEntry in remainingPartiesByMaskId.ToArray())
+		{
+			var parties = maskEntry.Value;
+			var party = parties.FirstOrDefault(candidate => candidate.MemberObjectIds.Contains(playerObjectId));
+			if (party == null)
+				continue;
+
+			if (party.LeaderObjectId == playerObjectId)
+			{
+				RemovePartyFromSimulation(remainingPartiesByMaskId, maskEntry.Key, parties, party);
+				cleanupIntents.Add(new AutoGroupAdditionalRegistrationCleanupIntent(
+					AutoGroupAdditionalRegistrationCleanupType.LeaderPartyRemoval,
+					party.MaskId,
+					playerObjectId,
+					party.LeaderObjectId,
+					party.MemberObjectIds,
+					WouldPenaliseParty: true,
+					WouldPenalisePlayer: false,
+					WouldRecheckQueueForNewMatches: false));
+				continue;
+			}
+
+			var partyIndex = parties.IndexOf(party);
+			var remainingMemberObjectIds = party.MemberObjectIds
+				.Where(memberObjectId => memberObjectId != playerObjectId)
+				.ToArray();
+			parties[partyIndex] = party with { MemberObjectIds = remainingMemberObjectIds };
+			cleanupIntents.Add(new AutoGroupAdditionalRegistrationCleanupIntent(
+				AutoGroupAdditionalRegistrationCleanupType.MemberRemoval,
+				party.MaskId,
+				playerObjectId,
+				party.LeaderObjectId,
+				[playerObjectId],
+				WouldPenaliseParty: false,
+				WouldPenalisePlayer: true,
+				WouldRecheckQueueForNewMatches: true));
+		}
+	}
+
+	private static void RemovePartyFromSimulation(
+		IDictionary<int, List<AutoGroupLookingPartyRegistration>> remainingPartiesByMaskId,
+		int maskId,
+		ICollection<AutoGroupLookingPartyRegistration> parties,
+		AutoGroupLookingPartyRegistration party)
+	{
+		parties.Remove(party);
+		if (parties.Count == 0)
+			remainingPartiesByMaskId.Remove(maskId);
+	}
 }
 
 public sealed record AutoGroupLookingPartyRegistration(
@@ -784,6 +865,63 @@ public enum AutoGroupQueueMatchPlanStatus
 	MissingCapacityData,
 	NotReady,
 	Ready,
+}
+
+public sealed record AutoGroupReadyMatchPlan(
+	AutoGroupReadyMatchPlanStatus Status,
+	AutoGroupQueueMatchPlan QueueMatchPlan,
+	IReadOnlyList<AutoGroupLookingPartyRegistration> MatchedParties,
+	IReadOnlyList<int> ReadyWindowRecipientObjectIds,
+	IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> AdditionalRegistrationCleanupIntents,
+	string JavaSource)
+{
+	public static AutoGroupReadyMatchPlan NotReady(AutoGroupQueueMatchPlan queueMatchPlan)
+	{
+		return new AutoGroupReadyMatchPlan(
+			AutoGroupReadyMatchPlanStatus.NotReady,
+			queueMatchPlan,
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			Array.Empty<int>(),
+			Array.Empty<AutoGroupAdditionalRegistrationCleanupIntent>(),
+			"AutoGroupService.checkQueueForNewMatches -> createNewInstance is skipped until AGQuestion.READY");
+	}
+
+	public static AutoGroupReadyMatchPlan Ready(
+		AutoGroupQueueMatchPlan queueMatchPlan,
+		IReadOnlyList<int> readyWindowRecipientObjectIds,
+		IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> additionalRegistrationCleanupIntents)
+	{
+		return new AutoGroupReadyMatchPlan(
+			AutoGroupReadyMatchPlanStatus.Ready,
+			queueMatchPlan,
+			queueMatchPlan.MatchedParties,
+			readyWindowRecipientObjectIds,
+			additionalRegistrationCleanupIntents,
+			"AutoGroupService.createNewInstance -> remove matched entries, set startEnterTime, searchAndRemoveAdditionalRegistrations(id), send SM_AUTO_GROUP(maskId, 4)");
+	}
+}
+
+public enum AutoGroupReadyMatchPlanStatus
+{
+	NotReady,
+	Ready,
+}
+
+public sealed record AutoGroupAdditionalRegistrationCleanupIntent(
+	AutoGroupAdditionalRegistrationCleanupType Type,
+	int MaskId,
+	int PlayerObjectId,
+	int LeaderObjectId,
+	IReadOnlyList<int> NotifiedMemberObjectIds,
+	bool WouldPenaliseParty,
+	bool WouldPenalisePlayer,
+	bool WouldRecheckQueueForNewMatches,
+	int WindowId = 2);
+
+public enum AutoGroupAdditionalRegistrationCleanupType
+{
+	LeaderPartyRemoval,
+	MemberRemoval,
 }
 
 public sealed record AutoGroupBattlegroundRegistrationAnnouncement(
