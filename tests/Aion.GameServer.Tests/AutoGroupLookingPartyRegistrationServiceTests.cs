@@ -411,6 +411,106 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void CreateQueueMatchPlan_OrdersQueuedPartiesLikeJavaLookingForPartyCompareTo()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 6, maxDark: 6);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		var newerLargeQuick = service.RegisterLookingParty(
+			107,
+			[1001, 1002, 1003],
+			"ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			baseTime.AddMinutes(3));
+		var olderSmallQuick = service.RegisterLookingParty(
+			107,
+			[1004],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			baseTime);
+		var newEntry = service.RegisterLookingParty(
+			107,
+			[1005, 1006, 1007, 1008],
+			"ELYOS",
+			AutoGroupEntryRequestType.NewGroupEntry,
+			baseTime.AddMinutes(1));
+		var groupEntry = service.RegisterLookingParty(
+			107,
+			[1009],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddMinutes(2));
+
+		var plan = service.CreateQueueMatchPlan(107, autoGroups, cooltimes);
+
+		Assert.Equal(
+			[groupEntry.LeaderObjectId, newerLargeQuick.LeaderObjectId, olderSmallQuick.LeaderObjectId, newEntry.LeaderObjectId],
+			plan.OrderedQueuedParties.Select(party => party.LeaderObjectId));
+	}
+
+	[Fact]
+	public void CreateQueueMatchPlan_PeriodicPvpMatchReachesReadyLikeJavaAutoPvpInstance()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		service.RegisterLookingParty(
+			107,
+			[2001, 2002],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(1));
+		service.RegisterLookingParty(
+			107,
+			[3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(2));
+
+		var plan = service.CreateQueueMatchPlan(107, autoGroups, cooltimes);
+
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.Ready, plan.Status);
+		Assert.Equal(4, plan.RequiredPlayerCount);
+		Assert.Equal([1001, 1002, 2001, 2002], plan.MatchedMemberObjectIds);
+		Assert.Equal([1001, 2001], plan.MatchedParties.Select(party => party.LeaderObjectId));
+	}
+
+	[Fact]
+	public void CreateQueueMatchPlan_PeriodicPvpSkipsRaceOverCapacityPartiesLikeJavaAutoPvpInstance()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002, 1003],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime);
+		service.RegisterLookingParty(
+			107,
+			[2001, 2002],
+			"ASMODIANS",
+			AutoGroupEntryRequestType.GroupEntry,
+			baseTime.AddSeconds(1));
+
+		var plan = service.CreateQueueMatchPlan(107, autoGroups, cooltimes);
+
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.NotReady, plan.Status);
+		Assert.Equal(4, plan.RequiredPlayerCount);
+		Assert.Empty(plan.MatchedParties);
+	}
+
+	[Fact]
 	public async Task StopRegistrationsByMaskId_RemovesMaskQueueAndSendsCancelWindowLikeJava()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();
@@ -575,6 +675,20 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 			RegisterGroup: registerGroup,
 			RegisterNew: registerNew,
 			NpcIds: []);
+	}
+
+	private static InstanceCooltimeTable CreatePeriodicCooltimes(int worldId, int maxLight, int maxDark)
+	{
+		return new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(
+				Id: 1,
+				WorldId: worldId,
+				Race: "PC_ALL",
+				MaxCount: 1,
+				MaxMemberLight: maxLight,
+				MaxMemberDark: maxDark),
+		]);
 	}
 
 	private static Player CreatePlayer(int objectId, int level, string race = "ELYOS")

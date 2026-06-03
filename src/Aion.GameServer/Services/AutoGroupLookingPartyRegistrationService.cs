@@ -57,7 +57,13 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				return AutoGroupStartLookingResult.AlreadyRegistered(maskId, entryRequestType);
 			}
 
-			var registration = new AutoGroupLookingPartyRegistration(maskId, player.ObjectId, memberObjectIds, player.Race);
+			var registration = new AutoGroupLookingPartyRegistration(
+				maskId,
+				player.ObjectId,
+				memberObjectIds,
+				player.Race,
+				entryRequestType,
+				now ?? DateTimeOffset.UtcNow);
 			if (parties == null)
 			{
 				parties = [];
@@ -77,12 +83,21 @@ public sealed class AutoGroupLookingPartyRegistrationService
 
 	public AutoGroupLookingPartyRegistration RegisterLookingParty(
 		int maskId,
-		IReadOnlyCollection<int> memberObjectIds)
+		IReadOnlyCollection<int> memberObjectIds,
+		string race = "",
+		AutoGroupEntryRequestType entryRequestType = AutoGroupEntryRequestType.NewGroupEntry,
+		DateTimeOffset? registrationTime = null)
 	{
 		if (memberObjectIds.Count == 0)
 			throw new ArgumentException("At least one member object id is required.", nameof(memberObjectIds));
 
-		var registration = new AutoGroupLookingPartyRegistration(maskId, memberObjectIds.First(), memberObjectIds.ToArray());
+		var registration = new AutoGroupLookingPartyRegistration(
+			maskId,
+			memberObjectIds.First(),
+			memberObjectIds.ToArray(),
+			race,
+			entryRequestType,
+			registrationTime ?? DateTimeOffset.UtcNow);
 		lock (_sync)
 		{
 			if (!_lookingPartiesByMaskId.TryGetValue(maskId, out var parties))
@@ -95,6 +110,91 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		}
 
 		return registration;
+	}
+
+	public AutoGroupQueueMatchPlan CreateQueueMatchPlan(
+		int maskId,
+		AutoGroupTable? autoGroups,
+		InstanceCooltimeTable? instanceCooltimes)
+	{
+		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
+		if (autoGroup == null)
+			return AutoGroupQueueMatchPlan.MissingAutoGroup(maskId);
+
+		AutoGroupLookingPartyRegistration[] orderedParties;
+		lock (_sync)
+		{
+			if (!_lookingPartiesByMaskId.TryGetValue(maskId, out var parties) || parties.Count == 0)
+				return AutoGroupQueueMatchPlan.NoQueuedParties(maskId, autoGroup.InstanceMapId);
+
+			// Java parity: AutoGroupService.checkQueueForNewMatches sorts LookingForParty
+			// with Comparable before probing each possible starting party.
+			orderedParties = parties
+				.OrderByDescending(party => party.EntryRequestType)
+				.ThenByDescending(party => party.MemberObjectIds.Count)
+				.ThenBy(party => party.RegistrationTime)
+				.ToArray();
+		}
+
+		if (!autoGroup.IsPeriodicInstance)
+		{
+			return AutoGroupQueueMatchPlan.UnsupportedAutoGroupKind(
+				maskId,
+				autoGroup.InstanceMapId,
+				orderedParties,
+				"AutoGroupService.checkQueueForNewMatches uses AutoGroupType.createAutoInstance; this C# planning slice currently models AutoPvpInstance periodic capacity rules only.");
+		}
+
+		if (instanceCooltimes == null)
+		{
+			return AutoGroupQueueMatchPlan.MissingCapacityData(
+				maskId,
+				autoGroup.InstanceMapId,
+				orderedParties);
+		}
+
+		var totalCapacity = GetPvpTotalCapacity(autoGroup, instanceCooltimes);
+		if (totalCapacity <= 0)
+		{
+			return AutoGroupQueueMatchPlan.MissingCapacityData(
+				maskId,
+				autoGroup.InstanceMapId,
+				orderedParties);
+		}
+
+		for (var i = 0; i < orderedParties.Length; i++)
+		{
+			var accepted = new List<AutoGroupLookingPartyRegistration>();
+			var raceCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+			if (!TryAddPeriodicPvpParty(orderedParties[i], autoGroup, instanceCooltimes, raceCounts))
+				continue;
+
+			accepted.Add(orderedParties[i]);
+			if (accepted.Sum(party => party.MemberObjectIds.Count) != totalCapacity)
+			{
+				for (var j = i + 1; j < orderedParties.Length; j++)
+				{
+					if (!TryAddPeriodicPvpParty(orderedParties[j], autoGroup, instanceCooltimes, raceCounts))
+						continue;
+
+					accepted.Add(orderedParties[j]);
+					if (accepted.Sum(party => party.MemberObjectIds.Count) == totalCapacity)
+						break;
+				}
+			}
+
+			if (accepted.Sum(party => party.MemberObjectIds.Count) == totalCapacity)
+			{
+				return AutoGroupQueueMatchPlan.Ready(
+					maskId,
+					autoGroup.InstanceMapId,
+					orderedParties,
+					accepted,
+					totalCapacity);
+			}
+		}
+
+		return AutoGroupQueueMatchPlan.NotReady(maskId, autoGroup.InstanceMapId, orderedParties, totalCapacity);
 	}
 
 	public int GetLookingPartyCount(int maskId)
@@ -534,13 +634,156 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			return ChatUtil.L10n(900241);
 		return null;
 	}
+
+	private static bool TryAddPeriodicPvpParty(
+		AutoGroupLookingPartyRegistration party,
+		AutoGroupSummary autoGroup,
+		InstanceCooltimeTable instanceCooltimes,
+		IDictionary<string, int> raceCounts)
+	{
+		// Java parity: AutoPvpInstance.addLookingForParty rejects parties that
+		// exceed the race-specific max-member count, then tentatively registers all members.
+		var race = party.Race;
+		var maxPlayersForRace = instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, race);
+		if (maxPlayersForRace <= 0)
+			return false;
+
+		raceCounts.TryGetValue(race, out var currentRaceCount);
+		if (party.MemberObjectIds.Count + currentRaceCount > maxPlayersForRace)
+			return false;
+
+		raceCounts[race] = currentRaceCount + party.MemberObjectIds.Count;
+		return true;
+	}
+
+	private static int GetPvpTotalCapacity(AutoGroupSummary autoGroup, InstanceCooltimeTable instanceCooltimes)
+	{
+		// Java parity: AutoPvpInstance.getMaxPlayers() before instance creation returns
+		// dark-race max players plus light-race max players.
+		return instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, "ASMODIANS")
+			+ instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, "ELYOS");
+	}
 }
 
 public sealed record AutoGroupLookingPartyRegistration(
 	int MaskId,
 	int LeaderObjectId,
 	IReadOnlyList<int> MemberObjectIds,
-	string Race = "");
+	string Race = "",
+	AutoGroupEntryRequestType EntryRequestType = AutoGroupEntryRequestType.NewGroupEntry,
+	DateTimeOffset RegistrationTime = default);
+
+public sealed record AutoGroupQueueMatchPlan(
+	AutoGroupQueueMatchPlanStatus Status,
+	int MaskId,
+	int InstanceMapId,
+	IReadOnlyList<AutoGroupLookingPartyRegistration> OrderedQueuedParties,
+	IReadOnlyList<AutoGroupLookingPartyRegistration> MatchedParties,
+	int RequiredPlayerCount,
+	string JavaSource)
+{
+	public IReadOnlyList<int> MatchedMemberObjectIds => MatchedParties
+		.SelectMany(party => party.MemberObjectIds)
+		.ToArray();
+
+	public static AutoGroupQueueMatchPlan MissingAutoGroup(int maskId)
+	{
+		return new AutoGroupQueueMatchPlan(
+			AutoGroupQueueMatchPlanStatus.MissingAutoGroup,
+			maskId,
+			InstanceMapId: 0,
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			RequiredPlayerCount: 0,
+			"AutoGroupService.checkQueueForNewMatches -> AutoGroupType.getAGTByMaskId returned null");
+	}
+
+	public static AutoGroupQueueMatchPlan NoQueuedParties(int maskId, int instanceMapId)
+	{
+		return new AutoGroupQueueMatchPlan(
+			AutoGroupQueueMatchPlanStatus.NoQueuedParties,
+			maskId,
+			instanceMapId,
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			RequiredPlayerCount: 0,
+			"AutoGroupService.checkQueueForNewMatches -> queuedParties null or empty");
+	}
+
+	public static AutoGroupQueueMatchPlan UnsupportedAutoGroupKind(
+		int maskId,
+		int instanceMapId,
+		IReadOnlyList<AutoGroupLookingPartyRegistration> orderedQueuedParties,
+		string javaSource)
+	{
+		return new AutoGroupQueueMatchPlan(
+			AutoGroupQueueMatchPlanStatus.UnsupportedAutoGroupKind,
+			maskId,
+			instanceMapId,
+			orderedQueuedParties,
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			RequiredPlayerCount: 0,
+			javaSource);
+	}
+
+	public static AutoGroupQueueMatchPlan MissingCapacityData(
+		int maskId,
+		int instanceMapId,
+		IReadOnlyList<AutoGroupLookingPartyRegistration> orderedQueuedParties)
+	{
+		return new AutoGroupQueueMatchPlan(
+			AutoGroupQueueMatchPlanStatus.MissingCapacityData,
+			maskId,
+			instanceMapId,
+			orderedQueuedParties,
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			RequiredPlayerCount: 0,
+			"AutoPvpInstance.getMaxPlayers -> INSTANCE_COOLTIME_DATA max-member data is required before queue matching can be planned");
+	}
+
+	public static AutoGroupQueueMatchPlan NotReady(
+		int maskId,
+		int instanceMapId,
+		IReadOnlyList<AutoGroupLookingPartyRegistration> orderedQueuedParties,
+		int requiredPlayerCount)
+	{
+		return new AutoGroupQueueMatchPlan(
+			AutoGroupQueueMatchPlanStatus.NotReady,
+			maskId,
+			instanceMapId,
+			orderedQueuedParties,
+			Array.Empty<AutoGroupLookingPartyRegistration>(),
+			requiredPlayerCount,
+			"AutoGroupService.checkQueueForNewMatches -> no probe produced AGQuestion.READY");
+	}
+
+	public static AutoGroupQueueMatchPlan Ready(
+		int maskId,
+		int instanceMapId,
+		IReadOnlyList<AutoGroupLookingPartyRegistration> orderedQueuedParties,
+		IReadOnlyList<AutoGroupLookingPartyRegistration> matchedParties,
+		int requiredPlayerCount)
+	{
+		return new AutoGroupQueueMatchPlan(
+			AutoGroupQueueMatchPlanStatus.Ready,
+			maskId,
+			instanceMapId,
+			orderedQueuedParties,
+			matchedParties,
+			requiredPlayerCount,
+			"AutoGroupService.checkQueueForNewMatches -> AutoPvpInstance.addLookingForParty reached AGQuestion.READY; createNewInstance remains deferred");
+	}
+}
+
+public enum AutoGroupQueueMatchPlanStatus
+{
+	MissingAutoGroup,
+	NoQueuedParties,
+	UnsupportedAutoGroupKind,
+	MissingCapacityData,
+	NotReady,
+	Ready,
+}
 
 public sealed record AutoGroupBattlegroundRegistrationAnnouncement(
 	string Message,
