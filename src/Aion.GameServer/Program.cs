@@ -162,6 +162,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();
+			services.AddSingleton<VortexInvasionRuntime>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<WorldNpcSpawnService>();

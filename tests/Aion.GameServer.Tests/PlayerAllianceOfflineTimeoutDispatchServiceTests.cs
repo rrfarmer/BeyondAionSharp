@@ -92,6 +92,52 @@ public sealed class PlayerAllianceOfflineTimeoutDispatchServiceTests
 	}
 
 	[Fact]
+	public async Task DispatchNextExpiredAsync_ExecutesOffenceInvaderVortexRemovalLikeJavaTimeout()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var vortexInvasions = new VortexInvasionRuntime();
+		var location = new VortexLocationSummary(
+			0,
+			"ELYOS",
+			"ASMODIANS",
+			new WorldPosition(120080000, 559.4f, 207.8f, 93.5f, 0),
+			new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0),
+			new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0));
+		var leader = CreatePlayer(1001, "Leader", isOnline: true, worldId: 210010000);
+		var timedOut = CreatePlayer(1002, "TimedOut", isOnline: false, worldId: location.InvasionWorldId);
+		alliances.CreateAlliance(88001, leader, PlayerAllianceTeamType.AllianceOffence);
+		alliances.AddMember(88001, timedOut);
+		alliances.UpdateMemberLastOnlineTime(timedOut, DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+		vortexInvasions.StartInvasion(location);
+		Assert.True(vortexInvasions.AddInvader(location.Id, timedOut));
+		var service = new PlayerAllianceOfflineTimeoutDispatchService(
+			alliances,
+			leagueRuntime: null,
+			registry,
+			vortexInvasions);
+
+		var result = Assert.IsType<PlayerAllianceOfflineTimeoutDispatchResult>(
+			await service.DispatchNextExpiredAsync(
+				DateTimeOffset.FromUnixTimeMilliseconds(700_000),
+				allianceRemoveTimeSeconds: 600));
+
+		Assert.True(result.WouldRemoveOffenceInvader);
+		Assert.True(result.RemovedOffenceInvader);
+		var removal = Assert.IsType<VortexInvaderRemovalResult>(result.VortexInvaderRemoval);
+		Assert.True(removal.Removed);
+		Assert.Equal(1002, removal.PlayerObjectId);
+		Assert.Equal(location.Id, removal.LocationId);
+		Assert.True(removal.RemovedPassedPlayer);
+		Assert.False(vortexInvasions.IsInvaderPlayer(timedOut));
+		var snapshot = Assert.IsType<VortexInvasionSnapshot>(vortexInvasions.GetSnapshot(location.Id));
+		Assert.Empty(snapshot.InvaderObjectIds);
+		Assert.Empty(snapshot.PassedPlayerObjectIds);
+		Assert.False(alliances.HasMember(88001, 1002));
+		Assert.Equal(PlayerTeamMembership.None, timedOut.TeamMembership);
+	}
+
+	[Fact]
 	public async Task DispatchNextExpiredAsync_ReturnsNullWhenNoAllianceMemberExpired()
 	{
 		var registry = new CapturingConnectionRegistry();

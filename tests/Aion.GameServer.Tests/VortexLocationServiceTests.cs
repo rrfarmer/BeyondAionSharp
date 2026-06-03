@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -60,6 +61,41 @@ public sealed class VortexLocationServiceTests
 		}
 	}
 
+	[Fact]
+	public async Task RemoveInvaderPlayer_RemovesActiveInvaderAndPassedPortalStateLikeJava()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-invasion-runtime-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location);
+
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			Assert.True(runtime.IsInvaderPlayer(invader));
+
+			var removal = runtime.RemoveInvaderPlayer(invader);
+
+			Assert.True(removal.Removed);
+			Assert.Equal(1002, removal.PlayerObjectId);
+			Assert.Equal(location.Id, removal.LocationId);
+			Assert.True(removal.RemovedPassedPlayer);
+			Assert.False(removal.WasOnline);
+			Assert.True(removal.WasInInvasionWorld);
+			Assert.False(runtime.IsInvaderPlayer(invader));
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.Empty(snapshot.InvaderObjectIds);
+			Assert.Empty(snapshot.PassedPlayerObjectIds);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(string tempPath)
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
@@ -97,6 +133,17 @@ public sealed class VortexLocationServiceTests
 		var context = new GameServerRuntimeContext();
 		context.SetDataManager(dataManager);
 		return context;
+	}
+
+	private static Player CreatePlayer(int objectId, bool isOnline, int worldId)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = "Invader",
+			IsOnline = isOnline,
+			Position = new WorldPosition(worldId, 1, 2, 3, 0),
+		};
 	}
 
 	private static void DeleteTempDirectory(string tempPath)

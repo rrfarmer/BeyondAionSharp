@@ -490,6 +490,7 @@ public sealed class PlayerAllianceRuntime
 					return new PlayerAllianceOfflineTimeoutPlan(
 						allianceId,
 						member.ObjectId,
+						member.Player,
 						kickDelaySeconds,
 						leagueId,
 						wasInLeague,

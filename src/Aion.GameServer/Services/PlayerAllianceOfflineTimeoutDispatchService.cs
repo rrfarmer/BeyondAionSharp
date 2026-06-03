@@ -5,7 +5,8 @@ namespace Aion.GameServer.Services;
 public sealed class PlayerAllianceOfflineTimeoutDispatchService(
 	PlayerAllianceRuntime allianceRuntime,
 	PlayerLeagueRuntime? leagueRuntime,
-	IGameClientConnectionRegistry connectionRegistry)
+	IGameClientConnectionRegistry connectionRegistry,
+	VortexInvasionRuntime? vortexInvasionRuntime = null)
 {
 	public async Task<PlayerAllianceOfflineTimeoutDispatchResult?> DispatchNextExpiredAsync(
 		DateTimeOffset now,
@@ -20,6 +21,10 @@ public sealed class PlayerAllianceOfflineTimeoutDispatchService(
 		if (timeoutPlan == null)
 			return null;
 
+		var vortexRemoval = timeoutPlan.WouldRemoveOffenceInvader
+			? vortexInvasionRuntime?.RemoveInvaderPlayer(timeoutPlan.TimedOutPlayer)
+			: null;
+
 		var sentPackets = await DispatchLeaveWorkflowAsync(
 			timeoutPlan.LeaveWorkflowPlan,
 			timeoutPlan.LeagueId,
@@ -28,7 +33,8 @@ public sealed class PlayerAllianceOfflineTimeoutDispatchService(
 		return new PlayerAllianceOfflineTimeoutDispatchResult(
 			timeoutPlan,
 			sentPackets,
-			timeoutPlan.WouldRemoveOffenceInvader);
+			timeoutPlan.WouldRemoveOffenceInvader,
+			vortexRemoval);
 	}
 
 	public async Task<PlayerAllianceOfflineTimeoutScanResult> DispatchExpiredScanAsync(
@@ -241,7 +247,11 @@ public sealed class PlayerAllianceOfflineTimeoutDispatchService(
 public sealed record PlayerAllianceOfflineTimeoutDispatchResult(
 	PlayerAllianceOfflineTimeoutPlan TimeoutPlan,
 	int SentPacketCount,
-	bool WouldRemoveOffenceInvader);
+	bool WouldRemoveOffenceInvader,
+	VortexInvaderRemovalResult? VortexInvaderRemoval = null)
+{
+	public bool RemovedOffenceInvader => VortexInvaderRemoval?.Removed == true;
+}
 
 public sealed record PlayerAllianceOfflineTimeoutScanResult(
 	DateTimeOffset ScanTime,

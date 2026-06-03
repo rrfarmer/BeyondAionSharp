@@ -179,6 +179,7 @@ public sealed class PlayerAllianceRuntimeTests
 
 		Assert.Equal(88001, timeoutPlan.AllianceId);
 		Assert.Equal(1002, timeoutPlan.TimedOutPlayerObjectId);
+		Assert.Same(timedOut, timeoutPlan.TimedOutPlayer);
 		Assert.Equal(600, timeoutPlan.KickDelaySeconds);
 		Assert.True(timeoutPlan.WasInLeague);
 		Assert.True(timeoutPlan.WouldRemoveOffenceInvader);
