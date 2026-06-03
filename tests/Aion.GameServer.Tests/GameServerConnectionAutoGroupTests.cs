@@ -287,6 +287,56 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.Empty(message.Parameters);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupHarmonyMissingTicketSendsJavaMemberAndRequesterMessages()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var registry = new RecordingConnectionRegistry([1013]);
+		var groupRuntime = new PlayerGroupRuntime();
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(33, 300350000));
+		var leader = new Player
+		{
+			ObjectId = 1012,
+			Name = "HarmonyLeader",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var member = new Player
+		{
+			ObjectId = 1013,
+			Name = "HarmonyMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		groupRuntime.CreateOrUpdateGroup(77, [leader, member]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			connectionRegistry: registry,
+			playerGroupRuntime: groupRuntime);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(33);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+
+		var memberDelivery = Assert.Single(registry.SentPackets);
+		Assert.Equal(member.ObjectId, memberDelivery.PlayerObjectId);
+		Assert.Equal(1400219, Assert.IsType<SmSystemMessage>(memberDelivery.Packet).MessageId);
+		var requesterMessage = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
+		Assert.Equal(1400187, requesterMessage.MessageId);
+		Assert.Equal(["HarmonyMember"], requesterMessage.Parameters);
+	}
+
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
 	{
 		using var buffer = new PacketBuffer();

@@ -1506,6 +1506,15 @@ public sealed class GameServerConnection : BaseClientConnection
 					_playerAllianceRuntime,
 					_runtimeContext?.DataManager?.StaticData.InstanceCooltimes);
 
+				if (result.GuardPlan != null)
+				{
+					foreach (var memberDenial in result.GuardPlan.MemberDenials)
+					{
+						if (_connectionRegistry != null)
+							await _connectionRegistry.SendPacketToPlayerAsync(memberDenial.MemberObjectId, memberDenial.Message);
+					}
+				}
+
 				if (result.GuardPlan?.DenialMessage != null)
 					await SendPacketAsync(result.GuardPlan.DenialMessage);
 				else if (result.Status == AutoGroupStartLookingStatus.AlreadyRegistered)

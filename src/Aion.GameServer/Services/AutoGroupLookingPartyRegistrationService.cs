@@ -347,6 +347,16 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				);
 			}
 		}
+		else if ((autoGroup.IsHarmonyArena || autoGroup.IsTrainingHarmonyArena) && memberObjectIds.Count > 3)
+		{
+			return new AutoGroupRegistrationGuardPlan(
+				AutoGroupRegistrationGuardPlanStatus.BlockedTooManyMembers,
+				player.Level,
+				SmSystemMessage.CantInstanceTooManyMembers(3, autoGroup.InstanceMapId),
+				CanRegister: false,
+				"AutoGroupUtility.checkGroupRequirements -> Harmony/training Harmony team.size() > 3 -> STR_MSG_CANT_INSTANCE_TOO_MANY_MEMBERS"
+			);
+		}
 
 		var memberGuard = CreateGroupMemberRequirementGuard(
 			player,
@@ -376,6 +386,20 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		{
 			if (member.ObjectId == requester.ObjectId)
 				continue;
+
+			if (autoGroup.IsHarmonyArena && !HasRequiredHarmonyTicket(member))
+			{
+				return new AutoGroupRegistrationGuardPlan(
+					AutoGroupRegistrationGuardPlanStatus.BlockedHarmonyMemberMissingItem,
+					requester.Level,
+					SmSystemMessage.CantInstanceEnterMember(member.Name),
+					CanRegister: false,
+					"AutoGroupUtility.checkGroupRequirements -> agt.isHarmonyArena() && !PvPArenaService.checkItem(member, agt) -> member STR_MSG_INSTANCE_CANT_ENTER_WITHOUT_ITEM and requester STR_MSG_CANT_INSTANCE_ENTER_MEMBER",
+					[
+						new AutoGroupMemberDenialIntent(member.ObjectId, SmSystemMessage.InstanceCantEnterWithoutItem()),
+					]
+				);
+			}
 
 			if (instanceCooltimes != null
 				&& PlayerPortalCooldownService.IsPortalUseDisabled(member, autoGroup.InstanceMapId, instanceCooltimes, now))
@@ -442,6 +466,14 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				?? memberObjectIds.FirstOrDefault() == player.ObjectId;
 
 		return false;
+	}
+
+	private static bool HasRequiredHarmonyTicket(Player member)
+	{
+		// Java parity: PvPArenaService.checkItem -> Harmony -> inventory.getItemCountByItemId(186000184) > 0.
+		return member.InventoryItems
+			.Where(item => item.ItemId == PvPArenaAvailabilityPlanService.HarmonyArenaTicketItemId)
+			.Sum(item => item.Count) > 0;
 	}
 
 	private static IReadOnlyList<Player> ResolveMemberPlayers(
@@ -542,6 +574,7 @@ public sealed record AutoGroupStartLookingResult(
 			or AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader
 			or AutoGroupRegistrationGuardPlanStatus.BlockedTooManyMembers
 			or AutoGroupRegistrationGuardPlanStatus.BlockedMemberCannotEnter
+			or AutoGroupRegistrationGuardPlanStatus.BlockedHarmonyMemberMissingItem
 			? AutoGroupStartLookingStatus.BlockedByEntryGuard
 			: AutoGroupStartLookingStatus.BlockedByCommonGuard;
 

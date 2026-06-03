@@ -176,6 +176,64 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void StartLooking_HarmonyGroupEntryRejectsTooManyMembersLikeJavaFixedSize()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var member1 = CreatePlayer(objectId: 1002, level: 50);
+		var member2 = CreatePlayer(objectId: 1003, level: 50);
+		var member3 = CreatePlayer(objectId: 1004, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, member1, member2, member3]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(33, 300350000)]);
+
+		var result = service.StartLooking(
+			leader,
+			33,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedTooManyMembers, result.GuardPlan?.Status);
+		Assert.Equal(1400180, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(["3", "300350000"], result.GuardPlan?.DenialMessage?.Parameters);
+		Assert.Equal(0, service.GetLookingPartyCount(33));
+	}
+
+	[Fact]
+	public void StartLooking_HarmonyGroupEntryRejectsMemberMissingTicketLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var ticketedMember = CreatePlayer(objectId: 1002, level: 50);
+		ticketedMember.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 9001, ItemId = PvPArenaAvailabilityPlanService.HarmonyArenaTicketItemId, Count = 1 },
+		];
+		var missingTicketMember = CreatePlayer(objectId: 1003, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, ticketedMember, missingTicketMember]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(33, 300350000)]);
+
+		var result = service.StartLooking(
+			leader,
+			33,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedHarmonyMemberMissingItem, result.GuardPlan?.Status);
+		Assert.Equal(1400187, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(["Player1003"], result.GuardPlan?.DenialMessage?.Parameters);
+		var memberDenial = Assert.Single(result.GuardPlan?.MemberDenials ?? []);
+		Assert.Equal(missingTicketMember.ObjectId, memberDenial.MemberObjectId);
+		Assert.Equal(1400219, memberDenial.Message.MessageId);
+		Assert.Equal(0, service.GetLookingPartyCount(33));
+	}
+
+	[Fact]
 	public void StartLooking_GroupEntryRejectsOutOfLevelMemberLikeJavaEnterMember()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();

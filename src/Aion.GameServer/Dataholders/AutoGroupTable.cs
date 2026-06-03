@@ -127,4 +127,8 @@ public sealed record AutoGroupSummary(
 		|| InstanceMapId is 300600000 or 300220000;
 
 	public bool IsPeriodicInstance => MaskId is 1 or 2 or 3 or 107 or 108 or 109 or 111;
+
+	public bool IsHarmonyArena => MaskId is 33 or 34 or 35 or 41;
+
+	public bool IsTrainingHarmonyArena => MaskId is 45 or 101 or 102 or 103;
 }

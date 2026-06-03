@@ -12,6 +12,7 @@ public enum AutoGroupRegistrationGuardPlanStatus
 	BlockedNotLeader,
 	BlockedTooManyMembers,
 	BlockedMemberCannotEnter,
+	BlockedHarmonyMemberMissingItem,
 }
 
 public sealed record AutoGroupRegistrationGuardPlan(
@@ -19,11 +20,16 @@ public sealed record AutoGroupRegistrationGuardPlan(
 	int PlayerLevel,
 	SmSystemMessage? DenialMessage,
 	bool CanRegister,
-	string JavaSource
+	string JavaSource,
+	IReadOnlyList<AutoGroupMemberDenialIntent>? MemberDenialIntents = null
 )
 {
 	public bool IsLive => false;
+
+	public IReadOnlyList<AutoGroupMemberDenialIntent> MemberDenials => MemberDenialIntents ?? Array.Empty<AutoGroupMemberDenialIntent>();
 }
+
+public sealed record AutoGroupMemberDenialIntent(int MemberObjectId, SmSystemMessage Message);
 
 public static class AutoGroupRegistrationGuardPlanService
 {
