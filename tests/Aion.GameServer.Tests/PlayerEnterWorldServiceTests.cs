@@ -3309,6 +3309,17 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> TransferItemOwnershipAsync(
+			int itemObjectId,
+			int previousOwnerId,
+			int newOwnerId,
+			int newLocation,
+			long newSlot,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveInventoryItemPackCountAsync(
 			int playerObjectId,
 			int itemObjectId,

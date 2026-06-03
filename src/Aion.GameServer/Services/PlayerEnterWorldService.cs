@@ -292,6 +292,18 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemCrossStorageMoveMutationAsync(player.ObjectId, itemObjectId, newLocation, newSlot, cancellationToken);
 	}
 
+	public Task<bool> TransferItemOwnershipAsync(
+		int itemObjectId,
+		int previousOwnerId,
+		int newOwnerId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExchangeService.performTrade transfers an item row to the trade partner atomically.
+		return _repository.TransferItemOwnershipAsync(itemObjectId, previousOwnerId, newOwnerId, newLocation, newSlot, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

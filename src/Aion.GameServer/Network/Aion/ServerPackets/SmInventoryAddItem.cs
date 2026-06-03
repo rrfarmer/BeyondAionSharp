@@ -9,6 +9,8 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	public const int PacketOpCode = 27;
 	public const int AllSlot = 0x13;
 	public const int ItemCollect = 0x19;
+	// Java parity: ItemPacketService.ItemAddType.PLAYER_EXCHANGE_GET = 0x21 (item received from a completed trade).
+	public const int PlayerExchangeGet = 0x21;
 	public const int CraftedItem = 0x2D;
 	public const int BrokerBuy = 0x2E;
 	public const int BrokerReturn = 0x2F;
@@ -51,6 +53,15 @@ public sealed class SmInventoryAddItem : GameServerPacket
 	{
 		// Java parity: ItemPacketService.ItemAddType.ITEM_COLLECT default add type.
 		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], ItemCollect);
+	}
+
+	public static SmInventoryAddItem CreatePlayerExchangeGet(
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int generalInfoWarehouseRestrictionFlag = 0)
+	{
+		// Java parity: ExchangeService.putItemToInventory uses ItemPacketService.ItemAddType.PLAYER_EXCHANGE_GET.
+		return new SmInventoryAddItem([new InventoryPacketItem(item, template, generalInfoWarehouseRestrictionFlag)], PlayerExchangeGet);
 	}
 
 	public static SmInventoryAddItem CreateAllSlot(

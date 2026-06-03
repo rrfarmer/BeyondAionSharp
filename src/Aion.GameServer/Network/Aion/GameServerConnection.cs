@@ -11371,7 +11371,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task RestoreExchangeItemsToInventoryUiAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: ExchangeService.returnItems sends SM_INVENTORY_ADD_ITEM or SM_INVENTORY_UPDATE_ITEM to restore
-		// committed items to inventory display when exchange is cancelled.
+		// committed items to inventory display when exchange is cancelled. Routes to the item owner (self or partner).
 		if (player.ExchangeItems.Count == 0)
 			return;
 
@@ -11390,8 +11390,177 @@ public sealed class GameServerConnection : BaseClientConnection
 				continue;
 
 			// Java parity: INC_PLAYER_EXCHANGE_GET_BACK (0x23) restores the full stack.
-			await SendPacketAsync(new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.PlayerExchangeGetBack), cancellationToken);
+			await SendExchangePacketAsync(player.ObjectId, new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.PlayerExchangeGetBack), cancellationToken);
 		}
+	}
+
+	private async Task ExecuteExchangeTradeAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExchangeService.performTrade. Items move between the two players' inventories and kinah is exchanged.
+		// Partial-stack splits (committed < stack count) are deferred and abort the trade cleanly; full-stack item trades + kinah are live.
+		var partner = TryGetOnlinePlayerByObjectId(player.CurrentExchangePartnerObjectId);
+		if (partner == null)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = staticData?.ItemTemplates;
+
+		var playerItems = ResolveCommittedExchangeItems(player);
+		var partnerItems = ResolveCommittedExchangeItems(partner);
+
+		// Defer partial-stack trades (require IdFactory split + INSERT); abort cleanly to avoid item loss/duplication.
+		var hasPartialStack = playerItems.Any(entry => entry.Committed < entry.Item.Count)
+			|| partnerItems.Any(entry => entry.Committed < entry.Item.Count);
+		if (hasPartialStack)
+		{
+			_logger.LogInformation(
+				"Deferring partial-stack exchange trade between {PlayerObjectId} and {PartnerObjectId}; cancelling.",
+				player.ObjectId,
+				partner.ObjectId);
+			await RestoreExchangeItemsToInventoryUiAsync(player, cancellationToken);
+			await RestoreExchangeItemsToInventoryUiAsync(partner, cancellationToken);
+			await SendExchangePacketAsync(player.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Canceled), cancellationToken);
+			await SendExchangePacketAsync(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Canceled), cancellationToken);
+			_playerExchangeRequestService.CancelExchange(player, TryGetOnlinePlayerByObjectId);
+			return;
+		}
+
+		// Java parity: validateInventorySize — each player needs free cube slots for the items they will receive.
+		if (itemTemplates != null)
+		{
+			var playerFreeSlots = InventoryCapacity.GetFreeCubeSlots(player, itemTemplates);
+			var partnerFreeSlots = InventoryCapacity.GetFreeCubeSlots(partner, itemTemplates);
+			if (playerFreeSlots < partnerItems.Count)
+			{
+				await SendExchangePacketAsync(player.ObjectId, new SmSystemMessage(1300359), cancellationToken); // CANT_EXCHANGE_HEAVY
+				await SendExchangePacketAsync(partner.ObjectId, new SmSystemMessage(1300357), cancellationToken); // PARTNER_TOO_HEAVY
+				await CancelExchangeAfterFailedTradeAsync(player, partner, cancellationToken);
+				return;
+			}
+			if (partnerFreeSlots < playerItems.Count)
+			{
+				await SendExchangePacketAsync(partner.ObjectId, new SmSystemMessage(1300359), cancellationToken);
+				await SendExchangePacketAsync(player.ObjectId, new SmSystemMessage(1300357), cancellationToken);
+				await CancelExchangeAfterFailedTradeAsync(player, partner, cancellationToken);
+				return;
+			}
+		}
+
+		// Kinah net change validation (each player's own kinah row count must stay non-negative).
+		var kinahTemplate = itemTemplates?.GetItemTemplate(KinahItemId);
+		var playerKinah = player.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
+		var partnerKinah = partner.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
+		var playerNet = partner.ExchangeKinah - player.ExchangeKinah;
+		var partnerNet = player.ExchangeKinah - partner.ExchangeKinah;
+		var playerKinahNewCount = (playerKinah?.Count ?? 0L) + playerNet;
+		var partnerKinahNewCount = (partnerKinah?.Count ?? 0L) + partnerNet;
+		if (playerKinahNewCount < 0 || partnerKinahNewCount < 0)
+		{
+			await CancelExchangeAfterFailedTradeAsync(player, partner, cancellationToken);
+			return;
+		}
+
+		// Java parity: performTrade sends SM_EXCHANGE_CONFIRMATION(0) to both after removal, before delivery.
+		await SendExchangePacketAsync(player.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Success), cancellationToken);
+		await SendExchangePacketAsync(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Success), cancellationToken);
+
+		// Transfer items both directions (full-stack only at this point).
+		await TransferTradeItemsAsync(player, partner, playerItems, itemTemplates, cancellationToken);
+		await TransferTradeItemsAsync(partner, player, partnerItems, itemTemplates, cancellationToken);
+
+		// Apply kinah exchange.
+		if (playerNet != 0 && playerKinah != null && kinahTemplate != null)
+		{
+			var update = CopyInventoryItem(playerKinah, count: playerKinahNewCount);
+			ReplaceInventoryItemFor(player, update);
+			await SendExchangePacketAsync(player.ObjectId, new SmInventoryUpdateItem(update, kinahTemplate,
+				playerNet > 0 ? SmInventoryUpdateItem.PlayerExchangeGet : SmInventoryUpdateItem.DecreaseKinahBuy), cancellationToken);
+		}
+		if (partnerNet != 0 && partnerKinah != null && kinahTemplate != null)
+		{
+			var update = CopyInventoryItem(partnerKinah, count: partnerKinahNewCount);
+			ReplaceInventoryItemFor(partner, update);
+			await SendExchangePacketAsync(partner.ObjectId, new SmInventoryUpdateItem(update, kinahTemplate,
+				partnerNet > 0 ? SmInventoryUpdateItem.PlayerExchangeGet : SmInventoryUpdateItem.DecreaseKinahBuy), cancellationToken);
+		}
+
+		// Java parity: cleanUpExchanges resets exchange state for both players (also clears the item/kinah baskets).
+		_playerExchangeRequestService.CancelExchange(player, TryGetOnlinePlayerByObjectId);
+	}
+
+	private async Task CancelExchangeAfterFailedTradeAsync(Player player, Player partner, CancellationToken cancellationToken)
+	{
+		// Java parity: performTrade failed-validation branch calls cleanUpExchanges(true, ...) and restores items to UI.
+		await RestoreExchangeItemsToInventoryUiAsync(player, cancellationToken);
+		await RestoreExchangeItemsToInventoryUiAsync(partner, cancellationToken);
+		_playerExchangeRequestService.CancelExchange(player, TryGetOnlinePlayerByObjectId);
+	}
+
+	private static List<(InventoryItem Item, long Committed)> ResolveCommittedExchangeItems(Player owner)
+	{
+		// Resolve each committed objectId to the live cube InventoryItem and its committed count.
+		var resolved = new List<(InventoryItem, long)>();
+		foreach (var (itemObjectId, committed) in owner.ExchangeItems)
+		{
+			var item = owner.InventoryItems.FirstOrDefault(i => i.ObjectId == itemObjectId && i.Location == CubeStorageId);
+			if (item != null)
+				resolved.Add((item, committed));
+		}
+
+		return resolved;
+	}
+
+	private async Task TransferTradeItemsAsync(
+		Player giver,
+		Player receiver,
+		IReadOnlyList<(InventoryItem Item, long Committed)> committedItems,
+		ItemTemplateTable? itemTemplates,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: ExchangeService.removeItemsFromInventory (giver) + putItemToInventory (receiver) for full-stack items.
+		foreach (var (item, _) in committedItems)
+		{
+			// Persist the atomic ownership transfer first (authoritative); in-memory move follows.
+			if (_playerEnterWorldService != null)
+			{
+				var transferred = await _playerEnterWorldService.TransferItemOwnershipAsync(
+					item.ObjectId, giver.ObjectId, receiver.ObjectId, CubeStorageId, FirstAvailableSlot, cancellationToken);
+				if (!transferred)
+					_logger.LogWarning("Item {ItemObjectId} ownership transfer persistence failed during trade.", item.ObjectId);
+			}
+
+			// Remove from giver in-memory list WITHOUT TrackDeletedItem (the row now belongs to the receiver; a logout delete would wrongly remove it).
+			giver.InventoryItems = giver.InventoryItems.Where(i => i.ObjectId != item.ObjectId).ToArray();
+			await SendExchangePacketAsync(giver.ObjectId, new SmDeleteItem(item.ObjectId, SmDeleteItem.MoveDeleteType), cancellationToken);
+
+			// Java parity: putItemToInventory sets equipmentSlot(0) and unwraps packCount (positive -> negative) before add.
+			var unwrappedPackCount = item.PackCount > 0 ? item.PackCount * -1 : item.PackCount;
+			var received = CopyInventoryItem(
+				item,
+				location: CubeStorageId,
+				slot: FirstAvailableSlot,
+				ownerId: receiver.ObjectId,
+				isEquipped: false,
+				packCount: unwrappedPackCount);
+			receiver.InventoryItems = receiver.InventoryItems.Append(received).ToArray();
+
+			var template = itemTemplates?.GetItemTemplate(received.ItemId);
+			if (template != null)
+				await SendExchangePacketAsync(receiver.ObjectId, SmInventoryAddItem.CreatePlayerExchangeGet(received, template), cancellationToken);
+		}
+
+		if (committedItems.Count > 0)
+		{
+			await SendExchangePacketAsync(giver.ObjectId, SmCubeUpdate.CubeSize(giver), cancellationToken);
+			await SendExchangePacketAsync(receiver.ObjectId, SmCubeUpdate.CubeSize(receiver), cancellationToken);
+		}
+	}
+
+	private static void ReplaceInventoryItemFor(Player owner, InventoryItem replacement)
+	{
+		var items = owner.InventoryItems.ToList();
+		ReplaceInventoryItem(items, replacement);
+		owner.InventoryItems = items.ToArray();
 	}
 
 	internal async Task<ExchangeLockPlan> HandleExchangeLockAsync(
@@ -11414,68 +11583,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
 
 		if (plan.Status == ExchangeConfirmStatus.TradeExecutionBlocked)
-			await ExecuteKinahOnlyExchangeAsync(activePlayer, cancellationToken);
+			await ExecuteExchangeTradeAsync(activePlayer, cancellationToken);
 
 		return plan;
-	}
-
-	private async Task ExecuteKinahOnlyExchangeAsync(Player player, CancellationToken cancellationToken = default)
-	{
-		// Java parity: ExchangeService.performTrade (kinah-only path); exchange item basket deferred until item basket is ported.
-		// This handles the case where both players confirm and no exchange items are tracked on either side.
-		var partner = TryGetOnlinePlayerByObjectId(player.CurrentExchangePartnerObjectId);
-		if (partner == null)
-			return;
-
-		var staticData = _runtimeContext?.DataManager?.StaticData;
-		var kinahTemplate = staticData?.ItemTemplates.GetItemTemplate(KinahItemId);
-
-		var playerKinah = player.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
-		var partnerKinah = partner.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
-
-		// Transfer kinah between players: each player's kinah decreases by their ExchangeKinah and increases by partner's ExchangeKinah.
-		var playerNet = partner.ExchangeKinah - player.ExchangeKinah;
-		var partnerNet = player.ExchangeKinah - partner.ExchangeKinah;
-
-		if ((playerNet != 0 || partnerNet != 0) && kinahTemplate != null)
-		{
-			var playerKinahOldCount = playerKinah?.Count ?? 0L;
-			var partnerKinahOldCount = partnerKinah?.Count ?? 0L;
-			var playerKinahNewCount = playerKinahOldCount + playerNet;
-			var partnerKinahNewCount = partnerKinahOldCount + partnerNet;
-
-			if (playerKinahNewCount >= 0 && partnerKinahNewCount >= 0)
-			{
-				if (playerKinah != null)
-				{
-					var playerKinahUpdate = CopyInventoryItem(playerKinah, count: playerKinahNewCount);
-					var playerItems = player.InventoryItems.ToList();
-					ReplaceInventoryItem(playerItems, playerKinahUpdate);
-					player.InventoryItems = playerItems.ToArray();
-					await SendPacketAsync(new SmInventoryUpdateItem(playerKinahUpdate, kinahTemplate,
-						playerNet > 0 ? SmInventoryUpdateItem.PlayerExchangeGet : SmInventoryUpdateItem.DecreaseKinahBuy), cancellationToken);
-				}
-
-				if (partnerKinah != null && _connectionRegistry != null)
-				{
-					var partnerKinahUpdate = CopyInventoryItem(partnerKinah, count: partnerKinahNewCount);
-					var partnerItems = partner.InventoryItems.ToList();
-					ReplaceInventoryItem(partnerItems, partnerKinahUpdate);
-					partner.InventoryItems = partnerItems.ToArray();
-					await _connectionRegistry.SendPacketToPlayerAsync(partner.ObjectId,
-						new SmInventoryUpdateItem(partnerKinahUpdate, kinahTemplate,
-							partnerNet > 0 ? SmInventoryUpdateItem.PlayerExchangeGet : SmInventoryUpdateItem.DecreaseKinahBuy));
-				}
-			}
-		}
-
-		// Java parity: ExchangeService.performTrade sends SM_EXCHANGE_CONFIRMATION(0) to both on success.
-		await SendPacketAsync(new SmExchangeConfirmation(SmExchangeConfirmation.Success), cancellationToken);
-		if (_connectionRegistry != null)
-			await _connectionRegistry.SendPacketToPlayerAsync(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Success));
-
-		// Java parity: ExchangeService.cleanUpExchanges resets exchange state for both players.
-		_playerExchangeRequestService.CancelExchange(player, TryGetOnlinePlayerByObjectId);
 	}
 
 	private async Task HandleExchangeAddKinahAsync(Player player, CmExchangeAddKinah packet)

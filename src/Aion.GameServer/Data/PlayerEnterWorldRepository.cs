@@ -334,6 +334,16 @@ public interface IPlayerEnterWorldRepository
 		long newSlot,
 		CancellationToken cancellationToken = default);
 
+	// Java parity: services/ExchangeService.performTrade -> InventoryDAO.store transfers item ownership atomically
+	// when an item moves from one player's inventory to another's during a trade.
+	Task<bool> TransferItemOwnershipAsync(
+		int itemObjectId,
+		int previousOwnerId,
+		int newOwnerId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -909,6 +919,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveInventoryItemSlotAsync(
 		int playerObjectId,
 		int itemObjectId,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> TransferItemOwnershipAsync(
+		int itemObjectId,
+		int previousOwnerId,
+		int newOwnerId,
+		int newLocation,
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
@@ -1829,6 +1850,40 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save inventory slot update for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> TransferItemOwnershipAsync(
+		int itemObjectId,
+		int previousOwnerId,
+		int newOwnerId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ExchangeService.performTrade -> InventoryDAO.store moves the item row to the new owner.
+		// The previous owner is matched in the WHERE clause so a stale transfer cannot overwrite an unrelated row.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE inventory SET item_owner = ?, item_location = ?, slot = ?, is_equipped = 0 WHERE item_unique_id = ? AND item_owner = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = newOwnerId },
+					new MySqlParameter { Value = newLocation },
+					new MySqlParameter { Value = newSlot },
+					new MySqlParameter { Value = itemObjectId },
+					new MySqlParameter { Value = previousOwnerId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not transfer item {ItemObjectId} ownership from {PreviousOwnerId} to {NewOwnerId}", itemObjectId, previousOwnerId, newOwnerId);
 			return false;
 		}
 	}
