@@ -1178,6 +1178,117 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void ZoneLeaveKickSchedulePlan_BlocksWhileStillInsideAndRemovesOnlyWhenInactive()
+	{
+		var planner = new VortexZoneLeaveKickSchedulePlanService();
+		var invader = new VortexZonePlayerSnapshot(PlayerObjectId: 1002, Race: "ASMODIANS");
+
+		var stillInside = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			isInvaderRace: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			isStillInsideLocation: true);
+		var inactive = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: false,
+			isInvaderRace: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002 });
+
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanStatus.StillInsideLocation, stillInside.Status);
+		Assert.True(stillInside.IsStillInsideLocation);
+		Assert.False(stillInside.WouldRemoveZonePlayer);
+		Assert.False(stillInside.WouldScheduleKick);
+		Assert.False(stillInside.WouldSendBattlefieldLeftMessage);
+		Assert.False(stillInside.ShouldMutateLiveZonePlayers);
+		Assert.Equal("model/vortex/VortexLocation.onLeaveZone", stillInside.JavaSource);
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanStatus.InactiveVortex, inactive.Status);
+		Assert.False(inactive.HasActiveInvasion);
+		Assert.True(inactive.WouldRemoveZonePlayer);
+		Assert.False(inactive.WouldScheduleKick);
+		Assert.False(inactive.WouldSendBattlefieldLeftMessage);
+		Assert.False(inactive.ShouldMutateLiveZonePlayers);
+	}
+
+	[Fact]
+	public void ZoneLeaveKickSchedulePlan_InvaderRequiresPassedPlayerBeforeMessageAndKickSchedule()
+	{
+		var planner = new VortexZoneLeaveKickSchedulePlanService();
+		var invader = new VortexZonePlayerSnapshot(PlayerObjectId: 1002, Race: "ASMODIANS");
+
+		var missingPass = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			isInvaderRace: true,
+			passedPlayerObjectIds: new HashSet<int> { 1003 });
+		var scheduled = planner.CreatePlan(
+			locationId: 0,
+			invader,
+			hasActiveInvasion: true,
+			isInvaderRace: true,
+			passedPlayerObjectIds: new HashSet<int> { 1002, 1003 });
+
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanStatus.InvaderMissingPassedPlayer, missingPass.Status);
+		Assert.True(missingPass.WouldRemoveZonePlayer);
+		Assert.False(missingPass.HadPassedPortal);
+		Assert.Equal([1003], missingPass.PassedPlayerObjectIds);
+		Assert.False(missingPass.WouldSendBattlefieldLeftMessage);
+		Assert.False(missingPass.WouldScheduleKick);
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanStatus.InvaderKickScheduled, scheduled.Status);
+		Assert.Equal(0, scheduled.LocationId);
+		Assert.Equal(1002, scheduled.PlayerObjectId);
+		Assert.Equal([1002, 1003], scheduled.PassedPlayerObjectIds);
+		Assert.True(scheduled.HadPassedPortal);
+		Assert.True(scheduled.WouldRemoveZonePlayer);
+		Assert.True(scheduled.WouldSendBattlefieldLeftMessage);
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanService.BattlefieldLeftMessageId, scheduled.BattlefieldLeftMessageId);
+		Assert.True(scheduled.WouldScheduleKick);
+		Assert.True(scheduled.ScheduledKickIsInvader);
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanService.KickDelaySeconds, scheduled.ScheduledKickDelaySeconds);
+		Assert.True(scheduled.ScheduledKickRequiresOnline);
+		Assert.True(scheduled.ScheduledKickRequiresOutsideActiveVortex);
+		Assert.False(scheduled.ShouldSendLivePacket);
+		Assert.False(scheduled.ShouldScheduleLiveKick);
+		Assert.False(scheduled.ShouldMutateLiveParticipants);
+		Assert.Equal(
+			"model/vortex/VortexLocation.onLeaveZone -> ThreadPoolManager.schedule -> services/vortex/Invasion.kickPlayer",
+			scheduled.JavaSource);
+	}
+
+	[Fact]
+	public void ZoneLeaveKickSchedulePlan_DefenderSchedulesKickWithoutBattlefieldLeftMessage()
+	{
+		var planner = new VortexZoneLeaveKickSchedulePlanService();
+		var offlineDefender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS", IsOnline: false);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			offlineDefender,
+			hasActiveInvasion: true,
+			isInvaderRace: false,
+			passedPlayerObjectIds: new HashSet<int> { 1002 });
+
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanStatus.DefenderKickScheduled, plan.Status);
+		Assert.False(plan.Player.IsOnline);
+		Assert.False(plan.IsInvaderRace);
+		Assert.False(plan.HadPassedPortal);
+		Assert.True(plan.WouldRemoveZonePlayer);
+		Assert.False(plan.WouldSendBattlefieldLeftMessage);
+		Assert.Null(plan.BattlefieldLeftMessageId);
+		Assert.True(plan.WouldScheduleKick);
+		Assert.False(plan.ScheduledKickIsInvader);
+		Assert.Equal(VortexZoneLeaveKickSchedulePlanService.KickDelaySeconds, plan.ScheduledKickDelaySeconds);
+		Assert.True(plan.ScheduledKickRequiresOnline);
+		Assert.True(plan.ScheduledKickRequiresOutsideActiveVortex);
+		Assert.False(plan.ShouldScheduleLiveKick);
+		Assert.False(plan.ShouldSendLivePacket);
+		Assert.False(plan.ShouldMutateLiveParticipants);
+	}
+
+	[Fact]
 	public async Task DefenderAllianceUpdatePlan_SelectsOnlyJavaDefenderRaceZonePlayers()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-" + Guid.NewGuid().ToString("N"));
