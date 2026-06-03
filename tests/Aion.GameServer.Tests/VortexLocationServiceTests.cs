@@ -1346,6 +1346,109 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationRegistrationRuntimeAdapter_StoresPendingRequestAndRecordsQuestionWindowIntent()
+	{
+		var invitationPlanner = new VortexDefenderInvitationPlanService();
+		var adapter = new VortexDefenderInvitationRegistrationRuntimeAdapterService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var invitation = invitationPlanner.CreatePlan(
+			new VortexZonePlayerSnapshot(defender.ObjectId, defender.Race),
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+
+		var report = adapter.Register(defender, invitation);
+
+		Assert.Equal(VortexDefenderInvitationRegistrationReportStatus.Registered, report.Status);
+		Assert.True(report.Registered);
+		Assert.True(report.RequestSlotAvailableBeforeRegistration);
+		Assert.True(report.AttemptedRequestRegistration);
+		Assert.True(report.ActualPutRequestResult);
+		Assert.True(report.RequestStoredByRegistry);
+		Assert.True(report.WouldSendQuestionWindow);
+		Assert.Equal(0, report.QuestionWindowSenderId);
+		Assert.Equal(0, report.QuestionWindowRangeOrCooldownSeconds);
+		Assert.True(report.HasPayload);
+		Assert.Equal(1, defender.ResponseRequester.Count);
+		Assert.True(defender.ResponseRequester.ContainsRequest(SmQuestionWindow.VortexDefenderInvitation));
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+
+		var dispatch = Assert.IsType<QuestionResponseDispatch>(
+			defender.ResponseRequester.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 1));
+		Assert.Equal(QuestionResponseRequestKind.VortexDefenderInvitation, dispatch.Request.Kind);
+		var payload = Assert.IsType<PendingVortexDefenderInvitationRequest>(dispatch.Request.Payload);
+		Assert.Equal(defender.ObjectId, payload.RequesterObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, payload.QuestionId);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, payload.DefenderAlliance);
+		Assert.Equal([1001], payload.ExistingDefenderObjectIds);
+	}
+
+	[Fact]
+	public void DefenderInvitationRegistrationRuntimeAdapter_RejectsOccupiedRequestSlotLikeJavaPutIfAbsent()
+	{
+		var invitationPlanner = new VortexDefenderInvitationPlanService();
+		var adapter = new VortexDefenderInvitationRegistrationRuntimeAdapterService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var existingRequest = new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown);
+		Assert.True(defender.ResponseRequester.PutRequest(SmQuestionWindow.VortexDefenderInvitation, existingRequest));
+		var invitation = invitationPlanner.CreatePlan(
+			new VortexZonePlayerSnapshot(defender.ObjectId, defender.Race),
+			existingDefenderObjectIds: new HashSet<int>(),
+			alliance: VortexDefenderAllianceSnapshot.Missing);
+
+		var report = adapter.Register(defender, invitation);
+
+		Assert.Equal(VortexDefenderInvitationRegistrationReportStatus.RequestRejected, report.Status);
+		Assert.True(report.Rejected);
+		Assert.False(report.RequestSlotAvailableBeforeRegistration);
+		Assert.True(report.AttemptedRequestRegistration);
+		Assert.False(report.ActualPutRequestResult);
+		Assert.False(report.RequestStoredByRegistry);
+		Assert.False(report.WouldSendQuestionWindow);
+		Assert.True(report.HasPayload);
+		Assert.Equal(1, defender.ResponseRequester.Count);
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+
+		var dispatch = Assert.IsType<QuestionResponseDispatch>(
+			defender.ResponseRequester.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 1));
+		Assert.Equal(QuestionResponseRequestKind.Unknown, dispatch.Request.Kind);
+		Assert.Same(existingRequest, dispatch.Request);
+	}
+
+	[Fact]
+	public void DefenderInvitationRegistrationRuntimeAdapter_SkipsGuardedDefenderWithoutRegistryMutation()
+	{
+		var invitationPlanner = new VortexDefenderInvitationPlanService();
+		var adapter = new VortexDefenderInvitationRegistrationRuntimeAdapterService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var invitation = invitationPlanner.CreatePlan(
+			new VortexZonePlayerSnapshot(defender.ObjectId, defender.Race),
+			existingDefenderObjectIds: new HashSet<int> { defender.ObjectId },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+
+		var report = adapter.Register(defender, invitation);
+
+		Assert.Equal(VortexDefenderInvitationRegistrationReportStatus.Skipped, report.Status);
+		Assert.True(report.Skipped);
+		Assert.True(report.RequestSlotAvailableBeforeRegistration);
+		Assert.False(report.AttemptedRequestRegistration);
+		Assert.False(report.ActualPutRequestResult);
+		Assert.False(report.RequestStoredByRegistry);
+		Assert.False(report.WouldSendQuestionWindow);
+		Assert.False(report.HasPayload);
+		Assert.Equal(0, defender.ResponseRequester.Count);
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public void DefenderInvitationResponseDispatchPlan_MapsZeroToDenyAndNonZeroToAcceptLikeJavaHandle()
 	{
 		var planner = new VortexDefenderInvitationResponseDispatchPlanService();
