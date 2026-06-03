@@ -2587,6 +2587,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.ItemAmount <= 0)
 			return;
 
+		// Java parity: ItemSplitService.splitItem checks player.isTrading() before split.
+		if (player.IsTrading)
+		{
+			await SendPacketAsync(SmSystemMessage.InventorySplitDuringTrade());
+			return;
+		}
+
 		if (packet.SourceStorageType == 3 || packet.DestinationStorageType == 3)
 		{
 			// Legion warehouse splits require LegionService and addWHItemHistory; deferred.
@@ -2756,6 +2763,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		var template = templates?.GetItemTemplate(item.ItemId);
 		if (template == null)
 			return;
+
+		// Java parity: ItemMoveService.moveItem — trading check before cross-storage restriction check.
+		if (player.IsTrading)
+		{
+			// Java parity: sendItemUnlockPacket restores item in source UI; use ALL_SLOT add type for cube.
+			if (item.Location == 0)
+				await SendPacketAsync(SmInventoryAddItem.CreateAllSlot(item, template));
+			else
+				await SendPacketAsync(SmWarehouseAddItem.CreateAllSlot(item.Location, item, template));
+			return;
+		}
 
 		// Java parity: ItemRestrictionService.isItemRestrictedTo — check storability for destination.
 		if (packet.Destination == 1 /* regular warehouse */ && !template.IsStorableInWarehouse)
