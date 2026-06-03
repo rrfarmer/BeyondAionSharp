@@ -53,6 +53,8 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
 		Assert.Same(repository.Player, result.Player);
 		Assert.True(repository.Player!.IsOnline);
+		// Java parity: enterWorld sets FriendList.Status.ONLINE (1) so the player is visible to friend lists / player search.
+		Assert.Equal(1, repository.Player.FriendListStatus);
 		Assert.Single(repository.Player.InventoryItems);
 		Assert.Single(repository.Player.WarehouseItems);
 		Assert.Single(repository.Player.AccountWarehouseItems);

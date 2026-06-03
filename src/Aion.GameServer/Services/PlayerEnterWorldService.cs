@@ -13,6 +13,9 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerEnterWorldService
 {
+	// Java parity: model/gameobjects/player/FriendList.Status.ONLINE.getValue() == 1.
+	private const byte FriendListStatusOnline = 1;
+
 	private readonly GameServerOptions _options;
 	private readonly IPlayerEnterWorldRepository _repository;
 	private readonly GameWorld _world;
@@ -140,6 +143,10 @@ public sealed class PlayerEnterWorldService
 			}
 
 			player.IsOnline = true;
+			// Java parity: PlayerEnterWorldService.enterWorld -> player.getFriendList().setStatus(Status.ONLINE, pcd).
+			// FriendList.Status.ONLINE == 1; the default 0 means OFFLINE, which would hide the player from
+			// friend lists and CM_PLAYER_SEARCH results.
+			player.FriendListStatus = FriendListStatusOnline;
 			await ApplyOfflineDpResetAsync(player, previousLastOnline, now);
 			player.LastOnline = now;
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged on", player.Name, playerObjectId);
