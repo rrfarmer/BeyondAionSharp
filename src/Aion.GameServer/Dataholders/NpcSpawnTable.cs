@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -166,6 +167,71 @@ public sealed record NpcRiftSpawnSummary(
 	string Anchor,
 	int State,
 	string AiName);
+
+public sealed class NpcVortexSpawnTable
+{
+	private readonly IReadOnlyDictionary<int, IReadOnlyList<NpcVortexSpawnSummary>> _spawnsByVortexLocationId;
+
+	public NpcVortexSpawnTable(IReadOnlyList<NpcVortexSpawnSummary> spawns)
+	{
+		Spawns = spawns;
+		_spawnsByVortexLocationId = new ReadOnlyDictionary<int, IReadOnlyList<NpcVortexSpawnSummary>>(
+			spawns
+				.GroupBy(spawn => spawn.VortexLocationId)
+				.ToDictionary(
+					group => group.Key,
+					group => (IReadOnlyList<NpcVortexSpawnSummary>)group.ToArray()));
+	}
+
+	public IReadOnlyList<NpcVortexSpawnSummary> Spawns { get; }
+
+	public int Count => Spawns.Count;
+
+	public IReadOnlyList<NpcVortexSpawnSummary> GetSpawnsForVortexLocation(int vortexLocationId)
+	{
+		return _spawnsByVortexLocationId.GetValueOrDefault(vortexLocationId) ?? Array.Empty<NpcVortexSpawnSummary>();
+	}
+
+	public IReadOnlyList<NpcVortexSpawnSummary> GetSpawnsForVortexLocation(
+		int vortexLocationId,
+		VortexStateType stateType)
+	{
+		return GetSpawnsForVortexLocation(vortexLocationId)
+			.Where(spawn => spawn.StateType == stateType)
+			.ToArray();
+	}
+}
+
+public sealed record NpcVortexSpawnSummary(
+	int MapId,
+	int VortexLocationId,
+	int SpawnGroupIndex,
+	int SpotIndex,
+	VortexStateType StateType,
+	int NpcId,
+	float X,
+	float Y,
+	float Z,
+	byte Heading,
+	int RespawnSeconds,
+	int PoolSize,
+	byte DifficultId,
+	string Handler,
+	int StaticId,
+	int RandomWalkRange,
+	string WalkerId,
+	int WalkerIndex,
+	string Anchor,
+	int State,
+	string AiName,
+	bool Custom,
+	TemporarySpawnSchedule? GroupTemporarySchedule,
+	TemporarySpawnSchedule? SpotTemporarySchedule)
+{
+	public bool IsInvasion => StateType == VortexStateType.Invasion;
+	public bool IsPeace => StateType == VortexStateType.Peace;
+	public bool HasTemporarySchedule => GroupTemporarySchedule != null || SpotTemporarySchedule != null;
+}
 
 public sealed record TemporarySpawnSchedule(
 	int WeekdayMask,

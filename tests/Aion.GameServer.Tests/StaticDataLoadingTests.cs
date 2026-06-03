@@ -731,6 +731,22 @@ public sealed class StaticDataLoadingTests
 								<spot x="17" y="18" z="19" anchor="rift-pooled-b" />
 							</spawn>
 						</rift_spawn>
+						<vortex_spawn id="0">
+							<state_type state="PEACE">
+								<spawn npc_id="831500" respawn_time="30" pool="2" difficult_id="1" handler="VORTEX" custom="true">
+									<temporary_spawn spawn_time="6.*.*" despawn_time="18.*.*" />
+									<spot x="21" y="22" z="23" h="24" anchor="peace-a" state="5" ai="peace_ai">
+										<temporary_spawn weekdays="Friday" spawn_time="7.*.*" despawn_time="17.*.*" />
+									</spot>
+									<spot x="25" y="26" z="27" anchor="peace-b" />
+								</spawn>
+							</state_type>
+							<state_type state="INVASION">
+								<spawn npc_id="831600" respawn_time="45">
+									<spot x="31" y="32" z="33" h="34" anchor="invasion-a" />
+								</spawn>
+							</state_type>
+						</vortex_spawn>
 					</spawn_map>
 				</spawns>
 				<town_spawns_data>
@@ -797,6 +813,41 @@ public sealed class StaticDataLoadingTests
 		Assert.True(staticData.NpcRiftSpawns.TryGetSpawnByAnchor("rift-pooled-a", out var anchoredPooled));
 		Assert.Equal(2, anchoredPooled?.PoolSize);
 		Assert.False(staticData.NpcRiftSpawns.TryGetSpawnByAnchor("rift-pooled-b", out _));
+		Assert.Equal(3, staticData.NpcVortexSpawns.Count);
+		var vortexSpawns = staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0);
+		Assert.Equal(3, vortexSpawns.Count);
+		var peaceSpawns = staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0, VortexStateType.Peace);
+		Assert.Equal(2, peaceSpawns.Count);
+		var peaceSpawn = Assert.Single(peaceSpawns, spawn => spawn.Anchor == "peace-a");
+		Assert.Equal(210010000, peaceSpawn.MapId);
+		Assert.Equal(0, peaceSpawn.VortexLocationId);
+		Assert.Equal(0, peaceSpawn.SpawnGroupIndex);
+		Assert.Equal(0, peaceSpawn.SpotIndex);
+		Assert.Equal(831500, peaceSpawn.NpcId);
+		Assert.Equal(21, peaceSpawn.X);
+		Assert.Equal(22, peaceSpawn.Y);
+		Assert.Equal(23, peaceSpawn.Z);
+		Assert.Equal((byte)24, peaceSpawn.Heading);
+		Assert.Equal(30, peaceSpawn.RespawnSeconds);
+		Assert.Equal(2, peaceSpawn.PoolSize);
+		Assert.Equal((byte)1, peaceSpawn.DifficultId);
+		Assert.Equal("VORTEX", peaceSpawn.Handler);
+		Assert.Equal(5, peaceSpawn.State);
+		Assert.Equal("peace_ai", peaceSpawn.AiName);
+		Assert.True(peaceSpawn.Custom);
+		Assert.True(peaceSpawn.IsPeace);
+		Assert.False(peaceSpawn.IsInvasion);
+		Assert.True(peaceSpawn.HasTemporarySchedule);
+		Assert.NotNull(peaceSpawn.GroupTemporarySchedule);
+		Assert.True(peaceSpawn.GroupTemporarySchedule.IsInSpawnTime(7 * 60, DayOfWeek.Friday));
+		Assert.False(peaceSpawn.GroupTemporarySchedule.IsInSpawnTime(19 * 60, DayOfWeek.Friday));
+		Assert.NotNull(peaceSpawn.SpotTemporarySchedule);
+		Assert.True(peaceSpawn.SpotTemporarySchedule.IsInSpawnTime(7 * 60, DayOfWeek.Friday));
+		Assert.False(peaceSpawn.SpotTemporarySchedule.IsInSpawnTime(18 * 60, DayOfWeek.Friday));
+		var invasionSpawn = Assert.Single(staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0, VortexStateType.Invasion));
+		Assert.True(invasionSpawn.IsInvasion);
+		Assert.False(invasionSpawn.IsPeace);
+		Assert.Equal(831600, invasionSpawn.NpcId);
 		Assert.Empty(staticData.NpcSpawns.GetSpawnsForMap(700010000));
 	}
 

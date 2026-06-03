@@ -35,6 +35,7 @@ public sealed class StaticData
 		NpcSpawnTable npcSpawns,
 		StaticDoorTable staticDoors,
 		NpcRiftSpawnTable npcRiftSpawns,
+		NpcVortexSpawnTable npcVortexSpawns,
 		NpcFactionTable npcFactions,
 		TradeListTable tradeLists,
 		GoodsListTable goodsLists,
@@ -92,6 +93,7 @@ public sealed class StaticData
 		NpcSpawns = npcSpawns;
 		StaticDoors = staticDoors;
 		NpcRiftSpawns = npcRiftSpawns;
+		NpcVortexSpawns = npcVortexSpawns;
 		NpcFactions = npcFactions;
 		TradeLists = tradeLists;
 		GoodsLists = goodsLists;
@@ -178,6 +180,8 @@ public sealed class StaticData
 	public StaticDoorTable StaticDoors { get; }
 
 	public NpcRiftSpawnTable NpcRiftSpawns { get; }
+
+	public NpcVortexSpawnTable NpcVortexSpawns { get; }
 
 	public NpcFactionTable NpcFactions { get; }
 
@@ -274,6 +278,7 @@ public sealed class StaticData
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var staticDoors = new List<StaticDoorSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
+		var npcVortexSpawns = new List<NpcVortexSpawnSummary>();
 		var npcFactions = new List<NpcFactionSummary>();
 		var tradeLists = new List<TradeListTemplateSummary>();
 		var tradeInLists = new List<TradeListTemplateSummary>();
@@ -334,6 +339,8 @@ public sealed class StaticData
 		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
 		NpcRiftSpawnBuilder? currentNpcRiftSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
+		NpcVortexSpawnBuilder? currentNpcVortexSpawn = null;
+		NpcSpawnSpotBuilder? currentNpcVortexSpawnSpot = null;
 		VortexLocationBuilder? currentVortexLocation = null;
 		TradeListTemplateBuilder? currentTradeListTemplate = null;
 		TradeListTemplateKind currentTradeListTemplateKind = TradeListTemplateKind.TradeList;
@@ -355,6 +362,13 @@ public sealed class StaticData
 		int currentNpcRiftSpawnGroupIndex = 0;
 		int currentNpcRiftSpawnGroupDepth = -1;
 		int currentNpcRiftSpawnSpotDepth = -1;
+		int currentNpcVortexSpawnId = 0;
+		int currentNpcVortexSpawnDepth = -1;
+		int currentNpcVortexSpawnStateDepth = -1;
+		int currentNpcVortexSpawnGroupIndex = 0;
+		int currentNpcVortexSpawnGroupDepth = -1;
+		int currentNpcVortexSpawnSpotDepth = -1;
+		VortexStateType currentNpcVortexSpawnStateType = default;
 		int currentStaticDoorWorldId = 0;
 		string currentWalkerParentRouteId = string.Empty;
 		SkillTemplateBuilder? currentSkillTemplate = null;
@@ -592,6 +606,32 @@ public sealed class StaticData
 					currentNpcRiftSpawnId = 0;
 					currentNpcRiftSpawnDepth = -1;
 					currentNpcRiftSpawnGroupIndex = 0;
+				}
+
+				if (reader.Depth == currentNpcVortexSpawnGroupDepth && reader.LocalName == "spawn")
+				{
+					currentNpcVortexSpawn = null;
+					currentNpcVortexSpawnGroupDepth = -1;
+				}
+
+				if (reader.Depth == currentNpcVortexSpawnSpotDepth && reader.LocalName == "spot" && currentNpcVortexSpawn != null && currentNpcVortexSpawnSpot != null)
+				{
+					npcVortexSpawns.Add(currentNpcVortexSpawn.ToSummary(currentNpcVortexSpawnSpot));
+					currentNpcVortexSpawnSpot = null;
+					currentNpcVortexSpawnSpotDepth = -1;
+				}
+
+				if (reader.Depth == currentNpcVortexSpawnStateDepth && reader.LocalName == "state_type")
+				{
+					currentNpcVortexSpawnStateType = default;
+					currentNpcVortexSpawnStateDepth = -1;
+				}
+
+				if (reader.Depth == currentNpcVortexSpawnDepth && reader.LocalName == "vortex_spawn")
+				{
+					currentNpcVortexSpawnId = 0;
+					currentNpcVortexSpawnDepth = -1;
+					currentNpcVortexSpawnGroupIndex = 0;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "vortex_location" && currentVortexLocation != null)
@@ -1319,6 +1359,28 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (currentNpcSpawnMapId != 0
+				&& reader.LocalName == "vortex_spawn"
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn_map")
+			{
+				// Java parity: dataholders/SpawnsData.addVortexSpawns groups vortex_spawn entries by location id.
+				currentNpcVortexSpawnId = ReadRequiredIntAttribute(reader, "id");
+				currentNpcVortexSpawnDepth = reader.Depth;
+				currentNpcVortexSpawnGroupIndex = 0;
+				continue;
+			}
+
+			if (currentNpcVortexSpawnDepth != -1
+				&& reader.LocalName == "state_type"
+				&& reader.Depth == currentNpcVortexSpawnDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "vortex_spawn")
+			{
+				// Java parity: model/templates/spawns/vortexspawns/VortexSpawn.VortexStateTemplate state attribute.
+				currentNpcVortexSpawnStateType = ReadVortexStateTypeAttribute(reader, "state");
+				currentNpcVortexSpawnStateDepth = reader.Depth;
+				continue;
+			}
+
 			if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
 			{
 				// Java parity: dataholders/WalkerVersionsData groups route variants by parent route id.
@@ -1402,6 +1464,27 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (currentNpcVortexSpawnStateDepth != -1
+				&& reader.LocalName == "spawn"
+				&& reader.Depth == currentNpcVortexSpawnStateDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "state_type")
+			{
+				// Java parity: SpawnGroup(worldId, spawn, id, VortexStateType) keeps ordinary spawn metadata plus vortex location/state.
+				currentNpcVortexSpawn = new NpcVortexSpawnBuilder(
+					currentNpcSpawnMapId,
+					currentNpcVortexSpawnId,
+					currentNpcVortexSpawnGroupIndex++,
+					currentNpcVortexSpawnStateType,
+					ReadRequiredIntAttribute(reader, "npc_id"),
+					ReadIntAttribute(reader, "respawn_time"),
+					ReadIntAttribute(reader, "pool"),
+					(byte)ReadIntAttribute(reader, "difficult_id"),
+					reader.GetAttribute("handler") ?? string.Empty,
+					ReadBoolAttribute(reader, "custom"));
+				currentNpcVortexSpawnGroupDepth = reader.Depth;
+				continue;
+			}
+
 			if (currentNpcSpawn != null
 				&& reader.LocalName == "temporary_spawn"
 				&& reader.Depth == currentNpcSpawnDepth + 1
@@ -1409,6 +1492,19 @@ public sealed class StaticData
 			{
 				// Java parity: model/templates/spawns/Spawn.temporary_spawn registers a group with TemporarySpawnEngine.
 				currentNpcSpawn.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
+					reader.GetAttribute("weekdays"),
+					reader.GetAttribute("spawn_time"),
+					reader.GetAttribute("despawn_time"));
+				continue;
+			}
+
+			if (currentNpcVortexSpawn != null
+				&& reader.LocalName == "temporary_spawn"
+				&& reader.Depth == currentNpcVortexSpawnGroupDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
+			{
+				// Java parity: Vortex Spawn still uses ordinary Spawn.temporary_spawn metadata.
+				currentNpcVortexSpawn.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
 					reader.GetAttribute("weekdays"),
 					reader.GetAttribute("spawn_time"),
 					reader.GetAttribute("despawn_time"));
@@ -1428,6 +1524,23 @@ public sealed class StaticData
 					npcSpawns.Add(currentNpcSpawn.ToSummary(currentNpcSpawnSpot));
 					currentNpcSpawnSpot = null;
 					currentNpcSpawnSpotDepth = -1;
+				}
+				continue;
+			}
+
+			if (currentNpcVortexSpawn != null
+				&& reader.LocalName == "spot"
+				&& reader.Depth == currentNpcVortexSpawnGroupDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
+			{
+				// Java parity: VortexSpawnTemplate inherits SpawnSpotTemplate coordinate and movement metadata.
+				currentNpcVortexSpawnSpot = NpcSpawnSpotBuilder.FromReader(reader);
+				currentNpcVortexSpawnSpotDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					npcVortexSpawns.Add(currentNpcVortexSpawn.ToSummary(currentNpcVortexSpawnSpot));
+					currentNpcVortexSpawnSpot = null;
+					currentNpcVortexSpawnSpotDepth = -1;
 				}
 				continue;
 			}
@@ -1456,6 +1569,19 @@ public sealed class StaticData
 			{
 				// Java parity: model/templates/spawns/SpawnSpotTemplate.temporary_spawn gates only this spot.
 				currentNpcSpawnSpot.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
+					reader.GetAttribute("weekdays"),
+					reader.GetAttribute("spawn_time"),
+					reader.GetAttribute("despawn_time"));
+				continue;
+			}
+
+			if (currentNpcVortexSpawnSpot != null
+				&& reader.LocalName == "temporary_spawn"
+				&& reader.Depth == currentNpcVortexSpawnSpotDepth + 1
+				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spot")
+			{
+				// Java parity: Vortex SpawnSpotTemplate can carry spot-local temporary spawn metadata.
+				currentNpcVortexSpawnSpot.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
 					reader.GetAttribute("weekdays"),
 					reader.GetAttribute("spawn_time"),
 					reader.GetAttribute("despawn_time"));
@@ -2785,6 +2911,7 @@ public sealed class StaticData
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new StaticDoorTable(staticDoors.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
+			new NpcVortexSpawnTable(npcVortexSpawns.AsReadOnly()),
 			new NpcFactionTable(npcFactions.AsReadOnly()),
 			new TradeListTable(
 				tradeLists.AsReadOnly(),
@@ -5082,6 +5209,87 @@ public sealed class StaticData
 		}
 	}
 
+	private sealed class NpcVortexSpawnBuilder
+	{
+		private int _nextSpotIndex;
+
+		public NpcVortexSpawnBuilder(
+			int mapId,
+			int vortexLocationId,
+			int spawnGroupIndex,
+			VortexStateType stateType,
+			int npcId,
+			int respawnSeconds,
+			int poolSize,
+			byte difficultId,
+			string handler,
+			bool custom)
+		{
+			MapId = mapId;
+			VortexLocationId = vortexLocationId;
+			SpawnGroupIndex = spawnGroupIndex;
+			StateType = stateType;
+			NpcId = npcId;
+			RespawnSeconds = respawnSeconds;
+			PoolSize = poolSize;
+			DifficultId = difficultId;
+			Handler = handler;
+			Custom = custom;
+		}
+
+		private int MapId { get; }
+
+		private int VortexLocationId { get; }
+
+		private int SpawnGroupIndex { get; }
+
+		private VortexStateType StateType { get; }
+
+		private int NpcId { get; }
+
+		private int RespawnSeconds { get; }
+
+		private int PoolSize { get; }
+
+		private byte DifficultId { get; }
+
+		private string Handler { get; }
+
+		private bool Custom { get; }
+
+		public TemporarySpawnSchedule? TemporarySchedule { get; set; }
+
+		public NpcVortexSpawnSummary ToSummary(NpcSpawnSpotBuilder spot)
+		{
+			// Java parity: model/templates/spawns/vortexspawns/VortexSpawnTemplate wraps ordinary SpawnTemplate metadata with vortex id/state.
+			return new NpcVortexSpawnSummary(
+				MapId,
+				VortexLocationId,
+				SpawnGroupIndex,
+				_nextSpotIndex++,
+				StateType,
+				NpcId,
+				spot.X,
+				spot.Y,
+				spot.Z,
+				spot.Heading,
+				RespawnSeconds,
+				PoolSize,
+				DifficultId,
+				Handler,
+				spot.StaticId,
+				spot.RandomWalkRange,
+				spot.WalkerId,
+				spot.WalkerIndex,
+				spot.Anchor,
+				spot.State,
+				spot.AiName,
+				Custom,
+				TemporarySchedule,
+				spot.TemporarySchedule);
+		}
+	}
+
 	private sealed class NpcSpawnSpotBuilder
 	{
 		private NpcSpawnSpotBuilder(
@@ -5436,6 +5644,17 @@ public sealed class StaticData
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
+	}
+
+	private static VortexStateType ReadVortexStateTypeAttribute(XmlReader reader, string attributeName)
+	{
+		var value = reader.GetAttribute(attributeName);
+		return value switch
+		{
+			"INVASION" => VortexStateType.Invasion,
+			"PEACE" => VortexStateType.Peace,
+			_ => throw new FormatException($"Element <{reader.LocalName}> has unexpected VortexStateType '{value}'."),
+		};
 	}
 
 	private static ItemActionUseTargetType ParseItemActionUseTargetType(string value)
