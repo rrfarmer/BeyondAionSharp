@@ -31,7 +31,7 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 				responder.ObjectId,
 				QuestionResponseRequestKind.VortexDefenderInvitation,
 				pendingRequest)));
-		await using var pair = await TestConnectionPair.CreateAsync(reports.Add);
+		await using var pair = await TestConnectionPair.CreateAsync(vortexReportObserver: reports.Add);
 
 		await pair.Connection.HandleQuestionResponseAsync(
 			responder,
@@ -57,7 +57,7 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 	{
 		var reports = new List<VortexDefenderInvitationResponseConsumptionReport>();
 		var responder = CreatePlayer();
-		await using var pair = await TestConnectionPair.CreateAsync(reports.Add);
+		await using var pair = await TestConnectionPair.CreateAsync(vortexReportObserver: reports.Add);
 
 		await pair.Connection.HandleQuestionResponseAsync(
 			responder,
@@ -73,6 +73,74 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 		Assert.False(report.ShouldMutateLiveGroup);
 		Assert.False(report.ShouldMutateLiveAlliance);
 		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_VortexDefenderAcceptanceObserverReportsTransitionAndParticipantForAccepted()
+	{
+		var acceptanceReports = new List<VortexDefenderAcceptanceRuntimeObserverReport>();
+		var responder = CreatePlayer();
+		responder.TeamMembership = PlayerTeamMembership.Group;
+		var existingDefenderObjectId = 1001;
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: responder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+			ExistingDefenderObjectIds: [existingDefenderObjectId]);
+		Assert.True(responder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(
+				responder.ObjectId,
+				QuestionResponseRequestKind.VortexDefenderInvitation,
+				pendingRequest)));
+		await using var pair = await TestConnectionPair.CreateAsync(vortexAcceptanceObserver: acceptanceReports.Add);
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			responder,
+			CreateQuestionResponse(SmQuestionWindow.VortexDefenderInvitation, response: 7));
+
+		Assert.Equal(0, responder.ResponseRequester.Count);
+		Assert.Empty(pair.SentPackets);
+		var report = Assert.Single(acceptanceReports);
+		Assert.True(report.Accepted);
+		Assert.False(report.Denied);
+		Assert.Equal(0, report.LocationId);
+		Assert.Equal(1004, report.ResponderObjectId);
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.ParticipantWouldBeRecorded, report.ParticipantStatus);
+		Assert.True(report.WouldRecordParticipant);
+		Assert.True(report.WouldPutParticipant);
+		Assert.Equal([existingDefenderObjectId], report.DefenderObjectIdsBefore);
+		Assert.Equal([existingDefenderObjectId, 1004], report.DefenderObjectIdsAfter);
+		Assert.Equal(PlayerTeamMembership.Group, responder.TeamMembership);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+		Assert.False(report.ShouldSendLivePacket);
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_VortexDefenderAcceptanceObserverReportsNoMutationForMissingRequest()
+	{
+		var acceptanceReports = new List<VortexDefenderAcceptanceRuntimeObserverReport>();
+		var responder = CreatePlayer();
+		await using var pair = await TestConnectionPair.CreateAsync(vortexAcceptanceObserver: acceptanceReports.Add);
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			responder,
+			CreateQuestionResponse(SmQuestionWindow.VortexDefenderInvitation, response: 1));
+
+		Assert.Equal(0, responder.ResponseRequester.Count);
+		Assert.Empty(pair.SentPackets);
+		var report = Assert.Single(acceptanceReports);
+		// Missing request → RequestMissing status → neither Accepted nor Denied
+		Assert.False(report.Accepted);
+		Assert.False(report.Denied);
+		Assert.Equal(VortexDefenderAcceptanceParticipantRuntimeReportStatus.NoParticipantMutation, report.ParticipantStatus);
+		Assert.False(report.WouldRecordParticipant);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+		Assert.False(report.ShouldSendLivePacket);
 	}
 
 	private static Player CreatePlayer()
@@ -132,7 +200,8 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 		public List<GameServerPacket> SentPackets { get; }
 
 		public static async Task<TestConnectionPair> CreateAsync(
-			Action<VortexDefenderInvitationResponseConsumptionReport> vortexReportObserver)
+			Action<VortexDefenderInvitationResponseConsumptionReport>? vortexReportObserver = null,
+			Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexAcceptanceObserver = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -154,6 +223,7 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 					options: new GameServerOptions(),
 					sentPacketObserver: sentPackets.Add,
 					vortexDefenderInvitationResponseObserver: vortexReportObserver,
+					vortexDefenderAcceptanceObserver: vortexAcceptanceObserver,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}

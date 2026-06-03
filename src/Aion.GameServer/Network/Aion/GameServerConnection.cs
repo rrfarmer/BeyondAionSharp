@@ -97,6 +97,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly Action<PrivateStoreNameOpenCompositionPlan>? _privateStoreNameOpenCompositionPlanObserver;
 	private readonly Action<GroupDataExchangeHandlerCompositionPlan>? _groupDataExchangeHandlerCompositionPlanObserver;
 	private readonly Action<VortexDefenderInvitationResponseConsumptionReport>? _vortexDefenderInvitationResponseObserver;
+	private readonly Action<VortexDefenderAcceptanceRuntimeObserverReport>? _vortexDefenderAcceptanceObserver;
 	private readonly FindGroupConnectionClientActionCompositionPlanService? _findGroupConnectionClientActionCompositionPlanService;
 	private readonly FindGroupConnectionBoundaryDispatchAdapterService? _findGroupConnectionBoundaryDispatchAdapterService;
 	private readonly Func<Player, int, object?, bool?>? _buyItemKnownObjectResolver;
@@ -188,6 +189,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		Action<PrivateStoreNameOpenCompositionPlan>? privateStoreNameOpenCompositionPlanObserver = null,
 		Action<GroupDataExchangeHandlerCompositionPlan>? groupDataExchangeHandlerCompositionPlanObserver = null,
 		Action<VortexDefenderInvitationResponseConsumptionReport>? vortexDefenderInvitationResponseObserver = null,
+		Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexDefenderAcceptanceObserver = null,
 		FindGroupConnectionClientActionCompositionPlanService? findGroupConnectionClientActionCompositionPlanService = null,
 		FindGroupConnectionBoundaryDispatchAdapterService? findGroupConnectionBoundaryDispatchAdapterService = null,
 		Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
@@ -257,6 +259,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_privateStoreNameOpenCompositionPlanObserver = privateStoreNameOpenCompositionPlanObserver;
 		_groupDataExchangeHandlerCompositionPlanObserver = groupDataExchangeHandlerCompositionPlanObserver;
 		_vortexDefenderInvitationResponseObserver = vortexDefenderInvitationResponseObserver;
+		_vortexDefenderAcceptanceObserver = vortexDefenderAcceptanceObserver;
 		_findGroupConnectionClientActionCompositionPlanService = findGroupConnectionClientActionCompositionPlanService;
 		_findGroupConnectionBoundaryDispatchAdapterService = findGroupConnectionBoundaryDispatchAdapterService;
 		_buyItemKnownObjectResolver = buyItemKnownObjectResolver;
@@ -10481,11 +10484,14 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: CM_QUESTION_RESPONSE delegates to ResponseRequester.respond; the Vortex
 		// accept callback remains metadata-only until live Vortex team/alliance mutation lands.
-		var report = new VortexDefenderInvitationResponseRuntimeAdapterService().HandleResponse(
+		// locationId 0 is a placeholder until production location wiring connects the runtime invasion map.
+		var observerReport = new VortexDefenderAcceptanceRuntimeObserverService().Observe(
+			locationId: 0,
 			responder,
 			packet.QuestionId,
 			packet.Response);
-		_vortexDefenderInvitationResponseObserver?.Invoke(report);
+		_vortexDefenderAcceptanceObserver?.Invoke(observerReport);
+		_vortexDefenderInvitationResponseObserver?.Invoke(observerReport.TransitionReport.ConsumptionReport);
 	}
 
 	internal async Task<GroupInviteRequestResult?> HandleInviteToGroupAsync(
