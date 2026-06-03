@@ -127,6 +127,127 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	}
 
 	[Fact]
+	public void TryAddOpenQuickEntry_AddsQuickPlayerWithinMaximumJoinWindowLikeJavaCheckInstances()
+	{
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001, 2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[1001] = "ELYOS",
+				[2001] = "ASMODIANS",
+			}));
+		var request = new AutoGroupOpenQuickEntryRequest(
+			107,
+			LeaderObjectId: 1002,
+			MemberObjectIds: [1002],
+			Race: "ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			MaxPlayersForRace: 2);
+
+		var result = service.TryAddOpenQuickEntry(request, startInstanceTime.AddMilliseconds(230000));
+
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.Added, result.Status);
+		Assert.Equal(300110000, result.WorldId);
+		Assert.Equal(2, result.InstanceId);
+		Assert.NotNull(result.Snapshot);
+		Assert.Equal(230000, result.Snapshot.MaximumJoinTimeMilliseconds);
+		Assert.Equal(4, result.Snapshot.MaxPlayers);
+		Assert.Contains(1002, result.Snapshot.RegisteredPlayerObjectIds);
+		Assert.Equal("ELYOS", result.Snapshot.RegisteredPlayerRacesByObjectId[1002]);
+		Assert.Equal(3, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds.Count);
+	}
+
+	[Fact]
+	public void TryAddOpenQuickEntry_RejectsAfterMaximumJoinWindowLikeJavaIsRegistrationDisabled()
+	{
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[1001] = "ELYOS",
+			}));
+		var request = new AutoGroupOpenQuickEntryRequest(
+			107,
+			LeaderObjectId: 1002,
+			MemberObjectIds: [1002],
+			Race: "ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			MaxPlayersForRace: 2);
+
+		var result = service.TryAddOpenQuickEntry(request, startInstanceTime.AddMilliseconds(230001));
+
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.RegistrationDisabledByMaximumJoinTime, result.Status);
+		Assert.NotNull(result.Snapshot);
+		Assert.DoesNotContain(1002, result.Snapshot.RegisteredPlayerObjectIds);
+		Assert.Single(service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
+	public void TryAddOpenQuickEntry_RejectsReadyEnterTaskAndRaceOverCapacityLikeJava()
+	{
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[1001] = "ELYOS",
+			}));
+		var onStartEnterTask = new AutoGroupOpenQuickEntryRequest(
+			107,
+			LeaderObjectId: 1002,
+			MemberObjectIds: [1002],
+			Race: "ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			MaxPlayersForRace: 2,
+			ReadyEnterStartTime: startInstanceTime.AddSeconds(1));
+		var raceFull = onStartEnterTask with { ReadyEnterStartTime = null, MaxPlayersForRace = 1 };
+
+		var onStartResult = service.TryAddOpenQuickEntry(onStartEnterTask, startInstanceTime.AddSeconds(2));
+		var raceFullResult = service.TryAddOpenQuickEntry(raceFull, startInstanceTime.AddSeconds(2));
+
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.OnStartEnterTask, onStartResult.Status);
+		Assert.Null(onStartResult.Snapshot);
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.RaceFull, raceFullResult.Status);
+		Assert.NotNull(raceFullResult.Snapshot);
+		Assert.DoesNotContain(1002, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
 	public void OnLeaveInstance_UnregistersAndRemovesGroupForJavaAutoPvpInstance()
 	{
 		var groups = new PlayerGroupRuntime();

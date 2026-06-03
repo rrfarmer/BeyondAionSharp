@@ -769,6 +769,13 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		if (autoGroup == null)
 			return null;
 
+		var registeredPlayerRaces = new Dictionary<int, string>();
+		foreach (var matchedParty in readyMatchPlan.MatchedParties)
+		{
+			foreach (var memberObjectId in matchedParty.MemberObjectIds)
+				registeredPlayerRaces[memberObjectId] = matchedParty.Race;
+		}
+
 		return new AutoGroupInstanceRuntimeRegistration(
 			autoGroup.InstanceMapId,
 			InstanceId: 0,
@@ -777,7 +784,10 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			readyMatchPlan.ReadyWindowRecipientObjectIds,
 			autoGroup.MaskId,
 			readyEnterStartTime,
-			DifficultyId: autoGroup.DifficultyId);
+			DifficultyId: autoGroup.DifficultyId,
+			MaximumJoinTimeMilliseconds: autoGroup.MaximumJoinTimeMilliseconds,
+			MaxPlayers: readyMatchPlan.QueueMatchPlan.RequiredPlayerCount,
+			RegisteredPlayerRacesByObjectId: registeredPlayerRaces);
 	}
 
 	private static AutoGroupInstanceKind GetInstanceKind(AutoGroupSummary autoGroup)
