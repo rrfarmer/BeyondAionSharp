@@ -96,6 +96,14 @@ public sealed record PlayerGroupLeavePlan(
 	bool WouldInvokeEventServiceOnLeftTeam,
 	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval = null);
 
+public sealed record PlayerGroupDisconnectedDisbandPlan(
+	int TeamId,
+	IReadOnlyList<int> DisbandedPlayerObjectIds,
+	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval,
+	IReadOnlyList<PlayerBaseLeaveSideEffectPlan> BaseLeavePlans,
+	bool RemovedRuntimeGroup,
+	string JavaSource);
+
 public sealed record PlayerGroupLeavePacketIntent(
 	int Sequence,
 	int RecipientObjectId,

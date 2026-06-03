@@ -432,6 +432,7 @@ public sealed class PlayerEnterWorldServiceTests
 			PlayerClass = "WARRIOR",
 			Race = "ELYOS",
 			Gender = "MALE",
+			IsOnline = true,
 			Position = new WorldPosition(210010000, 5, 6, 7, 16),
 		};
 		var groupRuntime = new PlayerGroupRuntime();
@@ -544,6 +545,52 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.IsType<SmGroupMemberInfo>(registry.SentPackets[7].Packet);
 		var descriptor = Assert.IsType<PlayerGroupDescriptor>(groupRuntime.GetDescriptor(99001));
 		Assert.Equal(fallback.ObjectId, descriptor.LeaderObjectId);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_DisbandGroupWhenNoMembersRemainOnlineLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Leader");
+		player.IsOnline = true;
+		var offlineMember = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Offline",
+			PlayerClass = "CLERIC",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = false,
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var groupRuntime = new PlayerGroupRuntime(findGroupService, serverId: 5);
+		groupRuntime.CreateOrUpdateGroup(99001, [player, offlineMember]);
+		findGroupService.AddRecruitment(
+			player,
+			"Team recruitment",
+			groupType: 4,
+			nowEpochSeconds: 100,
+			new FindGroupRecruitmentSubject(99001, "ELYOS", IsSoloPlayer: false, "Leader", Size: 2, MinLevel: 63, MaxLevel: 65, ClassId: 5));
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(
+			repository,
+			world,
+			out var registry,
+			findGroupService: findGroupService,
+			playerGroupRuntime: groupRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Empty(registry.SentPackets);
+		Assert.Null(groupRuntime.GetDescriptor(99001));
+		Assert.Empty(groupRuntime.GetMemberObjectIds(99001));
+		Assert.Equal(PlayerTeamMembership.None, player.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, offlineMember.TeamMembership);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Equal(1, repository.SaveLogoutCalls);
 	}
 
 	[Fact]

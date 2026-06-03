@@ -271,6 +271,49 @@ public sealed class PlayerGroupRuntime
 		}
 	}
 
+	public PlayerGroupDisconnectedDisbandPlan? DisbandAfterDisconnectedNoOnlineMembers(int teamId)
+	{
+		// Java parity: PlayerDisconnectedEvent calls PlayerGroupService.disband(group) only
+		// when group.getOnlineMembers().isEmpty().
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(teamId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByTeamId.TryGetValue(teamId, out var runtimeMembers)
+				|| !_descriptorsByTeamId.ContainsKey(teamId)
+				|| runtimeMembers.Any(member => member.IsOnline))
+				return null;
+
+			var members = runtimeMembers.ToArray();
+			var findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(
+				teamId,
+				_serverId,
+				unknown1: 0,
+				unknown2: 0,
+				unknown3: 0);
+			var baseLeavePlans = members
+				.Select(member => _baseLeavePlanner.CreateLeaveSideEffectPlan(
+					member.ObjectId,
+					member.IsOnline,
+					wasRegisteredToTeamInstance: false))
+				.ToArray();
+
+			foreach (var member in members)
+				ClearGroup(member.Player);
+			_membersByTeamId.Remove(teamId);
+			_descriptorsByTeamId.Remove(teamId);
+			_targetObjectIdsByBrandIdByTeamId.Remove(teamId);
+
+			return new PlayerGroupDisconnectedDisbandPlan(
+				teamId,
+				members.Select(member => member.ObjectId).ToArray(),
+				findGroupRecruitmentRemoval,
+				baseLeavePlans,
+				RemovedRuntimeGroup: true,
+				"PlayerDisconnectedEvent -> PlayerGroupService.disband removes FindGroup recruitment, removes the group map entry, then GroupDisbandEvent replays PlayerGroupLeavedEvent(DISBAND) for every offline member");
+		}
+	}
+
 	public PlayerGroupBrandUpdatePlan? UpdateBrand(int teamId, int brandId, int targetObjectId)
 	{
 		// Java parity: model/team/TemporaryPlayerTeam.updateBrand stores target id and broadcasts SM_SHOW_BRAND.

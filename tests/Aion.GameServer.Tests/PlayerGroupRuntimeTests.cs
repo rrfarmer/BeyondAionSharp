@@ -158,6 +158,44 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void DisbandAfterDisconnectedNoOnlineMembers_ClearsRuntimeAndRecruitmentLikeJavaLogoutDisband()
+	{
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var runtime = new PlayerGroupRuntime(findGroupService, serverId: 5);
+		var leader = new Player { ObjectId = 1001, Name = "Leader", Race = "ELYOS", PlayerClass = "RANGER", Level = 65, IsOnline = false };
+		var member = new Player { ObjectId = 1002, Name = "Member", Race = "ELYOS", PlayerClass = "CLERIC", Level = 63, IsOnline = false };
+		runtime.CreateOrUpdateGroup(99001, [leader, member]);
+		findGroupService.AddRecruitment(
+			leader,
+			"Team recruitment",
+			groupType: 4,
+			nowEpochSeconds: 100,
+			new FindGroupRecruitmentSubject(99001, "ELYOS", IsSoloPlayer: false, "Leader", Size: 2, MinLevel: 63, MaxLevel: 65, ClassId: 5));
+
+		var plan = Assert.IsType<PlayerGroupDisconnectedDisbandPlan>(
+			runtime.DisbandAfterDisconnectedNoOnlineMembers(99001));
+
+		Assert.True(plan.RemovedRuntimeGroup);
+		Assert.Equal(99001, plan.TeamId);
+		Assert.Equal([1001, 1002], plan.DisbandedPlayerObjectIds);
+		Assert.NotNull(plan.FindGroupRecruitmentRemoval);
+		Assert.Equal(FindGroupRecruitmentPlanStatus.Removed, plan.FindGroupRecruitmentRemoval!.Status);
+		Assert.Equal(99001, plan.FindGroupRecruitmentRemoval.RemovedRecruitment?.ObjectId);
+		Assert.NotNull(plan.FindGroupRecruitmentRemoval.WorldBroadcastIntent);
+		Assert.All(plan.BaseLeavePlans, basePlan =>
+		{
+			Assert.False(basePlan.IsOnline);
+			Assert.Empty(basePlan.PacketIntents);
+			Assert.True(basePlan.WouldNotifyEventServiceOnLeftTeam);
+		});
+		Assert.Null(runtime.GetDescriptor(99001));
+		Assert.Empty(runtime.GetMemberObjectIds(99001));
+		Assert.Equal(PlayerTeamMembership.None, leader.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, member.TeamMembership);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+	}
+
+	[Fact]
 	public void AddMember_RefreshesSnapshotForExistingMembersAndNewMember()
 	{
 		var runtime = new PlayerGroupRuntime();

@@ -825,6 +825,12 @@ public sealed class PlayerEnterWorldService
 		// PlayerLeaveWorldService sets the connection to null. The disconnected player is
 		// semi-offline, so PacketSendUtility.sendPacket(player, ...) is a no-op.
 		var plan = new PlayerGroupDisconnectedPlanner(_playerGroupRuntime).Plan(player);
+		if (plan.Status == PlayerGroupDisconnectedPlanStatus.NoOnlineMembersDisband)
+		{
+			_playerGroupRuntime.DisbandAfterDisconnectedNoOnlineMembers(plan.TeamId);
+			return;
+		}
+
 		if (!plan.IsPlanned)
 			return;
 
