@@ -68,6 +68,43 @@ public sealed class RiftPortalUseServiceTests
 	}
 
 	[Fact]
+	public void AcceptPortal_ForVortexRift_RecordsPassedPlayerInVortexRuntimeLikeJavaController()
+	{
+		var vortexRuntime = new VortexInvasionRuntime();
+		var service = new RiftPortalUseService(vortexRuntime);
+		var location = new VortexLocationSummary(
+			0,
+			"ELYOS",
+			"ASMODIANS",
+			new WorldPosition(120080000, 559.4f, 207.8f, 93.5f, 0),
+			new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0),
+			new WorldPosition(210060000, 951.0f, 2433.0f, 107.0f, 0));
+		var portal = CreatePortal(
+			new RiftDefinition(1170, "MARCHUTAN", "MARCHUTAN_AM", "MARCHUTAN_AS", 2, 45, 65, "ASMODIANS", IsVortex: true),
+			masterTemplateId: 831143);
+		var player = CreatePlayer(level: 50, objectId: 1002);
+		vortexRuntime.StartInvasion(location);
+
+		var result = service.AcceptPortal(
+			player,
+			portal,
+			_ => location.StartPoint,
+			_ => location);
+
+		Assert.True(result.Accepted);
+		Assert.Equal(location.StartPoint, player.Position);
+		Assert.Equal(1, portal.PassedPlayerCount);
+		Assert.Equal(1, portal.UsedEntries);
+		var snapshot = Assert.IsType<VortexInvasionSnapshot>(vortexRuntime.GetSnapshot(location.Id));
+		Assert.Equal([1002], snapshot.PassedPlayerObjectIds);
+		Assert.Empty(snapshot.InvaderObjectIds);
+
+		var join = vortexRuntime.AddInvaderFromPassedPortal(location, player);
+		Assert.True(join.Added);
+		Assert.Equal([1002], Assert.IsType<VortexInvasionSnapshot>(vortexRuntime.GetSnapshot(location.Id)).InvaderObjectIds);
+	}
+
+	[Fact]
 	public void AcceptPortal_ForVortexRift_RejectsWhenEntryLimitReached()
 	{
 		var service = new RiftPortalUseService();
@@ -134,12 +171,13 @@ public sealed class RiftPortalUseServiceTests
 
 	private static RiftPortalState CreatePortal(
 		RiftDefinition definition,
-		WorldPosition? slaveSpawnPosition = null)
+		WorldPosition? slaveSpawnPosition = null,
+		int masterTemplateId = 730100)
 	{
-		var template = new NpcTemplateSummary(730100, "Rift", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC");
+		var template = new NpcTemplateSummary(masterTemplateId, "Rift", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC");
 		var master = new WorldNpc(
 			ObjectId: 7101,
-			TemplateId: 730100,
+			TemplateId: masterTemplateId,
 			Template: template,
 			Position: new WorldPosition(210020000, 10, 20, 30, 0),
 			Anchor: definition.MasterAnchor);

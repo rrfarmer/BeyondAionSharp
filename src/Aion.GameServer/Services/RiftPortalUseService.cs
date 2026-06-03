@@ -1,14 +1,18 @@
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
 
-public sealed class RiftPortalUseService
+public sealed class RiftPortalUseService(
+	VortexInvasionRuntime? vortexInvasionRuntime = null,
+	VortexLocationService? vortexLocationService = null)
 {
 	public RiftPortalUseResult AcceptPortal(
 		Player player,
 		RiftPortalState portal,
 		Func<RiftPortalState, WorldPosition?>? vortexDestinationResolver = null,
+		Func<RiftPortalState, VortexLocationSummary?>? vortexLocationResolver = null,
 		bool isAccepting = true,
 		bool ownerSpawned = true)
 	{
@@ -34,6 +38,10 @@ public sealed class RiftPortalUseService
 			// Java parity: RVController vortex branch records passedPlayers, then syncPassed(true).
 			portal.AddPassedPlayer(player.ObjectId);
 			portal.SyncPassed(usePassedPlayerCount: true, passedPlayerCount: portal.PassedPlayerCount);
+			var vortexLocation = vortexLocationResolver?.Invoke(portal)
+				?? vortexLocationService?.GetLocationByRift(portal.MasterNpc.TemplateId);
+			if (vortexLocation != null)
+				vortexInvasionRuntime?.RecordPortalPass(vortexLocation, player);
 		}
 		else
 		{

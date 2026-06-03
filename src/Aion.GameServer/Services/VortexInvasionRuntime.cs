@@ -36,6 +36,53 @@ public sealed class VortexInvasionRuntime
 		}
 	}
 
+	public bool RecordPortalPass(VortexLocationSummary location, Player player)
+	{
+		ArgumentNullException.ThrowIfNull(location);
+		ArgumentNullException.ThrowIfNull(player);
+
+		lock (_sync)
+		{
+			if (!_activeInvasions.TryGetValue(location.Id, out var state))
+				return false;
+
+			// Java parity: controllers/RVController.acceptRequest records the responder in
+			// VortexLocation.vortexController.passedPlayers after teleporting through a vortex rift.
+			return state.PassedPlayerObjectIds.Add(player.ObjectId);
+		}
+	}
+
+	public VortexInvaderJoinResult AddInvaderFromPassedPortal(VortexLocationSummary location, Player player)
+	{
+		ArgumentNullException.ThrowIfNull(location);
+		ArgumentNullException.ThrowIfNull(player);
+
+		lock (_sync)
+		{
+			if (!_activeInvasions.TryGetValue(location.Id, out var state))
+			{
+				return new VortexInvaderJoinResult(
+					Added: false,
+					PlayerObjectId: player.ObjectId,
+					LocationId: location.Id,
+					HadPassedPortal: false,
+					WasAlreadyInvader: false,
+					JavaSource: "model/vortex/VortexLocation.onEnterZone");
+			}
+
+			var hadPassedPortal = state.PassedPlayerObjectIds.Contains(player.ObjectId);
+			var wasAlreadyInvader = state.InvaderObjectIds.Contains(player.ObjectId);
+			var added = hadPassedPortal && !wasAlreadyInvader && state.InvaderObjectIds.Add(player.ObjectId);
+			return new VortexInvaderJoinResult(
+				added,
+				player.ObjectId,
+				location.Id,
+				hadPassedPortal,
+				wasAlreadyInvader,
+				"model/vortex/VortexLocation.onEnterZone -> services/vortex/Invasion.addPlayer(player, true)");
+		}
+	}
+
 	public bool IsInvaderPlayer(Player player)
 	{
 		ArgumentNullException.ThrowIfNull(player);
@@ -135,4 +182,12 @@ public sealed record VortexInvaderRemovalResult(
 	bool RemovedPassedPlayer,
 	bool WasOnline,
 	bool WasInInvasionWorld,
+	string JavaSource);
+
+public sealed record VortexInvaderJoinResult(
+	bool Added,
+	int PlayerObjectId,
+	int LocationId,
+	bool HadPassedPortal,
+	bool WasAlreadyInvader,
 	string JavaSource);

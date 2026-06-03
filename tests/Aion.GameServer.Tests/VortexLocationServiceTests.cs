@@ -96,6 +96,43 @@ public sealed class VortexLocationServiceTests
 		}
 	}
 
+	[Fact]
+	public async Task AddInvaderFromPassedPortal_PromotesOnlyRecordedPortalPassLikeJavaZoneEntry()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-invader-zone-entry-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			var unpassed = CreatePlayer(1003, isOnline: true, location.InvasionWorldId);
+			runtime.StartInvasion(location);
+
+			var blocked = runtime.AddInvaderFromPassedPortal(location, unpassed);
+			var recorded = runtime.RecordPortalPass(location, invader);
+			var joined = runtime.AddInvaderFromPassedPortal(location, invader);
+			var duplicate = runtime.AddInvaderFromPassedPortal(location, invader);
+
+			Assert.False(blocked.Added);
+			Assert.False(blocked.HadPassedPortal);
+			Assert.True(recorded);
+			Assert.True(joined.Added);
+			Assert.True(joined.HadPassedPortal);
+			Assert.False(joined.WasAlreadyInvader);
+			Assert.False(duplicate.Added);
+			Assert.True(duplicate.WasAlreadyInvader);
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.Equal([1002], snapshot.InvaderObjectIds);
+			Assert.Equal([1002], snapshot.PassedPlayerObjectIds);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextAsync(string tempPath)
 	{
 		var staticDataFile = Path.Combine(tempPath, "static_data.xml");
