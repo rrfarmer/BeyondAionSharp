@@ -64,6 +64,7 @@ public sealed class StaticData
 		NearbyQuestTemplateTable nearbyQuestTemplates,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
+		WindstreamTable windstreamLocations,
 		Task? validationTask)
 	{
 		CacheFilePath = cacheFilePath;
@@ -122,6 +123,7 @@ public sealed class StaticData
 		NearbyQuestTemplates = nearbyQuestTemplates;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
+		WindstreamLocations = windstreamLocations;
 		ValidationTask = validationTask;
 	}
 
@@ -239,6 +241,8 @@ public sealed class StaticData
 
 	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
 
+	public WindstreamTable WindstreamLocations { get; }
+
 	public Task? ValidationTask { get; }
 
 	public int GetElementCount(string elementName)
@@ -321,6 +325,8 @@ public sealed class StaticData
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var questBonusItemGroups = new List<QuestBonusItemGroupProjection>();
+		var windstreamLocations = new List<WindstreamLocationSummary>();
+		int currentWindstreamMapId = 0;
 		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
@@ -669,6 +675,9 @@ public sealed class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
 					currentStaticDoorWorldId = 0;
+
+				if (reader.Depth == 2 && reader.LocalName == "windstream" && elementPath.GetValueOrDefault(1) == "windstreams")
+					currentWindstreamMapId = 0;
 
 				if (reader.Depth == 2 && reader.LocalName == "skill_template" && currentSkillTemplate != null)
 				{
@@ -1091,6 +1100,35 @@ public sealed class StaticData
 					ReadFloatAttribute(reader, "y"),
 					ReadFloatAttribute(reader, "z"),
 					ReadIntAttribute(reader, "state")));
+				continue;
+			}
+
+			if (reader.Depth == 2 && reader.LocalName == "windstream" && elementPath.GetValueOrDefault(1) == "windstreams")
+			{
+				// Java parity: dataholders/WindstreamData indexes WindstreamTemplate entries by mapid attribute.
+				currentWindstreamMapId = ReadRequiredIntAttribute(reader, "mapid");
+				continue;
+			}
+
+			if (currentWindstreamMapId != 0
+				&& reader.Depth == 4
+				&& reader.LocalName == "location"
+				&& elementPath.GetValueOrDefault(3) == "locations")
+			{
+				// Java parity: model/templates/windstreams/Location2D with fly_path mapped to FlyPathType.getId(): GEYSER=0, ONE_WAY=1, TWO_WAY=2.
+				var flyPath = reader.GetAttribute("fly_path") ?? string.Empty;
+				var flyPathId = flyPath switch
+				{
+					"GEYSER" => 0,
+					"ONE_WAY" => 1,
+					"TWO_WAY" => 2,
+					_ => 0,
+				};
+				windstreamLocations.Add(new WindstreamLocationSummary(
+					flyPathId,
+					currentWindstreamMapId,
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadOptionalIntAttribute(reader, "state", 0)));
 				continue;
 			}
 
@@ -2981,6 +3019,7 @@ public sealed class StaticData
 			nearbyQuestTemplates,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
+			new WindstreamTable(windstreamLocations.AsReadOnly()),
 			validationTask);
 	}
 

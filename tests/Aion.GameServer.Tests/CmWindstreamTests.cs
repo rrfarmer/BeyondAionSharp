@@ -284,6 +284,62 @@ public sealed class CmWindstreamTests
 		Assert.Equal(163, SmWindstream.PacketOpCode);
 	}
 
+	[Fact]
+	public void SmWindstreamAnnounce_WritesAllFields()
+	{
+		// Java parity: SM_WINDSTREAM_ANNOUNCE.writeImpl: writeD(bidirectional) writeD(mapId) writeD(streamId) writeC(state).
+		// bidirectional=1 (ONE_WAY), mapId=210050000, streamId=77, state=1.
+		var packet = new SmWindstreamAnnounce(flyPathId: 1, mapId: 210050000, streamId: 77, state: 1);
+		using var buf = new PacketBuffer(SerializeUnencryptedPayload(packet));
+
+		Assert.Equal(1, buf.ReadD()); // flyPathId (ONE_WAY)
+		Assert.Equal(210050000, buf.ReadD()); // mapId
+		Assert.Equal(77, buf.ReadD()); // streamId
+		Assert.Equal(1, buf.ReadC()); // state
+		Assert.Equal(0, buf.Remaining);
+	}
+
+	[Fact]
+	public void SmWindstreamAnnounce_OpcodeIs164()
+	{
+		// Java parity: ServerPacketsOpcodes line 182 -> addPacketOpcode(164, SM_WINDSTREAM_ANNOUNCE.class).
+		Assert.Equal(164, SmWindstreamAnnounce.PacketOpCode);
+	}
+
+	[Fact]
+	public void WindstreamTable_GetByMapId_ReturnsLocationsForMap()
+	{
+		// Java parity: WindstreamData.getStreamTemplate(mapId) returns WindstreamTemplate with its locations.
+		var locations = new[]
+		{
+			new WindstreamLocationSummary(FlyPathId: 1, MapId: 210050000, StreamId: 77, State: 1),
+			new WindstreamLocationSummary(FlyPathId: 0, MapId: 210050000, StreamId: 100, State: 1),
+			new WindstreamLocationSummary(FlyPathId: 2, MapId: 220070000, StreamId: 1, State: 1),
+		};
+		var table = new WindstreamTable(locations);
+
+		var forMap1 = table.GetByMapId(210050000);
+		var forMap2 = table.GetByMapId(220070000);
+		var forMissing = table.GetByMapId(999999999);
+
+		Assert.Equal(2, forMap1.Count);
+		Assert.Single(forMap2);
+		Assert.Empty(forMissing);
+		Assert.Contains(forMap1, loc => loc.StreamId == 77 && loc.FlyPathId == 1);
+		Assert.Contains(forMap1, loc => loc.StreamId == 100 && loc.FlyPathId == 0);
+	}
+
+	[Fact]
+	public void WindstreamTable_Count_ReflectsTotalLocations()
+	{
+		var table = new WindstreamTable([
+			new WindstreamLocationSummary(1, 210050000, 77, 1),
+			new WindstreamLocationSummary(0, 210050000, 100, 1),
+		]);
+
+		Assert.Equal(2, table.Count);
+	}
+
 	private static CmWindstream CreatePacket(int state = 0, int teleportId = 0, int distance = 0)
 	{
 		var packet = new CmWindstream(70, new HashSet<GameConnectionState> { GameConnectionState.InGame });

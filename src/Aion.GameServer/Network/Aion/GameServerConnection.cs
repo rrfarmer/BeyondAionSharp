@@ -1492,6 +1492,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.PortAnimation = ArrivalAnimation.None;
 		await SendPacketAsync(CreateAccountPropertiesPacket());
 		await SendPacketAsync(new SmMotion(player.ObjectId, player.Motions));
+
+		// Java parity: CM_LEVEL_READY.runImpl sends SM_WINDSTREAM_ANNOUNCE for each location in the windstream template for the player's map.
+		if (staticData?.WindstreamLocations != null)
+		{
+			foreach (var loc in staticData.WindstreamLocations.GetByMapId(player.Position.WorldId))
+				await SendPacketAsync(new SmWindstreamAnnounce(loc.FlyPathId, loc.MapId, loc.StreamId, loc.State));
+		}
+
 		// Java parity: CM_LEVEL_READY.runImpl spawns the already-moved player into World, then later player.getController().onEnterWorld updates zone state.
 		RevalidatePlayerCreaturePvpZones(player, staticData);
 		await PlayerLevelReadyFlightNotifier.NotifyIfFlyingAsync(
