@@ -1,9 +1,18 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Dataholders;
 
 namespace Aion.GameServer.Services;
 
 public sealed class VortexStopInvasionRuntimeSnapshotCollectorService
 {
+	private readonly IVortexPeaceSpawnSnapshotSelector _peaceSpawnSelector;
+
+	public VortexStopInvasionRuntimeSnapshotCollectorService(
+		IVortexPeaceSpawnSnapshotSelector? peaceSpawnSelector = null)
+	{
+		_peaceSpawnSelector = peaceSpawnSelector ?? new VortexPeaceSpawnSnapshotSelectionService();
+	}
+
 	public VortexStopInvasionSnapshotRequest Collect(
 		VortexInvasionSnapshot? snapshot,
 		IEnumerable<Player>? players = null,
@@ -38,5 +47,30 @@ public sealed class VortexStopInvasionRuntimeSnapshotCollectorService
 			SpawnedNpcs: collectedSpawnedNpcs,
 			InvaderAlliances: collectedAlliances,
 			PassedPlayerObjectIds: snapshot.PassedPlayerObjectIds.ToHashSet());
+	}
+
+	public VortexStopInvasionSnapshotRequest PrepareWithStaticPeaceSpawns(
+		int vortexLocationId,
+		VortexInvasionSnapshot? snapshot,
+		NpcVortexSpawnTable vortexSpawns,
+		IEnumerable<Player>? players = null,
+		IEnumerable<PlayerKiskRuntimeState>? invaderKisks = null,
+		IEnumerable<IWorldNpcObject>? spawnedNpcs = null,
+		IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot>? invaderAlliances = null)
+	{
+		ArgumentNullException.ThrowIfNull(vortexSpawns);
+
+		// Java parity: Invasion.stopInvasion composes state collected before stop
+		// side effects with VortexService.spawn(loc, VortexStateType.PEACE).
+		var request = Collect(
+			snapshot,
+			players,
+			invaderKisks,
+			spawnedNpcs,
+			invaderAlliances);
+		if (snapshot == null)
+			return request;
+
+		return request.WithPeaceSpawns(_peaceSpawnSelector.SelectPeaceSpawns(vortexLocationId, vortexSpawns));
 	}
 }

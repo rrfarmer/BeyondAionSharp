@@ -2446,6 +2446,104 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StopRuntimeSnapshotCollector_PreparesRuntimeSnapshotsWithStaticPeaceSpawnsWithoutLiveExecution()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-runtime-static-peace-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var collector = new VortexStopInvasionRuntimeSnapshotCollectorService();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService());
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			var kisk = new PlayerKiskRuntimeState(7101, invader.ObjectId, 831200);
+			var spawnedNpc = new WorldNpc(
+				ObjectId: 7201,
+				TemplateId: 831300,
+				Template: new NpcTemplateSummary(831300, "Vortex spawned", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
+				Position: location.StartPoint);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "peace-a"),
+					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+				]);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+
+			var request = collector.PrepareWithStaticPeaceSpawns(
+				location.Id,
+				snapshot,
+				table,
+				players: [invader],
+				invaderKisks: [kisk],
+				spawnedNpcs: [spawnedNpc],
+				invaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberActive,
+				});
+			var report = coordinator.StopInvasion(location.Id, request);
+
+			Assert.Equal([invader.ObjectId], request.InvaderSnapshots.Select(item => item.PlayerObjectId).ToArray());
+			Assert.Equal([kisk.ObjectId], request.InvaderKiskSnapshots.Select(item => item.KiskObjectId).ToArray());
+			Assert.Equal([spawnedNpc.ObjectId], request.SpawnedNpcSnapshots.Select(item => item.ObjectId).ToArray());
+			Assert.Equal([invader.ObjectId], request.PassedPlayerSnapshots.ToArray());
+			Assert.Equal([831500], request.PeaceSpawnSnapshots.Select(item => item.Spawn.NpcId).ToArray());
+			Assert.Equal(["peace-a"], request.PeaceSpawnSnapshots.Select(item => item.Spawn.Anchor).ToArray());
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.KillInvaderKisk,
+					VortexStopInvasionSideEffectStepKind.KickOnlineInvader,
+					VortexStopInvasionSideEffectStepKind.DespawnVortexNpc,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			var spawnStep = Assert.Single(report.SideEffectPlan.OrderedSteps, step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc);
+			Assert.Equal(831500, spawnStep.NpcId);
+			Assert.Equal(VortexStateType.Peace, spawnStep.VortexState);
+			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
+			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
+			Assert.False(kickRemoval.ShouldSendLivePacket);
+			Assert.False(kickRemoval.ShouldTeleportLivePlayer);
+			Assert.False(kickRemoval.ShouldMutateLiveParticipants);
+			Assert.False(kickRemoval.ShouldMutateLivePassedPlayers);
+			Assert.False(kickRemoval.ShouldSyncLivePassedPlayers);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public void StopRuntimeSnapshotCollector_StaticPeacePreparationMissingSnapshotSkipsStaticSelection()
+	{
+		var peaceSpawnSelector = new CountingPeaceSpawnSelector();
+		var collector = new VortexStopInvasionRuntimeSnapshotCollectorService(peaceSpawnSelector);
+		var table = new NpcVortexSpawnTable(
+			[
+				CreateVortexSpawn(0, 0, 0, VortexStateType.Peace, 831500, "peace-a"),
+			]);
+
+		var request = collector.PrepareWithStaticPeaceSpawns(0, null, table);
+
+		Assert.False(request.HasAnySnapshot);
+		Assert.Empty(request.PeaceSpawnSnapshots);
+		Assert.Equal(0, peaceSpawnSelector.CallCount);
+		Assert.Empty(peaceSpawnSelector.LocationIds);
+	}
+
+	[Fact]
 	public void StopRuntimeSnapshotCollector_MissingSnapshotReturnsEmptyRequest()
 	{
 		var collector = new VortexStopInvasionRuntimeSnapshotCollectorService();
