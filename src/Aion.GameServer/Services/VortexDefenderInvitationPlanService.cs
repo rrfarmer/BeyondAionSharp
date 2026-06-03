@@ -201,3 +201,67 @@ public sealed record VortexDefenderInvitationRequestPayloadPlan(
 	public bool ShouldRegisterLiveRequest => false;
 	public bool ShouldSendLivePacket => false;
 }
+
+public sealed class VortexDefenderInvitationRegistrationReportService
+{
+	private readonly VortexDefenderInvitationRequestPayloadPlanService _payloadPlanner = new();
+
+	public VortexDefenderInvitationRegistrationReport CreateReport(VortexDefenderInvitationPlan invitationPlan)
+	{
+		ArgumentNullException.ThrowIfNull(invitationPlan);
+
+		var payloadPlan = _payloadPlanner.CreatePlan(invitationPlan);
+		var attempted = invitationPlan.WouldInstallRequest;
+		var registered = attempted && invitationPlan.RequestSlotAvailable;
+		var status = registered
+			? VortexDefenderInvitationRegistrationReportStatus.Registered
+			: attempted
+				? VortexDefenderInvitationRegistrationReportStatus.RequestRejected
+				: VortexDefenderInvitationRegistrationReportStatus.Skipped;
+		var questionId = invitationPlan.RequestId ?? VortexDefenderInvitationPlanService.DefenderQuestionId;
+		var wouldSendQuestionWindow = registered && invitationPlan.HasQuestionWindowIntent;
+
+		return new VortexDefenderInvitationRegistrationReport(
+			status,
+			invitationPlan.Defender.PlayerObjectId,
+			questionId,
+			invitationPlan.RequestSlotAvailable,
+			attempted,
+			registered,
+			wouldSendQuestionWindow,
+			QuestionWindowSenderId: invitationPlan.QuestionWindowArg1,
+			QuestionWindowRangeOrCooldownSeconds: invitationPlan.QuestionWindowArg2,
+			payloadPlan,
+			invitationPlan,
+			JavaSource: "services/vortex/Invasion.updateDefenders -> model/gameobjects/player/ResponseRequester.putRequest");
+	}
+}
+
+public enum VortexDefenderInvitationRegistrationReportStatus
+{
+	Skipped,
+	RequestRejected,
+	Registered,
+}
+
+public sealed record VortexDefenderInvitationRegistrationReport(
+	VortexDefenderInvitationRegistrationReportStatus Status,
+	int DefenderObjectId,
+	int QuestionId,
+	bool RequestSlotAvailable,
+	bool WouldAttemptRequestRegistration,
+	bool SimulatedPutRequestResult,
+	bool WouldSendQuestionWindow,
+	int? QuestionWindowSenderId,
+	int? QuestionWindowRangeOrCooldownSeconds,
+	VortexDefenderInvitationRequestPayloadPlan PayloadPlan,
+	VortexDefenderInvitationPlan InvitationPlan,
+	string JavaSource)
+{
+	public bool Registered => Status == VortexDefenderInvitationRegistrationReportStatus.Registered;
+	public bool Rejected => Status == VortexDefenderInvitationRegistrationReportStatus.RequestRejected;
+	public bool Skipped => Status == VortexDefenderInvitationRegistrationReportStatus.Skipped;
+	public bool HasPayload => PayloadPlan.WouldCreateRequest;
+	public bool ShouldRegisterLiveRequest => false;
+	public bool ShouldSendLivePacket => false;
+}

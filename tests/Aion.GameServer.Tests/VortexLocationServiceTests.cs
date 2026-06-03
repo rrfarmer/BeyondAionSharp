@@ -1280,6 +1280,72 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationRegistrationReport_GatesQuestionWindowOnJavaPutRequestResult()
+	{
+		var invitationPlanner = new VortexDefenderInvitationPlanService();
+		var reportPlanner = new VortexDefenderInvitationRegistrationReportService();
+		var defender = new VortexZonePlayerSnapshot(PlayerObjectId: 1004, Race: "ELYOS");
+		var registeredInvitation = invitationPlanner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int> { 1001 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+		var rejectedInvitation = invitationPlanner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int>(),
+			alliance: VortexDefenderAllianceSnapshot.Open,
+			requestSlotAvailable: false);
+		var skippedInvitation = invitationPlanner.CreatePlan(
+			defender,
+			existingDefenderObjectIds: new HashSet<int> { 1004 },
+			alliance: VortexDefenderAllianceSnapshot.Open);
+
+		var registered = reportPlanner.CreateReport(registeredInvitation);
+		var rejected = reportPlanner.CreateReport(rejectedInvitation);
+		var skipped = reportPlanner.CreateReport(skippedInvitation);
+
+		Assert.Equal(VortexDefenderInvitationRegistrationReportStatus.Registered, registered.Status);
+		Assert.True(registered.Registered);
+		Assert.True(registered.WouldAttemptRequestRegistration);
+		Assert.True(registered.SimulatedPutRequestResult);
+		Assert.True(registered.WouldSendQuestionWindow);
+		Assert.True(registered.HasPayload);
+		Assert.Equal(1004, registered.DefenderObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, registered.QuestionId);
+		Assert.Equal(0, registered.QuestionWindowSenderId);
+		Assert.Equal(0, registered.QuestionWindowRangeOrCooldownSeconds);
+		Assert.False(registered.ShouldRegisterLiveRequest);
+		Assert.False(registered.ShouldSendLivePacket);
+		Assert.Equal(
+			"services/vortex/Invasion.updateDefenders -> model/gameobjects/player/ResponseRequester.putRequest",
+			registered.JavaSource);
+
+		Assert.Equal(VortexDefenderInvitationRegistrationReportStatus.RequestRejected, rejected.Status);
+		Assert.True(rejected.Rejected);
+		Assert.True(rejected.WouldAttemptRequestRegistration);
+		Assert.False(rejected.SimulatedPutRequestResult);
+		Assert.False(rejected.WouldSendQuestionWindow);
+		Assert.False(rejected.HasPayload);
+		Assert.False(rejected.RequestSlotAvailable);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, rejected.QuestionId);
+		Assert.Equal(0, rejected.QuestionWindowSenderId);
+		Assert.Equal(0, rejected.QuestionWindowRangeOrCooldownSeconds);
+		Assert.False(rejected.ShouldRegisterLiveRequest);
+		Assert.False(rejected.ShouldSendLivePacket);
+
+		Assert.Equal(VortexDefenderInvitationRegistrationReportStatus.Skipped, skipped.Status);
+		Assert.True(skipped.Skipped);
+		Assert.False(skipped.WouldAttemptRequestRegistration);
+		Assert.False(skipped.SimulatedPutRequestResult);
+		Assert.False(skipped.WouldSendQuestionWindow);
+		Assert.False(skipped.HasPayload);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, skipped.QuestionId);
+		Assert.Null(skipped.QuestionWindowSenderId);
+		Assert.Null(skipped.QuestionWindowRangeOrCooldownSeconds);
+		Assert.False(skipped.ShouldRegisterLiveRequest);
+		Assert.False(skipped.ShouldSendLivePacket);
+	}
+
+	[Fact]
 	public void DefenderInvitationResponseDispatchPlan_MapsZeroToDenyAndNonZeroToAcceptLikeJavaHandle()
 	{
 		var planner = new VortexDefenderInvitationResponseDispatchPlanService();
