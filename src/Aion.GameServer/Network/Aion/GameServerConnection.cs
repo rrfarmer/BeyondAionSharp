@@ -899,6 +899,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleQuestionResponseAsync(_activePlayer, questionResponse);
 				break;
+			case CmExchangeAddItem:
+				// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_ITEM.runImpl -> ExchangeService.addItem; deferred until exchange basket is ported.
+				break;
+			case CmExchangeAddKinah:
+				// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_KINAH.runImpl -> ExchangeService.addKinah; deferred until exchange basket is ported.
+				break;
 			case CmExchangeRequest exchangeRequest:
 				if (_activePlayer != null)
 					await HandleExchangeRequestAsync(_activePlayer, exchangeRequest);
@@ -984,6 +990,15 @@ public sealed class GameServerConnection : BaseClientConnection
 					await HandleFriendStatusAsync(_activePlayer, friendStatus);
 					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
 				}
+				break;
+			case CmReplaceItem:
+				// Java parity: network/aion/clientpackets/CM_REPLACE_ITEM.runImpl -> ItemMoveService.switchItemsInStorages; deferred until item slot-swap is ported.
+				break;
+			case CmGroupLoot:
+				// Java parity: network/aion/clientpackets/CM_GROUP_LOOT.runImpl -> DropDistributionService.handleRollOrBid; deferred until drop distribution is ported.
+				break;
+			case CmDistributionSettings:
+				// Java parity: network/aion/clientpackets/CM_DISTRIBUTION_SETTINGS.runImpl -> PlayerGroupService/PlayerAllianceService.changeGroupRules; deferred until loot rules are ported.
 				break;
 			case CmBlockSetReason blockSetReason:
 				if (_activePlayer != null)

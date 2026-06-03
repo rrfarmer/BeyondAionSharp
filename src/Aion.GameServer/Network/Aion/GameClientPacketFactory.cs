@@ -55,6 +55,8 @@ public static class GameClientPacketFactory
 		Register(61, states => new CmChatGroupInfo(61, states), GameConnectionState.InGame);
 		Register(62, states => new CmCheckPak(62, states), GameConnectionState.InGame);
 		Register(63, states => new CmExchangeRequest(63, states), GameConnectionState.InGame);
+		Register(64, states => new CmExchangeAddItem(64, states), GameConnectionState.InGame);
+		Register(66, states => new CmExchangeAddKinah(66, states), GameConnectionState.InGame);
 		Register(67, states => new CmExchangeLock(67, states), GameConnectionState.InGame);
 		Register(68, states => new CmExchangeOk(68, states), GameConnectionState.InGame);
 		Register(69, states => new CmExchangeCancel(69, states), GameConnectionState.InGame);
@@ -133,9 +135,12 @@ public static class GameClientPacketFactory
 		Register(175, states => new CmMacroCreate(175, states), GameConnectionState.InGame);
 		Register(176, states => new CmMacroDelete(176, states), GameConnectionState.InGame);
 		Register(177, states => new CmCheckNickname(177, states), GameConnectionState.Authed);
+		Register(178, states => new CmReplaceItem(178, states), GameConnectionState.InGame);
 		Register(179, states => new CmBlockSetReason(179, states), GameConnectionState.InGame);
 		Register(181, states => new CmShowBrand(181, states), GameConnectionState.InGame);
 		Register(183, states => new CmReconnectAuth(183, states), GameConnectionState.Authed);
+		Register(184, states => new CmGroupLoot(184, states), GameConnectionState.InGame);
+		Register(185, states => new CmDistributionSettings(185, states), GameConnectionState.InGame);
 		Register(186, states => new CmMayLoginIntoGame(186, states), GameConnectionState.Authed);
 		Register(188, states => new CmAbyssRankingPlayers(188, states), GameConnectionState.InGame);
 		Register(189, states => new CmMacAddress(189, states), GameConnectionState.Connected);
