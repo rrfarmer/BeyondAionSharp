@@ -1974,6 +1974,106 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderAllianceUpdateRuntimeAdapter_FiltersJavaDefenderRaceAndRegistersOnlySelectedPlayers()
+	{
+		var adapter = new VortexDefenderAllianceUpdateRuntimeAdapterService();
+		var location = new VortexLocationSummary(
+			Id: 0,
+			DefendersRace: "ELYOS",
+			InvadersRace: "ASMODIANS",
+			HomePoint: new WorldPosition(210010000, 1, 2, 3, 0),
+			ResurrectionPoint: new WorldPosition(210010000, 4, 5, 6, 0),
+			StartPoint: new WorldPosition(210060000, 7, 8, 9, 0));
+		var invader = CreatePlayer(1002, isOnline: true, worldId: location.InvasionWorldId, race: "ASMODIANS");
+		var registeredDefender = CreatePlayer(1004, isOnline: true, worldId: location.InvasionWorldId, race: "ELYOS");
+		var occupiedDefender = CreatePlayer(1006, isOnline: true, worldId: location.InvasionWorldId, race: "ELYOS");
+		var existingDefender = CreatePlayer(1007, isOnline: true, worldId: location.InvasionWorldId, race: "ELYOS");
+		var lowerCaseDefender = CreatePlayer(1008, isOnline: true, worldId: location.InvasionWorldId, race: "elyos");
+		var existingRequest = new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown);
+		Assert.True(occupiedDefender.ResponseRequester.PutRequest(SmQuestionWindow.VortexDefenderInvitation, existingRequest));
+
+		var report = adapter.UpdateAlliance(
+			location,
+			[invader, registeredDefender, occupiedDefender, existingDefender, lowerCaseDefender],
+			existingDefenders: [new VortexDefenderAddPlayerSnapshot(existingDefender.ObjectId, IsInGroup: false, IsInAlliance: false)],
+			defenderAlliance: VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexDefenderAllianceUpdateRuntimeReportStatus.Planned, report.Status);
+		Assert.Equal(location.Id, report.LocationId);
+		Assert.Equal([1004, 1006, 1007], report.DefenderObjectIds);
+		Assert.Equal([1002, 1008], report.SkippedObjectIds);
+		Assert.Equal(3, report.DefenderUpdatePlayerCount);
+		Assert.Equal(2, report.SkippedZonePlayerCount);
+		Assert.True(report.WouldCallUpdateDefenders);
+		Assert.Equal(1, report.RegisteredCount);
+		Assert.Equal(1, report.RejectedCount);
+		Assert.Equal(1, report.SkippedRegistrationCount);
+		Assert.Equal(1, report.RequestStoredCount);
+		Assert.Equal(1, report.QuestionWindowIntentCount);
+		Assert.Equal([1004, 1006, 1007], report.BatchReport.DefenderObjectIds);
+		Assert.Equal([1007], report.BatchReport.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, report.BatchReport.DefenderAlliance);
+		Assert.Equal(VortexDefenderAllianceUpdatePlanStatus.Planned, report.UpdatePlan.Status);
+		Assert.Equal([1004, 1006, 1007], report.UpdatePlan.DefenderObjectIds);
+		Assert.Equal([1002, 1008], report.UpdatePlan.SkippedObjectIds);
+		Assert.Equal(0, invader.ResponseRequester.Count);
+		Assert.Equal(1, registeredDefender.ResponseRequester.Count);
+		Assert.Equal(1, occupiedDefender.ResponseRequester.Count);
+		Assert.Equal(0, existingDefender.ResponseRequester.Count);
+		Assert.Equal(0, lowerCaseDefender.ResponseRequester.Count);
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+		Assert.Equal(
+			"services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders",
+			report.JavaSource);
+
+		var dispatch = Assert.IsType<QuestionResponseDispatch>(
+			occupiedDefender.ResponseRequester.Respond(SmQuestionWindow.VortexDefenderInvitation, responseCode: 1));
+		Assert.Same(existingRequest, dispatch.Request);
+	}
+
+	[Fact]
+	public void DefenderAllianceUpdateRuntimeAdapter_EmptyLocationPlayersAvoidsRegistrationMutation()
+	{
+		var adapter = new VortexDefenderAllianceUpdateRuntimeAdapterService();
+		var location = new VortexLocationSummary(
+			Id: 1,
+			DefendersRace: "ASMODIANS",
+			InvadersRace: "ELYOS",
+			HomePoint: new WorldPosition(220010000, 1, 2, 3, 0),
+			ResurrectionPoint: new WorldPosition(220010000, 4, 5, 6, 0),
+			StartPoint: new WorldPosition(220050000, 7, 8, 9, 0));
+
+		var report = adapter.UpdateAlliance(
+			location,
+			locationPlayers: null,
+			defenderAlliance: VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal(VortexDefenderAllianceUpdateRuntimeReportStatus.Planned, report.Status);
+		Assert.Equal(location.Id, report.LocationId);
+		Assert.Empty(report.DefenderObjectIds);
+		Assert.Empty(report.SkippedObjectIds);
+		Assert.Equal(0, report.DefenderUpdatePlayerCount);
+		Assert.Equal(0, report.SkippedZonePlayerCount);
+		Assert.False(report.WouldCallUpdateDefenders);
+		Assert.Equal(0, report.RegisteredCount);
+		Assert.Equal(0, report.RejectedCount);
+		Assert.Equal(0, report.SkippedRegistrationCount);
+		Assert.Equal(0, report.RequestStoredCount);
+		Assert.Equal(0, report.QuestionWindowIntentCount);
+		Assert.Empty(report.BatchReport.PlayerReports);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Full, report.BatchReport.DefenderAlliance);
+		Assert.False(report.ShouldSendLivePacket);
+		Assert.False(report.ShouldExecuteLiveCallback);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public void DefenderInvitationBatchPlan_FullAllianceSkipsAllInvitationRequestsLikeJavaFirstGate()
 	{
 		var updatePlan = new VortexDefenderAllianceUpdatePlan(

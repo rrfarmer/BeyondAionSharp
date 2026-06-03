@@ -69,7 +69,46 @@ public sealed class VortexDefenderInvitationBatchPlanService
 	}
 }
 
+public sealed class VortexDefenderAllianceUpdateRuntimeAdapterService
+{
+	private readonly VortexDefenderAllianceUpdatePlanService _updateAlliancePlanner = new();
+	private readonly VortexDefenderInvitationBatchRuntimeAdapterService _batchAdapter = new();
+
+	public VortexDefenderAllianceUpdateRuntimeReport UpdateAlliance(
+		VortexLocationSummary location,
+		IReadOnlyList<Player>? locationPlayers,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+	{
+		ArgumentNullException.ThrowIfNull(location);
+
+		var players = locationPlayers ?? [];
+		var zonePlayerSnapshots = players.Select(VortexZonePlayerSnapshot.FromPlayer).ToArray();
+		var updatePlan = _updateAlliancePlanner.CreatePlan(location, zonePlayerSnapshots);
+		var defenderObjectIds = updatePlan.DefenderObjectIds.ToHashSet();
+		var defenderPlayers = players
+			.Where(player => defenderObjectIds.Contains(player.ObjectId))
+			.ToArray();
+		var batchReport = _batchAdapter.RegisterInvitations(
+			defenderPlayers,
+			existingDefenders,
+			defenderAlliance);
+
+		return new VortexDefenderAllianceUpdateRuntimeReport(
+			VortexDefenderAllianceUpdateRuntimeReportStatus.Planned,
+			location.Id,
+			updatePlan,
+			batchReport,
+			JavaSource: "services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders");
+	}
+}
+
 public enum VortexDefenderAllianceUpdatePlanStatus
+{
+	Planned,
+}
+
+public enum VortexDefenderAllianceUpdateRuntimeReportStatus
 {
 	Planned,
 }
@@ -91,6 +130,30 @@ public sealed record VortexDefenderAllianceUpdatePlan(
 	public IReadOnlyList<int> SkippedObjectIds => SkippedPlayers.Select(player => player.PlayerObjectId).ToArray();
 	public bool ShouldMutateLiveAlliance => false;
 	public bool WouldCallUpdateDefenders => DefenderUpdatePlayers.Count > 0;
+}
+
+public sealed record VortexDefenderAllianceUpdateRuntimeReport(
+	VortexDefenderAllianceUpdateRuntimeReportStatus Status,
+	int LocationId,
+	VortexDefenderAllianceUpdatePlan UpdatePlan,
+	VortexDefenderInvitationBatchRuntimeReport BatchReport,
+	string JavaSource)
+{
+	public IReadOnlyList<int> DefenderObjectIds => UpdatePlan.DefenderObjectIds;
+	public IReadOnlyList<int> SkippedObjectIds => UpdatePlan.SkippedObjectIds;
+	public int DefenderUpdatePlayerCount => UpdatePlan.DefenderUpdatePlayers.Count;
+	public int SkippedZonePlayerCount => UpdatePlan.SkippedPlayers.Count;
+	public int RegisteredCount => BatchReport.RegisteredCount;
+	public int RejectedCount => BatchReport.RejectedCount;
+	public int SkippedRegistrationCount => BatchReport.SkippedCount;
+	public int RequestStoredCount => BatchReport.RequestStoredCount;
+	public int QuestionWindowIntentCount => BatchReport.QuestionWindowIntentCount;
+	public bool WouldCallUpdateDefenders => UpdatePlan.WouldCallUpdateDefenders;
+	public bool ShouldSendLivePacket => false;
+	public bool ShouldExecuteLiveCallback => false;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
 }
 
 public sealed record VortexDefenderInvitationBatchPlan(
