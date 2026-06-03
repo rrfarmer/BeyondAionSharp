@@ -1,5 +1,25 @@
 namespace Aion.GameServer.Services;
 
+public sealed record VortexStopInvasionSnapshotRequest(
+	IReadOnlyList<VortexStopInvaderSnapshot>? Invaders = null,
+	IReadOnlyList<VortexStopInvaderKiskSnapshot>? InvaderKisks = null,
+	IReadOnlyList<VortexStopSpawnedNpcSnapshot>? SpawnedNpcs = null,
+	IReadOnlyList<VortexStopPeaceSpawnSnapshot>? PeaceSpawns = null)
+{
+	public static VortexStopInvasionSnapshotRequest Empty { get; } = new();
+
+	public IReadOnlyList<VortexStopInvaderSnapshot> InvaderSnapshots => Invaders ?? Array.Empty<VortexStopInvaderSnapshot>();
+	public IReadOnlyList<VortexStopInvaderKiskSnapshot> InvaderKiskSnapshots => InvaderKisks ?? Array.Empty<VortexStopInvaderKiskSnapshot>();
+	public IReadOnlyList<VortexStopSpawnedNpcSnapshot> SpawnedNpcSnapshots => SpawnedNpcs ?? Array.Empty<VortexStopSpawnedNpcSnapshot>();
+	public IReadOnlyList<VortexStopPeaceSpawnSnapshot> PeaceSpawnSnapshots => PeaceSpawns ?? Array.Empty<VortexStopPeaceSpawnSnapshot>();
+
+	public bool HasAnySnapshot =>
+		InvaderSnapshots.Count > 0 ||
+		InvaderKiskSnapshots.Count > 0 ||
+		SpawnedNpcSnapshots.Count > 0 ||
+		PeaceSpawnSnapshots.Count > 0;
+}
+
 public sealed class VortexStopInvasionCoordinatorService
 {
 	private readonly VortexInvasionRuntime _runtime;
@@ -31,6 +51,20 @@ public sealed class VortexStopInvasionCoordinatorService
 			spawnedNpcs,
 			peaceSpawns);
 		return VortexStopInvasionCoordinatorReport.From(stopResult, sideEffectPlan);
+	}
+
+	public VortexStopInvasionCoordinatorReport StopInvasion(
+		int vortexLocationId,
+		VortexStopInvasionSnapshotRequest snapshotRequest)
+	{
+		ArgumentNullException.ThrowIfNull(snapshotRequest);
+
+		return StopInvasion(
+			vortexLocationId,
+			snapshotRequest.InvaderSnapshots,
+			snapshotRequest.InvaderKiskSnapshots,
+			snapshotRequest.SpawnedNpcSnapshots,
+			snapshotRequest.PeaceSpawnSnapshots);
 	}
 }
 
