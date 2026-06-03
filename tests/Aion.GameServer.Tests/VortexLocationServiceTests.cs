@@ -373,6 +373,77 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StartScheduledStopPlan_PlansJavaDurationOnlyAfterCoordinatorStartSucceeds()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-schedule-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService());
+			var scheduler = new VortexStartScheduledStopPlanService();
+			var startReport = coordinator.StartInvasion(location);
+
+			var plan = scheduler.CreatePlan(startReport, durationHours: 2);
+
+			Assert.Equal(VortexStartScheduledStopPlanStatus.Planned, plan.Status);
+			Assert.True(plan.HasScheduleIntent);
+			Assert.False(plan.ShouldScheduleLiveStop);
+			Assert.Equal(location.Id, plan.LocationId);
+			Assert.Equal(2, plan.DurationHours);
+			Assert.Equal("HOURS", plan.TimeUnit);
+			Assert.Equal("configs/main/CustomConfig.VORTEX_DURATION", plan.DurationSource);
+			Assert.Equal("services/VortexService.stopInvasion", plan.ScheduledMethod);
+			Assert.Equal(
+				"services/VortexService.startInvasion -> ThreadPoolManager.schedule(stopInvasion, getDuration(), TimeUnit.HOURS)",
+				plan.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StartScheduledStopPlan_DuplicateStartOmitsScheduleIntent()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-schedule-guard-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService());
+			var scheduler = new VortexStartScheduledStopPlanService();
+			coordinator.StartInvasion(location);
+
+			var duplicateReport = coordinator.StartInvasion(location);
+			var plan = scheduler.CreatePlan(duplicateReport, durationHours: 2);
+
+			Assert.Equal(VortexStartScheduledStopPlanStatus.NotScheduledAlreadyStarted, plan.Status);
+			Assert.False(plan.HasScheduleIntent);
+			Assert.False(plan.ShouldScheduleLiveStop);
+			Assert.Equal(location.Id, plan.LocationId);
+			Assert.Equal(0, plan.DurationHours);
+			Assert.Equal("HOURS", plan.TimeUnit);
+			Assert.Equal("services/VortexService.getDuration", plan.DurationSource);
+			Assert.Equal("services/VortexService.stopInvasion", plan.ScheduledMethod);
+			Assert.Equal("services/VortexService.startInvasion", plan.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task SetAndClearActivePortal_ModelsJavaSpawnAndDespawnControllerReference()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-clear-" + Guid.NewGuid().ToString("N"));
