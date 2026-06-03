@@ -11132,6 +11132,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				onlinePlayersInsideAtLogout);
 		}
 		SaveOfflineKiskBinding(player);
+		ApplyDeadPlayerLogoutRevive(player);
 		await DismissPostmanAsync(player, notifyClient: notifyPostmanClient);
 		_pendingHouseObjectUse?.Task.Cancel();
 		_pendingHouseObjectUse = null;
@@ -11154,6 +11155,111 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		_runtimeContext?.Kisks.RegisterOfflineBinding(player.ObjectId, player.BoundKiskObjectId);
+	}
+
+	private void ApplyDeadPlayerLogoutRevive(Player player)
+	{
+		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld revives dead players after KiskService.onLogout.
+		if (!IsDead(player))
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var resourceMaxStats = SmStatsInfo.CalculateCurrentResourceMaxStats(
+			player,
+			staticData?.PlayerExperienceTable,
+			staticData?.ItemTemplates,
+			staticData?.ItemRandomBonuses,
+			staticData?.ItemSets,
+			staticData?.EnchantTemplates,
+			staticData?.TemperingTemplates,
+			staticData?.SkillTemplates,
+			staticData?.TitleTemplates);
+		ClearReviveTargets(player);
+
+		if (ShouldUseInstanceLogoutRevive(player)
+			&& IsInstanceMap(player.Position.WorldId)
+			&& TryGetLogoutInstanceStartPosition(player, out var instanceStartPosition))
+		{
+			PlayerReviveRestoreService.ApplyInstanceReviveRestore(
+				player,
+				resourceMaxStats.MaxHp,
+				resourceMaxStats.MaxMp,
+				player.HasNoResurrectPenaltyEffect);
+			new PlayerReviveCleanupAdapterService().Apply(new PlayerReviveCleanupAdapterRequest(
+				player.ObjectId,
+				player.AggroList.Entries,
+				ExecuteLiveAggroMutation: true,
+				player.AggroList));
+			PlayerTeleportService.TeleportWithinSameInstance(player, instanceStartPosition);
+			player.ClearResurrectionPositionState();
+			return;
+		}
+
+		PlayerReviveRestoreService.ApplyBindReviveRestore(
+			player,
+			resourceMaxStats.MaxHp,
+			resourceMaxStats.MaxMp,
+			player.HasNoResurrectPenaltyEffect);
+		new PlayerReviveCleanupAdapterService().Apply(new PlayerReviveCleanupAdapterRequest(
+			player.ObjectId,
+			player.AggroList.Entries,
+			ExecuteLiveAggroMutation: true,
+			player.AggroList));
+		TryMoveDeadLogoutPlayerToBindLocation(player, staticData?.PlayerInitialData);
+		player.ClearResurrectionPositionState();
+	}
+
+	private bool ShouldUseInstanceLogoutRevive(Player player)
+	{
+		// Java parity: PlayerLeaveWorldService.leaveWorld uses player.isInInstance() || player.getWorldId() == 400030000.
+		if (player.Position.WorldId == 400030000)
+			return true;
+
+		return IsInstanceMap(player.Position.WorldId);
+	}
+
+	private bool IsInstanceMap(int worldId)
+	{
+		return _runtimeContext?.WorldMapStates.TryGetMap(worldId, out var map) == true
+			&& map?.Summary.IsInstance == true;
+	}
+
+	private bool TryGetLogoutInstanceStartPosition(Player player, out WorldPosition startPosition)
+	{
+		startPosition = default;
+		if (_runtimeContext?.WorldMapStates.TryGetWorldMapInstance(
+				player.Position.WorldId,
+				player.Position.InstanceId,
+				out var instance) != true
+			|| instance?.StartPosition == null)
+			return false;
+
+		startPosition = instance.StartPosition.Value;
+		return true;
+	}
+
+	private static bool TryMoveDeadLogoutPlayerToBindLocation(Player player, PlayerInitialDataTable? playerInitialData)
+	{
+		if (player.BindPoint == null && playerInitialData == null)
+			return false;
+
+		var plan = playerInitialData == null
+			? new BindLocationResolutionPlan(
+				BindLocationResolutionStatus.PlayerBindPoint,
+				new WorldPosition(
+					player.BindPoint!.MapId,
+					player.BindPoint.X,
+					player.BindPoint.Y,
+					player.BindPoint.Z,
+					player.BindPoint.Heading,
+					player.Position.WorldId != player.BindPoint.MapId ? 1 : player.Position.InstanceId),
+				"TeleportService.moveToBindLocation -> player.getBindPoint()")
+			: PlayerTeleportService.ResolveBindLocation(player, playerInitialData);
+		if (plan.Destination == null)
+			return false;
+
+		PlayerTeleportService.TeleportToKiskPosition(player, plan.Destination.Value);
+		return true;
 	}
 
 	private void HandleTargetSelect(Player player, CmTargetSelect packet)

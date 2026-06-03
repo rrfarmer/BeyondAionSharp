@@ -6,6 +6,10 @@ public static class PlayerReviveRestoreService
 {
 	public const int KiskReviveHpPercent = 30;
 	public const int KiskReviveMpPercent = 30;
+	public const int BindReviveHpPercent = 25;
+	public const int BindReviveMpPercent = 25;
+	public const int InstanceReviveHpPercent = 25;
+	public const int InstanceReviveMpPercent = 25;
 
 	public static PlayerReviveRestoreResult ApplyKiskReviveRestore(
 		Player player,
@@ -15,6 +19,28 @@ public static class PlayerReviveRestoreService
 	{
 		// Java parity: services/player/PlayerReviveService.kiskRevive -> revive(player, 30, 30, false, skillId).
 		return ApplyReviveRestore(player, maxHp, maxMp, KiskReviveHpPercent, KiskReviveMpPercent, hasNoResurrectPenalty);
+	}
+
+	public static PlayerReviveRestoreResult ApplyBindReviveRestore(
+		Player player,
+		int maxHp,
+		int maxMp,
+		bool hasNoResurrectPenalty = false)
+	{
+		// Java parity: services/player/PlayerReviveService.bindRevive -> revive(player, 25, 25, true, skillId)
+		// outside EVENT_MODE. Soul-sickness side effects remain outside this resource/state restore slice.
+		return ApplyReviveRestore(player, maxHp, maxMp, BindReviveHpPercent, BindReviveMpPercent, hasNoResurrectPenalty);
+	}
+
+	public static PlayerReviveRestoreResult ApplyInstanceReviveRestore(
+		Player player,
+		int maxHp,
+		int maxMp,
+		bool hasNoResurrectPenalty = false)
+	{
+		// Java parity: services/player/PlayerReviveService.instanceRevive -> revive(player, 25, 25, true, skillId)
+		// when the instance handler does not consume the revive event.
+		return ApplyReviveRestore(player, maxHp, maxMp, InstanceReviveHpPercent, InstanceReviveMpPercent, hasNoResurrectPenalty);
 	}
 
 	public static PlayerReviveRestoreResult ApplyReviveRestore(

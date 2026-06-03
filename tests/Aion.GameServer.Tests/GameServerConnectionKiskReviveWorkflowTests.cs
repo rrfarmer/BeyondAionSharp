@@ -370,6 +370,70 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, secondRestore.Status);
 	}
 
+	[Fact]
+	public async Task LeavePlayerWorldAsync_DeadOpenWorldPlayerBindRevivesLikeJavaLogoutBranch()
+	{
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
+		var player = CreateDeadLogoutPlayer(new WorldPosition(210010000, 4, 5, 6, 0));
+		player.BindPoint = new PlayerBindPoint(210010000, 10, 20, 30, 40);
+		player.IsInResurrectionPositionState = true;
+		player.ResurrectionPositionX = 1.5f;
+		player.ResurrectionPositionY = 2.5f;
+		player.ResurrectionPositionZ = 3.5f;
+		player.AggroList.TryAddKnownAttacker(2001, damage: 80, hate: 800, ownerKnownListKnowsAttacker: true);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.Equal(new WorldPosition(210010000, 10, 20, 30, 40), player.Position);
+		Assert.Equal(new PlayerLifeStats(42, 52, 12), player.LifeStats);
+		Assert.Equal(0, player.Dp);
+		Assert.False(player.IsInState(PlayerCreatureState.Dead));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.False(player.IsInResurrectionPositionState);
+		Assert.Equal(0, player.ResurrectionPositionX);
+		Assert.Equal(0, player.ResurrectionPositionY);
+		Assert.Equal(0, player.ResurrectionPositionZ);
+		Assert.Empty(player.AggroList.Entries);
+	}
+
+	[Fact]
+	public async Task LeavePlayerWorldAsync_DeadInstancePlayerUsesInstanceStartBeforeBindLikeJavaInstanceRevive()
+	{
+		var worldMapStates = new WorldMapRuntimeStateTable([new WorldMapSummary(300030000, IsInstance: true, TwinCount: 1)]);
+		var instance = worldMapStates.AddWorldMapInstance(300030000, instanceId: 7, maxPlayers: 6);
+		Assert.NotNull(instance);
+		var startPosition = instance.SetStartPositionIfMissing(new WorldPosition(300030000, 100, 200, 300, 9, InstanceId: 7));
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(worldMapStates: worldMapStates);
+		var player = CreateDeadLogoutPlayer(new WorldPosition(300030000, 4, 5, 6, 0, InstanceId: 7));
+		player.BindPoint = new PlayerBindPoint(210010000, 10, 20, 30, 40);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.Equal(startPosition, player.Position);
+		Assert.Equal(new PlayerLifeStats(42, 52, 12), player.LifeStats);
+		Assert.False(player.IsInState(PlayerCreatureState.Dead));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+	}
+
+	[Fact]
+	public async Task LeavePlayerWorldAsync_DeadSpecialMapFallsBackToBindWhenMapIsNotInstanceTypeLikeJava()
+	{
+		var worldMapStates = new WorldMapRuntimeStateTable([new WorldMapSummary(400030000, IsInstance: false, TwinCount: 1)]);
+		var instance = worldMapStates.AddWorldMapInstance(400030000, instanceId: 5, maxPlayers: 6);
+		Assert.NotNull(instance);
+		instance.SetStartPositionIfMissing(new WorldPosition(400030000, 100, 200, 300, 9, InstanceId: 5));
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(worldMapStates: worldMapStates);
+		var player = CreateDeadLogoutPlayer(new WorldPosition(400030000, 4, 5, 6, 0, InstanceId: 5));
+		player.BindPoint = new PlayerBindPoint(210010000, 10, 20, 30, 40);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.Equal(new WorldPosition(210010000, 10, 20, 30, 40), player.Position);
+		Assert.Equal(new PlayerLifeStats(42, 52, 12), player.LifeStats);
+		Assert.False(player.IsInState(PlayerCreatureState.Dead));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+	}
+
 	private static Player CreateDeadPlayer(int boundKiskObjectId)
 	{
 		return new Player
@@ -384,6 +448,24 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			Dp = 500,
 			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 12),
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+		};
+	}
+
+	private static Player CreateDeadLogoutPlayer(WorldPosition position)
+	{
+		return new Player
+		{
+			ObjectId = 1002,
+			Name = "DeadLogout",
+			Race = "ELYOS",
+			PlayerClass = "RANGER",
+			Level = 1,
+			CreatureState = PlayerCreatureState.Dead,
+			Dp = 500,
+			IsPlayerResurrectionActive = true,
+			ResurrectionSkillId = 4456,
+			LifeStats = new PlayerLifeStats(CurrentHp: 0, CurrentMp: 0, CurrentFp: 12),
+			Position = position,
 		};
 	}
 
@@ -581,9 +663,12 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			IGameClientConnectionRegistry? registry = null,
 			IDFactory? idFactory = null,
 			PlayerGroupRuntime? playerGroupRuntime = null,
-			PlayerAllianceRuntime? playerAllianceRuntime = null)
+			PlayerAllianceRuntime? playerAllianceRuntime = null,
+			WorldMapRuntimeStateTable? worldMapStates = null)
 		{
 			var runtimeContext = new GameServerRuntimeContext();
+			if (worldMapStates != null)
+				runtimeContext.SetWorldMapStates(worldMapStates);
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
 			world.Initialize();
 			var sentPackets = new List<GameServerPacket>();
