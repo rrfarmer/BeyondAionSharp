@@ -6,7 +6,9 @@ public sealed record VortexStopInvasionSnapshotRequest(
 	IReadOnlyList<VortexStopInvaderSnapshot>? Invaders = null,
 	IReadOnlyList<VortexStopInvaderKiskSnapshot>? InvaderKisks = null,
 	IReadOnlyList<VortexStopSpawnedNpcSnapshot>? SpawnedNpcs = null,
-	IReadOnlyList<VortexStopPeaceSpawnSnapshot>? PeaceSpawns = null)
+	IReadOnlyList<VortexStopPeaceSpawnSnapshot>? PeaceSpawns = null,
+	IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot>? InvaderAlliances = null,
+	IReadOnlySet<int>? PassedPlayerObjectIds = null)
 {
 	public static VortexStopInvasionSnapshotRequest Empty { get; } = new();
 
@@ -14,12 +16,16 @@ public sealed record VortexStopInvasionSnapshotRequest(
 	public IReadOnlyList<VortexStopInvaderKiskSnapshot> InvaderKiskSnapshots => InvaderKisks ?? Array.Empty<VortexStopInvaderKiskSnapshot>();
 	public IReadOnlyList<VortexStopSpawnedNpcSnapshot> SpawnedNpcSnapshots => SpawnedNpcs ?? Array.Empty<VortexStopSpawnedNpcSnapshot>();
 	public IReadOnlyList<VortexStopPeaceSpawnSnapshot> PeaceSpawnSnapshots => PeaceSpawns ?? Array.Empty<VortexStopPeaceSpawnSnapshot>();
+	public IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot> InvaderAllianceSnapshots => InvaderAlliances ?? EmptyInvaderAlliances;
+	public IReadOnlySet<int> PassedPlayerSnapshots => PassedPlayerObjectIds ?? EmptyPassedPlayers;
 
 	public bool HasAnySnapshot =>
 		InvaderSnapshots.Count > 0 ||
 		InvaderKiskSnapshots.Count > 0 ||
 		SpawnedNpcSnapshots.Count > 0 ||
-		PeaceSpawnSnapshots.Count > 0;
+		PeaceSpawnSnapshots.Count > 0 ||
+		InvaderAllianceSnapshots.Count > 0 ||
+		PassedPlayerSnapshots.Count > 0;
 
 	public VortexStopInvasionSnapshotRequest WithPeaceSpawns(
 		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns)
@@ -34,8 +40,15 @@ public sealed record VortexStopInvasionSnapshotRequest(
 			InvaderSnapshots,
 			InvaderKiskSnapshots,
 			SpawnedNpcSnapshots,
-			PeaceSpawnSnapshots.Concat(selectedPeaceSpawns).ToArray());
+			PeaceSpawnSnapshots.Concat(selectedPeaceSpawns).ToArray(),
+			InvaderAllianceSnapshots,
+			PassedPlayerSnapshots);
 	}
+
+	private static readonly IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot> EmptyInvaderAlliances =
+		new Dictionary<int, VortexKickPlayerAllianceSnapshot>();
+
+	private static readonly IReadOnlySet<int> EmptyPassedPlayers = new HashSet<int>();
 }
 
 public sealed class VortexStopInvasionCoordinatorService
@@ -59,7 +72,9 @@ public sealed class VortexStopInvasionCoordinatorService
 		IReadOnlyList<VortexStopInvaderSnapshot>? invaders = null,
 		IReadOnlyList<VortexStopInvaderKiskSnapshot>? invaderKisks = null,
 		IReadOnlyList<VortexStopSpawnedNpcSnapshot>? spawnedNpcs = null,
-		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns = null)
+		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns = null,
+		IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot>? invaderAlliances = null,
+		IReadOnlySet<int>? passedPlayerObjectIds = null)
 	{
 		// Java parity: services/VortexService.stopInvasion removes the active invasion
 		// from its service map, then invokes DimensionalVortex.stop, whose Invasion
@@ -70,7 +85,9 @@ public sealed class VortexStopInvasionCoordinatorService
 			invaders,
 			invaderKisks,
 			spawnedNpcs,
-			peaceSpawns);
+			peaceSpawns,
+			invaderAlliances,
+			passedPlayerObjectIds);
 	}
 
 	public VortexStopInvasionCoordinatorReport StopInvasion(
@@ -84,7 +101,9 @@ public sealed class VortexStopInvasionCoordinatorService
 			snapshotRequest.InvaderSnapshots,
 			snapshotRequest.InvaderKiskSnapshots,
 			snapshotRequest.SpawnedNpcSnapshots,
-			snapshotRequest.PeaceSpawnSnapshots);
+			snapshotRequest.PeaceSpawnSnapshots,
+			snapshotRequest.InvaderAllianceSnapshots,
+			snapshotRequest.PassedPlayerSnapshots);
 	}
 
 	public VortexStopInvasionCoordinatorReport StopInvasion(
@@ -112,7 +131,9 @@ public sealed class VortexStopInvasionCoordinatorService
 			enrichedRequest.InvaderSnapshots,
 			enrichedRequest.InvaderKiskSnapshots,
 			enrichedRequest.SpawnedNpcSnapshots,
-			enrichedRequest.PeaceSpawnSnapshots);
+			enrichedRequest.PeaceSpawnSnapshots,
+			enrichedRequest.InvaderAllianceSnapshots,
+			enrichedRequest.PassedPlayerSnapshots);
 	}
 
 	public VortexStopInvasionCoordinatorReport StopInvasion(
@@ -132,14 +153,18 @@ public sealed class VortexStopInvasionCoordinatorService
 		IReadOnlyList<VortexStopInvaderSnapshot>? invaders = null,
 		IReadOnlyList<VortexStopInvaderKiskSnapshot>? invaderKisks = null,
 		IReadOnlyList<VortexStopSpawnedNpcSnapshot>? spawnedNpcs = null,
-		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns = null)
+		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns = null,
+		IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot>? invaderAlliances = null,
+		IReadOnlySet<int>? passedPlayerObjectIds = null)
 	{
 		var sideEffectPlan = _sideEffectPlanner.CreatePlan(
 			stopResult,
 			invaders,
 			invaderKisks,
 			spawnedNpcs,
-			peaceSpawns);
+			peaceSpawns,
+			invaderAlliances,
+			passedPlayerObjectIds);
 		return VortexStopInvasionCoordinatorReport.From(stopResult, sideEffectPlan);
 	}
 }
@@ -161,6 +186,8 @@ public sealed record VortexStopInvasionCoordinatorReport(
 {
 	public bool Stopped => StopResult.Stopped;
 	public bool HasSideEffectPlan => SideEffectPlan.Status == VortexStopInvasionSideEffectPlanStatus.Planned;
+	public IReadOnlyList<VortexKickPlayerRemovalPlan> OrderedKickRemovalPlans => SideEffectPlan.OrderedKickRemovalPlans;
+	public bool HasKickRemovalPlans => SideEffectPlan.HasKickRemovalPlans;
 	public bool ShouldExecuteLiveSideEffects => false;
 
 	public static VortexStopInvasionCoordinatorReport From(

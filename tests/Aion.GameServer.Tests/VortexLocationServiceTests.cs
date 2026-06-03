@@ -2343,7 +2343,12 @@ public sealed class VortexLocationServiceTests
 		var suppliedPeaceSpawn = VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
 			CreateVortexSpawn(0, 9, 0, VortexStateType.Peace, 831499, "supplied-peace"));
 		var request = new VortexStopInvasionSnapshotRequest(
-			PeaceSpawns: [suppliedPeaceSpawn]);
+			PeaceSpawns: [suppliedPeaceSpawn],
+			InvaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+			{
+				[1002] = VortexKickPlayerAllianceSnapshot.MemberActive,
+			},
+			PassedPlayerObjectIds: new HashSet<int> { 1002 });
 		var table = new NpcVortexSpawnTable(
 			[
 				CreateVortexSpawn(0, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
@@ -2356,6 +2361,8 @@ public sealed class VortexLocationServiceTests
 		Assert.Equal([831499], request.PeaceSpawnSnapshots.Select(snapshot => snapshot.Spawn.NpcId).ToArray());
 		Assert.Equal([831499, 831500], enriched.PeaceSpawnSnapshots.Select(snapshot => snapshot.Spawn.NpcId).ToArray());
 		Assert.Equal(["supplied-peace", "static-peace"], enriched.PeaceSpawnSnapshots.Select(snapshot => snapshot.Spawn.Anchor).ToArray());
+		Assert.Equal([1002], enriched.InvaderAllianceSnapshots.Keys.ToArray());
+		Assert.Equal([1002], enriched.PassedPlayerSnapshots.ToArray());
 		Assert.DoesNotContain(enriched.PeaceSpawnSnapshots, snapshot => snapshot.Spawn.NpcId == 831600);
 		Assert.DoesNotContain(enriched.PeaceSpawnSnapshots, snapshot => snapshot.Spawn.NpcId == 831700);
 	}
@@ -2391,7 +2398,12 @@ public sealed class VortexLocationServiceTests
 				[VortexStopInvaderSnapshot.FromPlayer(invader)],
 				[VortexStopInvaderKiskSnapshot.FromRuntimeState(kisk)],
 				[VortexStopSpawnedNpcSnapshot.FromWorldNpc(spawnedNpc)],
-				[VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)]);
+				[VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)],
+				invaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberDisbandedAfterRemoval,
+				},
+				passedPlayerObjectIds: new HashSet<int> { invader.ObjectId });
 
 			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, report.Status);
 			Assert.True(report.Stopped);
@@ -2402,6 +2414,20 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal(location.Id, report.StopResult.LocationId);
 			Assert.Equal(VortexStopInvasionStatus.Stopped, report.StopResult.Status);
 			Assert.Equal(VortexStopInvasionSideEffectPlanStatus.Planned, report.SideEffectPlan.Status);
+			Assert.True(report.HasKickRemovalPlans);
+			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
+			Assert.Equal(invader.ObjectId, kickRemoval.PlayerObjectId);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, kickRemoval.AllianceKickMessageId);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, kickRemoval.DirectPortalOutMessageId);
+			Assert.True(kickRemoval.WouldClearAllianceReference);
+			Assert.True(kickRemoval.WouldRemovePassedPlayer);
+			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
+			Assert.False(kickRemoval.ShouldSendLivePacket);
+			Assert.False(kickRemoval.ShouldTeleportLivePlayer);
+			Assert.False(kickRemoval.ShouldMutateLiveParticipants);
+			Assert.False(kickRemoval.ShouldMutateLivePassedPlayers);
+			Assert.False(kickRemoval.ShouldSyncLivePassedPlayers);
 			Assert.Equal([1002], Assert.IsType<VortexInvasionSnapshot>(report.StopResult.PreviousSnapshot).InvaderObjectIds);
 			Assert.Equal([1004], Assert.IsType<VortexInvasionSnapshot>(report.StopResult.PreviousSnapshot).DefenderObjectIds);
 			Assert.Equal(
@@ -2448,7 +2474,12 @@ public sealed class VortexLocationServiceTests
 				Invaders: [VortexStopInvaderSnapshot.FromPlayer(invader)],
 				InvaderKisks: [VortexStopInvaderKiskSnapshot.FromRuntimeState(kisk)],
 				SpawnedNpcs: [VortexStopSpawnedNpcSnapshot.FromWorldNpc(spawnedNpc)],
-				PeaceSpawns: [VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)]);
+				PeaceSpawns: [VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)],
+				InvaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberActive,
+				},
+				PassedPlayerObjectIds: new HashSet<int> { invader.ObjectId });
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 			Assert.True(runtime.AddInvader(location.Id, invader));
 
@@ -2459,6 +2490,12 @@ public sealed class VortexLocationServiceTests
 			Assert.True(report.HasSideEffectPlan);
 			Assert.False(report.ShouldExecuteLiveSideEffects);
 			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, kickRemoval.AllianceKickMessageId);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, kickRemoval.DirectPortalOutMessageId);
+			Assert.False(kickRemoval.WouldClearAllianceReference);
+			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 			Assert.Equal(
 				[
 					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
@@ -2492,8 +2529,15 @@ public sealed class VortexLocationServiceTests
 				new VortexStopInvasionSideEffectPlanService());
 			var suppliedPeaceSpawn = VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
 				CreateVortexSpawn(location.Id, 9, 0, VortexStateType.Peace, 831499, "supplied-peace"));
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
 			var request = new VortexStopInvasionSnapshotRequest(
-				PeaceSpawns: [suppliedPeaceSpawn]);
+				Invaders: [VortexStopInvaderSnapshot.FromPlayer(invader)],
+				PeaceSpawns: [suppliedPeaceSpawn],
+				InvaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberActive,
+				},
+				PassedPlayerObjectIds: new HashSet<int> { invader.ObjectId });
 			var table = new NpcVortexSpawnTable(
 				[
 					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
@@ -2508,10 +2552,16 @@ public sealed class VortexLocationServiceTests
 			Assert.True(report.Stopped);
 			Assert.False(report.ShouldExecuteLiveSideEffects);
 			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
+			Assert.Equal(invader.ObjectId, kickRemoval.PlayerObjectId);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, kickRemoval.DirectPortalOutMessageId);
+			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
 			Assert.Equal(2, report.SideEffectPlan.PeaceSpawnCount);
 			Assert.Equal(
 				[
 					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.KickOnlineInvader,
 					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
 					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
 				],
