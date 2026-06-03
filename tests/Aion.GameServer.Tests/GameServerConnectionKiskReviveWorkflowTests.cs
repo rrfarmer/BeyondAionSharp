@@ -350,6 +350,26 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 		Assert.Equal(9001, idFactory.NextId());
 	}
 
+	[Fact]
+	public async Task LeavePlayerWorldAsync_BoundKiskRegistersOfflineBindingLikeJavaKiskServiceOnLogout()
+	{
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
+		var player = CreateOnlinePlayer(objectId: 1002, boundKiskObjectId: 9001);
+		var kiskPosition = new WorldPosition(210010000, 11, 22, 33, 0);
+		var kisk = fixture.RegisterKisk(objectId: 9001, kiskPosition, maxResurrects: 2);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+		var returningPlayer = CreateOnlinePlayer(objectId: 1002, boundKiskObjectId: 0);
+		var restore = fixture.RuntimeContext.Kisks.RestoreOfflineBinding(returningPlayer);
+		var secondRestore = fixture.RuntimeContext.Kisks.RestoreOfflineBinding(CreateOnlinePlayer(objectId: 1002, boundKiskObjectId: 0));
+
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.RestoredAddedMember, restore.Status);
+		Assert.Equal(kisk.ObjectId, restore.KiskObjectId);
+		Assert.Equal(9001, returningPlayer.BoundKiskObjectId);
+		Assert.Contains(1002, kisk.CurrentMemberIds);
+		Assert.Equal(PlayerKiskOfflineBindingRestoreStatus.NotFound, secondRestore.Status);
+	}
+
 	private static Player CreateDeadPlayer(int boundKiskObjectId)
 	{
 		return new Player
