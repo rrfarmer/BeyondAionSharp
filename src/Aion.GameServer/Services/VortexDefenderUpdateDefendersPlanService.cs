@@ -1,3 +1,5 @@
+using Aion.GameServer.Model.GameObjects;
+
 namespace Aion.GameServer.Services;
 
 public sealed class VortexDefenderUpdateDefendersPlanService
@@ -119,6 +121,64 @@ public sealed record VortexDefenderUpdateDefendersPlan(
 	public bool WouldWarn => AddPlayerPlan?.WouldWarn == true;
 	public bool ShouldMutateLiveRequest => false;
 	public bool ShouldSendLivePacket => false;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
+}
+
+public sealed class VortexDefenderUpdateDefendersRegistrationRuntimeAdapterService
+{
+	private readonly VortexDefenderUpdateDefendersPlanService _updateDefendersPlanner = new();
+	private readonly VortexDefenderInvitationRequestSlotSnapshotService _requestSlotSnapshotter = new();
+	private readonly VortexDefenderInvitationRegistrationRuntimeAdapterService _registrationAdapter = new();
+
+	public VortexDefenderUpdateDefendersRegistrationRuntimeReport RegisterInvitation(
+		Player defender,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+	{
+		ArgumentNullException.ThrowIfNull(defender);
+
+		var requestSlot = _requestSlotSnapshotter.CreateSnapshot(defender);
+		var updatePlan = _updateDefendersPlanner.CreateInvitationPlan(
+			VortexZonePlayerSnapshot.FromPlayer(defender),
+			existingDefenders,
+			defenderAlliance,
+			requestSlot.RequestSlotAvailable);
+		var registrationReport = _registrationAdapter.Register(
+			defender,
+			updatePlan.InvitationPlan ?? throw new InvalidOperationException("Update-defenders invitation plan was not created."));
+
+		return new VortexDefenderUpdateDefendersRegistrationRuntimeReport(
+			updatePlan.Status,
+			updatePlan.Stage,
+			defender.ObjectId,
+			requestSlot,
+			updatePlan,
+			registrationReport,
+			JavaSource: "services/vortex/Invasion.updateDefenders");
+	}
+}
+
+public sealed record VortexDefenderUpdateDefendersRegistrationRuntimeReport(
+	VortexDefenderUpdateDefendersPlanStatus Status,
+	VortexDefenderUpdateDefendersPlanStage Stage,
+	int DefenderObjectId,
+	VortexDefenderInvitationRequestSlotSnapshot RequestSlot,
+	VortexDefenderUpdateDefendersPlan UpdateDefendersPlan,
+	VortexDefenderInvitationRegistrationRuntimeReport RegistrationReport,
+	string JavaSource)
+{
+	public bool RequestSlotAvailableBeforeRegistration => RequestSlot.RequestSlotAvailable;
+	public bool Registered => RegistrationReport.Registered;
+	public bool Rejected => RegistrationReport.Rejected;
+	public bool Skipped => RegistrationReport.Skipped;
+	public bool AttemptedRequestRegistration => RegistrationReport.AttemptedRequestRegistration;
+	public bool RequestStoredByRegistry => RegistrationReport.RequestStoredByRegistry;
+	public bool WouldSendQuestionWindow => RegistrationReport.WouldSendQuestionWindow;
+	public bool HasPayload => RegistrationReport.HasPayload;
+	public bool ShouldSendLivePacket => false;
+	public bool ShouldExecuteLiveCallback => false;
 	public bool ShouldMutateLiveGroup => false;
 	public bool ShouldMutateLiveAlliance => false;
 	public bool ShouldMutateLiveDefenders => false;

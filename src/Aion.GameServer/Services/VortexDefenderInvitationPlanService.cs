@@ -143,7 +143,7 @@ public sealed class VortexDefenderInvitationRequestPayloadPlanService
 	{
 		ArgumentNullException.ThrowIfNull(invitationPlan);
 
-		if (!invitationPlan.HasQuestionWindowIntent || invitationPlan.RequestId is not { } requestId)
+		if (!invitationPlan.WouldInstallRequest || invitationPlan.RequestId is not { } requestId)
 		{
 			return new VortexDefenderInvitationRequestPayloadPlan(
 				VortexDefenderInvitationRequestPayloadPlanStatus.NotCreated,
