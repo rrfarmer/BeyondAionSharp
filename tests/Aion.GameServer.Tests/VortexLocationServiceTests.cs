@@ -202,6 +202,48 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StopInvasion_FinishedActiveInvasionRemovesEntryWithoutStopDispatchMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-finished-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+			var defender = CreatePlayer(1004, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			Assert.True(runtime.AddDefender(location.Id, defender));
+			Assert.True(runtime.MarkInvasionFinished(location.Id));
+			var activeSnapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.True(activeSnapshot.IsFinished);
+
+			var stop = runtime.StopInvasion(location.Id);
+
+			Assert.False(stop.Stopped);
+			Assert.Equal(VortexStopInvasionStatus.FinishedInvasion, stop.Status);
+			Assert.Equal("services/VortexService.stopInvasion -> services/vortex/DimensionalVortex.isFinished", stop.JavaSource);
+			Assert.True(stop.HadActivePortal);
+			Assert.Equal(1, stop.RemovedInvaderCount);
+			Assert.Equal(1, stop.RemovedDefenderCount);
+			Assert.Equal(1, stop.RemovedPassedPlayerCount);
+			var previous = Assert.IsType<VortexInvasionSnapshot>(stop.PreviousSnapshot);
+			Assert.True(previous.IsFinished);
+			Assert.True(previous.HasActivePortal);
+			Assert.Equal([1002], previous.InvaderObjectIds);
+			Assert.Equal([1004], previous.DefenderObjectIds);
+			Assert.Null(stop.StoppedSnapshot);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task StartInvasion_AfterStopCreatesFreshRuntimeStateLikeJavaServiceRestart()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-restart-" + Guid.NewGuid().ToString("N"));
@@ -729,6 +771,48 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal(0, repeated.SideEffectPlan.PeaceSpawnCount);
 			Assert.Equal(1, peaceSpawnSelector.CallCount);
 			Assert.Equal([location.Id], peaceSpawnSelector.LocationIds);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StopCoordinator_FinishedStaticPeaceSpawnStopSkipsSelectorAndSideEffectPlanning()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-finished-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var peaceSpawnSelector = new CountingPeaceSpawnSelector();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService(),
+				peaceSpawnSelector);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
+				]);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.MarkInvasionFinished(location.Id));
+
+			var report = coordinator.StopInvasion(location.Id, table);
+
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.FinishedInvasion, report.Status);
+			Assert.False(report.Stopped);
+			Assert.False(report.HasSideEffectPlan);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.Equal(VortexStopInvasionStatus.FinishedInvasion, report.StopResult.Status);
+			Assert.Equal(VortexStopInvasionSideEffectPlanStatus.FinishedInvasion, report.SideEffectPlan.Status);
+			Assert.Empty(report.SideEffectPlan.OrderedSteps);
+			Assert.Equal(0, report.SideEffectPlan.PeaceSpawnCount);
+			Assert.Equal(0, peaceSpawnSelector.CallCount);
+			Assert.Empty(peaceSpawnSelector.LocationIds);
+			Assert.Null(runtime.GetSnapshot(location.Id));
 		}
 		finally
 		{

@@ -147,6 +147,7 @@ public sealed class VortexStopInvasionCoordinatorService
 public enum VortexStopInvasionCoordinatorStatus
 {
 	MissingInvasion,
+	FinishedInvasion,
 	MissingStopSnapshot,
 	Planned,
 }
@@ -172,6 +173,7 @@ public sealed record VortexStopInvasionCoordinatorReport(
 		var status = sideEffectPlan.Status switch
 		{
 			VortexStopInvasionSideEffectPlanStatus.Planned => VortexStopInvasionCoordinatorStatus.Planned,
+			VortexStopInvasionSideEffectPlanStatus.FinishedInvasion => VortexStopInvasionCoordinatorStatus.FinishedInvasion,
 			VortexStopInvasionSideEffectPlanStatus.MissingStopSnapshot => VortexStopInvasionCoordinatorStatus.MissingStopSnapshot,
 			_ => VortexStopInvasionCoordinatorStatus.MissingInvasion,
 		};

@@ -18,9 +18,11 @@ public sealed class VortexStopInvasionSideEffectPlanService
 		if (!stopResult.Stopped)
 		{
 			return new VortexStopInvasionSideEffectPlan(
-				VortexStopInvasionSideEffectPlanStatus.MissingInvasion,
+				stopResult.Status == VortexStopInvasionStatus.FinishedInvasion
+					? VortexStopInvasionSideEffectPlanStatus.FinishedInvasion
+					: VortexStopInvasionSideEffectPlanStatus.MissingInvasion,
 				stopResult.LocationId,
-				JavaSource: "services/VortexService.stopInvasion");
+				JavaSource: stopResult.JavaSource);
 		}
 
 		if (stopResult.PreviousSnapshot == null || stopResult.StoppedSnapshot == null)
@@ -96,6 +98,7 @@ public sealed class VortexPeaceSpawnSnapshotSelectionService : IVortexPeaceSpawn
 public enum VortexStopInvasionSideEffectPlanStatus
 {
 	MissingInvasion,
+	FinishedInvasion,
 	MissingStopSnapshot,
 	Planned,
 }

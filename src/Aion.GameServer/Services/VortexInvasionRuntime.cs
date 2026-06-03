@@ -51,6 +51,21 @@ public sealed class VortexInvasionRuntime
 		}
 	}
 
+	public bool MarkInvasionFinished(int vortexLocationId)
+	{
+		lock (_sync)
+		{
+			if (!_activeInvasions.TryGetValue(vortexLocationId, out var state))
+				return false;
+
+			// Java parity: services/vortex/DimensionalVortex.stop flips the finished
+			// AtomicBoolean before executing stopInvasion. VortexService.stopInvasion
+			// removes the active map entry, then returns early when isFinished() is true.
+			state.IsFinished = true;
+			return true;
+		}
+	}
+
 	public VortexStopInvasionResult StopInvasion(int vortexLocationId)
 	{
 		lock (_sync)
@@ -65,6 +80,20 @@ public sealed class VortexInvasionRuntime
 			}
 
 			var previousSnapshot = state.ToSnapshot();
+			if (state.IsFinished)
+			{
+				return new VortexStopInvasionResult(
+					Stopped: false,
+					LocationId: vortexLocationId,
+					Status: VortexStopInvasionStatus.FinishedInvasion,
+					JavaSource: "services/VortexService.stopInvasion -> services/vortex/DimensionalVortex.isFinished",
+					PreviousSnapshot: previousSnapshot,
+					HadActivePortal: state.ActivePortal != null,
+					RemovedInvaderCount: state.InvaderObjectIds.Count,
+					RemovedDefenderCount: state.DefenderObjectIds.Count,
+					RemovedPassedPlayerCount: state.PassedPlayerObjectIds.Count);
+			}
+
 			var hadActivePortal = state.ActivePortal != null;
 			var removedInvaderCount = state.InvaderObjectIds.Count;
 			var removedDefenderCount = state.DefenderObjectIds.Count;
@@ -319,6 +348,7 @@ public sealed class VortexInvasionRuntime
 		public HashSet<int> DefenderObjectIds { get; } = [];
 		public HashSet<int> PassedPlayerObjectIds { get; } = [];
 		public RiftPortalState? ActivePortal { get; set; }
+		public bool IsFinished { get; set; }
 
 		public VortexInvasionSnapshot ToSnapshot()
 		{
@@ -329,7 +359,8 @@ public sealed class VortexInvasionRuntime
 				InvaderObjectIds.Order().ToArray(),
 				DefenderObjectIds.Order().ToArray(),
 				PassedPlayerObjectIds.Order().ToArray(),
-				ActivePortal);
+				ActivePortal,
+				IsFinished);
 		}
 	}
 }
@@ -341,7 +372,8 @@ public sealed record VortexInvasionSnapshot(
 	IReadOnlyList<int> InvaderObjectIds,
 	IReadOnlyList<int> DefenderObjectIds,
 	IReadOnlyList<int> PassedPlayerObjectIds,
-	RiftPortalState? ActivePortal = null)
+	RiftPortalState? ActivePortal = null,
+	bool IsFinished = false)
 {
 	public bool HasActivePortal => ActivePortal != null;
 }
@@ -393,6 +425,7 @@ public sealed record VortexPassedPlayerSyncPlan(
 public enum VortexStopInvasionStatus
 {
 	MissingInvasion,
+	FinishedInvasion,
 	Stopped,
 }
 
