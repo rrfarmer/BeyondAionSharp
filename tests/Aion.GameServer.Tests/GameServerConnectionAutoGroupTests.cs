@@ -183,6 +183,65 @@ public sealed class GameServerConnectionAutoGroupTests
 			});
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupSuccessfulRegistrationFansOutOnlyToOnlineMembersLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var registry = new RecordingConnectionRegistry([1005, 1006]);
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		var leader = new Player
+		{
+			ObjectId = 1005,
+			Name = "GroupLeader",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var onlineMember = new Player
+		{
+			ObjectId = 1006,
+			Name = "OnlineMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var offlineMember = new Player
+		{
+			ObjectId = 1007,
+			Name = "OfflineMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		groupRuntime.CreateOrUpdateGroup(77, [leader, onlineMember, offlineMember]);
+
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			groupRuntime);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+
+		Assert.Empty(sentPackets);
+		Assert.Equal([1005, 1005, 1005, 1006, 1006, 1006], registry.SentPackets.Select(delivery => delivery.PlayerObjectId));
+		Assert.DoesNotContain(registry.SentPackets, delivery => delivery.PlayerObjectId == 1007);
+		AssertFanoutPacketOrder(registry.SentPackets.Take(3).Select(delivery => delivery.Packet).ToArray());
+		AssertFanoutPacketOrder(registry.SentPackets.Skip(3).Take(3).Select(delivery => delivery.Packet).ToArray());
+	}
+
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
 	{
 		using var buffer = new PacketBuffer();
@@ -234,6 +293,28 @@ public sealed class GameServerConnectionAutoGroupTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertFanoutPacketOrder(IReadOnlyList<GameServerPacket> packets)
+	{
+		Assert.Collection(
+			packets,
+			packet =>
+			{
+				var autoGroup = Assert.IsType<SmAutoGroup>(packet);
+				Assert.Equal(SmAutoGroup.EntryIconWindowId, autoGroup.WindowId);
+				Assert.True(autoGroup.IsClosed);
+			},
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400194, message.MessageId);
+			},
+			packet =>
+			{
+				var autoGroup = Assert.IsType<SmAutoGroup>(packet);
+				Assert.Equal(1, autoGroup.WindowId);
+			});
 	}
 
 	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId)
@@ -350,7 +431,9 @@ public sealed class GameServerConnectionAutoGroupTests
 			GameServerOptions options,
 			Action<GameServerPacket> sentPacketObserver,
 			GameServerRuntimeContext? runtimeContext = null,
-			AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null)
+			AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
+			IGameClientConnectionRegistry? connectionRegistry = null,
+			PlayerGroupRuntime? playerGroupRuntime = null)
 		{
 			using var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -371,7 +454,9 @@ public sealed class GameServerConnectionAutoGroupTests
 					processor,
 					options,
 					runtimeContext: runtimeContext,
+					connectionRegistry: connectionRegistry,
 					sentPacketObserver: sentPacketObserver,
+					playerGroupRuntime: playerGroupRuntime,
 					autoGroupLookingPartyRegistrations: autoGroupLookingPartyRegistrations,
 					crypt: crypt);
 				return new ConnectionFixture(client, connection);
@@ -388,4 +473,81 @@ public sealed class GameServerConnectionAutoGroupTests
 			await Connection.DisposeAsync();
 		}
 	}
+
+	private sealed class RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds) : IGameClientConnectionRegistry
+	{
+		public List<PacketDelivery> SentPackets { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			if (!onlineObjectIds.Contains(playerObjectId))
+				return Task.FromResult(false);
+
+			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			throw new NotSupportedException();
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	private sealed record PacketDelivery(int PlayerObjectId, GameServerPacket Packet);
 }
