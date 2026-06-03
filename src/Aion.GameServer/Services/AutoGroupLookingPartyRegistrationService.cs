@@ -309,6 +309,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			runtimeRegistration,
 			removedMatchedPartyCount,
 			cleanupIntents,
+			CreatePenaltyRefreshIntents(cleanupIntents),
 			windowDeliveries,
 			sentWindowPackets);
 	}
@@ -418,6 +419,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				? AutoGroupCancelRegistrationStatus.LeaderPartyRemoved
 				: AutoGroupCancelRegistrationStatus.MemberRemoved,
 			removedParty?.MemberObjectIds ?? [playerObjectId],
+			removedParty?.MemberObjectIds.Select(CreatePenaltyRefreshIntent).ToArray()
+				?? [CreatePenaltyRefreshIntent(playerObjectId)],
 			sentPackets,
 			HasAutoGroupData: autoGroup != null,
 			RemovedMemberOnly: removedMemberOnly);
@@ -852,8 +855,32 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			runtimeResult,
 			readyEnterStartTime,
 			cleanupIntents,
+			CreatePenaltyRefreshIntents(cleanupIntents),
 			windowDeliveries,
 			"AutoGroupService.checkInstancesForOpenQuickEntries -> removeSearchEntry(lfp), lfp.setStartEnterTime(), SM_AUTO_GROUP(maskId, 4), searchAndRemoveAdditionalRegistrations(leader)");
+	}
+
+	private static AutoGroupPenaltyRefreshIntent CreatePenaltyRefreshIntent(int playerObjectId)
+	{
+		return new AutoGroupPenaltyRefreshIntent(
+			playerObjectId,
+			TimeSpan.FromMilliseconds(10000),
+			"AutoGroupService.penalisePlayerAndScheduleRemoval -> penalties.add(objectId), schedule penalties.remove(objectId) and PeriodicInstanceManager.checkAndSendOpenRegistrations(objectId) after 10000 ms");
+	}
+
+	private static IReadOnlyList<AutoGroupPenaltyRefreshIntent> CreatePenaltyRefreshIntents(
+		IEnumerable<AutoGroupAdditionalRegistrationCleanupIntent> cleanupIntents)
+	{
+		return cleanupIntents
+			.SelectMany(intent =>
+				intent.WouldPenaliseParty
+					? intent.NotifiedMemberObjectIds
+					: intent.WouldPenalisePlayer
+						? [intent.PlayerObjectId]
+						: Array.Empty<int>())
+			.Distinct()
+			.Select(CreatePenaltyRefreshIntent)
+			.ToArray();
 	}
 
 	private static AutoGroupInstanceRuntimeRegistration? CreateRuntimeRegistrationIntent(
@@ -1184,6 +1211,11 @@ public sealed record AutoGroupAdditionalRegistrationCleanupIntent(
 	bool WouldRecheckQueueForNewMatches,
 	int WindowId = 2);
 
+public sealed record AutoGroupPenaltyRefreshIntent(
+	int PlayerObjectId,
+	TimeSpan Delay,
+	string JavaSource);
+
 public enum AutoGroupAdditionalRegistrationCleanupType
 {
 	LeaderPartyRemoval,
@@ -1196,6 +1228,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 	AutoGroupInstanceRuntimeRegistration? RuntimeRegistration,
 	int RemovedMatchedPartyCount,
 	IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> AdditionalRegistrationCleanupIntents,
+	IReadOnlyList<AutoGroupPenaltyRefreshIntent> PenaltyRefreshIntents,
 	IReadOnlyList<AutoGroupWindowDeliveryIntent> WindowDeliveries,
 	int SentWindowPackets,
 	bool WouldApplyPenalties,
@@ -1210,6 +1243,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 			RuntimeRegistration: null,
 			RemovedMatchedPartyCount: 0,
 			Array.Empty<AutoGroupAdditionalRegistrationCleanupIntent>(),
+			Array.Empty<AutoGroupPenaltyRefreshIntent>(),
 			Array.Empty<AutoGroupWindowDeliveryIntent>(),
 			SentWindowPackets: 0,
 			WouldApplyPenalties: false,
@@ -1222,6 +1256,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 		AutoGroupInstanceRuntimeRegistration? runtimeRegistration,
 		int removedMatchedPartyCount,
 		IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> additionalRegistrationCleanupIntents,
+		IReadOnlyList<AutoGroupPenaltyRefreshIntent> penaltyRefreshIntents,
 		IReadOnlyList<AutoGroupWindowDeliveryIntent> windowDeliveries,
 		int sentWindowPackets)
 	{
@@ -1231,6 +1266,7 @@ public sealed record AutoGroupApplyReadyMatchResult(
 			runtimeRegistration,
 			removedMatchedPartyCount,
 			additionalRegistrationCleanupIntents,
+			penaltyRefreshIntents,
 			windowDeliveries,
 			sentWindowPackets,
 			additionalRegistrationCleanupIntents.Any(intent => intent.WouldPenaliseParty || intent.WouldPenalisePlayer),
@@ -1254,6 +1290,7 @@ public sealed record AutoGroupOpenQuickEntryAttachment(
 	AutoGroupOpenQuickEntryResult RuntimeResult,
 	DateTimeOffset ReadyEnterStartTime,
 	IReadOnlyList<AutoGroupAdditionalRegistrationCleanupIntent> AdditionalRegistrationCleanupIntents,
+	IReadOnlyList<AutoGroupPenaltyRefreshIntent> PenaltyRefreshIntents,
 	IReadOnlyList<AutoGroupWindowDeliveryIntent> WindowDeliveries,
 	string JavaSource);
 
@@ -1285,6 +1322,7 @@ public sealed record AutoGroupCancelRegistrationResult(
 	int PlayerObjectId,
 	AutoGroupCancelRegistrationStatus Status,
 	IReadOnlyList<int> NotifiedMemberObjectIds,
+	IReadOnlyList<AutoGroupPenaltyRefreshIntent> PenaltyRefreshIntents,
 	int SentPackets,
 	bool HasAutoGroupData,
 	bool RemovedMemberOnly)
@@ -1296,6 +1334,7 @@ public sealed record AutoGroupCancelRegistrationResult(
 			playerObjectId,
 			AutoGroupCancelRegistrationStatus.NoRegistration,
 			Array.Empty<int>(),
+			Array.Empty<AutoGroupPenaltyRefreshIntent>(),
 			SentPackets: 0,
 			HasAutoGroupData: false,
 			RemovedMemberOnly: false);

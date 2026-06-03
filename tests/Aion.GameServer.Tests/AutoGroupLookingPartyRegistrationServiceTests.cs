@@ -620,6 +620,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		var cleanup = Assert.Single(result.OpenQuickEntry.AdditionalRegistrationCleanupIntents);
 		Assert.Equal(AutoGroupAdditionalRegistrationCleanupType.LeaderPartyRemoval, cleanup.Type);
 		Assert.Equal([1001, 3001], cleanup.NotifiedMemberObjectIds);
+		AssertPenaltyRefreshes(result.OpenQuickEntry.PenaltyRefreshIntents, 1001, 3001);
 	}
 
 	[Fact]
@@ -958,6 +959,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal(6, result.SentWindowPackets);
 		Assert.True(result.WouldApplyPenalties);
 		Assert.False(result.WouldRecheckQueueForNewMatches);
+		AssertPenaltyRefreshes(result.PenaltyRefreshIntents, 1001, 3001);
 		Assert.False(service.IsSearching(1001, 107));
 		Assert.False(service.IsSearching(2001, 107));
 		Assert.False(service.IsSearching(1001, 108));
@@ -1011,6 +1013,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal(2, result.RemovedMatchedPartyCount);
 		Assert.True(result.WouldApplyPenalties);
 		Assert.True(result.WouldRecheckQueueForNewMatches);
+		AssertPenaltyRefreshes(result.PenaltyRefreshIntents, 1002, 2002);
 		Assert.False(service.IsSearching(1002, 108));
 		Assert.False(service.IsSearching(2002, 108));
 		Assert.True(service.IsSearching(3001, 108));
@@ -1149,6 +1152,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal(AutoGroupCancelRegistrationStatus.LeaderPartyRemoved, result.Status);
 		Assert.False(result.RemovedMemberOnly);
 		Assert.Equal([1001, 1002], result.NotifiedMemberObjectIds);
+		AssertPenaltyRefreshes(result.PenaltyRefreshIntents, 1001, 1002);
 		Assert.Equal(2, result.SentPackets);
 		Assert.Equal(0, service.GetLookingPartyCount(107));
 		Assert.False(service.IsSearching(1002, 107));
@@ -1171,6 +1175,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal(AutoGroupCancelRegistrationStatus.MemberRemoved, result.Status);
 		Assert.True(result.RemovedMemberOnly);
 		Assert.Equal([1002], result.NotifiedMemberObjectIds);
+		AssertPenaltyRefreshes(result.PenaltyRefreshIntents, 1002);
 		Assert.Equal(1, result.SentPackets);
 		Assert.Equal(1, service.GetLookingPartyCount(107));
 		Assert.True(service.IsSearching(1001, 107));
@@ -1192,6 +1197,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 
 		Assert.Equal(AutoGroupCancelRegistrationStatus.NoRegistration, result.Status);
 		Assert.Empty(result.NotifiedMemberObjectIds);
+		Assert.Empty(result.PenaltyRefreshIntents);
 		Assert.Equal(0, result.SentPackets);
 		Assert.Equal(1, service.GetLookingPartyCount(107));
 		Assert.Empty(registry.SentPackets);
@@ -1265,6 +1271,19 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		var packet = Assert.IsType<SmAutoGroup>(delivery.Packet);
 		Assert.Equal(maskId, packet.MaskId);
 		Assert.Equal(windowId, packet.WindowId);
+	}
+
+	private static void AssertPenaltyRefreshes(
+		IReadOnlyList<AutoGroupPenaltyRefreshIntent> intents,
+		params int[] expectedPlayerObjectIds)
+	{
+		Assert.Equal(expectedPlayerObjectIds, intents.Select(intent => intent.PlayerObjectId));
+		foreach (var intent in intents)
+		{
+			Assert.Equal(TimeSpan.FromMilliseconds(10000), intent.Delay);
+			Assert.Contains("penalisePlayerAndScheduleRemoval", intent.JavaSource, StringComparison.Ordinal);
+			Assert.Contains("checkAndSendOpenRegistrations", intent.JavaSource, StringComparison.Ordinal);
+		}
 	}
 
 	private sealed class RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds) : IGameClientConnectionRegistry
