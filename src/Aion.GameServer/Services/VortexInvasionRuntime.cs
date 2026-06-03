@@ -14,13 +14,38 @@ public sealed class VortexInvasionRuntime
 		VortexLocationSummary location,
 		RiftPortalState? activePortal = null)
 	{
+		return StartInvasionWithResult(location, activePortal).Snapshot;
+	}
+
+	public VortexStartInvasionResult StartInvasionWithResult(
+		VortexLocationSummary location,
+		RiftPortalState? activePortal = null)
+	{
 		ArgumentNullException.ThrowIfNull(location);
 
 		lock (_sync)
 		{
-			var state = GetOrCreateState(location);
+			if (_activeInvasions.TryGetValue(location.Id, out var existingState))
+			{
+				// Java parity: services/vortex/DimensionalVortex.start returns before
+				// startInvasion() when its started flag is already true.
+				return new VortexStartInvasionResult(
+					Started: false,
+					LocationId: location.Id,
+					Status: VortexStartInvasionStatus.AlreadyStarted,
+					Snapshot: existingState.ToSnapshot(),
+					JavaSource: "services/vortex/DimensionalVortex.start");
+			}
+
+			var state = new VortexInvasionState(location.Id, location.HomePoint, location.StartPoint);
+			_activeInvasions.Add(location.Id, state);
 			state.ActivePortal = activePortal;
-			return state.ToSnapshot();
+			return new VortexStartInvasionResult(
+				Started: true,
+				LocationId: location.Id,
+				Status: VortexStartInvasionStatus.Started,
+				Snapshot: state.ToSnapshot(),
+				JavaSource: "services/vortex/DimensionalVortex.start -> services/vortex/Invasion.startInvasion");
 		}
 	}
 
@@ -314,16 +339,6 @@ public sealed class VortexInvasionRuntime
 				: null;
 	}
 
-	private VortexInvasionState GetOrCreateState(VortexLocationSummary location)
-	{
-		if (_activeInvasions.TryGetValue(location.Id, out var state))
-			return state;
-
-		state = new VortexInvasionState(location.Id, location.HomePoint, location.StartPoint);
-		_activeInvasions.Add(location.Id, state);
-		return state;
-	}
-
 	private static VortexPassedPlayerSyncPlan CreatePassedPlayerSyncPlan(VortexInvasionState state)
 	{
 		// Java parity: controllers/RVController.syncPassed(true) sets usedEntries to
@@ -377,6 +392,19 @@ public sealed record VortexInvasionSnapshot(
 {
 	public bool HasActivePortal => ActivePortal != null;
 }
+
+public enum VortexStartInvasionStatus
+{
+	AlreadyStarted,
+	Started,
+}
+
+public sealed record VortexStartInvasionResult(
+	bool Started,
+	int LocationId,
+	VortexStartInvasionStatus Status,
+	VortexInvasionSnapshot Snapshot,
+	string JavaSource);
 
 public sealed record VortexInvaderRemovalResult(
 	bool Removed,

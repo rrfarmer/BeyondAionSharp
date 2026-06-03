@@ -86,6 +86,76 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StartInvasionWithResult_RepeatedStartPreservesStateLikeJavaDoubleStartGuard()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-double-start-result-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var initialPortal = CreateVortexPortal(location);
+			var replacementPortal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+			var defender = CreatePlayer(1004, isOnline: false, location.InvasionWorldId);
+
+			var started = runtime.StartInvasionWithResult(location, initialPortal);
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			Assert.True(runtime.AddDefender(location.Id, defender));
+			var repeated = runtime.StartInvasionWithResult(location, replacementPortal);
+
+			Assert.True(started.Started);
+			Assert.Equal(VortexStartInvasionStatus.Started, started.Status);
+			Assert.Equal("services/vortex/DimensionalVortex.start -> services/vortex/Invasion.startInvasion", started.JavaSource);
+			Assert.False(repeated.Started);
+			Assert.Equal(VortexStartInvasionStatus.AlreadyStarted, repeated.Status);
+			Assert.Equal("services/vortex/DimensionalVortex.start", repeated.JavaSource);
+			Assert.Same(initialPortal, repeated.Snapshot.ActivePortal);
+			Assert.Equal([1002], repeated.Snapshot.InvaderObjectIds);
+			Assert.Equal([1004], repeated.Snapshot.DefenderObjectIds);
+			var current = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.Same(initialPortal, current.ActivePortal);
+			Assert.NotSame(replacementPortal, current.ActivePortal);
+			Assert.Equal([1002], current.InvaderObjectIds);
+			Assert.Equal([1004], current.DefenderObjectIds);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StartInvasion_RepeatedSnapshotCallPreservesActivePortalAndParticipants()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-double-start-snapshot-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var initialPortal = CreateVortexPortal(location);
+			var replacementPortal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+
+			var first = runtime.StartInvasion(location, initialPortal);
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			var repeated = runtime.StartInvasion(location, replacementPortal);
+
+			Assert.Same(initialPortal, first.ActivePortal);
+			Assert.Same(initialPortal, repeated.ActivePortal);
+			Assert.Equal([1002], repeated.InvaderObjectIds);
+			Assert.Same(initialPortal, Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id)).ActivePortal);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task SetAndClearActivePortal_ModelsJavaSpawnAndDespawnControllerReference()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-clear-" + Guid.NewGuid().ToString("N"));
