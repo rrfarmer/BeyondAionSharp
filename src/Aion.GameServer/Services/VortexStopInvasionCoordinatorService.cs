@@ -42,13 +42,16 @@ public sealed class VortexStopInvasionCoordinatorService
 {
 	private readonly VortexInvasionRuntime _runtime;
 	private readonly VortexStopInvasionSideEffectPlanService _sideEffectPlanner;
+	private readonly IVortexPeaceSpawnSnapshotSelector _peaceSpawnSelector;
 
 	public VortexStopInvasionCoordinatorService(
 		VortexInvasionRuntime runtime,
-		VortexStopInvasionSideEffectPlanService sideEffectPlanner)
+		VortexStopInvasionSideEffectPlanService sideEffectPlanner,
+		IVortexPeaceSpawnSnapshotSelector? peaceSpawnSelector = null)
 	{
 		_runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
 		_sideEffectPlanner = sideEffectPlanner ?? throw new ArgumentNullException(nameof(sideEffectPlanner));
+		_peaceSpawnSelector = peaceSpawnSelector ?? new VortexPeaceSpawnSnapshotSelectionService();
 	}
 
 	public VortexStopInvasionCoordinatorReport StopInvasion(
@@ -88,7 +91,7 @@ public sealed class VortexStopInvasionCoordinatorService
 		int vortexLocationId,
 		VortexStopInvasionSnapshotRequest snapshotRequest,
 		NpcVortexSpawnTable vortexSpawns,
-		VortexPeaceSpawnSnapshotSelectionService? peaceSpawnSelector = null)
+		IVortexPeaceSpawnSnapshotSelector? peaceSpawnSelector = null)
 	{
 		ArgumentNullException.ThrowIfNull(snapshotRequest);
 		ArgumentNullException.ThrowIfNull(vortexSpawns);
@@ -100,7 +103,7 @@ public sealed class VortexStopInvasionCoordinatorService
 			// Java parity: VortexService.stopInvasion returns before invoking
 			// Invasion.stopInvasion when no active invasion exists, so static PEACE
 			// spawn enrichment is only relevant after the stop guard succeeds.
-			var selector = peaceSpawnSelector ?? new VortexPeaceSpawnSnapshotSelectionService();
+			var selector = peaceSpawnSelector ?? _peaceSpawnSelector;
 			enrichedRequest = snapshotRequest.WithPeaceSpawns(selector.SelectPeaceSpawns(vortexLocationId, vortexSpawns));
 		}
 
@@ -115,7 +118,7 @@ public sealed class VortexStopInvasionCoordinatorService
 	public VortexStopInvasionCoordinatorReport StopInvasion(
 		int vortexLocationId,
 		NpcVortexSpawnTable vortexSpawns,
-		VortexPeaceSpawnSnapshotSelectionService? peaceSpawnSelector = null)
+		IVortexPeaceSpawnSnapshotSelector? peaceSpawnSelector = null)
 	{
 		return StopInvasion(
 			vortexLocationId,

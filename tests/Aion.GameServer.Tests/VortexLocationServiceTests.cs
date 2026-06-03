@@ -643,9 +643,11 @@ public sealed class VortexLocationServiceTests
 			var context = await CreateRuntimeContextAsync(tempPath);
 			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
 			var runtime = new VortexInvasionRuntime();
+			var peaceSpawnSelector = new CountingPeaceSpawnSelector();
 			var coordinator = new VortexStopInvasionCoordinatorService(
 				runtime,
-				new VortexStopInvasionSideEffectPlanService());
+				new VortexStopInvasionSideEffectPlanService(),
+				peaceSpawnSelector);
 			var table = new NpcVortexSpawnTable(
 				[
 					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
@@ -671,6 +673,8 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal("static-peace", spawnStep.Spawn!.Anchor);
 			Assert.Equal(VortexStateType.Peace, spawnStep.VortexState);
 			Assert.Null(runtime.GetSnapshot(location.Id));
+			Assert.Equal(1, peaceSpawnSelector.CallCount);
+			Assert.Equal([location.Id], peaceSpawnSelector.LocationIds);
 		}
 		finally
 		{
@@ -688,9 +692,11 @@ public sealed class VortexLocationServiceTests
 			var context = await CreateRuntimeContextAsync(tempPath);
 			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
 			var runtime = new VortexInvasionRuntime();
+			var peaceSpawnSelector = new CountingPeaceSpawnSelector();
 			var coordinator = new VortexStopInvasionCoordinatorService(
 				runtime,
-				new VortexStopInvasionSideEffectPlanService());
+				new VortexStopInvasionSideEffectPlanService(),
+				peaceSpawnSelector);
 			var table = new NpcVortexSpawnTable(
 				[
 					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
@@ -721,6 +727,8 @@ public sealed class VortexLocationServiceTests
 			Assert.False(repeated.HasSideEffectPlan);
 			Assert.Empty(repeated.SideEffectPlan.OrderedSteps);
 			Assert.Equal(0, repeated.SideEffectPlan.PeaceSpawnCount);
+			Assert.Equal(1, peaceSpawnSelector.CallCount);
+			Assert.Equal([location.Id], peaceSpawnSelector.LocationIds);
 		}
 		finally
 		{
@@ -1211,6 +1219,24 @@ public sealed class VortexLocationServiceTests
 			Custom: false,
 			GroupTemporarySchedule: null,
 			SpotTemporarySchedule: null);
+	}
+
+	private sealed class CountingPeaceSpawnSelector : IVortexPeaceSpawnSnapshotSelector
+	{
+		private readonly VortexPeaceSpawnSnapshotSelectionService _selector = new();
+		private readonly List<int> _locationIds = [];
+
+		public int CallCount { get; private set; }
+		public IReadOnlyList<int> LocationIds => _locationIds;
+
+		public IReadOnlyList<VortexStopPeaceSpawnSnapshot> SelectPeaceSpawns(
+			int vortexLocationId,
+			NpcVortexSpawnTable vortexSpawns)
+		{
+			CallCount++;
+			_locationIds.Add(vortexLocationId);
+			return _selector.SelectPeaceSpawns(vortexLocationId, vortexSpawns);
+		}
 	}
 
 	private static void DeleteTempDirectory(string tempPath)

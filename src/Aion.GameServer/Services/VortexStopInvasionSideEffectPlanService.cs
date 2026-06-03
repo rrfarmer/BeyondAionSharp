@@ -68,7 +68,14 @@ public sealed class VortexStopInvasionSideEffectPlanService
 	}
 }
 
-public sealed class VortexPeaceSpawnSnapshotSelectionService
+public interface IVortexPeaceSpawnSnapshotSelector
+{
+	IReadOnlyList<VortexStopPeaceSpawnSnapshot> SelectPeaceSpawns(
+		int vortexLocationId,
+		NpcVortexSpawnTable vortexSpawns);
+}
+
+public sealed class VortexPeaceSpawnSnapshotSelectionService : IVortexPeaceSpawnSnapshotSelector
 {
 	public IReadOnlyList<VortexStopPeaceSpawnSnapshot> SelectPeaceSpawns(
 		int vortexLocationId,
