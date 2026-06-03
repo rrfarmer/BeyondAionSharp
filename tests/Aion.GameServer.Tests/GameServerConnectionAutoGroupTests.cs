@@ -786,7 +786,109 @@ public sealed class GameServerConnectionAutoGroupTests
 		var observation = Assert.Single(observations);
 		Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
 		Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
-		Assert.DoesNotContain(registry.SentPackets, delivery => delivery.PlayerObjectId == 1001 && delivery.Packet is SmAutoGroup);
+		Assert.Empty(registry.SentPackets);
+	}
+
+	[Fact]
+	public async Task LeavePlayerWorldAsync_StartEnterLogoutRefillsQueuedQuickEntryLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var startInstanceTime = DateTimeOffset.UtcNow.AddSeconds(-1);
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[1001],
+			"ELYOS",
+			AutoGroupEntryRequestType.NewGroupEntry,
+			startInstanceTime.AddSeconds(-30),
+			startEnterTime: startInstanceTime.AddSeconds(-20));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			startInstanceTime.AddSeconds(-5));
+		autoGroupRegistrations.RegisterLookingParty(
+			108,
+			[1002, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			startInstanceTime.AddSeconds(-4));
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			[CreateAutoGroup(107, 300110000), CreateAutoGroup(108, 300120000)],
+			new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1, MaxMemberLight: 2, MaxMemberDark: 2),
+			]));
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001, 2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[1001] = "ELYOS",
+				[2001] = "ASMODIANS",
+			}));
+		var player = new Player
+		{
+			ObjectId = 1001,
+			Name = "StartEnterLogout",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var registry = new RecordingConnectionRegistry([1002, 3001]);
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
+			threadPoolManager,
+			new PeriodicInstanceRegistrationService(),
+			runtimeContext);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			autoGroupInstanceLeaveRuntimeService: runtimeService,
+			autoGroupPenaltyRefreshScheduler: penaltyRefreshScheduler);
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		var cancelWindow = Assert.IsType<SmAutoGroup>(Assert.Single(sentPackets));
+		Assert.Equal(107, cancelWindow.MaskId);
+		Assert.Equal(2, cancelWindow.WindowId);
+		var snapshot = runtimeService.GetSnapshot(300110000, 2)!;
+		Assert.DoesNotContain(1001, snapshot.RegisteredPlayerObjectIds);
+		Assert.Contains(1002, snapshot.RegisteredPlayerObjectIds);
+		Assert.Contains(2001, snapshot.RegisteredPlayerObjectIds);
+		Assert.False(autoGroupRegistrations.IsSearching(1002, 107));
+		Assert.False(autoGroupRegistrations.IsSearching(1002, 108));
+		Assert.False(autoGroupRegistrations.IsSearching(3001, 108));
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(1001));
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(1002));
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(3001));
+		Assert.Equal(3, observations.Count);
+		Assert.All(observations, observation =>
+		{
+			Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+			Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
+		});
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => AssertReadyWindow(delivery, 1002, 107),
+			delivery => AssertCancelWindow(delivery, 1002, 108),
+			delivery => AssertCancelWindow(delivery, 3001, 108));
 	}
 
 	[Fact]
