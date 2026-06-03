@@ -125,4 +125,6 @@ public sealed record AutoGroupSummary(
 {
 	public bool IsRecruitableInstance => MaskId >= 302 && MaskId < 400
 		|| InstanceMapId is 300600000 or 300220000;
+
+	public bool IsPeriodicInstance => MaskId is 1 or 2 or 3 or 107 or 108 or 109 or 111;
 }

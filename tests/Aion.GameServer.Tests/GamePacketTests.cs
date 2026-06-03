@@ -84,6 +84,38 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmAutoGroup_WritesJavaWaitingWindowPayload()
+	{
+		var payload = SerializeUnencryptedPayload(
+			new SmAutoGroup(
+				new AutoGroupSummary(
+					MaskId: 107,
+					InstanceMapId: 300110000,
+					NameId: 140107,
+					TitleId: 150107,
+					MinLevel: 46,
+					MaxLevel: 65,
+					RegisterQuick: true,
+					RegisterGroup: true,
+					RegisterNew: true,
+					NpcIds: []),
+				windowId: 1,
+				requestTypeId: 2,
+				name: "LeaderTester"));
+
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(107, reader.ReadD());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(300110000, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(2, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal("LeaderTester", reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public void SmAutoGroup_WritesJavaCancelRegistrationWindowPayload()
 	{
 		var payload = SerializeUnencryptedPayload(
@@ -357,6 +389,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
 		AssertSystemMessage(SmSystemMessage.CantInstanceAlreadyRegistered(300110000), 1400181, "300110000");
+		AssertSystemMessage(SmSystemMessage.InstanceRegisterSuccess(), 1400194);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);
 		AssertSystemMessage(SmSystemMessage.CannotMoveToAirportNotEnoughFee(), 1300689);

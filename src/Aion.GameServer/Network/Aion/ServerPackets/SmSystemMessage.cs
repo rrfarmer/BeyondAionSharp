@@ -334,6 +334,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400181, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
 	}
 
+	public static SmSystemMessage InstanceRegisterSuccess()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_REGISTER_SUCCESS.
+		return new SmSystemMessage(1400194);
+	}
+
 	public static SmSystemMessage MentorCantEnter(int worldId)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MENTOR_CANT_ENTER(worldId).

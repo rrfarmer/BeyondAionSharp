@@ -1515,6 +1515,12 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (autoGroup != null)
 						await SendPacketAsync(SmSystemMessage.CantInstanceAlreadyRegistered(autoGroup.InstanceMapId));
 				}
+				else if (result.Status == AutoGroupStartLookingStatus.Registered && result.Registration != null)
+				{
+					var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
+					if (autoGroup != null)
+						await SendAutoGroupSuccessfulRegistrationAsync(player, result.Registration, autoGroup, entryRequestType.Value);
+				}
 				break;
 			}
 			case 101:
@@ -1569,6 +1575,40 @@ public sealed class GameServerConnection : BaseClientConnection
 				// DredgionRegService.failedEnterDredgion call and has no active side effect.
 				break;
 		}
+	}
+
+	private async Task SendAutoGroupSuccessfulRegistrationAsync(
+		Player leader,
+		AutoGroupLookingPartyRegistration registration,
+		AutoGroupSummary autoGroup,
+		AutoGroupEntryRequestType entryRequestType)
+	{
+		// Java parity: AutoGroupUtility.sendSuccessfulRegistration iterates queued
+		// member object ids, skips offline players, then sends optional periodic
+		// close icon, success system message, and waiting-window packet.
+		foreach (var memberObjectId in registration.MemberObjectIds)
+		{
+			foreach (var packet in CreateAutoGroupSuccessfulRegistrationPackets(autoGroup, entryRequestType, leader.Name))
+			{
+				if (_connectionRegistry != null)
+					await _connectionRegistry.SendPacketToPlayerAsync(memberObjectId, packet);
+				else if (memberObjectId == leader.ObjectId)
+					await SendPacketAsync(packet);
+			}
+		}
+	}
+
+	private static IReadOnlyList<GameServerPacket> CreateAutoGroupSuccessfulRegistrationPackets(
+		AutoGroupSummary autoGroup,
+		AutoGroupEntryRequestType entryRequestType,
+		string leaderName)
+	{
+		var packets = new List<GameServerPacket>(autoGroup.IsPeriodicInstance ? 3 : 2);
+		if (autoGroup.IsPeriodicInstance)
+			packets.Add(new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: true));
+		packets.Add(SmSystemMessage.InstanceRegisterSuccess());
+		packets.Add(new SmAutoGroup(autoGroup, windowId: 1, requestTypeId: (int)entryRequestType, name: leaderName));
+		return packets;
 	}
 
 	private AbyssPointsAddOptions CreateAbyssPointsOptions(long currentLegionContributionPoints = 0)

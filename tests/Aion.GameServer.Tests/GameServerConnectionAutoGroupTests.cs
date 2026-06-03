@@ -110,6 +110,7 @@ public sealed class GameServerConnectionAutoGroupTests
 					buffer.WriteC(100);
 					buffer.WriteC(2);
 				}));
+		sentPackets.Clear();
 		await InvokeProcessPacketAsync(
 			fixture.Connection,
 			CreateClientPayload(
@@ -125,6 +126,61 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.Equal(1400181, message.MessageId);
 		Assert.Equal(["300110000"], message.Parameters);
 		Assert.Equal(1, autoGroupRegistrations.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupSuccessfulRegistrationSendsJavaFanoutPackets()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(
+			fixture.Connection,
+			new Player
+			{
+				ObjectId = 1004,
+				Name = "LeaderTester",
+				Race = "ELYOS",
+				Level = 50,
+			});
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+
+		Assert.Collection(
+			sentPackets,
+			packet =>
+			{
+				var autoGroup = Assert.IsType<SmAutoGroup>(packet);
+				Assert.Equal(107, autoGroup.MaskId);
+				Assert.Equal(SmAutoGroup.EntryIconWindowId, autoGroup.WindowId);
+				Assert.True(autoGroup.IsClosed);
+			},
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400194, message.MessageId);
+			},
+			packet =>
+			{
+				var autoGroup = Assert.IsType<SmAutoGroup>(packet);
+				Assert.Equal(107, autoGroup.MaskId);
+				Assert.Equal(1, autoGroup.WindowId);
+			});
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
