@@ -157,6 +157,29 @@ public sealed class VortexDefenderInvitationResponseConsumptionReportService
 	}
 }
 
+public sealed class VortexDefenderInvitationResponseRuntimeAdapterService
+{
+	private readonly VortexDefenderInvitationResponseConsumptionReportService _consumptionReporter = new();
+
+	public VortexDefenderInvitationResponseConsumptionReport HandleResponse(
+		Player responder,
+		int questionId,
+		int responseCode,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+	{
+		ArgumentNullException.ThrowIfNull(responder);
+
+		var dispatch = responder.ResponseRequester.Respond(questionId, responseCode);
+		var responderSnapshot = VortexDefenderInvitationResponderSnapshot.FromPlayer(responder);
+		return _consumptionReporter.CreateReport(
+			questionId,
+			responseCode,
+			dispatch,
+			responderSnapshot,
+			defenderAlliance);
+	}
+}
+
 public enum VortexDefenderInvitationAcceptancePlanStatus
 {
 	AcceptancePlanned,
