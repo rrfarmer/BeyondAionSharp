@@ -121,6 +121,15 @@ public sealed record PlayerAllianceLeaveWorkflowPlan(
 	IReadOnlyList<PlayerAllianceLeaveWorkflowStep> Steps,
 	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval = null);
 
+public sealed record PlayerAllianceDisconnectedDisbandPlan(
+	int AllianceId,
+	IReadOnlyList<int> DisbandedPlayerObjectIds,
+	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval,
+	IReadOnlyList<PlayerBaseLeaveSideEffectPlan> BaseLeavePlans,
+	bool RemovedRuntimeAlliance,
+	bool WouldNotifyLeagueAfterDisband,
+	string JavaSource);
+
 public enum PlayerAllianceLeaveWorkflowStepKind
 {
 	AllianceLeave,

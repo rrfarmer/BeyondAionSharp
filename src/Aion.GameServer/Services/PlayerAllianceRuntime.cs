@@ -17,6 +17,7 @@ public sealed class PlayerAllianceRuntime
 	private readonly PlayerAllianceViceCaptainAssignmentPlanner _viceCaptainAssignmentPlanner = new();
 	private readonly PlayerAllianceLeaderChangePlanner _leaderChangePlanner = new();
 	private readonly PlayerAllianceLeaveWorkflowPlanner _leaveWorkflowPlanner = new();
+	private readonly PlayerBaseLeavePlanner _baseLeavePlanner = new();
 	private readonly FindGroupRecruitmentPlanService? _findGroupService;
 	private readonly byte _serverId;
 
@@ -237,6 +238,58 @@ public sealed class PlayerAllianceRuntime
 				&& _descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor)
 					? CreateSnapshot(allianceId, members, descriptor)
 					: null;
+	}
+
+	public PlayerAllianceDisconnectedDisbandPlan? DisbandAfterDisconnectedNoOnlineMembers(int allianceId)
+	{
+		// Java parity: alliance PlayerDisconnectedEvent fans out first, then calls
+		// PlayerAllianceService.disband(alliance, false) when getOnlineMembers().isEmpty().
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.ContainsKey(allianceId)
+				|| members.Any(member => member.IsOnline))
+				return null;
+
+			var disbandedMembers = members.ToArray();
+			var wasInLeague = _leagueIdByAllianceId.GetValueOrDefault(allianceId) != 0;
+			var findGroupRecruitmentRemoval = _findGroupService?.RemoveRecruitment(
+				allianceId,
+				_serverId,
+				unknown1: 0,
+				unknown2: 0,
+				unknown3: 0);
+			var baseLeavePlans = disbandedMembers
+				.Select(member => _baseLeavePlanner.CreateLeaveSideEffectPlan(
+					member.ObjectId,
+					member.IsOnline,
+					wasRegisteredToTeamInstance: false))
+				.ToArray();
+
+			foreach (var member in disbandedMembers)
+			{
+				member.ClearAllianceGroup();
+				ClearAlliance(member.Player);
+			}
+
+			_membersByAllianceId.Remove(allianceId);
+			_descriptorsByAllianceId.Remove(allianceId);
+			_leagueIdByAllianceId.Remove(allianceId);
+			_viceCaptainObjectIdsByAllianceId.Remove(allianceId);
+			_allianceReadyStatusByAllianceId.Remove(allianceId);
+			_targetObjectIdsByBrandIdByAllianceId.Remove(allianceId);
+
+			return new PlayerAllianceDisconnectedDisbandPlan(
+				allianceId,
+				disbandedMembers.Select(member => member.ObjectId).ToArray(),
+				findGroupRecruitmentRemoval,
+				baseLeavePlans,
+				RemovedRuntimeAlliance: true,
+				WouldNotifyLeagueAfterDisband: wasInLeague,
+				"PlayerDisconnectedEvent -> PlayerAllianceService.disband(alliance, false) removes FindGroup recruitment, replays AllianceDisbandEvent, removes the alliance map entry, then notifies league membership when present");
+		}
 	}
 
 	public PlayerAllianceSnapshot? SetLeagueId(int allianceId, int leagueId)

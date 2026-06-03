@@ -606,6 +606,7 @@ public sealed class PlayerEnterWorldServiceTests
 			PlayerClass = "WARRIOR",
 			Race = "ELYOS",
 			Gender = "MALE",
+			IsOnline = true,
 			Position = new WorldPosition(210010000, 5, 6, 7, 16),
 		};
 		var allianceRuntime = new PlayerAllianceRuntime();
@@ -624,6 +625,160 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(logoutMillis, allianceRuntime.GetMember(88001, player.ObjectId)?.LastOnlineTimeMillis);
 		Assert.Equal(0, allianceRuntime.GetMember(88001, teammate.ObjectId)?.LastOnlineTimeMillis);
 		Assert.False(world.TryGetObject(player.ObjectId, out _));
+	}
+
+	[Fact]
+	public async Task LeaveWorld_DispatchesAllianceDisconnectedFanoutToRemainingMembersLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Disconnected");
+		player.IsOnline = true;
+		var leader = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Leader",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var other = new Player
+		{
+			ObjectId = 2002,
+			AccountId = 21,
+			Name = "Other",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 8, 9, 10, 16),
+		};
+		var allianceRuntime = new PlayerAllianceRuntime();
+		allianceRuntime.CreateAlliance(88001, leader);
+		allianceRuntime.AddMember(88001, player);
+		allianceRuntime.AddMember(88001, other);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world, out var registry, playerAllianceRuntime: allianceRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.False(player.IsOnline);
+		Assert.Equal([2001, 2001, 2001, 2002, 2002, 2002], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
+		AssertAllianceOfflineMessage(registry.SentPackets[0], 2001, "Disconnected");
+		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[1].Packet);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[2].Packet);
+		AssertAllianceOfflineMessage(registry.SentPackets[3], 2002, "Disconnected");
+		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[4].Packet);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[5].Packet);
+		var descriptor = Assert.IsType<PlayerAllianceDescriptor>(allianceRuntime.GetDescriptor(88001));
+		Assert.Equal(leader.ObjectId, descriptor.LeaderObjectId);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_DispatchesAllianceLeaderChangeBeforeDisconnectedFanoutLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Leader");
+		player.IsOnline = true;
+		var fallback = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Fallback",
+			PlayerClass = "WARRIOR",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var other = new Player
+		{
+			ObjectId = 2002,
+			AccountId = 21,
+			Name = "Other",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 8, 9, 10, 16),
+		};
+		var allianceRuntime = new PlayerAllianceRuntime();
+		allianceRuntime.CreateAlliance(88001, player);
+		allianceRuntime.AddMember(88001, fallback);
+		allianceRuntime.AddMember(88001, other);
+		allianceRuntime.SetViceCaptains(88001, [fallback.ObjectId]);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(repository, world, out var registry, playerAllianceRuntime: allianceRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Equal([2001, 2001, 2002, 2001, 2001, 2001, 2002, 2002, 2002], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[0].Packet);
+		AssertAllianceSystemMessage(registry.SentPackets[1], 2001, 1300999);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[2].Packet);
+		AssertAllianceOfflineMessage(registry.SentPackets[3], 2001, "Leader");
+		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[4].Packet);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[5].Packet);
+		AssertAllianceOfflineMessage(registry.SentPackets[6], 2002, "Leader");
+		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[7].Packet);
+		Assert.IsType<SmAllianceInfo>(registry.SentPackets[8].Packet);
+		var descriptor = Assert.IsType<PlayerAllianceDescriptor>(allianceRuntime.GetDescriptor(88001));
+		Assert.Equal(fallback.ObjectId, descriptor.LeaderObjectId);
+		var snapshot = Assert.IsType<PlayerAllianceSnapshot>(allianceRuntime.GetSnapshot(88001));
+		Assert.DoesNotContain(fallback.ObjectId, snapshot.ViceCaptainObjectIds);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_DisbandAllianceWhenNoMembersRemainOnlineLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5), name: "Leader");
+		player.IsOnline = true;
+		var offlineMember = new Player
+		{
+			ObjectId = 2001,
+			AccountId = 20,
+			Name = "Offline",
+			PlayerClass = "CLERIC",
+			Race = "ELYOS",
+			Gender = "MALE",
+			IsOnline = false,
+			Position = new WorldPosition(210010000, 5, 6, 7, 16),
+		};
+		var findGroupService = new FindGroupRecruitmentPlanService();
+		var allianceRuntime = new PlayerAllianceRuntime(findGroupService, serverId: 5);
+		allianceRuntime.CreateAlliance(88001, player);
+		allianceRuntime.AddMember(88001, offlineMember);
+		findGroupService.AddRecruitment(
+			player,
+			"Alliance recruitment",
+			groupType: 8,
+			nowEpochSeconds: 100,
+			new FindGroupRecruitmentSubject(88001, "ELYOS", IsSoloPlayer: false, "Leader", Size: 2, MinLevel: 63, MaxLevel: 65, ClassId: 5));
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		world.TryAddObject(player.ObjectId, player);
+		var service = CreateService(
+			repository,
+			world,
+			out var registry,
+			findGroupService: findGroupService,
+			playerAllianceRuntime: allianceRuntime);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.Empty(registry.SentPackets);
+		Assert.Null(allianceRuntime.GetDescriptor(88001));
+		Assert.Empty(allianceRuntime.GetMemberObjectIds(88001));
+		Assert.Equal(PlayerTeamMembership.None, player.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, offlineMember.TeamMembership);
+		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
+		Assert.Equal(1, repository.SaveLogoutCalls);
 	}
 
 	[Fact]
@@ -1473,7 +1628,24 @@ public sealed class PlayerEnterWorldServiceTests
 		AssertGroupSystemMessage(delivery, expectedPlayerObjectId, 1300175, expectedPlayerName);
 	}
 
+	private static void AssertAllianceOfflineMessage(PacketDelivery delivery, int expectedPlayerObjectId, string expectedPlayerName)
+	{
+		AssertAllianceSystemMessage(delivery, expectedPlayerObjectId, 1301019, expectedPlayerName);
+	}
+
 	private static void AssertGroupSystemMessage(
+		PacketDelivery delivery,
+		int expectedPlayerObjectId,
+		int expectedMessageId,
+		params string[] expectedParameters)
+	{
+		Assert.Equal(expectedPlayerObjectId, delivery.PlayerObjectId);
+		var message = Assert.IsType<SmSystemMessage>(delivery.Packet);
+		Assert.Equal(expectedMessageId, message.MessageId);
+		Assert.Equal(expectedParameters, message.Parameters);
+	}
+
+	private static void AssertAllianceSystemMessage(
 		PacketDelivery delivery,
 		int expectedPlayerObjectId,
 		int expectedMessageId,

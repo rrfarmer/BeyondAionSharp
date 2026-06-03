@@ -810,6 +810,7 @@ public sealed class PlayerEnterWorldService
 		var saved = await _repository.SavePlayerLogoutAsync(player, lastOnline, cancellationToken);
 		RecordGroupLogoutLastOnline(player, lastOnline);
 		await DispatchGroupDisconnectedLogoutAsync(player);
+		await DispatchAllianceDisconnectedLogoutAsync(player);
 		if (saved)
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
@@ -863,6 +864,122 @@ public sealed class PlayerEnterWorldService
 				intent.RecipientObjectId,
 				intent.CreatePacket());
 		}
+	}
+
+	private async Task DispatchAllianceDisconnectedLogoutAsync(Player player)
+	{
+		if (_playerAllianceRuntime == null || _connectionRegistry == null)
+			return;
+
+		// Java parity: PlayerAllianceService.onPlayerLogout updates last-online, then
+		// PlayerDisconnectedEvent optionally changes leader, fans out offline packets,
+		// and only then disbands when no online members remain.
+		var snapshot = _playerAllianceRuntime.Resolve(player);
+		if (snapshot == null)
+			return;
+
+		var allianceId = snapshot.AllianceId;
+		var descriptor = _playerAllianceRuntime.GetDescriptor(allianceId);
+		var members = _playerAllianceRuntime.GetMemberPlayers(allianceId);
+		if (descriptor == null || members.Count == 0 || members.All(member => member.ObjectId != player.ObjectId))
+			return;
+
+		var membersByObjectId = members.ToDictionary(member => member.ObjectId);
+		var noOnlineMembersRemain = !members.Any(member => member.IsOnline);
+		var isInLeague = snapshot.LeagueId != 0;
+
+		if (descriptor.LeaderObjectId == player.ObjectId)
+		{
+			var fallbackLeaderObjectId = _playerAllianceRuntime.SelectFallbackLeaderObjectId(allianceId, player.ObjectId);
+			if (fallbackLeaderObjectId.HasValue)
+			{
+				var leaderChangePlan = _playerAllianceRuntime.ChangeLeader(
+					allianceId,
+					fallbackLeaderObjectId.Value,
+					eventPlayerWasSpecified: false);
+				if (leaderChangePlan != null)
+				{
+					await DispatchAllianceLeaderChangeAsync(leaderChangePlan, members, membersByObjectId, player.ObjectId);
+				}
+
+				snapshot = _playerAllianceRuntime.GetSnapshot(allianceId) ?? snapshot;
+				descriptor = _playerAllianceRuntime.GetDescriptor(allianceId) ?? descriptor;
+				members = _playerAllianceRuntime.GetMemberPlayers(allianceId);
+				membersByObjectId = members.ToDictionary(member => member.ObjectId);
+			}
+		}
+
+		var plan = new PlayerAllianceDisconnectedPlanner().CreateDisconnectedPlan(
+			allianceId,
+			descriptor.LeaderObjectId,
+			members,
+			snapshot.ViceCaptainObjectIds,
+			player.ObjectId,
+			descriptor.LootRules,
+			descriptor.TeamType,
+			isInLeague,
+			noOnlineMembersRemain);
+
+		if (plan.Status == PlayerAllianceDisconnectedPlanStatus.Planned)
+		{
+			foreach (var intent in plan.PacketIntents)
+			{
+				if (ShouldSkipAllianceLogoutRecipient(intent.RecipientObjectId, membersByObjectId, player.ObjectId))
+					continue;
+
+				await _connectionRegistry.SendPacketToPlayerAsync(
+					intent.RecipientObjectId,
+					intent.CreatePacket());
+			}
+		}
+
+		if (noOnlineMembersRemain)
+			_playerAllianceRuntime.DisbandAfterDisconnectedNoOnlineMembers(allianceId);
+	}
+
+	private async Task DispatchAllianceLeaderChangeAsync(
+		PlayerAllianceLeaderChangePlan plan,
+		IReadOnlyList<Player> members,
+		IReadOnlyDictionary<int, Player> membersByObjectId,
+		int disconnectedPlayerObjectId)
+	{
+		var allianceInfoIntents = plan.AllianceInfoIntents.ToDictionary(intent => intent.RecipientObjectId);
+		var systemMessageIntentsByRecipient = plan.SystemMessageIntents
+			.GroupBy(intent => intent.RecipientObjectId)
+			.ToDictionary(group => group.Key, group => group.ToArray());
+		foreach (var member in members)
+		{
+			if (ShouldSkipAllianceLogoutRecipient(member.ObjectId, membersByObjectId, disconnectedPlayerObjectId))
+				continue;
+
+			if (allianceInfoIntents.TryGetValue(member.ObjectId, out var allianceInfoIntent))
+			{
+				await _connectionRegistry!.SendPacketToPlayerAsync(
+					allianceInfoIntent.RecipientObjectId,
+					allianceInfoIntent.CreatePacket());
+			}
+
+			if (!systemMessageIntentsByRecipient.TryGetValue(member.ObjectId, out var systemMessageIntents))
+				continue;
+
+			foreach (var intent in systemMessageIntents)
+			{
+				await _connectionRegistry!.SendPacketToPlayerAsync(
+					intent.RecipientObjectId,
+					intent.Message);
+			}
+		}
+	}
+
+	private static bool ShouldSkipAllianceLogoutRecipient(
+		int recipientObjectId,
+		IReadOnlyDictionary<int, Player> membersByObjectId,
+		int disconnectedPlayerObjectId)
+	{
+		if (recipientObjectId == disconnectedPlayerObjectId)
+			return true;
+
+		return !membersByObjectId.TryGetValue(recipientObjectId, out var recipient) || !recipient.IsOnline;
 	}
 
 	private void RecordGroupLogoutLastOnline(Player player, DateTime lastOnline)
