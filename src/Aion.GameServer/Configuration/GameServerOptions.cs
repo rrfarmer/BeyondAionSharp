@@ -29,6 +29,8 @@ public sealed class GameServerOptions
 
 	public GameServerInstanceOptions Instance { get; init; } = new();
 
+	public GameServerGroupOptions Group { get; init; } = new();
+
 	public GameServerAutoGroupOptions AutoGroup { get; init; } = new();
 
 	public GameServerAdministrationOptions Administration { get; init; } = new();
@@ -235,6 +237,11 @@ public sealed class GameServerOptions
 				DestroyDelaySeconds = GetIntWithEnvironment(loader, "gameserver.instance.destroy_delay_seconds", 600),
 				SoloDestroyDelaySeconds = GetIntWithEnvironment(loader, "gameserver.instance.solo.destroy_delay_seconds", 600),
 				FormInstanceGroupAnywhere = GetBoolWithEnvironment(loader, "gameserver.instance_group.form_anywhere", false),
+			},
+			Group = new GameServerGroupOptions
+			{
+				GroupRemoveTimeSeconds = GetIntWithEnvironment(loader, "gameserver.playergroup.removetime", 600),
+				AllianceRemoveTimeSeconds = GetIntWithEnvironment(loader, "gameserver.playeralliance.removetime", 600),
 			},
 			AutoGroup = new GameServerAutoGroupOptions
 			{
@@ -614,6 +621,15 @@ public sealed class GameServerInstanceOptions
 
 	// Java parity: configs/main/GroupConfig.FORM_INSTANCE_GROUP_ANYWHERE.
 	public bool FormInstanceGroupAnywhere { get; init; }
+}
+
+public sealed class GameServerGroupOptions
+{
+	// Java parity: configs/main/GroupConfig.GROUP_REMOVE_TIME.
+	public int GroupRemoveTimeSeconds { get; init; } = 600;
+
+	// Java parity: configs/main/GroupConfig.ALLIANCE_REMOVE_TIME.
+	public int AllianceRemoveTimeSeconds { get; init; } = 600;
 }
 
 public sealed class GameServerAutoGroupOptions

@@ -112,6 +112,44 @@ public sealed class PlayerAllianceOfflineTimeoutDispatchServiceTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Fact]
+	public async Task DispatchExpiredScanAsync_DrainsExpiredMembersUsingConfiguredAllianceRemoveTimeLikeJavaChecker()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leader = CreatePlayer(1001, "Leader", isOnline: true, worldId: 210010000);
+		var expiredOne = CreatePlayer(1002, "ExpiredOne", isOnline: false, worldId: 220010000);
+		var expiredTwo = CreatePlayer(1003, "ExpiredTwo", isOnline: false, worldId: 230010000);
+		var stillWaiting = CreatePlayer(1004, "StillWaiting", isOnline: false, worldId: 240010000);
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, expiredOne);
+		alliances.AddMember(88001, expiredTwo);
+		alliances.AddMember(88001, stillWaiting);
+		alliances.UpdateMemberLastOnlineTime(expiredOne, DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+		alliances.UpdateMemberLastOnlineTime(expiredTwo, DateTimeOffset.FromUnixTimeMilliseconds(110_000));
+		alliances.UpdateMemberLastOnlineTime(stillWaiting, DateTimeOffset.FromUnixTimeMilliseconds(250_001));
+		var service = new PlayerAllianceOfflineTimeoutDispatchService(alliances, leagueRuntime: null, registry);
+
+		var scanResult = await service.DispatchExpiredScanAsync(
+			DateTimeOffset.FromUnixTimeMilliseconds(700_000),
+			allianceRemoveTimeSeconds: 590);
+
+		Assert.Equal(DateTimeOffset.FromUnixTimeMilliseconds(700_000), scanResult.ScanTime);
+		Assert.Equal(590, scanResult.AllianceRemoveTimeSeconds);
+		Assert.Equal(2, scanResult.TimedOutMemberCount);
+		Assert.Equal(15, scanResult.SentPacketCount);
+		Assert.False(scanResult.WouldRemoveAnyOffenceInvader);
+		Assert.Equal([1002, 1003], scanResult.DispatchResults.Select(result => result.TimeoutPlan.TimedOutPlayerObjectId));
+		Assert.Equal([1001, 1004], alliances.GetMemberObjectIds(88001));
+		Assert.Equal(PlayerTeamMembership.None, expiredOne.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.None, expiredTwo.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.Alliance, stillWaiting.TeamMembership);
+		Assert.Equal(15, registry.SentPackets.Count);
+		Assert.Equal(5, registry.SentPackets.Count(send => send.Packet is SmAllianceInfo));
+		Assert.Equal(5, registry.SentPackets.Count(send => send.Packet is SmAllianceMemberInfo));
+		Assert.Equal(5, registry.SentPackets.Count(send => send.Packet is SmSystemMessage));
+	}
+
 	private static Player CreatePlayer(
 		int objectId,
 		string name,

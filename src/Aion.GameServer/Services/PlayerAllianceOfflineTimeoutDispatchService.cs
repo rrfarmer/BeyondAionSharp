@@ -31,6 +31,33 @@ public sealed class PlayerAllianceOfflineTimeoutDispatchService(
 			timeoutPlan.WouldRemoveOffenceInvader);
 	}
 
+	public async Task<PlayerAllianceOfflineTimeoutScanResult> DispatchExpiredScanAsync(
+		DateTimeOffset now,
+		int allianceRemoveTimeSeconds = 600,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: OfflinePlayerAllianceChecker.run iterates alliances and fires LEAVE_TIMEOUT for
+		// every expired offline member observed during the scheduled scan.
+		var dispatchResults = new List<PlayerAllianceOfflineTimeoutDispatchResult>();
+		var totalSentPackets = 0;
+		while (true)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			var result = await DispatchNextExpiredAsync(now, allianceRemoveTimeSeconds, cancellationToken);
+			if (result == null)
+				break;
+
+			dispatchResults.Add(result);
+			totalSentPackets += result.SentPacketCount;
+		}
+
+		return new PlayerAllianceOfflineTimeoutScanResult(
+			now,
+			allianceRemoveTimeSeconds,
+			dispatchResults,
+			totalSentPackets);
+	}
+
 	private async Task<int> DispatchLeaveWorkflowAsync(
 		PlayerAllianceLeaveWorkflowPlan plan,
 		int leagueId,
@@ -215,3 +242,14 @@ public sealed record PlayerAllianceOfflineTimeoutDispatchResult(
 	PlayerAllianceOfflineTimeoutPlan TimeoutPlan,
 	int SentPacketCount,
 	bool WouldRemoveOffenceInvader);
+
+public sealed record PlayerAllianceOfflineTimeoutScanResult(
+	DateTimeOffset ScanTime,
+	int AllianceRemoveTimeSeconds,
+	IReadOnlyList<PlayerAllianceOfflineTimeoutDispatchResult> DispatchResults,
+	int SentPacketCount)
+{
+	public int TimedOutMemberCount => DispatchResults.Count;
+
+	public bool WouldRemoveAnyOffenceInvader => DispatchResults.Any(result => result.WouldRemoveOffenceInvader);
+}
