@@ -3142,8 +3142,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				ToPlayerGenderId(candidate.Gender),
 				candidate.Level,
 				status,
-				// Java parity: ChatUtil.toFactionPrefixedName — faction prefixing deferred; plain name sent.
-				candidate.Name));
+				// Java parity: ChatUtil.toFactionPrefixedName — staff searchers see a faction glyph prefix on each name.
+				PlayerSearchMatchService.ToFactionPrefixedName(criteria.SearcherIsStaff, candidate.Race, candidate.Name)));
 		});
 
 		await SendPacketAsync(new SmPlayerSearch(rows));

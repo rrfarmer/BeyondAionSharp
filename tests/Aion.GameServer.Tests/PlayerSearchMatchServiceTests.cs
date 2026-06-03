@@ -161,6 +161,40 @@ public sealed class PlayerSearchMatchServiceTests
 		Assert.Equal(211, SmPlayerSearch.PacketOpCode);
 	}
 
+	[Fact]
+	public void ToFactionPrefixedName_NonStaffSearcher_ReturnsPlainName()
+	{
+		// Java parity: ChatUtil.toFactionPrefixedName — no prefix unless reader.isStaff().
+		Assert.Equal("Target", PlayerSearchMatchService.ToFactionPrefixedName(searcherIsStaff: false, candidateRace: "ELYOS", candidateName: "Target"));
+		Assert.Equal("Target", PlayerSearchMatchService.ToFactionPrefixedName(searcherIsStaff: false, candidateRace: "ASMODIANS", candidateName: "Target"));
+	}
+
+	[Fact]
+	public void ToFactionPrefixedName_StaffSearcher_PrefixesByCandidateRace()
+	{
+		// Java parity: reader.isStaff() -> (player.getRace() == ELYOS ? ELYOS_NAME_PREFIX : ASMO_NAME_PREFIX) + name.
+		Assert.Equal(PlayerSearchMatchService.ElyosNamePrefix + "Elyos1",
+			PlayerSearchMatchService.ToFactionPrefixedName(searcherIsStaff: true, candidateRace: "ELYOS", candidateName: "Elyos1"));
+		Assert.Equal(PlayerSearchMatchService.AsmodianNamePrefix + "Asmo1",
+			PlayerSearchMatchService.ToFactionPrefixedName(searcherIsStaff: true, candidateRace: "ASMODIANS", candidateName: "Asmo1"));
+	}
+
+	[Fact]
+	public void ToFactionPrefixedName_StaffSearcher_NonElyosRaceUsesAsmodianPrefix()
+	{
+		// Java parity: the ternary's else branch (anything not ELYOS) yields the Asmodian prefix.
+		Assert.Equal(PlayerSearchMatchService.AsmodianNamePrefix + "Other",
+			PlayerSearchMatchService.ToFactionPrefixedName(searcherIsStaff: true, candidateRace: "UNKNOWN", candidateName: "Other"));
+	}
+
+	[Fact]
+	public void ToFactionPrefixedName_PrefixConstantsMatchJavaCodePoints()
+	{
+		// Java parity: ChatUtil.ELYOS_NAME_PREFIX = '', ASMO_NAME_PREFIX = ''.
+		Assert.Equal('', PlayerSearchMatchService.ElyosNamePrefix);
+		Assert.Equal('', PlayerSearchMatchService.AsmodianNamePrefix);
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
