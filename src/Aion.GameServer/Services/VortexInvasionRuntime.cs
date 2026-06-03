@@ -51,6 +51,48 @@ public sealed class VortexInvasionRuntime
 		}
 	}
 
+	public VortexStopInvasionResult StopInvasion(int vortexLocationId)
+	{
+		lock (_sync)
+		{
+			if (!_activeInvasions.Remove(vortexLocationId, out var state))
+			{
+				return new VortexStopInvasionResult(
+					Stopped: false,
+					LocationId: vortexLocationId,
+					Status: VortexStopInvasionStatus.MissingInvasion,
+					JavaSource: "services/VortexService.stopInvasion");
+			}
+
+			var previousSnapshot = state.ToSnapshot();
+			var hadActivePortal = state.ActivePortal != null;
+			var removedInvaderCount = state.InvaderObjectIds.Count;
+			var removedDefenderCount = state.DefenderObjectIds.Count;
+			var removedPassedPlayerCount = state.PassedPlayerObjectIds.Count;
+
+			// Java parity: VortexService removes the active invasion entry before
+			// DimensionalVortex.stop invokes Invasion.stopInvasion. The full Java method
+			// also kills kisks, kicks online invaders, despawns, and respawns PEACE NPCs;
+			// this runtime slice only clears metadata for those later side effects.
+			state.ActivePortal = null;
+			state.InvaderObjectIds.Clear();
+			state.DefenderObjectIds.Clear();
+			state.PassedPlayerObjectIds.Clear();
+
+			return new VortexStopInvasionResult(
+				Stopped: true,
+				LocationId: vortexLocationId,
+				Status: VortexStopInvasionStatus.Stopped,
+				JavaSource: "services/VortexService.stopInvasion -> services/vortex/Invasion.stopInvasion",
+				PreviousSnapshot: previousSnapshot,
+				StoppedSnapshot: state.ToSnapshot(),
+				HadActivePortal: hadActivePortal,
+				RemovedInvaderCount: removedInvaderCount,
+				RemovedDefenderCount: removedDefenderCount,
+				RemovedPassedPlayerCount: removedPassedPlayerCount);
+		}
+	}
+
 	public bool AddInvader(int vortexLocationId, Player player, bool passedPortal = true)
 	{
 		ArgumentNullException.ThrowIfNull(player);
@@ -347,3 +389,21 @@ public sealed record VortexPassedPlayerSyncPlan(
 	int PassedPlayerCount,
 	bool UsePassedPlayerCount,
 	string JavaSource);
+
+public enum VortexStopInvasionStatus
+{
+	MissingInvasion,
+	Stopped,
+}
+
+public sealed record VortexStopInvasionResult(
+	bool Stopped,
+	int LocationId,
+	VortexStopInvasionStatus Status,
+	string JavaSource,
+	VortexInvasionSnapshot? PreviousSnapshot = null,
+	VortexInvasionSnapshot? StoppedSnapshot = null,
+	bool HadActivePortal = false,
+	int RemovedInvaderCount = 0,
+	int RemovedDefenderCount = 0,
+	int RemovedPassedPlayerCount = 0);

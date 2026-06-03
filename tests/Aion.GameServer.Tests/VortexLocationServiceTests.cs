@@ -117,6 +117,124 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StopInvasion_ClearsActivePortalParticipantsAndRuntimeEntryLikeJavaStopMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-clears-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var portal = CreateVortexPortal(location);
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId);
+			var passer = CreatePlayer(1006, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location, portal);
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			Assert.True(runtime.AddDefender(location.Id, defender));
+			Assert.True(runtime.RecordPortalPass(location, passer));
+
+			var stop = runtime.StopInvasion(location.Id);
+
+			Assert.True(stop.Stopped);
+			Assert.Equal(VortexStopInvasionStatus.Stopped, stop.Status);
+			Assert.Equal(location.Id, stop.LocationId);
+			Assert.True(stop.HadActivePortal);
+			Assert.Equal(1, stop.RemovedInvaderCount);
+			Assert.Equal(1, stop.RemovedDefenderCount);
+			Assert.Equal(2, stop.RemovedPassedPlayerCount);
+			Assert.Equal(
+				"services/VortexService.stopInvasion -> services/vortex/Invasion.stopInvasion",
+				stop.JavaSource);
+			var previous = Assert.IsType<VortexInvasionSnapshot>(stop.PreviousSnapshot);
+			Assert.True(previous.HasActivePortal);
+			Assert.Equal([1002], previous.InvaderObjectIds);
+			Assert.Equal([1004], previous.DefenderObjectIds);
+			Assert.Equal([1002, 1006], previous.PassedPlayerObjectIds);
+			var stopped = Assert.IsType<VortexInvasionSnapshot>(stop.StoppedSnapshot);
+			Assert.False(stopped.HasActivePortal);
+			Assert.Empty(stopped.InvaderObjectIds);
+			Assert.Empty(stopped.DefenderObjectIds);
+			Assert.Empty(stopped.PassedPlayerObjectIds);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+			Assert.False(runtime.IsInvaderPlayer(invader));
+			Assert.False(runtime.IsDefenderPlayer(defender));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StopInvasion_MissingOrRepeatedStopReturnsGuardMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-missing-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+
+			var missing = runtime.StopInvasion(location.Id);
+
+			Assert.False(missing.Stopped);
+			Assert.Equal(VortexStopInvasionStatus.MissingInvasion, missing.Status);
+			Assert.Equal("services/VortexService.stopInvasion", missing.JavaSource);
+			Assert.Null(missing.PreviousSnapshot);
+			Assert.Null(missing.StoppedSnapshot);
+
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			var stopped = runtime.StopInvasion(location.Id);
+			var repeated = runtime.StopInvasion(location.Id);
+
+			Assert.True(stopped.Stopped);
+			Assert.False(repeated.Stopped);
+			Assert.Equal(VortexStopInvasionStatus.MissingInvasion, repeated.Status);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StartInvasion_AfterStopCreatesFreshRuntimeStateLikeJavaServiceRestart()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-restart-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var firstInvader = CreatePlayer(1002, isOnline: false, location.InvasionWorldId);
+			var nextInvader = CreatePlayer(1008, isOnline: false, location.InvasionWorldId);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.AddInvader(location.Id, firstInvader));
+			Assert.True(runtime.StopInvasion(location.Id).Stopped);
+
+			var restarted = runtime.StartInvasion(location);
+			Assert.True(runtime.AddInvader(location.Id, nextInvader));
+
+			Assert.False(restarted.HasActivePortal);
+			Assert.Empty(restarted.InvaderObjectIds);
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			Assert.Equal([1008], snapshot.InvaderObjectIds);
+			Assert.Equal([1008], snapshot.PassedPlayerObjectIds);
+			Assert.False(runtime.IsInvaderPlayer(firstInvader));
+			Assert.True(runtime.IsInvaderPlayer(nextInvader));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task RemoveInvaderPlayer_IncludesActivePortalMetadataForRiftEntryUpdatePipeline()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-removal-" + Guid.NewGuid().ToString("N"));
