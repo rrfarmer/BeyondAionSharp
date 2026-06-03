@@ -95,19 +95,39 @@ public sealed class NpcDialogSideEffectServiceTests
 	}
 
 	[Fact]
-	public void ItemTemplateSummary_IsBreakableMatchesJavaItemMaskBreakableBit()
+	public void ItemTemplateSummary_ItemMaskPropertiesMatchJavaItemMaskConstants()
 	{
-		// Java parity: model/items/ItemMask.BREAKABLE = (1 << 6) = 64; ItemTemplate.isBreakable() checks this bit.
-		const int breakableMask = 1 << 6;
-		var breakableTemplate = CreateMinimalItemTemplate(mask: breakableMask);
-		var nonBreakableTemplate = CreateMinimalItemTemplate(mask: 0);
-		var bothFlagsTemplate = CreateMinimalItemTemplate(mask: breakableMask | (1 << 7)); // BREAKABLE + SOUL_BOUND
+		// Java parity: model/items/ItemMask constants; each bit maps to a boolean property.
+		var allMask = CreateMinimalItemTemplate(mask: ~0); // all bits set
+		var noMask = CreateMinimalItemTemplate(mask: 0);
 
-		Assert.True(breakableTemplate.IsBreakable);
-		Assert.False(nonBreakableTemplate.IsBreakable);
-		Assert.True(bothFlagsTemplate.IsBreakable);
-		Assert.False(nonBreakableTemplate.IsSoulBound);
-		Assert.True(bothFlagsTemplate.IsSoulBound);
+		// Existing masks
+		Assert.True(allMask.IsTradeable);      // 1 << 1
+		Assert.True(allMask.IsBreakable);      // 1 << 6
+		Assert.True(allMask.IsSoulBound);      // 1 << 7
+		Assert.True(allMask.IsNoEnchant);      // 1 << 9
+		Assert.True(allMask.IsRemodelable);    // 1 << 12
+		Assert.True(allMask.CanPolish);        // 1 << 17
+		Assert.True(allMask.CanApExtract);     // 1 << 16
+		Assert.True(allMask.CanSocketGodstone); // 1 << 10
+		Assert.True(allMask.IsItemDyePermitted); // 1 << 15
+		// New masks added in UOW-2525
+		Assert.True(allMask.IsSellable);                  // 1 << 2
+		Assert.True(allMask.IsStorableInWarehouse);        // 1 << 3
+		Assert.True(allMask.IsStorableInAccountWarehouse); // 1 << 4
+		Assert.True(allMask.IsStorableInLegionWarehouse);  // 1 << 5
+		Assert.True(allMask.IsRemovedOnLogout);            // 1 << 8
+		Assert.True(allMask.CanCompositeWeapon);           // 1 << 11
+		Assert.True(allMask.CanSplit);                     // 1 << 13
+		Assert.True(allMask.IsDeletable);                  // 1 << 14
+		Assert.True(allMask.IsLegionTradeable);            // 1 << 18
+		// All false for zero mask
+		Assert.False(noMask.IsBreakable);
+		Assert.False(noMask.IsSellable);
+		Assert.False(noMask.IsStorableInWarehouse);
+		Assert.False(noMask.IsRemovedOnLogout);
+		Assert.False(noMask.IsDeletable);
+		Assert.False(noMask.IsLegionTradeable);
 	}
 
 	[Fact]

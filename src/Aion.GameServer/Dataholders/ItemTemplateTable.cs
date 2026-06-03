@@ -120,11 +120,20 @@ public sealed record ItemTemplateSummary(
 	int OptionSlotBonus = 0,
 	ItemTuningActionInfo? TuningAction = null)
 {
+	private const int SellableMask = 1 << 2;
+	private const int StorableInWhMask = 1 << 3;
+	private const int StorableInAwhMask = 1 << 4;
+	private const int StorableInLwhMask = 1 << 5;
 	private const int BreakableMask = 1 << 6;
 	private const int SoulBoundMask = 1 << 7;
+	private const int RemoveLogoutMask = 1 << 8;
 	private const int NoEnchantMask = 1 << 9;
+	private const int CanCompositeWeaponMask = 1 << 11;
+	private const int CanSplitMask = 1 << 13;
+	private const int DeletableMask = 1 << 14;
 	private const int CanPolishMask = 1 << 17;
 	private const int CanApExtractMask = 1 << 16;
+	private const int LegionTradeableMask = 1 << 18;
 	private const int LimitOneMask = 1;
 	private const int CanProcEnchantMask = 1 << 10;
 	private const int DyeableMask = 1 << 15;
@@ -230,6 +239,17 @@ public sealed record ItemTemplateSummary(
 	public bool IsTwoHandWeapon => TwoHandWeaponGroups.Contains(ItemGroup);
 
 	public bool IsTradeable => (Mask & (1 << 1)) == (1 << 1);
+
+	// Java parity: model/items/ItemMask.*
+	public bool IsSellable => (Mask & SellableMask) == SellableMask;
+	public bool IsStorableInWarehouse => (Mask & StorableInWhMask) == StorableInWhMask;
+	public bool IsStorableInAccountWarehouse => (Mask & StorableInAwhMask) == StorableInAwhMask;
+	public bool IsStorableInLegionWarehouse => (Mask & StorableInLwhMask) == StorableInLwhMask;
+	public bool IsRemovedOnLogout => (Mask & RemoveLogoutMask) == RemoveLogoutMask;
+	public bool CanCompositeWeapon => (Mask & CanCompositeWeaponMask) == CanCompositeWeaponMask;
+	public bool CanSplit => (Mask & CanSplitMask) == CanSplitMask;
+	public bool IsDeletable => (Mask & DeletableMask) == DeletableMask;
+	public bool IsLegionTradeable => (Mask & LegionTradeableMask) == LegionTradeableMask;
 
 	public bool IsLimitOne => (Mask & LimitOneMask) == LimitOneMask;
 
