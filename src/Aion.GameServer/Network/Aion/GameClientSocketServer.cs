@@ -54,6 +54,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
 	private readonly AutoGroupPenaltyRefreshSchedulerService? _autoGroupPenaltyRefreshScheduler;
@@ -100,6 +101,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
+		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
 		AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
 		AutoGroupPenaltyRefreshSchedulerService? autoGroupPenaltyRefreshScheduler = null,
@@ -152,6 +154,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
@@ -213,6 +216,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				autoGroupLookingPartyRegistrations: _autoGroupLookingPartyRegistrations,
 				autoGroupPenaltyRefreshScheduler: _autoGroupPenaltyRefreshScheduler,
 				periodicInstanceRegistrations: _periodicInstanceRegistrations,
+				playerLeagueRuntime: _playerLeagueRuntime,
 				playerGroupInviteRequestService: _playerGroupInviteRequestService,
 				playerAllianceInviteRequestService: _playerAllianceInviteRequestService,
 				findGroupConnectionClientActionCompositionPlanService: _findGroupConnectionClientActionCompositionPlanService,

@@ -1,8 +1,10 @@
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -101,7 +103,35 @@ public class GameClientSocketServerSmokeTests
 		}
 	}
 
-	private static GameClientSocketServer CreateServer()
+	[Fact]
+	public async Task GameClientSocketServer_AcceptedConnectionUsesSharedLeagueRuntimeLikeJavaService()
+	{
+		var leagueRuntime = new PlayerLeagueRuntime();
+		var server = CreateServer(leagueRuntime);
+		var serverTask = Task.Run(() => server.StartAsync());
+
+		try
+		{
+			var endpoint = await WaitForEndpointAsync(() => server.LocalEndPoint);
+			using var client = new TcpClient();
+			await client.ConnectAsync(endpoint.Address, endpoint.Port);
+			await using var stream = client.GetStream();
+			await ReadFrameAsync(stream);
+
+			var connection = await WaitForConnectionAsync(server);
+
+			Assert.Same(leagueRuntime, GetPrivateField<PlayerLeagueRuntime>(connection, "_playerLeagueRuntime"));
+			await server.StopAsync(TimeSpan.FromSeconds(1));
+			await AssertClientClosedAsync(stream);
+			await AssertTaskCompletedAsync(serverTask);
+		}
+		finally
+		{
+			await server.StopAsync(TimeSpan.FromSeconds(1));
+		}
+	}
+
+	private static GameClientSocketServer CreateServer(PlayerLeagueRuntime? leagueRuntime = null)
 	{
 		var options = new GameServerOptions
 		{
@@ -112,7 +142,11 @@ public class GameClientSocketServerSmokeTests
 			},
 		};
 		var processor = new GamePacketProcessor<string>((packet, cancellationToken) => Task.CompletedTask);
-		return new GameClientSocketServer(NullLogger<GameClientSocketServer>.Instance, options, processor);
+		return new GameClientSocketServer(
+			NullLogger<GameClientSocketServer>.Instance,
+			options,
+			processor,
+			playerLeagueRuntime: leagueRuntime);
 	}
 
 	private static async Task<IPEndPoint> WaitForEndpointAsync(Func<IPEndPoint?> getEndpoint)
@@ -169,5 +203,27 @@ public class GameClientSocketServerSmokeTests
 		var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(2)));
 		Assert.Same(task, completed);
 		await task;
+	}
+
+	private static async Task<GameServerConnection> WaitForConnectionAsync(GameClientSocketServer server)
+	{
+		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+		while (!cts.IsCancellationRequested)
+		{
+			var connections = GetPrivateField<ConcurrentDictionary<string, GameServerConnection>>(server, "_connections");
+			if (connections.Values.SingleOrDefault() is { } connection)
+				return connection;
+			await Task.Delay(20, cts.Token);
+		}
+
+		throw new TimeoutException("Socket server did not accept the test connection before timeout.");
+	}
+
+	private static T GetPrivateField<T>(object instance, string fieldName)
+		where T : class
+	{
+		var field = instance.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+		Assert.NotNull(field);
+		return Assert.IsType<T>(field.GetValue(instance));
 	}
 }

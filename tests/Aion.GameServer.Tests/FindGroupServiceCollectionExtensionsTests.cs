@@ -26,6 +26,9 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 			provider.GetRequiredService<PlayerAllianceRuntime>(),
 			GetPrivateField<PlayerAllianceRuntime>(socketServer, "_playerAllianceRuntime"));
 		Assert.Same(
+			provider.GetRequiredService<PlayerLeagueRuntime>(),
+			GetPrivateField<PlayerLeagueRuntime>(socketServer, "_playerLeagueRuntime"));
+		Assert.Same(
 			provider.GetRequiredService<PlayerGroupInviteRequestService>(),
 			GetPrivateField<PlayerGroupInviteRequestService>(socketServer, "_playerGroupInviteRequestService"));
 		Assert.Same(
