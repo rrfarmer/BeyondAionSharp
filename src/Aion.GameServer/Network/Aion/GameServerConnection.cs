@@ -12093,6 +12093,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmTitleInfo(packet.TitleId));
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmTitleInfo(player, packet.TitleId), includeSourcePlayer: true);
+
+		// Java parity: TitleList.setDisplayTitle -> owner.getController().updateNearbyQuests.
+		// Title requirements on quests may change which are available after a title change.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var worldMapStates = _runtimeContext?.WorldMapStates;
+		if (worldMapStates != null && staticData?.NearbyQuestTemplates != null)
+		{
+			worldMapStates.TryGetWorldMapInstance(player.Position.WorldId, player.Position.InstanceId, out var mapInstance);
+			var nearbyPlan = NearbyQuestRefreshPlanService.CreatePlan(player, mapInstance, staticData.NearbyQuestTemplates);
+			var packetPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(nearbyPlan);
+			if (packetPlan.Packet != null)
+				await SendPacketAsync(packetPlan.Packet);
+		}
 	}
 
 	private async Task HandleBonusTitleAsync(Player player, CmBonusTitle packet)
