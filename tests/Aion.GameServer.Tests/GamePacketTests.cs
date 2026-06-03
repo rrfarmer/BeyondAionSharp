@@ -2429,6 +2429,20 @@ public class GamePacketTests
 		Assert.Equal(0, questionWindowReader.ReadD());
 		Assert.Equal(0, questionWindowReader.Remaining);
 
+		var vortexDefenderQuestionPayload = SerializeUnencryptedPayload(
+			new SmQuestionWindow(SmQuestionWindow.VortexDefenderInvitation, 0, 0)
+		);
+		using var vortexDefenderQuestionReader = new PacketBuffer(vortexDefenderQuestionPayload);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, vortexDefenderQuestionReader.ReadD());
+		Assert.Equal(string.Empty, vortexDefenderQuestionReader.ReadS());
+		Assert.Equal(string.Empty, vortexDefenderQuestionReader.ReadS());
+		Assert.Equal(string.Empty, vortexDefenderQuestionReader.ReadS());
+		Assert.Equal(0, vortexDefenderQuestionReader.ReadD());
+		Assert.Equal(0, (int)vortexDefenderQuestionReader.ReadC());
+		Assert.Equal(0, vortexDefenderQuestionReader.ReadD());
+		Assert.Equal(0, vortexDefenderQuestionReader.ReadD());
+		Assert.Equal(0, vortexDefenderQuestionReader.Remaining);
+
 		var recallQuestionPayload = SerializeUnencryptedPayload(
 			new SmQuestionWindow(SmQuestionWindow.SummonPartyAcceptRequest, 0, 0, "Kahrun", "Summon Group Member", "30")
 		);

@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
 
@@ -182,4 +183,59 @@ public sealed record VortexDefenderUpdateDefendersRegistrationRuntimeReport(
 	public bool ShouldMutateLiveGroup => false;
 	public bool ShouldMutateLiveAlliance => false;
 	public bool ShouldMutateLiveDefenders => false;
+}
+
+public sealed class VortexDefenderQuestionWindowIntentAdapterService
+{
+	public VortexDefenderQuestionWindowIntent CreateIntent(VortexDefenderUpdateDefendersRegistrationRuntimeReport registrationReport)
+	{
+		ArgumentNullException.ThrowIfNull(registrationReport);
+
+		var report = registrationReport.RegistrationReport;
+		var questionId = report.QuestionId;
+		var senderId = report.QuestionWindowSenderId ?? 0;
+		var rangeOrCooldownSeconds = report.QuestionWindowRangeOrCooldownSeconds ?? 0;
+		if (!registrationReport.WouldSendQuestionWindow)
+		{
+			return new VortexDefenderQuestionWindowIntent(
+				VortexDefenderQuestionWindowIntentStatus.NotCreated,
+				registrationReport.DefenderObjectId,
+				questionId,
+				senderId,
+				rangeOrCooldownSeconds,
+				QuestionWindow: null,
+				registrationReport,
+				JavaSource: "services/vortex/Invasion.updateDefenders -> network/aion/serverpackets/SM_QUESTION_WINDOW");
+		}
+
+		return new VortexDefenderQuestionWindowIntent(
+			VortexDefenderQuestionWindowIntentStatus.Created,
+			registrationReport.DefenderObjectId,
+			questionId,
+			senderId,
+			rangeOrCooldownSeconds,
+			new SmQuestionWindow(questionId, senderId, rangeOrCooldownSeconds),
+			registrationReport,
+			JavaSource: "services/vortex/Invasion.updateDefenders -> network/aion/serverpackets/SM_QUESTION_WINDOW");
+	}
+}
+
+public enum VortexDefenderQuestionWindowIntentStatus
+{
+	NotCreated,
+	Created,
+}
+
+public sealed record VortexDefenderQuestionWindowIntent(
+	VortexDefenderQuestionWindowIntentStatus Status,
+	int RecipientObjectId,
+	int QuestionId,
+	int SenderObjectId,
+	int RangeOrCooldownSeconds,
+	SmQuestionWindow? QuestionWindow,
+	VortexDefenderUpdateDefendersRegistrationRuntimeReport RegistrationReport,
+	string JavaSource)
+{
+	public bool Created => Status == VortexDefenderQuestionWindowIntentStatus.Created;
+	public bool ShouldSendLivePacket => false;
 }

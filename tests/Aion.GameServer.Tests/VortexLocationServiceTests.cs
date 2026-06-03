@@ -1547,6 +1547,55 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderQuestionWindowIntentAdapter_CreatesNonSentPacketIntentOnlyAfterRegistration()
+	{
+		var registrationAdapter = new VortexDefenderUpdateDefendersRegistrationRuntimeAdapterService();
+		var intentAdapter = new VortexDefenderQuestionWindowIntentAdapterService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		var registration = registrationAdapter.RegisterInvitation(defender);
+
+		var intent = intentAdapter.CreateIntent(registration);
+
+		Assert.Equal(VortexDefenderQuestionWindowIntentStatus.Created, intent.Status);
+		Assert.True(intent.Created);
+		Assert.Equal(defender.ObjectId, intent.RecipientObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, intent.QuestionId);
+		Assert.Equal(0, intent.SenderObjectId);
+		Assert.Equal(0, intent.RangeOrCooldownSeconds);
+		var questionWindow = Assert.IsType<SmQuestionWindow>(intent.QuestionWindow);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, questionWindow.Code);
+		Assert.Same(registration, intent.RegistrationReport);
+		Assert.False(intent.ShouldSendLivePacket);
+		Assert.Equal(
+			"services/vortex/Invasion.updateDefenders -> network/aion/serverpackets/SM_QUESTION_WINDOW",
+			intent.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderQuestionWindowIntentAdapter_OmitsPacketIntentWhenRegistrationRejected()
+	{
+		var registrationAdapter = new VortexDefenderUpdateDefendersRegistrationRuntimeAdapterService();
+		var intentAdapter = new VortexDefenderQuestionWindowIntentAdapterService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		Assert.True(defender.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown)));
+		var registration = registrationAdapter.RegisterInvitation(defender);
+
+		var intent = intentAdapter.CreateIntent(registration);
+
+		Assert.Equal(VortexDefenderQuestionWindowIntentStatus.NotCreated, intent.Status);
+		Assert.False(intent.Created);
+		Assert.Equal(defender.ObjectId, intent.RecipientObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, intent.QuestionId);
+		Assert.Equal(0, intent.SenderObjectId);
+		Assert.Equal(0, intent.RangeOrCooldownSeconds);
+		Assert.Null(intent.QuestionWindow);
+		Assert.Same(registration, intent.RegistrationReport);
+		Assert.False(intent.ShouldSendLivePacket);
+	}
+
+	[Fact]
 	public void DefenderInvitationResponseDispatchPlan_MapsZeroToDenyAndNonZeroToAcceptLikeJavaHandle()
 	{
 		var planner = new VortexDefenderInvitationResponseDispatchPlanService();
