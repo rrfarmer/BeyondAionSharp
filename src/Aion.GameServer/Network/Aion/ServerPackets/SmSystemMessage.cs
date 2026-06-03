@@ -328,10 +328,25 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400179);
 	}
 
+	public static SmSystemMessage CantInstanceTooManyMembers(int maxMemberCount, int worldId)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_TOO_MANY_MEMBERS(maxMemberCount, worldId).
+		return new SmSystemMessage(
+			1400180,
+			maxMemberCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage CantInstanceAlreadyRegistered(int worldId)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_ALREADY_REGISTERED(worldId).
 		return new SmSystemMessage(1400181, worldId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage CantInstanceNotLeader()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_NOT_LEADER.
+		return new SmSystemMessage(1400182);
 	}
 
 	public static SmSystemMessage InstanceRegisterSuccess()

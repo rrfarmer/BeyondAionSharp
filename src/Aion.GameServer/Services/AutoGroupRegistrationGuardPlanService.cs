@@ -8,6 +8,9 @@ public enum AutoGroupRegistrationGuardPlanStatus
 	BlockedLevelOutOfRange,
 	BlockedPvPArenaUnavailable,
 	BlockedCooldown,
+	BlockedEntryUnsupported,
+	BlockedNotLeader,
+	BlockedTooManyMembers,
 }
 
 public sealed record AutoGroupRegistrationGuardPlan(

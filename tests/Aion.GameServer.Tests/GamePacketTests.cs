@@ -388,7 +388,9 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.InstanceOpenIdLdf5FortressRe(), 1402192);
 		AssertSystemMessage(SmSystemMessage.CannotMakeInstanceCoolTime(), 1400043);
 		AssertSystemMessage(SmSystemMessage.CantInstanceEnterLevel(), 1400179);
+		AssertSystemMessage(SmSystemMessage.CantInstanceTooManyMembers(3, 300110000), 1400180, "3", "300110000");
 		AssertSystemMessage(SmSystemMessage.CantInstanceAlreadyRegistered(300110000), 1400181, "300110000");
+		AssertSystemMessage(SmSystemMessage.CantInstanceNotLeader(), 1400182);
 		AssertSystemMessage(SmSystemMessage.InstanceRegisterSuccess(), 1400194);
 		AssertSystemMessage(SmSystemMessage.MentorCantEnter(300030000), 1400766, "300030000");
 		AssertSystemMessage(SmSystemMessage.MovePortalErrorInvalidRace(), 901354);

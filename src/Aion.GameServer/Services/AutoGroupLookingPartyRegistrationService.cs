@@ -16,7 +16,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		AutoGroupEntryRequestType entryRequestType,
 		AutoGroupTable? autoGroups,
 		PlayerGroupRuntime? groupRuntime = null,
-		PlayerAllianceRuntime? allianceRuntime = null)
+		PlayerAllianceRuntime? allianceRuntime = null,
+		InstanceCooltimeTable? instanceCooltimes = null)
 	{
 		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
 		if (autoGroup == null)
@@ -33,6 +34,17 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			return AutoGroupStartLookingResult.Blocked(maskId, entryRequestType, guard);
 
 		var memberObjectIds = ResolveMemberObjectIds(player, groupRuntime, allianceRuntime);
+		var entryGuard = CreateEntryRequestGuard(
+			player,
+			autoGroup,
+			entryRequestType,
+			memberObjectIds,
+			groupRuntime,
+			allianceRuntime,
+			instanceCooltimes);
+		if (!entryGuard.CanRegister)
+			return AutoGroupStartLookingResult.Blocked(maskId, entryRequestType, entryGuard);
+
 		lock (_sync)
 		{
 			if (_lookingPartiesByMaskId.TryGetValue(maskId, out var parties)
@@ -217,6 +229,159 @@ public sealed class AutoGroupLookingPartyRegistrationService
 
 		return [player.ObjectId];
 	}
+
+	private static AutoGroupRegistrationGuardPlan CreateEntryRequestGuard(
+		Player player,
+		AutoGroupSummary autoGroup,
+		AutoGroupEntryRequestType entryRequestType,
+		IReadOnlyList<int> memberObjectIds,
+		PlayerGroupRuntime? groupRuntime,
+		PlayerAllianceRuntime? allianceRuntime,
+		InstanceCooltimeTable? instanceCooltimes)
+	{
+		// Java parity: services/autogroup/AutoGroupUtility.canRegister* after
+		// AutoGroupService.canRegister common level/PvP/cooldown guards.
+		return entryRequestType switch
+		{
+			AutoGroupEntryRequestType.NewGroupEntry => CreateSoloEntryGuard(
+				player,
+				autoGroup.RegisterNew,
+				autoGroup.MaskId,
+				entryRequestType,
+				"AutoGroupUtility.canRegisterNewEntry"),
+			AutoGroupEntryRequestType.QuickGroupEntry => CreateSoloEntryGuard(
+				player,
+				autoGroup.RegisterQuick,
+				autoGroup.MaskId,
+				entryRequestType,
+				"AutoGroupUtility.canRegisterQuickEntry"),
+			AutoGroupEntryRequestType.GroupEntry => CreateGroupEntryGuard(
+				player,
+				autoGroup,
+				memberObjectIds,
+				groupRuntime,
+				allianceRuntime,
+				instanceCooltimes),
+			_ => AllowedEntryGuard(player.Level, autoGroup.MaskId, entryRequestType),
+		};
+	}
+
+	private static AutoGroupRegistrationGuardPlan CreateSoloEntryGuard(
+		Player player,
+		bool templateSupportsEntry,
+		int maskId,
+		AutoGroupEntryRequestType entryRequestType,
+		string javaSource)
+	{
+		if (!templateSupportsEntry)
+		{
+			return new AutoGroupRegistrationGuardPlan(
+				AutoGroupRegistrationGuardPlanStatus.BlockedEntryUnsupported,
+				player.Level,
+				DenialMessage: null,
+				CanRegister: false,
+				$"{javaSource} -> template flag false for mask {maskId} -> return false (no system message)"
+			);
+		}
+
+		if (IsInTeam(player))
+		{
+			return new AutoGroupRegistrationGuardPlan(
+				AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader,
+				player.Level,
+				SmSystemMessage.CantInstanceNotLeader(),
+				CanRegister: false,
+				$"{javaSource} -> player.isInTeam() -> STR_MSG_CANT_INSTANCE_NOT_LEADER"
+			);
+		}
+
+		return AllowedEntryGuard(player.Level, maskId, entryRequestType);
+	}
+
+	private static AutoGroupRegistrationGuardPlan CreateGroupEntryGuard(
+		Player player,
+		AutoGroupSummary autoGroup,
+		IReadOnlyList<int> memberObjectIds,
+		PlayerGroupRuntime? groupRuntime,
+		PlayerAllianceRuntime? allianceRuntime,
+		InstanceCooltimeTable? instanceCooltimes)
+	{
+		if (!autoGroup.RegisterGroup)
+		{
+			return new AutoGroupRegistrationGuardPlan(
+				AutoGroupRegistrationGuardPlanStatus.BlockedEntryUnsupported,
+				player.Level,
+				DenialMessage: null,
+				CanRegister: false,
+				$"AutoGroupUtility.canRegisterGroupEntry -> !template.hasRegisterGroup for mask {autoGroup.MaskId} -> return false (no system message)"
+			);
+		}
+
+		if (!IsInTeam(player) || !IsTeamLeader(player, memberObjectIds, groupRuntime, allianceRuntime))
+		{
+			return new AutoGroupRegistrationGuardPlan(
+				AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader,
+				player.Level,
+				SmSystemMessage.CantInstanceNotLeader(),
+				CanRegister: false,
+				"AutoGroupUtility.checkGroupRequirements -> team == null || !team.isLeader(player) -> STR_MSG_CANT_INSTANCE_NOT_LEADER"
+			);
+		}
+
+		if (autoGroup.IsPeriodicInstance && instanceCooltimes != null)
+		{
+			var maxMemberPerTeam = instanceCooltimes.GetMaxMemberCount(autoGroup.InstanceMapId, player.Race);
+			if (maxMemberPerTeam > 0 && memberObjectIds.Count > maxMemberPerTeam)
+			{
+				return new AutoGroupRegistrationGuardPlan(
+					AutoGroupRegistrationGuardPlanStatus.BlockedTooManyMembers,
+					player.Level,
+					SmSystemMessage.CantInstanceTooManyMembers(maxMemberPerTeam, autoGroup.InstanceMapId),
+					CanRegister: false,
+					"AutoGroupUtility.checkGroupRequirements -> periodic team.size() > INSTANCE_COOLTIME_DATA.getMaxMemberCount -> STR_MSG_CANT_INSTANCE_TOO_MANY_MEMBERS"
+				);
+			}
+		}
+
+		return AllowedEntryGuard(player.Level, autoGroup.MaskId, AutoGroupEntryRequestType.GroupEntry);
+	}
+
+	private static AutoGroupRegistrationGuardPlan AllowedEntryGuard(
+		int playerLevel,
+		int maskId,
+		AutoGroupEntryRequestType entryRequestType)
+	{
+		return new AutoGroupRegistrationGuardPlan(
+			AutoGroupRegistrationGuardPlanStatus.CanRegister,
+			playerLevel,
+			DenialMessage: null,
+			CanRegister: true,
+			$"AutoGroupUtility.canRegister* -> entry guard passed (mask={maskId}, entry={entryRequestType})"
+		);
+	}
+
+	private static bool IsInTeam(Player player)
+	{
+		return player.CurrentTeamId > 0
+			&& player.TeamMembership is PlayerTeamMembership.Group or PlayerTeamMembership.Alliance;
+	}
+
+	private static bool IsTeamLeader(
+		Player player,
+		IReadOnlyList<int> memberObjectIds,
+		PlayerGroupRuntime? groupRuntime,
+		PlayerAllianceRuntime? allianceRuntime)
+	{
+		if (player.TeamMembership == PlayerTeamMembership.Group)
+			return groupRuntime?.IsLeader(player.CurrentTeamId, player)
+				?? memberObjectIds.FirstOrDefault() == player.ObjectId;
+
+		if (player.TeamMembership == PlayerTeamMembership.Alliance)
+			return allianceRuntime?.IsLeader(player.CurrentTeamId, player)
+				?? memberObjectIds.FirstOrDefault() == player.ObjectId;
+
+		return false;
+	}
 }
 
 public sealed record AutoGroupLookingPartyRegistration(
@@ -298,8 +463,14 @@ public sealed record AutoGroupStartLookingResult(
 		AutoGroupEntryRequestType entryRequestType,
 		AutoGroupRegistrationGuardPlan guardPlan)
 	{
+		var status = guardPlan.Status is AutoGroupRegistrationGuardPlanStatus.BlockedEntryUnsupported
+			or AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader
+			or AutoGroupRegistrationGuardPlanStatus.BlockedTooManyMembers
+			? AutoGroupStartLookingStatus.BlockedByEntryGuard
+			: AutoGroupStartLookingStatus.BlockedByCommonGuard;
+
 		return new AutoGroupStartLookingResult(
-			AutoGroupStartLookingStatus.BlockedByCommonGuard,
+			status,
 			maskId,
 			entryRequestType,
 			Registration: null,
@@ -322,6 +493,7 @@ public enum AutoGroupStartLookingStatus
 	Registered,
 	MissingAutoGroup,
 	BlockedByCommonGuard,
+	BlockedByEntryGuard,
 	AlreadyRegistered,
 }
 

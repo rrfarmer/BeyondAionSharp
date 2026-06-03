@@ -108,7 +108,7 @@ public sealed class GameServerConnectionAutoGroupTests
 				{
 					buffer.WriteD(107);
 					buffer.WriteC(100);
-					buffer.WriteC(2);
+					buffer.WriteC(0);
 				}));
 		sentPackets.Clear();
 		await InvokeProcessPacketAsync(
@@ -119,7 +119,7 @@ public sealed class GameServerConnectionAutoGroupTests
 				{
 					buffer.WriteD(107);
 					buffer.WriteC(100);
-					buffer.WriteC(2);
+					buffer.WriteC(1);
 				}));
 
 		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
@@ -158,7 +158,7 @@ public sealed class GameServerConnectionAutoGroupTests
 				{
 					buffer.WriteD(107);
 					buffer.WriteC(100);
-					buffer.WriteC(2);
+					buffer.WriteC(0);
 				}));
 
 		Assert.Collection(
@@ -240,6 +240,51 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.DoesNotContain(registry.SentPackets, delivery => delivery.PlayerObjectId == 1007);
 		AssertFanoutPacketOrder(registry.SentPackets.Take(3).Select(delivery => delivery.Packet).ToArray());
 		AssertFanoutPacketOrder(registry.SentPackets.Skip(3).Take(3).Select(delivery => delivery.Packet).ToArray());
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var groupRuntime = new PlayerGroupRuntime();
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		var leader = new Player
+		{
+			ObjectId = 1010,
+			Name = "QuickLeader",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var member = new Player
+		{
+			ObjectId = 1011,
+			Name = "QuickMember",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		groupRuntime.CreateOrUpdateGroup(77, [leader, member]);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			playerGroupRuntime: groupRuntime);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, leader);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(1);
+				}));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
+		Assert.Equal(1400182, message.MessageId);
+		Assert.Empty(message.Parameters);
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)

@@ -28,12 +28,12 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		var result = service.StartLooking(
 			player,
 			107,
-			AutoGroupEntryRequestType.GroupEntry,
+			AutoGroupEntryRequestType.NewGroupEntry,
 			autoGroups);
 
 		Assert.Equal(AutoGroupStartLookingStatus.Registered, result.Status);
 		Assert.True(result.RegisteredQueue);
-		Assert.Equal(AutoGroupEntryRequestType.GroupEntry, result.EntryRequestType);
+		Assert.Equal(AutoGroupEntryRequestType.NewGroupEntry, result.EntryRequestType);
 		Assert.Equal([1001], result.Registration?.MemberObjectIds);
 		Assert.True(service.IsSearching(1001, 107));
 		Assert.Equal(1, service.GetLookingPartyCount(107));
@@ -67,13 +67,112 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		var service = new AutoGroupLookingPartyRegistrationService();
 		var player = CreatePlayer(objectId: 1001, level: 50);
 		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
-		service.StartLooking(player, 107, AutoGroupEntryRequestType.GroupEntry, autoGroups);
+		service.StartLooking(player, 107, AutoGroupEntryRequestType.NewGroupEntry, autoGroups);
 
 		var result = service.StartLooking(player, 107, AutoGroupEntryRequestType.QuickGroupEntry, autoGroups);
 
 		Assert.Equal(AutoGroupStartLookingStatus.AlreadyRegistered, result.Status);
 		Assert.False(result.RegisteredQueue);
 		Assert.Equal(1, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_NewOrQuickEntryRejectsTeamPlayerLikeJavaNotLeader()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var member = CreatePlayer(objectId: 1002, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, member]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var result = service.StartLooking(
+			leader,
+			107,
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			autoGroups,
+			groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader, result.GuardPlan?.Status);
+		Assert.Equal(1400182, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.False(service.IsSearching(leader.ObjectId, 107));
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_UnsupportedEntryFlagIsSilentNoOpLikeJavaTemplateFlag()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var player = CreatePlayer(objectId: 1001, level: 50);
+		var autoGroups = new AutoGroupTable(
+		[
+			CreateAutoGroup(107, 300110000, registerQuick: false),
+		]);
+
+		var result = service.StartLooking(
+			player,
+			107,
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			autoGroups);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedEntryUnsupported, result.GuardPlan?.Status);
+		Assert.Null(result.GuardPlan?.DenialMessage);
+		Assert.False(service.IsSearching(player.ObjectId, 107));
+	}
+
+	[Fact]
+	public void StartLooking_GroupEntryRejectsSoloOrNonLeaderLikeJavaNotLeader()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var solo = CreatePlayer(objectId: 1001, level: 50);
+		var leader = CreatePlayer(objectId: 1002, level: 50);
+		var member = CreatePlayer(objectId: 1003, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, member]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+
+		var soloResult = service.StartLooking(solo, 107, AutoGroupEntryRequestType.GroupEntry, autoGroups);
+		var memberResult = service.StartLooking(member, 107, AutoGroupEntryRequestType.GroupEntry, autoGroups, groupRuntime);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, soloResult.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader, soloResult.GuardPlan?.Status);
+		Assert.Equal(1400182, soloResult.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, memberResult.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedNotLeader, memberResult.GuardPlan?.Status);
+		Assert.Equal(1400182, memberResult.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void StartLooking_PeriodicGroupEntryRejectsTooManyMembersLikeJavaMaxMemberCount()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var groupRuntime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(objectId: 1001, level: 50);
+		var member1 = CreatePlayer(objectId: 1002, level: 50);
+		var member2 = CreatePlayer(objectId: 1003, level: 50);
+		groupRuntime.CreateOrUpdateGroup(teamId: 77, [leader, member1, member2]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var instanceCooltimes = new InstanceCooltimeTable(
+		[
+			new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 5, MaxMemberLight: 2, MaxMemberDark: 2),
+		]);
+
+		var result = service.StartLooking(
+			leader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			groupRuntime,
+			instanceCooltimes: instanceCooltimes);
+
+		Assert.Equal(AutoGroupStartLookingStatus.BlockedByEntryGuard, result.Status);
+		Assert.Equal(AutoGroupRegistrationGuardPlanStatus.BlockedTooManyMembers, result.GuardPlan?.Status);
+		Assert.Equal(1400180, result.GuardPlan?.DenialMessage?.MessageId);
+		Assert.Equal(["2", "300110000"], result.GuardPlan?.DenialMessage?.Parameters);
+		Assert.False(service.IsSearching(leader.ObjectId, 107));
 	}
 
 	[Fact]
@@ -256,7 +355,12 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Empty(registry.SentPackets);
 	}
 
-	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId)
+	private static AutoGroupSummary CreateAutoGroup(
+		int maskId,
+		int worldId,
+		bool registerQuick = true,
+		bool registerGroup = true,
+		bool registerNew = true)
 	{
 		return new AutoGroupSummary(
 			maskId,
@@ -265,9 +369,9 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 			TitleId: 150000 + maskId,
 			MinLevel: 46,
 			MaxLevel: 65,
-			RegisterQuick: true,
-			RegisterGroup: true,
-			RegisterNew: true,
+			RegisterQuick: registerQuick,
+			RegisterGroup: registerGroup,
+			RegisterNew: registerNew,
 			NpcIds: []);
 	}
 

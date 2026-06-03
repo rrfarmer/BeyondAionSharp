@@ -1503,7 +1503,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					entryRequestType.Value,
 					autoGroups,
 					_playerGroupRuntime,
-					_playerAllianceRuntime);
+					_playerAllianceRuntime,
+					_runtimeContext?.DataManager?.StaticData.InstanceCooltimes);
 
 				if (result.GuardPlan?.DenialMessage != null)
 					await SendPacketAsync(result.GuardPlan.DenialMessage);
