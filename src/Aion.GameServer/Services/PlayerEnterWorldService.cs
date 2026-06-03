@@ -225,6 +225,15 @@ public sealed class PlayerEnterWorldService
 		return true;
 	}
 
+	public async Task<bool> DeleteInventoryItemAsync(
+		Player player,
+		int itemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: Storage.delete(item, ItemDeleteType.DISCARD) -> InventoryDAO.store removes the item row.
+		return await _repository.DeleteInventoryItemAsync(player.ObjectId, itemObjectId, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

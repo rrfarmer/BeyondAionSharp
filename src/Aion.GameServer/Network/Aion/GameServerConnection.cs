@@ -2508,10 +2508,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		// Java parity: storage.delete(item, ItemDeleteType.DISCARD) removes item from inventory.
+		// Java parity: storage.delete(item, ItemDeleteType.DISCARD) removes item from inventory and persists.
 		var inventoryItems = player.InventoryItems.ToList();
 		inventoryItems.Remove(item);
 		player.InventoryItems = [.. inventoryItems];
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.DeleteInventoryItemAsync(player, item.ObjectId);
 		await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.DiscardDeleteType));
 	}
 
