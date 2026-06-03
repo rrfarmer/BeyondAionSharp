@@ -1204,6 +1204,89 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void CleanupSearchEntriesOnLogout_StartEnterEntryPlansCancelEnterForActiveMasksLikeJava()
+	{
+		var now = new DateTimeOffset(2026, 6, 2, 12, 0, 0, TimeSpan.Zero);
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(
+			107,
+			[1001, 1002],
+			startEnterTime: now.AddSeconds(-30));
+
+		var result = service.CleanupSearchEntriesOnLogout(
+			1001,
+			activeAutoInstanceMaskIds: [107, 108],
+			now: now);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.Cleaned, result.Status);
+		var entry = Assert.Single(result.Entries);
+		Assert.Equal(AutoGroupLogoutSearchCleanupType.StartEnterCancelEnter, entry.Type);
+		Assert.Equal(107, entry.MaskId);
+		Assert.Equal(1001, entry.OldLeaderObjectId);
+		Assert.Equal(1001, entry.NewLeaderObjectId);
+		Assert.Equal([1001], entry.AffectedMemberObjectIds);
+		Assert.False(entry.WouldRecheckQueueForNewMatches);
+		Assert.Equal([107, 108], result.StartEnterCancelIntents.Select(intent => intent.InstanceMaskId));
+		Assert.All(result.StartEnterCancelIntents, intent =>
+		{
+			Assert.Equal(1001, intent.PlayerObjectId);
+			Assert.Equal(107, intent.SourceMaskId);
+		});
+		Assert.Empty(result.QueueRecheckPlans);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.True(service.IsSearching(1002, 107));
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
+	public void CleanupSearchEntriesOnLogout_StartEnterBoundaryIncludesExactlyTwoMinutesLikeJava()
+	{
+		var now = new DateTimeOffset(2026, 6, 2, 12, 0, 0, TimeSpan.Zero);
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(
+			107,
+			[1001],
+			startEnterTime: now.AddMilliseconds(-120000));
+
+		var result = service.CleanupSearchEntriesOnLogout(
+			1001,
+			activeAutoInstanceMaskIds: [107],
+			now: now);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.Cleaned, result.Status);
+		var entry = Assert.Single(result.Entries);
+		Assert.Equal(AutoGroupLogoutSearchCleanupType.StartEnterCancelEnter, entry.Type);
+		var intent = Assert.Single(result.StartEnterCancelIntents);
+		Assert.Equal(107, intent.InstanceMaskId);
+		Assert.Empty(result.QueueRecheckPlans);
+		Assert.True(service.IsSearching(1001, 107));
+	}
+
+	[Fact]
+	public void CleanupSearchEntriesOnLogout_ExpiredStartEnterFallsBackToLeaderCleanupLikeJava()
+	{
+		var now = new DateTimeOffset(2026, 6, 2, 12, 0, 0, TimeSpan.Zero);
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(
+			107,
+			[1001],
+			startEnterTime: now.AddMilliseconds(-120001));
+
+		var result = service.CleanupSearchEntriesOnLogout(
+			1001,
+			activeAutoInstanceMaskIds: [107],
+			now: now);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.Cleaned, result.Status);
+		var entry = Assert.Single(result.Entries);
+		Assert.Equal(AutoGroupLogoutSearchCleanupType.RemovedLeaderOnlyParty, entry.Type);
+		Assert.Empty(result.StartEnterCancelIntents);
+		Assert.Empty(result.QueueRecheckPlans);
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+		Assert.False(service.IsSearching(1001, 107));
+	}
+
+	[Fact]
 	public void CleanupSearchEntriesOnLogout_LeaderOnlyPartyIsRemovedLikeJavaOnLogout()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();

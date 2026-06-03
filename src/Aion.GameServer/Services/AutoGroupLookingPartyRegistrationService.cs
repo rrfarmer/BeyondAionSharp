@@ -107,7 +107,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 		IReadOnlyCollection<int> memberObjectIds,
 		string race = "",
 		AutoGroupEntryRequestType entryRequestType = AutoGroupEntryRequestType.NewGroupEntry,
-		DateTimeOffset? registrationTime = null)
+		DateTimeOffset? registrationTime = null,
+		DateTimeOffset? startEnterTime = null)
 	{
 		if (memberObjectIds.Count == 0)
 			throw new ArgumentException("At least one member object id is required.", nameof(memberObjectIds));
@@ -118,7 +119,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			memberObjectIds.ToArray(),
 			race,
 			entryRequestType,
-			registrationTime ?? DateTimeOffset.UtcNow);
+			registrationTime ?? DateTimeOffset.UtcNow,
+			startEnterTime);
 		lock (_sync)
 		{
 			if (!_lookingPartiesByMaskId.TryGetValue(maskId, out var parties))
@@ -366,9 +368,13 @@ public sealed class AutoGroupLookingPartyRegistrationService
 	public AutoGroupLogoutSearchCleanupResult CleanupSearchEntriesOnLogout(
 		int playerObjectId,
 		AutoGroupTable? autoGroups = null,
-		InstanceCooltimeTable? instanceCooltimes = null)
+		InstanceCooltimeTable? instanceCooltimes = null,
+		IReadOnlyCollection<int>? activeAutoInstanceMaskIds = null,
+		DateTimeOffset? now = null)
 	{
+		var evaluatedAt = now ?? DateTimeOffset.UtcNow;
 		var cleanupEntries = new List<AutoGroupLogoutSearchCleanupEntry>();
+		var cancelEnterIntents = new List<AutoGroupLogoutStartEnterCancelIntent>();
 		var queueRecheckMaskIds = new List<int>();
 		lock (_sync)
 		{
@@ -379,6 +385,28 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				var party = parties.FirstOrDefault(candidate => candidate.MemberObjectIds.Contains(playerObjectId));
 				if (party == null)
 					continue;
+
+				if (party.IsOnStartEnterTask(evaluatedAt))
+				{
+					cleanupEntries.Add(new AutoGroupLogoutSearchCleanupEntry(
+						AutoGroupLogoutSearchCleanupType.StartEnterCancelEnter,
+						maskId,
+						playerObjectId,
+						party.LeaderObjectId,
+						NewLeaderObjectId: party.LeaderObjectId,
+						[playerObjectId],
+						WouldRecheckQueueForNewMatches: false));
+					foreach (var instanceMaskId in activeAutoInstanceMaskIds ?? Array.Empty<int>())
+					{
+						cancelEnterIntents.Add(new AutoGroupLogoutStartEnterCancelIntent(
+							playerObjectId,
+							SourceMaskId: maskId,
+							instanceMaskId,
+							"AutoGroupService.onLogout -> lfp.isOnStartEnterTask() delegates cancelEnter(player, autoInstance maskId) for every active AutoInstance."));
+					}
+
+					continue;
+				}
 
 				if (party.LeaderObjectId == playerObjectId)
 				{
@@ -437,8 +465,9 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				? AutoGroupLogoutSearchCleanupStatus.NoSearchEntries
 				: AutoGroupLogoutSearchCleanupStatus.Cleaned,
 			cleanupEntries,
+			cancelEnterIntents,
 			queueRecheckPlans,
-			"AutoGroupService.onLogout -> for each search entry: start-enter entries cancelEnter elsewhere; leaders promote the first remaining member or remove the entry; non-leaders unregisterMember and checkQueueForNewMatches(maskId); no penalty refresh is scheduled for search cleanup.");
+			"AutoGroupService.onLogout -> for each search entry: start-enter entries within LookingForParty.isOnStartEnterTask's 120000 ms window delegate cancelEnter for every active AutoInstance; leaders promote the first remaining member or remove the entry; non-leaders unregisterMember and checkQueueForNewMatches(maskId); no penalty refresh is scheduled for search cleanup.");
 	}
 
 	public async Task<AutoGroupCancelRegistrationResult> CancelRegistrationAsync(
@@ -1124,7 +1153,15 @@ public sealed record AutoGroupLookingPartyRegistration(
 	IReadOnlyList<int> MemberObjectIds,
 	string Race = "",
 	AutoGroupEntryRequestType EntryRequestType = AutoGroupEntryRequestType.NewGroupEntry,
-	DateTimeOffset RegistrationTime = default);
+	DateTimeOffset RegistrationTime = default,
+	DateTimeOffset? StartEnterTime = null)
+{
+	public bool IsOnStartEnterTask(DateTimeOffset now)
+	{
+		return StartEnterTime.HasValue
+			&& now - StartEnterTime.Value <= TimeSpan.FromMilliseconds(120000);
+	}
+}
 
 public sealed record AutoGroupQueueMatchPlan(
 	AutoGroupQueueMatchPlanStatus Status,
@@ -1430,6 +1467,7 @@ public sealed record AutoGroupLogoutSearchCleanupResult(
 	int PlayerObjectId,
 	AutoGroupLogoutSearchCleanupStatus Status,
 	IReadOnlyList<AutoGroupLogoutSearchCleanupEntry> Entries,
+	IReadOnlyList<AutoGroupLogoutStartEnterCancelIntent> StartEnterCancelIntents,
 	IReadOnlyList<AutoGroupQueueMatchPlan> QueueRecheckPlans,
 	string JavaSource)
 {
@@ -1437,6 +1475,12 @@ public sealed record AutoGroupLogoutSearchCleanupResult(
 		.Select(plan => plan.MaskId)
 		.ToArray();
 }
+
+public sealed record AutoGroupLogoutStartEnterCancelIntent(
+	int PlayerObjectId,
+	int SourceMaskId,
+	int InstanceMaskId,
+	string JavaSource);
 
 public sealed record AutoGroupLogoutSearchCleanupEntry(
 	AutoGroupLogoutSearchCleanupType Type,
@@ -1458,6 +1502,7 @@ public enum AutoGroupLogoutSearchCleanupType
 	RemovedLeaderOnlyParty,
 	PromotedNewLeader,
 	RemovedMember,
+	StartEnterCancelEnter,
 }
 
 public sealed record AutoGroupStartLookingResult(
