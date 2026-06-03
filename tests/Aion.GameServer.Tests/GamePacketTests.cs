@@ -8804,6 +8804,35 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmUnwrapItem_SerializesObjectIdAndPackCount()
+	{
+		// Java parity: SM_UNWRAP_ITEM.writeImpl — object ID and pack count byte.
+		var payload = SerializeUnencryptedPayload(new SmUnwrapItem(7777, 3));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(7777, reader.ReadD());
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void InventoryItem_PackCountIsSettable_ModelLevelJavaParity()
+	{
+		// Java parity: model/gameobjects/Item.setPackCount — CM_UNWRAP_ITEM negates packCount to mark as unwrapped.
+		var item = new InventoryItem
+		{
+			ObjectId = 2001,
+			ItemId = 100001,
+			Count = 1,
+			PackCount = 5,
+		};
+
+		item.PackCount = -item.PackCount;
+
+		Assert.Equal(-5, item.PackCount);
+	}
+
+	[Fact]
 	public void SmViewPlayerDetails_SerializesTargetAndEquippedItems()
 	{
 		// Java parity: SM_VIEW_PLAYER_DETAILS.writeImpl — target object ID, storage constant 11, item list.

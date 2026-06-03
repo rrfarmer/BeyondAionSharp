@@ -309,6 +309,12 @@ public interface IPlayerEnterWorldRepository
 		long newSlot,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveInventoryItemPackCountAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int newPackCount,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -885,6 +891,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int playerObjectId,
 		int itemObjectId,
 		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveInventoryItemPackCountAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int newPackCount,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1767,6 +1782,35 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save inventory slot update for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveInventoryItemPackCountAsync(
+		int playerObjectId,
+		int itemObjectId,
+		int newPackCount,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/InventoryDAO.store updates pack_count after CM_UNWRAP_ITEM.runImpl sets item.setPackCount(-packCount).
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE inventory SET pack_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = newPackCount },
+					new MySqlParameter { Value = itemObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save pack count update for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

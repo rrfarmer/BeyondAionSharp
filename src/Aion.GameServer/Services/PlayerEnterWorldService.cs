@@ -244,6 +244,16 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveInventoryItemSlotAsync(player.ObjectId, itemObjectId, newSlot, cancellationToken);
 	}
 
+	public Task<bool> SaveInventoryItemPackCountAsync(
+		Player player,
+		int itemObjectId,
+		int newPackCount,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_UNWRAP_ITEM.runImpl -> item.setPackCount(-packCount) -> InventoryDAO stores updated pack_count.
+		return _repository.SaveInventoryItemPackCountAsync(player.ObjectId, itemObjectId, newPackCount, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

@@ -83,7 +83,8 @@ public sealed class InventoryItem
 
 	public int Tempering { get; init; }
 
-	public int PackCount { get; init; }
+	// Java parity: model/gameobjects/Item.setPackCount mutates pack count in place (positive=wrapped, negative=unwrapped).
+	public int PackCount { get; set; }
 
 	public bool IsAmplified { get; init; }
 

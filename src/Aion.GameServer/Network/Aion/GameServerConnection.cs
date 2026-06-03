@@ -565,8 +565,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmMegaphone:
 				// Java parity: network/aion/clientpackets/CM_MEGAPHONE.runImpl validates item use before MegaphoneAction execution; deferred.
 				break;
-			case CmUnwrapItem:
-				// Java parity: network/aion/clientpackets/CM_UNWRAP_ITEM.runImpl mutates pack count and sends unwrap/inventory packets; deferred.
+			case CmUnwrapItem unwrapItem:
+				if (_activePlayer != null)
+					await HandleUnwrapItemAsync(_activePlayer, unwrapItem);
 				break;
 			case CmUpgradeArcade:
 				// Java parity: network/aion/clientpackets/CM_UPGRADE_ARCADE.runImpl gates on EventsConfig then dispatches UpgradeArcadeService; deferred.
@@ -2543,6 +2544,31 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_playerEnterWorldService != null)
 			await _playerEnterWorldService.DeleteInventoryItemAsync(player, item.ObjectId);
 		await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.DiscardDeleteType));
+	}
+
+	private async Task HandleUnwrapItemAsync(Player player, CmUnwrapItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_UNWRAP_ITEM.runImpl.
+		var item = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.ObjectId && i.Location == 0 /* cube */);
+		if (item == null || item.PackCount <= 0)
+			return;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var template = templates?.GetItemTemplate(item.ItemId);
+		if (template == null)
+			return;
+
+		// Java parity: sendPacket(new SM_UNWRAP_ITEM(objectId, item.getPackCount())).
+		await SendPacketAsync(new SmUnwrapItem(item.ObjectId, item.PackCount));
+
+		// Java parity: item.setPackCount(item.getPackCount() * -1) — negate to mark as unwrapped.
+		item.PackCount = -item.PackCount;
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.SaveInventoryItemPackCountAsync(player, item.ObjectId, item.PackCount);
+
+		// Java parity: PacketSendUtility.sendPacket(player, new SM_INVENTORY_UPDATE_ITEM(player, item)) defaults to DEC_ITEM_USE.
+		await SendPacketAsync(new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.DecreaseItemUse));
 	}
 
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)
