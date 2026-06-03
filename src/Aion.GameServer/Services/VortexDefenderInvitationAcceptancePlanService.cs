@@ -160,6 +160,7 @@ public sealed class VortexDefenderInvitationResponseConsumptionReportService
 public sealed class VortexDefenderInvitationResponseRuntimeAdapterService
 {
 	private readonly VortexDefenderInvitationResponseConsumptionReportService _consumptionReporter = new();
+	private readonly VortexDefenderUpdateDefendersPlanService _updateDefendersPlanner = new();
 
 	public VortexDefenderInvitationResponseConsumptionReport HandleResponse(
 		Player responder,
@@ -177,6 +178,35 @@ public sealed class VortexDefenderInvitationResponseRuntimeAdapterService
 			dispatch,
 			responderSnapshot,
 			defenderAlliance);
+	}
+
+	public VortexDefenderInvitationAcceptanceTransitionRuntimeReport HandleResponseWithAcceptanceTransition(
+		Player responder,
+		int questionId,
+		int responseCode,
+		IReadOnlyList<VortexDefenderAddPlayerSnapshot>? existingDefenders = null,
+		VortexDefenderAllianceSnapshot? defenderAlliance = null)
+	{
+		var consumption = HandleResponse(responder, questionId, responseCode, defenderAlliance);
+		VortexDefenderUpdateDefendersPlan? updatePlan = null;
+		if (consumption.Accepted && consumption.DispatchPlan?.Request is { } request)
+		{
+			var defenders = existingDefenders
+				?? request.ExistingDefenderObjectIds
+					.Select(objectId => new VortexDefenderAddPlayerSnapshot(objectId, IsInGroup: false, IsInAlliance: false))
+					.ToArray();
+			updatePlan = _updateDefendersPlanner.CreateAcceptancePlan(
+				VortexDefenderInvitationResponderSnapshot.FromPlayer(responder),
+				defenders,
+				defenderAlliance ?? request.DefenderAlliance);
+		}
+
+		return new VortexDefenderInvitationAcceptanceTransitionRuntimeReport(
+			consumption.Status,
+			responder.ObjectId,
+			consumption,
+			updatePlan,
+			JavaSource: "model/gameobjects/player/ResponseRequester.respond -> services/vortex/Invasion.updateDefenders.RequestResponseHandler.acceptRequest");
 	}
 }
 
@@ -248,6 +278,31 @@ public sealed record VortexDefenderInvitationResponseConsumptionReport(
 	public bool Accepted => Status == VortexDefenderInvitationResponseConsumptionReportStatus.Accepted;
 	public bool Denied => Status == VortexDefenderInvitationResponseConsumptionReportStatus.Denied;
 	public bool HasDispatchPlan => DispatchPlan is not null;
+	public bool ShouldRemoveLiveRequest => false;
+	public bool ShouldMutateLiveGroup => false;
+	public bool ShouldMutateLiveAlliance => false;
+	public bool ShouldMutateLiveDefenders => false;
+}
+
+public sealed record VortexDefenderInvitationAcceptanceTransitionRuntimeReport(
+	VortexDefenderInvitationResponseConsumptionReportStatus Status,
+	int ResponderObjectId,
+	VortexDefenderInvitationResponseConsumptionReport ConsumptionReport,
+	VortexDefenderUpdateDefendersPlan? UpdateDefendersPlan,
+	string JavaSource)
+{
+	public bool Accepted => ConsumptionReport.Accepted;
+	public bool Denied => ConsumptionReport.Denied;
+	public bool RequestRemovedByRegistry => ConsumptionReport.RequestRemovedByRegistry;
+	public bool HasVortexPayload => ConsumptionReport.HasVortexPayload;
+	public bool HasDispatchPlan => ConsumptionReport.HasDispatchPlan;
+	public bool HasAcceptanceTransitionPlan => UpdateDefendersPlan is not null;
+	public bool HasAddPlayerPlan => UpdateDefendersPlan?.HasAddPlayerPlan == true;
+	public bool WouldRemoveGroup => UpdateDefendersPlan?.WouldRemoveGroup == true;
+	public bool WouldRemoveAlliance => UpdateDefendersPlan?.WouldRemoveAlliance == true;
+	public bool WouldCallAddPlayer => UpdateDefendersPlan?.WouldCallAddPlayer == true;
+	public bool WouldPutParticipant => UpdateDefendersPlan?.WouldPutParticipant == true;
+	public bool WouldWarn => UpdateDefendersPlan?.WouldWarn == true;
 	public bool ShouldRemoveLiveRequest => false;
 	public bool ShouldMutateLiveGroup => false;
 	public bool ShouldMutateLiveAlliance => false;

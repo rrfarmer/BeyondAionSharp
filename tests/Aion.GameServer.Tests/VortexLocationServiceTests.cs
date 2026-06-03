@@ -1941,6 +1941,162 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationAcceptanceTransitionRuntimeReport_ComposesAcceptedGroupRemovalAndAddPlayerPlan()
+	{
+		var adapter = new VortexDefenderInvitationResponseRuntimeAdapterService();
+		var responder = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		responder.TeamMembership = PlayerTeamMembership.Group;
+		var existingDefender = new VortexDefenderAddPlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: true);
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: responder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Missing,
+			ExistingDefenderObjectIds: [existingDefender.PlayerObjectId]);
+		Assert.True(responder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(
+				responder.ObjectId,
+				QuestionResponseRequestKind.VortexDefenderInvitation,
+				pendingRequest)));
+
+		var report = adapter.HandleResponseWithAcceptanceTransition(
+			responder,
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 7,
+			existingDefenders: [existingDefender]);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.Accepted, report.Status);
+		Assert.True(report.Accepted);
+		Assert.True(report.RequestRemovedByRegistry);
+		Assert.True(report.HasVortexPayload);
+		Assert.True(report.HasDispatchPlan);
+		Assert.True(report.HasAcceptanceTransitionPlan);
+		Assert.True(report.HasAddPlayerPlan);
+		Assert.True(report.WouldRemoveGroup);
+		Assert.False(report.WouldRemoveAlliance);
+		Assert.True(report.WouldCallAddPlayer);
+		Assert.True(report.WouldPutParticipant);
+		Assert.False(report.WouldWarn);
+		Assert.Equal(0, responder.ResponseRequester.Count);
+		Assert.Equal(PlayerTeamMembership.Group, responder.TeamMembership);
+		var updatePlan = Assert.IsType<VortexDefenderUpdateDefendersPlan>(report.UpdateDefendersPlan);
+		Assert.Equal(VortexDefenderUpdateDefendersPlanStatus.AcceptancePlanned, updatePlan.Status);
+		Assert.Equal(VortexDefenderUpdateDefendersPlanStage.Acceptance, updatePlan.Stage);
+		Assert.Equal([1001], updatePlan.ExistingDefenderObjectIds);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Missing, updatePlan.DefenderAlliance);
+		Assert.Equal(VortexDefenderInvitationAcceptancePlanStatus.AcceptancePlanned, updatePlan.AcceptancePlan?.Status);
+		var addPlayerPlan = Assert.IsType<VortexDefenderAddPlayerTransitionPlan>(updatePlan.AddPlayerPlan);
+		Assert.Equal(VortexDefenderAddPlayerTransitionPlanStatus.CreateDefenderAlliance, addPlayerPlan.Status);
+		Assert.Equal(PlayerAllianceTeamType.AllianceDefence, addPlayerPlan.CreatedAllianceTeamType);
+		Assert.Equal([1004, 1001], addPlayerPlan.RemovalPlans.Select(removal => removal.PlayerObjectId).ToArray());
+		Assert.False(report.ShouldRemoveLiveRequest);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+		Assert.Equal(
+			"model/gameobjects/player/ResponseRequester.respond -> services/vortex/Invasion.updateDefenders.RequestResponseHandler.acceptRequest",
+			report.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderInvitationAcceptanceTransitionRuntimeReport_FullAllianceBlocksAddAfterRemovalIntent()
+	{
+		var adapter = new VortexDefenderInvitationResponseRuntimeAdapterService();
+		var responder = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		responder.TeamMembership = PlayerTeamMembership.Alliance;
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: responder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			ExistingDefenderObjectIds: [1001]);
+		Assert.True(responder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(
+				responder.ObjectId,
+				QuestionResponseRequestKind.VortexDefenderInvitation,
+				pendingRequest)));
+
+		var report = adapter.HandleResponseWithAcceptanceTransition(
+			responder,
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 1,
+			defenderAlliance: VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.Accepted, report.Status);
+		Assert.True(report.Accepted);
+		Assert.True(report.HasAcceptanceTransitionPlan);
+		Assert.False(report.HasAddPlayerPlan);
+		Assert.False(report.WouldRemoveGroup);
+		Assert.True(report.WouldRemoveAlliance);
+		Assert.False(report.WouldCallAddPlayer);
+		Assert.False(report.WouldPutParticipant);
+		Assert.Equal(0, responder.ResponseRequester.Count);
+		Assert.Equal(PlayerTeamMembership.Alliance, responder.TeamMembership);
+		var updatePlan = Assert.IsType<VortexDefenderUpdateDefendersPlan>(report.UpdateDefendersPlan);
+		Assert.Equal(VortexDefenderUpdateDefendersPlanStatus.AcceptanceAllianceFull, updatePlan.Status);
+		Assert.Equal(VortexDefenderInvitationAcceptancePlanStatus.DefenderAllianceFull, updatePlan.AcceptancePlan?.Status);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Full, updatePlan.DefenderAlliance);
+		Assert.False(report.ShouldMutateLiveGroup);
+		Assert.False(report.ShouldMutateLiveAlliance);
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
+	public void DefenderInvitationAcceptanceTransitionRuntimeReport_DeniedAndMissingResponsesDoNotCreateAcceptancePlan()
+	{
+		var adapter = new VortexDefenderInvitationResponseRuntimeAdapterService();
+		var deniedResponder = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+		deniedResponder.TeamMembership = PlayerTeamMembership.Group;
+		var missingResponder = CreatePlayer(1006, isOnline: true, worldId: 210060000);
+		missingResponder.TeamMembership = PlayerTeamMembership.Alliance;
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: deniedResponder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			ExistingDefenderObjectIds: []);
+		Assert.True(deniedResponder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(
+				deniedResponder.ObjectId,
+				QuestionResponseRequestKind.VortexDefenderInvitation,
+				pendingRequest)));
+
+		var denied = adapter.HandleResponseWithAcceptanceTransition(
+			deniedResponder,
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 0);
+		var missing = adapter.HandleResponseWithAcceptanceTransition(
+			missingResponder,
+			SmQuestionWindow.VortexDefenderInvitation,
+			responseCode: 1);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.Denied, denied.Status);
+		Assert.True(denied.Denied);
+		Assert.True(denied.RequestRemovedByRegistry);
+		Assert.True(denied.HasDispatchPlan);
+		Assert.False(denied.HasAcceptanceTransitionPlan);
+		Assert.Null(denied.UpdateDefendersPlan);
+		Assert.False(denied.WouldRemoveGroup);
+		Assert.False(denied.WouldRemoveAlliance);
+		Assert.False(denied.WouldCallAddPlayer);
+		Assert.Equal(PlayerTeamMembership.Group, deniedResponder.TeamMembership);
+		Assert.Equal(0, deniedResponder.ResponseRequester.Count);
+
+		Assert.Equal(VortexDefenderInvitationResponseConsumptionReportStatus.RequestMissing, missing.Status);
+		Assert.False(missing.RequestRemovedByRegistry);
+		Assert.False(missing.HasDispatchPlan);
+		Assert.False(missing.HasAcceptanceTransitionPlan);
+		Assert.Null(missing.UpdateDefendersPlan);
+		Assert.Equal(PlayerTeamMembership.Alliance, missingResponder.TeamMembership);
+		Assert.False(denied.ShouldMutateLiveGroup);
+		Assert.False(denied.ShouldMutateLiveAlliance);
+		Assert.False(denied.ShouldMutateLiveDefenders);
+		Assert.False(missing.ShouldMutateLiveGroup);
+		Assert.False(missing.ShouldMutateLiveAlliance);
+		Assert.False(missing.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public void DefenderInvitationBatchPlan_ComposesOneInvitationPlanPerDefenderUpdateCandidate()
 	{
 		var updatePlan = new VortexDefenderAllianceUpdatePlan(
