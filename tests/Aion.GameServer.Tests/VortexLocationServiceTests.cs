@@ -2140,7 +2140,13 @@ public sealed class VortexLocationServiceTests
 				],
 				[VortexStopInvaderKiskSnapshot.FromRuntimeState(kisk)],
 				[VortexStopSpawnedNpcSnapshot.FromWorldNpc(spawnedNpc)],
-				[VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)]);
+				[VortexStopPeaceSpawnSnapshot.FromSpawn(peaceSpawn)],
+				invaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberDisbandedAfterRemoval,
+					[outsideInvader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberActive,
+				},
+				passedPlayerObjectIds: new HashSet<int> { invader.ObjectId, outsideInvader.ObjectId });
 
 			Assert.Equal(VortexStopInvasionSideEffectPlanStatus.Planned, plan.Status);
 			Assert.False(plan.ShouldExecuteLiveSideEffects);
@@ -2149,6 +2155,8 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal(2, plan.OnlineInvaderKickCount);
 			Assert.Equal(1, plan.DespawnNpcCount);
 			Assert.Equal(1, plan.PeaceSpawnCount);
+			Assert.True(plan.HasKickRemovalPlans);
+			Assert.Equal([invader.ObjectId, outsideInvader.ObjectId], plan.OrderedKickRemovalPlans.Select(kick => kick.PlayerObjectId).ToArray());
 			Assert.Equal(
 				[
 					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
@@ -2165,13 +2173,32 @@ public sealed class VortexLocationServiceTests
 			Assert.True(insideKick.WasInInvasionWorld);
 			Assert.True(insideKick.ShouldTeleportHome);
 			Assert.Equal(location.HomePoint, insideKick.TeleportDestination);
+			var insideKickRemoval = Assert.IsType<VortexKickPlayerRemovalPlan>(insideKick.KickRemovalPlan);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, insideKickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, insideKickRemoval.AllianceKickMessageId);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, insideKickRemoval.DirectPortalOutMessageId);
+			Assert.True(insideKickRemoval.WouldClearAllianceReference);
+			Assert.True(insideKickRemoval.WouldRemovePassedPlayer);
+			Assert.Equal(1, insideKickRemoval.PassedPlayerSyncPlan.PassedPlayerCount);
+			Assert.False(insideKickRemoval.ShouldSendLivePacket);
+			Assert.False(insideKickRemoval.ShouldTeleportLivePlayer);
 			var outsideKick = plan.OrderedSteps.Single(step =>
 				step.Kind == VortexStopInvasionSideEffectStepKind.KickOnlineInvader
 				&& step.PlayerObjectId == outsideInvader.ObjectId);
 			Assert.False(outsideKick.WasInInvasionWorld);
 			Assert.False(outsideKick.ShouldTeleportHome);
 			Assert.Null(outsideKick.TeleportDestination);
+			var outsideKickRemoval = Assert.IsType<VortexKickPlayerRemovalPlan>(outsideKick.KickRemovalPlan);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemoved, outsideKickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, outsideKickRemoval.AllianceKickMessageId);
+			Assert.Null(outsideKickRemoval.DirectPortalOutMessageId);
+			Assert.True(outsideKickRemoval.WouldRemovePassedPlayer);
+			Assert.Equal(0, outsideKickRemoval.PassedPlayerSyncPlan.PassedPlayerCount);
+			Assert.False(outsideKickRemoval.ShouldMutateLiveParticipants);
+			Assert.False(outsideKickRemoval.ShouldMutateLivePassedPlayers);
+			Assert.False(outsideKickRemoval.ShouldSyncLivePassedPlayers);
 			Assert.DoesNotContain(plan.OrderedSteps, step => step.PlayerObjectId == offlineInvader.ObjectId);
+			Assert.DoesNotContain(plan.OrderedKickRemovalPlans, kick => kick.PlayerObjectId == offlineInvader.ObjectId);
 			Assert.Equal(VortexStateType.Peace, plan.OrderedSteps.Last().VortexState);
 			Assert.Same(peaceSpawn, plan.OrderedSteps.Last().Spawn);
 		}

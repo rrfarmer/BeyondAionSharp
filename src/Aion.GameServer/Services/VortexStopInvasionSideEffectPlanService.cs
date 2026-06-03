@@ -6,12 +6,16 @@ namespace Aion.GameServer.Services;
 
 public sealed class VortexStopInvasionSideEffectPlanService
 {
+	private readonly VortexKickPlayerRemovalPlanService _kickRemovalPlanner = new();
+
 	public VortexStopInvasionSideEffectPlan CreatePlan(
 		VortexStopInvasionResult stopResult,
 		IReadOnlyList<VortexStopInvaderSnapshot>? invaders = null,
 		IReadOnlyList<VortexStopInvaderKiskSnapshot>? invaderKisks = null,
 		IReadOnlyList<VortexStopSpawnedNpcSnapshot>? spawnedNpcs = null,
-		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns = null)
+		IReadOnlyList<VortexStopPeaceSpawnSnapshot>? peaceSpawns = null,
+		IReadOnlyDictionary<int, VortexKickPlayerAllianceSnapshot>? invaderAlliances = null,
+		IReadOnlySet<int>? passedPlayerObjectIds = null)
 	{
 		ArgumentNullException.ThrowIfNull(stopResult);
 
@@ -41,15 +45,39 @@ public sealed class VortexStopInvasionSideEffectPlanService
 		foreach (var kisk in invaderKisks ?? [])
 			steps.Add(VortexStopInvasionSideEffectStep.KillInvaderKisk(kisk));
 
+		var kickRemovalPlans = new List<VortexKickPlayerRemovalPlan>();
+		var remainingPassedPlayers = passedPlayerObjectIds == null
+			? new HashSet<int>()
+			: new HashSet<int>(passedPlayerObjectIds);
 		foreach (var invader in invaders ?? [])
 		{
 			if (!invader.IsOnline)
 				continue;
 
+			var passedPlayersBeforeKick = remainingPassedPlayers.ToHashSet();
+			remainingPassedPlayers.Remove(invader.PlayerObjectId);
+			VortexKickPlayerAllianceSnapshot? invaderAlliance = null;
+			invaderAlliances?.TryGetValue(invader.PlayerObjectId, out invaderAlliance);
+			var kickRemovalPlan = _kickRemovalPlanner.CreatePlan(
+				stopResult.LocationId,
+				new VortexKickPlayerSnapshot(
+					invader.PlayerObjectId,
+					invader.IsOnline,
+					invader.WorldId),
+				isInvader: true,
+				isParticipant: true,
+				alliance: invaderAlliance,
+				passedPlayerObjectIds: passedPlayersBeforeKick,
+				passedPlayerCountAfterRemoval: remainingPassedPlayers.Count,
+				invasionWorldId: stopResult.PreviousSnapshot.StartPoint.WorldId,
+				homePoint: stopResult.PreviousSnapshot.HomePoint);
+			kickRemovalPlans.Add(kickRemovalPlan);
+
 			steps.Add(VortexStopInvasionSideEffectStep.KickOnlineInvader(
 				invader,
 				stopResult.PreviousSnapshot.StartPoint,
-				stopResult.PreviousSnapshot.HomePoint));
+				stopResult.PreviousSnapshot.HomePoint,
+				kickRemovalPlan));
 		}
 
 		foreach (var spawnedNpc in spawnedNpcs ?? [])
@@ -66,6 +94,7 @@ public sealed class VortexStopInvasionSideEffectPlanService
 			OnlineInvaderKickCount: (invaders ?? []).Count(invader => invader.IsOnline),
 			DespawnNpcCount: (spawnedNpcs ?? []).Count,
 			PeaceSpawnCount: (peaceSpawns ?? []).Count,
+			KickRemovalPlans: kickRemovalPlans,
 			JavaSource: "services/VortexService.stopInvasion -> services/vortex/Invasion.stopInvasion");
 	}
 }
@@ -126,9 +155,12 @@ public sealed record VortexStopInvasionSideEffectPlan(
 	int OnlineInvaderKickCount = 0,
 	int DespawnNpcCount = 0,
 	int PeaceSpawnCount = 0,
+	IReadOnlyList<VortexKickPlayerRemovalPlan>? KickRemovalPlans = null,
 	string JavaSource = "")
 {
 	public IReadOnlyList<VortexStopInvasionSideEffectStep> OrderedSteps => Steps ?? [];
+	public IReadOnlyList<VortexKickPlayerRemovalPlan> OrderedKickRemovalPlans => KickRemovalPlans ?? [];
+	public bool HasKickRemovalPlans => OrderedKickRemovalPlans.Count > 0;
 	public bool ShouldExecuteLiveSideEffects => false;
 }
 
@@ -141,6 +173,7 @@ public sealed record VortexStopInvasionSideEffectStep(
 	bool WasInInvasionWorld = false,
 	bool ShouldTeleportHome = false,
 	WorldPosition? TeleportDestination = null,
+	VortexKickPlayerRemovalPlan? KickRemovalPlan = null,
 	NpcSpawnSummary? Spawn = null,
 	VortexStateType? VortexState = null,
 	string JavaSource = "")
@@ -166,7 +199,8 @@ public sealed record VortexStopInvasionSideEffectStep(
 	public static VortexStopInvasionSideEffectStep KickOnlineInvader(
 		VortexStopInvaderSnapshot invader,
 		WorldPosition invasionStartPoint,
-		WorldPosition homePoint)
+		WorldPosition homePoint,
+		VortexKickPlayerRemovalPlan? kickRemovalPlan = null)
 	{
 		var wasInInvasionWorld = invader.WorldId == invasionStartPoint.WorldId;
 		return new VortexStopInvasionSideEffectStep(
@@ -176,6 +210,7 @@ public sealed record VortexStopInvasionSideEffectStep(
 			WasInInvasionWorld: wasInInvasionWorld,
 			ShouldTeleportHome: wasInInvasionWorld,
 			TeleportDestination: wasInInvasionWorld ? homePoint : null,
+			KickRemovalPlan: kickRemovalPlan,
 			JavaSource: "services/vortex/Invasion.stopInvasion -> services/vortex/Invasion.kickPlayer(player, true)");
 	}
 
