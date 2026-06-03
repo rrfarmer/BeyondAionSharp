@@ -655,6 +655,106 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void InvaderUpdateInvadersPlan_SkipsAlreadyInvaderBeforeAddPlayerLikeJava()
+	{
+		var planner = new VortexInvaderUpdateInvadersPlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(
+			invader,
+			existingInvaders: [invader],
+			invaderAlliance: VortexInvaderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexInvaderUpdateInvadersPlanStatus.AlreadyInvader, plan.Status);
+		Assert.Equal(1002, plan.PlayerObjectId);
+		Assert.Equal([1002], plan.ExistingInvaderObjectIds);
+		Assert.Equal(VortexInvaderAllianceSnapshot.Open, plan.InvaderAlliance);
+		Assert.Equal(VortexInvaderUpdateAddPlayerPlanStatus.AlreadyInvader, plan.AddPlayerPlan.Status);
+		Assert.False(plan.WouldCallAddPlayer);
+		Assert.False(plan.WouldPutParticipant);
+		Assert.False(plan.WouldWarn);
+		Assert.False(plan.ShouldMutateLiveInvaders);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.Equal("services/vortex/Invasion.updateInvaders", plan.JavaSource);
+	}
+
+	[Fact]
+	public void InvaderUpdateInvadersPlan_ComposesRecordFirstInvaderAddPlayer()
+	{
+		var planner = new VortexInvaderUpdateInvadersPlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(invader);
+
+		Assert.Equal(VortexInvaderUpdateInvadersPlanStatus.AddPlayerPlanned, plan.Status);
+		Assert.Empty(plan.ExistingInvaderObjectIds);
+		Assert.Equal(VortexInvaderAllianceSnapshot.Missing, plan.InvaderAlliance);
+		Assert.Equal(VortexInvaderUpdateAddPlayerPlanStatus.RecordFirstInvader, plan.AddPlayerPlan.Status);
+		Assert.True(plan.WouldCallAddPlayer);
+		Assert.False(plan.WouldAddToExistingAlliance);
+		Assert.False(plan.WouldCreateInvaderAlliance);
+		Assert.Null(plan.CreatedAllianceTeamType);
+		Assert.True(plan.WouldPutParticipant);
+		Assert.False(plan.WouldWarn);
+		Assert.False(plan.ShouldMutateLiveInvaders);
+		Assert.Equal("services/vortex/Invasion.updateInvaders -> services/vortex/Invasion.addPlayer(player, true)", plan.JavaSource);
+	}
+
+	[Fact]
+	public void InvaderUpdateInvadersPlan_ComposesOffenceAllianceCreationForSecondInvader()
+	{
+		var planner = new VortexInvaderUpdateInvadersPlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: true, IsInAlliance: true);
+		var otherInvader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: true);
+
+		var plan = planner.CreatePlan(
+			invader,
+			existingInvaders: [otherInvader],
+			invaderAlliance: VortexInvaderAllianceSnapshot.Missing);
+
+		Assert.Equal(VortexInvaderUpdateInvadersPlanStatus.AddPlayerPlanned, plan.Status);
+		Assert.Equal([1001], plan.ExistingInvaderObjectIds);
+		Assert.Equal(VortexInvaderUpdateAddPlayerPlanStatus.CreateInvaderAlliance, plan.AddPlayerPlan.Status);
+		Assert.True(plan.WouldCallAddPlayer);
+		Assert.True(plan.WouldCreateInvaderAlliance);
+		Assert.Equal(PlayerAllianceTeamType.AllianceOffence, plan.CreatedAllianceTeamType);
+		Assert.True(plan.WouldPutParticipant);
+		Assert.Equal([1002, 1001], plan.AddPlayerPlan.RemovalPlans.Select(removal => removal.PlayerObjectId).ToArray());
+		Assert.Equal([true, false], plan.AddPlayerPlan.RemovalPlans.Select(removal => removal.WouldRemoveGroup).ToArray());
+		Assert.Equal([false, true], plan.AddPlayerPlan.RemovalPlans.Select(removal => removal.WouldRemoveAlliance).ToArray());
+		Assert.False(plan.ShouldMutateLiveInvaders);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+	}
+
+	[Fact]
+	public void InvaderUpdateInvadersPlan_ComposesAddPlayerWarningWhenAllianceMissingWithManyInvaders()
+	{
+		var planner = new VortexInvaderUpdateInvadersPlanService();
+		var invader = new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1002, IsInGroup: false, IsInAlliance: false);
+
+		var plan = planner.CreatePlan(
+			invader,
+			existingInvaders:
+			[
+				new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1001, IsInGroup: false, IsInAlliance: false),
+				new VortexInvaderUpdatePlayerSnapshot(PlayerObjectId: 1003, IsInGroup: false, IsInAlliance: false),
+			],
+			invaderAlliance: VortexInvaderAllianceSnapshot.Disbanded);
+
+		Assert.Equal(VortexInvaderUpdateInvadersPlanStatus.AddPlayerWarning, plan.Status);
+		Assert.True(plan.WouldCallAddPlayer);
+		Assert.Equal(VortexInvaderUpdateAddPlayerPlanStatus.MissingAllianceTooManyParticipants, plan.AddPlayerPlan.Status);
+		Assert.False(plan.WouldPutParticipant);
+		Assert.True(plan.WouldWarn);
+		Assert.Equal([1001, 1003], plan.ExistingInvaderObjectIds);
+		Assert.False(plan.ShouldMutateLiveInvaders);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveGroup);
+	}
+
+	[Fact]
 	public void InvaderPassedPortalUpdatePlan_BlocksWhenInactiveOrNoPassedPlayerLikeJavaZoneEntry()
 	{
 		var planner = new VortexInvaderPassedPortalUpdatePlanService();
