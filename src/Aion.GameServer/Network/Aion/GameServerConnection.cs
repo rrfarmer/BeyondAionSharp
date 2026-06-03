@@ -1668,6 +1668,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		recheckedMaskIds ??= new HashSet<int>();
+		var scheduledPenaltyRefreshPlayerObjectIds = new HashSet<int>();
 		var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(queueMatchPlan);
 		var applyResult = await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
 			readyMatchPlan,
@@ -1677,6 +1678,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance,
 			afterCleanupWindowDeliveryAsync: async cleanupIntent =>
 			{
+				var immediatePenaltyRefreshes = CreateAutoGroupPenaltyRefreshIntents(cleanupIntent)
+					.Where(intent => scheduledPenaltyRefreshPlayerObjectIds.Add(intent.PlayerObjectId))
+					.ToArray();
+				ScheduleAutoGroupPenaltyRefreshes(immediatePenaltyRefreshes);
+
 				if (!cleanupIntent.WouldRecheckQueueForNewMatches || !recheckedMaskIds.Add(cleanupIntent.MaskId))
 					return;
 
@@ -1691,7 +1697,26 @@ public sealed class GameServerConnection : BaseClientConnection
 					connectionRegistry,
 					recheckedMaskIds);
 			});
-		ScheduleAutoGroupPenaltyRefreshes(applyResult.PenaltyRefreshIntents);
+		var remainingPenaltyRefreshes = applyResult.PenaltyRefreshIntents
+			.Where(intent => scheduledPenaltyRefreshPlayerObjectIds.Add(intent.PlayerObjectId))
+			.ToArray();
+		ScheduleAutoGroupPenaltyRefreshes(remainingPenaltyRefreshes);
+	}
+
+	private static IReadOnlyList<AutoGroupPenaltyRefreshIntent> CreateAutoGroupPenaltyRefreshIntents(
+		AutoGroupAdditionalRegistrationCleanupIntent cleanupIntent)
+	{
+		if (cleanupIntent.WouldPenaliseParty)
+		{
+			return cleanupIntent.NotifiedMemberObjectIds
+				.Select(AutoGroupLookingPartyRegistrationService.CreatePenaltyRefreshIntent)
+				.ToArray();
+		}
+
+		if (cleanupIntent.WouldPenalisePlayer)
+			return [AutoGroupLookingPartyRegistrationService.CreatePenaltyRefreshIntent(cleanupIntent.PlayerObjectId)];
+
+		return Array.Empty<AutoGroupPenaltyRefreshIntent>();
 	}
 
 	private AutoGroupInstanceRuntimeRegistration MaterializeAutoGroupReadyMatchRuntimeInstance(

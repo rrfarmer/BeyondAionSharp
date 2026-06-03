@@ -1229,11 +1229,22 @@ public sealed class GameServerConnectionAutoGroupTests
 			Race = "ELYOS",
 			Level = 50,
 		};
-		var registry = new RecordingConnectionRegistry([1001, 1002, 2001, 2002, 3001, 4001]);
+		var events = new List<string>();
+		var registry = new RecordingConnectionRegistry(
+			[1001, 1002, 2001, 2002, 3001, 4001],
+			delivery =>
+			{
+				if (delivery.Packet is SmAutoGroup autoGroup)
+					events.Add($"packet:{delivery.PlayerObjectId}:{autoGroup.MaskId}:{autoGroup.WindowId}");
+			});
 		var observations = new List<ThreadPoolScheduleObservation>();
 		await using var threadPoolManager = new ThreadPoolManager(
 			NullLogger<ThreadPoolManager>.Instance,
-			observations.Add);
+			observation =>
+			{
+				observations.Add(observation);
+				events.Add("schedule");
+			});
 		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
 			threadPoolManager,
 			new PeriodicInstanceRegistrationService(),
@@ -1267,6 +1278,18 @@ public sealed class GameServerConnectionAutoGroupTests
 			delivery => AssertReadyWindow(delivery, 1002, 107),
 			delivery => AssertReadyWindow(delivery, 2001, 107),
 			delivery => AssertReadyWindow(delivery, 2002, 107));
+		Assert.Equal(
+			[
+				"packet:1001:108:2",
+				"schedule",
+				"packet:3001:108:4",
+				"packet:4001:108:4",
+				"packet:1001:107:4",
+				"packet:1002:107:4",
+				"packet:2001:107:4",
+				"packet:2002:107:4",
+			],
+			events);
 		Assert.Equal([1001, 1002, 2001, 2002], runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
 		Assert.Equal([3001, 4001], runtimeService.GetSnapshot(300120000, 2)!.RegisteredPlayerObjectIds);
 	}
@@ -1752,17 +1775,20 @@ public sealed class GameServerConnectionAutoGroupTests
 	{
 		private readonly IReadOnlyCollection<int> _onlineObjectIds;
 		private readonly IReadOnlyList<Player> _onlinePlayers;
+		private readonly Action<PacketDelivery>? _onSend;
 
-		public RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds)
+		public RecordingConnectionRegistry(IReadOnlyCollection<int> onlineObjectIds, Action<PacketDelivery>? onSend = null)
 		{
 			_onlineObjectIds = onlineObjectIds;
 			_onlinePlayers = Array.Empty<Player>();
+			_onSend = onSend;
 		}
 
-		public RecordingConnectionRegistry(IReadOnlyList<Player> onlinePlayers)
+		public RecordingConnectionRegistry(IReadOnlyList<Player> onlinePlayers, Action<PacketDelivery>? onSend = null)
 		{
 			_onlinePlayers = onlinePlayers;
 			_onlineObjectIds = onlinePlayers.Select(player => player.ObjectId).ToArray();
+			_onSend = onSend;
 		}
 
 		public List<PacketDelivery> SentPackets { get; } = [];
@@ -1794,7 +1820,9 @@ public sealed class GameServerConnectionAutoGroupTests
 			if (!_onlineObjectIds.Contains(playerObjectId))
 				return Task.FromResult(false);
 
-			SentPackets.Add(new PacketDelivery(playerObjectId, packet));
+			var delivery = new PacketDelivery(playerObjectId, packet);
+			SentPackets.Add(delivery);
+			_onSend?.Invoke(delivery);
 			return Task.FromResult(true);
 		}
 
