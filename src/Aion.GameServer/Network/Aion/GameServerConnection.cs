@@ -611,6 +611,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHouseTeleportBack:
 				// Java parity: network/aion/clientpackets/CM_HOUSE_TELEPORT_BACK.runImpl uses battle-return teleport state; deferred.
 				break;
+			case CmBindPointTeleport:
+				// Java parity: network/aion/clientpackets/CM_BIND_POINT_TELEPORT.runImpl -> BindPointTeleportService.teleport/cancelTeleport;
+				// full channeling + teleport dispatch remains deferred (BindPointTeleportHandlerCompositionPlanService.IsLive = false).
+				break;
 			case CmPositionSelf:
 				// Java parity: network/aion/clientpackets/CM_POSITION_SELF.runImpl has no side effect.
 				break;
@@ -1255,6 +1259,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmHousePayRent housePayRent:
 				if (_activePlayer != null)
 					await HandleHousePayRentAsync(_activePlayer, housePayRent);
+				break;
+			case CmHouseTeleport:
+				// Java parity: network/aion/clientpackets/CM_HOUSE_TELEPORT.runImpl uses HousingService.findActiveHouse + InstanceService.getOrCreateHouseInstance
+				// to teleport via relationship crystal; deferred until housing instance access is ported.
+				break;
+			case CmHouseOpenDoor:
+				// Java parity: network/aion/clientpackets/CM_HOUSE_OPEN_DOOR.runImpl teleports player in/out of a house via HousingService.getHouseByAddress;
+				// deferred until housing instance entry/exit is ported.
 				break;
 			case CmShowFriendList:
 				if (_activePlayer != null)

@@ -163,7 +163,9 @@ public static class GameClientPacketFactory
 		Register(218, states => new CmGetHouseBids(218, states), GameConnectionState.InGame);
 		Register(219, states => new CmRegisterHouse(219, states), GameConnectionState.InGame);
 		Register(221, states => new CmPlaceBid(221, states), GameConnectionState.InGame);
+		Register(222, states => new CmHouseTeleport(222, states), GameConnectionState.InGame);
 		Register(223, states => new CmHousePayRent(223, states), GameConnectionState.InGame);
+		Register(226, states => new CmHouseOpenDoor(226, states), GameConnectionState.InGame);
 		Register(224, states => new CmUseHouseObject(224, states), GameConnectionState.InGame);
 		Register(225, states => new CmReleaseObject(225, states), GameConnectionState.InGame);
 		Register(229, states => new CmGfWebshopTokenRequest(229, states), GameConnectionState.InGame);
