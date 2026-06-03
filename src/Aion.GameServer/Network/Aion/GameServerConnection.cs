@@ -1591,7 +1591,29 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (cancelEnter.Status != AutoGroupInstanceCancelEnterStatus.Unregistered)
 					return;
 
-				var autoGroup = _runtimeContext?.DataManager?.StaticData.AutoGroups.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
+				var staticData = _runtimeContext?.DataManager?.StaticData;
+				var autoGroups = staticData?.AutoGroups;
+				if (_connectionRegistry != null
+					&& cancelEnter.Snapshot?.QuickRegistrationAllowed == true
+					&& cancelEnter.RegisteredPlayerCountAfterCancel > 0)
+				{
+					var refill = _autoGroupLookingPartyRegistrations.TryRefillQueuedQuickEntry(
+						packet.InstanceMaskId,
+						autoGroups,
+						staticData?.InstanceCooltimes,
+						request => _autoGroupInstanceLeaveRuntimeService.TryAddOpenQuickEntry(request));
+					if (refill != null)
+					{
+						foreach (var delivery in refill.WindowDeliveries)
+						{
+							var deliveryAutoGroup = autoGroups?.GetTemplateByInstanceMaskId(delivery.MaskId);
+							if (deliveryAutoGroup != null)
+								await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
+						}
+					}
+				}
+
+				var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
 				if (autoGroup != null)
 					await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 2));
 				break;

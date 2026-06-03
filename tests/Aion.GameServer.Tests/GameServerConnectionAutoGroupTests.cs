@@ -486,6 +486,92 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupCancelEnterRefillsQueuedQuickEntryLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var runtimeService = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = DateTimeOffset.UtcNow.AddSeconds(-1);
+		var cancellingPlayer = new Player
+		{
+			ObjectId = 1001,
+			Name = "CancelPlayer",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		runtimeService.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001, 2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[1001] = "ELYOS",
+				[2001] = "ASMODIANS",
+			}));
+		autoGroupRegistrations.RegisterLookingParty(
+			107,
+			[1002],
+			"ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			startInstanceTime.AddSeconds(-5));
+		autoGroupRegistrations.RegisterLookingParty(
+			108,
+			[1002, 3001],
+			"ELYOS",
+			AutoGroupEntryRequestType.GroupEntry,
+			startInstanceTime.AddSeconds(-4));
+		var registry = new RecordingConnectionRegistry([1002, 3001]);
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			[CreateAutoGroup(107, 300110000), CreateAutoGroup(108, 300120000)],
+			new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1, MaxMemberLight: 2, MaxMemberDark: 2),
+			]));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			autoGroupInstanceLeaveRuntimeService: runtimeService);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, cancellingPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(103);
+					buffer.WriteC(0);
+				}));
+
+		var cancelWindow = Assert.IsType<SmAutoGroup>(Assert.Single(sentPackets));
+		Assert.Equal(107, cancelWindow.MaskId);
+		Assert.Equal(2, cancelWindow.WindowId);
+		Assert.DoesNotContain(1001, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Contains(1002, runtimeService.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.False(autoGroupRegistrations.IsSearching(1002, 107));
+		Assert.False(autoGroupRegistrations.IsSearching(1002, 108));
+		Assert.False(autoGroupRegistrations.IsSearching(3001, 108));
+		Assert.Collection(
+			registry.SentPackets,
+			delivery => AssertReadyWindow(delivery, 1002, 107),
+			delivery => AssertCancelWindow(delivery, 1002, 108),
+			delivery => AssertCancelWindow(delivery, 3001, 108));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
 	{
 		var sentPackets = new List<GameServerPacket>();

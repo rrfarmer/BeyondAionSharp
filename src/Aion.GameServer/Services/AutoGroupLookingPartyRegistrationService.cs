@@ -313,6 +313,42 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			sentWindowPackets);
 	}
 
+	public AutoGroupOpenQuickEntryAttachment? TryRefillQueuedQuickEntry(
+		int maskId,
+		AutoGroupTable? autoGroups,
+		InstanceCooltimeTable? instanceCooltimes,
+		Func<AutoGroupOpenQuickEntryRequest, AutoGroupOpenQuickEntryResult> tryAddOpenQuickEntry,
+		DateTimeOffset? now = null)
+	{
+		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
+		if (autoGroup == null)
+			return null;
+
+		var evaluatedAt = now ?? DateTimeOffset.UtcNow;
+		lock (_sync)
+		{
+			if (!_lookingPartiesByMaskId.TryGetValue(maskId, out var parties) || parties.Count == 0)
+				return null;
+
+			foreach (var registration in parties.ToArray())
+			{
+				if (registration.EntryRequestType != AutoGroupEntryRequestType.QuickGroupEntry)
+					continue;
+
+				var attachment = TryAttachOpenQuickEntry(
+					registration,
+					autoGroup,
+					instanceCooltimes,
+					tryAddOpenQuickEntry,
+					evaluatedAt);
+				if (attachment != null)
+					return attachment;
+			}
+		}
+
+		return null;
+	}
+
 	public int GetLookingPartyCount(int maskId)
 	{
 		lock (_sync)
