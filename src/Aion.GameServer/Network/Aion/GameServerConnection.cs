@@ -12579,6 +12579,17 @@ public sealed class GameServerConnection : BaseClientConnection
 				&& packet.TargetZ > packet.Z;
 		}
 
+		// Java parity: CM_MOVE.runImpl checks isProtectionActive() before World.updatePosition and stops it if player has actually moved.
+		// The z-threshold (+0.5f) in Java allows small fall drift without cancelling protection.
+		var oldPosition = player.Position;
+		if (player.IsProtectionActive()
+			&& (oldPosition.X != packet.X || oldPosition.Y != packet.Y || oldPosition.Z > packet.Z + 0.5f))
+		{
+			player.StopProtectionActive();
+			if (_connectionRegistry != null)
+				await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmPlayerState(player), includeSourcePlayer: true);
+		}
+
 		player.Position = player.Position with
 		{
 			X = packet.X,
