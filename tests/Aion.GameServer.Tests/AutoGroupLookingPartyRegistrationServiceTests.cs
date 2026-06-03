@@ -1203,6 +1203,93 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Empty(registry.SentPackets);
 	}
 
+	[Fact]
+	public void CleanupSearchEntriesOnLogout_LeaderOnlyPartyIsRemovedLikeJavaOnLogout()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001]);
+
+		var result = service.CleanupSearchEntriesOnLogout(1001);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.Cleaned, result.Status);
+		var entry = Assert.Single(result.Entries);
+		Assert.Equal(AutoGroupLogoutSearchCleanupType.RemovedLeaderOnlyParty, entry.Type);
+		Assert.Equal(107, entry.MaskId);
+		Assert.Equal(1001, entry.OldLeaderObjectId);
+		Assert.Equal(0, entry.NewLeaderObjectId);
+		Assert.Equal([1001], entry.AffectedMemberObjectIds);
+		Assert.False(entry.WouldRecheckQueueForNewMatches);
+		Assert.Empty(result.QueueRecheckPlans);
+		Assert.Equal(0, service.GetLookingPartyCount(107));
+		Assert.False(service.IsSearching(1001, 107));
+	}
+
+	[Fact]
+	public async Task CleanupSearchEntriesOnLogout_LeaderPromotesFirstRemainingMemberWithoutRemovingOldLeaderLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001, 1002, 1003]);
+
+		var result = service.CleanupSearchEntriesOnLogout(1001);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.Cleaned, result.Status);
+		var entry = Assert.Single(result.Entries);
+		Assert.Equal(AutoGroupLogoutSearchCleanupType.PromotedNewLeader, entry.Type);
+		Assert.Equal(1001, entry.OldLeaderObjectId);
+		Assert.Equal(1002, entry.NewLeaderObjectId);
+		Assert.Equal([1001, 1002, 1003], entry.AffectedMemberObjectIds);
+		Assert.False(entry.WouldRecheckQueueForNewMatches);
+		Assert.Empty(result.QueueRecheckPlans);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.True(service.IsSearching(1002, 107));
+
+		var registry = new RecordingConnectionRegistry([1001, 1002, 1003]);
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cancelPromotedLeader = await service.CancelRegistrationAsync(1002, 107, autoGroups, registry);
+
+		Assert.Equal(AutoGroupCancelRegistrationStatus.LeaderPartyRemoved, cancelPromotedLeader.Status);
+		Assert.Equal([1001, 1002, 1003], cancelPromotedLeader.NotifiedMemberObjectIds);
+	}
+
+	[Fact]
+	public void CleanupSearchEntriesOnLogout_MemberRemovalPlansQueueRecheckLikeJavaOnLogout()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001, 1002, 1003]);
+
+		var result = service.CleanupSearchEntriesOnLogout(1002);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.Cleaned, result.Status);
+		var entry = Assert.Single(result.Entries);
+		Assert.Equal(AutoGroupLogoutSearchCleanupType.RemovedMember, entry.Type);
+		Assert.Equal(107, entry.MaskId);
+		Assert.Equal(1001, entry.OldLeaderObjectId);
+		Assert.Equal(1001, entry.NewLeaderObjectId);
+		Assert.Equal([1002], entry.AffectedMemberObjectIds);
+		Assert.True(entry.WouldRecheckQueueForNewMatches);
+		var queueRecheckPlan = Assert.Single(result.QueueRecheckPlans);
+		Assert.Equal(107, queueRecheckPlan.MaskId);
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.MissingAutoGroup, queueRecheckPlan.Status);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.False(service.IsSearching(1002, 107));
+		Assert.True(service.IsSearching(1003, 107));
+	}
+
+	[Fact]
+	public void CleanupSearchEntriesOnLogout_MissingSearchEntryIsNoOpLikeJava()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		service.RegisterLookingParty(107, [1001]);
+
+		var result = service.CleanupSearchEntriesOnLogout(2001);
+
+		Assert.Equal(AutoGroupLogoutSearchCleanupStatus.NoSearchEntries, result.Status);
+		Assert.Empty(result.Entries);
+		Assert.Empty(result.QueueRecheckPlans);
+		Assert.Equal(1, service.GetLookingPartyCount(107));
+		Assert.True(service.IsSearching(1001, 107));
+	}
+
 	private static AutoGroupSummary CreateAutoGroup(
 		int maskId,
 		int worldId,

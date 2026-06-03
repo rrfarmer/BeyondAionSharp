@@ -363,6 +363,84 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				&& parties.Any(party => party.MemberObjectIds.Contains(playerObjectId));
 	}
 
+	public AutoGroupLogoutSearchCleanupResult CleanupSearchEntriesOnLogout(
+		int playerObjectId,
+		AutoGroupTable? autoGroups = null,
+		InstanceCooltimeTable? instanceCooltimes = null)
+	{
+		var cleanupEntries = new List<AutoGroupLogoutSearchCleanupEntry>();
+		var queueRecheckMaskIds = new List<int>();
+		lock (_sync)
+		{
+			foreach (var maskEntry in _lookingPartiesByMaskId.ToArray())
+			{
+				var maskId = maskEntry.Key;
+				var parties = maskEntry.Value;
+				var party = parties.FirstOrDefault(candidate => candidate.MemberObjectIds.Contains(playerObjectId));
+				if (party == null)
+					continue;
+
+				if (party.LeaderObjectId == playerObjectId)
+				{
+					var newLeaderObjectId = party.MemberObjectIds.FirstOrDefault(memberObjectId => memberObjectId != playerObjectId);
+					if (newLeaderObjectId == 0)
+					{
+						RemovePartyFromSimulation(_lookingPartiesByMaskId, maskId, parties, party);
+						cleanupEntries.Add(new AutoGroupLogoutSearchCleanupEntry(
+							AutoGroupLogoutSearchCleanupType.RemovedLeaderOnlyParty,
+							maskId,
+							playerObjectId,
+							OldLeaderObjectId: playerObjectId,
+							NewLeaderObjectId: 0,
+							party.MemberObjectIds,
+							WouldRecheckQueueForNewMatches: false));
+						continue;
+					}
+
+					var partyIndex = parties.IndexOf(party);
+					parties[partyIndex] = party with { LeaderObjectId = newLeaderObjectId };
+					cleanupEntries.Add(new AutoGroupLogoutSearchCleanupEntry(
+						AutoGroupLogoutSearchCleanupType.PromotedNewLeader,
+						maskId,
+						playerObjectId,
+						OldLeaderObjectId: playerObjectId,
+						newLeaderObjectId,
+						party.MemberObjectIds,
+						WouldRecheckQueueForNewMatches: false));
+					continue;
+				}
+
+				var remainingMemberObjectIds = party.MemberObjectIds
+					.Where(memberObjectId => memberObjectId != playerObjectId)
+					.ToArray();
+				var index = parties.IndexOf(party);
+				parties[index] = party with { MemberObjectIds = remainingMemberObjectIds };
+				cleanupEntries.Add(new AutoGroupLogoutSearchCleanupEntry(
+					AutoGroupLogoutSearchCleanupType.RemovedMember,
+					maskId,
+					playerObjectId,
+					party.LeaderObjectId,
+					NewLeaderObjectId: party.LeaderObjectId,
+					[playerObjectId],
+					WouldRecheckQueueForNewMatches: true));
+				queueRecheckMaskIds.Add(maskId);
+			}
+		}
+
+		var queueRecheckPlans = queueRecheckMaskIds
+			.Distinct()
+			.Select(maskId => CreateQueueMatchPlan(maskId, autoGroups, instanceCooltimes))
+			.ToArray();
+		return new AutoGroupLogoutSearchCleanupResult(
+			playerObjectId,
+			cleanupEntries.Count == 0
+				? AutoGroupLogoutSearchCleanupStatus.NoSearchEntries
+				: AutoGroupLogoutSearchCleanupStatus.Cleaned,
+			cleanupEntries,
+			queueRecheckPlans,
+			"AutoGroupService.onLogout -> for each search entry: start-enter entries cancelEnter elsewhere; leaders promote the first remaining member or remove the entry; non-leaders unregisterMember and checkQueueForNewMatches(maskId); no penalty refresh is scheduled for search cleanup.");
+	}
+
 	public async Task<AutoGroupCancelRegistrationResult> CancelRegistrationAsync(
 		int playerObjectId,
 		int maskId,
@@ -1346,6 +1424,40 @@ public enum AutoGroupCancelRegistrationStatus
 	NoRegistration,
 	LeaderPartyRemoved,
 	MemberRemoved,
+}
+
+public sealed record AutoGroupLogoutSearchCleanupResult(
+	int PlayerObjectId,
+	AutoGroupLogoutSearchCleanupStatus Status,
+	IReadOnlyList<AutoGroupLogoutSearchCleanupEntry> Entries,
+	IReadOnlyList<AutoGroupQueueMatchPlan> QueueRecheckPlans,
+	string JavaSource)
+{
+	public IReadOnlyList<int> QueueRecheckMaskIds => QueueRecheckPlans
+		.Select(plan => plan.MaskId)
+		.ToArray();
+}
+
+public sealed record AutoGroupLogoutSearchCleanupEntry(
+	AutoGroupLogoutSearchCleanupType Type,
+	int MaskId,
+	int PlayerObjectId,
+	int OldLeaderObjectId,
+	int NewLeaderObjectId,
+	IReadOnlyList<int> AffectedMemberObjectIds,
+	bool WouldRecheckQueueForNewMatches);
+
+public enum AutoGroupLogoutSearchCleanupStatus
+{
+	NoSearchEntries,
+	Cleaned,
+}
+
+public enum AutoGroupLogoutSearchCleanupType
+{
+	RemovedLeaderOnlyParty,
+	PromotedNewLeader,
+	RemovedMember,
 }
 
 public sealed record AutoGroupStartLookingResult(
