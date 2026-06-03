@@ -1424,6 +1424,41 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 	}
 
 	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceViceCaptainPromoteLimitInLeagueReturnsBeforeFanoutLikeJava()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true };
+		var vice1 = new Player { ObjectId = 1002, Name = "Vice1", IsOnline = true };
+		var vice2 = new Player { ObjectId = 1003, Name = "Vice2", IsOnline = true };
+		var vice3 = new Player { ObjectId = 1004, Name = "Vice3", IsOnline = true };
+		var vice4 = new Player { ObjectId = 1005, Name = "Vice4", IsOnline = true };
+		var target = new Player { ObjectId = 1006, Name = "Target", IsOnline = true };
+		var otherLeader = new Player { ObjectId = 2001, Name = "OtherLeader", IsOnline = true };
+		alliances.CreateAlliance(88001, leader);
+		foreach (var player in new[] { vice1, vice2, vice3, vice4, target })
+			alliances.AddMember(88001, player);
+		alliances.CreateAlliance(88002, otherLeader);
+		alliances.SetViceCaptains(88001, [vice1.ObjectId, vice2.ObjectId, vice3.ObjectId, vice4.ObjectId]);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		alliances.SetLeagueId(88001, 77001);
+		alliances.SetLeagueId(88002, 77001);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 25, selectedObjectId: target.ObjectId));
+
+		Assert.False(alliances.IsViceCaptain(88001, target.ObjectId));
+		Assert.Equal([vice1.ObjectId, vice2.ObjectId, vice3.ObjectId, vice4.ObjectId], alliances.GetSnapshot(88001)?.ViceCaptainObjectIds);
+		var send = Assert.Single(registry.SentPackets);
+		Assert.Equal(leader.ObjectId, send.PlayerObjectId);
+		Assert.Equal(1301061, Assert.IsType<SmSystemMessage>(send.Packet).MessageId);
+	}
+
+	[Fact]
 	public async Task HandlePlayerStatusInfoAsync_AllianceSetCaptainChangesLeaderAndDemotesOldLeaderToViceCaptain()
 	{
 		var registry = new CapturingConnectionRegistry();
