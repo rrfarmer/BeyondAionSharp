@@ -16,11 +16,13 @@ public static class GameClientPacketFactory
 		Register(3, states => new CmQuit(3, states), GameConnectionState.Authed, GameConnectionState.InGame);
 		Register(4, states => new CmMayQuit(4, states), GameConnectionState.InGame);
 		Register(5, states => new CmRevive(5, states), GameConnectionState.InGame);
+		Register(7, states => new CmCharacterEdit(7, states), GameConnectionState.Authed);
 		Register(8, states => new CmEnterWorld(8, states), GameConnectionState.Authed);
 		Register(9, states => new CmLevelReady(9, states), GameConnectionState.InGame);
 		Register(10, states => new CmUiSettings(10, states), GameConnectionState.InGame);
 		Register(11, states => new CmObjectSearch(11, states), GameConnectionState.InGame);
 		Register(12, states => new CmCustomSettings(12, states), GameConnectionState.InGame);
+		Register(14, states => new CmCaptcha(14, states), GameConnectionState.InGame);
 		Register(15, states => new CmTeleportAnimationDone(15, states), GameConnectionState.InGame);
 		Register(16, states => new CmLegionSendEmblemInfo(16, states), GameConnectionState.InGame);
 		Register(17, states => new CmPositionSelf(17, states), GameConnectionState.InGame);

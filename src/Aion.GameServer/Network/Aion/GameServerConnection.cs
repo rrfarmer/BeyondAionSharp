@@ -750,6 +750,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_LEGION.runImpl dispatches LegionService by exOpcode.
 				// Legion mutation and membership side effects remain unported; keep this parser-only for now.
 				break;
+			case CmCharacterEdit:
+				// Java parity: CM_CHARACTER_EDIT.runImpl -> PlayerEnterWorldService.enterWorld + appearance mutation; deferred until character edit is ported.
+				break;
+			case CmCaptcha:
+				// Java parity: CM_CAPTCHA.runImpl -> PunishmentService captcha verification; deferred until anti-bot punishment is ported.
+				break;
 			case CmLegionSendEmblemInfo:
 				// Java parity: CM_LEGION_SEND_EMBLEM_INFO.runImpl -> LegionService.getLegion(legionId) -> SM_LEGION_SEND_EMBLEM; deferred.
 				break;
