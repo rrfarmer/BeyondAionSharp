@@ -952,6 +952,9 @@ public sealed class PlayerEnterWorldService
 
 		if (plan.Status == PlayerAllianceDisconnectedPlanStatus.Planned)
 		{
+			var leagueAllianceInfoByRecipient = isInLeague && !noOnlineMembersRemain && _playerLeagueRuntime != null
+				? CreateDisconnectedLeagueAllianceInfoByRecipient(plan, snapshot.LeagueId)
+				: null;
 			foreach (var intent in plan.PacketIntents)
 			{
 				if (ShouldSkipAllianceLogoutRecipient(intent.RecipientObjectId, membersByObjectId, player.ObjectId))
@@ -959,7 +962,7 @@ public sealed class PlayerEnterWorldService
 
 				await _connectionRegistry.SendPacketToPlayerAsync(
 					intent.RecipientObjectId,
-					intent.CreatePacket());
+					CreateAllianceLogoutPacket(intent, leagueAllianceInfoByRecipient));
 			}
 		}
 
@@ -986,6 +989,35 @@ public sealed class PlayerEnterWorldService
 			if (leagueBroadcastPlan != null)
 				await DispatchLeagueLogoutPacketsAsync(leagueBroadcastPlan.PacketIntents, player.ObjectId);
 		}
+	}
+
+	private IReadOnlyDictionary<int, GameServerPacket>? CreateDisconnectedLeagueAllianceInfoByRecipient(
+		PlayerAllianceDisconnectedPlan plan,
+		int leagueId)
+	{
+		// Java parity: PlayerDisconnectedEvent sends new SM_ALLIANCE_INFO(alliance) to remaining alliance members.
+		// If the alliance is in a league, the Java packet constructor expands the real league id and league rows.
+		var leagueInfoPlan = _playerLeagueRuntime?.CreateAllianceInfoFanout(
+			leagueId,
+			plan.AllianceId,
+			messageId: 0,
+			message: string.Empty,
+			_playerAllianceRuntime!);
+		return leagueInfoPlan?.PacketIntents
+			.Where(intent => intent.Kind == PlayerLeaguePacketIntentKind.AllianceInfo)
+			.ToDictionary(intent => intent.RecipientObjectId, intent => intent.CreatePacket());
+	}
+
+	private static GameServerPacket CreateAllianceLogoutPacket(
+		PlayerAlliancePacketIntent intent,
+		IReadOnlyDictionary<int, GameServerPacket>? leagueAllianceInfoByRecipient)
+	{
+		if (intent.Kind == PlayerAlliancePacketIntentKind.AllianceInfo
+			&& leagueAllianceInfoByRecipient != null
+			&& leagueAllianceInfoByRecipient.TryGetValue(intent.RecipientObjectId, out var packet))
+			return packet;
+
+		return intent.CreatePacket();
 	}
 
 	private async Task DispatchLeagueLogoutPacketsAsync(

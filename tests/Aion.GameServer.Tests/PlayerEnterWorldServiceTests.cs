@@ -990,11 +990,17 @@ public sealed class PlayerEnterWorldServiceTests
 		await service.LeaveWorldAsync(player);
 
 		Assert.Equal([2001, 2001, 2001, 2001, 3001], registry.SentPackets.Select(packet => packet.PlayerObjectId));
+		var expectedRows =
+			new[]
+			{
+				new PlayerAllianceInfoLeagueRow(0, 88001, 2, "AllianceLeader", 220010000),
+				new PlayerAllianceInfoLeagueRow(1, 88002, 1, "LeagueMate", 230010000),
+			};
 		AssertAllianceOfflineMessage(registry.SentPackets[0], 2001, "Disconnected");
 		Assert.IsType<SmAllianceMemberInfo>(registry.SentPackets[1].Packet);
-		Assert.IsType<SmAllianceInfo>(registry.SentPackets[2].Packet);
-		AssertLeagueAllianceInfoPacket(registry.SentPackets[3], 88001, 2001, 220010000, expectedAllianceGroupSize: 2);
-		AssertLeagueAllianceInfoPacket(registry.SentPackets[4], 88002, 3001, 230010000);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[2], 88001, 2001, 220010000, expectedAllianceGroupSize: 2, expectedLeagueRows: expectedRows);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[3], 88001, 2001, 220010000, expectedAllianceGroupSize: 2, expectedLeagueRows: expectedRows);
+		AssertLeagueAllianceInfoPacket(registry.SentPackets[4], 88002, 3001, 230010000, expectedLeagueRows: expectedRows);
 		Assert.DoesNotContain(registry.SentPackets, packet => packet.PlayerObjectId == player.ObjectId);
 		Assert.Equal([88001, 88002], leagueRuntime.GetAllianceIdsByPosition(77001));
 	}
