@@ -1072,6 +1072,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal(107, result.MaskId);
 		Assert.Equal(2, result.RemovedPartyCount);
 		Assert.Equal([1001, 1002, 1003], result.RemovedMemberObjectIds);
+		Assert.Empty(result.PenaltyRefreshIntents);
 		Assert.Equal(3, result.SentPackets);
 		Assert.True(result.HasAutoGroupData);
 		Assert.Equal(0, service.GetLookingPartyCount(107));
@@ -1096,6 +1097,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 
 		Assert.Equal(2, result.RemovedPartyCount);
 		Assert.Equal([1001, 1001], result.RemovedMemberObjectIds);
+		Assert.Empty(result.PenaltyRefreshIntents);
 		Assert.Equal(2, result.SentPackets);
 		Assert.Collection(
 			registry.SentPackets,
@@ -1116,6 +1118,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal(107, result.MaskId);
 		Assert.Equal(0, result.RemovedPartyCount);
 		Assert.Empty(result.RemovedMemberObjectIds);
+		Assert.Empty(result.PenaltyRefreshIntents);
 		Assert.Equal(0, result.SentPackets);
 		Assert.False(result.HasAutoGroupData);
 		Assert.Equal(1, service.GetLookingPartyCount(108));
@@ -1133,6 +1136,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 
 		Assert.Equal(1, result.RemovedPartyCount);
 		Assert.Equal([1001, 1002], result.RemovedMemberObjectIds);
+		Assert.Empty(result.PenaltyRefreshIntents);
 		Assert.Equal(0, result.SentPackets);
 		Assert.False(result.HasAutoGroupData);
 		Assert.Equal(0, service.GetLookingPartyCount(107));

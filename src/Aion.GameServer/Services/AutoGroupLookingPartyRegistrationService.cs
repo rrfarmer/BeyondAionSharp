@@ -548,6 +548,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 					maskId,
 					RemovedPartyCount: 0,
 					RemovedMemberObjectIds: Array.Empty<int>(),
+					PenaltyRefreshIntents: Array.Empty<AutoGroupPenaltyRefreshIntent>(),
 					SentPackets: 0,
 					HasAutoGroupData: autoGroups?.GetTemplateByInstanceMaskId(maskId) != null);
 			}
@@ -574,6 +575,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			maskId,
 			removedParties.Length,
 			removedMemberObjectIds,
+			Array.Empty<AutoGroupPenaltyRefreshIntent>(),
 			sentPackets,
 			HasAutoGroupData: autoGroup != null);
 	}
@@ -1429,6 +1431,7 @@ public sealed record AutoGroupStopRegistrationsByMaskIdResult(
 	int MaskId,
 	int RemovedPartyCount,
 	IReadOnlyList<int> RemovedMemberObjectIds,
+	IReadOnlyList<AutoGroupPenaltyRefreshIntent> PenaltyRefreshIntents,
 	int SentPackets,
 	bool HasAutoGroupData);
 
