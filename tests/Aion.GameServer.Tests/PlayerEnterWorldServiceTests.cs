@@ -3298,6 +3298,15 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveInventoryItemSlotAsync(
+			int playerObjectId,
+			int itemObjectId,
+			long newSlot,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,

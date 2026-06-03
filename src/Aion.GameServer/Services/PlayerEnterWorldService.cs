@@ -234,6 +234,16 @@ public sealed class PlayerEnterWorldService
 		return await _repository.DeleteInventoryItemAsync(player.ObjectId, itemObjectId, cancellationToken);
 	}
 
+	public Task<bool> SaveInventoryItemSlotAsync(
+		Player player,
+		int itemObjectId,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemMoveService.moveInSameStorage -> item.setEquipmentSlot -> InventoryDAO stores updated slot.
+		return _repository.SaveInventoryItemSlotAsync(player.ObjectId, itemObjectId, newSlot, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

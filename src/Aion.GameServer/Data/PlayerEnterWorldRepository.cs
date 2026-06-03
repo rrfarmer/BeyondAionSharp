@@ -303,6 +303,12 @@ public interface IPlayerEnterWorldRepository
 		int? deletedToolItemObjectId,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveInventoryItemSlotAsync(
+		int playerObjectId,
+		int itemObjectId,
+		long newSlot,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -870,6 +876,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int? deletedMaterialItemObjectId,
 		InventoryItem? toolItemUpdate,
 		int? deletedToolItemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveInventoryItemSlotAsync(
+		int playerObjectId,
+		int itemObjectId,
+		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1723,6 +1738,35 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save item amplification mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveInventoryItemSlotAsync(
+		int playerObjectId,
+		int itemObjectId,
+		long newSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/InventoryDAO.store updates slot after ItemMoveService.moveInSameStorage.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE inventory SET slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = newSlot },
+					new MySqlParameter { Value = itemObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save inventory slot update for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

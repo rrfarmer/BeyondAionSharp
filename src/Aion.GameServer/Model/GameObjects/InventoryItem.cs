@@ -53,7 +53,8 @@ public sealed class InventoryItem
 
 	public bool IsSoulBound { get; init; }
 
-	public long Slot { get; init; }
+	// Java parity: model/gameobjects/Item.setEquipmentSlot mutates slot in place.
+	public long Slot { get; set; }
 
 	public int Location { get; init; }
 

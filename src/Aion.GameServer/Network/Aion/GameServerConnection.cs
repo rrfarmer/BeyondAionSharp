@@ -624,9 +624,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmLootItem lootItem:
 				await HandleLootItemAsync(lootItem);
 				break;
-			case CmMoveItem:
-				// Java parity: network/aion/clientpackets/CM_MOVE_ITEM.runImpl calls ItemMoveService.moveItem.
-				// Inventory/warehouse move side effects remain unported; keep this parser-only for now.
+			case CmMoveItem moveItem:
+				if (_activePlayer != null)
+					await HandleMoveItemAsync(_activePlayer, moveItem);
 				break;
 			case CmSplitItem:
 				// Java parity: network/aion/clientpackets/CM_SPLIT_ITEM.runImpl calls ItemSplitService.splitItem.
@@ -2543,6 +2543,29 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_playerEnterWorldService != null)
 			await _playerEnterWorldService.DeleteInventoryItemAsync(player, item.ObjectId);
 		await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.DiscardDeleteType));
+	}
+
+	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_MOVE_ITEM.runImpl -> ItemMoveService.moveItem.
+		if (packet.Source != packet.Destination)
+		{
+			// Cross-storage moves involve ItemRestrictionService, LegionService, stack merging, and
+			// multi-packet side effects. Deferred until those systems are ported.
+			return;
+		}
+
+		// Same-storage slot reordering.
+		// Java parity: ItemMoveService.moveInSameStorage — updates slot and marks item dirty; no response packet.
+		var item = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.ItemObjectId && i.Location == packet.Source);
+		if (item == null || item.Slot == packet.Slot)
+			return;
+
+		item.Slot = packet.Slot;
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, item.ObjectId, packet.Slot);
+		// No response packet: the client already updated its UI before sending this packet.
 	}
 
 	private void HandleCloseDialog(Player player, CmCloseDialog packet)

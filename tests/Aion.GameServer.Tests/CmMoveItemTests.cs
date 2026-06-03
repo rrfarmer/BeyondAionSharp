@@ -1,4 +1,5 @@
 using Aion.Commons.Network;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -47,6 +48,44 @@ public sealed class CmMoveItemTests
 		Assert.Equal(0, packet.Source);
 		Assert.Equal(3, packet.Destination);
 		Assert.Equal((short)-1, packet.Slot);
+	}
+
+	[Fact]
+	public void InventoryItem_SlotIsSettable_ModelLevelJavaParity()
+	{
+		// Java parity: model/gameobjects/Item.setEquipmentSlot mutates slot in place.
+		// ItemMoveService.moveInSameStorage calls item.setEquipmentSlot(slot) on the live item object.
+		var item = new InventoryItem
+		{
+			ObjectId = 1001,
+			ItemId = 100000,
+			Count = 1,
+			Location = 0,
+			Slot = 5,
+		};
+
+		item.Slot = 12;
+
+		Assert.Equal(12, item.Slot);
+	}
+
+	[Fact]
+	public void CmMoveItem_SameSourceAndDestination_IdentifiesSameStorageMove()
+	{
+		// Java parity: CM_MOVE_ITEM.runImpl -> ItemMoveService.moveItem checks sourceStorageType == destinationStorageType.
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(999);
+		buffer.WriteC(0); // source = cube
+		buffer.WriteC(0); // destination = cube (same storage)
+		buffer.WriteH(7);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.Equal(0, packet.Source);
+		Assert.Equal(0, packet.Destination);
+		Assert.True(packet.Source == packet.Destination); // same-storage indicator
+		Assert.Equal(7, packet.Slot);
 	}
 
 	private static CmMoveItem CreatePacket()
