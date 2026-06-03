@@ -518,6 +518,77 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task DefenderAllianceUpdatePlan_SelectsOnlyJavaDefenderRaceZonePlayers()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var planner = new VortexDefenderAllianceUpdatePlanService();
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			var offlineDefender = CreatePlayer(1006, isOnline: false, location.InvasionWorldId, location.DefendersRace);
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
+			var lowerCaseDefender = CreatePlayer(1008, isOnline: true, location.InvasionWorldId, location.DefendersRace.ToLowerInvariant());
+
+			var plan = planner.CreatePlan(
+				location,
+				[
+					VortexZonePlayerSnapshot.FromPlayer(invader),
+					VortexZonePlayerSnapshot.FromPlayer(defender),
+					VortexZonePlayerSnapshot.FromPlayer(offlineDefender),
+					VortexZonePlayerSnapshot.FromPlayer(lowerCaseDefender),
+				]);
+
+			Assert.Equal(VortexDefenderAllianceUpdatePlanStatus.Planned, plan.Status);
+			Assert.Equal(location.Id, plan.LocationId);
+			Assert.Equal(location.DefendersRace, plan.DefendersRace);
+			Assert.True(plan.WouldCallUpdateDefenders);
+			Assert.False(plan.ShouldMutateLiveAlliance);
+			Assert.Equal([1004, 1006], plan.DefenderObjectIds);
+			Assert.Equal([1002, 1008], plan.SkippedObjectIds);
+			Assert.Equal([location.DefendersRace, location.DefendersRace], plan.DefenderUpdatePlayers.Select(player => player.Race).ToArray());
+			Assert.Equal(
+				"services/vortex/Invasion.updateAlliance -> services/vortex/Invasion.updateDefenders",
+				plan.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task DefenderAllianceUpdatePlan_EmptyZoneHasNoLiveAllianceMutation()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-update-empty-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(1));
+			var planner = new VortexDefenderAllianceUpdatePlanService();
+
+			var plan = planner.CreatePlan(location, zonePlayers: null);
+
+			Assert.Equal(VortexDefenderAllianceUpdatePlanStatus.Planned, plan.Status);
+			Assert.Equal(location.Id, plan.LocationId);
+			Assert.Equal(location.DefendersRace, plan.DefendersRace);
+			Assert.False(plan.WouldCallUpdateDefenders);
+			Assert.False(plan.ShouldMutateLiveAlliance);
+			Assert.Empty(plan.DefenderObjectIds);
+			Assert.Empty(plan.SkippedObjectIds);
+			Assert.Empty(plan.DefenderUpdatePlayers);
+			Assert.Empty(plan.SkippedPlayers);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task SetAndClearActivePortal_ModelsJavaSpawnAndDespawnControllerReference()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-clear-" + Guid.NewGuid().ToString("N"));
@@ -1637,13 +1708,14 @@ public sealed class VortexLocationServiceTests
 		return context;
 	}
 
-	private static Player CreatePlayer(int objectId, bool isOnline, int worldId)
+	private static Player CreatePlayer(int objectId, bool isOnline, int worldId, string race = "ELYOS")
 	{
 		return new Player
 		{
 			ObjectId = objectId,
 			Name = "Invader",
 			IsOnline = isOnline,
+			Race = race,
 			Position = new WorldPosition(worldId, 1, 2, 3, 0),
 		};
 	}
