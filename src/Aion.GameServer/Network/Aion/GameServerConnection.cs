@@ -3035,15 +3035,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleDistributionSettingsAsync(Player player, CmDistributionSettings packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_DISTRIBUTION_SETTINGS.runImpl -> PlayerGroupService.changeGroupRules.
-		// Alliance and League paths are deferred; only group path is live.
-		if (player.TeamMembership != PlayerTeamMembership.Group)
-			return;
-
-		var teamId = player.CurrentTeamId;
-		if (teamId == 0 || !_playerGroupRuntime.IsLeader(teamId, player))
-			return;
-
+		// Java parity: network/aion/clientpackets/CM_DISTRIBUTION_SETTINGS.runImpl -> PlayerGroupService/PlayerAllianceService.changeGroupRules.
 		var lootRule = packet.LootRule switch
 		{
 			0 => PlayerGroupLootRuleType.FreeForAll,
@@ -3063,12 +3055,34 @@ public sealed class GameServerConnection : BaseClientConnection
 			EternalItemAbove: packet.EthernalItemAbove,
 			packet.MythicItemAbove);
 
-		var plan = _playerGroupRuntime.ChangeLootRules(teamId, newRules);
-		if (plan == null)
-			return;
+		if (player.TeamMembership == PlayerTeamMembership.Group)
+		{
+			var teamId = player.CurrentTeamId;
+			if (teamId == 0 || !_playerGroupRuntime.IsLeader(teamId, player))
+				return;
 
-		foreach (var intent in plan.GroupInfoBroadcasts)
-			await SendGroupLeaderPacketAsync(intent.RecipientObjectId, intent.CreateGroupInfoPacket(), default);
+			var plan = _playerGroupRuntime.ChangeLootRules(teamId, newRules);
+			if (plan == null)
+				return;
+
+			foreach (var intent in plan.GroupInfoBroadcasts)
+				await SendGroupLeaderPacketAsync(intent.RecipientObjectId, intent.CreateGroupInfoPacket(), default);
+		}
+		else if (player.TeamMembership == PlayerTeamMembership.Alliance)
+		{
+			// Java parity: CM_DISTRIBUTION_SETTINGS.runImpl -> PlayerAllianceService.changeGroupRules for alliance leader.
+			// League path remains deferred.
+			var allianceId = player.CurrentTeamId;
+			if (allianceId == 0 || !_playerAllianceRuntime.IsLeader(allianceId, player))
+				return;
+
+			var allianceIntents = _playerAllianceRuntime.ChangeLootRules(allianceId, newRules);
+			if (allianceIntents == null)
+				return;
+
+			foreach (var intent in allianceIntents)
+				await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), default);
+		}
 	}
 
 	private void HandleCloseDialog(Player player, CmCloseDialog packet)

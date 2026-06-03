@@ -428,6 +428,42 @@ public sealed class PlayerAllianceRuntime
 				&& descriptor.LeaderObjectId == player.ObjectId;
 	}
 
+	public IReadOnlyList<PlayerAllianceInfoIntent>? ChangeLootRules(int allianceId, PlayerGroupLootRules lootRules)
+	{
+		// Java parity: model/team/alliance/events/ChangeAllianceLootRulesEvent sets LootGroupRules and broadcasts SM_ALLIANCE_INFO.
+		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(allianceId, 0);
+
+		lock (_sync)
+		{
+			if (!_membersByAllianceId.TryGetValue(allianceId, out var members)
+				|| !_descriptorsByAllianceId.TryGetValue(allianceId, out var descriptor))
+				return null;
+
+			var updatedDescriptor = descriptor with { LootRules = lootRules };
+			_descriptorsByAllianceId[allianceId] = updatedDescriptor;
+			ApplySnapshot(allianceId, members, updatedDescriptor);
+
+			var viceCaptainIds = _viceCaptainObjectIdsByAllianceId.TryGetValue(allianceId, out var currentViceCaptains)
+				? currentViceCaptains.ToArray()
+				: Array.Empty<int>();
+			var leagueId = _leagueIdByAllianceId.GetValueOrDefault(allianceId);
+
+			return members.Select(member => new PlayerAllianceInfoIntent(
+				member.ObjectId,
+				PlayerAllianceInfoPacketPlan.FromSnapshot(
+					allianceId,
+					updatedDescriptor.LeaderObjectId,
+					allianceGroupSize: members.Count,
+					activePlayerMapId: member.Player.Position.WorldId,
+					viceCaptainIds,
+					updatedDescriptor.LootRules,
+					updatedDescriptor.TeamType,
+					messageId: 0,
+					message: string.Empty,
+					leagueId: leagueId))).ToArray();
+		}
+	}
+
 	public bool IsFull(int allianceId)
 	{
 		// Java parity: model/team/GeneralTeam.isFull for PlayerAlliance max member count.
