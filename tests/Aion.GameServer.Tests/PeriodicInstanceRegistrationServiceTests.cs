@@ -340,6 +340,38 @@ public sealed class PeriodicInstanceRegistrationServiceTests
 		Assert.False(service.IsRegistrationOpen(108));
 	}
 
+	[Fact]
+	public void CreateRequestPacket_SendsDefaultRequestWindowForOpenLevelRangeLikeJavaHandleRequest()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		Assert.True(service.OpenRegistration(107));
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000, minLevel: 46, maxLevel: 65)]);
+		var player = CreatePlayer(level: 50);
+		player.PortalCooldowns = new Dictionary<int, PlayerPortalCooldown>
+		{
+			[300110000] = new(300110000, ReuseTimeMillis: 200_000, EntryCount: 1),
+		};
+
+		var packet = service.CreateRequestPacket(player, 107, autoGroups);
+
+		var autoGroupPacket = Assert.IsType<SmAutoGroup>(packet);
+		Assert.Equal(107, autoGroupPacket.MaskId);
+		Assert.Equal(0, autoGroupPacket.WindowId);
+	}
+
+	[Fact]
+	public void CreateRequestPacket_ClosedUnknownOrOutOfLevelRangeIsNoOpLikeJavaHandleRequest()
+	{
+		var service = new PeriodicInstanceRegistrationService();
+		Assert.True(service.OpenRegistration(107));
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000, minLevel: 46, maxLevel: 65)]);
+
+		Assert.Null(service.CreateRequestPacket(CreatePlayer(level: 50), 108, autoGroups));
+		Assert.Null(service.CreateRequestPacket(CreatePlayer(level: 50), 107, autoGroups: null));
+		Assert.Null(service.CreateRequestPacket(CreatePlayer(level: 45), 107, autoGroups));
+		Assert.Null(service.CreateRequestPacket(CreatePlayer(level: 66), 107, autoGroups));
+	}
+
 	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId, int minLevel, int maxLevel)
 	{
 		return new AutoGroupSummary(

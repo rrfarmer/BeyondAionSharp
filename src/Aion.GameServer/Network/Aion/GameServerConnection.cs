@@ -77,6 +77,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
+	private readonly PeriodicInstanceRegistrationService _periodicInstanceRegistrations;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
@@ -165,6 +166,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
 		AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
+		PeriodicInstanceRegistrationService? periodicInstanceRegistrations = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
@@ -230,6 +232,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
+		_periodicInstanceRegistrations = periodicInstanceRegistrations ?? new PeriodicInstanceRegistrationService();
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
@@ -1532,6 +1535,16 @@ public sealed class GameServerConnection : BaseClientConnection
 				var autoGroup = _runtimeContext?.DataManager?.StaticData.AutoGroups.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
 				if (autoGroup != null)
 					await SendPacketAsync(new SmAutoGroup(autoGroup, windowId: 2));
+				break;
+			}
+			case 104:
+			{
+				var requestPacket = _periodicInstanceRegistrations.CreateRequestPacket(
+					player,
+					packet.InstanceMaskId,
+					_runtimeContext?.DataManager?.StaticData.AutoGroups);
+				if (requestPacket != null)
+					await SendPacketAsync(requestPacket);
 				break;
 			}
 		}

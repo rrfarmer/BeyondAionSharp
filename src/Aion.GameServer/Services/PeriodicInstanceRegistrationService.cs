@@ -230,6 +230,25 @@ public sealed class PeriodicInstanceRegistrationService
 		return packets;
 	}
 
+	public SmAutoGroup? CreateRequestPacket(Player player, int maskId, AutoGroupTable? autoGroups)
+	{
+		// Java parity: PeriodicInstanceManager.handleRequest only checks whether the
+		// requested registration is open and whether the player is inside the level range.
+		lock (_sync)
+		{
+			if (!_openedRegistrations.Contains(maskId))
+				return null;
+		}
+
+		var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(maskId);
+		if (autoGroup == null)
+			return null;
+		if (player.Level < autoGroup.MinLevel || player.Level > autoGroup.MaxLevel)
+			return null;
+
+		return new SmAutoGroup(autoGroup);
+	}
+
 	private static PeriodicInstanceRegistrationBroadcastPlan CreateRegistrationBroadcastPlan(
 		int maskId,
 		AutoGroupTable? autoGroups,
