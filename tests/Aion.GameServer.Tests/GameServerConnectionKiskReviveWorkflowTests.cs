@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -371,6 +372,38 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 	}
 
 	[Fact]
+	public async Task LeavePlayerWorldAsync_WithEnterWorldServiceDeniesPendingQuestionsLikeJavaDenyAll()
+	{
+		var registry = new CapturingConnectionRegistry();
+		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync(
+			registry,
+			playerEnterWorldServiceFactory: world => new PlayerEnterWorldService(
+				new GameServerOptions(),
+				new EmptyPlayerEnterWorldRepository(),
+				world,
+				NullLogger<PlayerEnterWorldService>.Instance,
+				connectionRegistry: registry));
+		var player = CreateOnlinePlayer(objectId: 1002, boundKiskObjectId: 0);
+		player.IsOnline = true;
+		player.PendingFriendRequest = new PendingFriendRequest(2001, "Requester");
+		Assert.True(player.ResponseRequester.PutRequest(
+			SmQuestionWindow.BuddyListAddBuddyRequest,
+			new QuestionResponseRequest(2001, QuestionResponseRequestKind.FriendInvite, player.PendingFriendRequest)));
+		Assert.True(fixture.World.TryAddObject(player.ObjectId, player));
+
+		await fixture.Connection.LeavePlayerWorldAsync(player, notifyPostmanClient: false);
+
+		Assert.False(player.IsOnline);
+		Assert.NotNull(player.LastOnline);
+		Assert.False(fixture.World.TryGetObject(player.ObjectId, out _));
+		Assert.Null(player.PendingFriendRequest);
+		Assert.Equal(0, player.ResponseRequester.Count);
+		Assert.Contains(
+			registry.SentPackets,
+			delivery => delivery.PlayerObjectId == 2001 && delivery.Packet is SmFriendResponse);
+	}
+
+	[Fact]
 	public async Task LeavePlayerWorldAsync_DeadOpenWorldPlayerBindRevivesLikeJavaLogoutBranch()
 	{
 		await using var fixture = await KiskReviveWorkflowFixture.CreateAsync();
@@ -664,13 +697,15 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 			IDFactory? idFactory = null,
 			PlayerGroupRuntime? playerGroupRuntime = null,
 			PlayerAllianceRuntime? playerAllianceRuntime = null,
-			WorldMapRuntimeStateTable? worldMapStates = null)
+			WorldMapRuntimeStateTable? worldMapStates = null,
+			Func<GameWorld, PlayerEnterWorldService>? playerEnterWorldServiceFactory = null)
 		{
 			var runtimeContext = new GameServerRuntimeContext();
 			if (worldMapStates != null)
 				runtimeContext.SetWorldMapStates(worldMapStates);
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
 			world.Initialize();
+			var playerEnterWorldService = playerEnterWorldServiceFactory?.Invoke(world);
 			var sentPackets = new List<GameServerPacket>();
 
 			var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -694,6 +729,7 @@ public sealed class GameServerConnectionKiskReviveWorkflowTests
 					connectionRegistry: registry,
 					idFactory: idFactory,
 					world: world,
+					playerEnterWorldService: playerEnterWorldService,
 					sentPacketObserver: sentPackets.Add,
 					playerGroupRuntime: playerGroupRuntime,
 					playerAllianceRuntime: playerAllianceRuntime,
