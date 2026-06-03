@@ -95,6 +95,22 @@ public sealed class NpcDialogSideEffectServiceTests
 	}
 
 	[Fact]
+	public void ItemTemplateSummary_IsBreakableMatchesJavaItemMaskBreakableBit()
+	{
+		// Java parity: model/items/ItemMask.BREAKABLE = (1 << 6) = 64; ItemTemplate.isBreakable() checks this bit.
+		const int breakableMask = 1 << 6;
+		var breakableTemplate = CreateMinimalItemTemplate(mask: breakableMask);
+		var nonBreakableTemplate = CreateMinimalItemTemplate(mask: 0);
+		var bothFlagsTemplate = CreateMinimalItemTemplate(mask: breakableMask | (1 << 7)); // BREAKABLE + SOUL_BOUND
+
+		Assert.True(breakableTemplate.IsBreakable);
+		Assert.False(nonBreakableTemplate.IsBreakable);
+		Assert.True(bothFlagsTemplate.IsBreakable);
+		Assert.False(nonBreakableTemplate.IsSoulBound);
+		Assert.True(bothFlagsTemplate.IsSoulBound);
+	}
+
+	[Fact]
 	public void CloseDialogPlan_PlansMailboxCloseAndAiEventForNpcTargetWithOpenMailbox()
 	{
 		var planner = new NpcDialogCloseSideEffectPlanService();
@@ -154,5 +170,23 @@ public sealed class NpcDialogSideEffectServiceTests
 			TemplateId: template.TemplateId,
 			Template: template,
 			Position: new WorldPosition(210010000, 0, 0, 0, 0));
+	}
+
+	private static ItemTemplateSummary CreateMinimalItemTemplate(int mask)
+	{
+		// Java parity: ItemMask bits are read from the parsed integer mask on the item template.
+		return new ItemTemplateSummary(
+			100001,
+			"test_item",
+			0,
+			mask,
+			1,
+			"ETC",
+			"ELSE",
+			"COMMON",
+			"PC_ALL",
+			1,
+			0,
+			1);
 	}
 }

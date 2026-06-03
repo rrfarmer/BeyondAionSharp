@@ -520,8 +520,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmGroupDistribution:
 				// Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION.runImpl validates trade state and splits Kinah across group/alliance/league; deferred.
 				break;
-			case CmDeleteItem:
-				// Java parity: network/aion/clientpackets/CM_DELETE_ITEM.runImpl checks inventory breakability and discards the item; deferred.
+			case CmDeleteItem deleteItem:
+				if (_activePlayer != null)
+					await HandleDeleteItemAsync(_activePlayer, deleteItem);
 				break;
 			case CmAbyssRankingLegions:
 				// Java parity: network/aion/clientpackets/CM_ABYSS_RANKING_LEGIONS.runImpl resolves race-specific legion ranking cache; deferred.
@@ -2486,6 +2487,32 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return new SmRepurchase(targetObjectId, packetItems);
+	}
+
+	private async Task HandleDeleteItemAsync(Player player, CmDeleteItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_DELETE_ITEM.runImpl -> inventory.getItemByObjId -> isBreakable.
+		var item = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.ItemObjectId && i.Location == 0 /* cube */);
+		if (item == null)
+			return;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var template = templates?.GetItemTemplate(item.ItemId);
+		if (template == null)
+			return;
+
+		if (!template.IsBreakable)
+		{
+			await SendPacketAsync(SmSystemMessage.UnbreakableItem(template.GetClientName()));
+			return;
+		}
+
+		// Java parity: storage.delete(item, ItemDeleteType.DISCARD) removes item from inventory.
+		var inventoryItems = player.InventoryItems.ToList();
+		inventoryItems.Remove(item);
+		player.InventoryItems = [.. inventoryItems];
+		await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.DiscardDeleteType));
 	}
 
 	private void HandleCloseDialog(Player player, CmCloseDialog packet)

@@ -40,6 +40,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300419);
 	}
 
+	public static SmSystemMessage UnbreakableItem(string? itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNBREAKABLE_ITEM(item.getL10n()).
+		return new SmSystemMessage(1400340, itemName ?? string.Empty);
+	}
+
 	public static SmSystemMessage CannotGetLoreItem(string itemName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CAN_NOT_GET_LORE_ITEM.

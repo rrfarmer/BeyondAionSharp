@@ -120,11 +120,12 @@ public sealed record ItemTemplateSummary(
 	int OptionSlotBonus = 0,
 	ItemTuningActionInfo? TuningAction = null)
 {
+	private const int BreakableMask = 1 << 6;
+	private const int SoulBoundMask = 1 << 7;
+	private const int NoEnchantMask = 1 << 9;
 	private const int CanPolishMask = 1 << 17;
 	private const int CanApExtractMask = 1 << 16;
 	private const int LimitOneMask = 1;
-	private const int SoulBoundMask = 1 << 7;
-	private const int NoEnchantMask = 1 << 9;
 	private const int CanProcEnchantMask = 1 << 10;
 	private const int DyeableMask = 1 << 15;
 
@@ -233,6 +234,9 @@ public sealed record ItemTemplateSummary(
 	public bool IsLimitOne => (Mask & LimitOneMask) == LimitOneMask;
 
 	public bool IsRemodelable => (Mask & (1 << 12)) == (1 << 12);
+
+	// Java parity: model/items/ItemMask.BREAKABLE = (1 << 6) -> ItemTemplate.isBreakable()
+	public bool IsBreakable => (Mask & BreakableMask) == BreakableMask;
 
 	public bool IsSoulBound => (Mask & SoulBoundMask) == SoulBoundMask;
 
