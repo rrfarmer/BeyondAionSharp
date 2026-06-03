@@ -8803,6 +8803,47 @@ public class GamePacketTests
 		);
 	}
 
+	[Fact]
+	public void SmViewPlayerDetails_SerializesTargetAndEquippedItems()
+	{
+		// Java parity: SM_VIEW_PLAYER_DETAILS.writeImpl — target object ID, storage constant 11, item list.
+		var template = new ItemTemplateSummary(100000, "sword_item", 40000, 0, 1, "WEAPON", "NORMAL", "COMMON", "ALL", 100, 0, 0);
+		var item = new InventoryItem
+		{
+			ObjectId = 500,
+			ItemId = template.TemplateId,
+			Count = 1,
+			IsEquipped = true,
+			Location = 0,
+		};
+		var items = new List<(InventoryItem, ItemTemplateSummary)> { (item, template) };
+		var payload = SerializeUnencryptedPayload(new SmViewPlayerDetails(9001, items));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(9001, reader.ReadD());          // targetObjectId
+		Assert.Equal(11, (int)reader.ReadC());       // EQUIPMENT storage constant
+		Assert.Equal(1, reader.ReadH());             // item count
+		Assert.Equal(0, reader.ReadD());             // unknown per-item prefix
+		Assert.Equal(template.TemplateId, reader.ReadD());
+		Assert.Equal(template.GetClientName(), reader.ReadS());
+		var blobSize = reader.ReadH();
+		Assert.True(blobSize > 0);
+		reader.ReadB(blobSize);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
+	public void SmViewPlayerDetails_SerializesEmptyEquipmentList()
+	{
+		var payload = SerializeUnencryptedPayload(new SmViewPlayerDetails(9002, []));
+		using var reader = new PacketBuffer(payload);
+
+		Assert.Equal(9002, reader.ReadD());
+		Assert.Equal(11, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static ItemTemplateSummary CreateBrokerTemplate(int templateId, IReadOnlySet<string>? classRestrictions = null, int craftLearnRecipeId = 0)
 	{
 		return new ItemTemplateSummary(

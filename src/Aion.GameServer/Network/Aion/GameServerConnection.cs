@@ -2506,8 +2506,15 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		// Sending SM_VIEW_PLAYER_DETAILS with equipment data deferred until
-		// SM_VIEW_PLAYER_DETAILS packet serialization is ported.
+		// Java parity: target.getEquipment().getEquippedItemsWithoutStigma().
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var equippedItems = targetPlayer.InventoryItems
+			.Where(i => i.IsEquipped)
+			.Select(i => (Item: i, Template: itemTemplates?.GetItemTemplate(i.ItemId)))
+			.Where(pair => pair.Template != null && !pair.Template.IsStigma)
+			.Select(pair => (pair.Item, pair.Template!))
+			.ToList();
+		await SendPacketAsync(new SmViewPlayerDetails(targetPlayer.ObjectId, equippedItems));
 	}
 
 	private async Task HandleDeleteItemAsync(Player player, CmDeleteItem packet)
