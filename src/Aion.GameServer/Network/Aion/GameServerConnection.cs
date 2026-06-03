@@ -1003,8 +1003,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmGroupLoot:
 				// Java parity: network/aion/clientpackets/CM_GROUP_LOOT.runImpl -> DropDistributionService.handleRollOrBid; deferred until drop distribution is ported.
 				break;
-			case CmDistributionSettings:
-				// Java parity: network/aion/clientpackets/CM_DISTRIBUTION_SETTINGS.runImpl -> PlayerGroupService/PlayerAllianceService.changeGroupRules; deferred until loot rules are ported.
+			case CmDistributionSettings distributionSettings:
+				if (_activePlayer != null)
+					await HandleDistributionSettingsAsync(_activePlayer, distributionSettings);
 				break;
 			case CmBlockSetReason blockSetReason:
 				if (_activePlayer != null)
@@ -3009,6 +3010,44 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, sourceOldSlot);
 		}
 		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
+	}
+
+	private async Task HandleDistributionSettingsAsync(Player player, CmDistributionSettings packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_DISTRIBUTION_SETTINGS.runImpl -> PlayerGroupService.changeGroupRules.
+		// Alliance and League paths are deferred; only group path is live.
+		if (player.TeamMembership != PlayerTeamMembership.Group)
+			return;
+
+		var teamId = player.CurrentTeamId;
+		if (teamId == 0 || !_playerGroupRuntime.IsLeader(teamId, player))
+			return;
+
+		var lootRule = packet.LootRule switch
+		{
+			0 => PlayerGroupLootRuleType.FreeForAll,
+			1 => PlayerGroupLootRuleType.RoundRobin,
+			2 => PlayerGroupLootRuleType.Leader,
+			_ => PlayerGroupLootRuleType.RoundRobin,
+		};
+
+		// Java parity: CM_DISTRIBUTION_SETTINGS.ethernalItemAbove maps to LootGroupRules(ethernalItemAbove) in Java (typo preserved).
+		var newRules = new PlayerGroupLootRules(
+			lootRule,
+			packet.Misc,
+			packet.CommonItemAbove,
+			packet.SuperiorItemAbove,
+			packet.HeroicItemAbove,
+			packet.FabledItemAbove,
+			EternalItemAbove: packet.EthernalItemAbove,
+			packet.MythicItemAbove);
+
+		var plan = _playerGroupRuntime.ChangeLootRules(teamId, newRules);
+		if (plan == null)
+			return;
+
+		foreach (var intent in plan.GroupInfoBroadcasts)
+			await SendGroupLeaderPacketAsync(intent.RecipientObjectId, intent.CreateGroupInfoPacket(), default);
 	}
 
 	private void HandleCloseDialog(Player player, CmCloseDialog packet)
