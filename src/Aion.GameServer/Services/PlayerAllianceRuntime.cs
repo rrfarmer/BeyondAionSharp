@@ -444,6 +444,7 @@ public sealed class PlayerAllianceRuntime
 				return null;
 
 			var currentViceCaptainIds = _viceCaptainObjectIdsByAllianceId.GetValueOrDefault(allianceId) ?? [];
+			var leagueId = _leagueIdByAllianceId.GetValueOrDefault(allianceId);
 			var plan = _viceCaptainAssignmentPlanner.CreateAssignmentPlan(
 				allianceId,
 				descriptor.LeaderObjectId,
@@ -453,7 +454,8 @@ public sealed class PlayerAllianceRuntime
 				assignType,
 				descriptor.LootRules,
 				descriptor.TeamType,
-				isInLeague: false);
+				isInLeague: leagueId != 0,
+				leagueId: leagueId);
 
 			if (plan.Status == PlayerAllianceRolePlanStatus.Planned)
 			{

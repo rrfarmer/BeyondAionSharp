@@ -9736,6 +9736,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!_playerAllianceRuntime.HasMember(alliance.AllianceId, newLeaderObjectId))
 			throw CreateInvalidTeamMemberException(player, newLeaderObjectId);
 
+		var changedAllianceMemberObjectIds = _playerAllianceRuntime.GetMemberObjectIds(alliance.AllianceId);
+		var leagueId = alliance.LeagueId;
+		var newLeader = _playerAllianceRuntime.GetMember(alliance.AllianceId, newLeaderObjectId)?.Player;
+
 		var plan = _playerAllianceRuntime.ChangeLeader(
 			alliance.AllianceId,
 			newLeaderObjectId,
@@ -9743,11 +9747,37 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (plan == null)
 			return null;
 
+		if (leagueId != 0)
+		{
+			var leagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfo(
+				leagueId,
+				skippedPlayerObjectId: null,
+				_playerAllianceRuntime);
+			if (leagueBroadcastPlan != null)
+			{
+				foreach (var intent in leagueBroadcastPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+					await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+			}
+		}
+
+		var leagueTimeoutPlan = leagueId != 0 && newLeader != null
+			? _playerLeagueRuntime.CreateAllianceLeaderChangeTimeoutPlan(
+				leagueId,
+				alliance.AllianceId,
+				plan.NewLeaderObjectId,
+				newLeader.Name,
+				changedAllianceMemberObjectIds,
+				_playerAllianceRuntime)
+			: null;
+
 		foreach (var intent in plan.AllianceInfoIntents)
 			await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
 
-		foreach (var intent in plan.SystemMessageIntents)
-			await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+		await DispatchAllianceLeaderChangeSystemMessagesAsync(
+			plan,
+			changedAllianceMemberObjectIds,
+			leagueTimeoutPlan,
+			cancellationToken);
 
 		var demoteOldLeaderPlan = _playerAllianceRuntime.AssignViceCaptain(
 			alliance.AllianceId,
@@ -9757,9 +9787,48 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			foreach (var intent in demoteOldLeaderPlan.AllianceInfoIntents)
 				await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+
+			if (leagueId != 0 && demoteOldLeaderPlan.WouldBroadcastLeague)
+			{
+				var demoteLeagueBroadcastPlan = _playerLeagueRuntime.BroadcastAllianceInfo(
+					leagueId,
+					skippedPlayerObjectId: null,
+					_playerAllianceRuntime);
+				if (demoteLeagueBroadcastPlan != null)
+				{
+					foreach (var intent in demoteLeagueBroadcastPlan.PacketIntents.OrderBy(intent => intent.Sequence))
+						await SendLeaguePacketAsync(intent.RecipientObjectId, intent.CreatePacket(), cancellationToken);
+				}
+			}
 		}
 
 		return plan;
+	}
+
+	private async Task DispatchAllianceLeaderChangeSystemMessagesAsync(
+		PlayerAllianceLeaderChangePlan plan,
+		IReadOnlyList<int> changedAllianceMemberObjectIds,
+		PlayerLeagueLeaderChangeTimeoutPlan? leagueTimeoutPlan,
+		CancellationToken cancellationToken)
+	{
+		foreach (var changedAllianceMemberObjectId in changedAllianceMemberObjectIds)
+		{
+			foreach (var intent in plan.SystemMessageIntents.Where(intent => intent.RecipientObjectId == changedAllianceMemberObjectId))
+				await SendAllianceLeaderPacketAsync(intent.RecipientObjectId, intent.Message, cancellationToken);
+
+			if (leagueTimeoutPlan == null)
+				continue;
+
+			foreach (var timeoutIntent in leagueTimeoutPlan.TimeoutIntents
+				.Where(intent => intent.TriggeringChangedAllianceMemberObjectId == changedAllianceMemberObjectId)
+				.OrderBy(intent => intent.PacketIntent.Sequence))
+			{
+				await SendLeaguePacketAsync(
+					timeoutIntent.PacketIntent.RecipientObjectId,
+					timeoutIntent.PacketIntent.CreatePacket(),
+					cancellationToken);
+			}
+		}
 	}
 
 	private async Task SendAllianceLeaderPacketAsync(

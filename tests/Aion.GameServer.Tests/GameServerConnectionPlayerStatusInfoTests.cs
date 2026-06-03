@@ -1393,6 +1393,72 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 			send => Assert.IsType<SmAllianceInfo>(send.Packet));
 	}
 
+	[Fact]
+	public async Task HandlePlayerStatusInfoAsync_AllianceSetCaptainInLeagueFansOutLikeJavaLeaderEvent()
+	{
+		var registry = new CapturingConnectionRegistry();
+		var alliances = new PlayerAllianceRuntime();
+		var leagues = new PlayerLeagueRuntime();
+		var leader = new Player { ObjectId = 1001, Name = "Leader", IsOnline = true, Position = new WorldPosition(210010000, 1, 2, 3, 0) };
+		var target = new Player { ObjectId = 1002, Name = "Target", IsOnline = true, Position = new WorldPosition(220010000, 4, 5, 6, 0) };
+		var member = new Player { ObjectId = 1003, Name = "Member", IsOnline = true, Position = new WorldPosition(230010000, 7, 8, 9, 0) };
+		var otherLeader = new Player { ObjectId = 2001, Name = "OtherLeader", IsOnline = true, Position = new WorldPosition(240010000, 10, 11, 12, 0) };
+		alliances.CreateAlliance(88001, leader);
+		alliances.AddMember(88001, target);
+		alliances.AddMember(88001, member);
+		alliances.CreateAlliance(88002, otherLeader);
+		leagues.CreateLeague(77001, leaderAllianceId: 88001);
+		leagues.AddAlliance(77001, allianceId: 88002);
+		alliances.SetLeagueId(88001, 77001);
+		alliances.SetLeagueId(88002, 77001);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, alliances, playerLeagueRuntime: leagues);
+
+		await pair.Connection.HandlePlayerStatusInfoAsync(
+			leader,
+			CreatePacket(commandCode: 17, selectedObjectId: target.ObjectId));
+
+		var expectedLeagueRows = new[]
+		{
+			new PlayerAllianceInfoLeagueRow(0, 88001, 3, "Target", 220010000),
+			new PlayerAllianceInfoLeagueRow(1, 88002, 1, "OtherLeader", 240010000),
+		};
+		Assert.True(alliances.IsLeader(88001, target));
+		Assert.True(alliances.IsViceCaptain(88001, leader.ObjectId));
+		Assert.False(alliances.IsViceCaptain(88001, target.ObjectId));
+		Assert.Equal(
+		[
+			1001, 1002, 1003, 2001,
+			1001, 1001, 1003, 2001,
+			1002, 1002,
+			1003, 1001, 1003, 2001,
+			1001, 1002, 1003,
+			1001, 1002, 1003, 2001,
+		], registry.SentPackets.Select(send => send.PlayerObjectId));
+		Assert.Collection(
+			registry.SentPackets,
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 210010000, expectedAllianceGroupSize: 3, expectedLeagueRows: expectedLeagueRows),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 220010000, expectedAllianceGroupSize: 3, expectedLeagueRows: expectedLeagueRows),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 230010000, expectedAllianceGroupSize: 3, expectedLeagueRows: expectedLeagueRows),
+			send => AssertLeagueAllianceInfoPacket(send, 88002, 2001, 240010000, expectedLeagueRows: expectedLeagueRows),
+			send => AssertSystemMessagePayload(send, 1300998, "Target"),
+			send => AssertSystemMessagePayload(send, 1400588, "Target"),
+			send => AssertSystemMessagePayload(send, 1400588, "Target"),
+			send => AssertSystemMessagePayload(send, 1400588, "Target"),
+			send => AssertSystemMessagePayload(send, 1300999),
+			send => AssertSystemMessagePayload(send, 1400587),
+			send => AssertSystemMessagePayload(send, 1300998, "Target"),
+			send => AssertSystemMessagePayload(send, 1400588, "Target"),
+			send => AssertSystemMessagePayload(send, 1400588, "Target"),
+			send => AssertSystemMessagePayload(send, 1400588, "Target"),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 210010000, expectedAllianceGroupSize: 3, expectedLeagueRows: [], expectedViceCaptainObjectIds: [1001]),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 220010000, expectedAllianceGroupSize: 3, expectedLeagueRows: [], expectedViceCaptainObjectIds: [1001]),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 230010000, expectedAllianceGroupSize: 3, expectedLeagueRows: [], expectedViceCaptainObjectIds: [1001]),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 210010000, expectedAllianceGroupSize: 3, expectedLeagueRows: expectedLeagueRows, expectedViceCaptainObjectIds: [1001]),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 220010000, expectedAllianceGroupSize: 3, expectedLeagueRows: expectedLeagueRows, expectedViceCaptainObjectIds: [1001]),
+			send => AssertLeagueAllianceInfoPacket(send, 88001, 1002, 230010000, expectedAllianceGroupSize: 3, expectedLeagueRows: expectedLeagueRows, expectedViceCaptainObjectIds: [1001]),
+			send => AssertLeagueAllianceInfoPacket(send, 88002, 2001, 240010000, expectedLeagueRows: expectedLeagueRows));
+	}
+
 	[Theory]
 	[InlineData(16)]
 	[InlineData(17)]
@@ -1747,8 +1813,11 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		string expectedMessage = "",
 		int expectedLeagueId = 77001,
 		IReadOnlyList<PlayerAllianceInfoLeagueRow>? expectedLeagueRows = null,
-		PlayerGroupLootRules? expectedLeagueLootRules = null)
+		PlayerGroupLootRules? expectedLeagueLootRules = null,
+		IReadOnlyList<int>? expectedViceCaptainObjectIds = null,
+		int expectedAllianceGroupSize = 1)
 	{
+		expectedViceCaptainObjectIds ??= [];
 		expectedLeagueLootRules ??= new PlayerGroupLootRules(
 			PlayerGroupLootRuleType.FreeForAll,
 			Misc: 0,
@@ -1765,12 +1834,16 @@ public sealed class GameServerConnectionPlayerStatusInfoTests
 		];
 		var packet = Assert.IsType<SmAllianceInfo>(send.Packet);
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
-		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedAllianceGroupSize, reader.ReadH());
 		Assert.Equal(expectedAllianceId, reader.ReadD());
 		Assert.Equal(expectedLeaderObjectId, reader.ReadD());
 		Assert.Equal(expectedActivePlayerMapId, reader.ReadD());
+		var paddedViceCaptains = expectedViceCaptainObjectIds
+			.Concat(Enumerable.Repeat(0, 4))
+			.Take(4)
+			.ToArray();
 		for (var i = 0; i < 4; i++)
-			Assert.Equal(0, reader.ReadD());
+			Assert.Equal(paddedViceCaptains[i], reader.ReadD());
 		AssertDefaultLootRules(reader);
 		Assert.Equal(0x02, reader.ReadD());
 		Assert.Equal(0x00, (int)reader.ReadC());
