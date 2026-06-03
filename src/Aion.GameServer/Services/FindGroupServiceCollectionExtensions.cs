@@ -11,11 +11,23 @@ public static class FindGroupServiceCollectionExtensions
 		// Java parity: PlayerAllianceService.createAlliance starts initializeOfflineCheck once,
 		// and initializeOfflineCheck schedules OfflinePlayerAllianceChecker on ThreadPoolManager.
 		return services.AddFindGroupSingletonGraph(
+			createGroupOfflineTimeoutStartCallback: null,
+			createAllianceOfflineTimeoutStartCallback: serviceProvider => () => serviceProvider.GetRequiredService<PlayerAllianceOfflineTimeoutScheduler>().Start());
+	}
+
+	public static IServiceCollection AddFindGroupSingletonGraphWithOfflineTimeoutSchedulers(
+		this IServiceCollection services)
+	{
+		// Java parity: PlayerGroupService.createGroup and PlayerAllianceService.createAlliance each start
+		// their own offline checker once, using the same ThreadPoolManager cadence.
+		return services.AddFindGroupSingletonGraph(
+			serviceProvider => () => serviceProvider.GetRequiredService<PlayerGroupOfflineTimeoutScheduler>().Start(),
 			serviceProvider => () => serviceProvider.GetRequiredService<PlayerAllianceOfflineTimeoutScheduler>().Start());
 	}
 
 	public static IServiceCollection AddFindGroupSingletonGraph(
 		this IServiceCollection services,
+		Func<IServiceProvider, Action?>? createGroupOfflineTimeoutStartCallback = null,
 		Func<IServiceProvider, Action?>? createAllianceOfflineTimeoutStartCallback = null)
 	{
 		// Java parity: services/findgroup/FindGroupService uses SingletonHolder and is shared by
@@ -24,6 +36,8 @@ public static class FindGroupServiceCollectionExtensions
 		services.AddSingleton<FindGroupRecruitmentPlanService>();
 		services.AddSingleton<FindGroupClientActionPlanService>();
 		services.AddSingleton<PlayerLeagueRuntime>();
+		services.AddSingleton<PlayerGroupOfflineTimeoutDispatchService>();
+		services.AddSingleton<PlayerGroupOfflineTimeoutScheduler>();
 		services.AddSingleton<PlayerAllianceOfflineTimeoutDispatchService>();
 		services.AddSingleton<PlayerAllianceOfflineTimeoutScheduler>();
 		services.AddSingleton<FindGroupJoinedTeamLifecycleRecorder>(
@@ -34,7 +48,8 @@ public static class FindGroupServiceCollectionExtensions
 		services.AddSingleton<PlayerGroupRuntime>(
 			serviceProvider => new PlayerGroupRuntime(
 				serviceProvider.GetRequiredService<FindGroupRecruitmentPlanService>(),
-				GetServerIdByte(serviceProvider.GetRequiredService<GameServerOptions>())));
+				GetServerIdByte(serviceProvider.GetRequiredService<GameServerOptions>()),
+				createGroupOfflineTimeoutStartCallback?.Invoke(serviceProvider)));
 		services.AddSingleton<PlayerAllianceRuntime>(
 			serviceProvider => new PlayerAllianceRuntime(
 				serviceProvider.GetRequiredService<FindGroupRecruitmentPlanService>(),

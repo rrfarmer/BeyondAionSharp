@@ -654,6 +654,55 @@ public sealed class PlayerGroupRuntimeTests
 	}
 
 	[Fact]
+	public void RemoveNextExpiredOfflineMemberWithLeavePlan_UsesConfiguredGroupRemoveTimeLikeJavaChecker()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(1001, "Leader", isOnline: true);
+		var expired = CreatePlayer(1002, "Expired", isOnline: false);
+		var waiting = CreatePlayer(1003, "Waiting", isOnline: false);
+		runtime.CreateOrUpdateGroup(99001, [leader, expired, waiting]);
+		runtime.UpdateMemberLastOnlineTime(expired, DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+		runtime.UpdateMemberLastOnlineTime(waiting, DateTimeOffset.FromUnixTimeMilliseconds(450_001));
+
+		var timeoutPlan = Assert.IsType<PlayerGroupOfflineTimeoutPlan>(
+			runtime.RemoveNextExpiredOfflineMemberWithLeavePlan(
+				DateTimeOffset.FromUnixTimeMilliseconds(700_000),
+				groupRemoveTimeSeconds: 250));
+
+		Assert.Equal(99001, timeoutPlan.TeamId);
+		Assert.Equal(1002, timeoutPlan.TimedOutPlayerObjectId);
+		Assert.Same(expired, timeoutPlan.TimedOutPlayer);
+		Assert.Equal(250, timeoutPlan.KickDelaySeconds);
+		Assert.Equal(PlayerGroupLeaveReason.LeaveTimeout, timeoutPlan.LeavePlan.Reason);
+		Assert.False(timeoutPlan.LeavePlan.WouldDisband);
+		Assert.Equal([1001, 1003], runtime.GetMemberObjectIds(99001));
+		Assert.Equal(PlayerTeamMembership.None, expired.TeamMembership);
+		Assert.Equal(PlayerTeamMembership.Group, waiting.TeamMembership);
+	}
+
+	[Fact]
+	public void RemoveNextExpiredOfflineMemberWithLeavePlan_DoesNotChangeLeaderForTimeoutLikeJavaEvent()
+	{
+		var runtime = new PlayerGroupRuntime();
+		var leader = CreatePlayer(1001, "Leader", isOnline: false);
+		var member = CreatePlayer(1002, "Member", isOnline: true);
+		var other = CreatePlayer(1003, "Other", isOnline: true);
+		runtime.CreateOrUpdateGroup(99001, [leader, member, other]);
+		runtime.UpdateMemberLastOnlineTime(leader, DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+
+		var timeoutPlan = Assert.IsType<PlayerGroupOfflineTimeoutPlan>(
+			runtime.RemoveNextExpiredOfflineMemberWithLeavePlan(
+				DateTimeOffset.FromUnixTimeMilliseconds(700_000),
+				groupRemoveTimeSeconds: 600));
+
+		Assert.Equal(1001, timeoutPlan.TimedOutPlayerObjectId);
+		Assert.Null(timeoutPlan.LeavePlan.LeaderChangePlan);
+		var descriptor = Assert.IsType<PlayerGroupDescriptor>(runtime.GetDescriptor(99001));
+		Assert.Equal(1001, descriptor.LeaderObjectId);
+		Assert.Equal([1002, 1003], runtime.GetMemberObjectIds(99001));
+	}
+
+	[Fact]
 	public void TryReconnectMember_ReplacesStoredWrapperWithLoggingInPlayerAndRefreshesSnapshot()
 	{
 		var runtime = new PlayerGroupRuntime();
@@ -1845,5 +1894,18 @@ public sealed class PlayerGroupRuntimeTests
 		for (var i = 0; i < 8; i++)
 			Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static Player CreatePlayer(int objectId, string name, bool isOnline)
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = name,
+			IsOnline = isOnline,
+			PlayerClass = "RANGER",
+			Level = 40,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+		};
 	}
 }

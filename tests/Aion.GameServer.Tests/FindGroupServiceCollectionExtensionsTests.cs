@@ -122,7 +122,7 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		var observations = new List<ThreadPoolScheduleObservation>();
 		await using var provider = CreateServices(
 			includeSocketServer: true,
-			useAllianceOfflineTimeoutSchedulerGraph: true,
+			offlineTimeoutSchedulerGraph: OfflineTimeoutSchedulerGraph.AllianceOnly,
 			scheduleObserver: observations.Add).BuildServiceProvider();
 		var allianceRuntime = provider.GetRequiredService<PlayerAllianceRuntime>();
 		var firstLeader = CreatePlayer(1001, "FirstLeader");
@@ -140,9 +140,39 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		Assert.Equal(PlayerAllianceOfflineTimeoutScheduler.Period, observation.Period);
 	}
 
+	[Fact]
+	public async Task AddFindGroupSingletonGraphWithOfflineTimeoutSchedulers_StartsGroupAndAllianceOnceLikeJavaCreateCalls()
+	{
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var provider = CreateServices(
+			includeSocketServer: true,
+			offlineTimeoutSchedulerGraph: OfflineTimeoutSchedulerGraph.GroupAndAlliance,
+			scheduleObserver: observations.Add).BuildServiceProvider();
+		var groupRuntime = provider.GetRequiredService<PlayerGroupRuntime>();
+		var allianceRuntime = provider.GetRequiredService<PlayerAllianceRuntime>();
+		var firstLeader = CreatePlayer(1001, "FirstLeader");
+		var firstMember = CreatePlayer(1002, "FirstMember");
+		var secondLeader = CreatePlayer(2001, "SecondLeader");
+		var secondMember = CreatePlayer(2002, "SecondMember");
+		var allianceLeader = CreatePlayer(3001, "AllianceLeader");
+
+		groupRuntime.CreateOrUpdateGroup(77001, [firstLeader, firstMember]);
+		groupRuntime.CreateOrUpdateGroup(77002, [secondLeader, secondMember]);
+		allianceRuntime.CreateAlliance(88001, allianceLeader);
+		await provider.GetRequiredService<ThreadPoolManager>().ShutdownAsync();
+
+		Assert.Equal(2, observations.Count);
+		Assert.All(observations, observation =>
+		{
+			Assert.Equal(ThreadPoolScheduleKind.FixedRate, observation.Kind);
+			Assert.Equal(TimeSpan.FromSeconds(1), observation.Delay);
+			Assert.Equal(TimeSpan.FromSeconds(30), observation.Period);
+		});
+	}
+
 	private static IServiceCollection CreateServices(
 		bool includeSocketServer = false,
-		bool useAllianceOfflineTimeoutSchedulerGraph = false,
+		OfflineTimeoutSchedulerGraph offlineTimeoutSchedulerGraph = OfflineTimeoutSchedulerGraph.None,
 		Action<ThreadPoolScheduleObservation>? scheduleObserver = null)
 	{
 		var services = new ServiceCollection();
@@ -157,7 +187,7 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 					MaxOnlinePlayers = 100,
 				},
 			});
-		if (scheduleObserver != null || useAllianceOfflineTimeoutSchedulerGraph)
+		if (scheduleObserver != null || offlineTimeoutSchedulerGraph != OfflineTimeoutSchedulerGraph.None)
 		{
 			services.AddSingleton(
 				serviceProvider => new ThreadPoolManager(
@@ -166,7 +196,9 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		}
 
 		services.AddSingleton<GamePacketProcessor<string>>(_ => new GamePacketProcessor<string>((_, _) => Task.CompletedTask));
-		if (useAllianceOfflineTimeoutSchedulerGraph)
+		if (offlineTimeoutSchedulerGraph == OfflineTimeoutSchedulerGraph.GroupAndAlliance)
+			services.AddFindGroupSingletonGraphWithOfflineTimeoutSchedulers();
+		else if (offlineTimeoutSchedulerGraph == OfflineTimeoutSchedulerGraph.AllianceOnly)
 			services.AddFindGroupSingletonGraphWithAllianceOfflineTimeoutScheduler();
 		else
 			services.AddFindGroupSingletonGraph();
@@ -199,5 +231,12 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		var field = instance.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 		Assert.NotNull(field);
 		return Assert.IsType<T>(field.GetValue(instance));
+	}
+
+	private enum OfflineTimeoutSchedulerGraph
+	{
+		None,
+		AllianceOnly,
+		GroupAndAlliance,
 	}
 }

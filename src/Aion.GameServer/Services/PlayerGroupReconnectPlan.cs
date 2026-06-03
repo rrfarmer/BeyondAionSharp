@@ -96,6 +96,13 @@ public sealed record PlayerGroupLeavePlan(
 	bool WouldInvokeEventServiceOnLeftTeam,
 	FindGroupRecruitmentMutationPlan? FindGroupRecruitmentRemoval = null);
 
+public sealed record PlayerGroupOfflineTimeoutPlan(
+	int TeamId,
+	int TimedOutPlayerObjectId,
+	Player TimedOutPlayer,
+	int KickDelaySeconds,
+	PlayerGroupLeavePlan LeavePlan);
+
 public sealed record PlayerGroupDisconnectedDisbandPlan(
 	int TeamId,
 	IReadOnlyList<int> DisbandedPlayerObjectIds,

@@ -12,12 +12,18 @@ public sealed class PlayerGroupRuntime
 	private readonly Dictionary<int, Dictionary<int, int>> _targetObjectIdsByBrandIdByTeamId = [];
 	private readonly PlayerBaseLeavePlanner _baseLeavePlanner = new();
 	private readonly FindGroupRecruitmentPlanService? _findGroupService;
+	private readonly Action? _startOfflineTimeoutCheck;
 	private readonly byte _serverId;
+	private int _offlineTimeoutCheckStarted;
 
-	public PlayerGroupRuntime(FindGroupRecruitmentPlanService? findGroupService = null, byte serverId = 0)
+	public PlayerGroupRuntime(
+		FindGroupRecruitmentPlanService? findGroupService = null,
+		byte serverId = 0,
+		Action? startOfflineTimeoutCheck = null)
 	{
 		_findGroupService = findGroupService;
 		_serverId = serverId;
+		_startOfflineTimeoutCheck = startOfflineTimeoutCheck;
 	}
 
 	public PlayerGroupSnapshot CreateOrUpdateGroup(
@@ -30,6 +36,8 @@ public sealed class PlayerGroupRuntime
 		if (members.Count == 0)
 			throw new ArgumentException("A group requires at least one member.", nameof(members));
 
+		PlayerGroupSnapshot snapshot;
+		var shouldStartOfflineTimeoutCheck = false;
 		lock (_sync)
 		{
 			var runtimeMembers = CopyDistinctMembers(members);
@@ -39,8 +47,16 @@ public sealed class PlayerGroupRuntime
 			_membersByTeamId[teamId] = runtimeMembers;
 			_descriptorsByTeamId[teamId] = PlayerGroupDescriptor.FromLeader(teamId, runtimeMembers[0].Player, teamType);
 			_targetObjectIdsByBrandIdByTeamId.TryAdd(teamId, []);
-			return ApplySnapshot(teamId, runtimeMembers);
+			snapshot = ApplySnapshot(teamId, runtimeMembers);
+			shouldStartOfflineTimeoutCheck = Interlocked.CompareExchange(ref _offlineTimeoutCheckStarted, 1, 0) == 0;
 		}
+
+		// Java parity: PlayerGroupService.createGroup starts OfflinePlayerChecker once through
+		// offlineCheckStarted.compareAndSet(false, true), after the group is created.
+		if (shouldStartOfflineTimeoutCheck)
+			_startOfflineTimeoutCheck?.Invoke();
+
+		return snapshot;
 	}
 
 	public PlayerGroupSnapshot AddMember(int teamId, Player member)
@@ -241,7 +257,7 @@ public sealed class PlayerGroupRuntime
 			}
 			else
 			{
-				if (wasLeader)
+				if (wasLeader && reason != PlayerGroupLeaveReason.LeaveTimeout)
 				{
 					var fallbackLeader = runtimeMembers.FirstOrDefault(candidate => candidate.IsOnline) ?? runtimeMembers[0];
 					leaderChangePlan = ChangeLeaderCore(teamId, runtimeMembers, descriptor, fallbackLeader.ObjectId);
@@ -269,6 +285,52 @@ public sealed class PlayerGroupRuntime
 				baseLeavePlan.WouldNotifyEventServiceOnLeftTeam,
 				findGroupRecruitmentRemoval);
 		}
+	}
+
+	public PlayerGroupOfflineTimeoutPlan? RemoveNextExpiredOfflineMemberWithLeavePlan(
+		DateTimeOffset now,
+		int groupRemoveTimeSeconds = 600)
+	{
+		// Java parity: PlayerGroupService.OfflinePlayerChecker removes expired offline members
+		// with PlayerGroupLeavedEvent(..., LEAVE_TIMEOUT).
+		ArgumentOutOfRangeException.ThrowIfNegative(groupRemoveTimeSeconds);
+
+		PlayerGroupMember? expiredMember = null;
+		var expiredTeamId = 0;
+		lock (_sync)
+		{
+			var nowMillis = now.ToUnixTimeMilliseconds();
+			foreach (var groupEntry in _membersByTeamId.ToArray())
+			{
+				var teamId = groupEntry.Key;
+				foreach (var member in groupEntry.Value.ToArray())
+				{
+					if (member.IsOnline || !IsExpired(member.LastOnlineTimeMillis, groupRemoveTimeSeconds, nowMillis))
+						continue;
+
+					expiredMember = member;
+					expiredTeamId = teamId;
+					break;
+				}
+
+				if (expiredMember != null)
+					break;
+			}
+		}
+
+		if (expiredMember == null)
+			return null;
+
+		var leavePlan = RemoveMemberWithLeavePlan(expiredMember.Player, PlayerGroupLeaveReason.LeaveTimeout);
+		if (leavePlan == null)
+			return null;
+
+		return new PlayerGroupOfflineTimeoutPlan(
+			expiredTeamId,
+			expiredMember.ObjectId,
+			expiredMember.Player,
+			groupRemoveTimeSeconds,
+			leavePlan);
 	}
 
 	public PlayerGroupDisconnectedDisbandPlan? DisbandAfterDisconnectedNoOnlineMembers(int teamId)
@@ -778,5 +840,10 @@ public sealed class PlayerGroupRuntime
 		member.CurrentTeamId = 0;
 		member.CurrentTeamMemberObjectIds = Array.Empty<int>();
 		member.CurrentGroupSnapshot = null;
+	}
+
+	private static bool IsExpired(long lastOnlineTimeMillis, int kickDelaySeconds, long nowMillis)
+	{
+		return lastOnlineTimeMillis + kickDelaySeconds * 1000L <= nowMillis;
 	}
 }
