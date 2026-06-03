@@ -201,6 +201,59 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 	}
 
 	[Fact]
+	public void TryAddOpenQuickEntry_SkipsRejectedOpenInstanceAndAddsLaterMatchLikeJavaCheckInstances()
+	{
+		var service = new AutoGroupInstanceLeaveRuntimeService(
+			new PlayerGroupRuntime(),
+			new PlayerAllianceRuntime());
+		var startInstanceTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			2,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [1001, 1002],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[1001] = "ELYOS",
+				[1002] = "ELYOS",
+			}));
+		service.RegisterInstance(new AutoGroupInstanceRuntimeRegistration(
+			300110000,
+			3,
+			AutoGroupInstanceKind.PvpRaceInstance,
+			QuickRegistrationAllowed: true,
+			RegisteredPlayerObjectIds: [2001],
+			InstanceMaskId: 107,
+			StartInstanceTime: startInstanceTime,
+			MaximumJoinTimeMilliseconds: 230000,
+			MaxPlayers: 4,
+			RegisteredPlayerRacesByObjectId: new Dictionary<int, string>
+			{
+				[2001] = "ASMODIANS",
+			}));
+		var request = new AutoGroupOpenQuickEntryRequest(
+			107,
+			LeaderObjectId: 1003,
+			MemberObjectIds: [1003],
+			Race: "ELYOS",
+			AutoGroupEntryRequestType.QuickGroupEntry,
+			MaxPlayersForRace: 2);
+
+		var result = service.TryAddOpenQuickEntry(request, startInstanceTime.AddSeconds(1));
+
+		Assert.Equal(AutoGroupOpenQuickEntryStatus.Added, result.Status);
+		Assert.Equal(300110000, result.WorldId);
+		Assert.Equal(3, result.InstanceId);
+		Assert.DoesNotContain(1003, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		Assert.Contains(1003, service.GetSnapshot(300110000, 3)!.RegisteredPlayerObjectIds);
+	}
+
+	[Fact]
 	public void TryAddOpenQuickEntry_RejectsAfterMaximumJoinWindowLikeJavaIsRegistrationDisabled()
 	{
 		var service = new AutoGroupInstanceLeaveRuntimeService(
