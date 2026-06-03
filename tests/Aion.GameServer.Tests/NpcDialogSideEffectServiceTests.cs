@@ -95,6 +95,34 @@ public sealed class NpcDialogSideEffectServiceTests
 	}
 
 	[Fact]
+	public void InventoryItemExtensions_ComposeTemplateMaskWithInstanceSoulboundLikeJavaItem()
+	{
+		// Java parity: Item.isTradeable/isStorableInAccWarehouse/isStorableInLegWarehouse/isLegionTradeable
+		// each combine template mask bit AND !item.isSoulBound() (runtime instance state).
+		var tradeableTemplate = CreateMinimalItemTemplate(mask: (1 << 1)); // TRADEABLE
+		var awhTemplate = CreateMinimalItemTemplate(mask: (1 << 4));       // STORABLE_IN_AWH
+		var lwhTemplate = CreateMinimalItemTemplate(mask: (1 << 5));       // STORABLE_IN_LWH
+		var legionTemplate = CreateMinimalItemTemplate(mask: (1 << 18));   // LEGION_TRADEABLE
+		var notSoulBound = CreateInventoryItem(isSoulBound: false);
+		var soulBound = CreateInventoryItem(isSoulBound: true);
+
+		// Not soul-bound instance: template mask determines outcome
+		Assert.True(notSoulBound.IsTradeable(tradeableTemplate));
+		Assert.True(notSoulBound.IsStorableInAccountWarehouse(awhTemplate));
+		Assert.True(notSoulBound.IsStorableInLegionWarehouse(lwhTemplate));
+		Assert.True(notSoulBound.IsLegionTradeable(legionTemplate));
+		// Soul-bound instance: always false regardless of template mask
+		Assert.False(soulBound.IsTradeable(tradeableTemplate));
+		Assert.False(soulBound.IsStorableInAccountWarehouse(awhTemplate));
+		Assert.False(soulBound.IsStorableInLegionWarehouse(lwhTemplate));
+		Assert.False(soulBound.IsLegionTradeable(legionTemplate));
+		// Template mask false: always false regardless of instance soulbound
+		var noMaskTemplate = CreateMinimalItemTemplate(mask: 0);
+		Assert.False(notSoulBound.IsTradeable(noMaskTemplate));
+		Assert.False(notSoulBound.IsStorableInAccountWarehouse(noMaskTemplate));
+	}
+
+	[Fact]
 	public void ItemTemplateSummary_ItemMaskPropertiesMatchJavaItemMaskConstants()
 	{
 		// Java parity: model/items/ItemMask constants; each bit maps to a boolean property.
@@ -206,6 +234,17 @@ public sealed class NpcDialogSideEffectServiceTests
 			TemplateId: template.TemplateId,
 			Template: template,
 			Position: new WorldPosition(210010000, 0, 0, 0, 0));
+	}
+
+	private static InventoryItem CreateInventoryItem(bool isSoulBound)
+	{
+		return new InventoryItem
+		{
+			ObjectId = 9001,
+			ItemId = 100001,
+			Count = 1,
+			IsSoulBound = isSoulBound,
+		};
 	}
 
 	private static ItemTemplateSummary CreateMinimalItemTemplate(int mask)
