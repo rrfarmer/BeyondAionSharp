@@ -197,6 +197,7 @@ public sealed class AutoGroupInstanceLeaveRuntimeService
 				state.WorldId,
 				state.Key.InstanceId,
 				state.RegisteredPlayerCount,
+				removed ? [AutoGroupLookingPartyRegistrationService.CreatePenaltyRefreshIntent(player.ObjectId)] : Array.Empty<AutoGroupPenaltyRefreshIntent>(),
 				state.CreateSnapshot(),
 				"AutoGroupService.cancelEnter -> getAutoInstance(player, mask) -> AutoInstance.unregister(player) -> penalisePlayerAndScheduleRemoval -> destroyOrAddPlayersFromQuickEntries -> SM_AUTO_GROUP(mask, 2)");
 		}
@@ -365,6 +366,7 @@ public sealed record AutoGroupInstanceCancelEnterResult(
 	int WorldId,
 	int InstanceId,
 	int RegisteredPlayerCountAfterCancel,
+	IReadOnlyList<AutoGroupPenaltyRefreshIntent> PenaltyRefreshIntents,
 	AutoGroupInstanceRuntimeSnapshot? Snapshot,
 	string JavaSource)
 {
@@ -377,6 +379,7 @@ public sealed record AutoGroupInstanceCancelEnterResult(
 			WorldId: 0,
 			InstanceId: 0,
 			RegisteredPlayerCountAfterCancel: 0,
+			Array.Empty<AutoGroupPenaltyRefreshIntent>(),
 			Snapshot: null,
 			"AutoGroupService.cancelEnter -> getAutoInstance returned null");
 	}

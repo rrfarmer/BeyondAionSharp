@@ -860,7 +860,7 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			"AutoGroupService.checkInstancesForOpenQuickEntries -> removeSearchEntry(lfp), lfp.setStartEnterTime(), SM_AUTO_GROUP(maskId, 4), searchAndRemoveAdditionalRegistrations(leader)");
 	}
 
-	private static AutoGroupPenaltyRefreshIntent CreatePenaltyRefreshIntent(int playerObjectId)
+	public static AutoGroupPenaltyRefreshIntent CreatePenaltyRefreshIntent(int playerObjectId)
 	{
 		return new AutoGroupPenaltyRefreshIntent(
 			playerObjectId,

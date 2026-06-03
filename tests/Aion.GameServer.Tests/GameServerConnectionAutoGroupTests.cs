@@ -572,6 +572,110 @@ public sealed class GameServerConnectionAutoGroupTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupCancelRegistrationSchedulesPenaltyRefreshLikeJava()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		autoGroupRegistrations.RegisterLookingParty(107, [1001]);
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		var cancelPlayer = new Player
+		{
+			ObjectId = 1001,
+			Name = "CancelPlayer",
+			Race = "ELYOS",
+			Level = 50,
+		};
+		var registry = new RecordingConnectionRegistry([cancelPlayer]);
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var penaltyRefreshScheduler = new AutoGroupPenaltyRefreshSchedulerService(
+			threadPoolManager,
+			new PeriodicInstanceRegistrationService(),
+			runtimeContext);
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations,
+			registry,
+			autoGroupPenaltyRefreshScheduler: penaltyRefreshScheduler);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(fixture.Connection, cancelPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(101);
+					buffer.WriteC(0);
+				}));
+
+		Assert.True(penaltyRefreshScheduler.HasPendingRefresh(1001));
+		var observation = Assert.Single(observations);
+		Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+		Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
+		var cancelWindow = Assert.Single(registry.SentPackets);
+		AssertCancelWindow(cancelWindow, 1001, 107);
+	}
+
+	[Fact]
+	public async Task AutoGroupPenaltyRefreshScheduler_DedupesAndRefreshesOpenRegistrationsLikeJava()
+	{
+		var periodicRegistrations = new PeriodicInstanceRegistrationService();
+		Assert.True(periodicRegistrations.OpenRegistration(107));
+		Assert.True(periodicRegistrations.OpenRegistration(108));
+		var runtimeContext = CreateAutoGroupRuntimeContext(
+			[CreateAutoGroup(107, 300110000), CreateAutoGroup(108, 300120000)],
+			new InstanceCooltimeTable(
+			[
+				new InstanceCooltimeSummary(8, 300110000, "PC_ALL", MaxCount: 1),
+				new InstanceCooltimeSummary(9, 300120000, "PC_ALL", MaxCount: 1),
+			]));
+		var registry = new RecordingConnectionRegistry(
+		[
+			new Player
+			{
+				ObjectId = 1001,
+				Name = "RefreshPlayer",
+				Race = "ELYOS",
+				Level = 50,
+			},
+		]);
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var scheduler = new AutoGroupPenaltyRefreshSchedulerService(
+			threadPoolManager,
+			periodicRegistrations,
+			runtimeContext,
+			() => DateTimeOffset.FromUnixTimeMilliseconds(100_000));
+		var intent = AutoGroupLookingPartyRegistrationService.CreatePenaltyRefreshIntent(1001);
+
+		var first = scheduler.ScheduleRefreshes([intent], registry);
+		var duplicate = scheduler.ScheduleRefreshes([intent], registry);
+		var sent = await scheduler.ExecuteRefreshAsync(1001, registry);
+
+		Assert.Equal([1001], first.ScheduledPlayerObjectIds);
+		Assert.Empty(first.AlreadyPendingPlayerObjectIds);
+		Assert.Empty(duplicate.ScheduledPlayerObjectIds);
+		Assert.Equal([1001], duplicate.AlreadyPendingPlayerObjectIds);
+		Assert.True(scheduler.HasPendingRefresh(1001));
+		var observation = Assert.Single(observations);
+		Assert.Equal(ThreadPoolScheduleKind.Once, observation.Kind);
+		Assert.Equal(TimeSpan.FromMilliseconds(10000), observation.Delay);
+		Assert.Equal(2, sent);
+		Assert.Equal([107, 108], registry.SentPackets
+			.Select(delivery => Assert.IsType<SmAutoGroup>(delivery.Packet).MaskId)
+			.OrderBy(maskId => maskId));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_AutoGroupQuickEntryTeamPlayerSendsJavaNotLeaderMessage()
 	{
 		var sentPackets = new List<GameServerPacket>();
@@ -888,7 +992,8 @@ public sealed class GameServerConnectionAutoGroupTests
 			AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
 			IGameClientConnectionRegistry? connectionRegistry = null,
 			PlayerGroupRuntime? playerGroupRuntime = null,
-			AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null)
+			AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
+			AutoGroupPenaltyRefreshSchedulerService? autoGroupPenaltyRefreshScheduler = null)
 		{
 			using var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -914,6 +1019,7 @@ public sealed class GameServerConnectionAutoGroupTests
 					playerGroupRuntime: playerGroupRuntime,
 					autoGroupInstanceLeaveRuntimeService: autoGroupInstanceLeaveRuntimeService,
 					autoGroupLookingPartyRegistrations: autoGroupLookingPartyRegistrations,
+					autoGroupPenaltyRefreshScheduler: autoGroupPenaltyRefreshScheduler,
 					crypt: crypt);
 				return new ConnectionFixture(client, connection);
 			}

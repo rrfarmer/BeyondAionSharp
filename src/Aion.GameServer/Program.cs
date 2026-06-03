@@ -143,6 +143,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
 			services.AddSingleton<AutoGroupLookingPartyRegistrationService>();
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
+			services.AddSingleton<AutoGroupPenaltyRefreshSchedulerService>();
 			services.AddSingleton(
 				serviceProvider =>
 				{

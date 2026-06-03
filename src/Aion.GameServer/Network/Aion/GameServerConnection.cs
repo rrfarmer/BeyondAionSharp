@@ -77,6 +77,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
+	private readonly AutoGroupPenaltyRefreshSchedulerService? _autoGroupPenaltyRefreshScheduler;
 	private readonly PeriodicInstanceRegistrationService _periodicInstanceRegistrations;
 	private readonly PlayerLeagueRuntime _playerLeagueRuntime;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
@@ -166,6 +167,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
 		AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
+		AutoGroupPenaltyRefreshSchedulerService? autoGroupPenaltyRefreshScheduler = null,
 		PeriodicInstanceRegistrationService? periodicInstanceRegistrations = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
@@ -232,6 +234,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
+		_autoGroupPenaltyRefreshScheduler = autoGroupPenaltyRefreshScheduler;
 		_periodicInstanceRegistrations = periodicInstanceRegistrations ?? new PeriodicInstanceRegistrationService();
 		_playerLeagueRuntime = playerLeagueRuntime ?? new PlayerLeagueRuntime();
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
@@ -1543,17 +1546,20 @@ public sealed class GameServerConnection : BaseClientConnection
 								if (deliveryAutoGroup != null)
 									await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
 							}
+
+							ScheduleAutoGroupPenaltyRefreshes(result.OpenQuickEntry.PenaltyRefreshIntents);
 						}
 
 						if (result.QueueMatchPlan?.Status == AutoGroupQueueMatchPlanStatus.Ready && _connectionRegistry != null)
 						{
 							var readyMatchPlan = _autoGroupLookingPartyRegistrations.CreateReadyMatchPlan(result.QueueMatchPlan);
-							await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
+							var applyResult = await _autoGroupLookingPartyRegistrations.ApplyReadyMatchPlanAsync(
 								readyMatchPlan,
 								autoGroups,
 								_connectionRegistry,
 								registerRuntimeInstance: registration => _autoGroupInstanceLeaveRuntimeService.RegisterInstance(registration),
 								materializeRuntimeInstance: MaterializeAutoGroupReadyMatchRuntimeInstance);
+							ScheduleAutoGroupPenaltyRefreshes(applyResult.PenaltyRefreshIntents);
 						}
 					}
 				}
@@ -1562,11 +1568,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 101:
 				if (_connectionRegistry != null)
 				{
-					await _autoGroupLookingPartyRegistrations.CancelRegistrationAsync(
+					var cancelRegistration = await _autoGroupLookingPartyRegistrations.CancelRegistrationAsync(
 						player.ObjectId,
 						packet.InstanceMaskId,
 						_runtimeContext?.DataManager?.StaticData.AutoGroups,
 						_connectionRegistry);
+					ScheduleAutoGroupPenaltyRefreshes(cancelRegistration.PenaltyRefreshIntents);
 				}
 				break;
 			case 102:
@@ -1590,6 +1597,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				var cancelEnter = _autoGroupInstanceLeaveRuntimeService.CancelEnter(player, packet.InstanceMaskId);
 				if (cancelEnter.Status != AutoGroupInstanceCancelEnterStatus.Unregistered)
 					return;
+				ScheduleAutoGroupPenaltyRefreshes(cancelEnter.PenaltyRefreshIntents);
 
 				var staticData = _runtimeContext?.DataManager?.StaticData;
 				var autoGroups = staticData?.AutoGroups;
@@ -1610,6 +1618,8 @@ public sealed class GameServerConnection : BaseClientConnection
 							if (deliveryAutoGroup != null)
 								await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
 						}
+
+						ScheduleAutoGroupPenaltyRefreshes(refill.PenaltyRefreshIntents);
 					}
 				}
 
@@ -1633,6 +1643,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				// DredgionRegService.failedEnterDredgion call and has no active side effect.
 				break;
 		}
+	}
+
+	private void ScheduleAutoGroupPenaltyRefreshes(IReadOnlyList<AutoGroupPenaltyRefreshIntent> penaltyRefreshIntents)
+	{
+		if (penaltyRefreshIntents.Count == 0)
+			return;
+
+		if (_connectionRegistry != null)
+			_autoGroupPenaltyRefreshScheduler?.ScheduleRefreshes(penaltyRefreshIntents, _connectionRegistry);
 	}
 
 	private AutoGroupInstanceRuntimeRegistration MaterializeAutoGroupReadyMatchRuntimeInstance(
@@ -7756,6 +7775,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (deliveryAutoGroup != null)
 						await _connectionRegistry.SendPacketToPlayerAsync(delivery.PlayerObjectId, new SmAutoGroup(deliveryAutoGroup, delivery.WindowId));
 				}
+
+				ScheduleAutoGroupPenaltyRefreshes(refill.PenaltyRefreshIntents);
 			}
 		}
 

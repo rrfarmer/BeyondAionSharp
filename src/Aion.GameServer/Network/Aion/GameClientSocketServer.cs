@@ -56,6 +56,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
+	private readonly AutoGroupPenaltyRefreshSchedulerService? _autoGroupPenaltyRefreshScheduler;
 	private readonly PeriodicInstanceRegistrationService _periodicInstanceRegistrations;
 	private readonly PlayerGroupInviteRequestService _playerGroupInviteRequestService;
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
@@ -101,6 +102,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		AutoGroupInstanceLeaveRuntimeService? autoGroupInstanceLeaveRuntimeService = null,
 		AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null,
+		AutoGroupPenaltyRefreshSchedulerService? autoGroupPenaltyRefreshScheduler = null,
 		PeriodicInstanceRegistrationService? periodicInstanceRegistrations = null,
 		PlayerGroupInviteRequestService? playerGroupInviteRequestService = null,
 		PlayerAllianceInviteRequestService? playerAllianceInviteRequestService = null,
@@ -153,6 +155,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
+		_autoGroupPenaltyRefreshScheduler = autoGroupPenaltyRefreshScheduler;
 		_periodicInstanceRegistrations = periodicInstanceRegistrations ?? new PeriodicInstanceRegistrationService();
 		_playerGroupInviteRequestService = playerGroupInviteRequestService ?? new PlayerGroupInviteRequestService();
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
@@ -208,6 +211,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				playerAllianceRuntime: _playerAllianceRuntime,
 				autoGroupInstanceLeaveRuntimeService: _autoGroupInstanceLeaveRuntimeService,
 				autoGroupLookingPartyRegistrations: _autoGroupLookingPartyRegistrations,
+				autoGroupPenaltyRefreshScheduler: _autoGroupPenaltyRefreshScheduler,
 				periodicInstanceRegistrations: _periodicInstanceRegistrations,
 				playerGroupInviteRequestService: _playerGroupInviteRequestService,
 				playerAllianceInviteRequestService: _playerAllianceInviteRequestService,

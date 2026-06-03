@@ -97,6 +97,9 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 		Assert.DoesNotContain(player.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
 		Assert.Contains(teammate.ObjectId, result.Snapshot.RegisteredPlayerObjectIds);
 		Assert.DoesNotContain(player.ObjectId, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
+		var penaltyRefreshIntent = Assert.Single(result.PenaltyRefreshIntents);
+		Assert.Equal(player.ObjectId, penaltyRefreshIntent.PlayerObjectId);
+		Assert.Equal(TimeSpan.FromMilliseconds(10000), penaltyRefreshIntent.Delay);
 	}
 
 	[Fact]
@@ -121,6 +124,8 @@ public sealed class AutoGroupInstanceLeaveRuntimeServiceTests
 
 		Assert.Equal(AutoGroupInstanceCancelEnterStatus.NoAutoInstance, missingMask.Status);
 		Assert.Equal(AutoGroupInstanceCancelEnterStatus.NoAutoInstance, unregisteredPlayer.Status);
+		Assert.Empty(missingMask.PenaltyRefreshIntents);
+		Assert.Empty(unregisteredPlayer.PenaltyRefreshIntents);
 		Assert.Equal(PlayerTeamMembership.Group, player.TeamMembership);
 		Assert.True(groups.HasMember(9001, player.ObjectId));
 		Assert.Contains(teammate.ObjectId, service.GetSnapshot(300110000, 2)!.RegisteredPlayerObjectIds);
