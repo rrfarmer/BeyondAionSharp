@@ -55,6 +55,8 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 		_generalInfoWarehouseRestrictionFlag = generalInfoWarehouseRestrictionFlag;
 	}
 
+	public int UpdateType => _updateType;
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		buffer.WriteD(_item.ObjectId);

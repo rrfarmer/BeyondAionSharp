@@ -11397,7 +11397,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task ExecuteExchangeTradeAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: ExchangeService.performTrade. Items move between the two players' inventories and kinah is exchanged.
-		// Partial-stack splits (committed < stack count) are deferred and abort the trade cleanly; full-stack item trades + kinah are live.
+		// Full-stack and partial-stack item trades + kinah are live. Partial-stack splits require an IDFactory to allocate
+		// the receiver's new item id; if none is available we abort cleanly to avoid item loss/duplication.
 		var partner = TryGetOnlinePlayerByObjectId(player.CurrentExchangePartnerObjectId);
 		if (partner == null)
 			return;
@@ -11408,13 +11409,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		var playerItems = ResolveCommittedExchangeItems(player);
 		var partnerItems = ResolveCommittedExchangeItems(partner);
 
-		// Defer partial-stack trades (require IdFactory split + INSERT); abort cleanly to avoid item loss/duplication.
+		// A partial-stack split (committed < stack count) needs the IDFactory; without it, abort cleanly.
 		var hasPartialStack = playerItems.Any(entry => entry.Committed < entry.Item.Count)
 			|| partnerItems.Any(entry => entry.Committed < entry.Item.Count);
-		if (hasPartialStack)
+		if (hasPartialStack && _idFactory == null)
 		{
 			_logger.LogInformation(
-				"Deferring partial-stack exchange trade between {PlayerObjectId} and {PartnerObjectId}; cancelling.",
+				"Deferring partial-stack exchange trade between {PlayerObjectId} and {PartnerObjectId} (no IDFactory); cancelling.",
 				player.ObjectId,
 				partner.ObjectId);
 			await RestoreExchangeItemsToInventoryUiAsync(player, cancellationToken);
@@ -11464,7 +11465,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendExchangePacketAsync(player.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Success), cancellationToken);
 		await SendExchangePacketAsync(partner.ObjectId, new SmExchangeConfirmation(SmExchangeConfirmation.Success), cancellationToken);
 
-		// Transfer items both directions (full-stack only at this point).
+		// Transfer items both directions (full-stack ownership move or partial-stack split).
 		await TransferTradeItemsAsync(player, partner, playerItems, itemTemplates, cancellationToken);
 		await TransferTradeItemsAsync(partner, player, partnerItems, itemTemplates, cancellationToken);
 
@@ -11517,9 +11518,51 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemTemplateTable? itemTemplates,
 		CancellationToken cancellationToken)
 	{
-		// Java parity: ExchangeService.removeItemsFromInventory (giver) + putItemToInventory (receiver) for full-stack items.
-		foreach (var (item, _) in committedItems)
+		// Java parity: ExchangeService.removeItemsFromInventory (giver) + putItemToInventory (receiver).
+		foreach (var (item, committed) in committedItems)
 		{
+			// Java parity: putItemToInventory sets equipmentSlot(0) and unwraps packCount (positive -> negative) before add.
+			var unwrappedPackCount = item.PackCount > 0 ? item.PackCount * -1 : item.PackCount;
+			var template = itemTemplates?.GetItemTemplate(item.ItemId);
+
+			if (committed < item.Count && _idFactory != null)
+			{
+				// Java parity: removeItemsFromInventory decreaseItemCount branch (committed < stack) — the giver keeps the
+				// remainder; addItem already created a fresh-id ExchangeItem (newItem) holding the committed count, which
+				// putItemToInventory then adds to the receiver.
+				var reducedSource = CopyInventoryItem(item, count: item.Count - committed);
+				ReplaceInventoryItemFor(giver, reducedSource);
+
+				var receivedSplit = CopyInventoryItem(
+					item,
+					objectId: _idFactory.NextId(),
+					location: CubeStorageId,
+					slot: FirstAvailableSlot,
+					count: committed,
+					ownerId: receiver.ObjectId,
+					isEquipped: false,
+					packCount: unwrappedPackCount);
+				receiver.InventoryItems = receiver.InventoryItems.Append(receivedSplit).ToArray();
+
+				// Persist atomically: UPDATE the giver's source count + INSERT the receiver's new row (keyed by its OwnerId).
+				if (_playerEnterWorldService != null)
+				{
+					var saved = await _playerEnterWorldService.SaveItemSplitMutationAsync(giver, reducedSource, receivedSplit, cancellationToken);
+					if (!saved)
+						_logger.LogWarning("Item {ItemObjectId} partial-stack split persistence failed during trade.", item.ObjectId);
+				}
+
+				// Java parity: decreaseItemCount sends SM_INVENTORY_UPDATE_ITEM(DEC_ITEM_USE = 0x16) for the reduced source.
+				if (template != null)
+					await SendExchangePacketAsync(giver.ObjectId, new SmInventoryUpdateItem(reducedSource, template, SmInventoryUpdateItem.DecreaseItemUse), cancellationToken);
+
+				if (template != null)
+					await SendExchangePacketAsync(receiver.ObjectId, SmInventoryAddItem.CreatePlayerExchangeGet(receivedSplit, template), cancellationToken);
+
+				continue;
+			}
+
+			// Full-stack transfer: the same item row changes owner.
 			// Persist the atomic ownership transfer first (authoritative); in-memory move follows.
 			if (_playerEnterWorldService != null)
 			{
@@ -11533,8 +11576,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			giver.InventoryItems = giver.InventoryItems.Where(i => i.ObjectId != item.ObjectId).ToArray();
 			await SendExchangePacketAsync(giver.ObjectId, new SmDeleteItem(item.ObjectId, SmDeleteItem.MoveDeleteType), cancellationToken);
 
-			// Java parity: putItemToInventory sets equipmentSlot(0) and unwraps packCount (positive -> negative) before add.
-			var unwrappedPackCount = item.PackCount > 0 ? item.PackCount * -1 : item.PackCount;
 			var received = CopyInventoryItem(
 				item,
 				location: CubeStorageId,
@@ -11544,7 +11585,6 @@ public sealed class GameServerConnection : BaseClientConnection
 				packCount: unwrappedPackCount);
 			receiver.InventoryItems = receiver.InventoryItems.Append(received).ToArray();
 
-			var template = itemTemplates?.GetItemTemplate(received.ItemId);
 			if (template != null)
 				await SendExchangePacketAsync(receiver.ObjectId, SmInventoryAddItem.CreatePlayerExchangeGet(received, template), cancellationToken);
 		}
@@ -15676,11 +15716,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		int? itemSkin = null,
 		int? color = null,
 		bool setColor = false,
-		int? colorExpires = null)
+		int? colorExpires = null,
+		int? objectId = null)
 	{
 		var copy = new InventoryItem
 		{
-			ObjectId = item.ObjectId,
+			ObjectId = objectId ?? item.ObjectId,
 			ItemId = item.ItemId,
 			Count = count ?? item.Count,
 			Color = setColor ? color : item.Color,

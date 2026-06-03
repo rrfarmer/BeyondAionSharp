@@ -7,6 +7,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -60,12 +61,13 @@ public sealed class GameServerConnectionExchangeTradeTests
 	}
 
 	[Fact]
-	public async Task ExecuteExchangeTrade_PartialStack_AbortsWithCancelAndKeepsItems()
+	public async Task ExecuteExchangeTrade_PartialStack_NoIdFactory_AbortsWithCancelAndKeepsItems()
 	{
 		var registry = new CapturingConnectionRegistry();
+		// No IDFactory injected: a partial-stack split cannot allocate the receiver's new id, so the trade aborts cleanly.
 		await using var pair = await TestConnectionPair.CreateAsync(registry);
 
-		// Player commits 20 of a 50-count stack — a partial-stack trade (deferred).
+		// Player commits 20 of a 50-count stack — a partial-stack trade.
 		var stack = CreateItem(objectId: 9002, itemId: 100100, count: 50, ownerId: 5001);
 		var player = CreateTradingPlayer(5001, "Giver", partnerObjectId: 5002, items: [stack]);
 		player.ExchangeItems[9002] = 20;
@@ -88,6 +90,57 @@ public sealed class GameServerConnectionExchangeTradeTests
 		// State cleared.
 		Assert.False(player.IsTrading);
 		Assert.False(partner.IsTrading);
+	}
+
+	[Fact]
+	public async Task ExecuteExchangeTrade_PartialStack_SplitsStackToReceiverWithNewId()
+	{
+		var registry = new CapturingConnectionRegistry();
+		// Pre-lock the test object ids so the allocated split id cannot collide with them.
+		var idFactory = new IDFactory([5001, 5002, 9002]);
+		await using var pair = await TestConnectionPair.CreateAsync(registry, idFactory);
+
+		// Giver commits 20 of a 50-count stack; receiver brings nothing.
+		var stack = CreateItem(objectId: 9002, itemId: 100100, count: 50, ownerId: 5001);
+		var player = CreateTradingPlayer(5001, "Giver", partnerObjectId: 5002, items: [stack]);
+		player.ExchangeItems[9002] = 20;
+
+		var partner = CreateTradingPlayer(5002, "Receiver", partnerObjectId: 5001, items: []);
+
+		registry.OnlinePlayers.Add(player);
+		registry.OnlinePlayers.Add(partner);
+
+		await InvokeExecuteExchangeTradeAsync(pair.Connection, player);
+
+		// Giver keeps the original row with the reduced remainder (50 - 20 = 30).
+		var giverRemainder = Assert.Single(player.InventoryItems, i => i.ObjectId == 9002);
+		Assert.Equal(30, giverRemainder.Count);
+
+		// Receiver gets a brand-new row (fresh id, not 9002) holding the committed 20 with correct ownership/location.
+		var received = Assert.Single(partner.InventoryItems, i => i.ItemId == 100100);
+		Assert.NotEqual(9002, received.ObjectId);
+		Assert.Equal(20, received.Count);
+		Assert.Equal(5002, received.OwnerId);
+		Assert.Equal(CubeStorageId, received.Location);
+		Assert.False(received.IsEquipped);
+
+		// Persistence-safety: nothing tracked for deletion (the giver row survives; the receiver row is a fresh INSERT).
+		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Empty(partner.DeletedInventoryItems);
+
+		// Trade succeeded (success confirmation to both), not cancelled.
+		Assert.Equal(2, registry.SentPackets.Count(p => p.Packet is SmExchangeConfirmation { Action: SmExchangeConfirmation.Success }));
+		Assert.DoesNotContain(registry.SentPackets, p => p.Packet is SmExchangeConfirmation { Action: SmExchangeConfirmation.Canceled });
+
+		// Java parity: the partial-stack branch decreases the source (DEC_ITEM_USE update) and never deletes the giver's
+		// row, unlike the full-stack branch which sends SM_DELETE_ITEM. The absence of a giver delete confirms the split
+		// branch was taken. (The DEC_ITEM_USE/PLAYER_EXCHANGE_GET packets themselves require an ItemTemplate, which this
+		// focused harness does not load; their type constants are unit-verified elsewhere.)
+		Assert.DoesNotContain(registry.SentPackets, p => p.RecipientObjectId == 5001 && p.Packet is SmDeleteItem);
+
+		// Exchange state cleared.
+		Assert.Empty(player.ExchangeItems);
+		Assert.Empty(partner.ExchangeItems);
 	}
 
 	private static InventoryItem CreateItem(int objectId, int itemId, long count, int ownerId)
@@ -190,7 +243,7 @@ public sealed class GameServerConnectionExchangeTradeTests
 
 		public GameServerConnection Connection { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync(IGameClientConnectionRegistry registry)
+		public static async Task<TestConnectionPair> CreateAsync(IGameClientConnectionRegistry registry, IDFactory? idFactory = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -210,6 +263,7 @@ public sealed class GameServerConnectionExchangeTradeTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
 					connectionRegistry: registry,
+					idFactory: idFactory,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection);
 			}
