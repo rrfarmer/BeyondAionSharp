@@ -763,7 +763,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: CM_LEGION_SEND_EMBLEM.runImpl -> LegionService data dispatch; deferred.
 				break;
 			case CmLegionHistory:
-				// Java parity: CM_LEGION_HISTORY.runImpl -> SM_LEGION_HISTORY(page, type); deferred until legion history is ported.
+				// Java parity: CM_LEGION_HISTORY.runImpl. Java returns silently when player.getLegion() == null, else sends
+				// SM_LEGION_HISTORY(legion.getHistory(type), page, type) (with a REWARD-type brigade-general guard).
+				// The SM_LEGION_HISTORY server packet is now ported (SmLegionHistory, golden-tested). Live wiring stays
+				// deferred because the C# port has no legion-history data source (Legion.getHistory) and does not model
+				// legion member rank, so the REWARD/brigade-general guard cannot be reproduced faithfully. No response is
+				// sent — matching Java exactly for the no-legion case (the only case the port can currently represent).
 				break;
 			case CmLegionModifyEmblem:
 				// Java parity: CM_LEGION_MODIFY_EMBLEM.runImpl -> LegionService.updateEmblem; deferred.
