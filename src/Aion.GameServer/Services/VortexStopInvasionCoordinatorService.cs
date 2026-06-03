@@ -94,16 +94,27 @@ public sealed class VortexStopInvasionCoordinatorService
 		int vortexLocationId,
 		VortexStopInvasionSnapshotRequest snapshotRequest)
 	{
-		ArgumentNullException.ThrowIfNull(snapshotRequest);
+		return StopInvasionWithPreparedRequest(vortexLocationId, snapshotRequest);
+	}
 
-		return StopInvasion(
-			vortexLocationId,
-			snapshotRequest.InvaderSnapshots,
-			snapshotRequest.InvaderKiskSnapshots,
-			snapshotRequest.SpawnedNpcSnapshots,
-			snapshotRequest.PeaceSpawnSnapshots,
-			snapshotRequest.InvaderAllianceSnapshots,
-			snapshotRequest.PassedPlayerSnapshots);
+	public VortexStopInvasionCoordinatorReport StopInvasionWithPreparedRequest(
+		int vortexLocationId,
+		VortexStopInvasionSnapshotRequest preparedRequest)
+	{
+		ArgumentNullException.ThrowIfNull(preparedRequest);
+
+		// Java parity: this consumes a request already prepared from
+		// Invasion.stopInvasion/VortexService.spawn inputs and must not perform a
+		// second static PEACE enrichment pass.
+		var stopResult = _runtime.StopInvasion(vortexLocationId);
+		return CreateReport(
+			stopResult,
+			preparedRequest.InvaderSnapshots,
+			preparedRequest.InvaderKiskSnapshots,
+			preparedRequest.SpawnedNpcSnapshots,
+			preparedRequest.PeaceSpawnSnapshots,
+			preparedRequest.InvaderAllianceSnapshots,
+			preparedRequest.PassedPlayerSnapshots);
 	}
 
 	public VortexStopInvasionCoordinatorReport StopInvasion(

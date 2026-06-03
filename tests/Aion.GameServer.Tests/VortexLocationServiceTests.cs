@@ -2779,6 +2779,137 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StopCoordinator_PreparedRuntimeStaticRequestConsumesCollectorMetadataWithoutExtraSelection()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-prepared-request-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinatorSelector = new CountingPeaceSpawnSelector();
+			var collector = new VortexStopInvasionRuntimeSnapshotCollectorService();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService(),
+				coordinatorSelector);
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			var kisk = new PlayerKiskRuntimeState(7101, invader.ObjectId, 831200);
+			var spawnedNpc = new WorldNpc(
+				ObjectId: 7201,
+				TemplateId: 831300,
+				Template: new NpcTemplateSummary(831300, "Vortex spawned", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
+				Position: location.StartPoint);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "peace-a"),
+				]);
+			runtime.StartInvasion(location, CreateVortexPortal(location));
+			Assert.True(runtime.AddInvader(location.Id, invader));
+			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
+			var preparedRequest = collector.PrepareWithStaticPeaceSpawns(
+				location.Id,
+				snapshot,
+				table,
+				players: [invader],
+				invaderKisks: [kisk],
+				spawnedNpcs: [spawnedNpc],
+				invaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
+				{
+					[invader.ObjectId] = VortexKickPlayerAllianceSnapshot.MemberDisbandedAfterRemoval,
+				});
+
+			var report = coordinator.StopInvasionWithPreparedRequest(location.Id, preparedRequest);
+
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Stopped);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.Equal(0, coordinatorSelector.CallCount);
+			Assert.Empty(coordinatorSelector.LocationIds);
+			Assert.Equal(1, report.SideEffectPlan.PeaceSpawnCount);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.KillInvaderKisk,
+					VortexStopInvasionSideEffectStepKind.KickOnlineInvader,
+					VortexStopInvasionSideEffectStepKind.DespawnVortexNpc,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			var spawnStep = Assert.Single(report.SideEffectPlan.OrderedSteps, step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc);
+			Assert.Equal(831500, spawnStep.NpcId);
+			Assert.Equal("peace-a", spawnStep.Spawn!.Anchor);
+			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
+			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, kickRemoval.AllianceKickMessageId);
+			Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, kickRemoval.DirectPortalOutMessageId);
+			Assert.True(kickRemoval.WouldClearAllianceReference);
+			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
+			Assert.False(kickRemoval.ShouldSendLivePacket);
+			Assert.False(kickRemoval.ShouldTeleportLivePlayer);
+			Assert.False(kickRemoval.ShouldMutateLiveParticipants);
+			Assert.False(kickRemoval.ShouldMutateLivePassedPlayers);
+			Assert.False(kickRemoval.ShouldSyncLivePassedPlayers);
+			Assert.Null(runtime.GetSnapshot(location.Id));
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StopCoordinator_PreparedRequestMissingOrRepeatedStopPreservesNoDispatchGuard()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-prepared-guard-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStopInvasionCoordinatorService(
+				runtime,
+				new VortexStopInvasionSideEffectPlanService());
+			var preparedRequest = new VortexStopInvasionSnapshotRequest(
+				PeaceSpawns:
+				[
+					VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
+						CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "peace-a")),
+				]);
+
+			var missing = coordinator.StopInvasionWithPreparedRequest(location.Id, preparedRequest);
+			runtime.StartInvasion(location);
+			var stopped = coordinator.StopInvasionWithPreparedRequest(location.Id, preparedRequest);
+			var repeated = coordinator.StopInvasionWithPreparedRequest(location.Id, preparedRequest);
+
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.MissingInvasion, missing.Status);
+			Assert.False(missing.Stopped);
+			Assert.False(missing.HasSideEffectPlan);
+			Assert.False(missing.ShouldExecuteLiveSideEffects);
+			Assert.Empty(missing.SideEffectPlan.OrderedSteps);
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.Planned, stopped.Status);
+			Assert.True(stopped.Stopped);
+			Assert.Equal(
+				[
+					VortexStopInvasionSideEffectStepKind.ClearActiveVortex,
+					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
+				],
+				stopped.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
+			Assert.Equal(VortexStopInvasionCoordinatorStatus.MissingInvasion, repeated.Status);
+			Assert.False(repeated.Stopped);
+			Assert.False(repeated.HasSideEffectPlan);
+			Assert.Empty(repeated.SideEffectPlan.OrderedSteps);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task StopCoordinator_StaticPeaceSpawnTableOnlyEnrichmentFeedsPlannerWithoutLiveExecution()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-stop-coordinator-static-only-" + Guid.NewGuid().ToString("N"));
