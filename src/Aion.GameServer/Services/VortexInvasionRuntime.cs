@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services;
@@ -105,14 +106,29 @@ public sealed class VortexInvasionRuntime
 				// Java parity: services/vortex/Invasion.kickPlayer removes passed-player portal state
 				// after VortexService.removeInvaderPlayer finds the active invader.
 				var removedPassedPlayer = state.PassedPlayerObjectIds.Remove(player.ObjectId);
+				var wasInInvasionWorld = player.Position.WorldId == state.InvasionWorldId;
+				var systemMessages = new List<SmSystemMessage>();
+				PlayerTeleportResult? teleportResult = null;
+				if (player.IsOnline)
+				{
+					systemMessages.Add(SmSystemMessage.InvasionInvaderKick());
+					if (wasInInvasionWorld)
+					{
+						systemMessages.Add(SmSystemMessage.InvasionDirectPortalOutCompulsion());
+						teleportResult = PlayerTeleportService.TeleportToWorldPosition(player, state.HomePoint);
+					}
+				}
+
 				return new VortexInvaderRemovalResult(
 					Removed: true,
 					PlayerObjectId: player.ObjectId,
 					LocationId: state.LocationId,
 					RemovedPassedPlayer: removedPassedPlayer,
 					WasOnline: player.IsOnline,
-					WasInInvasionWorld: player.Position.WorldId == state.InvasionWorldId,
-					JavaSource: "services/VortexService.removeInvaderPlayer -> services/vortex/Invasion.kickPlayer");
+					WasInInvasionWorld: wasInInvasionWorld,
+					JavaSource: "services/VortexService.removeInvaderPlayer -> services/vortex/Invasion.kickPlayer",
+					SystemMessages: systemMessages,
+					TeleportResult: teleportResult);
 			}
 		}
 
@@ -182,7 +198,9 @@ public sealed record VortexInvaderRemovalResult(
 	bool RemovedPassedPlayer,
 	bool WasOnline,
 	bool WasInInvasionWorld,
-	string JavaSource);
+	string JavaSource,
+	IReadOnlyList<SmSystemMessage>? SystemMessages = null,
+	PlayerTeleportResult? TeleportResult = null);
 
 public sealed record VortexInvaderJoinResult(
 	bool Added,

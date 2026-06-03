@@ -2473,10 +2473,22 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401445);
 	}
 
+	public static SmSystemMessage InvasionInvaderKick()
+	{
+		// Java parity: services/vortex/Invasion.kickPlayer -> new SM_SYSTEM_MESSAGE(1401452).
+		return new SmSystemMessage(1401452);
+	}
+
 	public static SmSystemMessage InvasionDirectPortalOpenNotice()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INVADE_DIRECT_PORTAL_OPEN_NOTICE.
 		return new SmSystemMessage(1401454);
+	}
+
+	public static SmSystemMessage InvasionDirectPortalOutCompulsion()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_INVADE_DIRECT_PORTAL_OUT_COMPULSION().
+		return new SmSystemMessage(1401474);
 	}
 
 	public static SmSystemMessage HousingOrderOpenDoor()

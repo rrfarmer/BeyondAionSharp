@@ -85,10 +85,76 @@ public sealed class VortexLocationServiceTests
 			Assert.True(removal.RemovedPassedPlayer);
 			Assert.False(removal.WasOnline);
 			Assert.True(removal.WasInInvasionWorld);
+			Assert.Empty(removal.SystemMessages ?? []);
+			Assert.Null(removal.TeleportResult);
 			Assert.False(runtime.IsInvaderPlayer(invader));
 			var snapshot = Assert.IsType<VortexInvasionSnapshot>(runtime.GetSnapshot(location.Id));
 			Assert.Empty(snapshot.InvaderObjectIds);
 			Assert.Empty(snapshot.PassedPlayerObjectIds);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RemoveInvaderPlayer_ForOnlineInvaderInInvasionWorld_SendsKickAndPortalOutThenTeleportsHomeLikeJava()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-online-kick-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
+			runtime.StartInvasion(location);
+			Assert.True(runtime.AddInvader(location.Id, invader));
+
+			var removal = runtime.RemoveInvaderPlayer(invader);
+
+			Assert.True(removal.Removed);
+			Assert.True(removal.WasOnline);
+			Assert.True(removal.WasInInvasionWorld);
+			Assert.Equal([1401452, 1401474], (removal.SystemMessages ?? []).Select(message => message.MessageId).ToArray());
+			var teleport = Assert.IsType<PlayerTeleportResult>(removal.TeleportResult);
+			Assert.Equal(new WorldPosition(location.InvasionWorldId, 1, 2, 3, 0), teleport.PreviousPosition);
+			Assert.Equal(location.HomePoint, teleport.Destination);
+			Assert.Equal(location.HomePoint, invader.Position);
+			Assert.Equal(location.HomePoint.X, invader.Movement.TargetX);
+			Assert.Equal(location.HomePoint.Y, invader.Movement.TargetY);
+			Assert.Equal(location.HomePoint.Z, invader.Movement.TargetZ);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RemoveInvaderPlayer_ForOnlineInvaderOutsideInvasionWorld_SendsKickWithoutPortalOutTeleportLikeJava()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-online-kick-outside-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var invader = CreatePlayer(1002, isOnline: true, location.HomePoint.WorldId);
+			var originalPosition = invader.Position;
+			runtime.StartInvasion(location);
+			Assert.True(runtime.AddInvader(location.Id, invader));
+
+			var removal = runtime.RemoveInvaderPlayer(invader);
+
+			Assert.True(removal.Removed);
+			Assert.True(removal.WasOnline);
+			Assert.False(removal.WasInInvasionWorld);
+			Assert.Equal([1401452], (removal.SystemMessages ?? []).Select(message => message.MessageId).ToArray());
+			Assert.Null(removal.TeleportResult);
+			Assert.Equal(originalPosition, invader.Position);
 		}
 		finally
 		{

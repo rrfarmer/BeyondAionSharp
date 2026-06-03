@@ -60,6 +60,19 @@ public static class PlayerTeleportService
 		return new PlayerTeleportResult(previousPosition, destination, UsesSameWorldSpawnPath: previousPosition.WorldId == destination.WorldId);
 	}
 
+	public static PlayerTeleportResult TeleportToWorldPosition(Player player, WorldPosition destination)
+	{
+		// Java parity: services/teleport/TeleportService.teleportTo(Player, WorldPosition).
+		var previousPosition = player.Position;
+		player.Position = destination;
+		player.PortAnimation = TeleportAnimation.None.DefaultArrivalAnimation;
+		ResetMovementToDestination(player, destination);
+		return new PlayerTeleportResult(
+			previousPosition,
+			destination,
+			UsesSameWorldSpawnPath: previousPosition.WorldId == destination.WorldId);
+	}
+
 	public static PlayerTeleportResult TeleportWithinSameInstance(Player player, WorldPosition destination)
 	{
 		// Java parity: services/teleport/TeleportService.teleportTo same map + same instance runs SpawnTask immediately with TeleportAnimation.NONE.
