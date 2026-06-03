@@ -1,8 +1,11 @@
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
+
 namespace Aion.GameServer.Services;
 
 public sealed class VortexDefenderInvitationPlanService
 {
-	public const int DefenderQuestionId = 904306;
+	public const int DefenderQuestionId = SmQuestionWindow.VortexDefenderInvitation;
 
 	public VortexDefenderInvitationPlan CreatePlan(
 		VortexZonePlayerSnapshot defender,
@@ -102,3 +105,34 @@ public sealed record VortexDefenderAllianceSnapshot(
 	public static VortexDefenderAllianceSnapshot Full { get; } = new(Exists: true, IsFull: true);
 	public static VortexDefenderAllianceSnapshot Disbanded { get; } = new(Exists: true, IsFull: false, IsDisbanded: true);
 }
+
+public sealed class VortexDefenderInvitationRequestSlotSnapshotService
+{
+	public VortexDefenderInvitationRequestSlotSnapshot CreateSnapshot(Player defender)
+	{
+		ArgumentNullException.ThrowIfNull(defender);
+
+		// Java parity: services/vortex/Invasion.updateDefenders uses
+		// Player.getResponseRequester().putRequest(904306, responseHandler).
+		return new VortexDefenderInvitationRequestSlotSnapshot(
+			defender.ObjectId,
+			VortexDefenderInvitationPlanService.DefenderQuestionId,
+			defender.ResponseRequester.IsRequestSlotAvailable(VortexDefenderInvitationPlanService.DefenderQuestionId),
+			defender.ResponseRequester.Count,
+			JavaSource: "model/gameobjects/player/ResponseRequester.putRequest");
+	}
+
+	public IReadOnlyDictionary<int, bool> CollectRequestSlotsByPlayerObjectId(IEnumerable<Player>? defenders)
+	{
+		return (defenders ?? [])
+			.Select(CreateSnapshot)
+			.ToDictionary(snapshot => snapshot.PlayerObjectId, snapshot => snapshot.RequestSlotAvailable);
+	}
+}
+
+public sealed record VortexDefenderInvitationRequestSlotSnapshot(
+	int PlayerObjectId,
+	int QuestionId,
+	bool RequestSlotAvailable,
+	int ActiveRequestCount,
+	string JavaSource);

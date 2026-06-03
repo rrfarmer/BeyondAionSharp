@@ -47,6 +47,19 @@ public sealed class QuestionResponseRegistry
 			return _activeRequests.Remove(questionId);
 	}
 
+	public bool ContainsRequest(int questionId)
+	{
+		lock (_sync)
+			return _activeRequests.ContainsKey(questionId);
+	}
+
+	public bool IsRequestSlotAvailable(int questionId)
+	{
+		// Java parity: ResponseRequester.putRequest(messageId, handler) succeeds
+		// only when the same message id is not already registered.
+		return !ContainsRequest(questionId);
+	}
+
 	public IReadOnlyList<QuestionResponseDispatch> DenyAll()
 	{
 		// Java parity: ResponseRequester.denyAll handles every active request with response 0, then clears the map.

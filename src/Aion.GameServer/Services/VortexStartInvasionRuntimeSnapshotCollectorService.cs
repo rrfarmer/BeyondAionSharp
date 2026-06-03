@@ -9,15 +9,18 @@ public sealed class VortexStartInvasionRuntimeSnapshotCollectorService
 	private readonly IVortexInvasionSpawnSnapshotSelector _invasionSpawnSelector;
 	private readonly VortexDefenderAllianceUpdatePlanService _defenderAllianceUpdatePlanner;
 	private readonly VortexDefenderInvitationBatchPlanService _defenderInvitationBatchPlanner;
+	private readonly VortexDefenderInvitationRequestSlotSnapshotService _requestSlotSnapshotService;
 
 	public VortexStartInvasionRuntimeSnapshotCollectorService(
 		IVortexInvasionSpawnSnapshotSelector? invasionSpawnSelector = null,
 		VortexDefenderAllianceUpdatePlanService? defenderAllianceUpdatePlanner = null,
-		VortexDefenderInvitationBatchPlanService? defenderInvitationBatchPlanner = null)
+		VortexDefenderInvitationBatchPlanService? defenderInvitationBatchPlanner = null,
+		VortexDefenderInvitationRequestSlotSnapshotService? requestSlotSnapshotService = null)
 	{
 		_invasionSpawnSelector = invasionSpawnSelector ?? new VortexInvasionSpawnSnapshotSelectionService();
 		_defenderAllianceUpdatePlanner = defenderAllianceUpdatePlanner ?? new VortexDefenderAllianceUpdatePlanService();
 		_defenderInvitationBatchPlanner = defenderInvitationBatchPlanner ?? new VortexDefenderInvitationBatchPlanService();
+		_requestSlotSnapshotService = requestSlotSnapshotService ?? new VortexDefenderInvitationRequestSlotSnapshotService();
 	}
 
 	public VortexStartInvasionSnapshotRequest Collect(
@@ -35,18 +38,22 @@ public sealed class VortexStartInvasionRuntimeSnapshotCollectorService
 		// VortexLocation.spawned collection for despawn metadata, then
 		// Invasion.updateAlliance scans VortexLocation.players and forwards only
 		// exact defender-race matches to updateDefenders.
+		var currentZonePlayers = (zonePlayers ?? []).ToArray();
 		var collectedSpawnedNpcs = (spawnedNpcs ?? [])
 			.Select(VortexStartSpawnedNpcSnapshot.FromWorldNpc)
 			.ToArray();
-		var playerSnapshots = (zonePlayers ?? [])
+		var playerSnapshots = currentZonePlayers
 			.Select(VortexZonePlayerSnapshot.FromPlayer)
 			.ToArray();
 		var defenderAllianceUpdatePlan = _defenderAllianceUpdatePlanner.CreatePlan(location, playerSnapshots);
+		var requestSlots = defenderRequestSlotsByPlayerObjectId
+			?? _requestSlotSnapshotService.CollectRequestSlotsByPlayerObjectId(
+				currentZonePlayers.Where(player => defenderAllianceUpdatePlan.DefenderObjectIds.Contains(player.ObjectId)));
 		var defenderInvitationBatchPlan = _defenderInvitationBatchPlanner.CreatePlan(
 			defenderAllianceUpdatePlan,
 			existingDefenders,
 			defenderAlliance,
-			defenderRequestSlotsByPlayerObjectId,
+			requestSlots,
 			defaultDefenderRequestSlotAvailable);
 
 		return new VortexStartInvasionSnapshotRequest(

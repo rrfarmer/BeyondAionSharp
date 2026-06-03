@@ -20,6 +20,22 @@ public sealed class QuestionResponseRegistryTests
 	}
 
 	[Fact]
+	public void IsRequestSlotAvailable_ReflectsJavaPutIfAbsentMessageIdGuard()
+	{
+		var registry = new QuestionResponseRegistry();
+		var request = new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite);
+
+		Assert.True(registry.IsRequestSlotAvailable(SmQuestionWindow.UnionInviteMe));
+		Assert.False(registry.ContainsRequest(SmQuestionWindow.UnionInviteMe));
+
+		Assert.True(registry.PutRequest(SmQuestionWindow.UnionInviteMe, request));
+
+		Assert.True(registry.ContainsRequest(SmQuestionWindow.UnionInviteMe));
+		Assert.False(registry.IsRequestSlotAvailable(SmQuestionWindow.UnionInviteMe));
+		Assert.True(registry.IsRequestSlotAvailable(SmQuestionWindow.BuddyListAddBuddyRequest));
+	}
+
+	[Fact]
 	public void Respond_RemovesBeforeDispatchAndMapsZeroToDenyNonzeroToAcceptLikeJavaHandle()
 	{
 		var registry = new QuestionResponseRegistry();

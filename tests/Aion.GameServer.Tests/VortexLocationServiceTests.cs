@@ -1,6 +1,7 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 
@@ -286,6 +287,9 @@ public sealed class VortexLocationServiceTests
 			var offlineDefender = CreatePlayer(1006, isOnline: false, location.InvasionWorldId, location.DefendersRace);
 			var existingDefender = CreatePlayer(1007, isOnline: true, location.InvasionWorldId, location.DefendersRace);
 			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
+			Assert.True(offlineDefender.ResponseRequester.PutRequest(
+				SmQuestionWindow.VortexDefenderInvitation,
+				new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown)));
 			var table = new NpcVortexSpawnTable(
 				[
 					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
@@ -298,8 +302,7 @@ public sealed class VortexLocationServiceTests
 				[spawnedNpc],
 				[invader, defender, offlineDefender, existingDefender],
 				existingDefenders: [new VortexDefenderAddPlayerSnapshot(1007, IsInGroup: false, IsInAlliance: false)],
-				defenderAlliance: VortexDefenderAllianceSnapshot.Open,
-				defenderRequestSlotsByPlayerObjectId: new Dictionary<int, bool> { [1006] = false });
+				defenderAlliance: VortexDefenderAllianceSnapshot.Open);
 
 			Assert.True(request.HasAnySnapshot);
 			Assert.Equal([831500], request.SpawnedNpcSnapshots.Select(npc => npc.NpcId).ToArray());
@@ -1208,6 +1211,29 @@ public sealed class VortexLocationServiceTests
 		Assert.False(plan.ShouldMutateLiveRequest);
 		Assert.False(plan.ShouldSendLivePacket);
 		Assert.Equal("services/vortex/Invasion.updateDefenders", plan.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderInvitationRequestSlotSnapshot_UsesPlayerResponseRequesterForJavaQuestionId()
+	{
+		var planner = new VortexDefenderInvitationRequestSlotSnapshotService();
+		var defender = CreatePlayer(1004, isOnline: true, worldId: 210060000);
+
+		var open = planner.CreateSnapshot(defender);
+		Assert.True(defender.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown)));
+		var occupied = planner.CreateSnapshot(defender);
+
+		Assert.Equal(1004, open.PlayerObjectId);
+		Assert.Equal(SmQuestionWindow.VortexDefenderInvitation, open.QuestionId);
+		Assert.Equal(VortexDefenderInvitationPlanService.DefenderQuestionId, open.QuestionId);
+		Assert.True(open.RequestSlotAvailable);
+		Assert.Equal(0, open.ActiveRequestCount);
+		Assert.Equal("model/gameobjects/player/ResponseRequester.putRequest", open.JavaSource);
+		Assert.Equal(1004, occupied.PlayerObjectId);
+		Assert.False(occupied.RequestSlotAvailable);
+		Assert.Equal(1, occupied.ActiveRequestCount);
 	}
 
 	[Fact]
