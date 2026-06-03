@@ -178,6 +178,29 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300388);
 	}
 
+	public static SmSystemMessage MsgSplitMeToB(long amount, int people, long rewardPerPlayer)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_SPLIT_ME_TO_B(long num0, int num1, long num2) -> 1390247.
+		// "You distributed %num0 Kinah to %num1 people, giving each %num2 Kinah."
+		return new SmSystemMessage(
+			1390247,
+			amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			people.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			rewardPerPlayer.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage MsgSplitBToMe(string distributorName, long amount, int people, long rewardPerPlayer)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_SPLIT_B_TO_ME(String value0, long num1, int num2, long num3) -> 1390248.
+		// "%0 distributed %num1 Kinah among %num2 people, giving %num3 Kinah each."
+		return new SmSystemMessage(
+			1390248,
+			distributorName,
+			amount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			people.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			rewardPerPlayer.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
 	public static SmSystemMessage CraftCantExtendMoney()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_CRAFT_CANT_EXTEND_MONEY.

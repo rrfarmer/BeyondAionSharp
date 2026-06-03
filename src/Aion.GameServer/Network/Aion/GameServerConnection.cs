@@ -518,7 +518,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_GAMEGUARD.runImpl delegates to AntiHackService.checkAionBin; deferred.
 				break;
 			case CmGroupDistribution:
-				// Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION.runImpl validates trade state and splits Kinah across group/alliance/league; deferred.
+				// Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION.runImpl (amount < 2 / canTrade guards) ->
+				// TeamKinahDistributionEvent. The distribution decision is now ported as a pure, tested planner
+				// (GroupKinahDistributionPlanService) plus the SM_SYSTEM_MESSAGE factories (MsgSplitMeToB/MsgSplitBToMe,
+				// NotEnoughMoney). Live wiring is the next step: resolve the distributor's team online members via the
+				// group/alliance/league runtime, decrease the distributor's cube kinah by amount, increase each online
+				// member's kinah by RewardPerPlayer, then send MsgSplitMeToB to the distributor and MsgSplitBToMe to the
+				// others. Deferred here only because it mutates multiple players' kinah state (multi-player persistence).
 				break;
 			case CmDeleteItem deleteItem:
 				if (_activePlayer != null)
