@@ -2726,10 +2726,20 @@ public sealed class GameServerConnection : BaseClientConnection
 				}
 			}
 
-			// Java parity: destStorage.increaseItemCount -> SM_INVENTORY_UPDATE_ITEM with INC_ITEM_MERGE.
-			await SendPacketAsync(new SmInventoryUpdateItem(targetItem, template, SmInventoryUpdateItem.IncreaseItemMerge));
-			// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, SmInventoryUpdateItem.DecreaseItemSplit));
+			// Java parity: mergeStacks uses INC_ITEM_MERGE for same-storage, INC_ITEM_COLLECT for cross-storage.
+			var isSameStorage = packet.SourceStorageType == packet.DestinationStorageType;
+			var destIncreaseType = isSameStorage ? SmInventoryUpdateItem.IncreaseItemMerge : SmInventoryUpdateItem.IncreaseItemCollect;
+			var srcDecreaseType = isSameStorage ? SmInventoryUpdateItem.DecreaseItemSplit : SmInventoryUpdateItem.DecreaseItemSplitMove;
+
+			if (packet.DestinationStorageType == 0)
+				await SendPacketAsync(new SmInventoryUpdateItem(targetItem, template, destIncreaseType));
+			else
+				await SendPacketAsync(new SmWarehouseUpdateItem(targetItem, template, packet.DestinationStorageType, destIncreaseType));
+
+			if (packet.SourceStorageType == 0)
+				await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, srcDecreaseType));
+			else
+				await SendPacketAsync(new SmWarehouseUpdateItem(sourceItem, template, packet.SourceStorageType, srcDecreaseType));
 		}
 	}
 
