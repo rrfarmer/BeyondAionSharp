@@ -3,9 +3,12 @@ using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -75,6 +78,55 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.Empty(sentPackets);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_AutoGroupDuplicateStartLookingSendsJavaAlreadyRegisteredMessage()
+	{
+		var sentPackets = new List<GameServerPacket>();
+		var autoGroupRegistrations = new AutoGroupLookingPartyRegistrationService();
+		var runtimeContext = CreateAutoGroupRuntimeContext(CreateAutoGroup(107, 300110000));
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			new GameServerOptions(),
+			sentPackets.Add,
+			runtimeContext,
+			autoGroupRegistrations);
+		SetConnectionState(fixture.Connection, GameConnectionState.InGame);
+		SetActivePlayer(
+			fixture.Connection,
+			new Player
+			{
+				ObjectId = 1003,
+				Name = "DuplicateTester",
+				Race = "ELYOS",
+				Level = 50,
+			});
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(
+				200,
+				buffer =>
+				{
+					buffer.WriteD(107);
+					buffer.WriteC(100);
+					buffer.WriteC(2);
+				}));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(sentPackets));
+		Assert.Equal(1400181, message.MessageId);
+		Assert.Equal(["300110000"], message.Parameters);
+		Assert.Equal(1, autoGroupRegistrations.GetLookingPartyCount(107));
+	}
+
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writePayload)
 	{
 		using var buffer = new PacketBuffer();
@@ -128,6 +180,104 @@ public sealed class GameServerConnectionAutoGroupTests
 		return frame[7..];
 	}
 
+	private static AutoGroupSummary CreateAutoGroup(int maskId, int worldId)
+	{
+		return new AutoGroupSummary(
+			maskId,
+			worldId,
+			NameId: 140000 + maskId,
+			TitleId: 150000 + maskId,
+			MinLevel: 46,
+			MaxLevel: 65,
+			RegisterQuick: true,
+			RegisterGroup: true,
+			RegisterNew: true,
+			NpcIds: []);
+	}
+
+	private static GameServerRuntimeContext CreateAutoGroupRuntimeContext(params AutoGroupSummary[] autoGroups)
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(CreateDataManagerForTest(CreateStaticDataForAutoGroups(autoGroups)));
+		return runtimeContext;
+	}
+
+	private static DataManager CreateDataManagerForTest(StaticData staticData)
+	{
+		var constructor = typeof(DataManager).GetConstructor(
+			BindingFlags.Instance | BindingFlags.NonPublic,
+			binder: null,
+			[typeof(StaticData)],
+			modifiers: null);
+		Assert.NotNull(constructor);
+		return (DataManager)constructor!.Invoke([staticData]);
+	}
+
+	private static StaticData CreateStaticDataForAutoGroups(IReadOnlyList<AutoGroupSummary> autoGroups)
+	{
+		var emptySkillTemplates = new SkillTemplateTable(Array.Empty<SkillTemplateSummary>());
+		var constructor = typeof(StaticData).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).Single();
+		return (StaticData)constructor.Invoke(
+		[
+			string.Empty,
+			Array.Empty<string>(),
+			new Dictionary<string, int>(),
+			Array.Empty<string>(),
+			Array.Empty<WorldMapSummary>(),
+			new FlightZoneTable(Array.Empty<FlightZoneSummary>()),
+			new CreaturePvpZoneTable(Array.Empty<CreaturePvpZoneSummary>()),
+			new PlayerExperienceTable(Array.Empty<long>()),
+			new ItemTemplateTable(Array.Empty<ItemTemplateSummary>()),
+			new CosmeticItemTable(Array.Empty<CosmeticItemSummary>()),
+			new DecomposableItemTable(Array.Empty<DecomposableItemSummary>()),
+			new AssemblyItemTable(Array.Empty<AssemblyItemSummary>()),
+			new ItemPurificationTable(Array.Empty<ItemPurificationSummary>()),
+			new ItemRestrictionCleanupTable(Array.Empty<ItemRestrictionCleanupSummary>()),
+			new RideTable(Array.Empty<RideInfoSummary>()),
+			new ItemRandomBonusTable(Array.Empty<ItemRandomBonusSummary>()),
+			new ItemSetTable(Array.Empty<ItemSetSummary>()),
+			new EnchantTable(Array.Empty<EnchantGroupSummary>()),
+			new TemperingTable(Array.Empty<TemperingGroupSummary>()),
+			new WalkerTemplateTable(Array.Empty<WalkerTemplateSummary>()),
+			new WalkerVersionTable(new Dictionary<string, string>()),
+			new RiftLocationTable(Array.Empty<RiftLocationSummary>()),
+			new VortexLocationTable(Array.Empty<VortexLocationSummary>()),
+			new NpcTemplateTable(Array.Empty<NpcTemplateSummary>()),
+			new NpcSpawnTable(Array.Empty<NpcSpawnSummary>()),
+			new StaticDoorTable(Array.Empty<StaticDoorSummary>()),
+			new NpcRiftSpawnTable(Array.Empty<NpcRiftSpawnSummary>()),
+			new NpcFactionTable(Array.Empty<NpcFactionSummary>()),
+			new TradeListTable(Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>()),
+			new GoodsListTable(Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>(), Array.Empty<GoodsListSummary>()),
+			new CustomNpcDropTable(Array.Empty<CustomNpcDropSummary>()),
+			new QuestDropTable(Array.Empty<QuestDropSummary>()),
+			new QuestUpdateItemTable(Array.Empty<int>()),
+			new GlobalDropTable(Array.Empty<GlobalDropRuleSummary>()),
+			new EventDropTable(Array.Empty<EventTemplateSummary>()),
+			GlobalNpcExclusionTable.Empty,
+			emptySkillTemplates,
+			new NpcSkillTable(Array.Empty<NpcSkillListSummary>()),
+			new PetSkillTable(Array.Empty<PetSkillSummary>()),
+			new TitleTemplateTable(Array.Empty<TitleTemplateSummary>()),
+			new RecipeTemplateTable(Array.Empty<RecipeTemplateSummary>()),
+			new HousingTemplateTable(Array.Empty<HousingAddressSummary>(), Array.Empty<HousingBuildingSummary>()),
+			new HousingObjectTemplateTable(Array.Empty<HousingObjectTemplateSummary>()),
+			new InstanceCooltimeTable(Array.Empty<InstanceCooltimeSummary>()),
+			new InstanceExitTable(Array.Empty<InstanceExitSummary>()),
+			new PortalPathTable(Array.Empty<PortalPathSummary>(), new Dictionary<int, int>(), Array.Empty<PortalPathSummary>(), Array.Empty<PortalPathSummary>()),
+			new PortalLocTable(Array.Empty<PortalLocSummary>()),
+			new AutoGroupTable(autoGroups),
+			new PlayerInitialDataTable(new Dictionary<string, PlayerCreationData>(), new Dictionary<string, PlayerSpawnLocation>()),
+			new SkillTreeTable(Array.Empty<SkillLearnSummary>(), emptySkillTemplates),
+			new StorageExpansionTemplateTable(Array.Empty<StorageExpansionTemplateSummary>()),
+			new StorageExpansionTemplateTable(Array.Empty<StorageExpansionTemplateSummary>()),
+			new NearbyQuestTemplateTable(Array.Empty<NearbyQuestTemplateSummary>()),
+			new QuestFinishRewardProjectionLookupTable(Array.Empty<(int QuestId, QuestFinishRewardProjectionLookupEntry Entry)>()),
+			new QuestBonusItemGroupTable(Array.Empty<QuestBonusItemGroupProjection>()),
+			null,
+		]);
+	}
+
 	private sealed class ConnectionFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
@@ -142,7 +292,9 @@ public sealed class GameServerConnectionAutoGroupTests
 
 		public static async Task<ConnectionFixture> CreateAsync(
 			GameServerOptions options,
-			Action<GameServerPacket> sentPacketObserver)
+			Action<GameServerPacket> sentPacketObserver,
+			GameServerRuntimeContext? runtimeContext = null,
+			AutoGroupLookingPartyRegistrationService? autoGroupLookingPartyRegistrations = null)
 		{
 			using var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -162,7 +314,9 @@ public sealed class GameServerConnectionAutoGroupTests
 					"autogroup-test",
 					processor,
 					options,
+					runtimeContext: runtimeContext,
 					sentPacketObserver: sentPacketObserver,
+					autoGroupLookingPartyRegistrations: autoGroupLookingPartyRegistrations,
 					crypt: crypt);
 				return new ConnectionFixture(client, connection);
 			}

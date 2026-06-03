@@ -1496,16 +1496,25 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (entryRequestType == null)
 					return;
 
+				var autoGroups = _runtimeContext?.DataManager?.StaticData.AutoGroups;
 				var result = _autoGroupLookingPartyRegistrations.StartLooking(
 					player,
 					packet.InstanceMaskId,
 					entryRequestType.Value,
-					_runtimeContext?.DataManager?.StaticData.AutoGroups,
+					autoGroups,
 					_playerGroupRuntime,
 					_playerAllianceRuntime);
 
 				if (result.GuardPlan?.DenialMessage != null)
 					await SendPacketAsync(result.GuardPlan.DenialMessage);
+				else if (result.Status == AutoGroupStartLookingStatus.AlreadyRegistered)
+				{
+					// Java parity: AutoGroupService.startLooking duplicate branch sends
+					// STR_MSG_CANT_INSTANCE_ALREADY_REGISTERED(agt.getTemplate().getInstanceMapId()).
+					var autoGroup = autoGroups?.GetTemplateByInstanceMaskId(packet.InstanceMaskId);
+					if (autoGroup != null)
+						await SendPacketAsync(SmSystemMessage.CantInstanceAlreadyRegistered(autoGroup.InstanceMapId));
+				}
 				break;
 			}
 			case 101:
