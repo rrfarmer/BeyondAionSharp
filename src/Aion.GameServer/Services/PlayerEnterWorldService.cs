@@ -809,10 +809,54 @@ public sealed class PlayerEnterWorldService
 			ClearPlayerCreaturePvpZones(player.ObjectId);
 		var saved = await _repository.SavePlayerLogoutAsync(player, lastOnline, cancellationToken);
 		RecordGroupLogoutLastOnline(player, lastOnline);
+		await DispatchGroupDisconnectedLogoutAsync(player);
 		if (saved)
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
 			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
+	private async Task DispatchGroupDisconnectedLogoutAsync(Player player)
+	{
+		if (_playerGroupRuntime == null || _connectionRegistry == null)
+			return;
+
+		// Java parity: PlayerGroupService.onPlayerLogout fires PlayerDisconnectedEvent after
+		// PlayerLeaveWorldService sets the connection to null. The disconnected player is
+		// semi-offline, so PacketSendUtility.sendPacket(player, ...) is a no-op.
+		var plan = new PlayerGroupDisconnectedPlanner(_playerGroupRuntime).Plan(player);
+		if (!plan.IsPlanned)
+			return;
+
+		var leaderChangePlan = plan.LeaderChangePlan;
+		if (plan.FallbackLeaderObjectId.HasValue)
+			leaderChangePlan = _playerGroupRuntime.ChangeLeader(plan.TeamId, plan.FallbackLeaderObjectId.Value) ?? leaderChangePlan;
+
+		if (leaderChangePlan != null)
+		{
+			foreach (var intent in leaderChangePlan.PacketIntents)
+			{
+				if (intent.RecipientObjectId == player.ObjectId)
+					continue;
+
+				await _connectionRegistry.SendPacketToPlayerAsync(
+					intent.RecipientObjectId,
+					new SmGroupInfo(intent.GroupInfoPlan));
+				await _connectionRegistry.SendPacketToPlayerAsync(
+					intent.RecipientObjectId,
+					intent.SystemMessage);
+			}
+		}
+
+		foreach (var intent in plan.PacketIntents)
+		{
+			if (intent.RecipientObjectId == player.ObjectId)
+				continue;
+
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				intent.RecipientObjectId,
+				intent.CreatePacket());
+		}
 	}
 
 	private void RecordGroupLogoutLastOnline(Player player, DateTime lastOnline)
