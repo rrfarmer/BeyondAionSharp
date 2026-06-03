@@ -9,7 +9,8 @@ public sealed class VortexStartInvasionSideEffectPlanService
 	public VortexStartInvasionSideEffectPlan CreatePlan(
 		VortexStartInvasionResult startResult,
 		IReadOnlyList<VortexStartSpawnedNpcSnapshot>? spawnedNpcs = null,
-		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null)
+		IReadOnlyList<VortexStartInvasionSpawnSnapshot>? invasionSpawns = null,
+		VortexDefenderAllianceUpdatePlan? defenderAllianceUpdatePlan = null)
 	{
 		ArgumentNullException.ThrowIfNull(startResult);
 
@@ -45,7 +46,10 @@ public sealed class VortexStartInvasionSideEffectPlanService
 			steps,
 			DespawnNpcCount: existingSpawnedNpcs.Count,
 			InvasionSpawnCount: selectedInvasionSpawns.Count,
+			DefenderUpdatePlayerCount: defenderAllianceUpdatePlan?.DefenderUpdatePlayers.Count ?? 0,
+			SkippedZonePlayerCount: defenderAllianceUpdatePlan?.SkippedPlayers.Count ?? 0,
 			StartResult: startResult,
+			DefenderAllianceUpdatePlan: defenderAllianceUpdatePlan,
 			JavaSource: "services/vortex/Invasion.startInvasion");
 	}
 }
@@ -97,11 +101,15 @@ public sealed record VortexStartInvasionSideEffectPlan(
 	IReadOnlyList<VortexStartInvasionSideEffectStep>? Steps = null,
 	int DespawnNpcCount = 0,
 	int InvasionSpawnCount = 0,
+	int DefenderUpdatePlayerCount = 0,
+	int SkippedZonePlayerCount = 0,
 	VortexStartInvasionResult? StartResult = null,
+	VortexDefenderAllianceUpdatePlan? DefenderAllianceUpdatePlan = null,
 	string JavaSource = "")
 {
 	public IReadOnlyList<VortexStartInvasionSideEffectStep> OrderedSteps => Steps ?? [];
 	public bool ShouldExecuteLiveSideEffects => false;
+	public bool HasDefenderAllianceUpdatePlan => DefenderAllianceUpdatePlan is not null;
 }
 
 public sealed record VortexStartInvasionSideEffectStep(

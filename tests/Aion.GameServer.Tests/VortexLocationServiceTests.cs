@@ -268,6 +268,52 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task StartSnapshotCollector_PreparesRuntimeStaticRequestWithDefenderAllianceMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-collector-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var collector = new VortexStartInvasionRuntimeSnapshotCollectorService();
+			var spawnedNpc = new WorldNpc(
+				ObjectId: 7201,
+				TemplateId: 831500,
+				Template: new NpcTemplateSummary(831500, "Existing vortex peace", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
+				Position: location.HomePoint);
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			var offlineDefender = CreatePlayer(1006, isOnline: false, location.InvasionWorldId, location.DefendersRace);
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Invasion, 831600, "static-invasion"),
+				]);
+
+			var request = collector.PrepareWithStaticInvasionSpawns(
+				location,
+				table,
+				[spawnedNpc],
+				[invader, defender, offlineDefender]);
+
+			Assert.True(request.HasAnySnapshot);
+			Assert.Equal([831500], request.SpawnedNpcSnapshots.Select(npc => npc.NpcId).ToArray());
+			Assert.Equal([831600], request.InvasionSpawnSnapshots.Select(spawn => spawn.Spawn.NpcId).ToArray());
+			var defenderPlan = Assert.IsType<VortexDefenderAllianceUpdatePlan>(request.DefenderAllianceUpdatePlan);
+			Assert.Equal(location.Id, defenderPlan.LocationId);
+			Assert.Equal([1004, 1006], defenderPlan.DefenderObjectIds);
+			Assert.Equal([1002], defenderPlan.SkippedObjectIds);
+			Assert.True(defenderPlan.WouldCallUpdateDefenders);
+			Assert.False(defenderPlan.ShouldMutateLiveAlliance);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task StartCoordinator_StaticInvasionSpawnsEnrichPlanOnlyAfterStartGuardSucceeds()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-" + Guid.NewGuid().ToString("N"));
@@ -319,6 +365,69 @@ public sealed class VortexLocationServiceTests
 			Assert.Equal(
 				"services/VortexService.startInvasion -> services/vortex/DimensionalVortex.start -> services/vortex/Invasion.startInvasion",
 				report.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task StartCoordinator_PreparedRuntimeStaticRequestCarriesDefenderAllianceUpdateMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-start-coordinator-prepared-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var runtime = new VortexInvasionRuntime();
+			var coordinator = new VortexStartInvasionCoordinatorService(
+				runtime,
+				new VortexStartInvasionSideEffectPlanService());
+			var collector = new VortexStartInvasionRuntimeSnapshotCollectorService();
+			var spawnedNpc = new WorldNpc(
+				ObjectId: 7201,
+				TemplateId: 831500,
+				Template: new NpcTemplateSummary(831500, "Existing vortex peace", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
+				Position: location.HomePoint);
+			var defender = CreatePlayer(1004, isOnline: true, location.InvasionWorldId, location.DefendersRace);
+			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
+			var table = new NpcVortexSpawnTable(
+				[
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "static-invasion"),
+				]);
+			var request = collector.PrepareWithStaticInvasionSpawns(
+				location,
+				table,
+				[spawnedNpc],
+				[invader, defender]);
+
+			var report = coordinator.StartInvasion(location, request);
+
+			Assert.Equal(VortexStartInvasionCoordinatorStatus.Planned, report.Status);
+			Assert.True(report.Started);
+			Assert.True(report.HasSideEffectPlan);
+			Assert.False(report.ShouldExecuteLiveSideEffects);
+			Assert.False(report.SideEffectPlan.ShouldExecuteLiveSideEffects);
+			Assert.True(report.SideEffectPlan.HasDefenderAllianceUpdatePlan);
+			Assert.Same(request.DefenderAllianceUpdatePlan, report.SideEffectPlan.DefenderAllianceUpdatePlan);
+			Assert.Equal(1, report.SideEffectPlan.DespawnNpcCount);
+			Assert.Equal(1, report.SideEffectPlan.InvasionSpawnCount);
+			Assert.Equal(1, report.SideEffectPlan.DefenderUpdatePlayerCount);
+			Assert.Equal(1, report.SideEffectPlan.SkippedZonePlayerCount);
+			Assert.Equal([1004], Assert.IsType<VortexDefenderAllianceUpdatePlan>(
+				report.SideEffectPlan.DefenderAllianceUpdatePlan).DefenderObjectIds);
+			Assert.Equal(
+				[
+					VortexStartInvasionSideEffectStepKind.SetActiveVortex,
+					VortexStartInvasionSideEffectStepKind.DespawnExistingVortexNpcs,
+					VortexStartInvasionSideEffectStepKind.DespawnExistingVortexNpc,
+					VortexStartInvasionSideEffectStepKind.SpawnInvasionNpc,
+					VortexStartInvasionSideEffectStepKind.InitRiftGenerator,
+					VortexStartInvasionSideEffectStepKind.UpdateDefenderAlliance,
+				],
+				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
 		}
 		finally
 		{
