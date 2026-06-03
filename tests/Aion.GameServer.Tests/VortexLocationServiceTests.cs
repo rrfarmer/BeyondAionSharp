@@ -1507,6 +1507,132 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void KickPlayerRemovalPlan_OfflineInvaderRemovesParticipantPassedPlayerAndSyncsWithoutPackets()
+	{
+		var planner = new VortexKickPlayerRemovalPlanService();
+		var player = new VortexKickPlayerSnapshot(PlayerObjectId: 1002, IsOnline: false, WorldId: 220050000);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			player,
+			isInvader: true,
+			isParticipant: true,
+			alliance: VortexKickPlayerAllianceSnapshot.MemberActive,
+			passedPlayerObjectIds: new HashSet<int> { 1002, 1003 },
+			passedPlayerCountAfterRemoval: 1,
+			invasionWorldId: 220050000,
+			homePoint: new WorldPosition(210060000, 951, 2433, 107, 0));
+
+		Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemoved, plan.Status);
+		Assert.True(plan.WouldRemoveParticipant);
+		Assert.True(plan.WouldRemoveFromAlliance);
+		Assert.Null(plan.AllianceKickMessageId);
+		Assert.False(plan.WouldTeleportHome);
+		Assert.Null(plan.DirectPortalOutMessageId);
+		Assert.True(plan.WouldRemovePassedPlayer);
+		Assert.True(plan.WouldSyncPassedPlayers);
+		Assert.Equal(1, plan.PassedPlayerSyncPlan.PassedPlayerCount);
+		Assert.False(plan.ShouldMutateLiveParticipants);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldSendLivePacket);
+		Assert.False(plan.ShouldTeleportLivePlayer);
+		Assert.False(plan.ShouldMutateLivePassedPlayers);
+		Assert.False(plan.ShouldSyncLivePassedPlayers);
+		Assert.Equal("services/vortex/Invasion.kickPlayer", plan.JavaSource);
+	}
+
+	[Fact]
+	public void KickPlayerRemovalPlan_OnlineInvaderInInvasionWorldSendsPortalOutAndTeleportsHome()
+	{
+		var planner = new VortexKickPlayerRemovalPlanService();
+		var player = new VortexKickPlayerSnapshot(PlayerObjectId: 1002, IsOnline: true, WorldId: 220050000);
+		var homePoint = new WorldPosition(210060000, 951, 2433, 107, 0);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			player,
+			isInvader: true,
+			isParticipant: true,
+			alliance: VortexKickPlayerAllianceSnapshot.MemberDisbandedAfterRemoval,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			passedPlayerCountAfterRemoval: 0,
+			invasionWorldId: 220050000,
+			homePoint: homePoint);
+
+		Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, plan.Status);
+		Assert.True(plan.WasOnline);
+		Assert.True(plan.WasInInvasionWorld);
+		Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderAllianceKickMessageId, plan.AllianceKickMessageId);
+		Assert.True(plan.WouldClearAllianceReference);
+		Assert.Equal(VortexKickPlayerRemovalPlanService.InvaderDirectPortalOutMessageId, plan.DirectPortalOutMessageId);
+		Assert.True(plan.WouldTeleportHome);
+		Assert.Equal(homePoint, plan.HomePoint);
+		Assert.True(plan.WouldRemovePassedPlayer);
+		Assert.True(plan.WouldSyncPassedPlayers);
+		Assert.False(plan.ShouldSendLivePacket);
+		Assert.False(plan.ShouldTeleportLivePlayer);
+	}
+
+	[Fact]
+	public void KickPlayerRemovalPlan_OnlineDefenderRemovesAllianceAndSendsDefenderKickOnly()
+	{
+		var planner = new VortexKickPlayerRemovalPlanService();
+		var player = new VortexKickPlayerSnapshot(PlayerObjectId: 1004, IsOnline: true, WorldId: 220050000);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			player,
+			isInvader: false,
+			isParticipant: true,
+			alliance: VortexKickPlayerAllianceSnapshot.MemberDisbandedAfterRemoval,
+			passedPlayerObjectIds: new HashSet<int>(),
+			passedPlayerCountAfterRemoval: 0,
+			invasionWorldId: 220050000);
+
+		Assert.Equal(VortexKickPlayerRemovalPlanStatus.DefenderRemovedFromAlliance, plan.Status);
+		Assert.True(plan.WouldRemoveParticipant);
+		Assert.True(plan.WouldRemoveFromAlliance);
+		Assert.Equal(VortexKickPlayerRemovalPlanService.DefenderAllianceKickMessageId, plan.AllianceKickMessageId);
+		Assert.True(plan.WouldClearAllianceReference);
+		Assert.Null(plan.DirectPortalOutMessageId);
+		Assert.False(plan.WouldTeleportHome);
+		Assert.False(plan.WouldRemovePassedPlayer);
+		Assert.True(plan.WouldSyncPassedPlayers);
+		Assert.False(plan.ShouldMutateLiveParticipants);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldSendLivePacket);
+		Assert.False(plan.ShouldTeleportLivePlayer);
+	}
+
+	[Fact]
+	public void KickPlayerRemovalPlan_NonParticipantStillRecordsPassedSyncIntentLikeJavaTailCall()
+	{
+		var planner = new VortexKickPlayerRemovalPlanService();
+		var player = new VortexKickPlayerSnapshot(PlayerObjectId: 1004, IsOnline: true, WorldId: 210060000);
+
+		var plan = planner.CreatePlan(
+			locationId: 0,
+			player,
+			isInvader: false,
+			isParticipant: false,
+			alliance: VortexKickPlayerAllianceSnapshot.NonMember,
+			passedPlayerObjectIds: new HashSet<int> { 1002 },
+			passedPlayerCountAfterRemoval: 1,
+			invasionWorldId: 220050000);
+
+		Assert.Equal(VortexKickPlayerRemovalPlanStatus.NotParticipant, plan.Status);
+		Assert.False(plan.WouldRemoveParticipant);
+		Assert.False(plan.WouldRemoveFromAlliance);
+		Assert.Null(plan.AllianceKickMessageId);
+		Assert.False(plan.WouldRemovePassedPlayer);
+		Assert.True(plan.WouldSyncPassedPlayers);
+		Assert.Equal(1, plan.PassedPlayerSyncPlan.PassedPlayerCount);
+		Assert.False(plan.ShouldMutateLiveParticipants);
+		Assert.False(plan.ShouldMutateLivePassedPlayers);
+		Assert.False(plan.ShouldSyncLivePassedPlayers);
+	}
+
+	[Fact]
 	public void InvaderKiskZoneMembershipPlan_EnterRecordsOnlyInvaderRaceKisksLikeJava()
 	{
 		var planner = new VortexInvaderKiskZoneMembershipPlanService();
