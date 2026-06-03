@@ -518,6 +518,73 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public void DefenderInvitationAcceptancePlan_GroupResponderRemovesGroupBeforeAddingDefender()
+	{
+		var planner = new VortexDefenderInvitationAcceptancePlanService();
+		var responder = new VortexDefenderInvitationResponderSnapshot(
+			PlayerObjectId: 1004,
+			IsInGroup: true,
+			IsInAlliance: true);
+
+		var plan = planner.CreatePlan(responder, VortexDefenderAllianceSnapshot.Open);
+
+		Assert.Equal(VortexDefenderInvitationAcceptancePlanStatus.AcceptancePlanned, plan.Status);
+		Assert.Same(responder, plan.Responder);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Open, plan.DefenderAlliance);
+		Assert.True(plan.WouldRemoveGroup);
+		Assert.False(plan.WouldRemoveAlliance);
+		Assert.True(plan.WouldAddDefender);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+		Assert.Equal(
+			"services/vortex/Invasion.updateDefenders.RequestResponseHandler.acceptRequest",
+			plan.JavaSource);
+	}
+
+	[Fact]
+	public void DefenderInvitationAcceptancePlan_AllianceResponderRemovesAllianceWhenNotGrouped()
+	{
+		var planner = new VortexDefenderInvitationAcceptancePlanService();
+		var responder = new VortexDefenderInvitationResponderSnapshot(
+			PlayerObjectId: 1004,
+			IsInGroup: false,
+			IsInAlliance: true);
+
+		var plan = planner.CreatePlan(responder, VortexDefenderAllianceSnapshot.Missing);
+
+		Assert.Equal(VortexDefenderInvitationAcceptancePlanStatus.AcceptancePlanned, plan.Status);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Missing, plan.DefenderAlliance);
+		Assert.False(plan.WouldRemoveGroup);
+		Assert.True(plan.WouldRemoveAlliance);
+		Assert.True(plan.WouldAddDefender);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
+	public void DefenderInvitationAcceptancePlan_FullAllianceBlocksAddAfterRemovalCheck()
+	{
+		var planner = new VortexDefenderInvitationAcceptancePlanService();
+		var responder = new VortexDefenderInvitationResponderSnapshot(
+			PlayerObjectId: 1004,
+			IsInGroup: true,
+			IsInAlliance: false);
+
+		var plan = planner.CreatePlan(responder, VortexDefenderAllianceSnapshot.Full);
+
+		Assert.Equal(VortexDefenderInvitationAcceptancePlanStatus.DefenderAllianceFull, plan.Status);
+		Assert.Equal(VortexDefenderAllianceSnapshot.Full, plan.DefenderAlliance);
+		Assert.True(plan.WouldRemoveGroup);
+		Assert.False(plan.WouldRemoveAlliance);
+		Assert.False(plan.WouldAddDefender);
+		Assert.False(plan.ShouldMutateLiveGroup);
+		Assert.False(plan.ShouldMutateLiveAlliance);
+		Assert.False(plan.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public void DefenderInvitationPlan_NewDefenderWithOpenAllianceRecordsQuestionWindowIntent()
 	{
 		var planner = new VortexDefenderInvitationPlanService();
