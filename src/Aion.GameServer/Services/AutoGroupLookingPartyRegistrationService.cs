@@ -776,7 +776,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 			autoGroup.RegisterQuick,
 			readyMatchPlan.ReadyWindowRecipientObjectIds,
 			autoGroup.MaskId,
-			readyEnterStartTime);
+			readyEnterStartTime,
+			DifficultyId: autoGroup.DifficultyId);
 	}
 
 	private static AutoGroupInstanceKind GetInstanceKind(AutoGroupSummary autoGroup)

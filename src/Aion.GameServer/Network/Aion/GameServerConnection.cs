@@ -1617,7 +1617,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				registration.WorldId,
 				ownerId: 0,
 				maxPlayers: registration.RegisteredPlayerObjectIds.Count,
-				difficultyId: 0,
+				difficultyId: registration.DifficultyId,
 				instanceHandler: null,
 				autoDestroy: false);
 			instance.NotifyInstanceCreated();

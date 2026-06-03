@@ -1819,6 +1819,12 @@ public sealed class StaticDataLoadingTests
 		AssertAutoGroupMatchesSource(
 			GetSingleByAttribute(autoGroupElements, "id", 401),
 			staticData.AutoGroups.GetTemplateByInstanceMaskId(401));
+		AssertAutoGroupTypeMetadata(staticData.AutoGroups.GetTemplateByInstanceMaskId(21), maximumJoinTime: 110000, difficultyId: 1);
+		AssertAutoGroupTypeMetadata(staticData.AutoGroups.GetTemplateByInstanceMaskId(33), maximumJoinTime: 110000, difficultyId: 1);
+		AssertAutoGroupTypeMetadata(staticData.AutoGroups.GetTemplateByInstanceMaskId(41), maximumJoinTime: 110000, difficultyId: 4);
+		AssertAutoGroupTypeMetadata(staticData.AutoGroups.GetTemplateByInstanceMaskId(107), maximumJoinTime: 230000, difficultyId: 0);
+		AssertAutoGroupTypeMetadata(staticData.AutoGroups.GetTemplateByInstanceMaskId(111), maximumJoinTime: 170000, difficultyId: 0);
+		AssertAutoGroupTypeMetadata(staticData.AutoGroups.GetTemplateByInstanceMaskId(302), maximumJoinTime: 0, difficultyId: 0);
 
 		var recruitableMasksByPortalNpc = autoGroupElements
 			.Where(IsRecruitableAutoGroup)
@@ -1848,6 +1854,13 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(ReadOptionalBoolAttribute(sourceAutoGroup, "register_new", false), actualAutoGroup.RegisterNew);
 		Assert.Equal(ReadIntListAttribute(sourceAutoGroup, "npc_ids"), actualAutoGroup.NpcIds);
 		Assert.Equal(IsRecruitableAutoGroup(sourceAutoGroup), actualAutoGroup.IsRecruitableInstance);
+	}
+
+	private static void AssertAutoGroupTypeMetadata(AutoGroupSummary? actualAutoGroup, int maximumJoinTime, byte difficultyId)
+	{
+		Assert.NotNull(actualAutoGroup);
+		Assert.Equal(maximumJoinTime, actualAutoGroup.MaximumJoinTimeMilliseconds);
+		Assert.Equal(difficultyId, actualAutoGroup.DifficultyId);
 	}
 
 	private static bool IsRecruitableAutoGroup(XElement sourceAutoGroup)

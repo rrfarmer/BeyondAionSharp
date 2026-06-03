@@ -730,6 +730,7 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 		Assert.Equal([1001, 1002, 2001, 2002], result.RuntimeRegistration.RegisteredPlayerObjectIds);
 		Assert.Equal(readyEnterStartTime, result.RuntimeRegistration.ReadyEnterStartTime);
 		Assert.Equal(startInstanceTime, result.RuntimeRegistration.StartInstanceTime);
+		Assert.Equal(0, result.RuntimeRegistration.DifficultyId);
 		Assert.Equal(2, result.RemovedMatchedPartyCount);
 		Assert.Equal(6, result.SentWindowPackets);
 		Assert.True(result.WouldApplyPenalties);

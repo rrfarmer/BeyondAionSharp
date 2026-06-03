@@ -189,7 +189,8 @@ public sealed record AutoGroupInstanceRuntimeRegistration(
 	IReadOnlyCollection<int> RegisteredPlayerObjectIds,
 	int InstanceMaskId = 0,
 	DateTimeOffset? ReadyEnterStartTime = null,
-	DateTimeOffset? StartInstanceTime = null);
+	DateTimeOffset? StartInstanceTime = null,
+	byte DifficultyId = 0);
 
 public sealed record AutoGroupInstanceRuntimeResult(
 	AutoGroupInstanceLeavePlan Plan,

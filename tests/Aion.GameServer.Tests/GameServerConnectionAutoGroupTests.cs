@@ -387,6 +387,7 @@ public sealed class GameServerConnectionAutoGroupTests
 		Assert.True(runtimeContext.WorldMapStates.TryGetWorldMapInstance(300110000, 2, out var allocatedInstance));
 		Assert.NotNull(allocatedInstance);
 		Assert.Equal(4, allocatedInstance!.MaxPlayers);
+		Assert.Equal(0, allocatedInstance.DifficultyId);
 		Assert.True(allocatedInstance.InstanceCreateNotified);
 
 		await InvokeProcessPacketAsync(

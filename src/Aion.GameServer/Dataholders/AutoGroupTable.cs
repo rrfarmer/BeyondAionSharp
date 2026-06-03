@@ -131,4 +131,22 @@ public sealed record AutoGroupSummary(
 	public bool IsHarmonyArena => MaskId is 33 or 34 or 35 or 41;
 
 	public bool IsTrainingHarmonyArena => MaskId is 45 or 101 or 102 or 103;
+
+	public int MaximumJoinTimeMilliseconds => MaskId switch
+	{
+		1 or 2 or 3 => 420000,
+		21 or 22 or 23 or 24 or 25 or 26 or 27 or 28 or 29 or 30 or 31 or 32 or 33 or 34 or 35 or 38 or 39 or 40 or 41 or 42 or 43 or 44 or 45 or 101 or 102 or 103 => 110000,
+		107 or 108 or 109 => 230000,
+		111 => 170000,
+		_ => 0,
+	};
+
+	public byte DifficultyId => MaskId switch
+	{
+		21 or 24 or 27 or 30 or 33 or 101 => 1,
+		22 or 25 or 28 or 31 or 34 or 42 or 102 => 2,
+		23 or 26 or 29 or 32 or 35 or 103 => 3,
+		39 or 40 or 41 or 43 or 44 or 45 => 4,
+		_ => 0,
+	};
 }
