@@ -8804,6 +8804,32 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmInventoryUpdateItem_DecreaseItemSplitConstantMatchesJava()
+	{
+		// Java parity: ItemPacketService.ItemUpdateType.DEC_ITEM_SPLIT = 0x06.
+		Assert.Equal(0x06, SmInventoryUpdateItem.DecreaseItemSplit);
+		// Java parity: ItemPacketService.ItemUpdateType.INC_ITEM_MERGE = 0x01.
+		Assert.Equal(0x01, SmInventoryUpdateItem.IncreaseItemMerge);
+	}
+
+	[Fact]
+	public void InventoryItem_CountIsSettable_ModelLevelJavaParity()
+	{
+		// Java parity: model/gameobjects/Item.decreaseItemCount mutates count in place during ItemSplitService.splitItem.
+		var item = new InventoryItem
+		{
+			ObjectId = 3001,
+			ItemId = 100002,
+			Count = 100,
+			Location = 0,
+		};
+
+		item.Count -= 30;
+
+		Assert.Equal(70, item.Count);
+	}
+
+	[Fact]
 	public void SmUnwrapItem_SerializesObjectIdAndPackCount()
 	{
 		// Java parity: SM_UNWRAP_ITEM.writeImpl — object ID and pack count byte.

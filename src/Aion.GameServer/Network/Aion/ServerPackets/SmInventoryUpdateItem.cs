@@ -12,6 +12,10 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	public const int IncreaseKinahCollect = 0x1A;
 	public const int IncreaseKinahQuest = 0x32;
 	public const int IncreaseItemRepurchase = 0x51;
+	// Java parity: ItemPacketService.ItemUpdateType.DEC_ITEM_SPLIT = 0x06.
+	public const int DecreaseItemSplit = 0x06;
+	// Java parity: ItemPacketService.ItemUpdateType.INC_ITEM_MERGE = 0x01.
+	public const int IncreaseItemMerge = 0x01;
 	public const int DecreaseItemUse = 0x16;
 	public const int DecreaseStigmaUse = 0x17;
 	public const int DecreaseKinahBuy = 0x1D;

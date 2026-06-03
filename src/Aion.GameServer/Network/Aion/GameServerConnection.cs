@@ -629,9 +629,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleMoveItemAsync(_activePlayer, moveItem);
 				break;
-			case CmSplitItem:
-				// Java parity: network/aion/clientpackets/CM_SPLIT_ITEM.runImpl calls ItemSplitService.splitItem.
-				// Stack split storage side effects remain unported; keep this parser-only for now.
+			case CmSplitItem splitItem:
+				if (_activePlayer != null)
+					await HandleSplitItemAsync(_activePlayer, splitItem);
 				break;
 			case CmSubzoneChange:
 				if (_activePlayer != null)
@@ -2569,6 +2569,91 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// Java parity: PacketSendUtility.sendPacket(player, new SM_INVENTORY_UPDATE_ITEM(player, item)) defaults to DEC_ITEM_USE.
 		await SendPacketAsync(new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.DecreaseItemUse));
+	}
+
+	private async Task HandleSplitItemAsync(Player player, CmSplitItem packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_SPLIT_ITEM.runImpl -> ItemSplitService.splitItem.
+		if (packet.ItemAmount <= 0)
+			return;
+
+		if (packet.SourceStorageType != packet.DestinationStorageType)
+		{
+			// Cross-storage splits require ItemRestrictionService, LegionService, and kinah special-casing; deferred.
+			return;
+		}
+
+		// Same-storage split: only cube (location 0) supported.
+		if (packet.SourceStorageType != 0)
+			return;
+
+		var sourceItem = player.InventoryItems.FirstOrDefault(
+			i => i.ObjectId == packet.SourceItemObjectId && i.Location == 0);
+		if (sourceItem == null)
+			return;
+
+		// Java parity: ItemSplitService.splitItem — targetItem == null branch (split to empty slot).
+		var targetItem = packet.DestinationItemObjectId != 0
+			? player.InventoryItems.FirstOrDefault(i => i.ObjectId == packet.DestinationItemObjectId && i.Location == 0)
+			: null;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var template = templates?.GetItemTemplate(sourceItem.ItemId);
+		if (template == null)
+			return;
+
+		if (targetItem == null)
+		{
+			// Split into empty slot.
+			if (_idFactory == null)
+				return;
+			var newCount = packet.ItemAmount;
+			var remainingCount = sourceItem.Count - newCount;
+			if (sourceItem.Count < newCount || remainingCount == 0)
+				return;
+
+			var newObjectId = _idFactory.NextId();
+			var newItem = new InventoryItem
+			{
+				ObjectId = newObjectId,
+				ItemId = sourceItem.ItemId,
+				Count = newCount,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = packet.SlotNumber,
+				TuneCount = 0,
+				PersistentState = InventoryItemPersistentState.New,
+			};
+
+			sourceItem.Count = remainingCount;
+			player.InventoryItems = [.. player.InventoryItems, newItem];
+
+			if (_playerEnterWorldService != null)
+			{
+				var saved = await _playerEnterWorldService.SaveItemSplitMutationAsync(player, sourceItem, newItem);
+				if (!saved)
+				{
+					// Rollback in-memory changes.
+					sourceItem.Count += newCount;
+					var items = player.InventoryItems.ToList();
+					items.Remove(newItem);
+					player.InventoryItems = [.. items];
+					_idFactory.ReleaseId(newObjectId);
+					return;
+				}
+			}
+
+			// Java parity: sourceStorage.decreaseItemCount -> SM_INVENTORY_UPDATE_ITEM with DEC_ITEM_SPLIT.
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, SmInventoryUpdateItem.DecreaseItemSplit));
+			// Java parity: SM_CUBE_UPDATE.cubeSize after split.
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+			// Java parity: destStorage.add(newItem) -> SM_INVENTORY_ADD_ITEM with ITEM_COLLECT default.
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(newItem, template));
+		}
+		else if (targetItem.ItemId == sourceItem.ItemId)
+		{
+			// Java parity: mergeStacks path — cross-stack merge within same storage; deferred until IStorage merge semantics are ported.
+		}
 	}
 
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)

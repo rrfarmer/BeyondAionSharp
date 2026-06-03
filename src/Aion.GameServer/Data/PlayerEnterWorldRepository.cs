@@ -315,6 +315,12 @@ public interface IPlayerEnterWorldRepository
 		int newPackCount,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemSplitMutationAsync(
+		int playerObjectId,
+		InventoryItem sourceItem,
+		InventoryItem newItem,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -900,6 +906,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int playerObjectId,
 		int itemObjectId,
 		int newPackCount,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveItemSplitMutationAsync(
+		int playerObjectId,
+		InventoryItem sourceItem,
+		InventoryItem newItem,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -1811,6 +1826,33 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save pack count update for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveItemSplitMutationAsync(
+		int playerObjectId,
+		InventoryItem sourceItem,
+		InventoryItem newItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemSplitService.splitItem — decreases source item count and inserts the new split item atomically.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItem, cancellationToken))
+				return false;
+
+			await InsertInventoryItemAsync(connection, transaction, newItem, cancellationToken);
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item split mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

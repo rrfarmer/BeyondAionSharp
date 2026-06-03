@@ -35,7 +35,8 @@ public sealed class InventoryItem
 
 	public int ItemId { get; init; }
 
-	public long Count { get; init; }
+	// Java parity: model/gameobjects/Item.decreaseItemCount / increaseItemCount mutate count in place.
+	public long Count { get; set; }
 
 	public int? Color { get; init; }
 

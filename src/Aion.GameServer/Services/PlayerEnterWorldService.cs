@@ -254,6 +254,16 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveInventoryItemPackCountAsync(player.ObjectId, itemObjectId, newPackCount, cancellationToken);
 	}
 
+	public Task<bool> SaveItemSplitMutationAsync(
+		Player player,
+		InventoryItem sourceItem,
+		InventoryItem newItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemSplitService.splitItem decreases source count and inserts new split item.
+		return _repository.SaveItemSplitMutationAsync(player.ObjectId, sourceItem, newItem, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,
