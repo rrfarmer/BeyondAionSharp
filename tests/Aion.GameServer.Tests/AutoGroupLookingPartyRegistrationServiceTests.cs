@@ -511,6 +511,39 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 	}
 
 	[Fact]
+	public void StartLooking_ExposesQueueMatchPlanAfterSuccessfulRegistrationLikeJavaFollowUp()
+	{
+		var service = new AutoGroupLookingPartyRegistrationService();
+		var autoGroups = new AutoGroupTable([CreateAutoGroup(107, 300110000)]);
+		var cooltimes = CreatePeriodicCooltimes(worldId: 300110000, maxLight: 2, maxDark: 2);
+		var baseTime = new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero);
+		var elyosLeader = CreateGroupedLeader(objectId: 1001, race: "ELYOS", memberObjectIds: [1001, 1002]);
+		var asmoLeader = CreateGroupedLeader(objectId: 2001, race: "ASMODIANS", memberObjectIds: [2001, 2002]);
+
+		var first = service.StartLooking(
+			elyosLeader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			instanceCooltimes: cooltimes,
+			now: baseTime);
+		var second = service.StartLooking(
+			asmoLeader,
+			107,
+			AutoGroupEntryRequestType.GroupEntry,
+			autoGroups,
+			instanceCooltimes: cooltimes,
+			now: baseTime.AddSeconds(1));
+
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.NotReady, first.QueueMatchPlan?.Status);
+		Assert.Equal(AutoGroupQueueMatchPlanStatus.Ready, second.QueueMatchPlan?.Status);
+		Assert.Equal([1001, 1002, 2001, 2002], second.QueueMatchPlan?.MatchedMemberObjectIds);
+		Assert.True(service.IsSearching(1001, 107));
+		Assert.True(service.IsSearching(2001, 107));
+		Assert.Equal(2, service.GetLookingPartyCount(107));
+	}
+
+	[Fact]
 	public async Task StopRegistrationsByMaskId_RemovesMaskQueueAndSendsCancelWindowLikeJava()
 	{
 		var service = new AutoGroupLookingPartyRegistrationService();
@@ -700,6 +733,15 @@ public sealed class AutoGroupLookingPartyRegistrationServiceTests
 			Race = race,
 			Level = level,
 		};
+	}
+
+	private static Player CreateGroupedLeader(int objectId, string race, IReadOnlyList<int> memberObjectIds)
+	{
+		var player = CreatePlayer(objectId, level: 50, race);
+		player.TeamMembership = PlayerTeamMembership.Group;
+		player.CurrentTeamId = objectId + 10000;
+		player.CurrentTeamMemberObjectIds = memberObjectIds;
+		return player;
 	}
 
 	private static void AssertCancelWindow(PacketDelivery delivery, int playerObjectId)

@@ -77,7 +77,8 @@ public sealed class AutoGroupLookingPartyRegistrationService
 				entryRequestType,
 				parties,
 				announceBattlegroundRegistrations);
-			return AutoGroupStartLookingResult.Registered(maskId, entryRequestType, registration, guard, announcement);
+			var queueMatchPlan = CreateQueueMatchPlan(maskId, autoGroups, instanceCooltimes);
+			return AutoGroupStartLookingResult.Registered(maskId, entryRequestType, registration, guard, announcement, queueMatchPlan);
 		}
 	}
 
@@ -843,7 +844,8 @@ public sealed record AutoGroupStartLookingResult(
 	AutoGroupEntryRequestType EntryRequestType,
 	AutoGroupLookingPartyRegistration? Registration,
 	AutoGroupRegistrationGuardPlan? GuardPlan,
-	AutoGroupBattlegroundRegistrationAnnouncement? BattlegroundAnnouncement = null)
+	AutoGroupBattlegroundRegistrationAnnouncement? BattlegroundAnnouncement = null,
+	AutoGroupQueueMatchPlan? QueueMatchPlan = null)
 {
 	public bool RegisteredQueue => Status == AutoGroupStartLookingStatus.Registered;
 
@@ -852,7 +854,8 @@ public sealed record AutoGroupStartLookingResult(
 		AutoGroupEntryRequestType entryRequestType,
 		AutoGroupLookingPartyRegistration registration,
 		AutoGroupRegistrationGuardPlan guardPlan,
-		AutoGroupBattlegroundRegistrationAnnouncement? battlegroundAnnouncement = null)
+		AutoGroupBattlegroundRegistrationAnnouncement? battlegroundAnnouncement = null,
+		AutoGroupQueueMatchPlan? queueMatchPlan = null)
 	{
 		return new AutoGroupStartLookingResult(
 			AutoGroupStartLookingStatus.Registered,
@@ -860,7 +863,8 @@ public sealed record AutoGroupStartLookingResult(
 			entryRequestType,
 			registration,
 			guardPlan,
-			battlegroundAnnouncement);
+			battlegroundAnnouncement,
+			queueMatchPlan);
 	}
 
 	public static AutoGroupStartLookingResult MissingAutoGroup(int maskId, AutoGroupEntryRequestType entryRequestType)
