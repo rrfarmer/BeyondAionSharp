@@ -420,6 +420,33 @@ public sealed class PlayerAllianceRuntime
 				: Array.Empty<int>();
 	}
 
+	public IReadOnlyList<Player> GetOnlineMemberPlayers(int allianceId)
+	{
+		// Java parity: model/team/alliance/PlayerAlliance.getOnlineMembers (TemporaryPlayerTeam.getOnlineMembers).
+		lock (_sync)
+			return _membersByAllianceId.TryGetValue(allianceId, out var members)
+				? members.Where(member => member.IsOnline).Select(member => member.Player).ToArray()
+				: Array.Empty<Player>();
+	}
+
+	public IReadOnlyList<Player> GetOnlineMemberPlayersByGroupId(int allianceId, int allianceGroupId)
+	{
+		// Java parity: model/team/alliance/PlayerAllianceGroup.getOnlineMembers — online members of one alliance sub-group.
+		lock (_sync)
+			return _membersByAllianceId.TryGetValue(allianceId, out var members)
+				? members.Where(member => member.IsOnline && member.AllianceGroupId == allianceGroupId).Select(member => member.Player).ToArray()
+				: Array.Empty<Player>();
+	}
+
+	public int? GetMemberAllianceGroupId(int allianceId, int objectId)
+	{
+		// Java parity: model/team/alliance/PlayerAllianceMember.getPlayerAllianceGroup().getObjectId() — the distributor's sub-group.
+		lock (_sync)
+			return _membersByAllianceId.TryGetValue(allianceId, out var members)
+				? members.FirstOrDefault(member => member.ObjectId == objectId)?.AllianceGroupId
+				: null;
+	}
+
 	public bool IsLeader(int allianceId, Player player)
 	{
 		// Java parity: model/team/GeneralTeam.isLeader compares against the leader's Player object.

@@ -11412,21 +11412,42 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: PlayerRestrictions.canTrade(player) gate. canTrade (duel/restriction state) is not modeled in the
 		// port yet; documented omission — it only blocks distribution in transient restricted states.
 
-		// Java parity: partyType 1 routes to PlayerGroupService.distributeKinah when the player is NOT in an alliance
-		// (isInAlliance -> PlayerAllianceService.distributeKinahInGroup). Alliance (2) and league (3) variants are deferred.
-		if (partyType != 1 || player.TeamMembership != PlayerTeamMembership.Group)
-			return;
-
+		// Java parity: CM_GROUP_DISTRIBUTION partyType routing:
+		//   1 -> PlayerGroupService.distributeKinah (not in alliance) OR PlayerAllianceService.distributeKinahInGroup (alliance sub-group).
+		//   2 -> PlayerAllianceService.distributeKinah (whole alliance).
+		//   3 -> LeagueService.distributeKinah (league; not modeled, deferred).
 		var teamId = player.CurrentTeamId;
-		if (teamId == 0)
+		IReadOnlyList<Player>? onlineMembers = null;
+		var isTeamMember = false;
+		switch (partyType)
+		{
+			case 1 when player.TeamMembership == PlayerTeamMembership.Group && teamId != 0:
+				onlineMembers = _playerGroupRuntime.GetOnlineMemberPlayers(teamId);
+				isTeamMember = _playerGroupRuntime.HasMember(teamId, player.ObjectId);
+				break;
+			case 1 when player.TeamMembership == PlayerTeamMembership.Alliance && teamId != 0:
+				// Java parity: distributeKinahInGroup — the distributor's alliance sub-group only.
+				var allianceGroupId = _playerAllianceRuntime.GetMemberAllianceGroupId(teamId, player.ObjectId);
+				if (allianceGroupId != null)
+				{
+					onlineMembers = _playerAllianceRuntime.GetOnlineMemberPlayersByGroupId(teamId, allianceGroupId.Value);
+					isTeamMember = _playerAllianceRuntime.HasMember(teamId, player.ObjectId);
+				}
+
+				break;
+			case 2 when player.TeamMembership == PlayerTeamMembership.Alliance && teamId != 0:
+				onlineMembers = _playerAllianceRuntime.GetOnlineMemberPlayers(teamId);
+				isTeamMember = _playerAllianceRuntime.HasMember(teamId, player.ObjectId);
+				break;
+		}
+
+		if (onlineMembers == null)
 			return;
 
 		// Java parity: TeamKinahDistributionEvent — checkCondition (hasMember) + handleEvent decision.
-		var onlineMembers = _playerGroupRuntime.GetOnlineMemberPlayers(teamId);
 		var distributorKinahItem = player.InventoryItems.FirstOrDefault(i => i.ItemId == KinahItemId && i.Location == CubeStorageId);
 		var distributorKinah = distributorKinahItem?.Count ?? 0L;
-		var plan = GroupKinahDistributionPlanService.Plan(
-			amount, distributorKinah, onlineMembers.Count, _playerGroupRuntime.HasMember(teamId, player.ObjectId));
+		var plan = GroupKinahDistributionPlanService.Plan(amount, distributorKinah, onlineMembers.Count, isTeamMember);
 
 		if (plan.Outcome == GroupKinahDistributionOutcome.NotEnoughMoney)
 		{
