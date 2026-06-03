@@ -444,6 +444,80 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task RiftGeneratorLookupPlan_SelectsLastJavaGeneratorNpcAndPlansDeathObserver()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-generator-plan-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var planner = new VortexRiftGeneratorLookupPlanService();
+			var firstGenerator = new VortexStartSpawnedNpcSnapshot(ObjectId: 7301, NpcId: VortexRiftGeneratorLookupPlanService.GeneratorNpcIdA);
+			var secondGenerator = new VortexStartSpawnedNpcSnapshot(ObjectId: 7302, NpcId: VortexRiftGeneratorLookupPlanService.GeneratorNpcIdB);
+
+			var plan = planner.CreatePlan(
+				location,
+				[
+					new VortexStartSpawnedNpcSnapshot(ObjectId: 7201, NpcId: 831600),
+					firstGenerator,
+					new VortexStartSpawnedNpcSnapshot(ObjectId: 7202, NpcId: 831601),
+					secondGenerator,
+				]);
+
+			Assert.Equal(VortexRiftGeneratorLookupPlanStatus.Planned, plan.Status);
+			Assert.True(plan.HasGenerator);
+			Assert.False(plan.ShouldAttachLiveDeathObserver);
+			Assert.True(plan.WouldStopInvasionOnGeneratorDeath);
+			Assert.Equal(location.Id, plan.LocationId);
+			Assert.Equal(location.HomePoint.WorldId, plan.HomeWorldId);
+			Assert.Equal([7301, 7302], plan.CandidateGenerators.Select(candidate => candidate.ObjectId).ToArray());
+			Assert.Same(secondGenerator, plan.SelectedGenerator);
+			Assert.Equal(string.Empty, plan.JavaExceptionMessage);
+			Assert.Equal(
+				"services/vortex/DimensionalVortex.initRiftGenerator -> Npc.getObserveController().attach(DeathObserver)",
+				plan.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
+	public async Task RiftGeneratorLookupPlan_MissingGeneratorRecordsJavaExceptionMetadata()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-generator-missing-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var planner = new VortexRiftGeneratorLookupPlanService();
+
+			var plan = planner.CreatePlan(
+				location,
+				[
+					new VortexStartSpawnedNpcSnapshot(ObjectId: 7201, NpcId: 831600),
+					new VortexStartSpawnedNpcSnapshot(ObjectId: 7202, NpcId: 831601),
+				]);
+
+			Assert.Equal(VortexRiftGeneratorLookupPlanStatus.MissingGenerator, plan.Status);
+			Assert.False(plan.HasGenerator);
+			Assert.False(plan.ShouldAttachLiveDeathObserver);
+			Assert.False(plan.WouldStopInvasionOnGeneratorDeath);
+			Assert.Empty(plan.CandidateGenerators);
+			Assert.Null(plan.SelectedGenerator);
+			Assert.Equal($"No generator was found in loc:{location.Id}", plan.JavaExceptionMessage);
+			Assert.Equal("services/vortex/DimensionalVortex.initRiftGenerator", plan.JavaSource);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task SetAndClearActivePortal_ModelsJavaSpawnAndDespawnControllerReference()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-active-portal-clear-" + Guid.NewGuid().ToString("N"));
