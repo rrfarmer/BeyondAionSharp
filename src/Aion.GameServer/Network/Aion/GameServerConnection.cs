@@ -1037,8 +1037,9 @@ public sealed class GameServerConnection : BaseClientConnection
 					await SendPacketAsync(new SmFriendStatus(friendStatus.Status));
 				}
 				break;
-			case CmPlayerSearch:
-				// Java parity: CM_PLAYER_SEARCH.runImpl -> World.getAllPlayers() filter -> SM_PLAYER_SEARCH; deferred until world player list is accessible.
+			case CmPlayerSearch playerSearch:
+				if (_activePlayer != null)
+					await HandlePlayerSearchAsync(_activePlayer, playerSearch);
 				break;
 			case CmReplaceItem replaceItem:
 				if (_activePlayer != null)
@@ -3073,6 +3074,111 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmShowNpcOnMap(player, packet.NpcId, spawn.MapId, spawn.X, spawn.Y, spawn.Z));
+	}
+
+	private async Task HandlePlayerSearchAsync(Player player, CmPlayerSearch packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_PLAYER_SEARCH.runImpl -> World.getAllPlayers() filter -> SM_PLAYER_SEARCH.
+		var levelToSearch = _options.Custom.LevelToSearch;
+		if (player.Level < levelToSearch)
+		{
+			// Java parity: SM_SYSTEM_MESSAGE.STR_CANT_WHO_LEVEL(LEVEL_TO_SEARCH) has message id 1400341.
+			await SendPacketAsync(new SmSystemMessage(1400341, levelToSearch.ToString()));
+			return;
+		}
+
+		if (_connectionRegistry == null)
+		{
+			await SendPacketAsync(new SmPlayerSearch(Array.Empty<PlayerSearchResultRow>()));
+			return;
+		}
+
+		var nameFilter = (packet.Name ?? string.Empty).Trim();
+		var criteria = new PlayerSearchCriteria(
+			SearcherRace: player.Race,
+			SearcherIsStaff: player.AccessLevel > 0,
+			NameFilter: nameFilter,
+			Region: packet.Region,
+			ClassMask: packet.ClassMask,
+			MinLevel: packet.MinLevel,
+			MaxLevel: packet.MaxLevel,
+			LfgOnly: packet.LfgOnly,
+			FactionsSearchMode: _options.Custom.FactionsSearchMode,
+			SearchGmList: _options.Custom.SearchGmList);
+
+		var rows = new List<PlayerSearchResultRow>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (rows.Count >= PlayerSearchMatchService.MaxResults)
+				return;
+
+			var candidateInfo = new PlayerSearchCandidate(
+				ObjectId: candidate.ObjectId,
+				Name: candidate.Name,
+				Race: candidate.Race,
+				Level: candidate.Level,
+				ClassId: ToPlayerClassId(candidate.PlayerClass),
+				WorldId: candidate.Position.WorldId,
+				IsStaff: candidate.AccessLevel > 0,
+				IsLookingForGroup: candidate.IsLookingForGroup,
+				// Java parity: FriendList.Status.OFFLINE == 0 (appear-offline social toggle).
+				FriendStatusOffline: candidate.FriendListStatus == 0);
+
+			if (!PlayerSearchMatchService.Matches(criteria, candidateInfo, player.ObjectId))
+				return;
+
+			// Java parity: status byte: deniedGroup ? 1 : inTeam ? 3 : lfg ? 2 : 0.
+			var status = candidate.Settings.DeniesGroupRequests() ? 1
+				: candidate.IsInTeam ? 3
+				: candidate.IsLookingForGroup ? 2
+				: 0;
+
+			rows.Add(new PlayerSearchResultRow(
+				candidate.Position.WorldId,
+				candidate.Position.X,
+				candidate.Position.Y,
+				candidate.Position.Z,
+				candidateInfo.ClassId,
+				ToPlayerGenderId(candidate.Gender),
+				candidate.Level,
+				status,
+				// Java parity: ChatUtil.toFactionPrefixedName — faction prefixing deferred; plain name sent.
+				candidate.Name));
+		});
+
+		await SendPacketAsync(new SmPlayerSearch(rows));
+	}
+
+	private static int ToPlayerClassId(string playerClass)
+	{
+		// Java parity: model/PlayerClass.getClassId ordinal mapping.
+		return playerClass.ToUpperInvariant() switch
+		{
+			"WARRIOR" => 0,
+			"GLADIATOR" => 1,
+			"TEMPLAR" => 2,
+			"SCOUT" => 3,
+			"ASSASSIN" => 4,
+			"RANGER" => 5,
+			"MAGE" => 6,
+			"SORCERER" => 7,
+			"SPIRIT_MASTER" => 8,
+			"PRIEST" => 9,
+			"CLERIC" => 10,
+			"CHANTER" => 11,
+			"ENGINEER" => 12,
+			"RIDER" => 13,
+			"GUNNER" => 14,
+			"ARTIST" => 15,
+			"BARD" => 16,
+			_ => 0,
+		};
+	}
+
+	private static int ToPlayerGenderId(string gender)
+	{
+		// Java parity: model/Gender.getGenderId — MALE=0, FEMALE=1.
+		return string.Equals(gender, "FEMALE", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
 	}
 
 	private async Task HandleDistributionSettingsAsync(Player player, CmDistributionSettings packet)
