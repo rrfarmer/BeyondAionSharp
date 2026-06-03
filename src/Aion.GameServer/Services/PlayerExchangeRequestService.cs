@@ -99,10 +99,12 @@ public sealed class PlayerExchangeRequestService
 		requester.IsTrading = true;
 		requester.IsExchangeLocked = false;
 		requester.IsExchangeConfirmed = false;
+		requester.ExchangeKinah = 0;
 		requester.CurrentExchangePartnerObjectId = responder.ObjectId;
 		responder.IsTrading = true;
 		responder.IsExchangeLocked = false;
 		responder.IsExchangeConfirmed = false;
+		responder.ExchangeKinah = 0;
 		responder.CurrentExchangePartnerObjectId = requester.ObjectId;
 		return ExchangeResponsePlan.CreateHandled(
 			ExchangeResponseStatus.Accepted,
@@ -161,6 +163,7 @@ public sealed class PlayerExchangeRequestService
 		activePlayer.IsTrading = false;
 		activePlayer.IsExchangeLocked = false;
 		activePlayer.IsExchangeConfirmed = false;
+		activePlayer.ExchangeKinah = 0;
 		activePlayer.CurrentExchangePartnerObjectId = 0;
 
 		if (partner == null)
@@ -169,6 +172,7 @@ public sealed class PlayerExchangeRequestService
 		partner.IsTrading = false;
 		partner.IsExchangeLocked = false;
 		partner.IsExchangeConfirmed = false;
+		partner.ExchangeKinah = 0;
 		partner.CurrentExchangePartnerObjectId = 0;
 		return ExchangeCancelPlan.CreateHandled(
 			ExchangeCancelStatus.Canceled,

@@ -199,6 +199,9 @@ public sealed class Player
 	// Java parity: services/ExchangeService.getCurrentExchange(player).isConfirmed represented without the full Exchange basket model.
 	public bool IsExchangeConfirmed { get; set; }
 
+	// Java parity: model/trade/Exchange.kinahCount tracks how much kinah this player has put into the active exchange.
+	public long ExchangeKinah { get; set; }
+
 	public int CurrentExchangePartnerObjectId { get; set; }
 
 	private IReadOnlyList<InventoryItem> _inventoryItems = Array.Empty<InventoryItem>();

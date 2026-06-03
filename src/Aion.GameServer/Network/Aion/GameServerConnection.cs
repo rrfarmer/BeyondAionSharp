@@ -900,10 +900,11 @@ public sealed class GameServerConnection : BaseClientConnection
 					await HandleQuestionResponseAsync(_activePlayer, questionResponse);
 				break;
 			case CmExchangeAddItem:
-				// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_ITEM.runImpl -> ExchangeService.addItem; deferred until exchange basket is ported.
+				// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_ITEM.runImpl -> ExchangeService.addItem; deferred until exchange item basket is ported.
 				break;
-			case CmExchangeAddKinah:
-				// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_KINAH.runImpl -> ExchangeService.addKinah; deferred until exchange basket is ported.
+			case CmExchangeAddKinah exchangeAddKinah:
+				if (_activePlayer != null)
+					await HandleExchangeAddKinahAsync(_activePlayer, exchangeAddKinah);
 				break;
 			case CmExchangeRequest exchangeRequest:
 				if (_activePlayer != null)
@@ -11109,6 +11110,29 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendExchangePacketAsync(intent.RecipientObjectId, intent.Packet, cancellationToken);
 
 		return plan;
+	}
+
+	private async Task HandleExchangeAddKinahAsync(Player player, CmExchangeAddKinah packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_EXCHANGE_ADD_KINAH.runImpl -> ExchangeService.addKinah.
+		if (!player.IsTrading || player.IsExchangeLocked)
+			return;
+
+		var partnerObjectId = player.CurrentExchangePartnerObjectId;
+		if (partnerObjectId == 0)
+			return;
+
+		var inventoryKinah = player.InventoryItems
+			.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId)?.Count ?? 0L;
+		var plan = ExchangeAddKinahPlanService.CreatePlan(packet.KinahCount, inventoryKinah, player.ExchangeKinah);
+		if (!plan.ShouldSendToSelf)
+			return;
+
+		player.ExchangeKinah += plan.CountToAdd;
+		if (plan.SelfPacket != null)
+			await SendPacketAsync(plan.SelfPacket);
+		if (plan.OtherPacket != null && _connectionRegistry != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(partnerObjectId, plan.OtherPacket);
 	}
 
 	private async Task SendDuelPacketAsync(
