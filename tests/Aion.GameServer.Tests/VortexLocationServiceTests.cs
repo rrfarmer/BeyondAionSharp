@@ -2266,6 +2266,41 @@ public sealed class VortexLocationServiceTests
 	}
 
 	[Fact]
+	public async Task FindDefenderLocationId_ReturnsLocationIdForActiveDefenderAndNullWhenAbsent()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-find-defender-location-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var context = await CreateRuntimeContextAsync(tempPath);
+			var location0 = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(0));
+			var location1 = Assert.IsType<VortexLocationSummary>(context.DataManager?.StaticData.VortexLocations.GetLocation(1));
+			var runtime = new VortexInvasionRuntime();
+			var defender0 = CreatePlayer(1004, isOnline: true, location0.InvasionWorldId);
+			var defender1 = CreatePlayer(1006, isOnline: true, location1.InvasionWorldId);
+			var unregistered = CreatePlayer(1999, isOnline: true, location0.InvasionWorldId);
+			runtime.StartInvasion(location0);
+			runtime.StartInvasion(location1);
+			Assert.True(runtime.AddDefender(location0.Id, defender0));
+			Assert.True(runtime.AddDefender(location1.Id, defender1));
+
+			// Java parity: VortexService.removeDefenderPlayer iterates activeInvasions to find the first
+			// invasion with defenders.containsKey(player.getObjectId()).
+			var found0 = runtime.FindDefenderLocationId(defender0.ObjectId);
+			var found1 = runtime.FindDefenderLocationId(defender1.ObjectId);
+			var notFound = runtime.FindDefenderLocationId(unregistered.ObjectId);
+
+			Assert.Equal(location0.Id, found0);
+			Assert.Equal(location1.Id, found1);
+			Assert.Null(notFound);
+		}
+		finally
+		{
+			DeleteTempDirectory(tempPath);
+		}
+	}
+
+	[Fact]
 	public async Task DefenderAcceptanceRuntimeObserver_ComposesTransitionAndParticipantReportForAcceptedResponse()
 	{
 		var tempPath = Path.Combine(Path.GetTempPath(), "aion-vortex-defender-observer-accepted-" + Guid.NewGuid().ToString("N"));

@@ -6,6 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -119,6 +120,46 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_VortexDefenderAcceptanceObserverUsesRuntimeLocationIdWhenAvailable()
+	{
+		const int expectedLocationId = 1;
+		var acceptanceReports = new List<VortexDefenderAcceptanceRuntimeObserverReport>();
+		var responder = CreatePlayer();
+		var runtime = new VortexInvasionRuntime();
+		// Seed runtime so FindDefenderLocationId returns expectedLocationId for this player.
+		var fakeLocation = new VortexLocationSummary(
+			expectedLocationId, DefendersRace: "ELYOS", InvadersRace: "ASMODIANS",
+			HomePoint: new WorldPosition(120080000, 559.4f, 207.8f, 93.5f, 0),
+			ResurrectionPoint: new WorldPosition(220050000, 2237.3f, 2801.5f, 73.3f, 0),
+			StartPoint: new WorldPosition(220050000, 2242.0f, 2797.0f, 75.4f, 0));
+		runtime.StartInvasion(fakeLocation);
+		Assert.True(runtime.AddDefender(expectedLocationId, responder));
+		var pendingRequest = new PendingVortexDefenderInvitationRequest(
+			RequesterObjectId: responder.ObjectId,
+			QuestionId: SmQuestionWindow.VortexDefenderInvitation,
+			DefenderAlliance: VortexDefenderAllianceSnapshot.Open,
+			ExistingDefenderObjectIds: []);
+		Assert.True(responder.ResponseRequester.PutRequest(
+			SmQuestionWindow.VortexDefenderInvitation,
+			new QuestionResponseRequest(
+				responder.ObjectId,
+				QuestionResponseRequestKind.VortexDefenderInvitation,
+				pendingRequest)));
+		await using var pair = await TestConnectionPair.CreateAsync(
+			vortexAcceptanceObserver: acceptanceReports.Add,
+			vortexInvasionRuntime: runtime);
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			responder,
+			CreateQuestionResponse(SmQuestionWindow.VortexDefenderInvitation, response: 1));
+
+		var report = Assert.Single(acceptanceReports);
+		Assert.Equal(expectedLocationId, report.LocationId);
+		Assert.True(report.Accepted);
+		Assert.False(report.ShouldMutateLiveDefenders);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_VortexDefenderAcceptanceObserverReportsNoMutationForMissingRequest()
 	{
 		var acceptanceReports = new List<VortexDefenderAcceptanceRuntimeObserverReport>();
@@ -201,7 +242,8 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			Action<VortexDefenderInvitationResponseConsumptionReport>? vortexReportObserver = null,
-			Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexAcceptanceObserver = null)
+			Action<VortexDefenderAcceptanceRuntimeObserverReport>? vortexAcceptanceObserver = null,
+			VortexInvasionRuntime? vortexInvasionRuntime = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -224,6 +266,7 @@ public sealed class GameServerConnectionVortexQuestionResponseTests
 					sentPacketObserver: sentPackets.Add,
 					vortexDefenderInvitationResponseObserver: vortexReportObserver,
 					vortexDefenderAcceptanceObserver: vortexAcceptanceObserver,
+					vortexInvasionRuntime: vortexInvasionRuntime,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}

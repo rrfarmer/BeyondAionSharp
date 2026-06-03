@@ -339,6 +339,21 @@ public sealed class VortexInvasionRuntime
 				: null;
 	}
 
+	public int? FindDefenderLocationId(int playerObjectId)
+	{
+		// Java parity: services/VortexService.removeDefenderPlayer iterates activeInvasions.values()
+		// to find the first invasion containing the player in its defenders map.
+		lock (_sync)
+		{
+			foreach (var state in _activeInvasions.Values.OrderBy(state => state.LocationId))
+			{
+				if (state.DefenderObjectIds.Contains(playerObjectId))
+					return state.LocationId;
+			}
+			return null;
+		}
+	}
+
 	private static VortexPassedPlayerSyncPlan CreatePassedPlayerSyncPlan(VortexInvasionState state)
 	{
 		// Java parity: controllers/RVController.syncPassed(true) sets usedEntries to
