@@ -4,6 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -112,7 +113,34 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 		Assert.Empty(findGroupService.ShowRecruitments("ELYOS", nowEpochSeconds: 200).Recruitments);
 	}
 
-	private static IServiceCollection CreateServices(bool includeSocketServer = false)
+	[Fact]
+	public async Task AddFindGroupSingletonGraph_CanWireAllianceTimeoutSchedulerCallbackOnceLikeJavaCreateAlliance()
+	{
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var provider = CreateServices(
+			includeSocketServer: true,
+			includeAllianceOfflineTimeoutSchedulerCallback: true,
+			scheduleObserver: observations.Add).BuildServiceProvider();
+		var allianceRuntime = provider.GetRequiredService<PlayerAllianceRuntime>();
+		var firstLeader = CreatePlayer(1001, "FirstLeader");
+		var secondLeader = CreatePlayer(2001, "SecondLeader");
+		var autoLeader = CreatePlayer(3001, "AutoLeader");
+
+		allianceRuntime.CreateAlliance(88001, firstLeader);
+		allianceRuntime.CreateAlliance(88002, secondLeader);
+		allianceRuntime.CreateAlliance(88003, autoLeader, PlayerAllianceTeamType.AutoAlliance);
+		await provider.GetRequiredService<ThreadPoolManager>().ShutdownAsync();
+
+		var observation = Assert.Single(observations);
+		Assert.Equal(ThreadPoolScheduleKind.FixedRate, observation.Kind);
+		Assert.Equal(PlayerAllianceOfflineTimeoutScheduler.InitialDelay, observation.Delay);
+		Assert.Equal(PlayerAllianceOfflineTimeoutScheduler.Period, observation.Period);
+	}
+
+	private static IServiceCollection CreateServices(
+		bool includeSocketServer = false,
+		bool includeAllianceOfflineTimeoutSchedulerCallback = false,
+		Action<ThreadPoolScheduleObservation>? scheduleObserver = null)
 	{
 		var services = new ServiceCollection();
 		services.AddLogging();
@@ -126,10 +154,25 @@ public sealed class FindGroupServiceCollectionExtensionsTests
 					MaxOnlinePlayers = 100,
 				},
 			});
+		if (scheduleObserver != null || includeAllianceOfflineTimeoutSchedulerCallback)
+		{
+			services.AddSingleton(
+				serviceProvider => new ThreadPoolManager(
+					serviceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<ThreadPoolManager>>(),
+					scheduleObserver));
+		}
+
 		services.AddSingleton<GamePacketProcessor<string>>(_ => new GamePacketProcessor<string>((_, _) => Task.CompletedTask));
-		services.AddFindGroupSingletonGraph();
+		services.AddFindGroupSingletonGraph(
+			includeAllianceOfflineTimeoutSchedulerCallback
+				? serviceProvider => () => serviceProvider.GetRequiredService<PlayerAllianceOfflineTimeoutScheduler>().Start()
+				: null);
 		if (includeSocketServer)
+		{
 			services.AddSingleton<GameClientSocketServer>();
+			services.AddSingleton<IGameClientConnectionRegistry>(
+				serviceProvider => serviceProvider.GetRequiredService<GameClientSocketServer>());
+		}
 		return services;
 	}
 
