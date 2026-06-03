@@ -462,7 +462,8 @@ public sealed class PlayerAllianceRuntime
 					if (member.IsOnline || !IsExpired(member.LastOnlineTimeMillis, kickDelaySeconds, nowMillis))
 						continue;
 
-					var wasInLeague = _leagueIdByAllianceId.GetValueOrDefault(allianceId) != 0;
+					var leagueId = _leagueIdByAllianceId.GetValueOrDefault(allianceId);
+					var wasInLeague = leagueId != 0;
 					var leaveWorkflowPlan = RemoveMemberWithLeaveWorkflowCore(
 						member.Player,
 						PlayerAllianceLeaveReason.LeaveTimeout,
@@ -474,6 +475,7 @@ public sealed class PlayerAllianceRuntime
 						allianceId,
 						member.ObjectId,
 						kickDelaySeconds,
+						leagueId,
 						wasInLeague,
 						descriptor.TeamType.IsOffence(),
 						leaveWorkflowPlan);

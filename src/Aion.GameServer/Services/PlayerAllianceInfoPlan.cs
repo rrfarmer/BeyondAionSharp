@@ -137,6 +137,7 @@ public sealed record PlayerAllianceOfflineTimeoutPlan(
 	int AllianceId,
 	int TimedOutPlayerObjectId,
 	int KickDelaySeconds,
+	int LeagueId,
 	bool WasInLeague,
 	bool WouldRemoveOffenceInvader,
 	PlayerAllianceLeaveWorkflowPlan LeaveWorkflowPlan);
