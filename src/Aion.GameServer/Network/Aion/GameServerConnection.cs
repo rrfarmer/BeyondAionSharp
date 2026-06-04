@@ -786,8 +786,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmLegionDominionRequestRanking:
 				// Java parity: CM_LEGION_DOMINION_REQUEST_RANKING.runImpl dispatches DominionService; deferred.
 				break;
-			case CmQuestShare:
-				// Java parity: CM_QUEST_SHARE.runImpl -> QuestService.checkStartConditions + SM_QUEST_ACTION to group; deferred until quest engine is ported.
+			case CmQuestShare questShare:
+				// Java parity: CM_QUEST_SHARE.runImpl -> QuestService.checkStartConditions + SM_QUEST_ACTION to group.
+				if (_activePlayer != null)
+					await HandleQuestShareAsync(_activePlayer, questShare.QuestId);
 				break;
 			case CmBuilderCommand:
 				// Java parity: CM_BUILDER_COMMAND.runImpl logs //// prefixed command to ADMINAUDIT_LOG; deferred until admin command pipeline is ported.
@@ -11486,6 +11488,41 @@ public sealed class GameServerConnection : BaseClientConnection
 				: SmSystemMessage.MsgSplitBToMe(player.Name, amount, plan.OnlineMemberCount, plan.RewardPerPlayer);
 			await SendToPlayerOrActiveAsync(member.ObjectId, message, cancellationToken);
 		}
+	}
+
+	private async Task HandleQuestShareAsync(Player player, int questId)
+	{
+		// Java parity: CM_QUEST_SHARE.runImpl. Resolves the quest template, the sharer's quest state, and the
+		// current-team online members, then fans out the QuestSharePlanService decision (1100001/1100000/1100005
+		// messages, SM_QUEST_ACTION.SHARE, and 1100002/1100003 per-member messages).
+		var questTemplates = _runtimeContext?.DataManager?.StaticData.NearbyQuestTemplates;
+		NearbyQuestTemplateSummary? template = null;
+		if (questTemplates != null)
+			questTemplates.TryGetQuest(questId, out template);
+
+		var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
+
+		// Java: player.getCurrentGroup() — the whole group OR whole alliance (not the alliance sub-group); null when solo.
+		var teamId = player.CurrentTeamId;
+		IReadOnlyList<Player> currentTeamOnlineMembers = player.TeamMembership switch
+		{
+			PlayerTeamMembership.Group when teamId != 0 => _playerGroupRuntime.GetOnlineMemberPlayers(teamId),
+			PlayerTeamMembership.Alliance when teamId != 0 => _playerAllianceRuntime.GetOnlineMemberPlayers(teamId),
+			_ => Array.Empty<Player>(),
+		};
+
+		var plan = QuestSharePlanService.Plan(
+			player,
+			questId,
+			template,
+			questState,
+			currentTeamOnlineMembers,
+			// Java: QuestService.checkStartConditions(member, questId, false).
+			member => questTemplates != null
+				&& NearbyQuestStartConditionService.CheckNearbyStartConditions(member, questId, questTemplates).CanStart);
+
+		foreach (var instruction in plan.Instructions)
+			await SendToPlayerOrActiveAsync(instruction.RecipientObjectId, instruction.Packet);
 	}
 
 	private async Task SendToPlayerOrActiveAsync(int recipientObjectId, GameServerPacket packet, CancellationToken cancellationToken = default)
