@@ -5516,6 +5516,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (transactionPlan.Status == TradeBuyTransactionPlanStatus.BlockedInventoryFull)
+		{
+			await SendPacketAsync(SmSystemMessage.FullInventory());
+			return;
+		}
+
 		if (transactionPlan.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
 			|| transactionPlan.Mutation == null
 			|| transactionPlan.Mutation.RequiredAbyssPoints != 0

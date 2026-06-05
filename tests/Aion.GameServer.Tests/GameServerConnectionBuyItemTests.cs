@@ -483,6 +483,66 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopFullInventorySendsLiveDenialWithoutMutation()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(501, Items: [new GoodsListItemSummary(1001)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 500, maxStackCount: 100),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			observeBuyItemPlans: false);
+		var player = CreatePlayer();
+		var inventoryItems = new List<InventoryItem>
+		{
+			new()
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		};
+		inventoryItems.AddRange(Enumerable.Range(0, 27).Select(index => new InventoryItem
+		{
+			ObjectId = 4000 + index,
+			ItemId = 200000000 + index,
+			Count = 1,
+			OwnerId = player.ObjectId,
+			Location = 0,
+			Slot = index + 1,
+		}));
+		player.InventoryItems = inventoryItems;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 1)]));
+
+		Assert.Empty(fixture.BuyItemPlans);
+		Assert.Empty(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == 1001);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 10_000);
+		Assert.Equal(28, player.InventoryItems.Count);
+		var denial = Assert.Single(fixture.SentPackets);
+		Assert.Equal(1300762, Assert.IsType<SmSystemMessage>(denial).MessageId);
+		var packetEvent = Assert.Single(fixture.PacketEvents);
+		Assert.Equal(1300762, AssertPacketEvent<SmSystemMessage>(packetEvent, "active").MessageId);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopBlocksDisabledLimitedItemPlan()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
