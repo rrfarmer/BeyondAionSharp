@@ -6723,7 +6723,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			else if (startConditions.Failure == NearbyQuestStartConditionFailure.InventoryItems
 				&& CreateInventoryItemStartConditionFailureMessage(player, questTemplate, staticData.ItemTemplates) is { } inventoryItemMessage)
 				await SendPacketAsync(inventoryItemMessage, cancellationToken);
-			else if (CreateQuestStartConditionFailureMessage(startConditions.Failure, questTemplate) is { } failureMessage)
+			else if (CreateQuestStartConditionFailureMessage(player, startConditions.Failure, questTemplate) is { } failureMessage)
 				await SendPacketAsync(failureMessage, cancellationToken);
 			return;
 		}
@@ -6796,6 +6796,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	}
 
 	private static SmSystemMessage? CreateQuestStartConditionFailureMessage(
+		Player player,
 		NearbyQuestStartConditionFailure failure,
 		NearbyQuestTemplateSummary template)
 	{
@@ -6808,6 +6809,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			NearbyQuestStartConditionFailure.MaxLevel => SmSystemMessage.QuestAcquireErrorMaxLevel(template.MaxLevelPermitted),
 			NearbyQuestStartConditionFailure.Class => SmSystemMessage.QuestAcquireErrorClass(),
 			NearbyQuestStartConditionFailure.Gender => SmSystemMessage.QuestAcquireErrorGender(),
+			NearbyQuestStartConditionFailure.Rank => SmSystemMessage.QuestAcquireErrorMinRank(PlayerAbyssRank.GetRankL10n(player.Race, template.RequiredRank)),
 			NearbyQuestStartConditionFailure.CombineSkill => SmSystemMessage.QuestAcquireErrorTsRank(template.CombineSkillPoint.ToString()),
 			_ => null,
 		};

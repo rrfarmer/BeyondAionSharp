@@ -295,6 +295,26 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: expectedMessageId));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemSendsRankStartConditionFailureMessage()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 169700011);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.Quests);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(
+				Assert.IsType<SmSystemMessage>(packet),
+				expectedMessageId: 1300573,
+				PlayerAbyssRank.GetRankL10n("ELYOS", 4)));
+	}
+
 	[Theory]
 	[InlineData(169700004, 1300571, "10", 1)]
 	[InlineData(169700005, 1300572, "2", 5)]
@@ -4316,6 +4336,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<queststart questid="1124"/>
 							</actions>
 						</item_template>
+						<item_template id="169700011" name="Test Rank Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1125"/>
+							</actions>
+						</item_template>
 						<item_template id="182215001" name="Required Quest Token" desc="910001" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10"/>
 						<item_template id="169600001" name="Test Emotion Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
 							<actions>
@@ -4502,6 +4527,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 							</inventory_items>
 						</quest>
 						<quest id="1124" name="Test Combine Skill Quest" minlevel_permitted="0" race_permitted="PC_ALL" combineskill="40001" combine_skillpoint="199"/>
+						<quest id="1125" name="Test Rank Quest" minlevel_permitted="0" race_permitted="PC_ALL" rank="4"/>
 					</quests>
 				</static_data>
 				""");

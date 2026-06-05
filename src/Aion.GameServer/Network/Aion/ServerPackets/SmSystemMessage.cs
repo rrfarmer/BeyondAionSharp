@@ -1541,6 +1541,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300579);
 	}
 
+	public static SmSystemMessage QuestAcquireErrorMinRank(string rankName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MIN_RANK(String).
+		return new SmSystemMessage(1300573, rankName);
+	}
+
 	public static SmSystemMessage QuestAcquireErrorMaxNormal()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MAX_NORMAL().
