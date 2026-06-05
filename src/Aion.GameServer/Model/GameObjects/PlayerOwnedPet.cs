@@ -11,7 +11,8 @@ public sealed record PlayerOwnedPet(
 	int FeedProgressData = 0,
 	long RefeedTimeMillis = 0,
 	IReadOnlyList<int>? DopingItemIds = null,
-	bool CancelFeed = false)
+	bool CancelFeed = false,
+	bool IsLooting = false)
 {
 	public int BirthdayEpochSeconds => Birthday is null ? 0 : checked((int)(Birthday.Value.ToUnixTimeMilliseconds() / 1000));
 

@@ -2600,6 +2600,122 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetAutoLootEnableMutatesPetAndSendsPackets()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Loot Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(3, PetFunctionType.Loot, Slots: 0, RatePrice: 0)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Loot Mate",
+				Decoration: 188051001),
+			new PlayerOwnedPet(
+				ObjectId: 7002,
+				TemplateId: 900220,
+				Name: "Warehouse Mate",
+				Decoration: 188051002),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodSpecialFunctionPayload(actionType: 3, activateSpecialFunction: 1));
+
+		Assert.Collection(
+			player.OwnedPets.OrderBy(pet => pet.ObjectId),
+			pet => Assert.Equal((7001, true), (pet.ObjectId, pet.IsLooting)),
+			pet => Assert.Equal((7002, false), (pet.ObjectId, pet.IsLooting)));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(PetAutoLootActivationPlanService.AutoLootEnabledMessageId, Assert.IsType<SmSystemMessage>(packet).MessageId),
+			packet => AssertPetSpecialFunctionActivationPacket(
+				Assert.IsType<SmPet>(packet),
+				PetSpecialFunction.AutoLoot,
+				expectedActive: true));
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetAutoLootDisableMutatesPetAndSendsPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Loot Mate",
+				Decoration: 188051001,
+				IsLooting: true),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodSpecialFunctionPayload(actionType: 3, activateSpecialFunction: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.IsLooting);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetSpecialFunctionActivationPacket(
+			Assert.IsType<SmPet>(packet),
+			PetSpecialFunction.AutoLoot,
+			expectedActive: false);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetAutoLootEnableWithoutLootFunctionDoesNothing()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Warehouse Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(0, PetFunctionType.Warehouse, Slots: 12, RatePrice: 0)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Warehouse Mate",
+				Decoration: 188051001),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodSpecialFunctionPayload(actionType: 3, activateSpecialFunction: 1));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.IsLooting);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -3867,6 +3983,21 @@ public sealed class GameServerConnectionBuyItemTests
 		return buffer.ToArray();
 	}
 
+	private static byte[] CreatePetFoodSpecialFunctionPayload(int actionType, int activateSpecialFunction)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(22);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteH((int)PetAction.Food);
+		buffer.WriteD(actionType);
+		buffer.WriteD(activateSpecialFunction);
+		buffer.WriteD(0);
+		buffer.WriteD(0);
+		return buffer.ToArray();
+	}
+
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
@@ -3953,6 +4084,19 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(4, (int)reader.ReadC());
 		Assert.Equal(expectedFeedProgressData, reader.ReadD());
 		Assert.Equal(expectedRefeedDelaySeconds, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetSpecialFunctionActivationPacket(
+		SmPet packet,
+		PetSpecialFunction expectedFunction,
+		bool expectedActive)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)expectedFunction, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedActive ? 1 : 0, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 

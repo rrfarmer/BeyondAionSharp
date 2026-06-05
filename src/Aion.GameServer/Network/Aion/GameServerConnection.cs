@@ -505,7 +505,16 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandlePetFoodAsync(Player player, CmPet packet)
 	{
 		// Java parity: CM_PET FOOD action types 2/3/4 dispatch to pet doping, looting, and auto-sell services.
-		if (packet.ActionType is 2 or 3 or 4)
+		if (packet.ActionType == 2)
+			return;
+
+		if (packet.ActionType == 3)
+		{
+			await HandlePetAutoLootActivationAsync(player, packet);
+			return;
+		}
+
+		if (packet.ActionType == 4)
 			return;
 
 		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
@@ -558,6 +567,31 @@ public sealed class GameServerConnection : BaseClientConnection
 			ItemObjectId: foodItem.ObjectId,
 			Count: packet.Count)));
 		await SendPacketAsync(new SmEmotion(player, EmotionType.StartFeeding, 0, player.ObjectId));
+	}
+
+	private async Task HandlePetAutoLootActivationAsync(Player player, CmPet packet)
+	{
+		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
+			return;
+
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == player.PetSummonObjectId);
+		if (ownedPet == null)
+			return;
+
+		var activate = packet.ActivateSpecialFunction != 0;
+		var template = _petTemplates?.GetPetTemplate(ownedPet.TemplateId);
+		if (activate && template?.ContainsFunction(PetFunctionType.Loot) != true)
+			return;
+
+		if (activate)
+			await SendPacketAsync(new SmSystemMessage(PetAutoLootActivationPlanService.AutoLootEnabledMessageId));
+
+		var updatedPet = ownedPet with { IsLooting = activate };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
+
+		await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoLoot, activate)));
 	}
 
 	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
