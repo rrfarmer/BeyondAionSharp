@@ -539,7 +539,25 @@ public sealed class GameServerConnection : BaseClientConnection
 				ItemObjectId: packet.ObjectId,
 				Count: packet.Count,
 				RefeedDelaySeconds: refeedDelaySeconds)));
+			return;
 		}
+
+		var foodItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packet.ObjectId);
+		if (foodItem == null || packet.Count > foodItem.Count)
+			return;
+
+		// Java parity: PetService.removeObject clears cancelFeed and sends feed-start packets before delayed checkFeeding consumes food.
+		var feedingPet = ownedPet with { CancelFeed = false };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? feedingPet : pet)
+			.ToArray();
+
+		await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 1,
+			FeedProgressData: feedingPet.FeedProgressData,
+			ItemObjectId: foodItem.ObjectId,
+			Count: packet.Count)));
+		await SendPacketAsync(new SmEmotion(player, EmotionType.StartFeeding, 0, player.ObjectId));
 	}
 
 	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
