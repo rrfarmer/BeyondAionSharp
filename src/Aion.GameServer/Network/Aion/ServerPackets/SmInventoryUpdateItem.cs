@@ -17,6 +17,7 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	public const int IncreaseItemCollect = 0x19;
 	public const int IncreaseKinahCollect = 0x1A;
 	public const int IncreaseKinahQuest = 0x32;
+	public const int IncreaseKinahSell = 0x20;
 	public const int IncreaseItemRepurchase = 0x51;
 	// Java parity: ItemPacketService.ItemUpdateType.INC_ITEM_BUY = 0x1C (buying from NPC).
 	public const int IncreaseItemBuy = 0x1C;

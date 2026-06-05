@@ -5446,7 +5446,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_cmBuyItemHandlerCompositionPlanObserver == null
 			&& _cmBuyItemSideEffectOutcomePlanObserver == null
 			&& !IsPrivateStoreBuyItemPacket(player, packet)
-			&& !IsBuyFromShopBuyItemPacket(player, packet))
+			&& !IsBuyFromShopBuyItemPacket(player, packet)
+			&& !IsSellToShopBuyItemPacket(player, packet))
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
@@ -5484,6 +5485,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player?.ObjectId,
 			repurchaseStateSnapshots));
 		await TryExecutePrivateStorePurchaseAsync(player, packet, targetKind, privateStoreItems, privateStorePurchasePlan);
+		await TryExecuteSellToShopAsync(player, packet, targetKind, sellToShopPlan);
 		await TryExecuteBuyFromShopPurchaseAsync(player, packet, targetKind, buyFromShopTradeTemplate, buyTransactionPlan);
 	}
 
@@ -5503,6 +5505,89 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& _world != null
 			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
 			&& gameObject is IWorldNpcObject;
+	}
+
+	private bool IsSellToShopBuyItemPacket(Player? player, CmBuyItem packet)
+	{
+		return player != null
+			&& packet.TradeActionId == CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId
+			&& _world != null
+			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject;
+	}
+
+	private async Task TryExecuteSellToShopAsync(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		TradeSellToShopPlan? sellPlan)
+	{
+		// Java parity: CM_BUY_ITEM.runImpl action 1 -> TradeService.performSellToShop.
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId
+			|| sellPlan == null)
+			return;
+
+		if (sellPlan.Status == TradeSellToShopPlanStatus.BlockedNotSellable)
+		{
+			await SendPacketAsync(SmSystemMessage.BuySellHeDoesNotSellItem(string.Empty));
+			return;
+		}
+
+		if (sellPlan.Status != TradeSellToShopPlanStatus.PlanCreated || sellPlan.KinahUpdate == null)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		var kinahTemplate = itemTemplates?.GetItemTemplate(KinahItemId);
+		if (itemTemplates == null || kinahTemplate == null)
+			return;
+
+		var workingItems = player.InventoryItems.ToList();
+		var kinahWasCreated = workingItems.All(item => item.ObjectId != sellPlan.KinahUpdate.ObjectId);
+		foreach (var deletedObjectId in sellPlan.SellerDeletedItemObjectIds)
+			workingItems.RemoveAll(item => item.ObjectId == deletedObjectId);
+		foreach (var updatedItem in sellPlan.SellerItemUpdates)
+			ReplaceInventoryItem(workingItems, updatedItem);
+		if (kinahWasCreated)
+			workingItems.Add(sellPlan.KinahUpdate);
+		else
+			ReplaceInventoryItem(workingItems, sellPlan.KinahUpdate);
+
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SaveNpcShopSellMutationAsync(player, sellPlan, kinahWasCreated))
+		{
+			return;
+		}
+
+		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
+		player.InventoryItems = workingItems.ToArray();
+		player.RepurchaseItems = sellPlan.RepurchaseItems.ToArray();
+
+		foreach (var deletedObjectId in sellPlan.SellerDeletedItemObjectIds)
+		{
+			projectedCubeItemsCount--;
+			await SendPacketAsync(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
+
+		foreach (var updatedItem in sellPlan.SellerItemUpdates)
+		{
+			var template = itemTemplates.GetItemTemplate(updatedItem.ItemId);
+			if (template == null)
+				return;
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, staticData?.ItemRestrictionCleanups)));
+		}
+
+		if (kinahWasCreated)
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(sellPlan.KinahUpdate, kinahTemplate));
+		else
+			await SendPacketAsync(new SmInventoryUpdateItem(sellPlan.KinahUpdate, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahSell));
 	}
 
 	private async Task TryExecuteBuyFromShopPurchaseAsync(
@@ -6642,7 +6727,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			sellActionFacts?.PurchaseTemplate,
 			goodsLists,
 			sellModifier,
-			_buyItemDiagnosticObjectIdProvider ?? (() => 0));
+			NextBuyItemObjectId);
 	}
 
 	private TradeSellForApToShopPlan? ResolveBuyItemSellForApToShopPlan(

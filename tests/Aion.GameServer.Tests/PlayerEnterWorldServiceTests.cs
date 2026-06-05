@@ -3562,6 +3562,17 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveNpcShopSellMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> sellerItemUpdates,
+			IReadOnlyList<int> sellerDeletedItemObjectIds,
+			InventoryItem kinahItem,
+			bool kinahWasCreated,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveInventoryItemPackCountAsync(
 			int playerObjectId,
 			int itemObjectId,

@@ -400,6 +400,23 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveNpcShopSellMutationAsync(
+		Player player,
+		TradeSellToShopPlan sellPlan,
+		bool kinahWasCreated,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: TradeService.performSellToShop persists sold item row mutations and
+		// the seller's Kinah increase through InventoryDAO; RepurchaseService state is runtime-only.
+		return _repository.SaveNpcShopSellMutationAsync(
+			player.ObjectId,
+			sellPlan.SellerItemUpdates,
+			sellPlan.SellerDeletedItemObjectIds,
+			sellPlan.KinahUpdate!,
+			kinahWasCreated,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,
