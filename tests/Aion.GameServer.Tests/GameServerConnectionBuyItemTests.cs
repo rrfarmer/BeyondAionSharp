@@ -1050,6 +1050,11 @@ public sealed class GameServerConnectionBuyItemTests
 			sent =>
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				AssertInventoryAddItemPayload(
 					Assert.IsType<SmInventoryAddItem>(sent.Packet),
 					expectedObjectId: 9002,
@@ -1066,11 +1071,6 @@ public sealed class GameServerConnectionBuyItemTests
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
-			},
-			sent =>
-			{
-				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
-				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
 			});
 		var closeBroadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
 		Assert.Equal(sellerPlayer.ObjectId, closeBroadcast.SourceObjectId);
@@ -1195,12 +1195,22 @@ public sealed class GameServerConnectionBuyItemTests
 			sent =>
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(sent.Packet), 3002, SmDeleteItem.UseDeleteType);
 			},
 			sent =>
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 0);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
 			},
 			sent =>
 			{
@@ -1221,16 +1231,6 @@ public sealed class GameServerConnectionBuyItemTests
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
-			},
-			sent =>
-			{
-				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
-				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
-			},
-			sent =>
-			{
-				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
-				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
 			});
 		var closeBroadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
 		Assert.Equal(sellerPlayer.ObjectId, closeBroadcast.SourceObjectId);
@@ -1337,6 +1337,11 @@ public sealed class GameServerConnectionBuyItemTests
 			sent =>
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400135, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				AssertInventoryAddItemPayload(
 					Assert.IsType<SmInventoryAddItem>(sent.Packet),
 					expectedObjectId: 9002,
@@ -1353,11 +1358,6 @@ public sealed class GameServerConnectionBuyItemTests
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
-			},
-			sent =>
-			{
-				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
-				Assert.Equal(1400135, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
 			});
 		Assert.Empty(fixture.Registry.VisibleBroadcasts);
 	}

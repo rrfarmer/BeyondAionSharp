@@ -5524,18 +5524,29 @@ public sealed class GameServerConnection : BaseClientConnection
 			UpdateSellerPrivateStoreItems(seller, GetAppliedPrivateStoreBoughtItems(purchasePlan));
 
 		var projectedSellerCubeItemsCount = sellerCubeItemsCountBeforeDeletedItems;
-		foreach (var deletedItemObjectId in purchasePlan.SellerDeletedItemObjectIds)
+		var sellerDeletedItemObjectIds = purchasePlan.SellerDeletedItemObjectIds.ToHashSet();
+		var sellerItemUpdatesByObjectId = purchasePlan.SellerItemUpdates.ToDictionary(item => item.ObjectId);
+		var sellerMessageIndex = 0;
+		foreach (var boughtItem in GetAppliedPrivateStoreBoughtItems(purchasePlan))
 		{
-			if (projectedSellerCubeItemsCount > 0)
-				projectedSellerCubeItemsCount--;
-			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(deletedItemObjectId, SmDeleteItem.UseDeleteType));
-			await SendPacketToPlayerOrSelfAsync(
-				seller.ObjectId,
-				SmCubeUpdate.CubeSizeSnapshot(projectedSellerCubeItemsCount, seller.NpcExpands, seller.QuestExpands, seller.ItemExpands));
-		}
-		foreach (var sellerItem in purchasePlan.SellerItemUpdates)
-			if (itemTemplates.GetItemTemplate(sellerItem.ItemId) is { } template)
+			if (sellerDeletedItemObjectIds.Contains(boughtItem.ItemObjectId))
+			{
+				if (projectedSellerCubeItemsCount > 0)
+					projectedSellerCubeItemsCount--;
+				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(boughtItem.ItemObjectId, SmDeleteItem.UseDeleteType));
+				await SendPacketToPlayerOrSelfAsync(
+					seller.ObjectId,
+					SmCubeUpdate.CubeSizeSnapshot(projectedSellerCubeItemsCount, seller.NpcExpands, seller.QuestExpands, seller.ItemExpands));
+			}
+			else if (sellerItemUpdatesByObjectId.TryGetValue(boughtItem.ItemObjectId, out var sellerItem)
+				&& itemTemplates.GetItemTemplate(sellerItem.ItemId) is { } template)
+			{
 				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmInventoryUpdateItem(sellerItem, template, SmInventoryUpdateItem.DecreaseItemUse));
+			}
+
+			if (sellerMessageIndex < purchasePlan.SellerMessages.Count)
+				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, purchasePlan.SellerMessages[sellerMessageIndex++]);
+		}
 		var projectedBuyerCubeItemsCount = buyerCubeItemsCountBeforeAddedItems;
 		foreach (var buyerItem in purchasePlan.BuyerAddedItems)
 		{
@@ -5569,8 +5580,6 @@ public sealed class GameServerConnection : BaseClientConnection
 				seller.ObjectId,
 				new SmInventoryUpdateItem(purchasePlan.SellerKinahUpdate, sellerKinahTemplate, SmInventoryUpdateItem.IncreaseKinahCollect));
 		}
-		foreach (var sellerMessage in purchasePlan.SellerMessages)
-			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, sellerMessage);
 
 		if (purchasePlan.ShouldCloseSellerStore)
 			await HandleClosePrivateStoreAsync(seller);
