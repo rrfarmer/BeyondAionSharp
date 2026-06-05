@@ -2964,6 +2964,129 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetDopingAddMutatesSlotAndSendsPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Doping Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(27, PetFunctionType.Doping, Slots: 0, RatePrice: 0)])),
+			buyItemPetDopings: CreatePetDopings(
+				new PetDopingEntrySummary(27, UseDrink: true, UseFood: true, ScrollsUsed: 2)));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Doping Mate",
+				Decoration: 188051001,
+				DopingItemIds: [166000001, 166000002]),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodDopingPayload(dopingAction: 0, dopingItemId: 164000001, dopingSlot1: 2, dopingSlot2: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal([166000001, 166000002, 164000001], pet.DopingItemIds);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDopingAddPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedDopeAction: 0,
+			expectedItemId: 164000001,
+			expectedSlot: 2);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetDopingRemoveMutatesSlotAndSendsPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Doping Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(1, PetFunctionType.Doping, Slots: 0, RatePrice: 0)])),
+			buyItemPetDopings: CreatePetDopings(
+				new PetDopingEntrySummary(1, UseDrink: true, UseFood: true, ScrollsUsed: 0)));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Doping Mate",
+				Decoration: 188051001,
+				DopingItemIds: [166000001, 166000002]),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodDopingPayload(dopingAction: 1, dopingItemId: 0, dopingSlot1: 1, dopingSlot2: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal([166000001, 0], pet.DopingItemIds);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDopingRemovePacket(
+			Assert.IsType<SmPet>(packet),
+			expectedDopeAction: 1,
+			expectedSlot: 1);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetDopingAddRejectedByDopingDataDoesNothing()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Doping Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(8, PetFunctionType.Doping, Slots: 0, RatePrice: 0)])),
+			buyItemPetDopings: CreatePetDopings(
+				new PetDopingEntrySummary(8, UseDrink: false, UseFood: false, ScrollsUsed: 1)));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Doping Mate",
+				Decoration: 188051001,
+				DopingItemIds: [0, 0, 164000001]),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodDopingPayload(dopingAction: 0, dopingItemId: 164000002, dopingSlot1: 3, dopingSlot2: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal([0, 0, 164000001], pet.DopingItemIds);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -4079,6 +4202,11 @@ public sealed class GameServerConnectionBuyItemTests
 		return new PetTemplateTable(templates);
 	}
 
+	private static PetDopingTable CreatePetDopings(params PetDopingEntrySummary[] dopings)
+	{
+		return new PetDopingTable(dopings);
+	}
+
 	private static ItemTemplateSummary Template(
 		int itemId,
 		long price,
@@ -4396,6 +4524,34 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertPetDopingAddPacket(
+		SmPet packet,
+		int expectedDopeAction,
+		int expectedItemId,
+		int expectedSlot)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)PetSpecialFunction.Doping, (int)reader.ReadC());
+		Assert.Equal(expectedDopeAction, (int)reader.ReadC());
+		Assert.Equal(expectedItemId, reader.ReadD());
+		Assert.Equal(expectedSlot, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetDopingRemovePacket(
+		SmPet packet,
+		int expectedDopeAction,
+		int expectedSlot)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)PetSpecialFunction.Doping, (int)reader.ReadC());
+		Assert.Equal(expectedDopeAction, (int)reader.ReadC());
+		Assert.Equal(expectedSlot, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertPetFoodStartPacket(
 		SmPet packet,
 		int expectedFeedProgressData,
@@ -4623,6 +4779,7 @@ public sealed class GameServerConnectionBuyItemTests
 			ItemTemplateTable? buyItemItemTemplates = null,
 			GoodsListTable? buyItemGoodsLists = null,
 			PetTemplateTable? buyItemPetTemplates = null,
+			PetDopingTable? buyItemPetDopings = null,
 			LimitedItemTradeService? limitedItemTradeService = null,
 			long? buyItemCurrentSellLimit = null,
 			Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -4682,6 +4839,7 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemItemTemplates: buyItemItemTemplates,
 						buyItemGoodsLists: buyItemGoodsLists,
 						buyItemPetTemplates: buyItemPetTemplates,
+						buyItemPetDopings: buyItemPetDopings,
 						limitedItemTradeService: limitedItemTradeService,
 						buyItemCurrentSellLimit: buyItemCurrentSellLimit,
 						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider,

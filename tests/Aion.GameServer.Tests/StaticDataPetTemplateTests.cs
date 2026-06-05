@@ -42,4 +42,40 @@ public sealed class StaticDataPetTemplateTests
 				Directory.Delete(tempDirectory, recursive: true);
 		}
 	}
+
+	[Fact]
+	public async Task LoadFromCacheAsync_ParsesPetDopingEntries()
+	{
+		var tempDirectory = Path.Combine(Path.GetTempPath(), "aion-static-pet-doping-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDirectory);
+		var cacheFile = Path.Combine(tempDirectory, "static_data.xml");
+		try
+		{
+			await File.WriteAllTextAsync(
+				cacheFile,
+				"""
+				<static_data>
+					<dopings>
+						<doping id="8" usedrink="false" usefood="false" usescroll="1"/>
+						<doping id="27" usedrink="true" usefood="true" usescroll="2"/>
+					</dopings>
+				</static_data>
+				""");
+
+			var staticData = await StaticData.LoadFromCacheAsync(cacheFile, Array.Empty<string>());
+
+			Assert.Equal(2, staticData.PetDopings.Count);
+			var entry = staticData.PetDopings.GetDopingTemplate(27);
+			Assert.NotNull(entry);
+			Assert.Equal((27, true, true, 2), (entry.Id, entry.UseDrink, entry.UseFood, entry.ScrollsUsed));
+			var scrollOnlyEntry = staticData.PetDopings.GetDopingTemplate(8);
+			Assert.NotNull(scrollOnlyEntry);
+			Assert.Equal((false, false, 1), (scrollOnlyEntry.UseDrink, scrollOnlyEntry.UseFood, scrollOnlyEntry.ScrollsUsed));
+		}
+		finally
+		{
+			if (Directory.Exists(tempDirectory))
+				Directory.Delete(tempDirectory, recursive: true);
+		}
+	}
 }

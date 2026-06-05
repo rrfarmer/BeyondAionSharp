@@ -50,6 +50,7 @@ public sealed class StaticData
 		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
 		PetTemplateTable petTemplates,
+		PetDopingTable petDopings,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
 		WorkOrderRecipeTable workOrderRecipes,
@@ -112,6 +113,7 @@ public sealed class StaticData
 		NpcSkills = npcSkills;
 		PetSkills = petSkills;
 		PetTemplates = petTemplates;
+		PetDopings = petDopings;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
 		WorkOrderRecipes = workOrderRecipes;
@@ -217,6 +219,8 @@ public sealed class StaticData
 	public PetSkillTable PetSkills { get; }
 
 	public PetTemplateTable PetTemplates { get; }
+
+	public PetDopingTable PetDopings { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
 
@@ -345,6 +349,7 @@ public sealed class StaticData
 		var autoGroups = new List<AutoGroupSummary>();
 		var petSkills = new List<PetSkillSummary>();
 		var petTemplates = new List<PetTemplateSummary>();
+		var petDopings = new List<PetDopingEntrySummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
@@ -2433,6 +2438,19 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2
+				&& reader.LocalName == "doping"
+				&& elementPath.GetValueOrDefault(1) == "dopings")
+			{
+				// Java parity: dataholders/PetDopingData indexes pet_doping.xml rows by id after unmarshalling.
+				petDopings.Add(new PetDopingEntrySummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadRequiredBoolAttribute(reader, "usedrink"),
+					ReadRequiredBoolAttribute(reader, "usefood"),
+					ReadRequiredIntAttribute(reader, "usescroll")));
+				continue;
+			}
+
 			if (currentPetTemplate != null
 				&& reader.Depth == currentPetTemplateDepth + 1
 				&& reader.LocalName == "petfunction")
@@ -3055,6 +3073,7 @@ public sealed class StaticData
 			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),
 			new PetTemplateTable(petTemplates.AsReadOnly()),
+			new PetDopingTable(petDopings.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			workOrderRecipes,
@@ -5820,6 +5839,13 @@ public sealed class StaticData
 	private static bool ReadBoolAttribute(XmlReader reader, string attributeName)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) && parsed;
+	}
+
+	private static bool ReadRequiredBoolAttribute(XmlReader reader, string attributeName)
+	{
+		var value = reader.GetAttribute(attributeName)
+			?? throw new FormatException($"Element <{reader.LocalName}> is missing required attribute '{attributeName}'.");
+		return bool.Parse(value);
 	}
 
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)

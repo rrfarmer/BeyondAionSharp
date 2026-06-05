@@ -112,6 +112,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
 	private readonly GoodsListTable? _buyItemGoodsLists;
 	private readonly PetTemplateTable? _petTemplates;
+	private readonly PetDopingTable? _petDopings;
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -210,6 +211,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		ItemTemplateTable? buyItemItemTemplates = null,
 		GoodsListTable? buyItemGoodsLists = null,
 		PetTemplateTable? buyItemPetTemplates = null,
+		PetDopingTable? buyItemPetDopings = null,
 		LimitedItemTradeService? limitedItemTradeService = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -286,6 +288,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemItemTemplates = buyItemItemTemplates;
 		_buyItemGoodsLists = buyItemGoodsLists;
 		_petTemplates = buyItemPetTemplates;
+		_petDopings = buyItemPetDopings;
 		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
@@ -586,7 +589,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var activate = packet.ActivateSpecialFunction != 0;
-		var template = _petTemplates?.GetPetTemplate(ownedPet.TemplateId);
+		var template = GetPetTemplate(ownedPet.TemplateId);
 		if (activate && template?.ContainsFunction(PetFunctionType.Loot) != true)
 			return;
 
@@ -610,23 +613,84 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (ownedPet == null)
 			return;
 
-		var template = _petTemplates?.GetPetTemplate(ownedPet.TemplateId);
+		var template = GetPetTemplate(ownedPet.TemplateId);
 		if (template?.ContainsFunction(PetFunctionType.Doping) != true)
 			return;
+
+		if (packet.DopingAction < 2)
+		{
+			if (!ValidateSetPetDopingItem(template, packet.DopingItemId, packet.DopingSlot1))
+				return;
+
+			UpdateOwnedPetDopingItems(
+				player,
+				ownedPet,
+				SetPetDopingItem(ownedPet.DopingItemIds ?? [], packet.DopingItemId, packet.DopingSlot1));
+
+			await SendPacketAsync(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
+				packet.DopingAction,
+				ItemTemplateIdOrSlot2: packet.DopingItemId,
+				Slot: packet.DopingSlot1)));
+			return;
+		}
 
 		if (packet.DopingAction != 2)
 			return;
 
-		var updatedItems = SwitchPetDopingItems(ownedPet.DopingItemIds ?? [], packet.DopingSlot1, packet.DopingSlot2);
-		var updatedPet = ownedPet with { DopingItemIds = updatedItems };
-		player.OwnedPets = player.OwnedPets
-			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
-			.ToArray();
+		UpdateOwnedPetDopingItems(
+			player,
+			ownedPet,
+			SwitchPetDopingItems(ownedPet.DopingItemIds ?? [], packet.DopingSlot1, packet.DopingSlot2));
 
 		await SendPacketAsync(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
 			packet.DopingAction,
 			ItemTemplateIdOrSlot2: packet.DopingSlot2,
 			Slot: packet.DopingSlot1)));
+	}
+
+	private bool ValidateSetPetDopingItem(PetTemplateSummary petTemplate, int itemId, int slot)
+	{
+		// Java parity: services/toypet/PetService.validateSetDopeItem resolves the DOPING PetFunction id in DataManager.PET_DOPING_DATA.
+		var petFunction = petTemplate.GetFunction(PetFunctionType.Doping);
+		var doping = petFunction == null ? null : GetPetDopingTemplate(petFunction.Id);
+		if (doping == null)
+			return false;
+		if (slot == 0 && !doping.UseFood)
+			return false;
+		if (slot == 1 && !doping.UseDrink)
+			return false;
+		if (slot > 1 && slot - 1 > doping.ScrollsUsed)
+			return false;
+
+		return true;
+	}
+
+	private void UpdateOwnedPetDopingItems(Player player, PlayerOwnedPet ownedPet, IReadOnlyList<int> dopingItemIds)
+	{
+		var updatedPet = ownedPet with { DopingItemIds = dopingItemIds };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
+	}
+
+	private PetTemplateSummary? GetPetTemplate(int templateId)
+	{
+		return (_petTemplates ?? _runtimeContext?.DataManager?.StaticData.PetTemplates)?.GetPetTemplate(templateId);
+	}
+
+	private PetDopingEntrySummary? GetPetDopingTemplate(int dopingId)
+	{
+		return (_petDopings ?? _runtimeContext?.DataManager?.StaticData.PetDopings)?.GetDopingTemplate(dopingId);
+	}
+
+	private static IReadOnlyList<int> SetPetDopingItem(IReadOnlyList<int> itemIds, int itemId, int slot)
+	{
+		var bag = new PetDopingBag();
+		for (var itemSlot = 0; itemSlot < itemIds.Count; itemSlot++)
+			bag.SetItem(itemIds[itemSlot], itemSlot);
+
+		bag.SetItem(itemId, slot);
+		return bag.GetItems();
 	}
 
 	private static IReadOnlyList<int> SwitchPetDopingItems(IReadOnlyList<int> itemIds, int slot1, int slot2)
@@ -649,7 +713,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var activate = packet.ActivateSpecialFunction != 0;
-		var template = _petTemplates?.GetPetTemplate(ownedPet.TemplateId);
+		var template = GetPetTemplate(ownedPet.TemplateId);
 		if (activate && template?.ContainsFunction(PetFunctionType.Merchant) != true)
 			return;
 
