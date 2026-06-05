@@ -19,6 +19,17 @@ public interface IWorldNpcObject
 	string AiName { get; }
 }
 
+// Java parity: model/gameobjects/Pet visible object facts needed by CM_BUY_ITEM
+// action 17 pet merchant dispatch.
+public interface IWorldPetObject
+{
+	int ObjectId { get; }
+
+	bool HasMerchantFunction { get; }
+
+	int? MerchantSellModifier { get; }
+}
+
 public sealed record WorldNpc(
 	int ObjectId,
 	int TemplateId,

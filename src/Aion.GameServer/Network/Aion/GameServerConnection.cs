@@ -5448,7 +5448,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& !IsPrivateStoreBuyItemPacket(player, packet)
 			&& !IsBuyFromShopBuyItemPacket(player, packet)
 			&& !IsSellToShopBuyItemPacket(player, packet)
-			&& !IsRepurchaseBuyItemPacket(player, packet))
+			&& !IsRepurchaseBuyItemPacket(player, packet)
+			&& !IsPetSellToShopBuyItemPacket(player, packet))
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
@@ -5463,6 +5464,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var repurchasableItemObjectIds = ResolveBuyItemRepurchasableItemObjectIds(player, packet, targetKind);
 		var repurchasePlan = ResolveBuyItemRepurchasePlan(player, packet, targetKind, repurchasableItemObjectIds);
 		var repurchaseStateSnapshots = ResolveBuyItemRepurchaseStateSnapshots(player, packet, targetKind);
+		var petMerchantTarget = ResolveBuyItemPetMerchantTarget(player, packet, targetKind);
+		var petSellToShopPlan = ResolveBuyItemPetSellToShopPlan(player, packet, targetKind, petMerchantTarget);
 		var plan = CmBuyItemHandlerCompositionPlanService.CreatePlan(
 			new CmBuyItemHandlerCompositionInput(
 				packet,
@@ -5479,7 +5482,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				RepurchasableItemObjectIds: repurchasableItemObjectIds,
 				RepurchasePlan: repurchasePlan,
 				PrivateStoreItems: privateStoreItems,
-				PrivateStorePurchasePlan: privateStorePurchasePlan));
+				PrivateStorePurchasePlan: privateStorePurchasePlan,
+				PetSellModifier: petMerchantTarget?.MerchantSellModifier,
+				PetSellToShopPlan: petSellToShopPlan,
+				PetHasMerchantFunction: petMerchantTarget?.HasMerchantFunction ?? false));
 		_cmBuyItemHandlerCompositionPlanObserver?.Invoke(plan);
 		_cmBuyItemSideEffectOutcomePlanObserver?.Invoke(CmBuyItemSideEffectOutcomePlanService.CreateDisabledPlan(
 			plan,
@@ -5488,6 +5494,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await TryExecutePrivateStorePurchaseAsync(player, packet, targetKind, privateStoreItems, privateStorePurchasePlan);
 		await TryExecuteRepurchaseAsync(player, packet, targetKind, repurchasePlan);
 		await TryExecuteSellToShopAsync(player, packet, targetKind, sellToShopPlan);
+		await TryExecuteSellToShopAsync(player, packet, targetKind, petSellToShopPlan);
 		await TryExecuteSellForApToShopAsync(player, packet, targetKind, sellForApToShopPlan);
 		await TryExecuteBuyFromShopPurchaseAsync(player, packet, targetKind, buyFromShopTradeTemplate, buyTransactionPlan);
 	}
@@ -5526,6 +5533,15 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& _world != null
 			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
 			&& gameObject is IWorldNpcObject;
+	}
+
+	private bool IsPetSellToShopBuyItemPacket(Player? player, CmBuyItem packet)
+	{
+		return player != null
+			&& packet.TradeActionId == 17
+			&& _world != null
+			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			&& gameObject is IWorldPetObject;
 	}
 
 	private async Task TryExecuteRepurchaseAsync(
@@ -5615,10 +5631,14 @@ public sealed class GameServerConnection : BaseClientConnection
 		CmBuyItemRunTargetKind targetKind,
 		TradeSellToShopPlan? sellPlan)
 	{
-		// Java parity: CM_BUY_ITEM.runImpl action 1 -> TradeService.performSellToShop.
+		// Java parity: CM_BUY_ITEM.runImpl action 1 Npc branch and action 17
+		// Pet MERCHANT branch both route to TradeService.performSellToShop.
+		var isNpcSellToShop = targetKind == CmBuyItemRunTargetKind.Npc
+			&& packet.TradeActionId == CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId;
+		var isPetSellToShop = targetKind == CmBuyItemRunTargetKind.Pet
+			&& packet.TradeActionId == 17;
 		if (player == null
-			|| targetKind != CmBuyItemRunTargetKind.Npc
-			|| packet.TradeActionId != CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId
+			|| (!isNpcSellToShop && !isPetSellToShop)
 			|| sellPlan == null)
 			return;
 
@@ -6891,6 +6911,84 @@ public sealed class GameServerConnection : BaseClientConnection
 			itemTemplates,
 			sellActionFacts?.PurchaseTemplate,
 			goodsLists,
+			sellModifier,
+			NextBuyItemObjectId);
+	}
+
+	private IWorldPetObject? ResolveBuyItemPetMerchantTarget(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Pet
+			|| packet.TradeActionId != 17
+			|| _world == null
+			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			|| gameObject is not IWorldPetObject pet)
+			return null;
+
+		return pet;
+	}
+
+	private TradeSellToShopPlan? ResolveBuyItemPetSellToShopPlan(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		IWorldPetObject? pet)
+	{
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Pet
+			|| packet.TradeActionId != 17
+			|| pet?.HasMerchantFunction != true
+			|| pet.MerchantSellModifier == null)
+			return null;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return null;
+
+		// Java parity: CM_BUY_ITEM.runImpl Pet MERCHANT action 17 calls
+		// TradeService.performSellToShop(player, tradeList, null, pf.getRatePrice()).
+		var sellModifier = pet.MerchantSellModifier.Value;
+		var sellLimitLookup = SellLimitLookupService.CreatePlan(player.Level);
+		var remainingSellLimit = _buyItemCurrentSellLimit ?? sellLimitLookup.BaseLimit ?? 0;
+		var tradeItems = new List<TradeSellToShopItemRequest>();
+		foreach (var packetItem in packet.Items)
+		{
+			var inventoryItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == packetItem.ItemObjectId);
+			var template = inventoryItem == null ? null : itemTemplates.GetItemTemplate(inventoryItem.ItemId);
+			var isSellable = template == null || IsItemTemplateSellable(template);
+			long? sellLimitAdjustedCount = null;
+			if (template != null)
+			{
+				var sellReward = PricesService.GetSellReward(template.Price, sellModifier);
+				var sellLimitPlan = PlayerSellLimitPlanService.CreatePlan(
+					_options.Custom.LimitsEnabled,
+					_options.Custom.LimitsEnableDynamicCap,
+					sellReward,
+					packetItem.Count,
+					remainingSellLimit);
+				sellLimitAdjustedCount = sellLimitPlan.UseCount;
+				remainingSellLimit = sellLimitPlan.RemainingLimitAfter;
+			}
+
+			tradeItems.Add(new TradeSellToShopItemRequest(
+				packetItem.ItemObjectId,
+				packetItem.Count,
+				isSellable,
+				sellLimitAdjustedCount));
+		}
+
+		return TradeSellToShopPlanService.CreatePlan(
+			CanTrade(player),
+			player,
+			player.InventoryItems,
+			tradeItems,
+			itemTemplates,
+			purchaseTemplate: null,
+			goodsLists: null,
 			sellModifier,
 			NextBuyItemObjectId);
 	}

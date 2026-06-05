@@ -1940,6 +1940,67 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPetMerchantSellActionExecutesSellToShopLive()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, mask: 1 << 2),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 1,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 1_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(7001, new WorldPet(7001, HasMerchantFunction: true, MerchantSellModifier: 33));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 7001, tradeActionId: 17, [(2001, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner, plan.Status);
+		Assert.Equal(33, plan.PetSellModifier);
+		Assert.Equal(TradeSellToShopPlanStatus.PlanCreated, plan.PetSellToShopPlan!.Status);
+		Assert.Equal(1, playerRepository.SaveNpcShopSellMutationCalls);
+		var persistence = Assert.IsType<NpcShopSellPersistenceCapture>(playerRepository.NpcShopSellPersistence);
+		Assert.Equal(player.ObjectId, persistence.PlayerObjectId);
+		Assert.Empty(persistence.SellerItemUpdates);
+		Assert.Equal([2001], persistence.SellerDeletedItemObjectIds);
+		Assert.False(persistence.KinahWasCreated);
+		Assert.Equal((3001, InventoryItemFactory.KinahItemId, 1_330L), (persistence.KinahItem.ObjectId, persistence.KinahItem.ItemId, persistence.KinahItem.Count));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 2001);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 1_330);
+		var repurchase = Assert.Single(player.RepurchaseItems);
+		Assert.Equal((2001, 100000001, 1L), (repurchase.Item.ObjectId, repurchase.Item.ItemId, repurchase.Item.Count));
+		Assert.Equal(330, repurchase.RepurchasePrice);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 2001, SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => Assert.Equal(SmInventoryUpdateItem.IncreaseKinahSell, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionBlocksDisabledNormalSellPlanWhenTemplateMaskIsNotSellable()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
@@ -2882,6 +2943,11 @@ public sealed class GameServerConnectionBuyItemTests
 			FunctionDialogIds: functionDialogIds);
 		return new WorldNpc(objectId, templateId, template, position);
 	}
+
+	private sealed record WorldPet(
+		int ObjectId,
+		bool HasMerchantFunction,
+		int? MerchantSellModifier) : IWorldPetObject;
 
 	private static TradeListTable CreateTradeLists(params TradeListTemplateSummary[] purchaseLists)
 	{

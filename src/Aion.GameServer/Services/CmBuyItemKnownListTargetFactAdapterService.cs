@@ -71,6 +71,7 @@ public static class CmBuyItemKnownListTargetFactAdapterService
 		{
 			Player => CmBuyItemRunTargetKind.Player,
 			IWorldNpcObject => CmBuyItemRunTargetKind.Npc,
+			IWorldPetObject => CmBuyItemRunTargetKind.Pet,
 			_ => CmBuyItemRunTargetKind.Other,
 		};
 

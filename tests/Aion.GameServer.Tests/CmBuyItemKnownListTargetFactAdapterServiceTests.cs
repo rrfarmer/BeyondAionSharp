@@ -83,6 +83,20 @@ public sealed class CmBuyItemKnownListTargetFactAdapterServiceTests
 		Assert.Equal(CmBuyItemKnownListTargetFactAdapterStatus.ResolvedFromKnownListFact, plan.Status);
 	}
 
+	[Fact]
+	public void CreatePlan_PetTargetClassifiesPetWhenKnown()
+	{
+		var plan = CmBuyItemKnownListTargetFactAdapterService.CreatePlan(
+			new Player { ObjectId = 1001 },
+			sellerObjectId: 7001,
+			new TestWorldPet(7001, HasMerchantFunction: true, MerchantSellModifier: 33),
+			isKnownByPlayer: true);
+
+		Assert.Equal(CmBuyItemRunTargetKind.Pet, plan.TargetKind);
+		Assert.Equal(CmBuyItemKnownListTargetFactAdapterStatus.ResolvedFromKnownListFact, plan.Status);
+		Assert.True(plan.IsJavaKnownListParity);
+	}
+
 	private static WorldNpc CreateNpc(int objectId)
 	{
 		var template = new NpcTemplateSummary(
@@ -97,4 +111,9 @@ public sealed class CmBuyItemKnownListTargetFactAdapterServiceTests
 			Type: "NPC");
 		return new WorldNpc(objectId, 700001, template, new WorldPosition(210010000, 0, 0, 0, 0));
 	}
+
+	private sealed record TestWorldPet(
+		int ObjectId,
+		bool HasMerchantFunction,
+		int? MerchantSellModifier) : IWorldPetObject;
 }
