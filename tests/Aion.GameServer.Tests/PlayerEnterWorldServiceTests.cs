@@ -3393,6 +3393,8 @@ public sealed class PlayerEnterWorldServiceTests
 			int petObjectId,
 			InventoryItem? sourceItemUpdate,
 			int? deletedSourceItemObjectId,
+			IReadOnlyList<InventoryItem> rewardItemUpdates,
+			IReadOnlyList<InventoryItem> rewardItemAdds,
 			int hungryLevel,
 			int feedProgress,
 			long reuseTime,

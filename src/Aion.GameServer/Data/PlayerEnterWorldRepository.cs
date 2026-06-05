@@ -237,6 +237,8 @@ public interface IPlayerEnterWorldRepository
 		int petObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> rewardItemUpdates,
+		IReadOnlyList<InventoryItem> rewardItemAdds,
 		int hungryLevel,
 		int feedProgress,
 		long reuseTime,
@@ -466,7 +468,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SavePlayerPetFeedConsumeMutationCalls { get; private set; }
 
-	public (int PlayerObjectId, int PetObjectId, InventoryItem? SourceItemUpdate, int? DeletedSourceItemObjectId, int HungryLevel, int FeedProgress, long ReuseTime)?
+	public (int PlayerObjectId, int PetObjectId, InventoryItem? SourceItemUpdate, int? DeletedSourceItemObjectId, IReadOnlyList<InventoryItem> RewardItemUpdates, IReadOnlyList<InventoryItem> RewardItemAdds, int HungryLevel, int FeedProgress, long ReuseTime)?
 		SavedPlayerPetFeedConsumeMutation { get; private set; }
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
@@ -958,6 +960,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int petObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> rewardItemUpdates,
+		IReadOnlyList<InventoryItem> rewardItemAdds,
 		int hungryLevel,
 		int feedProgress,
 		long reuseTime,
@@ -969,6 +973,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			petObjectId,
 			sourceItemUpdate,
 			deletedSourceItemObjectId,
+			rewardItemUpdates.ToArray(),
+			rewardItemAdds.ToArray(),
 			hungryLevel,
 			feedProgress,
 			reuseTime);
@@ -5780,12 +5786,14 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		int petObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> rewardItemUpdates,
+		IReadOnlyList<InventoryItem> rewardItemAdds,
 		int hungryLevel,
 		int feedProgress,
 		long reuseTime,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: PetService.checkFeeding consumes one item, and PlayerPetsDAO.saveFeedStatus stores the pet feed packet data.
+		// Java parity: PetService.checkFeeding consumes one item, optionally grants ItemService.addItem reward, and stores pet feed/refeed state.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
@@ -5805,6 +5813,18 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				await transaction.RollbackAsync(cancellationToken);
 				return false;
 			}
+
+			foreach (var rewardItemUpdate in rewardItemUpdates)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, rewardItemUpdate, cancellationToken))
+				{
+					await transaction.RollbackAsync(cancellationToken);
+					return false;
+				}
+			}
+
+			foreach (var rewardItemAdd in rewardItemAdds)
+				await InsertInventoryItemAsync(connection, transaction, rewardItemAdd, cancellationToken);
 
 			await using var command = connection.CreateCommand();
 			command.Transaction = transaction;

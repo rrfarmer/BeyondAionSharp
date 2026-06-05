@@ -628,6 +628,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var itemTemplate = itemTemplates?.GetItemTemplate(foodItem.ItemId);
 		if (itemTemplate == null)
 			return;
+		var itemTemplateTable = itemTemplates!;
 
 		var progress = new PetFeedProgress((short)flavour.LovedFoodLimit)
 		{
@@ -669,36 +670,69 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (plan.Status is not (PetFeedServiceOperationPlanStatus.ConsumedContinue or PetFeedServiceOperationPlanStatus.ConsumedStop))
+		if (plan.Status is not (PetFeedServiceOperationPlanStatus.ConsumedContinue
+			or PetFeedServiceOperationPlanStatus.ConsumedStop
+			or PetFeedServiceOperationPlanStatus.Rewarded))
 			return;
 
 		var sourceItemUpdate = foodItem.Count > 1 ? CopyInventoryItem(foodItem, count: foodItem.Count - 1) : null;
 		var deletedSourceItemObjectId = sourceItemUpdate == null ? foodItem.ObjectId : (int?)null;
+		var rewardTemplate = plan.Evaluation?.Reward == null
+			? null
+			: itemTemplateTable.GetItemTemplate(plan.Evaluation.Reward.ItemId);
+		var workingInventoryItems = player.InventoryItems.ToList();
+		if (sourceItemUpdate == null)
+			workingInventoryItems.RemoveAll(item => item.ObjectId == foodItem.ObjectId);
+		else
+			ReplaceInventoryItem(workingInventoryItems, sourceItemUpdate);
+
+		var rewardPlan = InventoryAddPlan.Empty;
+		if (plan.Status == PetFeedServiceOperationPlanStatus.Rewarded)
+		{
+			if (rewardTemplate == null || _idFactory == null)
+				return;
+
+			rewardPlan = InventoryAddService.CreateAddItemPlan(
+				player,
+				workingInventoryItems,
+				rewardTemplate,
+				1,
+				() => _idFactory.NextId(),
+				itemTemplates: itemTemplateTable);
+			if (!rewardPlan.Succeeded)
+				return;
+		}
+
+		if (plan.Status == PetFeedServiceOperationPlanStatus.Rewarded)
+			progress.Reset();
+
 		var feedProgressData = progress.GetDataForPacket();
+		var refeedTimeMillis = plan.RefeedTimeMilliseconds ?? ownedPet.RefeedTimeMillis;
 		var persisted = _playerEnterWorldService == null
 			|| await _playerEnterWorldService.SavePlayerPetFeedConsumeMutationAsync(
 				player,
 				ownedPet.ObjectId,
 				sourceItemUpdate,
 				deletedSourceItemObjectId,
+				rewardPlan.UpdatedItems,
+				rewardPlan.AddedItems,
 				(int)progress.HungryLevel,
 				feedProgressData,
-				ownedPet.RefeedTimeMillis,
+				refeedTimeMillis,
 				cancellationToken);
 		if (!persisted)
 			return;
 
-		var inventoryItems = player.InventoryItems.ToList();
-		if (sourceItemUpdate == null)
-			inventoryItems.RemoveAll(item => item.ObjectId == foodItem.ObjectId);
-		else
-			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
-		player.InventoryItems = inventoryItems.ToArray();
+		foreach (var rewardItemUpdate in rewardPlan.UpdatedItems)
+			ReplaceInventoryItem(workingInventoryItems, rewardItemUpdate);
+		workingInventoryItems.AddRange(rewardPlan.AddedItems);
+		player.InventoryItems = workingInventoryItems.ToArray();
 
 		var updatedPet = ownedPet with
 		{
 			FeedProgressData = feedProgressData,
 			HungryLevel = progress.HungryLevel,
+			RefeedTimeMillis = refeedTimeMillis,
 		};
 		player.OwnedPets = player.OwnedPets
 			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
@@ -718,6 +752,43 @@ public sealed class GameServerConnection : BaseClientConnection
 			FeedProgressData: feedProgressData,
 			ItemObjectId: foodItem.ObjectId,
 			Count: plan.RemainingRequestedCount)));
+		if (plan.Status == PetFeedServiceOperationPlanStatus.Rewarded)
+		{
+			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+				SubType: 6,
+				FeedProgressData: feedProgressData,
+				ItemObjectId: plan.Evaluation!.Reward!.ItemId)));
+			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+				SubType: 5,
+				FeedProgressData: feedProgressData,
+				RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
+			await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
+			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+				SubType: 7,
+				FeedProgressData: feedProgressData,
+				RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
+
+			foreach (var rewardItemUpdate in rewardPlan.UpdatedItems)
+			{
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					rewardItemUpdate,
+					rewardTemplate!,
+					SmInventoryUpdateItem.IncreaseItemCollect,
+					GetGeneralInfoWarehouseRestrictionFlag(rewardItemUpdate.ItemId, _runtimeContext?.DataManager?.StaticData.ItemRestrictionCleanups)));
+			}
+
+			foreach (var rewardItemAdd in rewardPlan.AddedItems)
+			{
+				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+					rewardItemAdd,
+					rewardTemplate!,
+					GetGeneralInfoWarehouseRestrictionFlag(rewardItemAdd.ItemId, _runtimeContext?.DataManager?.StaticData.ItemRestrictionCleanups)));
+			}
+
+			SchedulePetRefeed(player, updatedPet.ObjectId, plan.RefeedTimeMilliseconds.GetValueOrDefault() - DateTimeOffset.Now.ToUnixTimeMilliseconds());
+			return;
+		}
+
 		if (plan.Status == PetFeedServiceOperationPlanStatus.ConsumedContinue)
 		{
 			await SchedulePetFeedingCheckAsync(player, updatedPet.ObjectId, foodItem.ObjectId, plan.RemainingRequestedCount);
@@ -729,6 +800,32 @@ public sealed class GameServerConnection : BaseClientConnection
 			FeedProgressData: feedProgressData,
 			RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
 		await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
+	}
+
+	private void SchedulePetRefeed(Player player, int petObjectId, long delayMilliseconds)
+	{
+		// Java parity: PetCommonData.scheduleRefeed clears refeed time and sets hungry level back to HUNGRY after the delay.
+		if (_threadPoolManager == null || delayMilliseconds <= 0)
+			return;
+
+		_threadPoolManager.Schedule(
+			_ =>
+			{
+				var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
+				if (ownedPet == null)
+					return ValueTask.CompletedTask;
+
+				var refeedPet = ownedPet with
+				{
+					RefeedTimeMillis = 0,
+					HungryLevel = PetHungryLevel.Hungry,
+				};
+				player.OwnedPets = player.OwnedPets
+					.Select(pet => pet.ObjectId == petObjectId ? refeedPet : pet)
+					.ToArray();
+				return ValueTask.CompletedTask;
+			},
+			TimeSpan.FromMilliseconds(delayMilliseconds));
 	}
 
 	private async Task SendItemUnlockPacketAsync(Player player, InventoryItem item, ItemTemplateSummary template)

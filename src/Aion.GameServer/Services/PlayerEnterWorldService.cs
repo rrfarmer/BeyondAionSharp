@@ -329,17 +329,21 @@ public sealed class PlayerEnterWorldService
 		int petObjectId,
 		InventoryItem? sourceItemUpdate,
 		int? deletedSourceItemObjectId,
+		IReadOnlyList<InventoryItem> rewardItemUpdates,
+		IReadOnlyList<InventoryItem> rewardItemAdds,
 		int hungryLevel,
 		int feedProgress,
 		long reuseTime,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: PetService.checkFeeding decreases inventory and PetController.onDespawn stores PlayerPetsDAO.saveFeedStatus.
+		// Java parity: PetService.checkFeeding decreases inventory, grants reward through ItemService.addItem, and stores pet feed/refeed state.
 		return _repository.SavePlayerPetFeedConsumeMutationAsync(
 			player.ObjectId,
 			petObjectId,
 			sourceItemUpdate,
 			deletedSourceItemObjectId,
+			rewardItemUpdates,
+			rewardItemAdds,
 			hungryLevel,
 			feedProgress,
 			reuseTime,
