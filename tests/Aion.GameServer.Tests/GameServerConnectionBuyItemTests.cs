@@ -2623,6 +2623,103 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetFoodMultiCountConsumesEachItemAndEndsAfterRemainingCountReachesZero()
+	{
+		const int flavourId = 71;
+		const int foodItemId = 182006001;
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(Template(foodItemId, price: 1, maxStackCount: 100)),
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"feeder pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(flavourId, PetFunctionType.Food, Slots: 0, RatePrice: 0)])),
+			buyItemPetFeedData: CreatePetFeedData(flavourId, foodItemId),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Feeder Mate",
+				Decoration: 188051001,
+				FeedProgressData: 0),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 500001,
+				ItemId = foodItemId,
+				Count = 3,
+				OwnerId = player.ObjectId,
+				Location = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodFeedPayload(actionType: 1, objectId: 500001, count: 3, unknown2: 99));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.CancelFeed);
+		Assert.True(pet.FeedProgressData > 0);
+		Assert.Empty(player.InventoryItems);
+		Assert.Equal(3, playerRepository.SavePlayerPetFeedConsumeMutationCalls);
+		Assert.NotNull(playerRepository.SavedPlayerPetFeedConsumeMutation);
+		var lastPersistence = playerRepository.SavedPlayerPetFeedConsumeMutation.Value;
+		Assert.Null(lastPersistence.SourceItemUpdate);
+		Assert.Equal(500001, lastPersistence.DeletedSourceItemObjectId);
+		Assert.Equal(pet.FeedProgressData, lastPersistence.FeedProgress);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetFoodStartPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: 0,
+				expectedItemObjectId: 500001,
+				expectedCount: 3),
+			packet => AssertStartFeedingEmotionPacket(
+				Assert.IsType<SmEmotion>(packet),
+				expectedPlayerObjectId: player.ObjectId,
+				expectedCreatureState: (int)player.CreatureState),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertPetFoodProgressPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: GetPetFeedProgressDataAfterRegularFeeds(1),
+				expectedItemObjectId: 500001,
+				expectedCount: 2),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertPetFoodProgressPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: GetPetFeedProgressDataAfterRegularFeeds(2),
+				expectedItemObjectId: 500001,
+				expectedCount: 1),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 500001, SmDeleteItem.UseDeleteType),
+			packet => AssertPetFoodProgressPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: pet.FeedProgressData,
+				expectedItemObjectId: 500001,
+				expectedCount: 0),
+			packet => AssertPetFoodEndPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: pet.FeedProgressData,
+				expectedRefeedDelaySeconds: 0),
+			packet => AssertEndFeedingEmotionPacket(
+				Assert.IsType<SmEmotion>(packet),
+				expectedPlayerObjectId: player.ObjectId,
+				expectedCreatureState: (int)player.CreatureState));
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodPersistenceFailureLeavesFoodAndFeedStateUnchangedAfterStart()
 	{
 		const int flavourId = 71;
@@ -4523,6 +4620,13 @@ public sealed class GameServerConnectionBuyItemTests
 	private static PetDopingTable CreatePetDopings(params PetDopingEntrySummary[] dopings)
 	{
 		return new PetDopingTable(dopings);
+	}
+
+	private static int GetPetFeedProgressDataAfterRegularFeeds(short regularFeeds)
+	{
+		var progress = new PetFeedProgress(lovedFoodLimit: 0);
+		progress.SetRegularCount(regularFeeds);
+		return progress.GetDataForPacket();
 	}
 
 	private static PetFeedDataTable CreatePetFeedData(int flavourId, int foodItemId)

@@ -586,9 +586,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task SchedulePetFeedingCheckAsync(Player player, int petObjectId, int itemObjectId, int count)
 	{
-		// Java parity: PetService.checkFeeding is scheduled once for this live slice. The repeat/reward branches
-		// remain separate runtime work because they need chained scheduling and reward-item persistence.
-		if (count != 1)
+		// Java parity: PetService.checkFeeding consumes one item per scheduled check and repeats while count remains.
+		if (count <= 0)
 			return;
 
 		if (_threadPoolManager != null)
@@ -670,7 +669,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (plan.Status != PetFeedServiceOperationPlanStatus.ConsumedStop)
+		if (plan.Status is not (PetFeedServiceOperationPlanStatus.ConsumedContinue or PetFeedServiceOperationPlanStatus.ConsumedStop))
 			return;
 
 		var sourceItemUpdate = foodItem.Count > 1 ? CopyInventoryItem(foodItem, count: foodItem.Count - 1) : null;
@@ -718,7 +717,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			SubType: 2,
 			FeedProgressData: feedProgressData,
 			ItemObjectId: foodItem.ObjectId,
-			Count: 0)));
+			Count: plan.RemainingRequestedCount)));
+		if (plan.Status == PetFeedServiceOperationPlanStatus.ConsumedContinue)
+		{
+			await SchedulePetFeedingCheckAsync(player, updatedPet.ObjectId, foodItem.ObjectId, plan.RemainingRequestedCount);
+			return;
+		}
+
 		await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
 			SubType: 5,
 			FeedProgressData: feedProgressData,
