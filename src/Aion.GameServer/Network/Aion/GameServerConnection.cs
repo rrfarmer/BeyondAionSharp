@@ -5555,9 +5555,20 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(new SmInventoryUpdateItem(purchasePlan.BuyerKinahUpdate, buyerKinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
 		if (purchasePlan.SellerKinahUpdate != null
 			&& itemTemplates.GetItemTemplate(purchasePlan.SellerKinahUpdate.ItemId) is { } sellerKinahTemplate)
+		{
+			if (purchasePlan.SellerKinahWasCreated)
+			{
+				var zeroCountKinah = CopyInventoryItem(purchasePlan.SellerKinahUpdate, count: 0);
+				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, SmInventoryAddItem.CreateItemCollect(zeroCountKinah, sellerKinahTemplate));
+				await SendPacketToPlayerOrSelfAsync(
+					seller.ObjectId,
+					SmCubeUpdate.CubeSizeSnapshot(projectedSellerCubeItemsCount, seller.NpcExpands, seller.QuestExpands, seller.ItemExpands));
+			}
+
 			await SendPacketToPlayerOrSelfAsync(
 				seller.ObjectId,
 				new SmInventoryUpdateItem(purchasePlan.SellerKinahUpdate, sellerKinahTemplate, SmInventoryUpdateItem.IncreaseKinahCollect));
+		}
 		foreach (var sellerMessage in purchasePlan.SellerMessages)
 			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, sellerMessage);
 

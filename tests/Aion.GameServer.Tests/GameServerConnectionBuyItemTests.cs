@@ -1007,6 +1007,7 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Single(purchasePlan.BuyerAddedItems);
 		Assert.Equal(10_000, purchasePlan.BuyerKinahUpdate!.Count);
 		Assert.Equal(10_000, purchasePlan.SellerKinahUpdate!.Count);
+		Assert.True(purchasePlan.SellerKinahWasCreated);
 		Assert.True(purchasePlan.ShouldCloseSellerStore);
 
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
@@ -1040,6 +1041,21 @@ public sealed class GameServerConnectionBuyItemTests
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(sent.Packet), 3001, SmDeleteItem.UseDeleteType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 0);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertInventoryAddItemPayload(
+					Assert.IsType<SmInventoryAddItem>(sent.Packet),
+					expectedObjectId: 9002,
+					expectedItemId: InventoryItemFactory.KinahItemId,
+					expectedCount: 0,
+					expectedAddType: SmInventoryAddItem.ItemCollect);
 			},
 			sent =>
 			{
@@ -1151,6 +1167,7 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(2, purchasePlan.BuyerAddedItems.Count);
 		Assert.Equal(11_000, purchasePlan.BuyerKinahUpdate!.Count);
 		Assert.Equal(9_000, purchasePlan.SellerKinahUpdate!.Count);
+		Assert.True(purchasePlan.SellerKinahWasCreated);
 		Assert.True(purchasePlan.ShouldCloseSellerStore);
 
 		Assert.DoesNotContain(sellerPlayer.InventoryItems, item => item.ObjectId is 3001 or 3002);
@@ -1179,6 +1196,21 @@ public sealed class GameServerConnectionBuyItemTests
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(sent.Packet), 3002, SmDeleteItem.UseDeleteType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 0);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertInventoryAddItemPayload(
+					Assert.IsType<SmInventoryAddItem>(sent.Packet),
+					expectedObjectId: 9003,
+					expectedItemId: InventoryItemFactory.KinahItemId,
+					expectedCount: 0,
+					expectedAddType: SmInventoryAddItem.ItemCollect);
 			},
 			sent =>
 			{
@@ -1277,6 +1309,7 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Empty(purchasePlan.SellerDeletedItemObjectIds);
 		var sellerPlanUpdate = Assert.Single(purchasePlan.SellerItemUpdates);
 		Assert.Equal((3001, 2L, 3), (sellerPlanUpdate.ObjectId, sellerPlanUpdate.Count, sellerPlanUpdate.PackCount));
+		Assert.True(purchasePlan.SellerKinahWasCreated);
 		Assert.False(purchasePlan.ShouldCloseSellerStore);
 
 		var storeItem = Assert.Single(sellerPlayer.PrivateStoreItems);
@@ -1300,6 +1333,21 @@ public sealed class GameServerConnectionBuyItemTests
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
 				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertInventoryAddItemPayload(
+					Assert.IsType<SmInventoryAddItem>(sent.Packet),
+					expectedObjectId: 9002,
+					expectedItemId: InventoryItemFactory.KinahItemId,
+					expectedCount: 0,
+					expectedAddType: SmInventoryAddItem.ItemCollect);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 1);
 			},
 			sent =>
 			{
@@ -1388,6 +1436,7 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Empty(purchasePlan.SellerDeletedItemObjectIds);
 		Assert.Empty(purchasePlan.SellerItemUpdates);
 		Assert.Empty(purchasePlan.BuyerAddedItems);
+		Assert.False(purchasePlan.SellerKinahWasCreated);
 		Assert.False(purchasePlan.ShouldCloseSellerStore);
 
 		var storeItem = Assert.Single(sellerPlayer.PrivateStoreItems);
@@ -1588,6 +1637,26 @@ public sealed class GameServerConnectionBuyItemTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal(expectedDeleteType, reader.ReadC());
+	}
+
+	private static void AssertInventoryAddItemPayload(
+		SmInventoryAddItem packet,
+		int expectedObjectId,
+		int expectedItemId,
+		long expectedCount,
+		int expectedAddType)
+	{
+		var addTypeField = typeof(SmInventoryAddItem).GetField("_addType", BindingFlags.Instance | BindingFlags.NonPublic);
+		var itemsField = typeof(SmInventoryAddItem).GetField("_items", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(addTypeField);
+		Assert.NotNull(itemsField);
+		Assert.Equal(expectedAddType, Assert.IsType<int>(addTypeField.GetValue(packet)));
+
+		var items = Assert.IsAssignableFrom<IReadOnlyList<SmInventoryAddItem.InventoryPacketItem>>(itemsField.GetValue(packet));
+		var packetItem = Assert.Single(items);
+		Assert.Equal(expectedObjectId, packetItem.Item.ObjectId);
+		Assert.Equal(expectedItemId, packetItem.Item.ItemId);
+		Assert.Equal(expectedCount, packetItem.Item.Count);
 	}
 
 	private static void AssertCubeUpdatePayload(SmCubeUpdate packet, int expectedItemsCount)

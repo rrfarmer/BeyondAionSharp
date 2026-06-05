@@ -41,7 +41,8 @@ public sealed record PrivateStorePurchasePlan(
 	bool WouldWriteAuditLog,
 	string? AuditMessage,
 	bool ShouldCloseSellerStore,
-	string JavaSource)
+	string JavaSource,
+	bool SellerKinahWasCreated = false)
 {
 	public bool IsLive => false;
 }
@@ -352,6 +353,7 @@ public static class PrivateStorePurchasePlanService
 
 		var buyerKinahUpdate = CopyInventoryItem(buyerKinah, buyerKinah.Count - totalPrice);
 		var sellerKinah = sellerInventoryItems.FirstOrDefault(item => item.ItemId == InventoryItemFactory.KinahItemId && item.Location == CubeStorageId);
+		var sellerKinahWasCreated = sellerKinah == null;
 		var sellerKinahUpdate = sellerKinah == null
 			? new InventoryItem
 			{
@@ -387,7 +389,8 @@ public static class PrivateStorePurchasePlanService
 			WouldWriteAuditLog: false,
 			AuditMessage: null,
 			ShouldCloseSellerStore: remainingStoreItemObjectIds.Length == 0,
-			javaSource);
+			javaSource,
+			SellerKinahWasCreated: sellerKinahWasCreated);
 	}
 
 	private static bool TryCalculatePrice(IReadOnlyList<PrivateStorePurchaseItemRequest> boughtItems, out long totalPrice)
@@ -427,7 +430,8 @@ public static class PrivateStorePurchasePlanService
 			wouldWriteAuditLog,
 			auditMessage,
 			ShouldCloseSellerStore: false,
-			javaSource);
+			javaSource,
+			SellerKinahWasCreated: false);
 	}
 
 	private static void ApplyBuyerAddPlan(List<InventoryItem> workingBuyerItems, InventoryAddPlan addPlan)
