@@ -3399,6 +3399,19 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SavePlayerPetMoodDataAsync(
+			int playerObjectId,
+			int petObjectId,
+			long moodStartedMillis,
+			int shuggleCounter,
+			long moodCooldownStartedMillis,
+			long giftCooldownStartedMillis,
+			DateTime? despawnTime,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
 			int playerObjectId,
 			int petObjectId,

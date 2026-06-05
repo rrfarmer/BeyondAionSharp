@@ -2358,6 +2358,70 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetDismissPersistsMoodDataAndRefreshesDespawnTime()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Mood Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: 11_000,
+				ShuggleCounter: 3,
+				MoodCooldownStartedMillis: 22_000,
+				GiftCooldownStartedMillis: 33_000,
+				DespawnTime: DateTimeOffset.FromUnixTimeSeconds(10)),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		fixture.World.TryAddObject(
+			7001,
+			new Aion.GameServer.Model.GameObjects.WorldPet(
+				7001,
+				900210,
+				"Mood Mate",
+				player.ObjectId,
+				player.Position,
+				188051001,
+				HasMerchantFunction: false,
+				MerchantSellModifier: null));
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		var beforeDismiss = DateTime.Now.AddSeconds(-1);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Dismiss, templateId: 123456));
+
+		var afterDismiss = DateTime.Now.AddSeconds(1);
+		Assert.Equal(1, playerRepository.SavePlayerPetMoodDataCalls);
+		Assert.True(playerRepository.SavedPlayerPetMoodData.HasValue);
+		var savedMood = playerRepository.SavedPlayerPetMoodData.Value;
+		Assert.Equal(player.ObjectId, savedMood.PlayerObjectId);
+		Assert.Equal(7001, savedMood.PetObjectId);
+		Assert.Equal(11_000, savedMood.MoodStartedMillis);
+		Assert.Equal(3, savedMood.ShuggleCounter);
+		Assert.Equal(22_000, savedMood.MoodCooldownStartedMillis);
+		Assert.Equal(33_000, savedMood.GiftCooldownStartedMillis);
+		Assert.NotNull(savedMood.DespawnTime);
+		Assert.InRange(savedMood.DespawnTime.Value, beforeDismiss, afterDismiss);
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.NotNull(pet.DespawnTime);
+		Assert.InRange(pet.DespawnTime.Value.DateTime, beforeDismiss, afterDismiss);
+		Assert.False(fixture.World.TryGetObject(7001, out _));
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDismissPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedObjectId: 7001,
+			expectedAnimation: ObjectDeleteAnimation.FadeOut);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetDismissWithoutActivePetDoesNothing()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();

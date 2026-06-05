@@ -16,7 +16,12 @@ public sealed record PlayerOwnedPet(
 	bool CancelFeed = false,
 	bool IsLooting = false,
 	bool IsSelling = false,
-	PetHungryLevel HungryLevel = PetHungryLevel.Hungry)
+	PetHungryLevel HungryLevel = PetHungryLevel.Hungry,
+	DateTimeOffset? DespawnTime = null,
+	long MoodStartedMillis = 0,
+	int ShuggleCounter = 0,
+	long MoodCooldownStartedMillis = 0,
+	long GiftCooldownStartedMillis = 0)
 {
 	public int BirthdayEpochSeconds => Birthday is null ? 0 : checked((int)(Birthday.Value.ToUnixTimeMilliseconds() / 1000));
 

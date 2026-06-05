@@ -342,6 +342,28 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SavePlayerPetMoodDataAsync(
+		Player player,
+		int petObjectId,
+		long moodStartedMillis,
+		int shuggleCounter,
+		long moodCooldownStartedMillis,
+		long giftCooldownStartedMillis,
+		DateTime? despawnTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetController.onDelete -> PlayerPetsDAO.savePetMoodData.
+		return _repository.SavePlayerPetMoodDataAsync(
+			player.ObjectId,
+			petObjectId,
+			moodStartedMillis,
+			shuggleCounter,
+			moodCooldownStartedMillis,
+			giftCooldownStartedMillis,
+			despawnTime,
+			cancellationToken);
+	}
+
 	public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
 		Player player,
 		int petObjectId,

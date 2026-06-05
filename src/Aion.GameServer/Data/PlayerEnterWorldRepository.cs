@@ -240,6 +240,16 @@ public interface IPlayerEnterWorldRepository
 		long reuseTime,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerPetMoodDataAsync(
+		int playerObjectId,
+		int petObjectId,
+		long moodStartedMillis,
+		int shuggleCounter,
+		long moodCooldownStartedMillis,
+		long giftCooldownStartedMillis,
+		DateTime? despawnTime,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerPetFeedConsumeMutationAsync(
 		int playerObjectId,
 		int petObjectId,
@@ -477,6 +487,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int SavePlayerPetFeedStatusCalls { get; private set; }
 
 	public (int PlayerObjectId, int PetObjectId, int HungryLevel, int FeedProgress, long ReuseTime)? SavedPlayerPetFeedStatus { get; private set; }
+
+	public bool SavePlayerPetMoodDataResult { get; init; } = true;
+
+	public int SavePlayerPetMoodDataCalls { get; private set; }
+
+	public (int PlayerObjectId, int PetObjectId, long MoodStartedMillis, int ShuggleCounter, long MoodCooldownStartedMillis, long GiftCooldownStartedMillis, DateTime? DespawnTime)?
+		SavedPlayerPetMoodData { get; private set; }
 
 	public bool SavePlayerPetFeedConsumeMutationResult { get; init; } = true;
 
@@ -980,6 +997,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SavePlayerPetFeedStatusCalls++;
 		SavedPlayerPetFeedStatus = (playerObjectId, petObjectId, hungryLevel, feedProgress, reuseTime);
 		return Task.FromResult(SavePlayerPetFeedStatusResult);
+	}
+
+	public Task<bool> SavePlayerPetMoodDataAsync(
+		int playerObjectId,
+		int petObjectId,
+		long moodStartedMillis,
+		int shuggleCounter,
+		long moodCooldownStartedMillis,
+		long giftCooldownStartedMillis,
+		DateTime? despawnTime,
+		CancellationToken cancellationToken = default)
+	{
+		SavePlayerPetMoodDataCalls++;
+		SavedPlayerPetMoodData = (
+			playerObjectId,
+			petObjectId,
+			moodStartedMillis,
+			shuggleCounter,
+			moodCooldownStartedMillis,
+			giftCooldownStartedMillis,
+			despawnTime);
+		return Task.FromResult(SavePlayerPetMoodDataResult);
 	}
 
 	public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
@@ -5718,7 +5757,12 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					projection.FeedProgress?.GetDataForPacket() ?? 0,
 					projection.Timing.RefeedTimeMillis,
 					projection.DopingBag?.GetItems() ?? [],
-					HungryLevel: projection.FeedProgress?.HungryLevel ?? PetHungryLevel.Hungry));
+					HungryLevel: projection.FeedProgress?.HungryLevel ?? PetHungryLevel.Hungry,
+					DespawnTime: projection.DespawnTime,
+					MoodStartedMillis: projection.Timing.StartMoodTimeMillis,
+					ShuggleCounter: projection.Timing.ShuggleCounter,
+					MoodCooldownStartedMillis: projection.Timing.MoodCooldownStartedMillis,
+					GiftCooldownStartedMillis: projection.Timing.GiftCooldownStartedMillis));
 			}
 
 			return pets;
@@ -5837,6 +5881,47 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save feed status for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePlayerPetMoodDataAsync(
+		int playerObjectId,
+		int petObjectId,
+		long moodStartedMillis,
+		int shuggleCounter,
+		long moodCooldownStartedMillis,
+		long giftCooldownStartedMillis,
+		DateTime? despawnTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerPetsDAO.savePetMoodData stores mood counters and despawn_time by pet id.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE player_pets
+				SET mood_started = ?, counter = ?, mood_cd_started = ?, gift_cd_started = ?, despawn_time = ?
+				WHERE id = ? AND player_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = moodStartedMillis },
+					new MySqlParameter { Value = shuggleCounter },
+					new MySqlParameter { Value = moodCooldownStartedMillis },
+					new MySqlParameter { Value = giftCooldownStartedMillis },
+					new MySqlParameter { Value = despawnTime ?? (object)DBNull.Value },
+					new MySqlParameter { Value = petObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save mood data for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
 			return false;
 		}
 	}

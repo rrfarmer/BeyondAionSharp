@@ -1083,7 +1083,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		CancelPetRefeedTask(petObjectId);
 		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
 		if (ownedPet != null)
+		{
 			await PersistActivePetFeedStatusOnDeleteAsync(player, ownedPet);
+			await PersistActivePetMoodDataOnDeleteAsync(player, ownedPet);
+		}
 
 		_world?.TryRemoveObject(petObjectId, out _);
 		player.HasPetSummon = false;
@@ -1093,6 +1096,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java World.removeObject despawns pets with ObjectDeleteAnimation.FADE_OUT before PetController.onDelete.
 		if (sendDismissPacket)
 			await SendPacketAsync(new SmPet(petObjectId, ObjectDeleteAnimation.FadeOut));
+	}
+
+	private async Task PersistActivePetMoodDataOnDeleteAsync(Player player, PlayerOwnedPet ownedPet)
+	{
+		// Java parity: PetController.onDelete sets despawnTime to now and calls PlayerPetsDAO.savePetMoodData.
+		var despawnTime = DateTimeOffset.Now;
+		var updatedPet = ownedPet with { DespawnTime = despawnTime };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? pet with { DespawnTime = despawnTime } : pet)
+			.ToArray();
+
+		if (_playerEnterWorldService != null)
+		{
+			await _playerEnterWorldService.SavePlayerPetMoodDataAsync(
+				player,
+				updatedPet.ObjectId,
+				updatedPet.MoodStartedMillis,
+				updatedPet.ShuggleCounter,
+				updatedPet.MoodCooldownStartedMillis,
+				updatedPet.GiftCooldownStartedMillis,
+				updatedPet.DespawnTime?.DateTime);
+		}
 	}
 
 	private async Task PersistActivePetFeedStatusOnDeleteAsync(Player player, PlayerOwnedPet ownedPet)
