@@ -5503,6 +5503,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (itemTemplates == null)
 			return;
 
+		var sellerCubeItemsCountBeforeDeletedItems = seller.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
+		var buyerCubeItemsCountBeforeAddedItems = buyer.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		ApplyInventoryItemUpdates(seller, purchasePlan.SellerItemUpdates);
 		if (purchasePlan.SellerDeletedItemObjectIds.Count != 0)
 			seller.InventoryItems = seller.InventoryItems
@@ -5521,20 +5523,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!purchasePlan.ShouldCloseSellerStore)
 			UpdateSellerPrivateStoreItems(seller, GetAppliedPrivateStoreBoughtItems(purchasePlan));
 
+		var projectedSellerCubeItemsCount = sellerCubeItemsCountBeforeDeletedItems;
 		foreach (var deletedItemObjectId in purchasePlan.SellerDeletedItemObjectIds)
 		{
+			if (projectedSellerCubeItemsCount > 0)
+				projectedSellerCubeItemsCount--;
 			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(deletedItemObjectId, SmDeleteItem.UseDeleteType));
-			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, SmCubeUpdate.CubeSize(seller));
+			await SendPacketToPlayerOrSelfAsync(
+				seller.ObjectId,
+				SmCubeUpdate.CubeSizeSnapshot(projectedSellerCubeItemsCount, seller.NpcExpands, seller.QuestExpands, seller.ItemExpands));
 		}
 		foreach (var sellerItem in purchasePlan.SellerItemUpdates)
 			if (itemTemplates.GetItemTemplate(sellerItem.ItemId) is { } template)
 				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmInventoryUpdateItem(sellerItem, template, SmInventoryUpdateItem.DecreaseItemUse));
+		var projectedBuyerCubeItemsCount = buyerCubeItemsCountBeforeAddedItems;
 		foreach (var buyerItem in purchasePlan.BuyerAddedItems)
 		{
 			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
 			{
+				if (buyerItem.Location == CubeStorageId && buyerItem.ItemId != KinahItemId)
+					projectedBuyerCubeItemsCount++;
 				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(buyerItem, template));
-				await SendPacketAsync(SmCubeUpdate.CubeSize(buyer));
+				await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedBuyerCubeItemsCount, buyer.NpcExpands, buyer.QuestExpands, buyer.ItemExpands));
 			}
 		}
 		foreach (var buyerItem in purchasePlan.BuyerUpdatedItems)

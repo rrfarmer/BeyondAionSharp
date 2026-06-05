@@ -1062,6 +1062,149 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreMultiAddUsesPerItemCubeSnapshots()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		activePlayer.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 8001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 20_000,
+				OwnerId = activePlayer.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		var sellerPlayer = new Player
+		{
+			ObjectId = 9101,
+			Name = "StoreSeller",
+			Race = activePlayer.Race,
+			IsOnline = true,
+			CreatureState = PlayerCreatureState.PrivateShop,
+			PrivateStoreMessage = "Practice wares",
+			Position = new WorldPosition(210010000, 10, 0, 0, 0),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 3001,
+					ItemId = 100000001,
+					Count = 1,
+					OwnerId = 9101,
+					Location = 0,
+					Slot = 1,
+				},
+				new InventoryItem
+				{
+					ObjectId = 3002,
+					ItemId = 100000002,
+					Count = 1,
+					OwnerId = 9101,
+					Location = 0,
+					Slot = 2,
+				},
+			],
+			PrivateStoreItems =
+			[
+				new PrivateStoreListedItemSummary(
+					StoreIndex: 0,
+					ItemObjectId: 3001,
+					ItemId: 100000001,
+					Count: 1,
+					PricePerItem: 4_000,
+					ItemName: "Practice Sword"),
+				new PrivateStoreListedItemSummary(
+					StoreIndex: 1,
+					ItemObjectId: 3002,
+					ItemId: 100000002,
+					Count: 1,
+					PricePerItem: 5_000,
+					ItemName: "Practice Dagger"),
+			],
+		};
+		membership.UpsertKnownPlayers(
+			activePlayer.ObjectId,
+			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000),
+				Template(100000002, price: 1_000),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(9001));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(0, 1), (1, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.NotNull(plan.PrivateStorePurchasePlan);
+		var purchasePlan = plan.PrivateStorePurchasePlan;
+		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, purchasePlan.Status);
+		Assert.Equal([3001, 3002], purchasePlan.SellerDeletedItemObjectIds);
+		Assert.Equal(2, purchasePlan.BuyerAddedItems.Count);
+		Assert.Equal(11_000, purchasePlan.BuyerKinahUpdate!.Count);
+		Assert.Equal(9_000, purchasePlan.SellerKinahUpdate!.Count);
+		Assert.True(purchasePlan.ShouldCloseSellerStore);
+
+		Assert.DoesNotContain(sellerPlayer.InventoryItems, item => item.ObjectId is 3001 or 3002);
+		Assert.Contains(activePlayer.InventoryItems, item => item.ObjectId == 9001 && item.ItemId == 100000001);
+		Assert.Contains(activePlayer.InventoryItems, item => item.ObjectId == 9002 && item.ItemId == 100000002);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+		Assert.Collection(
+			fixture.Registry.DirectPackets,
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(sent.Packet), 3001, SmDeleteItem.UseDeleteType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 1);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(sent.Packet), 3002, SmDeleteItem.UseDeleteType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 0);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			});
+		var closeBroadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
+		Assert.Equal(sellerPlayer.ObjectId, closeBroadcast.SourceObjectId);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStorePartialStackKeepsStoreOpenAndDecrementsPackCount()
 	{
 		var membership = new PlayerKnownListMembershipService();
