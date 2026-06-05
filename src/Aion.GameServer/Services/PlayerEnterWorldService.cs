@@ -295,6 +295,15 @@ public sealed class PlayerEnterWorldService
 		return await _repository.DeleteInventoryItemAsync(player.ObjectId, itemObjectId, cancellationToken);
 	}
 
+	public Task<bool> DeletePlayerPetAsync(
+		Player player,
+		int petObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetList.deletePet -> PlayerPetsDAO.removePlayerPet(petCommonData.getObjectId()).
+		return _repository.DeletePlayerPetAsync(player.ObjectId, petObjectId, cancellationToken);
+	}
+
 	public Task<bool> SaveInventoryItemSlotAsync(
 		Player player,
 		int itemObjectId,

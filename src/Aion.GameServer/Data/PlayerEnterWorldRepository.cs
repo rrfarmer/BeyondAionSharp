@@ -221,6 +221,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> DeletePlayerPetAsync(int playerObjectId, int petObjectId, CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
 	Task<bool> SaveItemChargeMutationAsync(
@@ -422,6 +424,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public IReadOnlyList<PlayerOwnedPet> LoadedPlayerPets { get; init; } = Array.Empty<PlayerOwnedPet>();
 
 	public bool MarkPlayerOnlineResult { get; init; }
+
+	public bool DeletePlayerPetResult { get; init; } = true;
+
+	public int DeletePlayerPetCalls { get; private set; }
+
+	public (int PlayerObjectId, int PetObjectId)? DeletedPlayerPet { get; private set; }
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
@@ -880,6 +888,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(LoadedPlayerPets);
+	}
+
+	public Task<bool> DeletePlayerPetAsync(int playerObjectId, int petObjectId, CancellationToken cancellationToken = default)
+	{
+		DeletePlayerPetCalls++;
+		DeletedPlayerPet = (playerObjectId, petObjectId);
+		return Task.FromResult(DeletePlayerPetResult);
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -5600,6 +5615,30 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load pets for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<PlayerOwnedPet>();
+		}
+	}
+
+	public async Task<bool> DeletePlayerPetAsync(int playerObjectId, int petObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerPetsDAO.removePlayerPet deletes player_pets by id after PetList.deletePet removes it from memory.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_pets WHERE id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = petObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete pet {PetObjectId} for player {PlayerObjectId}", petObjectId, playerObjectId);
+			return false;
 		}
 	}
 

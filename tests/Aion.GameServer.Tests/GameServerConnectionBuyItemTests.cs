@@ -2172,6 +2172,90 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetSurrenderDeletesOwnedPetAndSendsSurrenderPacket()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+			new PlayerOwnedPet(
+				ObjectId: 7002,
+				TemplateId: 900220,
+				Name: "Warehouse Mate",
+				Decoration: 188051002),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		fixture.World.TryAddObject(
+			7001,
+			new Aion.GameServer.Model.GameObjects.WorldPet(
+				7001,
+				900210,
+				"Merchant Mate",
+				player.ObjectId,
+				player.Position,
+				188051001,
+				HasMerchantFunction: true,
+				MerchantSellModifier: 15));
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Surrender, templateId: 900210));
+
+		Assert.Equal(1, playerRepository.DeletePlayerPetCalls);
+		Assert.Equal((player.ObjectId, 7001), playerRepository.DeletedPlayerPet);
+		Assert.False(player.HasPetSummon);
+		Assert.Equal((0, 0), (player.PetSummonObjectId, player.PetSummonNpcId));
+		Assert.False(fixture.World.TryGetObject(7001, out _));
+		var remainingPet = Assert.Single(player.OwnedPets);
+		Assert.Equal((7002, 900220), (remainingPet.ObjectId, remainingPet.TemplateId));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetDismissPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedObjectId: 7001,
+				expectedAnimation: ObjectDeleteAnimation.FadeOut),
+			packet => AssertPetSurrenderPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedTemplateId: 900210,
+				expectedObjectId: 7001));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetSurrenderWithoutOwnedPetDoesNothing()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7002,
+				TemplateId: 900220,
+				Name: "Warehouse Mate",
+				Decoration: 188051002),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Surrender, templateId: 900210));
+
+		Assert.Equal(0, playerRepository.DeletePlayerPetCalls);
+		var remainingPet = Assert.Single(player.OwnedPets);
+		Assert.Equal((7002, 900220), (remainingPet.ObjectId, remainingPet.TemplateId));
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -3456,6 +3540,20 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal((int)PetAction.Dismiss, reader.ReadH());
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal((byte)expectedAnimation, reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetSurrenderPacket(
+		SmPet packet,
+		int expectedTemplateId,
+		int expectedObjectId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Surrender, reader.ReadH());
+		Assert.Equal(expectedTemplateId, reader.ReadD());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 

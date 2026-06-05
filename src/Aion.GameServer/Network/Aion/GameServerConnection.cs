@@ -364,6 +364,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case PetAction.Dismiss:
 				await HandlePetDismissAsync(player);
 				break;
+			case PetAction.Surrender:
+				await HandlePetSurrenderAsync(player, packet.TemplateId);
+				break;
 		}
 	}
 
@@ -423,6 +426,33 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
 			return;
 
+		await ClearActivePetAsync(player, sendDismissPacket: true);
+	}
+
+	private async Task HandlePetSurrenderAsync(Player player, int templateId)
+	{
+		// Java parity: CM_PET SURRENDER -> PetAdoptionService.surrenderPet(player, templateId).
+		var ownedPet = player.GetOwnedPet(templateId);
+		if (ownedPet == null)
+			return;
+
+		var persisted = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.DeletePlayerPetAsync(player, ownedPet.ObjectId);
+		if (!persisted)
+			return;
+
+		if (player.HasPetSummon && player.PetSummonObjectId == ownedPet.ObjectId)
+			await ClearActivePetAsync(player, sendDismissPacket: true);
+
+		player.OwnedPets = player.OwnedPets
+			.Where(pet => pet.TemplateId != templateId)
+			.ToArray();
+
+		await SendPacketAsync(new SmPet(new SmPetSurrenderSnapshot(ownedPet.TemplateId, ownedPet.ObjectId)));
+	}
+
+	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
+	{
 		var petObjectId = player.PetSummonObjectId;
 		_world?.TryRemoveObject(petObjectId, out _);
 		player.HasPetSummon = false;
@@ -430,7 +460,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.PetSummonNpcId = 0;
 
 		// Java World.removeObject despawns pets with ObjectDeleteAnimation.FADE_OUT before PetController.onDelete.
-		await SendPacketAsync(new SmPet(petObjectId, ObjectDeleteAnimation.FadeOut));
+		if (sendDismissPacket)
+			await SendPacketAsync(new SmPet(petObjectId, ObjectDeleteAnimation.FadeOut));
 	}
 
 	internal static int GetGeneralInfoWarehouseRestrictionFlag(
