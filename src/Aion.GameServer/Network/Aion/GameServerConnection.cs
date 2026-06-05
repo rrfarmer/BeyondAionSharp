@@ -5486,6 +5486,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			repurchaseStateSnapshots));
 		await TryExecutePrivateStorePurchaseAsync(player, packet, targetKind, privateStoreItems, privateStorePurchasePlan);
 		await TryExecuteSellToShopAsync(player, packet, targetKind, sellToShopPlan);
+		await TryExecuteSellForApToShopAsync(player, packet, targetKind, sellForApToShopPlan);
 		await TryExecuteBuyFromShopPurchaseAsync(player, packet, targetKind, buyFromShopTradeTemplate, buyTransactionPlan);
 	}
 
@@ -5588,6 +5589,64 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(sellPlan.KinahUpdate, kinahTemplate));
 		else
 			await SendPacketAsync(new SmInventoryUpdateItem(sellPlan.KinahUpdate, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahSell));
+	}
+
+	private async Task TryExecuteSellForApToShopAsync(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		TradeSellForApToShopPlan? sellPlan)
+	{
+		// Java parity: CM_BUY_ITEM.runImpl action 1 -> TradeService.performSellForAPToShop.
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemSellToShopCompositionPlanService.SellToShopTradeActionId
+			|| sellPlan == null)
+			return;
+
+		if (sellPlan.Status != TradeSellForApToShopPlanStatus.PlanCreated)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return;
+
+		var workingItems = player.InventoryItems.ToList();
+		foreach (var reward in sellPlan.AbyssPointRewards)
+		{
+			var item = workingItems.FirstOrDefault(candidate => candidate.ObjectId == reward.ItemObjectId);
+			if (item == null || item.Count != reward.Count)
+				return;
+		}
+
+		var abyssPointsPlan = AbyssPointsService.CreateAddApPlan(player, sellPlan.TotalAbyssPoints, CreateAbyssPointsOptions());
+		if (!abyssPointsPlan.Applied || abyssPointsPlan.UpdatedRank == null)
+			return;
+
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SaveNpcShopApSellMutationAsync(player, sellPlan, abyssPointsPlan.UpdatedRank))
+		{
+			return;
+		}
+
+		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
+		foreach (var deletedObjectId in sellPlan.DeletedItemObjectIds)
+			workingItems.RemoveAll(item => item.ObjectId == deletedObjectId);
+		player.InventoryItems = workingItems.ToArray();
+		player.AbyssRank = abyssPointsPlan.UpdatedRank;
+
+		foreach (var deletedObjectId in sellPlan.DeletedItemObjectIds)
+		{
+			projectedCubeItemsCount--;
+			await SendPacketAsync(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
+
+		foreach (var playerPacket in abyssPointsPlan.PlayerPackets)
+			await SendPacketAsync(playerPacket);
+		if (staticData != null)
+			await ApplyAbyssRankChangedSideEffectsAsync(player, abyssPointsPlan.OldRank, staticData);
 	}
 
 	private async Task TryExecuteBuyFromShopPurchaseAsync(

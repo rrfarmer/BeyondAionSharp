@@ -417,6 +417,22 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveNpcShopApSellMutationAsync(
+		Player player,
+		TradeSellForApToShopPlan sellPlan,
+		PlayerAbyssRank abyssRank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: TradeService.performSellForAPToShop persists inventory decrease
+		// and AbyssPointsService.addAp rank state after successful AP-item resale.
+		return _repository.SaveNpcShopApSellMutationAsync(
+			player.ObjectId,
+			abyssRank,
+			Array.Empty<InventoryItem>(),
+			sellPlan.DeletedItemObjectIds,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

@@ -382,6 +382,13 @@ public interface IPlayerEnterWorldRepository
 		bool kinahWasCreated,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveNpcShopApSellMutationAsync(
+		int playerObjectId,
+		PlayerAbyssRank abyssRank,
+		IReadOnlyList<InventoryItem> sellerItemUpdates,
+		IReadOnlyList<int> sellerDeletedItemObjectIds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -1092,6 +1099,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult(SaveNpcShopSellMutationResult);
 	}
 
+	public bool SaveNpcShopApSellMutationResult { get; init; } = true;
+
+	public int SaveNpcShopApSellMutationCalls { get; private set; }
+
+	public NpcShopApSellPersistenceCapture? NpcShopApSellPersistence { get; private set; }
+
+	public Task<bool> SaveNpcShopApSellMutationAsync(
+		int playerObjectId,
+		PlayerAbyssRank abyssRank,
+		IReadOnlyList<InventoryItem> sellerItemUpdates,
+		IReadOnlyList<int> sellerDeletedItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		SaveNpcShopApSellMutationCalls++;
+		NpcShopApSellPersistence = new NpcShopApSellPersistenceCapture(
+			playerObjectId,
+			abyssRank,
+			sellerItemUpdates,
+			sellerDeletedItemObjectIds);
+		return Task.FromResult(SaveNpcShopApSellMutationResult);
+	}
+
 	public Task<bool> SaveInventoryItemPackCountAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -1180,6 +1209,12 @@ public sealed record NpcShopSellPersistenceCapture(
 	IReadOnlyList<int> SellerDeletedItemObjectIds,
 	InventoryItem KinahItem,
 	bool KinahWasCreated);
+
+public sealed record NpcShopApSellPersistenceCapture(
+	int PlayerObjectId,
+	PlayerAbyssRank AbyssRank,
+	IReadOnlyList<InventoryItem> SellerItemUpdates,
+	IReadOnlyList<int> SellerDeletedItemObjectIds);
 
 internal sealed record ItemStonePersistenceRow(
 	int ItemObjectId,
@@ -2232,6 +2267,45 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save NPC shop sell mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveNpcShopApSellMutationAsync(
+		int playerObjectId,
+		PlayerAbyssRank abyssRank,
+		IReadOnlyList<InventoryItem> sellerItemUpdates,
+		IReadOnlyList<int> sellerDeletedItemObjectIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: TradeService.performSellForAPToShop decreases inventory and
+		// AbyssPointsService.addAp persists the player's Abyss rank state.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await SaveAbyssRankAsync(connection, transaction, playerObjectId, abyssRank, cancellationToken);
+
+			foreach (var item in sellerItemUpdates)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var itemObjectId in sellerDeletedItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, itemObjectId, cancellationToken))
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save NPC shop AP sell mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

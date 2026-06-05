@@ -1517,13 +1517,15 @@ public sealed class GameServerConnectionBuyItemTests
 	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcAbyssSellActionHydratesDisabledApSellPlanFromInventoryFacts()
 	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
 		await using var fixture = await BuyItemFixture.CreateAsync(
 			buyItemTradeLists: CreateTradeLists(
 				new TradeListTemplateSummary(700001, [129], NpcType: "ABYSS", BuyPriceRate: 35)),
 			buyItemItemTemplates: CreateItemTemplates(
 				Template(100000001, price: 1_000, requiredAbyssPoints: 1_000)),
 			buyItemGoodsLists: CreateGoodsLists(
-				new GoodsListSummary(129, Items: [new GoodsListItemSummary(100000001)])));
+				new GoodsListSummary(129, Items: [new GoodsListItemSummary(100000001)])),
+			playerEnterWorldRepository: playerRepository);
 		var player = CreatePlayer();
 		player.InventoryItems =
 		[
@@ -1568,7 +1570,20 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.True(outcome.SellForApToShopOutcomePlan.WouldMutateAbyssPoints);
 		Assert.True(outcome.WouldSendPackets);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
-		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(1, playerRepository.SaveNpcShopApSellMutationCalls);
+		var persistence = Assert.IsType<NpcShopApSellPersistenceCapture>(playerRepository.NpcShopApSellPersistence);
+		Assert.Equal(player.ObjectId, persistence.PlayerObjectId);
+		Assert.Equal(700, persistence.AbyssRank.Ap);
+		Assert.Empty(persistence.SellerItemUpdates);
+		Assert.Equal([2001], persistence.SellerDeletedItemObjectIds);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 2001);
+		Assert.Equal(700, player.AbyssRank.Ap);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 2001, SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => Assert.Equal(1320000, Assert.IsType<SmSystemMessage>(packet).MessageId),
+			packet => AssertAbyssRankPayload(Assert.IsType<SmAbyssRank>(packet), expectedAp: 700, expectedRank: 1));
 	}
 
 	[Fact]
