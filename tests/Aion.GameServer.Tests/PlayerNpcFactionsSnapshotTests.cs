@@ -121,6 +121,63 @@ public sealed class PlayerNpcFactionsSnapshotTests
 	}
 
 	[Fact]
+	public void GetReusableDailyQuestIds_MatchesJavaSendDailyQuestAssignedQuestBranch()
+	{
+		var snapshot = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 2_000,
+				State: PlayerNpcFactionQuestState.Noting,
+				QuestId: 35007),
+			new PlayerNpcFactionState(
+				FactionId: 8,
+				IsActive: true,
+				IsMentor: true,
+				TimeEpochSeconds: 2_500,
+				State: PlayerNpcFactionQuestState.Noting,
+				QuestId: 47000),
+			new PlayerNpcFactionState(
+				FactionId: 12,
+				IsActive: false,
+				IsMentor: false,
+				TimeEpochSeconds: 2_500,
+				State: PlayerNpcFactionQuestState.Noting,
+				QuestId: 48000),
+		]);
+
+		var questIds = snapshot.GetReusableDailyQuestIds(currentEpochSeconds: 1_000);
+
+		Assert.Equal([35007, 47000], questIds);
+	}
+
+	[Theory]
+	[InlineData(PlayerNpcFactionQuestState.Noting, 900, 35007)]
+	[InlineData(PlayerNpcFactionQuestState.Noting, 2_000, 0)]
+	[InlineData(PlayerNpcFactionQuestState.Start, 2_000, 35007)]
+	[InlineData(PlayerNpcFactionQuestState.Complete, 2_000, 35007)]
+	public void GetReusableDailyQuestIds_SkipsBranchesThatRequireRandomSelectionOrNoPacket(
+		PlayerNpcFactionQuestState state,
+		int timeEpochSeconds,
+		int questId)
+	{
+		var snapshot = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 2,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: timeEpochSeconds,
+				State: state,
+				QuestId: questId),
+		]);
+
+		Assert.Empty(snapshot.GetReusableDailyQuestIds(currentEpochSeconds: 1_000));
+	}
+
+	[Fact]
 	public void LevelUpPlan_DeactivatesOverLevelActiveFactionAndRecordsJavaSideEffects()
 	{
 		var snapshot = new PlayerNpcFactionsSnapshot(

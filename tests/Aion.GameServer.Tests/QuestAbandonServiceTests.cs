@@ -183,6 +183,43 @@ public sealed class QuestAbandonServiceTests
 	}
 
 	[Fact]
+	public void Abandon_NpcFactionQuestSendsReusableDailyQuestPacketLikeJava()
+	{
+		var activeFaction = new PlayerNpcFactionState(
+			FactionId: 42,
+			IsActive: true,
+			IsMentor: false,
+			TimeEpochSeconds: 2_000,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 1009);
+		var player = PlayerWithQuest(new PlayerQuestState(1009, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.NpcFactions = new PlayerNpcFactionsSnapshot([activeFaction]);
+
+		var result = QuestAbandonService.Abandon(player, 1009, Template(1009, npcFactionId: 42), currentEpochSeconds: 1_000);
+
+		var packet = Assert.Single(result.NpcFactionDailyQuestPackets);
+		Assert.Equal(Convert.FromHexString("06F103000001000000"), SerializeUnencryptedPayload(packet));
+	}
+
+	[Fact]
+	public void Abandon_NpcFactionQuestDoesNotRandomlySelectDailyQuestWithoutEligibleReuse()
+	{
+		var activeFaction = new PlayerNpcFactionState(
+			FactionId: 42,
+			IsActive: true,
+			IsMentor: false,
+			TimeEpochSeconds: 900,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 1009);
+		var player = PlayerWithQuest(new PlayerQuestState(1009, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.NpcFactions = new PlayerNpcFactionsSnapshot([activeFaction]);
+
+		var result = QuestAbandonService.Abandon(player, 1009, Template(1009, npcFactionId: 42), currentEpochSeconds: 1_000);
+
+		Assert.Empty(result.NpcFactionDailyQuestPackets);
+	}
+
+	[Fact]
 	public void Abandon_NpcFactionQuestLeavesInactiveFactionUnchangedLikeJava()
 	{
 		var inactiveFaction = new PlayerNpcFactionState(

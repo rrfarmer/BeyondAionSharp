@@ -58,10 +58,13 @@ public sealed class CompleteAscensionQuestPlanServiceTests
 	[Fact]
 	public void SmQuestActionConstants_MatchJavaActionTypeIds()
 	{
-		// Java: ActionType.ADD=1, ActionType.UPDATE=2, ActionType.ABANDON=3
+		// Java: SM_QUEST_ACTION.ActionType ids.
 		Assert.Equal(1, Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction.AddActionId);
 		Assert.Equal(2, Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction.UpdateActionId);
 		Assert.Equal(3, Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction.AbandonActionId);
+		Assert.Equal(4, Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction.TimerActionId);
+		Assert.Equal(5, Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction.ShareActionId);
+		Assert.Equal(6, Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction.UnknownActionId);
 	}
 
 	[Fact]

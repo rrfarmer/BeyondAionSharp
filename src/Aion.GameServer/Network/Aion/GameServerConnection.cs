@@ -11542,6 +11542,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var packet in result.TimerPackets)
 			await SendPacketAsync(packet, cancellationToken);
 
+		foreach (var packet in result.NpcFactionDailyQuestPackets)
+			await SendPacketAsync(packet, cancellationToken);
+
 		foreach (var deletion in result.WorkItemDeletions)
 		{
 			await SendPacketAsync(new SmDeleteItem(deletion.Item.ObjectId, deletion.DeleteType), cancellationToken);

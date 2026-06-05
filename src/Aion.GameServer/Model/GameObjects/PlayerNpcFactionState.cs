@@ -59,6 +59,30 @@ public sealed class PlayerNpcFactionsSnapshot
 		return _activeNpcFaction[isMentor ? 1 : 0];
 	}
 
+	public IReadOnlyList<int> GetReusableDailyQuestIds(int currentEpochSeconds)
+	{
+		// Java parity breadcrumb: NpcFactions.sendDailyQuest reuses the assigned quest id when
+		// an active NOTING faction still has a future time value. Random replacement selection
+		// through QuestsData.getQuestsByNpcFaction is intentionally handled separately.
+		var questIds = new List<int>();
+		for (var i = 0; i < _activeNpcFaction.Length; i++)
+		{
+			var faction = _activeNpcFaction[i];
+			if (faction == null || !faction.IsActive)
+				continue;
+			if (_timeLimit[i] > currentEpochSeconds)
+				continue;
+			if (faction.State != PlayerNpcFactionQuestState.Noting)
+				continue;
+			if (faction.TimeEpochSeconds <= currentEpochSeconds || faction.QuestId == 0)
+				continue;
+
+			questIds.Add(faction.QuestId);
+		}
+
+		return questIds;
+	}
+
 	public bool CanStartAssignedQuest(int factionId, int questId)
 	{
 		// Java parity breadcrumb: QuestService.startQuest rejects NPC faction quest starts

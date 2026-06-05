@@ -18,6 +18,7 @@ public enum QuestAbandonStatus
 public sealed record QuestAbandonResult(
 	QuestAbandonStatus Status,
 	IReadOnlyList<SmQuestAction> TimerPackets,
+	IReadOnlyList<SmQuestAction> NpcFactionDailyQuestPackets,
 	IReadOnlyList<QuestWorkItemDeletion> WorkItemDeletions,
 	PlayerNpcFactionAbortResult? NpcFactionAbort,
 	int? WorkOrderRecipeId,
@@ -33,7 +34,7 @@ public sealed record QuestWorkItemDeletion(InventoryItem Item, int DeleteType, i
 
 public static class QuestAbandonService
 {
-	public static QuestAbandonResult Abandon(Player player, int questId, NearbyQuestTemplateSummary? template)
+	public static QuestAbandonResult Abandon(Player player, int questId, NearbyQuestTemplateSummary? template, int? currentEpochSeconds = null)
 	{
 		// Java parity: CM_DELETE_QUEST.runImpl clears a visible quest timer before calling QuestService.abandonQuest.
 		var timerPackets = new List<SmQuestAction>();
@@ -41,17 +42,17 @@ public static class QuestAbandonService
 			timerPackets.Add(SmQuestAction.Timer(questId, 0));
 
 		if (template is null)
-			return Result(QuestAbandonStatus.MissingTemplate, timerPackets, [], null, null, null, null, null, refresh: false);
+			return Result(QuestAbandonStatus.MissingTemplate, timerPackets, [], [], null, null, null, null, null, refresh: false);
 		if (template.CannotGiveup)
-			return Result(QuestAbandonStatus.CannotGiveup, timerPackets, [], null, null, null, null, null, refresh: false);
+			return Result(QuestAbandonStatus.CannotGiveup, timerPackets, [], [], null, null, null, null, null, refresh: false);
 
 		var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
 		if (questState is null)
-			return Result(QuestAbandonStatus.MissingQuestState, timerPackets, [], null, null, null, null, null, refresh: false);
+			return Result(QuestAbandonStatus.MissingQuestState, timerPackets, [], [], null, null, null, null, null, refresh: false);
 		if (string.Equals(questState.Status, "COMPLETE", StringComparison.Ordinal))
-			return Result(QuestAbandonStatus.AlreadyComplete, timerPackets, [], null, null, null, questState, questState, refresh: false);
+			return Result(QuestAbandonStatus.AlreadyComplete, timerPackets, [], [], null, null, null, questState, questState, refresh: false);
 		if (string.Equals(questState.Status, "LOCKED", StringComparison.Ordinal))
-			return Result(QuestAbandonStatus.Locked, timerPackets, [], null, null, null, questState, questState, refresh: false);
+			return Result(QuestAbandonStatus.Locked, timerPackets, [], [], null, null, null, questState, questState, refresh: false);
 
 		if (questState.CompleteCount > 0)
 		{
@@ -59,14 +60,16 @@ public static class QuestAbandonService
 			var reset = questState with { Status = "COMPLETE", QuestVars = 0, Flags = 0 };
 			player.Quests = player.Quests.Select(quest => quest.QuestId == questId ? reset : quest).ToArray();
 			var npcFactionAbort = AbortNpcFactionQuest(player, template);
+			var dailyQuestPackets = CreateReusableDailyQuestPackets(npcFactionAbort, player, currentEpochSeconds);
 			var workItemDeletions = RemoveQuestWorkItems(player, template, reset);
-			return Result(QuestAbandonStatus.ResetToComplete, timerPackets, workItemDeletions, npcFactionAbort, GetWorkOrderRecipeId(template), SmQuestAction.Abandon(reset), questState, reset, refresh: true);
+			return Result(QuestAbandonStatus.ResetToComplete, timerPackets, dailyQuestPackets, workItemDeletions, npcFactionAbort, GetWorkOrderRecipeId(template), SmQuestAction.Abandon(reset), questState, reset, refresh: true);
 		}
 
 		player.Quests = player.Quests.Where(quest => quest.QuestId != questId).ToArray();
 		var factionAbort = AbortNpcFactionQuest(player, template);
+		var factionDailyQuestPackets = CreateReusableDailyQuestPackets(factionAbort, player, currentEpochSeconds);
 		var deletions = RemoveQuestWorkItems(player, template, questState);
-		return Result(QuestAbandonStatus.Deleted, timerPackets, deletions, factionAbort, GetWorkOrderRecipeId(template), SmQuestAction.Abandon(questState), questState, null, refresh: true);
+		return Result(QuestAbandonStatus.Deleted, timerPackets, factionDailyQuestPackets, deletions, factionAbort, GetWorkOrderRecipeId(template), SmQuestAction.Abandon(questState), questState, null, refresh: true);
 	}
 
 	private static int? GetWorkOrderRecipeId(NearbyQuestTemplateSummary template)
@@ -91,6 +94,24 @@ public static class QuestAbandonService
 			player.NpcFactions = abort.Snapshot;
 
 		return abort;
+	}
+
+	private static IReadOnlyList<SmQuestAction> CreateReusableDailyQuestPackets(
+		PlayerNpcFactionAbortResult? abort,
+		Player player,
+		int? currentEpochSeconds)
+	{
+		// Java parity: NpcFactions.abortQuest calls sendDailyQuest immediately after setting
+		// the faction state to NOTING. This implements the reuse branch only; when Java would
+		// randomly select a new quest via QuestsData.getQuestsByNpcFaction, C# currently sends none.
+		if (abort?.Applied != true)
+			return Array.Empty<SmQuestAction>();
+
+		var now = currentEpochSeconds ?? CurrentEpochSeconds();
+		return player.NpcFactions
+			.GetReusableDailyQuestIds(now)
+			.Select(questId => SmQuestAction.Unknown(questId))
+			.ToArray();
 	}
 
 	private static IReadOnlyList<QuestWorkItemDeletion> RemoveQuestWorkItems(
@@ -140,6 +161,7 @@ public static class QuestAbandonService
 	private static QuestAbandonResult Result(
 		QuestAbandonStatus status,
 		IReadOnlyList<SmQuestAction> timerPackets,
+		IReadOnlyList<SmQuestAction> npcFactionDailyQuestPackets,
 		IReadOnlyList<QuestWorkItemDeletion> workItemDeletions,
 		PlayerNpcFactionAbortResult? npcFactionAbort,
 		int? workOrderRecipeId,
@@ -148,6 +170,12 @@ public static class QuestAbandonService
 		PlayerQuestState? finalQuestState,
 		bool refresh)
 	{
-		return new QuestAbandonResult(status, timerPackets, workItemDeletions, npcFactionAbort, workOrderRecipeId, abandonPacket, originalQuestState, finalQuestState, refresh);
+		return new QuestAbandonResult(status, timerPackets, npcFactionDailyQuestPackets, workItemDeletions, npcFactionAbort, workOrderRecipeId, abandonPacket, originalQuestState, finalQuestState, refresh);
+	}
+
+	private static int CurrentEpochSeconds()
+	{
+		var epochSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		return epochSeconds > int.MaxValue ? int.MaxValue : (int)epochSeconds;
 	}
 }

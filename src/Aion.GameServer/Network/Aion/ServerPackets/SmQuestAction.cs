@@ -13,6 +13,7 @@ public sealed class SmQuestAction : GameServerPacket
 	public const int AbandonActionId = 3;
 	public const int TimerActionId = 4;
 	public const int ShareActionId = 5;
+	public const int UnknownActionId = 6;
 
 	private readonly int _actionId;
 	private readonly int _questId;
@@ -74,6 +75,12 @@ public sealed class SmQuestAction : GameServerPacket
 		return new SmQuestAction(ShareActionId, questId, null, 0, sharerId, shareInAlliance, suppressForExtraCategory);
 	}
 
+	/// <summary>Java parity: SM_QUEST_ACTION(int questId) -> ActionType.UNK.</summary>
+	public static SmQuestAction Unknown(int questId, bool suppressForExtraCategory = false)
+	{
+		return new SmQuestAction(UnknownActionId, questId, null, 0, 0, false, suppressForExtraCategory);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity breadcrumb: network/aion/serverpackets/SM_QUEST_ACTION.writeImpl.
@@ -103,6 +110,11 @@ public sealed class SmQuestAction : GameServerPacket
 				// Java: case SHARE: writeD(sharerId); writeD(shareInAlliance ? 1 : 0).
 				buffer.WriteD(_sharerId);
 				buffer.WriteD(_shareInAlliance ? 1 : 0);
+				break;
+			case UnknownActionId:
+				// Java: SM_QUEST_ACTION(int questId) writes ActionType.UNK with two H fields.
+				buffer.WriteH(1);
+				buffer.WriteH(0);
 				break;
 		}
 	}
