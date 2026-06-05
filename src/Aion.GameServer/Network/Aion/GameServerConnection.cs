@@ -410,6 +410,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.PetSummonNpcId = ownedPet.TemplateId;
 
 		var merchantFunction = petTemplate.GetFunction(PetFunctionType.Merchant);
+		ownedPet = ApplyPetSpawnRefeedState(player, ownedPet, petTemplate, DateTimeOffset.Now);
 		var worldPet = new WorldPet(
 			ownedPet.ObjectId,
 			ownedPet.TemplateId,
@@ -436,6 +437,35 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.Position.Heading,
 			player.ObjectId,
 			ownedPet.Decoration)));
+	}
+
+	private PlayerOwnedPet ApplyPetSpawnRefeedState(
+		Player player,
+		PlayerOwnedPet ownedPet,
+		PetTemplateSummary petTemplate,
+		DateTimeOffset currentTime)
+	{
+		// Java parity: PetSpawnService.summonPet -> PetCommonData.getRefeedDelay/scheduleRefeed,
+		// else feedProgress.setHungryLevel(HUNGRY) when the spawned pet has food progress but no remaining delay.
+		var refeedDelayMilliseconds = ownedPet.RefeedTimeMillis - currentTime.ToUnixTimeMilliseconds();
+		if (refeedDelayMilliseconds > 0)
+		{
+			SchedulePetRefeed(player, ownedPet.ObjectId, refeedDelayMilliseconds);
+			return ownedPet;
+		}
+
+		if (!petTemplate.ContainsFunction(PetFunctionType.Food))
+			return ownedPet;
+
+		var hungryPet = ownedPet with
+		{
+			RefeedTimeMillis = 0,
+			HungryLevel = PetHungryLevel.Hungry,
+		};
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? hungryPet : pet)
+			.ToArray();
+		return hungryPet;
 	}
 
 	private async Task HandlePetDismissAsync(Player player)

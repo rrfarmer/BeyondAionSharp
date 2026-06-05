@@ -2124,6 +2124,49 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnSchedulesRestoredRefeedDelayAndCallbackMutatesPetState()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"feeder pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(71, PetFunctionType.Food, Slots: 0, RatePrice: 0)])),
+			threadPoolManager: threadPoolManager);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Feeder Mate",
+				Decoration: 188051001,
+				FeedProgressData: 16,
+				RefeedTimeMillis: DateTimeOffset.Now.ToUnixTimeMilliseconds() + 40,
+				HungryLevel: PetHungryLevel.Full),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+
+		Assert.True(player.HasPetSummon);
+		Assert.Equal((7001, 900210), (player.PetSummonObjectId, player.PetSummonNpcId));
+		Assert.True(fixture.World.TryGetObject(7001, out _));
+
+		await WaitUntilAsync(
+			() =>
+			{
+				var pet = Assert.Single(player.OwnedPets);
+				return pet.RefeedTimeMillis == 0 && pet.HungryLevel == PetHungryLevel.Hungry;
+			});
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetDismissClearsActivePetStateAndSendsDismissPacket()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();
