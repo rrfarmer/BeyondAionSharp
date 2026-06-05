@@ -2838,6 +2838,106 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetFoodLovedRewardUsesLiveRandomSelectorForGrantedReward()
+	{
+		const int flavourId = 71;
+		const int foodItemId = 182006001;
+		const int firstRewardItemId = 188052001;
+		const int secondRewardItemId = 188052002;
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(foodItemId, price: 1, maxStackCount: 100),
+				Template(firstRewardItemId, price: 1, maxStackCount: 1),
+				Template(secondRewardItemId, price: 1, maxStackCount: 1)),
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"feeder pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(flavourId, PetFunctionType.Food, Slots: 0, RatePrice: 0)])),
+			buyItemPetFeedData: CreateRewardPetFeedData(flavourId, foodItemId, firstRewardItemId, secondRewardItemId),
+			playerEnterWorldRepository: playerRepository,
+			idFactory: new IDFactory([500001, 7001]),
+			petLovedRewardIndexSelector: count =>
+			{
+				Assert.Equal(2, count);
+				return 1;
+			});
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Feeder Mate",
+				Decoration: 188051001,
+				FeedProgressData: 0),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 500001,
+				ItemId = foodItemId,
+				Count = 2,
+				OwnerId = player.ObjectId,
+				Location = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodFeedPayload(actionType: 1, objectId: 500001, count: 1, unknown2: 99));
+
+		Assert.DoesNotContain(player.InventoryItems, item => item.ItemId == firstRewardItemId);
+		var reward = Assert.Single(player.InventoryItems, item => item.ItemId == secondRewardItemId);
+		Assert.Equal(1, reward.ObjectId);
+		Assert.Equal(1, reward.Count);
+		Assert.NotNull(playerRepository.SavedPlayerPetFeedConsumeMutation);
+		var persistedReward = Assert.Single(playerRepository.SavedPlayerPetFeedConsumeMutation.Value.RewardItemAdds);
+		Assert.Equal(secondRewardItemId, persistedReward.ItemId);
+		Assert.Contains(
+			fixture.SentPackets,
+			packet =>
+			{
+				if (packet is not SmPet petPacket)
+					return false;
+
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(petPacket));
+				return reader.ReadH() == (int)PetAction.Food
+					&& reader.ReadH() == 1
+					&& reader.ReadC() == 1
+					&& reader.ReadC() == 6
+					&& reader.ReadD() == 16
+					&& reader.ReadD() == 0
+					&& reader.ReadD() == secondRewardItemId;
+			});
+		Assert.DoesNotContain(
+			fixture.SentPackets,
+			packet =>
+			{
+				if (packet is not SmPet petPacket)
+					return false;
+
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(petPacket));
+				return reader.ReadH() == (int)PetAction.Food
+					&& reader.ReadH() == 1
+					&& reader.ReadC() == 1
+					&& reader.ReadC() == 6
+					&& reader.ReadD() == 16
+					&& reader.ReadD() == 0
+					&& reader.ReadD() == firstRewardItemId;
+			});
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodPersistenceFailureLeavesFoodAndFeedStateUnchangedAfterStart()
 	{
 		const int flavourId = 71;
@@ -4770,7 +4870,7 @@ public sealed class GameServerConnectionBuyItemTests
 				new Dictionary<int, int> { [foodItemId] = 1 }));
 	}
 
-	private static PetFeedDataTable CreateRewardPetFeedData(int flavourId, int foodItemId, int rewardItemId)
+	private static PetFeedDataTable CreateRewardPetFeedData(int flavourId, int foodItemId, params int[] rewardItemIds)
 	{
 		return new PetFeedDataTable(
 			new PetFeedEvaluationContext(
@@ -4786,11 +4886,13 @@ public sealed class GameServerConnectionBuyItemTests
 							new PetFeedRewardGroup(
 								PetFoodType.AetherCherry,
 								IsLoved: true,
-								Results: [new PetFeedReward(rewardItemId, ItemLevel: 1)]),
+								Results: rewardItemIds.Select(rewardItemId => new PetFeedReward(rewardItemId, ItemLevel: 1)).ToArray()),
 						]),
 				},
 				PetFoodItemGroups.From((PetFoodType.AetherCherry, new HashSet<int> { foodItemId })),
-				new Dictionary<int, int> { [foodItemId] = 1, [rewardItemId] = 1 }));
+				new[] { foodItemId }
+					.Concat(rewardItemIds)
+					.ToDictionary(itemId => itemId, _ => 1)));
 	}
 
 	private static ItemTemplateSummary Template(
@@ -5464,6 +5566,7 @@ public sealed class GameServerConnectionBuyItemTests
 			PriceInfluenceRates? buyItemPriceInfluenceRates = null,
 			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 			IDFactory? idFactory = null,
+			Func<int, int>? petLovedRewardIndexSelector = null,
 			bool observeBuyItemPlans = true)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -5520,6 +5623,7 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemPetTemplates: buyItemPetTemplates,
 						buyItemPetDopings: buyItemPetDopings,
 						buyItemPetFeedData: buyItemPetFeedData,
+						petLovedRewardIndexSelector: petLovedRewardIndexSelector,
 						limitedItemTradeService: limitedItemTradeService,
 						buyItemCurrentSellLimit: buyItemCurrentSellLimit,
 						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider,

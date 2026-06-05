@@ -114,6 +114,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PetTemplateTable? _petTemplates;
 	private readonly PetDopingTable? _petDopings;
 	private readonly PetFeedDataTable? _petFeedData;
+	private readonly Func<int, int> _petLovedRewardIndexSelector;
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -214,6 +215,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PetTemplateTable? buyItemPetTemplates = null,
 		PetDopingTable? buyItemPetDopings = null,
 		PetFeedDataTable? buyItemPetFeedData = null,
+		Func<int, int>? petLovedRewardIndexSelector = null,
 		LimitedItemTradeService? limitedItemTradeService = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -292,6 +294,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_petTemplates = buyItemPetTemplates;
 		_petDopings = buyItemPetDopings;
 		_petFeedData = buyItemPetFeedData;
+		_petLovedRewardIndexSelector = petLovedRewardIndexSelector ?? (count => Random.Shared.Next(count));
 		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
@@ -649,7 +652,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.Level,
 				DateTimeOffset.Now.ToUnixTimeMilliseconds(),
 				ownedPet.CancelFeed,
-				rewards => rewards.FirstOrDefault());
+				SelectLovedPetFeedReward);
 		}
 		catch (KeyNotFoundException)
 		{
@@ -826,6 +829,18 @@ public sealed class GameServerConnection : BaseClientConnection
 				return ValueTask.CompletedTask;
 			},
 			TimeSpan.FromMilliseconds(delayMilliseconds));
+	}
+
+	private PetFeedReward? SelectLovedPetFeedReward(IReadOnlyList<PetFeedReward> rewards)
+	{
+		// Java parity: PetFeedCalculator.getReward loved-food branch uses Rnd.get(validRewards).
+		if (rewards.Count == 0)
+			return null;
+
+		var index = _petLovedRewardIndexSelector(rewards.Count);
+		if (index < 0 || index >= rewards.Count)
+			index = 0;
+		return rewards[index];
 	}
 
 	private async Task SendItemUnlockPacketAsync(Player player, InventoryItem item, ItemTemplateSummary template)
