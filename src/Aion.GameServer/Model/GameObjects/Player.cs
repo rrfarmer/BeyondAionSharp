@@ -834,6 +834,9 @@ public sealed class Player
 	// for PrivateStoreService.getBoughtItems index-based CM_BUY_ITEM action 0 lookup.
 	public IReadOnlyList<PrivateStoreListedItemSummary> PrivateStoreItems { get; set; } = Array.Empty<PrivateStoreListedItemSummary>();
 
+	// Java parity: PrivateStore.getStoreMessage/setStoreMessage used by CM_PRIVATE_STORE_NAME and SM_PRIVATE_STORE_NAME.
+	public string PrivateStoreMessage { get; set; } = string.Empty;
+
 	// Java parity: RepurchaseService.getRepurchaseItems(player.getObjectId()) feeds SM_REPURCHASE.
 	// This is a diagnostic snapshot until the live RepurchaseService singleton/state is ported.
 	public IReadOnlyList<RepurchaseSourceItem> RepurchaseItems { get; set; } = Array.Empty<RepurchaseSourceItem>();

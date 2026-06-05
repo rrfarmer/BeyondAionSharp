@@ -1109,10 +1109,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmPrivateStoreName privateStoreName:
 				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE_NAME.runImpl calls
-				// PrivateStoreService.openPrivateStore(activePlayer, name). Existing C# open-plan diagnostics
-				// remain non-live; handler wiring is deferred until store state mutation is ported.
+				// PrivateStoreService.openPrivateStore(activePlayer, name).
 				if (_activePlayer != null)
-					_privateStoreNameOpenCompositionPlanObserver?.Invoke(CreatePrivateStoreNameOpenPlan(privateStoreName, _activePlayer));
+					await HandleOpenPrivateStoreNameAsync(_activePlayer, privateStoreName);
 				break;
 			case CmSummonCommand:
 				// Java parity: network/aion/clientpackets/CM_SUMMON_COMMAND.runImpl dispatches SummonsService.doMode.
@@ -5743,6 +5742,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		player.PrivateStoreItems = Array.Empty<PrivateStoreListedItemSummary>();
+		player.PrivateStoreMessage = string.Empty;
 		player.SetCreatureState(PlayerCreatureState.PrivateShop, enabled: false);
 		player.SetCreatureState(PlayerCreatureState.Active, enabled: true);
 
@@ -5818,6 +5818,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		player.PrivateStoreItems = storedItems;
+		player.PrivateStoreMessage = string.Empty;
 		player.SetCreatureState(PlayerCreatureState.PrivateShop, enabled: true);
 
 		var openPacket = new SmEmotion(player, EmotionType.OpenPrivateShop, 0, 0);
@@ -5832,6 +5833,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		else
 		{
 			await SendPacketAsync(openPacket);
+		}
+	}
+
+	private async Task HandleOpenPrivateStoreNameAsync(Player player, CmPrivateStoreName packet)
+	{
+		// Java parity: services/PrivateStoreService.openPrivateStore.
+		if (!IsPrivateStoreOpen(player))
+			return;
+
+		player.PrivateStoreMessage = packet.StoreName ?? string.Empty;
+		var namePacket = new SmPrivateStoreName(player.ObjectId, player.PrivateStoreMessage);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				namePacket,
+				includeSourcePlayer: true);
+		}
+		else
+		{
+			await SendPacketAsync(namePacket);
 		}
 	}
 

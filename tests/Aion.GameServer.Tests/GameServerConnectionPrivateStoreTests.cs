@@ -35,6 +35,7 @@ public sealed class GameServerConnectionPrivateStoreTests
 		Assert.Equal(100000001, listedItem.ItemId);
 		Assert.Equal(2, listedItem.Count);
 		Assert.Equal(100, listedItem.PricePerItem);
+		Assert.Equal(string.Empty, player.PrivateStoreMessage);
 		Assert.True(player.IsInState(PlayerCreatureState.PrivateShop));
 		Assert.Empty(fixture.CreatePlans);
 		AssertOpenPrivateShopEmotion(Assert.IsType<SmEmotion>(Assert.Single(fixture.SentPackets)), player.ObjectId);
@@ -68,6 +69,7 @@ public sealed class GameServerConnectionPrivateStoreTests
 		await using var fixture = await PrivateStoreFixture.CreateAsync();
 		var player = CreatePlayer();
 		player.ReplaceCreatureState(PlayerCreatureState.PrivateShop);
+		player.PrivateStoreMessage = "Old Shop";
 		player.PrivateStoreItems =
 		[
 			new PrivateStoreListedItemSummary(0, ItemObjectId: 3001, ItemId: 100000001, Count: 1, PricePerItem: 100, ItemName: "Practice Sword"),
@@ -79,6 +81,7 @@ public sealed class GameServerConnectionPrivateStoreTests
 			CreatePrivateStorePayload([]));
 
 		Assert.Empty(player.PrivateStoreItems);
+		Assert.Equal(string.Empty, player.PrivateStoreMessage);
 		Assert.False(player.IsInState(PlayerCreatureState.PrivateShop));
 		Assert.True(player.IsInState(PlayerCreatureState.Active));
 		Assert.Empty(fixture.CreatePlans);
@@ -86,41 +89,39 @@ public sealed class GameServerConnectionPrivateStoreTests
 	}
 
 	[Fact]
-	public async Task ProcessPacketAsync_CmPrivateStoreNameRecordsDisabledOpenPlanWithoutSendingPackets()
+	public async Task ProcessPacketAsync_CmPrivateStoreNameSetsStoreMessageAndSendsNamePacket()
 	{
 		await using var fixture = await PrivateStoreFixture.CreateAsync();
 		var player = CreatePlayer();
 		player.ReplaceCreatureState(PlayerCreatureState.PrivateShop);
+		player.PrivateStoreItems =
+		[
+			new PrivateStoreListedItemSummary(0, ItemObjectId: 3001, ItemId: 100000001, Count: 1, PricePerItem: 100, ItemName: "Practice Sword"),
+		];
 		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, player);
 
 		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
 			fixture.Connection,
 			CreatePrivateStoreNamePayload("For Atreia"));
 
-		var plan = Assert.Single(fixture.NameOpenPlans);
-		Assert.Equal(PrivateStoreNameOpenCompositionPlanStatus.OpenPlanCreated, plan.Status);
-		Assert.False(plan.IsLive);
-		Assert.True(plan.WouldSetStoreMessage);
-		Assert.True(plan.WouldBroadcastStoreName);
-		Assert.Equal("For Atreia", plan.OpenPlan!.StoreMessage);
-		Assert.Empty(fixture.SentPackets);
+		Assert.Equal("For Atreia", player.PrivateStoreMessage);
+		Assert.Empty(fixture.NameOpenPlans);
+		AssertPrivateStoreName(Assert.IsType<SmPrivateStoreName>(Assert.Single(fixture.SentPackets)), player.ObjectId, "For Atreia");
 	}
 
 	[Fact]
-	public async Task ProcessPacketAsync_CmPrivateStoreNameMissingStoreRecordsPreconditionWithoutSendingPackets()
+	public async Task ProcessPacketAsync_CmPrivateStoreNameMissingStoreReturnsSilently()
 	{
 		await using var fixture = await PrivateStoreFixture.CreateAsync();
-		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, CreatePlayer());
+		var player = CreatePlayer();
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, player);
 
 		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
 			fixture.Connection,
 			CreatePrivateStoreNamePayload(string.Empty));
 
-		var plan = Assert.Single(fixture.NameOpenPlans);
-		Assert.Equal(PrivateStoreNameOpenCompositionPlanStatus.MissingStorePrecondition, plan.Status);
-		Assert.Null(plan.OpenPlan);
-		Assert.False(plan.WouldSetStoreMessage);
-		Assert.False(plan.WouldBroadcastStoreName);
+		Assert.Equal(string.Empty, player.PrivateStoreMessage);
+		Assert.Empty(fixture.NameOpenPlans);
 		Assert.Empty(fixture.SentPackets);
 	}
 
@@ -199,6 +200,13 @@ public sealed class GameServerConnectionPrivateStoreTests
 		Assert.Equal((int)EmotionType.OpenPrivateShop, reader.ReadC());
 		Assert.Equal((int)PlayerCreatureState.PrivateShop, reader.ReadH());
 		Assert.Equal(0f, reader.ReadF());
+	}
+
+	private static void AssertPrivateStoreName(SmPrivateStoreName packet, int expectedPlayerObjectId, string expectedName)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(expectedName, reader.ReadS());
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
