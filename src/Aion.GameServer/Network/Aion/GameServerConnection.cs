@@ -64,6 +64,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GameWorld? _world;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
+	private readonly IStaticPlaceableStateService? _staticPlaceableStateService;
 	private readonly Action<GameServerPacket>? _sentPacketObserver;
 	private readonly Action<QuestDialogNpcTargetBranchInputAssemblyPlan>? _dialogSelectPlanObserver;
 	private readonly RiftPortalInteractionService? _riftPortalInteractionService;
@@ -157,6 +158,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		GameWorld? world = null,
 		ThreadPoolManager? threadPoolManager = null,
 		IHouseDoorStateService? houseDoorStateService = null,
+		IStaticPlaceableStateService? staticPlaceableStateService = null,
 		Action<GameServerPacket>? sentPacketObserver = null,
 		RiftService? riftService = null,
 		RiftPortalDialogService? riftPortalDialogService = null,
@@ -232,6 +234,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_world = world;
 		_threadPoolManager = threadPoolManager;
 		_houseDoorStateService = houseDoorStateService;
+		_staticPlaceableStateService = staticPlaceableStateService;
 		_sentPacketObserver = sentPacketObserver;
 		_dialogSelectPlanObserver = dialogSelectPlanObserver;
 		_worldNpcLootService = worldNpcLootService;
@@ -543,8 +546,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmBreakWeapons:
 				// Java parity: network/aion/clientpackets/CM_BREAK_WEAPONS.runImpl validates armsfusion NPC targeting before service dispatch; deferred.
 				break;
-			case CmOpenStaticDoor:
-				// Java parity: network/aion/clientpackets/CM_OPEN_STATICDOOR.runImpl dispatches StaticDoorService.openStaticDoor; deferred.
+			case CmOpenStaticDoor openStaticDoor:
+				if (_activePlayer != null)
+					await HandleOpenStaticDoorAsync(_activePlayer, openStaticDoor);
 				break;
 			case CmWindstream windstream:
 				if (_activePlayer != null)
@@ -14863,6 +14867,60 @@ public sealed class GameServerConnection : BaseClientConnection
 			// Java parity: controllers/HouseController.kickVisitors owner notification before CM_HOUSE_SETTINGS door confirmation.
 			await SendPacketAsync(SmSystemMessage.HousingOrderOutAll());
 			await SendPacketAsync(SmSystemMessage.HousingOrderCloseDoorAll());
+		}
+	}
+
+	private async Task HandleOpenStaticDoorAsync(Player player, CmOpenStaticDoor packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_OPEN_STATICDOOR.runImpl -> StaticDoorService.openStaticDoor.
+		var staticDoors = _runtimeContext?.DataManager?.StaticData.StaticDoors;
+		if (staticDoors == null || _staticPlaceableStateService == null)
+			return;
+
+		var worldId = player.Position.WorldId;
+		var instanceId = player.Position.InstanceId;
+		var door = staticDoors.GetStaticDoor(worldId, packet.DoorId);
+		if (door == null)
+			return;
+
+		if (door.KeyId != 0)
+		{
+			// Java keyed-door parity depends on StaticDoor.locked and inventory key consumption; leave it silent until both are live.
+			return;
+		}
+
+		var isOpen = _staticPlaceableStateService.GetDoorState(worldId, instanceId, packet.DoorId) ?? door.IsOpen;
+		if (isOpen)
+			return;
+
+		_staticPlaceableStateService.SetDoorState(worldId, instanceId, packet.DoorId, open: true);
+		var packetState = 0x9;
+		var openDoorPacket = new SmEmotion(
+			packet.DoorId,
+			EmotionType.OpenDoor,
+			packetState,
+			movementSpeed: 0,
+			baseAttackSpeed: 0,
+			currentAttackSpeed: 0);
+
+		if (_connectionRegistry != null)
+		{
+			var doorPosition = new global::Aion.GameServer.World.WorldPosition(
+				worldId,
+				door.X,
+				door.Y,
+				door.Z,
+				0,
+				instanceId);
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				doorPosition,
+				packet.DoorId,
+				openDoorPacket,
+				includeSourcePlayer: true);
+		}
+		else
+		{
+			await SendPacketAsync(openDoorPacket);
 		}
 	}
 

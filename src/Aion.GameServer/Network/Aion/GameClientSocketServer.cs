@@ -44,6 +44,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly GameWorld? _world;
 	private readonly IHouseDoorStateService? _houseDoorStateService;
+	private readonly IStaticPlaceableStateService? _staticPlaceableStateService;
 	private readonly RiftService? _riftService;
 	private readonly RiftPortalDialogService? _riftPortalDialogService;
 	private readonly RiftPortalUseService? _riftPortalUseService;
@@ -94,6 +95,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		ThreadPoolManager? threadPoolManager = null,
 		GameWorld? world = null,
 		IHouseDoorStateService? houseDoorStateService = null,
+		IStaticPlaceableStateService? staticPlaceableStateService = null,
 		RiftService? riftService = null,
 		RiftPortalDialogService? riftPortalDialogService = null,
 		RiftPortalUseService? riftPortalUseService = null,
@@ -146,6 +148,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_threadPoolManager = threadPoolManager;
 		_world = world;
 		_houseDoorStateService = houseDoorStateService;
+		_staticPlaceableStateService = staticPlaceableStateService;
 		_riftService = riftService;
 		_riftPortalDialogService = riftPortalDialogService;
 		_riftPortalUseService = riftPortalUseService;
@@ -205,6 +208,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_world,
 				threadPoolManager: _threadPoolManager,
 				houseDoorStateService: _houseDoorStateService,
+				staticPlaceableStateService: _staticPlaceableStateService,
 				riftService: _riftService,
 				riftPortalDialogService: _riftPortalDialogService,
 				riftPortalUseService: _riftPortalUseService,
