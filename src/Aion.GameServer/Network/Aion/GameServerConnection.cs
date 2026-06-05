@@ -5519,7 +5519,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			ApplyInventoryItemUpdates(seller, [purchasePlan.SellerKinahUpdate]);
 
 		if (!purchasePlan.ShouldCloseSellerStore)
-			UpdateSellerPrivateStoreItems(seller, purchasePlan.BoughtItems);
+			UpdateSellerPrivateStoreItems(seller, GetAppliedPrivateStoreBoughtItems(purchasePlan));
 
 		foreach (var deletedItemObjectId in purchasePlan.SellerDeletedItemObjectIds)
 			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(deletedItemObjectId));
@@ -5590,6 +5590,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		seller.PrivateStoreItems = updatedStoreItems;
+	}
+
+	private static IReadOnlyList<PrivateStorePurchaseItemRequest> GetAppliedPrivateStoreBoughtItems(PrivateStorePurchasePlan purchasePlan)
+	{
+		if (purchasePlan.SkippedMissingSellerItems.Count == 0)
+			return purchasePlan.BoughtItems;
+
+		var skippedItems = purchasePlan.SkippedMissingSellerItems.ToHashSet();
+		return purchasePlan.BoughtItems
+			.Where(item => !skippedItems.Contains(item))
+			.ToArray();
 	}
 
 	private async Task HandleFindGroupAsync(CmFindGroup findGroup)

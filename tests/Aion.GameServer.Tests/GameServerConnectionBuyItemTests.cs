@@ -1164,6 +1164,99 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Empty(fixture.Registry.VisibleBroadcasts);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreMissingSellerInventoryKeepsStoreItemAndTransfersKinah()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		activePlayer.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 8001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = activePlayer.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		var sellerPlayer = new Player
+		{
+			ObjectId = 9101,
+			Name = "StoreSeller",
+			Race = activePlayer.Race,
+			IsOnline = true,
+			CreatureState = PlayerCreatureState.PrivateShop,
+			PrivateStoreMessage = "Practice wares",
+			Position = new WorldPosition(210010000, 10, 0, 0, 0),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 7001,
+					ItemId = InventoryItemFactory.KinahItemId,
+					Count = 500,
+					OwnerId = 9101,
+					Location = 0,
+					Slot = 0,
+				},
+			],
+			PrivateStoreItems =
+			[
+				new PrivateStoreListedItemSummary(
+					StoreIndex: 0,
+					ItemObjectId: 3001,
+					ItemId: 100000001,
+					Count: 1,
+					PricePerItem: 4_000,
+					ItemName: "Practice Sword"),
+			],
+		};
+		membership.UpsertKnownPlayers(
+			activePlayer.ObjectId,
+			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(9001));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(0, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.NotNull(plan.PrivateStorePurchasePlan);
+		var purchasePlan = plan.PrivateStorePurchasePlan;
+		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, purchasePlan.Status);
+		var skippedItem = Assert.Single(purchasePlan.SkippedMissingSellerItems);
+		Assert.Equal((0, 3001, 100000001, 1L, 4_000L), (skippedItem.StoreIndex, skippedItem.ItemObjectId, skippedItem.ItemId, skippedItem.Count, skippedItem.PricePerItem));
+		Assert.Empty(purchasePlan.SellerDeletedItemObjectIds);
+		Assert.Empty(purchasePlan.SellerItemUpdates);
+		Assert.Empty(purchasePlan.BuyerAddedItems);
+		Assert.False(purchasePlan.ShouldCloseSellerStore);
+
+		var storeItem = Assert.Single(sellerPlayer.PrivateStoreItems);
+		Assert.Equal((0, 3001, 1L), (storeItem.StoreIndex, storeItem.ItemObjectId, storeItem.Count));
+		Assert.Equal("Practice wares", sellerPlayer.PrivateStoreMessage);
+		Assert.True(sellerPlayer.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.DoesNotContain(sellerPlayer.InventoryItems, item => item.ObjectId == 3001);
+		Assert.Contains(sellerPlayer.InventoryItems, item => item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 4_500);
+		Assert.DoesNotContain(activePlayer.InventoryItems, item => item.ObjectId == 9001);
+		Assert.Contains(activePlayer.InventoryItems, item => item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 6_000);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+		var sellerPacket = Assert.Single(fixture.Registry.DirectPackets);
+		Assert.Equal(sellerPlayer.ObjectId, sellerPacket.PlayerObjectId);
+		Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sellerPacket.Packet).UpdateType);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
 	private static Player CreatePlayer() =>
 		new()
 		{

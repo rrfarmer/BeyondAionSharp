@@ -367,6 +367,10 @@ public static class PrivateStorePurchasePlanService
 		var javaSource = skippedMissingSellerItems.Count == 0
 			? "PrivateStoreService.sellStoreItem -> decrease seller item -> unpack if packCount>0 -> ItemService.addItem(buyer, item, count) -> seller message -> decrease buyer kinah -> increase seller kinah -> close store when soldItems empty"
 			: "PrivateStoreService.sellStoreItem -> seller.getInventory().getItemByObjId(...) == null skips that bought item inside loop; buyer.getInventory().decreaseKinah(price) and seller.getInventory().increaseKinah(price) still run after loop";
+		var remainingStoreItemObjectIds = remainingStoreItemObjectIdsAfterPurchase
+			.Concat(skippedMissingSellerItems.Select(item => item.ItemObjectId))
+			.Distinct()
+			.ToArray();
 
 		return new PrivateStorePurchasePlan(
 			PrivateStorePurchasePlanStatus.PlanCreated,
@@ -382,7 +386,7 @@ public static class PrivateStorePurchasePlanService
 			sellerMessages,
 			WouldWriteAuditLog: false,
 			AuditMessage: null,
-			ShouldCloseSellerStore: remainingStoreItemObjectIdsAfterPurchase.Count == 0,
+			ShouldCloseSellerStore: remainingStoreItemObjectIds.Length == 0,
 			javaSource);
 	}
 

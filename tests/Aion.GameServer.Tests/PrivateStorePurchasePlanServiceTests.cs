@@ -217,7 +217,7 @@ public sealed class PrivateStorePurchasePlanServiceTests
 			buyerInventoryItems: [buyerKinah],
 			sellerInventoryItems: [sellerKinah],
 			boughtItems: [request],
-			remainingStoreItemObjectIdsAfterPurchase: [request.ItemObjectId]);
+			remainingStoreItemObjectIdsAfterPurchase: []);
 
 		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, plan.Status);
 		Assert.Equal([request], plan.SkippedMissingSellerItems);
