@@ -338,7 +338,10 @@ public static class PrivateStorePurchasePlanService
 
 			var sellerRemainingCount = sellerItem.Count - boughtItem.Count;
 			if (sellerRemainingCount > 0)
-				sellerUpdates.Add(CopyInventoryItem(sellerItem, sellerRemainingCount));
+				sellerUpdates.Add(CopyInventoryItem(
+					sellerItem,
+					sellerRemainingCount,
+					sellerItem.PackCount > 0 ? sellerItem.PackCount - 1 : sellerItem.PackCount));
 			else
 				sellerDeletes.Add(sellerItem.ObjectId);
 

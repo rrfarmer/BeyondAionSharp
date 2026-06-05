@@ -1055,6 +1055,115 @@ public sealed class GameServerConnectionBuyItemTests
 		AssertClosePrivateShopEmotion(Assert.IsType<SmEmotion>(closeBroadcast.Packet), sellerPlayer.ObjectId);
 	}
 
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStorePartialStackKeepsStoreOpenAndDecrementsPackCount()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		activePlayer.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 8001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 20_000,
+				OwnerId = activePlayer.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		var sellerPlayer = new Player
+		{
+			ObjectId = 9101,
+			Name = "StoreSeller",
+			Race = activePlayer.Race,
+			IsOnline = true,
+			CreatureState = PlayerCreatureState.PrivateShop,
+			PrivateStoreMessage = "Practice wares",
+			Position = new WorldPosition(210010000, 10, 0, 0, 0),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 3001,
+					ItemId = 182003001,
+					Count = 5,
+					OwnerId = 9101,
+					Location = 0,
+					Slot = 1,
+					PackCount = 4,
+				},
+			],
+			PrivateStoreItems =
+			[
+				new PrivateStoreListedItemSummary(
+					StoreIndex: 0,
+					ItemObjectId: 3001,
+					ItemId: 182003001,
+					Count: 5,
+					PricePerItem: 100,
+					ItemName: "Practice Bundle"),
+			],
+		};
+		membership.UpsertKnownPlayers(
+			activePlayer.ObjectId,
+			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(182003001, price: 1, maxStackCount: 10),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(9001));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(0, 3)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.NotNull(plan.PrivateStorePurchasePlan);
+		var purchasePlan = plan.PrivateStorePurchasePlan;
+		Assert.Equal(PrivateStorePurchasePlanStatus.PlanCreated, purchasePlan.Status);
+		Assert.Empty(purchasePlan.SellerDeletedItemObjectIds);
+		var sellerPlanUpdate = Assert.Single(purchasePlan.SellerItemUpdates);
+		Assert.Equal((3001, 2L, 3), (sellerPlanUpdate.ObjectId, sellerPlanUpdate.Count, sellerPlanUpdate.PackCount));
+		Assert.False(purchasePlan.ShouldCloseSellerStore);
+
+		var storeItem = Assert.Single(sellerPlayer.PrivateStoreItems);
+		Assert.Equal((0, 3001, 2L), (storeItem.StoreIndex, storeItem.ItemObjectId, storeItem.Count));
+		Assert.Equal("Practice wares", sellerPlayer.PrivateStoreMessage);
+		Assert.True(sellerPlayer.IsInState(PlayerCreatureState.PrivateShop));
+		var sellerItem = Assert.Single(sellerPlayer.InventoryItems, item => item.ObjectId == 3001);
+		Assert.Equal((2L, 3), (sellerItem.Count, sellerItem.PackCount));
+		Assert.Contains(sellerPlayer.InventoryItems, item => item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 300);
+		var buyerItem = Assert.Single(activePlayer.InventoryItems, item => item.ObjectId == 9001);
+		Assert.Equal((182003001, 3L, 0), (buyerItem.ItemId, buyerItem.Count, buyerItem.PackCount));
+		Assert.Contains(activePlayer.InventoryItems, item => item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 19_700);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+		Assert.Collection(
+			fixture.Registry.DirectPackets,
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400135, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			});
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
 	private static Player CreatePlayer() =>
 		new()
 		{

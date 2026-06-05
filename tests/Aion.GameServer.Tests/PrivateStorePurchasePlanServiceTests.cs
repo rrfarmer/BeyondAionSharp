@@ -74,7 +74,7 @@ public sealed class PrivateStorePurchasePlanServiceTests
 		var buyer = new Player { ObjectId = 1001 };
 		var seller = new Player { ObjectId = 2001 };
 		var buyerKinah = Item(10, KinahItemId, 10_000, ownerId: buyer.ObjectId);
-		var sellerItem = Item(30, StackableItemId, 5, ownerId: seller.ObjectId);
+		var sellerItem = Item(30, StackableItemId, 5, ownerId: seller.ObjectId, packCount: 4);
 
 		var plan = CreatePlan(
 			buyer,
@@ -92,8 +92,10 @@ public sealed class PrivateStorePurchasePlanServiceTests
 		Assert.Empty(plan.SellerDeletedItemObjectIds);
 		var sellerUpdate = Assert.Single(plan.SellerItemUpdates);
 		Assert.Equal((sellerItem.ObjectId, 2L), (sellerUpdate.ObjectId, sellerUpdate.Count));
+		Assert.Equal(3, sellerUpdate.PackCount);
 		var buyerItem = Assert.Single(plan.BuyerAddedItems);
 		Assert.Equal(3, buyerItem.Count);
+		Assert.Equal(0, buyerItem.PackCount);
 		Assert.Equal(9_700, plan.BuyerKinahUpdate!.Count);
 		Assert.Equal(300, plan.SellerKinahUpdate!.Count);
 		Assert.Equal(1400135, Assert.Single(plan.SellerMessages).MessageId);
@@ -292,7 +294,7 @@ public sealed class PrivateStorePurchasePlanServiceTests
 			() => ++nextObjectId);
 	}
 
-	private static InventoryItem Item(int objectId, int itemId, long count, int ownerId)
+	private static InventoryItem Item(int objectId, int itemId, long count, int ownerId, int packCount = 0)
 	{
 		return new InventoryItem
 		{
@@ -302,6 +304,7 @@ public sealed class PrivateStorePurchasePlanServiceTests
 			OwnerId = ownerId,
 			Location = 0,
 			Slot = 65535,
+			PackCount = packCount,
 		};
 	}
 
