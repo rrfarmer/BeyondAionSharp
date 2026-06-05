@@ -428,7 +428,7 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveNpcShopApSellMutationAsync(
 			player.ObjectId,
 			abyssRank,
-			Array.Empty<InventoryItem>(),
+			sellPlan.UpdatedItems,
 			sellPlan.DeletedItemObjectIds,
 			cancellationToken);
 	}

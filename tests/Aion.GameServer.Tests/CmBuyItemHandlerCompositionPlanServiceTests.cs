@@ -354,6 +354,7 @@ public sealed class CmBuyItemHandlerCompositionPlanServiceTests
 				TradeSellForApToShopStep.PlanAbyssPointReward,
 			],
 			DeletedItemObjectIds: [200],
+			UpdatedItems: [],
 			SkippedDeleteFailedItemObjectIds: [],
 			AbyssPointRewards: [new TradeSellForApToShopApReward(200, ItemId: 100000001, Count: 1, RequiredApPerItem: 1_000, ApReward: 350)],
 			TotalAbyssPoints: 350,

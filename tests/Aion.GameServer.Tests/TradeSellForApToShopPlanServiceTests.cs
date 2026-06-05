@@ -9,8 +9,8 @@ public sealed class TradeSellForApToShopPlanServiceTests
 	[Fact]
 	public void CreatePlan_DeletesItemsAndPlansAbyssPointRewards()
 	{
-		var sword = Item(200, ApSwordItemId, 3);
-		var shield = Item(201, ApShieldItemId, 2);
+		var sword = Item(200, ApSwordItemId, 2);
+		var shield = Item(201, ApShieldItemId, 1);
 
 		var plan = CreatePlan(
 			inventoryItems: [sword, shield],
@@ -24,10 +24,28 @@ public sealed class TradeSellForApToShopPlanServiceTests
 		Assert.False(plan.IsLive);
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 		Assert.Equal([sword.ObjectId, shield.ObjectId], plan.DeletedItemObjectIds);
+		Assert.Empty(plan.UpdatedItems);
 		Assert.Empty(plan.SkippedDeleteFailedItemObjectIds);
 		Assert.Equal(654, plan.TotalAbyssPoints);
 		Assert.Equal([436, 218], plan.AbyssPointRewards.Select(reward => reward.ApReward).ToArray());
 		Assert.Contains(TradeSellForApToShopStep.PlanAbyssPointReward, plan.Steps);
+	}
+
+	[Fact]
+	public void CreatePlan_UpdatesPartialStackAndPlansAbyssPointReward()
+	{
+		var sword = Item(200, ApSwordItemId, 3);
+
+		var plan = CreatePlan(
+			inventoryItems: [sword],
+			tradeItems: [new TradeSellForApToShopItemRequest(sword.ObjectId, Count: 2)]);
+
+		Assert.Equal(TradeSellForApToShopPlanStatus.PlanCreated, plan.Status);
+		Assert.Empty(plan.DeletedItemObjectIds);
+		var update = Assert.Single(plan.UpdatedItems);
+		Assert.Equal((sword.ObjectId, ApSwordItemId, 1L), (update.ObjectId, update.ItemId, update.Count));
+		Assert.Empty(plan.SkippedDeleteFailedItemObjectIds);
+		Assert.Equal(436, plan.TotalAbyssPoints);
 	}
 
 	[Fact]
@@ -116,8 +134,30 @@ public sealed class TradeSellForApToShopPlanServiceTests
 		Assert.Equal(TradeSellForApToShopPlanStatus.PlanCreated, plan.Status);
 		Assert.Equal([sword.ObjectId], plan.SkippedDeleteFailedItemObjectIds);
 		Assert.Equal([shield.ObjectId], plan.DeletedItemObjectIds);
+		Assert.Empty(plan.UpdatedItems);
 		Assert.Equal(218, plan.TotalAbyssPoints);
 		Assert.Equal(shield.ObjectId, Assert.Single(plan.AbyssPointRewards).ItemObjectId);
+	}
+
+	[Fact]
+	public void CreatePlan_TooLargeCountSkipsAbyssPointRewardAndContinuesLikeJava()
+	{
+		var sword = Item(200, ApSwordItemId, 1);
+		var shield = Item(201, ApShieldItemId, 1);
+
+		var plan = CreatePlan(
+			inventoryItems: [sword, shield],
+			tradeItems:
+			[
+				new TradeSellForApToShopItemRequest(sword.ObjectId, Count: 2),
+				new TradeSellForApToShopItemRequest(shield.ObjectId, Count: 1),
+			]);
+
+		Assert.Equal(TradeSellForApToShopPlanStatus.PlanCreated, plan.Status);
+		Assert.Equal([sword.ObjectId], plan.SkippedDeleteFailedItemObjectIds);
+		Assert.Equal([shield.ObjectId], plan.DeletedItemObjectIds);
+		Assert.Empty(plan.UpdatedItems);
+		Assert.Equal(218, plan.TotalAbyssPoints);
 	}
 
 	[Fact]

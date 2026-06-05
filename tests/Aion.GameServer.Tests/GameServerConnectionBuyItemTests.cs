@@ -1590,6 +1590,8 @@ public sealed class GameServerConnectionBuyItemTests
 			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 2)]));
 
 		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner, plan.Status);
+		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.WouldDispatchSellForApToShop, plan.SellToShopPlan!.Status);
 		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.SellToShopPlan!.Dispatch);
 		var apPlan = Assert.IsType<TradeSellForApToShopPlan>(dispatch.SellForApToShopPlan);
 		Assert.Equal(TradeSellForApToShopPlanStatus.PlanCreated, apPlan.Status);
@@ -1619,6 +1621,80 @@ public sealed class GameServerConnectionBuyItemTests
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 2001, SmDeleteItem.UseDeleteType),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => Assert.Equal(1320000, Assert.IsType<SmSystemMessage>(packet).MessageId),
+			packet => AssertAbyssRankPayload(Assert.IsType<SmAbyssRank>(packet), expectedAp: 700, expectedRank: 1));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcAbyssSellActionUpdatesPartialStackLive()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateTradeLists(
+				new TradeListTemplateSummary(700001, [129], NpcType: "ABYSS", BuyPriceRate: 35)),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, requiredAbyssPoints: 1_000, maxStackCount: 100)),
+			buyItemGoodsLists: CreateGoodsLists(
+				new GoodsListSummary(129, Items: [new GoodsListItemSummary(100000001)])),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 3,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [103]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 1, [(2001, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedSellToShopPlanner, plan.Status);
+		Assert.Equal(CmBuyItemSellToShopCompositionPlanStatus.WouldDispatchSellForApToShop, plan.SellToShopPlan!.Status);
+		var dispatch = Assert.IsType<CmBuyItemSellToShopDispatchDescriptor>(plan.SellToShopPlan!.Dispatch);
+		var apPlan = Assert.IsType<TradeSellForApToShopPlan>(dispatch.SellForApToShopPlan);
+		Assert.Equal(TradeSellForApToShopPlanStatus.PlanCreated, apPlan.Status);
+		Assert.Empty(apPlan.DeletedItemObjectIds);
+		var plannedUpdate = Assert.Single(apPlan.UpdatedItems);
+		Assert.Equal((2001, 100000001, 1L), (plannedUpdate.ObjectId, plannedUpdate.ItemId, plannedUpdate.Count));
+		var reward = Assert.Single(apPlan.AbyssPointRewards);
+		Assert.Equal(700, reward.ApReward);
+		Assert.Equal(700, apPlan.TotalAbyssPoints);
+
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.SellForApToShopOutcomeCreated, outcome.Status);
+		Assert.Equal(TradeSellForApToShopOutcomePlanStatus.DisabledNoTransaction, outcome.SellForApToShopOutcomePlan!.Status);
+		Assert.True(outcome.WouldWritePersistence);
+		Assert.True(outcome.WouldMutateSellerInventory);
+		Assert.True(outcome.SellForApToShopOutcomePlan.WouldMutateAbyssPoints);
+		Assert.True(outcome.WouldSendPackets);
+		Assert.Equal(1, playerRepository.SaveNpcShopApSellMutationCalls);
+		var persistence = Assert.IsType<NpcShopApSellPersistenceCapture>(playerRepository.NpcShopApSellPersistence);
+		Assert.Equal(player.ObjectId, persistence.PlayerObjectId);
+		Assert.Equal(700, persistence.AbyssRank.Ap);
+		var persistedUpdate = Assert.Single(persistence.SellerItemUpdates);
+		Assert.Equal((2001, 100000001, 1L), (persistedUpdate.ObjectId, persistedUpdate.ItemId, persistedUpdate.Count));
+		Assert.Empty(persistence.SellerDeletedItemObjectIds);
+		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == 2001).Count);
+		Assert.Equal(700, player.AbyssRank.Ap);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
 			packet => Assert.Equal(1320000, Assert.IsType<SmSystemMessage>(packet).MessageId),
 			packet => AssertAbyssRankPayload(Assert.IsType<SmAbyssRank>(packet), expectedAp: 700, expectedRank: 1));
 	}

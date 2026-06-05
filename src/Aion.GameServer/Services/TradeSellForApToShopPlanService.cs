@@ -39,6 +39,7 @@ public sealed record TradeSellForApToShopPlan(
 	TradeSellForApToShopPlanStatus Status,
 	IReadOnlyList<TradeSellForApToShopStep> Steps,
 	IReadOnlyList<int> DeletedItemObjectIds,
+	IReadOnlyList<InventoryItem> UpdatedItems,
 	IReadOnlyList<int> SkippedDeleteFailedItemObjectIds,
 	IReadOnlyList<TradeSellForApToShopApReward> AbyssPointRewards,
 	int TotalAbyssPoints,
@@ -121,6 +122,7 @@ public static class TradeSellForApToShopPlanService
 				"TradeService.performSellForAPToShop -> !PlayerRestrictions.canTrade(player) -> false");
 
 		var deletedItemObjectIds = new List<int>();
+		var updatedItems = new List<InventoryItem>();
 		var skippedDeleteFailedItemObjectIds = new List<int>();
 		var apRewards = new List<TradeSellForApToShopApReward>();
 
@@ -152,13 +154,16 @@ public static class TradeSellForApToShopPlanService
 					tradeItem.ItemObjectId);
 
 			steps.Add(TradeSellForApToShopStep.PlanInventoryDecrease);
-			if (!tradeItem.InventoryDecreaseSucceeds)
+			if (!tradeItem.InventoryDecreaseSucceeds || item.Count < tradeItem.Count)
 			{
 				skippedDeleteFailedItemObjectIds.Add(tradeItem.ItemObjectId);
 				continue;
 			}
 
-			deletedItemObjectIds.Add(tradeItem.ItemObjectId);
+			if (item.Count == tradeItem.Count)
+				deletedItemObjectIds.Add(tradeItem.ItemObjectId);
+			else
+				updatedItems.Add(CopyInventoryItem(item, item.Count - tradeItem.Count));
 			steps.Add(TradeSellForApToShopStep.PlanAbyssPointReward);
 			var apReward = TradeApFormulaService.CalculateApResaleReward(
 				template.RequiredAbyssPoints,
@@ -176,6 +181,7 @@ public static class TradeSellForApToShopPlanService
 			TradeSellForApToShopPlanStatus.PlanCreated,
 			steps,
 			deletedItemObjectIds,
+			updatedItems,
 			skippedDeleteFailedItemObjectIds,
 			apRewards,
 			apRewards.Sum(reward => reward.ApReward),
@@ -204,12 +210,54 @@ public static class TradeSellForApToShopPlanService
 			status,
 			steps.ToArray(),
 			DeletedItemObjectIds: Array.Empty<int>(),
+			UpdatedItems: Array.Empty<InventoryItem>(),
 			SkippedDeleteFailedItemObjectIds: Array.Empty<int>(),
 			AbyssPointRewards: Array.Empty<TradeSellForApToShopApReward>(),
 			TotalAbyssPoints: 0,
 			ShouldDispatchLiveSideEffects: false,
 			javaSource,
 			rejectedItemObjectId);
+	}
+
+	private static InventoryItem CopyInventoryItem(InventoryItem item, long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			OwnerId = item.OwnerId,
+			Count = count,
+			Location = item.Location,
+			Slot = item.Slot,
+			IsEquipped = item.IsEquipped,
+			ItemSkin = item.ItemSkin,
+			Color = item.Color,
+			ActivationCount = item.ActivationCount,
+			IsSoulBound = item.IsSoulBound,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			Charge = item.Charge,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			PackCount = item.PackCount,
+			RandomBonus = item.RandomBonus,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			TuneCount = item.TuneCount,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = item.PendingTuneResult,
+			PersistentState = item.PersistentState,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			IdianStone = item.IdianStone,
+			Godstone = item.Godstone,
+			ColorExpires = item.ColorExpires,
+		};
 	}
 }
 
@@ -255,7 +303,8 @@ public static class TradeSellForApToShopOutcomePlanService
 				sellForApToShopPlan,
 				"TradeService.performSellForAPToShop final outcome stops because the AP-sell plan is blocked before mutation");
 
-		var wouldMutateSellerInventory = sellForApToShopPlan.DeletedItemObjectIds.Count > 0;
+		var wouldMutateSellerInventory = sellForApToShopPlan.DeletedItemObjectIds.Count > 0
+			|| sellForApToShopPlan.UpdatedItems.Count > 0;
 		var wouldMutateAbyssPoints = sellForApToShopPlan.AbyssPointRewards.Count > 0;
 		var wouldWritePersistence = wouldMutateSellerInventory || wouldMutateAbyssPoints;
 		var wouldSendPackets = wouldMutateSellerInventory || wouldMutateAbyssPoints;

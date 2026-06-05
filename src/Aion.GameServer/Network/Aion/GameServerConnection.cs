@@ -5708,7 +5708,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var reward in sellPlan.AbyssPointRewards)
 		{
 			var item = workingItems.FirstOrDefault(candidate => candidate.ObjectId == reward.ItemObjectId);
-			if (item == null || item.Count != reward.Count)
+			if (item == null || item.Count < reward.Count)
 				return;
 		}
 
@@ -5725,6 +5725,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		foreach (var deletedObjectId in sellPlan.DeletedItemObjectIds)
 			workingItems.RemoveAll(item => item.ObjectId == deletedObjectId);
+		foreach (var updatedItem in sellPlan.UpdatedItems)
+			ReplaceInventoryItem(workingItems, updatedItem);
 		player.InventoryItems = workingItems.ToArray();
 		player.AbyssRank = abyssPointsPlan.UpdatedRank;
 
@@ -5733,6 +5735,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			projectedCubeItemsCount--;
 			await SendPacketAsync(new SmDeleteItem(deletedObjectId, SmDeleteItem.UseDeleteType));
 			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
+
+		foreach (var updatedItem in sellPlan.UpdatedItems)
+		{
+			var template = itemTemplates.GetItemTemplate(updatedItem.ItemId);
+			if (template == null)
+				return;
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, staticData?.ItemRestrictionCleanups)));
 		}
 
 		foreach (var playerPacket in abyssPointsPlan.PlayerPackets)
