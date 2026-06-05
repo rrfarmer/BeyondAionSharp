@@ -318,6 +318,66 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId, expectedLevel));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemSendsMaxNormalMessageWhenQuestListIsFull()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			options: CreateQuestLimitOptions(limit: 1));
+		var player = CreatePlayer(itemId: 169700001);
+		player.Quests = [new PlayerQuestState(1121, "START", 0, 0, 0)];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Single(player.Quests);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300622));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemAllowsMembershipQuestLimitBypass()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			options: CreateQuestLimitOptions(limit: 1, disabledMembership: 5));
+		var player = CreatePlayer(itemId: 169700001, accountMembership: 5);
+		player.Quests = [new PlayerQuestState(1121, "START", 0, 0, 0)];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(2, player.Quests.Count);
+		Assert.Equal(1, repository.InsertPlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169700001, expectedEnd: 1, expectedUnknown3: 1),
+			packet => AssertQuestActionPacket(Assert.IsType<SmQuestAction>(packet), SmQuestAction.AddActionId, 1114, expectedClientQuestVars: 0));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemAllowsNoCountQuestWhenQuestListIsFull()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(
+			repository,
+			options: CreateQuestLimitOptions(limit: 1));
+		var player = CreatePlayer(itemId: 169700008);
+		player.Quests = [new PlayerQuestState(1121, "START", 0, 0, 0)];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Equal(2, player.Quests.Count);
+		Assert.Equal(1, repository.InsertPlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169700008, expectedEnd: 1, expectedUnknown3: 1),
+			packet => AssertQuestActionPacket(Assert.IsType<SmQuestAction>(packet), SmQuestAction.AddActionId, 1122, expectedClientQuestVars: 0));
+	}
+
 	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
@@ -2734,12 +2794,14 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		bool isEquipped = false,
 		int location = 0,
 		string gender = "MALE",
-		int level = 1)
+		int level = 1,
+		byte accountMembership = 0)
 	{
 		return new Player
 		{
 			ObjectId = 1001,
 			Name = "TicketUser",
+			AccountMembership = accountMembership,
 			Race = race,
 			PlayerClass = playerClass,
 			Gender = gender,
@@ -3110,6 +3172,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				EnableApCap = true,
 				ApCapValue = 1_000,
 			},
+		};
+	}
+
+	private static GameServerOptions CreateQuestLimitOptions(int limit, byte disabledMembership = 10)
+	{
+		return new GameServerOptions
+		{
+			Custom = new GameServerCustomOptions { BasicQuestSizeLimit = limit },
+			Membership = new GameServerMembershipOptions { QuestLimitDisabled = disabledMembership },
 		};
 	}
 
@@ -4191,6 +4262,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<queststart questid="1120"/>
 							</actions>
 						</item_template>
+						<item_template id="169700008" name="Test No Count Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1122"/>
+							</actions>
+						</item_template>
 						<item_template id="169600001" name="Test Emotion Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
 							<actions>
 								<learnemotion emotionid="64"/>
@@ -4368,6 +4444,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<quest id="1120" name="Test Gender Quest" minlevel_permitted="0" race_permitted="PC_ALL">
 							<gender_permitted>FEMALE</gender_permitted>
 						</quest>
+						<quest id="1121" name="Existing Normal Quest" minlevel_permitted="0" race_permitted="PC_ALL"/>
+						<quest id="1122" name="Test No Count Quest" minlevel_permitted="0" race_permitted="PC_ALL" category="EVENT"/>
 					</quests>
 				</static_data>
 				""");

@@ -70,7 +70,16 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			CannotGiveup: ReadBoolAttribute(quest, "cannot_giveup"),
 			QuestWorkItems: questWorkItems,
 			Target: ReadStringAttribute(quest, "target", defaultValue: "NONE"),
-			Name: ReadStringAttribute(quest, "name"));
+			Name: ReadStringAttribute(quest, "name"),
+			IsNoCount: IsNoCount(quest));
+	}
+
+	private static bool IsNoCount(XElement quest)
+	{
+		// Java parity: model/templates/QuestTemplate.isNoCount returns true for NON_COUNT and EVENT categories.
+		var category = ReadStringAttribute(quest, "category", defaultValue: "QUEST");
+		return string.Equals(category, "NON_COUNT", StringComparison.Ordinal)
+			|| string.Equals(category, "EVENT", StringComparison.Ordinal);
 	}
 
 	private static IReadOnlyList<NearbyQuestInventoryItem> ReadQuestWorkItems(XElement quest)

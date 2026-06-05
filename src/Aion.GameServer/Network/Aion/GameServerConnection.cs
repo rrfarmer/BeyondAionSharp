@@ -6725,6 +6725,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (!questTemplate.IsNoCount
+			&& !CanStartNormalQuest(player, staticData.NearbyQuestTemplates)
+			&& !HasPermission(player, _options.Membership.QuestLimitDisabled))
+		{
+			await SendPacketAsync(SmSystemMessage.QuestAcquireErrorMaxNormal(), cancellationToken);
+			return;
+		}
+
 		var finalQuestState = existingQuest == null
 			? new PlayerQuestState(questId, "START", 0, 0, 0)
 			: existingQuest with { Status = "START" };
@@ -6744,6 +6752,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId));
 		await SendPacketAsync(SmQuestAction.Add(finalQuestState), cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
+	}
+
+	private bool CanStartNormalQuest(Player player, NearbyQuestTemplateTable questTemplates)
+	{
+		// Java parity: QuestService.checkQuestListSize uses QuestStateList.getNormalQuests().size() + 1
+		// where normal means category QUEST and status neither COMPLETE nor LOCKED.
+		return player.Quests.Count(quest =>
+			questTemplates.TryGetQuest(quest.QuestId, out var template)
+			&& template != null
+			&& string.Equals(template.QuestCategory, "QUEST", StringComparison.Ordinal)
+			&& !string.Equals(quest.Status, "COMPLETE", StringComparison.Ordinal)
+			&& !string.Equals(quest.Status, "LOCKED", StringComparison.Ordinal)) + 1 <= _options.Custom.BasicQuestSizeLimit;
+	}
+
+	private static bool HasPermission(Player player, byte permissionLevel)
+	{
+		// Java parity: model/gameobjects/player/Player.hasPermission.
+		return player.AccountMembership >= permissionLevel;
 	}
 
 	private static SmSystemMessage? CreateQuestStartConditionFailureMessage(

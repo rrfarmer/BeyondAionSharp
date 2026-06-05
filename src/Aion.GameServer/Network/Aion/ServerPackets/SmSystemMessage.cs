@@ -1541,6 +1541,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300579);
 	}
 
+	public static SmSystemMessage QuestAcquireErrorMaxNormal()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MAX_NORMAL().
+		return new SmSystemMessage(1300622);
+	}
+
 	public static SmSystemMessage CashTitle(string titleName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.

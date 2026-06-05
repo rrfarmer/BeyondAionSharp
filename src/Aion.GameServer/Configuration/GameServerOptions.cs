@@ -229,6 +229,7 @@ public sealed class GameServerOptions
 				StigmaAutoLearn = GetByteWithEnvironment(loader, "gameserver.autolearn.stigma", 10),
 				InstancesCooldown = GetByteWithEnvironment(loader, "gameserver.instances.cooldown", 10),
 				InstancesGroupRequirement = GetByteWithEnvironment(loader, "gameserver.instances.group.requirement", 10),
+				QuestLimitDisabled = GetByteWithEnvironment(loader, "gameserver.quest.limit.disable", 10),
 			},
 			Instance = new GameServerInstanceOptions
 			{
@@ -605,6 +606,8 @@ public sealed class GameServerMembershipOptions
 	public byte InstancesCooldown { get; init; } = 10;
 
 	public byte InstancesGroupRequirement { get; init; } = 10;
+
+	public byte QuestLimitDisabled { get; init; } = 10;
 }
 
 public sealed class GameServerInstanceOptions

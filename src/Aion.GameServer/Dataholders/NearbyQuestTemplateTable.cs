@@ -69,7 +69,8 @@ public sealed record NearbyQuestTemplateSummary(
 	bool CannotShare = false,
 	bool CannotGiveup = false,
 	string Target = "NONE",
-	string Name = "")
+	string Name = "",
+	bool IsNoCount = false)
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
 
