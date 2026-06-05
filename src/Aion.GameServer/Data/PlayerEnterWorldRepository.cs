@@ -29,6 +29,10 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> DeletePlayerQuestAsync(int playerObjectId, int questId, CancellationToken cancellationToken = default);
+
+	Task<bool> UpdatePlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default);
+
 	Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
 		int playerObjectId,
 		NpcFactionTable npcFactions,
@@ -448,6 +452,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<PlayerQuestState>>(Array.Empty<PlayerQuestState>());
+	}
+
+	public Task<bool> DeletePlayerQuestAsync(int playerObjectId, int questId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> UpdatePlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
 	}
 
 	public Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
@@ -3240,6 +3254,71 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load quests for player {PlayerObjectId}", playerObjectId);
 			return Array.Empty<PlayerQuestState>();
+		}
+	}
+
+	public async Task<bool> DeletePlayerQuestAsync(int playerObjectId, int questId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerQuestListDAO.deleteQuest for QuestStateList deleted quest ids.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM player_quests WHERE player_id = ? AND quest_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = questId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) >= 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete quest {QuestId} for player {PlayerObjectId}", questId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdatePlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerQuestListDAO.updateQuests.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE player_quests
+				SET status = ?,
+					quest_vars = ?,
+					flags = ?,
+					complete_count = ?,
+					next_repeat_time = ?,
+					reward = ?,
+					complete_time = ?
+				WHERE player_id = ? AND quest_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = questState.Status },
+					new MySqlParameter { Value = questState.QuestVars },
+					new MySqlParameter { Value = questState.Flags },
+					new MySqlParameter { Value = questState.CompleteCount },
+					new MySqlParameter { Value = questState.NextRepeatTime?.DateTime ?? (object)DBNull.Value },
+					new MySqlParameter { Value = questState.RewardGroup.HasValue ? questState.RewardGroup.Value : DBNull.Value },
+					new MySqlParameter { Value = questState.CompleteTime?.DateTime ?? (object)DBNull.Value },
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = questState.QuestId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) >= 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not update quest {QuestId} for player {PlayerObjectId}", questState.QuestId, playerObjectId);
+			return false;
 		}
 	}
 

@@ -11536,6 +11536,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			questTemplates.TryGetQuest(questId, out template);
 
 		var result = QuestAbandonService.Abandon(player, questId, template);
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.PersistQuestAbandonAsync(player, result, cancellationToken);
+
 		foreach (var packet in result.TimerPackets)
 			await SendPacketAsync(packet, cancellationToken);
 

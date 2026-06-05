@@ -232,6 +232,23 @@ public sealed class PlayerEnterWorldService
 		return true;
 	}
 
+	public Task<bool> PersistQuestAbandonAsync(
+		Player player,
+		QuestAbandonResult result,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: QuestService.abandonQuest marks the quest list dirty and PlayerQuestListDAO.store
+		// later deletes or updates the player_quests row for that live quest-list mutation.
+		return result.Status switch
+		{
+			QuestAbandonStatus.Deleted when result.OriginalQuestState != null =>
+				_repository.DeletePlayerQuestAsync(player.ObjectId, result.OriginalQuestState.QuestId, cancellationToken),
+			QuestAbandonStatus.ResetToComplete when result.FinalQuestState != null =>
+				_repository.UpdatePlayerQuestAsync(player.ObjectId, result.FinalQuestState, cancellationToken),
+			_ => Task.FromResult(false),
+		};
+	}
+
 	public async Task<bool> DeleteInventoryItemAsync(
 		Player player,
 		int itemObjectId,

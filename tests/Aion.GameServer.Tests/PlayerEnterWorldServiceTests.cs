@@ -1573,6 +1573,54 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task PersistQuestAbandon_DeletesFirstTimeQuestRow()
+	{
+		var player = CreatePlayer();
+		player.Quests = [new PlayerQuestState(1001, "START", QuestVars: 0x22, Flags: 2, CompleteCount: 0)];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = QuestAbandonService.Abandon(player, 1001, QuestTemplate(1001));
+		var persisted = await service.PersistQuestAbandonAsync(player, result);
+
+		Assert.True(persisted);
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.Empty(player.Quests);
+		Assert.Equal(1, repository.DeleteQuestCalls);
+		Assert.Equal(1001, repository.DeletedQuestId);
+		Assert.Equal(0, repository.UpdateQuestCalls);
+	}
+
+	[Fact]
+	public async Task PersistQuestAbandon_UpdatesRepeatedQuestRowToComplete()
+	{
+		var player = CreatePlayer();
+		var nextRepeat = DateTimeOffset.UtcNow.AddHours(3);
+		var completeTime = DateTimeOffset.UtcNow.AddDays(-1);
+		player.Quests = [new PlayerQuestState(1002, "START", QuestVars: 0x1122, Flags: 3, CompleteCount: 2, RewardGroup: 4, NextRepeatTime: nextRepeat, CompleteTime: completeTime)];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = QuestAbandonService.Abandon(player, 1002, QuestTemplate(1002));
+		var persisted = await service.PersistQuestAbandonAsync(player, result);
+
+		Assert.True(persisted);
+		Assert.Equal(QuestAbandonStatus.ResetToComplete, result.Status);
+		Assert.Equal(0, repository.DeleteQuestCalls);
+		Assert.Equal(1, repository.UpdateQuestCalls);
+		Assert.NotNull(repository.UpdatedQuestState);
+		var saved = repository.UpdatedQuestState;
+		Assert.Equal(1002, saved.QuestId);
+		Assert.Equal("COMPLETE", saved.Status);
+		Assert.Equal(0, saved.QuestVars);
+		Assert.Equal(0, saved.Flags);
+		Assert.Equal(2, saved.CompleteCount);
+		Assert.Equal(4, saved.RewardGroup);
+		Assert.Equal(nextRepeat, saved.NextRepeatTime);
+		Assert.Equal(completeTime, saved.CompleteTime);
+	}
+
+	[Fact]
 	public async Task SavePowerShardUseMutation_FlattensUseResultsForRepository()
 	{
 		var player = CreatePlayer();
@@ -2143,6 +2191,11 @@ public sealed class PlayerEnterWorldServiceTests
 		};
 	}
 
+	private static NearbyQuestTemplateSummary QuestTemplate(int questId)
+	{
+		return new NearbyQuestTemplateSummary(questId);
+	}
+
 	private static InventoryItem CreateInventoryItem(
 		int objectId,
 		int location,
@@ -2465,6 +2518,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedRecipeId { get; private set; }
 
+		public int DeleteQuestCalls { get; private set; }
+
+		public int DeletedQuestId { get; private set; }
+
+		public int UpdateQuestCalls { get; private set; }
+
+		public PlayerQuestState? UpdatedQuestState { get; private set; }
+
 		public int DeleteEmotionCalls { get; private set; }
 
 		public int DeletedEmotionId { get; private set; }
@@ -2724,6 +2785,20 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadQuestsCalls++;
 			return Task.FromResult(Quests);
+		}
+
+		public Task<bool> DeletePlayerQuestAsync(int playerObjectId, int questId, CancellationToken cancellationToken = default)
+		{
+			DeleteQuestCalls++;
+			DeletedQuestId = questId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> UpdatePlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
+		{
+			UpdateQuestCalls++;
+			UpdatedQuestState = questState;
+			return Task.FromResult(true);
 		}
 
 		public Task<PlayerNpcFactionsSnapshot> LoadPlayerNpcFactionsAsync(
