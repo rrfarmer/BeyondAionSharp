@@ -2633,6 +2633,10 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedQuestId { get; private set; }
 
+		public int InsertQuestCalls { get; private set; }
+
+		public PlayerQuestState? InsertedQuestState { get; private set; }
+
 		public int UpdateQuestCalls { get; private set; }
 
 		public PlayerQuestState? UpdatedQuestState { get; private set; }
@@ -2910,6 +2914,13 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			DeleteQuestCalls++;
 			DeletedQuestId = questId;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> InsertPlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
+		{
+			InsertQuestCalls++;
+			InsertedQuestState = questState;
 			return Task.FromResult(true);
 		}
 

@@ -6570,6 +6570,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (sourceTemplate.QuestStartQuestId > 0)
+		{
+			await HandleQuestStartUseItemAsync(player, sourceItem, sourceTemplate, staticData);
+			return;
+		}
+
 		if (sourceTemplate.HasTitleAddAction)
 		{
 			await HandleTitleAddUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
@@ -6680,6 +6686,55 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (sourceTemplate.ChargeActionMaxLevel > 0)
 			await HandleChargeUseItemAsync(player, inventoryItems, sourceItem, sourceTemplate, staticData);
+	}
+
+	private async Task HandleQuestStartUseItemAsync(
+		Player player,
+		InventoryItem sourceItem,
+		ItemTemplateSummary sourceTemplate,
+		StaticData staticData,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/templates/item/actions/QuestStartAction.canAct + act, then QuestService.startQuest.
+		var questId = sourceTemplate.QuestStartQuestId;
+		if (questId <= 0 || _playerEnterWorldService == null)
+			return;
+
+		if (!staticData.NearbyQuestTemplates.TryGetQuest(questId, out var questTemplate) || questTemplate == null)
+			return;
+
+		var existingQuest = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
+		var isNewQuestState = existingQuest == null;
+		if (existingQuest != null && !string.Equals(existingQuest.Status, "COMPLETE", StringComparison.Ordinal))
+			return;
+
+		var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+			player,
+			questId,
+			staticData.NearbyQuestTemplates,
+			DateTimeOffset.Now);
+		if (!startConditions.CanStart)
+			return;
+
+		var finalQuestState = existingQuest == null
+			? new PlayerQuestState(questId, "START", 0, 0, 0)
+			: existingQuest with { Status = "START" };
+		if (!await _playerEnterWorldService.PersistQuestStartAsync(player, finalQuestState, isNewQuestState, cancellationToken))
+			return;
+
+		var questStates = player.Quests.ToList();
+		var existingIndex = questStates.FindIndex(quest => quest.QuestId == questId);
+		if (existingIndex >= 0)
+			questStates[existingIndex] = finalQuestState;
+		else
+			questStates.Add(finalQuestState);
+		player.Quests = questStates.ToArray();
+
+		await BroadcastItemUsageAnimationAsync(
+			player,
+			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId));
+		await SendPacketAsync(SmQuestAction.Add(finalQuestState), cancellationToken);
+		await SendNearbyQuestRefreshAsync(player, cancellationToken);
 	}
 
 	private async Task HandleAssemblyUseItemAsync(

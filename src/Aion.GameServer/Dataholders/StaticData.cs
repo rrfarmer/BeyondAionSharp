@@ -2397,6 +2397,13 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 4 && reader.LocalName == "queststart" && currentItemTemplate != null)
+			{
+				// Java parity: model/templates/item/actions/QuestStartAction.questid.
+				currentItemTemplate.QuestStartQuestId = ReadIntAttribute(reader, "questid");
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "expandinventory" && currentItemTemplate != null)
 			{
 				currentItemTemplate.ExpandInventoryAction = new ItemExpandInventoryActionInfo(
@@ -4604,6 +4611,8 @@ public sealed class StaticData
 
 		public ItemTuningActionInfo? TuningAction { get; set; }
 
+		public int QuestStartQuestId { get; set; }
+
 		public void AddModifier(ItemStatModifier modifier)
 		{
 			Modifiers.Add(modifier);
@@ -4711,7 +4720,8 @@ public sealed class StaticData
 				ToyPetSpawnTime,
 				MaxEnchantBonus,
 				OptionSlotBonus,
-				TuningAction);
+				TuningAction,
+				QuestStartQuestId);
 		}
 
 		private static int CalculateMaxTuneCount(

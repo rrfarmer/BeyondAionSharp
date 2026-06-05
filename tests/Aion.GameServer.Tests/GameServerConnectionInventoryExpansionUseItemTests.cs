@@ -191,6 +191,52 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemPersistsQuestAndSendsQuestAdd()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 169700001);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		var questState = Assert.Single(player.Quests);
+		Assert.Equal(new PlayerQuestState(1114, "START", 0, 0, 0), questState);
+		Assert.Equal(1, repository.InsertPlayerQuestCalls);
+		Assert.Equal(questState, repository.InsertedPlayerQuestState);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169700001, expectedEnd: 1, expectedUnknown3: 1),
+			packet => AssertQuestActionPacket(Assert.IsType<SmQuestAction>(packet), SmQuestAction.AddActionId, 1114));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemRestartsCompletedRepeatableQuest()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 169700002);
+		player.Quests =
+		[
+			new PlayerQuestState(1115, "COMPLETE", 23, 1, 1, RewardGroup: 2, CompleteTime: DateTimeOffset.UnixEpoch),
+		];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		var questState = Assert.Single(player.Quests);
+		Assert.Equal("START", questState.Status);
+		Assert.Equal(23, questState.QuestVars);
+		Assert.Equal(1, questState.Flags);
+		Assert.Equal(1, questState.CompleteCount);
+		Assert.Equal(2, questState.RewardGroup);
+		Assert.Equal(1, repository.UpdatePlayerQuestCalls);
+		Assert.Equal(questState, repository.UpdatedPlayerQuestState);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertItemUsagePayload(Assert.IsType<SmItemUsageAnimation>(packet), expectedItemId: 169700002, expectedEnd: 1, expectedUnknown3: 1),
+			packet => AssertQuestActionPacket(Assert.IsType<SmQuestAction>(packet), SmQuestAction.AddActionId, 1115, expectedClientQuestVars: 23 | (1 << 24)));
+	}
+
 	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
@@ -3189,6 +3235,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertQuestActionPacket(
+		SmQuestAction packet,
+		int expectedActionId,
+		int expectedQuestId,
+		int expectedClientQuestVars = 0)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedActionId, (int)reader.ReadC());
+		Assert.Equal(expectedQuestId, reader.ReadD());
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedClientQuestVars, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertInventoryUpdatePayload(SmInventoryUpdateItem packet, int expectedObjectId, int expectedUpdateType)
 	{
 		var payload = SerializeUnencryptedPayload(packet);
@@ -4009,6 +4071,16 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<skilllearn skillid="1" level="1" class="RANGER"/>
 							</actions>
 						</item_template>
+						<item_template id="169700001" name="Test Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1114"/>
+							</actions>
+						</item_template>
+						<item_template id="169700002" name="Test Repeat Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1115"/>
+							</actions>
+						</item_template>
 						<item_template id="169600001" name="Test Emotion Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
 							<actions>
 								<learnemotion emotionid="64"/>
@@ -4174,6 +4246,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					<player_titles>
 						<title id="269" nameId="1101268" desc="Test Title" race="ELYOS"/>
 					</player_titles>
+					<quests>
+						<quest id="1114" minlevel_permitted="0" race_permitted="PC_ALL"/>
+						<quest id="1115" minlevel_permitted="0" race_permitted="PC_ALL" max_repeat_count="2"/>
+					</quests>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(

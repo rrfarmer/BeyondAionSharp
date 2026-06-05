@@ -29,6 +29,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<PlayerQuestState>> LoadPlayerQuestsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> InsertPlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default);
+
 	Task<bool> DeletePlayerQuestAsync(int playerObjectId, int questId, CancellationToken cancellationToken = default);
 
 	Task<bool> UpdatePlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default);
@@ -370,6 +372,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 {
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
+	public bool InsertPlayerQuestResult { get; init; } = true;
+
+	public int InsertPlayerQuestCalls { get; private set; }
+
+	public PlayerQuestState? InsertedPlayerQuestState { get; private set; }
+
+	public int UpdatePlayerQuestCalls { get; private set; }
+
+	public PlayerQuestState? UpdatedPlayerQuestState { get; private set; }
+
 	public bool SaveInventoryExpansionMutationResult { get; init; } = true;
 
 	public int SaveInventoryExpansionMutationCalls { get; private set; }
@@ -456,6 +468,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult<IReadOnlyList<PlayerQuestState>>(Array.Empty<PlayerQuestState>());
 	}
 
+	public Task<bool> InsertPlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
+	{
+		InsertPlayerQuestCalls++;
+		InsertedPlayerQuestState = questState;
+		return Task.FromResult(InsertPlayerQuestResult);
+	}
+
 	public Task<bool> DeletePlayerQuestAsync(int playerObjectId, int questId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -463,6 +482,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<bool> UpdatePlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
 	{
+		UpdatePlayerQuestCalls++;
+		UpdatedPlayerQuestState = questState;
 		return Task.FromResult(true);
 	}
 
@@ -3284,6 +3305,42 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not delete quest {QuestId} for player {PlayerObjectId}", questId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> InsertPlayerQuestAsync(int playerObjectId, PlayerQuestState questState, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerQuestListDAO.addQuests inserts NEW quest states.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				INSERT INTO player_quests
+					(player_id, quest_id, status, quest_vars, flags, complete_count, next_repeat_time, reward, complete_time)
+				VALUES
+					(?, ?, ?, ?, ?, ?, ?, ?, ?)
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = questState.QuestId },
+					new MySqlParameter { Value = questState.Status },
+					new MySqlParameter { Value = questState.QuestVars },
+					new MySqlParameter { Value = questState.Flags },
+					new MySqlParameter { Value = questState.CompleteCount },
+					new MySqlParameter { Value = questState.NextRepeatTime?.DateTime ?? (object)DBNull.Value },
+					new MySqlParameter { Value = questState.RewardGroup.HasValue ? questState.RewardGroup.Value : DBNull.Value },
+					new MySqlParameter { Value = questState.CompleteTime?.DateTime ?? (object)DBNull.Value },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not insert quest {QuestId} for player {PlayerObjectId}", questState.QuestId, playerObjectId);
 			return false;
 		}
 	}

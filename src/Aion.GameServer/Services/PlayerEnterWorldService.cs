@@ -271,6 +271,19 @@ public sealed class PlayerEnterWorldService
 		return questResult || factionResult || inventoryResult;
 	}
 
+	public Task<bool> PersistQuestStartAsync(
+		Player player,
+		PlayerQuestState questState,
+		bool isNewQuestState,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: QuestService.startQuest mutates QuestStateList, then PlayerQuestListDAO.store
+		// persists NEW states through addQuests and repeat-started COMPLETE states through updateQuests.
+		return isNewQuestState
+			? _repository.InsertPlayerQuestAsync(player.ObjectId, questState, cancellationToken)
+			: _repository.UpdatePlayerQuestAsync(player.ObjectId, questState, cancellationToken);
+	}
+
 	public async Task<bool> DeleteInventoryItemAsync(
 		Player player,
 		int itemObjectId,

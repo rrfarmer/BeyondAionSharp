@@ -118,7 +118,8 @@ public sealed record ItemTemplateSummary(
 	int ToyPetSpawnTime = 0,
 	int MaxEnchantBonus = 0,
 	int OptionSlotBonus = 0,
-	ItemTuningActionInfo? TuningAction = null)
+	ItemTuningActionInfo? TuningAction = null,
+	int QuestStartQuestId = 0)
 {
 	private const int SellableMask = 1 << 2;
 	private const int StorableInWhMask = 1 << 3;
