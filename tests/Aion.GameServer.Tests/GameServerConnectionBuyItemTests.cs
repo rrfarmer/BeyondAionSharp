@@ -5,6 +5,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion;
@@ -2120,6 +2121,57 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetDismissClearsActivePetStateAndSendsDismissPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		fixture.World.TryAddObject(
+			7001,
+			new Aion.GameServer.Model.GameObjects.WorldPet(
+				7001,
+				900210,
+				"Merchant Mate",
+				player.ObjectId,
+				player.Position,
+				188051001,
+				HasMerchantFunction: true,
+				MerchantSellModifier: 15));
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Dismiss, templateId: 123456));
+
+		Assert.False(player.HasPetSummon);
+		Assert.Equal((0, 0), (player.PetSummonObjectId, player.PetSummonNpcId));
+		Assert.False(fixture.World.TryGetObject(7001, out _));
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDismissPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedObjectId: 7001,
+			expectedAnimation: ObjectDeleteAnimation.FadeOut);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetDismissWithoutActivePetDoesNothing()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Dismiss, templateId: 900210));
+
+		Assert.False(player.HasPetSummon);
+		Assert.Equal((0, 0), (player.PetSummonObjectId, player.PetSummonNpcId));
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -3393,6 +3445,18 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(expectedDecoration, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
+	}
+
+	private static void AssertPetDismissPacket(
+		SmPet packet,
+		int expectedObjectId,
+		ObjectDeleteAnimation expectedAnimation)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Dismiss, reader.ReadH());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal((byte)expectedAnimation, reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertLoadPetsPacket(

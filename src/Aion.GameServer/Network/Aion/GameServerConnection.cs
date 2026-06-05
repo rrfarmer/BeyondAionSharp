@@ -354,11 +354,17 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandlePetAsync(Player player, CmPet packet)
 	{
-		// Java parity: network/aion/clientpackets/CM_PET.runImpl routes SPAWN to PetSpawnService.summonPet.
-		if (packet.Action != PetAction.Spawn)
-			return;
-
-		await HandlePetSpawnAsync(player, packet.TemplateId);
+		// Java parity: network/aion/clientpackets/CM_PET.runImpl routes SPAWN to PetSpawnService.summonPet
+		// and DISMISS to the active PetController.delete path.
+		switch (packet.Action)
+		{
+			case PetAction.Spawn:
+				await HandlePetSpawnAsync(player, packet.TemplateId);
+				break;
+			case PetAction.Dismiss:
+				await HandlePetDismissAsync(player);
+				break;
+		}
 	}
 
 	private async Task HandlePetSpawnAsync(Player player, int templateId)
@@ -409,6 +415,22 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.Position.Heading,
 			player.ObjectId,
 			ownedPet.Decoration)));
+	}
+
+	private async Task HandlePetDismissAsync(Player player)
+	{
+		// Java parity: CM_PET DISMISS ignores the read template id and deletes player.getPet() when present.
+		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
+			return;
+
+		var petObjectId = player.PetSummonObjectId;
+		_world?.TryRemoveObject(petObjectId, out _);
+		player.HasPetSummon = false;
+		player.PetSummonObjectId = 0;
+		player.PetSummonNpcId = 0;
+
+		// Java World.removeObject despawns pets with ObjectDeleteAnimation.FADE_OUT before PetController.onDelete.
+		await SendPacketAsync(new SmPet(petObjectId, ObjectDeleteAnimation.FadeOut));
 	}
 
 	internal static int GetGeneralInfoWarehouseRestrictionFlag(
