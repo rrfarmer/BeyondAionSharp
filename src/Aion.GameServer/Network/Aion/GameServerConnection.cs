@@ -5426,7 +5426,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		if (_cmBuyItemHandlerCompositionPlanObserver == null
 			&& _cmBuyItemSideEffectOutcomePlanObserver == null
-			&& !IsPrivateStoreBuyItemPacket(player, packet))
+			&& !IsPrivateStoreBuyItemPacket(player, packet)
+			&& !IsBuyFromShopBuyItemPacket(player, packet))
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
@@ -5464,6 +5465,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player?.ObjectId,
 			repurchaseStateSnapshots));
 		await TryExecutePrivateStorePurchaseAsync(player, packet, targetKind, privateStoreItems, privateStorePurchasePlan);
+		await TryExecuteBuyFromShopPurchaseAsync(player, packet, targetKind, buyFromShopTradeTemplate, buyTransactionPlan);
 	}
 
 	private bool IsPrivateStoreBuyItemPacket(Player? player, CmBuyItem packet)
@@ -5473,6 +5475,112 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& _world != null
 			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
 			&& gameObject is Player;
+	}
+
+	private bool IsBuyFromShopBuyItemPacket(Player? player, CmBuyItem packet)
+	{
+		return player != null
+			&& packet.TradeActionId == 13
+			&& _world != null
+			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject;
+	}
+
+	private async Task TryExecuteBuyFromShopPurchaseAsync(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		TradeListTemplateSummary? tradeTemplate,
+		TradeBuyTransactionPlan? transactionPlan)
+	{
+		// Java parity: CM_BUY_ITEM.runImpl action 13 -> TradeService.performBuyFromShop
+		// -> performBuyTransaction for NORMAL kinah shops. This first live slice
+		// intentionally excludes AP/token costs and limited-item counter persistence.
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != 13
+			|| tradeTemplate == null
+			|| !string.Equals(tradeTemplate.NpcType, "NORMAL", StringComparison.Ordinal)
+			|| transactionPlan?.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
+			|| transactionPlan.Mutation == null
+			|| transactionPlan.Mutation.RequiredAbyssPoints != 0
+			|| transactionPlan.Mutation.RequiredItems.Count != 0)
+			return;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		if (itemTemplates == null)
+			return;
+
+		var kinahTemplate = itemTemplates.GetItemTemplate(KinahItemId);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahTemplate == null
+			|| kinahItem == null
+			|| kinahItem.Count < transactionPlan.Mutation.RequiredKinah)
+			return;
+
+		var workingItems = player.InventoryItems.ToList();
+		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - transactionPlan.Mutation.RequiredKinah);
+		ReplaceInventoryItem(workingItems, kinahUpdate);
+		var boughtItemUpdates = new List<(InventoryItem Item, ItemTemplateSummary Template)>();
+		var boughtItemAdds = new List<(InventoryItem Item, ItemTemplateSummary Template)>();
+		foreach (var boughtItem in transactionPlan.Mutation.AddedItems)
+		{
+			var template = itemTemplates.GetItemTemplate(boughtItem.ItemId);
+			if (template == null)
+				return;
+
+			var addPlan = InventoryAddService.CreateAddItemPlan(
+				player,
+				workingItems,
+				template,
+				boughtItem.Count,
+				NextBuyItemObjectId,
+				allowInventoryOverflow: true,
+				itemTemplates);
+			if (!addPlan.Succeeded)
+				return;
+
+			foreach (var updatedItem in addPlan.UpdatedItems)
+			{
+				ReplaceInventoryItem(workingItems, updatedItem);
+				boughtItemUpdates.Add((updatedItem, template));
+			}
+
+			foreach (var addedItem in addPlan.AddedItems)
+			{
+				workingItems.Add(addedItem);
+				boughtItemAdds.Add((addedItem, template));
+			}
+		}
+
+		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
+		player.InventoryItems = workingItems.ToArray();
+		if (transactionPlan.Mutation.RequiredKinah > 0)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		foreach (var (updatedItem, template) in boughtItemUpdates)
+		{
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				SmInventoryUpdateItem.IncreaseItemBuy,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, staticData?.ItemRestrictionCleanups)));
+		}
+
+		foreach (var (addedItem, template) in boughtItemAdds)
+		{
+			await SendPacketAsync(SmInventoryAddItem.CreateBuy(
+				addedItem,
+				template,
+				GetGeneralInfoWarehouseRestrictionFlag(addedItem.ItemId, staticData?.ItemRestrictionCleanups)));
+			projectedCubeItemsCount++;
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
+	}
+
+	private int NextBuyItemObjectId()
+	{
+		return _idFactory?.NextId() ?? _buyItemDiagnosticObjectIdProvider?.Invoke() ?? 0;
 	}
 
 	private async Task TryExecutePrivateStorePurchaseAsync(
