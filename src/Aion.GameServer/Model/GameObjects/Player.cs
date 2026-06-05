@@ -293,6 +293,20 @@ public sealed class Player
 		DeletedAccountWarehouseItems = Array.Empty<InventoryItem>();
 	}
 
+	public void MarkDeletedInventoryItemsPersisted(IEnumerable<int> itemObjectIds)
+	{
+		var persistedIds = itemObjectIds.ToHashSet();
+		if (persistedIds.Count == 0)
+			return;
+
+		DeletedInventoryItems = DeletedInventoryItems
+			.Where(item => !persistedIds.Contains(item.ObjectId))
+			.ToArray();
+		InventoryStoragePersistentState = DeletedInventoryItems.Count == 0
+			? PromoteStoragePersistentState(StoragePersistentState.Updated, InventoryItems)
+			: StoragePersistentState.UpdateRequired;
+	}
+
 	// Java parity: Storage.setPersistentState(UPDATE_REQUIRED) at the currently modeled player-owned storage boundary.
 	public void MarkStorageDirty(int location)
 	{

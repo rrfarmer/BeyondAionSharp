@@ -256,7 +256,19 @@ public sealed class PlayerEnterWorldService
 				factionResult = true;
 		}
 
-		return questResult || factionResult;
+		var inventoryResult = false;
+		var persistedWorkItemObjectIds = new List<int>();
+		foreach (var objectId in result.WorkItemDeletions.Select(deletion => deletion.Item.ObjectId).Distinct())
+		{
+			if (await _repository.DeleteInventoryItemAsync(player.ObjectId, objectId, cancellationToken))
+			{
+				inventoryResult = true;
+				persistedWorkItemObjectIds.Add(objectId);
+			}
+		}
+
+		player.MarkDeletedInventoryItemsPersisted(persistedWorkItemObjectIds);
+		return questResult || factionResult || inventoryResult;
 	}
 
 	public async Task<bool> DeleteInventoryItemAsync(

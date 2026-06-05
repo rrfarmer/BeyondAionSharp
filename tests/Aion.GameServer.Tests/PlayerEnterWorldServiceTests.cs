@@ -1700,6 +1700,32 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task PersistQuestAbandon_DeletesQuestWorkItemInventoryRows()
+	{
+		var player = CreatePlayer();
+		player.Quests = [new PlayerQuestState(1005, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)];
+		player.InventoryItems =
+		[
+			new InventoryItem { ObjectId = 5001, ItemId = 188000001, Count = 1, OwnerId = 1001, Location = 0 },
+			new InventoryItem { ObjectId = 5002, ItemId = 188000001, Count = 3, OwnerId = 1001, Location = 0 },
+			new InventoryItem { ObjectId = 5003, ItemId = 100000094, Count = 1, OwnerId = 1001, Location = 0 },
+		];
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = QuestAbandonService.Abandon(player, 1005, QuestTemplate(1005, questWorkItemIds: [188000001]));
+		var persisted = await service.PersistQuestAbandonAsync(player, result);
+
+		Assert.True(persisted);
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.Equal([5001, 5002], result.WorkItemDeletions.Select(deletion => deletion.Item.ObjectId).Order());
+		Assert.Equal([5003], player.InventoryItems.Select(item => item.ObjectId));
+		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Equal(1, repository.DeleteQuestCalls);
+		Assert.Equal([5001, 5002], repository.DeletedInventoryItemObjectIds);
+	}
+
+	[Fact]
 	public async Task SavePowerShardUseMutation_FlattensUseResultsForRepository()
 	{
 		var player = CreatePlayer();
@@ -2270,9 +2296,15 @@ public sealed class PlayerEnterWorldServiceTests
 		};
 	}
 
-	private static NearbyQuestTemplateSummary QuestTemplate(int questId, int npcFactionId = 0)
+	private static NearbyQuestTemplateSummary QuestTemplate(
+		int questId,
+		int npcFactionId = 0,
+		IReadOnlyList<int>? questWorkItemIds = null)
 	{
-		return new NearbyQuestTemplateSummary(questId, NpcFactionId: npcFactionId);
+		return new NearbyQuestTemplateSummary(
+			questId,
+			NpcFactionId: npcFactionId,
+			QuestWorkItems: questWorkItemIds?.Select(itemId => new NearbyQuestInventoryItem(itemId)).ToArray());
 	}
 
 	private static InventoryItem CreateInventoryItem(
@@ -2621,6 +2653,10 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeletedMotionId { get; private set; }
 
+		public int DeleteInventoryItemCalls { get; private set; }
+
+		public IReadOnlyList<int> DeletedInventoryItemObjectIds { get; private set; } = Array.Empty<int>();
+
 		public int SaveItemUseSourceMutationCalls { get; private set; }
 
 		public InventoryItem? ItemUseSourceItemUpdate { get; private set; }
@@ -2957,6 +2993,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> DeleteInventoryItemAsync(int itemOwnerId, int itemObjectId, CancellationToken cancellationToken = default)
 		{
+			DeleteInventoryItemCalls++;
+			DeletedInventoryItemObjectIds = DeletedInventoryItemObjectIds.Append(itemObjectId).ToArray();
 			return Task.FromResult(true);
 		}
 
