@@ -108,6 +108,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
 	private readonly GoodsListTable? _buyItemGoodsLists;
+	private readonly PetTemplateTable? _buyItemPetTemplates;
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -205,6 +206,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
 		GoodsListTable? buyItemGoodsLists = null,
+		PetTemplateTable? buyItemPetTemplates = null,
 		LimitedItemTradeService? limitedItemTradeService = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -280,6 +282,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
 		_buyItemGoodsLists = buyItemGoodsLists;
+		_buyItemPetTemplates = buyItemPetTemplates;
 		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
@@ -6922,13 +6925,14 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		if (player == null
 			|| targetKind != CmBuyItemRunTargetKind.Pet
-			|| packet.TradeActionId != 17
-			|| _world == null
-			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
-			|| gameObject is not IWorldPetObject pet)
+			|| packet.TradeActionId != 17)
 			return null;
 
-		return pet;
+		if (_world?.TryGetObject(packet.SellerObjectId, out var gameObject) == true
+			&& gameObject is IWorldPetObject pet)
+			return pet;
+
+		return CreateActivePetBuyItemTarget(player, packet.SellerObjectId);
 	}
 
 	private TradeSellToShopPlan? ResolveBuyItemPetSellToShopPlan(
@@ -7178,7 +7182,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		// world-object-only approximation as non-live diagnostic evidence.
 		var worldObject = _world?.TryGetObject(sellerObjectId, out var gameObject) == true
 			? gameObject
-			: null;
+			: CreateActivePetBuyItemTarget(player, sellerObjectId);
 		bool? isKnownByPlayer = player == null || _buyItemKnownObjectResolver == null
 			? null
 			: _buyItemKnownObjectResolver(player, sellerObjectId, worldObject);
@@ -7189,6 +7193,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			isKnownByPlayer);
 		return factPlan.TargetKind;
 	}
+
+	private IWorldPetObject? CreateActivePetBuyItemTarget(Player? player, int sellerObjectId)
+	{
+		if (player?.HasPetSummon != true || player.PetSummonObjectId != sellerObjectId)
+			return null;
+
+		var petTemplates = _buyItemPetTemplates ?? _runtimeContext?.DataManager?.StaticData.PetTemplates;
+		var merchantSellModifier = petTemplates?.GetMerchantSellModifier(player.PetSummonNpcId);
+		return new ActivePlayerPetBuyItemTarget(
+			sellerObjectId,
+			HasMerchantFunction: merchantSellModifier != null,
+			MerchantSellModifier: merchantSellModifier);
+	}
+
+	private sealed record ActivePlayerPetBuyItemTarget(
+		int ObjectId,
+		bool HasMerchantFunction,
+		int? MerchantSellModifier) : IWorldPetObject;
 
 	private IWorldNpcObject? ResolveCraftTarget(int targetObjectId)
 	{

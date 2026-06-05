@@ -249,6 +249,7 @@ public sealed class GameServerConnectionOpenStaticDoorTests
 			emptySkillTemplates,
 			new NpcSkillTable(Array.Empty<NpcSkillListSummary>()),
 			new PetSkillTable(Array.Empty<PetSkillSummary>()),
+			new PetTemplateTable(Array.Empty<PetTemplateSummary>()),
 			new TitleTemplateTable(Array.Empty<TitleTemplateSummary>()),
 			new RecipeTemplateTable(Array.Empty<RecipeTemplateSummary>()),
 			new WorkOrderRecipeTable(Array.Empty<WorkOrderRecipeSummary>()),

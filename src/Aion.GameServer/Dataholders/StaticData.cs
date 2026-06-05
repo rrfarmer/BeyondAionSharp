@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Xml;
+using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Dataholders;
@@ -48,6 +49,7 @@ public sealed class StaticData
 		SkillTemplateTable skillTemplates,
 		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
+		PetTemplateTable petTemplates,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
 		WorkOrderRecipeTable workOrderRecipes,
@@ -109,6 +111,7 @@ public sealed class StaticData
 		SkillTemplates = skillTemplates;
 		NpcSkills = npcSkills;
 		PetSkills = petSkills;
+		PetTemplates = petTemplates;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
 		WorkOrderRecipes = workOrderRecipes;
@@ -212,6 +215,8 @@ public sealed class StaticData
 	public NpcSkillTable NpcSkills { get; }
 
 	public PetSkillTable PetSkills { get; }
+
+	public PetTemplateTable PetTemplates { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
 
@@ -339,6 +344,7 @@ public sealed class StaticData
 		var portalLocs = new List<PortalLocSummary>();
 		var autoGroups = new List<AutoGroupSummary>();
 		var petSkills = new List<PetSkillSummary>();
+		var petTemplates = new List<PetTemplateSummary>();
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
@@ -398,6 +404,8 @@ public sealed class StaticData
 		SkillTemplateBuilder? currentSkillTemplate = null;
 		NpcSkillListBuilder? currentNpcSkillList = null;
 		NpcSkillTemplateBuilder? currentNpcSkill = null;
+		PetTemplateBuilder? currentPetTemplate = null;
+		int currentPetTemplateDepth = -1;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		RecipeTemplateBuilder? currentRecipeTemplate = null;
 		List<int>? currentStorageExpansionNpcIds = null;
@@ -573,6 +581,13 @@ public sealed class StaticData
 				{
 					npcTemplates.Add(currentNpcTemplate.ToSummary());
 					currentNpcTemplate = null;
+				}
+
+				if (reader.Depth == currentPetTemplateDepth && reader.LocalName == "pet" && currentPetTemplate != null)
+				{
+					petTemplates.Add(currentPetTemplate.ToSummary());
+					currentPetTemplate = null;
+					currentPetTemplateDepth = -1;
 				}
 
 				if (reader.Depth == currentTradeListTemplateDepth && currentTradeListTemplate != null)
@@ -2397,6 +2412,40 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2
+				&& reader.LocalName == "pet"
+				&& elementPath.GetValueOrDefault(1) == "pets")
+			{
+				// Java parity: dataholders/PetData indexes PetTemplate by pet id after static_data/pets/pets.xml unmarshalling.
+				currentPetTemplate = new PetTemplateBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					reader.GetAttribute("name") ?? string.Empty,
+					ReadIntAttribute(reader, "nameid"),
+					ReadIntAttribute(reader, "condition_reward"));
+				currentPetTemplateDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					petTemplates.Add(currentPetTemplate.ToSummary());
+					currentPetTemplate = null;
+					currentPetTemplateDepth = -1;
+				}
+
+				continue;
+			}
+
+			if (currentPetTemplate != null
+				&& reader.Depth == currentPetTemplateDepth + 1
+				&& reader.LocalName == "petfunction")
+			{
+				// Java parity: model/templates/pet/PetFunction fields id/type/slots/rate_price.
+				currentPetTemplate.AddFunction(new PetFunctionSummary(
+					ReadIntAttribute(reader, "id"),
+					ReadPetFunctionTypeAttribute(reader.GetAttribute("type")),
+					ReadIntAttribute(reader, "slots"),
+					ReadIntAttribute(reader, "rate_price")));
+				continue;
+			}
+
 			if (reader.Depth == 4 && reader.LocalName == "queststart" && currentItemTemplate != null)
 			{
 				// Java parity: model/templates/item/actions/QuestStartAction.questid.
@@ -3005,6 +3054,7 @@ public sealed class StaticData
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),
+			new PetTemplateTable(petTemplates.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			workOrderRecipes,
@@ -3197,6 +3247,42 @@ public sealed class StaticData
 		List,
 		InList,
 		PurchaseList,
+	}
+
+	private sealed class PetTemplateBuilder
+	{
+		private readonly List<PetFunctionSummary> _functions = [];
+
+		public PetTemplateBuilder(int id, string name, int nameId, int conditionReward)
+		{
+			Id = id;
+			Name = name;
+			NameId = nameId;
+			ConditionReward = conditionReward;
+		}
+
+		private int Id { get; }
+
+		private string Name { get; }
+
+		private int NameId { get; }
+
+		private int ConditionReward { get; }
+
+		public void AddFunction(PetFunctionSummary function)
+		{
+			_functions.Add(function);
+		}
+
+		public PetTemplateSummary ToSummary()
+		{
+			return new PetTemplateSummary(
+				Id,
+				Name,
+				NameId,
+				ConditionReward,
+				_functions.AsReadOnly());
+		}
 	}
 
 	private sealed class TradeListTemplateBuilder
@@ -5686,6 +5772,25 @@ public sealed class StaticData
 	private static int ReadOptionalIntAttribute(XmlReader reader, string attributeName, int defaultValue)
 	{
 		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
+	}
+
+	private static PetFunctionType ReadPetFunctionTypeAttribute(string? value)
+	{
+		// Java parity: model/templates/pet/PetFunctionType JAXB enum names.
+		return value switch
+		{
+			"WAREHOUSE" => PetFunctionType.Warehouse,
+			"FOOD" => PetFunctionType.Food,
+			"DOPING" => PetFunctionType.Doping,
+			"LOOT" => PetFunctionType.Loot,
+			"BUFF" => PetFunctionType.Buff,
+			"MERCHANT" => PetFunctionType.Merchant,
+			"NONE" => PetFunctionType.None,
+			"APPEARANCE" => PetFunctionType.Appearance,
+			"BAG" => PetFunctionType.Bag,
+			"WING" => PetFunctionType.Wing,
+			_ => throw new FormatException($"Unexpected PetFunctionType value '{value}'."),
+		};
 	}
 
 	private static float ReadOptionalFloatAttribute(XmlReader reader, string attributeName, float defaultValue)

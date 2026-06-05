@@ -1623,6 +1623,7 @@ public sealed class GameServerConnectionInstanceCooldownTests
 			emptySkillTemplates,
 			new NpcSkillTable(Array.Empty<NpcSkillListSummary>()),
 			new PetSkillTable(Array.Empty<PetSkillSummary>()),
+			new PetTemplateTable(Array.Empty<PetTemplateSummary>()),
 			new TitleTemplateTable(Array.Empty<TitleTemplateSummary>()),
 			new RecipeTemplateTable(Array.Empty<RecipeTemplateSummary>()),
 			new HousingTemplateTable(Array.Empty<HousingAddressSummary>(), Array.Empty<HousingBuildingSummary>()),

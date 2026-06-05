@@ -6,6 +6,7 @@ using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
@@ -2001,6 +2002,74 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemActivePetMerchantSellUsesStaticPetTemplateRateLive()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, mask: 1 << 2),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"merchant pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(3, PetFunctionType.Merchant, Slots: 0, RatePrice: 15)])),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 1,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 1_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 7001, tradeActionId: 17, [(2001, 1)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner, plan.Status);
+		Assert.Equal(15, plan.PetSellModifier);
+		Assert.Equal(TradeSellToShopPlanStatus.PlanCreated, plan.PetSellToShopPlan!.Status);
+		Assert.Equal(1, playerRepository.SaveNpcShopSellMutationCalls);
+		var persistence = Assert.IsType<NpcShopSellPersistenceCapture>(playerRepository.NpcShopSellPersistence);
+		Assert.Equal(player.ObjectId, persistence.PlayerObjectId);
+		Assert.Equal([2001], persistence.SellerDeletedItemObjectIds);
+		Assert.Equal((3001, InventoryItemFactory.KinahItemId, 1_150L), (persistence.KinahItem.ObjectId, persistence.KinahItem.ItemId, persistence.KinahItem.Count));
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 2001);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 1_150);
+		var repurchase = Assert.Single(player.RepurchaseItems);
+		Assert.Equal((2001, 100000001, 1L), (repurchase.Item.ObjectId, repurchase.Item.ItemId, repurchase.Item.Count));
+		Assert.Equal(150, repurchase.RepurchasePrice);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 2001, SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => Assert.Equal(SmInventoryUpdateItem.IncreaseKinahSell, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionBlocksDisabledNormalSellPlanWhenTemplateMaskIsNotSellable()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
@@ -2986,6 +3055,11 @@ public sealed class GameServerConnectionBuyItemTests
 		return new ItemTemplateTable(templates);
 	}
 
+	private static PetTemplateTable CreatePetTemplates(params PetTemplateSummary[] templates)
+	{
+		return new PetTemplateTable(templates);
+	}
+
 	private static ItemTemplateSummary Template(
 		int itemId,
 		long price,
@@ -3213,6 +3287,7 @@ public sealed class GameServerConnectionBuyItemTests
 			TradeListTable? buyItemTradeLists = null,
 			ItemTemplateTable? buyItemItemTemplates = null,
 			GoodsListTable? buyItemGoodsLists = null,
+			PetTemplateTable? buyItemPetTemplates = null,
 			LimitedItemTradeService? limitedItemTradeService = null,
 			long? buyItemCurrentSellLimit = null,
 			Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -3271,6 +3346,7 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemTradeLists: buyItemTradeLists,
 						buyItemItemTemplates: buyItemItemTemplates,
 						buyItemGoodsLists: buyItemGoodsLists,
+						buyItemPetTemplates: buyItemPetTemplates,
 						limitedItemTradeService: limitedItemTradeService,
 						buyItemCurrentSellLimit: buyItemCurrentSellLimit,
 						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider,
