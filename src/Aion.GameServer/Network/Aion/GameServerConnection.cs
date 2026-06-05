@@ -5518,7 +5518,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			|| targetKind != CmBuyItemRunTargetKind.Npc
 			|| packet.TradeActionId != 13
 			|| tradeTemplate == null
-			|| !ShouldUseKinahForBuyTransaction(tradeTemplate.NpcType)
+			|| !IsLiveBuyFromShopNpcType(tradeTemplate.NpcType)
 			|| transactionPlan == null)
 			return;
 
@@ -5563,13 +5563,6 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (itemTemplates == null)
 			return;
 
-		var kinahTemplate = itemTemplates.GetItemTemplate(KinahItemId);
-		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
-		if (kinahTemplate == null
-			|| kinahItem == null
-			|| kinahItem.Count < transactionPlan.Mutation.RequiredKinah)
-			return;
-
 		var workingItems = player.InventoryItems.ToList();
 		var abyssPointsPlan = transactionPlan.Mutation.RequiredAbyssPoints > 0
 			? AbyssPointsService.CreateAddApPlan(player, -transactionPlan.Mutation.RequiredAbyssPoints, CreateAbyssPointsOptions())
@@ -5577,8 +5570,21 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (abyssPointsPlan != null && (!abyssPointsPlan.Applied || abyssPointsPlan.UpdatedRank == null))
 			return;
 
-		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - transactionPlan.Mutation.RequiredKinah);
-		ReplaceInventoryItem(workingItems, kinahUpdate);
+		ItemTemplateSummary? kinahTemplate = null;
+		InventoryItem? kinahUpdate = null;
+		if (transactionPlan.Mutation.RequiredKinah > 0)
+		{
+			kinahTemplate = itemTemplates.GetItemTemplate(KinahItemId);
+			var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+			if (kinahTemplate == null
+				|| kinahItem == null
+				|| kinahItem.Count < transactionPlan.Mutation.RequiredKinah)
+				return;
+
+			kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - transactionPlan.Mutation.RequiredKinah);
+			ReplaceInventoryItem(workingItems, kinahUpdate);
+		}
+
 		var requiredItemConsumption = CreateNpcShopRequiredItemConsumptionPlan(workingItems, transactionPlan.Mutation.RequiredItems);
 		if (requiredItemConsumption == null)
 			return;
@@ -5646,7 +5652,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (transactionPlan.Mutation.RequiredKinah > 0)
-			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate!, kinahTemplate!, SmInventoryUpdateItem.DecreaseKinahBuy));
 		foreach (var step in requiredItemConsumption.Steps)
 		{
 			if (step.Deleted)
@@ -6799,6 +6805,11 @@ public sealed class GameServerConnection : BaseClientConnection
 	private static bool ShouldUseKinahForBuyTransaction(string npcType)
 	{
 		return npcType is "NORMAL" or "ABYSS_KINAH";
+	}
+
+	private static bool IsLiveBuyFromShopNpcType(string npcType)
+	{
+		return npcType is "NORMAL" or "ABYSS_KINAH" or "ABYSS";
 	}
 
 	private static bool IsBuyFromShopTradeAction(int tradeActionId)
