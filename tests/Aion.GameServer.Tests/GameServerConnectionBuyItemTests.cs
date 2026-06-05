@@ -10,6 +10,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
 
@@ -1108,6 +1109,105 @@ public sealed class GameServerConnectionBuyItemTests
 			packet => AssertPacketEvent<SmCubeUpdate>(packet, "direct", sellerPlayer.ObjectId),
 			packet => Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, AssertPacketEvent<SmInventoryUpdateItem>(packet, "direct", sellerPlayer.ObjectId).UpdateType),
 			packet => AssertPacketEvent<SmEmotion>(packet, "visible", sellerPlayer.ObjectId));
+		Assert.Contains(
+			fixture.Logger.Entries,
+			entry =>
+				entry.Level == LogLevel.Information
+				&& entry.Message.Contains(
+					"[PRIVATE STORE] > [Seller: StoreSeller] sold [Item: 100000001][Amount: 1] to [Buyer: BuyItemTester] for [Price: 10000]",
+					StringComparison.Ordinal));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreStaleSellerCountLogsAuditAndStops()
+	{
+		var membership = new PlayerKnownListMembershipService();
+		var activePlayer = CreatePlayer();
+		activePlayer.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 8001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 20_000,
+				OwnerId = activePlayer.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		var sellerPlayer = new Player
+		{
+			ObjectId = 9101,
+			Name = "StoreSeller",
+			Race = activePlayer.Race,
+			IsOnline = true,
+			CreatureState = PlayerCreatureState.PrivateShop,
+			PrivateStoreMessage = "Practice wares",
+			Position = new WorldPosition(210010000, 10, 0, 0, 0),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 3001,
+					ItemId = 100000001,
+					Count = 1,
+					OwnerId = 9101,
+					Location = 0,
+					Slot = 1,
+				},
+			],
+			PrivateStoreItems =
+			[
+				new PrivateStoreListedItemSummary(
+					StoreIndex: 0,
+					ItemObjectId: 3001,
+					ItemId: 100000001,
+					Count: 2,
+					PricePerItem: 10_000,
+					ItemName: "Practice Sword"),
+			],
+		};
+		membership.UpsertKnownPlayers(
+			activePlayer.ObjectId,
+			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)));
+		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
+		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: sellerPlayer.ObjectId, tradeActionId: 0, [(0, 2)]));
+
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPrivateStorePlanner, plan.Status);
+		Assert.NotNull(plan.PrivateStorePurchasePlan);
+		var purchasePlan = plan.PrivateStorePurchasePlan;
+		Assert.Equal(PrivateStorePurchasePlanStatus.BlockedSellerItemCountChanged, purchasePlan.Status);
+		Assert.Equal("tried to buy more than players private store item stack count", purchasePlan.AuditMessage);
+		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
+		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
+		Assert.False(outcome.ShouldDispatchLiveSideEffects);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.DirectPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+		Assert.Contains(activePlayer.InventoryItems, item => item.ObjectId == 8001 && item.Count == 20_000);
+		var sellerInventoryItem = Assert.Single(sellerPlayer.InventoryItems, item => item.ObjectId == 3001);
+		Assert.Equal(1, sellerInventoryItem.Count);
+		var storeItem = Assert.Single(sellerPlayer.PrivateStoreItems);
+		Assert.Equal((0, 3001, 2L), (storeItem.StoreIndex, storeItem.ItemObjectId, storeItem.Count));
+		Assert.True(sellerPlayer.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.Equal("Practice wares", sellerPlayer.PrivateStoreMessage);
+		Assert.Contains(
+			fixture.Logger.Entries,
+			entry =>
+				entry.Level == LogLevel.Warning
+				&& entry.Message.Contains(
+					"Player BuyItemTester (1001) tried to buy more than players private store item stack count",
+					StringComparison.Ordinal));
 	}
 
 	[Fact]
@@ -1748,7 +1848,8 @@ public sealed class GameServerConnectionBuyItemTests
 			List<CmBuyItemHandlerCompositionPlan> buyItemPlans,
 			List<CmBuyItemSideEffectOutcomePlan> buyItemSideEffectOutcomePlans,
 			List<GameServerPacket> sentPackets,
-			List<PacketEvent> packetEvents)
+			List<PacketEvent> packetEvents,
+			CapturingLogger logger)
 		{
 			_client = client;
 			Connection = connection;
@@ -1758,6 +1859,7 @@ public sealed class GameServerConnectionBuyItemTests
 			BuyItemSideEffectOutcomePlans = buyItemSideEffectOutcomePlans;
 			SentPackets = sentPackets;
 			PacketEvents = packetEvents;
+			Logger = logger;
 		}
 
 		public GameServerConnection Connection { get; }
@@ -1773,6 +1875,8 @@ public sealed class GameServerConnectionBuyItemTests
 		public List<GameServerPacket> SentPackets { get; }
 
 		public List<PacketEvent> PacketEvents { get; }
+
+		public CapturingLogger Logger { get; }
 
 		public static async Task<BuyItemFixture> CreateAsync(
 			Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
@@ -1803,6 +1907,7 @@ public sealed class GameServerConnectionBuyItemTests
 				var sentPackets = new List<GameServerPacket>();
 				var packetEvents = new List<PacketEvent>();
 				var registry = new CapturingConnectionRegistry(packetEvents);
+				var logger = new CapturingLogger();
 				var gameServerOptions = options ?? new GameServerOptions();
 				var playerEnterWorldService = playerEnterWorldRepository == null
 					? null
@@ -1814,7 +1919,7 @@ public sealed class GameServerConnectionBuyItemTests
 				var fixture = new BuyItemFixture(
 					client,
 					new GameServerConnection(
-						NullLogger.Instance,
+						logger,
 						serverClient,
 						"cm-buy-item-test",
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
@@ -1842,7 +1947,8 @@ public sealed class GameServerConnectionBuyItemTests
 					buyItemPlans,
 					buyItemSideEffectOutcomePlans,
 					sentPackets,
-					packetEvents);
+					packetEvents,
+					logger);
 				return fixture;
 			}
 			finally
@@ -1863,6 +1969,38 @@ public sealed class GameServerConnectionBuyItemTests
 	internal sealed record VisibleRegistryBroadcast(WorldPosition Position, int SourceObjectId, GameServerPacket Packet, bool IncludeSourcePlayer);
 
 	internal sealed record PacketEvent(string Recipient, int? PlayerObjectId, GameServerPacket Packet);
+
+	internal sealed record CapturedLog(LogLevel Level, string Message, Exception? Exception);
+
+	internal sealed class CapturingLogger : ILogger
+	{
+		public List<CapturedLog> Entries { get; } = [];
+
+		public IDisposable? BeginScope<TState>(TState state)
+			where TState : notnull =>
+			NullScope.Instance;
+
+		public bool IsEnabled(LogLevel logLevel) => true;
+
+		public void Log<TState>(
+			LogLevel logLevel,
+			EventId eventId,
+			TState state,
+			Exception? exception,
+			Func<TState, Exception?, string> formatter)
+		{
+			Entries.Add(new CapturedLog(logLevel, formatter(state, exception), exception));
+		}
+
+		private sealed class NullScope : IDisposable
+		{
+			public static NullScope Instance { get; } = new();
+
+			public void Dispose()
+			{
+			}
+		}
+	}
 
 	internal sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{

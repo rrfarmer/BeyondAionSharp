@@ -5496,6 +5496,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var buyerMessage in purchasePlan.BuyerMessages)
 			await SendPacketAsync(buyerMessage);
 
+		if (purchasePlan.AuditMessage != null)
+			_logger.LogWarning(
+				"Player {PlayerName} ({PlayerObjectId}) {AuditMessage}",
+				buyer.Name,
+				buyer.ObjectId,
+				purchasePlan.AuditMessage);
+
 		if (purchasePlan.Status != PrivateStorePurchasePlanStatus.PlanCreated)
 			return;
 
@@ -5571,6 +5578,14 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (sellerMessageIndex < purchasePlan.SellerMessages.Count)
 				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, purchasePlan.SellerMessages[sellerMessageIndex++]);
+
+			_logger.LogInformation(
+				"[PRIVATE STORE] > [Seller: {SellerName}] sold [Item: {ItemId}][Amount: {Amount}] to [Buyer: {BuyerName}] for [Price: {Price}]",
+				seller.Name,
+				boughtItem.ItemId,
+				boughtItem.Count,
+				buyer.Name,
+				boughtItem.PricePerItem * boughtItem.Count);
 		}
 		if (buyerItemFanouts == null)
 		{
