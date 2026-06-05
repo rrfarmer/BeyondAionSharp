@@ -840,8 +840,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: PetCommonData.scheduleRefeed cancels any previous refeed task, then clears refeed time
 		// and sets hungry level back to HUNGRY after the delay.
-		if (_petRefeedTasks.TryRemove(petObjectId, out var existingTask))
-			existingTask.Cancel();
+		CancelPetRefeedTask(petObjectId);
 
 		if (_threadPoolManager == null || delayMilliseconds <= 0)
 			return;
@@ -874,6 +873,13 @@ public sealed class GameServerConnection : BaseClientConnection
 	private bool TryRemovePetRefeedTask(int petObjectId, ScheduledTask scheduledTask) =>
 		((ICollection<KeyValuePair<int, ScheduledTask>>)_petRefeedTasks).Remove(
 			new KeyValuePair<int, ScheduledTask>(petObjectId, scheduledTask));
+
+	private void CancelPetRefeedTask(int petObjectId)
+	{
+		// Java parity: PetController.onDelete -> PetCommonData.cancelRefeedTask.
+		if (_petRefeedTasks.TryRemove(petObjectId, out var existingTask))
+			existingTask.Cancel();
+	}
 
 	private PetFeedReward? SelectLovedPetFeedReward(IReadOnlyList<PetFeedReward> rewards)
 	{
@@ -1068,6 +1074,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
 	{
 		var petObjectId = player.PetSummonObjectId;
+		CancelPetRefeedTask(petObjectId);
 		_world?.TryRemoveObject(petObjectId, out _);
 		player.HasPetSummon = false;
 		player.PetSummonObjectId = 0;
