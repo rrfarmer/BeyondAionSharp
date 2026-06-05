@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -980,12 +981,14 @@ public sealed class GameServerConnectionBuyItemTests
 		membership.UpsertKnownPlayers(
 			activePlayer.ObjectId,
 			[new PlayerKnownListMembershipCandidate(sellerPlayer.ObjectId, IsVisibleToOwner: true)]);
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
 		await using var fixture = await BuyItemFixture.CreateAsync(
 			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
 			buyItemItemTemplates: CreateItemTemplates(
 				Template(100000001, price: 1_000),
 				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
-			buyItemDiagnosticObjectIdProvider: Sequence(9001));
+			buyItemDiagnosticObjectIdProvider: Sequence(9001),
+			playerEnterWorldRepository: playerRepository);
 		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
 		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
 
@@ -1009,6 +1012,24 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(10_000, purchasePlan.SellerKinahUpdate!.Count);
 		Assert.True(purchasePlan.SellerKinahWasCreated);
 		Assert.True(purchasePlan.ShouldCloseSellerStore);
+		Assert.Equal(1, playerRepository.SavePrivateStorePurchaseMutationCalls);
+		Assert.NotNull(playerRepository.PrivateStorePurchasePersistence);
+		var persistence = playerRepository.PrivateStorePurchasePersistence!;
+		Assert.Equal(activePlayer.ObjectId, persistence.BuyerObjectId);
+		Assert.Equal(sellerPlayer.ObjectId, persistence.SellerObjectId);
+		Assert.Empty(persistence.SellerUpdatedItems);
+		Assert.Equal([3001], persistence.SellerDeletedItemObjectIds);
+		Assert.Empty(persistence.BuyerUpdatedItems);
+		var persistedBuyerItem = Assert.Single(persistence.BuyerAddedItems);
+		Assert.Equal((9001, 100000001, 1L, activePlayer.ObjectId, 0), (
+			persistedBuyerItem.ObjectId,
+			persistedBuyerItem.ItemId,
+			persistedBuyerItem.Count,
+			persistedBuyerItem.OwnerId,
+			persistedBuyerItem.Location));
+		Assert.Equal(10_000, persistence.BuyerKinahItem!.Count);
+		Assert.Equal(10_000, persistence.SellerKinahItem!.Count);
+		Assert.True(persistence.SellerKinahWasCreated);
 
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
 		Assert.Equal(CmBuyItemSideEffectOutcomePlanStatus.PrivateStoreOutcomeCreated, outcome.Status);
@@ -1761,7 +1782,8 @@ public sealed class GameServerConnectionBuyItemTests
 			long? buyItemCurrentSellLimit = null,
 			Func<int>? buyItemDiagnosticObjectIdProvider = null,
 			GameServerOptions? options = null,
-			PriceInfluenceRates? buyItemPriceInfluenceRates = null)
+			PriceInfluenceRates? buyItemPriceInfluenceRates = null,
+			IPlayerEnterWorldRepository? playerEnterWorldRepository = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1781,6 +1803,14 @@ public sealed class GameServerConnectionBuyItemTests
 				var sentPackets = new List<GameServerPacket>();
 				var packetEvents = new List<PacketEvent>();
 				var registry = new CapturingConnectionRegistry(packetEvents);
+				var gameServerOptions = options ?? new GameServerOptions();
+				var playerEnterWorldService = playerEnterWorldRepository == null
+					? null
+					: new PlayerEnterWorldService(
+						gameServerOptions,
+						playerEnterWorldRepository,
+						world,
+						NullLogger<PlayerEnterWorldService>.Instance);
 				var fixture = new BuyItemFixture(
 					client,
 					new GameServerConnection(
@@ -1788,8 +1818,9 @@ public sealed class GameServerConnectionBuyItemTests
 						serverClient,
 						"cm-buy-item-test",
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
-						options: options ?? new GameServerOptions(),
+						options: gameServerOptions,
 						world: world,
+						playerEnterWorldService: playerEnterWorldService,
 						connectionRegistry: registry,
 						crypt: crypt,
 						sentPacketObserver: packet =>

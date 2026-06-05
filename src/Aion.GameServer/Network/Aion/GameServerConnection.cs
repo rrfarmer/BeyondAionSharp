@@ -5503,6 +5503,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (itemTemplates == null)
 			return;
 
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SavePrivateStorePurchaseMutationAsync(buyer, seller, purchasePlan))
+			return;
+
 		var sellerCubeItemsCountBeforeDeletedItems = seller.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		var buyerCubeItemsCountBeforeAddedItems = buyer.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		ApplyInventoryItemUpdates(seller, purchasePlan.SellerItemUpdates);

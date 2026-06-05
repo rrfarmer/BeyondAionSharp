@@ -3534,6 +3534,21 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SavePrivateStorePurchaseMutationAsync(
+			int buyerObjectId,
+			int sellerObjectId,
+			IReadOnlyList<InventoryItem> sellerUpdatedItems,
+			IReadOnlyList<int> sellerDeletedItemObjectIds,
+			IReadOnlyList<InventoryItem> buyerUpdatedItems,
+			IReadOnlyList<InventoryItem> buyerAddedItems,
+			InventoryItem? buyerKinahItem,
+			InventoryItem? sellerKinahItem,
+			bool sellerKinahWasCreated,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveInventoryItemPackCountAsync(
 			int playerObjectId,
 			int itemObjectId,

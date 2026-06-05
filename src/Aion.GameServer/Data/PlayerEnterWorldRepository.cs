@@ -352,6 +352,18 @@ public interface IPlayerEnterWorldRepository
 		long newSlot,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SavePrivateStorePurchaseMutationAsync(
+		int buyerObjectId,
+		int sellerObjectId,
+		IReadOnlyList<InventoryItem> sellerUpdatedItems,
+		IReadOnlyList<int> sellerDeletedItemObjectIds,
+		IReadOnlyList<InventoryItem> buyerUpdatedItems,
+		IReadOnlyList<InventoryItem> buyerAddedItems,
+		InventoryItem? buyerKinahItem,
+		InventoryItem? sellerKinahItem,
+		bool sellerKinahWasCreated,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -978,6 +990,38 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult(true);
 	}
 
+	public bool SavePrivateStorePurchaseMutationResult { get; init; } = true;
+
+	public int SavePrivateStorePurchaseMutationCalls { get; private set; }
+
+	public PrivateStorePurchasePersistenceCapture? PrivateStorePurchasePersistence { get; private set; }
+
+	public Task<bool> SavePrivateStorePurchaseMutationAsync(
+		int buyerObjectId,
+		int sellerObjectId,
+		IReadOnlyList<InventoryItem> sellerUpdatedItems,
+		IReadOnlyList<int> sellerDeletedItemObjectIds,
+		IReadOnlyList<InventoryItem> buyerUpdatedItems,
+		IReadOnlyList<InventoryItem> buyerAddedItems,
+		InventoryItem? buyerKinahItem,
+		InventoryItem? sellerKinahItem,
+		bool sellerKinahWasCreated,
+		CancellationToken cancellationToken = default)
+	{
+		SavePrivateStorePurchaseMutationCalls++;
+		PrivateStorePurchasePersistence = new PrivateStorePurchasePersistenceCapture(
+			buyerObjectId,
+			sellerObjectId,
+			sellerUpdatedItems,
+			sellerDeletedItemObjectIds,
+			buyerUpdatedItems,
+			buyerAddedItems,
+			buyerKinahItem,
+			sellerKinahItem,
+			sellerKinahWasCreated);
+		return Task.FromResult(SavePrivateStorePurchaseMutationResult);
+	}
+
 	public Task<bool> SaveInventoryItemPackCountAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -1039,6 +1083,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult(false);
 	}
 }
+
+public sealed record PrivateStorePurchasePersistenceCapture(
+	int BuyerObjectId,
+	int SellerObjectId,
+	IReadOnlyList<InventoryItem> SellerUpdatedItems,
+	IReadOnlyList<int> SellerDeletedItemObjectIds,
+	IReadOnlyList<InventoryItem> BuyerUpdatedItems,
+	IReadOnlyList<InventoryItem> BuyerAddedItems,
+	InventoryItem? BuyerKinahItem,
+	InventoryItem? SellerKinahItem,
+	bool SellerKinahWasCreated);
 
 internal sealed record ItemStonePersistenceRow(
 	int ItemObjectId,
@@ -1931,6 +1986,72 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
+	public async Task<bool> SavePrivateStorePurchaseMutationAsync(
+		int buyerObjectId,
+		int sellerObjectId,
+		IReadOnlyList<InventoryItem> sellerUpdatedItems,
+		IReadOnlyList<int> sellerDeletedItemObjectIds,
+		IReadOnlyList<InventoryItem> buyerUpdatedItems,
+		IReadOnlyList<InventoryItem> buyerAddedItems,
+		InventoryItem? buyerKinahItem,
+		InventoryItem? sellerKinahItem,
+		bool sellerKinahWasCreated,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PrivateStoreService.sellStoreItem mutates seller inventory, buyer inventory,
+		// and both kinah rows; InventoryDAO.store persists those dirty item rows.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in sellerUpdatedItems)
+			{
+				if (!await SavePrivateStoreSellerItemAsync(connection, transaction, sellerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var itemObjectId in sellerDeletedItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, sellerObjectId, itemObjectId, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in buyerUpdatedItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, buyerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in buyerAddedItems)
+				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);
+
+			if (buyerKinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, buyerObjectId, buyerKinahItem, cancellationToken))
+				return false;
+
+			if (sellerKinahItem != null)
+			{
+				if (sellerKinahWasCreated)
+					await InsertInventoryItemAsync(connection, transaction, sellerKinahItem, cancellationToken);
+				else if (!await SaveInventoryItemCountAsync(connection, transaction, sellerObjectId, sellerKinahItem, cancellationToken))
+					return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not save private-store purchase mutation for buyer {BuyerObjectId} and seller {SellerObjectId}",
+				buyerObjectId,
+				sellerObjectId);
+			return false;
+		}
+	}
+
 	public async Task<bool> SaveInventoryItemPackCountAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -2268,6 +2389,27 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = item.Count },
 				new MySqlParameter { Value = item.ObjectId },
 				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> SavePrivateStoreSellerItemAsync(
+		MySqlConnection connection,
+		MySqlTransaction transaction,
+		int sellerObjectId,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET item_count = ?, pack_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = item.Count },
+				new MySqlParameter { Value = item.PackCount },
+				new MySqlParameter { Value = item.ObjectId },
+				new MySqlParameter { Value = sellerObjectId },
 			});
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}

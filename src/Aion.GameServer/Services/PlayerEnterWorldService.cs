@@ -356,6 +356,27 @@ public sealed class PlayerEnterWorldService
 		return _repository.TransferItemOwnershipAsync(itemObjectId, previousOwnerId, newOwnerId, newLocation, newSlot, cancellationToken);
 	}
 
+	public Task<bool> SavePrivateStorePurchaseMutationAsync(
+		Player buyer,
+		Player seller,
+		PrivateStorePurchasePlan purchasePlan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PrivateStoreService.sellStoreItem persists the live Storage/Inventory mutations
+		// through InventoryDAO.store after buyer/seller item and kinah changes.
+		return _repository.SavePrivateStorePurchaseMutationAsync(
+			buyer.ObjectId,
+			seller.ObjectId,
+			purchasePlan.SellerItemUpdates,
+			purchasePlan.SellerDeletedItemObjectIds,
+			purchasePlan.BuyerUpdatedItems,
+			purchasePlan.BuyerAddedItems,
+			purchasePlan.BuyerKinahUpdate,
+			purchasePlan.SellerKinahUpdate,
+			purchasePlan.SellerKinahWasCreated,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,
