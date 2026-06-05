@@ -5516,6 +5516,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (transactionPlan.Status is TradeBuyTransactionPlanStatus.BlockedNotEnoughAbyssPoints
+			or TradeBuyTransactionPlanStatus.BlockedNotEnoughRequiredItems
+			or TradeBuyTransactionPlanStatus.AuditNegativeRequiredAp)
+		{
+			await SendPacketAsync(SmSystemMessage.MsgNotEnoughAbyssPoints());
+			return;
+		}
+
 		if (transactionPlan.Status == TradeBuyTransactionPlanStatus.BlockedInventoryFull)
 		{
 			await SendPacketAsync(SmSystemMessage.FullInventory());

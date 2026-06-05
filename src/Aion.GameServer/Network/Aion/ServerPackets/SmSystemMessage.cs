@@ -184,6 +184,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300759);
 	}
 
+	public static SmSystemMessage MsgNotEnoughAbyssPoints()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_ABYSSPOINT.
+		return new SmSystemMessage(1300927);
+	}
+
 	public static SmSystemMessage MsgSplitMeToB(long amount, int people, long rewardPerPlayer)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_SPLIT_ME_TO_B(long num0, int num1, long num2) -> 1390247.
