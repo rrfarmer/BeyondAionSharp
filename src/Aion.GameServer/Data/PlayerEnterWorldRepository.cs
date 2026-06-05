@@ -6,6 +6,7 @@ using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services;
+using Aion.GameServer.Services.ToyPet;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
@@ -231,6 +232,16 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<int> itemIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerPetFeedConsumeMutationAsync(
+		int playerObjectId,
+		int petObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
 	Task<bool> SaveItemChargeMutationAsync(
@@ -450,6 +461,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int SavePlayerPetDopingBagCalls { get; private set; }
 
 	public (int PlayerObjectId, int PetObjectId, IReadOnlyList<int> ItemIds)? SavedPlayerPetDopingBag { get; private set; }
+
+	public bool SavePlayerPetFeedConsumeMutationResult { get; init; } = true;
+
+	public int SavePlayerPetFeedConsumeMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, int PetObjectId, InventoryItem? SourceItemUpdate, int? DeletedSourceItemObjectId, int HungryLevel, int FeedProgress, long ReuseTime)?
+		SavedPlayerPetFeedConsumeMutation { get; private set; }
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
@@ -933,6 +951,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SavePlayerPetDopingBagCalls++;
 		SavedPlayerPetDopingBag = (playerObjectId, petObjectId, itemIds.ToArray());
 		return Task.FromResult(SavePlayerPetDopingBagResult);
+	}
+
+	public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
+		int playerObjectId,
+		int petObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default)
+	{
+		SavePlayerPetFeedConsumeMutationCalls++;
+		SavedPlayerPetFeedConsumeMutation = (
+			playerObjectId,
+			petObjectId,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			hungryLevel,
+			feedProgress,
+			reuseTime);
+		return Task.FromResult(SavePlayerPetFeedConsumeMutationResult);
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -5644,7 +5684,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					projection.ExpireTime,
 					projection.FeedProgress?.GetDataForPacket() ?? 0,
 					projection.Timing.RefeedTimeMillis,
-					projection.DopingBag?.GetItems() ?? []));
+					projection.DopingBag?.GetItems() ?? [],
+					HungryLevel: projection.FeedProgress?.HungryLevel ?? PetHungryLevel.Hungry));
 			}
 
 			return pets;
@@ -5730,6 +5771,65 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save doping bag for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePlayerPetFeedConsumeMutationAsync(
+		int playerObjectId,
+		int petObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetService.checkFeeding consumes one item, and PlayerPetsDAO.saveFeedStatus stores the pet feed packet data.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (sourceItemUpdate != null
+				&& !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItemUpdate, cancellationToken))
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return false;
+			}
+
+			if (deletedSourceItemObjectId.HasValue
+				&& !await DeleteInventoryItemAsync(connection, transaction, playerObjectId, deletedSourceItemObjectId.Value, cancellationToken))
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return false;
+			}
+
+			await using var command = connection.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = "UPDATE player_pets SET hungry_level = ?, feed_progress = ?, reuse_time = ? WHERE id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = hungryLevel },
+					new MySqlParameter { Value = feedProgress },
+					new MySqlParameter { Value = reuseTime },
+					new MySqlParameter { Value = petObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return false;
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save pet feed consume mutation for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
 			return false;
 		}
 	}

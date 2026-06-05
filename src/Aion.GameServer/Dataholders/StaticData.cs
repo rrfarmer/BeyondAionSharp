@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Xml;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services;
+using Aion.GameServer.Services.ToyPet;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -51,6 +52,7 @@ public sealed class StaticData
 		PetSkillTable petSkills,
 		PetTemplateTable petTemplates,
 		PetDopingTable petDopings,
+		PetFeedDataTable petFeedData,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
 		WorkOrderRecipeTable workOrderRecipes,
@@ -114,6 +116,7 @@ public sealed class StaticData
 		PetSkills = petSkills;
 		PetTemplates = petTemplates;
 		PetDopings = petDopings;
+		PetFeedData = petFeedData;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
 		WorkOrderRecipes = workOrderRecipes;
@@ -221,6 +224,8 @@ public sealed class StaticData
 	public PetTemplateTable PetTemplates { get; }
 
 	public PetDopingTable PetDopings { get; }
+
+	public PetFeedDataTable PetFeedData { get; }
 
 	public TitleTemplateTable TitleTemplates { get; }
 
@@ -350,6 +355,8 @@ public sealed class StaticData
 		var petSkills = new List<PetSkillSummary>();
 		var petTemplates = new List<PetTemplateSummary>();
 		var petDopings = new List<PetDopingEntrySummary>();
+		var petFeedFlavours = new Dictionary<int, PetFeedFlavourProjection>();
+		var petFoodGroupItems = new Dictionary<PetFoodType, HashSet<int>>();
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
@@ -411,6 +418,12 @@ public sealed class StaticData
 		NpcSkillTemplateBuilder? currentNpcSkill = null;
 		PetTemplateBuilder? currentPetTemplate = null;
 		int currentPetTemplateDepth = -1;
+		PetFeedFlavourBuilder? currentPetFeedFlavour = null;
+		PetFeedRewardGroupBuilder? currentPetFeedRewardGroup = null;
+		int currentPetFeedFlavourDepth = -1;
+		int currentPetFeedRewardGroupDepth = -1;
+		PetFoodType? currentPetFoodItemGroup = null;
+		int currentPetFoodItemGroupDepth = -1;
 		TitleTemplateBuilder? currentTitleTemplate = null;
 		RecipeTemplateBuilder? currentRecipeTemplate = null;
 		List<int>? currentStorageExpansionNpcIds = null;
@@ -593,6 +606,28 @@ public sealed class StaticData
 					petTemplates.Add(currentPetTemplate.ToSummary());
 					currentPetTemplate = null;
 					currentPetTemplateDepth = -1;
+				}
+
+				if (reader.Depth == currentPetFeedRewardGroupDepth && reader.LocalName == "food" && currentPetFeedRewardGroup != null)
+				{
+					currentPetFeedFlavour?.AddRewardGroup(currentPetFeedRewardGroup.ToSummary());
+					currentPetFeedRewardGroup = null;
+					currentPetFeedRewardGroupDepth = -1;
+				}
+
+				if (reader.Depth == currentPetFeedFlavourDepth && reader.LocalName == "flavour" && currentPetFeedFlavour != null)
+				{
+					var flavour = currentPetFeedFlavour.ToSummary();
+					// Java parity: PetFeedData.afterUnmarshal Map.put replaces duplicate flavour ids with the later row.
+					petFeedFlavours[flavour.Id] = flavour;
+					currentPetFeedFlavour = null;
+					currentPetFeedFlavourDepth = -1;
+				}
+
+				if (reader.Depth == currentPetFoodItemGroupDepth && currentPetFoodItemGroup.HasValue)
+				{
+					currentPetFoodItemGroup = null;
+					currentPetFoodItemGroupDepth = -1;
 				}
 
 				if (reader.Depth == currentTradeListTemplateDepth && currentTradeListTemplate != null)
@@ -2451,6 +2486,79 @@ public sealed class StaticData
 				continue;
 			}
 
+			if (reader.Depth == 2
+				&& reader.LocalName == "flavour"
+				&& elementPath.GetValueOrDefault(1) == "pet_feed")
+			{
+				// Java parity: dataholders/PetFeedData indexes pet_feed.xml flavour rows by id after unmarshalling.
+				currentPetFeedFlavour = new PetFeedFlavourBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadOptionalIntAttribute(reader, "full_count", defaultValue: 1),
+					ReadOptionalIntAttribute(reader, "loved_limit", defaultValue: 0),
+					ReadRequiredIntAttribute(reader, "cd"));
+				currentPetFeedFlavourDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					var flavour = currentPetFeedFlavour.ToSummary();
+					petFeedFlavours[flavour.Id] = flavour;
+					currentPetFeedFlavour = null;
+					currentPetFeedFlavourDepth = -1;
+				}
+
+				continue;
+			}
+
+			if (currentPetFeedFlavour != null
+				&& reader.Depth == currentPetFeedFlavourDepth + 1
+				&& reader.LocalName == "food")
+			{
+				currentPetFeedRewardGroup = new PetFeedRewardGroupBuilder(
+					ReadPetFoodTypeAttribute(reader.GetAttribute("group")),
+					ReadBoolAttribute(reader, "loved"));
+				currentPetFeedRewardGroupDepth = reader.Depth;
+				if (reader.IsEmptyElement)
+				{
+					currentPetFeedFlavour.AddRewardGroup(currentPetFeedRewardGroup.ToSummary());
+					currentPetFeedRewardGroup = null;
+					currentPetFeedRewardGroupDepth = -1;
+				}
+
+				continue;
+			}
+
+			if (currentPetFeedRewardGroup != null
+				&& reader.Depth == currentPetFeedRewardGroupDepth + 1
+				&& reader.LocalName == "result")
+			{
+				currentPetFeedRewardGroup.AddReward(ReadRequiredIntAttribute(reader, "item"));
+				continue;
+			}
+
+			if (reader.Depth == 2
+				&& elementPath.GetValueOrDefault(1) == "item_groups"
+				&& TryGetPetFoodTypeForItemGroupElement(reader.LocalName, out var petFoodType))
+			{
+				currentPetFoodItemGroup = petFoodType;
+				currentPetFoodItemGroupDepth = reader.Depth;
+				if (!petFoodGroupItems.ContainsKey(petFoodType))
+					petFoodGroupItems[petFoodType] = new HashSet<int>();
+				if (reader.IsEmptyElement)
+				{
+					currentPetFoodItemGroup = null;
+					currentPetFoodItemGroupDepth = -1;
+				}
+
+				continue;
+			}
+
+			if (currentPetFoodItemGroup.HasValue
+				&& reader.Depth == currentPetFoodItemGroupDepth + 1
+				&& reader.LocalName == "item")
+			{
+				petFoodGroupItems[currentPetFoodItemGroup.Value].Add(ReadRequiredIntAttribute(reader, "id"));
+				continue;
+			}
+
 			if (currentPetTemplate != null
 				&& reader.Depth == currentPetTemplateDepth + 1
 				&& reader.LocalName == "petfunction")
@@ -3074,6 +3182,13 @@ public sealed class StaticData
 			new PetSkillTable(petSkills.AsReadOnly()),
 			new PetTemplateTable(petTemplates.AsReadOnly()),
 			new PetDopingTable(petDopings.AsReadOnly()),
+			new PetFeedDataTable(new PetFeedEvaluationContext(
+				petFeedFlavours,
+				new PetFoodItemGroups(
+					petFoodGroupItems.ToDictionary(
+						pair => pair.Key,
+						pair => (IReadOnlySet<int>)pair.Value)),
+				itemTemplates.ToDictionary(template => template.TemplateId, template => template.Level))),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			workOrderRecipes,
@@ -3301,6 +3416,67 @@ public sealed class StaticData
 				NameId,
 				ConditionReward,
 				_functions.AsReadOnly());
+		}
+	}
+
+	private sealed class PetFeedFlavourBuilder
+	{
+		private readonly List<PetFeedRewardGroup> _rewardGroups = [];
+
+		public PetFeedFlavourBuilder(int id, int fullCount, int lovedFoodLimit, int cooldownSeconds)
+		{
+			Id = id;
+			FullCount = fullCount;
+			LovedFoodLimit = lovedFoodLimit;
+			CooldownSeconds = cooldownSeconds;
+		}
+
+		private int Id { get; }
+
+		private int FullCount { get; }
+
+		private int LovedFoodLimit { get; }
+
+		private int CooldownSeconds { get; }
+
+		public void AddRewardGroup(PetFeedRewardGroup rewardGroup)
+		{
+			_rewardGroups.Add(rewardGroup);
+		}
+
+		public PetFeedFlavourProjection ToSummary()
+		{
+			return new PetFeedFlavourProjection(
+				Id,
+				FullCount,
+				LovedFoodLimit,
+				CooldownSeconds,
+				_rewardGroups.AsReadOnly());
+		}
+	}
+
+	private sealed class PetFeedRewardGroupBuilder
+	{
+		private readonly List<PetFeedReward> _rewards = [];
+
+		public PetFeedRewardGroupBuilder(PetFoodType type, bool isLoved)
+		{
+			Type = type;
+			IsLoved = isLoved;
+		}
+
+		private PetFoodType Type { get; }
+
+		private bool IsLoved { get; }
+
+		public void AddReward(int itemId)
+		{
+			_rewards.Add(new PetFeedReward(itemId, ItemLevel: 0));
+		}
+
+		public PetFeedRewardGroup ToSummary()
+		{
+			return new PetFeedRewardGroup(Type, IsLoved, _rewards.AsReadOnly());
 		}
 	}
 
@@ -5810,6 +5986,99 @@ public sealed class StaticData
 			"WING" => PetFunctionType.Wing,
 			_ => throw new FormatException($"Unexpected PetFunctionType value '{value}'."),
 		};
+	}
+
+	private static PetFoodType ReadPetFoodTypeAttribute(string? value)
+	{
+		// Java parity: model/templates/pet/FoodType JAXB enum names.
+		return value switch
+		{
+			"AETHER_CHERRY" => PetFoodType.AetherCherry,
+			"AETHER_CRYSTAL_BISCUIT" => PetFoodType.AetherCrystalBiscuit,
+			"AETHER_GEM_BISCUIT" => PetFoodType.AetherGemBiscuit,
+			"AETHER_POWDER_BISCUIT" => PetFoodType.AetherPowderBiscuit,
+			"ARMOR" => PetFoodType.Armor,
+			"BALAUR_SCALES" => PetFoodType.BalaurScales,
+			"BONES" => PetFoodType.Bones,
+			"EXCLUDES" => PetFoodType.Excludes,
+			"FLUIDS" => PetFoodType.Fluids,
+			"HEALTHY_FOOD_ALL" => PetFoodType.HealthyFoodAll,
+			"HEALTHY_FOOD_SPICY" => PetFoodType.HealthyFoodSpicy,
+			"MISCELLANEOUS" => PetFoodType.Miscellaneous,
+			"POPPY_SNACK" => PetFoodType.PoppySnack,
+			"POPPY_SNACK_TASTY" => PetFoodType.PoppySnackTasty,
+			"POPPY_SNACK_NUTRITIOUS" => PetFoodType.PoppySnackNutritious,
+			"SOULS" => PetFoodType.Souls,
+			"SHUGO_EVENT_COIN" => PetFoodType.ShugoEventCoin,
+			"STINKY" => PetFoodType.Stinky,
+			"THORNS" => PetFoodType.Thorns,
+			_ => throw new FormatException($"Unexpected FoodType value '{value}'."),
+		};
+	}
+
+	private static bool TryGetPetFoodTypeForItemGroupElement(string elementName, out PetFoodType petFoodType)
+	{
+		// Java parity: dataholders/ItemGroupsData.getPetFood maps FoodType values to these item_groups.xml elements.
+		switch (elementName)
+		{
+			case "feed_crystal_biscuit":
+				petFoodType = PetFoodType.AetherCrystalBiscuit;
+				return true;
+			case "feed_gem_biscuit":
+				petFoodType = PetFoodType.AetherGemBiscuit;
+				return true;
+			case "feed_powder_biscuit":
+				petFoodType = PetFoodType.AetherPowderBiscuit;
+				return true;
+			case "feed_aether_cherry":
+				petFoodType = PetFoodType.AetherCherry;
+				return true;
+			case "feed_armor":
+				petFoodType = PetFoodType.Armor;
+				return true;
+			case "feed_balaur_material":
+				petFoodType = PetFoodType.BalaurScales;
+				return true;
+			case "feed_bone":
+				petFoodType = PetFoodType.Bones;
+				return true;
+			case "feed_fluid":
+				petFoodType = PetFoodType.Fluids;
+				return true;
+			case "feed_soul":
+				petFoodType = PetFoodType.Souls;
+				return true;
+			case "feed_thorn":
+				petFoodType = PetFoodType.Thorns;
+				return true;
+			case "feed_healthy_all":
+				petFoodType = PetFoodType.HealthyFoodAll;
+				return true;
+			case "feed_healthy_spicy":
+				petFoodType = PetFoodType.HealthyFoodSpicy;
+				return true;
+			case "poppy_snack":
+				petFoodType = PetFoodType.PoppySnack;
+				return true;
+			case "tasty_poppy_snack":
+				petFoodType = PetFoodType.PoppySnackTasty;
+				return true;
+			case "nutritious_poppy_snack":
+				petFoodType = PetFoodType.PoppySnackNutritious;
+				return true;
+			case "feed_shugo_event_coin":
+				petFoodType = PetFoodType.ShugoEventCoin;
+				return true;
+			case "stinking_junk":
+				petFoodType = PetFoodType.Stinky;
+				return true;
+			case "feed_exclude":
+				petFoodType = PetFoodType.Excludes;
+				return true;
+			default:
+				petFoodType = default;
+				return false;
+		}
 	}
 
 	private static float ReadOptionalFloatAttribute(XmlReader reader, string attributeName, float defaultValue)

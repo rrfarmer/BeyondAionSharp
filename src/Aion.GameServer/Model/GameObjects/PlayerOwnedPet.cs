@@ -1,3 +1,5 @@
+using Aion.GameServer.Services.ToyPet;
+
 namespace Aion.GameServer.Model.GameObjects;
 
 public sealed record PlayerOwnedPet(
@@ -13,7 +15,8 @@ public sealed record PlayerOwnedPet(
 	IReadOnlyList<int>? DopingItemIds = null,
 	bool CancelFeed = false,
 	bool IsLooting = false,
-	bool IsSelling = false)
+	bool IsSelling = false,
+	PetHungryLevel HungryLevel = PetHungryLevel.Hungry)
 {
 	public int BirthdayEpochSeconds => Birthday is null ? 0 : checked((int)(Birthday.Value.ToUnixTimeMilliseconds() / 1000));
 

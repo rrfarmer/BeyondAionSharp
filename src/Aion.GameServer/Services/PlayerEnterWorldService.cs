@@ -324,6 +324,28 @@ public sealed class PlayerEnterWorldService
 		return _repository.SavePlayerPetDopingBagAsync(player.ObjectId, petObjectId, itemIds, cancellationToken);
 	}
 
+	public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
+		Player player,
+		int petObjectId,
+		InventoryItem? sourceItemUpdate,
+		int? deletedSourceItemObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetService.checkFeeding decreases inventory and PetController.onDespawn stores PlayerPetsDAO.saveFeedStatus.
+		return _repository.SavePlayerPetFeedConsumeMutationAsync(
+			player.ObjectId,
+			petObjectId,
+			sourceItemUpdate,
+			deletedSourceItemObjectId,
+			hungryLevel,
+			feedProgress,
+			reuseTime,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveInventoryItemSlotAsync(
 		Player player,
 		int itemObjectId,

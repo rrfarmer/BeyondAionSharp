@@ -113,6 +113,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly GoodsListTable? _buyItemGoodsLists;
 	private readonly PetTemplateTable? _petTemplates;
 	private readonly PetDopingTable? _petDopings;
+	private readonly PetFeedDataTable? _petFeedData;
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -212,6 +213,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		GoodsListTable? buyItemGoodsLists = null,
 		PetTemplateTable? buyItemPetTemplates = null,
 		PetDopingTable? buyItemPetDopings = null,
+		PetFeedDataTable? buyItemPetFeedData = null,
 		LimitedItemTradeService? limitedItemTradeService = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -289,6 +291,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemGoodsLists = buyItemGoodsLists;
 		_petTemplates = buyItemPetTemplates;
 		_petDopings = buyItemPetDopings;
+		_petFeedData = buyItemPetFeedData;
 		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
@@ -577,6 +580,136 @@ public sealed class GameServerConnection : BaseClientConnection
 			ItemObjectId: foodItem.ObjectId,
 			Count: packet.Count)));
 		await SendPacketAsync(new SmEmotion(player, EmotionType.StartFeeding, 0, player.ObjectId));
+
+		await SchedulePetFeedingCheckAsync(player, feedingPet.ObjectId, foodItem.ObjectId, packet.Count);
+	}
+
+	private async Task SchedulePetFeedingCheckAsync(Player player, int petObjectId, int itemObjectId, int count)
+	{
+		// This UOW advances Java PetService.checkFeeding's accepted single-consume branch. The repeat/reward branches
+		// remain separate runtime work because they need chained scheduling and reward-item persistence.
+		if (count != 1)
+			return;
+
+		if (_threadPoolManager != null)
+		{
+			_threadPoolManager.Schedule(
+				cancellationToken => ExecutePetFeedingCheckAsync(player, petObjectId, itemObjectId, count, cancellationToken),
+				TimeSpan.FromMilliseconds(2500));
+			return;
+		}
+
+		await ExecutePetFeedingCheckAsync(player, petObjectId, itemObjectId, count, CancellationToken.None);
+	}
+
+	private async ValueTask ExecutePetFeedingCheckAsync(
+		Player player,
+		int petObjectId,
+		int itemObjectId,
+		int count,
+		CancellationToken cancellationToken)
+	{
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
+		if (ownedPet == null || ownedPet.CancelFeed)
+			return;
+
+		var foodItem = player.InventoryItems.FirstOrDefault(item => item.ObjectId == itemObjectId);
+		if (foodItem == null || foodItem.Count <= 0)
+			return;
+
+		var feedData = GetPetFeedData();
+		var foodFunction = GetPetTemplate(ownedPet.TemplateId)?.GetFunction(PetFunctionType.Food);
+		if (feedData == null || foodFunction == null)
+			return;
+
+		if (!feedData.Flavours.TryGetValue(foodFunction.Id, out var flavour))
+			return;
+
+		var itemTemplates = GetItemTemplates();
+		var itemTemplate = itemTemplates?.GetItemTemplate(foodItem.ItemId);
+		if (itemTemplate == null)
+			return;
+
+		var progress = new PetFeedProgress((short)flavour.LovedFoodLimit)
+		{
+			HungryLevel = ownedPet.HungryLevel,
+		};
+		progress.SetData(ownedPet.FeedProgressData);
+
+		PetFeedServiceOperationPlan plan;
+		try
+		{
+			plan = PetFeedServiceOperationPlanner.CreatePlan(
+				feedData.Context,
+				foodFunction.Id,
+				progress,
+				foodItem.ObjectId,
+				foodItem.ItemId,
+				count,
+				player.Level,
+				DateTimeOffset.Now.ToUnixTimeMilliseconds(),
+				ownedPet.CancelFeed,
+				rewards => rewards.FirstOrDefault());
+		}
+		catch (KeyNotFoundException)
+		{
+			return;
+		}
+
+		if (plan.Status != PetFeedServiceOperationPlanStatus.ConsumedStop)
+			return;
+
+		var sourceItemUpdate = foodItem.Count > 1 ? CopyInventoryItem(foodItem, count: foodItem.Count - 1) : null;
+		var deletedSourceItemObjectId = sourceItemUpdate == null ? foodItem.ObjectId : (int?)null;
+		var feedProgressData = progress.GetDataForPacket();
+		var persisted = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.SavePlayerPetFeedConsumeMutationAsync(
+				player,
+				ownedPet.ObjectId,
+				sourceItemUpdate,
+				deletedSourceItemObjectId,
+				(int)progress.HungryLevel,
+				feedProgressData,
+				ownedPet.RefeedTimeMillis,
+				cancellationToken);
+		if (!persisted)
+			return;
+
+		var inventoryItems = player.InventoryItems.ToList();
+		if (sourceItemUpdate == null)
+			inventoryItems.RemoveAll(item => item.ObjectId == foodItem.ObjectId);
+		else
+			ReplaceInventoryItem(inventoryItems, sourceItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+
+		var updatedPet = ownedPet with
+		{
+			FeedProgressData = feedProgressData,
+			HungryLevel = progress.HungryLevel,
+		};
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
+
+		if (sourceItemUpdate == null)
+		{
+			await SendPacketAsync(new SmDeleteItem(foodItem.ObjectId, SmDeleteItem.UseDeleteType));
+		}
+		else
+		{
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, itemTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		}
+
+		await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 2,
+			FeedProgressData: feedProgressData,
+			ItemObjectId: foodItem.ObjectId,
+			Count: 0)));
+		await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+			SubType: 5,
+			FeedProgressData: feedProgressData,
+			RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
+		await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
 	}
 
 	private async Task HandlePetAutoLootActivationAsync(Player player, CmPet packet)
@@ -692,6 +825,16 @@ public sealed class GameServerConnection : BaseClientConnection
 	private PetDopingEntrySummary? GetPetDopingTemplate(int dopingId)
 	{
 		return (_petDopings ?? _runtimeContext?.DataManager?.StaticData.PetDopings)?.GetDopingTemplate(dopingId);
+	}
+
+	private PetFeedDataTable? GetPetFeedData()
+	{
+		return _petFeedData ?? _runtimeContext?.DataManager?.StaticData.PetFeedData;
+	}
+
+	private ItemTemplateTable? GetItemTemplates()
+	{
+		return _buyItemItemTemplates ?? _runtimeContext?.DataManager?.StaticData.ItemTemplates;
 	}
 
 	private static IReadOnlyList<int> SetPetDopingItem(IReadOnlyList<int> itemIds, int itemId, int slot)
