@@ -44,6 +44,7 @@ public sealed class PlayerEnterWorldServiceTests
 			AbyssRank = new PlayerAbyssRank(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
 			Settings = new PlayerSettings { UiSettings = [1, 2], Shortcuts = [3], HouseBuddies = [4] },
 			BindPoint = new PlayerBindPoint(210010000, 10, 20, 30, 0),
+			Pets = [new PlayerOwnedPet(ObjectId: 7001, TemplateId: 900210, Name: "Merchant Mate", Decoration: 188051001)],
 		};
 		var world = CreateWorld();
 		var service = CreateService(repository, world);
@@ -79,6 +80,8 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(7, repository.Player.AbyssRank.Rank);
 		Assert.NotNull(repository.Player.Settings.UiSettings);
 		Assert.NotNull(repository.Player.BindPoint);
+		var pet = Assert.Single(repository.Player.OwnedPets);
+		Assert.Equal((7001, 900210, "Merchant Mate", 188051001), (pet.ObjectId, pet.TemplateId, pet.Name, pet.Decoration));
 		Assert.Equal(1, repository.LoadItemsCalls);
 		Assert.Equal(1, repository.LoadWarehouseItemsCalls);
 		Assert.Equal(1, repository.LoadAccountWarehouseItemsCalls);
@@ -103,6 +106,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, repository.LoadAbyssRankCalls);
 		Assert.Equal(1, repository.LoadSettingsCalls);
 		Assert.Equal(1, repository.LoadBindPointCalls);
+		Assert.Equal(1, repository.LoadPetsCalls);
 		Assert.Equal(1, repository.MarkOnlineCalls);
 		Assert.True(world.TryGetObject(1001, out var stored));
 		Assert.Same(repository.Player, stored);
@@ -2529,6 +2533,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public PlayerBindPoint? BindPoint { get; init; }
 
+		public IReadOnlyList<PlayerOwnedPet> Pets { get; init; } = Array.Empty<PlayerOwnedPet>();
+
 		public int LoadItemsCalls { get; private set; }
 
 		public int LoadWarehouseItemsCalls { get; private set; }
@@ -2594,6 +2600,8 @@ public sealed class PlayerEnterWorldServiceTests
 		public int LoadSettingsCalls { get; private set; }
 
 		public int LoadBindPointCalls { get; private set; }
+
+		public int LoadPetsCalls { get; private set; }
 
 		public int MarkOnlineCalls { get; private set; }
 
@@ -3353,6 +3361,12 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadBindPointCalls++;
 			return Task.FromResult(BindPoint);
+		}
+
+		public Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+		{
+			LoadPetsCalls++;
+			return Task.FromResult(Pets);
 		}
 
 		public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)

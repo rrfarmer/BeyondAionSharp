@@ -218,6 +218,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
+	Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
 	Task<bool> SaveItemChargeMutationAsync(
@@ -862,6 +864,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<PlayerBindPoint?> LoadPlayerBindPointAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<PlayerBindPoint?>(null);
+	}
+
+	public Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyList<PlayerOwnedPet>>(Array.Empty<PlayerOwnedPet>());
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -5515,6 +5522,63 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load bind point for player {PlayerObjectId}", playerObjectId);
 			return null;
+		}
+	}
+
+	public async Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerPetsDAO.getPlayerPets feeds player PetList.loadPets during Player construction.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT id, player_id, template_id, decoration, name, despawn_time, expire_time,
+					hungry_level, feed_progress, reuse_time, dopings, birthday, mood_started,
+					counter, mood_cd_started, gift_cd_started
+				FROM player_pets
+				WHERE player_id = ?
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+
+			var pets = new List<PlayerOwnedPet>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var projection = PlayerPetRowProjection.Project(
+					new PlayerPetRepositoryRow(
+						PetObjectId: ReadInt(reader, "id"),
+						TemplateId: ReadInt(reader, "template_id"),
+						PlayerObjectId: ReadInt(reader, "player_id"),
+						ExpireTime: ReadInt(reader, "expire_time"),
+						Name: ReadString(reader, "name"),
+						Decoration: ReadInt(reader, "decoration"),
+						HungryLevel: ReadInt(reader, "hungry_level"),
+						FeedProgressData: ReadInt(reader, "feed_progress"),
+						ReuseTimeMillis: ReadLong(reader, "reuse_time"),
+						Dopings: ReadNullableString(reader, "dopings"),
+						Birthday: ReadDateTimeOffset(reader, "birthday"),
+						MoodStartedMillis: ReadLong(reader, "mood_started"),
+						ShuggleCounter: ReadInt(reader, "counter"),
+						MoodCooldownStartedMillis: ReadLong(reader, "mood_cd_started"),
+						GiftCooldownStartedMillis: ReadLong(reader, "gift_cd_started"),
+						DespawnTime: ReadDateTimeOffset(reader, "despawn_time")),
+					new PlayerPetProjectionOptions(HasFoodFunction: false, HasDopingFunction: false),
+					() => DateTimeOffset.Now);
+				pets.Add(new PlayerOwnedPet(
+					projection.PetObjectId,
+					projection.TemplateId,
+					projection.Name,
+					projection.Decoration));
+			}
+
+			return pets;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load pets for player {PlayerObjectId}", playerObjectId);
+			return Array.Empty<PlayerOwnedPet>();
 		}
 	}
 

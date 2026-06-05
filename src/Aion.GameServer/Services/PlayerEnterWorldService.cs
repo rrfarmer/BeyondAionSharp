@@ -130,6 +130,8 @@ public sealed class PlayerEnterWorldService
 			player.AbyssRank = await _repository.LoadPlayerAbyssRankAsync(playerObjectId, cancellationToken);
 			player.Settings = await _repository.LoadPlayerSettingsAsync(playerObjectId, cancellationToken);
 			player.BindPoint = await _repository.LoadPlayerBindPointAsync(playerObjectId, cancellationToken);
+			// Java parity: Player construction creates PetList, whose loadPets method calls PlayerPetsDAO.getPlayerPets.
+			player.OwnedPets = await _repository.LoadPlayerPetsAsync(playerObjectId, cancellationToken);
 			if (!_world.TryAddObject(playerObjectId, player))
 				return new PlayerEnterWorldResult(EnterWorldCheckMessage.ConnectionError);
 
