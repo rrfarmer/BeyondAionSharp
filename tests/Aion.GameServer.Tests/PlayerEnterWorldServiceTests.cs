@@ -3551,6 +3551,7 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> SaveNpcShopBuyMutationAsync(
 			int playerObjectId,
+			PlayerAbyssRank? abyssRank,
 			IReadOnlyList<InventoryItem> requiredItemUpdates,
 			IReadOnlyList<int> deletedRequiredItemObjectIds,
 			IReadOnlyList<InventoryItem> updatedItems,

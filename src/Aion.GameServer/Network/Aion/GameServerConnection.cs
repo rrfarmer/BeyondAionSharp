@@ -5537,8 +5537,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (transactionPlan.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
-			|| transactionPlan.Mutation == null
-			|| transactionPlan.Mutation.RequiredAbyssPoints != 0)
+			|| transactionPlan.Mutation == null)
 			return;
 
 		var staticData = _runtimeContext?.DataManager?.StaticData;
@@ -5554,6 +5553,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var workingItems = player.InventoryItems.ToList();
+		var abyssPointsPlan = transactionPlan.Mutation.RequiredAbyssPoints > 0
+			? AbyssPointsService.CreateAddApPlan(player, -transactionPlan.Mutation.RequiredAbyssPoints, CreateAbyssPointsOptions())
+			: null;
+		if (abyssPointsPlan != null && (!abyssPointsPlan.Applied || abyssPointsPlan.UpdatedRank == null))
+			return;
+
 		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - transactionPlan.Mutation.RequiredKinah);
 		ReplaceInventoryItem(workingItems, kinahUpdate);
 		var requiredItemConsumption = CreateNpcShopRequiredItemConsumptionPlan(workingItems, transactionPlan.Mutation.RequiredItems);
@@ -5601,6 +5606,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_playerEnterWorldService != null
 			&& !await _playerEnterWorldService.SaveNpcShopBuyMutationAsync(
 				player,
+				abyssPointsPlan?.UpdatedRank,
 				requiredItemConsumption.UpdatedItems,
 				requiredItemConsumption.DeletedObjectIds,
 				boughtItemUpdates.Select(item => item.Item).ToArray(),
@@ -5612,6 +5618,15 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		player.InventoryItems = workingItems.ToArray();
+		if (abyssPointsPlan?.UpdatedRank != null)
+		{
+			player.AbyssRank = abyssPointsPlan.UpdatedRank;
+			foreach (var playerPacket in abyssPointsPlan.PlayerPackets)
+				await SendPacketAsync(playerPacket);
+			if (staticData != null)
+				await ApplyAbyssRankChangedSideEffectsAsync(player, abyssPointsPlan.OldRank, staticData);
+		}
+
 		if (transactionPlan.Mutation.RequiredKinah > 0)
 			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
 		foreach (var step in requiredItemConsumption.Steps)

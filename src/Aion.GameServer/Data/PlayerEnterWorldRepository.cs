@@ -366,6 +366,7 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> SaveNpcShopBuyMutationAsync(
 		int playerObjectId,
+		PlayerAbyssRank? abyssRank,
 		IReadOnlyList<InventoryItem> requiredItemUpdates,
 		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
@@ -1039,6 +1040,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<bool> SaveNpcShopBuyMutationAsync(
 		int playerObjectId,
+		PlayerAbyssRank? abyssRank,
 		IReadOnlyList<InventoryItem> requiredItemUpdates,
 		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
@@ -1049,6 +1051,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveNpcShopBuyMutationCalls++;
 		NpcShopBuyPersistence = new NpcShopBuyPersistenceCapture(
 			playerObjectId,
+			abyssRank,
 			requiredItemUpdates,
 			deletedRequiredItemObjectIds,
 			updatedItems,
@@ -1132,6 +1135,7 @@ public sealed record PrivateStorePurchasePersistenceCapture(
 
 public sealed record NpcShopBuyPersistenceCapture(
 	int PlayerObjectId,
+	PlayerAbyssRank? AbyssRank,
 	IReadOnlyList<InventoryItem> RequiredItemUpdates,
 	IReadOnlyList<int> DeletedRequiredItemObjectIds,
 	IReadOnlyList<InventoryItem> UpdatedItems,
@@ -2097,6 +2101,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<bool> SaveNpcShopBuyMutationAsync(
 		int playerObjectId,
+		PlayerAbyssRank? abyssRank,
 		IReadOnlyList<InventoryItem> requiredItemUpdates,
 		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
@@ -2104,13 +2109,16 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem? kinahItem,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: TradeService.performBuyTransaction decreases kinah, then ItemService.addItem
-		// mutates Storage; InventoryDAO.store persists the dirty item rows.
+		// Java parity: TradeService.performBuyTransaction decreases AP/kinah/required items, then
+		// ItemService.addItem mutates Storage; AbyssRankDAO/InventoryDAO persist dirty rows.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (abyssRank != null)
+				await SaveAbyssRankAsync(connection, transaction, playerObjectId, abyssRank, cancellationToken);
 
 			if (kinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItem, cancellationToken))
 				return false;

@@ -379,6 +379,7 @@ public sealed class PlayerEnterWorldService
 
 	public Task<bool> SaveNpcShopBuyMutationAsync(
 		Player player,
+		PlayerAbyssRank? abyssRank,
 		IReadOnlyList<InventoryItem> requiredItemUpdates,
 		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
@@ -387,9 +388,10 @@ public sealed class PlayerEnterWorldService
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: TradeService.performBuyTransaction persists kinah decrease and
-		// required-item/reward Storage mutations through InventoryDAO.store.
+		// AP/required-item/reward Storage mutations through AbyssRankDAO/InventoryDAO.
 		return _repository.SaveNpcShopBuyMutationAsync(
 			player.ObjectId,
+			abyssRank,
 			requiredItemUpdates,
 			deletedRequiredItemObjectIds,
 			updatedItems,
