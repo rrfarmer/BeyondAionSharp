@@ -8854,6 +8854,13 @@ public class GamePacketTests
 	}
 
 	[Fact]
+	public void SmDeleteItem_UseDeleteTypeMatchesJava()
+	{
+		// Java parity: ItemPacketService.ItemDeleteType.USE = 0x17.
+		Assert.Equal(0x17, SmDeleteItem.UseDeleteType);
+	}
+
+	[Fact]
 	public void InventoryItem_LocationIsSettable_ModelLevelJavaParity()
 	{
 		// Java parity: item.setItemLocation mutates location after cross-storage move.

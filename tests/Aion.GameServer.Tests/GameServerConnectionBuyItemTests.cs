@@ -1032,13 +1032,19 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
 			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
 		Assert.Collection(
 			fixture.Registry.DirectPackets,
 			sent =>
 			{
 				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
-				Assert.IsType<SmDeleteItem>(sent.Packet);
+				AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(sent.Packet), 3001, SmDeleteItem.UseDeleteType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(sent.Packet), expectedItemsCount: 0);
 			},
 			sent =>
 			{
@@ -1143,6 +1149,7 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
 			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
 		Assert.Collection(
 			fixture.Registry.DirectPackets,
@@ -1431,6 +1438,24 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal((int)Aion.GameServer.Model.EmotionType.ClosePrivateShop, reader.ReadC());
 		Assert.Equal((int)PlayerCreatureState.Active, reader.ReadH());
 		Assert.Equal(0f, reader.ReadF());
+	}
+
+	private static void AssertDeleteItemPayload(SmDeleteItem packet, int expectedObjectId, int expectedDeleteType)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedDeleteType, reader.ReadC());
+	}
+
+	private static void AssertCubeUpdatePayload(SmCubeUpdate packet, int expectedItemsCount)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(expectedItemsCount, reader.ReadD());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

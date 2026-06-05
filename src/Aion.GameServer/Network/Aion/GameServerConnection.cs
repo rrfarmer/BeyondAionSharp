@@ -5522,13 +5522,21 @@ public sealed class GameServerConnection : BaseClientConnection
 			UpdateSellerPrivateStoreItems(seller, GetAppliedPrivateStoreBoughtItems(purchasePlan));
 
 		foreach (var deletedItemObjectId in purchasePlan.SellerDeletedItemObjectIds)
-			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(deletedItemObjectId));
+		{
+			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(deletedItemObjectId, SmDeleteItem.UseDeleteType));
+			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, SmCubeUpdate.CubeSize(seller));
+		}
 		foreach (var sellerItem in purchasePlan.SellerItemUpdates)
 			if (itemTemplates.GetItemTemplate(sellerItem.ItemId) is { } template)
 				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmInventoryUpdateItem(sellerItem, template, SmInventoryUpdateItem.DecreaseItemUse));
 		foreach (var buyerItem in purchasePlan.BuyerAddedItems)
+		{
 			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+			{
 				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(buyerItem, template));
+				await SendPacketAsync(SmCubeUpdate.CubeSize(buyer));
+			}
+		}
 		foreach (var buyerItem in purchasePlan.BuyerUpdatedItems)
 			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
 				await SendPacketAsync(new SmInventoryUpdateItem(buyerItem, template, SmInventoryUpdateItem.IncreaseItemCollect));
