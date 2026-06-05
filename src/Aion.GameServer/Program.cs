@@ -164,10 +164,13 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<VortexLocationService>();
 			services.AddSingleton<VortexInvasionRuntime>();
 			services.AddSingleton<PeriodicSaveService>();
+			services.AddSingleton<LimitedItemTradeSchedulerService>();
 			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<WorldNpcSpawnService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
+			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
+				serviceProvider => serviceProvider.GetRequiredService<LimitedItemTradeSchedulerService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(

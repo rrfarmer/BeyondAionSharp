@@ -29,6 +29,18 @@ public sealed class JavaQuartzCronExpressionTests
 	}
 
 	[Fact]
+	public void TryParse_HandlesJavaGoodsListHourRanges()
+	{
+		Assert.True(JavaQuartzCronExpression.TryParse("0 0 09-18 ? * MON", out var expression));
+
+		var morningRun = expression.GetNextRunAfter(new DateTimeOffset(2026, 5, 18, 8, 59, 59, TimeSpan.Zero));
+		var nextHourRun = expression.GetNextRunAfter(new DateTimeOffset(2026, 5, 18, 9, 0, 0, TimeSpan.Zero));
+
+		Assert.Equal(new DateTimeOffset(2026, 5, 18, 9, 0, 0, TimeSpan.Zero), morningRun);
+		Assert.Equal(new DateTimeOffset(2026, 5, 18, 10, 0, 0, TimeSpan.Zero), nextHourRun);
+	}
+
+	[Fact]
 	public void TryParse_RejectsUnsupportedExpressionShapes()
 	{
 		Assert.False(JavaQuartzCronExpression.TryParse("bad cron", out _));

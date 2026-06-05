@@ -1,11 +1,14 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;
 
 public sealed class LimitedItemTradeService
 {
 	private readonly Dictionary<int, List<LimitedItemRuntimeState>> _limitedTradeNpcs;
+	private readonly List<ScheduledTask> _scheduledResetTasks = [];
 	private readonly object _sync = new();
+	private CancellationTokenSource? _resetTokenSource;
 
 	private LimitedItemTradeService(Dictionary<int, List<LimitedItemRuntimeState>> limitedTradeNpcs)
 	{
@@ -85,11 +88,120 @@ public sealed class LimitedItemTradeService
 		}
 	}
 
+	public LimitedItemResetScheduleResult StartScheduledResets(
+		ThreadPoolManager threadPoolManager,
+		TimeZoneInfo serverTimeZone,
+		Func<DateTimeOffset>? clock = null,
+		CancellationToken cancellationToken = default)
+	{
+		ArgumentNullException.ThrowIfNull(threadPoolManager);
+		ArgumentNullException.ThrowIfNull(serverTimeZone);
+
+		// Java parity: services/LimitedItemTradeService.start schedules each
+		// LimitedItem.setToDefault through CronService with GSConfig.TIME_ZONE_ID.
+		ShutdownScheduledResets();
+		clock ??= () => DateTimeOffset.Now;
+		var skipped = new List<LimitedItemResetScheduleSkip>();
+		var scheduled = new List<LimitedItemScheduledReset>();
+		lock (_sync)
+		{
+			foreach (var (npcId, item) in EnumerateLimitedItems())
+			{
+				if (!JavaQuartzCronExpression.TryParse(item.SalesTime, out var cronExpression))
+				{
+					skipped.Add(new LimitedItemResetScheduleSkip(npcId, item.ItemId, item.SalesTime, "Unsupported Java Quartz cron expression."));
+					continue;
+				}
+
+				scheduled.Add(new LimitedItemScheduledReset(npcId, item, cronExpression));
+			}
+
+			_resetTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+		}
+
+		foreach (var reset in scheduled)
+			ScheduleReset(threadPoolManager, serverTimeZone, clock, reset);
+
+		return new LimitedItemResetScheduleResult(scheduled.Count, skipped);
+	}
+
+	public void ShutdownScheduledResets()
+	{
+		CancellationTokenSource? tokenSource;
+		lock (_sync)
+		{
+			tokenSource = _resetTokenSource;
+			_resetTokenSource = null;
+			foreach (var task in _scheduledResetTasks)
+				task.Cancel();
+			_scheduledResetTasks.Clear();
+		}
+
+		tokenSource?.Cancel();
+		tokenSource?.Dispose();
+	}
+
 	private LimitedItemRuntimeState? FindLimitedItem(int npcId, int itemId)
 	{
 		if (!_limitedTradeNpcs.TryGetValue(npcId, out var limitedItems))
 			return null;
 		return limitedItems.FirstOrDefault(item => item.ItemId == itemId);
+	}
+
+	private void ScheduleReset(
+		ThreadPoolManager threadPoolManager,
+		TimeZoneInfo serverTimeZone,
+		Func<DateTimeOffset> clock,
+		LimitedItemScheduledReset reset)
+	{
+		CancellationToken lifetimeToken;
+		lock (_sync)
+		{
+			if (_resetTokenSource == null || _resetTokenSource.IsCancellationRequested)
+				return;
+			lifetimeToken = _resetTokenSource.Token;
+		}
+
+		var now = TimeZoneInfo.ConvertTime(clock(), serverTimeZone);
+		var nextRun = reset.CronExpression.GetNextRunAfter(now);
+		var delay = nextRun - now;
+		if (delay < TimeSpan.Zero)
+			delay = TimeSpan.Zero;
+
+		var task = threadPoolManager.Schedule(
+			_ =>
+			{
+				lock (_sync)
+					reset.Item.SetToDefault();
+				if (!lifetimeToken.IsCancellationRequested)
+					ScheduleReset(threadPoolManager, serverTimeZone, clock, reset);
+				return ValueTask.CompletedTask;
+			},
+			delay,
+			lifetimeToken);
+		TrackScheduledResetTask(task);
+	}
+
+	private void TrackScheduledResetTask(ScheduledTask task)
+	{
+		lock (_sync)
+			_scheduledResetTasks.Add(task);
+		_ = task.Completion.ContinueWith(
+			_ =>
+			{
+				lock (_sync)
+					_scheduledResetTasks.Remove(task);
+			},
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	private IEnumerable<(int NpcId, LimitedItemRuntimeState Item)> EnumerateLimitedItems()
+	{
+		foreach (var (npcId, limitedItems) in _limitedTradeNpcs)
+		foreach (var item in limitedItems)
+			yield return (npcId, item);
 	}
 }
 
@@ -97,6 +209,21 @@ public sealed record LimitedItemBuyMutation(
 	int ItemId,
 	int? PlayerBuyCount,
 	int? SellLimit);
+
+public sealed record LimitedItemResetScheduleResult(
+	int ScheduledCount,
+	IReadOnlyList<LimitedItemResetScheduleSkip> SkippedItems);
+
+public sealed record LimitedItemResetScheduleSkip(
+	int NpcId,
+	int ItemId,
+	string? SalesTime,
+	string Reason);
+
+internal sealed record LimitedItemScheduledReset(
+	int NpcId,
+	LimitedItemRuntimeState Item,
+	JavaQuartzCronExpression CronExpression);
 
 internal sealed class LimitedItemRuntimeState
 {
@@ -162,5 +289,12 @@ internal sealed class LimitedItemRuntimeState
 		}
 
 		return new LimitedItemBuyMutation(ItemId, updatedBuyCount, updatedSellLimit);
+	}
+
+	public void SetToDefault()
+	{
+		// Java parity: model/limiteditems/LimitedItem.setToDefault.
+		SellLimit = DefaultSellLimit;
+		_buyCounts.Clear();
 	}
 }

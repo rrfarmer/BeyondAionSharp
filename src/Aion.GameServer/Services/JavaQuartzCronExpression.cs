@@ -104,9 +104,24 @@ public sealed class JavaQuartzCronExpression
 		var parsed = new SortedSet<int>();
 		foreach (var part in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
 		{
-			if (!int.TryParse(part, out var number) || number < min || number > max)
+			if (part.Contains('-', StringComparison.Ordinal))
+			{
+				var rangeParts = part.Split('-', StringSplitOptions.TrimEntries);
+				if (rangeParts.Length != 2
+					|| !int.TryParse(rangeParts[0], out var from)
+					|| !int.TryParse(rangeParts[1], out var to)
+					|| from < min
+					|| to > max
+					|| from > to)
+					return false;
+				foreach (var number in Enumerable.Range(from, to - from + 1))
+					parsed.Add(number);
+				continue;
+			}
+
+			if (!int.TryParse(part, out var singleNumber) || singleNumber < min || singleNumber > max)
 				return false;
-			parsed.Add(number);
+			parsed.Add(singleNumber);
 		}
 
 		if (parsed.Count == 0)
