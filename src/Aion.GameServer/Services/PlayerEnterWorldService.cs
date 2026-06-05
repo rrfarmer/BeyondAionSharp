@@ -377,6 +377,18 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveNpcShopBuyMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<InventoryItem> addedItems,
+		InventoryItem? kinahItem,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: TradeService.performBuyTransaction persists kinah decrease and
+		// ItemService.addItem Storage mutations through InventoryDAO.store.
+		return _repository.SaveNpcShopBuyMutationAsync(player.ObjectId, updatedItems, addedItems, kinahItem, cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

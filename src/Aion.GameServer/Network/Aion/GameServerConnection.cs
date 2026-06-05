@@ -5589,6 +5589,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SaveNpcShopBuyMutationAsync(
+				player,
+				boughtItemUpdates.Select(item => item.Item).ToArray(),
+				boughtItemAdds.Select(item => item.Item).ToArray(),
+				kinahUpdate))
+		{
+			return;
+		}
+
 		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
 		player.InventoryItems = workingItems.ToArray();
 		if (transactionPlan.Mutation.RequiredKinah > 0)
