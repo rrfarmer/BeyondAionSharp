@@ -223,6 +223,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> DeletePlayerPetAsync(int playerObjectId, int petObjectId, CancellationToken cancellationToken = default);
 
+	Task<bool> UpdatePlayerPetNameAsync(int playerObjectId, int petObjectId, string petName, CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
 	Task<bool> SaveItemChargeMutationAsync(
@@ -430,6 +432,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int DeletePlayerPetCalls { get; private set; }
 
 	public (int PlayerObjectId, int PetObjectId)? DeletedPlayerPet { get; private set; }
+
+	public bool UpdatePlayerPetNameResult { get; init; } = true;
+
+	public int UpdatePlayerPetNameCalls { get; private set; }
+
+	public (int PlayerObjectId, int PetObjectId, string PetName)? UpdatedPlayerPetName { get; private set; }
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
@@ -895,6 +903,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		DeletePlayerPetCalls++;
 		DeletedPlayerPet = (playerObjectId, petObjectId);
 		return Task.FromResult(DeletePlayerPetResult);
+	}
+
+	public Task<bool> UpdatePlayerPetNameAsync(int playerObjectId, int petObjectId, string petName, CancellationToken cancellationToken = default)
+	{
+		UpdatePlayerPetNameCalls++;
+		UpdatedPlayerPetName = (playerObjectId, petObjectId, petName);
+		return Task.FromResult(UpdatePlayerPetNameResult);
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -5638,6 +5653,31 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not delete pet {PetObjectId} for player {PlayerObjectId}", petObjectId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> UpdatePlayerPetNameAsync(int playerObjectId, int petObjectId, string petName, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerPetsDAO.updatePetName updates player_pets.name by pet object id.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE player_pets SET name = ? WHERE id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = petName },
+					new MySqlParameter { Value = petObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not update pet {PetObjectId} name for player {PlayerObjectId}", petObjectId, playerObjectId);
 			return false;
 		}
 	}

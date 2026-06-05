@@ -2256,6 +2256,121 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetRenameUpdatesActivePetNamePersistsAndBroadcastsRenamePacket()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+			new PlayerOwnedPet(
+				ObjectId: 7002,
+				TemplateId: 900220,
+				Name: "Warehouse Mate",
+				Decoration: 188051002),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		fixture.World.TryAddObject(
+			7001,
+			new Aion.GameServer.Model.GameObjects.WorldPet(
+				7001,
+				900210,
+				"Merchant Mate",
+				player.ObjectId,
+				player.Position,
+				188051001,
+				HasMerchantFunction: true,
+				MerchantSellModifier: 15));
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetRenamePayload(objectId: 9999, petName: "nEwmate"));
+
+		Assert.Equal(1, playerRepository.UpdatePlayerPetNameCalls);
+		Assert.Equal((player.ObjectId, 7001, "Newmate"), playerRepository.UpdatedPlayerPetName);
+		Assert.Collection(
+			player.OwnedPets.OrderBy(pet => pet.ObjectId),
+			pet => Assert.Equal((7001, "Newmate"), (pet.ObjectId, pet.Name)),
+			pet => Assert.Equal((7002, "Warehouse Mate"), (pet.ObjectId, pet.Name)));
+		Assert.True(fixture.World.TryGetObject(7001, out var worldObject));
+		var worldPet = Assert.IsType<Aion.GameServer.Model.GameObjects.WorldPet>(worldObject);
+		Assert.Equal("Newmate", worldPet.Name);
+		Assert.Empty(fixture.SentPackets);
+		var broadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
+		Assert.Equal((player.Position, player.ObjectId, true), (broadcast.Position, broadcast.SourceObjectId, broadcast.IncludeSourcePlayer));
+		AssertPetRenamePacket(
+			Assert.IsType<SmPet>(broadcast.Packet),
+			expectedObjectId: 7001,
+			expectedPetName: "Newmate");
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetRenameInvalidNameSendsSystemMessageWithoutMutation()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetRenamePayload(objectId: 7001, petName: "x"));
+
+		Assert.Equal(0, playerRepository.UpdatePlayerPetNameCalls);
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal("Merchant Mate", pet.Name);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+		var packet = Assert.Single(fixture.SentPackets);
+		Assert.Equal(1400643, Assert.IsType<SmSystemMessage>(packet).MessageId);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetRenameWithoutActivePetDoesNothing()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetRenamePayload(objectId: 7001, petName: "Validname"));
+
+		Assert.Equal(0, playerRepository.UpdatePlayerPetNameCalls);
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal("Merchant Mate", pet.Name);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -3495,6 +3610,19 @@ public sealed class GameServerConnectionBuyItemTests
 		return buffer.ToArray();
 	}
 
+	private static byte[] CreatePetRenamePayload(int objectId, string petName)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(22);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteH((int)PetAction.Rename);
+		buffer.WriteD(objectId);
+		buffer.WriteS(petName);
+		return buffer.ToArray();
+	}
+
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
@@ -3554,6 +3682,18 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetRenamePacket(
+		SmPet packet,
+		int expectedObjectId,
+		string expectedPetName)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Rename, reader.ReadH());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedPetName, reader.ReadS());
 		Assert.Equal(0, reader.Remaining);
 	}
 

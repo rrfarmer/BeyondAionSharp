@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -367,6 +368,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case PetAction.Surrender:
 				await HandlePetSurrenderAsync(player, packet.TemplateId);
 				break;
+			case PetAction.Rename:
+				await HandlePetRenameAsync(player, packet.PetName);
+				break;
 		}
 	}
 
@@ -451,6 +455,50 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmPet(new SmPetSurrenderSnapshot(ownedPet.TemplateId, ownedPet.ObjectId)));
 	}
 
+	private async Task HandlePetRenameAsync(Player player, string petName)
+	{
+		// Java parity: CM_PET RENAME validates NameRestrictionService and then PetService.renamePet(player, petName).
+		if (!IsValidPetName(petName) || IsForbiddenName(petName))
+		{
+			await SendPacketAsync(SmSystemMessage.PetNotAvailableName());
+			return;
+		}
+
+		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
+			return;
+
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == player.PetSummonObjectId);
+		if (ownedPet == null)
+			return;
+
+		var normalizedName = NormalizeName(petName);
+		var persisted = _playerEnterWorldService == null
+			|| await _playerEnterWorldService.UpdatePlayerPetNameAsync(player, ownedPet.ObjectId, normalizedName);
+		if (!persisted)
+			return;
+
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? pet with { Name = normalizedName } : pet)
+			.ToArray();
+
+		if (_world?.TryGetObject(ownedPet.ObjectId, out var worldObject) == true && worldObject is WorldPet worldPet)
+			_world.TryUpdateObject(ownedPet.ObjectId, worldPet with { Name = normalizedName });
+
+		var packet = new SmPet(ownedPet.ObjectId, normalizedName);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				packet,
+				includeSourcePlayer: true);
+		}
+		else
+		{
+			await SendPacketAsync(packet);
+		}
+	}
+
 	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
 	{
 		var petObjectId = player.PetSummonObjectId;
@@ -462,6 +510,46 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java World.removeObject despawns pets with ObjectDeleteAnimation.FADE_OUT before PetController.onDelete.
 		if (sendDismissPacket)
 			await SendPacketAsync(new SmPet(petObjectId, ObjectDeleteAnimation.FadeOut));
+	}
+
+	private string NormalizeName(string name)
+	{
+		// Java parity: PetService.renamePet applies Util.convertName before mutating PetCommonData.
+		if (string.IsNullOrEmpty(name) || _options.Names.AllowCustomNames)
+			return name;
+
+		return name[..1].ToUpper(CultureInfo.InvariantCulture) + name[1..].ToLower(CultureInfo.InvariantCulture);
+	}
+
+	private bool IsValidPetName(string name)
+	{
+		// Java parity: services/NameRestrictionService.isValidPetName.
+		try
+		{
+			return _options.Names.CreatePetNameRegex().IsMatch(name);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Invalid pet name regex {Pattern}", _options.Names.PetPattern);
+			return false;
+		}
+	}
+
+	private bool IsForbiddenName(string name)
+	{
+		// Java parity: services/NameRestrictionService.isForbidden.
+		try
+		{
+			var forbiddenSequence = _options.Names.CreateForbiddenSequenceRegex();
+			if (forbiddenSequence != null && forbiddenSequence.IsMatch(name))
+				return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Invalid forbidden sequence regex {Pattern}", _options.Names.ForbiddenSequencePattern);
+		}
+
+		return _options.Names.ForbiddenWords.Any(word => string.Equals(word, name, StringComparison.OrdinalIgnoreCase));
 	}
 
 	internal static int GetGeneralInfoWarehouseRestrictionFlag(

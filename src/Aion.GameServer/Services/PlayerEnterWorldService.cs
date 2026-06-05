@@ -304,6 +304,16 @@ public sealed class PlayerEnterWorldService
 		return _repository.DeletePlayerPetAsync(player.ObjectId, petObjectId, cancellationToken);
 	}
 
+	public Task<bool> UpdatePlayerPetNameAsync(
+		Player player,
+		int petObjectId,
+		string petName,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetService.renamePet -> PlayerPetsDAO.updatePetName(pet.getCommonData()).
+		return _repository.UpdatePlayerPetNameAsync(player.ObjectId, petObjectId, petName, cancellationToken);
+	}
+
 	public Task<bool> SaveInventoryItemSlotAsync(
 		Player player,
 		int itemObjectId,

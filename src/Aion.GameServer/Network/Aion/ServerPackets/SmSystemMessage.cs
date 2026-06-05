@@ -273,6 +273,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402918);
 	}
 
+	public static SmSystemMessage PetNotAvailableName()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_PET_NOT_AVALIABE_NAME.
+		return new SmSystemMessage(1400643);
+	}
+
 	public static SmSystemMessage SkillSummonAttackMode(string summonName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_ATTACK_MODE(String). %0 is in Attack mode.

@@ -217,6 +217,7 @@ public sealed class GameServerOptions
 			{
 				AllowCustomNames = GetBoolWithEnvironment(loader, "gameserver.name.allow.custom", false),
 				CharacterPattern = GetWithEnvironment(loader, "gameserver.name.character_pattern", "[a-zA-Z]{2,16}"),
+				PetPattern = GetWithEnvironment(loader, "gameserver.name.pet_pattern", "[a-zA-Z]{2,16}"),
 				ForbiddenSequencePattern = GetWithEnvironment(loader, "gameserver.name.forbidden_sequences_pattern", string.Empty),
 				ForbiddenWords = GetStringListWithEnvironment(loader, "gameserver.name.forbidden_words", string.Empty),
 				ReserveOldNameDays = GetIntWithEnvironment(loader, "gameserver.name.reserve_old_name_days", 30),
@@ -574,6 +575,8 @@ public sealed class GameServerNameOptions
 
 	public string CharacterPattern { get; init; } = "[a-zA-Z]{2,16}";
 
+	public string PetPattern { get; init; } = "[a-zA-Z]{2,16}";
+
 	public string ForbiddenSequencePattern { get; init; } = string.Empty;
 
 	public IReadOnlyList<string> ForbiddenWords { get; init; } = Array.Empty<string>();
@@ -583,6 +586,11 @@ public sealed class GameServerNameOptions
 	public Regex CreateCharacterNameRegex()
 	{
 		return new Regex($"^(?:{CharacterPattern})$", RegexOptions.CultureInvariant);
+	}
+
+	public Regex CreatePetNameRegex()
+	{
+		return new Regex($"^(?:{PetPattern})$", RegexOptions.CultureInvariant);
 	}
 
 	public Regex? CreateForbiddenSequenceRegex()
