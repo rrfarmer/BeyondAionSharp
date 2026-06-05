@@ -6809,7 +6809,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static bool IsLiveBuyFromShopNpcType(string npcType)
 	{
-		return npcType is "NORMAL" or "ABYSS_KINAH" or "ABYSS";
+		return npcType is "NORMAL" or "ABYSS_KINAH" or "ABYSS" or "REWARD";
 	}
 
 	private static bool IsBuyFromShopTradeAction(int tradeActionId)
