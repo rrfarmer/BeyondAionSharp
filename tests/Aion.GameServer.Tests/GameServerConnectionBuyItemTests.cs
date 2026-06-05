@@ -1014,6 +1014,74 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopSuccessfulLimitedItemUpdatesLiveCounter()
+	{
+		var tradeLists = CreateBuyTradeLists(
+			new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50));
+		var goodsLists = CreateBuyGoodsLists(
+			new GoodsListSummary(
+				501,
+				SalesTime: "0 0 9 ? * MON",
+				Items: [new GoodsListItemSummary(1001, SellLimit: 1, BuyLimit: 1)]));
+		var limitedItemService = LimitedItemTradeService.Create(tradeLists, goodsLists);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: tradeLists,
+			buyItemGoodsLists: goodsLists,
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 500),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			limitedItemTradeService: limitedItemService,
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			observeBuyItemPlans: false);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 1)]));
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 1)]));
+
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.Count == 9_750);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 8001 && item.ItemId == 1001 && item.Count == 1);
+		Assert.Equal(2, player.InventoryItems.Count);
+		var liveFact = Assert.Single(limitedItemService.GetLimitedItemFacts(700001, player.ObjectId));
+		Assert.Equal((1001, 0, 1), (liveFact.ItemId, liveFact.SellLimit, liveFact.PlayerBuyCount));
+		Assert.False(limitedItemService.CanBuy(700001, 1001, player.ObjectId, 1));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertInventoryAddItemPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 8001,
+				expectedItemId: 1001,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.Buy),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => Assert.Equal(1400353, Assert.IsType<SmSystemMessage>(packet).MessageId));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopNotEnoughAbyssPointsSendsLiveDenialWithoutMutation()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
@@ -2695,6 +2763,7 @@ public sealed class GameServerConnectionBuyItemTests
 			TradeListTable? buyItemTradeLists = null,
 			ItemTemplateTable? buyItemItemTemplates = null,
 			GoodsListTable? buyItemGoodsLists = null,
+			LimitedItemTradeService? limitedItemTradeService = null,
 			long? buyItemCurrentSellLimit = null,
 			Func<int>? buyItemDiagnosticObjectIdProvider = null,
 			GameServerOptions? options = null,
@@ -2752,6 +2821,7 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemTradeLists: buyItemTradeLists,
 						buyItemItemTemplates: buyItemItemTemplates,
 						buyItemGoodsLists: buyItemGoodsLists,
+						limitedItemTradeService: limitedItemTradeService,
 						buyItemCurrentSellLimit: buyItemCurrentSellLimit,
 						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider,
 						buyItemPriceInfluenceRates: buyItemPriceInfluenceRates),

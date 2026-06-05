@@ -5,7 +5,9 @@ namespace Aion.GameServer.Services;
 public sealed record NpcDialogLimitedItemFactAdapterInput(
 	int NpcId,
 	int PlayerObjectId,
-	IReadOnlyDictionary<int, int>? PlayerBuyCountsByItemId = null
+	IReadOnlyDictionary<int, int>? PlayerBuyCountsByItemId = null,
+	IReadOnlyDictionary<int, int>? SellLimitsByItemId = null,
+	IReadOnlyList<NpcDialogLimitedItemFact>? LiveLimitedItems = null
 );
 
 public sealed record NpcDialogLimitedItemFact(int ItemId, int SellLimit, int BuyLimit, int PlayerBuyCount, string? SalesTime);
@@ -35,11 +37,20 @@ public static class NpcDialogLimitedItemFactAdapterService
 		// Java parity:
 		// LimitedItemTradeService.start scans TradeListData.getTradeListTemplate(),
 		// GoodsListData.getGoodsListById(tab.id), and GoodsList.getLimitedItems().
-		// LimitedItem.getBuyCount(playerObjectId) defaults to 0 until live purchase mutation exists.
+		if (input.LiveLimitedItems != null)
+		{
+			return new NpcDialogLimitedItemFactAdapterPlan(
+				input.LiveLimitedItems,
+				Array.Empty<int>(),
+				"LimitedItemTradeService.start + LimitedItem.getBuyCount",
+				IsLive: true);
+		}
+
 		var tradeList = tradeLists.GetTradeListTemplate(input.NpcId);
 		var limitedItems = new List<NpcDialogLimitedItemFact>();
 		var missingGoodsListIds = new List<int>();
 		var buyCounts = input.PlayerBuyCountsByItemId ?? new Dictionary<int, int>();
+		var sellLimits = input.SellLimitsByItemId ?? new Dictionary<int, int>();
 
 		if (tradeList != null)
 		{
@@ -60,7 +71,7 @@ public static class NpcDialogLimitedItemFactAdapterService
 					limitedItems.Add(
 						new NpcDialogLimitedItemFact(
 							item.Id,
-							item.SellLimit!.Value,
+							sellLimits.GetValueOrDefault(item.Id, item.SellLimit!.Value),
 							item.BuyLimit!.Value,
 							buyCounts.GetValueOrDefault(item.Id),
 							goodsList.SalesTime

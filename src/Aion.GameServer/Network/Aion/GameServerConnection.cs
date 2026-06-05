@@ -108,6 +108,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
 	private readonly GoodsListTable? _buyItemGoodsLists;
+	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
 	private readonly PriceInfluenceRates _buyItemPriceInfluenceRates;
@@ -204,6 +205,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		TradeListTable? buyItemTradeLists = null,
 		ItemTemplateTable? buyItemItemTemplates = null,
 		GoodsListTable? buyItemGoodsLists = null,
+		LimitedItemTradeService? limitedItemTradeService = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
 		PriceInfluenceRates? buyItemPriceInfluenceRates = null,
@@ -278,6 +280,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
 		_buyItemGoodsLists = buyItemGoodsLists;
+		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
 		_buyItemPriceInfluenceRates = buyItemPriceInfluenceRates ?? new PriceInfluenceRates();
@@ -2565,7 +2568,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					VendorBuyModifier: _options.Prices.VendorBuyModifier));
 		var tradeListFactInput = tradeRuntimeFactPlan?.ToTradeListFactInput(npc.TemplateId);
 		var limitedItemFactInput = packet.DialogActionId == CmDialogSelect.Buy
-			? tradeRuntimeFactPlan?.ToLimitedItemFactInput(npc.TemplateId)
+			? CreateLimitedItemFactInput(npc.TemplateId, player.ObjectId, tradeRuntimeFactPlan)
 			: null;
 		var repurchasePacketSnapshotPlan = packet.DialogActionId == CmDialogSelect.BuyAgain && staticData?.ItemTemplates != null
 			? RepurchasePacketSnapshotPlanService.CreateDisabledPlan(
@@ -2606,6 +2609,22 @@ public sealed class GameServerConnection : BaseClientConnection
 			npcTemplates,
 			staticData?.TradeLists,
 			staticData?.GoodsLists);
+	}
+
+	private NpcDialogLimitedItemFactAdapterInput? CreateLimitedItemFactInput(
+		int npcId,
+		int playerObjectId,
+		NpcDialogTradeRuntimeFactAdapterPlan? tradeRuntimeFactPlan)
+	{
+		if (_limitedItemTradeService != null)
+		{
+			return new NpcDialogLimitedItemFactAdapterInput(
+				npcId,
+				playerObjectId,
+				LiveLimitedItems: _limitedItemTradeService.GetLimitedItemFacts(npcId, playerObjectId));
+		}
+
+		return tradeRuntimeFactPlan?.ToLimitedItemFactInput(npcId);
 	}
 
 	private static SmRepurchase CreateDialogRepurchasePacket(Player player, int targetObjectId, ItemTemplateTable? itemTemplates)
@@ -5495,7 +5514,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: CM_BUY_ITEM.runImpl action 13 -> TradeService.performBuyFromShop
 		// -> performBuyTransaction for NORMAL kinah shops. This first live slice
-		// intentionally excludes AP/token costs and limited-item counter persistence.
+		// intentionally excludes non-normal shop types.
 		if (player == null
 			|| targetKind != CmBuyItemRunTargetKind.Npc
 			|| packet.TradeActionId != 13
@@ -5666,6 +5685,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			projectedCubeItemsCount++;
 			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 		}
+
+		foreach (var boughtItem in transactionPlan.Mutation.AddedItems)
+			_limitedItemTradeService?.BuyItem(tradeTemplate.NpcId, boughtItem.ItemId, player.ObjectId, boughtItem.Count);
 	}
 
 	private static NpcShopRequiredItemConsumptionPlan? CreateNpcShopRequiredItemConsumptionPlan(
@@ -6690,7 +6712,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		// trade goods lists before any live inventory/AP/Kinah mutation.
 		var allowedGoodsItemIds = CreateBuyItemAllowedGoodsItemIds(tradeTemplate, goodsLists);
 		var limitedItemFacts = NpcDialogLimitedItemFactAdapterService.CreatePlan(
-			new NpcDialogLimitedItemFactAdapterInput(tradeTemplate.NpcId, player.ObjectId),
+			CreateLimitedItemFactInput(tradeTemplate.NpcId, player.ObjectId, null)
+				?? new NpcDialogLimitedItemFactAdapterInput(tradeTemplate.NpcId, player.ObjectId),
 			new TradeListTable([tradeTemplate], Array.Empty<TradeListTemplateSummary>(), Array.Empty<TradeListTemplateSummary>()),
 			goodsLists);
 		var priceSnapshot = PricesService.CreateSnapshot(player.Race, _options.Prices, _buyItemPriceInfluenceRates);

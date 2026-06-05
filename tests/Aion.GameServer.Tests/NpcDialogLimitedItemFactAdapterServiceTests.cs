@@ -61,6 +61,34 @@ public sealed class NpcDialogLimitedItemFactAdapterServiceTests
 	}
 
 	[Fact]
+	public void CreatePlan_UsesLiveLimitedItemsWhenRuntimeStateIsAvailable()
+	{
+		var plan = NpcDialogLimitedItemFactAdapterService.CreatePlan(
+			new NpcDialogLimitedItemFactAdapterInput(
+				NpcId: 203060,
+				PlayerObjectId: 42,
+				LiveLimitedItems:
+				[
+					new NpcDialogLimitedItemFact(
+						ItemId: 186000001,
+						SellLimit: 4,
+						BuyLimit: 3,
+						PlayerBuyCount: 1,
+						SalesTime: "0 0 9 ? * MON"),
+				]),
+			CreateTradeLists(new TradeListTemplateSummary(203060, [129])),
+			CreateGoodsLists(new GoodsListSummary(
+				129,
+				Items: [new GoodsListItemSummary(186000001, SellLimit: 5, BuyLimit: 3)])));
+
+		Assert.True(plan.IsLive);
+		Assert.Empty(plan.MissingGoodsListIds);
+		var item = Assert.Single(plan.LimitedItems);
+		Assert.Equal((186000001, 4, 3, 1), (item.ItemId, item.SellLimit, item.BuyLimit, item.PlayerBuyCount));
+		Assert.Equal([new SmTradeListLimitedItemSummary(186000001, BuyCount: 1, SellLimit: 4)], plan.PacketItems);
+	}
+
+	[Fact]
 	public void CreatePlan_ReturnsEmptyWhenNpcHasNoTradeList()
 	{
 		var plan = NpcDialogLimitedItemFactAdapterService.CreatePlan(

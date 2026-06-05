@@ -11,10 +11,13 @@ public sealed class GameServerRuntimeContext
 
 	public WorldMapRuntimeStateTable WorldMapStates { get; private set; } = WorldMapRuntimeStateTable.Empty;
 
+	public LimitedItemTradeService LimitedItems { get; private set; } = LimitedItemTradeService.Empty;
+
 	public void SetDataManager(DataManager dataManager)
 	{
 		DataManager = dataManager;
 		WorldMapStates = new WorldMapRuntimeStateTable(dataManager.StaticData.WorldMaps);
+		LimitedItems = LimitedItemTradeService.Create(dataManager.StaticData.TradeLists, dataManager.StaticData.GoodsLists);
 	}
 
 	public void SetWorldMapStates(WorldMapRuntimeStateTable worldMapStates)
