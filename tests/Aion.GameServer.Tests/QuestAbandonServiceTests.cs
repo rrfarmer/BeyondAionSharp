@@ -282,6 +282,7 @@ public sealed class QuestAbandonServiceTests
 			Template(2010, npcFactionId: 42),
 			Template(2011, npcFactionId: 42),
 		]);
+		var questHandlers = new QuestHandlerAvailabilityTable([2011]);
 
 		var result = QuestAbandonService.Abandon(
 			player,
@@ -295,7 +296,7 @@ public sealed class QuestAbandonServiceTests
 				Assert.Equal(1, count);
 				return 0;
 			},
-			hasQuestHandler: questId => questId != 2010);
+			hasQuestHandler: questHandlers.IsHaveHandler);
 
 		var packet = Assert.Single(result.NpcFactionDailyQuestPackets);
 		Assert.Equal(Convert.FromHexString("06DB07000001000000"), SerializeUnencryptedPayload(packet));

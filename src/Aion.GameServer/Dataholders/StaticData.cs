@@ -63,6 +63,7 @@ public sealed class StaticData
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		NearbyQuestTemplateTable nearbyQuestTemplates,
+		QuestHandlerAvailabilityTable questHandlers,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
 		WindstreamTable windstreamLocations,
@@ -123,6 +124,7 @@ public sealed class StaticData
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		NearbyQuestTemplates = nearbyQuestTemplates;
+		QuestHandlers = questHandlers;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
 		WindstreamLocations = windstreamLocations;
@@ -241,6 +243,8 @@ public sealed class StaticData
 
 	public NearbyQuestTemplateTable NearbyQuestTemplates { get; }
 
+	public QuestHandlerAvailabilityTable QuestHandlers { get; }
+
 	public QuestFinishRewardProjectionLookupTable QuestFinishRewardProjections { get; }
 
 	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
@@ -257,6 +261,16 @@ public sealed class StaticData
 	public static async Task<StaticData> LoadFromCacheAsync(
 		string cacheFilePath,
 		IReadOnlyList<string> importedFiles,
+		Task? validationTask = null,
+		CancellationToken cancellationToken = default)
+	{
+		return await LoadFromCacheAsync(cacheFilePath, importedFiles, null, validationTask, cancellationToken);
+	}
+
+	public static async Task<StaticData> LoadFromCacheAsync(
+		string cacheFilePath,
+		IReadOnlyList<string> importedFiles,
+		string? questHandlerDirectory,
 		Task? validationTask = null,
 		CancellationToken cancellationToken = default)
 	{
@@ -2926,6 +2940,7 @@ public sealed class StaticData
 					? template with { WorkOrderRecipeId = recipeId }
 					: template)
 				.ToArray());
+		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
 		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
 		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
 			.Create(questFinishRewardProjectionStream);
@@ -3028,6 +3043,7 @@ public sealed class StaticData
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			nearbyQuestTemplates,
+			questHandlers,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			new WindstreamTable(windstreamLocations.AsReadOnly()),

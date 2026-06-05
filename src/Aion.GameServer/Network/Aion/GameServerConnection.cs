@@ -11530,20 +11530,25 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: CM_DELETE_QUEST.runImpl -> timer-clear SM_QUEST_ACTION(questId, 0),
 		// then QuestService.abandonQuest(player, questId).
-		var questTemplates = _runtimeContext?.DataManager?.StaticData.NearbyQuestTemplates;
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var questTemplates = staticData?.NearbyQuestTemplates;
 		NearbyQuestTemplateSummary? template = null;
 		if (questTemplates != null)
 			questTemplates.TryGetQuest(questId, out template);
 
 		var now = DateTimeOffset.Now;
 		var currentEpochSeconds = now.ToUnixTimeSeconds() > int.MaxValue ? int.MaxValue : (int)now.ToUnixTimeSeconds();
+		Func<int, bool>? hasQuestHandler = staticData?.QuestHandlers == null
+			? null
+			: staticData.QuestHandlers.IsHaveHandler;
 		var result = QuestAbandonService.Abandon(
 			player,
 			questId,
 			template,
 			currentEpochSeconds,
 			questTemplates,
-			NpcFactionDailyResetService.GetNextResetEpochSeconds(now, _options));
+			NpcFactionDailyResetService.GetNextResetEpochSeconds(now, _options),
+			hasQuestHandler: hasQuestHandler);
 		if (_playerEnterWorldService != null)
 			await _playerEnterWorldService.PersistQuestAbandonAsync(player, result, cancellationToken);
 

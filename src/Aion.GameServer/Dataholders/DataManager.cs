@@ -26,6 +26,7 @@ public sealed class DataManager
 			MainXmlFilePath = Path.Combine(staticDataDirectory, "static_data.xml"),
 			SchemaFilePath = Path.Combine(staticDataDirectory, "static_data.xsd"),
 			CacheXmlFilePath = Path.Combine(cacheDirectory ?? Path.Combine(repoRoot, "game-server", "cache"), "static_data.xml"),
+			QuestHandlerDirectory = Path.Combine(repoRoot, "game-server", "data", "handlers", "quest"),
 			ValidateWhenCacheChanges = validateWhenCacheChanges,
 		};
 

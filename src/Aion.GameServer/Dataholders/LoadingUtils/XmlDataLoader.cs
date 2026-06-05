@@ -12,6 +12,8 @@ public sealed class XmlDataLoaderOptions
 
 	public required string SchemaFilePath { get; init; }
 
+	public string? QuestHandlerDirectory { get; init; }
+
 	public bool ValidateWhenCacheChanges { get; init; } = true;
 }
 
@@ -34,7 +36,12 @@ public static class XmlDataLoader
 				CancellationToken.None);
 		}
 
-		return StaticData.LoadFromCacheAsync(mergeResult.CacheFilePath, mergeResult.ImportedFiles, validationTask, cancellationToken);
+		return StaticData.LoadFromCacheAsync(
+			mergeResult.CacheFilePath,
+			mergeResult.ImportedFiles,
+			options.QuestHandlerDirectory,
+			validationTask,
+			cancellationToken);
 	}
 
 	public static void ValidateCache(string cacheFilePath, string schemaFilePath)
