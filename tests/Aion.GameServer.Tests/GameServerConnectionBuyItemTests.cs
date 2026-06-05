@@ -2605,7 +2605,7 @@ public sealed class GameServerConnectionBuyItemTests
 				Assert.IsType<SmEmotion>(packet),
 				expectedPlayerObjectId: player.ObjectId,
 				expectedCreatureState: (int)player.CreatureState),
-			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreasePetFood, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
 			packet => AssertPetFoodProgressPacket(
 				Assert.IsType<SmPet>(packet),
 				expectedFeedProgressData: pet.FeedProgressData,
@@ -2690,13 +2690,13 @@ public sealed class GameServerConnectionBuyItemTests
 				Assert.IsType<SmEmotion>(packet),
 				expectedPlayerObjectId: player.ObjectId,
 				expectedCreatureState: (int)player.CreatureState),
-			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreasePetFood, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
 			packet => AssertPetFoodProgressPacket(
 				Assert.IsType<SmPet>(packet),
 				expectedFeedProgressData: GetPetFeedProgressDataAfterRegularFeeds(1),
 				expectedItemObjectId: 500001,
 				expectedCount: 2),
-			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreasePetFood, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
 			packet => AssertPetFoodProgressPacket(
 				Assert.IsType<SmPet>(packet),
 				expectedFeedProgressData: GetPetFeedProgressDataAfterRegularFeeds(2),

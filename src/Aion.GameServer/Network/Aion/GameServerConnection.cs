@@ -710,7 +710,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 		else
 		{
-			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, itemTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+			await SendPacketAsync(new SmInventoryUpdateItem(sourceItemUpdate, itemTemplate, SmInventoryUpdateItem.DecreasePetFood));
 		}
 
 		await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(

@@ -35,6 +35,8 @@ public sealed class SmInventoryUpdateItem : GameServerPacket
 	public const int DecreaseKinahLearn = 0x49;
 	public const int DecreaseKinahFly = 0x4B;
 	public const int DecreaseKinahCube = 0x5A;
+	// Java parity: ItemPacketService.ItemUpdateType.DEC_PET_FOOD = 0x5E.
+	public const int DecreasePetFood = 0x5E;
 	public const int EquipUnequip = -1;
 	public const int Charge = -2;
 	public const int PolishCharge = -3;
