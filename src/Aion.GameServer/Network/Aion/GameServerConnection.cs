@@ -437,6 +437,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.Position.Heading,
 			player.ObjectId,
 			ownedPet.Decoration)));
+
+		// Java parity: PetSpawnService.summonPet sends persisted special-function states immediately after spawn.
+		if (ownedPet.IsLooting)
+			await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoLoot, Active: true)));
+		if (ownedPet.IsSelling)
+			await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoSell, Active: true)));
 	}
 
 	private PlayerOwnedPet ApplyPetSpawnRefeedState(

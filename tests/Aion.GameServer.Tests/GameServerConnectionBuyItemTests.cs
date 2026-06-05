@@ -2124,6 +2124,58 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnSendsPersistedSpecialFunctionPackets()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"merchant pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions:
+					[
+						new PetFunctionSummary(3, PetFunctionType.Loot, Slots: 0, RatePrice: 0),
+						new PetFunctionSummary(5, PetFunctionType.Merchant, Slots: 0, RatePrice: 15),
+					])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Utility Mate",
+				Decoration: 188051001,
+				IsLooting: true,
+				IsSelling: true),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetSpawnPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedName: "Utility Mate",
+				expectedTemplateId: 900210,
+				expectedObjectId: 7001,
+				expectedPlayerObjectId: player.ObjectId,
+				expectedPosition: player.Position,
+				expectedDecoration: 188051001),
+			packet => AssertPetSpecialFunctionActivationPacket(
+				Assert.IsType<SmPet>(packet),
+				PetSpecialFunction.AutoLoot,
+				expectedActive: true),
+			packet => AssertPetSpecialFunctionActivationPacket(
+				Assert.IsType<SmPet>(packet),
+				PetSpecialFunction.AutoSell,
+				expectedActive: true));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetSpawnSchedulesRestoredRefeedDelayAndCallbackMutatesPetState()
 	{
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
