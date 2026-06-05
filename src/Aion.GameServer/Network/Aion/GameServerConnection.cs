@@ -1582,6 +1582,7 @@ public sealed class GameServerConnection : BaseClientConnection
 							staticData?.TemperingTemplates,
 							staticData?.SkillTemplates,
 							staticData?.TitleTemplates));
+					await SendOwnedPetListAsync(enterWorldResult.Player, _petTemplates ?? staticData?.PetTemplates);
 					// Java parity: services/mail/MailService.onPlayerLogin sends mailbox state before macro/recipe restore.
 					await SendPacketAsync(new SmMailService(enterWorldResult.Player.Mailbox));
 					foreach (var housingBidSystemMessage in SmReceiveBids.CreateLoginSystemMessages(enterWorldResult.Player))
@@ -6717,6 +6718,61 @@ public sealed class GameServerConnection : BaseClientConnection
 	private static bool IsDead(Player player)
 	{
 		return player.LifeStats?.CurrentHp <= 0 || player.CreatureState == PlayerCreatureState.Dead;
+	}
+
+	private async Task SendOwnedPetListAsync(Player player, PetTemplateTable? petTemplates)
+	{
+		// Java parity: PetService.onPlayerLogin sends SM_PET(Collection<PetCommonData>) when the persisted pet list is not empty.
+		if (player.OwnedPets.Count == 0)
+			return;
+
+		var currentTime = DateTimeOffset.Now;
+		var pets = player.OwnedPets
+			.Select(pet => CreateOwnedPetDataSnapshot(player, pet, petTemplates, currentTime))
+			.ToArray();
+		await SendPacketAsync(SmPet.LoadPets(pets));
+	}
+
+	private static SmPetDataSnapshot CreateOwnedPetDataSnapshot(
+		Player player,
+		PlayerOwnedPet pet,
+		PetTemplateTable? petTemplates,
+		DateTimeOffset currentTime)
+	{
+		var template = petTemplates?.GetPetTemplate(pet.TemplateId);
+		return new SmPetDataSnapshot(
+			pet.Name,
+			pet.TemplateId,
+			pet.ObjectId,
+			pet.MasterObjectId == 0 ? player.ObjectId : pet.MasterObjectId,
+			pet.BirthdayEpochSeconds,
+			pet.SecondsUntilExpiration(currentTime),
+			CreateOwnedPetFunctionSnapshots(pet, template, currentTime),
+			pet.Decoration);
+	}
+
+	private static IReadOnlyList<SmPetFunctionSnapshot> CreateOwnedPetFunctionSnapshots(
+		PlayerOwnedPet pet,
+		PetTemplateSummary? template,
+		DateTimeOffset currentTime)
+	{
+		if (template == null)
+			return Array.Empty<SmPetFunctionSnapshot>();
+
+		var functions = new List<SmPetFunctionSnapshot>(capacity: 2);
+		if (template.ContainsFunction(PetFunctionType.Warehouse))
+			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.Warehouse));
+		if (template.ContainsFunction(PetFunctionType.Loot))
+			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.Loot));
+		if (template.ContainsFunction(PetFunctionType.Doping))
+			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.Doping, pet.DopingItemIds ?? []));
+		if (template.ContainsFunction(PetFunctionType.Food))
+			functions.Add(new SmPetFunctionSnapshot(
+				PetFunctionType.Food,
+				FeedProgressData: pet.FeedProgressData,
+				RefeedDelaySeconds: pet.RefeedDelaySeconds(currentTime)));
+
+		return functions;
 	}
 
 	private static IReadOnlySet<int> ResolveBuyItemRepurchasableItemObjectIds(

@@ -4,6 +4,7 @@ using Aion.Commons.Database;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
@@ -416,6 +417,12 @@ public interface IPlayerEnterWorldRepository
 
 public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepository
 {
+	public Player? LoadedPlayer { get; init; }
+
+	public IReadOnlyList<PlayerOwnedPet> LoadedPlayerPets { get; init; } = Array.Empty<PlayerOwnedPet>();
+
+	public bool MarkPlayerOnlineResult { get; init; }
+
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
 	public bool InsertPlayerQuestResult { get; init; } = true;
@@ -476,7 +483,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult<Player?>(null);
+		return Task.FromResult(LoadedPlayer is { ObjectId: var objectId, AccountId: var playerAccountId }
+			&& objectId == playerObjectId
+			&& playerAccountId == accountId
+			? LoadedPlayer
+			: null);
 	}
 
 	public Task<IReadOnlyList<InventoryItem>> LoadPlayerItemsAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -868,12 +879,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<IReadOnlyList<PlayerOwnedPet>> LoadPlayerPetsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult<IReadOnlyList<PlayerOwnedPet>>(Array.Empty<PlayerOwnedPet>());
+		return Task.FromResult(LoadedPlayerPets);
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult(false);
+		return Task.FromResult(MarkPlayerOnlineResult);
 	}
 
 	public Task<bool> SaveItemChargeMutationAsync(
@@ -5546,8 +5557,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 			while (await reader.ReadAsync(cancellationToken))
 			{
-				var projection = PlayerPetRowProjection.Project(
-					new PlayerPetRepositoryRow(
+				var row = new PlayerPetRepositoryRow(
 						PetObjectId: ReadInt(reader, "id"),
 						TemplateId: ReadInt(reader, "template_id"),
 						PlayerObjectId: ReadInt(reader, "player_id"),
@@ -5563,14 +5573,25 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 						ShuggleCounter: ReadInt(reader, "counter"),
 						MoodCooldownStartedMillis: ReadLong(reader, "mood_cd_started"),
 						GiftCooldownStartedMillis: ReadLong(reader, "gift_cd_started"),
-						DespawnTime: ReadDateTimeOffset(reader, "despawn_time")),
-					new PlayerPetProjectionOptions(HasFoodFunction: false, HasDopingFunction: false),
+						DespawnTime: ReadDateTimeOffset(reader, "despawn_time"));
+				var template = _runtimeContext.DataManager?.StaticData.PetTemplates.GetPetTemplate(row.TemplateId);
+				var projection = PlayerPetRowProjection.Project(
+					row,
+					new PlayerPetProjectionOptions(
+						HasFoodFunction: template?.ContainsFunction(PetFunctionType.Food) == true,
+						HasDopingFunction: template?.ContainsFunction(PetFunctionType.Doping) == true),
 					() => DateTimeOffset.Now);
 				pets.Add(new PlayerOwnedPet(
 					projection.PetObjectId,
 					projection.TemplateId,
 					projection.Name,
-					projection.Decoration));
+					projection.Decoration,
+					projection.PlayerObjectId,
+					projection.Birthday,
+					projection.ExpireTime,
+					projection.FeedProgress?.GetDataForPacket() ?? 0,
+					projection.Timing.RefeedTimeMillis,
+					projection.DopingBag?.GetItems() ?? []));
 			}
 
 			return pets;

@@ -2120,6 +2120,58 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
+	{
+		var player = CreatePlayer(accountId: 7);
+		player.IsOnline = false;
+		player.LastOnline = DateTime.Now.AddMinutes(-10);
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			LoadedPlayerPets =
+			[
+				new PlayerOwnedPet(
+					ObjectId: 7001,
+					TemplateId: 900220,
+					Name: "Login Mate",
+					Decoration: 188051002,
+					MasterObjectId: player.ObjectId,
+					Birthday: new DateTimeOffset(2024, 1, 2, 3, 4, 5, TimeSpan.Zero)),
+			],
+			MarkPlayerOnlineResult = true,
+		};
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900220,
+					"warehouse pet",
+					NameId: 1600220,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(0, PetFunctionType.Warehouse, Slots: 12, RatePrice: 0)])),
+			playerEnterWorldRepository: repository,
+			observeBuyItemPlans: false);
+		SetAuthenticatedAccountForEnterWorld(fixture.Connection, accountId: 7);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateEnterWorldPayload(player.ObjectId));
+
+		var statsIndex = fixture.SentPackets.FindIndex(packet => packet is SmStatsInfo);
+		var petIndex = fixture.SentPackets.FindIndex(packet => packet is SmPet);
+		Assert.True(statsIndex >= 0);
+		Assert.True(petIndex > statsIndex);
+		AssertLoadPetsPacket(
+			Assert.IsType<SmPet>(fixture.SentPackets[petIndex]),
+			expectedName: "Login Mate",
+			expectedTemplateId: 900220,
+			expectedObjectId: 7001,
+			expectedPlayerObjectId: player.ObjectId,
+			expectedBirthdayEpochSeconds: 1704164645,
+			expectedDecoration: 188051002);
+		Assert.True(player.IsOnline);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetSpawnEnablesMerchantSellActionSeventeenLive()
 	{
 		var playerRepository = new EmptyPlayerEnterWorldRepository();
@@ -3103,9 +3155,10 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Empty(fixture.Registry.VisibleBroadcasts);
 	}
 
-	private static Player CreatePlayer() =>
+	private static Player CreatePlayer(int accountId = 0) =>
 		new()
 		{
+			AccountId = accountId,
 			ObjectId = 1001,
 			Name = "BuyItemTester",
 			Race = "ELYOS",
@@ -3240,6 +3293,14 @@ public sealed class GameServerConnectionBuyItemTests
 		SetConnectionState(connection, GameConnectionState.InGame);
 	}
 
+	private static void SetAuthenticatedAccountForEnterWorld(GameServerConnection connection, int accountId)
+	{
+		var accountIdField = typeof(GameServerConnection).GetField("_accountId", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(accountIdField);
+		accountIdField.SetValue(connection, accountId);
+		SetConnectionState(connection, GameConnectionState.Authed);
+	}
+
 	private static void SetConnectionState(GameServerConnection connection, GameConnectionState state)
 	{
 		var stateField = typeof(GameServerConnection).GetField("_state", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -3272,6 +3333,17 @@ public sealed class GameServerConnectionBuyItemTests
 			buffer.WriteQ(count);
 		}
 
+		return buffer.ToArray();
+	}
+
+	private static byte[] CreateEnterWorldPayload(int playerObjectId)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(8);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteD(playerObjectId);
 		return buffer.ToArray();
 	}
 
@@ -3321,6 +3393,40 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(expectedDecoration, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
+	}
+
+	private static void AssertLoadPetsPacket(
+		SmPet packet,
+		string expectedName,
+		int expectedTemplateId,
+		int expectedObjectId,
+		int expectedPlayerObjectId,
+		int expectedBirthdayEpochSeconds,
+		int expectedDecoration)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.LoadPets, reader.ReadH());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(expectedTemplateId, reader.ReadD());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedBirthdayEpochSeconds, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal((int)PetFunctionType.Warehouse, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal((int)PetFunctionType.None, reader.ReadH());
+		Assert.Equal((int)PetFunctionType.Appearance, reader.ReadH());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(expectedDecoration, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertClosePrivateShopEmotion(SmEmotion packet, int expectedPlayerObjectId)
