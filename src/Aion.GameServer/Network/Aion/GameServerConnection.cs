@@ -1097,10 +1097,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmPrivateStore privateStore:
 				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE.runImpl closes the private store when no
-				// items are listed, otherwise calls PrivateStoreService.createStoreWithItems. Live store mutation,
-				// validation, packet fanout, and persistence remain deferred; this unit is parser-only.
+				// items are listed, otherwise calls PrivateStoreService.createStoreWithItems. The create branch remains
+				// deferred until its Java item validation and open-store state mutation are ported.
 				if (_activePlayer != null)
-					_privateStoreCreatePlanObserver?.Invoke(CreatePrivateStoreCreatePlan(privateStore, _activePlayer));
+				{
+					if (privateStore.Items.Count == 0)
+						await HandleClosePrivateStoreAsync(_activePlayer);
+					else
+						_privateStoreCreatePlanObserver?.Invoke(CreatePrivateStoreCreatePlan(privateStore, _activePlayer));
+				}
 				break;
 			case CmPrivateStoreName privateStoreName:
 				// Java parity: network/aion/clientpackets/CM_PRIVATE_STORE_NAME.runImpl calls
@@ -5729,6 +5734,31 @@ public sealed class GameServerConnection : BaseClientConnection
 				});
 
 		return PrivateStoreCreatePlanService.CreateDisabledPlan(packet, context, itemContexts);
+	}
+
+	private async Task HandleClosePrivateStoreAsync(Player player)
+	{
+		// Java parity: services/PrivateStoreService.closePrivateStore.
+		if (!IsPrivateStoreOpen(player))
+			return;
+
+		player.PrivateStoreItems = Array.Empty<PrivateStoreListedItemSummary>();
+		player.SetCreatureState(PlayerCreatureState.PrivateShop, enabled: false);
+		player.SetCreatureState(PlayerCreatureState.Active, enabled: true);
+
+		var closePacket = new SmEmotion(player, EmotionType.ClosePrivateShop, 0, 0);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				closePacket,
+				includeSourcePlayer: true);
+		}
+		else
+		{
+			await SendPacketAsync(closePacket);
+		}
 	}
 
 	private static PrivateStoreNameOpenCompositionPlan CreatePrivateStoreNameOpenPlan(CmPrivateStoreName packet, Player player)

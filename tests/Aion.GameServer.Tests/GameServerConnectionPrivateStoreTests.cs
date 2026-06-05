@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -14,7 +15,7 @@ namespace Aion.GameServer.Tests;
 public sealed class GameServerConnectionPrivateStoreTests
 {
 	[Fact]
-	public async Task ProcessPacketAsync_CmPrivateStoreCloseRecordsDisabledPlanWithoutSendingPackets()
+	public async Task ProcessPacketAsync_CmPrivateStoreCloseClearsStoreStateAndSendsCloseEmotion()
 	{
 		await using var fixture = await PrivateStoreFixture.CreateAsync();
 		var player = CreatePlayer();
@@ -29,12 +30,11 @@ public sealed class GameServerConnectionPrivateStoreTests
 			fixture.Connection,
 			CreatePrivateStorePayload([]));
 
-		var plan = Assert.Single(fixture.CreatePlans);
-		Assert.Equal(PrivateStoreCreatePlanStatus.ClosePlanCreated, plan.Status);
-		Assert.Equal(PrivateStoreClosePlanStatus.PlanCreated, plan.ClosePlan!.Status);
-		Assert.False(plan.IsLive);
-		Assert.False(plan.WouldSetStore);
-		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(player.PrivateStoreItems);
+		Assert.False(player.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.True(player.IsInState(PlayerCreatureState.Active));
+		Assert.Empty(fixture.CreatePlans);
+		AssertClosePrivateShopEmotion(Assert.IsType<SmEmotion>(Assert.Single(fixture.SentPackets)), player.ObjectId);
 	}
 
 	[Fact]
@@ -121,6 +121,23 @@ public sealed class GameServerConnectionPrivateStoreTests
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+
+	private static void AssertClosePrivateShopEmotion(SmEmotion packet, int expectedPlayerObjectId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal((int)EmotionType.ClosePrivateShop, reader.ReadC());
+		Assert.Equal((int)PlayerCreatureState.Active, reader.ReadH());
+		Assert.Equal(0f, reader.ReadF());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private sealed class PrivateStoreFixture : IAsyncDisposable
