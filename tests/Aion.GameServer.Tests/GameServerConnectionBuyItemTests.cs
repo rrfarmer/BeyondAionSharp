@@ -2689,6 +2689,97 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetFoodRejectedFoodUnlocksItemAndSendsFaceMessageWithoutMutation()
+	{
+		const int flavourId = 71;
+		const int validFoodItemId = 182006001;
+		const int rejectedFoodItemId = 182006777;
+		var rejectedTemplate = Template(rejectedFoodItemId, price: 1, maxStackCount: 100);
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(validFoodItemId, price: 1, maxStackCount: 100),
+				rejectedTemplate),
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"feeder pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(flavourId, PetFunctionType.Food, Slots: 0, RatePrice: 0)])),
+			buyItemPetFeedData: CreatePetFeedData(flavourId, validFoodItemId),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Feeder Mate",
+				Decoration: 188051001,
+				FeedProgressData: 0x654321),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 500777,
+				ItemId = rejectedFoodItemId,
+				Count = 2,
+				OwnerId = player.ObjectId,
+				Location = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodFeedPayload(actionType: 1, objectId: 500777, count: 1, unknown2: 99));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.CancelFeed);
+		Assert.Equal(0x654321, pet.FeedProgressData);
+		Assert.Equal(2, Assert.Single(player.InventoryItems).Count);
+		Assert.Equal(0, playerRepository.SavePlayerPetFeedConsumeMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetFoodStartPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: 0x654321,
+				expectedItemObjectId: 500777,
+				expectedCount: 1),
+			packet => AssertStartFeedingEmotionPacket(
+				Assert.IsType<SmEmotion>(packet),
+				expectedPlayerObjectId: player.ObjectId,
+				expectedCreatureState: (int)player.CreatureState),
+			packet => AssertInventoryAddItemPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 500777,
+				expectedItemId: rejectedFoodItemId,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.AllSlot),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertPetFoodEndPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedFeedProgressData: 0x654321,
+				expectedRefeedDelaySeconds: 0),
+			packet => AssertEndFeedingEmotionPacket(
+				Assert.IsType<SmEmotion>(packet),
+				expectedPlayerObjectId: player.ObjectId,
+				expectedCreatureState: (int)player.CreatureState),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1400618, message.MessageId);
+				Assert.Equal(["Feeder Mate", rejectedTemplate.GetClientName()], message.Parameters);
+			});
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodWithoutInventoryItemDoesNothing()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();

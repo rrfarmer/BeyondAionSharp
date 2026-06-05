@@ -586,7 +586,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task SchedulePetFeedingCheckAsync(Player player, int petObjectId, int itemObjectId, int count)
 	{
-		// This UOW advances Java PetService.checkFeeding's accepted single-consume branch. The repeat/reward branches
+		// Java parity: PetService.checkFeeding is scheduled once for this live slice. The repeat/reward branches
 		// remain separate runtime work because they need chained scheduling and reward-item persistence.
 		if (count != 1)
 			return;
@@ -656,6 +656,20 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (plan.Status == PetFeedServiceOperationPlanStatus.RejectedFood)
+		{
+			await SendItemUnlockPacketAsync(player, foodItem, itemTemplate);
+			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+				SubType: 5,
+				FeedProgressData: ownedPet.FeedProgressData,
+				RefeedDelaySeconds: ownedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
+			await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
+			await SendPacketAsync(SmSystemMessage.ToyPetFeedFoodNotLoveFlavor(
+				ownedPet.Name,
+				itemTemplate.GetClientName() ?? itemTemplate.Name));
+			return;
+		}
+
 		if (plan.Status != PetFeedServiceOperationPlanStatus.ConsumedStop)
 			return;
 
@@ -710,6 +724,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			FeedProgressData: feedProgressData,
 			RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
 		await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
+	}
+
+	private async Task SendItemUnlockPacketAsync(Player player, InventoryItem item, ItemTemplateSummary template)
+	{
+		// Java parity: ItemPacketService.sendItemUnlockPacket -> sendStorageUpdatePacket(..., ItemAddType.ALL_SLOT).
+		if (item.Location == CubeStorageId)
+			await SendPacketAsync(SmInventoryAddItem.CreateAllSlot(item, template));
+		else
+			await SendPacketAsync(SmWarehouseAddItem.CreateAllSlot(item.Location, item, template));
+
+		await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 	}
 
 	private async Task HandlePetAutoLootActivationAsync(Player player, CmPet packet)

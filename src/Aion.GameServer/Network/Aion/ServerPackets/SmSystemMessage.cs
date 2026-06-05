@@ -2805,6 +2805,13 @@ public sealed class SmSystemMessage : GameServerPacket
 		);
 	}
 
+	public static SmSystemMessage ToyPetFeedFoodNotLoveFlavor(string petName, string itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_TOYPET_FEED_FOOD_NOT_LOVEFLAVOR(String, String) -> 1400618.
+		// "%0 spits out %1 and makes a face."
+		return new SmSystemMessage(1400618, petName, itemName);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.
