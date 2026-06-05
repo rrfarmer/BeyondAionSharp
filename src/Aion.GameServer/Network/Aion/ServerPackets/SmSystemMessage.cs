@@ -1553,6 +1553,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300594, requiredItemName);
 	}
 
+	public static SmSystemMessage QuestAcquireErrorTsRank(string requiredSkillPoint)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_TS_RANK(String).
+		return new SmSystemMessage(1300574, requiredSkillPoint);
+	}
+
 	public static SmSystemMessage CashTitle(string titleName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.

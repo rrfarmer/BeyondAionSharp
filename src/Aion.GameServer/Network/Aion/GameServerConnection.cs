@@ -6808,6 +6808,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			NearbyQuestStartConditionFailure.MaxLevel => SmSystemMessage.QuestAcquireErrorMaxLevel(template.MaxLevelPermitted),
 			NearbyQuestStartConditionFailure.Class => SmSystemMessage.QuestAcquireErrorClass(),
 			NearbyQuestStartConditionFailure.Gender => SmSystemMessage.QuestAcquireErrorGender(),
+			NearbyQuestStartConditionFailure.CombineSkill => SmSystemMessage.QuestAcquireErrorTsRank(template.CombineSkillPoint.ToString()),
 			_ => null,
 		};
 	}
