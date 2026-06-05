@@ -6720,6 +6720,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (existingQuest != null && startConditions.Failure is NearbyQuestStartConditionFailure.RepeatCount or NearbyQuestStartConditionFailure.RepeatTiming)
 				await SendPacketAsync(SmSystemMessage.QuestAcquireErrorNoneRepeatable(questTemplate.Name), cancellationToken);
+			else if (CreateQuestStartConditionFailureMessage(startConditions.Failure, questTemplate) is { } failureMessage)
+				await SendPacketAsync(failureMessage, cancellationToken);
 			return;
 		}
 
@@ -6742,6 +6744,23 @@ public sealed class GameServerConnection : BaseClientConnection
 			new SmItemUsageAnimation(player.ObjectId, sourceItem.ObjectId, sourceItem.ItemId));
 		await SendPacketAsync(SmQuestAction.Add(finalQuestState), cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
+	}
+
+	private static SmSystemMessage? CreateQuestStartConditionFailureMessage(
+		NearbyQuestStartConditionFailure failure,
+		NearbyQuestTemplateSummary template)
+	{
+		// Java parity: QuestService.checkStartConditions warn=true emits these fixed system messages
+		// before dialog start mutates quest state.
+		return failure switch
+		{
+			NearbyQuestStartConditionFailure.Race => SmSystemMessage.QuestAcquireErrorRace(),
+			NearbyQuestStartConditionFailure.MinLevel => SmSystemMessage.QuestAcquireErrorMinLevel(template.MinLevelPermitted),
+			NearbyQuestStartConditionFailure.MaxLevel => SmSystemMessage.QuestAcquireErrorMaxLevel(template.MaxLevelPermitted),
+			NearbyQuestStartConditionFailure.Class => SmSystemMessage.QuestAcquireErrorClass(),
+			NearbyQuestStartConditionFailure.Gender => SmSystemMessage.QuestAcquireErrorGender(),
+			_ => null,
+		};
 	}
 
 	private async Task HandleAssemblyUseItemAsync(

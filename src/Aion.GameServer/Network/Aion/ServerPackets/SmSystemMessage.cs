@@ -1511,6 +1511,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300599, questName);
 	}
 
+	public static SmSystemMessage QuestAcquireErrorRace()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_RACE().
+		return new SmSystemMessage(1300575);
+	}
+
+	public static SmSystemMessage QuestAcquireErrorMinLevel(int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MIN_LEVEL(int).
+		return new SmSystemMessage(1300571, level.ToString());
+	}
+
+	public static SmSystemMessage QuestAcquireErrorMaxLevel(int level)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MAX_LEVEL(int).
+		return new SmSystemMessage(1300572, level.ToString());
+	}
+
+	public static SmSystemMessage QuestAcquireErrorClass()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_CLASS().
+		return new SmSystemMessage(1300580);
+	}
+
+	public static SmSystemMessage QuestAcquireErrorGender()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_GENDER().
+		return new SmSystemMessage(1300579);
+	}
+
 	public static SmSystemMessage CashTitle(string titleName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.

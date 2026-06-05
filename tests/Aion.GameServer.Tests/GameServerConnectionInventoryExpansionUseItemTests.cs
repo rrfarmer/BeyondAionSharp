@@ -276,6 +276,49 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Theory]
+	[InlineData(169700003, 1300575)]
+	[InlineData(169700006, 1300580)]
+	[InlineData(169700007, 1300579)]
+	public async Task HandleUseItemAsync_QuestStartItemSendsFixedStartConditionFailureMessages(int itemId, int expectedMessageId)
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: itemId);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.Quests);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: expectedMessageId));
+	}
+
+	[Theory]
+	[InlineData(169700004, 1300571, "10", 1)]
+	[InlineData(169700005, 1300572, "2", 5)]
+	public async Task HandleUseItemAsync_QuestStartItemSendsLevelStartConditionFailureMessages(
+		int itemId,
+		int expectedMessageId,
+		string expectedLevel,
+		int playerLevel)
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: itemId, level: playerLevel);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.Quests);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId, expectedLevel));
+	}
+
+	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
 	public async Task HandleUseItemAsync_InventoryExpansionPersistenceFailureDoesNotMutateRuntimeState(int itemId)
@@ -2689,7 +2732,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		string race = "ELYOS",
 		string playerClass = "RANGER",
 		bool isEquipped = false,
-		int location = 0)
+		int location = 0,
+		string gender = "MALE",
+		int level = 1)
 	{
 		return new Player
 		{
@@ -2697,6 +2742,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			Name = "TicketUser",
 			Race = race,
 			PlayerClass = playerClass,
+			Gender = gender,
+			Level = level,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			InventoryItems =
 			[
@@ -4119,6 +4166,31 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<queststart questid="1115"/>
 							</actions>
 						</item_template>
+						<item_template id="169700003" name="Test Race Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1116"/>
+							</actions>
+						</item_template>
+						<item_template id="169700004" name="Test Min Level Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1117"/>
+							</actions>
+						</item_template>
+						<item_template id="169700005" name="Test Max Level Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1118"/>
+							</actions>
+						</item_template>
+						<item_template id="169700006" name="Test Class Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1119"/>
+							</actions>
+						</item_template>
+						<item_template id="169700007" name="Test Gender Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1120"/>
+							</actions>
+						</item_template>
 						<item_template id="169600001" name="Test Emotion Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
 							<actions>
 								<learnemotion emotionid="64"/>
@@ -4287,6 +4359,15 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					<quests>
 						<quest id="1114" name="Test Quest Starter Quest" minlevel_permitted="0" race_permitted="PC_ALL"/>
 						<quest id="1115" name="Test Repeat Quest Starter Quest" minlevel_permitted="0" race_permitted="PC_ALL" max_repeat_count="2"/>
+						<quest id="1116" name="Test Race Quest" minlevel_permitted="0" race_permitted="ASMODIANS"/>
+						<quest id="1117" name="Test Min Level Quest" minlevel_permitted="10" race_permitted="PC_ALL"/>
+						<quest id="1118" name="Test Max Level Quest" minlevel_permitted="0" maxlevel_permitted="2" race_permitted="PC_ALL"/>
+						<quest id="1119" name="Test Class Quest" minlevel_permitted="0" race_permitted="PC_ALL">
+							<class_permitted>CLERIC</class_permitted>
+						</quest>
+						<quest id="1120" name="Test Gender Quest" minlevel_permitted="0" race_permitted="PC_ALL">
+							<gender_permitted>FEMALE</gender_permitted>
+						</quest>
 					</quests>
 				</static_data>
 				""");
