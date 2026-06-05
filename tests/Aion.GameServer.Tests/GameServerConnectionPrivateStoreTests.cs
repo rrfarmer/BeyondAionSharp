@@ -15,6 +15,54 @@ namespace Aion.GameServer.Tests;
 public sealed class GameServerConnectionPrivateStoreTests
 {
 	[Fact]
+	public async Task ProcessPacketAsync_CmPrivateStoreCreateSetsStoreStateAndSendsOpenEmotion()
+	{
+		await using var fixture = await PrivateStoreFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 3001, itemId: 100000001, count: 3, packCount: 1),
+		];
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, player);
+
+		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
+			fixture.Connection,
+			CreatePrivateStorePayload([(3001, 100000001, 2, 100)]));
+
+		var listedItem = Assert.Single(player.PrivateStoreItems);
+		Assert.Equal(0, listedItem.StoreIndex);
+		Assert.Equal(3001, listedItem.ItemObjectId);
+		Assert.Equal(100000001, listedItem.ItemId);
+		Assert.Equal(2, listedItem.Count);
+		Assert.Equal(100, listedItem.PricePerItem);
+		Assert.True(player.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.Empty(fixture.CreatePlans);
+		AssertOpenPrivateShopEmotion(Assert.IsType<SmEmotion>(Assert.Single(fixture.SentPackets)), player.ObjectId);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPrivateStoreCreateInCombatSendsJavaDenialWithoutOpeningStore()
+	{
+		await using var fixture = await PrivateStoreFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.SetCreatureState(PlayerCreatureState.WeaponEquipped, enabled: true);
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 3001, itemId: 100000001, count: 3, packCount: 1),
+		];
+		GameServerConnectionBuyItemTests.SetActivePlayerForPacketDispatchForAdapterTests(fixture.Connection, player);
+
+		await GameServerConnectionBuyItemTests.InvokeProcessPacketAsyncForAdapterTests(
+			fixture.Connection,
+			CreatePrivateStorePayload([(3001, 100000001, 2, 100)]));
+
+		Assert.Empty(player.PrivateStoreItems);
+		Assert.False(player.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.Empty(fixture.CreatePlans);
+		Assert.Equal(1300663, Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets)).MessageId);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPrivateStoreCloseClearsStoreStateAndSendsCloseEmotion()
 	{
 		await using var fixture = await PrivateStoreFixture.CreateAsync();
@@ -88,6 +136,18 @@ public sealed class GameServerConnectionPrivateStoreTests
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
 
+	private static InventoryItem CreateInventoryItem(int objectId, int itemId, long count, int packCount = 0)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemId,
+			Count = count,
+			OwnerId = 1001,
+			PackCount = packCount,
+		};
+	}
+
 	private static byte[] CreatePrivateStorePayload(IReadOnlyList<(int ItemObjectId, int ItemId, int Count, long Price)> items)
 	{
 		using var buffer = new PacketBuffer();
@@ -129,6 +189,15 @@ public sealed class GameServerConnectionPrivateStoreTests
 		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
 		Assert.Equal((int)EmotionType.ClosePrivateShop, reader.ReadC());
 		Assert.Equal((int)PlayerCreatureState.Active, reader.ReadH());
+		Assert.Equal(0f, reader.ReadF());
+	}
+
+	private static void AssertOpenPrivateShopEmotion(SmEmotion packet, int expectedPlayerObjectId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal((int)EmotionType.OpenPrivateShop, reader.ReadC());
+		Assert.Equal((int)PlayerCreatureState.PrivateShop, reader.ReadH());
 		Assert.Equal(0f, reader.ReadF());
 	}
 

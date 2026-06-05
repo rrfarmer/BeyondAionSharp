@@ -1104,7 +1104,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (privateStore.Items.Count == 0)
 						await HandleClosePrivateStoreAsync(_activePlayer);
 					else
-						_privateStoreCreatePlanObserver?.Invoke(CreatePrivateStoreCreatePlan(privateStore, _activePlayer));
+						await HandleCreatePrivateStoreAsync(_activePlayer, privateStore);
 				}
 				break;
 			case CmPrivateStoreName privateStoreName:
@@ -5758,6 +5758,80 @@ public sealed class GameServerConnection : BaseClientConnection
 		else
 		{
 			await SendPacketAsync(closePacket);
+		}
+	}
+
+	private async Task HandleCreatePrivateStoreAsync(Player player, CmPrivateStore packet)
+	{
+		// Java parity: services/PrivateStoreService.createStoreWithItems.
+		var openGuard = PrivateStoreOpenGuardPlanService.CreatePlan(
+			player.IsFlying(),
+			player.Movement.Mask != MovementMask.Immediate,
+			player.IsInState(PlayerCreatureState.WeaponEquipped),
+			player.IsTrading,
+			player.IsInRideMode,
+			player.VisualState != PlayerVisualStates.Visible && player.VisualState != PlayerVisualStates.Blinking,
+			IsDead(player),
+			player.IsInState(PlayerCreatureState.Chair),
+			IsPrivateStoreOpen(player));
+		if (!openGuard.CanOpen)
+		{
+			if (openGuard.DenialMessage != null)
+				await SendPacketAsync(openGuard.DenialMessage);
+			return;
+		}
+
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates ?? _buyItemItemTemplates;
+		var storedItems = new List<PrivateStoreListedItemSummary>();
+		var registeredObjectIds = new HashSet<int>();
+		foreach (var requestedItem in packet.Items)
+		{
+			var item = player.InventoryItems.FirstOrDefault(item => item.ObjectId == requestedItem.ItemObjectId);
+			var itemTemplate = itemTemplates?.GetItemTemplate(requestedItem.ItemId);
+			var itemExistsAndIdMatches = item != null && item.ItemId == requestedItem.ItemId;
+			var itemIsPackCountAboveZeroOrTradeable = item != null
+				&& (item.PackCount > 0 || (itemTemplate != null && item.IsTradeable(itemTemplate)));
+			var validation = PrivateStoreItemValidationPlanService.CreatePlan(
+				itemExistsAndIdMatches,
+				requestedItem.Count,
+				item?.Count ?? 0,
+				requestedItem.Price,
+				storedItems.Count,
+				itemIsPackCountAboveZeroOrTradeable,
+				item?.IsEquipped == true,
+				registeredObjectIds.Contains(requestedItem.ItemObjectId));
+			if (!validation.IsValid)
+			{
+				if (validation.DenialMessage != null)
+					await SendPacketAsync(validation.DenialMessage);
+				return;
+			}
+
+			registeredObjectIds.Add(requestedItem.ItemObjectId);
+			storedItems.Add(new PrivateStoreListedItemSummary(
+				storedItems.Count,
+				requestedItem.ItemObjectId,
+				requestedItem.ItemId,
+				requestedItem.Count,
+				requestedItem.Price,
+				itemTemplate?.Name));
+		}
+
+		player.PrivateStoreItems = storedItems;
+		player.SetCreatureState(PlayerCreatureState.PrivateShop, enabled: true);
+
+		var openPacket = new SmEmotion(player, EmotionType.OpenPrivateShop, 0, 0);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				openPacket,
+				includeSourcePlayer: true);
+		}
+		else
+		{
+			await SendPacketAsync(openPacket);
 		}
 	}
 
