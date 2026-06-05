@@ -2716,6 +2716,120 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetAutoSellEnableMutatesPetAndSendsPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Merchant Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(5, PetFunctionType.Merchant, Slots: 0, RatePrice: 15)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+			new PlayerOwnedPet(
+				ObjectId: 7002,
+				TemplateId: 900220,
+				Name: "Loot Mate",
+				Decoration: 188051002),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodSpecialFunctionPayload(actionType: 4, activateSpecialFunction: 1));
+
+		Assert.Collection(
+			player.OwnedPets.OrderBy(pet => pet.ObjectId),
+			pet => Assert.Equal((7001, true), (pet.ObjectId, pet.IsSelling)),
+			pet => Assert.Equal((7002, false), (pet.ObjectId, pet.IsSelling)));
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetSpecialFunctionActivationPacket(
+			Assert.IsType<SmPet>(packet),
+			PetSpecialFunction.AutoSell,
+			expectedActive: true);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetAutoSellDisableMutatesPetAndSendsPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				IsSelling: true),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodSpecialFunctionPayload(actionType: 4, activateSpecialFunction: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.IsSelling);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetSpecialFunctionActivationPacket(
+			Assert.IsType<SmPet>(packet),
+			PetSpecialFunction.AutoSell,
+			expectedActive: false);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetAutoSellEnableWithoutMerchantFunctionDoesNothing()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Loot Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(3, PetFunctionType.Loot, Slots: 0, RatePrice: 0)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Loot Mate",
+				Decoration: 188051001),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodSpecialFunctionPayload(actionType: 4, activateSpecialFunction: 1));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.IsSelling);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);

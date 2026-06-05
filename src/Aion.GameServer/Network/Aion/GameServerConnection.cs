@@ -515,7 +515,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (packet.ActionType == 4)
+		{
+			await HandlePetAutoSellActivationAsync(player, packet);
 			return;
+		}
 
 		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
 			return;
@@ -592,6 +595,28 @@ public sealed class GameServerConnection : BaseClientConnection
 			.ToArray();
 
 		await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoLoot, activate)));
+	}
+
+	private async Task HandlePetAutoSellActivationAsync(Player player, CmPet packet)
+	{
+		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
+			return;
+
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == player.PetSummonObjectId);
+		if (ownedPet == null)
+			return;
+
+		var activate = packet.ActivateSpecialFunction != 0;
+		var template = _petTemplates?.GetPetTemplate(ownedPet.TemplateId);
+		if (activate && template?.ContainsFunction(PetFunctionType.Merchant) != true)
+			return;
+
+		var updatedPet = ownedPet with { IsSelling = activate };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
+
+		await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoSell, activate)));
 	}
 
 	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
