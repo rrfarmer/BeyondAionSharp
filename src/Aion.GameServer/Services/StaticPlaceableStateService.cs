@@ -13,12 +13,17 @@ public interface IStaticPlaceableStateService
 	void SetDoorState(int worldId, int instanceId, int staticId, bool open);
 
 	bool? GetDoorState(int worldId, int instanceId, int staticId);
+
+	void SetDoorLockedState(int worldId, int instanceId, int staticId, bool locked);
+
+	bool? GetDoorLockedState(int worldId, int instanceId, int staticId);
 }
 
 public sealed class StaticPlaceableStateService : IStaticPlaceableStateService
 {
 	private readonly ConcurrentDictionary<StaticPlaceableKey, int> _spawnCounts = new();
 	private readonly ConcurrentDictionary<StaticDoorKey, bool> _doorStates = new();
+	private readonly ConcurrentDictionary<StaticDoorKey, bool> _doorLockedStates = new();
 
 	public void SpawnPlaceableObject(int worldId, int staticId)
 	{
@@ -58,6 +63,22 @@ public sealed class StaticPlaceableStateService : IStaticPlaceableStateService
 	{
 		return _doorStates.TryGetValue(new StaticDoorKey(worldId, instanceId, staticId), out var open)
 			? open
+			: null;
+	}
+
+	public void SetDoorLockedState(int worldId, int instanceId, int staticId, bool locked)
+	{
+		if (worldId <= 0 || instanceId <= 0 || staticId <= 0)
+			return;
+
+		// Java parity: model/gameobjects/StaticDoor keeps locked/unlocked state on the spawned door instance.
+		_doorLockedStates[new StaticDoorKey(worldId, instanceId, staticId)] = locked;
+	}
+
+	public bool? GetDoorLockedState(int worldId, int instanceId, int staticId)
+	{
+		return _doorLockedStates.TryGetValue(new StaticDoorKey(worldId, instanceId, staticId), out var locked)
+			? locked
 			: null;
 	}
 

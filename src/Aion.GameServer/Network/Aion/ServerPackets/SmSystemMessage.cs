@@ -2628,6 +2628,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1401383);
 	}
 
+	public static SmSystemMessage CannotOpenDoorNeedKeyItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_OPEN_DOOR_NEED_KEY_ITEM.
+		return new SmSystemMessage(1300723);
+	}
+
 	public static SmSystemMessage HousingRequestOut()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_REQUEST_OUT.

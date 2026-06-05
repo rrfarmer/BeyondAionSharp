@@ -14873,25 +14873,28 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleOpenStaticDoorAsync(Player player, CmOpenStaticDoor packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_OPEN_STATICDOOR.runImpl -> StaticDoorService.openStaticDoor.
-		var staticDoors = _runtimeContext?.DataManager?.StaticData.StaticDoors;
-		if (staticDoors == null || _staticPlaceableStateService == null)
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || _staticPlaceableStateService == null)
 			return;
 
 		var worldId = player.Position.WorldId;
 		var instanceId = player.Position.InstanceId;
-		var door = staticDoors.GetStaticDoor(worldId, packet.DoorId);
+		var door = staticData.StaticDoors.GetStaticDoor(worldId, packet.DoorId);
 		if (door == null)
 			return;
 
-		if (door.KeyId != 0)
-		{
-			// Java keyed-door parity depends on StaticDoor.locked and inventory key consumption; leave it silent until both are live.
+		if (door.KeyId == 1)
 			return;
-		}
 
 		var isOpen = _staticPlaceableStateService.GetDoorState(worldId, instanceId, packet.DoorId) ?? door.IsOpen;
 		if (isOpen)
 			return;
+
+		var isLocked = _staticPlaceableStateService.GetDoorLockedState(worldId, instanceId, packet.DoorId) ?? door.KeyId >= 2;
+		if (isLocked && !await TryUnlockStaticDoorAsync(player, door.KeyId, staticData.ItemTemplates))
+			return;
+		if (isLocked)
+			_staticPlaceableStateService.SetDoorLockedState(worldId, instanceId, packet.DoorId, locked: false);
 
 		_staticPlaceableStateService.SetDoorState(worldId, instanceId, packet.DoorId, open: true);
 		var packetState = 0x9;
@@ -14922,6 +14925,35 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			await SendPacketAsync(openDoorPacket);
 		}
+	}
+
+	private async Task<bool> TryUnlockStaticDoorAsync(Player player, int keyItemId, ItemTemplateTable itemTemplates)
+	{
+		// Java parity: StaticDoorService.checkStaticDoorKey -> player.getInventory().decreaseByItemId(keyId, 1).
+		var keyItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == keyItemId && item.Count > 0);
+		if (keyItem == null)
+		{
+			await SendPacketAsync(SmSystemMessage.CannotOpenDoorNeedKeyItem());
+			return false;
+		}
+
+		if (keyItem.Count == 1)
+		{
+			player.InventoryItems = player.InventoryItems
+				.Where(item => item.ObjectId != keyItem.ObjectId)
+				.ToArray();
+			await SendPacketAsync(new SmDeleteItem(keyItem.ObjectId, SmDeleteItem.UseDeleteType));
+			return true;
+		}
+
+		var updatedKeyItem = CopyInventoryItem(keyItem, count: keyItem.Count - 1);
+		player.InventoryItems = player.InventoryItems
+			.Select(item => item.ObjectId == keyItem.ObjectId ? updatedKeyItem : item)
+			.ToArray();
+		var keyTemplate = itemTemplates.GetItemTemplate(keyItemId);
+		if (keyTemplate != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(updatedKeyItem, keyTemplate, SmInventoryUpdateItem.DecreaseItemUse));
+		return true;
 	}
 
 	private async Task HandleHouseKickAsync(Player player, CmHouseKick packet)

@@ -42,7 +42,7 @@ public sealed class GameServerConnectionOpenStaticDoorTests
 	}
 
 	[Fact]
-	public async Task ProcessPacketAsync_OpenStaticDoorKeyedDoorLeavesDeferredStateUntouched()
+	public async Task ProcessPacketAsync_OpenStaticDoorKeyedDoorWithoutKeySendsNeedKeyMessage()
 	{
 		var staticPlaceables = new StaticPlaceableStateService();
 		staticPlaceables.SetDoorState(WorldId, InstanceId, KeyedDoorId, open: false);
@@ -56,7 +56,37 @@ public sealed class GameServerConnectionOpenStaticDoorTests
 		await InvokeProcessPacketAsync(fixture.Connection, CreateOpenStaticDoorPayload(KeyedDoorId));
 
 		Assert.False(staticPlaceables.GetDoorState(WorldId, InstanceId, KeyedDoorId));
-		Assert.Empty(sentPackets);
+		var message = Assert.Single(sentPackets);
+		Assert.Equal(1300723, Assert.IsType<SmSystemMessage>(message).MessageId);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_OpenStaticDoorKeyedDoorWithKeyConsumesKeyUnlocksAndOpens()
+	{
+		var staticPlaceables = new StaticPlaceableStateService();
+		staticPlaceables.SetDoorState(WorldId, InstanceId, KeyedDoorId, open: false);
+		var sentPackets = new List<GameServerPacket>();
+		await using var fixture = await ConnectionFixture.CreateAsync(
+			CreateRuntimeContext(),
+			staticPlaceables,
+			sentPackets.Add);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			CreateInventoryItem(objectId: 5001, itemId: 185000044, count: 2),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(fixture.Connection, CreateOpenStaticDoorPayload(KeyedDoorId));
+
+		Assert.True(staticPlaceables.GetDoorState(WorldId, InstanceId, KeyedDoorId));
+		Assert.False(staticPlaceables.GetDoorLockedState(WorldId, InstanceId, KeyedDoorId));
+		var keyItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, keyItem.Count);
+		Assert.Collection(
+			sentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertOpenDoorEmotion(Assert.IsType<SmEmotion>(packet), KeyedDoorId));
 	}
 
 	private static void AssertOpenDoorEmotion(SmEmotion packet, int expectedDoorId)
@@ -77,6 +107,19 @@ public sealed class GameServerConnectionOpenStaticDoorTests
 			Name = "DoorRunner",
 			Race = "ELYOS",
 			Position = new WorldPosition(WorldId, 100, 200, 300, 0, InstanceId),
+		};
+	}
+
+	private static InventoryItem CreateInventoryItem(int objectId, int itemId, long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemId,
+			Count = count,
+			OwnerId = 1001,
+			Location = 0,
+			Slot = 1,
 		};
 	}
 
@@ -155,7 +198,22 @@ public sealed class GameServerConnectionOpenStaticDoorTests
 			new FlightZoneTable(Array.Empty<FlightZoneSummary>()),
 			new CreaturePvpZoneTable(Array.Empty<CreaturePvpZoneSummary>()),
 			new PlayerExperienceTable(Array.Empty<long>()),
-			new ItemTemplateTable(Array.Empty<ItemTemplateSummary>()),
+			new ItemTemplateTable(
+			[
+				new ItemTemplateSummary(
+					185000044,
+					"Key",
+					DescriptionId: 0,
+					Mask: 0,
+					Level: 1,
+					ItemGroup: "KEY",
+					ItemType: "NORMAL",
+					Quality: "COMMON",
+					Race: "ALL",
+					MaxStackCount: 100,
+					Price: 0,
+					ValidEquipmentSlots: 0),
+			]),
 			new CosmeticItemTable(Array.Empty<CosmeticItemSummary>()),
 			new DecomposableItemTable(Array.Empty<DecomposableItemSummary>()),
 			new AssemblyItemTable(Array.Empty<AssemblyItemSummary>()),
