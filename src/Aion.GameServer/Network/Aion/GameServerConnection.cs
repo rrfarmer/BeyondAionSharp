@@ -12,6 +12,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
@@ -108,7 +109,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly TradeListTable? _buyItemTradeLists;
 	private readonly ItemTemplateTable? _buyItemItemTemplates;
 	private readonly GoodsListTable? _buyItemGoodsLists;
-	private readonly PetTemplateTable? _buyItemPetTemplates;
+	private readonly PetTemplateTable? _petTemplates;
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -282,7 +283,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_buyItemTradeLists = buyItemTradeLists;
 		_buyItemItemTemplates = buyItemItemTemplates;
 		_buyItemGoodsLists = buyItemGoodsLists;
-		_buyItemPetTemplates = buyItemPetTemplates;
+		_petTemplates = buyItemPetTemplates;
 		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
@@ -349,6 +350,65 @@ public sealed class GameServerConnection : BaseClientConnection
 				resolvedPlayer = player;
 		});
 		return resolvedPlayer;
+	}
+
+	private async Task HandlePetAsync(Player player, CmPet packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_PET.runImpl routes SPAWN to PetSpawnService.summonPet.
+		if (packet.Action != PetAction.Spawn)
+			return;
+
+		await HandlePetSpawnAsync(player, packet.TemplateId);
+	}
+
+	private async Task HandlePetSpawnAsync(Player player, int templateId)
+	{
+		if (player.HasPetSummon && player.PetSummonNpcId == templateId)
+			return;
+
+		var ownedPet = player.GetOwnedPet(templateId);
+		if (ownedPet == null)
+			return;
+
+		var petTemplates = _petTemplates ?? _runtimeContext?.DataManager?.StaticData.PetTemplates;
+		var petTemplate = petTemplates?.GetPetTemplate(templateId);
+		if (petTemplate == null)
+			return;
+
+		if (player.HasPetSummon && player.PetSummonObjectId != 0)
+			_world?.TryRemoveObject(player.PetSummonObjectId, out _);
+
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = ownedPet.ObjectId;
+		player.PetSummonNpcId = ownedPet.TemplateId;
+
+		var merchantFunction = petTemplate.GetFunction(PetFunctionType.Merchant);
+		var worldPet = new WorldPet(
+			ownedPet.ObjectId,
+			ownedPet.TemplateId,
+			ownedPet.Name,
+			player.ObjectId,
+			player.Position,
+			ownedPet.Decoration,
+			HasMerchantFunction: merchantFunction != null,
+			MerchantSellModifier: merchantFunction?.RatePrice);
+		_world?.TryRemoveObject(ownedPet.ObjectId, out _);
+		_world?.TryAddObject(ownedPet.ObjectId, worldPet);
+
+		// Java parity: VisibleObjectSpawner.spawnPet spawns at the player's current position and SM_PET(Pet) exposes that spawn.
+		await SendPacketAsync(new SmPet(new SmPetSpawnSnapshot(
+			ownedPet.Name,
+			ownedPet.TemplateId,
+			ownedPet.ObjectId,
+			player.Position.X,
+			player.Position.Y,
+			player.Position.Z,
+			player.Position.X,
+			player.Position.Y,
+			player.Position.Z,
+			player.Position.Heading,
+			player.ObjectId,
+			ownedPet.Decoration)));
 	}
 
 	internal static int GetGeneralInfoWarehouseRestrictionFlag(
@@ -720,6 +780,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmPlayerListener:
 				// Java parity: network/aion/clientpackets/CM_PLAYER_LISTENER.runImpl dispatches WebRewardService when enabled; deferred until web rewards are ported.
+				break;
+			case CmPet pet:
+				if (_activePlayer != null)
+					await HandlePetAsync(_activePlayer, pet);
 				break;
 			case CmDeleteQuest deleteQuest:
 				if (_activePlayer != null)
@@ -7199,7 +7263,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player?.HasPetSummon != true || player.PetSummonObjectId != sellerObjectId)
 			return null;
 
-		var petTemplates = _buyItemPetTemplates ?? _runtimeContext?.DataManager?.StaticData.PetTemplates;
+		var petTemplates = _petTemplates ?? _runtimeContext?.DataManager?.StaticData.PetTemplates;
 		var merchantSellModifier = petTemplates?.GetMerchantSellModifier(player.PetSummonNpcId);
 		return new ActivePlayerPetBuyItemTarget(
 			sellerObjectId,

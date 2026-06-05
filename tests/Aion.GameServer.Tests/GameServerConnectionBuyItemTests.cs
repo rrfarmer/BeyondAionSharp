@@ -2070,6 +2070,128 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnMutatesActivePetStateAndSendsSpawnPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"merchant pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(3, PetFunctionType.Merchant, Slots: 0, RatePrice: 15)])));
+		var player = CreatePlayer();
+		player.Position = new WorldPosition(210010000, 31.5f, 42.5f, 53.5f, 7);
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+
+		Assert.True(player.HasPetSummon);
+		Assert.Equal((7001, 900210), (player.PetSummonObjectId, player.PetSummonNpcId));
+		Assert.True(fixture.World.TryGetObject(7001, out var worldObject));
+		var worldPet = Assert.IsType<Aion.GameServer.Model.GameObjects.WorldPet>(worldObject);
+		Assert.Equal((7001, 900210, player.ObjectId, true, 15), (
+			worldPet.ObjectId,
+			worldPet.TemplateId,
+			worldPet.MasterObjectId,
+			worldPet.HasMerchantFunction,
+			worldPet.MerchantSellModifier));
+		Assert.Equal(player.Position, worldPet.Position);
+
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetSpawnPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedName: "Merchant Mate",
+			expectedTemplateId: 900210,
+			expectedObjectId: 7001,
+			expectedPlayerObjectId: player.ObjectId,
+			expectedPosition: player.Position,
+			expectedDecoration: 188051001);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnEnablesMerchantSellActionSeventeenLive()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(100000001, price: 1_000, mask: 1 << 2),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"merchant pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(3, PetFunctionType.Merchant, Slots: 0, RatePrice: 15)])),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+		];
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 2001,
+				ItemId = 100000001,
+				Count = 1,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 1_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 65535,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 7001, tradeActionId: 17, [(2001, 1)]));
+
+		Assert.True(player.HasPetSummon);
+		Assert.Equal((7001, 900210), (player.PetSummonObjectId, player.PetSummonNpcId));
+		var plan = Assert.Single(fixture.BuyItemPlans);
+		Assert.Equal(CmBuyItemHandlerCompositionPlanStatus.SelectedPetSellToShopPlanner, plan.Status);
+		Assert.Equal(15, plan.PetSellModifier);
+		Assert.Equal(TradeSellToShopPlanStatus.PlanCreated, plan.PetSellToShopPlan!.Status);
+		Assert.Equal(1, playerRepository.SaveNpcShopSellMutationCalls);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 2001);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 1_150);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmPet>(packet),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 2001, SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => Assert.Equal(SmInventoryUpdateItem.IncreaseKinahSell, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcSellActionBlocksDisabledNormalSellPlanWhenTemplateMaskIsNotSellable()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
@@ -3153,9 +3275,52 @@ public sealed class GameServerConnectionBuyItemTests
 		return buffer.ToArray();
 	}
 
+	private static byte[] CreatePetTemplateActionPayload(PetAction action, int templateId)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(22);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteH((int)action);
+		buffer.WriteD(templateId);
+		return buffer.ToArray();
+	}
+
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+
+	private static void AssertPetSpawnPacket(
+		SmPet packet,
+		string expectedName,
+		int expectedTemplateId,
+		int expectedObjectId,
+		int expectedPlayerObjectId,
+		WorldPosition expectedPosition,
+		int expectedDecoration)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Spawn, reader.ReadH());
+		Assert.Equal(expectedName, reader.ReadS());
+		Assert.Equal(expectedTemplateId, reader.ReadD());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedPosition.X, reader.ReadF());
+		Assert.Equal(expectedPosition.Y, reader.ReadF());
+		Assert.Equal(expectedPosition.Z, reader.ReadF());
+		Assert.Equal(expectedPosition.X, reader.ReadF());
+		Assert.Equal(expectedPosition.Y, reader.ReadF());
+		Assert.Equal(expectedPosition.Z, reader.ReadF());
+		Assert.Equal(expectedPosition.Heading, reader.ReadC());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal((int)PetFunctionType.Appearance, reader.ReadH());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(expectedDecoration, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
 	}
 
 	private static void AssertClosePrivateShopEmotion(SmEmotion packet, int expectedPlayerObjectId)

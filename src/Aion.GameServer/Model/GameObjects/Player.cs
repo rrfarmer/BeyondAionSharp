@@ -394,6 +394,9 @@ public sealed class Player
 
 	public DateTimeOffset? ExpressMailCooldownUntil { get; set; }
 
+	// Java parity: model/gameobjects/player/PetList stores PetCommonData keyed by template id.
+	public IReadOnlyList<PlayerOwnedPet> OwnedPets { get; set; } = Array.Empty<PlayerOwnedPet>();
+
 	// Java parity: Player.getSummon() != null && Summon.isPet() guard used by CM_CASTSPELL pet-order skills.
 	public bool HasPetSummon { get; set; }
 
@@ -582,6 +585,12 @@ public sealed class Player
 
 	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.
 	public IReadOnlyList<PlayerPetSkillOrder> PetSkillOrders => _petSkillOrders;
+
+	public PlayerOwnedPet? GetOwnedPet(int templateId)
+	{
+		// Java parity: PetList.getPet(templateId).
+		return OwnedPets.FirstOrDefault(pet => pet.TemplateId == templateId);
+	}
 
 	public void AddPetSkillOrder(PlayerPetSkillOrder order)
 	{

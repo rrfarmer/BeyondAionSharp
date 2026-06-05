@@ -30,6 +30,16 @@ public interface IWorldPetObject
 	int? MerchantSellModifier { get; }
 }
 
+public sealed record WorldPet(
+	int ObjectId,
+	int TemplateId,
+	string Name,
+	int MasterObjectId,
+	WorldPosition Position,
+	int Decoration,
+	bool HasMerchantFunction,
+	int? MerchantSellModifier) : IWorldPetObject;
+
 public sealed record WorldNpc(
 	int ObjectId,
 	int TemplateId,
