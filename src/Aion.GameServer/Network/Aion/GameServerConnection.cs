@@ -622,10 +622,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (!ValidateSetPetDopingItem(template, packet.DopingItemId, packet.DopingSlot1))
 				return;
 
-			UpdateOwnedPetDopingItems(
-				player,
-				ownedPet,
-				SetPetDopingItem(ownedPet.DopingItemIds ?? [], packet.DopingItemId, packet.DopingSlot1));
+			var currentItemIds = ownedPet.DopingItemIds ?? [];
+			var itemIds = SetPetDopingItem(currentItemIds, packet.DopingItemId, packet.DopingSlot1);
+			if (!currentItemIds.SequenceEqual(itemIds) && !await PersistPetDopingBagAsync(player, ownedPet, itemIds))
+				return;
+
+			UpdateOwnedPetDopingItems(player, ownedPet, itemIds);
 
 			await SendPacketAsync(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
 				packet.DopingAction,
@@ -637,15 +639,24 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.DopingAction != 2)
 			return;
 
-		UpdateOwnedPetDopingItems(
-			player,
-			ownedPet,
-			SwitchPetDopingItems(ownedPet.DopingItemIds ?? [], packet.DopingSlot1, packet.DopingSlot2));
+		var currentSwitchedItemIds = ownedPet.DopingItemIds ?? [];
+		var switchedItemIds = SwitchPetDopingItems(currentSwitchedItemIds, packet.DopingSlot1, packet.DopingSlot2);
+		if (!currentSwitchedItemIds.SequenceEqual(switchedItemIds) && !await PersistPetDopingBagAsync(player, ownedPet, switchedItemIds))
+			return;
+
+		UpdateOwnedPetDopingItems(player, ownedPet, switchedItemIds);
 
 		await SendPacketAsync(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
 			packet.DopingAction,
 			ItemTemplateIdOrSlot2: packet.DopingSlot2,
 			Slot: packet.DopingSlot1)));
+	}
+
+	private Task<bool> PersistPetDopingBagAsync(Player player, PlayerOwnedPet ownedPet, IReadOnlyList<int> itemIds)
+	{
+		return _playerEnterWorldService == null
+			? Task.FromResult(true)
+			: _playerEnterWorldService.SavePlayerPetDopingBagAsync(player, ownedPet.ObjectId, itemIds);
 	}
 
 	private bool ValidateSetPetDopingItem(PetTemplateSummary petTemplate, int itemId, int slot)

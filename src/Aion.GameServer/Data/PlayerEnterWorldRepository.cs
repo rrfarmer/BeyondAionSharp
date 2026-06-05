@@ -225,6 +225,12 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> UpdatePlayerPetNameAsync(int playerObjectId, int petObjectId, string petName, CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerPetDopingBagAsync(
+		int playerObjectId,
+		int petObjectId,
+		IReadOnlyList<int> itemIds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
 	Task<bool> SaveItemChargeMutationAsync(
@@ -438,6 +444,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int UpdatePlayerPetNameCalls { get; private set; }
 
 	public (int PlayerObjectId, int PetObjectId, string PetName)? UpdatedPlayerPetName { get; private set; }
+
+	public bool SavePlayerPetDopingBagResult { get; init; } = true;
+
+	public int SavePlayerPetDopingBagCalls { get; private set; }
+
+	public (int PlayerObjectId, int PetObjectId, IReadOnlyList<int> ItemIds)? SavedPlayerPetDopingBag { get; private set; }
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
@@ -910,6 +922,17 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		UpdatePlayerPetNameCalls++;
 		UpdatedPlayerPetName = (playerObjectId, petObjectId, petName);
 		return Task.FromResult(UpdatePlayerPetNameResult);
+	}
+
+	public Task<bool> SavePlayerPetDopingBagAsync(
+		int playerObjectId,
+		int petObjectId,
+		IReadOnlyList<int> itemIds,
+		CancellationToken cancellationToken = default)
+	{
+		SavePlayerPetDopingBagCalls++;
+		SavedPlayerPetDopingBag = (playerObjectId, petObjectId, itemIds.ToArray());
+		return Task.FromResult(SavePlayerPetDopingBagResult);
 	}
 
 	public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -5678,6 +5701,35 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not update pet {PetObjectId} name for player {PlayerObjectId}", petObjectId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePlayerPetDopingBagAsync(
+		int playerObjectId,
+		int petObjectId,
+		IReadOnlyList<int> itemIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerPetsDAO.saveDopingBag stores food, drink, then scroll slots as player_pets.dopings CSV.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE player_pets SET dopings = ? WHERE id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = string.Join(",", itemIds) },
+					new MySqlParameter { Value = petObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save doping bag for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
 			return false;
 		}
 	}

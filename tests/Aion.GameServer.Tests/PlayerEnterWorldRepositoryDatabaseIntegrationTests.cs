@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aion.Commons.Database;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
@@ -11,6 +12,35 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 {
 	private const int PlayerObjectId = 1001;
+
+	[Fact]
+	public async Task SavePlayerPetDopingBagAsync_WritesJavaCsvAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerPetsDAO.saveDopingBag writes food, drink, then scroll slots to player_pets.dopings.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO player_pets (id, player_id, template_id, decoration, name)
+			VALUES (7001, 1001, 900210, 188051001, 'Doping Mate')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SavePlayerPetDopingBagAsync(
+			PlayerObjectId,
+			petObjectId: 7001,
+			itemIds: [166000001, 162000001, 164000001, 0]);
+
+		Assert.True(saved);
+		Assert.Equal("166000001,162000001,164000001,0", await ExecuteScalarStringAsync("SELECT dopings FROM player_pets WHERE id = 7001"));
+	}
 
 	[Fact]
 	public async Task SavePlayerLogoutAsync_WritesRetuningInventoryFieldsAgainstJavaSchema_WhenEnabled()
@@ -687,5 +717,16 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		var value = await command.ExecuteScalarAsync();
 		Assert.NotNull(value);
 		return Convert.ToInt64(value);
+	}
+
+	private static async Task<string> ExecuteScalarStringAsync(string sql)
+	{
+		await using var connection = DatabaseFactory.GetConnection();
+		await connection.OpenAsync();
+		await using var command = connection.CreateCommand();
+		command.CommandText = sql;
+		var value = await command.ExecuteScalarAsync();
+		Assert.NotNull(value);
+		return Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
 	}
 }

@@ -314,6 +314,16 @@ public sealed class PlayerEnterWorldService
 		return _repository.UpdatePlayerPetNameAsync(player.ObjectId, petObjectId, petName, cancellationToken);
 	}
 
+	public Task<bool> SavePlayerPetDopingBagAsync(
+		Player player,
+		int petObjectId,
+		IReadOnlyList<int> itemIds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetController.onDespawn persists dirty PetDopingBag through PlayerPetsDAO.saveDopingBag.
+		return _repository.SavePlayerPetDopingBagAsync(player.ObjectId, petObjectId, itemIds, cancellationToken);
+	}
+
 	public Task<bool> SaveInventoryItemSlotAsync(
 		Player player,
 		int itemObjectId,

@@ -3379,6 +3379,15 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SavePlayerPetDopingBagAsync(
+			int playerObjectId,
+			int petObjectId,
+			IReadOnlyList<int> itemIds,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
 		{
 			MarkOnlineCalls++;
