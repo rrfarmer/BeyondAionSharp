@@ -5504,6 +5504,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			|| transactionPlan == null)
 			return;
 
+		if (transactionPlan.Status == TradeBuyTransactionPlanStatus.BlockedInvalidBuyItem)
+		{
+			await SendPacketAsync(new SmMessage("Some items are not allowed to be sold from this NPC."));
+			return;
+		}
+
 		if (transactionPlan.Status == TradeBuyTransactionPlanStatus.BlockedNotEnoughKinah)
 		{
 			await SendPacketAsync(SmSystemMessage.MsgNotEnoughMoney());
