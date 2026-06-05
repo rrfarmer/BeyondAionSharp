@@ -17,6 +17,7 @@ using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Services.ToyPet;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
@@ -506,7 +507,10 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: CM_PET FOOD action types 2/3/4 dispatch to pet doping, looting, and auto-sell services.
 		if (packet.ActionType == 2)
+		{
+			await HandlePetDopingAsync(player, packet);
 			return;
+		}
 
 		if (packet.ActionType == 3)
 		{
@@ -595,6 +599,44 @@ public sealed class GameServerConnection : BaseClientConnection
 			.ToArray();
 
 		await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoLoot, activate)));
+	}
+
+	private async Task HandlePetDopingAsync(Player player, CmPet packet)
+	{
+		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
+			return;
+
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == player.PetSummonObjectId);
+		if (ownedPet == null)
+			return;
+
+		var template = _petTemplates?.GetPetTemplate(ownedPet.TemplateId);
+		if (template?.ContainsFunction(PetFunctionType.Doping) != true)
+			return;
+
+		if (packet.DopingAction != 2)
+			return;
+
+		var updatedItems = SwitchPetDopingItems(ownedPet.DopingItemIds ?? [], packet.DopingSlot1, packet.DopingSlot2);
+		var updatedPet = ownedPet with { DopingItemIds = updatedItems };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
+
+		await SendPacketAsync(SmPet.DopingSpecialFunction(new SmPetDopingSpecialFunctionSnapshot(
+			packet.DopingAction,
+			ItemTemplateIdOrSlot2: packet.DopingSlot2,
+			Slot: packet.DopingSlot1)));
+	}
+
+	private static IReadOnlyList<int> SwitchPetDopingItems(IReadOnlyList<int> itemIds, int slot1, int slot2)
+	{
+		var bag = new PetDopingBag();
+		for (var slot = 0; slot < itemIds.Count; slot++)
+			bag.SetItem(itemIds[slot], slot);
+
+		bag.SwitchItems(slot1, slot2);
+		return bag.GetItems();
 	}
 
 	private async Task HandlePetAutoSellActivationAsync(Player player, CmPet packet)

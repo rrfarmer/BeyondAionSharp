@@ -2830,6 +2830,140 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetDopingSwitchMutatesSlotsAndSendsPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Doping Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(2, PetFunctionType.Doping, Slots: 0, RatePrice: 0)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Doping Mate",
+				Decoration: 188051001,
+				DopingItemIds: [166000001, 166000002, 164000001, 164000002, 164000003]),
+			new PlayerOwnedPet(
+				ObjectId: 7002,
+				TemplateId: 900220,
+				Name: "Merchant Mate",
+				Decoration: 188051002,
+				DopingItemIds: [166000003, 166000004, 164000004]),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodDopingPayload(dopingAction: 2, dopingItemId: 0, dopingSlot1: 2, dopingSlot2: 4));
+
+		Assert.Collection(
+			player.OwnedPets.OrderBy(pet => pet.ObjectId),
+			pet =>
+			{
+				Assert.Equal(7001, pet.ObjectId);
+				Assert.Equal([166000001, 166000002, 164000003, 164000002, 164000001], pet.DopingItemIds);
+			},
+			pet =>
+			{
+				Assert.Equal(7002, pet.ObjectId);
+				Assert.Equal([166000003, 166000004, 164000004], pet.DopingItemIds);
+			});
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDopingSpecialFunctionPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedDopeAction: 2,
+			expectedSlot1: 2,
+			expectedSlot2: 4);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetDopingSwitchWithFoodSlotSendsPacketWithoutMutatingSlots()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Doping Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(2, PetFunctionType.Doping, Slots: 0, RatePrice: 0)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Doping Mate",
+				Decoration: 188051001,
+				DopingItemIds: [166000001, 166000002, 164000001]),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodDopingPayload(dopingAction: 2, dopingItemId: 0, dopingSlot1: 1, dopingSlot2: 2));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal([166000001, 166000002, 164000001], pet.DopingItemIds);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDopingSpecialFunctionPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedDopeAction: 2,
+			expectedSlot1: 1,
+			expectedSlot2: 2);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetDopingSwitchWithoutDopingFunctionDoesNothing()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"Merchant Mate",
+					NameId: 0,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(5, PetFunctionType.Merchant, Slots: 0, RatePrice: 15)])));
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				DopingItemIds: [166000001, 166000002, 164000001]),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodDopingPayload(dopingAction: 2, dopingItemId: 0, dopingSlot1: 2, dopingSlot2: 3));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal([166000001, 166000002, 164000001], pet.DopingItemIds);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -4112,6 +4246,39 @@ public sealed class GameServerConnectionBuyItemTests
 		return buffer.ToArray();
 	}
 
+	private static byte[] CreatePetFoodDopingPayload(int dopingAction, int dopingItemId, int dopingSlot1, int dopingSlot2)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(22);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteH((int)PetAction.Food);
+		buffer.WriteD(2);
+		buffer.WriteD(dopingAction);
+		switch (dopingAction)
+		{
+			case 0:
+				buffer.WriteD(dopingItemId);
+				buffer.WriteD(dopingSlot1);
+				break;
+			case 1:
+				buffer.WriteD(dopingSlot1);
+				buffer.WriteD(dopingItemId);
+				break;
+			case 2:
+				buffer.WriteD(dopingSlot1);
+				buffer.WriteD(dopingSlot2);
+				break;
+			case 3:
+				buffer.WriteD(dopingItemId);
+				buffer.WriteD(dopingSlot1);
+				break;
+		}
+
+		return buffer.ToArray();
+	}
+
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
@@ -4211,6 +4378,21 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal((int)expectedFunction, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(expectedActive ? 1 : 0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetDopingSpecialFunctionPacket(
+		SmPet packet,
+		int expectedDopeAction,
+		int expectedSlot1,
+		int expectedSlot2)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.SpecialFunction, reader.ReadH());
+		Assert.Equal((int)PetSpecialFunction.Doping, (int)reader.ReadC());
+		Assert.Equal(expectedDopeAction, (int)reader.ReadC());
+		Assert.Equal(expectedSlot1, reader.ReadD());
+		Assert.Equal(expectedSlot2, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 
