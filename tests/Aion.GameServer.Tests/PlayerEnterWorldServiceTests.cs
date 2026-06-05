@@ -1655,6 +1655,51 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task PersistQuestAbandon_UpdatesRandomNpcFactionDailyAssignmentRow()
+	{
+		var player = CreatePlayer();
+		player.Level = 50;
+		player.Quests = [new PlayerQuestState(1004, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)];
+		player.NpcFactions = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 42,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 900,
+				State: PlayerNpcFactionQuestState.Start,
+				QuestId: 1004),
+		]);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+		var questTemplates = new NearbyQuestTemplateTable(
+		[
+			QuestTemplate(1004, npcFactionId: 42),
+			QuestTemplate(2011, npcFactionId: 42),
+		]);
+
+		var result = QuestAbandonService.Abandon(
+			player,
+			1004,
+			QuestTemplate(1004, npcFactionId: 42),
+			currentEpochSeconds: 1_000,
+			questTemplates: questTemplates,
+			nextResetEpochSeconds: 5_000,
+			randomIndexSelector: count => 1);
+		var persisted = await service.PersistQuestAbandonAsync(player, result);
+
+		Assert.True(persisted);
+		Assert.Equal(1, repository.DeleteQuestCalls);
+		Assert.Equal(1, repository.UpdateNpcFactionCalls);
+		Assert.NotNull(repository.UpdatedNpcFactionState);
+		var savedFaction = repository.UpdatedNpcFactionState;
+		Assert.Equal(42, savedFaction.FactionId);
+		Assert.Equal(2011, savedFaction.QuestId);
+		Assert.Equal(5_000, savedFaction.TimeEpochSeconds);
+		Assert.Equal(PlayerNpcFactionQuestState.Noting, savedFaction.State);
+	}
+
+	[Fact]
 	public async Task SavePowerShardUseMutation_FlattensUseResultsForRepository()
 	{
 		var player = CreatePlayer();

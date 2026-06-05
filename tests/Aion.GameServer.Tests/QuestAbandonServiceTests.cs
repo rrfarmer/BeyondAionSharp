@@ -220,6 +220,90 @@ public sealed class QuestAbandonServiceTests
 	}
 
 	[Fact]
+	public void Abandon_NpcFactionQuestRandomlyAssignsEligibleDailyQuestLikeJava()
+	{
+		var activeFaction = new PlayerNpcFactionState(
+			FactionId: 42,
+			IsActive: true,
+			IsMentor: false,
+			TimeEpochSeconds: 900,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 1009);
+		var player = PlayerWithQuest(new PlayerQuestState(1009, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.Level = 50;
+		player.NpcFactions = new PlayerNpcFactionsSnapshot([activeFaction]);
+		var questTemplates = new NearbyQuestTemplateTable(
+		[
+			Template(1009, npcFactionId: 42),
+			Template(2010, npcFactionId: 42, isTimeBased: true),
+			Template(2011, npcFactionId: 42),
+		]);
+
+		var result = QuestAbandonService.Abandon(
+			player,
+			1009,
+			Template(1009, npcFactionId: 42),
+			currentEpochSeconds: 1_000,
+			questTemplates: questTemplates,
+			nextResetEpochSeconds: 5_000,
+			randomIndexSelector: count =>
+			{
+				Assert.Equal(2, count);
+				return 1;
+			});
+
+		var packet = Assert.Single(result.NpcFactionDailyQuestPackets);
+		Assert.Equal(Convert.FromHexString("06DB07000001000000"), SerializeUnencryptedPayload(packet));
+		Assert.True(player.NpcFactions.TryGetFaction(42, out var assignedFaction));
+		Assert.NotNull(assignedFaction);
+		Assert.Equal(2011, assignedFaction.QuestId);
+		Assert.Equal(5_000, assignedFaction.TimeEpochSeconds);
+		Assert.Equal(PlayerNpcFactionQuestState.Noting, assignedFaction.State);
+		var persisted = Assert.Single(result.NpcFactionPersistenceUpdates);
+		Assert.Equal(2011, persisted.QuestId);
+		Assert.Equal(5_000, persisted.TimeEpochSeconds);
+	}
+
+	[Fact]
+	public void Abandon_NpcFactionQuestRandomBranchHonorsHandlerAvailabilityFilter()
+	{
+		var activeFaction = new PlayerNpcFactionState(
+			FactionId: 42,
+			IsActive: true,
+			IsMentor: false,
+			TimeEpochSeconds: 900,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 1009);
+		var player = PlayerWithQuest(new PlayerQuestState(1009, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.Level = 50;
+		player.NpcFactions = new PlayerNpcFactionsSnapshot([activeFaction]);
+		var questTemplates = new NearbyQuestTemplateTable(
+		[
+			Template(2010, npcFactionId: 42),
+			Template(2011, npcFactionId: 42),
+		]);
+
+		var result = QuestAbandonService.Abandon(
+			player,
+			1009,
+			Template(1009, npcFactionId: 42),
+			currentEpochSeconds: 1_000,
+			questTemplates: questTemplates,
+			nextResetEpochSeconds: 5_000,
+			randomIndexSelector: count =>
+			{
+				Assert.Equal(1, count);
+				return 0;
+			},
+			hasQuestHandler: questId => questId != 2010);
+
+		var packet = Assert.Single(result.NpcFactionDailyQuestPackets);
+		Assert.Equal(Convert.FromHexString("06DB07000001000000"), SerializeUnencryptedPayload(packet));
+		Assert.True(player.NpcFactions.TryGetFaction(42, out var assignedFaction));
+		Assert.Equal(2011, assignedFaction?.QuestId);
+	}
+
+	[Fact]
 	public void Abandon_NpcFactionQuestLeavesInactiveFactionUnchangedLikeJava()
 	{
 		var inactiveFaction = new PlayerNpcFactionState(
@@ -286,7 +370,8 @@ public sealed class QuestAbandonServiceTests
 		int? questWorkItemId = null,
 		int npcFactionId = 0,
 		string questCategory = "QUEST",
-		int workOrderRecipeId = 0)
+		int workOrderRecipeId = 0,
+		bool isTimeBased = false)
 	{
 		return new NearbyQuestTemplateSummary(
 			questId,
@@ -295,6 +380,8 @@ public sealed class QuestAbandonServiceTests
 			QuestCategory: questCategory,
 			WorkOrderRecipeId: workOrderRecipeId,
 			NpcFactionId: npcFactionId,
+			IsTimeBased: isTimeBased,
+			RepeatCycle: isTimeBased ? ["ALL"] : null,
 			QuestWorkItems: questWorkItemId == null ? null : [new NearbyQuestInventoryItem(questWorkItemId.Value)]);
 	}
 

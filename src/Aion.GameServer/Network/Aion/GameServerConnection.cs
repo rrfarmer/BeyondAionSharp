@@ -11535,7 +11535,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (questTemplates != null)
 			questTemplates.TryGetQuest(questId, out template);
 
-		var result = QuestAbandonService.Abandon(player, questId, template);
+		var now = DateTimeOffset.Now;
+		var currentEpochSeconds = now.ToUnixTimeSeconds() > int.MaxValue ? int.MaxValue : (int)now.ToUnixTimeSeconds();
+		var result = QuestAbandonService.Abandon(
+			player,
+			questId,
+			template,
+			currentEpochSeconds,
+			questTemplates,
+			NpcFactionDailyResetService.GetNextResetEpochSeconds(now, _options));
 		if (_playerEnterWorldService != null)
 			await _playerEnterWorldService.PersistQuestAbandonAsync(player, result, cancellationToken);
 

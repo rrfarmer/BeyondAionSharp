@@ -3,11 +3,20 @@ namespace Aion.GameServer.Dataholders;
 public sealed class NearbyQuestTemplateTable
 {
 	private readonly Dictionary<int, NearbyQuestTemplateSummary> _templates;
+	private readonly IReadOnlyDictionary<int, IReadOnlyList<NearbyQuestTemplateSummary>> _templatesByNpcFactionId;
 
 	public NearbyQuestTemplateTable(IEnumerable<NearbyQuestTemplateSummary> templates)
 	{
-		// Java parity: dataholders/QuestsData.afterUnmarshal indexes QuestTemplate by quest id.
-		_templates = templates.ToDictionary(template => template.QuestId);
+		// Java parity: dataholders/QuestsData.afterUnmarshal indexes QuestTemplate by quest id
+		// and non-time-based NPC-faction quests by npcfaction_id in XML load order.
+		var templateList = templates.ToArray();
+		_templates = templateList.ToDictionary(template => template.QuestId);
+		_templatesByNpcFactionId = templateList
+			.Where(template => template.NpcFactionId != 0 && !template.IsTimeBased)
+			.GroupBy(template => template.NpcFactionId)
+			.ToDictionary(
+				group => group.Key,
+				group => (IReadOnlyList<NearbyQuestTemplateSummary>)group.ToArray());
 	}
 
 	public int Count => _templates.Count;
@@ -15,6 +24,15 @@ public sealed class NearbyQuestTemplateTable
 	public bool TryGetQuest(int questId, out NearbyQuestTemplateSummary? template)
 	{
 		return _templates.TryGetValue(questId, out template);
+	}
+
+	public IReadOnlyList<NearbyQuestTemplateSummary> GetQuestsByNpcFaction(int npcFactionId)
+	{
+		// Java parity: QuestsData.getQuestsByNpcFaction starts from the afterUnmarshal
+		// non-time-based faction index before applying handler/start-condition filters.
+		return _templatesByNpcFactionId.TryGetValue(npcFactionId, out var templates)
+			? templates
+			: Array.Empty<NearbyQuestTemplateSummary>();
 	}
 }
 

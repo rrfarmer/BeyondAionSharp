@@ -248,12 +248,14 @@ public sealed class PlayerEnterWorldService
 			_ => Task.FromResult(false),
 		};
 
-		var factionPersisted = result.NpcFactionAbort?.AbortedFaction == null
-			? Task.FromResult(false)
-			: _repository.UpdatePlayerNpcFactionAsync(player.ObjectId, result.NpcFactionAbort.AbortedFaction, cancellationToken);
-
 		var questResult = await questPersisted;
-		var factionResult = await factionPersisted;
+		var factionResult = false;
+		foreach (var factionState in result.NpcFactionPersistenceUpdates)
+		{
+			if (await _repository.UpdatePlayerNpcFactionAsync(player.ObjectId, factionState, cancellationToken))
+				factionResult = true;
+		}
+
 		return questResult || factionResult;
 	}
 

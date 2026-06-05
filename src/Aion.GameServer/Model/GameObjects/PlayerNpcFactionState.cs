@@ -127,6 +127,40 @@ public sealed class PlayerNpcFactionsSnapshot
 			completedFaction);
 	}
 
+	public PlayerNpcFactionDailyQuestAssignmentResult AssignDailyQuest(
+		int factionId,
+		int questId,
+		int nextResetEpochSeconds)
+	{
+		// Java parity breadcrumb: NpcFactions.sendDailyQuest random branch assigns the
+		// selected QuestTemplate id, next reset time, and ENpcFactionQuestState.NOTING.
+		if (!_factions.TryGetValue(factionId, out var faction))
+			return new PlayerNpcFactionDailyQuestAssignmentResult(
+				PlayerNpcFactionDailyQuestAssignmentStatus.NoFaction,
+				this,
+				null);
+		if (!faction.IsActive)
+			return new PlayerNpcFactionDailyQuestAssignmentResult(
+				PlayerNpcFactionDailyQuestAssignmentStatus.InactiveFaction,
+				this,
+				faction);
+
+		var assignedFaction = faction with
+		{
+			QuestId = questId,
+			TimeEpochSeconds = nextResetEpochSeconds,
+			State = PlayerNpcFactionQuestState.Noting,
+		};
+		var updatedFactions = _factions.Values
+			.Select(candidate => candidate.FactionId == factionId ? assignedFaction : candidate)
+			.ToArray();
+
+		return new PlayerNpcFactionDailyQuestAssignmentResult(
+			PlayerNpcFactionDailyQuestAssignmentStatus.Applied,
+			new PlayerNpcFactionsSnapshot(updatedFactions),
+			assignedFaction);
+	}
+
 	public PlayerNpcFactionAbortResult AbortQuest(int factionId)
 	{
 		// Java parity breadcrumb: NpcFactions.abortQuest looks up the exact npcfaction_id,
@@ -169,6 +203,21 @@ public sealed record PlayerNpcFactionCompletionResult(
 	PlayerNpcFactionState? CompletedFaction)
 {
 	public bool Applied => Status == PlayerNpcFactionCompletionStatus.Applied;
+}
+
+public enum PlayerNpcFactionDailyQuestAssignmentStatus
+{
+	Applied,
+	NoFaction,
+	InactiveFaction,
+}
+
+public sealed record PlayerNpcFactionDailyQuestAssignmentResult(
+	PlayerNpcFactionDailyQuestAssignmentStatus Status,
+	PlayerNpcFactionsSnapshot Snapshot,
+	PlayerNpcFactionState? AssignedFaction)
+{
+	public bool Applied => Status == PlayerNpcFactionDailyQuestAssignmentStatus.Applied;
 }
 
 public enum PlayerNpcFactionAbortStatus
