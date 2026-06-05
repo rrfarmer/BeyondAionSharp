@@ -543,7 +543,7 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
-	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopBlocksDisabledLimitedItemPlan()
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopLimitedItemPlanRecordsDisabledOutcomeAndSendsLiveDenial()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync(
 			buyItemTradeLists: CreateBuyTradeLists(
@@ -596,7 +596,60 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.False(outcome.WouldWritePersistence);
 		Assert.True(outcome.WouldSendPackets);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
-		Assert.Empty(fixture.SentPackets);
+		var denial = Assert.Single(fixture.SentPackets);
+		Assert.Equal(1400353, Assert.IsType<SmSystemMessage>(denial).MessageId);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopLimitedItemSendsLiveDenialWithoutMutation()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(
+					501,
+					SalesTime: "0 0 9 ? * MON",
+					Items: [new GoodsListItemSummary(1001, SellLimit: 1, BuyLimit: 1)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 500),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			observeBuyItemPlans: false);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 2)]));
+
+		Assert.Empty(fixture.BuyItemPlans);
+		Assert.Empty(fixture.BuyItemSideEffectOutcomePlans);
+		var kinah = Assert.Single(player.InventoryItems);
+		Assert.Equal((3001, InventoryItemFactory.KinahItemId, 10_000L), (kinah.ObjectId, kinah.ItemId, kinah.Count));
+		var denial = Assert.Single(fixture.SentPackets);
+		Assert.Equal(1400353, Assert.IsType<SmSystemMessage>(denial).MessageId);
+		var packetEvent = Assert.Single(fixture.PacketEvents);
+		Assert.Equal(1400353, AssertPacketEvent<SmSystemMessage>(packetEvent, "active").MessageId);
 	}
 
 	[Fact]

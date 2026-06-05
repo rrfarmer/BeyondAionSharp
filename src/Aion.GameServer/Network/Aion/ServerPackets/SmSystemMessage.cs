@@ -1229,6 +1229,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300762);
 	}
 
+	public static SmSystemMessage LimitedBuyingCantSelectNoItems()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LIMITED_BUYING_CANT_SELECT_NO_ITEMS.
+		return new SmSystemMessage(1400353);
+	}
+
 	public static SmSystemMessage CombineInventoryFull()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_COMBINE_INVENTORY_IS_FULL.

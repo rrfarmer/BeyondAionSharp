@@ -5522,6 +5522,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (transactionPlan.Status == TradeBuyTransactionPlanStatus.BlockedLimitedItem)
+		{
+			await SendPacketAsync(SmSystemMessage.LimitedBuyingCantSelectNoItems());
+			return;
+		}
+
 		if (transactionPlan.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
 			|| transactionPlan.Mutation == null
 			|| transactionPlan.Mutation.RequiredAbyssPoints != 0

@@ -1493,6 +1493,7 @@ public class GamePacketTests
 		Assert.Equal(0, systemMessageReader.Remaining);
 		AssertSystemMessage(SmSystemMessage.MsgNotEnoughMoney(), 1300759);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
+		AssertSystemMessage(SmSystemMessage.LimitedBuyingCantSelectNoItems(), 1400353);
 		AssertSystemMessage(SmSystemMessage.CombineInventoryFull(), 1330037);
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);
 		Assert.Equal(0x1C, SmInventoryAddItem.Buy);
