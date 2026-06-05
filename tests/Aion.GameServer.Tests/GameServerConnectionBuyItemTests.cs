@@ -696,6 +696,81 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcAbyssKinahBuyFromShopUsesSecondaryRatesLive()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(
+					700001,
+					[501],
+					NpcType: "ABYSS_KINAH",
+					SellPriceRate: 50,
+					SellPriceRate2: 75,
+					ApSellPriceRate2: 80)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(501, Items: [new GoodsListItemSummary(1001)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 1_000, requiredAbyssPoints: 10_000, maxStackCount: 100, acquisitionType: "AP"),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			playerEnterWorldRepository: playerRepository,
+			observeBuyItemPlans: false);
+		var player = CreatePlayer();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 10_000, Rank = 2, MaxRank = 2 };
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 1)]));
+
+		Assert.Equal(1, playerRepository.SaveNpcShopBuyMutationCalls);
+		Assert.NotNull(playerRepository.NpcShopBuyPersistence);
+		var persistence = playerRepository.NpcShopBuyPersistence!;
+		Assert.Equal(2_000, persistence.AbyssRank!.Ap);
+		Assert.Equal((3001, InventoryItemFactory.KinahItemId, 9_250L), (
+			persistence.KinahItem!.ObjectId,
+			persistence.KinahItem.ItemId,
+			persistence.KinahItem.Count));
+		var addedItem = Assert.Single(persistence.AddedItems);
+		Assert.Equal((8001, 1001, 1L), (addedItem.ObjectId, addedItem.ItemId, addedItem.Count));
+		Assert.Equal(2_000, player.AbyssRank.Ap);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.Count == 9_250);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 8001 && item.ItemId == 1001 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(1300965, Assert.IsType<SmSystemMessage>(packet).MessageId),
+			packet => AssertAbyssRankPayload(Assert.IsType<SmAbyssRank>(packet), expectedAp: 2_000, expectedRank: 2),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertInventoryAddItemPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 8001,
+				expectedItemId: 1001,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.Buy),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopPersistenceFailureStopsMutationAndPackets()
 	{
 		var playerRepository = new EmptyPlayerEnterWorldRepository { SaveNpcShopBuyMutationResult = false };

@@ -5513,13 +5513,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		TradeBuyTransactionPlan? transactionPlan)
 	{
 		// Java parity: CM_BUY_ITEM.runImpl action 13 -> TradeService.performBuyFromShop
-		// -> performBuyTransaction for NORMAL kinah shops. This first live slice
-		// intentionally excludes non-normal shop types.
+		// -> NORMAL/ABYSS_KINAH -> performBuyTransaction(..., true).
 		if (player == null
 			|| targetKind != CmBuyItemRunTargetKind.Npc
 			|| packet.TradeActionId != 13
 			|| tradeTemplate == null
-			|| !string.Equals(tradeTemplate.NpcType, "NORMAL", StringComparison.Ordinal)
+			|| !ShouldUseKinahForBuyTransaction(tradeTemplate.NpcType)
 			|| transactionPlan == null)
 			return;
 
