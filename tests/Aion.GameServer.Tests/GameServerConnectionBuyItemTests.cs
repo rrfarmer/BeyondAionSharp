@@ -2441,6 +2441,71 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetFoodWithRefeedDelaySendsNotHungryPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				FeedProgressData: 0x654321,
+				RefeedTimeMillis: DateTimeOffset.Now.AddSeconds(5000).ToUnixTimeMilliseconds()),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodFeedPayload(actionType: 1, objectId: 500001, count: 12, unknown2: 99));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.CancelFeed);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetFoodNotHungryPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedFeedProgressData: 0x654321,
+			minimumRefeedDelaySeconds: 4990,
+			expectedItemObjectId: 500001,
+			expectedCount: 12);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetFoodWithoutRefeedDelayLeavesRegularFeedDeferred()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				FeedProgressData: 0x654321),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetFoodFeedPayload(actionType: 1, objectId: 500001, count: 12, unknown2: 99));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.False(pet.CancelFeed);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(fixture.Registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmEnterWorldSendsRestoredPetListAfterStats()
 	{
 		var player = CreatePlayer(accountId: 7);
@@ -3794,6 +3859,25 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(4, (int)reader.ReadC());
 		Assert.Equal(expectedFeedProgressData, reader.ReadD());
 		Assert.Equal(expectedRefeedDelaySeconds, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetFoodNotHungryPacket(
+		SmPet packet,
+		int expectedFeedProgressData,
+		int minimumRefeedDelaySeconds,
+		int expectedItemObjectId,
+		int expectedCount)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Food, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(8, (int)reader.ReadC());
+		Assert.Equal(expectedFeedProgressData, reader.ReadD());
+		Assert.True(reader.ReadD() >= minimumRefeedDelaySeconds);
+		Assert.Equal(expectedItemObjectId, reader.ReadD());
+		Assert.Equal(expectedCount, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 

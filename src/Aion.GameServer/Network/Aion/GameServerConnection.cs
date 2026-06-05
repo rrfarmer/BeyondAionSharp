@@ -504,8 +504,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandlePetFoodAsync(Player player, CmPet packet)
 	{
-		// Java parity: CM_PET FOOD objectId == 0 cancels active pet feeding.
-		if (packet.ActionType is 2 or 3 or 4 || packet.ObjectId != 0)
+		// Java parity: CM_PET FOOD action types 2/3/4 dispatch to pet doping, looting, and auto-sell services.
+		if (packet.ActionType is 2 or 3 or 4)
 			return;
 
 		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
@@ -515,16 +515,31 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (ownedPet == null)
 			return;
 
-		var updatedPet = ownedPet with { CancelFeed = true };
-		player.OwnedPets = player.OwnedPets
-			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
-			.ToArray();
+		if (packet.ObjectId == 0)
+		{
+			var updatedPet = ownedPet with { CancelFeed = true };
+			player.OwnedPets = player.OwnedPets
+				.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+				.ToArray();
 
-		await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
-			SubType: 4,
-			FeedProgressData: updatedPet.FeedProgressData,
-			RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
-		await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
+			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+				SubType: 4,
+				FeedProgressData: updatedPet.FeedProgressData,
+				RefeedDelaySeconds: updatedPet.RefeedDelaySeconds(DateTimeOffset.Now))));
+			await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
+			return;
+		}
+
+		var refeedDelaySeconds = ownedPet.RefeedDelaySeconds(DateTimeOffset.Now);
+		if (refeedDelaySeconds > 0)
+		{
+			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
+				SubType: 8,
+				FeedProgressData: ownedPet.FeedProgressData,
+				ItemObjectId: packet.ObjectId,
+				Count: packet.Count,
+				RefeedDelaySeconds: refeedDelaySeconds)));
+		}
 	}
 
 	private async Task ClearActivePetAsync(Player player, bool sendDismissPacket)
