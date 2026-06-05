@@ -20,8 +20,10 @@ public sealed class QuestAbandonServiceTests
 		Assert.True(result.Mutated);
 		Assert.Empty(player.Quests);
 		Assert.True(result.NearbyQuestRefreshRequired);
-		var packet = Assert.Single(result.Packets);
-		Assert.Equal(Convert.FromHexString("03E903000000000000"), SerializeUnencryptedPayload(packet));
+		Assert.Empty(result.TimerPackets);
+		Assert.Empty(result.WorkItemDeletions);
+		Assert.NotNull(result.AbandonPacket);
+		Assert.Equal(Convert.FromHexString("03E903000000000000"), SerializeUnencryptedPayload(result.AbandonPacket!));
 	}
 
 	[Fact]
@@ -39,7 +41,8 @@ public sealed class QuestAbandonServiceTests
 		Assert.Equal(2, reset.CompleteCount);
 		Assert.Same(reset, result.FinalQuestState);
 		Assert.True(result.NearbyQuestRefreshRequired);
-		Assert.Equal(Convert.FromHexString("03EA03000000000000"), SerializeUnencryptedPayload(Assert.Single(result.Packets)));
+		Assert.NotNull(result.AbandonPacket);
+		Assert.Equal(Convert.FromHexString("03EA03000000000000"), SerializeUnencryptedPayload(result.AbandonPacket!));
 	}
 
 	[Theory]
@@ -55,7 +58,9 @@ public sealed class QuestAbandonServiceTests
 		Assert.Equal(expected, result.Status);
 		Assert.False(result.Mutated);
 		Assert.Same(original, Assert.Single(player.Quests));
-		Assert.Empty(result.Packets);
+		Assert.Empty(result.TimerPackets);
+		Assert.Empty(result.WorkItemDeletions);
+		Assert.Null(result.AbandonPacket);
 		Assert.False(result.NearbyQuestRefreshRequired);
 	}
 
@@ -70,7 +75,9 @@ public sealed class QuestAbandonServiceTests
 		Assert.Equal(QuestAbandonStatus.CannotGiveup, result.Status);
 		Assert.False(result.Mutated);
 		Assert.Same(questState, Assert.Single(player.Quests));
-		Assert.Empty(result.Packets);
+		Assert.Empty(result.TimerPackets);
+		Assert.Empty(result.WorkItemDeletions);
+		Assert.Null(result.AbandonPacket);
 	}
 
 	[Fact]
@@ -81,9 +88,9 @@ public sealed class QuestAbandonServiceTests
 		var result = QuestAbandonService.Abandon(player, 1005, Template(1005, isTimer: true));
 
 		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
-		Assert.Equal(2, result.Packets.Count);
-		Assert.Equal(Convert.FromHexString("04ED0300000000000000"), SerializeUnencryptedPayload(result.Packets[0]));
-		Assert.Equal(Convert.FromHexString("03ED03000000000000"), SerializeUnencryptedPayload(result.Packets[1]));
+		Assert.Equal(Convert.FromHexString("04ED0300000000000000"), SerializeUnencryptedPayload(Assert.Single(result.TimerPackets)));
+		Assert.NotNull(result.AbandonPacket);
+		Assert.Equal(Convert.FromHexString("03ED03000000000000"), SerializeUnencryptedPayload(result.AbandonPacket!));
 	}
 
 	[Fact]
@@ -97,7 +104,47 @@ public sealed class QuestAbandonServiceTests
 		Assert.Equal(QuestAbandonStatus.MissingTemplate, result.Status);
 		Assert.False(result.Mutated);
 		Assert.Same(questState, Assert.Single(player.Quests));
-		Assert.Empty(result.Packets);
+		Assert.Empty(result.TimerPackets);
+		Assert.Empty(result.WorkItemDeletions);
+		Assert.Null(result.AbandonPacket);
+	}
+
+	[Fact]
+	public void Abandon_RemovesAllMatchingQuestWorkItemStacksFromCube()
+	{
+		var kept = Item(5001, 188000002, 3);
+		var firstWorkItem = Item(5002, 188000001, 2);
+		var secondWorkItem = Item(5003, 188000001, 5);
+		var equippedWorkItem = Item(5004, 188000001, 1, isEquipped: true);
+		var player = PlayerWithQuest(new PlayerQuestState(1007, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.InventoryItems = [kept, firstWorkItem, secondWorkItem, equippedWorkItem];
+
+		var result = QuestAbandonService.Abandon(player, 1007, Template(1007, questWorkItemId: 188000001));
+
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.Equal([5002, 5003], result.WorkItemDeletions.Select(deletion => deletion.Item.ObjectId).Order());
+		Assert.All(result.WorkItemDeletions, deletion => Assert.Equal(SmDeleteItem.QuestStartDeleteType, deletion.DeleteType));
+		Assert.Equal([2, 1], result.WorkItemDeletions.Select(deletion => deletion.CubeItemCountAfterDeletion));
+		Assert.Equal([5001, 5004], player.InventoryItems.Select(item => item.ObjectId).Order());
+		Assert.Equal([5002, 5003], player.DeletedInventoryItems.Select(item => item.ObjectId).Order());
+		Assert.Equal(StoragePersistentState.UpdateRequired, player.InventoryStoragePersistentState);
+	}
+
+	[Fact]
+	public void Abandon_PreviouslyCompletedQuestWorkItemsUseQuestCompleteDeleteType()
+	{
+		var workItem = Item(6001, 188000003, 1);
+		var player = PlayerWithQuest(new PlayerQuestState(1008, "START", QuestVars: 9, Flags: 2, CompleteCount: 1));
+		player.InventoryItems = [workItem];
+
+		var result = QuestAbandonService.Abandon(player, 1008, Template(1008, questWorkItemId: 188000003));
+
+		Assert.Equal(QuestAbandonStatus.ResetToComplete, result.Status);
+		var deletion = Assert.Single(result.WorkItemDeletions);
+		Assert.Equal(6001, deletion.Item.ObjectId);
+		Assert.Equal(SmDeleteItem.QuestCompleteDeleteType, deletion.DeleteType);
+		Assert.Equal(0, deletion.CubeItemCountAfterDeletion);
+		Assert.Empty(player.InventoryItems);
 	}
 
 	private static Player PlayerWithQuest(PlayerQuestState questState)
@@ -105,9 +152,29 @@ public sealed class QuestAbandonServiceTests
 		return new Player { Quests = [questState] };
 	}
 
-	private static NearbyQuestTemplateSummary Template(int questId = 1001, bool cannotGiveup = false, bool isTimer = false)
+	private static NearbyQuestTemplateSummary Template(
+		int questId = 1001,
+		bool cannotGiveup = false,
+		bool isTimer = false,
+		int? questWorkItemId = null)
 	{
-		return new NearbyQuestTemplateSummary(questId, CannotGiveup: cannotGiveup, IsTimer: isTimer);
+		return new NearbyQuestTemplateSummary(
+			questId,
+			CannotGiveup: cannotGiveup,
+			IsTimer: isTimer,
+			QuestWorkItems: questWorkItemId == null ? null : [new NearbyQuestInventoryItem(questWorkItemId.Value)]);
+	}
+
+	private static InventoryItem Item(int objectId, int itemId, long count, bool isEquipped = false)
+	{
+		return new InventoryItem
+		{
+			ObjectId = objectId,
+			ItemId = itemId,
+			Count = count,
+			Location = 0,
+			IsEquipped = isEquipped,
+		};
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)

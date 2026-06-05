@@ -11536,11 +11536,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			questTemplates.TryGetQuest(questId, out template);
 
 		var result = QuestAbandonService.Abandon(player, questId, template);
-		foreach (var packet in result.Packets)
+		foreach (var packet in result.TimerPackets)
 			await SendPacketAsync(packet, cancellationToken);
 
-		// Java also removes quest work items, aborts NPC-faction quests, and deletes work-order recipes.
-		// Those dependencies are not live in C# yet; the core quest-state mutation + client packets are live.
+		foreach (var deletion in result.WorkItemDeletions)
+		{
+			await SendPacketAsync(new SmDeleteItem(deletion.Item.ObjectId, deletion.DeleteType), cancellationToken);
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(
+				deletion.CubeItemCountAfterDeletion,
+				player.NpcExpands,
+				player.QuestExpands,
+				player.ItemExpands), cancellationToken);
+		}
+
+		if (result.AbandonPacket != null)
+			await SendPacketAsync(result.AbandonPacket, cancellationToken);
+
+		// Java also aborts NPC-faction quests and deletes work-order recipes.
+		// Those dependencies are not live in C# yet.
 		if (result.NearbyQuestRefreshRequired)
 			await SendNearbyQuestRefreshAsync(player, cancellationToken);
 	}

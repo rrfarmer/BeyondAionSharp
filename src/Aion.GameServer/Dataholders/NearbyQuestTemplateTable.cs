@@ -38,6 +38,7 @@ public sealed record NearbyQuestTemplateSummary(
 	int NpcFactionId = 0,
 	bool IsMentorQuest = false,
 	IReadOnlyList<NearbyQuestInventoryItem>? InventoryItems = null,
+	IReadOnlyList<NearbyQuestInventoryItem>? QuestWorkItems = null,
 	IReadOnlyList<NearbyQuestXmlStartCondition>? XmlStartConditions = null,
 	bool HasUnsupportedXmlStartConditionElements = false,
 	bool CanReport = false,
@@ -56,6 +57,9 @@ public sealed record NearbyQuestTemplateSummary(
 
 	public IReadOnlyList<NearbyQuestInventoryItem> InventoryItems { get; } =
 		InventoryItems ?? Array.Empty<NearbyQuestInventoryItem>();
+
+	public IReadOnlyList<NearbyQuestInventoryItem> QuestWorkItems { get; } =
+		QuestWorkItems ?? Array.Empty<NearbyQuestInventoryItem>();
 
 	public IReadOnlyList<NearbyQuestXmlStartCondition> XmlStartConditions { get; } =
 		XmlStartConditions ?? Array.Empty<NearbyQuestXmlStartCondition>();

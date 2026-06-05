@@ -30,6 +30,7 @@ public sealed class NearbyQuestTemplateXmlExtractor
 		var classPermitted = ReadWhitespaceList(quest.Elements().FirstOrDefault(element => element.Name.LocalName == "class_permitted")?.Value);
 		var startConditions = ReadStartConditions(quest);
 		var inventoryItems = ReadInventoryItems(quest);
+		var questWorkItems = ReadQuestWorkItems(quest);
 		var repeatCycle = ReadWhitespaceList(ReadStringAttribute(quest, "repeat_cycle"))
 			.Select(value => value.ToUpperInvariant())
 			.ToArray();
@@ -60,14 +61,28 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			HasRewards: HasChild(quest, "rewards"),
 			HasExtendedRewards: HasChild(quest, "extended_rewards"),
 			HasBonus: HasChild(quest, "bonus"),
-			HasQuestWorkItems: HasChild(quest, "quest_work_items"),
+			HasQuestWorkItems: questWorkItems.Count != 0,
 			// Java parity: QuestTemplate.cannotShare (@XmlAttribute cannot_share, default false) and
 			// QuestTemplate.target (@XmlAttribute target, QuestTarget enum, default NONE). Both back CM_QUEST_SHARE.
 			CannotShare: ReadBoolAttribute(quest, "cannot_share"),
 			// Java parity: QuestTemplate.cannotGiveup (@XmlAttribute cannot_giveup, default false)
 			// backs QuestService.abandonQuest.
 			CannotGiveup: ReadBoolAttribute(quest, "cannot_giveup"),
+			QuestWorkItems: questWorkItems,
 			Target: ReadStringAttribute(quest, "target", defaultValue: "NONE"));
+	}
+
+	private static IReadOnlyList<NearbyQuestInventoryItem> ReadQuestWorkItems(XElement quest)
+	{
+		// Java parity breadcrumb: model/templates/quest/QuestWorkItems contains quest_work_item rows.
+		return quest
+			.Elements()
+			.Where(element => element.Name.LocalName == "quest_work_items")
+			.SelectMany(element => element.Elements().Where(child => child.Name.LocalName == "quest_work_item"))
+			.Select(element => new NearbyQuestInventoryItem(
+				ReadRequiredIntAttribute(element, "item_id"),
+				ReadNullableIntAttribute(element, "count")))
+			.ToArray();
 	}
 
 	private static IReadOnlyList<NearbyQuestInventoryItem> ReadInventoryItems(XElement quest)

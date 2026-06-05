@@ -105,6 +105,9 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.True(template.HasExtendedRewards);
 		Assert.True(template.HasBonus);
 		Assert.True(template.HasQuestWorkItems);
+		var workItem = Assert.Single(template.QuestWorkItems);
+		Assert.Equal(182200003, workItem.ItemId);
+		Assert.Equal(1, workItem.Count);
 		Assert.True(template.CannotShare);
 		Assert.True(template.CannotGiveup);
 		Assert.True(template.IsTimer);
@@ -149,6 +152,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.False(template.HasExtendedRewards);
 		Assert.False(template.HasBonus);
 		Assert.False(template.HasQuestWorkItems);
+		Assert.Empty(template.QuestWorkItems);
 		Assert.False(template.CannotShare);
 		Assert.False(template.CannotGiveup);
 		Assert.False(template.IsTimer);
