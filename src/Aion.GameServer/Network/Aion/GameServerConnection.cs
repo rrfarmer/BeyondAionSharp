@@ -6706,7 +6706,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		var existingQuest = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
 		var isNewQuestState = existingQuest == null;
 		if (existingQuest != null && !string.Equals(existingQuest.Status, "COMPLETE", StringComparison.Ordinal))
+		{
+			await SendPacketAsync(SmSystemMessage.QuestAcquireErrorWorkingQuest(), cancellationToken);
 			return;
+		}
 
 		var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
 			player,
@@ -6714,7 +6717,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			staticData.NearbyQuestTemplates,
 			DateTimeOffset.Now);
 		if (!startConditions.CanStart)
+		{
+			if (existingQuest != null && startConditions.Failure is NearbyQuestStartConditionFailure.RepeatCount or NearbyQuestStartConditionFailure.RepeatTiming)
+				await SendPacketAsync(SmSystemMessage.QuestAcquireErrorNoneRepeatable(questTemplate.Name), cancellationToken);
 			return;
+		}
 
 		var finalQuestState = existingQuest == null
 			? new PlayerQuestState(questId, "START", 0, 0, 0)

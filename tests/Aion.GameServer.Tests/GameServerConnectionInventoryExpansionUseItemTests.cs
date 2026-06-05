@@ -237,6 +237,44 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertQuestActionPacket(Assert.IsType<SmQuestAction>(packet), SmQuestAction.AddActionId, 1115, expectedClientQuestVars: 23 | (1 << 24)));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemSendsWorkingQuestMessageForActiveState()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 169700001);
+		player.Quests = [new PlayerQuestState(1114, "START", 7, 0, 0)];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		var questState = Assert.Single(player.Quests);
+		Assert.Equal("START", questState.Status);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300597));
+	}
+
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemSendsNoneRepeatableMessageForCompletedNonRepeatableState()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 169700001);
+		player.Quests = [new PlayerQuestState(1114, "COMPLETE", 0, 0, 1)];
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		var questState = Assert.Single(player.Quests);
+		Assert.Equal("COMPLETE", questState.Status);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300599, "Test Quest Starter Quest"));
+	}
+
 	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
@@ -4247,8 +4285,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<title id="269" nameId="1101268" desc="Test Title" race="ELYOS"/>
 					</player_titles>
 					<quests>
-						<quest id="1114" minlevel_permitted="0" race_permitted="PC_ALL"/>
-						<quest id="1115" minlevel_permitted="0" race_permitted="PC_ALL" max_repeat_count="2"/>
+						<quest id="1114" name="Test Quest Starter Quest" minlevel_permitted="0" race_permitted="PC_ALL"/>
+						<quest id="1115" name="Test Repeat Quest Starter Quest" minlevel_permitted="0" race_permitted="PC_ALL" max_repeat_count="2"/>
 					</quests>
 				</static_data>
 				""");

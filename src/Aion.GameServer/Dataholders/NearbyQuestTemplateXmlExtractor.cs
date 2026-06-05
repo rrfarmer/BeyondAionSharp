@@ -69,7 +69,8 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			// backs QuestService.abandonQuest.
 			CannotGiveup: ReadBoolAttribute(quest, "cannot_giveup"),
 			QuestWorkItems: questWorkItems,
-			Target: ReadStringAttribute(quest, "target", defaultValue: "NONE"));
+			Target: ReadStringAttribute(quest, "target", defaultValue: "NONE"),
+			Name: ReadStringAttribute(quest, "name"));
 	}
 
 	private static IReadOnlyList<NearbyQuestInventoryItem> ReadQuestWorkItems(XElement quest)

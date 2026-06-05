@@ -1499,6 +1499,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300035, titleName);
 	}
 
+	public static SmSystemMessage QuestAcquireErrorWorkingQuest()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_WORKING_QUEST().
+		return new SmSystemMessage(1300597);
+	}
+
+	public static SmSystemMessage QuestAcquireErrorNoneRepeatable(string questName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_NONE_REPEATABLE(String).
+		return new SmSystemMessage(1300599, questName);
+	}
+
 	public static SmSystemMessage CashTitle(string titleName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.
