@@ -147,6 +147,65 @@ public sealed class QuestAbandonServiceTests
 		Assert.Empty(player.InventoryItems);
 	}
 
+	[Fact]
+	public void Abandon_NpcFactionQuestResetsActiveFactionStateLikeJava()
+	{
+		var activeFaction = new PlayerNpcFactionState(
+			FactionId: 42,
+			IsActive: true,
+			IsMentor: false,
+			TimeEpochSeconds: 123456,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 1009);
+		var mentorFaction = new PlayerNpcFactionState(
+			FactionId: 77,
+			IsActive: true,
+			IsMentor: true,
+			TimeEpochSeconds: 654321,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 2009);
+		var player = PlayerWithQuest(new PlayerQuestState(1009, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.NpcFactions = new PlayerNpcFactionsSnapshot([activeFaction, mentorFaction]);
+
+		var result = QuestAbandonService.Abandon(player, 1009, Template(1009, npcFactionId: 42));
+
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.NotNull(result.NpcFactionAbort);
+		Assert.True(result.NpcFactionAbort.Applied);
+		Assert.Equal(PlayerNpcFactionQuestState.Start, result.NpcFactionAbort.PreviousFaction?.State);
+		Assert.True(player.NpcFactions.TryGetFaction(42, out var abortedFaction));
+		Assert.NotNull(abortedFaction);
+		Assert.True(abortedFaction.IsActive);
+		Assert.Equal(1009, abortedFaction.QuestId);
+		Assert.Equal(123456, abortedFaction.TimeEpochSeconds);
+		Assert.Equal(PlayerNpcFactionQuestState.Noting, abortedFaction.State);
+		Assert.Equal(77, player.NpcFactions.GetActiveFaction(isMentor: true)?.FactionId);
+	}
+
+	[Fact]
+	public void Abandon_NpcFactionQuestLeavesInactiveFactionUnchangedLikeJava()
+	{
+		var inactiveFaction = new PlayerNpcFactionState(
+			FactionId: 43,
+			IsActive: false,
+			IsMentor: false,
+			TimeEpochSeconds: 111,
+			State: PlayerNpcFactionQuestState.Start,
+			QuestId: 1010);
+		var player = PlayerWithQuest(new PlayerQuestState(1010, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.NpcFactions = new PlayerNpcFactionsSnapshot([inactiveFaction]);
+
+		var result = QuestAbandonService.Abandon(player, 1010, Template(1010, npcFactionId: 43));
+
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.NotNull(result.NpcFactionAbort);
+		Assert.Equal(PlayerNpcFactionAbortStatus.InactiveFaction, result.NpcFactionAbort.Status);
+		Assert.True(player.NpcFactions.TryGetFaction(43, out var unchangedFaction));
+		Assert.NotNull(unchangedFaction);
+		Assert.False(unchangedFaction.IsActive);
+		Assert.Equal(PlayerNpcFactionQuestState.Start, unchangedFaction.State);
+	}
+
 	private static Player PlayerWithQuest(PlayerQuestState questState)
 	{
 		return new Player { Quests = [questState] };
@@ -156,12 +215,14 @@ public sealed class QuestAbandonServiceTests
 		int questId = 1001,
 		bool cannotGiveup = false,
 		bool isTimer = false,
-		int? questWorkItemId = null)
+		int? questWorkItemId = null,
+		int npcFactionId = 0)
 	{
 		return new NearbyQuestTemplateSummary(
 			questId,
 			CannotGiveup: cannotGiveup,
 			IsTimer: isTimer,
+			NpcFactionId: npcFactionId,
 			QuestWorkItems: questWorkItemId == null ? null : [new NearbyQuestInventoryItem(questWorkItemId.Value)]);
 	}
 

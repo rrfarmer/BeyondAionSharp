@@ -102,6 +102,27 @@ public sealed class PlayerNpcFactionsSnapshot
 			new PlayerNpcFactionsSnapshot(updatedFactions),
 			completedFaction);
 	}
+
+	public PlayerNpcFactionAbortResult AbortQuest(int factionId)
+	{
+		// Java parity breadcrumb: NpcFactions.abortQuest looks up the exact npcfaction_id,
+		// requires an active row, and resets only the faction quest state to NOTING.
+		if (!_factions.TryGetValue(factionId, out var faction))
+			return new PlayerNpcFactionAbortResult(PlayerNpcFactionAbortStatus.NoFaction, this, null, null);
+		if (!faction.IsActive)
+			return new PlayerNpcFactionAbortResult(PlayerNpcFactionAbortStatus.InactiveFaction, this, faction, faction);
+
+		var abortedFaction = faction with { State = PlayerNpcFactionQuestState.Noting };
+		var updatedFactions = _factions.Values
+			.Select(candidate => candidate.FactionId == factionId ? abortedFaction : candidate)
+			.ToArray();
+
+		return new PlayerNpcFactionAbortResult(
+			PlayerNpcFactionAbortStatus.Applied,
+			new PlayerNpcFactionsSnapshot(updatedFactions),
+			faction,
+			abortedFaction);
+	}
 }
 
 public enum PlayerNpcFactionQuestState
@@ -124,4 +145,20 @@ public sealed record PlayerNpcFactionCompletionResult(
 	PlayerNpcFactionState? CompletedFaction)
 {
 	public bool Applied => Status == PlayerNpcFactionCompletionStatus.Applied;
+}
+
+public enum PlayerNpcFactionAbortStatus
+{
+	Applied,
+	NoFaction,
+	InactiveFaction,
+}
+
+public sealed record PlayerNpcFactionAbortResult(
+	PlayerNpcFactionAbortStatus Status,
+	PlayerNpcFactionsSnapshot Snapshot,
+	PlayerNpcFactionState? PreviousFaction,
+	PlayerNpcFactionState? AbortedFaction)
+{
+	public bool Applied => Status == PlayerNpcFactionAbortStatus.Applied;
 }
