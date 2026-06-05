@@ -5447,7 +5447,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& _cmBuyItemSideEffectOutcomePlanObserver == null
 			&& !IsPrivateStoreBuyItemPacket(player, packet)
 			&& !IsBuyFromShopBuyItemPacket(player, packet)
-			&& !IsSellToShopBuyItemPacket(player, packet))
+			&& !IsSellToShopBuyItemPacket(player, packet)
+			&& !IsRepurchaseBuyItemPacket(player, packet))
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
@@ -5485,6 +5486,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			player?.ObjectId,
 			repurchaseStateSnapshots));
 		await TryExecutePrivateStorePurchaseAsync(player, packet, targetKind, privateStoreItems, privateStorePurchasePlan);
+		await TryExecuteRepurchaseAsync(player, packet, targetKind, repurchasePlan);
 		await TryExecuteSellToShopAsync(player, packet, targetKind, sellToShopPlan);
 		await TryExecuteSellForApToShopAsync(player, packet, targetKind, sellForApToShopPlan);
 		await TryExecuteBuyFromShopPurchaseAsync(player, packet, targetKind, buyFromShopTradeTemplate, buyTransactionPlan);
@@ -5515,6 +5517,96 @@ public sealed class GameServerConnection : BaseClientConnection
 			&& _world != null
 			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
 			&& gameObject is IWorldNpcObject;
+	}
+
+	private bool IsRepurchaseBuyItemPacket(Player? player, CmBuyItem packet)
+	{
+		return player != null
+			&& packet.TradeActionId == CmBuyItemRepurchaseReadPlanService.RepurchaseTradeActionId
+			&& _world != null
+			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			&& gameObject is IWorldNpcObject;
+	}
+
+	private async Task TryExecuteRepurchaseAsync(
+		Player? player,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		RepurchasePlan? repurchasePlan)
+	{
+		// Java parity: CM_BUY_ITEM.runImpl action 2 -> RepurchaseService.repurchaseFromShop.
+		if (player == null
+			|| targetKind != CmBuyItemRunTargetKind.Npc
+			|| packet.TradeActionId != CmBuyItemRepurchaseReadPlanService.RepurchaseTradeActionId
+			|| repurchasePlan == null)
+			return;
+
+		foreach (var message in repurchasePlan.Messages)
+			await SendPacketAsync(message);
+
+		if (repurchasePlan.Status != RepurchasePlanStatus.PlanCreated
+			|| (repurchasePlan.AddedItems.Count == 0
+				&& repurchasePlan.UpdatedItems.Count == 0
+				&& repurchasePlan.KinahUpdate == null))
+		{
+			return;
+		}
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var itemTemplates = _buyItemItemTemplates ?? staticData?.ItemTemplates;
+		var kinahTemplate = itemTemplates?.GetItemTemplate(KinahItemId);
+		if (itemTemplates == null || kinahTemplate == null)
+			return;
+
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SaveNpcShopRepurchaseMutationAsync(player, repurchasePlan))
+		{
+			return;
+		}
+
+		var workingItems = player.InventoryItems.ToList();
+		if (repurchasePlan.KinahUpdate != null)
+			ReplaceInventoryItem(workingItems, repurchasePlan.KinahUpdate);
+		foreach (var updatedItem in repurchasePlan.UpdatedItems)
+			ReplaceInventoryItem(workingItems, updatedItem);
+		foreach (var addedItem in repurchasePlan.AddedItems)
+			workingItems.Add(addedItem);
+
+		var removedObjectIds = repurchasePlan.RemovedRepurchaseItemObjectIds.ToHashSet();
+		player.InventoryItems = workingItems.ToArray();
+		player.RepurchaseItems = player.RepurchaseItems
+			.Where(sourceItem => !removedObjectIds.Contains(sourceItem.Item.ObjectId))
+			.ToArray();
+
+		if (repurchasePlan.KinahUpdate != null)
+			await SendPacketAsync(new SmInventoryUpdateItem(repurchasePlan.KinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+
+		foreach (var updatedItem in repurchasePlan.UpdatedItems)
+		{
+			var template = itemTemplates.GetItemTemplate(updatedItem.ItemId);
+			if (template == null)
+				return;
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				SmInventoryUpdateItem.IncreaseItemCollect,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, staticData?.ItemRestrictionCleanups)));
+		}
+
+		var projectedCubeItemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId)
+			- repurchasePlan.AddedItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
+		foreach (var addedItem in repurchasePlan.AddedItems)
+		{
+			var template = itemTemplates.GetItemTemplate(addedItem.ItemId);
+			if (template == null)
+				return;
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+				addedItem,
+				template,
+				GetGeneralInfoWarehouseRestrictionFlag(addedItem.ItemId, staticData?.ItemRestrictionCleanups)));
+			projectedCubeItemsCount++;
+			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+		}
 	}
 
 	private async Task TryExecuteSellToShopAsync(
@@ -6595,7 +6687,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return null;
 
 		// Java parity: RepurchaseService.repurchaseFromShop runs after CM_BUY_ITEM
-		// target and npc.canBuy gates. This remains a disabled diagnostic payload.
+		// target and npc.canBuy gates.
 		return RepurchasePlanService.CreatePlan(
 			CanTrade(player),
 			player,
@@ -6603,7 +6695,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			readPlan.RepurchaseItemObjectIds,
 			player.RepurchaseItems,
 			itemTemplates,
-			_buyItemDiagnosticObjectIdProvider ?? (() => 0));
+			NextBuyItemObjectId);
 	}
 
 	private IReadOnlyList<PrivateStoreListedItemSummary>? ResolveBuyItemPrivateStoreItems(

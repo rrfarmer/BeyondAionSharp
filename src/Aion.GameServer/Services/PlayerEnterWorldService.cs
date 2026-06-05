@@ -433,6 +433,21 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveNpcShopRepurchaseMutationAsync(
+		Player player,
+		RepurchasePlan repurchasePlan,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: RepurchaseService.repurchaseFromShop persists Kinah decrease
+		// and restored inventory rows through Storage/InventoryDAO; repurchase state is runtime-only.
+		return _repository.SaveNpcShopRepurchaseMutationAsync(
+			player.ObjectId,
+			repurchasePlan.KinahUpdate,
+			repurchasePlan.UpdatedItems,
+			repurchasePlan.AddedItems,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveItemUseSourceMutationAsync(
 		Player player,
 		InventoryItem? sourceItemUpdate,

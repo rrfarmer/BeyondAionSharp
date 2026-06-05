@@ -93,12 +93,15 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
-	public async Task ProcessPacketAsync_CmBuyItemNpcRepurchaseHydratesDisabledExecutionPlanFromSnapshot()
+	public async Task ProcessPacketAsync_CmBuyItemNpcRepurchaseExecutesLiveFromSnapshot()
 	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
 		await using var fixture = await BuyItemFixture.CreateAsync(
 			buyItemItemTemplates: CreateItemTemplates(
-				Template(100000001, price: 1_000)),
-			buyItemDiagnosticObjectIdProvider: Sequence(8001));
+				Template(100000001, price: 1_000),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			playerEnterWorldRepository: playerRepository);
 		var player = CreatePlayer();
 		player.InventoryItems =
 		[
@@ -148,7 +151,13 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal([7101], repurchasePlan.RepurchasedItemObjectIds);
 		Assert.Equal([7101], repurchasePlan.RemovedRepurchaseItemObjectIds);
 		Assert.Equal(3_800, repurchasePlan.KinahUpdate!.Count);
-		Assert.Single(repurchasePlan.AddedItems);
+		var addedPlanItem = Assert.Single(repurchasePlan.AddedItems);
+		Assert.Equal((8001, 100000001, 1L, player.ObjectId, 0), (
+			addedPlanItem.ObjectId,
+			addedPlanItem.ItemId,
+			addedPlanItem.Count,
+			addedPlanItem.OwnerId,
+			addedPlanItem.Location));
 		Assert.False(plan.ShouldDispatchLiveSideEffects);
 
 		var outcome = Assert.Single(fixture.BuyItemSideEffectOutcomePlans);
@@ -166,7 +175,35 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Empty(stateRemoval.UpdatedSnapshot!.RepurchaseItems);
 		Assert.False(stateRemoval.DidRemoveItems);
 		Assert.False(stateRemoval.IsLive);
-		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(1, playerRepository.SaveNpcShopRepurchaseMutationCalls);
+		Assert.NotNull(playerRepository.NpcShopRepurchasePersistence);
+		var persistence = playerRepository.NpcShopRepurchasePersistence!;
+		Assert.Equal(player.ObjectId, persistence.PlayerObjectId);
+		Assert.Equal((3001, InventoryItemFactory.KinahItemId, 3_800L), (
+			persistence.KinahItem!.ObjectId,
+			persistence.KinahItem.ItemId,
+			persistence.KinahItem.Count));
+		Assert.Empty(persistence.UpdatedItems);
+		var persistedAddedItem = Assert.Single(persistence.AddedItems);
+		Assert.Equal((8001, 100000001, 1L, player.ObjectId, 0), (
+			persistedAddedItem.ObjectId,
+			persistedAddedItem.ItemId,
+			persistedAddedItem.Count,
+			persistedAddedItem.OwnerId,
+			persistedAddedItem.Location));
+		Assert.Equal(3_800, player.InventoryItems.Single(item => item.ItemId == InventoryItemFactory.KinahItemId).Count);
+		Assert.Equal(8001, player.InventoryItems.Single(item => item.ItemId == 100000001).ObjectId);
+		Assert.Empty(player.RepurchaseItems);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertInventoryAddItemPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 8001,
+				expectedItemId: 100000001,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.ItemCollect),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
 	}
 
 	[Fact]

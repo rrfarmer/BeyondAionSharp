@@ -389,6 +389,13 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<int> sellerDeletedItemObjectIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveNpcShopRepurchaseMutationAsync(
+		int playerObjectId,
+		InventoryItem? kinahItem,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<InventoryItem> addedItems,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveEquipmentMutationAsync(
 		int playerObjectId,
 		IReadOnlyList<InventoryItem> items,
@@ -1121,6 +1128,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return Task.FromResult(SaveNpcShopApSellMutationResult);
 	}
 
+	public bool SaveNpcShopRepurchaseMutationResult { get; init; } = true;
+
+	public int SaveNpcShopRepurchaseMutationCalls { get; private set; }
+
+	public NpcShopRepurchasePersistenceCapture? NpcShopRepurchasePersistence { get; private set; }
+
+	public Task<bool> SaveNpcShopRepurchaseMutationAsync(
+		int playerObjectId,
+		InventoryItem? kinahItem,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<InventoryItem> addedItems,
+		CancellationToken cancellationToken = default)
+	{
+		SaveNpcShopRepurchaseMutationCalls++;
+		NpcShopRepurchasePersistence = new NpcShopRepurchasePersistenceCapture(
+			playerObjectId,
+			kinahItem,
+			updatedItems,
+			addedItems);
+		return Task.FromResult(SaveNpcShopRepurchaseMutationResult);
+	}
+
 	public Task<bool> SaveInventoryItemPackCountAsync(
 		int playerObjectId,
 		int itemObjectId,
@@ -1215,6 +1244,12 @@ public sealed record NpcShopApSellPersistenceCapture(
 	PlayerAbyssRank AbyssRank,
 	IReadOnlyList<InventoryItem> SellerItemUpdates,
 	IReadOnlyList<int> SellerDeletedItemObjectIds);
+
+public sealed record NpcShopRepurchasePersistenceCapture(
+	int PlayerObjectId,
+	InventoryItem? KinahItem,
+	IReadOnlyList<InventoryItem> UpdatedItems,
+	IReadOnlyList<InventoryItem> AddedItems);
 
 internal sealed record ItemStonePersistenceRow(
 	int ItemObjectId,
@@ -2306,6 +2341,44 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save NPC shop AP sell mutation for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveNpcShopRepurchaseMutationAsync(
+		int playerObjectId,
+		InventoryItem? kinahItem,
+		IReadOnlyList<InventoryItem> updatedItems,
+		IReadOnlyList<InventoryItem> addedItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: RepurchaseService.repurchaseFromShop decreases Kinah through
+		// Storage.tryDecreaseKinah, restores the item through ItemService.addItem, and
+		// keeps the repurchase set as runtime-only state.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (kinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItem, cancellationToken))
+				return false;
+
+			foreach (var item in updatedItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var item in addedItems)
+				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save NPC shop repurchase mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
