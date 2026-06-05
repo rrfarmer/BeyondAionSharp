@@ -12,6 +12,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.ToyPet;
+using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
@@ -2938,6 +2939,49 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task SchedulePetRefeed_CancelsPreviousTaskBeforeReplacementCallbackMutatesPetState()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		await using var fixture = await BuyItemFixture.CreateAsync(threadPoolManager: threadPoolManager);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Feeder Mate",
+				Decoration: 188051001,
+				RefeedTimeMillis: 900_000,
+				HungryLevel: PetHungryLevel.Full),
+		];
+
+		fixture.Connection.SchedulePetRefeed(player, petObjectId: 7001, delayMilliseconds: 150);
+		fixture.Connection.SchedulePetRefeed(player, petObjectId: 7001, delayMilliseconds: 20);
+
+		await WaitUntilAsync(
+			() =>
+			{
+				var pet = Assert.Single(player.OwnedPets);
+				return pet.RefeedTimeMillis == 0 && pet.HungryLevel == PetHungryLevel.Hungry;
+			});
+
+		player.OwnedPets =
+		[
+			Assert.Single(player.OwnedPets) with
+			{
+				RefeedTimeMillis = 123_456,
+				HungryLevel = PetHungryLevel.Full,
+			},
+		];
+
+		await Task.Delay(200);
+
+		var finalPet = Assert.Single(player.OwnedPets);
+		Assert.Equal(123_456, finalPet.RefeedTimeMillis);
+		Assert.Equal(PetHungryLevel.Full, finalPet.HungryLevel);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodPersistenceFailureLeavesFoodAndFeedStateUnchangedAfterStart()
 	{
 		const int flavourId = 71;
@@ -5509,6 +5553,20 @@ public sealed class GameServerConnectionBuyItemTests
 		return frame[7..];
 	}
 
+	private static async Task WaitUntilAsync(Func<bool> predicate)
+	{
+		var deadline = DateTime.UtcNow.AddSeconds(2);
+		while (DateTime.UtcNow < deadline)
+		{
+			if (predicate())
+				return;
+
+			await Task.Delay(10);
+		}
+
+		Assert.True(predicate());
+	}
+
 	internal sealed class BuyItemFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
@@ -5566,6 +5624,7 @@ public sealed class GameServerConnectionBuyItemTests
 			PriceInfluenceRates? buyItemPriceInfluenceRates = null,
 			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 			IDFactory? idFactory = null,
+			ThreadPoolManager? threadPoolManager = null,
 			Func<int, int>? petLovedRewardIndexSelector = null,
 			bool observeBuyItemPlans = true)
 		{
@@ -5608,6 +5667,7 @@ public sealed class GameServerConnectionBuyItemTests
 						playerEnterWorldService: playerEnterWorldService,
 						connectionRegistry: registry,
 						idFactory: idFactory,
+						threadPoolManager: threadPoolManager,
 						crypt: crypt,
 						sentPacketObserver: packet =>
 						{

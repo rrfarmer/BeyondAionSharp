@@ -115,6 +115,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PetDopingTable? _petDopings;
 	private readonly PetFeedDataTable? _petFeedData;
 	private readonly Func<int, int> _petLovedRewardIndexSelector;
+	private readonly ConcurrentDictionary<int, ScheduledTask> _petRefeedTasks = new();
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -805,15 +806,23 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmEmotion(player, EmotionType.EndFeeding, 0, player.ObjectId));
 	}
 
-	private void SchedulePetRefeed(Player player, int petObjectId, long delayMilliseconds)
+	internal void SchedulePetRefeed(Player player, int petObjectId, long delayMilliseconds)
 	{
-		// Java parity: PetCommonData.scheduleRefeed clears refeed time and sets hungry level back to HUNGRY after the delay.
+		// Java parity: PetCommonData.scheduleRefeed cancels any previous refeed task, then clears refeed time
+		// and sets hungry level back to HUNGRY after the delay.
+		if (_petRefeedTasks.TryRemove(petObjectId, out var existingTask))
+			existingTask.Cancel();
+
 		if (_threadPoolManager == null || delayMilliseconds <= 0)
 			return;
 
-		_threadPoolManager.Schedule(
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.Schedule(
 			_ =>
 			{
+				if (scheduledTask == null || !TryRemovePetRefeedTask(petObjectId, scheduledTask))
+					return ValueTask.CompletedTask;
+
 				var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
 				if (ownedPet == null)
 					return ValueTask.CompletedTask;
@@ -829,7 +838,12 @@ public sealed class GameServerConnection : BaseClientConnection
 				return ValueTask.CompletedTask;
 			},
 			TimeSpan.FromMilliseconds(delayMilliseconds));
+		_petRefeedTasks[petObjectId] = scheduledTask;
 	}
+
+	private bool TryRemovePetRefeedTask(int petObjectId, ScheduledTask scheduledTask) =>
+		((ICollection<KeyValuePair<int, ScheduledTask>>)_petRefeedTasks).Remove(
+			new KeyValuePair<int, ScheduledTask>(petObjectId, scheduledTask));
 
 	private PetFeedReward? SelectLovedPetFeedReward(IReadOnlyList<PetFeedReward> rewards)
 	{
