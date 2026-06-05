@@ -324,6 +324,24 @@ public sealed class PlayerEnterWorldService
 		return _repository.SavePlayerPetDopingBagAsync(player.ObjectId, petObjectId, itemIds, cancellationToken);
 	}
 
+	public Task<bool> SavePlayerPetFeedStatusAsync(
+		Player player,
+		int petObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PetController.onDelete -> PlayerPetsDAO.saveFeedStatus.
+		return _repository.SavePlayerPetFeedStatusAsync(
+			player.ObjectId,
+			petObjectId,
+			hungryLevel,
+			feedProgress,
+			reuseTime,
+			cancellationToken);
+	}
+
 	public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
 		Player player,
 		int petObjectId,

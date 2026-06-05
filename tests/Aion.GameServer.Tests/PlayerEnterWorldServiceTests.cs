@@ -3388,6 +3388,17 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SavePlayerPetFeedStatusAsync(
+			int playerObjectId,
+			int petObjectId,
+			int hungryLevel,
+			int feedProgress,
+			long reuseTime,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
 			int playerObjectId,
 			int petObjectId,

@@ -1081,6 +1081,10 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		var petObjectId = player.PetSummonObjectId;
 		CancelPetRefeedTask(petObjectId);
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
+		if (ownedPet != null)
+			await PersistActivePetFeedStatusOnDeleteAsync(player, ownedPet);
+
 		_world?.TryRemoveObject(petObjectId, out _);
 		player.HasPetSummon = false;
 		player.PetSummonObjectId = 0;
@@ -1089,6 +1093,29 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java World.removeObject despawns pets with ObjectDeleteAnimation.FADE_OUT before PetController.onDelete.
 		if (sendDismissPacket)
 			await SendPacketAsync(new SmPet(petObjectId, ObjectDeleteAnimation.FadeOut));
+	}
+
+	private async Task PersistActivePetFeedStatusOnDeleteAsync(Player player, PlayerOwnedPet ownedPet)
+	{
+		// Java parity: PetController.onDelete sets cancelFeed and persists PlayerPetsDAO.saveFeedStatus
+		// only when PetCommonData has feed progress, which food-function pets provide.
+		if (GetPetTemplate(ownedPet.TemplateId)?.ContainsFunction(PetFunctionType.Food) != true)
+			return;
+
+		var updatedPet = ownedPet with { CancelFeed = true };
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
+
+		if (_playerEnterWorldService != null)
+		{
+			await _playerEnterWorldService.SavePlayerPetFeedStatusAsync(
+				player,
+				updatedPet.ObjectId,
+				(int)updatedPet.HungryLevel,
+				updatedPet.FeedProgressData,
+				updatedPet.RefeedTimeMillis);
+		}
 	}
 
 	private string NormalizeName(string name)

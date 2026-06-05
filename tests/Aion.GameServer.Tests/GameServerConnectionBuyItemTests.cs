@@ -2298,6 +2298,66 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetDismissPersistsFeedStatusAndSetsCancelFeed()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"feeder pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [new PetFunctionSummary(71, PetFunctionType.Food, Slots: 0, RatePrice: 0)])),
+			playerEnterWorldRepository: playerRepository);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Feeder Mate",
+				Decoration: 188051001,
+				FeedProgressData: 0x12345550,
+				RefeedTimeMillis: 123_456_789,
+				HungryLevel: PetHungryLevel.Semifull),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		fixture.World.TryAddObject(
+			7001,
+			new Aion.GameServer.Model.GameObjects.WorldPet(
+				7001,
+				900210,
+				"Feeder Mate",
+				player.ObjectId,
+				player.Position,
+				188051001,
+				HasMerchantFunction: false,
+				MerchantSellModifier: null));
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Dismiss, templateId: 123456));
+
+		Assert.Equal(1, playerRepository.SavePlayerPetFeedStatusCalls);
+		Assert.Equal(
+			(player.ObjectId, 7001, (int)PetHungryLevel.Semifull, 0x12345550, 123_456_789L),
+			playerRepository.SavedPlayerPetFeedStatus);
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.True(pet.CancelFeed);
+		Assert.False(player.HasPetSummon);
+		Assert.False(fixture.World.TryGetObject(7001, out _));
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetDismissPacket(
+			Assert.IsType<SmPet>(packet),
+			expectedObjectId: 7001,
+			expectedAnimation: ObjectDeleteAnimation.FadeOut);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetDismissWithoutActivePetDoesNothing()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();

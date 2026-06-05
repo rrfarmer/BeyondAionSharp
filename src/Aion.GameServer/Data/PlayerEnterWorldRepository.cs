@@ -232,6 +232,14 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<int> itemIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SavePlayerPetFeedStatusAsync(
+		int playerObjectId,
+		int petObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerPetFeedConsumeMutationAsync(
 		int playerObjectId,
 		int petObjectId,
@@ -463,6 +471,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int SavePlayerPetDopingBagCalls { get; private set; }
 
 	public (int PlayerObjectId, int PetObjectId, IReadOnlyList<int> ItemIds)? SavedPlayerPetDopingBag { get; private set; }
+
+	public bool SavePlayerPetFeedStatusResult { get; init; } = true;
+
+	public int SavePlayerPetFeedStatusCalls { get; private set; }
+
+	public (int PlayerObjectId, int PetObjectId, int HungryLevel, int FeedProgress, long ReuseTime)? SavedPlayerPetFeedStatus { get; private set; }
 
 	public bool SavePlayerPetFeedConsumeMutationResult { get; init; } = true;
 
@@ -953,6 +967,19 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SavePlayerPetDopingBagCalls++;
 		SavedPlayerPetDopingBag = (playerObjectId, petObjectId, itemIds.ToArray());
 		return Task.FromResult(SavePlayerPetDopingBagResult);
+	}
+
+	public Task<bool> SavePlayerPetFeedStatusAsync(
+		int playerObjectId,
+		int petObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default)
+	{
+		SavePlayerPetFeedStatusCalls++;
+		SavedPlayerPetFeedStatus = (playerObjectId, petObjectId, hungryLevel, feedProgress, reuseTime);
+		return Task.FromResult(SavePlayerPetFeedStatusResult);
 	}
 
 	public Task<bool> SavePlayerPetFeedConsumeMutationAsync(
@@ -5777,6 +5804,39 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save doping bag for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePlayerPetFeedStatusAsync(
+		int playerObjectId,
+		int petObjectId,
+		int hungryLevel,
+		int feedProgress,
+		long reuseTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerPetsDAO.saveFeedStatus stores delete-time pet feed status.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE player_pets SET hungry_level = ?, feed_progress = ?, reuse_time = ? WHERE id = ? AND player_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = hungryLevel },
+					new MySqlParameter { Value = feedProgress },
+					new MySqlParameter { Value = reuseTime },
+					new MySqlParameter { Value = petObjectId },
+					new MySqlParameter { Value = playerObjectId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save feed status for pet {PetObjectId} and player {PlayerObjectId}", petObjectId, playerObjectId);
 			return false;
 		}
 	}
