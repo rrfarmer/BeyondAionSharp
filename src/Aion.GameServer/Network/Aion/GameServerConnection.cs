@@ -926,7 +926,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleCraftAsync(_activePlayer, craft);
 				break;
 			case CmBuyItem buyItem:
-				HandleBuyItem(_activePlayer, buyItem);
+				await HandleBuyItemAsync(_activePlayer, buyItem);
 				break;
 			case CmBuyTradeInTrade:
 				// Java parity: network/aion/clientpackets/CM_BUY_TRADE_IN_TRADE.runImpl calls TradeService.performBuyFromTradeInTrade when count >= 1.
@@ -5422,9 +5422,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		_cmCraftStartCompositionPlanObserver.Invoke(compositionPlan);
 	}
 
-	private void HandleBuyItem(Player? player, CmBuyItem packet)
+	private async Task HandleBuyItemAsync(Player? player, CmBuyItem packet)
 	{
-		if (_cmBuyItemHandlerCompositionPlanObserver == null && _cmBuyItemSideEffectOutcomePlanObserver == null)
+		if (_cmBuyItemHandlerCompositionPlanObserver == null
+			&& _cmBuyItemSideEffectOutcomePlanObserver == null
+			&& !IsPrivateStoreBuyItemPacket(player, packet))
 			return;
 
 		var targetKind = ResolveBuyItemTargetKind(player, packet.SellerObjectId);
@@ -5461,6 +5463,133 @@ public sealed class GameServerConnection : BaseClientConnection
 			plan,
 			player?.ObjectId,
 			repurchaseStateSnapshots));
+		await TryExecutePrivateStorePurchaseAsync(player, packet, targetKind, privateStoreItems, privateStorePurchasePlan);
+	}
+
+	private bool IsPrivateStoreBuyItemPacket(Player? player, CmBuyItem packet)
+	{
+		return player != null
+			&& packet.TradeActionId == 0
+			&& _world != null
+			&& _world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			&& gameObject is Player;
+	}
+
+	private async Task TryExecutePrivateStorePurchaseAsync(
+		Player? buyer,
+		CmBuyItem packet,
+		CmBuyItemRunTargetKind targetKind,
+		IReadOnlyList<PrivateStoreListedItemSummary>? privateStoreItems,
+		PrivateStorePurchasePlan? purchasePlan)
+	{
+		// Java parity: CM_BUY_ITEM.runImpl -> PrivateStoreService.sellStoreItem for Player targets/action 0.
+		if (buyer == null
+			|| targetKind != CmBuyItemRunTargetKind.Player
+			|| packet.TradeActionId != 0
+			|| privateStoreItems == null
+			|| purchasePlan == null
+			|| _world == null
+			|| !_world.TryGetObject(packet.SellerObjectId, out var gameObject)
+			|| gameObject is not Player seller)
+			return;
+
+		foreach (var buyerMessage in purchasePlan.BuyerMessages)
+			await SendPacketAsync(buyerMessage);
+
+		if (purchasePlan.Status != PrivateStorePurchasePlanStatus.PlanCreated)
+			return;
+
+		var itemTemplates = _buyItemItemTemplates ?? _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (itemTemplates == null)
+			return;
+
+		ApplyInventoryItemUpdates(seller, purchasePlan.SellerItemUpdates);
+		if (purchasePlan.SellerDeletedItemObjectIds.Count != 0)
+			seller.InventoryItems = seller.InventoryItems
+				.Where(item => !purchasePlan.SellerDeletedItemObjectIds.Contains(item.ObjectId))
+				.ToArray();
+		ApplyInventoryItemUpdates(buyer, purchasePlan.BuyerUpdatedItems);
+		if (purchasePlan.BuyerAddedItems.Count != 0)
+			buyer.InventoryItems = buyer.InventoryItems
+				.Concat(purchasePlan.BuyerAddedItems)
+				.ToArray();
+		if (purchasePlan.BuyerKinahUpdate != null)
+			ApplyInventoryItemUpdates(buyer, [purchasePlan.BuyerKinahUpdate]);
+		if (purchasePlan.SellerKinahUpdate != null)
+			ApplyInventoryItemUpdates(seller, [purchasePlan.SellerKinahUpdate]);
+
+		if (!purchasePlan.ShouldCloseSellerStore)
+			UpdateSellerPrivateStoreItems(seller, purchasePlan.BoughtItems);
+
+		foreach (var deletedItemObjectId in purchasePlan.SellerDeletedItemObjectIds)
+			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmDeleteItem(deletedItemObjectId));
+		foreach (var sellerItem in purchasePlan.SellerItemUpdates)
+			if (itemTemplates.GetItemTemplate(sellerItem.ItemId) is { } template)
+				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmInventoryUpdateItem(sellerItem, template, SmInventoryUpdateItem.DecreaseItemUse));
+		foreach (var buyerItem in purchasePlan.BuyerAddedItems)
+			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(buyerItem, template));
+		foreach (var buyerItem in purchasePlan.BuyerUpdatedItems)
+			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+				await SendPacketAsync(new SmInventoryUpdateItem(buyerItem, template, SmInventoryUpdateItem.IncreaseItemCollect));
+		if (purchasePlan.BuyerKinahUpdate != null
+			&& itemTemplates.GetItemTemplate(purchasePlan.BuyerKinahUpdate.ItemId) is { } buyerKinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(purchasePlan.BuyerKinahUpdate, buyerKinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		if (purchasePlan.SellerKinahUpdate != null
+			&& itemTemplates.GetItemTemplate(purchasePlan.SellerKinahUpdate.ItemId) is { } sellerKinahTemplate)
+			await SendPacketToPlayerOrSelfAsync(
+				seller.ObjectId,
+				new SmInventoryUpdateItem(purchasePlan.SellerKinahUpdate, sellerKinahTemplate, SmInventoryUpdateItem.IncreaseKinahCollect));
+		foreach (var sellerMessage in purchasePlan.SellerMessages)
+			await SendPacketToPlayerOrSelfAsync(seller.ObjectId, sellerMessage);
+
+		if (purchasePlan.ShouldCloseSellerStore)
+			await HandleClosePrivateStoreAsync(seller);
+	}
+
+	private async Task SendPacketToPlayerOrSelfAsync(int playerObjectId, GameServerPacket packet)
+	{
+		if (_activePlayer?.ObjectId == playerObjectId)
+			await SendPacketAsync(packet);
+		else if (_connectionRegistry != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(playerObjectId, packet);
+	}
+
+	private static void ApplyInventoryItemUpdates(Player player, IReadOnlyList<InventoryItem> updates)
+	{
+		if (updates.Count == 0)
+			return;
+
+		var items = player.InventoryItems.ToList();
+		foreach (var update in updates)
+		{
+			var index = items.FindIndex(item => item.ObjectId == update.ObjectId);
+			if (index >= 0)
+				items[index] = update;
+			else
+				items.Add(update);
+		}
+
+		player.InventoryItems = items.ToArray();
+	}
+
+	private static void UpdateSellerPrivateStoreItems(Player seller, IReadOnlyList<PrivateStorePurchaseItemRequest> boughtItems)
+	{
+		var boughtCountsByObjectId = new Dictionary<int, long>();
+		foreach (var boughtItem in boughtItems)
+			boughtCountsByObjectId[boughtItem.ItemObjectId] = boughtCountsByObjectId.GetValueOrDefault(boughtItem.ItemObjectId) + boughtItem.Count;
+
+		var updatedStoreItems = new List<PrivateStoreListedItemSummary>();
+		foreach (var storeItem in seller.PrivateStoreItems)
+		{
+			var remainingCount = storeItem.Count - boughtCountsByObjectId.GetValueOrDefault(storeItem.ItemObjectId);
+			if (remainingCount <= 0)
+				continue;
+
+			updatedStoreItems.Add(storeItem with { StoreIndex = updatedStoreItems.Count, Count = remainingCount });
+		}
+
+		seller.PrivateStoreItems = updatedStoreItems;
 	}
 
 	private async Task HandleFindGroupAsync(CmFindGroup findGroup)

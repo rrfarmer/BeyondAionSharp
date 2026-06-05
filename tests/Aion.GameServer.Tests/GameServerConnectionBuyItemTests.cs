@@ -929,7 +929,7 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
-	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreHydratesListedItemPurchaseDiagnostics()
+	public async Task ProcessPacketAsync_CmBuyItemPlayerPrivateStoreExecutesSingleItemPurchaseAndClosesStore()
 	{
 		var membership = new PlayerKnownListMembershipService();
 		var activePlayer = CreatePlayer();
@@ -951,6 +951,8 @@ public sealed class GameServerConnectionBuyItemTests
 			Name = "StoreSeller",
 			Race = activePlayer.Race,
 			IsOnline = true,
+			CreatureState = PlayerCreatureState.PrivateShop,
+			PrivateStoreMessage = "Practice wares",
 			Position = new WorldPosition(210010000, 10, 0, 0, 0),
 			InventoryItems =
 			[
@@ -981,7 +983,8 @@ public sealed class GameServerConnectionBuyItemTests
 		await using var fixture = await BuyItemFixture.CreateAsync(
 			CmBuyItemKnownListMembershipResolverAdapterService.CreateResolver(membership),
 			buyItemItemTemplates: CreateItemTemplates(
-				Template(100000001, price: 1_000)),
+				Template(100000001, price: 1_000),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
 			buyItemDiagnosticObjectIdProvider: Sequence(9001));
 		SetActivePlayerForPacketDispatch(fixture.Connection, activePlayer);
 		fixture.World.TryAddObject(sellerPlayer.ObjectId, sellerPlayer);
@@ -1018,7 +1021,38 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.True(outcome.WouldWriteExchangeLog);
 		Assert.True(outcome.WouldCommitTransactionBoundary);
 		Assert.False(outcome.ShouldDispatchLiveSideEffects);
-		Assert.Empty(fixture.SentPackets);
+		Assert.Empty(sellerPlayer.PrivateStoreItems);
+		Assert.Equal(string.Empty, sellerPlayer.PrivateStoreMessage);
+		Assert.False(sellerPlayer.IsInState(PlayerCreatureState.PrivateShop));
+		Assert.True(sellerPlayer.IsInState(PlayerCreatureState.Active));
+		Assert.DoesNotContain(sellerPlayer.InventoryItems, item => item.ObjectId == 3001);
+		Assert.Contains(sellerPlayer.InventoryItems, item => item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 10_000);
+		Assert.Contains(activePlayer.InventoryItems, item => item.ObjectId == 9001 && item.ItemId == 100000001 && item.Count == 1);
+		Assert.Contains(activePlayer.InventoryItems, item => item.ItemId == InventoryItemFactory.KinahItemId && item.Count == 10_000);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType));
+		Assert.Collection(
+			fixture.Registry.DirectPackets,
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.IsType<SmDeleteItem>(sent.Packet);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, Assert.IsType<SmInventoryUpdateItem>(sent.Packet).UpdateType);
+			},
+			sent =>
+			{
+				Assert.Equal(sellerPlayer.ObjectId, sent.PlayerObjectId);
+				Assert.Equal(1400134, Assert.IsType<SmSystemMessage>(sent.Packet).MessageId);
+			});
+		var closeBroadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
+		Assert.Equal(sellerPlayer.ObjectId, closeBroadcast.SourceObjectId);
+		AssertClosePrivateShopEmotion(Assert.IsType<SmEmotion>(closeBroadcast.Packet), sellerPlayer.ObjectId);
 	}
 
 	private static Player CreatePlayer() =>
@@ -1188,6 +1222,23 @@ public sealed class GameServerConnectionBuyItemTests
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
 	}
 
+	private static void AssertClosePrivateShopEmotion(SmEmotion packet, int expectedPlayerObjectId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal((int)Aion.GameServer.Model.EmotionType.ClosePrivateShop, reader.ReadC());
+		Assert.Equal((int)PlayerCreatureState.Active, reader.ReadH());
+		Assert.Equal(0f, reader.ReadF());
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
+
 	internal sealed class BuyItemFixture : IAsyncDisposable
 	{
 		private readonly TcpClient _client;
@@ -1196,6 +1247,7 @@ public sealed class GameServerConnectionBuyItemTests
 			TcpClient client,
 			GameServerConnection connection,
 			GameWorld world,
+			CapturingConnectionRegistry registry,
 			List<CmBuyItemHandlerCompositionPlan> buyItemPlans,
 			List<CmBuyItemSideEffectOutcomePlan> buyItemSideEffectOutcomePlans,
 			List<GameServerPacket> sentPackets)
@@ -1203,6 +1255,7 @@ public sealed class GameServerConnectionBuyItemTests
 			_client = client;
 			Connection = connection;
 			World = world;
+			Registry = registry;
 			BuyItemPlans = buyItemPlans;
 			BuyItemSideEffectOutcomePlans = buyItemSideEffectOutcomePlans;
 			SentPackets = sentPackets;
@@ -1211,6 +1264,8 @@ public sealed class GameServerConnectionBuyItemTests
 		public GameServerConnection Connection { get; }
 
 		public GameWorld World { get; }
+
+		public CapturingConnectionRegistry Registry { get; }
 
 		public List<CmBuyItemHandlerCompositionPlan> BuyItemPlans { get; }
 
@@ -1244,6 +1299,7 @@ public sealed class GameServerConnectionBuyItemTests
 				var buyItemPlans = new List<CmBuyItemHandlerCompositionPlan>();
 				var buyItemSideEffectOutcomePlans = new List<CmBuyItemSideEffectOutcomePlan>();
 				var sentPackets = new List<GameServerPacket>();
+				var registry = new CapturingConnectionRegistry();
 				var fixture = new BuyItemFixture(
 					client,
 					new GameServerConnection(
@@ -1253,6 +1309,7 @@ public sealed class GameServerConnectionBuyItemTests
 						new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 						options: options ?? new GameServerOptions(),
 						world: world,
+						connectionRegistry: registry,
 						crypt: crypt,
 						sentPacketObserver: sentPackets.Add,
 						cmBuyItemHandlerCompositionPlanObserver: buyItemPlans.Add,
@@ -1265,6 +1322,7 @@ public sealed class GameServerConnectionBuyItemTests
 						buyItemDiagnosticObjectIdProvider: buyItemDiagnosticObjectIdProvider,
 						buyItemPriceInfluenceRates: buyItemPriceInfluenceRates),
 					world,
+					registry,
 					buyItemPlans,
 					buyItemSideEffectOutcomePlans,
 					sentPackets);
@@ -1281,5 +1339,72 @@ public sealed class GameServerConnectionBuyItemTests
 			await Connection.DisposeAsync();
 			_client.Dispose();
 		}
+	}
+
+	internal sealed record DirectRegistryPacket(int PlayerObjectId, GameServerPacket Packet);
+
+	internal sealed record VisibleRegistryBroadcast(WorldPosition Position, int SourceObjectId, GameServerPacket Packet, bool IncludeSourcePlayer);
+
+	internal sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public List<DirectRegistryPacket> DirectPackets { get; } = [];
+
+		public List<VisibleRegistryBroadcast> VisibleBroadcasts { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			DirectPackets.Add(new DirectRegistryPacket(playerObjectId, packet));
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null) =>
+			Task.FromResult(0);
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			VisibleBroadcasts.Add(new VisibleRegistryBroadcast(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
+			return Task.FromResult(1);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null) =>
+			Task.FromResult(0);
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null) =>
+			Task.FromResult(0);
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates) =>
+			Task.FromResult(0);
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail) =>
+			Task.FromResult(false);
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah) =>
+			Task.FromResult(false);
 	}
 }
