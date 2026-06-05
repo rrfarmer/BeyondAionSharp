@@ -711,8 +711,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmPlayerListener:
 				// Java parity: network/aion/clientpackets/CM_PLAYER_LISTENER.runImpl dispatches WebRewardService when enabled; deferred until web rewards are ported.
 				break;
-			case CmDeleteQuest:
-				// Java parity: network/aion/clientpackets/CM_DELETE_QUEST.runImpl cancels timed quests and dispatches QuestService.abandonQuest; deferred until quest mutation is ported.
+			case CmDeleteQuest deleteQuest:
+				if (_activePlayer != null)
+					await HandleDeleteQuestAsync(_activePlayer, deleteQuest.QuestId);
 				break;
 			case CmUiSettings uiSettings:
 				if (_activePlayer != null)
@@ -11523,6 +11524,39 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var instruction in plan.Instructions)
 			await SendToPlayerOrActiveAsync(instruction.RecipientObjectId, instruction.Packet);
+	}
+
+	private async Task HandleDeleteQuestAsync(Player player, int questId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: CM_DELETE_QUEST.runImpl -> timer-clear SM_QUEST_ACTION(questId, 0),
+		// then QuestService.abandonQuest(player, questId).
+		var questTemplates = _runtimeContext?.DataManager?.StaticData.NearbyQuestTemplates;
+		NearbyQuestTemplateSummary? template = null;
+		if (questTemplates != null)
+			questTemplates.TryGetQuest(questId, out template);
+
+		var result = QuestAbandonService.Abandon(player, questId, template);
+		foreach (var packet in result.Packets)
+			await SendPacketAsync(packet, cancellationToken);
+
+		// Java also removes quest work items, aborts NPC-faction quests, and deletes work-order recipes.
+		// Those dependencies are not live in C# yet; the core quest-state mutation + client packets are live.
+		if (result.NearbyQuestRefreshRequired)
+			await SendNearbyQuestRefreshAsync(player, cancellationToken);
+	}
+
+	private async Task SendNearbyQuestRefreshAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		var worldMapStates = _runtimeContext?.WorldMapStates;
+		if (worldMapStates == null || staticData?.NearbyQuestTemplates == null)
+			return;
+
+		worldMapStates.TryGetWorldMapInstance(player.Position.WorldId, player.Position.InstanceId, out var mapInstance);
+		var nearbyPlan = NearbyQuestRefreshPlanService.CreatePlan(player, mapInstance, staticData.NearbyQuestTemplates);
+		var packetPlan = NearbyQuestRefreshPlanService.CreatePacketFactoryPlan(nearbyPlan);
+		if (packetPlan.Packet != null)
+			await SendPacketAsync(packetPlan.Packet, cancellationToken);
 	}
 
 	private async Task SendToPlayerOrActiveAsync(int recipientObjectId, GameServerPacket packet, CancellationToken cancellationToken = default)

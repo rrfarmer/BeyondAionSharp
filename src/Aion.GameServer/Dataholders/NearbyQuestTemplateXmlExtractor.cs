@@ -43,6 +43,7 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			RequiredRank: ReadIntAttribute(quest, "rank"),
 			MaxRepeatCount: ReadIntAttribute(quest, "max_repeat_count", defaultValue: 1),
 			IsTimeBased: repeatCycle.Length != 0,
+			IsTimer: ReadBoolAttribute(quest, "timer"),
 			RepeatCycle: repeatCycle,
 			HasXmlStartConditions: startConditions.Count != 0,
 			HasInventoryItems: inventoryItems.Count != 0,
@@ -63,6 +64,9 @@ public sealed class NearbyQuestTemplateXmlExtractor
 			// Java parity: QuestTemplate.cannotShare (@XmlAttribute cannot_share, default false) and
 			// QuestTemplate.target (@XmlAttribute target, QuestTarget enum, default NONE). Both back CM_QUEST_SHARE.
 			CannotShare: ReadBoolAttribute(quest, "cannot_share"),
+			// Java parity: QuestTemplate.cannotGiveup (@XmlAttribute cannot_giveup, default false)
+			// backs QuestService.abandonQuest.
+			CannotGiveup: ReadBoolAttribute(quest, "cannot_giveup"),
 			Target: ReadStringAttribute(quest, "target", defaultValue: "NONE"));
 	}
 

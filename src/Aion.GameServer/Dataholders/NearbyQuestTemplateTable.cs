@@ -28,6 +28,7 @@ public sealed record NearbyQuestTemplateSummary(
 	int RequiredRank = 0,
 	int MaxRepeatCount = 1,
 	bool IsTimeBased = false,
+	bool IsTimer = false,
 	IReadOnlyList<string>? RepeatCycle = null,
 	bool HasXmlStartConditions = false,
 	bool HasInventoryItems = false,
@@ -46,6 +47,7 @@ public sealed record NearbyQuestTemplateSummary(
 	bool HasBonus = false,
 	bool HasQuestWorkItems = false,
 	bool CannotShare = false,
+	bool CannotGiveup = false,
 	string Target = "NONE")
 {
 	public IReadOnlySet<string> ClassPermitted { get; } = ClassPermitted ?? new HashSet<string>(StringComparer.Ordinal);
