@@ -5524,9 +5524,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			UpdateSellerPrivateStoreItems(seller, GetAppliedPrivateStoreBoughtItems(purchasePlan));
 
 		var projectedSellerCubeItemsCount = sellerCubeItemsCountBeforeDeletedItems;
+		var projectedBuyerCubeItemsCount = buyerCubeItemsCountBeforeAddedItems;
 		var sellerDeletedItemObjectIds = purchasePlan.SellerDeletedItemObjectIds.ToHashSet();
 		var sellerItemUpdatesByObjectId = purchasePlan.SellerItemUpdates.ToDictionary(item => item.ObjectId);
 		var sellerMessageIndex = 0;
+		var buyerItemFanouts = purchasePlan.BuyerItemFanouts;
+		var buyerItemFanoutIndex = 0;
 		foreach (var boughtItem in GetAppliedPrivateStoreBoughtItems(purchasePlan))
 		{
 			if (sellerDeletedItemObjectIds.Contains(boughtItem.ItemObjectId))
@@ -5544,23 +5547,43 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, new SmInventoryUpdateItem(sellerItem, template, SmInventoryUpdateItem.DecreaseItemUse));
 			}
 
+			if (buyerItemFanouts != null && buyerItemFanoutIndex < buyerItemFanouts.Count)
+			{
+				var buyerItemFanout = buyerItemFanouts[buyerItemFanoutIndex++];
+				foreach (var buyerItem in buyerItemFanout.BuyerAddedItems)
+				{
+					if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+					{
+						if (buyerItem.Location == CubeStorageId && buyerItem.ItemId != KinahItemId)
+							projectedBuyerCubeItemsCount++;
+						await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(buyerItem, template));
+						await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedBuyerCubeItemsCount, buyer.NpcExpands, buyer.QuestExpands, buyer.ItemExpands));
+					}
+				}
+				foreach (var buyerItem in buyerItemFanout.BuyerUpdatedItems)
+					if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+						await SendPacketAsync(new SmInventoryUpdateItem(buyerItem, template, SmInventoryUpdateItem.IncreaseItemCollect));
+			}
+
 			if (sellerMessageIndex < purchasePlan.SellerMessages.Count)
 				await SendPacketToPlayerOrSelfAsync(seller.ObjectId, purchasePlan.SellerMessages[sellerMessageIndex++]);
 		}
-		var projectedBuyerCubeItemsCount = buyerCubeItemsCountBeforeAddedItems;
-		foreach (var buyerItem in purchasePlan.BuyerAddedItems)
+		if (buyerItemFanouts == null)
 		{
-			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+			foreach (var buyerItem in purchasePlan.BuyerAddedItems)
 			{
-				if (buyerItem.Location == CubeStorageId && buyerItem.ItemId != KinahItemId)
-					projectedBuyerCubeItemsCount++;
-				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(buyerItem, template));
-				await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedBuyerCubeItemsCount, buyer.NpcExpands, buyer.QuestExpands, buyer.ItemExpands));
+				if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+				{
+					if (buyerItem.Location == CubeStorageId && buyerItem.ItemId != KinahItemId)
+						projectedBuyerCubeItemsCount++;
+					await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(buyerItem, template));
+					await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedBuyerCubeItemsCount, buyer.NpcExpands, buyer.QuestExpands, buyer.ItemExpands));
+				}
 			}
+			foreach (var buyerItem in purchasePlan.BuyerUpdatedItems)
+				if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
+					await SendPacketAsync(new SmInventoryUpdateItem(buyerItem, template, SmInventoryUpdateItem.IncreaseItemCollect));
 		}
-		foreach (var buyerItem in purchasePlan.BuyerUpdatedItems)
-			if (itemTemplates.GetItemTemplate(buyerItem.ItemId) is { } template)
-				await SendPacketAsync(new SmInventoryUpdateItem(buyerItem, template, SmInventoryUpdateItem.IncreaseItemCollect));
 		if (purchasePlan.BuyerKinahUpdate != null
 			&& itemTemplates.GetItemTemplate(purchasePlan.BuyerKinahUpdate.ItemId) is { } buyerKinahTemplate)
 			await SendPacketAsync(new SmInventoryUpdateItem(purchasePlan.BuyerKinahUpdate, buyerKinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));

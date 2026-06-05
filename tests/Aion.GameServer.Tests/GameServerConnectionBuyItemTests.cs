@@ -1075,6 +1075,18 @@ public sealed class GameServerConnectionBuyItemTests
 		var closeBroadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
 		Assert.Equal(sellerPlayer.ObjectId, closeBroadcast.SourceObjectId);
 		AssertClosePrivateShopEmotion(Assert.IsType<SmEmotion>(closeBroadcast.Packet), sellerPlayer.ObjectId);
+		Assert.Collection(
+			fixture.PacketEvents,
+			packet => AssertPacketEvent<SmDeleteItem>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmInventoryAddItem>(packet, "active"),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "active"),
+			packet => Assert.Equal(1400134, AssertPacketEvent<SmSystemMessage>(packet, "direct", sellerPlayer.ObjectId).MessageId),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, AssertPacketEvent<SmInventoryUpdateItem>(packet, "active").UpdateType),
+			packet => AssertPacketEvent<SmInventoryAddItem>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "direct", sellerPlayer.ObjectId),
+			packet => Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, AssertPacketEvent<SmInventoryUpdateItem>(packet, "direct", sellerPlayer.ObjectId).UpdateType),
+			packet => AssertPacketEvent<SmEmotion>(packet, "visible", sellerPlayer.ObjectId));
 	}
 
 	[Fact]
@@ -1234,6 +1246,23 @@ public sealed class GameServerConnectionBuyItemTests
 			});
 		var closeBroadcast = Assert.Single(fixture.Registry.VisibleBroadcasts);
 		Assert.Equal(sellerPlayer.ObjectId, closeBroadcast.SourceObjectId);
+		Assert.Collection(
+			fixture.PacketEvents,
+			packet => AssertPacketEvent<SmDeleteItem>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmInventoryAddItem>(packet, "active"),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "active"),
+			packet => Assert.Equal(1400134, AssertPacketEvent<SmSystemMessage>(packet, "direct", sellerPlayer.ObjectId).MessageId),
+			packet => AssertPacketEvent<SmDeleteItem>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmInventoryAddItem>(packet, "active"),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "active"),
+			packet => Assert.Equal(1400134, AssertPacketEvent<SmSystemMessage>(packet, "direct", sellerPlayer.ObjectId).MessageId),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, AssertPacketEvent<SmInventoryUpdateItem>(packet, "active").UpdateType),
+			packet => AssertPacketEvent<SmInventoryAddItem>(packet, "direct", sellerPlayer.ObjectId),
+			packet => AssertPacketEvent<SmCubeUpdate>(packet, "direct", sellerPlayer.ObjectId),
+			packet => Assert.Equal(SmInventoryUpdateItem.IncreaseKinahCollect, AssertPacketEvent<SmInventoryUpdateItem>(packet, "direct", sellerPlayer.ObjectId).UpdateType),
+			packet => AssertPacketEvent<SmEmotion>(packet, "visible", sellerPlayer.ObjectId));
 	}
 
 	[Fact]
@@ -1639,6 +1668,14 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(expectedDeleteType, reader.ReadC());
 	}
 
+	private static TPacket AssertPacketEvent<TPacket>(PacketEvent packetEvent, string expectedRecipient, int? expectedPlayerObjectId = null)
+		where TPacket : GameServerPacket
+	{
+		Assert.Equal(expectedRecipient, packetEvent.Recipient);
+		Assert.Equal(expectedPlayerObjectId, packetEvent.PlayerObjectId);
+		return Assert.IsType<TPacket>(packetEvent.Packet);
+	}
+
 	private static void AssertInventoryAddItemPayload(
 		SmInventoryAddItem packet,
 		int expectedObjectId,
@@ -1689,7 +1726,8 @@ public sealed class GameServerConnectionBuyItemTests
 			CapturingConnectionRegistry registry,
 			List<CmBuyItemHandlerCompositionPlan> buyItemPlans,
 			List<CmBuyItemSideEffectOutcomePlan> buyItemSideEffectOutcomePlans,
-			List<GameServerPacket> sentPackets)
+			List<GameServerPacket> sentPackets,
+			List<PacketEvent> packetEvents)
 		{
 			_client = client;
 			Connection = connection;
@@ -1698,6 +1736,7 @@ public sealed class GameServerConnectionBuyItemTests
 			BuyItemPlans = buyItemPlans;
 			BuyItemSideEffectOutcomePlans = buyItemSideEffectOutcomePlans;
 			SentPackets = sentPackets;
+			PacketEvents = packetEvents;
 		}
 
 		public GameServerConnection Connection { get; }
@@ -1711,6 +1750,8 @@ public sealed class GameServerConnectionBuyItemTests
 		public List<CmBuyItemSideEffectOutcomePlan> BuyItemSideEffectOutcomePlans { get; }
 
 		public List<GameServerPacket> SentPackets { get; }
+
+		public List<PacketEvent> PacketEvents { get; }
 
 		public static async Task<BuyItemFixture> CreateAsync(
 			Func<Player, int, object?, bool?>? buyItemKnownObjectResolver = null,
@@ -1738,7 +1779,8 @@ public sealed class GameServerConnectionBuyItemTests
 				var buyItemPlans = new List<CmBuyItemHandlerCompositionPlan>();
 				var buyItemSideEffectOutcomePlans = new List<CmBuyItemSideEffectOutcomePlan>();
 				var sentPackets = new List<GameServerPacket>();
-				var registry = new CapturingConnectionRegistry();
+				var packetEvents = new List<PacketEvent>();
+				var registry = new CapturingConnectionRegistry(packetEvents);
 				var fixture = new BuyItemFixture(
 					client,
 					new GameServerConnection(
@@ -1750,7 +1792,11 @@ public sealed class GameServerConnectionBuyItemTests
 						world: world,
 						connectionRegistry: registry,
 						crypt: crypt,
-						sentPacketObserver: sentPackets.Add,
+						sentPacketObserver: packet =>
+						{
+							sentPackets.Add(packet);
+							packetEvents.Add(new PacketEvent("active", null, packet));
+						},
 						cmBuyItemHandlerCompositionPlanObserver: buyItemPlans.Add,
 						cmBuyItemSideEffectOutcomePlanObserver: buyItemSideEffectOutcomePlans.Add,
 						buyItemKnownObjectResolver: buyItemKnownObjectResolver,
@@ -1764,7 +1810,8 @@ public sealed class GameServerConnectionBuyItemTests
 					registry,
 					buyItemPlans,
 					buyItemSideEffectOutcomePlans,
-					sentPackets);
+					sentPackets,
+					packetEvents);
 				return fixture;
 			}
 			finally
@@ -1784,8 +1831,17 @@ public sealed class GameServerConnectionBuyItemTests
 
 	internal sealed record VisibleRegistryBroadcast(WorldPosition Position, int SourceObjectId, GameServerPacket Packet, bool IncludeSourcePlayer);
 
+	internal sealed record PacketEvent(string Recipient, int? PlayerObjectId, GameServerPacket Packet);
+
 	internal sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
+		private readonly List<PacketEvent> _packetEvents;
+
+		public CapturingConnectionRegistry(List<PacketEvent> packetEvents)
+		{
+			_packetEvents = packetEvents;
+		}
+
 		public List<DirectRegistryPacket> DirectPackets { get; } = [];
 
 		public List<VisibleRegistryBroadcast> VisibleBroadcasts { get; } = [];
@@ -1811,6 +1867,7 @@ public sealed class GameServerConnectionBuyItemTests
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
 			DirectPackets.Add(new DirectRegistryPacket(playerObjectId, packet));
+			_packetEvents.Add(new PacketEvent("direct", playerObjectId, packet));
 			return Task.FromResult(true);
 		}
 
@@ -1825,6 +1882,7 @@ public sealed class GameServerConnectionBuyItemTests
 			Func<Player, bool>? filter = null)
 		{
 			VisibleBroadcasts.Add(new VisibleRegistryBroadcast(sourcePosition, sourceObjectId, packet, includeSourcePlayer));
+			_packetEvents.Add(new PacketEvent("visible", sourceObjectId, packet));
 			return Task.FromResult(1);
 		}
 

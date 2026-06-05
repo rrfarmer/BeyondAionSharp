@@ -26,6 +26,11 @@ public sealed record PrivateStorePurchaseItemRequest(
 	long PricePerItem,
 	string? ItemName);
 
+public sealed record PrivateStorePurchaseBuyerItemFanout(
+	PrivateStorePurchaseItemRequest BoughtItem,
+	IReadOnlyList<InventoryItem> BuyerAddedItems,
+	IReadOnlyList<InventoryItem> BuyerUpdatedItems);
+
 public sealed record PrivateStorePurchasePlan(
 	PrivateStorePurchasePlanStatus Status,
 	IReadOnlyList<PrivateStorePurchaseItemRequest> BoughtItems,
@@ -42,7 +47,8 @@ public sealed record PrivateStorePurchasePlan(
 	string? AuditMessage,
 	bool ShouldCloseSellerStore,
 	string JavaSource,
-	bool SellerKinahWasCreated = false)
+	bool SellerKinahWasCreated = false,
+	IReadOnlyList<PrivateStorePurchaseBuyerItemFanout>? BuyerItemFanouts = null)
 {
 	public bool IsLive => false;
 }
@@ -285,6 +291,7 @@ public static class PrivateStorePurchasePlanService
 		var sellerDeletes = new List<int>();
 		var buyerAddedItems = new List<InventoryItem>();
 		var buyerUpdatedItems = new List<InventoryItem>();
+		var buyerItemFanouts = new List<PrivateStorePurchaseBuyerItemFanout>();
 		var skippedMissingSellerItems = new List<PrivateStorePurchaseItemRequest>();
 		var sellerMessages = new List<SmSystemMessage>();
 
@@ -335,6 +342,10 @@ public static class PrivateStorePurchasePlanService
 
 			buyerAddedItems.AddRange(addPlan.AddedItems);
 			buyerUpdatedItems.AddRange(addPlan.UpdatedItems);
+			buyerItemFanouts.Add(new PrivateStorePurchaseBuyerItemFanout(
+				boughtItem,
+				addPlan.AddedItems,
+				addPlan.UpdatedItems));
 			ApplyBuyerAddPlan(workingBuyerItems, addPlan);
 
 			var sellerRemainingCount = sellerItem.Count - boughtItem.Count;
@@ -390,7 +401,8 @@ public static class PrivateStorePurchasePlanService
 			AuditMessage: null,
 			ShouldCloseSellerStore: remainingStoreItemObjectIds.Length == 0,
 			javaSource,
-			SellerKinahWasCreated: sellerKinahWasCreated);
+			SellerKinahWasCreated: sellerKinahWasCreated,
+			BuyerItemFanouts: buyerItemFanouts);
 	}
 
 	private static bool TryCalculatePrice(IReadOnlyList<PrivateStorePurchaseItemRequest> boughtItems, out long totalPrice)
