@@ -6720,6 +6720,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (existingQuest != null && startConditions.Failure is NearbyQuestStartConditionFailure.RepeatCount or NearbyQuestStartConditionFailure.RepeatTiming)
 				await SendPacketAsync(SmSystemMessage.QuestAcquireErrorNoneRepeatable(questTemplate.Name), cancellationToken);
+			else if (startConditions.Failure == NearbyQuestStartConditionFailure.InventoryItems
+				&& CreateInventoryItemStartConditionFailureMessage(player, questTemplate, staticData.ItemTemplates) is { } inventoryItemMessage)
+				await SendPacketAsync(inventoryItemMessage, cancellationToken);
 			else if (CreateQuestStartConditionFailureMessage(startConditions.Failure, questTemplate) is { } failureMessage)
 				await SendPacketAsync(failureMessage, cancellationToken);
 			return;
@@ -6770,6 +6773,26 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: model/gameobjects/player/Player.hasPermission.
 		return player.AccountMembership >= permissionLevel;
+	}
+
+	private static SmSystemMessage? CreateInventoryItemStartConditionFailureMessage(
+		Player player,
+		NearbyQuestTemplateSummary template,
+		ItemTemplateTable itemTemplates)
+	{
+		// Java parity: QuestService.inventoryItemCheck iterates required inventory_item rows
+		// and sends STR_QUEST_ACQUIRE_ERROR_INVENTORY_ITEM for the first missing item.
+		foreach (var requiredItem in template.InventoryItems)
+		{
+			if (player.InventoryItems.Any(item => item.ItemId == requiredItem.ItemId))
+				continue;
+
+			var itemTemplate = itemTemplates.GetItemTemplate(requiredItem.ItemId);
+			var requiredItemName = itemTemplate?.GetClientName();
+			return requiredItemName == null ? null : SmSystemMessage.QuestAcquireErrorInventoryItem(requiredItemName);
+		}
+
+		return null;
 	}
 
 	private static SmSystemMessage? CreateQuestStartConditionFailureMessage(

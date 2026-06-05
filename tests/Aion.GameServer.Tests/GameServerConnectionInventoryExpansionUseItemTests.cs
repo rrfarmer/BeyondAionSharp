@@ -378,6 +378,24 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			packet => AssertQuestActionPacket(Assert.IsType<SmQuestAction>(packet), SmQuestAction.AddActionId, 1122, expectedClientQuestVars: 0));
 	}
 
+	[Fact]
+	public async Task HandleUseItemAsync_QuestStartItemSendsInventoryItemConditionFailureMessage()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 169700009);
+
+		await fixture.Connection.HandleUseItemAsync(player, CreateUseItem(sourceItemObjectId: 5001));
+
+		Assert.Empty(player.Quests);
+		Assert.Equal(0, repository.InsertPlayerQuestCalls);
+		Assert.Equal(0, repository.UpdatePlayerQuestCalls);
+		var requiredItemName = fixture.StaticData.ItemTemplates.GetItemTemplate(182215001)!.GetClientName()!;
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300594, requiredItemName));
+	}
+
 	[Theory]
 	[InlineData(169630000)]
 	[InlineData(169640000)]
@@ -4177,18 +4195,22 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			GameServerConnection connection,
 			ThreadPoolManager? threadPoolManager,
 			List<GameServerPacket> sentPackets,
+			StaticData staticData,
 			string tempRoot)
 		{
 			_client = client;
 			_connection = connection;
 			_threadPoolManager = threadPoolManager;
 			SentPackets = sentPackets;
+			StaticData = staticData;
 			_tempRoot = tempRoot;
 		}
 
 		public GameServerConnection Connection => _connection;
 
 		public List<GameServerPacket> SentPackets { get; }
+
+		public StaticData StaticData { get; }
 
 		public static async Task<InventoryExpansionUseItemFixture> CreateAsync(
 			EmptyPlayerEnterWorldRepository? repository = null,
@@ -4267,6 +4289,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 								<queststart questid="1122"/>
 							</actions>
 						</item_template>
+						<item_template id="169700009" name="Test Inventory Quest Starter" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
+							<actions>
+								<queststart questid="1123"/>
+							</actions>
+						</item_template>
+						<item_template id="182215001" name="Required Quest Token" desc="910001" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10"/>
 						<item_template id="169600001" name="Test Emotion Card" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="10">
 							<actions>
 								<learnemotion emotionid="64"/>
@@ -4446,6 +4474,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						</quest>
 						<quest id="1121" name="Existing Normal Quest" minlevel_permitted="0" race_permitted="PC_ALL"/>
 						<quest id="1122" name="Test No Count Quest" minlevel_permitted="0" race_permitted="PC_ALL" category="EVENT"/>
+						<quest id="1123" name="Test Inventory Quest" minlevel_permitted="0" race_permitted="PC_ALL">
+							<inventory_items>
+								<inventory_item item_id="182215001" count="1"/>
+							</inventory_items>
+						</quest>
 					</quests>
 				</static_data>
 				""");
@@ -4493,7 +4526,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					idFactory: idFactory,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
-				return new InventoryExpansionUseItemFixture(client, connection, threadPoolManager, sentPackets, tempRoot);
+				return new InventoryExpansionUseItemFixture(client, connection, threadPoolManager, sentPackets, dataManager.StaticData, tempRoot);
 			}
 			finally
 			{

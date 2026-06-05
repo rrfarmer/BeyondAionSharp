@@ -1547,6 +1547,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300622);
 	}
 
+	public static SmSystemMessage QuestAcquireErrorInventoryItem(string requiredItemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_INVENTORY_ITEM(String).
+		return new SmSystemMessage(1300594, requiredItemName);
+	}
+
 	public static SmSystemMessage CashTitle(string titleName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE.
