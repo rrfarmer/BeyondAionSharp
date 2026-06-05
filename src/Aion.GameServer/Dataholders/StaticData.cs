@@ -50,6 +50,7 @@ public sealed class StaticData
 		PetSkillTable petSkills,
 		TitleTemplateTable titleTemplates,
 		RecipeTemplateTable recipeTemplates,
+		WorkOrderRecipeTable workOrderRecipes,
 		HousingTemplateTable housingTemplates,
 		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
@@ -109,6 +110,7 @@ public sealed class StaticData
 		PetSkills = petSkills;
 		TitleTemplates = titleTemplates;
 		RecipeTemplates = recipeTemplates;
+		WorkOrderRecipes = workOrderRecipes;
 		HousingTemplates = housingTemplates;
 		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
@@ -212,6 +214,8 @@ public sealed class StaticData
 	public TitleTemplateTable TitleTemplates { get; }
 
 	public RecipeTemplateTable RecipeTemplates { get; }
+
+	public WorkOrderRecipeTable WorkOrderRecipes { get; }
 
 	public HousingTemplateTable HousingTemplates { get; }
 
@@ -2913,9 +2917,15 @@ public sealed class StaticData
 		if (experience.Count == 0)
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
+		var workOrderRecipes = WorkOrderRecipeTable.LoadFromImportedFiles(importedFiles);
 		using var nearbyQuestTemplateStream = File.OpenRead(cacheFilePath);
 		var nearbyQuestTemplates = new NearbyQuestTemplateTable(
-			new NearbyQuestTemplateXmlExtractor().Extract(nearbyQuestTemplateStream));
+			new NearbyQuestTemplateXmlExtractor()
+				.Extract(nearbyQuestTemplateStream)
+				.Select(template => workOrderRecipes.TryGetRecipeId(template.QuestId, out var recipeId)
+					? template with { WorkOrderRecipeId = recipeId }
+					: template)
+				.ToArray());
 		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
 		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
 			.Create(questFinishRewardProjectionStream);
@@ -2975,6 +2985,7 @@ public sealed class StaticData
 			new PetSkillTable(petSkills.AsReadOnly()),
 			new TitleTemplateTable(titleTemplates.AsReadOnly()),
 			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
+			workOrderRecipes,
 			new HousingTemplateTable(
 				housingAddresses
 					.Select(

@@ -20,6 +20,7 @@ public sealed record QuestAbandonResult(
 	IReadOnlyList<SmQuestAction> TimerPackets,
 	IReadOnlyList<QuestWorkItemDeletion> WorkItemDeletions,
 	PlayerNpcFactionAbortResult? NpcFactionAbort,
+	int? WorkOrderRecipeId,
 	SmQuestAction? AbandonPacket,
 	PlayerQuestState? OriginalQuestState,
 	PlayerQuestState? FinalQuestState,
@@ -40,17 +41,17 @@ public static class QuestAbandonService
 			timerPackets.Add(SmQuestAction.Timer(questId, 0));
 
 		if (template is null)
-			return Result(QuestAbandonStatus.MissingTemplate, timerPackets, [], null, null, null, null, refresh: false);
+			return Result(QuestAbandonStatus.MissingTemplate, timerPackets, [], null, null, null, null, null, refresh: false);
 		if (template.CannotGiveup)
-			return Result(QuestAbandonStatus.CannotGiveup, timerPackets, [], null, null, null, null, refresh: false);
+			return Result(QuestAbandonStatus.CannotGiveup, timerPackets, [], null, null, null, null, null, refresh: false);
 
 		var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
 		if (questState is null)
-			return Result(QuestAbandonStatus.MissingQuestState, timerPackets, [], null, null, null, null, refresh: false);
+			return Result(QuestAbandonStatus.MissingQuestState, timerPackets, [], null, null, null, null, null, refresh: false);
 		if (string.Equals(questState.Status, "COMPLETE", StringComparison.Ordinal))
-			return Result(QuestAbandonStatus.AlreadyComplete, timerPackets, [], null, null, questState, questState, refresh: false);
+			return Result(QuestAbandonStatus.AlreadyComplete, timerPackets, [], null, null, null, questState, questState, refresh: false);
 		if (string.Equals(questState.Status, "LOCKED", StringComparison.Ordinal))
-			return Result(QuestAbandonStatus.Locked, timerPackets, [], null, null, questState, questState, refresh: false);
+			return Result(QuestAbandonStatus.Locked, timerPackets, [], null, null, null, questState, questState, refresh: false);
 
 		if (questState.CompleteCount > 0)
 		{
@@ -59,13 +60,23 @@ public static class QuestAbandonService
 			player.Quests = player.Quests.Select(quest => quest.QuestId == questId ? reset : quest).ToArray();
 			var npcFactionAbort = AbortNpcFactionQuest(player, template);
 			var workItemDeletions = RemoveQuestWorkItems(player, template, reset);
-			return Result(QuestAbandonStatus.ResetToComplete, timerPackets, workItemDeletions, npcFactionAbort, SmQuestAction.Abandon(reset), questState, reset, refresh: true);
+			return Result(QuestAbandonStatus.ResetToComplete, timerPackets, workItemDeletions, npcFactionAbort, GetWorkOrderRecipeId(template), SmQuestAction.Abandon(reset), questState, reset, refresh: true);
 		}
 
 		player.Quests = player.Quests.Where(quest => quest.QuestId != questId).ToArray();
 		var factionAbort = AbortNpcFactionQuest(player, template);
 		var deletions = RemoveQuestWorkItems(player, template, questState);
-		return Result(QuestAbandonStatus.Deleted, timerPackets, deletions, factionAbort, SmQuestAction.Abandon(questState), questState, null, refresh: true);
+		return Result(QuestAbandonStatus.Deleted, timerPackets, deletions, factionAbort, GetWorkOrderRecipeId(template), SmQuestAction.Abandon(questState), questState, null, refresh: true);
+	}
+
+	private static int? GetWorkOrderRecipeId(NearbyQuestTemplateSummary template)
+	{
+		// Java parity: QuestService.abandonQuest deletes a work-order recipe only for TASK
+		// templates whose XMLQuest handler is WorkOrdersData.
+		return string.Equals(template.QuestCategory, "TASK", StringComparison.Ordinal)
+			&& template.WorkOrderRecipeId != 0
+			? template.WorkOrderRecipeId
+			: null;
 	}
 
 	private static PlayerNpcFactionAbortResult? AbortNpcFactionQuest(Player player, NearbyQuestTemplateSummary template)
@@ -131,11 +142,12 @@ public static class QuestAbandonService
 		IReadOnlyList<SmQuestAction> timerPackets,
 		IReadOnlyList<QuestWorkItemDeletion> workItemDeletions,
 		PlayerNpcFactionAbortResult? npcFactionAbort,
+		int? workOrderRecipeId,
 		SmQuestAction? abandonPacket,
 		PlayerQuestState? originalQuestState,
 		PlayerQuestState? finalQuestState,
 		bool refresh)
 	{
-		return new QuestAbandonResult(status, timerPackets, workItemDeletions, npcFactionAbort, abandonPacket, originalQuestState, finalQuestState, refresh);
+		return new QuestAbandonResult(status, timerPackets, workItemDeletions, npcFactionAbort, workOrderRecipeId, abandonPacket, originalQuestState, finalQuestState, refresh);
 	}
 }

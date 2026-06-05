@@ -97,6 +97,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(40001, template.CombineSkill);
 		Assert.Equal(199, template.CombineSkillPoint);
 		Assert.Equal("TASK", template.QuestCategory);
+		Assert.Equal(0, template.WorkOrderRecipeId);
 		Assert.Equal(12, template.NpcFactionId);
 		Assert.True(template.IsMentorQuest);
 		Assert.True(template.CanReport);
@@ -144,6 +145,7 @@ public sealed class NearbyQuestTemplateXmlExtractorTests
 		Assert.Equal(0, template.CombineSkill);
 		Assert.Equal(0, template.CombineSkillPoint);
 		Assert.Equal("QUEST", template.QuestCategory);
+		Assert.Equal(0, template.WorkOrderRecipeId);
 		Assert.Equal(0, template.NpcFactionId);
 		Assert.False(template.IsMentorQuest);
 		Assert.False(template.CanReport);

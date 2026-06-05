@@ -35,6 +35,7 @@ public sealed record NearbyQuestTemplateSummary(
 	int CombineSkill = 0,
 	int CombineSkillPoint = 0,
 	string QuestCategory = "QUEST",
+	int WorkOrderRecipeId = 0,
 	int NpcFactionId = 0,
 	bool IsMentorQuest = false,
 	IReadOnlyList<NearbyQuestInventoryItem>? InventoryItems = null,

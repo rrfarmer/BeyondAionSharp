@@ -206,6 +206,37 @@ public sealed class QuestAbandonServiceTests
 		Assert.Equal(PlayerNpcFactionQuestState.Start, unchangedFaction.State);
 	}
 
+	[Fact]
+	public void Abandon_TaskWorkOrderQuestReturnsRecipeDeleteCandidateLikeJava()
+	{
+		var player = PlayerWithQuest(new PlayerQuestState(1011, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+		player.Recipes = [155004001, 155004099];
+
+		var result = QuestAbandonService.Abandon(
+			player,
+			1011,
+			Template(1011, questCategory: "TASK", workOrderRecipeId: 155004001));
+
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.Equal(155004001, result.WorkOrderRecipeId);
+	}
+
+	[Theory]
+	[InlineData("QUEST", 155004001)]
+	[InlineData("TASK", 0)]
+	public void Abandon_NonWorkOrderTemplatesDoNotReturnRecipeDeleteCandidate(string questCategory, int workOrderRecipeId)
+	{
+		var player = PlayerWithQuest(new PlayerQuestState(1012, "START", QuestVars: 0, Flags: 0, CompleteCount: 0));
+
+		var result = QuestAbandonService.Abandon(
+			player,
+			1012,
+			Template(1012, questCategory: questCategory, workOrderRecipeId: workOrderRecipeId));
+
+		Assert.Equal(QuestAbandonStatus.Deleted, result.Status);
+		Assert.Null(result.WorkOrderRecipeId);
+	}
+
 	private static Player PlayerWithQuest(PlayerQuestState questState)
 	{
 		return new Player { Quests = [questState] };
@@ -216,12 +247,16 @@ public sealed class QuestAbandonServiceTests
 		bool cannotGiveup = false,
 		bool isTimer = false,
 		int? questWorkItemId = null,
-		int npcFactionId = 0)
+		int npcFactionId = 0,
+		string questCategory = "QUEST",
+		int workOrderRecipeId = 0)
 	{
 		return new NearbyQuestTemplateSummary(
 			questId,
 			CannotGiveup: cannotGiveup,
 			IsTimer: isTimer,
+			QuestCategory: questCategory,
+			WorkOrderRecipeId: workOrderRecipeId,
 			NpcFactionId: npcFactionId,
 			QuestWorkItems: questWorkItemId == null ? null : [new NearbyQuestInventoryItem(questWorkItemId.Value)]);
 	}

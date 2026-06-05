@@ -11549,11 +11549,19 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.ItemExpands), cancellationToken);
 		}
 
+		if (result.WorkOrderRecipeId is { } recipeId)
+		{
+			var recipeDeleted = _playerEnterWorldService == null
+				? DeleteRecipeInMemory(player, recipeId)
+				: await _playerEnterWorldService.DeleteRecipeAsync(player, recipeId, cancellationToken);
+			if (recipeDeleted)
+				await SendPacketAsync(new SmRecipeDelete(recipeId), cancellationToken);
+		}
+
 		if (result.AbandonPacket != null)
 			await SendPacketAsync(result.AbandonPacket, cancellationToken);
 
-		// Java also aborts NPC-faction quests and deletes work-order recipes.
-		// Those dependencies are not live in C# yet.
+		// Java also cancels the QUEST_TIMER task-map entry; C# currently emits the timer-clear packet only.
 		if (result.NearbyQuestRefreshRequired)
 			await SendNearbyQuestRefreshAsync(player, cancellationToken);
 	}
