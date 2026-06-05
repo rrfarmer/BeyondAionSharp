@@ -366,6 +366,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> SaveNpcShopBuyMutationAsync(
 		int playerObjectId,
+		IReadOnlyList<InventoryItem> requiredItemUpdates,
+		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? kinahItem,
@@ -1037,13 +1039,21 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<bool> SaveNpcShopBuyMutationAsync(
 		int playerObjectId,
+		IReadOnlyList<InventoryItem> requiredItemUpdates,
+		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? kinahItem,
 		CancellationToken cancellationToken = default)
 	{
 		SaveNpcShopBuyMutationCalls++;
-		NpcShopBuyPersistence = new NpcShopBuyPersistenceCapture(playerObjectId, updatedItems, addedItems, kinahItem);
+		NpcShopBuyPersistence = new NpcShopBuyPersistenceCapture(
+			playerObjectId,
+			requiredItemUpdates,
+			deletedRequiredItemObjectIds,
+			updatedItems,
+			addedItems,
+			kinahItem);
 		return Task.FromResult(SaveNpcShopBuyMutationResult);
 	}
 
@@ -1122,6 +1132,8 @@ public sealed record PrivateStorePurchasePersistenceCapture(
 
 public sealed record NpcShopBuyPersistenceCapture(
 	int PlayerObjectId,
+	IReadOnlyList<InventoryItem> RequiredItemUpdates,
+	IReadOnlyList<int> DeletedRequiredItemObjectIds,
 	IReadOnlyList<InventoryItem> UpdatedItems,
 	IReadOnlyList<InventoryItem> AddedItems,
 	InventoryItem? KinahItem);
@@ -2085,6 +2097,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<bool> SaveNpcShopBuyMutationAsync(
 		int playerObjectId,
+		IReadOnlyList<InventoryItem> requiredItemUpdates,
+		IReadOnlyList<int> deletedRequiredItemObjectIds,
 		IReadOnlyList<InventoryItem> updatedItems,
 		IReadOnlyList<InventoryItem> addedItems,
 		InventoryItem? kinahItem,
@@ -2100,6 +2114,18 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 			if (kinahItem != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItem, cancellationToken))
 				return false;
+
+			foreach (var item in requiredItemUpdates)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+					return false;
+			}
+
+			foreach (var itemObjectId in deletedRequiredItemObjectIds)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, itemObjectId, cancellationToken))
+					return false;
+			}
 
 			foreach (var item in updatedItems)
 			{

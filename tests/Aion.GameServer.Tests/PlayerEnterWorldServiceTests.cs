@@ -3551,6 +3551,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> SaveNpcShopBuyMutationAsync(
 			int playerObjectId,
+			IReadOnlyList<InventoryItem> requiredItemUpdates,
+			IReadOnlyList<int> deletedRequiredItemObjectIds,
 			IReadOnlyList<InventoryItem> updatedItems,
 			IReadOnlyList<InventoryItem> addedItems,
 			InventoryItem? kinahItem,

@@ -5538,8 +5538,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (transactionPlan.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
 			|| transactionPlan.Mutation == null
-			|| transactionPlan.Mutation.RequiredAbyssPoints != 0
-			|| transactionPlan.Mutation.RequiredItems.Count != 0)
+			|| transactionPlan.Mutation.RequiredAbyssPoints != 0)
 			return;
 
 		var staticData = _runtimeContext?.DataManager?.StaticData;
@@ -5557,6 +5556,16 @@ public sealed class GameServerConnection : BaseClientConnection
 		var workingItems = player.InventoryItems.ToList();
 		var kinahUpdate = CopyInventoryItem(kinahItem, count: kinahItem.Count - transactionPlan.Mutation.RequiredKinah);
 		ReplaceInventoryItem(workingItems, kinahUpdate);
+		var requiredItemConsumption = CreateNpcShopRequiredItemConsumptionPlan(workingItems, transactionPlan.Mutation.RequiredItems);
+		if (requiredItemConsumption == null)
+			return;
+		foreach (var step in requiredItemConsumption.Steps.Where(step => !step.Deleted))
+		{
+			if (itemTemplates.GetItemTemplate(step.ItemId) == null)
+				return;
+		}
+
+		workingItems = requiredItemConsumption.WorkingItems.ToList();
 		var boughtItemUpdates = new List<(InventoryItem Item, ItemTemplateSummary Template)>();
 		var boughtItemAdds = new List<(InventoryItem Item, ItemTemplateSummary Template)>();
 		foreach (var boughtItem in transactionPlan.Mutation.AddedItems)
@@ -5592,6 +5601,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_playerEnterWorldService != null
 			&& !await _playerEnterWorldService.SaveNpcShopBuyMutationAsync(
 				player,
+				requiredItemConsumption.UpdatedItems,
+				requiredItemConsumption.DeletedObjectIds,
 				boughtItemUpdates.Select(item => item.Item).ToArray(),
 				boughtItemAdds.Select(item => item.Item).ToArray(),
 				kinahUpdate))
@@ -5603,6 +5614,25 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.InventoryItems = workingItems.ToArray();
 		if (transactionPlan.Mutation.RequiredKinah > 0)
 			await SendPacketAsync(new SmInventoryUpdateItem(kinahUpdate, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		foreach (var step in requiredItemConsumption.Steps)
+		{
+			if (step.Deleted)
+			{
+				projectedCubeItemsCount--;
+				await SendPacketAsync(new SmDeleteItem(step.ObjectId, SmDeleteItem.UseDeleteType));
+				await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
+				continue;
+			}
+
+			var updatedItem = requiredItemConsumption.UpdatedItems.First(item => item.ObjectId == step.ObjectId);
+			var template = itemTemplates.GetItemTemplate(step.ItemId)!;
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				updatedItem,
+				template,
+				SmInventoryUpdateItem.DecreaseItemUse,
+				GetGeneralInfoWarehouseRestrictionFlag(updatedItem.ItemId, staticData?.ItemRestrictionCleanups)));
+		}
+
 		foreach (var (updatedItem, template) in boughtItemUpdates)
 		{
 			await SendPacketAsync(new SmInventoryUpdateItem(
@@ -5622,6 +5652,67 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(projectedCubeItemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands));
 		}
 	}
+
+	private static NpcShopRequiredItemConsumptionPlan? CreateNpcShopRequiredItemConsumptionPlan(
+		IReadOnlyList<InventoryItem> inventoryItems,
+		IReadOnlyList<TradeBuyTransactionRequiredItem> requiredItems)
+	{
+		var workingItems = inventoryItems.ToList();
+		var updatedItemsByObjectId = new Dictionary<int, InventoryItem>();
+		var deletedObjectIds = new List<int>();
+		var steps = new List<NpcShopRequiredItemConsumptionStep>();
+
+		foreach (var requiredItem in requiredItems)
+		{
+			var remaining = requiredItem.Count;
+			foreach (var item in workingItems
+				.Where(candidate => candidate.Location == CubeStorageId
+					&& !candidate.IsEquipped
+					&& candidate.ItemId == requiredItem.ItemId
+					&& candidate.Count > 0)
+				.ToArray())
+			{
+				if (remaining == 0)
+					break;
+
+				var consumed = Math.Min(item.Count, remaining);
+				var newCount = item.Count - consumed;
+				if (newCount == 0)
+				{
+					updatedItemsByObjectId.Remove(item.ObjectId);
+					deletedObjectIds.Add(item.ObjectId);
+					workingItems.RemoveAll(candidate => candidate.ObjectId == item.ObjectId);
+					steps.Add(new NpcShopRequiredItemConsumptionStep(item.ItemId, item.ObjectId, Deleted: true));
+				}
+				else
+				{
+					var updatedItem = CopyInventoryItem(item, count: newCount);
+					updatedItemsByObjectId[updatedItem.ObjectId] = updatedItem;
+					ReplaceInventoryItem(workingItems, updatedItem);
+					steps.Add(new NpcShopRequiredItemConsumptionStep(item.ItemId, item.ObjectId, Deleted: false));
+				}
+
+				remaining -= consumed;
+			}
+
+			if (remaining != 0)
+				return null;
+		}
+
+		return new NpcShopRequiredItemConsumptionPlan(
+			workingItems,
+			updatedItemsByObjectId.Values.ToArray(),
+			deletedObjectIds,
+			steps);
+	}
+
+	private sealed record NpcShopRequiredItemConsumptionPlan(
+		IReadOnlyList<InventoryItem> WorkingItems,
+		IReadOnlyList<InventoryItem> UpdatedItems,
+		IReadOnlyList<int> DeletedObjectIds,
+		IReadOnlyList<NpcShopRequiredItemConsumptionStep> Steps);
+
+	private sealed record NpcShopRequiredItemConsumptionStep(int ItemId, int ObjectId, bool Deleted);
 
 	private int NextBuyItemObjectId()
 	{

@@ -473,6 +473,158 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopConsumesRequiredItemStackBeforeRewardAdd()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(501, Items: [new GoodsListItemSummary(1001)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 500, maxStackCount: 100, acquisitionItemId: 186000001, acquisitionItemCount: 2),
+				Template(186000001, price: 1, maxStackCount: 100),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			playerEnterWorldRepository: playerRepository,
+			observeBuyItemPlans: false);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+			new InventoryItem
+			{
+				ObjectId = 3002,
+				ItemId = 186000001,
+				Count = 5,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 1,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 1)]));
+
+		Assert.Equal(1, playerRepository.SaveNpcShopBuyMutationCalls);
+		Assert.NotNull(playerRepository.NpcShopBuyPersistence);
+		var persistence = playerRepository.NpcShopBuyPersistence!;
+		Assert.Equal((3001, InventoryItemFactory.KinahItemId, 9_750L), (
+			persistence.KinahItem!.ObjectId,
+			persistence.KinahItem.ItemId,
+			persistence.KinahItem.Count));
+		var requiredUpdate = Assert.Single(persistence.RequiredItemUpdates);
+		Assert.Equal((3002, 186000001, 3L), (requiredUpdate.ObjectId, requiredUpdate.ItemId, requiredUpdate.Count));
+		Assert.Empty(persistence.DeletedRequiredItemObjectIds);
+		var addedItem = Assert.Single(persistence.AddedItems);
+		Assert.Equal((8001, 1001, 1L), (addedItem.ObjectId, addedItem.ItemId, addedItem.Count));
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.Count == 9_750);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3002 && item.Count == 3);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 8001 && item.ItemId == 1001 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseItemUse, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertInventoryAddItemPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 8001,
+				expectedItemId: 1001,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.Buy),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 2));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopDeletesRequiredItemStackAtZero()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemTradeLists: CreateBuyTradeLists(
+				new TradeListTemplateSummary(700001, [501], NpcType: "NORMAL", SellPriceRate: 50)),
+			buyItemGoodsLists: CreateBuyGoodsLists(
+				new GoodsListSummary(501, Items: [new GoodsListItemSummary(1001)])),
+			buyItemItemTemplates: CreateItemTemplates(
+				Template(1001, price: 500, maxStackCount: 100, acquisitionItemId: 186000001, acquisitionItemCount: 2),
+				Template(186000001, price: 1, maxStackCount: 100),
+				Template(InventoryItemFactory.KinahItemId, price: 1, maxStackCount: 10_000_000)),
+			buyItemDiagnosticObjectIdProvider: Sequence(8001),
+			playerEnterWorldRepository: playerRepository,
+			observeBuyItemPlans: false);
+		var player = CreatePlayer();
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 3001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 10_000,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 0,
+			},
+			new InventoryItem
+			{
+				ObjectId = 3002,
+				ItemId = 186000001,
+				Count = 2,
+				OwnerId = player.ObjectId,
+				Location = 0,
+				Slot = 1,
+			},
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		fixture.World.TryAddObject(
+			9001,
+			CreateNpc(
+				objectId: 9001,
+				templateId: 700001,
+				position: new WorldPosition(210010000, 11, 0, 0, 0),
+				functionDialogIds: [2]));
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateBuyItemPayload(sellerObjectId: 9001, tradeActionId: 13, [(1001, 1)]));
+
+		Assert.Equal(1, playerRepository.SaveNpcShopBuyMutationCalls);
+		Assert.NotNull(playerRepository.NpcShopBuyPersistence);
+		var persistence = playerRepository.NpcShopBuyPersistence!;
+		Assert.Empty(persistence.RequiredItemUpdates);
+		Assert.Equal([3002], persistence.DeletedRequiredItemObjectIds);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 3002);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 3001 && item.Count == 9_750);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == 8001 && item.ItemId == 1001 && item.Count == 1);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.Equal(SmInventoryUpdateItem.DecreaseKinahBuy, Assert.IsType<SmInventoryUpdateItem>(packet).UpdateType),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), 3002, SmDeleteItem.UseDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertInventoryAddItemPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 8001,
+				expectedItemId: 1001,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.Buy),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmBuyItemNpcBuyFromShopPersistenceFailureStopsMutationAndPackets()
 	{
 		var playerRepository = new EmptyPlayerEnterWorldRepository { SaveNpcShopBuyMutationResult = false };
