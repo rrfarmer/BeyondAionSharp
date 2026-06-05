@@ -5501,7 +5501,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			|| packet.TradeActionId != 13
 			|| tradeTemplate == null
 			|| !string.Equals(tradeTemplate.NpcType, "NORMAL", StringComparison.Ordinal)
-			|| transactionPlan?.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
+			|| transactionPlan == null)
+			return;
+
+		if (transactionPlan.Status == TradeBuyTransactionPlanStatus.BlockedNotEnoughKinah)
+		{
+			await SendPacketAsync(SmSystemMessage.MsgNotEnoughMoney());
+			return;
+		}
+
+		if (transactionPlan.Status != TradeBuyTransactionPlanStatus.WouldApplyBuyTransaction
 			|| transactionPlan.Mutation == null
 			|| transactionPlan.Mutation.RequiredAbyssPoints != 0
 			|| transactionPlan.Mutation.RequiredItems.Count != 0)

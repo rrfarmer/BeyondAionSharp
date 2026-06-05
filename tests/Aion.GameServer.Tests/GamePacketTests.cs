@@ -1491,6 +1491,7 @@ public class GamePacketTests
 		Assert.Equal(0, (int)systemMessageReader.ReadC());
 		Assert.Equal(0, (int)systemMessageReader.ReadC());
 		Assert.Equal(0, systemMessageReader.Remaining);
+		AssertSystemMessage(SmSystemMessage.MsgNotEnoughMoney(), 1300759);
 		AssertSystemMessage(SmSystemMessage.FullInventory(), 1300762);
 		AssertSystemMessage(SmSystemMessage.CombineInventoryFull(), 1330037);
 		AssertSystemMessage(SmSystemMessage.UiInventoryFull(), 1300042);

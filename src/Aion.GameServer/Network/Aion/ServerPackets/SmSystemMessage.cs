@@ -178,6 +178,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300388);
 	}
 
+	public static SmSystemMessage MsgNotEnoughMoney()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_MONEY.
+		return new SmSystemMessage(1300759);
+	}
+
 	public static SmSystemMessage MsgSplitMeToB(long amount, int people, long rewardPerPlayer)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_SPLIT_ME_TO_B(long num0, int num1, long num2) -> 1390247.
