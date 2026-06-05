@@ -1621,6 +1621,40 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task PersistQuestAbandon_UpdatesAbortedNpcFactionRow()
+	{
+		var player = CreatePlayer();
+		player.Quests = [new PlayerQuestState(1003, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)];
+		player.NpcFactions = new PlayerNpcFactionsSnapshot(
+		[
+			new PlayerNpcFactionState(
+				FactionId: 42,
+				IsActive: true,
+				IsMentor: false,
+				TimeEpochSeconds: 123456,
+				State: PlayerNpcFactionQuestState.Start,
+				QuestId: 1003),
+		]);
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var service = CreateService(repository, CreateWorld());
+
+		var result = QuestAbandonService.Abandon(player, 1003, QuestTemplate(1003, npcFactionId: 42));
+		var persisted = await service.PersistQuestAbandonAsync(player, result);
+
+		Assert.True(persisted);
+		Assert.Equal(1, repository.DeleteQuestCalls);
+		Assert.Equal(1, repository.UpdateNpcFactionCalls);
+		Assert.NotNull(repository.UpdatedNpcFactionState);
+		var savedFaction = repository.UpdatedNpcFactionState;
+		Assert.Equal(42, savedFaction.FactionId);
+		Assert.True(savedFaction.IsActive);
+		Assert.False(savedFaction.IsMentor);
+		Assert.Equal(123456, savedFaction.TimeEpochSeconds);
+		Assert.Equal(PlayerNpcFactionQuestState.Noting, savedFaction.State);
+		Assert.Equal(1003, savedFaction.QuestId);
+	}
+
+	[Fact]
 	public async Task SavePowerShardUseMutation_FlattensUseResultsForRepository()
 	{
 		var player = CreatePlayer();
@@ -2191,9 +2225,9 @@ public sealed class PlayerEnterWorldServiceTests
 		};
 	}
 
-	private static NearbyQuestTemplateSummary QuestTemplate(int questId)
+	private static NearbyQuestTemplateSummary QuestTemplate(int questId, int npcFactionId = 0)
 	{
-		return new NearbyQuestTemplateSummary(questId);
+		return new NearbyQuestTemplateSummary(questId, NpcFactionId: npcFactionId);
 	}
 
 	private static InventoryItem CreateInventoryItem(
@@ -2526,6 +2560,10 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public PlayerQuestState? UpdatedQuestState { get; private set; }
 
+		public int UpdateNpcFactionCalls { get; private set; }
+
+		public PlayerNpcFactionState? UpdatedNpcFactionState { get; private set; }
+
 		public int DeleteEmotionCalls { get; private set; }
 
 		public int DeletedEmotionId { get; private set; }
@@ -2811,6 +2849,13 @@ public sealed class PlayerEnterWorldServiceTests
 			NpcFactionTable = npcFactions;
 			NpcFactionCurrentEpochSeconds = currentEpochSeconds;
 			return Task.FromResult(NpcFactions);
+		}
+
+		public Task<bool> UpdatePlayerNpcFactionAsync(int playerObjectId, PlayerNpcFactionState factionState, CancellationToken cancellationToken = default)
+		{
+			UpdateNpcFactionCalls++;
+			UpdatedNpcFactionState = factionState;
+			return Task.FromResult(true);
 		}
 
 		public Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default)

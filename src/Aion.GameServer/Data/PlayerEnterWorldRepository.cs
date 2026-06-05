@@ -39,6 +39,8 @@ public interface IPlayerEnterWorldRepository
 		int currentEpochSeconds = 0,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> UpdatePlayerNpcFactionAsync(int playerObjectId, PlayerNpcFactionState factionState, CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyList<PlayerMotion>> LoadPlayerMotionsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -471,6 +473,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(PlayerNpcFactionsSnapshot.Empty);
+	}
+
+	public Task<bool> UpdatePlayerNpcFactionAsync(int playerObjectId, PlayerNpcFactionState factionState, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
 	}
 
 	public Task<IReadOnlyList<PlayerTitle>> LoadPlayerTitlesAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -3376,6 +3383,52 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			"NOTING" => PlayerNpcFactionQuestState.Noting,
 			"START" => PlayerNpcFactionQuestState.Start,
 			"COMPLETE" => PlayerNpcFactionQuestState.Complete,
+			_ => throw new InvalidOperationException($"Unknown NPC faction quest state '{state}'."),
+		};
+	}
+
+	public async Task<bool> UpdatePlayerNpcFactionAsync(int playerObjectId, PlayerNpcFactionState factionState, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/PlayerNpcFactionsDAO.updateNpcFaction.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE player_npc_factions
+				SET active = ?,
+					time = ?,
+					state = ?,
+					quest_id = ?
+				WHERE player_id = ? AND faction_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = factionState.IsActive },
+					new MySqlParameter { Value = factionState.TimeEpochSeconds },
+					new MySqlParameter { Value = ToNpcFactionQuestStateValue(factionState.State) },
+					new MySqlParameter { Value = factionState.QuestId },
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = factionState.FactionId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) >= 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not update NPC faction {FactionId} for player {PlayerObjectId}", factionState.FactionId, playerObjectId);
+			return false;
+		}
+	}
+
+	private static string ToNpcFactionQuestStateValue(PlayerNpcFactionQuestState state)
+	{
+		return state switch
+		{
+			PlayerNpcFactionQuestState.Noting => "NOTING",
+			PlayerNpcFactionQuestState.Start => "START",
+			PlayerNpcFactionQuestState.Complete => "COMPLETE",
 			_ => throw new InvalidOperationException($"Unknown NPC faction quest state '{state}'."),
 		};
 	}
