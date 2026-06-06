@@ -5342,9 +5342,75 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _playerEnterWorldService.PersistQuestStartAsync(player, mutation.QuestState, isNewQuestState: false, cancellationToken);
 
 		await SendPacketAsync(SmQuestAction.Update(mutation.QuestState), cancellationToken);
+		await ApplyQuestCompletionFollowUpsAsync(player, mutation.QuestState.QuestId, staticData, cancellationToken);
 		await CompleteQuestFinishNpcFactionAsync(player, inputPlan.Template, cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
 		return true;
+	}
+
+	private async Task ApplyQuestCompletionFollowUpsAsync(
+		Player player,
+		int completedQuestId,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		foreach (var registration in staticData.QuestCompletionFollowUps.GetDefaultFollowUps())
+		{
+			var existingQuest = player.Quests.FirstOrDefault(quest => quest.QuestId == registration.QuestId);
+			if (existingQuest != null && !string.Equals(existingQuest.Status, "LOCKED", StringComparison.Ordinal))
+				continue;
+
+			if (registration.PreQuestIds.Count != 0
+				&& !registration.PreQuestIds.All(preQuestId =>
+					player.Quests.Any(quest =>
+						quest.QuestId == preQuestId
+						&& string.Equals(quest.Status, "COMPLETE", StringComparison.Ordinal))))
+			{
+				continue;
+			}
+
+			if (!staticData.NearbyQuestTemplates.TryGetQuest(registration.QuestId, out var template) || template == null)
+				continue;
+
+			var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+				player,
+				registration.QuestId,
+				staticData.NearbyQuestTemplates,
+				DateTimeOffset.Now);
+			if (!startConditions.CanStart)
+				continue;
+
+			if (!template.IsNoCount
+				&& !CanStartNormalQuest(player, staticData.NearbyQuestTemplates)
+				&& !HasPermission(player, _options.Membership.QuestLimitDisabled))
+			{
+				continue;
+			}
+
+			var isNewQuestState = existingQuest == null;
+			var finalQuestState = existingQuest == null
+				? new PlayerQuestState(registration.QuestId, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)
+				: existingQuest with { Status = "START" };
+
+			if (_playerEnterWorldService != null
+				&& !await _playerEnterWorldService.PersistQuestStartAsync(player, finalQuestState, isNewQuestState, cancellationToken))
+			{
+				continue;
+			}
+
+			var questStates = player.Quests.ToList();
+			var existingIndex = questStates.FindIndex(quest => quest.QuestId == registration.QuestId);
+			if (existingIndex >= 0)
+				questStates[existingIndex] = finalQuestState;
+			else
+				questStates.Add(finalQuestState);
+			player.Quests = questStates.ToArray();
+
+			var packet = isNewQuestState || string.Equals(existingQuest?.Status, "COMPLETE", StringComparison.Ordinal)
+				? SmQuestAction.Add(finalQuestState)
+				: SmQuestAction.Update(finalQuestState);
+			await SendPacketAsync(packet, cancellationToken);
+		}
 	}
 
 	private async Task CompleteQuestFinishNpcFactionAsync(

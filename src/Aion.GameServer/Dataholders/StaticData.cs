@@ -69,6 +69,7 @@ public sealed class StaticData
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		NearbyQuestTemplateTable nearbyQuestTemplates,
 		QuestHandlerAvailabilityTable questHandlers,
+		QuestCompletionFollowUpTable questCompletionFollowUps,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
 		ChallengeTaskTable challengeTasks,
@@ -136,6 +137,7 @@ public sealed class StaticData
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		NearbyQuestTemplates = nearbyQuestTemplates;
 		QuestHandlers = questHandlers;
+		QuestCompletionFollowUps = questCompletionFollowUps;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
 		ChallengeTasks = challengeTasks;
@@ -264,6 +266,8 @@ public sealed class StaticData
 	public NearbyQuestTemplateTable NearbyQuestTemplates { get; }
 
 	public QuestHandlerAvailabilityTable QuestHandlers { get; }
+
+	public QuestCompletionFollowUpTable QuestCompletionFollowUps { get; }
 
 	public QuestFinishRewardProjectionLookupTable QuestFinishRewardProjections { get; }
 
@@ -3215,6 +3219,7 @@ public sealed class StaticData
 					: template)
 				.ToArray());
 		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
+		var questCompletionFollowUps = QuestCompletionFollowUpTable.Load(questHandlerDirectory, cancellationToken);
 		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
 		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
 			.Create(questFinishRewardProjectionStream);
@@ -3327,6 +3332,7 @@ public sealed class StaticData
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			nearbyQuestTemplates,
 			questHandlers,
+			questCompletionFollowUps,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),

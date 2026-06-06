@@ -742,6 +742,54 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestStartsDefaultCompletionFollowUpAfterQuestUpdate()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1015, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+		Assert.Contains(
+			fixture.StaticData.QuestCompletionFollowUps.Registrations,
+			registration => registration.QuestId == 1016 && registration.PreQuestIds.SequenceEqual([1015]));
+
+		var rewardQuestState = new PlayerQuestState(1015, "REWARD", QuestVars: 0xF5, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1016,
+			Name = "QuestFinishCallbackBoundary",
+			PlayerClass = "RANGER",
+			Level = 10,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1015,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => AssertQuestAction(packet, SmQuestAction.UpdateActionId, questId: 1015, statusValue: 5),
+			packet => AssertQuestAction(packet, SmQuestAction.AddActionId, questId: 1016, statusValue: 3));
+		Assert.Equal(2, player.Quests.Count);
+		var completedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1015);
+		Assert.NotSame(rewardQuestState, completedQuest);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		var followUpQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1016);
+		Assert.Equal("START", followUpQuest.Status);
+		Assert.Equal(0, followUpQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -815,6 +863,23 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertQuestAction(
+		GameServerPacket packet,
+		int expectedActionId,
+		int questId,
+		int statusValue)
+	{
+		var questAction = Assert.IsType<SmQuestAction>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(questAction));
+		Assert.Equal(expectedActionId, (int)reader.ReadC());
+		Assert.Equal(questId, reader.ReadD());
+		Assert.Equal(statusValue, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
 		var crypt = new GameCrypt(() => 0x01020304);
@@ -859,6 +924,32 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-quest-finish-dialog-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
+			var questHandlerDirectory = Path.Combine(tempRoot, "game-server", "data", "handlers", "quest", "test");
+			Directory.CreateDirectory(questHandlerDirectory);
+			await File.WriteAllTextAsync(
+				Path.Combine(questHandlerDirectory, "_1016FollowUp.java"),
+				"""
+				package quest.test;
+
+				import com.aionemu.gameserver.questEngine.handlers.AbstractQuestHandler;
+				import com.aionemu.gameserver.questEngine.model.QuestEnv;
+
+				public class _1016FollowUp extends AbstractQuestHandler {
+					public _1016FollowUp() {
+						super(1016);
+					}
+
+					@Override
+					public void register() {
+						qe.registerOnQuestCompleted(questId);
+					}
+
+					@Override
+					public void onQuestCompletedEvent(QuestEnv env) {
+						defaultOnQuestCompletedEvent(env, 1015);
+					}
+				}
+				""");
 			await File.WriteAllTextAsync(
 				Path.Combine(tempRoot, "game-server", "data", "static_data", "static_data.xml"),
 				"""
@@ -932,6 +1023,12 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 							<extended_rewards>
 								<selectable_reward_item item_id="186000004" count="6" />
 							</extended_rewards>
+						</quest>
+						<quest id="1015" can_report="true" reward_repeat_count="1">
+							<rewards exp="1" />
+						</quest>
+						<quest id="1016" minlevel_permitted="1">
+							<rewards />
 						</quest>
 					</quests>
 				</static_data>
