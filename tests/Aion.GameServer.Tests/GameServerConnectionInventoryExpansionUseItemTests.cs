@@ -1026,6 +1026,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
 		Assert.Collection(
 			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300418),
 			packet => AssertInventoryAddPayload(
 				Assert.IsType<SmInventoryAddItem>(packet),
 				expectedObjectId: 5001,
@@ -1062,6 +1063,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
 		Assert.Collection(
 			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1400356),
 			packet => AssertWarehouseAddPayload(
 				Assert.IsType<SmWarehouseAddItem>(packet),
 				expectedObjectId: 5001,

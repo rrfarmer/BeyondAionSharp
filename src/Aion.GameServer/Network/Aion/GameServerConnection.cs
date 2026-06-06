@@ -3979,11 +3979,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		// restriction failure before both split-to-empty-slot and merge-into-stack branches.
 		if (packet.SourceStorageType != packet.DestinationStorageType)
 		{
-			var isRestrictedToDestination =
-				(packet.DestinationStorageType == 1 && !template.IsStorableInWarehouse)
-				|| (packet.DestinationStorageType == 2 && !sourceItem.IsStorableInAccountWarehouse(template));
-			if (isRestrictedToDestination)
+			var restrictionMessage = CreateRestrictedToStorageMessage(sourceItem, template, packet.DestinationStorageType);
+			if (restrictionMessage != null)
 			{
+				await SendPacketAsync(restrictionMessage);
 				await SendStorageUpdatePacketAsync(player, sourceItem, template, packet.SourceStorageType, SmInventoryAddItem.ItemCollect);
 				return;
 			}
