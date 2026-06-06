@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Aion.GameServer.Services;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -41,9 +42,105 @@ public sealed class NpcSpawnTable
 		return Spawns.FirstOrDefault(spawn => spawn.MapId != worldId && spawn.NpcId == npcId);
 	}
 
+	public NpcSpawnSummary? GetNearestSpawnByNpcId(
+		WorldPosition playerPosition,
+		string playerRace,
+		IReadOnlyList<WorldMapSummary> worldMaps,
+		int npcId)
+	{
+		// Java parity: dataholders/SpawnsData.getNearestSpawnByNpcId searches current map,
+		// then same-race world maps, then all remaining maps.
+		var worldId = playerPosition.WorldId;
+		var spawns = GetSpawnsForNpc(worldId, npcId);
+		if (spawns.Count == 0)
+		{
+			foreach (var worldMap in worldMaps)
+			{
+				if (worldMap.MapId == worldId || !IsSameRaceWorld(worldMap.WorldType, playerRace))
+					continue;
+
+				spawns = GetSpawnsForNpc(worldMap.MapId, npcId);
+				if (spawns.Count != 0)
+				{
+					worldId = worldMap.MapId;
+					break;
+				}
+			}
+
+			if (spawns.Count == 0)
+			{
+				foreach (var worldMap in worldMaps)
+				{
+					if (worldMap.MapId == worldId || IsSameRaceWorld(worldMap.WorldType, playerRace))
+						continue;
+
+					spawns = GetSpawnsForNpc(worldMap.MapId, npcId);
+					if (spawns.Count != 0)
+					{
+						worldId = worldMap.MapId;
+						break;
+					}
+				}
+			}
+		}
+
+		return GetNearestSpawn(playerPosition, spawns, worldId);
+	}
+
 	public bool TryGetRiftSpawnByAnchor(string anchor, out NpcSpawnSummary? spawn)
 	{
 		return _riftSpawnsByAnchor.TryGetValue(anchor, out spawn);
+	}
+
+	private IReadOnlyList<NpcSpawnSummary> GetSpawnsForNpc(int worldId, int npcId)
+	{
+		return GetSpawnsForMap(worldId)
+			.Where(spawn => spawn.NpcId == npcId)
+			.ToArray();
+	}
+
+	private static NpcSpawnSummary? GetNearestSpawn(
+		WorldPosition playerPosition,
+		IReadOnlyList<NpcSpawnSummary> spawns,
+		int worldId)
+	{
+		if (spawns.Count == 0)
+			return null;
+
+		if (worldId != playerPosition.WorldId)
+			return spawns[0];
+
+		NpcSpawnSummary? nearest = null;
+		var nearestDistanceSquared = 0f;
+		foreach (var spawn in spawns)
+		{
+			var distanceSquared = GetDistanceSquared(playerPosition, spawn);
+			if (nearest == null || distanceSquared < nearestDistanceSquared)
+			{
+				nearest = spawn;
+				nearestDistanceSquared = distanceSquared;
+				if (nearestDistanceSquared <= 1f)
+					break;
+			}
+		}
+
+		return nearest;
+	}
+
+	private static float GetDistanceSquared(WorldPosition position, NpcSpawnSummary spawn)
+	{
+		var dx = position.X - spawn.X;
+		var dy = position.Y - spawn.Y;
+		var dz = position.Z - spawn.Z;
+		return dx * dx + dy * dy + dz * dz;
+	}
+
+	private static bool IsSameRaceWorld(string worldType, string playerRace)
+	{
+		return string.Equals(worldType, "ELYSEA", StringComparison.OrdinalIgnoreCase)
+			&& string.Equals(playerRace, "ELYOS", StringComparison.OrdinalIgnoreCase)
+			|| string.Equals(worldType, "ASMODAE", StringComparison.OrdinalIgnoreCase)
+			&& string.Equals(playerRace, "ASMODIANS", StringComparison.OrdinalIgnoreCase);
 	}
 
 	private static Dictionary<string, NpcSpawnSummary> BuildRiftAnchorLookup(IReadOnlyList<NpcSpawnSummary> spawns)

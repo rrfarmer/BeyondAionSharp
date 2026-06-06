@@ -5,7 +5,8 @@ public readonly record struct WorldMapSummary(
 	bool IsInstance,
 	int TwinCount,
 	string DropType = "NONE",
-	WorldZoneAttributes Flags = WorldZoneAttributes.None)
+	WorldZoneAttributes Flags = WorldZoneAttributes.None,
+	string WorldType = "NONE")
 {
 	public bool AllowsFlight => HasAttribute(WorldZoneAttributes.Fly);
 

@@ -4444,12 +4444,15 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleObjectSearchAsync(Player player, CmObjectSearch packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_OBJECT_SEARCH.runImpl -> SpawnsData.getNearestSpawnByNpcId -> SM_SHOW_NPC_ON_MAP.
-		// Simplified: uses GetFirstSpawnByNpcId (current map preferred) instead of full race-aware nearest-spawn search.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		if (staticData == null)
 			return;
 
-		var spawn = staticData.NpcSpawns.GetFirstSpawnByNpcId(player.Position.WorldId, packet.NpcId);
+		var spawn = staticData.NpcSpawns.GetNearestSpawnByNpcId(
+			player.Position,
+			player.Race,
+			staticData.WorldMaps,
+			packet.NpcId);
 		if (spawn == null)
 		{
 			// Java parity: SM_SYSTEM_MESSAGE.STR_FIND_POS_UNKNOWN_NAME() has message id 1300747.

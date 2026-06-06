@@ -33,6 +33,72 @@ public sealed class PlayerTeleportToNpcRequestServiceTests
 	}
 
 	[Fact]
+	public void GetNearestSpawnByNpcId_SearchesNearestSpawnOnPlayerWorld()
+	{
+		var table = new NpcSpawnTable(
+		[
+			CreateSpawn(210010000, 203001, x: 500, y: 500, z: 0),
+			CreateSpawn(210010000, 203001, x: 11, y: 20, z: 30),
+			CreateSpawn(210010000, 203001, x: 100, y: 100, z: 0),
+		]);
+		var playerPosition = new WorldPosition(210010000, 10, 20, 30, 0);
+
+		var spawn = table.GetNearestSpawnByNpcId(
+			playerPosition,
+			"ELYOS",
+			CreateWorldMaps(),
+			203001);
+
+		Assert.NotNull(spawn);
+		Assert.Equal(210010000, spawn.MapId);
+		Assert.Equal(11, spawn.X);
+		Assert.Equal(20, spawn.Y);
+		Assert.Equal(30, spawn.Z);
+	}
+
+	[Fact]
+	public void GetNearestSpawnByNpcId_SearchesSameRaceWorldsBeforeOtherWorlds()
+	{
+		var table = new NpcSpawnTable(
+		[
+			CreateSpawn(220010000, 203001, x: 1),
+			CreateSpawn(210030000, 203001, x: 2),
+		]);
+		var playerPosition = new WorldPosition(210010000, 10, 20, 30, 0);
+
+		var spawn = table.GetNearestSpawnByNpcId(
+			playerPosition,
+			"ELYOS",
+			CreateWorldMaps(),
+			203001);
+
+		Assert.NotNull(spawn);
+		Assert.Equal(210030000, spawn.MapId);
+		Assert.Equal(2, spawn.X);
+	}
+
+	[Fact]
+	public void GetNearestSpawnByNpcId_WhenOffWorldUsesFirstSpawnWithoutDistanceSort()
+	{
+		var table = new NpcSpawnTable(
+		[
+			CreateSpawn(220010000, 203001, x: 500, y: 500),
+			CreateSpawn(220010000, 203001, x: 10, y: 20),
+		]);
+		var playerPosition = new WorldPosition(210010000, 10, 20, 30, 0);
+
+		var spawn = table.GetNearestSpawnByNpcId(
+			playerPosition,
+			"ELYOS",
+			CreateWorldMaps(),
+			203001);
+
+		Assert.NotNull(spawn);
+		Assert.Equal(220010000, spawn.MapId);
+		Assert.Equal(500, spawn.X);
+	}
+
+	[Fact]
 	public void SendTeleportRequest_RegistersQuestionWindowAndAcceptComputesJavaDestination()
 	{
 		var service = new PlayerTeleportToNpcRequestService();
@@ -222,6 +288,16 @@ public sealed class PlayerTeleportToNpcRequestServiceTests
 	private static NpcTemplateTable CreateTemplates(params NpcTemplateSummary[] templates)
 	{
 		return new NpcTemplateTable(templates);
+	}
+
+	private static IReadOnlyList<WorldMapSummary> CreateWorldMaps()
+	{
+		return
+		[
+			new WorldMapSummary(210010000, IsInstance: false, TwinCount: 0, WorldType: "ELYSEA"),
+			new WorldMapSummary(210030000, IsInstance: false, TwinCount: 0, WorldType: "ELYSEA"),
+			new WorldMapSummary(220010000, IsInstance: false, TwinCount: 0, WorldType: "ASMODAE"),
+		];
 	}
 
 	private static NpcSpawnSummary CreateSpawn(
