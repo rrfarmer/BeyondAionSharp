@@ -3120,6 +3120,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var legionId = player.LegionId;
 		var legionName = player.LegionName;
 		var memberName = player.Name;
+		var memberRank = player.LegionRank;
 		var deleted = await _playerEnterWorldRepository.DeleteLegionMemberAsync(player.ObjectId);
 		if (!deleted)
 			return;
@@ -3136,8 +3137,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			() => new SmLegionLeaveMember(1300240, player.ObjectId, memberName, legionName));
 
 		_legionWarehouses.UnsetInUse(legionId, player.ObjectId);
-		ResetLegionMember(player);
 		await SendPacketAsync(new SmLegionLeaveMember(1300241, 0, legionName));
+		await BroadcastLegionUpdateTitleAsync(player, memberRank);
+		ResetLegionMember(player);
 	}
 
 	private async Task HandleLegionKickMemberAsync(Player player, string memberName)
@@ -3198,6 +3200,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			if (_connectionRegistry != null)
 				await _connectionRegistry.SendPacketToPlayerAsync(targetMember.PlayerObjectId, new SmLegionLeaveMember(1300246, 0, player.LegionName));
+			await BroadcastLegionUpdateTitleAsync(onlineTarget, targetMember.Rank);
 			ResetLegionMember(onlineTarget);
 		}
 	}
@@ -3226,6 +3229,24 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var recipientObjectId in recipientObjectIds)
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packetFactory());
+	}
+
+	private async Task BroadcastLegionUpdateTitleAsync(Player removedPlayer, string removedRank)
+	{
+		// Java parity: PacketSendUtility.broadcastPacket(player, SM_LEGION_UPDATE_TITLE(...), true) in LegionService.removeLegionMember.
+		var packet = new SmLegionUpdateTitle(removedPlayer.ObjectId, 0, string.Empty, removedRank);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				removedPlayer.Position,
+				removedPlayer.ObjectId,
+				packet,
+				includeSourcePlayer: true);
+			return;
+		}
+
+		if (_activePlayer?.ObjectId == removedPlayer.ObjectId)
+			await SendPacketAsync(packet);
 	}
 
 	private async Task HandleLegionRankChangeAsync(Player player, string memberName, int rankId)

@@ -794,6 +794,10 @@ public sealed class CmLegionTests
 		var targetPacket = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == target.ObjectId);
 		AssertLegionLeaveMemberPacket(targetPacket.Packet, 0, 1300246, "Hydrated Legion", string.Empty);
 		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+		var titleBroadcast = Assert.Single(registry.VisibleBroadcasts);
+		Assert.Equal(target.ObjectId, titleBroadcast.SourceObjectId);
+		Assert.True(titleBroadcast.IncludeSourcePlayer);
+		AssertLegionUpdateTitlePacket(titleBroadcast.Packet, target.ObjectId, 0, string.Empty, LegionRanks.GetRankId(LegionRanks.Legionary));
 	}
 
 	[Fact]
@@ -863,6 +867,10 @@ public sealed class CmLegionTests
 		Assert.Equal(bystander.ObjectId, bystanderPacket.PlayerObjectId);
 		AssertLegionLeaveMemberPacket(bystanderPacket.Packet, 1001, 1300240, "Tester", "Hydrated Legion");
 		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+		var titleBroadcast = Assert.Single(registry.VisibleBroadcasts);
+		Assert.Equal(player.ObjectId, titleBroadcast.SourceObjectId);
+		Assert.True(titleBroadcast.IncludeSourcePlayer);
+		AssertLegionUpdateTitlePacket(titleBroadcast.Packet, player.ObjectId, 0, string.Empty, LegionRanks.GetRankId(LegionRanks.Legionary));
 		AssertLegionLeaveMemberPacket(
 			Assert.Single(pair.SentPackets),
 			playerObjectId: 0,
@@ -1207,6 +1215,21 @@ public sealed class CmLegionTests
 		Assert.Equal(name1, reader.ReadS());
 	}
 
+	private static void AssertLegionUpdateTitlePacket(
+		GameServerPacket packet,
+		int playerObjectId,
+		int legionId,
+		string legionName,
+		int rankId)
+	{
+		var response = Assert.IsType<SmLegionUpdateTitle>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(legionId, reader.ReadD());
+		Assert.Equal(legionName, reader.ReadS());
+		Assert.Equal(rankId, reader.ReadC());
+	}
+
 	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -1291,6 +1314,8 @@ public sealed class CmLegionTests
 
 		public List<(int PlayerObjectId, GameServerPacket Packet)> DirectPackets { get; } = [];
 
+		public List<(WorldPosition SourcePosition, int SourceObjectId, GameServerPacket Packet, bool IncludeSourcePlayer)> VisibleBroadcasts { get; } = [];
+
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection) { }
 
 		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection) { }
@@ -1325,7 +1350,8 @@ public sealed class CmLegionTests
 			bool includeSourcePlayer = false,
 			Func<Player, bool>? filter = null)
 		{
-			return Task.FromResult(0);
+			VisibleBroadcasts.Add((sourcePosition, sourceObjectId, packet, includeSourcePlayer));
+			return Task.FromResult(1);
 		}
 
 		public Task<int> RefreshHousingVisibilityAsync(
