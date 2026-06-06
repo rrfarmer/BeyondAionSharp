@@ -5264,6 +5264,15 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (!await TryApplyQuestFinishTitleRewardAsync(player, reward, staticData, cancellationToken))
 						return true;
 					break;
+				case QuestFinishRewardNonItemAction.AbyssPoints:
+					await ApplyQuestFinishApRewardAsync(
+						player,
+						questRewardService,
+						reward,
+						inputPlan.Template,
+						staticData,
+						cancellationToken);
+					break;
 				default:
 					return true;
 			}
@@ -5434,6 +5443,27 @@ public sealed class GameServerConnection : BaseClientConnection
 		return true;
 	}
 
+	private async Task ApplyQuestFinishApRewardAsync(
+		Player player,
+		QuestRewardService questRewardService,
+		QuestFinishRewardNonItemProjectionDescriptor reward,
+		NearbyQuestTemplateSummary template,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var apResult = questRewardService.ApplyApReward(
+			player,
+			checked((int)reward.Amount),
+			isNonCountQuest: string.Equals(template.QuestCategory, "NON_COUNT", StringComparison.Ordinal),
+			abyssPointsOptions: CreateAbyssPointsOptions());
+		if (apResult.AbyssPointsPlan == null)
+			return;
+
+		foreach (var packet in apResult.AbyssPointsPlan.PlayerPackets)
+			await SendPacketAsync(packet, cancellationToken);
+		await ApplyAbyssRankChangedSideEffectsAsync(player, apResult.AbyssPointsPlan.OldRank, staticData);
+	}
+
 	private async Task<bool> TryApplyQuestFinishTitleRewardAsync(
 		Player player,
 		QuestFinishRewardNonItemProjectionDescriptor reward,
@@ -5597,7 +5627,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			|| projectionPlan.Descriptors.Any(descriptor =>
 				descriptor.Action is not QuestFinishRewardNonItemAction.Kinah
 					and not QuestFinishRewardNonItemAction.Experience
-					and not QuestFinishRewardNonItemAction.Title))
+					and not QuestFinishRewardNonItemAction.Title
+					and not QuestFinishRewardNonItemAction.AbyssPoints))
 		{
 			return false;
 		}
