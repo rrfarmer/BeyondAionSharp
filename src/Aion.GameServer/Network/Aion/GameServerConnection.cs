@@ -4085,11 +4085,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				items.Remove(sourceItem);
 				player.InventoryItems = [.. items];
 				var deleteType = isSameStorage ? SmDeleteItem.SplitDeleteType : SmDeleteItem.MoveDeleteType;
-				if (packet.SourceStorageType == 0)
-					await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId, deleteType));
-				else
-					await SendPacketAsync(new SmDeleteWarehouseItem(packet.SourceStorageType, sourceItem.ObjectId, deleteType));
-				await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+				await SendItemDeletePacketAsync(player, packet.SourceStorageType, sourceItem.ObjectId, deleteType);
 			}
 			else if (packet.SourceStorageType == 0)
 			{
