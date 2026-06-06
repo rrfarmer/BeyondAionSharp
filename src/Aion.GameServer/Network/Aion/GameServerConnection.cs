@@ -1951,9 +1951,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleEmotionAsync(_activePlayer, emotion);
 				break;
-			case CmLegion:
-				// Java parity: network/aion/clientpackets/CM_LEGION.runImpl dispatches LegionService by exOpcode.
-				// Legion mutation and membership side effects remain unported; keep this parser-only for now.
+			case CmLegion legion:
+				if (_activePlayer != null)
+					await HandleLegionAsync(_activePlayer, legion);
 				break;
 			case CmCharacterEdit:
 				// Java parity: CM_CHARACTER_EDIT.runImpl -> PlayerEnterWorldService.enterWorld + appearance mutation; deferred until character edit is ported.
@@ -3053,6 +3053,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			_ when destinationStorageType == 3 => AddLegionHistoryAsync(player, LegionHistoryActions.ItemDeposit, description),
 			_ => Task.CompletedTask,
 		};
+	}
+
+	private async Task HandleLegionAsync(Player player, CmLegion packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_LEGION.runImpl.
+		// Only refresh-info (exOpcode 0x08 -> new SM_LEGION_INFO(legion)) is live here.
+		// Other LegionService mutation paths remain deferred until their runtime state/services are ported.
+		if (player.LegionId <= 0)
+			return;
+
+		if (packet.ExOpcode == 0x08)
+			await SendPacketAsync(SmLegionInfo.FromPlayer(player));
 	}
 
 	private async Task HandleLegionHistoryAsync(Player player, CmLegionHistory packet)

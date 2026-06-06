@@ -1,6 +1,12 @@
+using System.Net;
+using System.Net.Sockets;
+using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
 
@@ -55,9 +61,129 @@ public sealed class CmLegionTests
 		Assert.Equal("Lurion", packet.CharacterName);
 	}
 
+	[Fact]
+	public void ReadFrom_RefreshInfoConsumesJavaEmptyFields()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x08);
+		buffer.WriteD(0);
+		buffer.WriteH(0);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.Equal(0x08, packet.ExOpcode);
+	}
+
+	[Fact]
+	public void SmLegionInfo_WritesJavaPayloadWithCurrentRuntimeFields()
+	{
+		var packet = new SmLegionInfo(
+			"Hydrated Legion",
+			legionLevel: 4,
+			rankingPosition: 123,
+			deputyPermission: 1,
+			centurionPermission: 2,
+			legionaryPermission: 3,
+			volunteerPermission: 4,
+			contributionPoints: 55_000,
+			disbandTime: 1_771_234_567,
+			occupiedLegionDominion: 5,
+			lastLegionDominion: 6,
+			currentLegionDominion: 7,
+			announcement: "Assemble",
+			announcementTime: 1_771_234_500);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+
+		Assert.Equal("Hydrated Legion", reader.ReadS());
+		Assert.Equal(4, reader.ReadC());
+		Assert.Equal(123, reader.ReadD());
+		Assert.Equal(1, reader.ReadSignedH());
+		Assert.Equal(2, reader.ReadSignedH());
+		Assert.Equal(3, reader.ReadSignedH());
+		Assert.Equal(4, reader.ReadSignedH());
+		Assert.Equal(55_000, reader.ReadQ());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(1_771_234_567, reader.ReadD());
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(6, reader.ReadD());
+		Assert.Equal(7, reader.ReadD());
+		Assert.Equal("Assemble", reader.ReadS());
+		Assert.Equal(1_771_234_500, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_RefreshInfoSendsActivePlayerLegionInfoLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		SetActivePlayer(pair.Connection, CreateLegionPlayer());
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateRefreshInfoPacket());
+
+		var response = Assert.IsType<SmLegionInfo>(Assert.Single(pair.SentPackets));
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal("Hydrated Legion", reader.ReadS());
+		Assert.Equal(4, reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(11, reader.ReadSignedH());
+		Assert.Equal(12, reader.ReadSignedH());
+		Assert.Equal(13, reader.ReadSignedH());
+		Assert.Equal(14, reader.ReadSignedH());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(1_771_234_567, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_RefreshInfoSkipsPlayerWithoutLegionLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		SetActivePlayer(pair.Connection, new Player { ObjectId = 1001, Name = "Unguilded" });
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateRefreshInfoPacket());
+
+		Assert.Empty(pair.SentPackets);
+	}
+
 	private static CmLegion CreatePacket()
 	{
 		return new CmLegion(45, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+	}
+
+	private static CmLegion CreateRefreshInfoPacket()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x08);
+		buffer.WriteD(0);
+		buffer.WriteH(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static Player CreateLegionPlayer()
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			Name = "Tester",
+			LegionId = 77,
+			LegionName = "Hydrated Legion",
+			LegionLevel = 4,
+			LegionDisbandTime = 1_771_234_567,
+			LegionDeputyPermission = 11,
+			LegionCenturionPermission = 12,
+			LegionLegionaryPermission = 13,
+			LegionVolunteerPermission = 14,
+		};
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writeBody)
@@ -78,5 +204,80 @@ public sealed class CmLegionTests
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
+	}
+
+	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"HandleInfrastructurePacketAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = (Task)method.Invoke(connection, [packet])!;
+		await task;
+	}
+
+	private static void SetActivePlayer(GameServerConnection connection, Player player)
+	{
+		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(activePlayerField);
+		activePlayerField.SetValue(connection, player);
+	}
+
+	private sealed class TestConnectionPair : IAsyncDisposable
+	{
+		private readonly TcpClient _client;
+
+		private TestConnectionPair(TcpClient client, GameServerConnection connection, List<GameServerPacket> sentPackets)
+		{
+			_client = client;
+			Connection = connection;
+			SentPackets = sentPackets;
+		}
+
+		public GameServerConnection Connection { get; }
+		public List<GameServerPacket> SentPackets { get; }
+
+		public static async Task<TestConnectionPair> CreateAsync()
+		{
+			var listener = new TcpListener(IPAddress.Loopback, 0);
+			listener.Start();
+			try
+			{
+				var endpoint = (IPEndPoint)listener.LocalEndpoint;
+				var client = new TcpClient();
+				var acceptTask = listener.AcceptTcpClientAsync();
+				await client.ConnectAsync(endpoint.Address, endpoint.Port);
+				var serverClient = await acceptTask;
+				var crypt = new GameCrypt(() => 0x01020304);
+				crypt.EnableKey();
+				var sentPackets = new List<GameServerPacket>();
+				var connection = new GameServerConnection(
+					NullLogger.Instance,
+					serverClient,
+					"legion-info-test",
+					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					sentPacketObserver: sentPackets.Add,
+					crypt: crypt);
+				return new TestConnectionPair(client, connection, sentPackets);
+			}
+			finally
+			{
+				listener.Stop();
+			}
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			await Connection.DisposeAsync();
+			_client.Dispose();
+		}
 	}
 }
