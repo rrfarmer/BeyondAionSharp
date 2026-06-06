@@ -235,6 +235,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		_packetProcessor = packetProcessor;
 		_options = options ?? new GameServerOptions();
+		PetMoodUpdateInterval = TimeSpan.FromSeconds(_options.PeriodicSave.PlayerPetsSeconds);
 		_runtimeContext = runtimeContext;
 		_loginServer = loginServer;
 		_chatServer = chatServer;

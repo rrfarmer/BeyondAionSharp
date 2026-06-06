@@ -39,6 +39,8 @@ public sealed class GameServerOptions
 
 	public GameServerPriceOptions Prices { get; init; } = new();
 
+	public GameServerPeriodicSaveOptions PeriodicSave { get; init; } = new();
+
 	public int LoadedPropertyCount { get; init; }
 
 	public static GameServerOptions LoadFromJavaConfig(string startDirectory)
@@ -284,6 +286,10 @@ public sealed class GameServerOptions
 				DefaultTaxes = GetIntWithEnvironment(loader, "gameserver.prices.default.taxes", 100),
 				VendorBuyModifier = GetIntWithEnvironment(loader, "gameserver.prices.vendor.buymod", 100),
 				VendorSellModifier = GetIntWithEnvironment(loader, "gameserver.prices.vendor.sellmod", 20),
+			},
+			PeriodicSave = new GameServerPeriodicSaveOptions
+			{
+				PlayerPetsSeconds = GetIntWithEnvironment(loader, "gameserver.periodicsave.player.pets", 10),
 			},
 			LoadedPropertyCount = loader.Count,
 		};
@@ -980,4 +986,9 @@ public sealed class GameThreadOptions
 	public long MaximumRuntimeWithoutWarningMillis { get; init; } = 5000;
 
 	public bool UsePriorities { get; init; }
+}
+
+public sealed class GameServerPeriodicSaveOptions
+{
+	public int PlayerPetsSeconds { get; init; } = 10;
 }

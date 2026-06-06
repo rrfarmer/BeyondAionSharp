@@ -2219,6 +2219,47 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnUsesConfiguredPeriodicSavePetCadenceForMoodUpdate()
+	{
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"mood pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [])),
+			options: new GameServerOptions
+			{
+				PeriodicSave = new GameServerPeriodicSaveOptions { PlayerPetsSeconds = 3 },
+			},
+			threadPoolManager: threadPoolManager);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Mood Mate",
+				Decoration: 188051001),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+
+		Assert.Equal(TimeSpan.FromSeconds(3), fixture.Connection.PetMoodUpdateInterval);
+		var fixedRate = Assert.Single(observations, observation => observation.Kind == ThreadPoolScheduleKind.FixedRate);
+		Assert.Equal(TimeSpan.FromSeconds(3), fixedRate.Delay);
+		Assert.Equal(TimeSpan.FromSeconds(3), fixedRate.Period);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetSpawnSchedulesMoodUpdateAndSendsPeriodicMoodPacket()
 	{
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
