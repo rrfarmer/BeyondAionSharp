@@ -523,6 +523,15 @@ public sealed class PlayerEnterWorldService
 			: _repository.UpdatePlayerQuestAsync(player.ObjectId, questState, cancellationToken);
 	}
 
+	public Task<bool> PersistNpcFactionUpdateAsync(
+		Player player,
+		PlayerNpcFactionState factionState,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: PlayerNpcFactionsDAO.updateNpcFaction stores live faction state changes.
+		return _repository.UpdatePlayerNpcFactionAsync(player.ObjectId, factionState, cancellationToken);
+	}
+
 	public async Task<bool> DeleteInventoryItemAsync(
 		Player player,
 		int itemObjectId,

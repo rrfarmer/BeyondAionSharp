@@ -5342,8 +5342,29 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _playerEnterWorldService.PersistQuestStartAsync(player, mutation.QuestState, isNewQuestState: false, cancellationToken);
 
 		await SendPacketAsync(SmQuestAction.Update(mutation.QuestState), cancellationToken);
+		await CompleteQuestFinishNpcFactionAsync(player, inputPlan.Template, cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
 		return true;
+	}
+
+	private async Task CompleteQuestFinishNpcFactionAsync(
+		Player player,
+		NearbyQuestTemplateSummary? template,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: QuestService.finishQuest -> player.getNpcFactions().completeQuest(template).
+		if (template == null || template.NpcFactionId == 0)
+			return;
+
+		var completion = player.NpcFactions.CompleteActiveQuest(
+			template.IsMentorQuest,
+			NpcFactionDailyResetService.GetNextResetEpochSeconds(DateTimeOffset.Now, _options));
+		if (!completion.Applied)
+			return;
+
+		player.NpcFactions = completion.Snapshot;
+		if (_playerEnterWorldService != null && completion.CompletedFaction != null)
+			await _playerEnterWorldService.PersistNpcFactionUpdateAsync(player, completion.CompletedFaction, cancellationToken);
 	}
 
 	private async Task<bool> TryApplyQuestFinishItemRewardAsync(

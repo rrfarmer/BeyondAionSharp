@@ -642,6 +642,62 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestCompletesNpcFactionAfterQuestUpdate()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1013, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1013, "REWARD", QuestVars: 0xF4, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1014,
+			Name = "QuestFinishNpcFactionBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			NpcFactions = new PlayerNpcFactionsSnapshot(
+			[
+				new PlayerNpcFactionState(
+					FactionId: 2,
+					IsActive: true,
+					IsMentor: false,
+					TimeEpochSeconds: 0,
+					State: PlayerNpcFactionQuestState.Start,
+					QuestId: 1013),
+			]),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1013,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.True(player.NpcFactions.TryGetFaction(2, out var faction));
+		Assert.NotNull(faction);
+		Assert.Equal(PlayerNpcFactionQuestState.Complete, faction.State);
+		Assert.True(faction.TimeEpochSeconds > 0);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -823,6 +879,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						<quest id="1012" can_report="true" reward_repeat_count="5" use_class_reward="2">
 							<rewards />
 							<ranger_selectable_reward item_id="186000003" count="4" />
+						</quest>
+						<quest id="1013" can_report="true" reward_repeat_count="1" npcfaction_id="2">
+							<rewards exp="1" />
 						</quest>
 					</quests>
 				</static_data>
