@@ -4463,6 +4463,19 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveItemStorageSwitchMutationAsync(
+			int playerObjectId,
+			int sourceItemObjectId,
+			int sourceNewLocation,
+			long sourceNewSlot,
+			int replaceItemObjectId,
+			int replaceNewLocation,
+			long replaceNewSlot,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveEquipmentMutationAsync(
 			int playerObjectId,
 			IReadOnlyList<InventoryItem> items,

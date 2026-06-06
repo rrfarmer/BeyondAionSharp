@@ -4344,12 +4344,15 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (_playerEnterWorldService != null)
 			{
-				var savedSource = await _playerEnterWorldService.SaveItemCrossStorageMoveMutationAsync(
-					player, sourceItem.ObjectId, sourceItem.Location, sourceItem.Slot);
-				var savedReplace = savedSource
-					&& await _playerEnterWorldService.SaveItemCrossStorageMoveMutationAsync(
-						player, replaceItem.ObjectId, replaceItem.Location, replaceItem.Slot);
-				if (!savedReplace)
+				var savedSwitch = await _playerEnterWorldService.SaveItemStorageSwitchMutationAsync(
+					player,
+					sourceItem.ObjectId,
+					sourceItem.Location,
+					sourceItem.Slot,
+					replaceItem.ObjectId,
+					replaceItem.Location,
+					replaceItem.Slot);
+				if (!savedSwitch)
 				{
 					sourceItem.Location = sourceOldLocation;
 					sourceItem.Slot = sourceCrossStorageOldSlot;

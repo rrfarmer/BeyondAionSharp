@@ -672,6 +672,28 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemCrossStorageMoveMutationAsync(player.ObjectId, itemObjectId, newLocation, newSlot, cancellationToken);
 	}
 
+	public Task<bool> SaveItemStorageSwitchMutationAsync(
+		Player player,
+		int sourceItemObjectId,
+		int sourceNewLocation,
+		long sourceNewSlot,
+		int replaceItemObjectId,
+		int replaceNewLocation,
+		long replaceNewSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemMoveService.switchItemsInStorages swaps both items as one storage state change.
+		return _repository.SaveItemStorageSwitchMutationAsync(
+			player.ObjectId,
+			sourceItemObjectId,
+			sourceNewLocation,
+			sourceNewSlot,
+			replaceItemObjectId,
+			replaceNewLocation,
+			replaceNewSlot,
+			cancellationToken);
+	}
+
 	public Task<bool> TransferItemOwnershipAsync(
 		int itemObjectId,
 		int previousOwnerId,

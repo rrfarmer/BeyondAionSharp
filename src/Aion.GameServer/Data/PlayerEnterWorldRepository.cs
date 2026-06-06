@@ -407,6 +407,16 @@ public interface IPlayerEnterWorldRepository
 		long newSlot,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveItemStorageSwitchMutationAsync(
+		int playerObjectId,
+		int sourceItemObjectId,
+		int sourceNewLocation,
+		long sourceNewSlot,
+		int replaceItemObjectId,
+		int replaceNewLocation,
+		long replaceNewSlot,
+		CancellationToken cancellationToken = default);
+
 	// Java parity: services/ExchangeService.performTrade -> InventoryDAO.store transfers item ownership atomically
 	// when an item moves from one player's inventory to another's during a trade.
 	Task<bool> TransferItemOwnershipAsync(
@@ -538,6 +548,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public (int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
 
 	public List<(int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)> SavedItemCrossStorageMoveMutations { get; } = [];
+
+	public bool SaveItemStorageSwitchMutationResult { get; init; } = true;
+
+	public int SaveItemStorageSwitchMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, int SourceItemObjectId, int SourceNewLocation, long SourceNewSlot, int ReplaceItemObjectId, int ReplaceNewLocation, long ReplaceNewSlot)?
+		SavedItemStorageSwitchMutation { get; private set; }
 
 	public bool InsertPlayerQuestResult { get; init; } = true;
 
@@ -1472,6 +1489,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SavedItemCrossStorageMoveMutation = (playerObjectId, itemObjectId, newLocation, newSlot);
 		SavedItemCrossStorageMoveMutations.Add((playerObjectId, itemObjectId, newLocation, newSlot));
 		return Task.FromResult(SaveItemCrossStorageMoveMutationResult);
+	}
+
+	public Task<bool> SaveItemStorageSwitchMutationAsync(
+		int playerObjectId,
+		int sourceItemObjectId,
+		int sourceNewLocation,
+		long sourceNewSlot,
+		int replaceItemObjectId,
+		int replaceNewLocation,
+		long replaceNewSlot,
+		CancellationToken cancellationToken = default)
+	{
+		SaveItemStorageSwitchMutationCalls++;
+		SavedItemStorageSwitchMutation = (
+			playerObjectId,
+			sourceItemObjectId,
+			sourceNewLocation,
+			sourceNewSlot,
+			replaceItemObjectId,
+			replaceNewLocation,
+			replaceNewSlot);
+		return Task.FromResult(SaveItemStorageSwitchMutationResult);
 	}
 
 	public Task<bool> SaveEquipmentMutationAsync(
@@ -3004,23 +3043,81 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
-			await using var command = connection.CreateCommand();
-			command.CommandText = "UPDATE inventory SET item_location = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
-			command.Parameters.AddRange(
-				new[]
-				{
-					new MySqlParameter { Value = newLocation },
-					new MySqlParameter { Value = newSlot },
-					new MySqlParameter { Value = itemObjectId },
-					new MySqlParameter { Value = playerObjectId },
-				});
-			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+			return await SaveInventoryItemLocationAsync(connection, null, playerObjectId, itemObjectId, newLocation, newSlot, cancellationToken);
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save cross-storage item move for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
+	}
+
+	public async Task<bool> SaveItemStorageSwitchMutationAsync(
+		int playerObjectId,
+		int sourceItemObjectId,
+		int sourceNewLocation,
+		long sourceNewSlot,
+		int replaceItemObjectId,
+		int replaceNewLocation,
+		long replaceNewSlot,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemMoveService.switchItemsInStorages swaps both item locations before InventoryDAO.store persists the changed storage state.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			if (!await SaveInventoryItemLocationAsync(
+				connection,
+				transaction,
+				playerObjectId,
+				sourceItemObjectId,
+				sourceNewLocation,
+				sourceNewSlot,
+				cancellationToken))
+				return false;
+			if (!await SaveInventoryItemLocationAsync(
+				connection,
+				transaction,
+				playerObjectId,
+				replaceItemObjectId,
+				replaceNewLocation,
+				replaceNewSlot,
+				cancellationToken))
+				return false;
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save item storage switch for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	private static async Task<bool> SaveInventoryItemLocationAsync(
+		MySqlConnection connection,
+		MySqlTransaction? transaction,
+		int playerObjectId,
+		int itemObjectId,
+		int newLocation,
+		long newSlot,
+		CancellationToken cancellationToken)
+	{
+		await using var command = connection.CreateCommand();
+		command.Transaction = transaction;
+		command.CommandText = "UPDATE inventory SET item_location = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = newLocation },
+				new MySqlParameter { Value = newSlot },
+				new MySqlParameter { Value = itemObjectId },
+				new MySqlParameter { Value = playerObjectId },
+			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 
 	public async Task<bool> SaveEquipmentMutationAsync(

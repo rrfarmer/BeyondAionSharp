@@ -1134,11 +1134,9 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				Assert.Equal(0, item.Location);
 				Assert.Equal(12, item.Slot);
 			});
-		Assert.Equal(2, repository.SaveItemCrossStorageMoveMutationCalls);
-		Assert.Collection(
-			repository.SavedItemCrossStorageMoveMutations,
-			mutation => Assert.Equal((1001, 5001, 1, 27L), mutation),
-			mutation => Assert.Equal((1001, 6001, 0, 12L), mutation));
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Equal((1001, 5001, 1, 27L, 6001, 0, 12L), repository.SavedItemStorageSwitchMutation);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
@@ -1166,6 +1164,38 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCount: 1,
 				expectedSlot: 27),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
+	public async Task HandleReplaceItemAsync_StorageSwitchSaveFailureRollsBackBothItems()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveItemStorageSwitchMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 1);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		var replaceItem = new InventoryItem
+		{
+			ObjectId = 6001,
+			ItemId = 201,
+			Count = 2,
+			Location = 1,
+			Slot = 27,
+		};
+		player.InventoryItems = player.InventoryItems.Concat([replaceItem]).ToArray();
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 0, sourceItemObjectId: 5001, replaceStorageType: 1, replaceItemObjectId: 6001));
+
+		Assert.Equal(0, sourceItem.Location);
+		Assert.Equal(12, sourceItem.Slot);
+		Assert.Equal(1, replaceItem.Location);
+		Assert.Equal(27, replaceItem.Slot);
+		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Empty(fixture.SentPackets);
 	}
 
 	[Fact]
