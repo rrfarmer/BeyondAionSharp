@@ -4973,7 +4973,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		};
 	}
 
-	private static SmSystemMessage? CreateLegionWarehouseMoveRestrictionMessage(
+	private SmSystemMessage? CreateLegionWarehouseMoveRestrictionMessage(
 		Player player,
 		InventoryItem item,
 		ItemTemplateSummary template,
@@ -4988,14 +4988,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (destinationStorageType == 3)
 		{
 			// Java parity: ItemRestrictionService.isItemRestrictedTo LEGION_WAREHOUSE.
-			if (!item.IsStorableInLegionWarehouse(template))
+			if (!item.IsStorableInLegionWarehouse(template) || !_options.Legion.WarehouseEnabled)
 				return SmSystemMessage.WarehouseCantLegionDeposit();
 			if (!HasLegionWarehouseRight(player, LegionWarehouseDepositPermission)
 				&& !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))
 				return SmSystemMessage.GuildWarehouseNoRight();
 		}
 
-		if (sourceStorageType == 3 && !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))
+		if (sourceStorageType == 3
+			&& (!_options.Legion.WarehouseEnabled || !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission)))
 		{
 			// Java parity: ItemRestrictionService.isItemRestrictedFrom LEGION_WAREHOUSE.
 			return SmSystemMessage.GuildWarehouseNoRight();
