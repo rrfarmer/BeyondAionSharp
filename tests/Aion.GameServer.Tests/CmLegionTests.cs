@@ -92,6 +92,15 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void ReadFrom_ChangeSelfIntroConsumesJavaEmptyIdAndIntro()
+	{
+		var packet = CreateChangeSelfIntroPacket("Ready for sieges");
+
+		Assert.Equal(0x0A, packet.ExOpcode);
+		Assert.Equal("Ready for sieges", packet.NewSelfIntro);
+	}
+
+	[Fact]
 	public void SmSystemMessage_LegionNoticeHelpersUseJavaIdsAndParameters()
 	{
 		var noNotice = SmSystemMessage.MsgNoSetGuildNotice();
@@ -106,6 +115,7 @@ public sealed class CmLegionTests
 		Assert.Equal(1300277, SmSystemMessage.GuildWriteNoticeDone().MessageId);
 		Assert.Equal(1390128, SmSystemMessage.MsgClearGuildNotice().MessageId);
 		Assert.Equal(1300283, SmSystemMessage.GuildChangeRightDontHaveRight().MessageId);
+		Assert.Equal(1300282, SmSystemMessage.GuildWriteIntroDone().MessageId);
 	}
 
 	[Fact]
@@ -285,6 +295,46 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeSelfIntroInvalidValueReturnsWithoutMutationLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var player = CreateLegionPlayer();
+		player.LegionSelfIntro = "Old intro";
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeSelfIntroPacket(string.Empty));
+
+		Assert.Empty(pair.SentPackets);
+		Assert.Equal("Old intro", player.LegionSelfIntro);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeSelfIntroMutatesRuntimeStateAndSendsPacketsLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var player = CreateLegionPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeSelfIntroPacket("Ready for sieges"));
+
+		Assert.Equal("Ready for sieges", player.LegionSelfIntro);
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var response = Assert.IsType<SmLegionUpdateSelfIntro>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+				Assert.Equal(player.ObjectId, reader.ReadD());
+				Assert.Equal("Ready for sieges", reader.ReadS());
+			},
+			packet =>
+			{
+				var response = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300282, response.MessageId);
+			});
+	}
+
+	[Fact]
 	public void ReadFrom_ChangeAnnouncementReadsJavaMessage()
 	{
 		var packet = CreateChangeAnnouncementPacket("New notice");
@@ -395,6 +445,17 @@ public sealed class CmLegionTests
 		buffer.WriteC(0x09);
 		buffer.WriteD(0);
 		buffer.WriteS(announcement);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegion CreateChangeSelfIntroPacket(string selfIntro)
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x0A);
+		buffer.WriteD(0);
+		buffer.WriteS(selfIntro);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
 	}

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using Aion.Commons.Network;
 using Aion.Commons.Network.Server;
 using Aion.GameServer.Configuration;
@@ -3076,9 +3077,36 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x09:
 				await HandleLegionAnnouncementChangeAsync(player, packet.Announcement);
 				break;
+			case 0x0A:
+				await HandleLegionSelfIntroChangeAsync(player, packet.NewSelfIntro);
+				break;
 			case 0x0D:
 				await HandleLegionPermissionChangeAsync(player, packet);
 				break;
+		}
+	}
+
+	private async Task HandleLegionSelfIntroChangeAsync(Player player, string newSelfIntro)
+	{
+		// Java parity: LegionService.changeSelfIntro -> LegionRestrictions.canChangeSelfIntro -> LegionMember.setSelfIntro.
+		if (!IsValidLegionSelfIntro(newSelfIntro))
+			return;
+
+		player.LegionSelfIntro = newSelfIntro;
+		await SendPacketAsync(new SmLegionUpdateSelfIntro(player.ObjectId, newSelfIntro));
+		await SendPacketAsync(SmSystemMessage.GuildWriteIntroDone());
+	}
+
+	private bool IsValidLegionSelfIntro(string selfIntro)
+	{
+		try
+		{
+			return Regex.IsMatch(selfIntro, $@"\A(?:{_options.Legion.SelfIntroPattern})\z", RegexOptions.CultureInvariant);
+		}
+		catch (ArgumentException ex)
+		{
+			_logger.LogWarning(ex, "Invalid legion self-intro regex {Pattern}", _options.Legion.SelfIntroPattern);
+			return false;
 		}
 	}
 

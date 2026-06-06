@@ -250,6 +250,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300283);
 	}
 
+	public static SmSystemMessage GuildWriteIntroDone()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WRITE_INTRO_DONE.
+		return new SmSystemMessage(1300282);
+	}
+
 	public static SmSystemMessage GuildNotice(string announcement, int unixTime)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_NOTICE(String, long) -> params: message, Unix seconds, date display mode.

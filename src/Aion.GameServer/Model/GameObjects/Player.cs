@@ -72,6 +72,9 @@ public sealed class Player
 	// Empty when the player has no legion (LegionId == 0).
 	public string LegionRank { get; set; } = string.Empty;
 
+	// Java parity: model/team/legion/LegionMember.getSelfIntro().
+	public string LegionSelfIntro { get; set; } = string.Empty;
+
 	// Java parity: model/team/legion/LegionMember.isBrigadeGeneral().
 	public bool IsBrigadeGeneral => Legion.LegionRanks.IsBrigadeGeneral(LegionRank);
 
