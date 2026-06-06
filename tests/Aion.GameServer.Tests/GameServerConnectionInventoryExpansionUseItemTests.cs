@@ -4538,7 +4538,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(7, unchangedItem.Count);
 		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
-		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.ItemDeposit, player.Name, "200:7"), repository.InsertedLegionHistory);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421),

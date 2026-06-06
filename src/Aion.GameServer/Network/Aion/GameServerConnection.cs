@@ -4712,7 +4712,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		var shouldRecordLegionWarehouseHistory = packet.Source == 3 || packet.Destination == 3;
 		var moveHistoryCount = item.Count;
-		var moveHistoryRecorded = false;
 
 		// Java parity: ItemMoveService.moveItem restriction branch. ItemRestrictionService emits the denial
 		// message first, then sendItemUnlockPacket restores the source slot with ALL_SLOT fanout.
@@ -4727,6 +4726,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(SmSystemMessage.Disable("Shutdown Progress"));
 			return;
 		}
+
+		// Java parity: ItemMoveService.moveItem calls LegionService.addWHItemHistory after restriction checks
+		// and before auto-merge/full-storage handling.
+		if (shouldRecordLegionWarehouseHistory)
+			await AddLegionWarehouseItemHistoryAsync(player, item.ItemId, moveHistoryCount, packet.Source, packet.Destination);
 
 		// Java parity: ItemMoveService.moveItem auto-merges stackable items into existing destination stacks
 		// when the client asks for automatic placement (slot == -1) before falling back to a normal move.
@@ -4760,12 +4764,6 @@ public sealed class GameServerConnection : BaseClientConnection
 						return;
 					}
 				}
-				if (shouldRecordLegionWarehouseHistory && !moveHistoryRecorded)
-				{
-					await AddLegionWarehouseItemHistoryAsync(player, item.ItemId, moveHistoryCount, packet.Source, packet.Destination);
-					moveHistoryRecorded = true;
-				}
-
 				if (packet.Destination == 0)
 					await SendPacketAsync(new SmInventoryUpdateItem(targetStack, template, SmInventoryUpdateItem.IncreaseItemCollect));
 				else
@@ -4817,8 +4815,6 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 			}
 		}
-		if (shouldRecordLegionWarehouseHistory && !moveHistoryRecorded)
-			await AddLegionWarehouseItemHistoryAsync(player, item.ItemId, moveHistoryCount, oldLocation, packet.Destination);
 
 		// Java parity: sendItemDeletePacket for source storage.
 		await SendItemDeletePacketAsync(player, oldLocation, item.ObjectId, SmDeleteItem.MoveDeleteType);
