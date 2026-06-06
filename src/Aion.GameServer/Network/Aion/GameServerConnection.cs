@@ -4164,6 +4164,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			0 when InventoryCapacity.GetFreeCubeSlots(player, itemTemplates) <= 0 => SmSystemMessage.WarehouseFullInventory(),
 			1 when GetRegularWarehouseFreeSlots(player) <= 0 => SmSystemMessage.WarehouseDepositFullBasket(),
+			2 when InventoryCapacity.GetFreeAccountWarehouseSlots(player) <= 0 => SmSystemMessage.WarehouseDepositFullBasket(),
 			_ => null,
 		};
 	}

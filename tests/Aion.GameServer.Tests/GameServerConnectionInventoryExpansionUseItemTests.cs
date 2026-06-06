@@ -1046,6 +1046,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_FullAccountWarehouseDestinationSendsJavaStorageFullMessageAndUnlocksSource()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 5, accountId: 77);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		player.AccountWarehouseItems = CreateStorageFillerItems(
+			location: 2,
+			count: InventoryCapacity.GetAccountWarehouseLimit(),
+			ownerId: 77);
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 2, slot: 8));
+
+		var unchangedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, unchangedItem.ObjectId);
+		Assert.Equal(5, unchangedItem.Count);
+		Assert.Equal(0, unchangedItem.Location);
+		Assert.Equal(12, unchangedItem.Slot);
+		Assert.Equal(InventoryCapacity.GetAccountWarehouseLimit(), player.AccountWarehouseItems.Count);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 5,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_RegularWarehouseRestrictionSendsDenialAndUnlocksSourceLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1510,6 +1549,42 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(5, sourceItem.Count);
 		Assert.Equal(0, sourceItem.Location);
 		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 1);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421));
+	}
+
+	[Fact]
+	public async Task HandleSplitItemAsync_FullAccountWarehouseDestinationSendsJavaStorageFullMessageWithoutMutation()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5, accountId: 77);
+		player.AccountWarehouseItems = CreateStorageFillerItems(
+			location: 2,
+			count: InventoryCapacity.GetAccountWarehouseLimit(),
+			ownerId: 77);
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 2,
+				sourceStorageType: 0,
+				destinationItemObjectId: 0,
+				destinationStorageType: 2,
+				slotNumber: 8));
+
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, sourceItem.ObjectId);
+		Assert.Equal(5, sourceItem.Count);
+		Assert.Equal(0, sourceItem.Location);
+		Assert.Equal(InventoryCapacity.GetAccountWarehouseLimit(), player.AccountWarehouseItems.Count);
+		Assert.DoesNotContain(player.AccountWarehouseItems, item => item.ObjectId == 1);
+		Assert.Equal(0, repository.SaveItemSplitMutationCalls);
 		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
 		Assert.Collection(
@@ -4139,7 +4214,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
-	private static InventoryItem[] CreateStorageFillerItems(int location, int count)
+	private static InventoryItem[] CreateStorageFillerItems(int location, int count, int ownerId = 1001)
 	{
 		return Enumerable.Range(0, count)
 			.Select(index => new InventoryItem
@@ -4147,6 +4222,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				ObjectId = 6000 + index,
 				ItemId = 200,
 				Count = 1,
+				OwnerId = ownerId,
 				Location = location,
 			})
 			.ToArray();

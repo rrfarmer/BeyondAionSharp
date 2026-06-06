@@ -12,6 +12,8 @@ public static class InventoryCapacity
 	private const int WarehouseStorageId = 1;
 	private const int BaseWarehouseSlots = 24;
 	private const int WarehouseSlotsPerExpansion = 8;
+	private const int AccountWarehouseStorageId = 2;
+	private const int BaseAccountWarehouseSlots = 16;
 	private const int SpecialCubeSlots = 102;
 
 	public static int GetCubeLimit(Player player)
@@ -111,6 +113,22 @@ public static class InventoryCapacity
 	public static int GetFreeWarehouseSlots(Player player)
 	{
 		return Math.Max(0, GetWarehouseLimit(player) - GetUsedWarehouseSlots(player));
+	}
+
+	public static int GetAccountWarehouseLimit()
+	{
+		// Java parity: model/items/storage/StorageType.ACCOUNT_WAREHOUSE.
+		return BaseAccountWarehouseSlots;
+	}
+
+	public static int GetUsedAccountWarehouseSlots(Player player)
+	{
+		return player.AccountWarehouseItems.Count(item => item.Location == AccountWarehouseStorageId && item.ItemId != KinahItemId);
+	}
+
+	public static int GetFreeAccountWarehouseSlots(Player player)
+	{
+		return Math.Max(0, GetAccountWarehouseLimit() - GetUsedAccountWarehouseSlots(player));
 	}
 
 	private static bool IsNormalCubeItem(InventoryItem item, ItemTemplateTable itemTemplates)
