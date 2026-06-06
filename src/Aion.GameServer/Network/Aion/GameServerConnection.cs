@@ -4171,14 +4171,19 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static int GetRegularWarehouseFreeSlots(Player player)
 	{
-		var usedSlots = player.InventoryItems.Count(item => item.Location == 1 && item.ItemId != KinahItemId);
+		var usedSlots = GetRegularWarehouseItemCount(player);
 		return Math.Max(0, InventoryCapacity.GetWarehouseLimit(player) - usedSlots);
 	}
 
 	private static IReadOnlyList<InventoryItem> GetMoveStorageItems(Player player, int storageType)
 	{
-		// Java parity: Player.getStorage(ACCOUNT_WAREHOUSE) returns the account warehouse, whose rows are restored separately.
-		return storageType == 2 ? player.AccountWarehouseItems : player.InventoryItems;
+		// Java parity: Player.getStorage(REGULAR_WAREHOUSE/ACCOUNT_WAREHOUSE) returns separate storage objects.
+		return storageType switch
+		{
+			1 when player.WarehouseItems.Count > 0 => player.WarehouseItems,
+			2 => player.AccountWarehouseItems,
+			_ => player.InventoryItems,
+		};
 	}
 
 	private static InventoryItem? FindMoveStorageItem(Player player, int objectId, int storageType)
@@ -4189,6 +4194,12 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static void RemoveMoveStorageItem(Player player, int storageType, InventoryItem item)
 	{
+		if (storageType == 1 && player.WarehouseItems.Contains(item))
+		{
+			player.WarehouseItems = player.WarehouseItems.Where(warehouseItem => warehouseItem != item).ToArray();
+			return;
+		}
+
 		var items = GetMoveStorageItems(player, storageType).ToList();
 		items.Remove(item);
 		SetMoveStorageItems(player, storageType, items);
@@ -4205,6 +4216,12 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static void AddMoveStorageItem(Player player, int storageType, InventoryItem item)
 	{
+		if (storageType == 1 && player.WarehouseItems.Count > 0)
+		{
+			player.WarehouseItems = player.WarehouseItems.Concat([item]).ToArray();
+			return;
+		}
+
 		var items = GetMoveStorageItems(player, storageType).ToList();
 		items.Add(item);
 		SetMoveStorageItems(player, storageType, items);
@@ -4212,10 +4229,18 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static void SetMoveStorageItems(Player player, int storageType, IReadOnlyList<InventoryItem> items)
 	{
-		if (storageType == 2)
-			player.AccountWarehouseItems = items;
-		else
-			player.InventoryItems = items;
+		switch (storageType)
+		{
+			case 1 when player.WarehouseItems.Count > 0:
+				player.WarehouseItems = items;
+				break;
+			case 2:
+				player.AccountWarehouseItems = items;
+				break;
+			default:
+				player.InventoryItems = items;
+				break;
+		}
 	}
 
 	private static int GetMoveStorageOwnerId(Player player, int storageType)
@@ -4522,11 +4547,19 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.QuestExpands,
 				player.ItemExpands),
 			1 => SmCubeUpdate.RegularWarehouseSizeSnapshot(
-				player.InventoryItems.Count(item => item.Location == 1 && item.ItemId != KinahItemId),
+				GetRegularWarehouseItemCount(player),
 				player.WarehouseNpcExpands,
 				player.WarehouseBonusExpands),
 			_ => SmCubeUpdate.ZeroSizeForJavaStorageId(storageType),
 		};
+	}
+
+	private static int GetRegularWarehouseItemCount(Player player)
+	{
+		var restoredWarehouseCount = player.WarehouseItems.Count(item => item.Location == 1 && item.ItemId != KinahItemId);
+		return restoredWarehouseCount > 0
+			? restoredWarehouseCount
+			: player.InventoryItems.Count(item => item.Location == 1 && item.ItemId != KinahItemId);
 	}
 
 	private async Task HandleAtreianPassportAsync(Player player, CmAtreianPassport packet)

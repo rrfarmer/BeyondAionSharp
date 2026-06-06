@@ -899,6 +899,63 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_RegularWarehouseSourceMovesRestoredItemToCubeLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 0, accountId: 77);
+		player.InventoryItems = [];
+		player.WarehouseItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 5001,
+				ItemId = 200,
+				Count = 2,
+				OwnerId = 1001,
+				Location = 1,
+				Slot = 27,
+			},
+		];
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 1, destination: 0, slot: 8));
+
+		Assert.Empty(player.WarehouseItems);
+		var movedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, movedItem.ObjectId);
+		Assert.Equal(1001, movedItem.OwnerId);
+		Assert.Equal(0, movedItem.Location);
+		Assert.Equal(8, movedItem.Slot);
+		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMove = Assert.NotNull(repository.SavedItemCrossStorageMoveMutation);
+		Assert.Equal(1001, savedMove.PlayerObjectId);
+		Assert.Equal(77, savedMove.AccountId);
+		Assert.Equal(5001, savedMove.ItemObjectId);
+		Assert.Equal(1, savedMove.OldLocation);
+		Assert.Equal(0, savedMove.NewLocation);
+		Assert.Equal(8, savedMove.NewSlot);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 1,
+				expectedObjectId: 5001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 1),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 8),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_AccountWarehouseSourceMovesRestoredItemToCubeLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
