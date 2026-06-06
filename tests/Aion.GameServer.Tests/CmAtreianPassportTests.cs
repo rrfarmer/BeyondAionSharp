@@ -390,6 +390,67 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(1, ReadInt(payload, 12));
 	}
 
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_EnterWorldOmitsExpiredAtreianPassportFromLoginSnapshot()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var now = AtreianPassportLoginClock();
+		var expiredArriveDate = now.AddDays(-2).UtcDateTime;
+		var player = new Player
+		{
+			ObjectId = 5006,
+			AccountId = 82,
+			Name = "PassportLoginExpired",
+			Level = 50,
+			CreationDate = new DateTime(2014, 1, 1, 12, 30, 0, DateTimeKind.Utc),
+			LastOnline = DateTime.Now.AddMinutes(-5),
+			PassportStamps = 3,
+			LastPassportStamp = now.UtcDateTime,
+			Passports =
+			[
+				new PlayerPassport(1, Rewarded: false, expiredArriveDate),
+			],
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			CreateWorld(),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportLoginClock);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			AtreianPassportLoginClock);
+		SetAccountId(pair.Connection, player.AccountId);
+		var packet = new CmEnterWorld(8, new HashSet<GameConnectionState> { GameConnectionState.Authed });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(player.ObjectId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		Assert.DoesNotContain(pair.SentPackets.OfType<SmSystemMessage>(), packet => packet.MessageId == 1402601);
+		var passportPacket = pair.SentPackets.OfType<SmAtreianPassport>().LastOrDefault();
+		Assert.NotNull(passportPacket);
+		Assert.Equal(1, repository.DeleteAccountPassportCalls);
+		Assert.Empty(player.Passports);
+		var payload = SerializeUnencryptedPayload(passportPacket);
+		Assert.Equal(2014, ReadShort(payload, 0));
+		Assert.Equal(1, ReadShort(payload, 2));
+		Assert.Equal(1, ReadShort(payload, 4));
+		Assert.Equal(0, ReadShort(payload, 6));
+	}
+
 	private static CmAtreianPassport CreatePacket()
 	{
 		return new CmAtreianPassport(248, new HashSet<GameConnectionState> { GameConnectionState.InGame });

@@ -210,6 +210,7 @@ public sealed class PlayerEnterWorldService
 		if (atreianPassports.IsDisabled(now))
 			return null;
 
+		await PurgeExpiredAtreianPassportsAsync(player, atreianPassports, now, cancellationToken);
 		var doReward = CheckAtreianPassportOnlineDate(player.LastPassportStamp, nowOffset) && player.PassportStamps < 28;
 		var newPassports = new List<PlayerPassport>();
 		if (doReward)
@@ -247,6 +248,37 @@ public sealed class PlayerEnterWorldService
 			ShouldSendSnapshot: true,
 			ShouldSendAttendRewardMessage: doReward,
 			newPassports);
+	}
+
+	private async Task PurgeExpiredAtreianPassportsAsync(
+		Player player,
+		AtreianPassportTable atreianPassports,
+		DateTime now,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: AtreianPassportService.purgeExpiredPassports.
+		var passports = player.Passports.ToArray();
+		var deletedIndexes = new HashSet<int>();
+		for (var i = 0; i < passports.Length; i++)
+		{
+			var passport = passports[i];
+			if (passport.Rewarded || passport.FakeStamp)
+				continue;
+
+			var template = atreianPassports.GetAtreianPassportId(passport.PassportId);
+			if (template == null || template.RewardExpireMinutes <= 0)
+				continue;
+
+			var deadline = passport.ArriveDate.AddMinutes(template.RewardExpireMinutes);
+			if (now <= deadline)
+				continue;
+
+			if (await _repository.DeleteAccountPassportAsync(player.AccountId, passport, cancellationToken))
+				deletedIndexes.Add(i);
+		}
+
+		if (deletedIndexes.Count > 0)
+			player.Passports = passports.Where((_, index) => !deletedIndexes.Contains(index)).ToArray();
 	}
 
 	private static bool CheckAtreianPassportOnlineDate(DateTime? lastStamp, DateTimeOffset now)

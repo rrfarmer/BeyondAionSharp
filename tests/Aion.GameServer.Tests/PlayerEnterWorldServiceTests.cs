@@ -295,6 +295,57 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task EnterWorld_AtreianPassportLoginDeletesExpiredAvailableRowsBeforeSnapshot()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var now = new DateTimeOffset(2014, 3, 20, 10, 15, 30, TimeSpan.Zero);
+		var expiredArriveDate = now.AddDays(-2).UtcDateTime;
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.PassportStamps = 3;
+		player.LastPassportStamp = now.UtcDateTime;
+		player.Passports =
+		[
+			new PlayerPassport(1, Rewarded: false, expiredArriveDate),
+			new PlayerPassport(1, Rewarded: true, expiredArriveDate),
+			new PlayerPassport(1, Rewarded: false, expiredArriveDate, FakeStamp: true),
+			new PlayerPassport(9, Rewarded: false, expiredArriveDate),
+		];
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			out _,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: () => now);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.NotNull(result.AtreianPassportLogin);
+		Assert.True(result.AtreianPassportLogin.ShouldSendSnapshot);
+		Assert.False(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
+		Assert.Empty(result.AtreianPassportLogin.NewPassports);
+		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.Equal(1, repository.DeleteAccountPassportCalls);
+		Assert.NotNull(repository.DeletedAccountPassport);
+		Assert.Equal((10, 1, expiredArriveDate), (
+			repository.DeletedAccountPassport.Value.AccountId,
+			repository.DeletedAccountPassport.Value.Passport.PassportId,
+			repository.DeletedAccountPassport.Value.Passport.ArriveDate));
+		Assert.Equal(3, player.Passports.Count);
+		Assert.Contains(player.Passports, passport => passport.PassportId == 1 && passport.Rewarded);
+		Assert.Contains(player.Passports, passport => passport.PassportId == 1 && passport.FakeStamp);
+		Assert.Contains(player.Passports, passport => passport.PassportId == 9 && !passport.Rewarded && !passport.FakeStamp);
+		Assert.Equal(3, player.PassportStamps);
+		Assert.Equal(now.UtcDateTime, player.LastPassportStamp);
+	}
+
+	[Fact]
 	public async Task EnterWorld_ResetsDpAfterFiveMinutesOfflineForAdvancedClass()
 	{
 		var repository = new CapturingEnterWorldRepository
@@ -3398,8 +3449,14 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
 		{
+			DeleteAccountPassportCalls++;
+			DeletedAccountPassport = (accountId, passport);
 			return Task.FromResult(true);
 		}
+
+		public int DeleteAccountPassportCalls { get; private set; }
+
+		public (int AccountId, PlayerPassport Passport)? DeletedAccountPassport { get; private set; }
 
 		public int SaveAccountPassportLoginMutationCalls { get; private set; }
 
