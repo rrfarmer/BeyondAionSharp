@@ -731,6 +731,48 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetSelectedRewardOpensSelectionPageForActiveRegisteredTalkQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		var questNpc = fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId);
+		Assert.Contains(1022, questNpc.OnTalkEvent);
+		Assert.DoesNotContain(1022, questNpc.OnQuestStart);
+
+		var completedRewardQuestState = new PlayerQuestState(1011, "REWARD", QuestVars: 0x57, Flags: 0, CompleteCount: 0);
+		var activeTalkQuestState = new PlayerQuestState(1022, "START", QuestVars: 3, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1015,
+			Name = "QuestFinishSelectedNpcActiveTalkBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [completedRewardQuestState, activeTalkQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: SelectedQuestReward1,
+			questId: 1011,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => Assert.IsType<SmQuestAction>(packet),
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, 10, 0));
+		Assert.Equal(2, player.Quests.Count);
+		var completedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1011);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		var activeTalkQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1022);
+		Assert.Equal("START", activeTalkQuest.Status);
+		Assert.Equal(3, activeTalkQuest.QuestVars);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAddsClassSelectedItemOnLastRepeatAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
@@ -1561,6 +1603,24 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 				}
 				""");
 			await File.WriteAllTextAsync(
+				Path.Combine(questHandlerDirectory, "_1022ActiveTalk.java"),
+				"""
+				package quest.test;
+
+				import com.aionemu.gameserver.questEngine.handlers.AbstractQuestHandler;
+
+				public class _1022ActiveTalk extends AbstractQuestHandler {
+					public _1022ActiveTalk() {
+						super(1022);
+					}
+
+					@Override
+					public void register() {
+						qe.registerQuestNpc(203001).addOnTalkEvent(questId);
+					}
+				}
+				""");
+			await File.WriteAllTextAsync(
 				Path.Combine(questHandlerDirectory, "_1016FollowUp.java"),
 				"""
 				package quest.test;
@@ -1731,6 +1791,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 							<start_conditions>
 								<finished quest_id="1020" />
 							</start_conditions>
+							<rewards />
+						</quest>
+						<quest id="1022">
 							<rewards />
 						</quest>
 					</quests>

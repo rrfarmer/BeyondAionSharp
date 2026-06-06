@@ -5783,13 +5783,24 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (completedInputPlan.RewardProjection?.TargetNpcId is > 0 and var npcId)
 		{
 			var questNpc = staticData.QuestNpcStarts.GetQuestNpc(npcId);
+			var npcHasActiveQuest = false;
 			foreach (var questId in questNpc.OnTalkEvent)
 			{
 				if (questId == completedQuestId)
 					continue;
 
 				var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
-				if (questState == null || !string.Equals(questState.Status, "REWARD", StringComparison.Ordinal))
+				if (questState == null)
+					continue;
+
+				if (!npcHasActiveQuest
+					&& string.Equals(questState.Status, "START", StringComparison.Ordinal)
+					&& IsNpcSelectedRewardPostFinishActiveTalkQuest(staticData, questNpc, questId, questState))
+				{
+					npcHasActiveQuest = true;
+				}
+
+				if (!string.Equals(questState.Status, "REWARD", StringComparison.Ordinal))
 					continue;
 
 				if (!staticData.QuestFinishRewardProjections.TryGetQuest(questId, out var projectionEntry)
@@ -5812,9 +5823,30 @@ public sealed class GameServerConnection : BaseClientConnection
 					GetQuestRewardSelectionDialogPageId(correction.QuestState.RewardGroup),
 					questId);
 			}
+
+			if (npcHasActiveQuest)
+				return new SmDialogWindow(targetObjectId, 10, 0);
 		}
 
 		return new SmDialogWindow(targetObjectId, 0, 0);
+	}
+
+	private static bool IsNpcSelectedRewardPostFinishActiveTalkQuest(
+		StaticData staticData,
+		QuestNpcStartRegistration questNpc,
+		int questId,
+		PlayerQuestState questState)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestEndDialog keeps the selection page open for
+		// registered active talk quests unless the same NPC is only the regular start NPC.
+		var isQuestStartNpc = questNpc.OnQuestStart.Contains(questId);
+		if (!isQuestStartNpc)
+			return true;
+
+		return questState.QuestVars == 0
+			&& staticData.NearbyQuestTemplates.TryGetQuest(questId, out var template)
+			&& template != null
+			&& string.Equals(template.QuestCategory, "MISSION", StringComparison.Ordinal);
 	}
 
 	private async Task<bool> TryHandleNpcTargetQuestFinishAutoRewardAsync(
