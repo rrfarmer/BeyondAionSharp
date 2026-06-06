@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
@@ -206,7 +207,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetRewardQuestCorrectsRewardGroupBeforeSendingPage()
 	{
-		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync(withPlayerEnterWorldService: true);
 		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1001, out var lookupEntry));
 		Assert.NotNull(lookupEntry);
 		var rewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 4, Flags: 0, CompleteCount: 0, RewardGroup: 9);
@@ -236,6 +237,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal("REWARD", correctedQuest.Status);
 		Assert.Equal(0, correctedQuest.RewardGroup);
 		Assert.Equal(4, correctedQuest.QuestVars);
+		Assert.Equal(1, fixture.PlayerEnterWorldRepository.UpdatePlayerQuestCalls);
+		Assert.Same(correctedQuest, fixture.PlayerEnterWorldRepository.UpdatedPlayerQuestState);
+		Assert.Equal(0, fixture.PlayerEnterWorldRepository.InsertPlayerQuestCalls);
 	}
 
 	[Fact]
@@ -1639,6 +1643,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			StaticData staticData,
 			List<GameServerPacket> sentPackets,
 			CapturingConnectionRegistry connectionRegistry,
+			EmptyPlayerEnterWorldRepository playerEnterWorldRepository,
 			string tempRoot)
 		{
 			_client = client;
@@ -1646,6 +1651,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			StaticData = staticData;
 			SentPackets = sentPackets;
 			ConnectionRegistry = connectionRegistry;
+			PlayerEnterWorldRepository = playerEnterWorldRepository;
 			_tempRoot = tempRoot;
 		}
 
@@ -1659,7 +1665,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 
 		public List<GameServerPacket> RegistryPackets => ConnectionRegistry.PacketOrder;
 
-		public static async Task<QuestFinishDialogFixture> CreateAsync()
+		public EmptyPlayerEnterWorldRepository PlayerEnterWorldRepository { get; }
+
+		public static async Task<QuestFinishDialogFixture> CreateAsync(bool withPlayerEnterWorldService = false)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-quest-finish-dialog-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -1915,6 +1923,14 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					new WorldPosition(210010000, 1, 2, 3, 0)));
 			var sentPackets = new List<GameServerPacket>();
 			var connectionRegistry = new CapturingConnectionRegistry();
+			var playerEnterWorldRepository = new EmptyPlayerEnterWorldRepository();
+			var playerEnterWorldService = withPlayerEnterWorldService
+				? new PlayerEnterWorldService(
+					new GameServerOptions(),
+					playerEnterWorldRepository,
+					world,
+					NullLogger<PlayerEnterWorldService>.Instance)
+				: null;
 
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1934,12 +1950,20 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
+					playerEnterWorldService: playerEnterWorldService,
 					world: world,
 					connectionRegistry: connectionRegistry,
 					idFactory: new IDFactory(),
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
-				return new QuestFinishDialogFixture(client, connection, dataManager.StaticData, sentPackets, connectionRegistry, tempRoot);
+				return new QuestFinishDialogFixture(
+					client,
+					connection,
+					dataManager.StaticData,
+					sentPackets,
+					connectionRegistry,
+					playerEnterWorldRepository,
+					tempRoot);
 			}
 			finally
 			{

@@ -5379,6 +5379,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.Quests = player.Quests
 				.Select(quest => quest.QuestId == correction.QuestState.QuestId ? correction.QuestState : quest)
 				.ToArray();
+
+			if (_playerEnterWorldService != null)
+				await _playerEnterWorldService.PersistQuestStartAsync(player, correction.QuestState, isNewQuestState: false, cancellationToken);
 		}
 
 		await SendPacketAsync(
