@@ -19,7 +19,6 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 {
 	private const int SelectedQuestAutoReward = 108;
 	private const int SelectedQuestAutoReward1 = 110;
-	private const int QuestAcceptSimple = 20000;
 	private const int KinahItemId = 182400001;
 	private const int RewardItemId = 186000001;
 	private const int SelectableRewardItemId = 186000002;
@@ -185,7 +184,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		};
 		var packet = CreateDialogSelect(
 			targetObjectId: QuestReportNpcObjectId,
-			dialogActionId: QuestAcceptSimple,
+			dialogActionId: CmDialogSelect.QuestAcceptSimple,
 			questId: 1001,
 			extendedRewardIndex: 0);
 
@@ -195,6 +194,40 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			fixture.SentPackets,
 			packet => AssertQuestAction(packet, SmQuestAction.AddActionId, questId: 1001, statusValue: 3),
 			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 0, questId: 0));
+		var startedQuest = Assert.Single(player.Quests);
+		Assert.Equal(1001, startedQuest.QuestId);
+		Assert.Equal("START", startedQuest.Status);
+		Assert.Equal(0, startedQuest.QuestVars);
+		Assert.Equal(0, startedQuest.CompleteCount);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetQuestAccept1StartsQuestAndSendsStartPage()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var player = new Player
+		{
+			ObjectId = 46,
+			Name = "QuestAccept1Boundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.QuestAccept1,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertQuestAction(packet, SmQuestAction.AddActionId, questId: 1001, statusValue: 3),
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 1003, questId: 1001));
 		var startedQuest = Assert.Single(player.Quests);
 		Assert.Equal(1001, startedQuest.QuestId);
 		Assert.Equal("START", startedQuest.Status);

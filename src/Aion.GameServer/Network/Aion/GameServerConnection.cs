@@ -5017,7 +5017,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestFinishAutoRewardAsync(player, packet))
 			return;
 
-		if (await TryHandleNpcTargetQuestAcceptSimpleAsync(player, packet))
+		if (await TryHandleNpcTargetQuestStartAcceptAsync(player, packet))
 			return;
 
 		if (packet.DialogActionId == CmDialogSelect.InstanceEntry
@@ -5251,16 +5251,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		return packet.QuestId != 0 || packet.DialogActionId is useObject or exchangeCoin;
 	}
 
-	private async Task<bool> TryHandleNpcTargetQuestAcceptSimpleAsync(
+	private async Task<bool> TryHandleNpcTargetQuestStartAcceptAsync(
 		Player player,
 		CmDialogSelect packet,
 		CancellationToken cancellationToken = default)
 	{
-		const int questAcceptSimple = 20000;
-
-		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles QUEST_ACCEPT_SIMPLE
-		// by calling QuestService.startQuest, then closeDialogWindow for NPC-visible quests.
-		if (packet.DialogActionId != questAcceptSimple
+		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles QUEST_ACCEPT_1
+		// and QUEST_ACCEPT_SIMPLE by calling QuestService.startQuest, then either
+		// sendQuestDialog(..., 1003) or closeDialogWindow for NPC-visible quests.
+		if (packet.DialogActionId is not (CmDialogSelect.QuestAccept1 or CmDialogSelect.QuestAcceptSimple)
 			|| packet.QuestId <= 0
 			|| packet.TargetObjectId == 0
 			|| packet.TargetObjectId == player.ObjectId
@@ -5339,9 +5338,16 @@ public sealed class GameServerConnection : BaseClientConnection
 			? SmQuestAction.Add(finalQuestState)
 			: SmQuestAction.Update(finalQuestState);
 		await SendPacketAsync(questPacket, cancellationToken);
-		await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 0), cancellationToken);
+		await SendPacketAsync(CreateQuestStartAcceptDialogWindow(packet), cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
 		return true;
+	}
+
+	private static SmDialogWindow CreateQuestStartAcceptDialogWindow(CmDialogSelect packet)
+	{
+		return packet.DialogActionId == CmDialogSelect.QuestAcceptSimple
+			? new SmDialogWindow(packet.TargetObjectId, 0)
+			: new SmDialogWindow(packet.TargetObjectId, 1003, packet.QuestId);
 	}
 
 	private async Task<bool> TryHandleQuestFinishAutoRewardAsync(
