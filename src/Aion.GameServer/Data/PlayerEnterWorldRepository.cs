@@ -35,6 +35,15 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem? kinahItemUpdate,
 		CancellationToken cancellationToken = default);
 
+	Task<int> CountLegionMembersAsync(int legionId, CancellationToken cancellationToken = default);
+
+	Task<bool> SaveLegionLevelUpMutationAsync(
+		int playerObjectId,
+		int legionId,
+		int legionLevel,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveLegionAnnouncementAsync(
 		int legionId,
 		string? announcement,
@@ -752,6 +761,37 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveLegionEmblemMutationCalls++;
 		SavedLegionEmblemMutation = (playerObjectId, legionId, emblem, kinahItemUpdate);
 		return Task.FromResult(SaveLegionEmblemMutationResult);
+	}
+
+	public int CountLegionMembersResult { get; init; }
+
+	public int CountLegionMembersCalls { get; private set; }
+
+	public int CountedLegionMembersLegionId { get; private set; }
+
+	public Task<int> CountLegionMembersAsync(int legionId, CancellationToken cancellationToken = default)
+	{
+		CountLegionMembersCalls++;
+		CountedLegionMembersLegionId = legionId;
+		return Task.FromResult(CountLegionMembersResult);
+	}
+
+	public bool SaveLegionLevelUpMutationResult { get; init; } = true;
+
+	public int SaveLegionLevelUpMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, int LegionId, int LegionLevel, InventoryItem? KinahItemUpdate)? SavedLegionLevelUpMutation { get; private set; }
+
+	public Task<bool> SaveLegionLevelUpMutationAsync(
+		int playerObjectId,
+		int legionId,
+		int legionLevel,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		SaveLegionLevelUpMutationCalls++;
+		SavedLegionLevelUpMutation = (playerObjectId, legionId, legionLevel, kinahItemUpdate);
+		return Task.FromResult(SaveLegionLevelUpMutationResult);
 	}
 
 	public bool SaveLegionAnnouncementResult { get; init; } = true;
@@ -2084,6 +2124,98 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Failed to persist legion emblem {LegionId}", legionId);
+			return false;
+		}
+	}
+
+	public async Task<int> CountLegionMembersAsync(int legionId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: model/team/legion/Legion.hasRequiredMembers uses legion.getMemberIds().size().
+		if (legionId <= 0)
+			return 0;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT COUNT(*) FROM legion_members WHERE legion_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = legionId });
+			var result = await command.ExecuteScalarAsync(cancellationToken);
+			return Convert.ToInt32(result, CultureInfo.InvariantCulture);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not count members for legion {LegionId}", legionId);
+			return 0;
+		}
+	}
+
+	public async Task<bool> SaveLegionLevelUpMutationAsync(
+		int playerObjectId,
+		int legionId,
+		int legionLevel,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		// C# runtime parity note: Java mutates the live Legion and periodically stores it; C# currently uses the
+		// Java schema directly as the shared runtime state for loaded player legion facts.
+		if (playerObjectId <= 0 || legionId <= 0 || legionLevel <= 0)
+			return false;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			try
+			{
+				if (kinahItemUpdate != null)
+				{
+					await using var kinahCommand = connection.CreateCommand();
+					kinahCommand.Transaction = transaction;
+					kinahCommand.CommandText = "UPDATE inventory SET item_count = ? WHERE item_unique_id = ? AND item_owner = ?";
+					kinahCommand.Parameters.AddRange(
+						new[]
+						{
+							new MySqlParameter { Value = kinahItemUpdate.Count },
+							new MySqlParameter { Value = kinahItemUpdate.ObjectId },
+							new MySqlParameter { Value = playerObjectId },
+						});
+					if (await kinahCommand.ExecuteNonQueryAsync(cancellationToken) == 0)
+					{
+						await transaction.RollbackAsync(cancellationToken);
+						return false;
+					}
+				}
+
+				await using var legionCommand = connection.CreateCommand();
+				legionCommand.Transaction = transaction;
+				legionCommand.CommandText = "UPDATE legions SET level = ? WHERE id = ?";
+				legionCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = legionLevel },
+						new MySqlParameter { Value = legionId },
+					});
+				if (await legionCommand.ExecuteNonQueryAsync(cancellationToken) == 0)
+				{
+					await transaction.RollbackAsync(cancellationToken);
+					return false;
+				}
+
+				await transaction.CommitAsync(cancellationToken);
+				return true;
+			}
+			catch
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				throw;
+			}
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save level-up mutation for legion {LegionId}", legionId);
 			return false;
 		}
 	}

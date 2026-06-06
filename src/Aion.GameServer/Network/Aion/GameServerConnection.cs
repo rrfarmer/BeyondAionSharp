@@ -42,6 +42,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int LegionWarehouseDepositPermission = 0x1000;
 	private const int LegionKickPermission = 0x10;
 	private const int LegionEditPermission = 0x200;
+	private const int MaxLegionLevel = 8;
 	private const int MaxLegionAnnouncementLength = 256;
 	private const int MinLegionEmblemId = 0;
 	private const int MaxLegionEmblemId = 49;
@@ -3078,6 +3079,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x08:
 				await SendPacketAsync(SmLegionInfo.FromPlayer(player));
 				break;
+			case 0x0E:
+				await HandleLegionLevelUpAsync(player);
+				break;
 			case 0x09:
 				await HandleLegionAnnouncementChangeAsync(player, packet.Announcement);
 				break;
@@ -3096,6 +3100,123 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x0F:
 				await HandleLegionNicknameChangeAsync(player, packet.CharacterName, packet.NewNickname);
 				break;
+		}
+	}
+
+	private async Task HandleLegionLevelUpAsync(Player player)
+	{
+		// Java parity: LegionService.requestChangeLevel -> LegionRestrictions.canChangeLevel -> changeLevel.
+		if (!player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeLevelDontHaveRight());
+			return;
+		}
+
+		if (player.LegionLevel >= MaxLegionLevel)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeLevelCantLevelUp());
+			return;
+		}
+
+		if (_options.Legion.ChallengeTaskRequirementEnabled && player.LegionLevel >= 5)
+		{
+			// Java calls ChallengeTaskService.canRaiseLegionLevel here. That live service is not ported yet, so the
+			// C# runtime preserves the Java default gate by denying 5+ raises instead of silently bypassing it.
+			await SendPacketAsync(SmSystemMessage.GuildLevelUpChallengeTask(player.LegionLevel));
+			return;
+		}
+
+		var requiredKinah = GetLegionLevelRequirement(_options.Legion.LevelRequiredKinah, player.LegionLevel);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (requiredKinah > 0 && (kinahItem == null || kinahItem.Count < requiredKinah))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeLevelNotEnoughMoney());
+			return;
+		}
+
+		if (_playerEnterWorldRepository == null)
+			return;
+
+		var requiredMembers = GetLegionLevelRequirement(_options.Legion.LevelRequiredMembers, player.LegionLevel);
+		var memberCount = await _playerEnterWorldRepository.CountLegionMembersAsync(player.LegionId);
+		if (memberCount < requiredMembers)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeLevelNotEnoughMember());
+			return;
+		}
+
+		var requiredContribution = GetLegionLevelRequirement(_options.Legion.LevelRequiredContribution, player.LegionLevel);
+		if (player.LegionContributionPoints < requiredContribution)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeLevelNotEnoughPoint());
+			return;
+		}
+
+		var newLevel = player.LegionLevel + 1;
+		var previousKinah = kinahItem?.Count ?? 0;
+		if (requiredKinah > 0 && kinahItem != null)
+			kinahItem.Count -= requiredKinah;
+
+		var saved = await _playerEnterWorldRepository.SaveLegionLevelUpMutationAsync(
+			player.ObjectId,
+			player.LegionId,
+			newLevel,
+			requiredKinah > 0 ? kinahItem : null);
+		if (!saved)
+		{
+			if (requiredKinah > 0 && kinahItem != null)
+				kinahItem.Count = previousKinah;
+			return;
+		}
+
+		player.LegionLevel = newLevel;
+		await _playerEnterWorldRepository.InsertLegionHistoryAsync(
+			player.LegionId,
+			LegionHistoryActions.LevelUp,
+			player.Name,
+			newLevel.ToString(CultureInfo.InvariantCulture));
+
+		if (requiredKinah > 0 && kinahItem != null)
+		{
+			var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+			if (templates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+				await SendPacketAsync(new SmInventoryUpdateItem(kinahItem, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		}
+
+		await BroadcastLegionLevelUpAsync(player, newLevel);
+	}
+
+	private static int GetLegionLevelRequirement(IReadOnlyList<int> requirements, int currentLegionLevel)
+	{
+		// Java parity: Legion.get{Kinah,Contribution}Price and hasRequiredMembers switch on current level 1..7.
+		var index = currentLegionLevel - 1;
+		return index >= 0 && index < requirements.Count ? requirements[index] : 0;
+	}
+
+	private async Task BroadcastLegionLevelUpAsync(Player player, int newLevel)
+	{
+		// Java parity: LegionService.changeLevel broadcasts SM_LEGION_EDIT(0x00) and STR_GUILD_EVENT_LEVELUP.
+		await SendPacketAsync(SmLegionEdit.Level(newLevel));
+		await SendPacketAsync(SmSystemMessage.GuildEventLevelUp(newLevel));
+
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != player.LegionId)
+				return;
+
+			candidate.LegionLevel = newLevel;
+			if (candidate.ObjectId != player.ObjectId)
+				recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmLegionEdit.Level(newLevel));
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmSystemMessage.GuildEventLevelUp(newLevel));
 		}
 	}
 

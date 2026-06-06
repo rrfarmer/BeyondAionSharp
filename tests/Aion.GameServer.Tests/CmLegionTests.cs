@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
@@ -98,6 +99,14 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void ReadFrom_LevelUpConsumesJavaEmptyFields()
+	{
+		var packet = CreateLevelUpPacket();
+
+		Assert.Equal(0x0E, packet.ExOpcode);
+	}
+
+	[Fact]
 	public void ReadFrom_ShowNoticeConsumesJavaEmptyFields()
 	{
 		var packet = CreatePacket();
@@ -165,6 +174,17 @@ public sealed class CmLegionTests
 		var notMember = SmSystemMessage.GuildChangeMemberNicknameHeIsNotMyGuildMember("Lurion");
 		Assert.Equal(1300314, notMember.MessageId);
 		Assert.Equal(["Lurion"], notMember.Parameters);
+		Assert.Equal(1300315, SmSystemMessage.GuildChangeLevelDontHaveRight().MessageId);
+		Assert.Equal(1300316, SmSystemMessage.GuildChangeLevelCantLevelUp().MessageId);
+		Assert.Equal(1300317, SmSystemMessage.GuildChangeLevelNotEnoughPoint().MessageId);
+		Assert.Equal(1300318, SmSystemMessage.GuildChangeLevelNotEnoughMember().MessageId);
+		Assert.Equal(1300319, SmSystemMessage.GuildChangeLevelNotEnoughMoney().MessageId);
+		var challengeTask = SmSystemMessage.GuildLevelUpChallengeTask(5);
+		Assert.Equal(904452, challengeTask.MessageId);
+		Assert.Equal(["5"], challengeTask.Parameters);
+		var eventLevelUp = SmSystemMessage.GuildEventLevelUp(2);
+		Assert.Equal(900700, eventLevelUp.MessageId);
+		Assert.Equal(["2"], eventLevelUp.Parameters);
 	}
 
 	[Fact]
@@ -634,6 +654,109 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LevelUpRejectsNonBrigadeGeneralLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Deputy;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLevelUpPacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300315, response.MessageId);
+		Assert.Equal(0, repository.CountLegionMembersCalls);
+		Assert.Equal(0, repository.SaveLegionLevelUpMutationCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LevelUpRejectsInsufficientKinahBeforeMemberCheckLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, options: CreateLevelUpOptions(requiredKinah: 100));
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionLevel = 1;
+		player.InventoryItems = [CreateKinah(99, player.ObjectId)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLevelUpPacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300319, response.MessageId);
+		Assert.Equal(0, repository.CountLegionMembersCalls);
+		Assert.Equal(0, repository.SaveLegionLevelUpMutationCalls);
+		Assert.Equal(99, player.InventoryItems.Single().Count);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LevelUpRejectsMissingChallengeTaskForLevelFivePlusLikeJavaDefault()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, options: CreateLevelUpOptions());
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionLevel = 5;
+		player.InventoryItems = [CreateKinah(1000, player.ObjectId)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLevelUpPacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(904452, response.MessageId);
+		Assert.Equal(["5"], response.Parameters);
+		Assert.Equal(0, repository.CountLegionMembersCalls);
+		Assert.Equal(0, repository.SaveLegionLevelUpMutationCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LevelUpMutatesKinahLevelHistoryAndBroadcastsLikeJava()
+	{
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		bystander.LegionLevel = 1;
+		var outsider = CreateLegionPlayer(3003, "Outsider");
+		outsider.LegionId = 99;
+		outsider.LegionLevel = 1;
+		var repository = new EmptyPlayerEnterWorldRepository { CountLegionMembersResult = 2 };
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			registry,
+			options: CreateLevelUpOptions(requiredKinah: 100, requiredMembers: 2, requiredContribution: 50));
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionLevel = 1;
+		player.LegionContributionPoints = 50;
+		player.InventoryItems = [CreateKinah(500, player.ObjectId)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLevelUpPacket());
+
+		Assert.Equal(1, repository.CountLegionMembersCalls);
+		Assert.Equal(77, repository.CountedLegionMembersLegionId);
+		Assert.Equal(1, repository.SaveLegionLevelUpMutationCalls);
+		Assert.Equal(2, repository.SavedLegionLevelUpMutation?.LegionLevel);
+		Assert.Equal(400, repository.SavedLegionLevelUpMutation?.KinahItemUpdate?.Count);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.LevelUp, "Tester", "2"), repository.InsertedLegionHistory);
+		Assert.Equal(2, player.LegionLevel);
+		Assert.Equal(2, bystander.LegionLevel);
+		Assert.Equal(1, outsider.LegionLevel);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => AssertLegionEditLevelPacket(packet, 2),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(900700, message.MessageId);
+				Assert.Equal(["2"], message.Parameters);
+			});
+		Assert.Equal(2, registry.DirectPackets.Count(delivery => delivery.PlayerObjectId == bystander.ObjectId));
+		AssertLegionEditLevelPacket(registry.DirectPackets[0].Packet, 2);
+		var directMessage = Assert.IsType<SmSystemMessage>(registry.DirectPackets[1].Packet);
+		Assert.Equal(900700, directMessage.MessageId);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_KickMissingMemberSendsNotMyGuildMemberLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1077,6 +1200,17 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
+	private static CmLegion CreateLevelUpPacket()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x0E);
+		buffer.WriteD(0);
+		buffer.WriteH(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
 	private static CmLegion CreateEditPermissionsPacket(short deputy, short centurion, short legionary, short volunteer)
 	{
 		var packet = CreatePacket();
@@ -1108,6 +1242,36 @@ public sealed class CmLegionTests
 			LegionCenturionPermission = 12,
 			LegionLegionaryPermission = 13,
 			LegionVolunteerPermission = 14,
+		};
+	}
+
+	private static InventoryItem CreateKinah(long count, int ownerId)
+	{
+		return new InventoryItem
+		{
+			ObjectId = 9001,
+			ItemId = 182400001,
+			Count = count,
+			OwnerId = ownerId,
+			Location = 0,
+		};
+	}
+
+	private static GameServerOptions CreateLevelUpOptions(
+		int requiredKinah = 0,
+		int requiredMembers = 1,
+		int requiredContribution = 0,
+		bool challengeTaskRequirementEnabled = true)
+	{
+		return new GameServerOptions
+		{
+			Legion = new GameServerLegionOptions
+			{
+				LevelRequiredKinah = [requiredKinah, 1000, 1000, 1000, 1000, 1000, 1000],
+				LevelRequiredMembers = [requiredMembers, 1, 1, 1, 1, 1, 1],
+				LevelRequiredContribution = [requiredContribution, 0, 0, 0, 0, 0, 0],
+				ChallengeTaskRequirementEnabled = challengeTaskRequirementEnabled,
+			},
 		};
 	}
 
@@ -1230,6 +1394,14 @@ public sealed class CmLegionTests
 		Assert.Equal(rankId, reader.ReadC());
 	}
 
+	private static void AssertLegionEditLevelPacket(GameServerPacket packet, int legionLevel)
+	{
+		var response = Assert.IsType<SmLegionEdit>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(legionLevel, reader.ReadC());
+	}
+
 	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -1264,7 +1436,8 @@ public sealed class CmLegionTests
 		public static async Task<TestConnectionPair> CreateAsync(
 			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 			IGameClientConnectionRegistry? connectionRegistry = null,
-			GameServerRuntimeContext? runtimeContext = null)
+			GameServerRuntimeContext? runtimeContext = null,
+			GameServerOptions? options = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1283,6 +1456,7 @@ public sealed class CmLegionTests
 					serverClient,
 					"legion-info-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					options: options,
 					runtimeContext: runtimeContext,
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					connectionRegistry: connectionRegistry,

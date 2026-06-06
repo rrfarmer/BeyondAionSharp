@@ -255,6 +255,37 @@ public sealed class GameServerOptions
 				EmblemRequiredKinah = GetIntWithEnvironment(loader, "gameserver.legion.emblemrequiredkinah", 800000),
 				SelfIntroPattern = GetWithEnvironment(loader, "gameserver.legion.selfintropattern", ".{1,32}"),
 				NicknamePattern = GetWithEnvironment(loader, "gameserver.legion.nicknamepattern", ".{1,10}"),
+				LevelRequiredKinah =
+				[
+					GetIntWithEnvironment(loader, "gameserver.legion.level2requiredkinah", 100000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level3requiredkinah", 1000000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level4requiredkinah", 5000000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level5requiredkinah", 25000000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level6requiredkinah", 50000000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level7requiredkinah", 75000000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level8requiredkinah", 100000000),
+				],
+				LevelRequiredMembers =
+				[
+					GetIntWithEnvironment(loader, "gameserver.legion.level2requiredmembers", 10),
+					GetIntWithEnvironment(loader, "gameserver.legion.level3requiredmembers", 20),
+					GetIntWithEnvironment(loader, "gameserver.legion.level4requiredmembers", 30),
+					GetIntWithEnvironment(loader, "gameserver.legion.level5requiredmembers", 40),
+					GetIntWithEnvironment(loader, "gameserver.legion.level6requiredmembers", 50),
+					GetIntWithEnvironment(loader, "gameserver.legion.level7requiredmembers", 60),
+					GetIntWithEnvironment(loader, "gameserver.legion.level8requiredmembers", 70),
+				],
+				LevelRequiredContribution =
+				[
+					GetIntWithEnvironment(loader, "gameserver.legion.level2requiredcontribution", 0),
+					GetIntWithEnvironment(loader, "gameserver.legion.level3requiredcontribution", 20000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level4requiredcontribution", 100000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level5requiredcontribution", 500000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level6requiredcontribution", 2500000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level7requiredcontribution", 12500000),
+					GetIntWithEnvironment(loader, "gameserver.legion.level8requiredcontribution", 62500000),
+				],
+				ChallengeTaskRequirementEnabled = GetBoolWithEnvironment(loader, "gameserver.legion.task.requirement.enable", true),
 			},
 			AutoGroup = new GameServerAutoGroupOptions
 			{
@@ -673,6 +704,18 @@ public sealed class GameServerLegionOptions
 
 	// Java parity: configs/main/LegionConfig.NICKNAME_PATTERN.
 	public string NicknamePattern { get; init; } = ".{1,10}";
+
+	// Java parity: configs/main/LegionConfig.LEGION_LEVEL{2..8}_REQUIRED_KINAH.
+	public IReadOnlyList<int> LevelRequiredKinah { get; init; } = [100000, 1000000, 5000000, 25000000, 50000000, 75000000, 100000000];
+
+	// Java parity: configs/main/LegionConfig.LEGION_LEVEL{2..8}_REQUIRED_MEMBERS.
+	public IReadOnlyList<int> LevelRequiredMembers { get; init; } = [10, 20, 30, 40, 50, 60, 70];
+
+	// Java parity: configs/main/LegionConfig.LEGION_LEVEL{2..8}_REQUIRED_CONTRIBUTION.
+	public IReadOnlyList<int> LevelRequiredContribution { get; init; } = [0, 20000, 100000, 500000, 2500000, 12500000, 62500000];
+
+	// Java parity: configs/main/LegionConfig.ENABLE_GUILD_TASK_REQ.
+	public bool ChallengeTaskRequirementEnabled { get; init; } = true;
 }
 
 public sealed class GameServerAutoGroupOptions

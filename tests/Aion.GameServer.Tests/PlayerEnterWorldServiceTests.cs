@@ -3676,6 +3676,21 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<int> CountLegionMembersAsync(int legionId, CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> SaveLegionLevelUpMutationAsync(
+			int playerObjectId,
+			int legionId,
+			int legionLevel,
+			InventoryItem? kinahItemUpdate,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveLegionAnnouncementAsync(
 			int legionId,
 			string? announcement,

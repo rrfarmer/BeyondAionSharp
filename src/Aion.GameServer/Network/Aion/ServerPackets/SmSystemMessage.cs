@@ -1,5 +1,6 @@
 using Aion.Commons.Network;
 using Aion.GameServer.Utils;
+using System.Globalization;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -2185,6 +2186,48 @@ public sealed class SmSystemMessage : GameServerPacket
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT. Legion warehouse access denied.
 		return new SmSystemMessage(1300322);
+	}
+
+	public static SmSystemMessage GuildChangeLevelDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_LEVEL_DONT_HAVE_RIGHT.
+		return new SmSystemMessage(1300315);
+	}
+
+	public static SmSystemMessage GuildLevelUpChallengeTask(int currentLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_LEVEL_UP_CHALLENGE_TASK(currentLevel).
+		return new SmSystemMessage(904452, currentLevel.ToString(CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GuildChangeLevelCantLevelUp()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_LEVEL_CANT_LEVEL_UP.
+		return new SmSystemMessage(1300316);
+	}
+
+	public static SmSystemMessage GuildChangeLevelNotEnoughPoint()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_LEVEL_NOT_ENOUGH_POINT.
+		return new SmSystemMessage(1300317);
+	}
+
+	public static SmSystemMessage GuildChangeLevelNotEnoughMember()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_LEVEL_NOT_ENOUGH_MEMBER.
+		return new SmSystemMessage(1300318);
+	}
+
+	public static SmSystemMessage GuildChangeLevelNotEnoughMoney()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_LEVEL_NOT_ENOUGH_MONEY.
+		return new SmSystemMessage(1300319);
+	}
+
+	public static SmSystemMessage GuildEventLevelUp(int newLevel)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_EVENT_LEVELUP(newLevel).
+		return new SmSystemMessage(900700, newLevel.ToString(CultureInfo.InvariantCulture));
 	}
 
 	public static SmSystemMessage NoGuildToDeposit()

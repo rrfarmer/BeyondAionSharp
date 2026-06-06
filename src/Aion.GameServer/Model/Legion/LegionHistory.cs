@@ -16,6 +16,7 @@ public static class LegionHistoryActions
 	public const string ItemDeposit = "ITEM_DEPOSIT";
 	public const string ItemWithdraw = "ITEM_WITHDRAW";
 	public const string Kick = "KICK";
+	public const string LevelUp = "LEVEL_UP";
 	public const string EmblemRegister = "EMBLEM_REGISTER";
 	public const string EmblemModified = "EMBLEM_MODIFIED";
 
@@ -31,7 +32,7 @@ public static class LegionHistoryActions
 			"CREATE" => ((byte)0, TypeLegion),
 			"JOIN" => ((byte)1, TypeLegion),
 			Kick => ((byte)2, TypeLegion),
-			"LEVEL_UP" => ((byte)3, TypeLegion),
+			LevelUp => ((byte)3, TypeLegion),
 			"APPOINTED" => ((byte)4, TypeLegion),
 			EmblemRegister => ((byte)5, TypeLegion),
 			EmblemModified => ((byte)6, TypeLegion),
