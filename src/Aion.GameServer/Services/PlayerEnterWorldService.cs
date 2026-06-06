@@ -218,15 +218,22 @@ public sealed class PlayerEnterWorldService
 			var attendDay = GetAtreianPassportAttendDay(nowOffset);
 			foreach (var template in atreianPassports.Passports)
 			{
-				if (!template.Active
-					|| template.AttendType != "DAILY"
-					|| template.PeriodStart >= now
-					|| template.PeriodEnd <= now
-					|| HasAtreianPassportForDay(player.Passports.Concat(newPassports), template.Id, attendDay))
+				if (!template.Active || template.PeriodStart >= now || template.PeriodEnd <= now)
 					continue;
 
-				var passport = new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now));
-				newPassports.Add(passport);
+				switch (template.AttendType)
+				{
+					case "DAILY":
+						if (!HasAtreianPassportForDay(player.Passports.Concat(newPassports), template.Id, attendDay))
+						{
+							var passport = new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now));
+							newPassports.Add(passport);
+						}
+						break;
+					case "CUMULATIVE" when template.AttendNum == player.PassportStamps + 1:
+						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
+						break;
+				}
 			}
 		}
 

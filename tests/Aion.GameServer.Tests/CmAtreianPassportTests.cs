@@ -391,6 +391,77 @@ public sealed class CmAtreianPassportTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_EnterWorldIncludesCumulativePassportThresholdRowInLoginSnapshot()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var now = AtreianPassportCumulativeLoginClock();
+		var startingStamps = 6;
+		var expectedDailyPassportIds = GetActiveDailyPassportIds(
+			runtimeContext.DataManager!.StaticData.AtreianPassports,
+			now.UtcDateTime);
+		var expectedCumulativePassportIds = GetActiveCumulativePassportIds(
+			runtimeContext.DataManager!.StaticData.AtreianPassports,
+			now.UtcDateTime,
+			startingStamps + 1);
+		var expectedPassportIds = expectedDailyPassportIds
+			.Concat(expectedCumulativePassportIds)
+			.Order()
+			.ToArray();
+		var player = new Player
+		{
+			ObjectId = 5007,
+			AccountId = 83,
+			Name = "PassportCumulativeLogin",
+			Level = 50,
+			CreationDate = new DateTime(2014, 1, 1, 12, 30, 0, DateTimeKind.Utc),
+			LastOnline = DateTime.Now.AddMinutes(-5),
+			PassportStamps = startingStamps,
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			CreateWorld(),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportCumulativeLoginClock);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			AtreianPassportCumulativeLoginClock);
+		SetAccountId(pair.Connection, player.AccountId);
+		var packet = new CmEnterWorld(8, new HashSet<GameConnectionState> { GameConnectionState.Authed });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(player.ObjectId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		var message = Assert.Single(pair.SentPackets.OfType<SmSystemMessage>(), packet => packet.MessageId == 1402601);
+		Assert.Empty(message.Parameters);
+		var passportPacket = pair.SentPackets.OfType<SmAtreianPassport>().LastOrDefault();
+		Assert.NotNull(passportPacket);
+		Assert.NotEmpty(expectedCumulativePassportIds);
+		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.Equal(7, player.PassportStamps);
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		var payload = SerializeUnencryptedPayload(passportPacket);
+		Assert.Equal(2014, ReadShort(payload, 0));
+		Assert.Equal(1, ReadShort(payload, 2));
+		Assert.Equal(1, ReadShort(payload, 4));
+		Assert.Equal(expectedPassportIds.Length, ReadShort(payload, 6));
+		Assert.Equal(expectedPassportIds, ReadPassportIds(payload).Order().ToArray());
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_EnterWorldOmitsExpiredAtreianPassportFromLoginSnapshot()
 	{
 		var runtimeContext = new GameServerRuntimeContext();
@@ -466,6 +537,11 @@ public sealed class CmAtreianPassportTests
 		return new DateTimeOffset(2014, 3, 20, 10, 15, 30, TimeSpan.Zero);
 	}
 
+	private static DateTimeOffset AtreianPassportCumulativeLoginClock()
+	{
+		return new DateTimeOffset(2014, 4, 2, 10, 15, 30, TimeSpan.Zero);
+	}
+
 	private static int[] GetActiveDailyPassportIds(AtreianPassportTable passports, DateTime now)
 	{
 		return passports.Passports
@@ -476,6 +552,29 @@ public sealed class CmAtreianPassportTests
 			.Select(passport => passport.Id)
 			.Order()
 			.ToArray();
+	}
+
+	private static int[] GetActiveCumulativePassportIds(AtreianPassportTable passports, DateTime now, int attendNum)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "CUMULATIVE"
+				&& passport.AttendNum == attendNum
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static int[] ReadPassportIds(byte[] payload)
+	{
+		var count = ReadShort(payload, 6);
+		var ids = new int[count];
+		for (var i = 0; i < count; i++)
+			ids[i] = ReadInt(payload, 8 + (i * 16));
+
+		return ids;
 	}
 
 	private static GameWorld CreateWorld()

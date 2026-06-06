@@ -295,6 +295,61 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task EnterWorld_AtreianPassportCumulativeLoginCreatesThresholdRowAndPersistsIt()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var now = new DateTimeOffset(2014, 4, 2, 10, 15, 30, TimeSpan.Zero);
+		var startingStamps = 6;
+		var expectedDailyPassportIds = GetActiveDailyPassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime);
+		var expectedCumulativePassportIds = GetActiveCumulativePassportIds(
+			dataManager.StaticData.AtreianPassports,
+			now.UtcDateTime,
+			startingStamps + 1);
+		var expectedPassportIds = expectedDailyPassportIds
+			.Concat(expectedCumulativePassportIds)
+			.Order()
+			.ToArray();
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.PassportStamps = startingStamps;
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			out _,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: () => now);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.NotNull(result.AtreianPassportLogin);
+		Assert.True(result.AtreianPassportLogin.ShouldSendSnapshot);
+		Assert.True(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
+		Assert.Equal(7, player.PassportStamps);
+		Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), player.LastPassportStamp);
+		Assert.NotEmpty(expectedCumulativePassportIds);
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.All(player.Passports, passport =>
+		{
+			Assert.False(passport.Rewarded);
+			Assert.False(passport.FakeStamp);
+			Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), passport.ArriveDate);
+		});
+		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
+		var saved = repository.SavedAccountPassportLoginMutation.Value;
+		Assert.Equal(10, saved.AccountId);
+		Assert.Equal(7, saved.Stamps);
+		Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), saved.LastStamp);
+		Assert.Equal(expectedPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+	}
+
+	[Fact]
 	public async Task EnterWorld_AtreianPassportLoginDeletesExpiredAvailableRowsBeforeSnapshot()
 	{
 		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
@@ -2497,6 +2552,19 @@ public sealed class PlayerEnterWorldServiceTests
 		return passports.Passports
 			.Where(passport => passport.Active
 				&& passport.AttendType == "DAILY"
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static int[] GetActiveCumulativePassportIds(AtreianPassportTable passports, DateTime now, int attendNum)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "CUMULATIVE"
+				&& passport.AttendNum == attendNum
 				&& passport.PeriodStart < now
 				&& passport.PeriodEnd > now)
 			.Select(passport => passport.Id)
