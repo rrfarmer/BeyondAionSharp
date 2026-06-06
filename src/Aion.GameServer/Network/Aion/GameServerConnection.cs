@@ -54,6 +54,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
+	private readonly IPlayerEnterWorldRepository? _playerEnterWorldRepository;
 	private readonly IMailRepository? _mailRepository;
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository _socialRepository;
@@ -160,6 +161,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
+		IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 		IMailRepository? mailRepository = null,
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
@@ -242,6 +244,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
+		_playerEnterWorldRepository = playerEnterWorldRepository;
 		_mailRepository = mailRepository;
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository ?? new EmptySocialRepository();
@@ -1882,12 +1885,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				break;
 			case CmAtreianPassport:
 				// Java parity: CM_ATREIAN_PASSPORT.runImpl -> AtreianPassportService.takeReward -> sendPassport.
-				// Reward execution/account passport mutation remain unported; send the currently modeled snapshot.
 				if (_activePlayer != null)
-					await SendPacketAsync(new SmAtreianPassport(
-						_activePlayer.Passports,
-						_activePlayer.PassportStamps,
-						_activePlayer.CreationDate));
+					await HandleAtreianPassportAsync(_activePlayer, (CmAtreianPassport)packet);
 				break;
 			case CmObjectSearch objectSearch:
 				if (_activePlayer != null)
@@ -4282,6 +4281,37 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, sourceOldSlot);
 		}
 		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
+	}
+
+	private async Task HandleAtreianPassportAsync(Player player, CmAtreianPassport packet)
+	{
+		// Java parity: services/AtreianPassportService.takeReward mutates matching Passport rows before sendPassport.
+		var passports = player.Passports.ToArray();
+		var mutated = false;
+		for (var i = 0; i < passports.Length; i++)
+		{
+			var passport = passports[i];
+			if (passport.Rewarded || passport.FakeStamp)
+				continue;
+			if (!packet.Passports.TryGetValue(passport.PassportId, out var timestamps) || !timestamps.Contains(passport.ArriveEpochSeconds))
+				continue;
+
+			var rewardedPassport = passport.ClaimReward();
+			if (_playerEnterWorldRepository == null
+				|| !await _playerEnterWorldRepository.UpdateAccountPassportRewardedAsync(player.AccountId, rewardedPassport))
+				continue;
+
+			passports[i] = rewardedPassport;
+			mutated = true;
+		}
+
+		if (mutated)
+			player.Passports = passports;
+
+		await SendPacketAsync(new SmAtreianPassport(
+			player.Passports,
+			player.PassportStamps,
+			player.CreationDate));
 	}
 
 	private async Task HandleObjectSearchAsync(Player player, CmObjectSearch packet)

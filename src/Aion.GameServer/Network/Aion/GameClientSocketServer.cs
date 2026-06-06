@@ -28,6 +28,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 	private readonly ICharacterSelectionRepository _characterSelectionRepository;
 	private readonly CharacterCreationService? _characterCreationService;
 	private readonly PlayerEnterWorldService? _playerEnterWorldService;
+	private readonly IPlayerEnterWorldRepository? _playerEnterWorldRepository;
 	private readonly IMailRepository? _mailRepository;
 	private readonly IBrokerRepository? _brokerRepository;
 	private readonly ISocialRepository? _socialRepository;
@@ -79,6 +80,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		ICharacterSelectionRepository? characterSelectionRepository = null,
 		CharacterCreationService? characterCreationService = null,
 		PlayerEnterWorldService? playerEnterWorldService = null,
+		IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 		IMailRepository? mailRepository = null,
 		IBrokerRepository? brokerRepository = null,
 		ISocialRepository? socialRepository = null,
@@ -131,6 +133,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
 		_characterCreationService = characterCreationService;
 		_playerEnterWorldService = playerEnterWorldService;
+		_playerEnterWorldRepository = playerEnterWorldRepository;
 		_mailRepository = mailRepository;
 		_brokerRepository = brokerRepository;
 		_socialRepository = socialRepository;
@@ -193,6 +196,7 @@ public sealed class GameClientSocketServer : BaseSocketServer, IGameClientConnec
 				_characterSelectionRepository,
 				_characterCreationService,
 				_playerEnterWorldService,
+				_playerEnterWorldRepository,
 				_mailRepository,
 				_brokerRepository,
 				_socialRepository,

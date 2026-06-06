@@ -2,6 +2,7 @@ using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -3329,6 +3330,11 @@ public sealed class PlayerEnterWorldServiceTests
 			SaveInventoryRewardMutationCalls++;
 			InventoryRewardUpdatedItems = updatedRewardItems;
 			InventoryRewardAddedItems = addedRewardItems;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> UpdateAccountPassportRewardedAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+		{
 			return Task.FromResult(true);
 		}
 

@@ -15,6 +15,9 @@ public sealed record PlayerPassport(
 	DateTime ArriveDate,
 	bool FakeStamp = false)
 {
+	public PlayerPassport ClaimReward()
+		=> this with { Rewarded = true };
+
 	public PlayerPassportRewardStatus RewardStatus
 		=> FakeStamp
 			? Rewarded ? PlayerPassportRewardStatus.Taken : PlayerPassportRewardStatus.Upcoming

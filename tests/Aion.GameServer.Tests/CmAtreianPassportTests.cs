@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Data;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
@@ -130,6 +131,56 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
 	}
 
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_AtreianPassportClaimsMatchingRestoredPassport()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var arriveDate = DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime;
+		var player = new Player
+		{
+			ObjectId = 5002,
+			AccountId = 78,
+			Name = "PassportClaimer",
+			CreationDate = new DateTime(2021, 3, 4, 12, 30, 0, DateTimeKind.Utc),
+			PassportStamps = 5,
+			Passports =
+			[
+				new PlayerPassport(
+					PassportId: 3003,
+					Rewarded: false,
+					ArriveDate: arriveDate)
+			],
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		SetActivePlayer(pair.Connection, player);
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteH(1);
+		buffer.WriteD(3003);
+		buffer.WriteD(1_717_286_400);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		Assert.Equal(1, repository.UpdateAccountPassportRewardedCalls);
+		Assert.NotNull(repository.UpdatedAccountPassportRewarded);
+		var update = repository.UpdatedAccountPassportRewarded.Value;
+		Assert.Equal(78, update.AccountId);
+		Assert.Equal(3003, update.Passport.PassportId);
+		Assert.True(update.Passport.Rewarded);
+		Assert.True(Assert.Single(player.Passports).Rewarded);
+
+		var response = Assert.Single(pair.SentPackets);
+		var passport = Assert.IsType<SmAtreianPassport>(response);
+		var payload = SerializeUnencryptedPayload(passport);
+		Assert.Equal(1, ReadShort(payload, 6));
+		Assert.Equal(3003, ReadInt(payload, 8));
+		Assert.Equal(5, ReadInt(payload, 12));
+		Assert.Equal(2, ReadInt(payload, 16)); // Passport.RewardStatus.TAKEN.
+		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
+	}
+
 	private static CmAtreianPassport CreatePacket()
 	{
 		return new CmAtreianPassport(248, new HashSet<GameConnectionState> { GameConnectionState.InGame });
@@ -204,7 +255,7 @@ public sealed class CmAtreianPassportTests
 		public GameServerConnection Connection { get; }
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync()
+		public static async Task<TestConnectionPair> CreateAsync(IPlayerEnterWorldRepository? playerEnterWorldRepository = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -223,6 +274,7 @@ public sealed class CmAtreianPassportTests
 					serverClient,
 					"atreian-passport-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					playerEnterWorldRepository: playerEnterWorldRepository,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
