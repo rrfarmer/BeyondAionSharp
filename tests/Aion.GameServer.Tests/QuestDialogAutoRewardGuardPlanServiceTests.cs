@@ -179,6 +179,28 @@ public sealed class QuestDialogAutoRewardGuardPlanServiceTests
 		Assert.Null(plan.StaticMetadata);
 	}
 
+	[Fact]
+	public void CreatePlanFromTemplateSummary_AllowsNonSelfTargetWhenNpcBranchOptedIn()
+	{
+		var plan = QuestDialogAutoRewardGuardPlanService.CreatePlanFromTemplateSummary(
+			new QuestDialogAutoRewardGuardTemplateInput(
+				PlayerObjectId: 77,
+				TargetObjectId: 88,
+				DialogActionId: 108,
+				QuestId: 1001,
+				QuestTemplate: new NearbyQuestTemplateSummary(
+					1001,
+					CanReport: true,
+					HasRewards: true,
+					HasQuestWorkItems: true)),
+			allowNpcTarget: true);
+
+		Assert.True(plan.Planned);
+		Assert.Equal(QuestDialogAutoRewardGuardStatus.Planned, plan.Status);
+		Assert.True(plan.StaticMetadata?.HasRewards);
+		Assert.True(plan.StaticMetadata?.HasQuestWorkItems);
+	}
+
 	[Theory]
 	[InlineData(108, true)]
 	[InlineData(109, false)]

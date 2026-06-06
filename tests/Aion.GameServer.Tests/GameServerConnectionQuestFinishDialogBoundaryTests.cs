@@ -25,6 +25,8 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	private const int ClassSelectableRewardItemId = 186000003;
 	private const int ExtendedSelectableRewardItemId = 186000004;
 	private const int WorkItemId = 182200003;
+	private const int QuestReportNpcObjectId = 7001;
+	private const int QuestReportNpcTemplateId = 203001;
 	private const int RewardTitleId = 5;
 	private const int RegularWarehouse = 1;
 	private const int AccountWarehouse = 2;
@@ -85,6 +87,50 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal("COMPLETE", unchangedQuest.Status);
 		Assert.Equal(1, unchangedQuest.CompleteCount);
 		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetReportableAutoRewardQuestAppliesXpAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1001, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 0xF1, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 43,
+			Name = "QuestFinishNpcTargetBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => AssertQuestAction(packet, SmQuestAction.UpdateActionId, questId: 1001, statusValue: 5));
+		Assert.Equal(300, player.Exp);
+		var completedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, completedQuest);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		Assert.Equal(1, completedQuest.CompleteCount);
+		Assert.Equal(0, completedQuest.QuestVars);
 	}
 
 	[Fact]
@@ -1204,6 +1250,22 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			runtimeContext.SetDataManager(dataManager);
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
 			world.Initialize();
+			world.TryAddObject(
+				QuestReportNpcObjectId,
+				new WorldNpc(
+					QuestReportNpcObjectId,
+					QuestReportNpcTemplateId,
+					new NpcTemplateSummary(
+						QuestReportNpcTemplateId,
+						"quest_report_npc",
+						NameId: 0,
+						Level: 1,
+						Rank: "NORMAL",
+						Rating: "NORMAL",
+						Race: "NONE",
+						Tribe: "NONE",
+						Type: "NPC"),
+					new WorldPosition(210010000, 1, 2, 3, 0)));
 			var sentPackets = new List<GameServerPacket>();
 			var connectionRegistry = new CapturingConnectionRegistry();
 

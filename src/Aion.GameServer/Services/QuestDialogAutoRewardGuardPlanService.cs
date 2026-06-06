@@ -8,11 +8,15 @@ public static class QuestDialogAutoRewardGuardPlanService
 	private const int SelectedQuestAutoReward1 = 110;
 	private const int SelectedQuestAutoReward15 = 124;
 
-	public static QuestDialogAutoRewardGuardPlan CreatePlan(QuestDialogAutoRewardGuardInput input)
+	public static QuestDialogAutoRewardGuardPlan CreatePlan(
+		QuestDialogAutoRewardGuardInput input,
+		bool allowNpcTarget = false)
 	{
 		// Java parity breadcrumb: network/aion/clientpackets/CM_DIALOG_SELECT.runImpl handles
 		// self/player-target reportable quest auto rewards before NPC controller dialog dispatch.
-		if (input.TargetObjectId != 0 && input.TargetObjectId != input.PlayerObjectId)
+		// NPC-target auto rewards are reached through NpcController/DialogService/QuestEngine
+		// once the target branch has proven a known NPC and allowed interaction.
+		if (!allowNpcTarget && input.TargetObjectId != 0 && input.TargetObjectId != input.PlayerObjectId)
 			return QuestDialogAutoRewardGuardPlan.NotPlanned(QuestDialogAutoRewardGuardStatus.NonSelfTarget, input);
 		if (!input.QuestTemplateExists)
 			return QuestDialogAutoRewardGuardPlan.NotPlanned(QuestDialogAutoRewardGuardStatus.MissingQuestTemplate, input);
@@ -25,7 +29,8 @@ public static class QuestDialogAutoRewardGuardPlanService
 	}
 
 	public static QuestDialogAutoRewardGuardPlan CreatePlanFromTemplateSummary(
-		QuestDialogAutoRewardGuardTemplateInput input)
+		QuestDialogAutoRewardGuardTemplateInput input,
+		bool allowNpcTarget = false)
 	{
 		var guardInput = new QuestDialogAutoRewardGuardInput(
 			input.PlayerObjectId,
@@ -34,7 +39,7 @@ public static class QuestDialogAutoRewardGuardPlanService
 			input.QuestId,
 			QuestTemplateExists: input.QuestTemplate is not null,
 			QuestTemplateCanReport: input.QuestTemplate?.CanReport == true);
-		var plan = CreatePlan(guardInput);
+		var plan = CreatePlan(guardInput, allowNpcTarget);
 
 		if (input.QuestTemplate is null || plan.Status == QuestDialogAutoRewardGuardStatus.NonSelfTarget)
 			return plan;
