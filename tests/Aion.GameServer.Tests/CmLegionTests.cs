@@ -1668,6 +1668,43 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteAcceptChunksMemberListAtJavaSize()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var player = CreateBrigadeGeneralPlayer();
+		var persistedRoster = CreateLargeLegionRoster(player, target);
+		var repository = new EmptyPlayerEnterWorldRepository { LoadedLegionMembers = persistedRoster };
+		var registry = new CapturingConnectionRegistry(player, target);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+		pair.SentPackets.Clear();
+		registry.DirectPackets.Clear();
+		registry.VisibleBroadcasts.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 1));
+
+		Assert.Equal(1, repository.LoadLegionMembersCalls);
+		var memberLists = registry.DirectPackets
+			.Where(delivery => delivery.PlayerObjectId == target.ObjectId && delivery.Packet is SmLegionMemberList)
+			.Select(delivery => delivery.Packet)
+			.ToArray();
+		Assert.Equal(2, memberLists.Length);
+		AssertLegionMemberListPacket(
+			memberLists[0],
+			isFirst: true,
+			signedCount: 80,
+			CreateExpectedLargeRosterRows(startOfflineIndex: 0, count: 79, includeLeader: true));
+		AssertLegionMemberListPacket(
+			memberLists[1],
+			isFirst: false,
+			signedCount: -2,
+			CreateExpectedLargeRosterRows(startOfflineIndex: 79, count: 2, includeLeader: false));
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_LegionInviteAcceptFullLegionNotifiesInviterAndDoesNotPersistLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { CountLegionMembersResult = 2 };
@@ -2575,6 +2612,103 @@ public sealed class CmLegionTests
 			string.Empty,
 			string.Empty,
 			isOnline);
+	}
+
+	private static IReadOnlyList<LegionMemberSnapshot> CreateLargeLegionRoster(Player player, Player acceptedPlayer)
+	{
+		var members = new List<LegionMemberSnapshot>
+		{
+			new(
+				player.ObjectId,
+				player.LegionId,
+				player.Name,
+				LegionRanks.BrigadeGeneral,
+				string.Empty,
+				string.Empty,
+				true,
+				player.PlayerClass,
+				player.Exp,
+				player.Position.WorldId,
+				player.LastOnline),
+			new(
+				acceptedPlayer.ObjectId,
+				player.LegionId,
+				acceptedPlayer.Name,
+				LegionRanks.Volunteer,
+				string.Empty,
+				string.Empty,
+				true,
+				acceptedPlayer.PlayerClass,
+				acceptedPlayer.Exp,
+				acceptedPlayer.Position.WorldId,
+				acceptedPlayer.LastOnline),
+		};
+
+		for (var index = 0; index < 81; index++)
+			members.Add(CreateOfflineLargeRosterMember(index));
+
+		return members;
+	}
+
+	private static LegionMemberSnapshot CreateOfflineLargeRosterMember(int index)
+	{
+		return new LegionMemberSnapshot(
+			5000 + index,
+			77,
+			$"Offline{index}",
+			LegionRanks.Legionary,
+			$"N{index}",
+			$"S{index}",
+			false,
+			"RANGER",
+			0,
+			120010000 + index,
+			DateTimeOffset.FromUnixTimeSeconds(10_000 + index).UtcDateTime);
+	}
+
+	private static IReadOnlyList<ExpectedLegionMemberListRow> CreateExpectedLargeRosterRows(
+		int startOfflineIndex,
+		int count,
+		bool includeLeader)
+	{
+		var rows = new List<ExpectedLegionMemberListRow>();
+		if (includeLeader)
+		{
+			rows.Add(new ExpectedLegionMemberListRow(
+				PlayerObjectId: 1001,
+				Name: "Tester",
+				ClassId: 0,
+				Level: 1,
+				RankId: LegionRanks.GetRankId(LegionRanks.BrigadeGeneral),
+				WorldId: 0,
+				Online: true,
+				SelfIntro: string.Empty,
+				Nickname: string.Empty,
+				LastOnlineEpochSeconds: 0,
+				HouseAddressId: 0,
+				HouseDoorStateId: 0,
+				GameServerId: 1));
+		}
+
+		for (var index = startOfflineIndex; index < startOfflineIndex + count; index++)
+		{
+			rows.Add(new ExpectedLegionMemberListRow(
+				PlayerObjectId: 5000 + index,
+				Name: $"Offline{index}",
+				ClassId: 5,
+				Level: 1,
+				RankId: LegionRanks.GetRankId(LegionRanks.Legionary),
+				WorldId: 120010000 + index,
+				Online: false,
+				SelfIntro: $"S{index}",
+				Nickname: $"N{index}",
+				LastOnlineEpochSeconds: 10_000 + index,
+				HouseAddressId: 0,
+				HouseDoorStateId: 0,
+				GameServerId: 1));
+		}
+
+		return rows;
 	}
 
 	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithLegionDominionDataAsync()

@@ -15913,9 +15913,33 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var onlineMember in onlineMembersById.Values)
 			members.Add(CreateLegionMemberListEntry(onlineMember));
 
-		await _connectionRegistry.SendPacketToPlayerAsync(
-			joinedPlayer.ObjectId,
-			new SmLegionMemberList(members, isFirst: true, isLast: true, gameServerId: _options.Network.GameServerId));
+		var chunkIndex = 0;
+		foreach (var chunk in SplitLegionMemberList(members))
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				joinedPlayer.ObjectId,
+				new SmLegionMemberList(
+					chunk,
+					isFirst: chunkIndex == 0,
+					isLast: (chunkIndex + 1) * LegionMemberListChunkSize >= members.Count,
+					gameServerId: _options.Network.GameServerId));
+			chunkIndex++;
+		}
+	}
+
+	private const int LegionMemberListChunkSize = 80;
+
+	private static IEnumerable<IReadOnlyList<LegionMemberListEntry>> SplitLegionMemberList(IReadOnlyList<LegionMemberListEntry> members)
+	{
+		// Java parity: FixedElementCountSplitList<>(allMembers, true, 80).
+		if (members.Count == 0)
+		{
+			yield return Array.Empty<LegionMemberListEntry>();
+			yield break;
+		}
+
+		for (var index = 0; index < members.Count; index += LegionMemberListChunkSize)
+			yield return members.Skip(index).Take(LegionMemberListChunkSize).ToArray();
 	}
 
 	private LegionMemberListEntry CreateLegionMemberListEntry(Player player)
