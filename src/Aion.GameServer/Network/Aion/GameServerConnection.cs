@@ -5452,7 +5452,66 @@ public sealed class GameServerConnection : BaseClientConnection
 			registration.QuestId,
 			questTemplates,
 			DateTimeOffset.Now);
-		return startConditions.CanStart ? "START" : null;
+		if (startConditions.CanStart)
+			return "START";
+
+		if (existingQuest == null
+			&& isMission
+			&& startConditions.Failure == NearbyQuestStartConditionFailure.XmlStartConditions
+			&& HasAnyCompletedXmlPreQuest(player, template, questTemplates))
+		{
+			return "LOCKED";
+		}
+
+		return null;
+	}
+
+	private static bool HasAnyCompletedXmlPreQuest(
+		Player player,
+		NearbyQuestTemplateSummary template,
+		NearbyQuestTemplateTable questTemplates)
+	{
+		var visitedQuestIds = new HashSet<int>();
+		foreach (var startCondition in template.XmlStartConditions)
+		{
+			if (HasAnyCompletedXmlPreQuest(player, startCondition, questTemplates, visitedQuestIds))
+				return true;
+		}
+
+		return false;
+	}
+
+	private static bool HasAnyCompletedXmlPreQuest(
+		Player player,
+		NearbyQuestXmlStartCondition startCondition,
+		NearbyQuestTemplateTable questTemplates,
+		HashSet<int> visitedQuestIds)
+	{
+		// Java parity: AbstractQuestHandler.hasAnyPreQuestFinished recursively walks
+		// <finished> XML preconditions and locks campaign follow-ups when any quest in the chain is complete.
+		foreach (var finished in startCondition.Finished)
+		{
+			if (player.Quests.Any(quest =>
+				quest.QuestId == finished.QuestId
+				&& string.Equals(quest.Status, "COMPLETE", StringComparison.Ordinal)))
+			{
+				return true;
+			}
+
+			if (!visitedQuestIds.Add(finished.QuestId))
+				continue;
+
+			if (!questTemplates.TryGetQuest(finished.QuestId, out var template) || template == null)
+				continue;
+
+			foreach (var nestedStartCondition in template.XmlStartConditions)
+			{
+				if (HasAnyCompletedXmlPreQuest(player, nestedStartCondition, questTemplates, visitedQuestIds))
+					return true;
+			}
+		}
+
+		return false;
 	}
 
 	private async Task CompleteQuestFinishNpcFactionAsync(

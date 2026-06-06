@@ -67,6 +67,36 @@ public sealed class QuestCompletionFollowUpJavaHandlerExtractorTests
 	}
 
 	[Fact]
+	public void Extract_ReadsDefaultOnQuestCompletedWithoutPreQuestArguments()
+	{
+		var extractor = new QuestCompletionFollowUpJavaHandlerExtractor();
+
+		var result = extractor.Extract(
+			"""
+			public class _1021XmlLockedFollowUp extends AbstractQuestHandler {
+				public _1021XmlLockedFollowUp() {
+					super(1021);
+				}
+
+				@Override
+				public void register() {
+					qe.registerOnQuestCompleted(questId);
+				}
+
+				@Override
+				public void onQuestCompletedEvent(QuestEnv env) {
+					defaultOnQuestCompletedEvent(env);
+				}
+			}
+			""",
+			"game-server/data/handlers/quest/test/_1021XmlLockedFollowUp.java");
+
+		var registration = Assert.Single(result.Registrations);
+		Assert.Equal(1021, registration.QuestId);
+		Assert.Empty(registration.PreQuestIds);
+	}
+
+	[Fact]
 	public void Extract_SkipsHandlersWithoutRegisteredCompletionEvent()
 	{
 		var extractor = new QuestCompletionFollowUpJavaHandlerExtractor();
