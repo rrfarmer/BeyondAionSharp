@@ -867,6 +867,8 @@ public sealed class Player
 
 	public PendingAllianceInviteRequest? PendingAllianceInviteRequest { get; set; }
 
+	public PendingLegionInviteRequest? PendingLegionInviteRequest { get; set; }
+
 	public PendingDuelRequest? PendingDuelRequest { get; set; }
 
 	public PendingDuelRequest? PendingDuelWithdrawRequest { get; set; }

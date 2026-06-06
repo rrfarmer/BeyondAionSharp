@@ -263,6 +263,60 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300282);
 	}
 
+	public static SmSystemMessage GuildInviteCantInviteWhenDead()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CANT_INVITE_WHEN_DEAD.
+		return new SmSystemMessage(1300250);
+	}
+
+	public static SmSystemMessage GuildInviteDontHaveRightToInvite()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_DONT_HAVE_RIGHT_TO_INVITE.
+		return new SmSystemMessage(1300252);
+	}
+
+	public static SmSystemMessage GuildInviteNoUserToInvite()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_NO_USER_TO_INVITE.
+		return new SmSystemMessage(1300253);
+	}
+
+	public static SmSystemMessage GuildInviteCanNotInviteSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_INVITE_SELF.
+		return new SmSystemMessage(1300254);
+	}
+
+	public static SmSystemMessage GuildInviteHeIsMyGuildMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_HE_IS_MY_GUILD_MEMBER(String).
+		return new SmSystemMessage(1300255, memberName);
+	}
+
+	public static SmSystemMessage GuildInviteHeIsOtherGuildMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_HE_IS_OTHER_GUILD_MEMBER(String).
+		return new SmSystemMessage(1300256, memberName);
+	}
+
+	public static SmSystemMessage GuildInviteSentInviteMsgToHim(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_SENT_INVITE_MSG_TO_HIM(String).
+		return new SmSystemMessage(1300258, memberName);
+	}
+
+	public static SmSystemMessage GuildInviteCanNotInviteOtherRace()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_INVITE_OTHER_RACE.
+		return new SmSystemMessage(1300311);
+	}
+
+	public static SmSystemMessage GuildInviteOtherIsBusy()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_OTHER_IS_BUSY.
+		return new SmSystemMessage(1300325);
+	}
+
 	public static SmSystemMessage GuildChangeMemberRankDontHaveRight()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_RANK_DONT_HAVE_RIGHT.

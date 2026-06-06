@@ -101,6 +101,7 @@ public enum QuestionResponseRequestKind
 	TeleportToNpc,
 	GroupInvite,
 	AllianceInvite,
+	LegionInvite,
 	DuelRequest,
 	DuelWithdraw,
 	VortexDefenderInvitation,

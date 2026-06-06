@@ -91,6 +91,15 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void ReadFrom_InviteBranchConsumesJavaEmptyIdAndCharacterName()
+	{
+		var packet = CreateLegionInvitePacket("Lurion");
+
+		Assert.Equal(0x01, packet.ExOpcode);
+		Assert.Equal("Lurion", packet.CharacterName);
+	}
+
+	[Fact]
 	public void ReadFrom_BrigadeGeneralTransferConsumesJavaEmptyIdAndCharacterName()
 	{
 		var packet = CreateBrigadeGeneralTransferPacket("Lurion");
@@ -1146,6 +1155,144 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteMissingOnlineTargetSendsNoUserLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: new CapturingConnectionRegistry());
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("missing"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300253, response.MessageId);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteWithoutPermissionSendsNoRightLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Legionary;
+		player.LegionLegionaryPermission = 0;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300252, response.MessageId);
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteSameLegionTargetSendsAlreadyMemberLikeJava()
+	{
+		var target = CreateLegionPlayer(2002, "Lurion");
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300255, response.MessageId);
+		Assert.Equal(["Lurion"], response.Parameters);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteOtherLegionTargetSendsOtherMemberLikeJava()
+	{
+		var target = CreateLegionPlayer(2002, "Lurion");
+		target.LegionId = 88;
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300256, response.MessageId);
+		Assert.Equal(["Lurion"], response.Parameters);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteOtherRaceTargetSendsRaceDenialLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion", "ASMODIANS");
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300311, response.MessageId);
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteBusyTargetSendsBusyLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		Assert.True(target.ResponseRequester.PutRequest(
+			SmQuestionWindow.GuildInviteDoYouAcceptInvitation,
+			new QuestionResponseRequest(9999, QuestionResponseRequestKind.Unknown)));
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300325, response.MessageId);
+		Assert.True(target.ResponseRequester.ContainsRequest(SmQuestionWindow.GuildInviteDoYouAcceptInvitation));
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteOnlineTargetStoresRequestAndSendsQuestionLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		Assert.True(target.ResponseRequester.ContainsRequest(SmQuestionWindow.GuildInviteDoYouAcceptInvitation));
+		var pending = Assert.IsType<PendingLegionInviteRequest>(target.PendingLegionInviteRequest);
+		Assert.Equal(player.ObjectId, pending.InviterObjectId);
+		Assert.Equal(target.ObjectId, pending.TargetObjectId);
+		Assert.Equal(player.LegionId, pending.LegionId);
+		var notification = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300258, notification.MessageId);
+		Assert.Equal(["Lurion"], notification.Parameters);
+		var directQuestion = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == target.ObjectId);
+		var question = Assert.IsType<SmQuestionWindow>(directQuestion.Packet);
+		Assert.Equal(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, question.Code);
+		AssertQuestionWindowPayload(
+			question,
+			SmQuestionWindow.GuildInviteDoYouAcceptInvitation,
+			"Hydrated Legion",
+			"4",
+			"Tester",
+			senderObjectId: 0);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_BrigadeGeneralTransferStoresRequesterConfirmAndSendsQuestionLikeJava()
 	{
 		var target = CreateLegionPlayer(2002, "Lurion");
@@ -1798,6 +1945,17 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
+	private static CmLegion CreateLegionInvitePacket(string memberName)
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x01);
+		buffer.WriteD(0);
+		buffer.WriteS(memberName);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
 	private static CmLegion CreateBrigadeGeneralTransferPacket(string memberName)
 	{
 		var packet = CreatePacket();
@@ -1869,6 +2027,7 @@ public sealed class CmLegionTests
 		{
 			ObjectId = objectId,
 			Name = name,
+			Race = "ELYOS",
 			LegionId = 77,
 			LegionName = "Hydrated Legion",
 			LegionLevel = 4,
@@ -1881,6 +2040,16 @@ public sealed class CmLegionTests
 			LegionCenturionPermission = 12,
 			LegionLegionaryPermission = 13,
 			LegionVolunteerPermission = 14,
+		};
+	}
+
+	private static Player CreateUnguildedPlayer(int objectId, string name, string race = "ELYOS")
+	{
+		return new Player
+		{
+			ObjectId = objectId,
+			Name = name,
+			Race = race,
 		};
 	}
 

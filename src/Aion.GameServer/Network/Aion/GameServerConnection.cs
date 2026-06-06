@@ -39,6 +39,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
 	private const int LegionWarehouseWithdrawalPermission = 0x4;
+	private const int LegionInvitePermission = 0x8;
 	private const int LegionWarehouseDepositPermission = 0x1000;
 	private const int LegionKickPermission = 0x10;
 	private const int LegionEditPermission = 0x200;
@@ -3077,6 +3078,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		switch (packet.ExOpcode)
 		{
+			case 0x01:
+				await HandleLegionInviteAsync(player, packet.CharacterName);
+				break;
 			case 0x02:
 				await HandleLegionLeaveAsync(player);
 				break;
@@ -3116,6 +3120,82 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleLegionDominionJoinAsync(player, packet.LegionDominionId);
 				break;
 		}
+	}
+
+	private async Task HandleLegionInviteAsync(Player player, string targetName)
+	{
+		// Java parity: LegionService.invitePlayerToLegion -> LegionRestrictions.canInvitePlayer.
+		var normalizedTargetName = ConvertCharacterName(targetName);
+		if (_connectionRegistry == null
+			|| normalizedTargetName.Length == 0
+			|| !_connectionRegistry.TryGetOnlinePlayerByName(normalizedTargetName, out var targetPlayer)
+			|| targetPlayer == null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildInviteNoUserToInvite());
+			return;
+		}
+
+		if (IsDead(player))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildInviteCantInviteWhenDead());
+			return;
+		}
+
+		if (player.ObjectId == targetPlayer.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildInviteCanNotInviteSelf());
+			return;
+		}
+
+		if (targetPlayer.LegionId > 0)
+		{
+			await SendPacketAsync(targetPlayer.LegionId == player.LegionId
+				? SmSystemMessage.GuildInviteHeIsMyGuildMember(targetPlayer.Name)
+				: SmSystemMessage.GuildInviteHeIsOtherGuildMember(targetPlayer.Name));
+			return;
+		}
+
+		if (!HasLegionWarehouseRight(player, LegionInvitePermission))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildInviteDontHaveRightToInvite());
+			return;
+		}
+
+		if (!string.IsNullOrEmpty(player.Race)
+			&& !string.IsNullOrEmpty(targetPlayer.Race)
+			&& !string.Equals(player.Race, targetPlayer.Race, StringComparison.Ordinal))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildInviteCanNotInviteOtherRace());
+			return;
+		}
+
+		var request = new PendingLegionInviteRequest(
+			player.ObjectId,
+			player.Name,
+			targetPlayer.ObjectId,
+			targetPlayer.Name,
+			player.LegionId,
+			player.LegionName,
+			player.LegionLevel);
+		if (!targetPlayer.ResponseRequester.PutRequest(
+			SmQuestionWindow.GuildInviteDoYouAcceptInvitation,
+			new QuestionResponseRequest(player.ObjectId, QuestionResponseRequestKind.LegionInvite, request)))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildInviteOtherIsBusy());
+			return;
+		}
+
+		targetPlayer.PendingLegionInviteRequest = request;
+		await SendPacketAsync(SmSystemMessage.GuildInviteSentInviteMsgToHim(targetPlayer.Name));
+		await _connectionRegistry.SendPacketToPlayerAsync(
+			targetPlayer.ObjectId,
+			new SmQuestionWindow(
+				SmQuestionWindow.GuildInviteDoYouAcceptInvitation,
+				0,
+				0,
+				player.LegionName,
+				player.LegionLevel.ToString(CultureInfo.InvariantCulture),
+				player.Name));
 	}
 
 	private async Task HandleLegionLevelUpAsync(Player player)
