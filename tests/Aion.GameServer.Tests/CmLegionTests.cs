@@ -3,11 +3,13 @@ using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Data;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -60,6 +62,15 @@ public sealed class CmLegionTests
 
 		Assert.Equal(0x06, packet.ExOpcode);
 		Assert.Equal(3, packet.Rank);
+		Assert.Equal("Lurion", packet.CharacterName);
+	}
+
+	[Fact]
+	public void ReadFrom_KickBranchConsumesJavaEmptyIdAndCharacterName()
+	{
+		var packet = CreateKickMemberPacket("Lurion");
+
+		Assert.Equal(0x04, packet.ExOpcode);
 		Assert.Equal("Lurion", packet.CharacterName);
 	}
 
@@ -132,6 +143,13 @@ public sealed class CmLegionTests
 		var rankNotMember = SmSystemMessage.GuildChangeMemberRankHeIsNotMyGuildMember("Lurion");
 		Assert.Equal(1300265, rankNotMember.MessageId);
 		Assert.Equal(["Lurion"], rankNotMember.Parameters);
+		Assert.Equal(1300243, SmSystemMessage.GuildBanishCantBanishSelf().MessageId);
+		Assert.Equal(1300244, SmSystemMessage.GuildBanishDontHaveRight().MessageId);
+		var banishNotMember = SmSystemMessage.GuildBanishHeIsNotMyGuildMember("Lurion");
+		Assert.Equal(1300248, banishNotMember.MessageId);
+		Assert.Equal(["Lurion"], banishNotMember.Parameters);
+		Assert.Equal(1300249, SmSystemMessage.GuildBanishCanBanishMaster().MessageId);
+		Assert.Equal(1390241, SmSystemMessage.GuildBanishCanNotBanishSameMemberRank().MessageId);
 		Assert.Equal(1300313, SmSystemMessage.GuildChangeMemberNicknameDontHaveRight().MessageId);
 		var notMember = SmSystemMessage.GuildChangeMemberNicknameHeIsNotMyGuildMember("Lurion");
 		Assert.Equal(1300314, notMember.MessageId);
@@ -605,6 +623,158 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickMissingMemberSendsNotMyGuildMemberLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("missing"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300248, response.MessageId);
+		Assert.Equal(["Missing"], response.Parameters);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickRejectsSelfLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("tester"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300243, response.MessageId);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickRejectsBrigadeGeneralTargetLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = CreateMemberSnapshot(2002, "Lurion", LegionRanks.BrigadeGeneral),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300249, response.MessageId);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickRejectsEqualOrHigherRankLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = CreateMemberSnapshot(2002, "Lurion", LegionRanks.Deputy),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Deputy;
+		player.LegionDeputyPermission = 0x10;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1390241, response.MessageId);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickWithoutPermissionSendsNoRightLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = CreateMemberSnapshot(2002, "Lurion", LegionRanks.Centurion),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Deputy;
+		player.LegionDeputyPermission = 0;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300244, response.MessageId);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickDeletesMemberAddsHistoryAndSendsLeavePacketLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = CreateMemberSnapshot(2002, "Lurion", LegionRanks.Legionary),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("lurion"));
+
+		Assert.Equal(1, repository.DeleteLegionMemberCalls);
+		Assert.Equal(2002, repository.DeletedLegionMemberObjectId);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.Kick, "Lurion", string.Empty), repository.InsertedLegionHistory);
+		AssertLegionLeaveMemberPacket(
+			Assert.Single(pair.SentPackets),
+			playerObjectId: 2002,
+			messageId: 1300247,
+			name: "Tester",
+			name1: "Lurion");
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickResetsResolvedOnlineTargetLegionStateLikeJava()
+	{
+		var target = new Player
+		{
+			ObjectId = 2005,
+			Name = "Lurion",
+			LegionId = 77,
+			LegionName = "Hydrated Legion",
+			LegionLevel = 4,
+			LegionRank = LegionRanks.Legionary,
+			LegionNickname = "Scout",
+			LegionSelfIntro = "Ready",
+			LegionContributionPoints = 55_000,
+			LegionDeputyPermission = 11,
+			LegionCenturionPermission = 12,
+			LegionLegionaryPermission = 13,
+			LegionVolunteerPermission = 14,
+		};
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = CreateMemberSnapshot(target.ObjectId, target.Name, LegionRanks.Legionary, isOnline: true),
+		};
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("lurion"));
+
+		Assert.Equal(0, target.LegionId);
+		Assert.Equal(string.Empty, target.LegionName);
+		Assert.Equal(string.Empty, target.LegionRank);
+		Assert.Equal(string.Empty, target.LegionNickname);
+		Assert.Equal(string.Empty, target.LegionSelfIntro);
+		AssertLegionLeaveMemberPacket(Assert.Single(pair.SentPackets), target.ObjectId, 1300247, "Tester", "Lurion");
+	}
+
+	[Fact]
 	public void ReadFrom_ChangeAnnouncementReadsJavaMessage()
 	{
 		var packet = CreateChangeAnnouncementPacket("New notice");
@@ -752,6 +922,17 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
+	private static CmLegion CreateKickMemberPacket(string memberName)
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x04);
+		buffer.WriteD(0);
+		buffer.WriteS(memberName);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
 	private static CmLegion CreateRefreshInfoPacket()
 	{
 		var packet = CreatePacket();
@@ -802,6 +983,23 @@ public sealed class CmLegionTests
 		var player = CreateLegionPlayer();
 		player.LegionRank = LegionRanks.BrigadeGeneral;
 		return player;
+	}
+
+	private static LegionMemberSnapshot CreateMemberSnapshot(
+		int playerObjectId,
+		string name,
+		string rank,
+		int legionId = 77,
+		bool isOnline = false)
+	{
+		return new LegionMemberSnapshot(
+			playerObjectId,
+			legionId,
+			name,
+			rank,
+			string.Empty,
+			string.Empty,
+			isOnline);
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writeBody)
@@ -867,6 +1065,23 @@ public sealed class CmLegionTests
 		Assert.Equal(text, reader.ReadS());
 	}
 
+	private static void AssertLegionLeaveMemberPacket(
+		GameServerPacket packet,
+		int playerObjectId,
+		int messageId,
+		string name,
+		string name1)
+	{
+		var response = Assert.IsType<SmLegionLeaveMember>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(messageId, reader.ReadD());
+		Assert.Equal(name, reader.ReadS());
+		Assert.Equal(name1, reader.ReadS());
+	}
+
 	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -898,7 +1113,9 @@ public sealed class CmLegionTests
 		public GameServerConnection Connection { get; }
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync(IPlayerEnterWorldRepository? playerEnterWorldRepository = null)
+		public static async Task<TestConnectionPair> CreateAsync(
+			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
+			IGameClientConnectionRegistry? connectionRegistry = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -918,6 +1135,7 @@ public sealed class CmLegionTests
 					"legion-info-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					playerEnterWorldRepository: playerEnterWorldRepository,
+					connectionRegistry: connectionRegistry,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
@@ -932,6 +1150,80 @@ public sealed class CmLegionTests
 		{
 			await Connection.DisposeAsync();
 			_client.Dispose();
+		}
+	}
+
+	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		private readonly IReadOnlyList<Player> _players;
+
+		public CapturingConnectionRegistry(params Player[] players)
+		{
+			_players = players;
+		}
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection) { }
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection) { }
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = _players.FirstOrDefault(candidate => string.Equals(candidate.Name, playerName, StringComparison.Ordinal));
+			return player != null;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+			foreach (var player in _players)
+				action(player);
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
 		}
 	}
 }

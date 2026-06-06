@@ -56,6 +56,10 @@ public interface IPlayerEnterWorldRepository
 		string rank,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> DeleteLegionMemberAsync(
+		int playerObjectId,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -817,6 +821,21 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveLegionMemberRankCalls++;
 		SavedLegionMemberRank = (playerObjectId, rank);
 		return Task.FromResult(SaveLegionMemberRankResult);
+	}
+
+	public bool DeleteLegionMemberResult { get; init; } = true;
+
+	public int DeleteLegionMemberCalls { get; private set; }
+
+	public int DeletedLegionMemberObjectId { get; private set; }
+
+	public Task<bool> DeleteLegionMemberAsync(
+		int playerObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		DeleteLegionMemberCalls++;
+		DeletedLegionMemberObjectId = playerObjectId;
+		return Task.FromResult(DeleteLegionMemberResult);
 	}
 
 	public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -2228,6 +2247,27 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (MySqlException ex)
 		{
 			_logger.LogError(ex, "Could not save legion member rank {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeleteLegionMemberAsync(
+		int playerObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionMemberDAO.deleteLegionMember removes the row during LegionService.removeLegionMember.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM legion_members WHERE player_id = ?";
+			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (MySqlException ex)
+		{
+			_logger.LogError(ex, "Could not delete legion member {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

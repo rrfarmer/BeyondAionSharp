@@ -280,6 +280,36 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300265, memberName);
 	}
 
+	public static SmSystemMessage GuildBanishCantBanishSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_BANISH_CANT_BANISH_SELF.
+		return new SmSystemMessage(1300243);
+	}
+
+	public static SmSystemMessage GuildBanishDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_BANISH_DONT_HAVE_RIGHT_TO_BANISH.
+		return new SmSystemMessage(1300244);
+	}
+
+	public static SmSystemMessage GuildBanishHeIsNotMyGuildMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_BANISH_HE_IS_NOT_MY_GUILD_MEMBER(String).
+		return new SmSystemMessage(1300248, memberName);
+	}
+
+	public static SmSystemMessage GuildBanishCanBanishMaster()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_BANISH_CAN_BANISH_MASTER.
+		return new SmSystemMessage(1300249);
+	}
+
+	public static SmSystemMessage GuildBanishCanNotBanishSameMemberRank()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_BANISH_CAN_NOT_BANISH_SAME_MEMBER_RANK.
+		return new SmSystemMessage(1390241);
+	}
+
 	public static SmSystemMessage GuildChangeMemberNicknameDontHaveRight()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_NICKNAME_DONT_HAVE_RIGHT_TO_CHANGE_NICKNAME.

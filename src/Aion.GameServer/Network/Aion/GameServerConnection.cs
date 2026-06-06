@@ -40,6 +40,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int KinahItemId = 182400001;
 	private const int LegionWarehouseWithdrawalPermission = 0x4;
 	private const int LegionWarehouseDepositPermission = 0x1000;
+	private const int LegionKickPermission = 0x10;
 	private const int LegionEditPermission = 0x200;
 	private const int MaxLegionAnnouncementLength = 256;
 	private const int MinLegionEmblemId = 0;
@@ -3080,6 +3081,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x0A:
 				await HandleLegionSelfIntroChangeAsync(player, packet.NewSelfIntro);
 				break;
+			case 0x04:
+				await HandleLegionKickMemberAsync(player, packet.CharacterName);
+				break;
 			case 0x06:
 				await HandleLegionRankChangeAsync(player, packet.CharacterName, packet.Rank);
 				break;
@@ -3090,6 +3094,60 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleLegionNicknameChangeAsync(player, packet.CharacterName, packet.NewNickname);
 				break;
 		}
+	}
+
+	private async Task HandleLegionKickMemberAsync(Player player, string memberName)
+	{
+		// Java parity: LegionService.kickMember -> LegionRestrictions.canKickPlayer -> removeLegionMember.
+		var normalizedMemberName = ConvertCharacterName(memberName);
+		var targetMember = await ResolveLegionMemberByNameAsync(player, normalizedMemberName);
+		if (targetMember == null || targetMember.LegionId != player.LegionId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildBanishHeIsNotMyGuildMember(normalizedMemberName));
+			return;
+		}
+
+		if (targetMember.PlayerObjectId == player.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildBanishCantBanishSelf());
+			return;
+		}
+
+		if (LegionRanks.IsBrigadeGeneral(targetMember.Rank))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildBanishCanBanishMaster());
+			return;
+		}
+
+		if (LegionRanks.GetRankId(targetMember.Rank) <= LegionRanks.GetRankId(player.LegionRank))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildBanishCanNotBanishSameMemberRank());
+			return;
+		}
+
+		if (!HasLegionWarehouseRight(player, LegionKickPermission))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildBanishDontHaveRight());
+			return;
+		}
+
+		if (_playerEnterWorldRepository == null)
+			return;
+
+		var deleted = await _playerEnterWorldRepository.DeleteLegionMemberAsync(targetMember.PlayerObjectId);
+		if (!deleted)
+			return;
+
+		await _playerEnterWorldRepository.InsertLegionHistoryAsync(
+			player.LegionId,
+			LegionHistoryActions.Kick,
+			targetMember.Name,
+			string.Empty);
+
+		if (ResolveOnlinePlayerByObjectId(targetMember.PlayerObjectId) is { } onlineTarget)
+			ResetLegionMember(onlineTarget);
+
+		await SendPacketAsync(new SmLegionLeaveMember(1300247, targetMember.PlayerObjectId, player.Name, targetMember.Name));
 	}
 
 	private async Task HandleLegionRankChangeAsync(Player player, string memberName, int rankId)
@@ -3205,6 +3263,27 @@ public sealed class GameServerConnection : BaseClientConnection
 			LegionRanks.Volunteer => 1400903,
 			_ => 0,
 		};
+	}
+
+	private static void ResetLegionMember(Player player)
+	{
+		// Java parity: Player.resetLegionMember clears the active legion-member association after kick/leave.
+		player.LegionId = 0;
+		player.LegionName = string.Empty;
+		player.LegionLevel = 0;
+		player.LegionRank = string.Empty;
+		player.LegionNickname = string.Empty;
+		player.LegionSelfIntro = string.Empty;
+		player.LegionContributionPoints = 0;
+		player.LegionOccupiedLegionDominion = 0;
+		player.LegionLastLegionDominion = 0;
+		player.LegionCurrentLegionDominion = 0;
+		player.LegionDeputyPermission = 0;
+		player.LegionCenturionPermission = 0;
+		player.LegionLegionaryPermission = 0;
+		player.LegionVolunteerPermission = 0;
+		player.LegionAnnouncement = string.Empty;
+		player.LegionAnnouncementEpochSeconds = 0;
 	}
 
 	private bool IsValidLegionNickname(string nickname)
