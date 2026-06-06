@@ -152,6 +152,13 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default);
 
+	Task<bool> SaveAccountPassportLoginMutationAsync(
+		int accountId,
+		IReadOnlyList<PlayerPassport> newPassports,
+		int stamps,
+		DateTime lastStamp,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveExpExtractActionMutationAsync(
 		int playerObjectId,
 		long newExp,
@@ -855,6 +862,24 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		DeleteAccountPassportCalls++;
 		DeletedAccountPassport = (accountId, passport);
 		return Task.FromResult(DeleteAccountPassportResult);
+	}
+
+	public int SaveAccountPassportLoginMutationCalls { get; private set; }
+
+	public (int AccountId, IReadOnlyList<PlayerPassport> NewPassports, int Stamps, DateTime LastStamp)? SavedAccountPassportLoginMutation { get; private set; }
+
+	public bool SaveAccountPassportLoginMutationResult { get; init; } = true;
+
+	public Task<bool> SaveAccountPassportLoginMutationAsync(
+		int accountId,
+		IReadOnlyList<PlayerPassport> newPassports,
+		int stamps,
+		DateTime lastStamp,
+		CancellationToken cancellationToken = default)
+	{
+		SaveAccountPassportLoginMutationCalls++;
+		SavedAccountPassportLoginMutation = (accountId, newPassports.ToArray(), stamps, lastStamp);
+		return Task.FromResult(SaveAccountPassportLoginMutationResult);
 	}
 
 	public Task<bool> SaveExpExtractActionMutationAsync(
@@ -5433,6 +5458,66 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				"Could not delete account passport {PassportId} for account {AccountId}",
 				passport.PassportId,
 				accountId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveAccountPassportLoginMutationAsync(
+		int accountId,
+		IReadOnlyList<PlayerPassport> newPassports,
+		int stamps,
+		DateTime lastStamp,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/AccountPassportsDAO.storePassport(Account) inserts NEW rows, then updateStamps(account).
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var passport in newPassports)
+			{
+				await using var passportCommand = connection.CreateCommand();
+				passportCommand.Transaction = transaction;
+				passportCommand.CommandText = """
+					INSERT INTO account_passports (account_id, passport_id, rewarded, arrive_date)
+					VALUES (?, ?, ?, ?)
+					ON DUPLICATE KEY UPDATE rewarded = GREATEST(rewarded, VALUES(rewarded))
+					""";
+				passportCommand.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = accountId },
+						new MySqlParameter { Value = passport.PassportId },
+						new MySqlParameter { Value = passport.Rewarded ? 1 : 0 },
+						new MySqlParameter { Value = passport.ArriveDate },
+					});
+				await passportCommand.ExecuteNonQueryAsync(cancellationToken);
+			}
+
+			await using var stampCommand = connection.CreateCommand();
+			stampCommand.Transaction = transaction;
+			stampCommand.CommandText = """
+				UPDATE account_stamps
+				SET stamps = ?, last_stamp = ?
+				WHERE account_id = ?
+				""";
+			stampCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = stamps },
+					new MySqlParameter { Value = lastStamp },
+					new MySqlParameter { Value = accountId },
+				});
+			var updatedStamps = await stampCommand.ExecuteNonQueryAsync(cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return updatedStamps > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save Atreian Passport login mutation for account {AccountId}", accountId);
 			return false;
 		}
 	}

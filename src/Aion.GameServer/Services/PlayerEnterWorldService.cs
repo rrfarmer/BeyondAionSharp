@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -31,6 +32,7 @@ public sealed class PlayerEnterWorldService
 	private readonly PlayerGroupRuntime? _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime? _playerAllianceRuntime;
 	private readonly PlayerLeagueRuntime? _playerLeagueRuntime;
+	private readonly Func<DateTimeOffset> _atreianPassportClock;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _periodicGeneralUpdateTasks = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _periodicItemUpdateTasks = new();
@@ -51,7 +53,8 @@ public sealed class PlayerEnterWorldService
 		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
-		PlayerLeagueRuntime? playerLeagueRuntime = null)
+		PlayerLeagueRuntime? playerLeagueRuntime = null,
+		Func<DateTimeOffset>? atreianPassportClock = null)
 	{
 		_options = options;
 		_repository = repository;
@@ -67,6 +70,7 @@ public sealed class PlayerEnterWorldService
 		_playerGroupRuntime = playerGroupRuntime;
 		_playerAllianceRuntime = playerAllianceRuntime;
 		_playerLeagueRuntime = playerLeagueRuntime;
+		_atreianPassportClock = atreianPassportClock ?? (() => DateTimeOffset.UtcNow);
 		_logger = logger;
 	}
 
@@ -157,9 +161,10 @@ public sealed class PlayerEnterWorldService
 			player.FriendListStatus = FriendListStatusOnline;
 			await ApplyOfflineDpResetAsync(player, previousLastOnline, now);
 			player.LastOnline = now;
+			var atreianPassportLogin = await ApplyAtreianPassportLoginAsync(player, cancellationToken);
 			SchedulePeriodicPlayerSaves(player);
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged on", player.Name, playerObjectId);
-			return new PlayerEnterWorldResult(EnterWorldCheckMessage.Ok, player);
+			return new PlayerEnterWorldResult(EnterWorldCheckMessage.Ok, player, atreianPassportLogin);
 		}
 		catch (Exception ex)
 		{
@@ -191,6 +196,84 @@ public sealed class PlayerEnterWorldService
 			.OrderBy(existing => existing.Id)
 			.ToArray();
 		return await _repository.SavePlayerMacroAsync(player.ObjectId, macro, cancellationToken);
+	}
+
+	private async Task<AtreianPassportLoginResult?> ApplyAtreianPassportLoginAsync(Player player, CancellationToken cancellationToken)
+	{
+		// Java parity: services/AtreianPassportService.onLogin.
+		var atreianPassports = _runtimeContext?.DataManager?.StaticData.AtreianPassports;
+		if (atreianPassports == null)
+			return null;
+
+		var nowOffset = _atreianPassportClock();
+		var now = nowOffset.UtcDateTime;
+		if (atreianPassports.IsDisabled(now))
+			return null;
+
+		var doReward = CheckAtreianPassportOnlineDate(player.LastPassportStamp, nowOffset) && player.PassportStamps < 28;
+		var newPassports = new List<PlayerPassport>();
+		if (doReward)
+		{
+			var attendDay = GetAtreianPassportAttendDay(nowOffset);
+			foreach (var template in atreianPassports.Passports)
+			{
+				if (!template.Active
+					|| template.AttendType != "DAILY"
+					|| template.PeriodStart >= now
+					|| template.PeriodEnd <= now
+					|| HasAtreianPassportForDay(player.Passports.Concat(newPassports), template.Id, attendDay))
+					continue;
+
+				var passport = new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now));
+				newPassports.Add(passport);
+			}
+		}
+
+		if (doReward)
+		{
+			var lastStamp = NormalizePassportTimestamp(now);
+			player.Passports = player.Passports.Concat(newPassports).ToArray();
+			player.PassportStamps++;
+			player.LastPassportStamp = lastStamp;
+			await _repository.SaveAccountPassportLoginMutationAsync(
+				player.AccountId,
+				newPassports,
+				player.PassportStamps,
+				lastStamp,
+				cancellationToken);
+		}
+
+		return new AtreianPassportLoginResult(
+			ShouldSendSnapshot: true,
+			ShouldSendAttendRewardMessage: doReward,
+			newPassports);
+	}
+
+	private static bool CheckAtreianPassportOnlineDate(DateTime? lastStamp, DateTimeOffset now)
+	{
+		// Java parity: AtreianPassportService.checkOnlineDate.
+		if (!lastStamp.HasValue)
+			return true;
+
+		return GetAtreianPassportAttendDay(new DateTimeOffset(lastStamp.Value)) != GetAtreianPassportAttendDay(now);
+	}
+
+	private static DateOnly GetAtreianPassportAttendDay(DateTimeOffset serverTime)
+	{
+		// Java parity: AtreianPassportService.getAttendDay -> serverTime.minusHours(9).toLocalDate().
+		return DateOnly.FromDateTime(serverTime.AddHours(-AtreianPassportAttendPlanService.AttendResetHour).DateTime);
+	}
+
+	private static bool HasAtreianPassportForDay(IEnumerable<PlayerPassport> passports, int passportId, DateOnly attendDay)
+	{
+		// Java parity: PassportsList.hasPassportForDay compares the stored arrive-date calendar day.
+		return passports.Any(passport => passport.PassportId == passportId && DateOnly.FromDateTime(passport.ArriveDate) == attendDay);
+	}
+
+	private static DateTime NormalizePassportTimestamp(DateTime value)
+	{
+		// Java parity: Passport.normTs truncates Timestamp values to seconds.
+		return new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute, value.Second, DateTimeKind.Utc);
 	}
 
 	public async Task<bool> DeleteMacroAsync(

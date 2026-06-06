@@ -34,6 +34,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300346);
 	}
 
+	public static SmSystemMessage AttendRewardGet()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_ATTEND_MSG_ATTEND_REWARD_GET.
+		return new SmSystemMessage(1402601);
+	}
+
 	public static SmSystemMessage WarehouseTooFarFromNpc()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_TOO_FAR_FROM_NPC.

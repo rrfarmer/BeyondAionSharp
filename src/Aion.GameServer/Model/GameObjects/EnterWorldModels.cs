@@ -1,3 +1,5 @@
+using Aion.GameServer.Model.Account;
+
 namespace Aion.GameServer.Model.GameObjects;
 
 public enum EnterWorldCheckMessage : byte
@@ -11,4 +13,12 @@ public enum EnterWorldCheckMessage : byte
 	ReentryTime = 6,
 }
 
-public sealed record PlayerEnterWorldResult(EnterWorldCheckMessage Message, Player? Player = null);
+public sealed record AtreianPassportLoginResult(
+	bool ShouldSendSnapshot,
+	bool ShouldSendAttendRewardMessage,
+	IReadOnlyList<PlayerPassport> NewPassports);
+
+public sealed record PlayerEnterWorldResult(
+	EnterWorldCheckMessage Message,
+	Player? Player = null,
+	AtreianPassportLoginResult? AtreianPassportLogin = null);

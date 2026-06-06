@@ -331,6 +331,65 @@ public sealed class CmAtreianPassportTests
 		Assert.Empty(pair.SentPackets);
 	}
 
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_EnterWorldSendsAtreianPassportLoginSnapshotAndRewardMessage()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var expectedDailyPassportIds = GetActiveDailyPassportIds(
+			runtimeContext.DataManager!.StaticData.AtreianPassports,
+			AtreianPassportLoginClock().UtcDateTime);
+		var player = new Player
+		{
+			ObjectId = 5005,
+			AccountId = 81,
+			Name = "PassportLogin",
+			Level = 50,
+			CreationDate = new DateTime(2014, 1, 1, 12, 30, 0, DateTimeKind.Utc),
+			LastOnline = DateTime.Now.AddMinutes(-5),
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			CreateWorld(),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportLoginClock);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			AtreianPassportLoginClock);
+		SetAccountId(pair.Connection, player.AccountId);
+		var packet = new CmEnterWorld(8, new HashSet<GameConnectionState> { GameConnectionState.Authed });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(player.ObjectId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		var message = Assert.Single(pair.SentPackets.OfType<SmSystemMessage>(), packet => packet.MessageId == 1402601);
+		Assert.Empty(message.Parameters);
+		var passportPacket = pair.SentPackets.OfType<SmAtreianPassport>().LastOrDefault();
+		Assert.NotNull(passportPacket);
+		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.Equal(1, player.PassportStamps);
+		Assert.Equal(expectedDailyPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		var payload = SerializeUnencryptedPayload(passportPacket);
+		Assert.Equal(2014, ReadShort(payload, 0));
+		Assert.Equal(1, ReadShort(payload, 2));
+		Assert.Equal(1, ReadShort(payload, 4));
+		Assert.Equal(expectedDailyPassportIds.Length, ReadShort(payload, 6));
+		Assert.Equal(1, ReadInt(payload, 12));
+	}
+
 	private static CmAtreianPassport CreatePacket()
 	{
 		return new CmAtreianPassport(248, new HashSet<GameConnectionState> { GameConnectionState.InGame });
@@ -339,6 +398,30 @@ public sealed class CmAtreianPassportTests
 	private static DateTimeOffset AtreianPassportActiveClock()
 	{
 		return new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+	}
+
+	private static DateTimeOffset AtreianPassportLoginClock()
+	{
+		return new DateTimeOffset(2014, 3, 20, 10, 15, 30, TimeSpan.Zero);
+	}
+
+	private static int[] GetActiveDailyPassportIds(AtreianPassportTable passports, DateTime now)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "DAILY"
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static GameWorld CreateWorld()
+	{
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		world.Initialize();
+		return world;
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writeBody)
@@ -394,6 +477,13 @@ public sealed class CmAtreianPassportTests
 		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
 		Assert.NotNull(activePlayerField);
 		activePlayerField.SetValue(connection, player);
+	}
+
+	private static void SetAccountId(GameServerConnection connection, int accountId)
+	{
+		var accountIdField = typeof(GameServerConnection).GetField("_accountId", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(accountIdField);
+		accountIdField.SetValue(connection, accountId);
 	}
 
 	private sealed class TestConnectionPair : IAsyncDisposable

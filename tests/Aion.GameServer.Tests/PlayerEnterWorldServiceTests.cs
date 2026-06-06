@@ -251,6 +251,50 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task EnterWorld_AtreianPassportDailyLoginCreatesRowsAndPersistsStampState()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var now = new DateTimeOffset(2014, 3, 20, 10, 15, 30, TimeSpan.Zero);
+		var expectedDailyPassportIds = GetActiveDailyPassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime);
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			out _,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: () => now);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.NotNull(result.AtreianPassportLogin);
+		Assert.True(result.AtreianPassportLogin.ShouldSendSnapshot);
+		Assert.True(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
+		Assert.Equal(1, player.PassportStamps);
+		Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), player.LastPassportStamp);
+		Assert.Equal(expectedDailyPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.All(player.Passports, passport =>
+		{
+			Assert.False(passport.Rewarded);
+			Assert.False(passport.FakeStamp);
+			Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), passport.ArriveDate);
+		});
+		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
+		var saved = repository.SavedAccountPassportLoginMutation.Value;
+		Assert.Equal(10, saved.AccountId);
+		Assert.Equal(1, saved.Stamps);
+		Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), saved.LastStamp);
+		Assert.Equal(expectedDailyPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+	}
+
+	[Fact]
 	public async Task EnterWorld_ResetsDpAfterFiveMinutesOfflineForAdvancedClass()
 	{
 		var repository = new CapturingEnterWorldRepository
@@ -2355,7 +2399,8 @@ public sealed class PlayerEnterWorldServiceTests
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
 		PlayerLeagueRuntime? playerLeagueRuntime = null,
 		GameServerOptions? options = null,
-		ThreadPoolManager? threadPoolManager = null)
+		ThreadPoolManager? threadPoolManager = null,
+		Func<DateTimeOffset>? atreianPassportClock = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -2377,7 +2422,8 @@ public sealed class PlayerEnterWorldServiceTests
 			findGroupLogoutCleanupPlanObserver: findGroupLogoutCleanupPlanObserver,
 			playerGroupRuntime: playerGroupRuntime,
 			playerAllianceRuntime: playerAllianceRuntime,
-			playerLeagueRuntime: playerLeagueRuntime);
+			playerLeagueRuntime: playerLeagueRuntime,
+			atreianPassportClock: atreianPassportClock);
 	}
 
 	private static PlayerEnterWorldService CreateService(
@@ -2393,6 +2439,18 @@ public sealed class PlayerEnterWorldServiceTests
 		var world = new GameWorld(NullLogger<GameWorld>.Instance);
 		world.Initialize();
 		return world;
+	}
+
+	private static int[] GetActiveDailyPassportIds(AtreianPassportTable passports, DateTime now)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "DAILY"
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
 	}
 
 	private static string FindRepoRoot()
@@ -3340,6 +3398,22 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
 		{
+			return Task.FromResult(true);
+		}
+
+		public int SaveAccountPassportLoginMutationCalls { get; private set; }
+
+		public (int AccountId, IReadOnlyList<PlayerPassport> NewPassports, int Stamps, DateTime LastStamp)? SavedAccountPassportLoginMutation { get; private set; }
+
+		public Task<bool> SaveAccountPassportLoginMutationAsync(
+			int accountId,
+			IReadOnlyList<PlayerPassport> newPassports,
+			int stamps,
+			DateTime lastStamp,
+			CancellationToken cancellationToken = default)
+		{
+			SaveAccountPassportLoginMutationCalls++;
+			SavedAccountPassportLoginMutation = (accountId, newPassports.ToArray(), stamps, lastStamp);
 			return Task.FromResult(true);
 		}
 

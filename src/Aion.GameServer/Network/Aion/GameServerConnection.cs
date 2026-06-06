@@ -2719,6 +2719,17 @@ public sealed class GameServerConnection : BaseClientConnection
 						await SendPacketAsync(housingBidRefreshPacket);
 					}
 
+					if (enterWorldResult.AtreianPassportLogin?.ShouldSendAttendRewardMessage == true)
+						await SendPacketAsync(SmSystemMessage.AttendRewardGet());
+					if (enterWorldResult.AtreianPassportLogin?.ShouldSendSnapshot == true)
+					{
+						// Java parity: services/AtreianPassportService.onLogin sends SM_ATREIAN_PASSPORT before macro list restore.
+						await SendPacketAsync(new SmAtreianPassport(
+							enterWorldResult.Player.Passports,
+							enterWorldResult.Player.PassportStamps,
+							enterWorldResult.Player.CreationDate));
+					}
+
 					// Java parity: PlayerEnterWorldService.sendMacroList before SM_RECIPE_LIST.
 					foreach (var macroPacket in SmMacroList.CreateLoginPackets(enterWorldResult.Player.ObjectId, enterWorldResult.Player.Macros))
 						await SendPacketAsync(macroPacket);
