@@ -74,6 +74,16 @@ public sealed class PlayerScripts
 		return true;
 	}
 
+	public bool RestoreFromXml(int scriptId, string? scriptXml)
+	{
+		// Java parity: dao/HouseScriptsDAO.addScript(..., storeInDb=false).
+		if (string.IsNullOrEmpty(scriptXml))
+			return Set(scriptId, Array.Empty<byte>(), 0);
+
+		var bytes = Encoding.Unicode.GetBytes(scriptXml);
+		return Set(scriptId, Compress(bytes), bytes.Length);
+	}
+
 	public static bool TryDecodeXml(byte[] compressedXml, int uncompressedSize, out string scriptXml)
 	{
 		return TryDecompressAndValidate(compressedXml, uncompressedSize, out scriptXml);

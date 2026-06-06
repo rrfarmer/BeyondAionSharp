@@ -5660,6 +5660,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				}
 			}
 			houses = await AttachTownLevelsAsync(connection, houses, cancellationToken);
+			houses = await AttachHouseScriptsAsync(connection, houses, cancellationToken);
 
 			var studio = houses.FirstOrDefault(IsStudioAddress);
 			if (studio != null)
@@ -5679,6 +5680,68 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			return Array.Empty<PlayerHouse>();
 		}
 	}
+
+	private async Task<List<PlayerHouse>> AttachHouseScriptsAsync(
+		MySqlConnection connection,
+		List<PlayerHouse> houses,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/HouseScriptsDAO.getPlayerScripts restores house_scripts rows ordered by date_added.
+		if (houses.Count == 0)
+			return houses;
+
+		try
+		{
+			await using var command = connection.CreateCommand();
+			var placeholders = new string[houses.Count];
+			for (var i = 0; i < houses.Count; i++)
+			{
+				var parameterName = $"@house{i}";
+				placeholders[i] = parameterName;
+				command.Parameters.Add(new MySqlParameter(parameterName, houses[i].ObjectId));
+			}
+
+			command.CommandText = $"""
+				SELECT house_id, script_id, script
+				FROM house_scripts
+				WHERE house_id IN ({string.Join(", ", placeholders)})
+				ORDER BY house_id, date_added
+				""";
+
+			var rows = new List<HouseScriptRestoreRow>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				rows.Add(
+					new HouseScriptRestoreRow(
+						ReadInt(reader, "house_id"),
+						ReadInt(reader, "script_id"),
+						ReadString(reader, "script")));
+			}
+
+			RestoreHouseScripts(houses, rows);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogWarning(ex, "Could not restore house scripts for player houses");
+		}
+
+		return houses;
+	}
+
+	internal static void RestoreHouseScripts(
+		IReadOnlyList<PlayerHouse> houses,
+		IEnumerable<HouseScriptRestoreRow> rows)
+	{
+		var housesByObjectId = houses.ToDictionary(house => house.ObjectId);
+		foreach (var row in rows)
+		{
+			if (housesByObjectId.TryGetValue(row.HouseObjectId, out var house))
+				house.Scripts.RestoreFromXml(row.ScriptId, row.ScriptXml);
+		}
+	}
+
+	internal readonly record struct HouseScriptRestoreRow(int HouseObjectId, int ScriptId, string ScriptXml);
 
 	private async Task<List<PlayerHouse>> AttachTownLevelsAsync(
 		MySqlConnection connection,
