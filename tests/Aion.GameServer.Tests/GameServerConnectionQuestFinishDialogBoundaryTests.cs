@@ -413,6 +413,52 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesGloryPointsAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1008, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1008, "REWARD", QuestVars: 0xF1, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1009,
+			Name = "QuestFinishGpBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			AbyssRank = PlayerAbyssRank.Default() with { Gp = 100, DailyGp = 5, WeeklyGp = 10 },
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1008,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1402081, message.MessageId);
+			},
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.Equal(150, player.AbyssRank.Gp);
+		Assert.Equal(55, player.AbyssRank.DailyGp);
+		Assert.Equal(60, player.AbyssRank.WeeklyGp);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -541,6 +587,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						</quest>
 						<quest id="1007" can_report="true" reward_repeat_count="1">
 							<rewards dp="600" />
+						</quest>
+						<quest id="1008" can_report="true" reward_repeat_count="1">
+							<rewards gp="50" />
 						</quest>
 					</quests>
 				</static_data>

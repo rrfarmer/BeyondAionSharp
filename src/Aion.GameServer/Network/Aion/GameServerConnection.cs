@@ -5276,6 +5276,14 @@ public sealed class GameServerConnection : BaseClientConnection
 				case QuestFinishRewardNonItemAction.DivinePoints:
 					await questRewardService.ApplyDpRewardAsync(player, checked((int)reward.Amount));
 					break;
+				case QuestFinishRewardNonItemAction.GloryPoints:
+					var gpResult = questRewardService.ApplyGpReward(player, checked((int)reward.Amount));
+					if (gpResult.GloryPointsPlan != null)
+					{
+						foreach (var gpPacket in gpResult.GloryPointsPlan.PlayerPackets)
+							await SendPacketAsync(gpPacket, cancellationToken);
+					}
+					break;
 				default:
 					return true;
 			}
@@ -5632,7 +5640,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					and not QuestFinishRewardNonItemAction.Experience
 					and not QuestFinishRewardNonItemAction.Title
 					and not QuestFinishRewardNonItemAction.AbyssPoints
-					and not QuestFinishRewardNonItemAction.DivinePoints))
+					and not QuestFinishRewardNonItemAction.DivinePoints
+					and not QuestFinishRewardNonItemAction.GloryPoints))
 		{
 			return false;
 		}
