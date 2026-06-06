@@ -57,30 +57,64 @@ public sealed class PlayerInventoryPersistentStateTests
 	{
 		var player = new Player
 		{
-			InventoryItems = [CreateItem(1001, location: 0, InventoryItemPersistentState.Updated)],
+			InventoryItems =
+			[
+				CreateItem(1001, location: 0, InventoryItemPersistentState.Updated),
+				CreateItem(4001, location: 3, InventoryItemPersistentState.Updated),
+			],
 			WarehouseItems = [CreateItem(2001, location: 1, InventoryItemPersistentState.Updated)],
 			AccountWarehouseItems = [CreateItem(3001, location: 2, InventoryItemPersistentState.Updated)],
 		};
 
-		player.TrackDeletedItem(player.InventoryItems.Single());
+		player.TrackDeletedItem(player.InventoryItems.Single(item => item.Location == 0));
 		player.TrackDeletedItem(player.WarehouseItems.Single());
 		player.TrackDeletedItem(player.AccountWarehouseItems.Single());
+		player.TrackDeletedItem(player.InventoryItems.Single(item => item.Location == 3));
 
 		var dirtyItems = player.GetDirtyItemsToUpdate();
 
 		Assert.Equal(
 			[
-				(1001, InventoryItemPersistentState.Updated),
 				(1001, InventoryItemPersistentState.Deleted),
-				(2001, InventoryItemPersistentState.Updated),
 				(2001, InventoryItemPersistentState.Deleted),
-				(3001, InventoryItemPersistentState.Updated),
 				(3001, InventoryItemPersistentState.Deleted),
+				(4001, InventoryItemPersistentState.Deleted),
 			],
 			dirtyItems.Select(item => (item.ObjectId, item.PersistentState)).ToArray());
 		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
 		Assert.Equal(StoragePersistentState.Updated, player.WarehouseStoragePersistentState);
 		Assert.Equal(StoragePersistentState.Updated, player.AccountWarehouseStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.LegionWarehouseStoragePersistentState);
+	}
+
+	[Fact]
+	public void GetDirtyItemsToUpdate_IncludesTrackedDeletedLegionWarehouseItemsLikeJavaStorageDelete()
+	{
+		var player = new Player
+		{
+			InventoryItems =
+			[
+				CreateItem(1001, location: 0, InventoryItemPersistentState.Updated),
+				CreateItem(4001, location: 3, InventoryItemPersistentState.Updated),
+			],
+		};
+
+		player.TrackDeletedItem(player.InventoryItems.Single(item => item.Location == 3));
+
+		var dirtyItems = player.GetDirtyItemsToUpdate();
+		var secondHarvest = player.GetDirtyItemsToUpdate();
+
+		Assert.Equal(
+			[
+				(4001, InventoryItemPersistentState.Deleted),
+			],
+			dirtyItems.Select(item => (item.ObjectId, item.PersistentState)).ToArray());
+		Assert.Empty(secondHarvest);
+		Assert.Equal([1001], player.InventoryItems.Select(item => item.ObjectId).ToArray());
+		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Equal([4001], player.DeletedLegionWarehouseItems.Select(item => item.ObjectId).ToArray());
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+		Assert.Equal(StoragePersistentState.Updated, player.LegionWarehouseStoragePersistentState);
 	}
 
 	[Fact]
@@ -94,7 +128,8 @@ public sealed class PlayerInventoryPersistentStateTests
 		player.TrackDeletedItem(player.InventoryItems.Single());
 
 		Assert.Empty(player.DeletedInventoryItems);
-		Assert.Equal([1001], player.GetDirtyItemsToUpdate().Select(item => item.ObjectId).ToArray());
+		Assert.Empty(player.InventoryItems);
+		Assert.Empty(player.GetDirtyItemsToUpdate());
 	}
 
 	[Fact]
@@ -162,6 +197,21 @@ public sealed class PlayerInventoryPersistentStateTests
 		player.MarkDirtyItemsPersisted();
 
 		Assert.Empty(player.DeletedInventoryItems);
+		Assert.Empty(player.GetDirtyItemsToUpdate());
+	}
+
+	[Fact]
+	public void MarkDirtyItemsPersisted_ClearsTrackedDeletedLegionWarehouseItems()
+	{
+		var player = new Player
+		{
+			InventoryItems = [CreateItem(4001, location: 3, InventoryItemPersistentState.Updated)],
+		};
+
+		player.TrackDeletedItem(player.InventoryItems.Single());
+		player.MarkDirtyItemsPersisted();
+
+		Assert.Empty(player.DeletedLegionWarehouseItems);
 		Assert.Empty(player.GetDirtyItemsToUpdate());
 	}
 

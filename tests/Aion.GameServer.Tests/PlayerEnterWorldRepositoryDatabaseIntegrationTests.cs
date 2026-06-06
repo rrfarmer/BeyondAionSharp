@@ -369,6 +369,51 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePeriodicPlayerItemsAsync_DeletesTrackedLegionWarehouseRowsLikeJava_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionStorageProxy.delete -> Storage.delete marks the
+		// location-3 item deleted, and InventoryDAO.store deletes it by item_unique_id.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9761, itemId: 110100001, count: 1, ownerId: 501, location: 3);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			AccountId = 1,
+			LegionId = 501,
+			Name = "PeriodicLegionDeleteIntegration",
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 9761,
+					ItemId = 110100001,
+					Count = 1,
+					OwnerId = 501,
+					Location = 3,
+					PersistentState = InventoryItemPersistentState.Updated,
+				},
+			],
+		};
+		player.TrackDeletedItem(player.InventoryItems.Single());
+
+		var saved = await repository.SavePeriodicPlayerItemsAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM inventory WHERE item_unique_id = 9761"));
+		Assert.Empty(player.DeletedLegionWarehouseItems);
+		Assert.Equal(StoragePersistentState.Updated, player.LegionWarehouseStoragePersistentState);
+	}
+
+	[Fact]
 	public async Task SavePeriodicPlayerGeneralAsync_WritesAbyssRankWithoutChangingRankingPositionAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

@@ -251,7 +251,12 @@ public sealed class Player
 		set
 		{
 			_inventoryItems = value;
-			InventoryStoragePersistentState = PromoteStoragePersistentState(InventoryStoragePersistentState, value.Where(item => !item.IsEquipped).ToArray());
+			InventoryStoragePersistentState = PromoteStoragePersistentState(
+				InventoryStoragePersistentState,
+				value.Where(item => !item.IsEquipped && item.Location == 0).ToArray());
+			LegionWarehouseStoragePersistentState = PromoteStoragePersistentState(
+				LegionWarehouseStoragePersistentState,
+				value.Where(item => !item.IsEquipped && item.Location == 3).ToArray());
 			EquipmentPersistentState = PromoteEquipmentPersistentState(EquipmentPersistentState, value);
 		}
 	}
@@ -283,6 +288,8 @@ public sealed class Player
 
 	public StoragePersistentState AccountWarehouseStoragePersistentState { get; private set; } = StoragePersistentState.Updated;
 
+	public StoragePersistentState LegionWarehouseStoragePersistentState { get; private set; } = StoragePersistentState.Updated;
+
 	// Java parity: model/gameobjects/player/Equipment.persistentState.
 	public StoragePersistentState EquipmentPersistentState { get; private set; } = StoragePersistentState.Updated;
 
@@ -293,13 +300,16 @@ public sealed class Player
 
 	public IReadOnlyList<InventoryItem> DeletedAccountWarehouseItems { get; private set; } = Array.Empty<InventoryItem>();
 
+	public IReadOnlyList<InventoryItem> DeletedLegionWarehouseItems { get; private set; } = Array.Empty<InventoryItem>();
+
 	// Java parity: model/gameobjects/player/Player.getDirtyItemsToUpdate.
 	public List<InventoryItem> GetDirtyItemsToUpdate()
 	{
 		var dirtyItems = new List<InventoryItem>();
-		AddDirtyStorageItems(dirtyItems, StorageLocation.Cube, InventoryItems.Where(item => !item.IsEquipped).ToArray(), DeletedInventoryItems);
+		AddDirtyStorageItems(dirtyItems, StorageLocation.Cube, InventoryItems.Where(item => !item.IsEquipped && item.Location == 0).ToArray(), DeletedInventoryItems);
 		AddDirtyStorageItems(dirtyItems, StorageLocation.Warehouse, WarehouseItems, DeletedWarehouseItems);
 		AddDirtyStorageItems(dirtyItems, StorageLocation.AccountWarehouse, AccountWarehouseItems, DeletedAccountWarehouseItems);
+		AddDirtyStorageItems(dirtyItems, StorageLocation.LegionWarehouse, InventoryItems.Where(item => !item.IsEquipped && item.Location == 3).ToArray(), DeletedLegionWarehouseItems);
 		AddDirtyEquipmentItems(dirtyItems, InventoryItems);
 		return dirtyItems;
 	}
@@ -313,10 +323,12 @@ public sealed class Player
 		InventoryStoragePersistentState = StoragePersistentState.Updated;
 		WarehouseStoragePersistentState = StoragePersistentState.Updated;
 		AccountWarehouseStoragePersistentState = StoragePersistentState.Updated;
+		LegionWarehouseStoragePersistentState = StoragePersistentState.Updated;
 		EquipmentPersistentState = StoragePersistentState.Updated;
 		DeletedInventoryItems = Array.Empty<InventoryItem>();
 		DeletedWarehouseItems = Array.Empty<InventoryItem>();
 		DeletedAccountWarehouseItems = Array.Empty<InventoryItem>();
+		DeletedLegionWarehouseItems = Array.Empty<InventoryItem>();
 	}
 
 	public void MarkDeletedInventoryItemsPersisted(IEnumerable<int> itemObjectIds)
@@ -329,7 +341,7 @@ public sealed class Player
 			.Where(item => !persistedIds.Contains(item.ObjectId))
 			.ToArray();
 		InventoryStoragePersistentState = DeletedInventoryItems.Count == 0
-			? PromoteStoragePersistentState(StoragePersistentState.Updated, InventoryItems)
+			? PromoteStoragePersistentState(StoragePersistentState.Updated, InventoryItems.Where(item => !item.IsEquipped && item.Location == 0).ToArray())
 			: StoragePersistentState.UpdateRequired;
 	}
 
@@ -347,6 +359,9 @@ public sealed class Player
 			case StorageLocation.AccountWarehouse:
 				AccountWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
 				return;
+			case StorageLocation.LegionWarehouse:
+				LegionWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
+				return;
 		}
 	}
 
@@ -360,6 +375,7 @@ public sealed class Player
 	public void TrackDeletedItem(InventoryItem item)
 	{
 		var deletedState = InventoryItem.TransitionPersistentState(item.PersistentState, InventoryItemPersistentState.Deleted);
+		RemoveCurrentStorageItem(item);
 		switch (deletedState)
 		{
 			case InventoryItemPersistentState.NoAction:
@@ -381,8 +397,29 @@ public sealed class Player
 						DeletedAccountWarehouseItems = ReplaceDeletedItem(DeletedAccountWarehouseItems, deletedItem);
 						AccountWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
 						return;
+					case 3:
+						DeletedLegionWarehouseItems = ReplaceDeletedItem(DeletedLegionWarehouseItems, deletedItem);
+						LegionWarehouseStoragePersistentState = StoragePersistentState.UpdateRequired;
+						return;
 				}
 
+				return;
+		}
+	}
+
+	private void RemoveCurrentStorageItem(InventoryItem item)
+	{
+		switch (item.Location)
+		{
+			case 0:
+			case 3:
+				_inventoryItems = InventoryItems.Where(current => current.ObjectId != item.ObjectId).ToArray();
+				return;
+			case 1:
+				_warehouseItems = WarehouseItems.Where(current => current.ObjectId != item.ObjectId).ToArray();
+				return;
+			case 2:
+				_accountWarehouseItems = AccountWarehouseItems.Where(current => current.ObjectId != item.ObjectId).ToArray();
 				return;
 		}
 	}
@@ -510,6 +547,7 @@ public sealed class Player
 			StorageLocation.Cube => InventoryStoragePersistentState,
 			StorageLocation.Warehouse => WarehouseStoragePersistentState,
 			StorageLocation.AccountWarehouse => AccountWarehouseStoragePersistentState,
+			StorageLocation.LegionWarehouse => LegionWarehouseStoragePersistentState,
 			_ => StoragePersistentState.Updated,
 		};
 	}
@@ -527,6 +565,9 @@ public sealed class Player
 			case StorageLocation.AccountWarehouse:
 				AccountWarehouseStoragePersistentState = persistentState;
 				return;
+			case StorageLocation.LegionWarehouse:
+				LegionWarehouseStoragePersistentState = persistentState;
+				return;
 		}
 	}
 
@@ -542,6 +583,9 @@ public sealed class Player
 				return;
 			case 2:
 				DeletedAccountWarehouseItems = RemoveDeletedItem(DeletedAccountWarehouseItems, item.ObjectId);
+				return;
+			case 3:
+				DeletedLegionWarehouseItems = RemoveDeletedItem(DeletedLegionWarehouseItems, item.ObjectId);
 				return;
 		}
 	}
@@ -607,6 +651,7 @@ public sealed class Player
 		Cube = 0,
 		Warehouse = 1,
 		AccountWarehouse = 2,
+		LegionWarehouse = 3,
 	}
 
 	// Java parity: model/gameobjects/Summon.addSkillOrder represented until the full Summon model exists.
