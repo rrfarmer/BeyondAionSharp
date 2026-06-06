@@ -207,6 +207,9 @@ public sealed class CmLegionTests
 		Assert.Equal(1300262, SmSystemMessage.GuildChangeMemberRankDontHaveRight().MessageId);
 		Assert.Equal(1300263, SmSystemMessage.GuildChangeMemberRankErrorSelf().MessageId);
 		Assert.Equal(1300264, SmSystemMessage.GuildChangeMemberRankNoUser().MessageId);
+		var rejectedInvite = SmSystemMessage.MsgRejectedInviteGuild("Lurion");
+		Assert.Equal(1390118, rejectedInvite.MessageId);
+		Assert.Equal(["Lurion"], rejectedInvite.Parameters);
 		var rankNotMember = SmSystemMessage.GuildChangeMemberRankHeIsNotMyGuildMember("Lurion");
 		Assert.Equal(1300265, rankNotMember.MessageId);
 		Assert.Equal(["Lurion"], rankNotMember.Parameters);
@@ -1219,6 +1222,26 @@ public sealed class CmLegionTests
 		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
 		Assert.Equal(1300256, response.MessageId);
 		Assert.Equal(["Lurion"], response.Parameters);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteGuildDeniedTargetSendsRejectLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		target.Settings.Deny = PlayerSettings.DenyGuildRequests;
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1390118, response.MessageId);
+		Assert.Equal(["Lurion"], response.Parameters);
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
 		Assert.Empty(registry.DirectPackets);
 	}
 

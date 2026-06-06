@@ -3135,6 +3135,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (targetPlayer.Settings.DeniesGuildRequests())
+		{
+			await SendPacketAsync(SmSystemMessage.MsgRejectedInviteGuild(targetPlayer.Name));
+			return;
+		}
+
 		if (IsDead(player))
 		{
 			await SendPacketAsync(SmSystemMessage.GuildInviteCantInviteWhenDead());
