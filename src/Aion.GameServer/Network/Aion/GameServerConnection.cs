@@ -5017,6 +5017,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestFinishAutoRewardAsync(player, packet))
 			return;
 
+		if (await TryHandleNpcTargetQuestAcceptSimpleAsync(player, packet))
+			return;
+
 		if (packet.DialogActionId == CmDialogSelect.InstanceEntry
 			&& IsBeshmundirsWalkTarget(packet.TargetObjectId))
 		{
@@ -5246,6 +5249,99 @@ public sealed class GameServerConnection : BaseClientConnection
 		const int useObject = -1;
 		const int exchangeCoin = 59;
 		return packet.QuestId != 0 || packet.DialogActionId is useObject or exchangeCoin;
+	}
+
+	private async Task<bool> TryHandleNpcTargetQuestAcceptSimpleAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		const int questAcceptSimple = 20000;
+
+		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles QUEST_ACCEPT_SIMPLE
+		// by calling QuestService.startQuest, then closeDialogWindow for NPC-visible quests.
+		if (packet.DialogActionId != questAcceptSimple
+			|| packet.QuestId <= 0
+			|| packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null
+			|| !staticData.QuestNpcStarts.GetQuestNpc(npc.TemplateId).OnQuestStart.Contains(packet.QuestId)
+			|| !staticData.NearbyQuestTemplates.TryGetQuest(packet.QuestId, out var questTemplate)
+			|| questTemplate == null)
+		{
+			return false;
+		}
+
+		var existingQuest = player.Quests.FirstOrDefault(quest => quest.QuestId == packet.QuestId);
+		if (existingQuest != null
+			&& (string.Equals(existingQuest.Status, "START", StringComparison.Ordinal)
+				|| string.Equals(existingQuest.Status, "REWARD", StringComparison.Ordinal)))
+		{
+			await SendPacketAsync(SmSystemMessage.QuestAcquireErrorWorkingQuest(), cancellationToken);
+			return true;
+		}
+
+		var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+			player,
+			packet.QuestId,
+			staticData.NearbyQuestTemplates,
+			DateTimeOffset.Now);
+		if (!startConditions.CanStart)
+		{
+			if (existingQuest != null && startConditions.Failure is NearbyQuestStartConditionFailure.RepeatCount or NearbyQuestStartConditionFailure.RepeatTiming)
+				await SendPacketAsync(SmSystemMessage.QuestAcquireErrorNoneRepeatable(questTemplate.Name), cancellationToken);
+			else if (startConditions.Failure == NearbyQuestStartConditionFailure.InventoryItems
+				&& CreateInventoryItemStartConditionFailureMessage(player, questTemplate, staticData.ItemTemplates) is { } inventoryItemMessage)
+				await SendPacketAsync(inventoryItemMessage, cancellationToken);
+			else if (CreateQuestStartConditionFailureMessage(player, startConditions.Failure, questTemplate) is { } failureMessage)
+				await SendPacketAsync(failureMessage, cancellationToken);
+			return true;
+		}
+
+		if (!questTemplate.IsNoCount
+			&& !CanStartNormalQuest(player, staticData.NearbyQuestTemplates)
+			&& !HasPermission(player, _options.Membership.QuestLimitDisabled))
+		{
+			await SendPacketAsync(SmSystemMessage.QuestAcquireErrorMaxNormal(), cancellationToken);
+			return true;
+		}
+
+		var isNewQuestState = existingQuest == null;
+		var finalQuestState = existingQuest == null
+			? new PlayerQuestState(packet.QuestId, "START", 0, 0, 0)
+			: existingQuest with { Status = "START" };
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.PersistQuestStartAsync(player, finalQuestState, isNewQuestState, cancellationToken))
+		{
+			return true;
+		}
+
+		var questStates = player.Quests.ToList();
+		var existingIndex = questStates.FindIndex(quest => quest.QuestId == packet.QuestId);
+		if (existingIndex >= 0)
+			questStates[existingIndex] = finalQuestState;
+		else
+			questStates.Add(finalQuestState);
+		player.Quests = questStates.ToArray();
+
+		var questPacket = isNewQuestState || string.Equals(existingQuest?.Status, "COMPLETE", StringComparison.Ordinal)
+			? SmQuestAction.Add(finalQuestState)
+			: SmQuestAction.Update(finalQuestState);
+		await SendPacketAsync(questPacket, cancellationToken);
+		await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 0), cancellationToken);
+		await SendNearbyQuestRefreshAsync(player, cancellationToken);
+		return true;
 	}
 
 	private async Task<bool> TryHandleQuestFinishAutoRewardAsync(

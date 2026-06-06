@@ -69,6 +69,7 @@ public sealed class StaticData
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		NearbyQuestTemplateTable nearbyQuestTemplates,
 		QuestHandlerAvailabilityTable questHandlers,
+		QuestNpcStartTable questNpcStarts,
 		QuestCompletionFollowUpTable questCompletionFollowUps,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
@@ -137,6 +138,7 @@ public sealed class StaticData
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		NearbyQuestTemplates = nearbyQuestTemplates;
 		QuestHandlers = questHandlers;
+		QuestNpcStarts = questNpcStarts;
 		QuestCompletionFollowUps = questCompletionFollowUps;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
@@ -266,6 +268,8 @@ public sealed class StaticData
 	public NearbyQuestTemplateTable NearbyQuestTemplates { get; }
 
 	public QuestHandlerAvailabilityTable QuestHandlers { get; }
+
+	public QuestNpcStartTable QuestNpcStarts { get; }
 
 	public QuestCompletionFollowUpTable QuestCompletionFollowUps { get; }
 
@@ -3219,6 +3223,7 @@ public sealed class StaticData
 					: template)
 				.ToArray());
 		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
+		var questNpcStarts = LoadQuestNpcStarts(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var questCompletionFollowUps = QuestCompletionFollowUpTable.Load(questHandlerDirectory, cancellationToken);
 		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
 		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
@@ -3332,6 +3337,7 @@ public sealed class StaticData
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			nearbyQuestTemplates,
 			questHandlers,
+			questNpcStarts,
 			questCompletionFollowUps,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
@@ -3340,6 +3346,21 @@ public sealed class StaticData
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			new WindstreamTable(windstreamLocations.AsReadOnly()),
 			validationTask);
+	}
+
+	private static QuestNpcStartTable LoadQuestNpcStarts(
+		string cacheFilePath,
+		string? questHandlerDirectory,
+		CancellationToken cancellationToken)
+	{
+		var table = new QuestNpcStartTable();
+		var questScriptDirectory = Path.GetDirectoryName(cacheFilePath);
+		var result = new QuestNpcStartRegistrationSourceLoader()
+			.Load(questScriptDirectory, questHandlerDirectory, cancellationToken);
+		foreach (var source in result.Sources)
+			table.RegisterOnQuestStart(source);
+
+		return table;
 	}
 
 	private static IReadOnlyList<GlobalDropRuleSummary> ProcessGlobalDropRules(

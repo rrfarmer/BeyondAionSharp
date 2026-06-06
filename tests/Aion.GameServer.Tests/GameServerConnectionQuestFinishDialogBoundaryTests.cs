@@ -19,6 +19,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 {
 	private const int SelectedQuestAutoReward = 108;
 	private const int SelectedQuestAutoReward1 = 110;
+	private const int QuestAcceptSimple = 20000;
 	private const int KinahItemId = 182400001;
 	private const int RewardItemId = 186000001;
 	private const int SelectableRewardItemId = 186000002;
@@ -165,6 +166,40 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		var unchangedQuest = Assert.Single(player.Quests);
 		Assert.Equal("START", unchangedQuest.Status);
 		Assert.Equal(0, player.Exp);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetQuestAcceptSimpleStartsQuestAndClosesDialog()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var player = new Player
+		{
+			ObjectId = 45,
+			Name = "QuestAcceptSimpleBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: QuestAcceptSimple,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertQuestAction(packet, SmQuestAction.AddActionId, questId: 1001, statusValue: 3),
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 0, questId: 0));
+		var startedQuest = Assert.Single(player.Quests);
+		Assert.Equal(1001, startedQuest.QuestId);
+		Assert.Equal("START", startedQuest.Status);
+		Assert.Equal(0, startedQuest.QuestVars);
+		Assert.Equal(0, startedQuest.CompleteCount);
 	}
 
 	[Fact]
@@ -1210,7 +1245,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						<title id="5" nameId="412994" desc="1" race="ELYOS" />
 					</player_titles>
 					<quests>
-						<quest id="1001" can_report="true" reward_repeat_count="1">
+						<quest id="1001" can_report="true" reward_repeat_count="1" start_npc_ids="203001">
 							<rewards exp="300" />
 						</quest>
 						<quest id="1002" can_report="true" reward_repeat_count="1">
