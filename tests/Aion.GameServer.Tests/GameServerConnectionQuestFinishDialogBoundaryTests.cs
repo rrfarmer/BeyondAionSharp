@@ -338,6 +338,39 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetFinishDialogSendsQuestSelectionPageWithoutStartingQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var existingQuest = new PlayerQuestState(1001, "LOCKED", QuestVars: 9, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 50,
+			Name = "FinishDialogBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [existingQuest],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.FinishDialog,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 10, questId: 0));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Same(existingQuest, unchangedQuest);
+		Assert.Equal("LOCKED", unchangedQuest.Status);
+		Assert.Equal(9, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetQuestRefuseSimpleClosesDialogWithoutStartingQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();

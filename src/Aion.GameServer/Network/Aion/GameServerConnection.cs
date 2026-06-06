@@ -5020,6 +5020,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestStartAskAcceptAsync(player, packet))
 			return;
 
+		if (await TryHandleNpcTargetQuestStartFinishDialogAsync(player, packet))
+			return;
+
 		if (await TryHandleNpcTargetQuestStartAcceptAsync(player, packet))
 			return;
 
@@ -5286,6 +5289,38 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 4, packet.QuestId), cancellationToken);
+		return true;
+	}
+
+	private async Task<bool> TryHandleNpcTargetQuestStartFinishDialogAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles FINISH_DIALOG
+		// by returning to quest selection page 10 with quest id 0.
+		if (packet.DialogActionId != CmDialogSelect.FinishDialog
+			|| packet.QuestId <= 0
+			|| packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null
+			|| !staticData.QuestNpcStarts.GetQuestNpc(npc.TemplateId).OnQuestStart.Contains(packet.QuestId))
+		{
+			return false;
+		}
+
+		await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 10, 0), cancellationToken);
 		return true;
 	}
 
