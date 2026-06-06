@@ -5017,6 +5017,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestFinishAutoRewardAsync(player, packet))
 			return;
 
+		if (await TryHandleNpcTargetQuestRewardSelectionPageAsync(player, packet))
+			return;
+
 		if (await TryHandleNpcTargetQuestStartAskAcceptAsync(player, packet))
 			return;
 
@@ -5255,9 +5258,101 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static bool ShouldUseNpcDialogFallback(CmDialogSelect packet)
 	{
-		const int useObject = -1;
 		const int exchangeCoin = 59;
-		return packet.QuestId != 0 || packet.DialogActionId is useObject or exchangeCoin;
+		return packet.QuestId != 0 || packet.DialogActionId is CmDialogSelect.UseObject or exchangeCoin;
+	}
+
+	private async Task<bool> TryHandleNpcTargetQuestRewardSelectionPageAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestEndDialog handles USE_OBJECT,
+		// QUEST_SELECT, SELECT_QUEST_REWARD, CHECK_USER_HAS_QUEST_ITEM, and
+		// CHECK_USER_HAS_QUEST_ITEM_SIMPLE for REWARD quests by validating/fixing
+		// reward group and sending DialogPage.getRewardPageByIndex(...).
+		if (!IsQuestRewardSelectionPageAction(packet.DialogActionId)
+			|| packet.QuestId <= 0
+			|| packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null
+			|| !staticData.QuestFinishRewardProjections.TryGetQuest(packet.QuestId, out var projectionEntry)
+			|| projectionEntry == null
+			|| projectionEntry.Template.CanReport != true)
+		{
+			return false;
+		}
+
+		var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == packet.QuestId);
+		if (questState == null || !string.Equals(questState.Status, "REWARD", StringComparison.Ordinal))
+			return false;
+
+		var interactionPlan = NpcDialogInteractionAllowedPlanService.CreatePlan(
+			new NpcDialogInteractionAllowedInput(
+				player.ObjectId,
+				SubDialogType: npc.Template.SubDialogType,
+				SubDialogValue: npc.Template.SubDialogValue,
+				PlayerHasSubDialogSkill: player.Skills.Any(skill => skill.SkillId == npc.Template.SubDialogValue),
+				PlayerHasSubDialogItem: player.InventoryItems.Any(item => item.ItemId == npc.Template.SubDialogValue),
+				PlayerHasReturnItem: player.InventoryItems.Any(item => item.ItemId == 164000335),
+				PlayerAbyssRankId: player.AbyssRank.Rank,
+				PlayerAbyssRankingPosition: player.AbyssRank.RankingListPosition,
+				PlayerHasLegion: player.LegionId > 0,
+				PlayerLevel: player.Level));
+		if (!interactionPlan.IsAllowed)
+			return false;
+
+		var rewardGroupCount = projectionEntry.RewardGroupProjections.Values.FirstOrDefault()?.RewardGroupCount;
+		var correction = QuestFinishRewardPlanService.CorrectRewardGroup(questState, rewardGroupCount);
+		if (!ReferenceEquals(correction.QuestState, questState))
+		{
+			player.Quests = player.Quests
+				.Select(quest => quest.QuestId == correction.QuestState.QuestId ? correction.QuestState : quest)
+				.ToArray();
+		}
+
+		await SendPacketAsync(
+			new SmDialogWindow(packet.TargetObjectId, GetQuestRewardSelectionDialogPageId(correction.QuestState.RewardGroup), packet.QuestId),
+			cancellationToken);
+		return true;
+	}
+
+	private static bool IsQuestRewardSelectionPageAction(int dialogActionId)
+	{
+		return dialogActionId is CmDialogSelect.UseObject
+			or CmDialogSelect.QuestSelect
+			or CmDialogSelect.SelectQuestReward
+			or CmDialogSelect.CheckUserHasQuestItem
+			or CmDialogSelect.CheckUserHasQuestItemSimple;
+	}
+
+	private static int GetQuestRewardSelectionDialogPageId(int? rewardGroup)
+	{
+		return rewardGroup switch
+		{
+			0 => 5,
+			1 => 6,
+			2 => 7,
+			3 => 8,
+			4 => 45,
+			5 => 46,
+			6 => 47,
+			7 => 48,
+			8 => 49,
+			9 => 50,
+			_ => 0,
+		};
 	}
 
 	private async Task<bool> TryHandleNpcTargetQuestStartAskAcceptAsync(

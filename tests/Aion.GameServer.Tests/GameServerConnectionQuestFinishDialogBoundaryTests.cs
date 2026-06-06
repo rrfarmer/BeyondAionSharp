@@ -168,6 +168,76 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetRewardQuestSendsRewardSelectionPage()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1001, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+		var rewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 3, Flags: 0, CompleteCount: 0, RewardGroup: 0);
+		var player = new Player
+		{
+			ObjectId = 52,
+			Name = "RewardPageBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.UseObject,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 5, questId: 1001));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Same(rewardQuestState, unchangedQuest);
+		Assert.Equal("REWARD", unchangedQuest.Status);
+		Assert.Equal(0, unchangedQuest.RewardGroup);
+		Assert.Equal(3, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetRewardQuestCorrectsRewardGroupBeforeSendingPage()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1001, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+		var rewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 4, Flags: 0, CompleteCount: 0, RewardGroup: 9);
+		var player = new Player
+		{
+			ObjectId = 53,
+			Name = "RewardPageCorrectionBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.SelectQuestReward,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 5, questId: 1001));
+		var correctedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, correctedQuest);
+		Assert.Equal("REWARD", correctedQuest.Status);
+		Assert.Equal(0, correctedQuest.RewardGroup);
+		Assert.Equal(4, correctedQuest.QuestVars);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetQuestAcceptSimpleStartsQuestAndClosesDialog()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
