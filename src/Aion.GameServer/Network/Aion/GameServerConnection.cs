@@ -5824,11 +5824,33 @@ public sealed class GameServerConnection : BaseClientConnection
 					questId);
 			}
 
-			if (npcHasActiveQuest)
+			if (npcHasActiveQuest || HasNpcSelectedRewardPostFinishNewQuest(player, staticData, questNpc))
 				return new SmDialogWindow(targetObjectId, 10, 0);
 		}
 
 		return new SmDialogWindow(targetObjectId, 0, 0);
+	}
+
+	private static bool HasNpcSelectedRewardPostFinishNewQuest(
+		Player player,
+		StaticData staticData,
+		QuestNpcStartRegistration questNpc)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestEndDialog scans QuestNpc.getOnQuestStart()
+		// and calls QuestService.checkStartConditions(player, questId, false) before keeping page 10 open.
+		foreach (var questId in questNpc.OnQuestStart)
+		{
+			var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+				player,
+				questId,
+				staticData.NearbyQuestTemplates,
+				DateTimeOffset.Now,
+				allowedDiffToMinLevel: 0);
+			if (startConditions.CanStart)
+				return true;
+		}
+
+		return false;
 	}
 
 	private static bool IsNpcSelectedRewardPostFinishActiveTalkQuest(

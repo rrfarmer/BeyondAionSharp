@@ -38,6 +38,33 @@ public sealed class NearbyQuestStartConditionServiceTests
 	}
 
 	[Fact]
+	public void CheckNearbyStartConditions_AllowsJavaExactMinLevelGateForNonNearbyCallers()
+	{
+		var player = new Player
+		{
+			Level = 20,
+			Race = "ELYOS",
+			PlayerClass = "GLADIATOR",
+			Gender = "MALE",
+		};
+		var table = new NearbyQuestTemplateTable(
+		[
+			new NearbyQuestTemplateSummary(1101, MinLevelPermitted: 22),
+		]);
+
+		AssertPass(player, 1101, table);
+
+		var result = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+			player,
+			1101,
+			table,
+			allowedDiffToMinLevel: 0);
+
+		Assert.False(result.CanStart);
+		Assert.Equal(NearbyQuestStartConditionFailure.MinLevel, result.Failure);
+	}
+
+	[Fact]
 	public void CheckNearbyStartConditions_AppliesJavaQuestStateAndRepeatGatesConservatively()
 	{
 		var player = new Player

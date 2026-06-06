@@ -14,9 +14,11 @@ public static class NearbyQuestStartConditionService
 		int questId,
 		NearbyQuestTemplateTable questTemplates,
 		DateTimeOffset? now = null,
-		int maxMasterCraftingSkills = CraftSkillUpdateService.DefaultMaxMasterCraftingSkills)
+		int maxMasterCraftingSkills = CraftSkillUpdateService.DefaultMaxMasterCraftingSkills,
+		int allowedDiffToMinLevel = NearbyAllowedDiffToMinLevel)
 	{
-		// Java parity breadcrumb: QuestService.checkStartConditions(player, questId, false, 2, false, false, false).
+		// Java parity breadcrumb: nearby refresh uses QuestService.checkStartConditions(player, questId, false, 2, false, false, false).
+		// Some runtime call sites, including AbstractQuestHandler.sendQuestEndDialog, use the stricter overload with diff 0.
 		if (!questTemplates.TryGetQuest(questId, out var template) || template == null)
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.MissingTemplate);
 
@@ -41,7 +43,7 @@ public static class NearbyQuestStartConditionService
 			&& !string.Equals(template.RacePermitted, player.Race, StringComparison.Ordinal))
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.Race);
 
-		var levelDiff = template.MinLevelPermitted - NearbyAllowedDiffToMinLevel - player.Level;
+		var levelDiff = template.MinLevelPermitted - allowedDiffToMinLevel - player.Level;
 		if (levelDiff > 0)
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.MinLevel);
 

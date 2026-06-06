@@ -652,8 +652,10 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
 		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1011, out var lookupEntry));
 		Assert.NotNull(lookupEntry);
+		Assert.Contains(1023, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
 
 		var rewardQuestState = new PlayerQuestState(1011, "REWARD", QuestVars: 0x57, Flags: 0, CompleteCount: 0);
+		var exhaustedStartQuestState = new PlayerQuestState(1001, "COMPLETE", QuestVars: 0, Flags: 0, CompleteCount: 1);
 		var player = new Player
 		{
 			ObjectId = 1013,
@@ -662,7 +664,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			Level = 1,
 			Exp = 0,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
-			Quests = [rewardQuestState],
+			Quests = [rewardQuestState, exhaustedStartQuestState],
 		};
 		var packet = CreateDialogSelect(
 			targetObjectId: QuestReportNpcObjectId,
@@ -683,11 +685,52 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(3, rewardItem.Count);
 		Assert.Equal(player.ObjectId, rewardItem.OwnerId);
 		Assert.Equal(0, rewardItem.Location);
-		var completedQuest = Assert.Single(player.Quests);
+		Assert.Equal(2, player.Quests.Count);
+		var completedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1011);
 		Assert.NotSame(rewardQuestState, completedQuest);
 		Assert.Equal("COMPLETE", completedQuest.Status);
 		Assert.Equal(1, completedQuest.CompleteCount);
 		Assert.Equal(0, completedQuest.QuestVars);
+		var exhaustedStartQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1001);
+		Assert.Same(exhaustedStartQuestState, exhaustedStartQuest);
+		Assert.Equal("COMPLETE", exhaustedStartQuest.Status);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetSelectedRewardOpensSelectionPageForNewStartableQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+
+		var completedRewardQuestState = new PlayerQuestState(1011, "REWARD", QuestVars: 0x57, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1016,
+			Name = "QuestFinishSelectedNpcNewQuestBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [completedRewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: SelectedQuestReward1,
+			questId: 1011,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => Assert.IsType<SmQuestAction>(packet),
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, 10, 0));
+		var completedQuest = Assert.Single(player.Quests);
+		Assert.Equal(1011, completedQuest.QuestId);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		Assert.DoesNotContain(player.Quests, quest => quest.QuestId == 1001);
 	}
 
 	[Fact]
@@ -1794,6 +1837,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 							<rewards />
 						</quest>
 						<quest id="1022">
+							<rewards />
+						</quest>
+						<quest id="1023" minlevel_permitted="3" start_npc_ids="203001">
 							<rewards />
 						</quest>
 					</quests>
