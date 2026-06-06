@@ -954,6 +954,27 @@ public sealed class PlayerEnterWorldServiceTests
 	}
 
 	[Fact]
+	public async Task LeaveWorld_ReleasesLegionWarehouseLockLikeJavaLogout()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.IsOnline = true;
+		player.LegionId = 77;
+		player.LegionRank = LegionRanks.Volunteer;
+		var repository = new CapturingEnterWorldRepository { Player = player };
+		var world = CreateWorld();
+		var runtimeContext = new GameServerRuntimeContext();
+		world.TryAddObject(player.ObjectId, player);
+		Assert.True(runtimeContext.LegionWarehouses.TrySetInUse(player.LegionId, player.ObjectId));
+		var service = CreateService(repository, world, runtimeContext);
+
+		await service.LeaveWorldAsync(player);
+
+		Assert.False(player.IsOnline);
+		Assert.True(runtimeContext.LegionWarehouses.TrySetInUse(player.LegionId, playerObjectId: 2002));
+		Assert.Equal(2002, runtimeContext.LegionWarehouses.GetCurrentUser(player.LegionId));
+	}
+
+	[Fact]
 	public async Task LeaveWorld_PersistsDirtyStorageRowsBeforeClearingLikeJavaInventoryStore()
 	{
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));

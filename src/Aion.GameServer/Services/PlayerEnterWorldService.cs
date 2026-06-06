@@ -1416,6 +1416,7 @@ public sealed class PlayerEnterWorldService
 		if (_world.TryRemoveObject(player.ObjectId, out _))
 			ClearPlayerCreaturePvpZones(player.ObjectId);
 		var saved = await _repository.SavePlayerLogoutAsync(player, lastOnline, cancellationToken);
+		ReleaseLegionWarehouseLockOnLogout(player);
 		RecordGroupLogoutLastOnline(player, lastOnline);
 		await DispatchGroupDisconnectedLogoutAsync(player);
 		await DispatchAllianceDisconnectedLogoutAsync(player);
@@ -1423,6 +1424,16 @@ public sealed class PlayerEnterWorldService
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
 			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
+	private void ReleaseLegionWarehouseLockOnLogout(Player player)
+	{
+		// Java parity: services/LegionService.onLogout releases
+		// player.getLegion().getLegionWarehouse().unsetInUse(player.getObjectId()) after marking the player offline.
+		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
+			return;
+
+		_runtimeContext?.LegionWarehouses.UnsetInUse(player.LegionId, player.ObjectId);
 	}
 
 	private void SchedulePeriodicPlayerSaves(Player player)
