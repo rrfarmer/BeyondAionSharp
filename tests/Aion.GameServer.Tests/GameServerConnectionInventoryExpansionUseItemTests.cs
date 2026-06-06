@@ -3966,6 +3966,75 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_ReplaceItemFromLegionWarehouseWithoutWithdrawalSendsNoRightLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 7, location: 3);
+		player.InventoryItems = player.InventoryItems.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 204,
+					Count = 1,
+					OwnerId = player.ObjectId,
+					Location = 0,
+					Slot = 4,
+					PersistentState = InventoryItemPersistentState.Updated,
+				},
+			]).ToArray();
+		player.LegionId = 77;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x800;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(178, buffer =>
+			{
+				buffer.WriteC(3);
+				buffer.WriteD(5001);
+				buffer.WriteC(0);
+				buffer.WriteD(6001);
+			}));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(3, item.Location);
+				Assert.Equal(7, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(0, item.Location);
+				Assert.Equal(1, item.Count);
+				Assert.Equal(4, item.Slot);
+			});
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300322),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 3,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedItemId: 200,
+				expectedCount: 7),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 3),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 6001,
+				expectedItemId: 204,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 4),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_SplitItemFromLegionWarehouseWithoutWithdrawalSendsNoRightLikeJava()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));

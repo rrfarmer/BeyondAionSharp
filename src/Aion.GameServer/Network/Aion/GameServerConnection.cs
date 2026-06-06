@@ -4524,7 +4524,26 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (packet.SourceStorageType == 3 || packet.ReplaceStorageType == 3)
 		{
-			// Legion warehouse requires LegionService history/permission integration; deferred.
+			var legionRestrictionMessage =
+				(packet.SourceStorageType == 3
+					? CreateLegionWarehouseMoveRestrictionMessage(player, sourceItem, sourceTemplate, packet.SourceStorageType, 0)
+					: null)
+				?? (packet.ReplaceStorageType == 3
+					? CreateLegionWarehouseMoveRestrictionMessage(player, replaceItem, replaceTemplate, packet.ReplaceStorageType, 0)
+					: null)
+				?? (packet.ReplaceStorageType == 3
+					? CreateLegionWarehouseMoveRestrictionMessage(player, sourceItem, sourceTemplate, 0, packet.ReplaceStorageType)
+					: null)
+				?? (packet.SourceStorageType == 3
+					? CreateLegionWarehouseMoveRestrictionMessage(player, replaceItem, replaceTemplate, 0, packet.SourceStorageType)
+					: null);
+			if (legionRestrictionMessage != null)
+			{
+				await SendPacketAsync(legionRestrictionMessage);
+				await SendStorageUpdatePacketAsync(player, sourceItem, sourceTemplate, packet.SourceStorageType, SmInventoryAddItem.AllSlot);
+				await SendStorageUpdatePacketAsync(player, replaceItem, replaceTemplate, packet.ReplaceStorageType, SmInventoryAddItem.AllSlot);
+			}
+			// Successful legion warehouse replacements require LegionService.addWHItemHistory and live legion storage; deferred.
 			return;
 		}
 
