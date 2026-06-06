@@ -25,6 +25,26 @@ public sealed class LegionRanksTests
 		Assert.Equal(-1, LegionRanks.GetRankId(rank));
 	}
 
+	[Theory]
+	// Java parity: LegionService.appointRank uses LegionRank.values()[rankId].
+	[InlineData(0, "BRIGADE_GENERAL")]
+	[InlineData(1, "DEPUTY")]
+	[InlineData(2, "CENTURION")]
+	[InlineData(3, "LEGIONARY")]
+	[InlineData(4, "VOLUNTEER")]
+	public void FromRankId_MapsJavaOrdinalToEnumName(int rankId, string expected)
+	{
+		Assert.Equal(expected, LegionRanks.FromRankId(rankId));
+	}
+
+	[Theory]
+	[InlineData(-1)]
+	[InlineData(5)]
+	public void FromRankId_InvalidRankIdReturnsNull(int rankId)
+	{
+		Assert.Null(LegionRanks.FromRankId(rankId));
+	}
+
 	[Fact]
 	public void IsBrigadeGeneral_OnlyTrueForBrigadeGeneral()
 	{

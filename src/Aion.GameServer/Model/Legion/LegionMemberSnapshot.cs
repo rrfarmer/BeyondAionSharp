@@ -7,4 +7,8 @@ public sealed record LegionMemberSnapshot(
 	string Rank,
 	string Nickname,
 	string SelfIntro,
-	bool IsOnline);
+	bool IsOnline,
+	string PlayerClass = "",
+	long Exp = 0,
+	int WorldId = 0,
+	DateTime? LastOnline = null);

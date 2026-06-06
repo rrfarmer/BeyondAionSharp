@@ -256,6 +256,30 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300282);
 	}
 
+	public static SmSystemMessage GuildChangeMemberRankDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_RANK_DONT_HAVE_RIGHT.
+		return new SmSystemMessage(1300262);
+	}
+
+	public static SmSystemMessage GuildChangeMemberRankErrorSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_RANK_ERROR_SELF.
+		return new SmSystemMessage(1300263);
+	}
+
+	public static SmSystemMessage GuildChangeMemberRankNoUser()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_RANK_NO_USER.
+		return new SmSystemMessage(1300264);
+	}
+
+	public static SmSystemMessage GuildChangeMemberRankHeIsNotMyGuildMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_RANK_HE_IS_NOT_MY_GUILD_MEMBER(String).
+		return new SmSystemMessage(1300265, memberName);
+	}
+
 	public static SmSystemMessage GuildChangeMemberNicknameDontHaveRight()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_NICKNAME_DONT_HAVE_RIGHT_TO_CHANGE_NICKNAME.

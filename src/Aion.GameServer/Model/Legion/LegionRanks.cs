@@ -28,4 +28,15 @@ public static class LegionRanks
 		Volunteer => 4,
 		_ => -1,
 	};
+
+	// Java parity: LegionService.appointRank uses LegionRank.values()[rankId].
+	public static string? FromRankId(int rankId) => rankId switch
+	{
+		0 => BrigadeGeneral,
+		1 => Deputy,
+		2 => Centurion,
+		3 => Legionary,
+		4 => Volunteer,
+		_ => null,
+	};
 }

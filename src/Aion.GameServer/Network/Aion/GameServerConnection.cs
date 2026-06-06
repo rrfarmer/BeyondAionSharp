@@ -3080,6 +3080,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x0A:
 				await HandleLegionSelfIntroChangeAsync(player, packet.NewSelfIntro);
 				break;
+			case 0x06:
+				await HandleLegionRankChangeAsync(player, packet.CharacterName, packet.Rank);
+				break;
 			case 0x0D:
 				await HandleLegionPermissionChangeAsync(player, packet);
 				break;
@@ -3089,12 +3092,57 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
+	private async Task HandleLegionRankChangeAsync(Player player, string memberName, int rankId)
+	{
+		// Java parity: LegionService.appointRank -> LegionRestrictions.canAppointRank -> LegionMember.setRank.
+		if (!player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMemberRankDontHaveRight());
+			return;
+		}
+
+		var normalizedMemberName = ConvertCharacterName(memberName);
+		var targetMember = await ResolveLegionMemberByNameAsync(player, normalizedMemberName);
+		if (targetMember == null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMemberRankNoUser());
+			return;
+		}
+
+		if (targetMember.LegionId != player.LegionId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMemberRankHeIsNotMyGuildMember(targetMember.Name));
+			return;
+		}
+
+		if (targetMember.PlayerObjectId == player.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMemberRankErrorSelf());
+			return;
+		}
+
+		var newRank = LegionRanks.FromRankId(rankId);
+		if (newRank == null)
+			return;
+
+		var updatedMember = targetMember with { Rank = newRank };
+		if (!updatedMember.IsOnline && _playerEnterWorldRepository != null)
+			await _playerEnterWorldRepository.SaveLegionMemberRankAsync(updatedMember.PlayerObjectId, newRank);
+
+		await SendPacketAsync(new SmLegionUpdateMember(
+			updatedMember,
+			GetLegionMemberLevel(updatedMember),
+			_options.Network.GameServerId,
+			GetLegionRankChangeMessageId(newRank),
+			updatedMember.Name));
+	}
+
 	private async Task HandleLegionNicknameChangeAsync(Player player, string memberName, string newNickname)
 	{
 		// Java parity: LegionService.changeNickname -> LegionRestrictions.canChangeNickname -> LegionMember.setNickname.
 		var normalizedMemberName = ConvertCharacterName(memberName);
-		var targetMember = await ResolveLegionMemberForNicknameChangeAsync(player, normalizedMemberName);
-		if (targetMember == null)
+		var targetMember = await ResolveLegionMemberByNameAsync(player, normalizedMemberName);
+		if (targetMember == null || targetMember.LegionId != player.LegionId)
 		{
 			await SendPacketAsync(SmSystemMessage.GuildChangeMemberNicknameHeIsNotMyGuildMember(normalizedMemberName));
 			return;
@@ -3118,7 +3166,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmLegionUpdateNickname(targetMember.PlayerObjectId, newNickname));
 	}
 
-	private async Task<LegionMemberSnapshot?> ResolveLegionMemberForNicknameChangeAsync(Player player, string normalizedMemberName)
+	private async Task<LegionMemberSnapshot?> ResolveLegionMemberByNameAsync(Player player, string normalizedMemberName)
 	{
 		if (string.Equals(player.Name, normalizedMemberName, StringComparison.Ordinal))
 		{
@@ -3129,13 +3177,34 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.LegionRank,
 				player.LegionNickname,
 				player.LegionSelfIntro,
-				IsOnline: true);
+				true,
+				player.PlayerClass,
+				player.Exp,
+				player.Position.WorldId,
+				player.LastOnline);
 		}
 
 		if (_playerEnterWorldRepository == null)
 			return null;
 
 		return await _playerEnterWorldRepository.LoadLegionMemberByNameAsync(player.LegionId, normalizedMemberName);
+	}
+
+	private int GetLegionMemberLevel(LegionMemberSnapshot member)
+	{
+		return Math.Max(1, GetPlayerExperienceTable()?.GetLevelForExp(member.Exp) ?? 1);
+	}
+
+	private static int GetLegionRankChangeMessageId(string rank)
+	{
+		return rank switch
+		{
+			LegionRanks.Deputy => 1400902,
+			LegionRanks.Centurion => 1300267,
+			LegionRanks.Legionary => 1300268,
+			LegionRanks.Volunteer => 1400903,
+			_ => 0,
+		};
 	}
 
 	private bool IsValidLegionNickname(string nickname)

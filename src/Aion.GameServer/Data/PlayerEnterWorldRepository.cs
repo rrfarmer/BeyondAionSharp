@@ -51,6 +51,11 @@ public interface IPlayerEnterWorldRepository
 		string nickname,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveLegionMemberRankAsync(
+		int playerObjectId,
+		string rank,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -777,7 +782,6 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		LoadedLegionMemberByNameRequest = (legionId, memberName);
 		return Task.FromResult(
 			LoadedLegionMemberByName is { } member
-			&& member.LegionId == legionId
 			&& string.Equals(member.Name, memberName, StringComparison.Ordinal)
 				? member
 				: null);
@@ -797,6 +801,22 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveLegionMemberNicknameCalls++;
 		SavedLegionMemberNickname = (playerObjectId, nickname);
 		return Task.FromResult(SaveLegionMemberNicknameResult);
+	}
+
+	public bool SaveLegionMemberRankResult { get; init; } = true;
+
+	public int SaveLegionMemberRankCalls { get; private set; }
+
+	public (int PlayerObjectId, string Rank)? SavedLegionMemberRank { get; private set; }
+
+	public Task<bool> SaveLegionMemberRankAsync(
+		int playerObjectId,
+		string rank,
+		CancellationToken cancellationToken = default)
+	{
+		SaveLegionMemberRankCalls++;
+		SavedLegionMemberRank = (playerObjectId, rank);
+		return Task.FromResult(SaveLegionMemberRankResult);
 	}
 
 	public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -2104,23 +2124,23 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: LegionService.getLegionMember(name) -> PlayerService.getOrLoadPlayerCommonData(name)
-		// -> LegionMemberDAO.loadLegionMember(playerObjId), scoped here to the caller's active legion.
+		// -> LegionMemberDAO.loadLegionMember(playerObjId). Callers apply active-legion membership checks.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT lm.player_id, lm.legion_id, p.name, lm.`rank`, lm.nickname, lm.selfintro, p.online
+				SELECT lm.player_id, lm.legion_id, p.name, lm.`rank`, lm.nickname, lm.selfintro,
+					p.online, p.player_class, p.exp, p.world_id, p.last_online
 				FROM legion_members lm
 				JOIN players p ON p.id = lm.player_id
-				WHERE lm.legion_id = ? AND p.name = ?
+				WHERE p.name = ?
 				LIMIT 1
 				""";
 			command.Parameters.AddRange(
 				new[]
 				{
-					new MySqlParameter { Value = legionId },
 					new MySqlParameter { Value = memberName },
 				});
 
@@ -2135,7 +2155,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				ReadString(reader, "rank"),
 				ReadString(reader, "nickname"),
 				ReadString(reader, "selfintro"),
-				ReadBoolean(reader, "online"));
+				ReadBoolean(reader, "online"),
+				ReadString(reader, "player_class"),
+				ReadLong(reader, "exp"),
+				ReadInt(reader, "world_id"),
+				ReadDateTime(reader, "last_online"));
 		}
 		catch (MySqlException ex)
 		{
@@ -2172,6 +2196,38 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (MySqlException ex)
 		{
 			_logger.LogError(ex, "Could not save legion member nickname {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveLegionMemberRankAsync(
+		int playerObjectId,
+		string rank,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionMemberDAO.storeLegionMember updates rank for offline targets after appointRank.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE legion_members
+				SET `rank` = ?
+				WHERE player_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = rank },
+					new MySqlParameter { Value = playerObjectId },
+				});
+
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (MySqlException ex)
+		{
+			_logger.LogError(ex, "Could not save legion member rank {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}
