@@ -42,6 +42,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int FirstAvailableSlot = 65535;
 	private const int NoTitleId = 0xFFFF;
 	private const int MaxBlockedUsers = 100;
+	private const int LegionEmblemDataChunkSize = 7993;
 	private const int OpenVendorDialogAction = 33;
 	private const string PowerShardItemGroup = "POWER_SHARDS";
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
@@ -1961,8 +1962,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLegionSendEmblemInfoAsync(_activePlayer, legionSendEmblemInfo);
 				break;
-			case CmLegionSendEmblem:
-				// Java parity: CM_LEGION_SEND_EMBLEM.runImpl -> LegionService data dispatch; deferred.
+			case CmLegionSendEmblem legionSendEmblem:
+				if (_activePlayer != null)
+					await HandleLegionSendEmblemAsync(_activePlayer, legionSendEmblem);
 				break;
 			case CmLegionHistory legionHistory:
 				if (_activePlayer != null)
@@ -3071,24 +3073,78 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleLegionSendEmblemInfoAsync(Player player, CmLegionSendEmblemInfo packet)
 	{
 		// Java parity: CM_LEGION_SEND_EMBLEM_INFO.runImpl fetches the legion and sends
-		// SM_LEGION_SEND_EMBLEM with emblemDataSize 0. C# currently has hydrated data
-		// for the active player's legion; other legion lookups remain blocked on a
-		// runtime legion registry/repository.
-		if (player.LegionId <= 0
-			|| player.LegionId != packet.LegionId
-			|| string.IsNullOrEmpty(player.LegionName))
+		// SM_LEGION_SEND_EMBLEM with emblemDataSize 0 and no following data chunks.
+		var snapshot = await ResolveLegionEmblemSnapshotAsync(player, packet.LegionId);
+		if (snapshot == null)
 			return;
 
 		await SendPacketAsync(new SmLegionSendEmblem(
+			snapshot.LegionId,
+			snapshot.EmblemId,
+			snapshot.EmblemType,
+			emblemDataSize: 0,
+			snapshot.ColorA,
+			snapshot.ColorR,
+			snapshot.ColorG,
+			snapshot.ColorB,
+			snapshot.LegionName));
+	}
+
+	private async Task HandleLegionSendEmblemAsync(Player player, CmLegionSendEmblem packet)
+	{
+		// Java parity: CM_LEGION_SEND_EMBLEM.runImpl -> LegionService.sendEmblemData.
+		var snapshot = await ResolveLegionEmblemSnapshotAsync(player, packet.LegionId);
+		if (snapshot == null)
+			return;
+
+		await SendLegionEmblemDataAsync(snapshot);
+	}
+
+	private async Task<LegionEmblemSnapshot?> ResolveLegionEmblemSnapshotAsync(Player player, int legionId)
+	{
+		if (_playerEnterWorldRepository != null)
+		{
+			var snapshot = await _playerEnterWorldRepository.LoadLegionEmblemAsync(legionId);
+			if (snapshot != null)
+				return snapshot;
+		}
+
+		if (player.LegionId <= 0 || player.LegionId != legionId || string.IsNullOrEmpty(player.LegionName))
+			return null;
+
+		return new LegionEmblemSnapshot(
 			player.LegionId,
+			player.LegionName,
 			player.LegionEmblemId,
 			player.LegionEmblemType,
-			emblemDataSize: 0,
 			player.LegionEmblemColorA,
 			player.LegionEmblemColorR,
 			player.LegionEmblemColorG,
 			player.LegionEmblemColorB,
-			player.LegionName));
+			Array.Empty<byte>());
+	}
+
+	private async Task SendLegionEmblemDataAsync(LegionEmblemSnapshot snapshot)
+	{
+		var customData = snapshot.CustomEmblemData;
+		await SendPacketAsync(new SmLegionSendEmblem(
+			snapshot.LegionId,
+			snapshot.EmblemId,
+			snapshot.EmblemType,
+			customData.Length,
+			snapshot.ColorA,
+			snapshot.ColorR,
+			snapshot.ColorG,
+			snapshot.ColorB,
+			snapshot.LegionName));
+
+		for (var offset = 0; offset < customData.Length; offset += LegionEmblemDataChunkSize)
+		{
+			var size = Math.Min(LegionEmblemDataChunkSize, customData.Length - offset);
+			var chunk = new byte[size];
+			Array.Copy(customData, offset, chunk, 0, size);
+			await SendPacketAsync(new SmLegionSendEmblemData(size, chunk));
+		}
 	}
 
 	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)

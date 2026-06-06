@@ -26,6 +26,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<InventoryItem>> LoadLegionWarehouseItemsAsync(int legionId, CancellationToken cancellationToken = default);
 
+	Task<LegionEmblemSnapshot?> LoadLegionEmblemAsync(int legionId, CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -687,6 +689,19 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<IReadOnlyList<InventoryItem>> LoadLegionWarehouseItemsAsync(int legionId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<InventoryItem>>(Array.Empty<InventoryItem>());
+	}
+
+	public LegionEmblemSnapshot? LoadedLegionEmblem { get; init; }
+
+	public int LoadLegionEmblemCalls { get; private set; }
+
+	public int LoadedLegionEmblemRequest { get; private set; }
+
+	public Task<LegionEmblemSnapshot?> LoadLegionEmblemAsync(int legionId, CancellationToken cancellationToken = default)
+	{
+		LoadLegionEmblemCalls++;
+		LoadedLegionEmblemRequest = legionId;
+		return Task.FromResult(LoadedLegionEmblem?.LegionId == legionId ? LoadedLegionEmblem : null);
 	}
 
 	public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -1800,6 +1815,52 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not load player {PlayerObjectId} for enter-world", playerObjectId);
+			return null;
+		}
+	}
+
+	public async Task<LegionEmblemSnapshot?> LoadLegionEmblemAsync(int legionId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionService.getLegion(legionId) -> LegionDAO.loadLegion + LegionDAO.loadLegionEmblem.
+		if (legionId <= 0)
+			return null;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT l.id, l.name, l.disband_time,
+					le.emblem_id, le.emblem_type, le.color_a, le.color_r, le.color_g, le.color_b, le.emblem_data
+				FROM legions l
+				LEFT JOIN legion_emblems le ON le.legion_id = l.id
+				WHERE l.id = ?
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = legionId });
+
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			if (!await reader.ReadAsync(cancellationToken))
+				return null;
+
+			var disbandTime = ReadInt(reader, "disband_time");
+			if (disbandTime > 0 && disbandTime < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+				return null;
+
+			return new LegionEmblemSnapshot(
+				ReadInt(reader, "id"),
+				ReadString(reader, "name"),
+				(byte)ReadInt(reader, "emblem_id"),
+				ToLegionEmblemTypeValue(ReadString(reader, "emblem_type")),
+				(byte)ReadInt(reader, "color_a"),
+				(byte)ReadInt(reader, "color_r"),
+				(byte)ReadInt(reader, "color_g"),
+				(byte)ReadInt(reader, "color_b"),
+				ReadBytes(reader, "emblem_data"));
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load legion emblem for legion {LegionId}", legionId);
 			return null;
 		}
 	}

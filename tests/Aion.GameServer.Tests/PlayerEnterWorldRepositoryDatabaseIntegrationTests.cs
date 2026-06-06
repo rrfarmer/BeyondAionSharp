@@ -1050,6 +1050,44 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.False(player.IsLegionDisbanding);
 	}
 
+	[Fact]
+	public async Task LoadLegionEmblemAsync_HydratesCustomEmblemAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionService.getLegion -> LegionDAO.loadLegion + LegionDAO.loadLegionEmblem.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level, disband_time)
+			VALUES (5001, 'Hydrated Legion', 4, 0)
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legion_emblems (legion_id, emblem_id, color_a, color_r, color_g, color_b, emblem_type, emblem_data)
+			VALUES (5001, 7, 255, 10, 20, 30, 'CUSTOM', X'01020304')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var emblem = await repository.LoadLegionEmblemAsync(5001);
+
+		Assert.NotNull(emblem);
+		Assert.Equal(5001, emblem.LegionId);
+		Assert.Equal("Hydrated Legion", emblem.LegionName);
+		Assert.Equal(7, emblem.EmblemId);
+		Assert.Equal(0x80, emblem.EmblemType);
+		Assert.Equal(255, emblem.ColorA);
+		Assert.Equal(10, emblem.ColorR);
+		Assert.Equal(20, emblem.ColorG);
+		Assert.Equal(30, emblem.ColorB);
+		Assert.Equal([1, 2, 3, 4], emblem.CustomEmblemData);
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(

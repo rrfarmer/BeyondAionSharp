@@ -3661,6 +3661,11 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(LegionWarehouseItems);
 		}
 
+		public Task<LegionEmblemSnapshot?> LoadLegionEmblemAsync(int legionId, CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<LegionEmblemSnapshot?>(null);
+		}
+
 		public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			LoadSkillsCalls++;

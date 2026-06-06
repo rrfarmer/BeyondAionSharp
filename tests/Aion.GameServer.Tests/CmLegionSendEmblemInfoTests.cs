@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Data;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -20,6 +22,17 @@ public sealed class CmLegionSendEmblemInfoTests
 
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(
 			CreateClientPayload(16, buffer => buffer.WriteD(77)),
+			GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesLegionSendEmblemAsInGameOnly()
+	{
+		Assert.IsType<CmLegionSendEmblem>(
+			GameClientPacketFactory.TryCreatePacket(CreateClientPayload(47, buffer => buffer.WriteD(77)), GameConnectionState.InGame));
+
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(
+			CreateClientPayload(47, buffer => buffer.WriteD(77)),
 			GameConnectionState.Authed));
 	}
 
@@ -52,13 +65,24 @@ public sealed class CmLegionSendEmblemInfoTests
 	}
 
 	[Fact]
+	public void SmLegionSendEmblemData_WritesJavaChunkPayload()
+	{
+		var packet = new SmLegionSendEmblemData(3, [0x10, 0x20, 0x30]);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+
+		Assert.Equal(3, reader.ReadD());
+		Assert.Equal([0x10, 0x20, 0x30], reader.ReadB(3));
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LegionSendEmblemInfoSendsActivePlayerLegionEmblemLikeJava()
 	{
 		await using var pair = await TestConnectionPair.CreateAsync();
 		var player = CreateLegionPlayer();
 		SetActivePlayer(pair.Connection, player);
 
-		var packet = CreatePacket(player.LegionId);
+		var packet = CreateInfoPacket(player.LegionId);
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
 
 		var response = Assert.IsType<SmLegionSendEmblem>(Assert.Single(pair.SentPackets));
@@ -76,12 +100,81 @@ public sealed class CmLegionSendEmblemInfoTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionSendEmblemInfoUsesRepositoryForOtherLegionLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionEmblem = CreateRepositorySnapshot(88, customData: [0x44]),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		SetActivePlayer(pair.Connection, CreateLegionPlayer());
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateInfoPacket(88));
+
+		Assert.Equal(1, repository.LoadLegionEmblemCalls);
+		Assert.Equal(88, repository.LoadedLegionEmblemRequest);
+		var response = Assert.IsType<SmLegionSendEmblem>(Assert.Single(pair.SentPackets));
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(88, reader.ReadD());
+		Assert.Equal(9, reader.ReadC());
+		Assert.Equal(0x80, reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(200, reader.ReadC());
+		Assert.Equal(21, reader.ReadC());
+		Assert.Equal(22, reader.ReadC());
+		Assert.Equal(23, reader.ReadC());
+		Assert.Equal("Repository Legion", reader.ReadS());
+		Assert.Equal(0x01, reader.ReadC());
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionSendEmblemSendsCustomDataChunksLikeJava()
+	{
+		var customData = Enumerable.Range(0, 8000).Select(index => (byte)(index % 251)).ToArray();
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionEmblem = CreateRepositorySnapshot(88, customData),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		SetActivePlayer(pair.Connection, CreateLegionPlayer());
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateDataPacket(88));
+
+		Assert.Equal(1, repository.LoadLegionEmblemCalls);
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var header = Assert.IsType<SmLegionSendEmblem>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(header));
+				Assert.Equal(88, reader.ReadD());
+				reader.ReadC();
+				reader.ReadC();
+				Assert.Equal(customData.Length, reader.ReadD());
+			},
+			packet =>
+			{
+				var chunk = Assert.IsType<SmLegionSendEmblemData>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(chunk));
+				Assert.Equal(7993, reader.ReadD());
+				Assert.Equal(customData.Take(7993).ToArray(), reader.ReadB(7993));
+			},
+			packet =>
+			{
+				var chunk = Assert.IsType<SmLegionSendEmblemData>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(chunk));
+				Assert.Equal(7, reader.ReadD());
+				Assert.Equal(customData.Skip(7993).ToArray(), reader.ReadB(7));
+			});
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LegionSendEmblemInfoSkipsUnknownLegionUntilRegistryExists()
 	{
 		await using var pair = await TestConnectionPair.CreateAsync();
 		SetActivePlayer(pair.Connection, CreateLegionPlayer());
 
-		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreatePacket(999));
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateInfoPacket(999));
 
 		Assert.Empty(pair.SentPackets);
 	}
@@ -103,9 +196,32 @@ public sealed class CmLegionSendEmblemInfoTests
 		};
 	}
 
-	private static CmLegionSendEmblemInfo CreatePacket(int legionId)
+	private static LegionEmblemSnapshot CreateRepositorySnapshot(int legionId, byte[] customData)
+	{
+		return new LegionEmblemSnapshot(
+			legionId,
+			"Repository Legion",
+			EmblemId: 9,
+			EmblemType: 0x80,
+			ColorA: 200,
+			ColorR: 21,
+			ColorG: 22,
+			ColorB: 23,
+			customData);
+	}
+
+	private static CmLegionSendEmblemInfo CreateInfoPacket(int legionId)
 	{
 		var packet = new CmLegionSendEmblemInfo(16, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(legionId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegionSendEmblem CreateDataPacket(int legionId)
+	{
+		var packet = new CmLegionSendEmblem(47, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
 		buffer.WriteD(legionId);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
@@ -167,7 +283,7 @@ public sealed class CmLegionSendEmblemInfoTests
 		public GameServerConnection Connection { get; }
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync()
+		public static async Task<TestConnectionPair> CreateAsync(IPlayerEnterWorldRepository? playerEnterWorldRepository = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -186,6 +302,7 @@ public sealed class CmLegionSendEmblemInfoTests
 					serverClient,
 					"legion-emblem-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					playerEnterWorldRepository: playerEnterWorldRepository,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
