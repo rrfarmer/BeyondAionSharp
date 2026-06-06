@@ -13,6 +13,8 @@ public static class LegionHistoryActions
 {
 	public const string KinahDeposit = "KINAH_DEPOSIT";
 	public const string KinahWithdraw = "KINAH_WITHDRAW";
+	public const string ItemDeposit = "ITEM_DEPOSIT";
+	public const string ItemWithdraw = "ITEM_WITHDRAW";
 
 	public const int TypeLegion = 0;
 	public const int TypeReward = 1;
@@ -34,8 +36,8 @@ public static class LegionHistoryActions
 			"OCCUPATION" => ((byte)12, TypeReward),
 			"LEGION_RENAME" => ((byte)13, TypeLegion),
 			"CHARACTER_RENAME" => ((byte)14, TypeLegion),
-			"ITEM_DEPOSIT" => ((byte)15, TypeWarehouse),
-			"ITEM_WITHDRAW" => ((byte)16, TypeWarehouse),
+			ItemDeposit => ((byte)15, TypeWarehouse),
+			ItemWithdraw => ((byte)16, TypeWarehouse),
 			KinahDeposit => ((byte)17, TypeWarehouse),
 			KinahWithdraw => ((byte)18, TypeWarehouse),
 			_ => ((byte)0, -1),

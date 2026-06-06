@@ -3025,11 +3025,23 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task AddLegionHistoryAsync(Player player, string actionName, string description)
 	{
-		// Java parity: LegionService.addHistory(legion, activePlayer.getName(), action, Long.toString(amount)).
+		// Java parity: LegionService.addHistory(legion, activePlayer.getName(), action, description).
 		if (player.LegionId <= 0 || _playerEnterWorldRepository == null)
 			return;
 
 		await _playerEnterWorldRepository.InsertLegionHistoryAsync(player.LegionId, actionName, player.Name, description);
+	}
+
+	private Task AddLegionWarehouseItemHistoryAsync(Player player, int itemId, long count, int sourceStorageType, int destinationStorageType)
+	{
+		// Java parity: LegionService.addWHItemHistory writes "itemId:count" with ITEM_WITHDRAW/ITEM_DEPOSIT.
+		var description = string.Create(CultureInfo.InvariantCulture, $"{itemId}:{count}");
+		return sourceStorageType switch
+		{
+			3 => AddLegionHistoryAsync(player, LegionHistoryActions.ItemWithdraw, description),
+			_ when destinationStorageType == 3 => AddLegionHistoryAsync(player, LegionHistoryActions.ItemDeposit, description),
+			_ => Task.CompletedTask,
+		};
 	}
 
 	private async Task HandleLegionHistoryAsync(Player player, CmLegionHistory packet)
@@ -4244,8 +4256,6 @@ public sealed class GameServerConnection : BaseClientConnection
 					return;
 				}
 			}
-			// Java parity gap: LegionService.addWHItemHistory and a dedicated LegionStorageProxy/LegionWarehouse
-			// aggregate are not yet modeled, but the split mutation, persistence owner, and packet fanout now follow ItemSplitService.splitItem.
 		}
 
 		// Java parity: ItemSplitService.splitItem — kinah branch (moveKinah) before general split logic.
@@ -4316,6 +4326,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					return;
 				}
 			}
+			if (packet.SourceStorageType != packet.DestinationStorageType)
+				await AddLegionWarehouseItemHistoryAsync(player, sourceItem.ItemId, newCount, packet.SourceStorageType, packet.DestinationStorageType);
 
 			// Java parity: sourceStorage.decreaseItemCount uses DEC_ITEM_SPLIT for same-storage, DEC_ITEM_SPLIT_MOVE for cross-storage.
 			var sourceDecreaseType = packet.SourceStorageType == packet.DestinationStorageType
@@ -4354,6 +4366,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					return;
 				}
 			}
+			if (packet.SourceStorageType != packet.DestinationStorageType)
+				await AddLegionWarehouseItemHistoryAsync(player, sourceItem.ItemId, packet.ItemAmount, packet.SourceStorageType, packet.DestinationStorageType);
 
 			// Java parity: mergeStacks uses INC_ITEM_MERGE for same-storage, INC_ITEM_COLLECT for cross-storage.
 			var isSameStorage = packet.SourceStorageType == packet.DestinationStorageType;
@@ -4619,14 +4633,15 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendStorageUpdatePacketAsync(player, item, legionTemplate, packet.Source, SmInventoryAddItem.AllSlot);
 				return;
 			}
-			// Java parity gap: LegionService.addWHItemHistory is not yet modeled, but the storage mutation,
-			// persistence owner, and packet fanout now follow ItemMoveService.moveItem.
 		}
 
 		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
 		var template = templates?.GetItemTemplate(item.ItemId);
 		if (template == null)
 			return;
+		var shouldRecordLegionWarehouseHistory = packet.Source == 3 || packet.Destination == 3;
+		var moveHistoryCount = item.Count;
+		var moveHistoryRecorded = false;
 
 		// Java parity: ItemMoveService.moveItem restriction branch. ItemRestrictionService emits the denial
 		// message first, then sendItemUnlockPacket restores the source slot with ALL_SLOT fanout.
@@ -4673,6 +4688,11 @@ public sealed class GameServerConnection : BaseClientConnection
 						targetStack.Count -= mergeCount;
 						return;
 					}
+				}
+				if (shouldRecordLegionWarehouseHistory && !moveHistoryRecorded)
+				{
+					await AddLegionWarehouseItemHistoryAsync(player, item.ItemId, moveHistoryCount, packet.Source, packet.Destination);
+					moveHistoryRecorded = true;
 				}
 
 				if (packet.Destination == 0)
@@ -4726,6 +4746,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 			}
 		}
+		if (shouldRecordLegionWarehouseHistory && !moveHistoryRecorded)
+			await AddLegionWarehouseItemHistoryAsync(player, item.ItemId, moveHistoryCount, oldLocation, packet.Destination);
 
 		// Java parity: sendItemDeletePacket for source storage.
 		await SendItemDeletePacketAsync(player, oldLocation, item.ObjectId, SmDeleteItem.MoveDeleteType);

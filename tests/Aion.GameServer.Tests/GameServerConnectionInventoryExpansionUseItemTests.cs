@@ -1095,6 +1095,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, savedMove.OldLocation);
 		Assert.Equal(3, savedMove.NewLocation);
 		Assert.Equal(12, savedMove.NewSlot);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((88, LegionHistoryActions.ItemDeposit, player.Name, "200:2"), repository.InsertedLegionHistory);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
@@ -2088,6 +2090,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
 		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
 		Assert.Equal((1001, 77, 88, 5001, 0, 3, 27L, 6001, 3, 0, 12L), repository.SavedItemStorageSwitchMutation);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
@@ -4260,6 +4263,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(3, savedSplit.NewItem.Location);
 		Assert.Equal(0, savedSplit.NewItem.Slot);
 		Assert.Equal(2, savedSplit.NewItem.Count);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((88, LegionHistoryActions.ItemDeposit, player.Name, "200:2"), repository.InsertedLegionHistory);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertInventoryUpdatePayload(
@@ -4276,6 +4281,117 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCount: 2,
 				expectedSlot: 0),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_LegionWarehouseSourceSplitsItemToCubeHistoryLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5, location: 3);
+		player.LegionId = 88;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x4;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(157, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteQ(2L);
+				buffer.WriteC(3);
+				buffer.WriteD(0);
+				buffer.WriteC(0);
+				buffer.WriteH(8);
+			}));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(1, item.ObjectId);
+				Assert.Equal(1001, item.OwnerId);
+				Assert.Equal(0, item.Location);
+				Assert.Equal(0, item.Slot);
+				Assert.Equal(2, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(1001, item.OwnerId);
+				Assert.Equal(3, item.Location);
+				Assert.Equal(3, item.Count);
+			});
+		Assert.Equal(1, repository.SaveItemSplitMutationCalls);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((88, LegionHistoryActions.ItemWithdraw, player.Name, "200:2"), repository.InsertedLegionHistory);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 3,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplitMove),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 1,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_LegionWarehouseSourceMovesItemToCubeHistoryLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 7, location: 3);
+		player.LegionId = 77;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x4;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(156, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteC(3);
+				buffer.WriteC(0);
+				buffer.WriteH(11);
+			}));
+
+		var movedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1001, movedItem.OwnerId);
+		Assert.Equal(0, movedItem.Location);
+		Assert.Equal(11, movedItem.Slot);
+		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMove = Assert.NotNull(repository.SavedItemCrossStorageMoveMutation);
+		Assert.Equal(77, savedMove.LegionId);
+		Assert.Equal(3, savedMove.OldLocation);
+		Assert.Equal(0, savedMove.NewLocation);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.ItemWithdraw, player.Name, "200:7"), repository.InsertedLegionHistory);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 3,
+				expectedObjectId: 5001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 3),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 7,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 11),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
 	}
 
 	[Fact]
