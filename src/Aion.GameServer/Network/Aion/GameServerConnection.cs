@@ -39,6 +39,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int KinahItemId = 182400001;
 	private const int LegionWarehouseWithdrawalPermission = 0x4;
 	private const int LegionWarehouseDepositPermission = 0x1000;
+	private const int LegionEditPermission = 0x200;
+	private const int MaxLegionAnnouncementLength = 256;
 	private const int MinLegionEmblemId = 0;
 	private const int MaxLegionEmblemId = 49;
 	private const int FirstAvailableSlot = 65535;
@@ -3073,7 +3075,57 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x08:
 				await SendPacketAsync(SmLegionInfo.FromPlayer(player));
 				break;
+			case 0x09:
+				await HandleLegionAnnouncementChangeAsync(player, packet.Announcement);
+				break;
 		}
+	}
+
+	private async Task HandleLegionAnnouncementChangeAsync(Player player, string announcement)
+	{
+		// Java parity: LegionService.changeAnnouncement.
+		if (!HasLegionWarehouseRight(player, LegionEditPermission))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWriteNoticeDontHaveRight());
+			return;
+		}
+
+		if (announcement.Length > MaxLegionAnnouncementLength)
+			announcement = announcement[..MaxLegionAnnouncementLength];
+
+		DateTimeOffset? announcementTime = null;
+		if (announcement.Length == 0)
+		{
+			player.LegionAnnouncement = string.Empty;
+			player.LegionAnnouncementEpochSeconds = 0;
+		}
+		else
+		{
+			announcementTime = DateTimeOffset.UtcNow;
+			player.LegionAnnouncement = announcement;
+			player.LegionAnnouncementEpochSeconds = ToClampedUnixSeconds(announcementTime.Value);
+		}
+
+		if (_playerEnterWorldRepository != null)
+			_ = await _playerEnterWorldRepository.SaveLegionAnnouncementAsync(
+				player.LegionId,
+				announcement.Length == 0 ? null : player.LegionAnnouncement,
+				announcementTime);
+
+		if (announcement.Length == 0)
+		{
+			await SendPacketAsync(SmSystemMessage.MsgClearGuildNotice());
+		}
+		else
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWriteNoticeDone());
+		}
+	}
+
+	private static int ToClampedUnixSeconds(DateTimeOffset value)
+	{
+		var seconds = value.ToUnixTimeSeconds();
+		return seconds < int.MinValue ? int.MinValue : seconds > int.MaxValue ? int.MaxValue : (int)seconds;
 	}
 
 	private async Task HandleLegionHistoryAsync(Player player, CmLegionHistory packet)

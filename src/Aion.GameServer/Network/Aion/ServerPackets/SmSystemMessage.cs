@@ -226,6 +226,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1390127);
 	}
 
+	public static SmSystemMessage GuildWriteNoticeDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WRITE_NOTICE_DONT_HAVE_RIGHT.
+		return new SmSystemMessage(1300276);
+	}
+
+	public static SmSystemMessage GuildWriteNoticeDone()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WRITE_NOTICE_DONE.
+		return new SmSystemMessage(1300277);
+	}
+
+	public static SmSystemMessage MsgClearGuildNotice()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CLEAR_GUILD_NOTICE.
+		return new SmSystemMessage(1390128);
+	}
+
 	public static SmSystemMessage GuildNotice(string announcement, int unixTime)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_NOTICE(String, long) -> params: message, Unix seconds, date display mode.

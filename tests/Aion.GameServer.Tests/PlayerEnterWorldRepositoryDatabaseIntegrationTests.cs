@@ -1066,6 +1066,49 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SaveLegionAnnouncementAsync_ReplacesAndClearsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionDAO.saveAnnouncement deletes all existing rows and inserts one non-null announcement.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level, disband_time)
+			VALUES (5001, 'Hydrated Legion', 4, 0)
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legion_announcement_list (legion_id, announcement, date)
+			VALUES
+				(5001, 'Old notice', '2026-01-01 00:00:00'),
+				(5001, 'Older notice', '2025-01-01 00:00:00')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SaveLegionAnnouncementAsync(
+			5001,
+			"Current notice",
+			DateTimeOffset.FromUnixTimeSeconds(1_771_234_500));
+
+		Assert.True(saved);
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM legion_announcement_list WHERE legion_id = 5001"));
+		Assert.Equal(
+			"Current notice",
+			await ExecuteScalarStringAsync("SELECT announcement FROM legion_announcement_list WHERE legion_id = 5001"));
+
+		var cleared = await repository.SaveLegionAnnouncementAsync(5001, null, null);
+
+		Assert.True(cleared);
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM legion_announcement_list WHERE legion_id = 5001"));
+	}
+
+	[Fact]
 	public async Task LoadPlayerAsync_DefaultsLegionFactsWhenNoLegionMemberAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

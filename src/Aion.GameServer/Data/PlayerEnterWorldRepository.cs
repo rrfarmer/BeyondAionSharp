@@ -35,6 +35,12 @@ public interface IPlayerEnterWorldRepository
 		InventoryItem? kinahItemUpdate,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveLegionAnnouncementAsync(
+		int legionId,
+		string? announcement,
+		DateTimeOffset? announcementTime,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -727,6 +733,23 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveLegionEmblemMutationCalls++;
 		SavedLegionEmblemMutation = (playerObjectId, legionId, emblem, kinahItemUpdate);
 		return Task.FromResult(SaveLegionEmblemMutationResult);
+	}
+
+	public bool SaveLegionAnnouncementResult { get; init; } = true;
+
+	public int SaveLegionAnnouncementCalls { get; private set; }
+
+	public (int LegionId, string? Announcement, DateTimeOffset? AnnouncementTime)? SavedLegionAnnouncement { get; private set; }
+
+	public Task<bool> SaveLegionAnnouncementAsync(
+		int legionId,
+		string? announcement,
+		DateTimeOffset? announcementTime,
+		CancellationToken cancellationToken = default)
+	{
+		SaveLegionAnnouncementCalls++;
+		SavedLegionAnnouncement = (legionId, announcement, announcementTime);
+		return Task.FromResult(SaveLegionAnnouncementResult);
 	}
 
 	public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -1965,6 +1988,55 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Failed to persist legion emblem {LegionId}", legionId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveLegionAnnouncementAsync(
+		int legionId,
+		string? announcement,
+		DateTimeOffset? announcementTime,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionDAO.saveAnnouncement deletes existing rows and inserts one announcement when non-null.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			await using (var delete = connection.CreateCommand())
+			{
+				delete.Transaction = transaction;
+				delete.CommandText = "DELETE FROM legion_announcement_list WHERE legion_id = ?";
+				delete.Parameters.Add(new MySqlParameter { Value = legionId });
+				await delete.ExecuteNonQueryAsync(cancellationToken);
+			}
+
+			if (!string.IsNullOrEmpty(announcement) && announcementTime.HasValue)
+			{
+				await using var insert = connection.CreateCommand();
+				insert.Transaction = transaction;
+				insert.CommandText = """
+					INSERT INTO legion_announcement_list (legion_id, announcement, date)
+					VALUES (?, ?, ?)
+					""";
+				insert.Parameters.AddRange(
+					new[]
+					{
+						new MySqlParameter { Value = legionId },
+						new MySqlParameter { Value = announcement },
+						new MySqlParameter { Value = announcementTime.Value.UtcDateTime },
+					});
+				await insert.ExecuteNonQueryAsync(cancellationToken);
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Failed to persist legion announcement {LegionId}", legionId);
 			return false;
 		}
 	}
