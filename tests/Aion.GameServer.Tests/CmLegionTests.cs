@@ -148,7 +148,7 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
-	public void SmLegionInfo_FromPlayerWritesLoadedAnnouncementLikeJava()
+	public void SmLegionInfo_FromPlayerWritesLoadedRuntimeFieldsLikeJava()
 	{
 		var player = CreateLegionPlayer();
 		player.LegionAnnouncement = "Assemble";
@@ -163,13 +163,13 @@ public sealed class CmLegionTests
 		Assert.Equal(12, reader.ReadSignedH());
 		Assert.Equal(13, reader.ReadSignedH());
 		Assert.Equal(14, reader.ReadSignedH());
-		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(55_000, reader.ReadQ());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(1_771_234_567, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(6, reader.ReadD());
+		Assert.Equal(7, reader.ReadD());
 		Assert.Equal("Assemble", reader.ReadS());
 		Assert.Equal(1_771_234_500, reader.ReadD());
 		Assert.Equal(string.Empty, reader.ReadS());
@@ -192,13 +192,13 @@ public sealed class CmLegionTests
 		Assert.Equal(12, reader.ReadSignedH());
 		Assert.Equal(13, reader.ReadSignedH());
 		Assert.Equal(14, reader.ReadSignedH());
-		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(55_000, reader.ReadQ());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(1_771_234_567, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
-		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(6, reader.ReadD());
+		Assert.Equal(7, reader.ReadD());
 		Assert.Equal(string.Empty, reader.ReadS());
 	}
 
@@ -378,6 +378,10 @@ public sealed class CmLegionTests
 			LegionName = "Hydrated Legion",
 			LegionLevel = 4,
 			LegionDisbandTime = 1_771_234_567,
+			LegionContributionPoints = 55_000,
+			LegionOccupiedLegionDominion = 5,
+			LegionLastLegionDominion = 6,
+			LegionCurrentLegionDominion = 7,
 			LegionDeputyPermission = 11,
 			LegionCenturionPermission = 12,
 			LegionLegionaryPermission = 13,

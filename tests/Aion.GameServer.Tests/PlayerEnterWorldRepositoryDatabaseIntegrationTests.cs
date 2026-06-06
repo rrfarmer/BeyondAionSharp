@@ -997,14 +997,16 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
 			return;
 
-		// Java source breadcrumbs: LegionDAO.loadLegion reads legions.level/disband_time; SM_TRADELIST/DialogService treat no legion as level 0.
+		// Java source breadcrumbs: LegionDAO.loadLegion reads legion info fields written by SM_LEGION_INFO.
 		InitializeDatabaseFactory();
 		await InitializeSchemaAsync();
 		await SeedPlayerAsync();
 		await ExecuteNonQueryAsync(
 			"""
-			INSERT INTO legions (id, name, level, disband_time)
-			VALUES (5001, 'Hydrated Legion', 4, 1771234567)
+			INSERT INTO legions (
+				id, name, level, disband_time, contribution_points,
+				occupied_legion_dominion, last_legion_dominion, current_legion_dominion)
+			VALUES (5001, 'Hydrated Legion', 4, 1771234567, 55000, 5, 6, 7)
 			""");
 		await ExecuteNonQueryAsync(
 			"""
@@ -1024,6 +1026,10 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal("Hydrated Legion", player.LegionName);
 		Assert.Equal(1_771_234_567, player.LegionDisbandTime);
 		Assert.True(player.IsLegionDisbanding);
+		Assert.Equal(55_000, player.LegionContributionPoints);
+		Assert.Equal(5, player.LegionOccupiedLegionDominion);
+		Assert.Equal(6, player.LegionLastLegionDominion);
+		Assert.Equal(7, player.LegionCurrentLegionDominion);
 	}
 
 	[Fact]
@@ -1131,6 +1137,10 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal(string.Empty, player.LegionName);
 		Assert.Equal(0, player.LegionDisbandTime);
 		Assert.False(player.IsLegionDisbanding);
+		Assert.Equal(0, player.LegionContributionPoints);
+		Assert.Equal(0, player.LegionOccupiedLegionDominion);
+		Assert.Equal(0, player.LegionLastLegionDominion);
+		Assert.Equal(0, player.LegionCurrentLegionDominion);
 	}
 
 	[Fact]

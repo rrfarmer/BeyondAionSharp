@@ -58,6 +58,16 @@ public sealed class Player
 
 	public bool IsLegionDisbanding => LegionDisbandTime > 0;
 
+	// Java parity: model/team/legion/Legion.getContributionPoints loaded by LegionDAO.loadLegion.
+	public long LegionContributionPoints { get; set; }
+
+	// Java parity: model/team/legion/Legion dominion fields written by SM_LEGION_INFO.
+	public int LegionOccupiedLegionDominion { get; set; }
+
+	public int LegionLastLegionDominion { get; set; }
+
+	public int LegionCurrentLegionDominion { get; set; }
+
 	// Java parity: model/team/legion/LegionMember.getRank() — legion_members.rank stores the LegionRank enum name.
 	// Empty when the player has no legion (LegionId == 0).
 	public string LegionRank { get; set; } = string.Empty;

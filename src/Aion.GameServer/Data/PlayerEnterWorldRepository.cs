@@ -1773,7 +1773,10 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				SELECT id, account_id, name, player_class, race, gender, note, creation_date, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
 					lm.legion_id, lm.`rank` AS legion_rank, l.level AS legion_level, l.name AS legion_name,
-					l.disband_time AS legion_disband_time,
+					l.disband_time AS legion_disband_time, l.contribution_points AS legion_contribution_points,
+					l.occupied_legion_dominion AS legion_occupied_legion_dominion,
+					l.last_legion_dominion AS legion_last_legion_dominion,
+					l.current_legion_dominion AS legion_current_legion_dominion,
 					l.deputy_permission, l.centurion_permission, l.legionary_permission, l.volunteer_permission,
 					(
 						SELECT la.announcement
@@ -1836,6 +1839,10 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					LegionLevel = ReadInt(reader, "legion_level"),
 					LegionName = ReadString(reader, "legion_name"),
 					LegionDisbandTime = ReadInt(reader, "legion_disband_time"),
+					LegionContributionPoints = ReadLong(reader, "legion_contribution_points"),
+					LegionOccupiedLegionDominion = ReadInt(reader, "legion_occupied_legion_dominion"),
+					LegionLastLegionDominion = ReadInt(reader, "legion_last_legion_dominion"),
+					LegionCurrentLegionDominion = ReadInt(reader, "legion_current_legion_dominion"),
 					LegionDeputyPermission = ReadInt(reader, "deputy_permission"),
 					LegionCenturionPermission = ReadInt(reader, "centurion_permission"),
 					LegionLegionaryPermission = ReadInt(reader, "legionary_permission"),

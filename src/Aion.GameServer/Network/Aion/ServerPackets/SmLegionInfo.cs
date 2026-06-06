@@ -58,8 +58,7 @@ public sealed class SmLegionInfo : GameServerPacket
 	public static SmLegionInfo FromPlayer(Player player)
 	{
 		// Java parity: network/aion/serverpackets/SM_LEGION_INFO.writeImpl.
-		// Current C# enter-world hydration has the legion identity, level, permissions, and disband time.
-		// Ranking, contribution, dominion, and announcement fields remain defaulted until the shared Legion aggregate is ported.
+		// Ranking remains defaulted until the AbyssRankingCache legion path is ported.
 		return new SmLegionInfo(
 			player.LegionName,
 			player.LegionLevel,
@@ -68,11 +67,11 @@ public sealed class SmLegionInfo : GameServerPacket
 			player.LegionCenturionPermission,
 			player.LegionLegionaryPermission,
 			player.LegionVolunteerPermission,
-			contributionPoints: 0,
+			player.LegionContributionPoints,
 			player.LegionDisbandTime,
-			occupiedLegionDominion: 0,
-			lastLegionDominion: 0,
-			currentLegionDominion: 0,
+			player.LegionOccupiedLegionDominion,
+			player.LegionLastLegionDominion,
+			player.LegionCurrentLegionDominion,
 			player.LegionAnnouncement,
 			player.LegionAnnouncementEpochSeconds);
 	}
