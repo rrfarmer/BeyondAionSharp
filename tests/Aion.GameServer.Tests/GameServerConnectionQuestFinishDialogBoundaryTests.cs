@@ -236,6 +236,40 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetQuestAcceptStartsQuestAndSendsStartPage()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var player = new Player
+		{
+			ObjectId = 47,
+			Name = "QuestAcceptBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.QuestAccept,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertQuestAction(packet, SmQuestAction.AddActionId, questId: 1001, statusValue: 3),
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 1003, questId: 1001));
+		var startedQuest = Assert.Single(player.Quests);
+		Assert.Equal(1001, startedQuest.QuestId);
+		Assert.Equal("START", startedQuest.Status);
+		Assert.Equal(0, startedQuest.QuestVars);
+		Assert.Equal(0, startedQuest.CompleteCount);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesKinahAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();

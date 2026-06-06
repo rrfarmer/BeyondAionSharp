@@ -5256,10 +5256,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		CmDialogSelect packet,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles QUEST_ACCEPT_1
-		// and QUEST_ACCEPT_SIMPLE by calling QuestService.startQuest, then either
+		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles QUEST_ACCEPT,
+		// QUEST_ACCEPT_1, and QUEST_ACCEPT_SIMPLE by calling QuestService.startQuest, then either
 		// sendQuestDialog(..., 1003) or closeDialogWindow for NPC-visible quests.
-		if (packet.DialogActionId is not (CmDialogSelect.QuestAccept1 or CmDialogSelect.QuestAcceptSimple)
+		if (packet.DialogActionId is not (CmDialogSelect.QuestAccept or CmDialogSelect.QuestAccept1 or CmDialogSelect.QuestAcceptSimple)
 			|| packet.QuestId <= 0
 			|| packet.TargetObjectId == 0
 			|| packet.TargetObjectId == player.ObjectId
