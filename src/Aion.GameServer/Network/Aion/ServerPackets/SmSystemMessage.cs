@@ -2045,6 +2045,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300279);
 	}
 
+	public static SmSystemMessage GuildWarehouseInUse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_IN_USE. Another Legion member has the warehouse open.
+		return new SmSystemMessage(1300280);
+	}
+
 	public static SmSystemMessage WarehouseCantDepositItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM. You cannot store this in the warehouse.

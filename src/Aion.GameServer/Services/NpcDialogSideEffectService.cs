@@ -84,5 +84,5 @@ public sealed record NpcDialogCloseSideEffectPlan(
 {
 	public bool ShouldMutateLiveAiState => false;
 	public bool ShouldMutateLiveMailboxState => false;
-	public bool ShouldMutateLiveLegionWarehouse => false;
+	public bool ShouldMutateLiveLegionWarehouse => WouldReleaseLegionWarehouseLock;
 }

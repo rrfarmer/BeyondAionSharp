@@ -85,6 +85,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
+	private readonly LegionWarehouseRuntime _legionWarehouses;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
 	private readonly AutoGroupPenaltyRefreshSchedulerService? _autoGroupPenaltyRefreshScheduler;
@@ -275,6 +276,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
+		_legionWarehouses = _runtimeContext?.LegionWarehouses ?? new LegionWarehouseRuntime();
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
@@ -4060,6 +4062,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (itemTemplates == null)
 			return;
 
+		if (!_legionWarehouses.TrySetInUse(player.LegionId, player.ObjectId)
+			&& _legionWarehouses.GetCurrentUser(player.LegionId) != player.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarehouseInUse());
+			return;
+		}
+
 		await SendPacketAsync(SmLegionEdit.WarehouseKinah(GetLegionWarehouseKinah(player)));
 		foreach (var packet in SmWarehouseInfo.CreateLegionWarehouseOpenPackets(
 			player,
@@ -5357,19 +5366,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
-	private void HandleCloseDialog(Player player, CmCloseDialog packet)
+	internal void HandleCloseDialog(Player player, CmCloseDialog packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_CLOSE_DIALOG.runImpl delegates to DialogService.onCloseDialog.
-		var isNpcTarget = _world != null
+		var targetNpc = _world != null
 			&& _world.TryGetObject(packet.TargetObjectId, out var target)
-			&& target is IWorldNpcObject;
+			&& target is IWorldNpcObject npc
+				? npc
+				: null;
+		var isNpcTarget = targetNpc != null;
+		var npcSupportsLegionWarehouse = targetNpc?.Template.SupportsDialogAction(CmDialogSelect.OpenLegionWarehouse) == true;
+		var playerIsLegionMember = player.LegionId > 0 && !string.IsNullOrEmpty(player.LegionRank);
 		var plan = new NpcDialogCloseSideEffectPlanService().CreatePlan(
 			player,
 			packet.TargetObjectId,
-			isNpcTarget);
+			isNpcTarget,
+			npcSupportsLegionWarehouse,
+			playerIsLegionMember);
 		if (plan.WouldCloseMailbox)
 			player.MailboxState = PlayerMailboxState.Closed;
-		// AI DIALOG_FINISH event and legion warehouse release remain non-live until AI and legion systems are enabled.
+		if (plan.WouldReleaseLegionWarehouseLock)
+			_legionWarehouses.UnsetInUse(player.LegionId, player.ObjectId);
+		// AI DIALOG_FINISH event remains non-live until AI dispatch is enabled.
 	}
 
 	private async Task HandleShowDialogAsync(Player player, CmShowDialog packet)

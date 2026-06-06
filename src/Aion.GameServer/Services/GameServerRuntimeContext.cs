@@ -9,6 +9,8 @@ public sealed class GameServerRuntimeContext
 
 	public PlayerKiskRegistry Kisks { get; } = new();
 
+	public LegionWarehouseRuntime LegionWarehouses { get; } = new();
+
 	public WorldMapRuntimeStateTable WorldMapStates { get; private set; } = WorldMapRuntimeStateTable.Empty;
 
 	public LimitedItemTradeService LimitedItems { get; private set; } = LimitedItemTradeService.Empty;

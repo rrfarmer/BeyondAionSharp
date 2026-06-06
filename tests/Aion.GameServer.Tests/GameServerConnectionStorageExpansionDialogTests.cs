@@ -115,6 +115,108 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseLocksAgainstOtherLegionMemberLikeJava()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var firstPlayer = CreateLegionWarehousePlayer(targetObjectId: 9016, objectId: 1001, legionId: 77);
+		var secondPlayer = CreateLegionWarehousePlayer(targetObjectId: 9016, objectId: 1002, legionId: 77);
+		var npc = CreateExpansionNpc(9016, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(firstPlayer, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+		fixture.SentPackets.Clear();
+
+		await fixture.Connection.HandleDialogSelectAsync(secondPlayer, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300280);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseAllowsCurrentUserToReopenLikeJava()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreateLegionWarehousePlayer(targetObjectId: 9017, objectId: 1001, legionId: 77);
+		var npc = CreateExpansionNpc(9017, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+		fixture.SentPackets.Clear();
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertLegionWarehouseKinahPayload(Assert.IsType<SmLegionEdit>(packet), expectedKinah: 0),
+			packet => AssertWarehouseInfoPayload(
+				Assert.IsType<SmWarehouseInfo>(packet),
+				expectedWarehouseType: 3,
+				expectedExpandLevel: 3,
+				expectedIsFirst: true,
+				expectedItemCount: 0),
+			packet => AssertDialogWindowPayload(
+				Assert.IsType<SmDialogWindow>(packet),
+				expectedTargetObjectId: npc.ObjectId,
+				expectedPageId: SmDialogWindow.LegionWarehousePageId));
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
+	public async Task HandleCloseDialog_OpenLegionWarehouseReleasesLockLikeJava()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var firstPlayer = CreateLegionWarehousePlayer(targetObjectId: 9018, objectId: 1001, legionId: 77);
+		var secondPlayer = CreateLegionWarehousePlayer(targetObjectId: 9018, objectId: 1002, legionId: 77);
+		var npc = CreateExpansionNpc(9018, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(firstPlayer, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+		fixture.SentPackets.Clear();
+
+		fixture.Connection.HandleCloseDialog(firstPlayer, CreateCloseDialog(npc.ObjectId));
+		await fixture.Connection.HandleDialogSelectAsync(secondPlayer, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertLegionWarehouseKinahPayload(Assert.IsType<SmLegionEdit>(packet), expectedKinah: 0),
+			packet => AssertWarehouseInfoPayload(
+				Assert.IsType<SmWarehouseInfo>(packet),
+				expectedWarehouseType: 3,
+				expectedExpandLevel: 3,
+				expectedIsFirst: true,
+				expectedItemCount: 0),
+			packet => AssertDialogWindowPayload(
+				Assert.IsType<SmDialogWindow>(packet),
+				expectedTargetObjectId: npc.ObjectId,
+				expectedPageId: SmDialogWindow.LegionWarehousePageId));
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
+	public async Task HandleCloseDialog_NonLegionWarehouseNpcDoesNotReleaseLockLikeJava()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var firstPlayer = CreateLegionWarehousePlayer(targetObjectId: 9019, objectId: 1001, legionId: 77);
+		var secondPlayer = CreateLegionWarehousePlayer(targetObjectId: 9019, objectId: 1002, legionId: 77);
+		var warehouseNpc = CreateExpansionNpc(9019, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		var otherNpc = CreateExpansionNpc(9020, templateId: 203201, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(warehouseNpc.ObjectId, warehouseNpc);
+		fixture.World.TryAddObject(otherNpc.ObjectId, otherNpc);
+
+		await fixture.Connection.HandleDialogSelectAsync(firstPlayer, CreateDialogSelect(warehouseNpc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+		fixture.SentPackets.Clear();
+
+		firstPlayer.TargetObjectId = otherNpc.ObjectId;
+		fixture.Connection.HandleCloseDialog(firstPlayer, CreateCloseDialog(otherNpc.ObjectId));
+		await fixture.Connection.HandleDialogSelectAsync(secondPlayer, CreateDialogSelect(warehouseNpc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300280);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_OpenLegionWarehouseWithoutLegionSendsJavaDenial()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
@@ -543,17 +645,25 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.True(reader.Remaining > 0);
 	}
 
-	private static Player CreatePlayer(int targetObjectId, int legionId = 0, int legionLevel = 0)
+	private static Player CreatePlayer(int targetObjectId, int legionId = 0, int legionLevel = 0, int objectId = 1001)
 	{
 		return new Player
 		{
-			ObjectId = 1001,
+			ObjectId = objectId,
 			Name = "ExpansionTester",
 			TargetObjectId = targetObjectId,
 			LegionId = legionId,
 			LegionLevel = legionLevel,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 		};
+	}
+
+	private static Player CreateLegionWarehousePlayer(int targetObjectId, int objectId, int legionId)
+	{
+		var player = CreatePlayer(targetObjectId, legionId, legionLevel: 4, objectId);
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x1000;
+		return player;
 	}
 
 	private static WorldNpc CreateExpansionNpc(int objectId, int templateId, int dialogActionId)
@@ -584,6 +694,16 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		writer.WriteD(0);
 		writer.WriteH(0);
 		var packet = new CmDialogSelect(56, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
+	private static CmCloseDialog CreateCloseDialog(int targetObjectId)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteD(targetObjectId);
+		var packet = new CmCloseDialog(53, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
 		return packet;
