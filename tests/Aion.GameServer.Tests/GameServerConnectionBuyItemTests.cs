@@ -4542,6 +4542,33 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmEnterWorldSendsLuaSandboxHouseScriptBeforeEnterWorldCheck()
+	{
+		var player = CreatePlayer(accountId: 7);
+		player.IsOnline = false;
+		player.LastOnline = DateTime.Now.AddMinutes(-10);
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			playerEnterWorldRepository: repository,
+			observeBuyItemPlans: false);
+		SetAuthenticatedAccountForEnterWorld(fixture.Connection, accountId: 7);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateEnterWorldPayload(player.ObjectId));
+
+		var scriptIndex = fixture.SentPackets.FindIndex(packet => packet is SmHouseScripts);
+		var enterWorldCheckIndex = fixture.SentPackets.FindIndex(packet => packet is SmEnterWorldCheck);
+		Assert.True(scriptIndex >= 0);
+		Assert.True(enterWorldCheckIndex > scriptIndex);
+		AssertLuaSandboxHouseScript(Assert.IsType<SmHouseScripts>(fixture.SentPackets[scriptIndex]));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetSpawnEnablesMerchantSellActionSeventeenLive()
 	{
 		var playerRepository = new EmptyPlayerEnterWorldRepository();
@@ -6253,6 +6280,25 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal(expectedDecoration, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertLuaSandboxHouseScript(SmHouseScripts packet)
+	{
+		var expected = PlayerScript.LuaSandboxFix;
+		Assert.True(PlayerScripts.TryDecodeXml(expected.CompressedBytes, expected.UncompressedSize, out var scriptXml));
+		Assert.Contains("Lua Fix", scriptXml, StringComparison.Ordinal);
+		Assert.Contains("_G.debug = nil", scriptXml, StringComparison.Ordinal);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expected.Id, reader.ReadC());
+		Assert.Equal(8 + expected.CompressedBytes.Length + 8, reader.ReadH());
+		Assert.Equal(expected.CompressedBytes.Length + 8, reader.ReadD());
+		Assert.Equal(expected.UncompressedSize, reader.ReadD());
+		Assert.Equal(expected.CompressedBytes, reader.ReadB(expected.CompressedBytes.Length));
+		Assert.Equal(Enumerable.Repeat((byte)0xCD, 8).ToArray(), reader.ReadB(8));
 		Assert.Equal(0, reader.Remaining);
 	}
 

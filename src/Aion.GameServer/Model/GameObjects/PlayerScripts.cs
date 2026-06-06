@@ -5,19 +5,47 @@ namespace Aion.GameServer.Model.GameObjects;
 
 public sealed record PlayerScript(int Id, byte[] CompressedBytes, int UncompressedSize)
 {
+	public static PlayerScript LuaSandboxFix { get; } = CreateLuaSandboxFix();
+
 	public bool HasData => CompressedBytes.Length > 0;
+
+	private static PlayerScript CreateLuaSandboxFix()
+	{
+		// Java parity: model/house/PlayerScript.LUA_SANDBOX_FIX.
+		var script = """
+			<?xml version="1.0" encoding="UTF-16" ?>
+			<lboxes>
+				<lbox>
+					<id>101</id>
+					<name><![CDATA[Lua Fix]]></name>
+					<desc><![CDATA[Secures the Lua environment against malicious actors]]></desc>
+					<script><![CDATA[
+			_G.debug = nil
+			_G.dofile = nil
+			_G.io = nil
+			_G.load = nil
+			_G.loadfile = nil
+			_G.loadstring = nil
+			_G.package = nil
+			_G.require = nil
+			]]></script>
+					<icon>1</icon>
+				</lbox>
+			</lboxes>
+			""";
+		var bytes = Encoding.Unicode.GetBytes(script);
+		return new PlayerScript(0, PlayerScripts.Compress(bytes), bytes.Length);
+	}
 }
 
 public sealed class PlayerScripts
 {
 	public const byte ScriptLimit = 8;
 
-	private readonly int _houseObjectId;
 	private readonly PlayerScript[] _scripts = new PlayerScript[ScriptLimit];
 
 	public PlayerScripts(int houseObjectId)
 	{
-		_houseObjectId = houseObjectId;
 		FillEmptyScripts();
 	}
 
@@ -88,6 +116,14 @@ public sealed class PlayerScripts
 		using var inflater = new ZLibStream(source, CompressionMode.Decompress);
 		using var target = new MemoryStream();
 		inflater.CopyTo(target);
+		return target.ToArray();
+	}
+
+	public static byte[] Compress(byte[] bytes)
+	{
+		using var target = new MemoryStream();
+		using (var deflater = new ZLibStream(target, CompressionLevel.Optimal, leaveOpen: true))
+			deflater.Write(bytes);
 		return target.ToArray();
 	}
 }

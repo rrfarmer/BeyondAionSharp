@@ -2565,6 +2565,11 @@ public sealed class GameServerConnection : BaseClientConnection
 						}
 					}
 				}
+				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })
+				{
+					// Java parity: services/player/PlayerEnterWorldService.onLogin sends PlayerScript.LUA_SANDBOX_FIX before SM_ENTER_WORLD_CHECK.
+					await SendPacketAsync(new SmHouseScripts(0, PlayerScript.LuaSandboxFix));
+				}
 				await SendPacketAsync(new SmEnterWorldCheck(enterWorldResult.Message));
 				if (enterWorldResult is { Message: EnterWorldCheckMessage.Ok, Player: not null })
 				{
