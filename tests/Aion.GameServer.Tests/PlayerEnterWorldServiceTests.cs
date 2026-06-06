@@ -319,6 +319,7 @@ public sealed class PlayerEnterWorldServiceTests
 			.Order()
 			.ToArray();
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CreationDate = now.UtcDateTime;
 		player.PassportStamps = startingStamps;
 		var repository = new CapturingEnterWorldRepository
 		{
@@ -396,6 +397,7 @@ public sealed class PlayerEnterWorldServiceTests
 			.Order()
 			.ToArray();
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CreationDate = now.UtcDateTime;
 		player.PassportStamps = startingStamps;
 		var repository = new CapturingEnterWorldRepository
 		{
@@ -459,6 +461,7 @@ public sealed class PlayerEnterWorldServiceTests
 			.Order()
 			.ToArray();
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CreationDate = now.UtcDateTime;
 		player.PassportStamps = startingStamps;
 		player.LastPassportStamp = now.UtcDateTime;
 		var repository = new CapturingEnterWorldRepository
@@ -494,6 +497,141 @@ public sealed class PlayerEnterWorldServiceTests
 			Assert.False(passport.Rewarded);
 			Assert.True(passport.FakeStamp);
 			Assert.Equal(PlayerPassportRewardStatus.Upcoming, passport.RewardStatus);
+		}
+		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
+	}
+
+	[Fact]
+	public async Task EnterWorld_AtreianPassportAnniversaryLoginCreatesRealAndFakeRewardRows()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var now = new DateTimeOffset(2014, 4, 2, 10, 15, 30, TimeSpan.Zero);
+		var monthsAlive = 3;
+		var expectedDailyPassportIds = GetActiveDailyPassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime);
+		var expectedCumulativePassportIds = GetActiveCumulativePassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime);
+		var expectedAnniversaryPassportIds = GetActiveAnniversaryPassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime)
+			.Where(id => dataManager.StaticData.AtreianPassports.GetAtreianPassportId(id)!.AttendNum <= monthsAlive)
+			.Order()
+			.ToArray();
+		var expectedRealAnniversaryPassportIds = GetActiveAnniversaryPassportIds(
+			dataManager.StaticData.AtreianPassports,
+			now.UtcDateTime,
+			monthsAlive);
+		var expectedFakeAnniversaryPassportIds = expectedAnniversaryPassportIds
+			.Except(expectedRealAnniversaryPassportIds)
+			.Order()
+			.ToArray();
+		var expectedPassportIds = expectedDailyPassportIds
+			.Concat(expectedCumulativePassportIds)
+			.Concat(expectedAnniversaryPassportIds)
+			.Order()
+			.ToArray();
+		var expectedPersistentPassportIds = expectedDailyPassportIds
+			.Concat(expectedRealAnniversaryPassportIds)
+			.Order()
+			.ToArray();
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CreationDate = new DateTime(2014, 1, 2, 12, 30, 0, DateTimeKind.Utc);
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			out _,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: () => now);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.NotNull(result.AtreianPassportLogin);
+		Assert.True(result.AtreianPassportLogin.ShouldSendSnapshot);
+		Assert.True(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
+		Assert.Equal(1, player.PassportStamps);
+		Assert.NotEmpty(expectedRealAnniversaryPassportIds);
+		Assert.NotEmpty(expectedFakeAnniversaryPassportIds);
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		foreach (var passport in player.Passports.Where(passport => expectedRealAnniversaryPassportIds.Contains(passport.PassportId)))
+		{
+			Assert.False(passport.Rewarded);
+			Assert.False(passport.FakeStamp);
+			Assert.Equal(PlayerPassportRewardStatus.Available, passport.RewardStatus);
+		}
+		foreach (var passport in player.Passports.Where(passport => expectedFakeAnniversaryPassportIds.Contains(passport.PassportId)))
+		{
+			Assert.True(passport.Rewarded);
+			Assert.True(passport.FakeStamp);
+			Assert.Equal(PlayerPassportRewardStatus.Taken, passport.RewardStatus);
+		}
+		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
+		var saved = repository.SavedAccountPassportLoginMutation.Value;
+		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+	}
+
+	[Fact]
+	public async Task EnterWorld_AtreianPassportAnniversaryRowsAreClientVisibleWithoutDailyRewardPersistence()
+	{
+		var dataManager = await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(dataManager);
+		var now = new DateTimeOffset(2014, 4, 2, 10, 15, 30, TimeSpan.Zero);
+		var monthsAlive = 3;
+		var expectedCumulativePassportIds = GetActiveCumulativePassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime);
+		var expectedAnniversaryPassportIds = GetActiveAnniversaryPassportIds(dataManager.StaticData.AtreianPassports, now.UtcDateTime)
+			.Where(id => dataManager.StaticData.AtreianPassports.GetAtreianPassportId(id)!.AttendNum <= monthsAlive)
+			.Order()
+			.ToArray();
+		var expectedRealAnniversaryPassportIds = GetActiveAnniversaryPassportIds(
+			dataManager.StaticData.AtreianPassports,
+			now.UtcDateTime,
+			monthsAlive);
+		var expectedFakeAnniversaryPassportIds = expectedAnniversaryPassportIds
+			.Except(expectedRealAnniversaryPassportIds)
+			.Order()
+			.ToArray();
+		var expectedPassportIds = expectedCumulativePassportIds
+			.Concat(expectedAnniversaryPassportIds)
+			.Order()
+			.ToArray();
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.CreationDate = new DateTime(2014, 1, 2, 12, 30, 0, DateTimeKind.Utc);
+		player.LastPassportStamp = now.UtcDateTime;
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			out _,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: () => now);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.NotNull(result.AtreianPassportLogin);
+		Assert.True(result.AtreianPassportLogin.ShouldSendSnapshot);
+		Assert.False(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
+		Assert.Equal(0, player.PassportStamps);
+		Assert.Equal(now.UtcDateTime, player.LastPassportStamp);
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		foreach (var passport in player.Passports.Where(passport => expectedRealAnniversaryPassportIds.Contains(passport.PassportId)))
+		{
+			Assert.False(passport.Rewarded);
+			Assert.False(passport.FakeStamp);
+			Assert.Equal(PlayerPassportRewardStatus.Available, passport.RewardStatus);
+		}
+		foreach (var passport in player.Passports.Where(passport => expectedFakeAnniversaryPassportIds.Contains(passport.PassportId)))
+		{
+			Assert.True(passport.Rewarded);
+			Assert.True(passport.FakeStamp);
+			Assert.Equal(PlayerPassportRewardStatus.Taken, passport.RewardStatus);
 		}
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 	}
@@ -2726,6 +2864,31 @@ public sealed class PlayerEnterWorldServiceTests
 		return passports.Passports
 			.Where(passport => passport.Active
 				&& passport.AttendType == "CUMULATIVE"
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static int[] GetActiveAnniversaryPassportIds(AtreianPassportTable passports, DateTime now, int attendNum)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "ANNIVERSARY"
+				&& passport.AttendNum == attendNum
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static int[] GetActiveAnniversaryPassportIds(AtreianPassportTable passports, DateTime now)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "ANNIVERSARY"
 				&& passport.PeriodStart < now
 				&& passport.PeriodEnd > now)
 			.Select(passport => passport.Id)

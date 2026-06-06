@@ -214,6 +214,7 @@ public sealed class PlayerEnterWorldService
 		var doReward = CheckAtreianPassportOnlineDate(player.LastPassportStamp, nowOffset) && player.PassportStamps < 28;
 		var newPassports = new List<PlayerPassport>();
 		var attendDay = GetAtreianPassportAttendDay(nowOffset);
+		var accountAgeMonths = GetAtreianPassportAccountAgeInMonths(player.CreationDate, now);
 		foreach (var template in atreianPassports.Passports)
 		{
 			if (!template.Active || template.PeriodStart >= now || template.PeriodEnd <= now)
@@ -235,6 +236,23 @@ public sealed class PlayerEnterWorldService
 						newPassports.Add(new PlayerPassport(
 							template.Id,
 							Rewarded: template.AttendNum <= player.PassportStamps,
+							NormalizePassportTimestamp(now),
+							FakeStamp: true));
+					}
+					break;
+				case "ANNIVERSARY":
+					if (HasAtreianPassport(player.Passports.Concat(newPassports), template.Id))
+						break;
+
+					if (accountAgeMonths == template.AttendNum)
+					{
+						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
+					}
+					else if (accountAgeMonths > template.AttendNum)
+					{
+						newPassports.Add(new PlayerPassport(
+							template.Id,
+							Rewarded: true,
 							NormalizePassportTimestamp(now),
 							FakeStamp: true));
 					}
@@ -321,6 +339,13 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: PassportsList.isPassportPresent compares only the Passport template id.
 		return passports.Any(passport => passport.PassportId == passportId);
+	}
+
+	private static int GetAtreianPassportAccountAgeInMonths(DateTime creationDate, DateTime now)
+	{
+		return AtreianPassportAttendPlanService.CreateAccountAgeInMonthsPlan(
+			DateOnly.FromDateTime(creationDate),
+			DateOnly.FromDateTime(now)).Months;
 	}
 
 	private static DateTime NormalizePassportTimestamp(DateTime value)

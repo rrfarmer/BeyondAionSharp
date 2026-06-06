@@ -415,8 +415,24 @@ public sealed class CmAtreianPassportTests
 			.Except(expectedTakenFakePassportIds)
 			.Order()
 			.ToArray();
+		var monthsAlive = 3;
+		var expectedAnniversaryPassportIds = GetActiveAnniversaryPassportIds(
+				runtimeContext.DataManager!.StaticData.AtreianPassports,
+				now.UtcDateTime)
+			.Where(id => runtimeContext.DataManager!.StaticData.AtreianPassports.GetAtreianPassportId(id)!.AttendNum <= monthsAlive)
+			.Order()
+			.ToArray();
+		var expectedRealAnniversaryPassportIds = GetActiveAnniversaryPassportIds(
+			runtimeContext.DataManager!.StaticData.AtreianPassports,
+			now.UtcDateTime,
+			monthsAlive);
+		var expectedFakeAnniversaryPassportIds = expectedAnniversaryPassportIds
+			.Except(expectedRealAnniversaryPassportIds)
+			.Order()
+			.ToArray();
 		var expectedPassportIds = expectedDailyPassportIds
 			.Concat(expectedCumulativePassportIds)
+			.Concat(expectedAnniversaryPassportIds)
 			.Order()
 			.ToArray();
 		var player = new Player
@@ -465,6 +481,8 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(14, player.PassportStamps);
 		Assert.NotEmpty(expectedTakenFakePassportIds);
 		Assert.NotEmpty(expectedUpcomingFakePassportIds);
+		Assert.NotEmpty(expectedRealAnniversaryPassportIds);
+		Assert.NotEmpty(expectedFakeAnniversaryPassportIds);
 		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
 		var payload = SerializeUnencryptedPayload(passportPacket);
 		var passportRows = ReadPassportRows(payload);
@@ -479,6 +497,10 @@ public sealed class CmAtreianPassportTests
 			Assert.Equal((int)PlayerPassportRewardStatus.Taken, passportRows[passportId]);
 		foreach (var passportId in expectedUpcomingFakePassportIds)
 			Assert.Equal((int)PlayerPassportRewardStatus.Upcoming, passportRows[passportId]);
+		foreach (var passportId in expectedRealAnniversaryPassportIds)
+			Assert.Equal((int)PlayerPassportRewardStatus.Available, passportRows[passportId]);
+		foreach (var passportId in expectedFakeAnniversaryPassportIds)
+			Assert.Equal((int)PlayerPassportRewardStatus.Taken, passportRows[passportId]);
 	}
 
 	[Fact]
@@ -592,6 +614,31 @@ public sealed class CmAtreianPassportTests
 		return passports.Passports
 			.Where(passport => passport.Active
 				&& passport.AttendType == "CUMULATIVE"
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static int[] GetActiveAnniversaryPassportIds(AtreianPassportTable passports, DateTime now, int attendNum)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "ANNIVERSARY"
+				&& passport.AttendNum == attendNum
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static int[] GetActiveAnniversaryPassportIds(AtreianPassportTable passports, DateTime now)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "ANNIVERSARY"
 				&& passport.PeriodStart < now
 				&& passport.PeriodEnd > now)
 			.Select(passport => passport.Id)
