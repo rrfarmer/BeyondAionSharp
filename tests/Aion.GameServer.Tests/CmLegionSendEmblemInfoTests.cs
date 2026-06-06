@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Legion;
@@ -33,6 +34,35 @@ public sealed class CmLegionSendEmblemInfoTests
 
 		Assert.Null(GameClientPacketFactory.TryCreatePacket(
 			CreateClientPayload(47, buffer => buffer.WriteD(77)),
+			GameConnectionState.Authed));
+	}
+
+	[Fact]
+	public void ClientPacketFactory_ParsesLegionModifyEmblemLikeJava()
+	{
+		var packet = Assert.IsType<CmLegionModifyEmblem>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(59, buffer =>
+				{
+					buffer.WriteD(77);
+					buffer.WriteC(12);
+					buffer.WriteC(0x80);
+					buffer.WriteC(200);
+					buffer.WriteC(21);
+					buffer.WriteC(22);
+					buffer.WriteC(23);
+				}),
+				GameConnectionState.InGame));
+
+		Assert.Equal(77, packet.LegionId);
+		Assert.Equal(12, packet.EmblemId);
+		Assert.Equal(0x80, packet.EmblemType);
+		Assert.Equal(200, packet.Alpha);
+		Assert.Equal(21, packet.Red);
+		Assert.Equal(22, packet.Green);
+		Assert.Equal(23, packet.Blue);
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(
+			CreateClientPayload(59, buffer => buffer.WriteD(77)),
 			GameConnectionState.Authed));
 	}
 
@@ -73,6 +103,29 @@ public sealed class CmLegionSendEmblemInfoTests
 
 		Assert.Equal(3, reader.ReadD());
 		Assert.Equal([0x10, 0x20, 0x30], reader.ReadB(3));
+	}
+
+	[Fact]
+	public void SmLegionUpdateEmblem_WritesJavaPayload()
+	{
+		var packet = new SmLegionUpdateEmblem(
+			legionId: 77,
+			emblemId: 12,
+			emblemType: 0,
+			colorA: 200,
+			colorR: 21,
+			colorG: 22,
+			colorB: 23);
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+
+		Assert.Equal(77, reader.ReadD());
+		Assert.Equal(12, reader.ReadC());
+		Assert.Equal(0, reader.ReadC());
+		Assert.Equal(200, reader.ReadC());
+		Assert.Equal(21, reader.ReadC());
+		Assert.Equal(22, reader.ReadC());
+		Assert.Equal(23, reader.ReadC());
 	}
 
 	[Fact]
@@ -169,6 +222,80 @@ public sealed class CmLegionSendEmblemInfoTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionModifyEmblemMutatesPersistsAndSendsUpdateLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, CreateOptions(emblemRequiredKinah: 100));
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.BrigadeGeneral;
+		player.LegionLevel = 2;
+		player.InventoryItems = [CreateKinahItem(count: 250)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateModifyPacket(
+			player.LegionId,
+			emblemId: 12,
+			emblemType: 0x80,
+			alpha: 200,
+			red: 21,
+			green: 22,
+			blue: 23));
+
+		Assert.Equal(150, player.InventoryItems.Single().Count);
+		Assert.Equal(12, player.LegionEmblemId);
+		Assert.Equal(0, player.LegionEmblemType);
+		Assert.Equal(200, player.LegionEmblemColorA);
+		Assert.Equal(21, player.LegionEmblemColorR);
+		Assert.Equal(22, player.LegionEmblemColorG);
+		Assert.Equal(23, player.LegionEmblemColorB);
+		Assert.Equal(1, repository.SaveLegionEmblemMutationCalls);
+		Assert.NotNull(repository.SavedLegionEmblemMutation);
+		var saved = repository.SavedLegionEmblemMutation.Value;
+		Assert.Equal(player.ObjectId, saved.PlayerObjectId);
+		Assert.Equal(player.LegionId, saved.LegionId);
+		Assert.Equal(12, saved.Emblem.EmblemId);
+		Assert.Equal(0, saved.Emblem.EmblemType);
+		Assert.Equal(150, saved.KinahItemUpdate?.Count);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal(LegionHistoryActions.EmblemModified, repository.InsertedLegionHistory?.ActionName);
+
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var update = Assert.IsType<SmLegionUpdateEmblem>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(update));
+				Assert.Equal(player.LegionId, reader.ReadD());
+				Assert.Equal(12, reader.ReadC());
+				Assert.Equal(0, reader.ReadC());
+				Assert.Equal(200, reader.ReadC());
+				Assert.Equal(21, reader.ReadC());
+				Assert.Equal(22, reader.ReadC());
+				Assert.Equal(23, reader.ReadC());
+			},
+			packet => Assert.Equal(1390137, Assert.IsType<SmSystemMessage>(packet).MessageId));
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionModifyEmblemRejectsNonBrigadeGeneralLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, CreateOptions(emblemRequiredKinah: 100));
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Legionary;
+		player.LegionLevel = 2;
+		player.InventoryItems = [CreateKinahItem(count: 250)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateModifyPacket(player.LegionId, 12, 0, 200, 21, 22, 23));
+
+		Assert.Equal(250, player.InventoryItems.Single().Count);
+		Assert.Equal(0, repository.SaveLegionEmblemMutationCalls);
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1390136, message.MessageId);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LegionSendEmblemInfoSkipsUnknownLegionUntilRegistryExists()
 	{
 		await using var pair = await TestConnectionPair.CreateAsync();
@@ -185,7 +312,9 @@ public sealed class CmLegionSendEmblemInfoTests
 		{
 			ObjectId = 1001,
 			Name = "Tester",
+			Race = "ELYOS",
 			LegionId = 77,
+			LegionLevel = 1,
 			LegionName = "Hydrated Legion",
 			LegionEmblemId = 6,
 			LegionEmblemType = 0x80,
@@ -193,6 +322,30 @@ public sealed class CmLegionSendEmblemInfoTests
 			LegionEmblemColorR = 10,
 			LegionEmblemColorG = 20,
 			LegionEmblemColorB = 30,
+		};
+	}
+
+	private static InventoryItem CreateKinahItem(long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = 9001,
+			ItemId = 182400001,
+			OwnerId = 1001,
+			Location = 0,
+			Count = count,
+		};
+	}
+
+	private static GameServerOptions CreateOptions(int emblemRequiredKinah)
+	{
+		return new GameServerOptions
+		{
+			Legion = new GameServerLegionOptions
+			{
+				WarehouseEnabled = true,
+				EmblemRequiredKinah = emblemRequiredKinah,
+			},
 		};
 	}
 
@@ -224,6 +377,28 @@ public sealed class CmLegionSendEmblemInfoTests
 		var packet = new CmLegionSendEmblem(47, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var buffer = new PacketBuffer();
 		buffer.WriteD(legionId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegionModifyEmblem CreateModifyPacket(
+		int legionId,
+		byte emblemId,
+		byte emblemType,
+		byte alpha,
+		byte red,
+		byte green,
+		byte blue)
+	{
+		var packet = new CmLegionModifyEmblem(59, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(legionId);
+		buffer.WriteC(emblemId);
+		buffer.WriteC(emblemType);
+		buffer.WriteC(alpha);
+		buffer.WriteC(red);
+		buffer.WriteC(green);
+		buffer.WriteC(blue);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
 	}
@@ -283,7 +458,9 @@ public sealed class CmLegionSendEmblemInfoTests
 		public GameServerConnection Connection { get; }
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync(IPlayerEnterWorldRepository? playerEnterWorldRepository = null)
+		public static async Task<TestConnectionPair> CreateAsync(
+			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
+			GameServerOptions? options = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -302,6 +479,7 @@ public sealed class CmLegionSendEmblemInfoTests
 					serverClient,
 					"legion-emblem-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					options: options,
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);

@@ -252,6 +252,7 @@ public sealed class GameServerOptions
 			Legion = new GameServerLegionOptions
 			{
 				WarehouseEnabled = GetBoolWithEnvironment(loader, "gameserver.legion.warehouse", true),
+				EmblemRequiredKinah = GetIntWithEnvironment(loader, "gameserver.legion.emblemrequiredkinah", 800000),
 			},
 			AutoGroup = new GameServerAutoGroupOptions
 			{
@@ -661,6 +662,9 @@ public sealed class GameServerLegionOptions
 {
 	// Java parity: configs/main/LegionConfig.LEGION_WAREHOUSE.
 	public bool WarehouseEnabled { get; init; } = true;
+
+	// Java parity: configs/main/LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH.
+	public int EmblemRequiredKinah { get; init; } = 800000;
 }
 
 public sealed class GameServerAutoGroupOptions

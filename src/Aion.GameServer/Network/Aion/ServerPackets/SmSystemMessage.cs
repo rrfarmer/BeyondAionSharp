@@ -196,6 +196,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300759);
 	}
 
+	public static SmSystemMessage GuildChangeEmblemDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_EMBLEM_DONT_HAVE_RIGHT.
+		return new SmSystemMessage(1390136);
+	}
+
+	public static SmSystemMessage GuildChangeEmblem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_EMBLEM.
+		return new SmSystemMessage(1390137);
+	}
+
 	public static SmSystemMessage MsgNotEnoughAbyssPoints()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_ABYSSPOINT.

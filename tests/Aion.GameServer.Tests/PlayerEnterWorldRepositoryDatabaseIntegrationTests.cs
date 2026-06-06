@@ -3,6 +3,7 @@ using Aion.Commons.Database;
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -1086,6 +1087,58 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal(20, emblem.ColorG);
 		Assert.Equal(30, emblem.ColorB);
 		Assert.Equal([1, 2, 3, 4], emblem.CustomEmblemData);
+	}
+
+	[Fact]
+	public async Task SaveLegionEmblemMutationAsync_PersistsDefaultEmblemAndKinahAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionService.storeLegionEmblem -> LegionDAO.storeLegionEmblem + Inventory.decreaseKinah.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9901, itemId: 182400001, count: 700);
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level, disband_time)
+			VALUES (5001, 'Mutation Legion', 2, 0)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var kinah = new InventoryItem
+		{
+			ObjectId = 9901,
+			ItemId = 182400001,
+			OwnerId = PlayerObjectId,
+			Location = 0,
+			Count = 600,
+		};
+		var emblem = new LegionEmblemSnapshot(
+			5001,
+			"Mutation Legion",
+			EmblemId: 12,
+			EmblemType: 0,
+			ColorA: 200,
+			ColorR: 21,
+			ColorG: 22,
+			ColorB: 23,
+			CustomEmblemData: Array.Empty<byte>());
+
+		var saved = await repository.SaveLegionEmblemMutationAsync(PlayerObjectId, 5001, emblem, kinah);
+
+		Assert.True(saved);
+		Assert.Equal(600, await ExecuteScalarLongAsync("SELECT item_count FROM inventory WHERE item_unique_id = 9901"));
+		Assert.Equal(12, await ExecuteScalarLongAsync("SELECT emblem_id FROM legion_emblems WHERE legion_id = 5001"));
+		Assert.Equal(200, await ExecuteScalarLongAsync("SELECT color_a FROM legion_emblems WHERE legion_id = 5001"));
+		Assert.Equal(21, await ExecuteScalarLongAsync("SELECT color_r FROM legion_emblems WHERE legion_id = 5001"));
+		Assert.Equal(22, await ExecuteScalarLongAsync("SELECT color_g FROM legion_emblems WHERE legion_id = 5001"));
+		Assert.Equal(23, await ExecuteScalarLongAsync("SELECT color_b FROM legion_emblems WHERE legion_id = 5001"));
+		Assert.Equal("DEFAULT", await ExecuteScalarStringAsync("SELECT emblem_type FROM legion_emblems WHERE legion_id = 5001"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM legion_emblems WHERE legion_id = 5001 AND emblem_data IS NOT NULL"));
 	}
 
 	private static void InitializeDatabaseFactory()

@@ -4,6 +4,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
@@ -671,6 +672,21 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: ItemSplitService.mergeStacks decreases source and increases target count atomically.
 		return _repository.SaveItemMergeMutationAsync(player.ObjectId, sourceItem, targetItem, cancellationToken);
+	}
+
+	public Task<bool> SaveLegionEmblemMutationAsync(
+		Player player,
+		LegionEmblemSnapshot emblem,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionService.storeLegionEmblem mutates the active legion emblem and decreases player Kinah.
+		return _repository.SaveLegionEmblemMutationAsync(
+			player.ObjectId,
+			player.LegionId,
+			emblem,
+			kinahItemUpdate,
+			cancellationToken);
 	}
 
 	public Task<bool> SaveItemCrossStorageMoveMutationAsync(

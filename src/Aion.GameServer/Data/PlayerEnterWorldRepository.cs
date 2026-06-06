@@ -28,6 +28,13 @@ public interface IPlayerEnterWorldRepository
 
 	Task<LegionEmblemSnapshot?> LoadLegionEmblemAsync(int legionId, CancellationToken cancellationToken = default);
 
+	Task<bool> SaveLegionEmblemMutationAsync(
+		int playerObjectId,
+		int legionId,
+		LegionEmblemSnapshot emblem,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -702,6 +709,24 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		LoadLegionEmblemCalls++;
 		LoadedLegionEmblemRequest = legionId;
 		return Task.FromResult(LoadedLegionEmblem?.LegionId == legionId ? LoadedLegionEmblem : null);
+	}
+
+	public bool SaveLegionEmblemMutationResult { get; init; } = true;
+
+	public int SaveLegionEmblemMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, int LegionId, LegionEmblemSnapshot Emblem, InventoryItem? KinahItemUpdate)? SavedLegionEmblemMutation { get; private set; }
+
+	public Task<bool> SaveLegionEmblemMutationAsync(
+		int playerObjectId,
+		int legionId,
+		LegionEmblemSnapshot emblem,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		SaveLegionEmblemMutationCalls++;
+		SavedLegionEmblemMutation = (playerObjectId, legionId, emblem, kinahItemUpdate);
+		return Task.FromResult(SaveLegionEmblemMutationResult);
 	}
 
 	public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
@@ -1862,6 +1887,69 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load legion emblem for legion {LegionId}", legionId);
 			return null;
+		}
+	}
+
+	public async Task<bool> SaveLegionEmblemMutationAsync(
+		int playerObjectId,
+		int legionId,
+		LegionEmblemSnapshot emblem,
+		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionService.storeLegionEmblem -> Inventory.decreaseKinah + LegionDAO.storeLegionEmblem.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			if (kinahItemUpdate != null && !await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, kinahItemUpdate, cancellationToken))
+			{
+				await transaction.RollbackAsync(cancellationToken);
+				return false;
+			}
+
+			await using var command = connection.CreateCommand();
+			command.Transaction = transaction;
+			command.CommandText = """
+				INSERT INTO legion_emblems (legion_id, emblem_id, color_a, color_r, color_g, color_b, emblem_type, emblem_data)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+				ON DUPLICATE KEY UPDATE
+					emblem_id = VALUES(emblem_id),
+					color_a = VALUES(color_a),
+					color_r = VALUES(color_r),
+					color_g = VALUES(color_g),
+					color_b = VALUES(color_b),
+					emblem_type = VALUES(emblem_type),
+					emblem_data = VALUES(emblem_data)
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = legionId },
+					new MySqlParameter { Value = emblem.EmblemId },
+					new MySqlParameter { Value = emblem.ColorA },
+					new MySqlParameter { Value = emblem.ColorR },
+					new MySqlParameter { Value = emblem.ColorG },
+					new MySqlParameter { Value = emblem.ColorB },
+					new MySqlParameter { Value = emblem.EmblemType == 0x80 ? "CUSTOM" : "DEFAULT" },
+					new MySqlParameter
+					{
+						Value = emblem.EmblemType == 0x80 && emblem.CustomEmblemData.Length > 0
+							? emblem.CustomEmblemData
+							: DBNull.Value,
+					},
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Failed to persist legion emblem {LegionId}", legionId);
+			return false;
 		}
 	}
 

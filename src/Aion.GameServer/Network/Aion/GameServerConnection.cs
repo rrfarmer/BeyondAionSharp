@@ -39,6 +39,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int KinahItemId = 182400001;
 	private const int LegionWarehouseWithdrawalPermission = 0x4;
 	private const int LegionWarehouseDepositPermission = 0x1000;
+	private const int MinLegionEmblemId = 0;
+	private const int MaxLegionEmblemId = 49;
 	private const int FirstAvailableSlot = 65535;
 	private const int NoTitleId = 0xFFFF;
 	private const int MaxBlockedUsers = 100;
@@ -1970,8 +1972,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLegionHistoryAsync(_activePlayer, legionHistory);
 				break;
-			case CmLegionModifyEmblem:
-				// Java parity: CM_LEGION_MODIFY_EMBLEM.runImpl -> LegionService.updateEmblem; deferred.
+			case CmLegionModifyEmblem legionModifyEmblem:
+				if (_activePlayer != null)
+					await HandleLegionModifyEmblemAsync(_activePlayer, legionModifyEmblem);
 				break;
 			case CmLegionUploadInfo:
 				// Java parity: CM_LEGION_UPLOAD_INFO.runImpl sends emblem info to LegionService; deferred.
@@ -3145,6 +3148,96 @@ public sealed class GameServerConnection : BaseClientConnection
 			Array.Copy(customData, offset, chunk, 0, size);
 			await SendPacketAsync(new SmLegionSendEmblemData(size, chunk));
 		}
+	}
+
+	private async Task HandleLegionModifyEmblemAsync(Player player, CmLegionModifyEmblem packet)
+	{
+		// Java parity: CM_LEGION_MODIFY_EMBLEM.runImpl -> LegionService.storeLegionEmblem.
+		if (player.LegionId <= 0 || player.LegionId != packet.LegionId || string.IsNullOrEmpty(player.LegionRank))
+			return;
+
+		if (packet.EmblemId is < MinLegionEmblemId or > MaxLegionEmblemId)
+			return;
+
+		if (!player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeEmblemDontHaveRight());
+			return;
+		}
+
+		if (player.LegionLevel < 2)
+			return;
+
+		var emblemPrice = PricesService.GetPriceForService(
+			_options.Legion.EmblemRequiredKinah,
+			player.Race,
+			_options.Prices,
+			_buyItemPriceInfluenceRates);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < emblemPrice)
+		{
+			await SendPacketAsync(SmSystemMessage.MsgNotEnoughMoney());
+			return;
+		}
+
+		var previousKinah = kinahItem.Count;
+		var previousEmblemId = player.LegionEmblemId;
+		var previousEmblemType = player.LegionEmblemType;
+		var previousColorA = player.LegionEmblemColorA;
+		var previousColorR = player.LegionEmblemColorR;
+		var previousColorG = player.LegionEmblemColorG;
+		var previousColorB = player.LegionEmblemColorB;
+
+		kinahItem.Count -= emblemPrice;
+		player.LegionEmblemId = packet.EmblemId;
+		// Java LegionEmblem.setEmblem downgrades CUSTOM to DEFAULT when no custom data is supplied.
+		player.LegionEmblemType = 0x00;
+		player.LegionEmblemColorA = packet.Alpha;
+		player.LegionEmblemColorR = packet.Red;
+		player.LegionEmblemColorG = packet.Green;
+		player.LegionEmblemColorB = packet.Blue;
+
+		var snapshot = new LegionEmblemSnapshot(
+			player.LegionId,
+			player.LegionName,
+			player.LegionEmblemId,
+			player.LegionEmblemType,
+			player.LegionEmblemColorA,
+			player.LegionEmblemColorR,
+			player.LegionEmblemColorG,
+			player.LegionEmblemColorB,
+			Array.Empty<byte>());
+
+		var saved = _playerEnterWorldService != null
+			? await _playerEnterWorldService.SaveLegionEmblemMutationAsync(player, snapshot, kinahItem)
+			: _playerEnterWorldRepository != null
+				&& await _playerEnterWorldRepository.SaveLegionEmblemMutationAsync(player.ObjectId, player.LegionId, snapshot, kinahItem);
+		if (!saved)
+		{
+			kinahItem.Count = previousKinah;
+			player.LegionEmblemId = previousEmblemId;
+			player.LegionEmblemType = previousEmblemType;
+			player.LegionEmblemColorA = previousColorA;
+			player.LegionEmblemColorR = previousColorR;
+			player.LegionEmblemColorG = previousColorG;
+			player.LegionEmblemColorB = previousColorB;
+			return;
+		}
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (templates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahItem, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+
+		await SendPacketAsync(new SmLegionUpdateEmblem(
+			player.LegionId,
+			player.LegionEmblemId,
+			player.LegionEmblemType,
+			player.LegionEmblemColorA,
+			player.LegionEmblemColorR,
+			player.LegionEmblemColorG,
+			player.LegionEmblemColorB));
+		await SendPacketAsync(SmSystemMessage.GuildChangeEmblem());
+		await AddLegionHistoryAsync(player, LegionHistoryActions.EmblemModified, string.Empty);
 	}
 
 	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)
