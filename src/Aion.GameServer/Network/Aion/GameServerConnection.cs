@@ -3163,7 +3163,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (!string.IsNullOrEmpty(player.Race)
 			&& !string.IsNullOrEmpty(targetPlayer.Race)
-			&& !string.Equals(player.Race, targetPlayer.Race, StringComparison.Ordinal))
+			&& !string.Equals(player.Race, targetPlayer.Race, StringComparison.Ordinal)
+			&& !_options.Legion.InviteOtherFactionEnabled)
 		{
 			await SendPacketAsync(SmSystemMessage.GuildInviteCanNotInviteOtherRace());
 			return;

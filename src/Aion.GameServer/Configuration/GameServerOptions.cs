@@ -252,6 +252,7 @@ public sealed class GameServerOptions
 			Legion = new GameServerLegionOptions
 			{
 				WarehouseEnabled = GetBoolWithEnvironment(loader, "gameserver.legion.warehouse", true),
+				InviteOtherFactionEnabled = GetBoolWithEnvironment(loader, "gameserver.legion.inviteotherfaction", false),
 				EmblemRequiredKinah = GetIntWithEnvironment(loader, "gameserver.legion.emblemrequiredkinah", 800000),
 				SelfIntroPattern = GetWithEnvironment(loader, "gameserver.legion.selfintropattern", ".{1,32}"),
 				NicknamePattern = GetWithEnvironment(loader, "gameserver.legion.nicknamepattern", ".{1,10}"),
@@ -706,6 +707,9 @@ public sealed class GameServerLegionOptions
 {
 	// Java parity: configs/main/LegionConfig.LEGION_WAREHOUSE.
 	public bool WarehouseEnabled { get; init; } = true;
+
+	// Java parity: configs/main/LegionConfig.LEGION_INVITEOTHERFACTION.
+	public bool InviteOtherFactionEnabled { get; init; }
 
 	// Java parity: configs/main/LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH.
 	public int EmblemRequiredKinah { get; init; } = 800000;

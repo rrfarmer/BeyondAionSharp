@@ -1241,6 +1241,41 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionInviteOtherRaceAllowedByConfigSendsQuestionLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion", "ASMODIANS");
+		var registry = new CapturingConnectionRegistry(target);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			connectionRegistry: registry,
+			options: new GameServerOptions
+			{
+				Legion = new GameServerLegionOptions { InviteOtherFactionEnabled = true },
+			});
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+
+		Assert.True(target.ResponseRequester.ContainsRequest(SmQuestionWindow.GuildInviteDoYouAcceptInvitation));
+		var pending = Assert.IsType<PendingLegionInviteRequest>(target.PendingLegionInviteRequest);
+		Assert.Equal(player.ObjectId, pending.InviterObjectId);
+		Assert.Equal(target.ObjectId, pending.TargetObjectId);
+		var notification = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300258, notification.MessageId);
+		Assert.Equal(["Lurion"], notification.Parameters);
+		var directQuestion = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == target.ObjectId);
+		var question = Assert.IsType<SmQuestionWindow>(directQuestion.Packet);
+		Assert.Equal(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, question.Code);
+		AssertQuestionWindowPayload(
+			question,
+			SmQuestionWindow.GuildInviteDoYouAcceptInvitation,
+			"Hydrated Legion",
+			"4",
+			"Tester",
+			senderObjectId: 0);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LegionInviteBusyTargetSendsBusyLikeJava()
 	{
 		var target = CreateUnguildedPlayer(2002, "Lurion");

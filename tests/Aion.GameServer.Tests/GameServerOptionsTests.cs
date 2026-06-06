@@ -182,6 +182,7 @@ public class GameServerOptionsTests
 				gameserver.playergroup.removetime = 450
 				gameserver.playeralliance.removetime = 720
 				gameserver.legion.warehouse = false
+				gameserver.legion.inviteotherfaction = true
 				gameserver.legion.nicknamepattern = .{1,8}
 				gameserver.legion.selfintropattern = .{1,16}
 				gameserver.legion.level4maxmembers = 222
@@ -224,6 +225,7 @@ public class GameServerOptionsTests
 			Assert.Equal(450, options.Group.GroupRemoveTimeSeconds);
 			Assert.Equal(720, options.Group.AllianceRemoveTimeSeconds);
 			Assert.False(options.Legion.WarehouseEnabled);
+			Assert.True(options.Legion.InviteOtherFactionEnabled);
 			Assert.Equal(".{1,8}", options.Legion.NicknamePattern);
 			Assert.Equal(".{1,16}", options.Legion.SelfIntroPattern);
 			Assert.Equal([30, 60, 90, 222, 150, 180, 210, 240], options.Legion.LevelMaxMembers);
