@@ -269,6 +269,39 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, startedQuest.CompleteCount);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetAskQuestAcceptSendsAskPageWithoutStartingQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var existingQuest = new PlayerQuestState(1001, "LOCKED", QuestVars: 9, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 50,
+			Name = "AskQuestAcceptBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [existingQuest],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.AskQuestAccept,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 4, questId: 1001));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Same(existingQuest, unchangedQuest);
+		Assert.Equal("LOCKED", unchangedQuest.Status);
+		Assert.Equal(9, unchangedQuest.QuestVars);
+	}
+
 	[Theory]
 	[InlineData(CmDialogSelect.QuestRefuse1)]
 	[InlineData(CmDialogSelect.QuestRefuse2)]
