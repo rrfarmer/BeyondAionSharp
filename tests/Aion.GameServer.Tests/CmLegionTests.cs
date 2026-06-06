@@ -460,10 +460,14 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_ChangeNicknameMutatesActiveMemberAndSendsUpdateLikeJava()
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknameMutatesActiveMemberAndBroadcastsLikeJava()
 	{
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var outsider = CreateLegionPlayer(3003, "Outsider");
+		outsider.LegionId = 99;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		player.LegionNickname = "Old";
 		SetActivePlayer(pair.Connection, player);
@@ -474,11 +478,18 @@ public sealed class CmLegionTests
 		Assert.Equal(0, repository.LoadLegionMemberByNameCalls);
 		Assert.Equal(0, repository.SaveLegionMemberNicknameCalls);
 		AssertLegionUpdateNicknamePacket(Assert.Single(pair.SentPackets), player.ObjectId, "Siege Lead");
+		var bystanderDelivery = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionUpdateNicknamePacket(bystanderDelivery.Packet, player.ObjectId, "Siege Lead");
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_ChangeNicknamePersistsOfflineMemberAndSendsUpdateLikeJava()
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknamePersistsOfflineMemberAndBroadcastsLikeJava()
 	{
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 88;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
 		var repository = new EmptyPlayerEnterWorldRepository
 		{
 			LoadedLegionMemberByName = new LegionMemberSnapshot(
@@ -490,7 +501,7 @@ public sealed class CmLegionTests
 				string.Empty,
 				IsOnline: false),
 		};
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		SetActivePlayer(pair.Connection, player);
 
@@ -501,6 +512,35 @@ public sealed class CmLegionTests
 		Assert.Equal(1, repository.SaveLegionMemberNicknameCalls);
 		Assert.Equal((2002, "Scout"), repository.SavedLegionMemberNickname);
 		AssertLegionUpdateNicknamePacket(Assert.Single(pair.SentPackets), 2002, "Scout");
+		var bystanderDelivery = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionUpdateNicknamePacket(bystanderDelivery.Packet, 2002, "Scout");
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknameOnlineTargetMutatesAndBroadcastsWithoutPersistenceLikeJava()
+	{
+		var target = CreateLegionPlayer(2002, "Lurion");
+		target.LegionNickname = "Old";
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 88;
+		var registry = new CapturingConnectionRegistry(target, bystander, outsider);
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("lurion", "Scout"));
+
+		Assert.Equal("Scout", target.LegionNickname);
+		Assert.Equal(0, repository.LoadLegionMemberByNameCalls);
+		Assert.Equal(0, repository.SaveLegionMemberNicknameCalls);
+		AssertLegionUpdateNicknamePacket(Assert.Single(pair.SentPackets), target.ObjectId, "Scout");
+		Assert.Equal([target.ObjectId, bystander.ObjectId], registry.DirectPackets.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in registry.DirectPackets)
+			AssertLegionUpdateNicknamePacket(delivery.Packet, target.ObjectId, "Scout");
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
@@ -540,8 +580,10 @@ public sealed class CmLegionTests
 	[Fact]
 	public async Task HandleInfrastructurePacketAsync_ChangeNicknameInvalidValueReturnsWithoutMutationLikeJava()
 	{
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var registry = new CapturingConnectionRegistry(bystander);
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		player.LegionNickname = "Old";
 		SetActivePlayer(pair.Connection, player);
@@ -549,6 +591,7 @@ public sealed class CmLegionTests
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("Tester", string.Empty));
 
 		Assert.Empty(pair.SentPackets);
+		Assert.Empty(registry.DirectPackets);
 		Assert.Equal("Old", player.LegionNickname);
 		Assert.Equal(0, repository.SaveLegionMemberNicknameCalls);
 	}

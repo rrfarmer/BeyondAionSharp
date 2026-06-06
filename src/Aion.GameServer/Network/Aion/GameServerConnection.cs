@@ -3600,13 +3600,22 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!IsValidLegionNickname(newNickname))
 			return;
 
-		if (targetMember.PlayerObjectId == player.ObjectId)
+		var updatedMember = targetMember;
+		if (ResolveOnlinePlayerByObjectId(updatedMember.PlayerObjectId) is { } onlineTarget)
+		{
+			onlineTarget.LegionNickname = newNickname;
+			updatedMember = CreateOnlineLegionMemberSnapshot(onlineTarget);
+		}
+		else if (updatedMember.PlayerObjectId == player.ObjectId)
+		{
 			player.LegionNickname = newNickname;
+			updatedMember = CreateOnlineLegionMemberSnapshot(player);
+		}
 
-		if (!targetMember.IsOnline && _playerEnterWorldRepository != null)
-			await _playerEnterWorldRepository.SaveLegionMemberNicknameAsync(targetMember.PlayerObjectId, newNickname);
+		if (!updatedMember.IsOnline && _playerEnterWorldRepository != null)
+			await _playerEnterWorldRepository.SaveLegionMemberNicknameAsync(updatedMember.PlayerObjectId, newNickname);
 
-		await SendPacketAsync(new SmLegionUpdateNickname(targetMember.PlayerObjectId, newNickname));
+		await BroadcastLegionNicknameUpdateAsync(player, updatedMember.PlayerObjectId, newNickname);
 	}
 
 	private async Task<LegionMemberSnapshot?> ResolveLegionMemberByNameAsync(Player player, string normalizedMemberName)
@@ -15889,6 +15898,24 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.SendPacketToPlayerAsync(
 				recipientObjectId,
 				new SmLegionUpdateSelfIntro(activePlayer.ObjectId, selfIntro));
+	}
+
+	private async Task BroadcastLegionNicknameUpdateAsync(Player activePlayer, int targetObjectId, string nickname)
+	{
+		// Java parity: LegionService.changeNickname -> PacketSendUtility.broadcastToLegion.
+		await SendPacketAsync(new SmLegionUpdateNickname(targetObjectId, nickname));
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == activePlayer.LegionId && candidate.ObjectId != activePlayer.ObjectId)
+				recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, new SmLegionUpdateNickname(targetObjectId, nickname));
 	}
 
 	private LegionMemberSnapshot CreateOnlineLegionMemberSnapshot(Player player)
