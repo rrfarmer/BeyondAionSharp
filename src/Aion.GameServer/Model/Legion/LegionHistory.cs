@@ -15,6 +15,7 @@ public static class LegionHistoryActions
 	public const string KinahWithdraw = "KINAH_WITHDRAW";
 	public const string ItemDeposit = "ITEM_DEPOSIT";
 	public const string ItemWithdraw = "ITEM_WITHDRAW";
+	public const string EmblemRegister = "EMBLEM_REGISTER";
 	public const string EmblemModified = "EMBLEM_MODIFIED";
 
 	public const int TypeLegion = 0;
@@ -31,7 +32,7 @@ public static class LegionHistoryActions
 			"KICK" => ((byte)2, TypeLegion),
 			"LEVEL_UP" => ((byte)3, TypeLegion),
 			"APPOINTED" => ((byte)4, TypeLegion),
-			"EMBLEM_REGISTER" => ((byte)5, TypeLegion),
+			EmblemRegister => ((byte)5, TypeLegion),
 			EmblemModified => ((byte)6, TypeLegion),
 			"DEFENSE" => ((byte)11, TypeReward),
 			"OCCUPATION" => ((byte)12, TypeReward),

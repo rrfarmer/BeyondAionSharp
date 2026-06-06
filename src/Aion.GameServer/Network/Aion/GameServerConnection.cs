@@ -152,6 +152,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private DateTimeOffset? _lastPingTime;
 	private PendingItemUse? _pendingItemUse;
 	private PendingHouseObjectUse? _pendingHouseObjectUse;
+	private PendingLegionEmblemUpload? _pendingLegionEmblemUpload;
 
 	internal TimeSpan PetMoodUpdateInterval { get; set; } = JavaPetUpdateInterval;
 
@@ -1976,11 +1977,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLegionModifyEmblemAsync(_activePlayer, legionModifyEmblem);
 				break;
-			case CmLegionUploadInfo:
-				// Java parity: CM_LEGION_UPLOAD_INFO.runImpl sends emblem info to LegionService; deferred.
+			case CmLegionUploadInfo legionUploadInfo:
+				if (_activePlayer != null)
+					await HandleLegionUploadInfoAsync(_activePlayer, legionUploadInfo);
 				break;
-			case CmLegionUploadEmblem:
-				// Java parity: CM_LEGION_UPLOAD_EMBLEM.runImpl sends binary emblem data to LegionService; deferred.
+			case CmLegionUploadEmblem legionUploadEmblem:
+				if (_activePlayer != null)
+					await HandleLegionUploadEmblemAsync(_activePlayer, legionUploadEmblem);
 				break;
 			case CmLegionDominionRequestRanking:
 				// Java parity: CM_LEGION_DOMINION_REQUEST_RANKING.runImpl dispatches DominionService; deferred.
@@ -3238,6 +3241,181 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.LegionEmblemColorB));
 		await SendPacketAsync(SmSystemMessage.GuildChangeEmblem());
 		await AddLegionHistoryAsync(player, LegionHistoryActions.EmblemModified, string.Empty);
+	}
+
+	private async Task HandleLegionUploadInfoAsync(Player player, CmLegionUploadInfo packet)
+	{
+		// Java parity: CM_LEGION_UPLOAD_INFO.runImpl -> LegionService.uploadEmblemInfo(initUpload: true).
+		if (!await CanUploadLegionEmblemAsync(player, initUpload: true))
+		{
+			_pendingLegionEmblemUpload = null;
+			return;
+		}
+
+		_pendingLegionEmblemUpload = new PendingLegionEmblemUpload
+		{
+			LegionId = player.LegionId,
+			LegionName = player.LegionName,
+			EmblemId = player.LegionEmblemId,
+			TotalSize = packet.TotalSize,
+			ColorA = packet.Alpha,
+			ColorR = packet.Red,
+			ColorG = packet.Green,
+			ColorB = packet.Blue,
+		};
+	}
+
+	private async Task HandleLegionUploadEmblemAsync(Player player, CmLegionUploadEmblem packet)
+	{
+		// Java parity: CM_LEGION_UPLOAD_EMBLEM.runImpl -> LegionService.uploadEmblemData.
+		if (packet.Data.Length == 0)
+			return;
+
+		if (!await CanUploadLegionEmblemAsync(player, initUpload: false))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarnFailureUploadEmblem());
+			_pendingLegionEmblemUpload = null;
+			return;
+		}
+
+		var upload = _pendingLegionEmblemUpload!;
+		if (upload.LegionId != player.LegionId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarnFailureUploadEmblem());
+			_pendingLegionEmblemUpload = null;
+			return;
+		}
+
+		upload.Data.AddRange(packet.Data);
+		upload.UploadedSize += packet.Size;
+		if (upload.UploadedSize < upload.TotalSize)
+			return;
+
+		if (upload.UploadedSize == 0 || upload.UploadedSize > upload.TotalSize)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarnCorruptEmblemFile());
+			return;
+		}
+
+		var emblemPrice = PricesService.GetPriceForService(
+			_options.Legion.EmblemRequiredKinah,
+			player.Race,
+			_options.Prices,
+			_buyItemPriceInfluenceRates);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < emblemPrice)
+		{
+			await SendPacketAsync(SmSystemMessage.MsgNotEnoughMoney());
+			await SendPacketAsync(SmSystemMessage.GuildWarnFailureUploadEmblem());
+			_pendingLegionEmblemUpload = null;
+			return;
+		}
+
+		var previousKinah = kinahItem.Count;
+		var previousEmblemId = player.LegionEmblemId;
+		var previousEmblemType = player.LegionEmblemType;
+		var previousColorA = player.LegionEmblemColorA;
+		var previousColorR = player.LegionEmblemColorR;
+		var previousColorG = player.LegionEmblemColorG;
+		var previousColorB = player.LegionEmblemColorB;
+
+		kinahItem.Count -= emblemPrice;
+		player.LegionEmblemId = upload.EmblemId;
+		player.LegionEmblemType = 0x80;
+		player.LegionEmblemColorA = upload.ColorA;
+		player.LegionEmblemColorR = upload.ColorR;
+		player.LegionEmblemColorG = upload.ColorG;
+		player.LegionEmblemColorB = upload.ColorB;
+
+		var customData = upload.Data.ToArray();
+		var snapshot = new LegionEmblemSnapshot(
+			upload.LegionId,
+			upload.LegionName,
+			player.LegionEmblemId,
+			player.LegionEmblemType,
+			player.LegionEmblemColorA,
+			player.LegionEmblemColorR,
+			player.LegionEmblemColorG,
+			player.LegionEmblemColorB,
+			customData);
+
+		var saved = _playerEnterWorldService != null
+			? await _playerEnterWorldService.SaveLegionEmblemMutationAsync(player, snapshot, kinahItem)
+			: _playerEnterWorldRepository != null
+				&& await _playerEnterWorldRepository.SaveLegionEmblemMutationAsync(player.ObjectId, player.LegionId, snapshot, kinahItem);
+		if (!saved)
+		{
+			kinahItem.Count = previousKinah;
+			player.LegionEmblemId = previousEmblemId;
+			player.LegionEmblemType = previousEmblemType;
+			player.LegionEmblemColorA = previousColorA;
+			player.LegionEmblemColorR = previousColorR;
+			player.LegionEmblemColorG = previousColorG;
+			player.LegionEmblemColorB = previousColorB;
+			_pendingLegionEmblemUpload = null;
+			return;
+		}
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (templates?.GetItemTemplate(KinahItemId) is { } kinahTemplate)
+			await SendPacketAsync(new SmInventoryUpdateItem(kinahItem, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+
+		await SendPacketAsync(new SmLegionUpdateEmblem(
+			player.LegionId,
+			player.LegionEmblemId,
+			player.LegionEmblemType,
+			player.LegionEmblemColorA,
+			player.LegionEmblemColorR,
+			player.LegionEmblemColorG,
+			player.LegionEmblemColorB));
+		await SendLegionEmblemDataAsync(snapshot);
+		await AddLegionHistoryAsync(player, LegionHistoryActions.EmblemRegister, string.Empty);
+		await SendPacketAsync(SmSystemMessage.GuildWarnSuccessUploadEmblem());
+		_pendingLegionEmblemUpload = null;
+	}
+
+	private async Task<bool> CanUploadLegionEmblemAsync(Player player, bool initUpload)
+	{
+		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
+			return false;
+
+		if (!player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeEmblemDontHaveRight());
+			return false;
+		}
+
+		if (player.LegionLevel < 2)
+			return false;
+
+		var emblemPrice = PricesService.GetPriceForService(
+			_options.Legion.EmblemRequiredKinah,
+			player.Race,
+			_options.Prices,
+			_buyItemPriceInfluenceRates);
+		var kinahItem = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == CubeStorageId);
+		if (kinahItem == null || kinahItem.Count < emblemPrice)
+		{
+			await SendPacketAsync(SmSystemMessage.MsgNotEnoughMoney());
+			return false;
+		}
+
+		if (player.LegionLevel < 3)
+			return false;
+
+		if (initUpload && _pendingLegionEmblemUpload != null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarnFailureUploadEmblem());
+			return false;
+		}
+
+		if (!initUpload && _pendingLegionEmblemUpload == null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarnFailureUploadEmblem());
+			return false;
+		}
+
+		return true;
 	}
 
 	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)
@@ -19686,6 +19864,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		bool IsInTalkRange);
 
 	private sealed record PendingHouseObjectUse(ScheduledTask Task, int ObjectId);
+
+	private sealed class PendingLegionEmblemUpload
+	{
+		public required int LegionId { get; init; }
+		public required string LegionName { get; init; }
+		public required byte EmblemId { get; init; }
+		public required int TotalSize { get; init; }
+		public required byte ColorA { get; init; }
+		public required byte ColorR { get; init; }
+		public required byte ColorG { get; init; }
+		public required byte ColorB { get; init; }
+		public int UploadedSize { get; set; }
+		public List<byte> Data { get; } = [];
+	}
 
 	private sealed record PendingItemUse(
 		ScheduledTask Task,

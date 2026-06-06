@@ -1141,6 +1141,56 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM legion_emblems WHERE legion_id = 5001 AND emblem_data IS NOT NULL"));
 	}
 
+	[Fact]
+	public async Task SaveLegionEmblemMutationAsync_PersistsCustomEmblemDataAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionService.uploadEmblemData -> LegionEmblem.setCustomEmblemData -> LegionDAO.storeLegionEmblem.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9902, itemId: 182400001, count: 700);
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level, disband_time)
+			VALUES (5002, 'Custom Mutation Legion', 3, 0)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var kinah = new InventoryItem
+		{
+			ObjectId = 9902,
+			ItemId = 182400001,
+			OwnerId = PlayerObjectId,
+			Location = 0,
+			Count = 600,
+		};
+		var emblem = new LegionEmblemSnapshot(
+			5002,
+			"Custom Mutation Legion",
+			EmblemId: 6,
+			EmblemType: 0x80,
+			ColorA: 200,
+			ColorR: 21,
+			ColorG: 22,
+			ColorB: 23,
+			CustomEmblemData: [0x10, 0x20, 0x30, 0x40]);
+
+		var saved = await repository.SaveLegionEmblemMutationAsync(PlayerObjectId, 5002, emblem, kinah);
+
+		Assert.True(saved);
+		Assert.Equal(600, await ExecuteScalarLongAsync("SELECT item_count FROM inventory WHERE item_unique_id = 9902"));
+		Assert.Equal("CUSTOM", await ExecuteScalarStringAsync("SELECT emblem_type FROM legion_emblems WHERE legion_id = 5002"));
+		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT OCTET_LENGTH(emblem_data) FROM legion_emblems WHERE legion_id = 5002"));
+		var loaded = await repository.LoadLegionEmblemAsync(5002);
+		Assert.NotNull(loaded);
+		Assert.Equal([0x10, 0x20, 0x30, 0x40], loaded.CustomEmblemData);
+	}
+
 	private static void InitializeDatabaseFactory()
 	{
 		DatabaseFactory.Initialize(

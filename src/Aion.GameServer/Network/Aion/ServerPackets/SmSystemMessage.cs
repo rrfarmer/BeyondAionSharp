@@ -214,6 +214,24 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300927);
 	}
 
+	public static SmSystemMessage GuildWarnSuccessUploadEmblem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WARN_SUCCESS_UPLOAD_EMBLEM.
+		return new SmSystemMessage(1300835);
+	}
+
+	public static SmSystemMessage GuildWarnFailureUploadEmblem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WARN_FAILURE_UPLOAD_EMBLEM.
+		return new SmSystemMessage(1300836);
+	}
+
+	public static SmSystemMessage GuildWarnCorruptEmblemFile()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WARN_CORRUPT_EMBLEM_FILE.
+		return new SmSystemMessage(1300837);
+	}
+
 	public static SmSystemMessage MsgSplitMeToB(long amount, int people, long rewardPerPlayer)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_SPLIT_ME_TO_B(long num0, int num1, long num2) -> 1390247.

@@ -67,6 +67,38 @@ public sealed class CmLegionSendEmblemInfoTests
 	}
 
 	[Fact]
+	public void ClientPacketFactory_ParsesLegionUploadPacketsLikeJava()
+	{
+		var info = Assert.IsType<CmLegionUploadInfo>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(160, buffer =>
+				{
+					buffer.WriteD(4);
+					buffer.WriteC(200);
+					buffer.WriteC(21);
+					buffer.WriteC(22);
+					buffer.WriteC(23);
+				}),
+				GameConnectionState.InGame));
+		Assert.Equal(4, info.TotalSize);
+		Assert.Equal(200, info.Alpha);
+		Assert.Equal(21, info.Red);
+		Assert.Equal(22, info.Green);
+		Assert.Equal(23, info.Blue);
+
+		var data = Assert.IsType<CmLegionUploadEmblem>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(161, buffer =>
+				{
+					buffer.WriteD(3);
+					buffer.WriteB([0x10, 0x20, 0x30]);
+				}),
+				GameConnectionState.InGame));
+		Assert.Equal(3, data.Size);
+		Assert.Equal([0x10, 0x20, 0x30], data.Data);
+	}
+
+	[Fact]
 	public void SmLegionSendEmblem_WritesJavaEmblemInfoPayload()
 	{
 		var packet = new SmLegionSendEmblem(
@@ -296,6 +328,96 @@ public sealed class CmLegionSendEmblemInfoTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionUploadCompletesCustomEmblemLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, CreateOptions(emblemRequiredKinah: 100));
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.BrigadeGeneral;
+		player.LegionLevel = 3;
+		player.InventoryItems = [CreateKinahItem(count: 250)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateUploadInfoPacket(
+			totalSize: 4,
+			alpha: 200,
+			red: 21,
+			green: 22,
+			blue: 23));
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateUploadEmblemPacket([0x10, 0x20]));
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateUploadEmblemPacket([0x30, 0x40]));
+
+		Assert.Equal(150, player.InventoryItems.Single().Count);
+		Assert.Equal(6, player.LegionEmblemId);
+		Assert.Equal(0x80, player.LegionEmblemType);
+		Assert.Equal(200, player.LegionEmblemColorA);
+		Assert.Equal(21, player.LegionEmblemColorR);
+		Assert.Equal(22, player.LegionEmblemColorG);
+		Assert.Equal(23, player.LegionEmblemColorB);
+		Assert.Equal(1, repository.SaveLegionEmblemMutationCalls);
+		Assert.NotNull(repository.SavedLegionEmblemMutation);
+		var saved = repository.SavedLegionEmblemMutation.Value;
+		Assert.Equal([0x10, 0x20, 0x30, 0x40], saved.Emblem.CustomEmblemData);
+		Assert.Equal(0x80, saved.Emblem.EmblemType);
+		Assert.Equal(150, saved.KinahItemUpdate?.Count);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal(LegionHistoryActions.EmblemRegister, repository.InsertedLegionHistory?.ActionName);
+
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var update = Assert.IsType<SmLegionUpdateEmblem>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(update));
+				Assert.Equal(player.LegionId, reader.ReadD());
+				Assert.Equal(6, reader.ReadC());
+				Assert.Equal(0x80, reader.ReadC());
+				Assert.Equal(200, reader.ReadC());
+				Assert.Equal(21, reader.ReadC());
+				Assert.Equal(22, reader.ReadC());
+				Assert.Equal(23, reader.ReadC());
+			},
+			packet =>
+			{
+				var header = Assert.IsType<SmLegionSendEmblem>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(header));
+				Assert.Equal(player.LegionId, reader.ReadD());
+				Assert.Equal(6, reader.ReadC());
+				Assert.Equal(0x80, reader.ReadC());
+				Assert.Equal(4, reader.ReadD());
+			},
+			packet =>
+			{
+				var chunk = Assert.IsType<SmLegionSendEmblemData>(packet);
+				using var reader = new PacketBuffer(SerializeUnencryptedPayload(chunk));
+				Assert.Equal(4, reader.ReadD());
+				Assert.Equal([0x10, 0x20, 0x30, 0x40], reader.ReadB(4));
+			},
+			packet => Assert.Equal(1300835, Assert.IsType<SmSystemMessage>(packet).MessageId));
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LegionUploadDataWithoutInfoFailsLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, CreateOptions(emblemRequiredKinah: 100));
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.BrigadeGeneral;
+		player.LegionLevel = 3;
+		player.InventoryItems = [CreateKinahItem(count: 250)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateUploadEmblemPacket([0x10, 0x20]));
+
+		Assert.Equal(250, player.InventoryItems.Single().Count);
+		Assert.Equal(0, repository.SaveLegionEmblemMutationCalls);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.Equal(1300836, Assert.IsType<SmSystemMessage>(packet).MessageId),
+			packet => Assert.Equal(1300836, Assert.IsType<SmSystemMessage>(packet).MessageId));
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LegionSendEmblemInfoSkipsUnknownLegionUntilRegistryExists()
 	{
 		await using var pair = await TestConnectionPair.CreateAsync();
@@ -399,6 +521,34 @@ public sealed class CmLegionSendEmblemInfoTests
 		buffer.WriteC(red);
 		buffer.WriteC(green);
 		buffer.WriteC(blue);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegionUploadInfo CreateUploadInfoPacket(
+		int totalSize,
+		byte alpha,
+		byte red,
+		byte green,
+		byte blue)
+	{
+		var packet = new CmLegionUploadInfo(160, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(totalSize);
+		buffer.WriteC(alpha);
+		buffer.WriteC(red);
+		buffer.WriteC(green);
+		buffer.WriteC(blue);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegionUploadEmblem CreateUploadEmblemPacket(byte[] data)
+	{
+		var packet = new CmLegionUploadEmblem(161, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(data.Length);
+		buffer.WriteB(data);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
 	}
