@@ -15730,8 +15730,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleLegionBrigadeGeneralTransferOfferResponseAsync(Player targetPlayer, CmQuestionResponse packet)
 	{
-		// Java parity: target denyRequest sends STR_GUILD_CHANGE_MASTER_HE_DECLINE_YOUR_OFFER to the requester.
-		// Accept-side rank mutation remains a separate runtime slice.
+		// Java parity: target denyRequest sends STR_GUILD_CHANGE_MASTER_HE_DECLINE_YOUR_OFFER;
+		// acceptRequest re-checks LegionRestrictions.canAppointBrigadeGeneral, then appoints the responder.
 		var dispatch = targetPlayer.ResponseRequester.Respond(packet.QuestionId, packet.Response);
 		if (dispatch?.Request.Kind != QuestionResponseRequestKind.LegionBrigadeGeneralTransferOffer)
 		{
@@ -15742,12 +15742,25 @@ public sealed class GameServerConnection : BaseClientConnection
 		var request = dispatch.Request.Payload as PendingLegionBrigadeGeneralTransferRequest
 			?? targetPlayer.PendingLegionBrigadeGeneralTransferRequest;
 		targetPlayer.PendingLegionBrigadeGeneralTransferRequest = null;
-		if (request == null || packet.Response != 0 || _connectionRegistry == null)
+		if (request == null || _connectionRegistry == null)
 			return;
 
-		await _connectionRegistry.SendPacketToPlayerAsync(
-			request.RequesterObjectId,
-			SmSystemMessage.GuildChangeMasterHeDeclineYourOffer(targetPlayer.Name));
+		if (packet.Response == 0)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				request.RequesterObjectId,
+				SmSystemMessage.GuildChangeMasterHeDeclineYourOffer(targetPlayer.Name));
+			return;
+		}
+
+		if (!_connectionRegistry.TryGetOnlinePlayerByName(request.RequesterName, out var requester)
+			|| requester == null
+			|| !IsLegionBrigadeGeneralTransferStillValid(requester, targetPlayer))
+		{
+			return;
+		}
+
+		await AppointLegionBrigadeGeneralAsync(requester, targetPlayer);
 	}
 
 	private async Task<bool> CanStartLegionBrigadeGeneralTransferAsync(Player requester, Player targetPlayer)
@@ -15772,6 +15785,89 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return true;
+	}
+
+	private static bool IsLegionBrigadeGeneralTransferStillValid(Player requester, Player targetPlayer)
+	{
+		// Java parity: acceptRequest silently audits instead of sending messages when the second validation fails.
+		return requester.IsBrigadeGeneral
+			&& requester.ObjectId != targetPlayer.ObjectId
+			&& requester.LegionId > 0
+			&& targetPlayer.LegionId == requester.LegionId;
+	}
+
+	private async Task AppointLegionBrigadeGeneralAsync(Player requester, Player targetPlayer)
+	{
+		// Java parity: LegionService.appointBrigadeGeneral(LegionMember) demotes the previous Brigade General,
+		// promotes the accepted member, broadcasts two SM_LEGION_UPDATE_MEMBER packets plus SM_LEGION_EDIT(0x08),
+		// and adds LegionHistoryAction.APPOINTED.
+		if (targetPlayer.IsBrigadeGeneral || _playerEnterWorldRepository == null || _connectionRegistry == null)
+			return;
+
+		var legionId = requester.LegionId;
+		requester.LegionRank = LegionRanks.Centurion;
+		targetPlayer.LegionRank = LegionRanks.BrigadeGeneral;
+
+		await _playerEnterWorldRepository.SaveLegionMemberRankAsync(requester.ObjectId, LegionRanks.Centurion);
+		await _playerEnterWorldRepository.SaveLegionMemberRankAsync(targetPlayer.ObjectId, LegionRanks.BrigadeGeneral);
+		await _playerEnterWorldRepository.InsertLegionHistoryAsync(
+			legionId,
+			LegionHistoryActions.Appointed,
+			targetPlayer.Name,
+			string.Empty);
+
+		await BroadcastToOnlineLegionAsync(
+			legionId,
+			() => new SmLegionUpdateMember(
+				CreateOnlineLegionMemberSnapshot(requester),
+				GetLegionMemberLevel(requester),
+				_options.Network.GameServerId));
+		await BroadcastToOnlineLegionAsync(
+			legionId,
+			() => new SmLegionUpdateMember(
+				CreateOnlineLegionMemberSnapshot(targetPlayer),
+				GetLegionMemberLevel(targetPlayer),
+				_options.Network.GameServerId,
+				1300273,
+				targetPlayer.Name));
+		await BroadcastToOnlineLegionAsync(legionId, SmLegionEdit.RefreshAnnouncement);
+	}
+
+	private async Task BroadcastToOnlineLegionAsync(int legionId, Func<GameServerPacket> packetFactory)
+	{
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == legionId)
+				recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packetFactory());
+	}
+
+	private LegionMemberSnapshot CreateOnlineLegionMemberSnapshot(Player player)
+	{
+		return new LegionMemberSnapshot(
+			player.ObjectId,
+			player.LegionId,
+			player.Name,
+			player.LegionRank,
+			player.LegionNickname,
+			player.LegionSelfIntro,
+			true,
+			player.PlayerClass,
+			player.Exp,
+			player.Position.WorldId,
+			player.LastOnline);
+	}
+
+	private int GetLegionMemberLevel(Player player)
+	{
+		return Math.Max(1, GetPlayerExperienceTable()?.GetLevelForExp(player.Exp) ?? 1);
 	}
 
 	internal async Task<GroupInviteRequestResult?> HandleInviteToGroupAsync(

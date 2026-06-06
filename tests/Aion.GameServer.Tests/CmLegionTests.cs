@@ -1132,6 +1132,107 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_BrigadeGeneralTransferOfferAcceptMutatesRanksPersistsHistoryAndBroadcastsLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var target = CreateLegionPlayer(2002, "Lurion");
+		target.LegionRank = LegionRanks.Legionary;
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		bystander.LegionRank = LegionRanks.Centurion;
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 88;
+		outsider.LegionRank = LegionRanks.Legionary;
+		var player = CreateBrigadeGeneralPlayer();
+		var registry = new CapturingConnectionRegistry(player, target, bystander, outsider);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateBrigadeGeneralTransferPacket("lurion"));
+		await pair.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(904979, response: 1));
+		registry.DirectPackets.Clear();
+		pair.SentPackets.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildChangeMasterDoYouAcceptOffer, response: 1));
+
+		Assert.Equal(LegionRanks.Centurion, player.LegionRank);
+		Assert.Equal(LegionRanks.BrigadeGeneral, target.LegionRank);
+		Assert.Equal(2, repository.SaveLegionMemberRankCalls);
+		Assert.Equal(
+			[(player.ObjectId, LegionRanks.Centurion), (target.ObjectId, LegionRanks.BrigadeGeneral)],
+			repository.SavedLegionMemberRanks);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.Appointed, "Lurion", string.Empty), repository.InsertedLegionHistory);
+		Assert.Empty(pair.SentPackets);
+		Assert.Equal(
+			[player.ObjectId, target.ObjectId, bystander.ObjectId, player.ObjectId, target.ObjectId, bystander.ObjectId, player.ObjectId, target.ObjectId, bystander.ObjectId],
+			registry.DirectPackets.Select(delivery => delivery.PlayerObjectId));
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+		foreach (var delivery in registry.DirectPackets.Take(3))
+		{
+			AssertLegionUpdateMemberPacket(
+				delivery.Packet,
+				playerObjectId: player.ObjectId,
+				rankId: LegionRanks.GetRankId(LegionRanks.Centurion),
+				classId: 0,
+				level: 1,
+				worldId: 0,
+				online: true,
+				lastOnlineEpochSeconds: 0,
+				gameServerId: 1,
+				messageId: 0,
+				text: string.Empty);
+		}
+
+		foreach (var delivery in registry.DirectPackets.Skip(3).Take(3))
+		{
+			AssertLegionUpdateMemberPacket(
+				delivery.Packet,
+				playerObjectId: target.ObjectId,
+				rankId: LegionRanks.GetRankId(LegionRanks.BrigadeGeneral),
+				classId: 0,
+				level: 1,
+				worldId: 0,
+				online: true,
+				lastOnlineEpochSeconds: 0,
+				gameServerId: 1,
+				messageId: 1300273,
+				text: "Lurion");
+		}
+
+		foreach (var delivery in registry.DirectPackets.Skip(6).Take(3))
+			AssertLegionEditPacket(delivery.Packet, expectedType: 0x08);
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_BrigadeGeneralTransferOfferAcceptWithStaleRequesterDoesNotMutateLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var target = CreateLegionPlayer(2002, "Lurion");
+		target.LegionRank = LegionRanks.Legionary;
+		var player = CreateBrigadeGeneralPlayer();
+		var registry = new CapturingConnectionRegistry(player, target);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateBrigadeGeneralTransferPacket("lurion"));
+		await pair.Connection.HandleQuestionResponseAsync(player, CreateQuestionResponse(904979, response: 1));
+		player.LegionRank = LegionRanks.Centurion;
+		registry.DirectPackets.Clear();
+		pair.SentPackets.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildChangeMasterDoYouAcceptOffer, response: 1));
+
+		Assert.Equal(LegionRanks.Centurion, player.LegionRank);
+		Assert.Equal(LegionRanks.Legionary, target.LegionRank);
+		Assert.Equal(0, repository.SaveLegionMemberRankCalls);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Empty(pair.SentPackets);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_KickRejectsSelfLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1828,6 +1929,14 @@ public sealed class CmLegionTests
 		Assert.Equal(gameServerId, reader.ReadD());
 		Assert.Equal(messageId, reader.ReadD());
 		Assert.Equal(text, reader.ReadS());
+	}
+
+	private static void AssertLegionEditPacket(GameServerPacket packet, int expectedType)
+	{
+		var response = Assert.IsType<SmLegionEdit>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(expectedType, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertLegionLeaveMemberPacket(

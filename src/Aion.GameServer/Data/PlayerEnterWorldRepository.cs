@@ -960,6 +960,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public (int PlayerObjectId, string Rank)? SavedLegionMemberRank { get; private set; }
 
+	public List<(int PlayerObjectId, string Rank)> SavedLegionMemberRanks { get; } = [];
+
 	public Task<bool> SaveLegionMemberRankAsync(
 		int playerObjectId,
 		string rank,
@@ -967,6 +969,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		SaveLegionMemberRankCalls++;
 		SavedLegionMemberRank = (playerObjectId, rank);
+		SavedLegionMemberRanks.Add((playerObjectId, rank));
 		return Task.FromResult(SaveLegionMemberRankResult);
 	}
 
