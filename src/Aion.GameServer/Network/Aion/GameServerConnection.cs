@@ -1957,8 +1957,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmCaptcha:
 				// Java parity: CM_CAPTCHA.runImpl -> PunishmentService captcha verification; deferred until anti-bot punishment is ported.
 				break;
-			case CmLegionSendEmblemInfo:
-				// Java parity: CM_LEGION_SEND_EMBLEM_INFO.runImpl -> LegionService.getLegion(legionId) -> SM_LEGION_SEND_EMBLEM; deferred.
+			case CmLegionSendEmblemInfo legionSendEmblemInfo:
+				if (_activePlayer != null)
+					await HandleLegionSendEmblemInfoAsync(_activePlayer, legionSendEmblemInfo);
 				break;
 			case CmLegionSendEmblem:
 				// Java parity: CM_LEGION_SEND_EMBLEM.runImpl -> LegionService data dispatch; deferred.
@@ -3065,6 +3066,29 @@ public sealed class GameServerConnection : BaseClientConnection
 			.Select(row => new LegionHistoryEntryRow(row.EpochSeconds, row.ActionId, row.Name, row.Description))
 			.ToArray();
 		await SendPacketAsync(new SmLegionHistory(rows, packet.Page, typeOrdinal));
+	}
+
+	private async Task HandleLegionSendEmblemInfoAsync(Player player, CmLegionSendEmblemInfo packet)
+	{
+		// Java parity: CM_LEGION_SEND_EMBLEM_INFO.runImpl fetches the legion and sends
+		// SM_LEGION_SEND_EMBLEM with emblemDataSize 0. C# currently has hydrated data
+		// for the active player's legion; other legion lookups remain blocked on a
+		// runtime legion registry/repository.
+		if (player.LegionId <= 0
+			|| player.LegionId != packet.LegionId
+			|| string.IsNullOrEmpty(player.LegionName))
+			return;
+
+		await SendPacketAsync(new SmLegionSendEmblem(
+			player.LegionId,
+			player.LegionEmblemId,
+			player.LegionEmblemType,
+			emblemDataSize: 0,
+			player.LegionEmblemColorA,
+			player.LegionEmblemColorR,
+			player.LegionEmblemColorG,
+			player.LegionEmblemColorB,
+			player.LegionName));
 	}
 
 	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)
