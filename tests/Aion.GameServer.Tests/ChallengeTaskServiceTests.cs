@@ -127,6 +127,10 @@ public sealed class ChallengeTaskServiceTests
 		Assert.Equal(6, result.CompleteCount);
 		var saved = Assert.Single(repository.SavedLegionChallengeTaskProgress);
 		Assert.Equal((77, 300, 17000, 6, 1_800_000_000), saved);
+		var availableTask = Assert.Single(result.AvailableTasks!);
+		Assert.Equal(300, availableTask.TaskId);
+		Assert.Equal(1_800_000_000, availableTask.CompleteTimeEpochSeconds);
+		Assert.Equal(6, availableTask.Quests.Single(quest => quest.QuestId == 17000).CompleteCount);
 	}
 
 	[Fact]

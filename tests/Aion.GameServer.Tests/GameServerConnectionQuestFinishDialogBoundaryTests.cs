@@ -145,6 +145,63 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableChallengeTaskQuestRefreshesOnlineLegionTaskListLikeJava()
+	{
+		var onlineLegionMember = new Player
+		{
+			ObjectId = 2002,
+			Name = "ChallengeTaskOnlineMember",
+			Race = "ELYOS",
+			LegionId = 77,
+			LegionLevel = 5,
+		};
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync(
+			withPlayerEnterWorldService: true,
+			options: new GameServerOptions { Custom = new GameServerCustomOptions { ChallengeTasksEnabled = true } },
+			onlinePlayers: [onlineLegionMember],
+			loadedLegionChallengeTasks:
+			[
+				new ChallengeTaskProgressRow(300, 1025, CompleteCount: 1),
+			]);
+
+		var player = new Player
+		{
+			ObjectId = 1003,
+			Name = "ChallengeTaskRefreshBoundary",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Level = 5,
+			LegionId = 77,
+			LegionLevel = 5,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [new PlayerQuestState(1025, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0)],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1025,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => AssertChallengeTaskListPacket(packet, player.ObjectId, completeCount: 2),
+			packet => AssertChallengeTaskInfoPacket(packet, player.ObjectId, completeCount: 2),
+			packet => AssertQuestAction(packet, SmQuestAction.UpdateActionId, questId: 1025, statusValue: 5));
+		Assert.Collection(
+			fixture.RegistryPackets,
+			packet => AssertChallengeTaskListPacket(packet, onlineLegionMember.ObjectId, completeCount: 2),
+			packet => AssertChallengeTaskInfoPacket(packet, onlineLegionMember.ObjectId, completeCount: 2));
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetReportableAutoRewardQuestAppliesXpAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
@@ -1664,6 +1721,43 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertChallengeTaskListPacket(GameServerPacket packet, int expectedPlayerObjectId, int completeCount)
+	{
+		var challengeList = Assert.IsType<SmChallengeList>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(challengeList));
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(77, reader.ReadD());
+		Assert.Equal(SmChallengeList.LegionOwnerTypeId, (int)reader.ReadC());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.True(reader.ReadD() > 0);
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(32, reader.ReadD());
+		Assert.Equal(300, reader.ReadD());
+		Assert.Equal(1, (int)reader.ReadC());
+		Assert.Equal(21, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.True(reader.ReadD() > 0);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertChallengeTaskInfoPacket(GameServerPacket packet, int expectedPlayerObjectId, int completeCount)
+	{
+		var challengeList = Assert.IsType<SmChallengeList>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(challengeList));
+		Assert.Equal(7, (int)reader.ReadC());
+		Assert.Equal(77, reader.ReadD());
+		Assert.Equal(SmChallengeList.LegionOwnerTypeId, (int)reader.ReadC());
+		Assert.Equal(expectedPlayerObjectId, reader.ReadD());
+		Assert.Equal(32, reader.ReadD());
+		Assert.Equal(300, reader.ReadD());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(1025, reader.ReadD());
+		Assert.Equal(3, reader.ReadH());
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(completeCount, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertDialogWindow(
 		GameServerPacket packet,
 		int expectedTargetObjectId,
@@ -1726,7 +1820,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 
 		public static async Task<QuestFinishDialogFixture> CreateAsync(
 			bool withPlayerEnterWorldService = false,
-			IReadOnlyList<ChallengeTaskProgressRow>? loadedLegionChallengeTasks = null)
+			IReadOnlyList<ChallengeTaskProgressRow>? loadedLegionChallengeTasks = null,
+			GameServerOptions? options = null,
+			IReadOnlyList<Player>? onlinePlayers = null)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-quest-finish-dialog-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -1989,14 +2085,15 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						Type: "NPC"),
 					new WorldPosition(210010000, 1, 2, 3, 0)));
 			var sentPackets = new List<GameServerPacket>();
-			var connectionRegistry = new CapturingConnectionRegistry();
+			var gameServerOptions = options ?? new GameServerOptions();
+			var connectionRegistry = new CapturingConnectionRegistry(onlinePlayers ?? Array.Empty<Player>());
 			var playerEnterWorldRepository = new EmptyPlayerEnterWorldRepository
 			{
 				LoadedLegionChallengeTasks = loadedLegionChallengeTasks ?? Array.Empty<ChallengeTaskProgressRow>(),
 			};
 			var playerEnterWorldService = withPlayerEnterWorldService
 				? new PlayerEnterWorldService(
-					new GameServerOptions(),
+					gameServerOptions,
 					playerEnterWorldRepository,
 					world,
 					NullLogger<PlayerEnterWorldService>.Instance)
@@ -2018,7 +2115,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					serverClient,
 					"quest-finish-dialog-boundary-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
-					options: new GameServerOptions(),
+					options: gameServerOptions,
 					runtimeContext: runtimeContext,
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					playerEnterWorldService: playerEnterWorldService,
@@ -2051,7 +2148,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		}
 	}
 
-	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
+	private sealed class CapturingConnectionRegistry(IReadOnlyList<Player> onlinePlayers) : IGameClientConnectionRegistry
 	{
 		public List<GameServerPacket> PacketOrder { get; } = [];
 
@@ -2071,6 +2168,8 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 
 		public void ForEachOnlinePlayer(Action<Player> action)
 		{
+			foreach (var player in onlinePlayers)
+				action(player);
 		}
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)

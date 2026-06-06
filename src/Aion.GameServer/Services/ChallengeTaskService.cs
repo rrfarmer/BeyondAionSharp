@@ -44,7 +44,8 @@ public sealed record ChallengeTaskFinishResult(
 	int TaskId = 0,
 	int QuestId = 0,
 	int CompleteCount = 0,
-	int CompleteTimeEpochSeconds = 0)
+	int CompleteTimeEpochSeconds = 0,
+	IReadOnlyList<ChallengeTaskState>? AvailableTasks = null)
 {
 	public bool Updated => Status == ChallengeTaskFinishStatus.Updated;
 }
@@ -185,14 +186,31 @@ public sealed class ChallengeTaskService : IChallengeTaskService
 			completeTime,
 			cancellationToken);
 
-		return saved
-			? new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.Updated, taskTemplate.TaskId, questId, completeCount, completeTime)
-			: new ChallengeTaskFinishResult(
+		if (!saved)
+		{
+			return new ChallengeTaskFinishResult(
 				ChallengeTaskFinishStatus.PersistenceFailed,
 				taskTemplate.TaskId,
 				questId,
 				progress.CompleteCount,
 				progress.CompleteTimeEpochSeconds);
+		}
+
+		var updatedRows = loadedProgress
+			.Select(row => row.TaskId == taskTemplate.TaskId && row.QuestId == questId
+				? row with { CompleteCount = completeCount, CompleteTimeEpochSeconds = completeTime }
+				: row)
+			.ToArray();
+		var availableTasks = BuildStates(challengeTasks, updatedRows)
+			.Where(task => task.IsRepeatable || !task.IsCompleted)
+			.ToArray();
+		return new ChallengeTaskFinishResult(
+			ChallengeTaskFinishStatus.Updated,
+			taskTemplate.TaskId,
+			questId,
+			completeCount,
+			completeTime,
+			availableTasks);
 	}
 
 	private static IReadOnlyList<ChallengeTaskState> BuildStates(

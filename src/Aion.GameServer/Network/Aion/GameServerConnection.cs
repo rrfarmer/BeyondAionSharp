@@ -5794,13 +5794,76 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var challengeTasks = _challengeTaskTableOverride ?? staticData.ChallengeTasks;
-		await _challengeTaskService.OnChallengeQuestFinishAsync(
+		var result = await _challengeTaskService.OnChallengeQuestFinishAsync(
 			challengeTasks,
 			_playerEnterWorldRepository,
 			player,
 			template.QuestId,
 			(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
 			cancellationToken);
+		await SendChallengeTaskListRefreshAsync(player, result, cancellationToken);
+	}
+
+	private async Task SendChallengeTaskListRefreshAsync(
+		Player player,
+		ChallengeTaskFinishResult result,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: ChallengeTaskService.onLegionTaskFinish calls showTaskList for each online legion member.
+		if (!result.Updated
+			|| result.AvailableTasks == null
+			|| !_options.Custom.ChallengeTasksEnabled
+			|| player.LegionId <= 0)
+		{
+			return;
+		}
+
+		var recipientsByObjectId = new Dictionary<int, Player>
+		{
+			[player.ObjectId] = player,
+		};
+		_connectionRegistry?.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == player.LegionId)
+				recipientsByObjectId[candidate.ObjectId] = candidate;
+		});
+
+		var currentEpochSeconds = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		foreach (var recipient in recipientsByObjectId.Values)
+		{
+			var listPacket = SmChallengeList.TaskList(
+				player.LegionId,
+				SmChallengeList.LegionOwnerTypeId,
+				recipient.ObjectId,
+				currentEpochSeconds,
+				result.AvailableTasks);
+			await SendChallengeTaskPacketAsync(player, recipient.ObjectId, listPacket, cancellationToken);
+
+			foreach (var task in result.AvailableTasks)
+			{
+				await SendChallengeTaskPacketAsync(
+					player,
+					recipient.ObjectId,
+					SmChallengeList.TaskInfo(player.LegionId, SmChallengeList.LegionOwnerTypeId, recipient.ObjectId, task),
+					cancellationToken);
+			}
+		}
+	}
+
+	private async Task SendChallengeTaskPacketAsync(
+		Player activePlayer,
+		int recipientObjectId,
+		GameServerPacket packet,
+		CancellationToken cancellationToken)
+	{
+		if (recipientObjectId == activePlayer.ObjectId)
+		{
+			await SendPacketAsync(packet, cancellationToken);
+			return;
+		}
+
+		if (_connectionRegistry != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packet);
 	}
 
 	private sealed record NpcSelectedRewardPostFinishDialogResult(
