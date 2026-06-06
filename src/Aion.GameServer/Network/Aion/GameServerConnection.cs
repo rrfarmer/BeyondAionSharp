@@ -4191,26 +4191,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (template == null)
 			return;
 
-		// Java parity: ItemMoveService.moveItem — trading check before cross-storage restriction check.
-		if (player.IsTrading)
+		// Java parity: ItemMoveService.moveItem restriction branch. ItemRestrictionService emits the denial
+		// message first, then sendItemUnlockPacket restores the source slot with ALL_SLOT fanout.
+		var restrictionMessage = CreateRestrictedToStorageMessage(item, template, packet.Destination);
+		var isShuttingDownSoon = _isShuttingDownSoon();
+		if (player.IsTrading || restrictionMessage != null || isShuttingDownSoon)
 		{
-			// Java parity: sendItemUnlockPacket restores item in source UI; use ALL_SLOT add type for cube.
-			if (item.Location == 0)
-				await SendPacketAsync(SmInventoryAddItem.CreateAllSlot(item, template));
-			else
-				await SendPacketAsync(SmWarehouseAddItem.CreateAllSlot(item.Location, item, template));
-			return;
-		}
-
-		// Java parity: ItemRestrictionService.isItemRestrictedTo — check storability for destination.
-		if (packet.Destination == 1 /* regular warehouse */ && !template.IsStorableInWarehouse)
-		{
-			await SendPacketAsync(SmSystemMessage.WarehouseCantDepositItem());
-			return;
-		}
-		if (packet.Destination == 2 /* account warehouse */ && !item.IsStorableInAccountWarehouse(template))
-		{
-			await SendPacketAsync(SmSystemMessage.WarehouseCantAccountDeposit());
+			if (restrictionMessage != null)
+				await SendPacketAsync(restrictionMessage);
+			await SendStorageUpdatePacketAsync(player, item, template, item.Location, SmInventoryAddItem.AllSlot);
+			if (isShuttingDownSoon)
+				await SendPacketAsync(SmSystemMessage.Disable("Shutdown Progress"));
 			return;
 		}
 

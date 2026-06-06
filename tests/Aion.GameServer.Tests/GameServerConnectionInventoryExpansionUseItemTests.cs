@@ -841,6 +841,39 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_RegularWarehouseRestrictionSendsDenialAndUnlocksSourceLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 999900202, count: 1);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 1, slot: 9));
+
+		var unchangedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, unchangedItem.ObjectId);
+		Assert.Equal(0, unchangedItem.Location);
+		Assert.Equal(12, unchangedItem.Slot);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Equal(0, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300418),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 999900202,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleSplitItemAsync_FullSourceMergeDeletesSourceStackLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
