@@ -9,7 +9,7 @@ public sealed class CmLegionHistory : GameClientPacket
 	{
 	}
 
-	// Java parity: CM_LEGION_HISTORY.readImpl: page (int) + type (byte; 0=Activity, 1=Reward).
+	// Java parity: CM_LEGION_HISTORY.readImpl: page (int) + Type.values()[readUC()] (0=LEGION, 1=REWARD, 2=WAREHOUSE).
 	public int Page { get; private set; }
 	public byte Type { get; private set; }
 

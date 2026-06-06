@@ -1961,14 +1961,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case CmLegionSendEmblem:
 				// Java parity: CM_LEGION_SEND_EMBLEM.runImpl -> LegionService data dispatch; deferred.
 				break;
-			case CmLegionHistory:
-				// Java parity: CM_LEGION_HISTORY.runImpl. Java returns silently when player.getLegion() == null, else sends
-				// SM_LEGION_HISTORY(legion.getHistory(type), page, type) (with a REWARD-type brigade-general guard).
-				// The SM_LEGION_HISTORY server packet is now ported (SmLegionHistory, golden-tested) and legion member rank
-				// is loaded (Player.IsBrigadeGeneral) so the REWARD/brigade-general guard is now expressible. Live wiring
-				// stays deferred because the C# port still has no legion-history data source (Legion.getHistory) to project
-				// into the packet. No response is sent — matching Java exactly for the no-legion case (the only case the
-				// port can currently represent).
+			case CmLegionHistory legionHistory:
+				if (_activePlayer != null)
+					await HandleLegionHistoryAsync(_activePlayer, legionHistory);
 				break;
 			case CmLegionModifyEmblem:
 				// Java parity: CM_LEGION_MODIFY_EMBLEM.runImpl -> LegionService.updateEmblem; deferred.
@@ -2949,7 +2944,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendStorageUpdatePacketAsync(player, CloneInventoryItemWithCount(legionKinah, 0), kinahTemplate, 3, SmInventoryAddItem.ItemCollect);
 		}
 		await SendPacketAsync(new SmWarehouseUpdateItem(legionKinah, kinahTemplate, 3, SmInventoryUpdateItem.IncreaseKinahCollect));
-		// Java parity gap: LegionService.addHistory(KINAH_DEPOSIT) is not yet modeled.
+		await AddLegionHistoryAsync(player, LegionHistoryActions.KinahDeposit, amount.ToString(CultureInfo.InvariantCulture));
 	}
 
 	private async Task HandleLegionWarehouseKinahWithdrawalAsync(Player player, long amount)
@@ -3025,7 +3020,37 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (cubeKinahWasCreated)
 			await SendStorageUpdatePacketAsync(player, CloneInventoryItemWithCount(cubeKinah, 0), kinahTemplate, 0, SmInventoryAddItem.ItemCollect);
 		await SendPacketAsync(new SmInventoryUpdateItem(cubeKinah, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahCollect));
-		// Java parity gap: LegionService.addHistory(KINAH_WITHDRAW) is not yet modeled.
+		await AddLegionHistoryAsync(player, LegionHistoryActions.KinahWithdraw, amount.ToString(CultureInfo.InvariantCulture));
+	}
+
+	private async Task AddLegionHistoryAsync(Player player, string actionName, string description)
+	{
+		// Java parity: LegionService.addHistory(legion, activePlayer.getName(), action, Long.toString(amount)).
+		if (player.LegionId <= 0 || _playerEnterWorldRepository == null)
+			return;
+
+		await _playerEnterWorldRepository.InsertLegionHistoryAsync(player.LegionId, actionName, player.Name, description);
+	}
+
+	private async Task HandleLegionHistoryAsync(Player player, CmLegionHistory packet)
+	{
+		// Java parity: CM_LEGION_HISTORY.runImpl -> player.getLegion() guard -> brigade-general reward guard ->
+		// new SM_LEGION_HISTORY(player.getLegion().getHistory(type), page, type).
+		if (player.LegionId <= 0 || _playerEnterWorldRepository == null)
+			return;
+
+		var typeOrdinal = packet.Type;
+		if (!LegionHistoryActions.IsValidTypeOrdinal(typeOrdinal))
+			return;
+
+		if (typeOrdinal == LegionHistoryActions.TypeReward && !player.IsBrigadeGeneral)
+			return;
+
+		var history = await _playerEnterWorldRepository.LoadLegionHistoryAsync(player.LegionId, typeOrdinal);
+		var rows = history
+			.Select(row => new LegionHistoryEntryRow(row.EpochSeconds, row.ActionId, row.Name, row.Description))
+			.ToArray();
+		await SendPacketAsync(new SmLegionHistory(rows, packet.Page, typeOrdinal));
 	}
 
 	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)

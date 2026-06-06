@@ -11,6 +11,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -4383,6 +4384,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(77, savedMerge.TargetItem.OwnerId);
 		Assert.Equal(3, savedMerge.TargetItem.Location);
 		Assert.Equal(InventoryItemPersistentState.New, savedMerge.TargetItem.PersistentState);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		var history = Assert.NotNull(repository.InsertedLegionHistory);
+		Assert.Equal(77, history.LegionId);
+		Assert.Equal(LegionHistoryActions.KinahDeposit, history.ActionName);
+		Assert.Equal("TicketUser", history.Name);
+		Assert.Equal("1000", history.Description);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertInventoryUpdatePayload(
@@ -4464,6 +4471,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(6000, savedMerge.TargetItem.Count);
 		Assert.Equal(1001, savedMerge.TargetItem.OwnerId);
 		Assert.Equal(0, savedMerge.TargetItem.Location);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		var history = Assert.NotNull(repository.InsertedLegionHistory);
+		Assert.Equal(77, history.LegionId);
+		Assert.Equal(LegionHistoryActions.KinahWithdraw, history.ActionName);
+		Assert.Equal("TicketUser", history.Name);
+		Assert.Equal("1000", history.Description);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertWarehouseUpdatePayload(
@@ -4475,6 +4488,73 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				Assert.IsType<SmInventoryUpdateItem>(packet),
 				expectedObjectId: 5001,
 				expectedUpdateType: SmInventoryUpdateItem.IncreaseKinahCollect));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_LegionHistorySendsWarehouseRowsLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionHistory =
+			[
+				new LegionHistoryRow(9, 1717459200, LegionHistoryActions.KinahWithdraw, 18, LegionHistoryActions.TypeWarehouse, "Test", "1000"),
+			],
+		};
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 182400001, count: 5000);
+		player.LegionId = 77;
+		player.LegionRank = "VOLUNTEER";
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(55, buffer =>
+			{
+				buffer.WriteD(0);
+				buffer.WriteC((byte)LegionHistoryActions.TypeWarehouse);
+			}));
+
+		Assert.Equal(1, repository.LoadLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.TypeWarehouse), repository.LoadedLegionHistoryRequest);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertLegionHistoryPayload(
+			Assert.IsType<SmLegionHistory>(packet),
+			expectedTotalEntries: 1,
+			expectedPage: 0,
+			expectedPageEntries: 1,
+			expectedEpochSeconds: 1717459200,
+			expectedActionId: 18,
+			expectedName: "Test",
+			expectedDescription: "1000",
+			expectedTypeOrdinal: LegionHistoryActions.TypeWarehouse);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_LegionHistoryRewardRequiresBrigadeGeneralLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionHistory =
+			[
+				new LegionHistoryRow(10, 1717459200, "DEFENSE", 11, LegionHistoryActions.TypeReward, "1000", "1011"),
+			],
+		};
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 182400001, count: 5000);
+		player.LegionId = 77;
+		player.LegionRank = "VOLUNTEER";
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(55, buffer =>
+			{
+				buffer.WriteD(0);
+				buffer.WriteC((byte)LegionHistoryActions.TypeReward);
+			}));
+
+		Assert.Equal(0, repository.LoadLegionHistoryCalls);
+		Assert.Empty(fixture.SentPackets);
 	}
 
 	[Fact]
@@ -5682,6 +5762,47 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(expectedUpdateType, actualUpdateType);
 	}
 
+	private static void AssertLegionHistoryPayload(
+		SmLegionHistory packet,
+		int expectedTotalEntries,
+		int expectedPage,
+		int expectedPageEntries,
+		int expectedEpochSeconds,
+		byte expectedActionId,
+		string expectedName,
+		string expectedDescription,
+		int expectedTypeOrdinal)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedTotalEntries, reader.ReadD());
+		Assert.Equal(expectedPage, reader.ReadD());
+		Assert.Equal(expectedPageEntries, reader.ReadD());
+		if (expectedPageEntries > 0)
+		{
+			Assert.Equal(expectedEpochSeconds, reader.ReadD());
+			Assert.Equal(expectedActionId, reader.ReadC());
+			Assert.Equal(0, reader.ReadC());
+			Assert.Equal(expectedName, ReadFixedLegionHistoryString(reader));
+			Assert.Equal(expectedDescription, ReadFixedLegionHistoryString(reader));
+			Assert.Equal(0, reader.ReadH());
+		}
+		Assert.Equal(expectedTypeOrdinal, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static string ReadFixedLegionHistoryString(PacketBuffer reader)
+	{
+		var chars = new List<char>();
+		for (var i = 0; i < 32; i++)
+		{
+			var value = reader.ReadH();
+			if (value != 0)
+				chars.Add((char)value);
+		}
+		Assert.Equal(0, reader.ReadH());
+		return new string(chars.ToArray());
+	}
+
 	private static void AssertWarehouseUpdatePayload(
 		SmWarehouseUpdateItem packet,
 		int expectedObjectId,
@@ -6848,6 +6969,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					options: options,
 					runtimeContext: runtimeContext,
 					playerEnterWorldService: playerEnterWorldService,
+					playerEnterWorldRepository: repository,
 					threadPoolManager: threadPoolManager,
 					idFactory: idFactory,
 					isShuttingDownSoon: isShuttingDownSoon,

@@ -4,6 +4,7 @@ using Aion.Commons.Database;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.ToyPet;
@@ -491,6 +492,18 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<int> deletedItemObjectIds,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> InsertLegionHistoryAsync(
+		int legionId,
+		string actionName,
+		string name,
+		string description,
+		CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyList<LegionHistoryRow>> LoadLegionHistoryAsync(
+		int legionId,
+		int typeOrdinal,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default);
 }
 
@@ -555,6 +568,18 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public int SaveItemMergeMutationCalls { get; private set; }
 
 	public (int PlayerObjectId, InventoryItem SourceItem, InventoryItem TargetItem)? SavedItemMergeMutation { get; private set; }
+
+	public bool InsertLegionHistoryResult { get; init; } = true;
+
+	public int InsertLegionHistoryCalls { get; private set; }
+
+	public (int LegionId, string ActionName, string Name, string Description)? InsertedLegionHistory { get; private set; }
+
+	public IReadOnlyList<LegionHistoryRow> LoadedLegionHistory { get; init; } = Array.Empty<LegionHistoryRow>();
+
+	public int LoadLegionHistoryCalls { get; private set; }
+
+	public (int LegionId, int TypeOrdinal)? LoadedLegionHistoryRequest { get; private set; }
 
 	public bool SaveItemCrossStorageMoveMutationResult { get; init; } = true;
 
@@ -1560,6 +1585,28 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
+	}
+
+	public Task<bool> InsertLegionHistoryAsync(
+		int legionId,
+		string actionName,
+		string name,
+		string description,
+		CancellationToken cancellationToken = default)
+	{
+		InsertLegionHistoryCalls++;
+		InsertedLegionHistory = (legionId, actionName, name, description);
+		return Task.FromResult(InsertLegionHistoryResult);
+	}
+
+	public Task<IReadOnlyList<LegionHistoryRow>> LoadLegionHistoryAsync(
+		int legionId,
+		int typeOrdinal,
+		CancellationToken cancellationToken = default)
+	{
+		LoadLegionHistoryCalls++;
+		LoadedLegionHistoryRequest = (legionId, typeOrdinal);
+		return Task.FromResult(LoadedLegionHistory);
 	}
 
 	public Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)
@@ -3271,6 +3318,92 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not save power shard use mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
+		}
+	}
+
+	public async Task<bool> InsertLegionHistoryAsync(
+		int legionId,
+		string actionName,
+		string name,
+		string description,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/LegionDAO.insertHistory stores the enum name and Timestamp(System.currentTimeMillis()).
+		if (legionId <= 0 || !LegionHistoryActions.TryGetActionMetadata(actionName, out _, out _))
+			return false;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "INSERT INTO legion_history(`legion_id`, `date`, `history_type`, `name`, `description`) VALUES (?, ?, ?, ?, ?)";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = legionId },
+					new MySqlParameter { Value = DateTime.Now },
+					new MySqlParameter { Value = actionName },
+					new MySqlParameter { Value = name },
+					new MySqlParameter { Value = description },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not add history entry for legion {LegionId}", legionId);
+			return false;
+		}
+	}
+
+	public async Task<IReadOnlyList<LegionHistoryRow>> LoadLegionHistoryAsync(
+		int legionId,
+		int typeOrdinal,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/LegionDAO.loadHistory SELECTs all rows for the legion ordered by date/id descending,
+		// then groups rows by LegionHistoryAction.Type before SM_LEGION_HISTORY paginates the selected type.
+		if (legionId <= 0 || !LegionHistoryActions.IsValidTypeOrdinal(typeOrdinal))
+			return Array.Empty<LegionHistoryRow>();
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "SELECT id, date, history_type, name, description FROM legion_history WHERE legion_id = ? ORDER BY date DESC, id DESC";
+			command.Parameters.Add(new MySqlParameter { Value = legionId });
+
+			var rows = new List<LegionHistoryRow>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				var actionName = ReadString(reader, "history_type");
+				if (!LegionHistoryActions.TryGetActionMetadata(actionName, out var actionId, out var actionTypeOrdinal)
+					|| actionTypeOrdinal != typeOrdinal)
+				{
+					continue;
+				}
+
+				var date = ReadDateTimeOffset(reader, "date");
+				rows.Add(
+					new LegionHistoryRow(
+						ReadInt(reader, "id"),
+						(int)(date?.ToUnixTimeSeconds() ?? 0),
+						actionName,
+						actionId,
+						actionTypeOrdinal,
+						ReadString(reader, "name"),
+						ReadString(reader, "description")));
+			}
+
+			return rows;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load history of legion {LegionId}", legionId);
+			return Array.Empty<LegionHistoryRow>();
 		}
 	}
 

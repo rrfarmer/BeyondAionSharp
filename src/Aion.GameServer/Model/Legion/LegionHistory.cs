@@ -1,0 +1,48 @@
+namespace Aion.GameServer.Model.Legion;
+
+public sealed record LegionHistoryRow(
+	int Id,
+	int EpochSeconds,
+	string ActionName,
+	byte ActionId,
+	int TypeOrdinal,
+	string Name,
+	string Description);
+
+public static class LegionHistoryActions
+{
+	public const string KinahDeposit = "KINAH_DEPOSIT";
+	public const string KinahWithdraw = "KINAH_WITHDRAW";
+
+	public const int TypeLegion = 0;
+	public const int TypeReward = 1;
+	public const int TypeWarehouse = 2;
+
+	public static bool TryGetActionMetadata(string actionName, out byte actionId, out int typeOrdinal)
+	{
+		// Java parity: model/team/legion/LegionHistoryAction declaration order and ids.
+		(actionId, typeOrdinal) = actionName switch
+		{
+			"CREATE" => ((byte)0, TypeLegion),
+			"JOIN" => ((byte)1, TypeLegion),
+			"KICK" => ((byte)2, TypeLegion),
+			"LEVEL_UP" => ((byte)3, TypeLegion),
+			"APPOINTED" => ((byte)4, TypeLegion),
+			"EMBLEM_REGISTER" => ((byte)5, TypeLegion),
+			"EMBLEM_MODIFIED" => ((byte)6, TypeLegion),
+			"DEFENSE" => ((byte)11, TypeReward),
+			"OCCUPATION" => ((byte)12, TypeReward),
+			"LEGION_RENAME" => ((byte)13, TypeLegion),
+			"CHARACTER_RENAME" => ((byte)14, TypeLegion),
+			"ITEM_DEPOSIT" => ((byte)15, TypeWarehouse),
+			"ITEM_WITHDRAW" => ((byte)16, TypeWarehouse),
+			KinahDeposit => ((byte)17, TypeWarehouse),
+			KinahWithdraw => ((byte)18, TypeWarehouse),
+			_ => ((byte)0, -1),
+		};
+
+		return typeOrdinal >= 0;
+	}
+
+	public static bool IsValidTypeOrdinal(int typeOrdinal) => typeOrdinal is TypeLegion or TypeReward or TypeWarehouse;
+}

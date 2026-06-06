@@ -4,6 +4,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
@@ -4506,6 +4507,24 @@ public sealed class PlayerEnterWorldServiceTests
 			PowerShardEquipUpdateItems = equipUpdateItems;
 			PowerShardDeletedItemObjectIds = deletedItemObjectIds;
 			return Task.FromResult(true);
+		}
+
+		public Task<bool> InsertLegionHistoryAsync(
+			int legionId,
+			string actionName,
+			string name,
+			string description,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
+		public Task<IReadOnlyList<LegionHistoryRow>> LoadLegionHistoryAsync(
+			int legionId,
+			int typeOrdinal,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<IReadOnlyList<LegionHistoryRow>>(Array.Empty<LegionHistoryRow>());
 		}
 
 		public Task<bool> SavePlayerLogoutAsync(Player player, DateTime lastOnline, CancellationToken cancellationToken = default)
