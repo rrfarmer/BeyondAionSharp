@@ -3990,12 +3990,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (packet.SourceStorageType == 3 || packet.DestinationStorageType == 3)
-		{
-			// Legion warehouse splits require LegionService and addWHItemHistory; deferred.
-			return;
-		}
-
 		var sourceItem = FindMoveStorageItem(player, packet.SourceItemObjectId, packet.SourceStorageType);
 		if (sourceItem == null)
 			return;
@@ -4009,6 +4003,27 @@ public sealed class GameServerConnection : BaseClientConnection
 		var template = templates?.GetItemTemplate(sourceItem.ItemId);
 		if (template == null)
 			return;
+
+		// Java parity: ItemSplitService.splitItem applies cross-storage restrictions before Kinah and split/merge mutation.
+		if (packet.SourceStorageType == 3 || packet.DestinationStorageType == 3)
+		{
+			if (packet.SourceStorageType != packet.DestinationStorageType)
+			{
+				var legionRestrictionMessage = CreateLegionWarehouseMoveRestrictionMessage(
+					player,
+					sourceItem,
+					template,
+					packet.SourceStorageType,
+					packet.DestinationStorageType);
+				if (legionRestrictionMessage != null)
+				{
+					await SendPacketAsync(legionRestrictionMessage);
+					await SendStorageUpdatePacketAsync(player, sourceItem, template, packet.SourceStorageType, SmInventoryAddItem.ItemCollect);
+				}
+			}
+			// Successful legion warehouse splits require LegionService.addWHItemHistory and live legion storage; deferred.
+			return;
+		}
 
 		// Java parity: ItemSplitService.splitItem — kinah branch (moveKinah) before general split logic.
 		// Java parity: ItemTemplate.isKinah() checks itemId == ItemId.KINAH (182400001).
