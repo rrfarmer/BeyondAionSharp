@@ -2760,6 +2760,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400076);
 	}
 
+	public static SmSystemMessage HousingScriptOverflow()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_SCRIPT_OVERFLOW.
+		return new SmSystemMessage(1401399);
+	}
+
 	public static SmSystemMessage DoNotAccuse()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DO_NOT_ACCUSE.
