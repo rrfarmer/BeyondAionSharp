@@ -1716,6 +1716,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await SavePeriodicAbyssRankAsync(connection, player.ObjectId, player.AbyssRank, cancellationToken);
+			await SavePeriodicPlayerSkillsAsync(connection, player.ObjectId, player.Skills, cancellationToken);
 			if (player.LifeStats != null)
 				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
 			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -3649,6 +3650,40 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = rank.LastGp },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task SavePeriodicPlayerSkillsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyList<PlayerSkill> skills,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PlayerSkillListDAO.storeSkills persists deleted/current skills during
+		// GeneralUpdateTask. C# snapshots the currently modeled live skill list.
+		await using (var deleteCommand = connection.CreateCommand())
+		{
+			deleteCommand.CommandText = "DELETE FROM player_skills WHERE player_id = ?";
+			deleteCommand.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+			await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		if (skills.Count == 0)
+			return;
+
+		await using var command = connection.CreateCommand();
+		command.CommandText = "REPLACE INTO player_skills (player_id, skill_id, skill_level) VALUES (?, ?, ?)";
+		foreach (var skill in skills)
+		{
+			command.Parameters.Clear();
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = skill.SkillId },
+					new MySqlParameter { Value = skill.SkillLevel },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+		}
 	}
 
 	private static CharacterAppearance ReadAppearance(MySqlDataReader reader)

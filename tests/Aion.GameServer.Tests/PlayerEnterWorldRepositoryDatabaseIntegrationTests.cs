@@ -340,6 +340,47 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePeriodicPlayerGeneralAsync_ReplacesLiveSkillListAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerEnterWorldService.GeneralUpdateTask.run calls
+		// PlayerSkillListDAO.storeSkills(player), whose DB shape is player_id/skill_id/skill_level.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO player_skills (player_id, skill_id, skill_level)
+			VALUES (1001, 37, 1), (1001, 99999, 1)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PeriodicSkillIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			Skills =
+			[
+				new PlayerSkill { SkillId = 37, SkillLevel = 2 },
+				new PlayerSkill { SkillId = 43, SkillLevel = 1 },
+			],
+		};
+
+		var saved = await repository.SavePeriodicPlayerGeneralAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(2, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM player_skills WHERE player_id = 1001"));
+		Assert.Equal(2, await ExecuteScalarLongAsync("SELECT skill_level FROM player_skills WHERE player_id = 1001 AND skill_id = 37"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT skill_level FROM player_skills WHERE player_id = 1001 AND skill_id = 43"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM player_skills WHERE player_id = 1001 AND skill_id = 99999"));
+	}
+
+	[Fact]
 	public async Task SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
