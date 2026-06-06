@@ -12,6 +12,7 @@ public sealed class SmQuestionWindow : GameServerPacket
 	public const int ExchangeAcceptRequest = 90001;
 	public const int BuddyListAddBuddyRequest = 1401498;
 	public const int SoulBoundItemConfirm = 95006;
+	public const int GuildChangeMasterDoYouAcceptOffer = 80011;
 	public const int ItemChargeAllConfirm = 903026;
 	public const int ItemCharge2AllConfirm = 904039;
 	public const int AskRecoverExperience = 160011;

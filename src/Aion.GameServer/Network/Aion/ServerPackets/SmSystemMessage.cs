@@ -287,6 +287,48 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300265, memberName);
 	}
 
+	public static SmSystemMessage GuildChangeMasterDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_DONT_HAVE_RIGHT.
+		return new SmSystemMessage(1300269);
+	}
+
+	public static SmSystemMessage GuildChangeMasterNoSuchUser()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_NO_SUCH_USER.
+		return new SmSystemMessage(1300270);
+	}
+
+	public static SmSystemMessage GuildChangeMasterErrorSelf()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_ERROR_SELF.
+		return new SmSystemMessage(1300271);
+	}
+
+	public static SmSystemMessage GuildChangeMasterNotMyGuildMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_NOT_MY_GUILD_MEMBER(String).
+		return new SmSystemMessage(1300272, memberName);
+	}
+
+	public static SmSystemMessage GuildChangeMasterSentOfferMsgToHim(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_SENT_OFFER_MSG_TO_HIM(String).
+		return new SmSystemMessage(1300330, memberName);
+	}
+
+	public static SmSystemMessage GuildChangeMasterSentCantOfferWhenHeIsQuestionAsked()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_SENT_CANT_OFFER_WHEN_HE_IS_QUESTION_ASKED.
+		return new SmSystemMessage(1300331);
+	}
+
+	public static SmSystemMessage GuildChangeMasterHeDeclineYourOffer(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MASTER_HE_DECLINE_YOUR_OFFER(String).
+		return new SmSystemMessage(1300332, memberName);
+	}
+
 	public static SmSystemMessage GuildLeaveCantLeaveGuildWhileUsingWarehouse()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_LEAVE_CANT_LEAVE_GUILD_WHILE_USING_WAREHOUSE.

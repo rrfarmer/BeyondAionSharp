@@ -42,6 +42,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int LegionWarehouseDepositPermission = 0x1000;
 	private const int LegionKickPermission = 0x10;
 	private const int LegionEditPermission = 0x200;
+	private const int LegionBrigadeGeneralTransferConfirmQuestionId = 904979;
 	private const int MaxLegionLevel = 8;
 	private const int MaxLegionAnnouncementLength = 256;
 	private const int MinLegionEmblemId = 0;
@@ -3099,6 +3100,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x04:
 				await HandleLegionKickMemberAsync(player, packet.CharacterName);
 				break;
+			case 0x05:
+				await HandleLegionBrigadeGeneralTransferRequestAsync(player, packet.CharacterName);
+				break;
 			case 0x06:
 				await HandleLegionRankChangeAsync(player, packet.CharacterName, packet.Rank);
 				break;
@@ -3529,6 +3533,43 @@ public sealed class GameServerConnection : BaseClientConnection
 			_options.Network.GameServerId,
 			GetLegionRankChangeMessageId(newRank),
 			updatedMember.Name));
+	}
+
+	private async Task HandleLegionBrigadeGeneralTransferRequestAsync(Player player, string memberName)
+	{
+		// Java parity: LegionService.startBrigadeGeneralChangeProcess resolves an online World player,
+		// stores a ResponseRequester entry on the requester, then sends SM_QUESTION_WINDOW(904979).
+		var normalizedMemberName = ConvertCharacterName(memberName);
+		if (_connectionRegistry == null
+			|| !_connectionRegistry.TryGetOnlinePlayerByName(normalizedMemberName, out var targetPlayer)
+			|| targetPlayer == null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMasterNoSuchUser());
+			return;
+		}
+
+		var request = new PendingLegionBrigadeGeneralTransferRequest(
+			player.ObjectId,
+			player.Name,
+			targetPlayer.ObjectId,
+			targetPlayer.Name,
+			player.LegionId);
+		if (!player.ResponseRequester.PutRequest(
+			LegionBrigadeGeneralTransferConfirmQuestionId,
+			new QuestionResponseRequest(
+				targetPlayer.ObjectId,
+				QuestionResponseRequestKind.LegionBrigadeGeneralTransferConfirm,
+				request)))
+		{
+			return;
+		}
+
+		player.PendingLegionBrigadeGeneralTransferRequest = request;
+		await SendPacketAsync(new SmQuestionWindow(
+			LegionBrigadeGeneralTransferConfirmQuestionId,
+			senderObjectId: 0,
+			rangeOrCooldownSeconds: 0,
+			targetPlayer.Name));
 	}
 
 	private async Task HandleLegionNicknameChangeAsync(Player player, string memberName, string newNickname)
@@ -15552,6 +15593,18 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == LegionBrigadeGeneralTransferConfirmQuestionId)
+		{
+			await HandleLegionBrigadeGeneralTransferConfirmResponseAsync(responder, packet);
+			return;
+		}
+
+		if (packet.QuestionId == SmQuestionWindow.GuildChangeMasterDoYouAcceptOffer)
+		{
+			await HandleLegionBrigadeGeneralTransferOfferResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
@@ -15615,6 +15668,110 @@ public sealed class GameServerConnection : BaseClientConnection
 			defenderAlliance: resolvedInputs?.DefenderAlliance);
 		_vortexDefenderAcceptanceObserver?.Invoke(observerReport);
 		_vortexDefenderInvitationResponseObserver?.Invoke(observerReport.TransitionReport.ConsumptionReport);
+	}
+
+	private async Task HandleLegionBrigadeGeneralTransferConfirmResponseAsync(Player requester, CmQuestionResponse packet)
+	{
+		// Java parity: the requester answers SM_QUESTION_WINDOW(904979); accept calls
+		// LegionService.appointBrigadeGeneral(activePlayer, targetPlayer).
+		var dispatch = requester.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.LegionBrigadeGeneralTransferConfirm)
+		{
+			requester.PendingLegionBrigadeGeneralTransferRequest = null;
+			return;
+		}
+
+		var request = dispatch.Request.Payload as PendingLegionBrigadeGeneralTransferRequest
+			?? requester.PendingLegionBrigadeGeneralTransferRequest;
+		requester.PendingLegionBrigadeGeneralTransferRequest = null;
+		if (request == null || packet.Response == 0)
+			return;
+
+		if (_connectionRegistry == null
+			|| !_connectionRegistry.TryGetOnlinePlayerByName(request.TargetName, out var targetPlayer)
+			|| targetPlayer == null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMasterNoSuchUser());
+			return;
+		}
+
+		if (!await CanStartLegionBrigadeGeneralTransferAsync(requester, targetPlayer))
+			return;
+
+		var targetRequest = request with
+		{
+			RequesterObjectId = requester.ObjectId,
+			RequesterName = requester.Name,
+			TargetObjectId = targetPlayer.ObjectId,
+			TargetName = targetPlayer.Name,
+			LegionId = requester.LegionId,
+		};
+		if (!targetPlayer.ResponseRequester.PutRequest(
+			SmQuestionWindow.GuildChangeMasterDoYouAcceptOffer,
+			new QuestionResponseRequest(
+				requester.ObjectId,
+				QuestionResponseRequestKind.LegionBrigadeGeneralTransferOffer,
+				targetRequest)))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMasterSentCantOfferWhenHeIsQuestionAsked());
+			return;
+		}
+
+		targetPlayer.PendingLegionBrigadeGeneralTransferRequest = targetRequest;
+		await SendPacketAsync(SmSystemMessage.GuildChangeMasterSentOfferMsgToHim(targetPlayer.Name));
+		await _connectionRegistry.SendPacketToPlayerAsync(
+			targetPlayer.ObjectId,
+			new SmQuestionWindow(
+				SmQuestionWindow.GuildChangeMasterDoYouAcceptOffer,
+				requester.ObjectId,
+				rangeOrCooldownSeconds: 0,
+				requester.Name));
+	}
+
+	private async Task HandleLegionBrigadeGeneralTransferOfferResponseAsync(Player targetPlayer, CmQuestionResponse packet)
+	{
+		// Java parity: target denyRequest sends STR_GUILD_CHANGE_MASTER_HE_DECLINE_YOUR_OFFER to the requester.
+		// Accept-side rank mutation remains a separate runtime slice.
+		var dispatch = targetPlayer.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.LegionBrigadeGeneralTransferOffer)
+		{
+			targetPlayer.PendingLegionBrigadeGeneralTransferRequest = null;
+			return;
+		}
+
+		var request = dispatch.Request.Payload as PendingLegionBrigadeGeneralTransferRequest
+			?? targetPlayer.PendingLegionBrigadeGeneralTransferRequest;
+		targetPlayer.PendingLegionBrigadeGeneralTransferRequest = null;
+		if (request == null || packet.Response != 0 || _connectionRegistry == null)
+			return;
+
+		await _connectionRegistry.SendPacketToPlayerAsync(
+			request.RequesterObjectId,
+			SmSystemMessage.GuildChangeMasterHeDeclineYourOffer(targetPlayer.Name));
+	}
+
+	private async Task<bool> CanStartLegionBrigadeGeneralTransferAsync(Player requester, Player targetPlayer)
+	{
+		// Java parity: LegionRestrictions.canAppointBrigadeGeneral(activePlayer, targetPlayer).
+		if (!requester.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMasterDontHaveRight());
+			return false;
+		}
+
+		if (requester.ObjectId == targetPlayer.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMasterErrorSelf());
+			return false;
+		}
+
+		if (requester.LegionId <= 0 || targetPlayer.LegionId != requester.LegionId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMasterNotMyGuildMember(targetPlayer.Name));
+			return false;
+		}
+
+		return true;
 	}
 
 	internal async Task<GroupInviteRequestResult?> HandleInviteToGroupAsync(

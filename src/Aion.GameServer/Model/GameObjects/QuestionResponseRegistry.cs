@@ -110,6 +110,8 @@ public enum QuestionResponseRequestKind
 	CraftSkillLearn,
 	StorageExpansion,
 	BeshmundirDifficultyEnter,
+	LegionBrigadeGeneralTransferConfirm,
+	LegionBrigadeGeneralTransferOffer,
 }
 
 public sealed record QuestionResponseRequest(

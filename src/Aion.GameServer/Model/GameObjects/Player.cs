@@ -881,6 +881,8 @@ public sealed class Player
 
 	public PendingStorageExpansionRequest? PendingStorageExpansionRequest { get; set; }
 
+	public PendingLegionBrigadeGeneralTransferRequest? PendingLegionBrigadeGeneralTransferRequest { get; set; }
+
 	// Java parity: controllers/CreatureController TaskId.TELEPORT stores TeleportService.SpawnTask until CM_TELEPORT_ANIMATION_DONE.
 	public PendingPlayerTeleport? PendingTeleport { get; set; }
 
