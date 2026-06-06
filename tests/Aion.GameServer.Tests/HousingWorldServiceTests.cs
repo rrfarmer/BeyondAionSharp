@@ -493,5 +493,22 @@ public sealed class HousingWorldServiceTests
 			DeletedHouseObjectId = itemObjectId;
 			return Task.FromResult(true);
 		}
+
+		public Task<bool> StoreHouseScriptAsync(
+			int houseObjectId,
+			int scriptId,
+			string scriptXml,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> DeleteHouseScriptAsync(
+			int houseObjectId,
+			int scriptId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
 	}
 }

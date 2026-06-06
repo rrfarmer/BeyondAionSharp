@@ -21,6 +21,8 @@ public sealed record PlayerHouse(
 	public const byte DoorClosedExceptFriends = 2;
 	public const byte DoorClosed = 3;
 
+	public PlayerScripts Scripts { get; init; } = new(ObjectId);
+
 	public int GetGraceSeconds(Func<DateTime>? clock = null, JavaCronSchedule? auctionEndSchedule = null)
 	{
 		// Java parity: model/house/House.secondsUntilGraceEnd -> findGraceEndTime.

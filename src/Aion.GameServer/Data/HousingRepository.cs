@@ -67,6 +67,17 @@ public interface IHousingRepository
 		int playerObjectId,
 		int itemObjectId,
 		CancellationToken cancellationToken = default);
+
+	Task<bool> StoreHouseScriptAsync(
+		int houseObjectId,
+		int scriptId,
+		string scriptXml,
+		CancellationToken cancellationToken = default);
+
+	Task<bool> DeleteHouseScriptAsync(
+		int houseObjectId,
+		int scriptId,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed class EmptyHousingRepository : IHousingRepository
@@ -155,6 +166,23 @@ public sealed class EmptyHousingRepository : IHousingRepository
 	public Task<bool> DeleteHouseRegisteredObjectAsync(
 		int playerObjectId,
 		int itemObjectId,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> StoreHouseScriptAsync(
+		int houseObjectId,
+		int scriptId,
+		string scriptXml,
+		CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(true);
+	}
+
+	public Task<bool> DeleteHouseScriptAsync(
+		int houseObjectId,
+		int scriptId,
 		CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult(true);
@@ -648,6 +676,67 @@ public sealed class MySqlHousingRepository : IHousingRepository
 				"Could not delete registered house object {HouseObjectId} for player {PlayerObjectId}",
 				itemObjectId,
 				playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> StoreHouseScriptAsync(
+		int houseObjectId,
+		int scriptId,
+		string scriptXml,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/HouseScriptsDAO.storeScript.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				INSERT INTO house_scripts (house_id, script_id, script)
+				VALUES (?, ?, ?)
+				ON DUPLICATE KEY UPDATE house_id = VALUES(house_id), script_id = VALUES(script_id), script = VALUES(script)
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = houseObjectId },
+					new MySqlParameter { Value = scriptId },
+					new MySqlParameter { Value = scriptXml },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save script data for houseId: {HouseObjectId}", houseObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeleteHouseScriptAsync(
+		int houseObjectId,
+		int scriptId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/HouseScriptsDAO.deleteScript.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "DELETE FROM house_scripts WHERE house_id = ? AND script_id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = houseObjectId },
+					new MySqlParameter { Value = scriptId },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not delete script for houseId: {HouseObjectId}", houseObjectId);
 			return false;
 		}
 	}

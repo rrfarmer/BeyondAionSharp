@@ -2013,10 +2013,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					await HandleHouseEditAsync(_activePlayer, houseEdit);
 				break;
 			case CmHouseScript houseScript:
-				// Java parity: network/aion/clientpackets/CM_HOUSE_SCRIPT.runImpl validates active house ownership,
-				// mutates PlayerScripts, sends overflow errors, and broadcasts SM_HOUSE_SCRIPTS. Live script persistence/fanout remains unported.
-				if (_activePlayer != null && houseScript.CompressedSize > CmHouseScript.MaxCompressedScriptSize)
-					await SendPacketAsync(SmSystemMessage.HousingScriptOverflow());
+				if (_activePlayer != null)
+					await HandleHouseScriptAsync(_activePlayer, houseScript);
 				break;
 			case CmMarkFriendList:
 				if (_activePlayer != null)
@@ -15003,6 +15001,50 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: services/HousingService.findActiveHouse prefers the loaded studio, otherwise the non-inactive custom house.
 		return player.Houses.FirstOrDefault(house => !house.IsInactive);
+	}
+
+	private async Task HandleHouseScriptAsync(Player player, CmHouseScript houseScript)
+	{
+		// Java parity: network/aion/clientpackets/CM_HOUSE_SCRIPT.runImpl.
+		if (houseScript.CompressedSize > CmHouseScript.MaxCompressedScriptSize)
+		{
+			await SendPacketAsync(SmSystemMessage.HousingScriptOverflow());
+			return;
+		}
+
+		var activeHouse = GetActiveHouse(player);
+		if (activeHouse == null || activeHouse.AddressId != houseScript.Address)
+		{
+			_logger.LogWarning(
+				"Player {PlayerObjectId} tried to modify script of house they don't own (address {HouseAddress})",
+				player.ObjectId,
+				houseScript.Address);
+			return;
+		}
+
+		PlayerScript? script;
+		if (houseScript.TotalSize == 0)
+		{
+			if (!activeHouse.Scripts.Remove(houseScript.ScriptId))
+				return;
+			await _housingRepository.DeleteHouseScriptAsync(activeHouse.ObjectId, houseScript.ScriptId);
+			script = activeHouse.Scripts.Get(houseScript.ScriptId);
+		}
+		else
+		{
+			if (!PlayerScripts.TryDecodeXml(houseScript.ScriptContent, houseScript.UncompressedSize, out var scriptXml))
+				return;
+			if (!activeHouse.Scripts.Set(houseScript.ScriptId, houseScript.ScriptContent, houseScript.UncompressedSize))
+				return;
+			await _housingRepository.StoreHouseScriptAsync(activeHouse.ObjectId, houseScript.ScriptId, scriptXml);
+			script = activeHouse.Scripts.Get(houseScript.ScriptId);
+		}
+
+		if (script != null && _connectionRegistry != null)
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				player.Position,
+				player.ObjectId,
+				new SmHouseScripts(activeHouse.AddressId, script));
 	}
 
 	private void RegisterLoadedHouses(Player player, HousingTemplateTable? housingTemplates)
