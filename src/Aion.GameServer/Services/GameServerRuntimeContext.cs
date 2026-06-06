@@ -11,6 +11,8 @@ public sealed class GameServerRuntimeContext
 
 	public LegionWarehouseRuntime LegionWarehouses { get; } = new();
 
+	public LegionBonusRuntime LegionBonuses { get; } = new();
+
 	public WorldMapRuntimeStateTable WorldMapStates { get; private set; } = WorldMapRuntimeStateTable.Empty;
 
 	public LimitedItemTradeService LimitedItems { get; private set; } = LimitedItemTradeService.Empty;

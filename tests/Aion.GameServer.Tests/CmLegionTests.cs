@@ -1467,6 +1467,19 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void SmIconInfo_WritesJavaConditionalBonusShape()
+	{
+		var packet = new SmIconInfo(1, display: true);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+
+		Assert.Equal(SmIconInfo.PacketOpCode, packet.OpCode);
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(1, reader.ReadD());
+		Assert.Equal(1, reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_LegionInviteAcceptPersistsMemberMutatesStateAndBroadcastsLikeJava()
 	{
 		var target = CreateUnguildedPlayer(2002, "Lurion");
@@ -1775,6 +1788,42 @@ public sealed class CmLegionTests
 			isFirst: false,
 			signedCount: -2,
 			CreateExpectedLargeRosterRows(startOfflineIndex: 79, count: 2, includeLeader: false));
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteAcceptActivatesOnlineBonusAtJavaThreshold()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var player = CreateBrigadeGeneralPlayer();
+		var onlineMembers = Enumerable.Range(0, 8)
+			.Select(index => CreateLegionPlayer(3000 + index, $"Watcher{index}"))
+			.ToArray();
+		var registryPlayers = new[] { player, target }.Concat(onlineMembers).ToArray();
+		var registry = new CapturingConnectionRegistry(registryPlayers);
+		var runtimeContext = new GameServerRuntimeContext();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry, runtimeContext);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+		pair.SentPackets.Clear();
+		registry.DirectPackets.Clear();
+		registry.VisibleBroadcasts.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 1));
+
+		Assert.True(runtimeContext.LegionBonuses.IsActive(player.LegionId));
+		var iconPackets = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmIconInfo)
+			.OrderBy(delivery => delivery.PlayerObjectId)
+			.ToArray();
+		Assert.Equal(10, iconPackets.Length);
+		Assert.Equal(
+			new[] { player.ObjectId, target.ObjectId }.Concat(onlineMembers.Select(member => member.ObjectId)).OrderBy(id => id),
+			iconPackets.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in iconPackets)
+			AssertIconInfoPacket(delivery.Packet, buffId: 1, display: true);
 	}
 
 	[Fact]
@@ -2914,6 +2963,16 @@ public sealed class CmLegionTests
 		Assert.Equal(gameServerId, reader.ReadD());
 		Assert.Equal(messageId, reader.ReadD());
 		Assert.Equal(text, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertIconInfoPacket(GameServerPacket packet, int buffId, bool display)
+	{
+		var response = Assert.IsType<SmIconInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(buffId, reader.ReadD());
+		Assert.Equal(display ? 1 : 0, reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 

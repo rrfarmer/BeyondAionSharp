@@ -96,6 +96,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerGroupRuntime _playerGroupRuntime;
 	private readonly PlayerAllianceRuntime _playerAllianceRuntime;
 	private readonly LegionWarehouseRuntime _legionWarehouses;
+	private readonly LegionBonusRuntime _legionBonuses;
 	private readonly AutoGroupInstanceLeaveRuntimeService _autoGroupInstanceLeaveRuntimeService;
 	private readonly AutoGroupLookingPartyRegistrationService _autoGroupLookingPartyRegistrations;
 	private readonly AutoGroupPenaltyRefreshSchedulerService? _autoGroupPenaltyRefreshScheduler;
@@ -292,6 +293,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerGroupRuntime = playerGroupRuntime ?? new PlayerGroupRuntime();
 		_playerAllianceRuntime = playerAllianceRuntime ?? new PlayerAllianceRuntime();
 		_legionWarehouses = _runtimeContext?.LegionWarehouses ?? new LegionWarehouseRuntime();
+		_legionBonuses = _runtimeContext?.LegionBonuses ?? new LegionBonusRuntime();
 		_autoGroupInstanceLeaveRuntimeService = autoGroupInstanceLeaveRuntimeService
 			?? new AutoGroupInstanceLeaveRuntimeService(_playerGroupRuntime, _playerAllianceRuntime);
 		_autoGroupLookingPartyRegistrations = autoGroupLookingPartyRegistrations ?? new AutoGroupLookingPartyRegistrationService();
@@ -15825,6 +15827,27 @@ public sealed class GameServerConnection : BaseClientConnection
 		await BroadcastLegionInviteEmblemAsync(responder);
 		await BroadcastToOnlineLegionAsync(responder.LegionId, SmLegionEdit.RefreshAnnouncement);
 		await BroadcastLegionJoinTitleAsync(responder);
+		await AddLegionBonusIfEligibleAsync(responder.LegionId);
+	}
+
+	private async Task AddLegionBonusIfEligibleAsync(int legionId)
+	{
+		// Java parity: Legion.addBonus toggles once when online members reach ten and sends SM_ICON_INFO(1, true).
+		if (_connectionRegistry == null || legionId <= 0)
+			return;
+
+		var onlineMembers = new List<Player>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == legionId)
+				onlineMembers.Add(candidate);
+		});
+
+		if (!_legionBonuses.TryActivate(legionId, onlineMembers.Count))
+			return;
+
+		foreach (var member in onlineMembers)
+			await _connectionRegistry.SendPacketToPlayerAsync(member.ObjectId, new SmIconInfo(1, display: true));
 	}
 
 	private async Task<bool> CanAddLegionInviteMemberAsync(int legionId, int legionLevel)
