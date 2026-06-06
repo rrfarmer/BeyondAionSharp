@@ -3706,6 +3706,22 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveLegionCurrentDominionAsync(
+			int legionId,
+			int currentLegionDominion,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> TryAddLegionDominionParticipantAsync(
+			int legionDominionId,
+			int legionId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveLegionAnnouncementAsync(
 			int legionId,
 			string? announcement,

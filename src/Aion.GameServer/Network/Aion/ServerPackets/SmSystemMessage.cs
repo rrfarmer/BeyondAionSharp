@@ -47,6 +47,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402627, itemName ?? string.Empty);
 	}
 
+	public static SmSystemMessage MsgGuildApplyDominion(string siegeName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GUILD_APPLY_DOMINION(String).
+		return new SmSystemMessage(1402902, siegeName);
+	}
+
 	public static SmSystemMessage WarehouseTooFarFromNpc()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_TOO_FAR_FROM_NPC.

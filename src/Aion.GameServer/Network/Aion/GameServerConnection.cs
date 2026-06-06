@@ -3107,6 +3107,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x0F:
 				await HandleLegionNicknameChangeAsync(player, packet.CharacterName, packet.NewNickname);
 				break;
+			case 0x10:
+				await HandleLegionDominionJoinAsync(player, packet.LegionDominionId);
+				break;
 		}
 	}
 
@@ -3261,6 +3264,56 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmLegionEdit.Level(newLevel));
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmSystemMessage.GuildEventLevelUp(newLevel));
+		}
+	}
+
+	private async Task HandleLegionDominionJoinAsync(Player player, int legionDominionId)
+	{
+		// Java parity: LegionService.joinLegionDominion.
+		if (!player.IsBrigadeGeneral && !string.Equals(player.LegionRank, LegionRanks.Deputy, StringComparison.Ordinal))
+			return;
+
+		if (player.LegionCurrentLegionDominion > 0)
+			return;
+
+		if (_playerEnterWorldRepository == null)
+			return;
+
+		if (!await _playerEnterWorldRepository.TryAddLegionDominionParticipantAsync(legionDominionId, player.LegionId))
+			return;
+
+		if (!await _playerEnterWorldRepository.SaveLegionCurrentDominionAsync(player.LegionId, legionDominionId))
+			return;
+
+		await BroadcastLegionDominionJoinedAsync(player, legionDominionId);
+	}
+
+	private async Task BroadcastLegionDominionJoinedAsync(Player player, int legionDominionId)
+	{
+		// Java uses LegionDominionLocation.getL10n(); dominion static l10n loading remains a narrower follow-up.
+		var dominionName = legionDominionId.ToString(CultureInfo.InvariantCulture);
+		player.LegionCurrentLegionDominion = legionDominionId;
+		await SendPacketAsync(SmSystemMessage.MsgGuildApplyDominion(dominionName));
+		await SendPacketAsync(SmLegionInfo.FromPlayer(player));
+
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != player.LegionId)
+				return;
+
+			candidate.LegionCurrentLegionDominion = legionDominionId;
+			if (candidate.ObjectId != player.ObjectId)
+				recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmSystemMessage.MsgGuildApplyDominion(dominionName));
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmLegionInfo.FromPlayer(player));
 		}
 	}
 

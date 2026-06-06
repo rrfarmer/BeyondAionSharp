@@ -1033,6 +1033,59 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SaveLegionCurrentDominionAsync_WritesJavaLegionDominionColumn_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionService.joinLegionDominion -> Legion.setCurrentLegionDominion
+		// -> LegionDAO.storeLegion writes current_legion_dominion.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level, current_legion_dominion)
+			VALUES (5001, 'Hydrated Legion', 4, 0)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var saved = await repository.SaveLegionCurrentDominionAsync(5001, 5);
+
+		Assert.True(saved);
+		Assert.Equal(5, await ExecuteScalarLongAsync("SELECT current_legion_dominion FROM legions WHERE id = 5001"));
+	}
+
+	[Fact]
+	public async Task TryAddLegionDominionParticipantAsync_InsertsOnceLikeJavaLocationJoin_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionDominionLocation.join rejects existing legion ids before
+		// LegionDominionDAO.storeNewInfo inserts legion_dominion_participants.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var inserted = await repository.TryAddLegionDominionParticipantAsync(5, 5001);
+		var duplicate = await repository.TryAddLegionDominionParticipantAsync(5, 5001);
+
+		Assert.True(inserted);
+		Assert.False(duplicate);
+		Assert.Equal(
+			1,
+			await ExecuteScalarLongAsync(
+				"SELECT COUNT(*) FROM legion_dominion_participants WHERE legion_dominion_id = 5 AND legion_id = 5001"));
+	}
+
+	[Fact]
 	public async Task LoadPlayerAsync_HydratesLatestLegionAnnouncementAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

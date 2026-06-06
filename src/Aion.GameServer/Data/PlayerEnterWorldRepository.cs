@@ -55,6 +55,16 @@ public interface IPlayerEnterWorldRepository
 		ChallengeTaskSummary task,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveLegionCurrentDominionAsync(
+		int legionId,
+		int currentLegionDominion,
+		CancellationToken cancellationToken = default);
+
+	Task<bool> TryAddLegionDominionParticipantAsync(
+		int legionDominionId,
+		int legionId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveLegionAnnouncementAsync(
 		int legionId,
 		string? announcement,
@@ -831,6 +841,38 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		SavedNewLegionChallengeTasks.Add((legionId, task));
 		return Task.FromResult(SaveNewLegionChallengeTaskResult);
+	}
+
+	public bool SaveLegionCurrentDominionResult { get; init; } = true;
+
+	public int SaveLegionCurrentDominionCalls { get; private set; }
+
+	public (int LegionId, int CurrentLegionDominion)? SavedLegionCurrentDominion { get; private set; }
+
+	public Task<bool> SaveLegionCurrentDominionAsync(
+		int legionId,
+		int currentLegionDominion,
+		CancellationToken cancellationToken = default)
+	{
+		SaveLegionCurrentDominionCalls++;
+		SavedLegionCurrentDominion = (legionId, currentLegionDominion);
+		return Task.FromResult(SaveLegionCurrentDominionResult);
+	}
+
+	public bool TryAddLegionDominionParticipantResult { get; init; } = true;
+
+	public int TryAddLegionDominionParticipantCalls { get; private set; }
+
+	public (int LegionDominionId, int LegionId)? AddedLegionDominionParticipant { get; private set; }
+
+	public Task<bool> TryAddLegionDominionParticipantAsync(
+		int legionDominionId,
+		int legionId,
+		CancellationToken cancellationToken = default)
+	{
+		TryAddLegionDominionParticipantCalls++;
+		AddedLegionDominionParticipant = (legionDominionId, legionId);
+		return Task.FromResult(TryAddLegionDominionParticipantResult);
 	}
 
 	public bool SaveLegionAnnouncementResult { get; init; } = true;
@@ -2333,6 +2375,76 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not insert legion challenge task {TaskId} for legion {LegionId}", task.TaskId, legionId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveLegionCurrentDominionAsync(
+		int legionId,
+		int currentLegionDominion,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionDAO.storeLegion persists current_legion_dominion after LegionService.joinLegionDominion.
+		if (legionId <= 0 || currentLegionDominion <= 0)
+			return false;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = "UPDATE legions SET current_legion_dominion = ? WHERE id = ?";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = currentLegionDominion },
+					new MySqlParameter { Value = legionId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save current dominion {DominionId} for legion {LegionId}", currentLegionDominion, legionId);
+			return false;
+		}
+	}
+
+	public async Task<bool> TryAddLegionDominionParticipantAsync(
+		int legionDominionId,
+		int legionId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionDominionLocation.join rejects an existing legion participant, then LegionDominionDAO.storeNewInfo inserts.
+		if (legionDominionId <= 0 || legionId <= 0)
+			return false;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				INSERT INTO legion_dominion_participants (legion_dominion_id, legion_id)
+				SELECT ?, ?
+				WHERE NOT EXISTS (
+					SELECT 1
+					FROM legion_dominion_participants
+					WHERE legion_dominion_id = ? AND legion_id = ?
+				)
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = legionDominionId },
+					new MySqlParameter { Value = legionId },
+					new MySqlParameter { Value = legionDominionId },
+					new MySqlParameter { Value = legionId },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not add legion {LegionId} to dominion {DominionId}", legionId, legionDominionId);
 			return false;
 		}
 	}
