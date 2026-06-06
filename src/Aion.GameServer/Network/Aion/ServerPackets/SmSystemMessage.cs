@@ -983,6 +983,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300416);
 	}
 
+	public static SmSystemMessage WarehouseDepositFullBasket()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_DEPOSIT_FULL_BASKET.
+		return new SmSystemMessage(1300421);
+	}
+
+	public static SmSystemMessage WarehouseFullInventory()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_FULL_INVENTORY.
+		return new SmSystemMessage(1390149);
+	}
+
 	public static SmSystemMessage InventorySizeExtended(int slots)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_SIZE_EXTENDED.

@@ -3990,6 +3990,13 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (targetItem == null)
 		{
+			var storageFullMessage = CreateStorageFullMessage(player, packet.DestinationStorageType, templates!);
+			if (storageFullMessage != null)
+			{
+				await SendPacketAsync(storageFullMessage);
+				return;
+			}
+
 			// Split into empty slot (same or cross storage).
 			if (_idFactory == null)
 				return;
@@ -4153,6 +4160,23 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(new SmInventoryUpdateItem(destKinah, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahMerge));
 		else
 			await SendPacketAsync(new SmWarehouseUpdateItem(destKinah, kinahTemplate, destinationStorageType, SmInventoryUpdateItem.IncreaseKinahMerge));
+	}
+
+	private static SmSystemMessage? CreateStorageFullMessage(Player player, int storageType, ItemTemplateTable itemTemplates)
+	{
+		// Java parity: model/items/storage/IStorage.getStorageIsFullMessage.
+		return storageType switch
+		{
+			0 when InventoryCapacity.GetFreeCubeSlots(player, itemTemplates) <= 0 => SmSystemMessage.WarehouseFullInventory(),
+			1 when GetRegularWarehouseFreeSlots(player) <= 0 => SmSystemMessage.WarehouseDepositFullBasket(),
+			_ => null,
+		};
+	}
+
+	private static int GetRegularWarehouseFreeSlots(Player player)
+	{
+		var usedSlots = player.InventoryItems.Count(item => item.Location == 1 && item.ItemId != KinahItemId);
+		return Math.Max(0, InventoryCapacity.GetWarehouseLimit(player) - usedSlots);
 	}
 
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)

@@ -1129,6 +1129,72 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSplitItemAsync_FullCubeDestinationSendsJavaStorageFullMessageWithoutMutation()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5, location: 1);
+		player.InventoryItems = player.InventoryItems
+			.Concat(CreateStorageFillerItems(location: 0, count: InventoryCapacity.GetCubeLimit(player)))
+			.ToArray();
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 2,
+				sourceStorageType: 1,
+				destinationItemObjectId: 0,
+				destinationStorageType: 0,
+				slotNumber: 8));
+
+		Assert.Equal(28, player.InventoryItems.Count);
+		var sourceItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(5, sourceItem.Count);
+		Assert.Equal(1, sourceItem.Location);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 1);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1390149));
+	}
+
+	[Fact]
+	public async Task HandleSplitItemAsync_FullWarehouseDestinationSendsJavaStorageFullMessageWithoutMutation()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5);
+		player.InventoryItems = player.InventoryItems
+			.Concat(CreateStorageFillerItems(location: 1, count: InventoryCapacity.GetWarehouseLimit(player)))
+			.ToArray();
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 2,
+				sourceStorageType: 0,
+				destinationItemObjectId: 0,
+				destinationStorageType: 1,
+				slotNumber: 8));
+
+		Assert.Equal(25, player.InventoryItems.Count);
+		var sourceItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(5, sourceItem.Count);
+		Assert.Equal(0, sourceItem.Location);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 1);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421));
+	}
+
+	[Fact]
 	public async Task HandleReplaceItemAsync_CrossStorageSwitchDeletesThenAddsLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -3593,6 +3659,19 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				},
 			],
 		};
+	}
+
+	private static InventoryItem[] CreateStorageFillerItems(int location, int count)
+	{
+		return Enumerable.Range(0, count)
+			.Select(index => new InventoryItem
+			{
+				ObjectId = 6000 + index,
+				ItemId = 200,
+				Count = 1,
+				Location = location,
+			})
+			.ToArray();
 	}
 
 	private static Player CreateApExtractPlayer(long sourceCount = 2)
