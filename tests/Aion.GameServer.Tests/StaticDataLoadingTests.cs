@@ -158,12 +158,12 @@ public sealed class StaticDataLoadingTests
 			<static_data>
 				<challenge_tasks>
 					<task id="300" type="LEGION" race="ELYOS" min_level="5" max_level="5" legion_level_task="true">
-						<quest id="17000" repeat_count="6" />
-						<quest id="17001" repeat_count="12" />
-						<quest id="17002" repeat_count="42" />
+						<quest id="17000" repeat_count="6" score="5" />
+						<quest id="17001" repeat_count="12" score="6" />
+						<quest id="17002" repeat_count="42" score="7" />
 					</task>
 					<task id="900" type="TOWN" race="ELYOS" min_level="1" max_level="1" legion_level_task="true">
-						<quest id="18000" repeat_count="1" />
+						<quest id="18000" repeat_count="1" score="1" />
 					</task>
 				</challenge_tasks>
 			</static_data>
@@ -184,16 +184,19 @@ public sealed class StaticDataLoadingTests
 			{
 				Assert.Equal(17000, quest.QuestId);
 				Assert.Equal(6, quest.RepeatCount);
+				Assert.Equal(5, quest.Score);
 			},
 			quest =>
 			{
 				Assert.Equal(17001, quest.QuestId);
 				Assert.Equal(12, quest.RepeatCount);
+				Assert.Equal(6, quest.Score);
 			},
 			quest =>
 			{
 				Assert.Equal(17002, quest.QuestId);
 				Assert.Equal(42, quest.RepeatCount);
+				Assert.Equal(7, quest.Score);
 			});
 	}
 

@@ -2485,7 +2485,9 @@ public sealed class StaticData
 					reader.GetAttribute("race") ?? string.Empty,
 					ReadRequiredIntAttribute(reader, "min_level"),
 					ReadRequiredIntAttribute(reader, "max_level"),
-					ReadOptionalBoolAttribute(reader, "legion_level_task", false));
+					ReadOptionalBoolAttribute(reader, "legion_level_task", false),
+					ReadOptionalBoolAttribute(reader, "repeat", false),
+					int.TryParse(reader.GetAttribute("prev_task"), out var previousTaskId) ? previousTaskId : (int?)null);
 				if (reader.IsEmptyElement)
 				{
 					challengeTasks.Add(currentChallengeTask.ToSummary());
@@ -2502,7 +2504,8 @@ public sealed class StaticData
 			{
 				currentChallengeTask.AddQuest(new ChallengeQuestSummary(
 					ReadRequiredIntAttribute(reader, "id"),
-					ReadRequiredIntAttribute(reader, "repeat_count")));
+					ReadRequiredIntAttribute(reader, "repeat_count"),
+					ReadRequiredIntAttribute(reader, "score")));
 				continue;
 			}
 
@@ -3498,7 +3501,15 @@ public sealed class StaticData
 	{
 		private readonly List<ChallengeQuestSummary> _quests = [];
 
-		public ChallengeTaskBuilder(int taskId, string type, string race, int minLevel, int maxLevel, bool isLegionLevelTask)
+		public ChallengeTaskBuilder(
+			int taskId,
+			string type,
+			string race,
+			int minLevel,
+			int maxLevel,
+			bool isLegionLevelTask,
+			bool isRepeatable,
+			int? previousTaskId)
 		{
 			TaskId = taskId;
 			Type = type;
@@ -3506,6 +3517,8 @@ public sealed class StaticData
 			MinLevel = minLevel;
 			MaxLevel = maxLevel;
 			IsLegionLevelTask = isLegionLevelTask;
+			IsRepeatable = isRepeatable;
+			PreviousTaskId = previousTaskId;
 		}
 
 		private int TaskId { get; }
@@ -3519,6 +3532,10 @@ public sealed class StaticData
 		private int MaxLevel { get; }
 
 		private bool IsLegionLevelTask { get; }
+
+		private bool IsRepeatable { get; }
+
+		private int? PreviousTaskId { get; }
 
 		public void AddQuest(ChallengeQuestSummary quest)
 		{
@@ -3534,6 +3551,8 @@ public sealed class StaticData
 				MinLevel,
 				MaxLevel,
 				IsLegionLevelTask,
+				IsRepeatable,
+				PreviousTaskId,
 				_quests.AsReadOnly());
 		}
 	}

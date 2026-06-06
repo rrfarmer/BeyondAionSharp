@@ -1331,10 +1331,12 @@ public sealed class CmLegionTests
 					5,
 					5,
 					true,
+					false,
+					null,
 					[
-						new ChallengeQuestSummary(17000, 6),
-						new ChallengeQuestSummary(17001, 12),
-						new ChallengeQuestSummary(17002, 42),
+						new ChallengeQuestSummary(17000, 6, 5),
+						new ChallengeQuestSummary(17001, 12, 6),
+						new ChallengeQuestSummary(17002, 42, 7),
 					]),
 				new ChallengeTaskSummary(
 					400,
@@ -1343,10 +1345,12 @@ public sealed class CmLegionTests
 					5,
 					5,
 					true,
+					false,
+					null,
 					[
-						new ChallengeQuestSummary(27000, 6),
-						new ChallengeQuestSummary(27001, 12),
-						new ChallengeQuestSummary(27002, 42),
+						new ChallengeQuestSummary(27000, 6, 5),
+						new ChallengeQuestSummary(27001, 12, 6),
+						new ChallengeQuestSummary(27002, 42, 7),
 					]),
 			]);
 	}

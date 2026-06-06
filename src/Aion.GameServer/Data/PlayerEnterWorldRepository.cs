@@ -14,7 +14,7 @@ using MySqlConnector;
 
 namespace Aion.GameServer.Data;
 
-public sealed record ChallengeTaskProgressRow(int TaskId, int QuestId, int CompleteCount);
+public sealed record ChallengeTaskProgressRow(int TaskId, int QuestId, int CompleteCount, int CompleteTimeEpochSeconds = 0);
 
 public interface IPlayerEnterWorldRepository
 {
@@ -48,6 +48,11 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<ChallengeTaskProgressRow>> LoadLegionChallengeTasksAsync(
 		int legionId,
+		CancellationToken cancellationToken = default);
+
+	Task<bool> SaveNewLegionChallengeTaskAsync(
+		int legionId,
+		ChallengeTaskSummary task,
 		CancellationToken cancellationToken = default);
 
 	Task<bool> SaveLegionAnnouncementAsync(
@@ -813,6 +818,19 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		LoadLegionChallengeTasksCalls++;
 		LoadedLegionChallengeTasksLegionId = legionId;
 		return Task.FromResult(LoadedLegionChallengeTasks);
+	}
+
+	public List<(int LegionId, ChallengeTaskSummary Task)> SavedNewLegionChallengeTasks { get; } = [];
+
+	public bool SaveNewLegionChallengeTaskResult { get; init; } = true;
+
+	public Task<bool> SaveNewLegionChallengeTaskAsync(
+		int legionId,
+		ChallengeTaskSummary task,
+		CancellationToken cancellationToken = default)
+	{
+		SavedNewLegionChallengeTasks.Add((legionId, task));
+		return Task.FromResult(SaveNewLegionChallengeTaskResult);
 	}
 
 	public bool SaveLegionAnnouncementResult { get; init; } = true;
@@ -2255,7 +2273,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT task_id, quest_id, complete_count
+				SELECT task_id, quest_id, complete_count, complete_time
 				FROM challenge_tasks
 				WHERE owner_id = ? AND owner_type = 'LEGION'
 				""";
@@ -2268,7 +2286,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				rows.Add(new ChallengeTaskProgressRow(
 					ReadInt(reader, "task_id"),
 					ReadInt(reader, "quest_id"),
-					ReadInt(reader, "complete_count")));
+					ReadInt(reader, "complete_count"),
+					ToUnixSeconds(ReadDateTimeOffset(reader, "complete_time"))));
 			}
 
 			return rows;
@@ -2277,6 +2296,44 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load legion challenge tasks for legion {LegionId}", legionId);
 			return Array.Empty<ChallengeTaskProgressRow>();
+		}
+	}
+
+	public async Task<bool> SaveNewLegionChallengeTaskAsync(
+		int legionId,
+		ChallengeTaskSummary task,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ChallengeTasksDAO.storeTask inserts one row per NEW quest entry.
+		if (legionId <= 0 || task.Quests.Count == 0)
+			return false;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+			foreach (var quest in task.Quests)
+			{
+				await using var command = connection.CreateCommand();
+				command.Transaction = transaction;
+				command.CommandText = """
+					INSERT INTO challenge_tasks (task_id, quest_id, owner_id, owner_type, complete_count, complete_time)
+					VALUES (?, ?, ?, 'LEGION', 0, NULL)
+					""";
+				command.Parameters.Add(new MySqlParameter { Value = task.TaskId });
+				command.Parameters.Add(new MySqlParameter { Value = quest.QuestId });
+				command.Parameters.Add(new MySqlParameter { Value = legionId });
+				await command.ExecuteNonQueryAsync(cancellationToken);
+			}
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not insert legion challenge task {TaskId} for legion {LegionId}", task.TaskId, legionId);
+			return false;
 		}
 	}
 

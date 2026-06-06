@@ -3698,6 +3698,14 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult<IReadOnlyList<ChallengeTaskProgressRow>>(Array.Empty<ChallengeTaskProgressRow>());
 		}
 
+		public Task<bool> SaveNewLegionChallengeTaskAsync(
+			int legionId,
+			ChallengeTaskSummary task,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveLegionAnnouncementAsync(
 			int legionId,
 			string? announcement,

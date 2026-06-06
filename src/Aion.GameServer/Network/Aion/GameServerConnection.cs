@@ -1770,8 +1770,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_GF_WEBSHOP_TOKEN_REQUEST.runImpl sends an empty token response.
 				await SendPacketAsync(new SmGfWebshopTokenResponse(string.Empty));
 				break;
-			case CmChallengeList:
-				// Java parity: network/aion/clientpackets/CM_CHALLENGE_LIST.runImpl dispatches ChallengeTaskService list requests; deferred.
+			case CmChallengeList challengeList:
+				if (_activePlayer != null)
+					await HandleChallengeListAsync(_activePlayer, challengeList);
 				break;
 			case CmMegaphone:
 				// Java parity: network/aion/clientpackets/CM_MEGAPHONE.runImpl validates item use before MegaphoneAction execution; deferred.
@@ -3204,6 +3205,36 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: Legion.get{Kinah,Contribution}Price and hasRequiredMembers switch on current level 1..7.
 		var index = currentLegionLevel - 1;
 		return index >= 0 && index < requirements.Count ? requirements[index] : 0;
+	}
+
+	private async Task HandleChallengeListAsync(Player player, CmChallengeList packet)
+	{
+		// Java parity: network/aion/clientpackets/CM_CHALLENGE_LIST.runImpl.
+		if (packet.OwnerType != SmChallengeList.LegionOwnerTypeId)
+			return; // TOWN challenge lists depend on town runtime state and remain deferred.
+
+		if (!_options.Custom.ChallengeTasksEnabled || player.LegionId <= 0)
+			return;
+
+		var challengeTasks = _challengeTaskTableOverride ?? _runtimeContext?.DataManager?.StaticData.ChallengeTasks;
+		if (_playerEnterWorldRepository == null || challengeTasks == null)
+			return;
+
+		var availableTasks = await _challengeTaskService.BuildLegionTaskListAsync(
+			challengeTasks,
+			_playerEnterWorldRepository,
+			packet.TaskOwner,
+			player.LegionLevel,
+			player.Race);
+		var currentEpochSeconds = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+		await SendPacketAsync(SmChallengeList.TaskList(
+			packet.TaskOwner,
+			SmChallengeList.LegionOwnerTypeId,
+			player.ObjectId,
+			currentEpochSeconds,
+			availableTasks));
+		foreach (var task in availableTasks)
+			await SendPacketAsync(SmChallengeList.TaskInfo(packet.TaskOwner, SmChallengeList.LegionOwnerTypeId, player.ObjectId, task));
 	}
 
 	private async Task BroadcastLegionLevelUpAsync(Player player, int newLevel)
