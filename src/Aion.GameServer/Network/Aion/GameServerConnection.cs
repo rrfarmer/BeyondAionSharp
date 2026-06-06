@@ -5011,6 +5011,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player.IsTrading)
 			return;
 
+		if (await TryHandleQuestFinishAutoRewardAsync(player, packet))
+			return;
+
 		if (packet.DialogActionId == CmDialogSelect.InstanceEntry
 			&& IsBeshmundirsWalkTarget(packet.TargetObjectId))
 		{
@@ -5204,6 +5207,146 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
+	}
+
+	private async Task<bool> TryHandleQuestFinishAutoRewardAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null || staticData.PlayerExperienceTable.MaxLevel == 0)
+			return false;
+
+		var guardedInputPlan = QuestFinishSocketGuardedInputAssemblyPlanService.CreatePlan(
+			player,
+			packet,
+			staticData.QuestFinishRewardProjections);
+		if (guardedInputPlan.Status == QuestFinishSocketGuardedInputAssemblyStatus.GuardRejected)
+			return false;
+
+		var inputPlan = guardedInputPlan.InputPlan;
+		if (inputPlan?.Status != QuestFinishSocketInputAssemblyStatus.Ready
+			|| inputPlan.Template == null
+			|| inputPlan.RewardProjection == null
+			|| inputPlan.QuestState == null)
+		{
+			return true;
+		}
+
+		if (!TryCreateQuestFinishXpRewards(inputPlan, out var xpRewards))
+			return true;
+
+		var questRewardService = CreateQuestRewardService();
+		foreach (var xpReward in xpRewards)
+		{
+			var xpResult = questRewardService.ApplyXpReward(
+				player,
+				staticData.PlayerExperienceTable,
+				xpReward.Amount);
+			foreach (var responsePacket in xpResult.Packets)
+				await SendPacketAsync(responsePacket, cancellationToken);
+		}
+
+		var mutation = QuestFinishStateMutationService.ApplyRewardCompletion(
+			inputPlan.QuestState,
+			inputPlan.Template,
+			DateTimeOffset.Now,
+			_options);
+		if (!mutation.Applied || mutation.QuestState == null)
+			return true;
+
+		player.Quests = player.Quests
+			.Select(quest => quest.QuestId == mutation.QuestState.QuestId ? mutation.QuestState : quest)
+			.ToArray();
+
+		if (_playerEnterWorldService != null)
+			await _playerEnterWorldService.PersistQuestStartAsync(player, mutation.QuestState, isNewQuestState: false, cancellationToken);
+
+		await SendPacketAsync(SmQuestAction.Update(mutation.QuestState), cancellationToken);
+		await SendNearbyQuestRefreshAsync(player, cancellationToken);
+		return true;
+	}
+
+	private QuestRewardService CreateQuestRewardService()
+	{
+		return new QuestRewardService(
+			new WorldNpcResourceStatsService(
+				new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!)),
+				_connectionRegistry,
+				new PlayerVisualStatsUpdateService(_connectionRegistry)),
+			_options,
+			_runtimeContext);
+	}
+
+	private static bool TryCreateQuestFinishXpRewards(
+		QuestFinishSocketInputAssemblyPlan inputPlan,
+		out IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> xpRewards)
+	{
+		xpRewards = Array.Empty<QuestFinishRewardNonItemProjectionDescriptor>();
+		var template = inputPlan.Template;
+		var projection = inputPlan.RewardProjection;
+		var questState = inputPlan.QuestState;
+		if (template == null || projection == null || questState == null || projection.HasItemRewards)
+			return false;
+
+		var descriptors = new List<QuestFinishRewardNonItemProjectionDescriptor>();
+		if (!TryAddXpRewards(
+			descriptors,
+			template,
+			projection,
+			projection.NonItemProjection,
+			QuestFinishRewardNonItemSource.Regular))
+		{
+			return false;
+		}
+
+		var isLastRepeat = questState.CompleteCount == template.RewardRepeatCount - 1;
+		if (isLastRepeat
+			&& !TryAddXpRewards(
+				descriptors,
+				template,
+				projection,
+				projection.ExtendedNonItemProjection,
+				QuestFinishRewardNonItemSource.Extended))
+		{
+			return false;
+		}
+
+		if (descriptors.Count == 0)
+			return false;
+
+		xpRewards = descriptors;
+		return true;
+	}
+
+	private static bool TryAddXpRewards(
+		ICollection<QuestFinishRewardNonItemProjectionDescriptor> rewards,
+		NearbyQuestTemplateSummary template,
+		QuestFinishRewardTemplateProjection projection,
+		QuestFinishRewardNonItemTemplateProjection? nonItemProjection,
+		QuestFinishRewardNonItemSource source)
+	{
+		if (nonItemProjection == null)
+			return true;
+
+		var projectionPlan = QuestFinishRewardPlanService.CreateNonItemRewardProjection(
+			new QuestFinishRewardNonItemProjectionInput(
+				template.QuestId,
+				template.QuestCategory,
+				projection.TargetNpcId,
+				projection.HasTargetNpcTemplate,
+				source),
+			nonItemProjection);
+		if (projectionPlan.Warnings.Count != 0
+			|| projectionPlan.Descriptors.Any(descriptor => descriptor.Action != QuestFinishRewardNonItemAction.Experience))
+		{
+			return false;
+		}
+
+		foreach (var descriptor in projectionPlan.Descriptors)
+			rewards.Add(descriptor);
+		return true;
 	}
 
 	private async Task HandleOpenLegionWarehouseDialogAsync(Player player, int targetObjectId)

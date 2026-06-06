@@ -19,7 +19,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	private const int SelectedQuestAutoReward = 108;
 
 	[Fact]
-	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestRemainsDisabledAtSocketBoundary()
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesXpAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
 		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1001, out var lookupEntry));
@@ -31,6 +31,8 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			ObjectId = 1001,
 			Name = "QuestFinishBoundary",
 			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
 			Position = new WorldPosition(210010000, 1, 2, 3, 0),
 			Quests = [rewardQuestState],
 		};
@@ -55,13 +57,23 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 
 		await fixture.Connection.HandleDialogSelectAsync(player, packet);
 
-		Assert.Empty(fixture.SentPackets);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.Equal(300, player.Exp);
+		Assert.Equal(1, player.Level);
 		Assert.Empty(player.InventoryItems);
 		var unchangedQuest = Assert.Single(player.Quests);
-		Assert.Same(rewardQuestState, unchangedQuest);
-		Assert.Equal("REWARD", unchangedQuest.Status);
-		Assert.Equal(0, unchangedQuest.CompleteCount);
-		Assert.Null(unchangedQuest.RewardGroup);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
 	private static CmDialogSelect CreateDialogSelect(
@@ -118,11 +130,14 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 				"""
 				<?xml version="1.0" encoding="UTF-8"?>
 				<static_data>
+					<player_experience_table>
+						<exp>0</exp>
+						<exp>1000</exp>
+						<exp>3000</exp>
+					</player_experience_table>
 					<quests>
 						<quest id="1001" can_report="true" reward_repeat_count="1">
-							<rewards gold="55">
-								<reward_item item_id="182400001" count="1" />
-							</rewards>
+							<rewards exp="300" />
 						</quest>
 					</quests>
 				</static_data>
