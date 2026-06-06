@@ -6,6 +6,9 @@ public sealed class CmDialogSelect : GameClientPacket
 {
 	public const int UseObject = 0xFFFF; // Java DialogAction.USE_OBJECT is -1; CM_DIALOG_SELECT reads it as unsigned H.
 	public const int Buy = 2;
+	public const int SelectedQuestReward1 = 8;
+	public const int SelectedQuestReward15 = 22;
+	public const int SelectedQuestNoReward = 23;
 	public const int QuestAccept = 29;
 	public const int QuestSelect = 31;
 	public const int Recovery = 35;

@@ -39,13 +39,15 @@ public static class QuestFinishSocketInputAssemblyPlanService
 		Player player,
 		CmDialogSelect packet,
 		QuestFinishRewardProjectionLookupTable rewardProjections,
-		NpcTemplateSummary? targetNpcTemplate = null)
+		NpcTemplateSummary? targetNpcTemplate = null,
+		bool allowSelectedRewardAction = false)
 	{
 		ArgumentNullException.ThrowIfNull(player);
 		ArgumentNullException.ThrowIfNull(packet);
 		ArgumentNullException.ThrowIfNull(rewardProjections);
 
-		if (!IsQuestAutoRewardAction(packet.DialogActionId))
+		if (!IsQuestAutoRewardAction(packet.DialogActionId)
+			&& !(allowSelectedRewardAction && IsSelectedQuestRewardAction(packet.DialogActionId)))
 		{
 			return new QuestFinishSocketInputAssemblyPlan(
 				QuestFinishSocketInputAssemblyStatus.NotQuestAutoRewardAction);
@@ -118,6 +120,11 @@ public static class QuestFinishSocketInputAssemblyPlanService
 	{
 		return dialogActionId == SelectedQuestAutoReward
 			|| (dialogActionId >= SelectedQuestAutoReward1 && dialogActionId <= SelectedQuestAutoReward15);
+	}
+
+	private static bool IsSelectedQuestRewardAction(int dialogActionId)
+	{
+		return dialogActionId >= SelectedQuestReward1 && dialogActionId <= SelectedQuestNoReward;
 	}
 
 	private static int NormalizeQuestRewardDialogAction(int dialogActionId)

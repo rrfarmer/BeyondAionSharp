@@ -22,7 +22,8 @@ public static class QuestFinishSocketGuardedInputAssemblyPlanService
 		CmDialogSelect packet,
 		QuestFinishRewardProjectionLookupTable rewardProjections,
 		NpcTemplateSummary? targetNpcTemplate = null,
-		bool allowNpcTarget = false)
+		bool allowNpcTarget = false,
+		bool allowSelectedRewardAction = false)
 	{
 		ArgumentNullException.ThrowIfNull(player);
 		ArgumentNullException.ThrowIfNull(packet);
@@ -38,7 +39,8 @@ public static class QuestFinishSocketGuardedInputAssemblyPlanService
 				packet.DialogActionId,
 				packet.QuestId,
 				template),
-			allowNpcTarget);
+			allowNpcTarget,
+			allowSelectedRewardAction);
 
 		if (!guardPlan.Planned)
 		{
@@ -54,7 +56,8 @@ public static class QuestFinishSocketGuardedInputAssemblyPlanService
 			player,
 			packet,
 			rewardProjections,
-			targetNpcTemplate);
+			targetNpcTemplate,
+			allowSelectedRewardAction);
 
 		return new QuestFinishSocketGuardedInputAssemblyPlan(
 			QuestFinishSocketGuardedInputAssemblyStatus.InputAssembled,

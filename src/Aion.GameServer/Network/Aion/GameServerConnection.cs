@@ -5017,6 +5017,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestFinishAutoRewardAsync(player, packet))
 			return;
 
+		if (await TryHandleNpcTargetQuestFinishSelectedRewardAsync(player, packet))
+			return;
+
 		if (await TryHandleNpcTargetQuestSetSucceedCloseDialogAsync(player, packet))
 			return;
 
@@ -5618,6 +5621,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		CmDialogSelect packet,
 		NpcTemplateSummary? targetNpcTemplate = null,
 		bool allowNpcTarget = false,
+		bool allowSelectedRewardAction = false,
+		int? closeDialogTargetObjectId = null,
 		CancellationToken cancellationToken = default)
 	{
 		var staticData = _runtimeContext?.DataManager?.StaticData;
@@ -5629,7 +5634,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet,
 			staticData.QuestFinishRewardProjections,
 			targetNpcTemplate,
-			allowNpcTarget);
+			allowNpcTarget,
+			allowSelectedRewardAction);
 		if (guardedInputPlan.Status == QuestFinishSocketGuardedInputAssemblyStatus.GuardRejected)
 			return false;
 
@@ -5753,6 +5759,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		await ApplyQuestCompletionFollowUpsAsync(player, mutation.QuestState.QuestId, staticData, cancellationToken);
 		await CompleteQuestFinishNpcFactionAsync(player, inputPlan.Template, cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
+		if (closeDialogTargetObjectId.HasValue)
+			await SendPacketAsync(new SmDialogWindow(closeDialogTargetObjectId.Value, 0, 0), cancellationToken);
 		return true;
 	}
 
@@ -5796,7 +5804,52 @@ public sealed class GameServerConnection : BaseClientConnection
 			packet,
 			npc.Template,
 			allowNpcTarget: true,
-			cancellationToken);
+			cancellationToken: cancellationToken);
+	}
+
+	private async Task<bool> TryHandleNpcTargetQuestFinishSelectedRewardAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestEndDialog handles
+		// SELECTED_QUEST_REWARD1..SELECTED_QUEST_NOREWARD by calling QuestService.finishQuest(env).
+		if (!QuestDialogAutoRewardGuardPlanService.IsSelectedQuestRewardDialogAction(packet.DialogActionId)
+			|| packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		var interactionPlan = NpcDialogInteractionAllowedPlanService.CreatePlan(
+			new NpcDialogInteractionAllowedInput(
+				player.ObjectId,
+				SubDialogType: npc.Template.SubDialogType,
+				SubDialogValue: npc.Template.SubDialogValue,
+				PlayerHasSubDialogSkill: player.Skills.Any(skill => skill.SkillId == npc.Template.SubDialogValue),
+				PlayerHasSubDialogItem: player.InventoryItems.Any(item => item.ItemId == npc.Template.SubDialogValue),
+				PlayerHasReturnItem: player.InventoryItems.Any(item => item.ItemId == 164000335),
+				PlayerAbyssRankId: player.AbyssRank.Rank,
+				PlayerAbyssRankingPosition: player.AbyssRank.RankingListPosition,
+				PlayerHasLegion: player.LegionId > 0,
+				PlayerLevel: player.Level));
+		if (!interactionPlan.IsAllowed)
+			return false;
+
+		return await TryHandleQuestFinishAutoRewardAsync(
+			player,
+			packet,
+			npc.Template,
+			allowNpcTarget: true,
+			allowSelectedRewardAction: true,
+			closeDialogTargetObjectId: packet.TargetObjectId,
+			cancellationToken: cancellationToken);
 	}
 
 	private async Task ApplyQuestCompletionFollowUpsAsync(

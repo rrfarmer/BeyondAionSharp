@@ -7,10 +7,13 @@ public static class QuestDialogAutoRewardGuardPlanService
 	private const int SelectedQuestAutoReward = 108;
 	private const int SelectedQuestAutoReward1 = 110;
 	private const int SelectedQuestAutoReward15 = 124;
+	private const int SelectedQuestReward1 = 8;
+	private const int SelectedQuestNoReward = 23;
 
 	public static QuestDialogAutoRewardGuardPlan CreatePlan(
 		QuestDialogAutoRewardGuardInput input,
-		bool allowNpcTarget = false)
+		bool allowNpcTarget = false,
+		bool allowSelectedRewardAction = false)
 	{
 		// Java parity breadcrumb: network/aion/clientpackets/CM_DIALOG_SELECT.runImpl handles
 		// self/player-target reportable quest auto rewards before NPC controller dialog dispatch.
@@ -22,7 +25,8 @@ public static class QuestDialogAutoRewardGuardPlanService
 			return QuestDialogAutoRewardGuardPlan.NotPlanned(QuestDialogAutoRewardGuardStatus.MissingQuestTemplate, input);
 		if (!input.QuestTemplateCanReport)
 			return QuestDialogAutoRewardGuardPlan.NotPlanned(QuestDialogAutoRewardGuardStatus.NotReportableQuest, input);
-		if (!IsAutoRewardDialogAction(input.DialogActionId))
+		if (!IsAutoRewardDialogAction(input.DialogActionId)
+			&& !(allowSelectedRewardAction && IsSelectedQuestRewardDialogAction(input.DialogActionId)))
 			return QuestDialogAutoRewardGuardPlan.NotPlanned(QuestDialogAutoRewardGuardStatus.NotAutoRewardDialogAction, input);
 
 		return QuestDialogAutoRewardGuardPlan.CreatePlanned(input);
@@ -30,7 +34,8 @@ public static class QuestDialogAutoRewardGuardPlanService
 
 	public static QuestDialogAutoRewardGuardPlan CreatePlanFromTemplateSummary(
 		QuestDialogAutoRewardGuardTemplateInput input,
-		bool allowNpcTarget = false)
+		bool allowNpcTarget = false,
+		bool allowSelectedRewardAction = false)
 	{
 		var guardInput = new QuestDialogAutoRewardGuardInput(
 			input.PlayerObjectId,
@@ -39,7 +44,7 @@ public static class QuestDialogAutoRewardGuardPlanService
 			input.QuestId,
 			QuestTemplateExists: input.QuestTemplate is not null,
 			QuestTemplateCanReport: input.QuestTemplate?.CanReport == true);
-		var plan = CreatePlan(guardInput, allowNpcTarget);
+		var plan = CreatePlan(guardInput, allowNpcTarget, allowSelectedRewardAction);
 
 		if (input.QuestTemplate is null || plan.Status == QuestDialogAutoRewardGuardStatus.NonSelfTarget)
 			return plan;
@@ -54,6 +59,11 @@ public static class QuestDialogAutoRewardGuardPlanService
 	{
 		return dialogActionId == SelectedQuestAutoReward
 			|| dialogActionId is >= SelectedQuestAutoReward1 and <= SelectedQuestAutoReward15;
+	}
+
+	public static bool IsSelectedQuestRewardDialogAction(int dialogActionId)
+	{
+		return dialogActionId is >= SelectedQuestReward1 and <= SelectedQuestNoReward;
 	}
 }
 
