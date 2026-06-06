@@ -198,6 +198,14 @@ public sealed class PlayerEnterWorldService
 		return await _repository.SavePlayerMacroAsync(player.ObjectId, macro, cancellationToken);
 	}
 
+	public Task<AtreianPassportLoginResult?> ApplyAtreianPassportLoginForActivePlayerAsync(
+		Player player,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: services/AtreianPassportService.takeReward calls onLogin(player) after claim processing.
+		return ApplyAtreianPassportLoginAsync(player, cancellationToken);
+	}
+
 	private async Task<AtreianPassportLoginResult?> ApplyAtreianPassportLoginAsync(Player player, CancellationToken cancellationToken)
 	{
 		// Java parity: services/AtreianPassportService.onLogin.

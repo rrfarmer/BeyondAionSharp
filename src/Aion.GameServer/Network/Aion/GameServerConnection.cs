@@ -4410,6 +4410,28 @@ public sealed class GameServerConnection : BaseClientConnection
 				? passports
 				: passports.Where((_, index) => !deletedPassportIndexes.Contains(index)).ToArray();
 
+		if (_playerEnterWorldService != null)
+		{
+			var loginResult = await _playerEnterWorldService.ApplyAtreianPassportLoginForActivePlayerAsync(player);
+			if (loginResult == null)
+				return;
+
+			foreach (var itemName in loginResult.ExcessRewardRemovedItemNames)
+				await SendPacketAsync(SmSystemMessage.AttendRewardRemoveExcess(itemName));
+			if (loginResult.ShouldSendAttendRewardMessage)
+				await SendPacketAsync(SmSystemMessage.AttendRewardGet());
+
+			if (loginResult.ShouldSendSnapshot)
+			{
+				await SendPacketAsync(new SmAtreianPassport(
+					player.Passports,
+					player.PassportStamps,
+					player.CreationDate));
+			}
+
+			return;
+		}
+
 		await SendPacketAsync(new SmAtreianPassport(
 			player.Passports,
 			player.PassportStamps,

@@ -147,7 +147,8 @@ public sealed class CmAtreianPassportTests
 			repository,
 			new GameWorld(NullLogger<GameWorld>.Instance),
 			NullLogger<PlayerEnterWorldService>.Instance,
-			runtimeContext: runtimeContext);
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportActiveClock);
 		await using var pair = await TestConnectionPair.CreateAsync(
 			repository,
 			runtimeContext,
@@ -198,18 +199,27 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(78, update.AccountId);
 		Assert.Equal(9, update.Passport.PassportId);
 		Assert.True(update.Passport.Rewarded);
-		Assert.True(Assert.Single(player.Passports).Rewarded);
+		Assert.True(Assert.Single(player.Passports, passport => passport.PassportId == 9 && passport.ArriveDate == arriveDate).Rewarded);
+
+		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.Equal(6, player.PassportStamps);
+		Assert.Equal(AtreianPassportActiveClock().UtcDateTime, player.LastPassportStamp);
 
 		Assert.Collection(
 			pair.SentPackets,
 			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1402601, message.MessageId);
+			},
 			packet => Assert.IsType<SmAtreianPassport>(packet));
-		var response = pair.SentPackets[1];
+		var response = pair.SentPackets[2];
 		var passport = Assert.IsType<SmAtreianPassport>(response);
 		var payload = SerializeUnencryptedPayload(passport);
-		Assert.Equal(1, ReadShort(payload, 6));
+		Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
 		Assert.Equal(9, ReadInt(payload, 8));
-		Assert.Equal(5, ReadInt(payload, 12));
+		Assert.Equal(6, ReadInt(payload, 12));
 		Assert.Equal(2, ReadInt(payload, 16)); // Passport.RewardStatus.TAKEN.
 		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
 	}
@@ -225,7 +235,8 @@ public sealed class CmAtreianPassportTests
 			repository,
 			new GameWorld(NullLogger<GameWorld>.Instance),
 			NullLogger<PlayerEnterWorldService>.Instance,
-			runtimeContext: runtimeContext);
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportActiveClock);
 		await using var pair = await TestConnectionPair.CreateAsync(
 			repository,
 			runtimeContext,
@@ -258,6 +269,7 @@ public sealed class CmAtreianPassportTests
 			Level = 50,
 			CreationDate = new DateTime(2021, 3, 4, 12, 30, 0, DateTimeKind.Utc),
 			PassportStamps = 5,
+			LastPassportStamp = AtreianPassportActiveClock().UtcDateTime,
 			Passports =
 			[
 				new PlayerPassport(
@@ -281,8 +293,9 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.SaveInventoryRewardMutationCalls);
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(0, repository.DeleteAccountPassportCalls);
+		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == rewardStack.ObjectId).Count);
-		Assert.False(Assert.Single(player.Passports).Rewarded);
+		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 9 && passport.ArriveDate == arriveDate).Rewarded);
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
 		Assert.Collection(
 			pair.SentPackets,
@@ -295,7 +308,7 @@ public sealed class CmAtreianPassportTests
 			{
 				var passport = Assert.IsType<SmAtreianPassport>(packet);
 				var payload = SerializeUnencryptedPayload(passport);
-				Assert.Equal(1, ReadShort(payload, 6));
+				Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
 				Assert.Equal(9, ReadInt(payload, 8));
 				Assert.Equal(5, ReadInt(payload, 12));
 				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
@@ -314,7 +327,8 @@ public sealed class CmAtreianPassportTests
 			repository,
 			new GameWorld(NullLogger<GameWorld>.Instance),
 			NullLogger<PlayerEnterWorldService>.Instance,
-			runtimeContext: runtimeContext);
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportActiveClock);
 		await using var pair = await TestConnectionPair.CreateAsync(
 			repository,
 			runtimeContext,
@@ -330,6 +344,7 @@ public sealed class CmAtreianPassportTests
 			Level = 50,
 			CreationDate = new DateTime(2021, 3, 4, 12, 30, 0, DateTimeKind.Utc),
 			PassportStamps = 6,
+			LastPassportStamp = AtreianPassportActiveClock().UtcDateTime,
 			Passports =
 			[
 				new PlayerPassport(
@@ -357,13 +372,15 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(arriveDate, deleted.Passport.ArriveDate);
 		Assert.Equal(0, repository.SaveInventoryRewardMutationCalls);
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
+		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.Empty(player.InventoryItems);
-		Assert.Empty(player.Passports);
+		Assert.DoesNotContain(player.Passports, passport => passport.PassportId == 1 && passport.ArriveDate == arriveDate);
 
 		var response = Assert.Single(pair.SentPackets);
 		var passport = Assert.IsType<SmAtreianPassport>(response);
 		var payload = SerializeUnencryptedPayload(passport);
-		Assert.Equal(0, ReadShort(payload, 6));
+		Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
+		Assert.DoesNotContain(ReadPassportRows(payload), row => row.Key == 1);
 	}
 
 	[Fact]
