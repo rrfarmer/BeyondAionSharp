@@ -4362,10 +4362,20 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// Cross-storage move (cube ↔ regular/account warehouse).
 		// Java parity: ItemMoveService.moveItem cross-storage — ItemRestrictionService checks, then remove/add.
-		// Legion warehouse and trading checks remain deferred.
 		if (packet.Destination == 3 || packet.Source == 3)
 		{
-			// Legion warehouse requires LegionService and permission checks; deferred.
+			var legionTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+			var legionTemplate = legionTemplates?.GetItemTemplate(item.ItemId);
+			if (legionTemplate == null)
+				return;
+
+			var legionRestrictionMessage = CreateLegionWarehouseMoveRestrictionMessage(player, item, legionTemplate, packet.Source, packet.Destination);
+			if (legionRestrictionMessage != null)
+			{
+				await SendPacketAsync(legionRestrictionMessage);
+				await SendStorageUpdatePacketAsync(player, item, legionTemplate, packet.Source, SmInventoryAddItem.AllSlot);
+			}
+			// Successful legion warehouse moves require LegionService.addWHItemHistory and live legion storage; deferred.
 			return;
 		}
 
@@ -4604,6 +4614,37 @@ public sealed class GameServerConnection : BaseClientConnection
 			2 when !item.IsStorableInAccountWarehouse(template) => SmSystemMessage.WarehouseCantAccountDeposit(),
 			_ => null,
 		};
+	}
+
+	private static SmSystemMessage? CreateLegionWarehouseMoveRestrictionMessage(
+		Player player,
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int sourceStorageType,
+		int destinationStorageType)
+	{
+		// Java parity: Player.getStorage(LEGION_WAREHOUSE) returns null when the player has no legion,
+		// so CM_MOVE_ITEM returns before ItemRestrictionService sends a message.
+		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
+			return null;
+
+		if (destinationStorageType == 3)
+		{
+			// Java parity: ItemRestrictionService.isItemRestrictedTo LEGION_WAREHOUSE.
+			if (!item.IsStorableInLegionWarehouse(template))
+				return SmSystemMessage.WarehouseCantLegionDeposit();
+			if (!HasLegionWarehouseRight(player, LegionWarehouseDepositPermission)
+				&& !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))
+				return SmSystemMessage.GuildWarehouseNoRight();
+		}
+
+		if (sourceStorageType == 3 && !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))
+		{
+			// Java parity: ItemRestrictionService.isItemRestrictedFrom LEGION_WAREHOUSE.
+			return SmSystemMessage.GuildWarehouseNoRight();
+		}
+
+		return null;
 	}
 
 	private async Task SendItemDeletePacketAsync(Player player, int storageType, int itemObjectId, int deleteType)
