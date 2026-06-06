@@ -1717,6 +1717,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await SavePeriodicAbyssRankAsync(connection, player.ObjectId, player.AbyssRank, cancellationToken);
 			await SavePeriodicPlayerSkillsAsync(connection, player.ObjectId, player.Skills, cancellationToken);
+			await SavePeriodicPlayerQuestsAsync(connection, player.ObjectId, player.Quests, cancellationToken);
 			if (player.LifeStats != null)
 				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
 			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -3681,6 +3682,51 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = playerObjectId },
 					new MySqlParameter { Value = skill.SkillId },
 					new MySqlParameter { Value = skill.SkillLevel },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+		}
+	}
+
+	private static async Task SavePeriodicPlayerQuestsAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyList<PlayerQuestState> quests,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/PlayerQuestListDAO.store(player) persists deleted/current quest state
+		// during GeneralUpdateTask. C# snapshots the currently modeled live quest list.
+		await using (var deleteCommand = connection.CreateCommand())
+		{
+			deleteCommand.CommandText = "DELETE FROM player_quests WHERE player_id = ?";
+			deleteCommand.Parameters.Add(new MySqlParameter { Value = playerObjectId });
+			await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		if (quests.Count == 0)
+			return;
+
+		await using var command = connection.CreateCommand();
+		command.CommandText = """
+			INSERT INTO player_quests
+				(player_id, quest_id, status, quest_vars, flags, complete_count, next_repeat_time, reward, complete_time)
+			VALUES
+				(?, ?, ?, ?, ?, ?, ?, ?, ?)
+			""";
+		foreach (var quest in quests)
+		{
+			command.Parameters.Clear();
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = quest.QuestId },
+					new MySqlParameter { Value = quest.Status },
+					new MySqlParameter { Value = quest.QuestVars },
+					new MySqlParameter { Value = quest.Flags },
+					new MySqlParameter { Value = quest.CompleteCount },
+					new MySqlParameter { Value = quest.NextRepeatTime?.DateTime ?? (object)DBNull.Value },
+					new MySqlParameter { Value = quest.RewardGroup.HasValue ? quest.RewardGroup.Value : DBNull.Value },
+					new MySqlParameter { Value = quest.CompleteTime?.DateTime ?? (object)DBNull.Value },
 				});
 			await command.ExecuteNonQueryAsync(cancellationToken);
 		}

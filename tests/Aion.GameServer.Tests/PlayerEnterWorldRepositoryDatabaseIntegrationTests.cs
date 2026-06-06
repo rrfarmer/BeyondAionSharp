@@ -381,6 +381,72 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePeriodicPlayerGeneralAsync_ReplacesLiveQuestListAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerEnterWorldService.GeneralUpdateTask.run calls
+		// PlayerQuestListDAO.store(player), whose DB shape includes nullable repeat/reward/complete columns.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO player_quests (
+				player_id, quest_id, status, quest_vars, flags, complete_count, next_repeat_time, reward, complete_time
+			)
+			VALUES
+				(1001, 5001, 'START', 1, 0, 0, NULL, NULL, NULL),
+				(1001, 9999, 'START', 9, 9, 0, NULL, NULL, NULL)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var nextRepeatTime = new DateTimeOffset(2026, 6, 1, 9, 30, 0, TimeSpan.Zero);
+		var completeTime = new DateTimeOffset(2026, 6, 1, 10, 15, 0, TimeSpan.Zero);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PeriodicQuestIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			Quests =
+			[
+				new PlayerQuestState(
+					QuestId: 5001,
+					Status: "REWARD",
+					QuestVars: 0x12345,
+					Flags: 2,
+					CompleteCount: 3,
+					RewardGroup: 4,
+					NextRepeatTime: nextRepeatTime,
+					CompleteTime: completeTime),
+				new PlayerQuestState(
+					QuestId: 5002,
+					Status: "COMPLETE",
+					QuestVars: 0,
+					Flags: 0,
+					CompleteCount: 1),
+			],
+		};
+
+		var saved = await repository.SavePeriodicPlayerGeneralAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(2, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM player_quests WHERE player_id = 1001"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM player_quests WHERE player_id = 1001 AND quest_id = 9999"));
+		Assert.Equal("REWARD", await ExecuteScalarStringAsync("SELECT status FROM player_quests WHERE player_id = 1001 AND quest_id = 5001"));
+		Assert.Equal(0x12345, await ExecuteScalarLongAsync("SELECT quest_vars FROM player_quests WHERE player_id = 1001 AND quest_id = 5001"));
+		Assert.Equal(2, await ExecuteScalarLongAsync("SELECT flags FROM player_quests WHERE player_id = 1001 AND quest_id = 5001"));
+		Assert.Equal(3, await ExecuteScalarLongAsync("SELECT complete_count FROM player_quests WHERE player_id = 1001 AND quest_id = 5001"));
+		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT reward FROM player_quests WHERE player_id = 1001 AND quest_id = 5001"));
+		Assert.Equal("COMPLETE", await ExecuteScalarStringAsync("SELECT status FROM player_quests WHERE player_id = 1001 AND quest_id = 5002"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT complete_count FROM player_quests WHERE player_id = 1001 AND quest_id = 5002"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM player_quests WHERE player_id = 1001 AND quest_id = 5002 AND reward IS NULL AND next_repeat_time IS NULL AND complete_time IS NULL"));
+	}
+
+	[Fact]
 	public async Task SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
