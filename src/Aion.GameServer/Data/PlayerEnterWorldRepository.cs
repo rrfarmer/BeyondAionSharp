@@ -403,6 +403,7 @@ public interface IPlayerEnterWorldRepository
 	Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		int playerObjectId,
 		int accountId,
+		int legionId,
 		int itemObjectId,
 		int oldLocation,
 		int newLocation,
@@ -412,6 +413,7 @@ public interface IPlayerEnterWorldRepository
 	Task<bool> SaveItemStorageSwitchMutationAsync(
 		int playerObjectId,
 		int accountId,
+		int legionId,
 		int sourceItemObjectId,
 		int sourceOldLocation,
 		int sourceNewLocation,
@@ -558,15 +560,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveItemCrossStorageMoveMutationCalls { get; private set; }
 
-	public (int PlayerObjectId, int AccountId, int ItemObjectId, int OldLocation, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
+	public (int PlayerObjectId, int AccountId, int LegionId, int ItemObjectId, int OldLocation, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
 
-	public List<(int PlayerObjectId, int AccountId, int ItemObjectId, int OldLocation, int NewLocation, long NewSlot)> SavedItemCrossStorageMoveMutations { get; } = [];
+	public List<(int PlayerObjectId, int AccountId, int LegionId, int ItemObjectId, int OldLocation, int NewLocation, long NewSlot)> SavedItemCrossStorageMoveMutations { get; } = [];
 
 	public bool SaveItemStorageSwitchMutationResult { get; init; } = true;
 
 	public int SaveItemStorageSwitchMutationCalls { get; private set; }
 
-	public (int PlayerObjectId, int AccountId, int SourceItemObjectId, int SourceOldLocation, int SourceNewLocation, long SourceNewSlot, int ReplaceItemObjectId, int ReplaceOldLocation, int ReplaceNewLocation, long ReplaceNewSlot)?
+	public (int PlayerObjectId, int AccountId, int LegionId, int SourceItemObjectId, int SourceOldLocation, int SourceNewLocation, long SourceNewSlot, int ReplaceItemObjectId, int ReplaceOldLocation, int ReplaceNewLocation, long ReplaceNewSlot)?
 		SavedItemStorageSwitchMutation { get; private set; }
 
 	public bool InsertPlayerQuestResult { get; init; } = true;
@@ -1498,6 +1500,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		int playerObjectId,
 		int accountId,
+		int legionId,
 		int itemObjectId,
 		int oldLocation,
 		int newLocation,
@@ -1505,14 +1508,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken = default)
 	{
 		SaveItemCrossStorageMoveMutationCalls++;
-		SavedItemCrossStorageMoveMutation = (playerObjectId, accountId, itemObjectId, oldLocation, newLocation, newSlot);
-		SavedItemCrossStorageMoveMutations.Add((playerObjectId, accountId, itemObjectId, oldLocation, newLocation, newSlot));
+		SavedItemCrossStorageMoveMutation = (playerObjectId, accountId, legionId, itemObjectId, oldLocation, newLocation, newSlot);
+		SavedItemCrossStorageMoveMutations.Add((playerObjectId, accountId, legionId, itemObjectId, oldLocation, newLocation, newSlot));
 		return Task.FromResult(SaveItemCrossStorageMoveMutationResult);
 	}
 
 	public Task<bool> SaveItemStorageSwitchMutationAsync(
 		int playerObjectId,
 		int accountId,
+		int legionId,
 		int sourceItemObjectId,
 		int sourceOldLocation,
 		int sourceNewLocation,
@@ -1527,6 +1531,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SavedItemStorageSwitchMutation = (
 			playerObjectId,
 			accountId,
+			legionId,
 			sourceItemObjectId,
 			sourceOldLocation,
 			sourceNewLocation,
@@ -3066,6 +3071,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public async Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		int playerObjectId,
 		int accountId,
+		int legionId,
 		int itemObjectId,
 		int oldLocation,
 		int newLocation,
@@ -3080,8 +3086,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			return await SaveInventoryItemLocationAsync(
 				connection,
 				null,
-				GetStorageOwnerId(playerObjectId, accountId, oldLocation),
-				GetStorageOwnerId(playerObjectId, accountId, newLocation),
+				GetStorageOwnerId(playerObjectId, accountId, legionId, oldLocation),
+				GetStorageOwnerId(playerObjectId, accountId, legionId, newLocation),
 				itemObjectId,
 				newLocation,
 				newSlot,
@@ -3097,6 +3103,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public async Task<bool> SaveItemStorageSwitchMutationAsync(
 		int playerObjectId,
 		int accountId,
+		int legionId,
 		int sourceItemObjectId,
 		int sourceOldLocation,
 		int sourceNewLocation,
@@ -3116,8 +3123,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await SaveInventoryItemLocationAsync(
 				connection,
 				transaction,
-				GetStorageOwnerId(playerObjectId, accountId, sourceOldLocation),
-				GetStorageOwnerId(playerObjectId, accountId, sourceNewLocation),
+				GetStorageOwnerId(playerObjectId, accountId, legionId, sourceOldLocation),
+				GetStorageOwnerId(playerObjectId, accountId, legionId, sourceNewLocation),
 				sourceItemObjectId,
 				sourceNewLocation,
 				sourceNewSlot,
@@ -3126,8 +3133,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await SaveInventoryItemLocationAsync(
 				connection,
 				transaction,
-				GetStorageOwnerId(playerObjectId, accountId, replaceOldLocation),
-				GetStorageOwnerId(playerObjectId, accountId, replaceNewLocation),
+				GetStorageOwnerId(playerObjectId, accountId, legionId, replaceOldLocation),
+				GetStorageOwnerId(playerObjectId, accountId, legionId, replaceNewLocation),
 				replaceItemObjectId,
 				replaceNewLocation,
 				replaceNewSlot,
@@ -3169,10 +3176,16 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 
-	private static int GetStorageOwnerId(int playerObjectId, int accountId, int storageLocation)
+	private static int GetStorageOwnerId(int playerObjectId, int accountId, int legionId, int storageLocation)
 	{
-		// Java parity: InventoryDAO.getItemOwnerId uses account id for ACCOUNT_WAREHOUSE rows and player id otherwise.
-		return storageLocation == 2 ? accountId : playerObjectId;
+		// Java parity: InventoryDAO.getItemOwnerId uses account id for ACCOUNT_WAREHOUSE,
+		// legion id for LEGION_WAREHOUSE when available, and player id otherwise.
+		return storageLocation switch
+		{
+			2 => accountId,
+			3 when legionId > 0 => legionId,
+			_ => playerObjectId,
+		};
 	}
 
 	public async Task<bool> SaveEquipmentMutationAsync(

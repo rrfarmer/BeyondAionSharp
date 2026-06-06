@@ -4456,6 +4456,7 @@ public sealed class PlayerEnterWorldServiceTests
 		public Task<bool> SaveItemCrossStorageMoveMutationAsync(
 			int playerObjectId,
 			int accountId,
+			int legionId,
 			int itemObjectId,
 			int oldLocation,
 			int newLocation,
@@ -4468,6 +4469,7 @@ public sealed class PlayerEnterWorldServiceTests
 		public Task<bool> SaveItemStorageSwitchMutationAsync(
 			int playerObjectId,
 			int accountId,
+			int legionId,
 			int sourceItemObjectId,
 			int sourceOldLocation,
 			int sourceNewLocation,

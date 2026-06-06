@@ -4352,7 +4352,12 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static int GetMoveStorageOwnerId(Player player, int storageType)
 	{
-		return storageType == 2 ? player.AccountId : player.ObjectId;
+		return storageType switch
+		{
+			2 => player.AccountId,
+			3 when player.LegionId > 0 => player.LegionId,
+			_ => player.ObjectId,
+		};
 	}
 
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)
@@ -4389,9 +4394,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			{
 				await SendPacketAsync(legionRestrictionMessage);
 				await SendStorageUpdatePacketAsync(player, item, legionTemplate, packet.Source, SmInventoryAddItem.AllSlot);
+				return;
 			}
-			// Successful legion warehouse moves require LegionService.addWHItemHistory and live legion storage; deferred.
-			return;
+			// Java parity gap: LegionService.addWHItemHistory is not yet modeled, but the storage mutation,
+			// persistence owner, and packet fanout now follow ItemMoveService.moveItem.
 		}
 
 		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
@@ -4717,6 +4723,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				GetRegularWarehouseItemCount(player),
 				player.WarehouseNpcExpands,
 				player.WarehouseBonusExpands),
+			3 => SmCubeUpdate.LegionWarehouseSizeSnapshot(
+				player.InventoryItems.Count(item => item.Location == 3 && item.ItemId != KinahItemId),
+				0),
 			_ => SmCubeUpdate.ZeroSizeForJavaStorageId(storageType),
 		};
 	}

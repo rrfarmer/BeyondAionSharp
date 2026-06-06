@@ -675,6 +675,7 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemCrossStorageMoveMutationAsync(
 			player.ObjectId,
 			player.AccountId,
+			player.LegionId,
 			itemObjectId,
 			oldLocation,
 			newLocation,
@@ -698,6 +699,7 @@ public sealed class PlayerEnterWorldService
 		return _repository.SaveItemStorageSwitchMutationAsync(
 			player.ObjectId,
 			player.AccountId,
+			player.LegionId,
 			sourceItemObjectId,
 			sourceOldLocation,
 			sourceNewLocation,
