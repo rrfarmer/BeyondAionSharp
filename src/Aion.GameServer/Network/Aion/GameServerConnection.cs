@@ -3975,6 +3975,27 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		// Java parity: ItemSplitService.splitItem sends a source storage update (unlock) on cross-storage
+		// restriction failure before both split-to-empty-slot and merge-into-stack branches.
+		if (packet.SourceStorageType != packet.DestinationStorageType)
+		{
+			var isRestrictedToDestination =
+				(packet.DestinationStorageType == 1 && !template.IsStorableInWarehouse)
+				|| (packet.DestinationStorageType == 2 && !sourceItem.IsStorableInAccountWarehouse(template));
+			if (isRestrictedToDestination)
+			{
+				if (packet.SourceStorageType == 0)
+					await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(sourceItem, template));
+				else
+					await SendPacketAsync(new SmWarehouseAddItem(
+						packet.SourceStorageType,
+						[new SmWarehouseAddItem.WarehousePacketItem(sourceItem, template)],
+						SmInventoryAddItem.ItemCollect));
+				await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+				return;
+			}
+		}
+
 		if (targetItem == null)
 		{
 			// Split into empty slot (same or cross storage).
@@ -3984,21 +4005,6 @@ public sealed class GameServerConnection : BaseClientConnection
 			var remainingCount = sourceItem.Count - newCount;
 			if (sourceItem.Count < newCount || remainingCount == 0)
 				return;
-
-			// Java parity: ItemRestrictionService.isItemRestrictedTo for cross-storage.
-			if (packet.SourceStorageType != packet.DestinationStorageType)
-			{
-				if (packet.DestinationStorageType == 1 && !template.IsStorableInWarehouse)
-				{
-					await SendPacketAsync(SmSystemMessage.WarehouseCantDepositItem());
-					return;
-				}
-				if (packet.DestinationStorageType == 2 && !sourceItem.IsStorableInAccountWarehouse(template))
-				{
-					await SendPacketAsync(SmSystemMessage.WarehouseCantAccountDeposit());
-					return;
-				}
-			}
 
 			var newObjectId = _idFactory.NextId();
 			var newItem = new InventoryItem

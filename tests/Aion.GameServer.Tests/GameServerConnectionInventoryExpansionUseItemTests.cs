@@ -806,6 +806,64 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSplitItemAsync_CrossStorageRestrictionUnlocksSourceLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 166000030, count: 3);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 166000030,
+					Count = 97,
+					Location = 1,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 3,
+				sourceStorageType: 0,
+				destinationItemObjectId: 6001,
+				destinationStorageType: 1,
+				slotNumber: 0));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(3, item.Count);
+				Assert.Equal(0, item.Location);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(97, item.Count);
+				Assert.Equal(1, item.Location);
+			});
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 166000030,
+				expectedCount: 3,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_SaveFailureStopsBeforeInMemoryMutationAndPackets()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeMutationResult = false };
@@ -3784,7 +3842,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		int expectedObjectId,
 		int expectedItemId,
 		long expectedCount,
-		int expectedAddType = SmInventoryAddItem.Decomposable)
+		int expectedAddType = SmInventoryAddItem.Decomposable,
+		int expectedSlot = 65535)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedAddType, reader.ReadH());
@@ -3794,7 +3853,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		reader.ReadS();
 		var blobSize = reader.ReadH();
 		var blob = reader.ReadB(blobSize);
-		Assert.Equal(65535, reader.ReadH());
+		Assert.Equal(expectedSlot, reader.ReadH());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 
