@@ -3951,14 +3951,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		var sourceItem = player.InventoryItems.FirstOrDefault(
-			i => i.ObjectId == packet.SourceItemObjectId && i.Location == packet.SourceStorageType);
+		var sourceItem = FindMoveStorageItem(player, packet.SourceItemObjectId, packet.SourceStorageType);
 		if (sourceItem == null)
 			return;
 
 		// Java parity: ItemSplitService.splitItem — targetItem == null branch (split to empty slot).
 		var targetItem = packet.DestinationItemObjectId != 0
-			? player.InventoryItems.FirstOrDefault(i => i.ObjectId == packet.DestinationItemObjectId && i.Location == packet.DestinationStorageType)
+			? FindMoveStorageItem(player, packet.DestinationItemObjectId, packet.DestinationStorageType)
 			: null;
 
 		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
@@ -4011,7 +4010,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				ObjectId = newObjectId,
 				ItemId = sourceItem.ItemId,
 				Count = newCount,
-				OwnerId = player.ObjectId,
+				OwnerId = GetMoveStorageOwnerId(player, packet.DestinationStorageType),
 				Location = packet.DestinationStorageType,
 				// Java parity: cross-storage split does NOT set slot (newItem.setEquipmentSlot only for same-storage).
 				Slot = packet.SourceStorageType == packet.DestinationStorageType ? packet.SlotNumber : 0,
@@ -4020,7 +4019,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			};
 
 			sourceItem.Count = remainingCount;
-			player.InventoryItems = [.. player.InventoryItems, newItem];
+			AddMoveStorageItem(player, packet.DestinationStorageType, newItem);
 
 			if (_playerEnterWorldService != null)
 			{
@@ -4029,9 +4028,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				{
 					// Rollback in-memory changes.
 					sourceItem.Count += newCount;
-					var items = player.InventoryItems.ToList();
-					items.Remove(newItem);
-					player.InventoryItems = [.. items];
+					RemoveMoveStorageItem(player, packet.DestinationStorageType, newItem);
 					_idFactory.ReleaseId(newObjectId);
 					return;
 				}
@@ -4087,9 +4084,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (sourceItem.Count <= 0)
 			{
-				var items = player.InventoryItems.ToList();
-				items.Remove(sourceItem);
-				player.InventoryItems = [.. items];
+				RemoveMoveStorageItem(player, packet.SourceStorageType, sourceItem);
 				var deleteType = isSameStorage ? SmDeleteItem.SplitDeleteType : SmDeleteItem.MoveDeleteType;
 				await SendItemDeletePacketAsync(player, packet.SourceStorageType, sourceItem.ObjectId, deleteType);
 			}
@@ -4123,7 +4118,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		const int KinahItemId = 182400001;
-		var destKinah = player.InventoryItems.FirstOrDefault(
+		var destKinah = GetMoveStorageItems(player, destinationStorageType).FirstOrDefault(
 			i => i.ItemId == KinahItemId && i.Location == destinationStorageType);
 		if (destKinah == null)
 			return;
@@ -4204,9 +4199,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		RemoveMoveStorageItem(player, sourceStorageType, item);
-		var destinationItems = GetMoveStorageItems(player, destinationStorageType).ToList();
-		destinationItems.Add(item);
-		SetMoveStorageItems(player, destinationStorageType, destinationItems);
+		AddMoveStorageItem(player, destinationStorageType, item);
+	}
+
+	private static void AddMoveStorageItem(Player player, int storageType, InventoryItem item)
+	{
+		var items = GetMoveStorageItems(player, storageType).ToList();
+		items.Add(item);
+		SetMoveStorageItems(player, storageType, items);
 	}
 
 	private static void SetMoveStorageItems(Player player, int storageType, IReadOnlyList<InventoryItem> items)

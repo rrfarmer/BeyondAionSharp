@@ -1301,6 +1301,124 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSplitItemAsync_AccountWarehouseSourceSplitsRestoredItemToCubeLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 0, accountId: 77);
+		player.InventoryItems = [];
+		player.AccountWarehouseItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 5001,
+				ItemId = 200,
+				Count = 5,
+				OwnerId = 77,
+				Location = 2,
+				Slot = 6,
+			},
+		];
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 2,
+				sourceStorageType: 2,
+				destinationItemObjectId: 0,
+				destinationStorageType: 0,
+				slotNumber: 8));
+
+		var sourceItem = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(5001, sourceItem.ObjectId);
+		Assert.Equal(77, sourceItem.OwnerId);
+		Assert.Equal(3, sourceItem.Count);
+		var newItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, newItem.ObjectId);
+		Assert.Equal(1001, newItem.OwnerId);
+		Assert.Equal(0, newItem.Location);
+		Assert.Equal(0, newItem.Slot);
+		Assert.Equal(2, newItem.Count);
+		Assert.Equal(1, repository.SaveItemSplitMutationCalls);
+		var savedSplit = Assert.NotNull(repository.SavedItemSplitMutation);
+		Assert.Equal(1001, savedSplit.PlayerObjectId);
+		Assert.Equal(77, savedSplit.SourceItem.OwnerId);
+		Assert.Equal(3, savedSplit.SourceItem.Count);
+		Assert.Equal(1001, savedSplit.NewItem.OwnerId);
+		Assert.Equal(0, savedSplit.NewItem.Location);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 2,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplitMove),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 1,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
+	public async Task HandleSplitItemAsync_CubeSourceSplitsItemToAccountWarehouseOwnerLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5, accountId: 77);
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 2,
+				sourceStorageType: 0,
+				destinationItemObjectId: 0,
+				destinationStorageType: 2,
+				slotNumber: 8));
+
+		var sourceItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(1001, sourceItem.OwnerId);
+		Assert.Equal(3, sourceItem.Count);
+		var newItem = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(1, newItem.ObjectId);
+		Assert.Equal(77, newItem.OwnerId);
+		Assert.Equal(2, newItem.Location);
+		Assert.Equal(0, newItem.Slot);
+		Assert.Equal(2, newItem.Count);
+		Assert.Equal(1, repository.SaveItemSplitMutationCalls);
+		var savedSplit = Assert.NotNull(repository.SavedItemSplitMutation);
+		Assert.Equal(1001, savedSplit.PlayerObjectId);
+		Assert.Equal(1001, savedSplit.SourceItem.OwnerId);
+		Assert.Equal(3, savedSplit.SourceItem.Count);
+		Assert.Equal(77, savedSplit.NewItem.OwnerId);
+		Assert.Equal(2, savedSplit.NewItem.Location);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplitMove),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 1,
+				expectedWarehouseType: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2));
+	}
+
+	[Fact]
 	public async Task HandleSplitItemAsync_FullCubeDestinationSendsJavaStorageFullMessageWithoutMutation()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

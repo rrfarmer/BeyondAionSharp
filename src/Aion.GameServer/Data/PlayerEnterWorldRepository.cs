@@ -539,6 +539,10 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public bool SaveItemMergeMutationResult { get; init; } = true;
 
+	public int SaveItemSplitMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, InventoryItem SourceItem, InventoryItem NewItem)? SavedItemSplitMutation { get; private set; }
+
 	public int SaveItemMergeMutationCalls { get; private set; }
 
 	public (int PlayerObjectId, InventoryItem SourceItem, InventoryItem TargetItem)? SavedItemMergeMutation { get; private set; }
@@ -1466,6 +1470,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem newItem,
 		CancellationToken cancellationToken = default)
 	{
+		SaveItemSplitMutationCalls++;
+		SavedItemSplitMutation = (playerObjectId, sourceItem, newItem);
 		return Task.FromResult(true);
 	}
 
@@ -2984,7 +2990,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItem, cancellationToken))
+			if (!await SaveInventoryItemCountAsync(connection, transaction, sourceItem.OwnerId, sourceItem, cancellationToken))
 				return false;
 
 			await InsertInventoryItemAsync(connection, transaction, newItem, cancellationToken);
@@ -3014,15 +3020,15 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			const int KinahItemId = 182400001;
 			if (sourceItem.Count <= 0 && sourceItem.ItemId != KinahItemId)
 			{
-				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, sourceItem.ObjectId, cancellationToken))
+				if (!await DeleteInventoryItemAsync(connection, transaction, sourceItem.OwnerId, sourceItem.ObjectId, cancellationToken))
 					return false;
 			}
-			else if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItem, cancellationToken))
+			else if (!await SaveInventoryItemCountAsync(connection, transaction, sourceItem.OwnerId, sourceItem, cancellationToken))
 			{
 				return false;
 			}
 
-			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, targetItem, cancellationToken))
+			if (!await SaveInventoryItemCountAsync(connection, transaction, targetItem.OwnerId, targetItem, cancellationToken))
 				return false;
 
 			await transaction.CommitAsync(cancellationToken);
