@@ -1760,7 +1760,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = player.ObjectId },
 				});
 
-			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+			if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
+				return false;
+
+			await SavePeriodicPlayerHousesAsync(connection, player.ObjectId, player.Houses, cancellationToken);
+			return true;
 		}
 		catch (Exception ex)
 		{
@@ -3727,6 +3731,51 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = quest.NextRepeatTime?.DateTime ?? (object)DBNull.Value },
 					new MySqlParameter { Value = quest.RewardGroup.HasValue ? quest.RewardGroup.Value : DBNull.Value },
 					new MySqlParameter { Value = quest.CompleteTime?.DateTime ?? (object)DBNull.Value },
+				});
+			await command.ExecuteNonQueryAsync(cancellationToken);
+		}
+	}
+
+	private static async Task SavePeriodicPlayerHousesAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		IReadOnlyList<PlayerHouse> houses,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: PlayerEnterWorldService.GeneralUpdateTask.run calls House.save,
+		// which delegates to HousesDAO.storeHouse for NEW/UPDATE_REQUIRED house rows.
+		// C# does not yet model house persistent state, so periodic saves snapshot loaded
+		// player-owned rows through the existing Java houses table shape.
+		if (houses.Count == 0)
+			return;
+
+		await using var command = connection.CreateCommand();
+		command.CommandText = """
+			INSERT INTO houses (id, address, building_id, player_id, acquire_time, settings, next_pay, sign_notice)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE
+				address = VALUES(address),
+				building_id = VALUES(building_id),
+				player_id = VALUES(player_id),
+				acquire_time = VALUES(acquire_time),
+				settings = VALUES(settings),
+				next_pay = VALUES(next_pay),
+				sign_notice = VALUES(sign_notice)
+			""";
+		foreach (var house in houses)
+		{
+			command.Parameters.Clear();
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = house.ObjectId },
+					new MySqlParameter { Value = house.AddressId },
+					new MySqlParameter { Value = house.BuildingId },
+					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = house.AcquiredTime.HasValue ? house.AcquiredTime.Value : DBNull.Value },
+					new MySqlParameter { Value = PlayerHouse.CreateSettings(house.DoorState, house.ShowOwnerName) },
+					new MySqlParameter { Value = house.NextPay.HasValue ? house.NextPay.Value : DBNull.Value },
+					new MySqlParameter { Value = string.IsNullOrEmpty(house.SignNotice) ? DBNull.Value : house.SignNotice },
 				});
 			await command.ExecuteNonQueryAsync(cancellationToken);
 		}

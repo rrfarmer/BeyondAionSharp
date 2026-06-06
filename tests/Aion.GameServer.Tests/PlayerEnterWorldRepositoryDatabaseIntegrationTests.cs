@@ -447,6 +447,69 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePeriodicPlayerGeneralAsync_UpsertsLiveHousesAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerEnterWorldService.GeneralUpdateTask.run calls
+		// player.getHouses().forEach(House::save), whose HousesDAO.storeHouse columns
+		// are id/address/building_id/player_id/acquire_time/settings/next_pay/sign_notice.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO houses (id, address, building_id, player_id, acquire_time, settings, next_pay, sign_notice)
+			VALUES (8101, 710001, 9001, 1001, '2026-01-01 01:02:03', 1, '2026-01-08 01:02:03', 'old notice')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PeriodicHouseIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			Houses =
+			[
+				new PlayerHouse(
+					ObjectId: 8101,
+					AddressId: 710001,
+					BuildingId: 9101,
+					AcquiredTime: new DateTime(2026, 2, 3, 4, 5, 6, DateTimeKind.Local),
+					NextPay: new DateTime(2026, 2, 10, 4, 5, 6, DateTimeKind.Local),
+					IsInactive: false,
+					DoorState: PlayerHouse.DoorClosedExceptFriends,
+					ShowOwnerName: false,
+					SignNotice: "fresh notice"),
+				new PlayerHouse(
+					ObjectId: 8102,
+					AddressId: 710002,
+					BuildingId: 9102,
+					AcquiredTime: null,
+					NextPay: null,
+					IsInactive: true,
+					DoorState: PlayerHouse.DoorClosed,
+					ShowOwnerName: true),
+			],
+		};
+
+		var saved = await repository.SavePeriodicPlayerGeneralAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(2, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM houses WHERE player_id = 1001"));
+		Assert.Equal(9101, await ExecuteScalarLongAsync("SELECT building_id FROM houses WHERE id = 8101"));
+		Assert.Equal(PlayerHouse.CreateSettings(PlayerHouse.DoorClosedExceptFriends, showOwnerName: false), await ExecuteScalarLongAsync("SELECT settings FROM houses WHERE id = 8101"));
+		Assert.Equal("fresh notice", await ExecuteScalarStringAsync("SELECT sign_notice FROM houses WHERE id = 8101"));
+		Assert.Equal(9102, await ExecuteScalarLongAsync("SELECT building_id FROM houses WHERE id = 8102"));
+		Assert.Equal(710002, await ExecuteScalarLongAsync("SELECT address FROM houses WHERE id = 8102"));
+		Assert.Equal(PlayerHouse.CreateSettings(PlayerHouse.DoorClosed, showOwnerName: true), await ExecuteScalarLongAsync("SELECT settings FROM houses WHERE id = 8102"));
+		Assert.Equal(1, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM houses WHERE id = 8102 AND acquire_time IS NULL AND next_pay IS NULL AND sign_notice IS NULL"));
+	}
+
+	[Fact]
 	public async Task SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
