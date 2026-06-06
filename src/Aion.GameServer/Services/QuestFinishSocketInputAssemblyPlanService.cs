@@ -32,6 +32,7 @@ public static class QuestFinishSocketInputAssemblyPlanService
 	private const int SelectedQuestAutoReward = 108;
 	private const int SelectedQuestAutoReward1 = 110;
 	private const int SelectedQuestAutoReward15 = 124;
+	private const int SelectedQuestReward1 = 8;
 
 	public static QuestFinishSocketInputAssemblyPlan CreatePlan(
 		Player player,
@@ -74,7 +75,7 @@ public static class QuestFinishSocketInputAssemblyPlanService
 		var lookupPlan = QuestFinishRewardProjectionLookupPlanService.CreatePlan(
 			new QuestFinishRewardProjectionLookupInput(
 				packet.QuestId,
-				packet.DialogActionId,
+				NormalizeQuestRewardDialogAction(packet.DialogActionId),
 				packet.ExtendedRewardIndex,
 				correction.QuestState.CompleteCount,
 				correction.QuestState.RewardGroup,
@@ -116,5 +117,15 @@ public static class QuestFinishSocketInputAssemblyPlanService
 	{
 		return dialogActionId == SelectedQuestAutoReward
 			|| (dialogActionId >= SelectedQuestAutoReward1 && dialogActionId <= SelectedQuestAutoReward15);
+	}
+
+	private static int NormalizeQuestRewardDialogAction(int dialogActionId)
+	{
+		// Java parity: DialogAction.SELECTED_QUEST_AUTO_REWARD1..15 mirror SELECTED_QUEST_REWARD1..15
+		// for reportable quests, while QuestService.getRewardItems still indexes the selected reward list.
+		if (dialogActionId >= SelectedQuestAutoReward1 && dialogActionId <= SelectedQuestAutoReward15)
+			return SelectedQuestReward1 + dialogActionId - SelectedQuestAutoReward1;
+
+		return dialogActionId;
 	}
 }
