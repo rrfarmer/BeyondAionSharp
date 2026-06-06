@@ -2719,6 +2719,11 @@ public sealed class GameServerConnection : BaseClientConnection
 						await SendPacketAsync(housingBidRefreshPacket);
 					}
 
+					if (enterWorldResult.AtreianPassportLogin != null)
+					{
+						foreach (var itemName in enterWorldResult.AtreianPassportLogin.ExcessRewardRemovedItemNames)
+							await SendPacketAsync(SmSystemMessage.AttendRewardRemoveExcess(itemName));
+					}
 					if (enterWorldResult.AtreianPassportLogin?.ShouldSendAttendRewardMessage == true)
 						await SendPacketAsync(SmSystemMessage.AttendRewardGet());
 					if (enterWorldResult.AtreianPassportLogin?.ShouldSendSnapshot == true)

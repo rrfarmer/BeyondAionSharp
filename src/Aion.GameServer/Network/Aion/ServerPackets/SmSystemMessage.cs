@@ -40,6 +40,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1402601);
 	}
 
+	public static SmSystemMessage AttendRewardRemoveExcess(string? itemName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_ATTEND_REWARD_REMOVE_EXCESS.
+		return new SmSystemMessage(1402627, itemName ?? string.Empty);
+	}
+
 	public static SmSystemMessage WarehouseTooFarFromNpc()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_TOO_FAR_FROM_NPC.

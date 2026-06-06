@@ -263,11 +263,17 @@ public sealed class PlayerEnterWorldService
 		if (newPassports.Count > 0)
 			player.Passports = player.Passports.Concat(newPassports).ToArray();
 
+		IReadOnlyList<string?> excessRewardRemovedItemNames = [];
 		if (doReward)
 		{
 			var lastStamp = NormalizePassportTimestamp(now);
 			player.PassportStamps++;
 			player.LastPassportStamp = lastStamp;
+			excessRewardRemovedItemNames = await CheckAtreianPassportLimitAsync(
+				player,
+				atreianPassports,
+				newPassports,
+				cancellationToken);
 			var persistentNewPassports = newPassports.Where(passport => !passport.FakeStamp).ToArray();
 			await _repository.SaveAccountPassportLoginMutationAsync(
 				player.AccountId,
@@ -280,7 +286,48 @@ public sealed class PlayerEnterWorldService
 		return new AtreianPassportLoginResult(
 			ShouldSendSnapshot: true,
 			ShouldSendAttendRewardMessage: doReward,
-			newPassports);
+			newPassports,
+			excessRewardRemovedItemNames);
+	}
+
+	private async Task<IReadOnlyList<string?>> CheckAtreianPassportLimitAsync(
+		Player player,
+		AtreianPassportTable atreianPassports,
+		List<PlayerPassport> newPassports,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: AtreianPassportService.checkPassportLimit.
+		if (player.Passports.Count < 50)
+			return [];
+
+		var oldest = player.Passports
+			.Where(passport => !passport.FakeStamp)
+			.OrderBy(passport => passport.ArriveDate)
+			.FirstOrDefault()
+			?? player.Passports.OrderBy(passport => passport.ArriveDate).FirstOrDefault();
+		if (oldest == null)
+			return [];
+
+		await _repository.DeleteAccountPassportAsync(player.AccountId, oldest, cancellationToken);
+		var passports = player.Passports.ToList();
+		var passportIndex = passports.FindIndex(passport => ReferenceEquals(passport, oldest));
+		if (passportIndex < 0)
+			passportIndex = passports.FindIndex(passport => IsSameAtreianPassportRow(passport, oldest));
+		if (passportIndex >= 0)
+			passports.RemoveAt(passportIndex);
+		player.Passports = passports.ToArray();
+
+		var newPassportIndex = newPassports.FindIndex(passport => ReferenceEquals(passport, oldest));
+		if (newPassportIndex < 0)
+			newPassportIndex = newPassports.FindIndex(passport => IsSameAtreianPassportRow(passport, oldest));
+		if (newPassportIndex >= 0)
+			newPassports.RemoveAt(newPassportIndex);
+
+		var passportTemplate = atreianPassports.GetAtreianPassportId(oldest.PassportId);
+		var itemTemplate = passportTemplate == null
+			? null
+			: _runtimeContext?.DataManager?.StaticData.ItemTemplates.GetItemTemplate(passportTemplate.RewardItemId);
+		return [itemTemplate?.GetClientName()];
 	}
 
 	private async Task PurgeExpiredAtreianPassportsAsync(
@@ -339,6 +386,14 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: PassportsList.isPassportPresent compares only the Passport template id.
 		return passports.Any(passport => passport.PassportId == passportId);
+	}
+
+	private static bool IsSameAtreianPassportRow(PlayerPassport left, PlayerPassport right)
+	{
+		return left.PassportId == right.PassportId
+			&& left.ArriveDate == right.ArriveDate
+			&& left.Rewarded == right.Rewarded
+			&& left.FakeStamp == right.FakeStamp;
 	}
 
 	private static int GetAtreianPassportAccountAgeInMonths(DateTime creationDate, DateTime now)

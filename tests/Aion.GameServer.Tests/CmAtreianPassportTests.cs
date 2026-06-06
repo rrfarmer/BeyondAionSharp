@@ -391,6 +391,90 @@ public sealed class CmAtreianPassportTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_EnterWorldSendsPassportLimitRemovalBeforeAttendanceReward()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var now = AtreianPassportCumulativeLoginClock();
+		var activeDailyPassportIds = GetActiveDailyPassportIds(
+			runtimeContext.DataManager!.StaticData.AtreianPassports,
+			now.UtcDateTime);
+		Assert.NotEmpty(activeDailyPassportIds);
+		var activeDailyPassportId = activeDailyPassportIds[0];
+		var existingPassports = Enumerable.Range(0, 45)
+			.Select(index => new PlayerPassport(
+				activeDailyPassportId,
+				Rewarded: true,
+				new DateTime(2014, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(index)))
+			.ToArray();
+		var oldest = existingPassports[0];
+		var rewardItemId = runtimeContext.DataManager.StaticData.AtreianPassports.GetAtreianPassportId(activeDailyPassportId)!.RewardItemId;
+		var expectedRemovedItemName = runtimeContext.DataManager.StaticData.ItemTemplates.GetItemTemplate(rewardItemId)!.GetClientName();
+		var player = new Player
+		{
+			ObjectId = 5008,
+			AccountId = 84,
+			Name = "PassportLimitLogin",
+			Level = 50,
+			CreationDate = now.UtcDateTime,
+			LastOnline = DateTime.Now.AddMinutes(-5),
+			Passports = existingPassports,
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			CreateWorld(),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportCumulativeLoginClock);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			AtreianPassportCumulativeLoginClock);
+		SetAccountId(pair.Connection, player.AccountId);
+		var packet = new CmEnterWorld(8, new HashSet<GameConnectionState> { GameConnectionState.Authed });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(player.ObjectId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		var removeIndex = pair.SentPackets.FindIndex(packet => packet is SmSystemMessage { MessageId: 1402627 });
+		var attendIndex = pair.SentPackets.FindIndex(packet => packet is SmSystemMessage { MessageId: 1402601 });
+		Assert.True(removeIndex >= 0);
+		Assert.True(attendIndex > removeIndex);
+		var removeMessage = Assert.IsType<SmSystemMessage>(pair.SentPackets[removeIndex]);
+		Assert.Equal([expectedRemovedItemName], removeMessage.Parameters);
+		Assert.Equal(1, repository.DeleteAccountPassportCalls);
+		Assert.NotNull(repository.DeletedAccountPassport);
+		Assert.Equal((player.AccountId, oldest.PassportId, oldest.ArriveDate), (
+			repository.DeletedAccountPassport.Value.AccountId,
+			repository.DeletedAccountPassport.Value.Passport.PassportId,
+			repository.DeletedAccountPassport.Value.Passport.ArriveDate));
+		Assert.DoesNotContain(player.Passports, passport => passport.PassportId == oldest.PassportId && passport.ArriveDate == oldest.ArriveDate);
+
+		var passportPacket = pair.SentPackets.OfType<SmAtreianPassport>().LastOrDefault();
+		Assert.NotNull(passportPacket);
+		var payload = SerializeUnencryptedPayload(passportPacket);
+		Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
+		var removedArriveSeconds = (int)new DateTimeOffset(oldest.ArriveDate, TimeSpan.Zero).ToUnixTimeSeconds();
+		for (var i = 0; i < ReadShort(payload, 6); i++)
+		{
+			var offset = 8 + (i * 16);
+			Assert.False(ReadInt(payload, offset) == oldest.PassportId
+				&& ReadInt(payload, offset + 12) == removedArriveSeconds);
+		}
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_EnterWorldIncludesCumulativePassportThresholdRowInLoginSnapshot()
 	{
 		var runtimeContext = new GameServerRuntimeContext();
