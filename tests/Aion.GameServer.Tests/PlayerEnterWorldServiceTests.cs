@@ -3722,6 +3722,13 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<IReadOnlyList<LegionDominionParticipantRow>> LoadLegionDominionParticipantsAsync(
+			int legionDominionId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<IReadOnlyList<LegionDominionParticipantRow>>(Array.Empty<LegionDominionParticipantRow>());
+		}
+
 		public Task<bool> SaveLegionAnnouncementAsync(
 			int legionId,
 			string? announcement,

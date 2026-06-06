@@ -33,6 +33,19 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void TryCreatePacket_RegistersJavaLegionDominionRankingOpcodeAsInGameOnly()
+	{
+		Assert.IsType<CmLegionDominionRequestRanking>(
+			GameClientPacketFactory.TryCreatePacket(
+				CreateClientPayload(29, buffer => buffer.WriteD(5)),
+				GameConnectionState.InGame));
+
+		Assert.Null(GameClientPacketFactory.TryCreatePacket(
+			CreateClientPayload(29, buffer => buffer.WriteD(5)),
+			GameConnectionState.Authed));
+	}
+
+	[Fact]
 	public void ReadFrom_EditPermissionsReadsSignedShorts()
 	{
 		var packet = CreatePacket();
@@ -114,6 +127,14 @@ public sealed class CmLegionTests
 
 		Assert.Equal(0x10, packet.ExOpcode);
 		Assert.Equal(5, packet.LegionDominionId);
+	}
+
+	[Fact]
+	public void ReadFrom_LegionDominionRankingConsumesJavaStonespearId()
+	{
+		var packet = CreateLegionDominionRankingPacket(5);
+
+		Assert.Equal(5, packet.StonespearId);
 	}
 
 	[Fact]
@@ -926,6 +947,56 @@ public sealed class CmLegionTests
 		Assert.Equal(["5"], message.Parameters);
 	}
 
+	[Theory]
+	[InlineData(0)]
+	[InlineData(7)]
+	public async Task HandleInfrastructurePacketAsync_DominionRankingRejectsInvalidIdsLikeJava(int stonespearId)
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionDominionParticipants =
+			[
+				new LegionDominionParticipantRow(77, "Hydrated Legion", 100, 20, 2000),
+			],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		SetActivePlayer(pair.Connection, CreateLegionPlayer());
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionDominionRankingPacket(stonespearId));
+
+		Assert.Equal(0, repository.LoadLegionDominionParticipantsCalls);
+		Assert.Empty(pair.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_DominionRankingLoadsRowsAndSendsRankLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionDominionParticipants =
+			[
+				new LegionDominionParticipantRow(10, "North", 80, 30, 3000),
+				new LegionDominionParticipantRow(77, "Hydrated Legion", 90, 40, 2000),
+				new LegionDominionParticipantRow(20, "South", 90, 50, 1000),
+			],
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		SetActivePlayer(pair.Connection, CreateLegionPlayer());
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionDominionRankingPacket(5));
+
+		Assert.Equal(1, repository.LoadLegionDominionParticipantsCalls);
+		Assert.Equal(5, repository.LoadedLegionDominionParticipantsRequest);
+		var packet = Assert.IsType<SmLegionDominionRank>(Assert.Single(pair.SentPackets));
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(5, reader.ReadD());
+		Assert.Equal(2, reader.ReadC());
+		Assert.Equal(3, reader.ReadH());
+		AssertLegionDominionRankRow(reader, 90, 50, 1000, "South");
+		AssertLegionDominionRankRow(reader, 90, 40, 2000, "Hydrated Legion");
+		AssertLegionDominionRankRow(reader, 80, 30, 3000, "North");
+	}
+
 	[Fact]
 	public async Task HandleInfrastructurePacketAsync_KickMissingMemberSendsNotMyGuildMemberLikeJava()
 	{
@@ -1391,6 +1462,15 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
+	private static CmLegionDominionRequestRanking CreateLegionDominionRankingPacket(int stonespearId)
+	{
+		var packet = new CmLegionDominionRequestRanking(29, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var buffer = new PacketBuffer();
+		buffer.WriteD(stonespearId);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
 	private static CmLegion CreateEditPermissionsPacket(short deputy, short centurion, short legionary, short volunteer)
 	{
 		var packet = CreatePacket();
@@ -1679,6 +1759,19 @@ public sealed class CmLegionTests
 		reader.ReadD();
 		reader.ReadD();
 		Assert.Equal(currentLegionDominion, reader.ReadD());
+	}
+
+	private static void AssertLegionDominionRankRow(
+		PacketBuffer reader,
+		int points,
+		int survivedTime,
+		long epochSeconds,
+		string legionName)
+	{
+		Assert.Equal(points, reader.ReadD());
+		Assert.Equal(survivedTime, reader.ReadD());
+		Assert.Equal(epochSeconds, reader.ReadQ());
+		Assert.Equal(legionName, reader.ReadS());
 	}
 
 	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)

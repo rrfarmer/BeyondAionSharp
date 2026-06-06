@@ -16,6 +16,13 @@ namespace Aion.GameServer.Data;
 
 public sealed record ChallengeTaskProgressRow(int TaskId, int QuestId, int CompleteCount, int CompleteTimeEpochSeconds = 0);
 
+public sealed record LegionDominionParticipantRow(
+	int LegionId,
+	string LegionName,
+	int Points,
+	int SurvivedTime,
+	long ParticipatedEpochSeconds);
+
 public interface IPlayerEnterWorldRepository
 {
 	Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default);
@@ -63,6 +70,10 @@ public interface IPlayerEnterWorldRepository
 	Task<bool> TryAddLegionDominionParticipantAsync(
 		int legionDominionId,
 		int legionId,
+		CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyList<LegionDominionParticipantRow>> LoadLegionDominionParticipantsAsync(
+		int legionDominionId,
 		CancellationToken cancellationToken = default);
 
 	Task<bool> SaveLegionAnnouncementAsync(
@@ -865,6 +876,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public (int LegionDominionId, int LegionId)? AddedLegionDominionParticipant { get; private set; }
 
+	public IReadOnlyList<LegionDominionParticipantRow> LoadedLegionDominionParticipants { get; init; } = Array.Empty<LegionDominionParticipantRow>();
+
+	public int LoadLegionDominionParticipantsCalls { get; private set; }
+
+	public int LoadedLegionDominionParticipantsRequest { get; private set; }
+
 	public Task<bool> TryAddLegionDominionParticipantAsync(
 		int legionDominionId,
 		int legionId,
@@ -873,6 +890,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		TryAddLegionDominionParticipantCalls++;
 		AddedLegionDominionParticipant = (legionDominionId, legionId);
 		return Task.FromResult(TryAddLegionDominionParticipantResult);
+	}
+
+	public Task<IReadOnlyList<LegionDominionParticipantRow>> LoadLegionDominionParticipantsAsync(
+		int legionDominionId,
+		CancellationToken cancellationToken = default)
+	{
+		LoadLegionDominionParticipantsCalls++;
+		LoadedLegionDominionParticipantsRequest = legionDominionId;
+		return Task.FromResult(LoadedLegionDominionParticipants);
 	}
 
 	public bool SaveLegionAnnouncementResult { get; init; } = true;
@@ -2446,6 +2472,50 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not add legion {LegionId} to dominion {DominionId}", legionId, legionDominionId);
 			return false;
+		}
+	}
+
+	public async Task<IReadOnlyList<LegionDominionParticipantRow>> LoadLegionDominionParticipantsAsync(
+		int legionDominionId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionDominionDAO.loadParticipants loads rows for one location; LegionDominionParticipantInfo.getLegionName
+		// resolves the in-memory legion name and falls back to "NOT AVAILABLE" when absent.
+		if (legionDominionId <= 0)
+			return Array.Empty<LegionDominionParticipantRow>();
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT ldp.legion_id, COALESCE(l.name, 'NOT AVAILABLE') AS legion_name,
+					ldp.points, ldp.survived_time, ldp.participated_date
+				FROM legion_dominion_participants ldp
+				LEFT JOIN legions l ON l.id = ldp.legion_id
+				WHERE ldp.legion_dominion_id = ?
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = legionDominionId });
+
+			var rows = new List<LegionDominionParticipantRow>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				rows.Add(new LegionDominionParticipantRow(
+					ReadInt(reader, "legion_id"),
+					ReadString(reader, "legion_name"),
+					ReadInt(reader, "points"),
+					ReadInt(reader, "survived_time"),
+					ToUnixSeconds(ReadDateTimeOffset(reader, "participated_date"))));
+			}
+
+			return rows;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load legion dominion participants for location {LegionDominionId}", legionDominionId);
+			return Array.Empty<LegionDominionParticipantRow>();
 		}
 	}
 

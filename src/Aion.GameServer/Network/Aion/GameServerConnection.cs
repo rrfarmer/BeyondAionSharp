@@ -1997,8 +1997,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleLegionUploadEmblemAsync(_activePlayer, legionUploadEmblem);
 				break;
-			case CmLegionDominionRequestRanking:
-				// Java parity: CM_LEGION_DOMINION_REQUEST_RANKING.runImpl dispatches DominionService; deferred.
+			case CmLegionDominionRequestRanking legionDominionRequestRanking:
+				if (_activePlayer != null)
+					await HandleLegionDominionRequestRankingAsync(_activePlayer, legionDominionRequestRanking);
 				break;
 			case CmQuestShare questShare:
 				// Java parity: CM_QUEST_SHARE.runImpl -> QuestService.checkStartConditions + SM_QUEST_ACTION to group.
@@ -3286,6 +3287,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await BroadcastLegionDominionJoinedAsync(player, legionDominionId);
+	}
+
+	private async Task HandleLegionDominionRequestRankingAsync(Player player, CmLegionDominionRequestRanking packet)
+	{
+		// Java parity: CM_LEGION_DOMINION_REQUEST_RANKING.runImpl guards Stonespear ids 1..6, then sends
+		// SM_LEGION_DOMINION_RANK for the active player's legion.
+		if (packet.StonespearId < 1 || packet.StonespearId > 6 || _playerEnterWorldRepository == null)
+			return;
+
+		var participants = await _playerEnterWorldRepository.LoadLegionDominionParticipantsAsync(packet.StonespearId);
+		await SendPacketAsync(new SmLegionDominionRank(packet.StonespearId, player.LegionId, participants));
 	}
 
 	private async Task BroadcastLegionDominionJoinedAsync(Player player, int legionDominionId)

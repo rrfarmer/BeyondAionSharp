@@ -1086,6 +1086,50 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task LoadLegionDominionParticipantsAsync_LoadsJavaRowsWithLegionNameFallback_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionDominionDAO.loadParticipants reads participant rows for one location;
+		// LegionDominionParticipantInfo.getLegionName falls back to "NOT AVAILABLE" when no legion is loaded.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level)
+			VALUES (5001, 'Hydrated Legion', 4)
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legion_dominion_participants
+				(legion_dominion_id, legion_id, points, survived_time, participated_date)
+			VALUES
+				(5, 5001, 42, 90, '1970-01-01 00:33:20'),
+				(5, 5002, 7, 30, '1970-01-01 00:16:40'),
+				(6, 5003, 99, 60, '1970-01-01 00:50:00')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var rows = await repository.LoadLegionDominionParticipantsAsync(5);
+
+		Assert.Equal(2, rows.Count);
+		var named = Assert.Single(rows, row => row.LegionId == 5001);
+		Assert.Equal("Hydrated Legion", named.LegionName);
+		Assert.Equal(42, named.Points);
+		Assert.Equal(90, named.SurvivedTime);
+		Assert.True(named.ParticipatedEpochSeconds > 0);
+
+		var missingName = Assert.Single(rows, row => row.LegionId == 5002);
+		Assert.Equal("NOT AVAILABLE", missingName.LegionName);
+		Assert.Equal(7, missingName.Points);
+		Assert.Equal(30, missingName.SurvivedTime);
+	}
+
+	[Fact]
 	public async Task LoadPlayerAsync_HydratesLatestLegionAnnouncementAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
