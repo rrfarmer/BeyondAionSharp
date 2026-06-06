@@ -3524,15 +3524,23 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var updatedMember = targetMember with { Rank = newRank };
+		if (ResolveOnlinePlayerByObjectId(updatedMember.PlayerObjectId) is { } onlineTarget)
+		{
+			onlineTarget.LegionRank = newRank;
+			updatedMember = CreateOnlineLegionMemberSnapshot(onlineTarget);
+		}
+
 		if (!updatedMember.IsOnline && _playerEnterWorldRepository != null)
 			await _playerEnterWorldRepository.SaveLegionMemberRankAsync(updatedMember.PlayerObjectId, newRank);
 
-		await SendPacketAsync(new SmLegionUpdateMember(
-			updatedMember,
-			GetLegionMemberLevel(updatedMember),
-			_options.Network.GameServerId,
-			GetLegionRankChangeMessageId(newRank),
-			updatedMember.Name));
+		await BroadcastLegionRankUpdateAsync(
+			player,
+			() => new SmLegionUpdateMember(
+				updatedMember,
+				GetLegionMemberLevel(updatedMember),
+				_options.Network.GameServerId,
+				GetLegionRankChangeMessageId(newRank),
+				updatedMember.Name));
 	}
 
 	private async Task HandleLegionBrigadeGeneralTransferRequestAsync(Player player, string memberName)
@@ -3605,18 +3613,14 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		if (string.Equals(player.Name, normalizedMemberName, StringComparison.Ordinal))
 		{
-			return new LegionMemberSnapshot(
-				player.ObjectId,
-				player.LegionId,
-				player.Name,
-				player.LegionRank,
-				player.LegionNickname,
-				player.LegionSelfIntro,
-				true,
-				player.PlayerClass,
-				player.Exp,
-				player.Position.WorldId,
-				player.LastOnline);
+			return CreateOnlineLegionMemberSnapshot(player);
+		}
+
+		if (_connectionRegistry != null
+			&& _connectionRegistry.TryGetOnlinePlayerByName(normalizedMemberName, out var onlinePlayer)
+			&& onlinePlayer != null)
+		{
+			return CreateOnlineLegionMemberSnapshot(onlinePlayer);
 		}
 
 		if (_playerEnterWorldRepository == null)
@@ -15842,6 +15846,24 @@ public sealed class GameServerConnection : BaseClientConnection
 		_connectionRegistry.ForEachOnlinePlayer(candidate =>
 		{
 			if (candidate.LegionId == legionId)
+				recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packetFactory());
+	}
+
+	private async Task BroadcastLegionRankUpdateAsync(Player activePlayer, Func<GameServerPacket> packetFactory)
+	{
+		// Java parity: LegionService.appointRank -> PacketSendUtility.broadcastToLegion.
+		await SendPacketAsync(packetFactory());
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == activePlayer.LegionId && candidate.ObjectId != activePlayer.ObjectId)
 				recipientObjectIds.Add(candidate.ObjectId);
 		});
 

@@ -619,6 +619,10 @@ public sealed class CmLegionTests
 	public async Task HandleInfrastructurePacketAsync_ChangeRankPersistsOfflineMemberAndSendsUpdateLikeJava()
 	{
 		var lastOnline = new DateTime(2026, 06, 01, 12, 30, 00, DateTimeKind.Utc);
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 88;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
 		var repository = new EmptyPlayerEnterWorldRepository
 		{
 			LoadedLegionMemberByName = new LegionMemberSnapshot(
@@ -634,7 +638,7 @@ public sealed class CmLegionTests
 				WorldId: 210010000,
 				LastOnline: lastOnline),
 		};
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		SetActivePlayer(pair.Connection, player);
 
@@ -656,31 +660,48 @@ public sealed class CmLegionTests
 			gameServerId: 1,
 			messageId: 1300267,
 			text: "Lurion");
+		var bystanderDelivery = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionUpdateMemberPacket(
+			bystanderDelivery.Packet,
+			playerObjectId: 2002,
+			rankId: 2,
+			classId: 10,
+			level: 1,
+			worldId: 210010000,
+			online: false,
+			lastOnlineEpochSeconds: (int)new DateTimeOffset(lastOnline).ToUnixTimeSeconds(),
+			gameServerId: 1,
+			messageId: 1300267,
+			text: "Lurion");
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_ChangeRankOnlineMemberSendsUpdateWithoutPersistenceLikeJava()
+	public async Task HandleInfrastructurePacketAsync_ChangeRankOnlineMemberMutatesStateAndBroadcastsWithoutPersistenceLikeJava()
 	{
-		var repository = new EmptyPlayerEnterWorldRepository
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var target = new Player
 		{
-			LoadedLegionMemberByName = new LegionMemberSnapshot(
-				2003,
-				77,
-				"Serin",
-				LegionRanks.Volunteer,
-				string.Empty,
-				string.Empty,
-				IsOnline: true,
-				PlayerClass: "RANGER",
-				Exp: 0,
-				WorldId: 220010000),
+			ObjectId = 2003,
+			Name = "Serin",
+			LegionId = 77,
+			LegionName = "Hydrated Legion",
+			LegionRank = LegionRanks.Volunteer,
+			PlayerClass = "RANGER",
+			Position = new WorldPosition(220010000, 0, 0, 0, 0),
 		};
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 88;
+		var registry = new CapturingConnectionRegistry(target, bystander, outsider);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		SetActivePlayer(pair.Connection, player);
 
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeRankPacket(rankId: 1, "serin"));
 
+		Assert.Equal(LegionRanks.Deputy, target.LegionRank);
+		Assert.Equal(0, repository.LoadLegionMemberByNameCalls);
 		Assert.Equal(0, repository.SaveLegionMemberRankCalls);
 		AssertLegionUpdateMemberPacket(
 			Assert.Single(pair.SentPackets),
@@ -694,6 +715,22 @@ public sealed class CmLegionTests
 			gameServerId: 1,
 			messageId: 1400902,
 			text: "Serin");
+		Assert.Equal([target.ObjectId, bystander.ObjectId], registry.DirectPackets.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in registry.DirectPackets)
+		{
+			AssertLegionUpdateMemberPacket(
+				delivery.Packet,
+				playerObjectId: 2003,
+				rankId: 1,
+				classId: 5,
+				level: 1,
+				worldId: 220010000,
+				online: true,
+				lastOnlineEpochSeconds: 0,
+				gameServerId: 1,
+				messageId: 1400902,
+				text: "Serin");
+		}
 	}
 
 	[Fact]
