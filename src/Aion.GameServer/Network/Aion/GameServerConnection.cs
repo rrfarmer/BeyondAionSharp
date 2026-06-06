@@ -2578,6 +2578,7 @@ public sealed class GameServerConnection : BaseClientConnection
 						_activePlayer,
 						new PlayerAccountRuntimeState(_accessLevel, _membership, _accountCreationEpochMillis));
 					_connectionRegistry?.RegisterPlayerConnection(_activePlayer.ObjectId, this);
+					await SyncLegionBonusOnLoginAsync(_activePlayer);
 
 					var staticData = _runtimeContext?.DataManager?.StaticData;
 					if (staticData != null)
@@ -15862,6 +15863,22 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var member in onlineMembers)
 			await SendLegionBonusIconAsync(member, display: false);
+	}
+
+	private async Task SyncLegionBonusOnLoginAsync(Player player)
+	{
+		// Java parity: LegionService.onLogin sends the active icon to the entering member,
+		// otherwise it delegates to Legion.addBonus for the ten-online-member activation.
+		if (player.LegionId <= 0)
+			return;
+
+		if (_legionBonuses.IsActive(player.LegionId))
+		{
+			await SendLegionBonusIconAsync(player, display: true);
+			return;
+		}
+
+		await AddLegionBonusIfEligibleAsync(player.LegionId);
 	}
 
 	private List<Player> CollectOnlineLegionMembers(int legionId)

@@ -14,6 +14,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
@@ -2252,6 +2253,73 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmEnterWorldSendsActiveLegionBonusIconLikeJavaOnLogin()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		Assert.True(runtimeContext.LegionBonuses.TryActivate(77, LegionBonusRuntime.OnlineMemberThreshold));
+		var player = CreateEnterWorldLegionPlayer();
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		var playerEnterWorldService = CreatePlayerEnterWorldService(repository, runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext: runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetAuthenticatedAccountForEnterWorld(pair.Connection, player.AccountId);
+
+		await InvokeProcessPacketAsync(pair.Connection, CreateEnterWorldPayload(player.ObjectId));
+
+		Assert.True(runtimeContext.LegionBonuses.IsActive(77));
+		var iconPacket = Assert.Single(pair.SentPackets, packet => packet is SmIconInfo);
+		AssertIconInfoPacket(iconPacket, buffId: 1, display: true);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmEnterWorldActivatesLegionBonusAtJavaOnlineThreshold()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		var bystanders = Enumerable.Range(0, LegionBonusRuntime.OnlineMemberThreshold - 1)
+			.Select(index => CreateLegionPlayer(3000 + index, $"Watcher{index}"))
+			.ToArray();
+		var registry = new CapturingConnectionRegistry(bystanders);
+		var player = CreateEnterWorldLegionPlayer();
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedPlayer = player,
+			MarkPlayerOnlineResult = true,
+		};
+		var playerEnterWorldService = CreatePlayerEnterWorldService(
+			repository,
+			connectionRegistry: registry,
+			runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			registry,
+			runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetAuthenticatedAccountForEnterWorld(pair.Connection, player.AccountId);
+
+		await InvokeProcessPacketAsync(pair.Connection, CreateEnterWorldPayload(player.ObjectId));
+
+		Assert.True(runtimeContext.LegionBonuses.IsActive(77));
+		var activeIcon = Assert.Single(pair.SentPackets, packet => packet is SmIconInfo);
+		AssertIconInfoPacket(activeIcon, buffId: 1, display: true);
+		var bystanderIcons = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmIconInfo)
+			.OrderBy(delivery => delivery.PlayerObjectId)
+			.ToArray();
+		Assert.Equal(LegionBonusRuntime.OnlineMemberThreshold - 1, bystanderIcons.Length);
+		for (var index = 0; index < bystanderIcons.Length; index++)
+		{
+			Assert.Equal(bystanders[index].ObjectId, bystanderIcons[index].PlayerObjectId);
+			AssertIconInfoPacket(bystanderIcons[index].Packet, buffId: 1, display: true);
+		}
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LeaveRejectsBrigadeGeneralLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -2663,11 +2731,12 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
-	private static Player CreateLegionPlayer(int objectId = 1001, string name = "Tester")
+	private static Player CreateLegionPlayer(int objectId = 1001, string name = "Tester", int accountId = 0)
 	{
 		return new Player
 		{
 			ObjectId = objectId,
+			AccountId = accountId,
 			Name = name,
 			Race = "ELYOS",
 			LegionId = 77,
@@ -2683,6 +2752,15 @@ public sealed class CmLegionTests
 			LegionLegionaryPermission = 13,
 			LegionVolunteerPermission = 14,
 		};
+	}
+
+	private static Player CreateEnterWorldLegionPlayer()
+	{
+		var player = CreateLegionPlayer(accountId: 7);
+		player.IsOnline = false;
+		player.LastOnline = DateTime.Now.AddMinutes(-5);
+		player.Position = new WorldPosition(210010000, 0, 0, 0, 0);
+		return player;
 	}
 
 	private static Player CreateUnguildedPlayer(int objectId, string name, string race = "ELYOS")
@@ -2955,6 +3033,17 @@ public sealed class CmLegionTests
 	private static int EncodeClientPacketOpcode(int opcode)
 	{
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
+	}
+
+	private static byte[] CreateEnterWorldPayload(int playerObjectId)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(8);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteD(playerObjectId);
+		return buffer.ToArray();
 	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
@@ -3279,11 +3368,49 @@ public sealed class CmLegionTests
 		await task;
 	}
 
+	private static async Task InvokeProcessPacketAsync(GameServerConnection connection, byte[] payload)
+	{
+		var method = typeof(GameServerConnection).GetMethod("ProcessPacketAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		using var packet = new PacketBuffer(payload);
+		var task = (Task)method.Invoke(connection, [packet])!;
+		await task;
+	}
+
+	private static void SetAuthenticatedAccountForEnterWorld(GameServerConnection connection, int accountId)
+	{
+		var accountIdField = typeof(GameServerConnection).GetField("_accountId", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(accountIdField);
+		accountIdField.SetValue(connection, accountId);
+		SetConnectionState(connection, GameConnectionState.Authed);
+	}
+
+	private static void SetConnectionState(GameServerConnection connection, GameConnectionState state)
+	{
+		var stateField = typeof(GameServerConnection).GetField("_state", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(stateField);
+		stateField.SetValue(connection, state);
+	}
+
 	private static void SetActivePlayer(GameServerConnection connection, Player player)
 	{
 		var activePlayerField = typeof(GameServerConnection).GetField("_activePlayer", BindingFlags.Instance | BindingFlags.NonPublic);
 		Assert.NotNull(activePlayerField);
 		activePlayerField.SetValue(connection, player);
+	}
+
+	private static PlayerEnterWorldService CreatePlayerEnterWorldService(
+		IPlayerEnterWorldRepository repository,
+		IGameClientConnectionRegistry? connectionRegistry = null,
+		GameServerRuntimeContext? runtimeContext = null)
+	{
+		return new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			new GameWorld(NullLogger<GameWorld>.Instance),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			connectionRegistry: connectionRegistry,
+			runtimeContext: runtimeContext);
 	}
 
 	private sealed class TestConnectionPair : IAsyncDisposable
@@ -3305,7 +3432,8 @@ public sealed class CmLegionTests
 			IGameClientConnectionRegistry? connectionRegistry = null,
 			GameServerRuntimeContext? runtimeContext = null,
 			GameServerOptions? options = null,
-			ChallengeTaskTable? challengeTaskTable = null)
+			ChallengeTaskTable? challengeTaskTable = null,
+			PlayerEnterWorldService? playerEnterWorldService = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -3326,6 +3454,7 @@ public sealed class CmLegionTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: options,
 					runtimeContext: runtimeContext,
+					playerEnterWorldService: playerEnterWorldService,
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					connectionRegistry: connectionRegistry,
 					sentPacketObserver: sentPackets.Add,
