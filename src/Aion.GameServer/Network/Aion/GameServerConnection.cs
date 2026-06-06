@@ -5764,19 +5764,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
 		if (closeDialogTargetObjectId.HasValue)
 		{
-			var followUpDialog = CreateNpcSelectedRewardPostFinishDialog(
+			var followUp = CreateNpcSelectedRewardPostFinishDialog(
 				player,
 				staticData,
 				inputPlan,
 				mutation.QuestState.QuestId,
 				closeDialogTargetObjectId.Value);
-			await SendPacketAsync(followUpDialog, cancellationToken);
+			if (followUp.CorrectedRewardQuestState != null && _playerEnterWorldService != null)
+				await _playerEnterWorldService.PersistQuestStartAsync(player, followUp.CorrectedRewardQuestState, isNewQuestState: false, cancellationToken);
+
+			await SendPacketAsync(followUp.Dialog, cancellationToken);
 		}
 
 		return true;
 	}
 
-	private static SmDialogWindow CreateNpcSelectedRewardPostFinishDialog(
+	private sealed record NpcSelectedRewardPostFinishDialogResult(
+		SmDialogWindow Dialog,
+		PlayerQuestState? CorrectedRewardQuestState = null);
+
+	private static NpcSelectedRewardPostFinishDialogResult CreateNpcSelectedRewardPostFinishDialog(
 		Player player,
 		StaticData staticData,
 		QuestFinishSocketInputAssemblyPlan completedInputPlan,
@@ -5821,10 +5828,13 @@ public sealed class GameServerConnection : BaseClientConnection
 						.ToArray();
 				}
 
-				return new SmDialogWindow(
+				var dialog = new SmDialogWindow(
 					targetObjectId,
 					GetQuestRewardSelectionDialogPageId(correction.QuestState.RewardGroup),
 					questId);
+				return new NpcSelectedRewardPostFinishDialogResult(
+					dialog,
+					ReferenceEquals(correction.QuestState, questState) ? null : correction.QuestState);
 			}
 
 			if (TryCreateNpcSelectedRewardPostFinishNewQuestDialog(
@@ -5834,14 +5844,14 @@ public sealed class GameServerConnection : BaseClientConnection
 				completedQuestId,
 				targetObjectId) is { } newQuestDialog)
 			{
-				return newQuestDialog;
+				return new NpcSelectedRewardPostFinishDialogResult(newQuestDialog);
 			}
 
 			if (npcHasActiveQuest)
-				return new SmDialogWindow(targetObjectId, 10, 0);
+				return new NpcSelectedRewardPostFinishDialogResult(new SmDialogWindow(targetObjectId, 10, 0));
 		}
 
-		return new SmDialogWindow(targetObjectId, 0, 0);
+		return new NpcSelectedRewardPostFinishDialogResult(new SmDialogWindow(targetObjectId, 0, 0));
 	}
 
 	private static SmDialogWindow? TryCreateNpcSelectedRewardPostFinishNewQuestDialog(

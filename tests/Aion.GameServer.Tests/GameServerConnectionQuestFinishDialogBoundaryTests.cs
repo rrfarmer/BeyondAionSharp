@@ -778,11 +778,11 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetSelectedRewardOpensNextRegisteredRewardPage()
 	{
-		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync(withPlayerEnterWorldService: true);
 		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnTalkEvent);
 
 		var completedRewardQuestState = new PlayerQuestState(1011, "REWARD", QuestVars: 0x57, Flags: 0, CompleteCount: 0);
-		var nextRewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0, RewardGroup: 0);
+		var nextRewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0, RewardGroup: 9);
 		var player = new Player
 		{
 			ObjectId = 1014,
@@ -811,8 +811,12 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		var completedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1011);
 		Assert.Equal("COMPLETE", completedQuest.Status);
 		var nextRewardQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1001);
+		Assert.NotSame(nextRewardQuestState, nextRewardQuest);
 		Assert.Equal("REWARD", nextRewardQuest.Status);
 		Assert.Equal(0, nextRewardQuest.RewardGroup);
+		Assert.Equal(2, fixture.PlayerEnterWorldRepository.UpdatePlayerQuestCalls);
+		Assert.Same(nextRewardQuest, fixture.PlayerEnterWorldRepository.UpdatedPlayerQuestState);
+		Assert.Equal(0, fixture.PlayerEnterWorldRepository.InsertPlayerQuestCalls);
 	}
 
 	[Fact]
