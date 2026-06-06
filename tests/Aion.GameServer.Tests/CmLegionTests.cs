@@ -1814,13 +1814,15 @@ public sealed class CmLegionTests
 			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 1));
 
 		Assert.True(runtimeContext.LegionBonuses.IsActive(player.LegionId));
+		var activeIcon = Assert.Single(pair.SentPackets, packet => packet is SmIconInfo);
+		AssertIconInfoPacket(activeIcon, buffId: 1, display: true);
 		var iconPackets = registry.DirectPackets
 			.Where(delivery => delivery.Packet is SmIconInfo)
 			.OrderBy(delivery => delivery.PlayerObjectId)
 			.ToArray();
-		Assert.Equal(10, iconPackets.Length);
+		Assert.Equal(9, iconPackets.Length);
 		Assert.Equal(
-			new[] { player.ObjectId, target.ObjectId }.Concat(onlineMembers.Select(member => member.ObjectId)).OrderBy(id => id),
+			new[] { target.ObjectId }.Concat(onlineMembers.Select(member => member.ObjectId)).OrderBy(id => id),
 			iconPackets.Select(delivery => delivery.PlayerObjectId));
 		foreach (var delivery in iconPackets)
 			AssertIconInfoPacket(delivery.Packet, buffId: 1, display: true);
@@ -2212,6 +2214,44 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_KickOnlineMemberDeactivatesLegionBonusBelowJavaThreshold()
+	{
+		var target = CreateLegionPlayer(2005, "Lurion");
+		target.LegionRank = LegionRanks.Legionary;
+		var bystanders = Enumerable.Range(0, 8)
+			.Select(index => CreateLegionPlayer(3000 + index, $"Watcher{index}"))
+			.ToArray();
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = CreateMemberSnapshot(target.ObjectId, target.Name, LegionRanks.Legionary, isOnline: true),
+		};
+		var registry = new CapturingConnectionRegistry(new[] { target }.Concat(bystanders).ToArray());
+		var runtimeContext = new GameServerRuntimeContext();
+		Assert.True(runtimeContext.LegionBonuses.TryActivate(77, LegionBonusRuntime.OnlineMemberThreshold));
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry, runtimeContext);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateKickMemberPacket("lurion"));
+
+		Assert.False(runtimeContext.LegionBonuses.IsActive(77));
+		var targetIcon = Assert.Single(
+			registry.DirectPackets,
+			delivery => delivery.PlayerObjectId == target.ObjectId && delivery.Packet is SmIconInfo);
+		AssertIconInfoPacket(targetIcon.Packet, buffId: 1, display: false);
+		var activeIcon = Assert.Single(pair.SentPackets, packet => packet is SmIconInfo);
+		AssertIconInfoPacket(activeIcon, buffId: 1, display: false);
+		var bystanderIcons = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmIconInfo && delivery.PlayerObjectId != target.ObjectId)
+			.OrderBy(delivery => delivery.PlayerObjectId)
+			.ToArray();
+		Assert.Equal(8, bystanderIcons.Length);
+		Assert.Equal(bystanders.Select(member => member.ObjectId).OrderBy(id => id), bystanderIcons.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in bystanderIcons)
+			AssertIconInfoPacket(delivery.Packet, buffId: 1, display: false);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LeaveRejectsBrigadeGeneralLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -2288,6 +2328,36 @@ public sealed class CmLegionTests
 			messageId: 1300241,
 			name: "Hydrated Legion",
 			name1: string.Empty);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LeaveDeactivatesLegionBonusBelowJavaThreshold()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var runtimeContext = new GameServerRuntimeContext();
+		Assert.True(runtimeContext.LegionBonuses.TryActivate(77, LegionBonusRuntime.OnlineMemberThreshold));
+		var bystanders = Enumerable.Range(0, 9)
+			.Select(index => CreateLegionPlayer(3000 + index, $"Watcher{index}"))
+			.ToArray();
+		var registry = new CapturingConnectionRegistry(bystanders);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Legionary;
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry, runtimeContext);
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLeavePacket());
+
+		Assert.False(runtimeContext.LegionBonuses.IsActive(77));
+		var activeIcon = Assert.Single(pair.SentPackets, packet => packet is SmIconInfo);
+		AssertIconInfoPacket(activeIcon, buffId: 1, display: false);
+		var bystanderIcons = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmIconInfo)
+			.OrderBy(delivery => delivery.PlayerObjectId)
+			.ToArray();
+		Assert.Equal(9, bystanderIcons.Length);
+		Assert.Equal(bystanders.Select(member => member.ObjectId).OrderBy(id => id), bystanderIcons.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in bystanderIcons)
+			AssertIconInfoPacket(delivery.Packet, buffId: 1, display: false);
 	}
 
 	[Fact]

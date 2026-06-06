@@ -3469,7 +3469,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		_legionWarehouses.UnsetInUse(legionId, player.ObjectId);
 		await SendPacketAsync(new SmLegionLeaveMember(1300241, 0, legionName));
 		await BroadcastLegionUpdateTitleAsync(player, memberRank);
+		await SendLegionBonusIconIfActiveAsync(player, legionId, display: false);
 		ResetLegionMember(player);
+		await RemoveLegionBonusIfEligibleAsync(legionId);
 	}
 
 	private async Task HandleLegionKickMemberAsync(Player player, string memberName)
@@ -3531,8 +3533,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (_connectionRegistry != null)
 				await _connectionRegistry.SendPacketToPlayerAsync(targetMember.PlayerObjectId, new SmLegionLeaveMember(1300246, 0, player.LegionName));
 			await BroadcastLegionUpdateTitleAsync(onlineTarget, targetMember.Rank);
+			await SendLegionBonusIconIfActiveAsync(onlineTarget, player.LegionId, display: false);
 			ResetLegionMember(onlineTarget);
 		}
+
+		await RemoveLegionBonusIfEligibleAsync(player.LegionId);
 	}
 
 	private async Task BroadcastLegionLeaveMemberAsync(
@@ -15833,21 +15838,64 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task AddLegionBonusIfEligibleAsync(int legionId)
 	{
 		// Java parity: Legion.addBonus toggles once when online members reach ten and sends SM_ICON_INFO(1, true).
-		if (_connectionRegistry == null || legionId <= 0)
+		if (legionId <= 0)
 			return;
 
-		var onlineMembers = new List<Player>();
-		_connectionRegistry.ForEachOnlinePlayer(candidate =>
-		{
-			if (candidate.LegionId == legionId)
-				onlineMembers.Add(candidate);
-		});
+		var onlineMembers = CollectOnlineLegionMembers(legionId);
 
 		if (!_legionBonuses.TryActivate(legionId, onlineMembers.Count))
 			return;
 
 		foreach (var member in onlineMembers)
-			await _connectionRegistry.SendPacketToPlayerAsync(member.ObjectId, new SmIconInfo(1, display: true));
+			await SendLegionBonusIconAsync(member, display: true);
+	}
+
+	private async Task RemoveLegionBonusIfEligibleAsync(int legionId)
+	{
+		// Java parity: Legion.removeBonus toggles once below ten online members and sends SM_ICON_INFO(1, false).
+		if (legionId <= 0)
+			return;
+
+		var onlineMembers = CollectOnlineLegionMembers(legionId);
+		if (!_legionBonuses.TryDeactivate(legionId, onlineMembers.Count))
+			return;
+
+		foreach (var member in onlineMembers)
+			await SendLegionBonusIconAsync(member, display: false);
+	}
+
+	private List<Player> CollectOnlineLegionMembers(int legionId)
+	{
+		var membersByObjectId = new Dictionary<int, Player>();
+		if (_activePlayer is { } activePlayer && activePlayer.LegionId == legionId)
+			membersByObjectId[activePlayer.ObjectId] = activePlayer;
+
+		_connectionRegistry?.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == legionId)
+				membersByObjectId[candidate.ObjectId] = candidate;
+		});
+
+		return membersByObjectId.Values.ToList();
+	}
+
+	private async Task SendLegionBonusIconIfActiveAsync(Player player, int legionId, bool display)
+	{
+		if (_legionBonuses.IsActive(legionId))
+			await SendLegionBonusIconAsync(player, display);
+	}
+
+	private async Task SendLegionBonusIconAsync(Player player, bool display)
+	{
+		var packet = new SmIconInfo(1, display);
+		if (_activePlayer?.ObjectId == player.ObjectId)
+		{
+			await SendPacketAsync(packet);
+			return;
+		}
+
+		if (_connectionRegistry != null)
+			await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
 	}
 
 	private async Task<bool> CanAddLegionInviteMemberAsync(int legionId, int legionLevel)
