@@ -57,6 +57,15 @@ public sealed class Player
 	// Java parity: model/team/legion/LegionMember.isBrigadeGeneral().
 	public bool IsBrigadeGeneral => Legion.LegionRanks.IsBrigadeGeneral(LegionRank);
 
+	// Java parity: model/team/legion/Legion permission masks used by LegionMember.hasRights.
+	public int LegionDeputyPermission { get; set; }
+
+	public int LegionCenturionPermission { get; set; }
+
+	public int LegionLegionaryPermission { get; set; }
+
+	public int LegionVolunteerPermission { get; set; }
+
 	public byte LegionEmblemId { get; set; }
 
 	public byte LegionEmblemType { get; set; }

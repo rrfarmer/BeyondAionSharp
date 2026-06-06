@@ -13,6 +13,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -36,6 +37,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int BrokerStorageId = 126;
 	private const int MailboxStorageId = 127;
 	private const int KinahItemId = 182400001;
+	private const int LegionWarehouseWithdrawalPermission = 0x4;
+	private const int LegionWarehouseDepositPermission = 0x1000;
 	private const int FirstAvailableSlot = 65535;
 	private const int NoTitleId = 0xFFFF;
 	private const int MaxBlockedUsers = 100;
@@ -1736,8 +1739,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				if (_activePlayer != null)
 					await HandleWindstreamAsync(_activePlayer, windstream);
 				break;
-			case CmLegionWarehouseKinah:
-				// Java parity: network/aion/clientpackets/CM_LEGION_WH_KINAH.runImpl mutates player/legion Kinah and history; deferred.
+			case CmLegionWarehouseKinah legionWarehouseKinah:
+				if (_activePlayer != null)
+					await HandleLegionWarehouseKinahAsync(_activePlayer, legionWarehouseKinah);
 				break;
 			case CmGroupDataExchange groupDataExchange:
 				await HandleGroupDataExchangeAsync(groupDataExchange);
@@ -2841,6 +2845,47 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: network/aion/serverpackets/SM_ACCOUNT_PROPERTIES uses AdminConfig.GM_PANEL.
 		return new SmAccountProperties(_accessLevel >= _options.Administration.GmPanelAccessLevel);
+	}
+
+	private async Task HandleLegionWarehouseKinahAsync(Player player, CmLegionWarehouseKinah packet)
+	{
+		// Java parity: CM_LEGION_WH_KINAH.runImpl returns when activePlayer.getLegionMember() is null.
+		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
+			return;
+
+		var requiredPermission = packet.ActionType switch
+		{
+			0 => LegionWarehouseWithdrawalPermission,
+			1 => LegionWarehouseDepositPermission,
+			_ => 0,
+		};
+		if (requiredPermission == 0)
+			return;
+
+		if (!HasLegionWarehouseRight(player, requiredPermission))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarehouseNoRight());
+			return;
+		}
+
+		// Java parity gap: successful legion warehouse Kinah mutation/history remains deferred until
+		// LegionWarehouse storage and LegionService.addHistory are modeled in the live C# runtime.
+	}
+
+	private static bool HasLegionWarehouseRight(Player player, int permission)
+	{
+		if (player.IsBrigadeGeneral)
+			return true;
+
+		var rankPermission = player.LegionRank switch
+		{
+			LegionRanks.Deputy => player.LegionDeputyPermission,
+			LegionRanks.Centurion => player.LegionCenturionPermission,
+			LegionRanks.Legionary => player.LegionLegionaryPermission,
+			LegionRanks.Volunteer => player.LegionVolunteerPermission,
+			_ => 0,
+		};
+		return (rankPermission & permission) != 0;
 	}
 
 	private async Task HandleAutoGroupAsync(Player player, CmAutoGroup packet)

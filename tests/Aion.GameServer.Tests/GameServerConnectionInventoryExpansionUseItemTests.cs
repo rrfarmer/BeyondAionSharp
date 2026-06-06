@@ -3966,6 +3966,48 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_LegionWarehouseKinahVolunteerWithdrawalSendsNoRightLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 182400001, count: 5000);
+		player.LegionId = 77;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x800;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+		var originalInventory = player.InventoryItems.Select(item => (item.ObjectId, item.Count)).ToArray();
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(76, buffer =>
+			{
+				buffer.WriteQ(1000L);
+				buffer.WriteC(0);
+			}));
+
+		Assert.Equal(originalInventory, player.InventoryItems.Select(item => (item.ObjectId, item.Count)).ToArray());
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300322);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_LegionWarehouseKinahNoLegionReturnsWithoutPacketLikeJava()
+	{
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 182400001, count: 5000);
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(76, buffer =>
+			{
+				buffer.WriteQ(1000L);
+				buffer.WriteC(1);
+			}));
+
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_SelectDecomposableDispatchesSelection()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));

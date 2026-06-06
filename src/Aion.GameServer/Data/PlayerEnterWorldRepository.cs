@@ -1651,6 +1651,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				SELECT id, account_id, name, player_class, race, gender, note, creation_date, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
 					lm.legion_id, lm.`rank` AS legion_rank, l.level AS legion_level, l.name AS legion_name,
+					l.deputy_permission, l.centurion_permission, l.legionary_permission, l.volunteer_permission,
 					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
 					le.color_a AS legion_emblem_color_a, le.color_r AS legion_emblem_color_r,
 					le.color_g AS legion_emblem_color_g, le.color_b AS legion_emblem_color_b,
@@ -1697,6 +1698,10 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					LegionRank = ReadString(reader, "legion_rank"), // Java parity: LegionMember rank (enum name); empty when no legion.
 					LegionLevel = ReadInt(reader, "legion_level"),
 					LegionName = ReadString(reader, "legion_name"),
+					LegionDeputyPermission = ReadInt(reader, "deputy_permission"),
+					LegionCenturionPermission = ReadInt(reader, "centurion_permission"),
+					LegionLegionaryPermission = ReadInt(reader, "legionary_permission"),
+					LegionVolunteerPermission = ReadInt(reader, "volunteer_permission"),
 					LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
 					LegionEmblemType = ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
 					LegionEmblemColorA = (byte)ReadInt(reader, "legion_emblem_color_a"),
