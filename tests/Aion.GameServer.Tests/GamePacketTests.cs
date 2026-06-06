@@ -408,6 +408,7 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.CantUseGuildStorage(), 1300279);
 		AssertSystemMessage(SmSystemMessage.GuildWarehouseInUse(), 1300280);
 		AssertSystemMessage(SmSystemMessage.GuildWarehouseNoRight(), 1300322);
+		AssertSystemMessage(SmSystemMessage.GuildWarehouseCantUseWhileDisbanding(), 1300333);
 		AssertSystemMessage(SmSystemMessage.PartyHeRejectInvitation("Responder"), 1300161, "Responder");
 		AssertSystemMessage(SmSystemMessage.PartyInvitedHim("Invited"), 1300173, "Invited");
 		AssertSystemMessage(SmSystemMessage.PartyAllianceHeRejectInvitation("Responder"), 1300190, "Responder");

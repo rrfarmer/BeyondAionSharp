@@ -2051,6 +2051,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300280);
 	}
 
+	public static SmSystemMessage GuildWarehouseCantUseWhileDisbanding()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_CANT_USE_WHILE_DISPERSE.
+		return new SmSystemMessage(1300333);
+	}
+
 	public static SmSystemMessage WarehouseCantDepositItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM. You cannot store this in the warehouse.

@@ -266,6 +266,22 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseDisbandingLegionSendsJavaDenial()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreateLegionWarehousePlayer(targetObjectId: 9021, objectId: 1001, legionId: 77);
+		player.LegionDisbandTime = 1_771_234_567;
+		var npc = CreateExpansionNpc(9021, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300333);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_OpenLegionWarehouseUnsupportedActionWithoutLegionKeepsJavaMembershipOrder()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();

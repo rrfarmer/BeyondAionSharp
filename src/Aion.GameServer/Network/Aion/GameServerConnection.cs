@@ -4051,6 +4051,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (player.IsLegionDisbanding)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarehouseCantUseWhileDisbanding());
+			return;
+		}
+
 		if (!HasLegionWarehouseRight(player, LegionWarehouseDepositPermission)
 			&& !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))
 		{

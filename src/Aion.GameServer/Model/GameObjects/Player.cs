@@ -53,6 +53,11 @@ public sealed class Player
 
 	public string LegionName { get; set; } = string.Empty;
 
+	// Java parity: model/team/legion/Legion.isDisbanding checks disband_time > 0.
+	public int LegionDisbandTime { get; set; }
+
+	public bool IsLegionDisbanding => LegionDisbandTime > 0;
+
 	// Java parity: model/team/legion/LegionMember.getRank() — legion_members.rank stores the LegionRank enum name.
 	// Empty when the player has no legion (LegionId == 0).
 	public string LegionRank { get; set; } = string.Empty;
