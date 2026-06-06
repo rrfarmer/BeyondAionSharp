@@ -1343,6 +1343,28 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void SmLegionAddMember_WritesJavaInviteAcceptanceShape()
+	{
+		var player = CreateUnguildedPlayer(2002, "Lurion");
+		player.LegionRank = LegionRanks.Volunteer;
+		player.Level = 14;
+		player.Position = new WorldPosition(210010000, 0, 0, 0, 0);
+
+		AssertLegionAddMemberPacket(
+			new SmLegionAddMember(player, isMember: false, gameServerId: 1, messageId: 1300260, text: player.Name),
+			playerObjectId: 2002,
+			name: "Lurion",
+			rankId: LegionRanks.GetRankId(LegionRanks.Volunteer),
+			isMember: false,
+			classId: 5,
+			level: 14,
+			worldId: 210010000,
+			gameServerId: 1,
+			messageId: 1300260,
+			text: "Lurion");
+	}
+
+	[Fact]
 	public async Task HandleQuestionResponseAsync_LegionInviteAcceptPersistsMemberMutatesStateAndBroadcastsLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1400,25 +1422,26 @@ public sealed class CmLegionTests
 		var noticePacket = Assert.IsType<SmSystemMessage>(notice.Packet);
 		Assert.Equal(["Welcome aboard", "1771234500", "2"], noticePacket.Parameters);
 
-		var memberUpdates = registry.DirectPackets
-			.Where(delivery => delivery.Packet is SmLegionUpdateMember)
+		var memberAdds = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmLegionAddMember)
 			.ToArray();
-		Assert.Equal([player.ObjectId, target.ObjectId, bystander.ObjectId], memberUpdates.Select(delivery => delivery.PlayerObjectId));
-		foreach (var delivery in memberUpdates)
+		Assert.Equal([player.ObjectId, target.ObjectId, bystander.ObjectId], memberAdds.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in memberAdds)
 		{
-			AssertLegionUpdateMemberPacket(
+			AssertLegionAddMemberPacket(
 				delivery.Packet,
 				playerObjectId: target.ObjectId,
+				name: "Lurion",
 				rankId: LegionRanks.GetRankId(LegionRanks.Volunteer),
+				isMember: false,
 				classId: 5,
-				level: 1,
+				level: 14,
 				worldId: 0,
-				online: true,
-				lastOnlineEpochSeconds: 0,
 				gameServerId: 1,
 				messageId: 1300260,
 				text: "Lurion");
 		}
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.Packet is SmLegionUpdateMember);
 
 		var refreshPackets = registry.DirectPackets
 			.Where(delivery => delivery.Packet is SmLegionEdit)
@@ -2433,6 +2456,34 @@ public sealed class CmLegionTests
 		Assert.Equal(gameServerId, reader.ReadD());
 		Assert.Equal(messageId, reader.ReadD());
 		Assert.Equal(text, reader.ReadS());
+	}
+
+	private static void AssertLegionAddMemberPacket(
+		GameServerPacket packet,
+		int playerObjectId,
+		string name,
+		int rankId,
+		bool isMember,
+		int classId,
+		int level,
+		int worldId,
+		int gameServerId,
+		int messageId,
+		string text)
+	{
+		var response = Assert.IsType<SmLegionAddMember>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(name, reader.ReadS());
+		Assert.Equal(rankId, reader.ReadC());
+		Assert.Equal(isMember ? 1 : 0, reader.ReadC());
+		Assert.Equal(classId, reader.ReadC());
+		Assert.Equal(level, reader.ReadC());
+		Assert.Equal(worldId, reader.ReadD());
+		Assert.Equal(gameServerId, reader.ReadD());
+		Assert.Equal(messageId, reader.ReadD());
+		Assert.Equal(text, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertLegionEditPacket(GameServerPacket packet, int expectedType)

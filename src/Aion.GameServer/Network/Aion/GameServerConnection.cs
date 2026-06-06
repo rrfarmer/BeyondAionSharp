@@ -15800,9 +15800,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await BroadcastToOnlineLegionAsync(
 			responder.LegionId,
-			() => new SmLegionUpdateMember(
-				CreateOnlineLegionMemberSnapshot(responder),
-				GetLegionMemberLevel(responder),
+			() => new SmLegionAddMember(
+				responder,
+				isMember: false,
 				_options.Network.GameServerId,
 				1300260,
 				responder.Name));
