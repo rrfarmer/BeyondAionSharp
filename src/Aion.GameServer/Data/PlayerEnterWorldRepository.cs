@@ -411,10 +411,13 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> SaveItemStorageSwitchMutationAsync(
 		int playerObjectId,
+		int accountId,
 		int sourceItemObjectId,
+		int sourceOldLocation,
 		int sourceNewLocation,
 		long sourceNewSlot,
 		int replaceItemObjectId,
+		int replaceOldLocation,
 		int replaceNewLocation,
 		long replaceNewSlot,
 		CancellationToken cancellationToken = default);
@@ -559,7 +562,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveItemStorageSwitchMutationCalls { get; private set; }
 
-	public (int PlayerObjectId, int SourceItemObjectId, int SourceNewLocation, long SourceNewSlot, int ReplaceItemObjectId, int ReplaceNewLocation, long ReplaceNewSlot)?
+	public (int PlayerObjectId, int AccountId, int SourceItemObjectId, int SourceOldLocation, int SourceNewLocation, long SourceNewSlot, int ReplaceItemObjectId, int ReplaceOldLocation, int ReplaceNewLocation, long ReplaceNewSlot)?
 		SavedItemStorageSwitchMutation { get; private set; }
 
 	public bool InsertPlayerQuestResult { get; init; } = true;
@@ -1503,10 +1506,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<bool> SaveItemStorageSwitchMutationAsync(
 		int playerObjectId,
+		int accountId,
 		int sourceItemObjectId,
+		int sourceOldLocation,
 		int sourceNewLocation,
 		long sourceNewSlot,
 		int replaceItemObjectId,
+		int replaceOldLocation,
 		int replaceNewLocation,
 		long replaceNewSlot,
 		CancellationToken cancellationToken = default)
@@ -1514,10 +1520,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveItemStorageSwitchMutationCalls++;
 		SavedItemStorageSwitchMutation = (
 			playerObjectId,
+			accountId,
 			sourceItemObjectId,
+			sourceOldLocation,
 			sourceNewLocation,
 			sourceNewSlot,
 			replaceItemObjectId,
+			replaceOldLocation,
 			replaceNewLocation,
 			replaceNewSlot);
 		return Task.FromResult(SaveItemStorageSwitchMutationResult);
@@ -3074,10 +3083,13 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<bool> SaveItemStorageSwitchMutationAsync(
 		int playerObjectId,
+		int accountId,
 		int sourceItemObjectId,
+		int sourceOldLocation,
 		int sourceNewLocation,
 		long sourceNewSlot,
 		int replaceItemObjectId,
+		int replaceOldLocation,
 		int replaceNewLocation,
 		long replaceNewSlot,
 		CancellationToken cancellationToken = default)
@@ -3091,8 +3103,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await SaveInventoryItemLocationAsync(
 				connection,
 				transaction,
-				playerObjectId,
-				playerObjectId,
+				GetStorageOwnerId(playerObjectId, accountId, sourceOldLocation),
+				GetStorageOwnerId(playerObjectId, accountId, sourceNewLocation),
 				sourceItemObjectId,
 				sourceNewLocation,
 				sourceNewSlot,
@@ -3101,8 +3113,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await SaveInventoryItemLocationAsync(
 				connection,
 				transaction,
-				playerObjectId,
-				playerObjectId,
+				GetStorageOwnerId(playerObjectId, accountId, replaceOldLocation),
+				GetStorageOwnerId(playerObjectId, accountId, replaceNewLocation),
 				replaceItemObjectId,
 				replaceNewLocation,
 				replaceNewSlot,

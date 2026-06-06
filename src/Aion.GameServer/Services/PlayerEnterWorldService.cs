@@ -683,9 +683,11 @@ public sealed class PlayerEnterWorldService
 	public Task<bool> SaveItemStorageSwitchMutationAsync(
 		Player player,
 		int sourceItemObjectId,
+		int sourceOldLocation,
 		int sourceNewLocation,
 		long sourceNewSlot,
 		int replaceItemObjectId,
+		int replaceOldLocation,
 		int replaceNewLocation,
 		long replaceNewSlot,
 		CancellationToken cancellationToken = default)
@@ -693,10 +695,13 @@ public sealed class PlayerEnterWorldService
 		// Java parity: ItemMoveService.switchItemsInStorages swaps both items as one storage state change.
 		return _repository.SaveItemStorageSwitchMutationAsync(
 			player.ObjectId,
+			player.AccountId,
 			sourceItemObjectId,
+			sourceOldLocation,
 			sourceNewLocation,
 			sourceNewSlot,
 			replaceItemObjectId,
+			replaceOldLocation,
 			replaceNewLocation,
 			replaceNewSlot,
 			cancellationToken);

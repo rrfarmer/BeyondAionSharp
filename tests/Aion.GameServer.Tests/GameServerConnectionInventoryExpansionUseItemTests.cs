@@ -1527,7 +1527,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			});
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
 		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
-		Assert.Equal((1001, 5001, 1, 27L, 6001, 0, 12L), repository.SavedItemStorageSwitchMutation);
+		Assert.Equal((1001, 0, 5001, 0, 1, 27L, 6001, 1, 0, 12L), repository.SavedItemStorageSwitchMutation);
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
@@ -1555,6 +1555,74 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCount: 1,
 				expectedSlot: 27),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
+	public async Task HandleReplaceItemAsync_AccountWarehouseSwitchMovesRestoredRowsAndOwnersLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 1, accountId: 77);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		player.AccountWarehouseItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 6001,
+				ItemId = 201,
+				Count = 2,
+				OwnerId = 77,
+				Location = 2,
+				Slot = 27,
+			},
+		];
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 0, sourceItemObjectId: 5001, replaceStorageType: 2, replaceItemObjectId: 6001));
+
+		var accountItem = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(5001, accountItem.ObjectId);
+		Assert.Equal(77, accountItem.OwnerId);
+		Assert.Equal(2, accountItem.Location);
+		Assert.Equal(27, accountItem.Slot);
+		var cubeItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(6001, cubeItem.ObjectId);
+		Assert.Equal(1001, cubeItem.OwnerId);
+		Assert.Equal(0, cubeItem.Location);
+		Assert.Equal(12, cubeItem.Slot);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Equal((1001, 77, 5001, 0, 2, 27L, 6001, 2, 0, 12L), repository.SavedItemStorageSwitchMutation);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 2,
+				expectedObjectId: 6001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 6001,
+				expectedItemId: 201,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 200,
+				expectedCount: 1,
+				expectedSlot: 27),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2));
 	}
 
 	[Fact]
@@ -1685,6 +1753,46 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(1, replaceItem.Location);
 		Assert.Equal(27, replaceItem.Slot);
 		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandleReplaceItemAsync_AccountWarehouseSaveFailureRollsBackListsAndOwners()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveItemStorageSwitchMutationResult = false };
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 1, accountId: 77);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		var replaceItem = new InventoryItem
+		{
+			ObjectId = 6001,
+			ItemId = 201,
+			Count = 2,
+			OwnerId = 77,
+			Location = 2,
+			Slot = 27,
+		};
+		player.AccountWarehouseItems = [replaceItem];
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 0, sourceItemObjectId: 5001, replaceStorageType: 2, replaceItemObjectId: 6001));
+
+		var cubeItem = Assert.Single(player.InventoryItems);
+		Assert.Same(sourceItem, cubeItem);
+		Assert.Equal(1001, sourceItem.OwnerId);
+		Assert.Equal(0, sourceItem.Location);
+		Assert.Equal(12, sourceItem.Slot);
+		var accountItem = Assert.Single(player.AccountWarehouseItems);
+		Assert.Same(replaceItem, accountItem);
+		Assert.Equal(77, replaceItem.OwnerId);
+		Assert.Equal(2, replaceItem.Location);
+		Assert.Equal(27, replaceItem.Slot);
+		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Equal((1001, 77, 5001, 0, 2, 27L, 6001, 2, 0, 12L), repository.SavedItemStorageSwitchMutation);
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
 		Assert.Empty(fixture.SentPackets);
 	}

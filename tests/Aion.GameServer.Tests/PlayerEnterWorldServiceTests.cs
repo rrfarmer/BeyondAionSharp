@@ -4467,10 +4467,13 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> SaveItemStorageSwitchMutationAsync(
 			int playerObjectId,
+			int accountId,
 			int sourceItemObjectId,
+			int sourceOldLocation,
 			int sourceNewLocation,
 			long sourceNewSlot,
 			int replaceItemObjectId,
+			int replaceOldLocation,
 			int replaceNewLocation,
 			long replaceNewSlot,
 			CancellationToken cancellationToken = default)

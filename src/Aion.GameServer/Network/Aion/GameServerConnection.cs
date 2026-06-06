@@ -4365,13 +4365,11 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleReplaceItemAsync(Player player, CmReplaceItem packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_REPLACE_ITEM.runImpl -> ItemMoveService.switchItemsInStorages.
-		var sourceItem = player.InventoryItems.FirstOrDefault(
-			i => i.ObjectId == packet.SourceItemObjectId && i.Location == packet.SourceStorageType);
+		var sourceItem = FindMoveStorageItem(player, packet.SourceItemObjectId, packet.SourceStorageType);
 		if (sourceItem == null)
 			return;
 
-		var replaceItem = player.InventoryItems.FirstOrDefault(
-			i => i.ObjectId == packet.ReplaceItemObjectId && i.Location == packet.ReplaceStorageType);
+		var replaceItem = FindMoveStorageItem(player, packet.ReplaceItemObjectId, packet.ReplaceStorageType);
 		if (replaceItem == null)
 			return;
 
@@ -4410,30 +4408,46 @@ public sealed class GameServerConnection : BaseClientConnection
 		{
 			var sourceOldLocation = sourceItem.Location;
 			var sourceCrossStorageOldSlot = sourceItem.Slot;
+			var sourceOldOwnerId = sourceItem.OwnerId;
 			var replaceOldLocation = replaceItem.Location;
 			var replaceCrossStorageOldSlot = replaceItem.Slot;
+			var replaceOldOwnerId = replaceItem.OwnerId;
 
+			RemoveMoveStorageItem(player, sourceOldLocation, sourceItem);
+			RemoveMoveStorageItem(player, replaceOldLocation, replaceItem);
 			sourceItem.Location = replaceOldLocation;
 			sourceItem.Slot = replaceCrossStorageOldSlot;
+			sourceItem.OwnerId = GetMoveStorageOwnerId(player, replaceOldLocation);
 			replaceItem.Location = sourceOldLocation;
 			replaceItem.Slot = sourceCrossStorageOldSlot;
+			replaceItem.OwnerId = GetMoveStorageOwnerId(player, sourceOldLocation);
+			AddMoveStorageItem(player, sourceItem.Location, sourceItem);
+			AddMoveStorageItem(player, replaceItem.Location, replaceItem);
 
 			if (_playerEnterWorldService != null)
 			{
 				var savedSwitch = await _playerEnterWorldService.SaveItemStorageSwitchMutationAsync(
 					player,
 					sourceItem.ObjectId,
+					sourceOldLocation,
 					sourceItem.Location,
 					sourceItem.Slot,
 					replaceItem.ObjectId,
+					replaceOldLocation,
 					replaceItem.Location,
 					replaceItem.Slot);
 				if (!savedSwitch)
 				{
+					RemoveMoveStorageItem(player, sourceItem.Location, sourceItem);
+					RemoveMoveStorageItem(player, replaceItem.Location, replaceItem);
 					sourceItem.Location = sourceOldLocation;
 					sourceItem.Slot = sourceCrossStorageOldSlot;
+					sourceItem.OwnerId = sourceOldOwnerId;
 					replaceItem.Location = replaceOldLocation;
 					replaceItem.Slot = replaceCrossStorageOldSlot;
+					replaceItem.OwnerId = replaceOldOwnerId;
+					AddMoveStorageItem(player, sourceOldLocation, sourceItem);
+					AddMoveStorageItem(player, replaceOldLocation, replaceItem);
 					return;
 				}
 			}
