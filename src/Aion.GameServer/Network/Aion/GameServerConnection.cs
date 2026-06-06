@@ -2868,8 +2868,132 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		// Java parity gap: successful legion warehouse Kinah mutation/history remains deferred until
-		// LegionWarehouse storage and LegionService.addHistory are modeled in the live C# runtime.
+		if (packet.ActionType == 1)
+			await HandleLegionWarehouseKinahDepositAsync(player, packet.Amount);
+		else
+		{
+			// Java parity gap: successful legion warehouse Kinah withdrawal remains deferred until
+			// shared LegionWarehouse storage can be modeled safely for source-legion currency rows.
+		}
+	}
+
+	private async Task HandleLegionWarehouseKinahDepositAsync(Player player, long amount)
+	{
+		// Java parity: CM_LEGION_WH_KINAH action 1 -> inventory.tryDecreaseKinah(amount) ->
+		// LEGION_WAREHOUSE.increaseKinah(amount) through LegionStorageProxy.
+		if (amount <= 0)
+			return;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var kinahTemplate = templates?.GetItemTemplate(KinahItemId);
+		if (kinahTemplate == null)
+			return;
+
+		var sourceKinah = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == 0);
+		if (sourceKinah == null || sourceKinah.Count < amount)
+			return;
+
+		var legionKinah = GetMoveStorageItems(player, 3).FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == 3);
+		var legionKinahWasCreated = false;
+		if (legionKinah == null)
+		{
+			if (_idFactory == null)
+				return;
+
+			legionKinah = new InventoryItem
+			{
+				ObjectId = _idFactory.NextId(),
+				ItemId = KinahItemId,
+				Count = 0,
+				OwnerId = GetMoveStorageOwnerId(player, 3),
+				Location = 3,
+				Slot = 0,
+				TuneCount = 0,
+				PersistentState = InventoryItemPersistentState.New,
+			};
+			AddMoveStorageItem(player, 3, legionKinah);
+			legionKinahWasCreated = true;
+		}
+
+		var newSourceCount = sourceKinah.Count - amount;
+		var newLegionCount = legionKinah.Count + amount;
+		if (newSourceCount + newLegionCount != sourceKinah.Count + legionKinah.Count)
+		{
+			if (legionKinahWasCreated)
+			{
+				RemoveMoveStorageItem(player, 3, legionKinah);
+				_idFactory?.ReleaseId(legionKinah.ObjectId);
+			}
+			return;
+		}
+
+		sourceKinah.Count = newSourceCount;
+		legionKinah.Count = newLegionCount;
+
+		if (_playerEnterWorldService != null)
+		{
+			var saved = await _playerEnterWorldService.SaveItemMergeMutationAsync(player, sourceKinah, legionKinah);
+			if (!saved)
+			{
+				sourceKinah.Count += amount;
+				legionKinah.Count -= amount;
+				if (legionKinahWasCreated)
+				{
+					RemoveMoveStorageItem(player, 3, legionKinah);
+					_idFactory?.ReleaseId(legionKinah.ObjectId);
+				}
+				return;
+			}
+		}
+
+		await SendPacketAsync(new SmInventoryUpdateItem(sourceKinah, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahBuy));
+		if (legionKinahWasCreated)
+		{
+			await SendStorageUpdatePacketAsync(player, CloneInventoryItemWithCount(legionKinah, 0), kinahTemplate, 3, SmInventoryAddItem.ItemCollect);
+		}
+		await SendPacketAsync(new SmWarehouseUpdateItem(legionKinah, kinahTemplate, 3, SmInventoryUpdateItem.IncreaseKinahCollect));
+		// Java parity gap: LegionService.addHistory(KINAH_DEPOSIT) is not yet modeled.
+	}
+
+	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)
+	{
+		return new InventoryItem
+		{
+			ObjectId = item.ObjectId,
+			ItemId = item.ItemId,
+			Count = count,
+			Color = item.Color,
+			ColorExpires = item.ColorExpires,
+			Creator = item.Creator,
+			ExpireTime = item.ExpireTime,
+			ActivationCount = item.ActivationCount,
+			OwnerId = item.OwnerId,
+			IsEquipped = item.IsEquipped,
+			IsSoulBound = item.IsSoulBound,
+			Slot = item.Slot,
+			Location = item.Location,
+			Enchant = item.Enchant,
+			EnchantBonus = item.EnchantBonus,
+			ItemSkin = item.ItemSkin,
+			FusionedItem = item.FusionedItem,
+			OptionalSocket = item.OptionalSocket,
+			OptionalFusionSocket = item.OptionalFusionSocket,
+			Charge = item.Charge,
+			TuneCount = item.TuneCount,
+			RandomBonus = item.RandomBonus,
+			FusionRandomBonus = item.FusionRandomBonus,
+			Tempering = item.Tempering,
+			PackCount = item.PackCount,
+			IsAmplified = item.IsAmplified,
+			BuffSkill = item.BuffSkill,
+			RandomPlumeBonus = item.RandomPlumeBonus,
+			PendingTuneResult = item.PendingTuneResult,
+			PersistentState = item.PersistentState,
+			ManaStones = item.ManaStones,
+			FusionStones = item.FusionStones,
+			Godstone = item.Godstone,
+			IdianStone = item.IdianStone,
+		};
 	}
 
 	private static bool HasLegionWarehouseRight(Player player, int permission)

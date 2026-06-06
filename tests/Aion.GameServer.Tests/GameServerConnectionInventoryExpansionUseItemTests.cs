@@ -4338,6 +4338,74 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_LegionWarehouseKinahDepositMutatesLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 182400001, count: 5000);
+		player.LegionId = 77;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x1000;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(76, buffer =>
+			{
+				buffer.WriteQ(1000L);
+				buffer.WriteC(1);
+			}));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(1, item.ObjectId);
+				Assert.Equal(77, item.OwnerId);
+				Assert.Equal(3, item.Location);
+				Assert.Equal(1000, item.Count);
+			},
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(1001, item.OwnerId);
+				Assert.Equal(0, item.Location);
+				Assert.Equal(4000, item.Count);
+			});
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		var savedMerge = Assert.NotNull(repository.SavedItemMergeMutation);
+		Assert.Equal(1001, savedMerge.PlayerObjectId);
+		Assert.Equal(5001, savedMerge.SourceItem.ObjectId);
+		Assert.Equal(4000, savedMerge.SourceItem.Count);
+		Assert.Equal(1001, savedMerge.SourceItem.OwnerId);
+		Assert.Equal(1, savedMerge.TargetItem.ObjectId);
+		Assert.Equal(1000, savedMerge.TargetItem.Count);
+		Assert.Equal(77, savedMerge.TargetItem.OwnerId);
+		Assert.Equal(3, savedMerge.TargetItem.Location);
+		Assert.Equal(InventoryItemPersistentState.New, savedMerge.TargetItem.PersistentState);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseKinahBuy),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 1,
+				expectedWarehouseType: 3,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 182400001,
+				expectedCount: 0,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 3),
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 1,
+				expectedWarehouseType: 3,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseKinahCollect));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_LegionWarehouseKinahNoLegionReturnsWithoutPacketLikeJava()
 	{
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(idFactory: new IDFactory([5001]));
