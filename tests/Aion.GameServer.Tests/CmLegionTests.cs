@@ -368,7 +368,9 @@ public sealed class CmLegionTests
 	[Fact]
 	public async Task HandleInfrastructurePacketAsync_EditPermissionsWithoutBrigadeGeneralSendsNoRightLikeJava()
 	{
-		await using var pair = await TestConnectionPair.CreateAsync();
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var registry = new CapturingConnectionRegistry(bystander);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
 		var player = CreateLegionPlayer();
 		player.LegionRank = LegionRanks.Deputy;
 		SetActivePlayer(pair.Connection, player);
@@ -381,12 +383,21 @@ public sealed class CmLegionTests
 		Assert.Equal(12, player.LegionCenturionPermission);
 		Assert.Equal(13, player.LegionLegionaryPermission);
 		Assert.Equal(14, player.LegionVolunteerPermission);
+		Assert.Equal(11, bystander.LegionDeputyPermission);
+		Assert.Equal(12, bystander.LegionCenturionPermission);
+		Assert.Equal(13, bystander.LegionLegionaryPermission);
+		Assert.Equal(14, bystander.LegionVolunteerPermission);
+		Assert.Empty(registry.DirectPackets);
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_EditPermissionsMutatesRuntimeStateAndSendsEditLikeJava()
+	public async Task HandleInfrastructurePacketAsync_EditPermissionsMutatesRuntimeStateAndBroadcastsLikeJava()
 	{
-		await using var pair = await TestConnectionPair.CreateAsync();
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var outsider = CreateLegionPlayer(3003, "Outsider");
+		outsider.LegionId = 99;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
 		var player = CreateBrigadeGeneralPlayer();
 		SetActivePlayer(pair.Connection, player);
 
@@ -396,14 +407,19 @@ public sealed class CmLegionTests
 		Assert.Equal(22, player.LegionCenturionPermission);
 		Assert.Equal(23, player.LegionLegionaryPermission);
 		Assert.Equal(24, player.LegionVolunteerPermission);
+		Assert.Equal(21, bystander.LegionDeputyPermission);
+		Assert.Equal(22, bystander.LegionCenturionPermission);
+		Assert.Equal(23, bystander.LegionLegionaryPermission);
+		Assert.Equal(24, bystander.LegionVolunteerPermission);
+		Assert.Equal(11, outsider.LegionDeputyPermission);
+		Assert.Equal(12, outsider.LegionCenturionPermission);
+		Assert.Equal(13, outsider.LegionLegionaryPermission);
+		Assert.Equal(14, outsider.LegionVolunteerPermission);
 
-		var response = Assert.IsType<SmLegionEdit>(Assert.Single(pair.SentPackets));
-		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
-		Assert.Equal(0x02, reader.ReadC());
-		Assert.Equal(21, reader.ReadSignedH());
-		Assert.Equal(22, reader.ReadSignedH());
-		Assert.Equal(23, reader.ReadSignedH());
-		Assert.Equal(24, reader.ReadSignedH());
+		AssertLegionEditPermissionsPacket(Assert.Single(pair.SentPackets), 21, 22, 23, 24);
+		var bystanderPacket = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionEditPermissionsPacket(bystanderPacket.Packet, 21, 22, 23, 24);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
@@ -2078,6 +2094,23 @@ public sealed class CmLegionTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
 		Assert.Equal(0, reader.ReadC());
 		Assert.Equal(legionLevel, reader.ReadC());
+	}
+
+	private static void AssertLegionEditPermissionsPacket(
+		GameServerPacket packet,
+		int deputyPermission,
+		int centurionPermission,
+		int legionaryPermission,
+		int volunteerPermission)
+	{
+		var response = Assert.IsType<SmLegionEdit>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(0x02, reader.ReadC());
+		Assert.Equal(deputyPermission, reader.ReadSignedH());
+		Assert.Equal(centurionPermission, reader.ReadSignedH());
+		Assert.Equal(legionaryPermission, reader.ReadSignedH());
+		Assert.Equal(volunteerPermission, reader.ReadSignedH());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertLegionInfoPacket(GameServerPacket packet, int currentLegionDominion)

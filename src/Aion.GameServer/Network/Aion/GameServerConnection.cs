@@ -3728,11 +3728,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.LegionLegionaryPermission = packet.LegionaryPermission;
 		player.LegionVolunteerPermission = packet.VolunteerPermission;
 
-		await SendPacketAsync(SmLegionEdit.Permissions(
+		await BroadcastLegionPermissionUpdateAsync(
+			player,
 			player.LegionDeputyPermission,
 			player.LegionCenturionPermission,
 			player.LegionLegionaryPermission,
-			player.LegionVolunteerPermission));
+			player.LegionVolunteerPermission);
 	}
 
 	private async Task HandleLegionAnnouncementChangeAsync(Player player, string announcement)
@@ -15916,6 +15917,43 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var recipientObjectId in recipientObjectIds)
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, new SmLegionUpdateNickname(targetObjectId, nickname));
+	}
+
+	private async Task BroadcastLegionPermissionUpdateAsync(
+		Player activePlayer,
+		int deputyPermission,
+		int centurionPermission,
+		int legionaryPermission,
+		int volunteerPermission)
+	{
+		// Java parity: LegionService.changePermissions mutates Legion permissions and broadcasts SM_LEGION_EDIT(0x02, legion).
+		await SendPacketAsync(SmLegionEdit.Permissions(
+			deputyPermission,
+			centurionPermission,
+			legionaryPermission,
+			volunteerPermission));
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != activePlayer.LegionId || candidate.ObjectId == activePlayer.ObjectId)
+				return;
+
+			candidate.LegionDeputyPermission = deputyPermission;
+			candidate.LegionCenturionPermission = centurionPermission;
+			candidate.LegionLegionaryPermission = legionaryPermission;
+			candidate.LegionVolunteerPermission = volunteerPermission;
+			recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				recipientObjectId,
+				SmLegionEdit.Permissions(deputyPermission, centurionPermission, legionaryPermission, volunteerPermission));
+		}
 	}
 
 	private LegionMemberSnapshot CreateOnlineLegionMemberSnapshot(Player player)
