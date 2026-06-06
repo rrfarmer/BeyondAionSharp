@@ -525,6 +525,18 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
+	public bool SaveItemMergeMutationResult { get; init; } = true;
+
+	public int SaveItemMergeMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, InventoryItem SourceItem, InventoryItem TargetItem)? SavedItemMergeMutation { get; private set; }
+
+	public bool SaveItemCrossStorageMoveMutationResult { get; init; } = true;
+
+	public int SaveItemCrossStorageMoveMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
+
 	public bool InsertPlayerQuestResult { get; init; } = true;
 
 	public int InsertPlayerQuestCalls { get; private set; }
@@ -1442,7 +1454,9 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		InventoryItem targetItem,
 		CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult(true);
+		SaveItemMergeMutationCalls++;
+		SavedItemMergeMutation = (playerObjectId, sourceItem, targetItem);
+		return Task.FromResult(SaveItemMergeMutationResult);
 	}
 
 	public Task<bool> SaveItemCrossStorageMoveMutationAsync(
@@ -1452,7 +1466,9 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
-		return Task.FromResult(true);
+		SaveItemCrossStorageMoveMutationCalls++;
+		SavedItemCrossStorageMoveMutation = (playerObjectId, itemObjectId, newLocation, newSlot);
+		return Task.FromResult(SaveItemCrossStorageMoveMutationResult);
 	}
 
 	public Task<bool> SaveEquipmentMutationAsync(
@@ -2949,8 +2965,17 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
-			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItem, cancellationToken))
+			const int KinahItemId = 182400001;
+			if (sourceItem.Count <= 0 && sourceItem.ItemId != KinahItemId)
+			{
+				if (!await DeleteInventoryItemAsync(connection, transaction, playerObjectId, sourceItem.ObjectId, cancellationToken))
+					return false;
+			}
+			else if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, sourceItem, cancellationToken))
+			{
 				return false;
+			}
+
 			if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, targetItem, cancellationToken))
 				return false;
 

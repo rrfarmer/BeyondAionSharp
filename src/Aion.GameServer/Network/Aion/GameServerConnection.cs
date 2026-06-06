@@ -4210,6 +4210,70 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		// Java parity: ItemMoveService.moveItem auto-merges stackable items into existing destination stacks
+		// when the client asks for automatic placement (slot == -1) before falling back to a normal move.
+		if (packet.Slot == -1 && template.MaxStackCount > 1)
+		{
+			var targetStacks = player.InventoryItems
+				.Where(i => i.Location == packet.Destination && i.ItemId == item.ItemId && i.ObjectId != item.ObjectId)
+				.ToArray();
+
+			foreach (var targetStack in targetStacks)
+			{
+				var freeCount = template.MaxStackCount - targetStack.Count;
+				if (freeCount <= 0)
+					continue;
+
+				var mergeCount = Math.Min(item.Count, freeCount);
+				if (mergeCount <= 0)
+					continue;
+
+				item.Count -= mergeCount;
+				targetStack.Count += mergeCount;
+
+				if (_playerEnterWorldService != null)
+				{
+					var saved = await _playerEnterWorldService.SaveItemMergeMutationAsync(player, item, targetStack);
+					if (!saved)
+					{
+						// Rollback in-memory changes.
+						item.Count += mergeCount;
+						targetStack.Count -= mergeCount;
+						return;
+					}
+				}
+
+				if (packet.Destination == 0)
+					await SendPacketAsync(new SmInventoryUpdateItem(targetStack, template, SmInventoryUpdateItem.IncreaseItemCollect));
+				else
+					await SendPacketAsync(new SmWarehouseUpdateItem(targetStack, template, packet.Destination, SmInventoryUpdateItem.IncreaseItemCollect));
+
+				if (item.Count <= 0)
+				{
+					var items = player.InventoryItems.ToList();
+					items.Remove(item);
+					player.InventoryItems = [.. items];
+
+					if (packet.Source == 0)
+					{
+						await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.MoveDeleteType));
+						await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+					}
+					else
+					{
+						await SendPacketAsync(new SmDeleteWarehouseItem(packet.Source, item.ObjectId, SmDeleteItem.MoveDeleteType));
+						await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+					}
+					return;
+				}
+
+				if (packet.Source == 0)
+					await SendPacketAsync(new SmInventoryUpdateItem(item, template, SmInventoryUpdateItem.DecreaseItemSplitMove));
+				else
+					await SendPacketAsync(new SmWarehouseUpdateItem(item, template, packet.Source, SmInventoryUpdateItem.DecreaseItemSplitMove));
+			}
+		}
+
 		// Mutate item location and slot in memory.
 		var oldLocation = item.Location;
 		var oldSlot = item.Slot;
