@@ -3060,8 +3060,6 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleLegionAsync(Player player, CmLegion packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_LEGION.runImpl.
-		// Only refresh-info (exOpcode 0x08 -> new SM_LEGION_INFO(legion)) is live here.
-		// Other LegionService mutation paths remain deferred until their runtime state/services are ported.
 		if (player.LegionId <= 0)
 			return;
 
@@ -3078,7 +3076,31 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x09:
 				await HandleLegionAnnouncementChangeAsync(player, packet.Announcement);
 				break;
+			case 0x0D:
+				await HandleLegionPermissionChangeAsync(player, packet);
+				break;
 		}
+	}
+
+	private async Task HandleLegionPermissionChangeAsync(Player player, CmLegion packet)
+	{
+		// Java parity: LegionService.changePermissions mutates the shared Legion and broadcasts SM_LEGION_EDIT(0x02, legion).
+		if (!player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeRightDontHaveRight());
+			return;
+		}
+
+		player.LegionDeputyPermission = packet.DeputyPermission;
+		player.LegionCenturionPermission = packet.CenturionPermission;
+		player.LegionLegionaryPermission = packet.LegionaryPermission;
+		player.LegionVolunteerPermission = packet.VolunteerPermission;
+
+		await SendPacketAsync(SmLegionEdit.Permissions(
+			player.LegionDeputyPermission,
+			player.LegionCenturionPermission,
+			player.LegionLegionaryPermission,
+			player.LegionVolunteerPermission));
 	}
 
 	private async Task HandleLegionAnnouncementChangeAsync(Player player, string announcement)

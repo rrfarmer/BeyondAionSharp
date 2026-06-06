@@ -105,6 +105,7 @@ public sealed class CmLegionTests
 		Assert.Equal(1300276, SmSystemMessage.GuildWriteNoticeDontHaveRight().MessageId);
 		Assert.Equal(1300277, SmSystemMessage.GuildWriteNoticeDone().MessageId);
 		Assert.Equal(1390128, SmSystemMessage.MsgClearGuildNotice().MessageId);
+		Assert.Equal(1300283, SmSystemMessage.GuildChangeRightDontHaveRight().MessageId);
 	}
 
 	[Fact]
@@ -243,6 +244,47 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_EditPermissionsWithoutBrigadeGeneralSendsNoRightLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Deputy;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateEditPermissionsPacket(21, 22, 23, 24));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300283, response.MessageId);
+		Assert.Equal(11, player.LegionDeputyPermission);
+		Assert.Equal(12, player.LegionCenturionPermission);
+		Assert.Equal(13, player.LegionLegionaryPermission);
+		Assert.Equal(14, player.LegionVolunteerPermission);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_EditPermissionsMutatesRuntimeStateAndSendsEditLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateEditPermissionsPacket(21, 22, 23, 24));
+
+		Assert.Equal(21, player.LegionDeputyPermission);
+		Assert.Equal(22, player.LegionCenturionPermission);
+		Assert.Equal(23, player.LegionLegionaryPermission);
+		Assert.Equal(24, player.LegionVolunteerPermission);
+
+		var response = Assert.IsType<SmLegionEdit>(Assert.Single(pair.SentPackets));
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(0x02, reader.ReadC());
+		Assert.Equal(21, reader.ReadSignedH());
+		Assert.Equal(22, reader.ReadSignedH());
+		Assert.Equal(23, reader.ReadSignedH());
+		Assert.Equal(24, reader.ReadSignedH());
+	}
+
+	[Fact]
 	public void ReadFrom_ChangeAnnouncementReadsJavaMessage()
 	{
 		var packet = CreateChangeAnnouncementPacket("New notice");
@@ -364,6 +406,19 @@ public sealed class CmLegionTests
 		buffer.WriteC(0x08);
 		buffer.WriteD(0);
 		buffer.WriteH(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegion CreateEditPermissionsPacket(short deputy, short centurion, short legionary, short volunteer)
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x0D);
+		buffer.WriteH(deputy);
+		buffer.WriteH(centurion);
+		buffer.WriteH(legionary);
+		buffer.WriteH(volunteer);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
 	}
