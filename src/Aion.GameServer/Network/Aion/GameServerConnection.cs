@@ -15785,6 +15785,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		BindLegionInviteAcceptedPlayer(inviter, responder);
 		await _connectionRegistry!.SendPacketToPlayerAsync(responder.ObjectId, SmLegionInfo.FromPlayer(responder));
+		await SendLegionInviteMemberListAsync(responder);
 		if (!string.IsNullOrEmpty(responder.LegionAnnouncement))
 		{
 			await _connectionRegistry.SendPacketToPlayerAsync(
@@ -15855,6 +15856,41 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_activePlayer?.ObjectId == joinedPlayer.ObjectId)
 			await SendPacketAsync(packet);
+	}
+
+	private async Task SendLegionInviteMemberListAsync(Player joinedPlayer)
+	{
+		// Java parity: LegionService.addLegionMember -> updateLegionMemberList(player, false, player.getObjectId()).
+		if (_connectionRegistry == null)
+			return;
+
+		var members = new List<LegionMemberListEntry>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != joinedPlayer.LegionId || candidate.ObjectId == joinedPlayer.ObjectId)
+				return;
+
+			members.Add(CreateLegionMemberListEntry(candidate));
+		});
+
+		await _connectionRegistry.SendPacketToPlayerAsync(
+			joinedPlayer.ObjectId,
+			new SmLegionMemberList(members, isFirst: true, isLast: true, gameServerId: _options.Network.GameServerId));
+	}
+
+	private LegionMemberListEntry CreateLegionMemberListEntry(Player player)
+	{
+		return new LegionMemberListEntry(
+			player.ObjectId,
+			player.Name,
+			player.PlayerClass,
+			GetLegionMemberLevel(player),
+			player.LegionRank,
+			player.Position.WorldId,
+			IsOnline: true,
+			player.LegionSelfIntro,
+			player.LegionNickname,
+			player.LastOnline);
 	}
 
 	private async Task BroadcastLegionInviteEmblemAsync(Player joinedPlayer)

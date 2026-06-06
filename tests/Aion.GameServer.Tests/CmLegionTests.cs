@@ -1343,6 +1343,48 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void SmLegionMemberList_WritesJavaLastChunkPayload()
+	{
+		var packet = new SmLegionMemberList(
+			[
+				new LegionMemberListEntry(
+					PlayerObjectId: 1001,
+					Name: "Tester",
+					PlayerClass: "RANGER",
+					Level: 47,
+					Rank: LegionRanks.Centurion,
+					WorldId: 210010000,
+					IsOnline: true,
+					SelfIntro: "Ready",
+					Nickname: "Scout"),
+			],
+			isFirst: true,
+			isLast: true,
+			gameServerId: 1);
+
+		AssertLegionMemberListPacket(
+			packet,
+			isFirst: true,
+			signedCount: -1,
+			[
+				new ExpectedLegionMemberListRow(
+					PlayerObjectId: 1001,
+					Name: "Tester",
+					ClassId: 5,
+					Level: 47,
+					RankId: LegionRanks.GetRankId(LegionRanks.Centurion),
+					WorldId: 210010000,
+					Online: true,
+					SelfIntro: "Ready",
+					Nickname: "Scout",
+					LastOnlineEpochSeconds: 0,
+					HouseAddressId: 0,
+					HouseDoorStateId: 0,
+					GameServerId: 1),
+			]);
+	}
+
+	[Fact]
 	public void SmLegionAddMember_WritesJavaInviteAcceptanceShape()
 	{
 		var player = CreateUnguildedPlayer(2002, "Lurion");
@@ -1379,7 +1421,20 @@ public sealed class CmLegionTests
 		player.LegionEmblemColorR = 10;
 		player.LegionEmblemColorG = 20;
 		player.LegionEmblemColorB = 30;
-		var bystander = CreateLegionPlayer(3003, "Watcher");
+		var bystander = new Player
+		{
+			ObjectId = 3003,
+			Name = "Watcher",
+			Race = "ELYOS",
+			PlayerClass = "CLERIC",
+			LegionId = 77,
+			LegionName = "Hydrated Legion",
+			LegionLevel = 4,
+			LegionRank = LegionRanks.Legionary,
+			LegionNickname = "Healer",
+			LegionSelfIntro = "Standing by",
+			Position = new WorldPosition(220010000, 0, 0, 0, 0),
+		};
 		var outsider = CreateLegionPlayer(4004, "Outsider");
 		outsider.LegionId = 99;
 		var registry = new CapturingConnectionRegistry(player, target, bystander, outsider);
@@ -1421,6 +1476,44 @@ public sealed class CmLegionTests
 				&& message.MessageId == 1400019);
 		var noticePacket = Assert.IsType<SmSystemMessage>(notice.Packet);
 		Assert.Equal(["Welcome aboard", "1771234500", "2"], noticePacket.Parameters);
+
+		var memberList = Assert.Single(
+			registry.DirectPackets,
+			delivery => delivery.PlayerObjectId == target.ObjectId && delivery.Packet is SmLegionMemberList);
+		AssertLegionMemberListPacket(
+			memberList.Packet,
+			isFirst: true,
+			signedCount: -2,
+			[
+				new ExpectedLegionMemberListRow(
+					PlayerObjectId: player.ObjectId,
+					Name: "Tester",
+					ClassId: 0,
+					Level: 1,
+					RankId: LegionRanks.GetRankId(LegionRanks.BrigadeGeneral),
+					WorldId: 0,
+					Online: true,
+					SelfIntro: string.Empty,
+					Nickname: string.Empty,
+					LastOnlineEpochSeconds: 0,
+					HouseAddressId: 0,
+					HouseDoorStateId: 0,
+					GameServerId: 1),
+				new ExpectedLegionMemberListRow(
+					PlayerObjectId: bystander.ObjectId,
+					Name: "Watcher",
+					ClassId: 10,
+					Level: 1,
+					RankId: LegionRanks.GetRankId(LegionRanks.Legionary),
+					WorldId: 220010000,
+					Online: true,
+					SelfIntro: "Standing by",
+					Nickname: "Healer",
+					LastOnlineEpochSeconds: 0,
+					HouseAddressId: 0,
+					HouseDoorStateId: 0,
+					GameServerId: 1),
+			]);
 
 		var memberAdds = registry.DirectPackets
 			.Where(delivery => delivery.Packet is SmLegionAddMember)
@@ -2499,6 +2592,38 @@ public sealed class CmLegionTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertLegionMemberListPacket(
+		GameServerPacket packet,
+		bool isFirst,
+		short signedCount,
+		IReadOnlyList<ExpectedLegionMemberListRow> rows)
+	{
+		var response = Assert.IsType<SmLegionMemberList>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(isFirst ? 1 : 0, reader.ReadC());
+		Assert.Equal(signedCount, reader.ReadSignedH());
+		foreach (var row in rows)
+			AssertLegionMemberListRow(reader, row);
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertLegionMemberListRow(PacketBuffer reader, ExpectedLegionMemberListRow row)
+	{
+		Assert.Equal(row.PlayerObjectId, reader.ReadD());
+		Assert.Equal(row.Name, reader.ReadS());
+		Assert.Equal(row.ClassId, reader.ReadC());
+		Assert.Equal(row.Level, reader.ReadD());
+		Assert.Equal(row.RankId, reader.ReadC());
+		Assert.Equal(row.WorldId, reader.ReadD());
+		Assert.Equal(row.Online ? 1 : 0, reader.ReadC());
+		Assert.Equal(row.SelfIntro, reader.ReadS());
+		Assert.Equal(row.Nickname, reader.ReadS());
+		Assert.Equal(row.LastOnlineEpochSeconds, reader.ReadD());
+		Assert.Equal(row.HouseAddressId, reader.ReadD());
+		Assert.Equal(row.HouseDoorStateId, reader.ReadD());
+		Assert.Equal(row.GameServerId, reader.ReadD());
+	}
+
 	private static void AssertLegionUpdateEmblemPacket(
 		GameServerPacket packet,
 		int legionId,
@@ -2766,6 +2891,21 @@ public sealed class CmLegionTests
 			_client.Dispose();
 		}
 	}
+
+	private sealed record ExpectedLegionMemberListRow(
+		int PlayerObjectId,
+		string Name,
+		int ClassId,
+		int Level,
+		int RankId,
+		int WorldId,
+		bool Online,
+		string SelfIntro,
+		string Nickname,
+		int LastOnlineEpochSeconds,
+		int HouseAddressId,
+		int HouseDoorStateId,
+		int GameServerId);
 
 	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
 	{
