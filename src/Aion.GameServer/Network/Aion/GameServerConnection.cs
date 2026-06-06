@@ -3184,7 +3184,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			string.Empty);
 
 		if (ResolveOnlinePlayerByObjectId(targetMember.PlayerObjectId) is { } onlineTarget)
+		{
+			if (_connectionRegistry != null)
+				await _connectionRegistry.SendPacketToPlayerAsync(targetMember.PlayerObjectId, new SmLegionLeaveMember(1300246, 0, player.LegionName));
 			ResetLegionMember(onlineTarget);
+		}
 
 		await SendPacketAsync(new SmLegionLeaveMember(1300247, targetMember.PlayerObjectId, player.Name, targetMember.Name));
 	}

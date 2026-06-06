@@ -748,7 +748,7 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_KickResetsResolvedOnlineTargetLegionStateLikeJava()
+	public async Task HandleInfrastructurePacketAsync_KickResetsResolvedOnlineTargetAndSendsDirectDonePacketLikeJava()
 	{
 		var target = new Player
 		{
@@ -783,6 +783,9 @@ public sealed class CmLegionTests
 		Assert.Equal(string.Empty, target.LegionNickname);
 		Assert.Equal(string.Empty, target.LegionSelfIntro);
 		AssertLegionLeaveMemberPacket(Assert.Single(pair.SentPackets), target.ObjectId, 1300247, "Tester", "Lurion");
+		var directPacket = Assert.Single(registry.DirectPackets);
+		Assert.Equal(target.ObjectId, directPacket.PlayerObjectId);
+		AssertLegionLeaveMemberPacket(directPacket.Packet, 0, 1300246, "Hydrated Legion", string.Empty);
 	}
 
 	[Fact]
@@ -1268,6 +1271,8 @@ public sealed class CmLegionTests
 			_players = players;
 		}
 
+		public List<(int PlayerObjectId, GameServerPacket Packet)> DirectPackets { get; } = [];
+
 		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection) { }
 
 		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection) { }
@@ -1286,7 +1291,8 @@ public sealed class CmLegionTests
 
 		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
 		{
-			return Task.FromResult(false);
+			DirectPackets.Add((playerObjectId, packet));
+			return Task.FromResult(true);
 		}
 
 		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
