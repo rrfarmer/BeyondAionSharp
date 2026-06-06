@@ -4237,7 +4237,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 			item.Slot = packet.Slot;
 			if (_playerEnterWorldService != null)
-				await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, item.ObjectId, packet.Slot);
+				await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, item.ObjectId, packet.Source, packet.Slot);
 			// No response packet: the client already updated its UI before sending this packet.
 			return;
 		}
@@ -4472,8 +4472,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_playerEnterWorldService != null)
 		{
-			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, sourceItem.ObjectId, replaceOldSlot);
-			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, sourceOldSlot);
+			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, sourceItem.ObjectId, packet.SourceStorageType, replaceOldSlot);
+			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, packet.ReplaceStorageType, sourceOldSlot);
 		}
 		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
 	}

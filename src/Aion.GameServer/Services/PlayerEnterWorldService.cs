@@ -624,11 +624,13 @@ public sealed class PlayerEnterWorldService
 	public Task<bool> SaveInventoryItemSlotAsync(
 		Player player,
 		int itemObjectId,
+		int storageType,
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: ItemMoveService.moveInSameStorage -> item.setEquipmentSlot -> InventoryDAO stores updated slot.
-		return _repository.SaveInventoryItemSlotAsync(player.ObjectId, itemObjectId, newSlot, cancellationToken);
+		var itemOwnerId = storageType == 2 ? player.AccountId : player.ObjectId;
+		return _repository.SaveInventoryItemSlotAsync(itemOwnerId, itemObjectId, newSlot, cancellationToken);
 	}
 
 	public Task<bool> SaveInventoryItemPackCountAsync(

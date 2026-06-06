@@ -4348,7 +4348,7 @@ public sealed class PlayerEnterWorldServiceTests
 		}
 
 		public Task<bool> SaveInventoryItemSlotAsync(
-			int playerObjectId,
+			int itemOwnerId,
 			int itemObjectId,
 			long newSlot,
 			CancellationToken cancellationToken = default)

@@ -941,6 +941,39 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_AccountWarehouseSameStorageSlotPersistsWithAccountOwnerLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 0, accountId: 77);
+		player.InventoryItems = [];
+		player.AccountWarehouseItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 5001,
+				ItemId = 200,
+				Count = 2,
+				OwnerId = 77,
+				Location = 2,
+				Slot = 6,
+			},
+		];
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 2, destination: 2, slot: 9));
+
+		var item = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(9, item.Slot);
+		Assert.Equal(77, item.OwnerId);
+		Assert.Equal(1, repository.SaveInventoryItemSlotCalls);
+		Assert.Equal((77, 5001, 9L), Assert.Single(repository.SavedInventoryItemSlots));
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_FullCubeDestinationSendsJavaStorageFullMessageAndUnlocksSource()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -1794,6 +1827,50 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
 		Assert.Equal((1001, 77, 5001, 0, 2, 27L, 6001, 2, 0, 12L), repository.SavedItemStorageSwitchMutation);
 		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task HandleReplaceItemAsync_AccountWarehouseSameStorageSwitchPersistsSlotsWithAccountOwnerLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 0, accountId: 77);
+		player.InventoryItems = [];
+		var sourceItem = new InventoryItem
+		{
+			ObjectId = 5001,
+			ItemId = 200,
+			Count = 1,
+			OwnerId = 77,
+			Location = 2,
+			Slot = 12,
+		};
+		var replaceItem = new InventoryItem
+		{
+			ObjectId = 6001,
+			ItemId = 200,
+			Count = 2,
+			OwnerId = 77,
+			Location = 2,
+			Slot = 27,
+		};
+		player.AccountWarehouseItems = [sourceItem, replaceItem];
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 2, sourceItemObjectId: 5001, replaceStorageType: 2, replaceItemObjectId: 6001));
+
+		Assert.Equal(27, sourceItem.Slot);
+		Assert.Equal(12, replaceItem.Slot);
+		Assert.Equal(2, player.AccountWarehouseItems.Count);
+		Assert.Empty(player.InventoryItems);
+		Assert.Equal(2, repository.SaveInventoryItemSlotCalls);
+		Assert.Equal(
+			[(77, 5001, 27L), (77, 6001, 12L)],
+			repository.SavedInventoryItemSlots);
+		Assert.Equal(0, repository.SaveItemStorageSwitchMutationCalls);
 		Assert.Empty(fixture.SentPackets);
 	}
 

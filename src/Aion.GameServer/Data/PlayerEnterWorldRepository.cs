@@ -377,7 +377,7 @@ public interface IPlayerEnterWorldRepository
 		CancellationToken cancellationToken = default);
 
 	Task<bool> SaveInventoryItemSlotAsync(
-		int playerObjectId,
+		int itemOwnerId,
 		int itemObjectId,
 		long newSlot,
 		CancellationToken cancellationToken = default);
@@ -537,6 +537,10 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public (int PlayerObjectId, int PetObjectId, InventoryItem? SourceItemUpdate, int? DeletedSourceItemObjectId, IReadOnlyList<InventoryItem> RewardItemUpdates, IReadOnlyList<InventoryItem> RewardItemAdds, int HungryLevel, int FeedProgress, long ReuseTime)?
 		SavedPlayerPetFeedConsumeMutation { get; private set; }
+
+	public int SaveInventoryItemSlotCalls { get; private set; }
+
+	public List<(int ItemOwnerId, int ItemObjectId, long NewSlot)> SavedInventoryItemSlots { get; } = [];
 
 	public bool SaveItemUseSourceMutationResult { get; init; } = true;
 
@@ -1311,11 +1315,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public Task<bool> SaveInventoryItemSlotAsync(
-		int playerObjectId,
+		int itemOwnerId,
 		int itemObjectId,
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
+		SaveInventoryItemSlotCalls++;
+		SavedInventoryItemSlots.Add((itemOwnerId, itemObjectId, newSlot));
 		return Task.FromResult(true);
 	}
 
@@ -2654,7 +2660,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public async Task<bool> SaveInventoryItemSlotAsync(
-		int playerObjectId,
+		int itemOwnerId,
 		int itemObjectId,
 		long newSlot,
 		CancellationToken cancellationToken = default)
@@ -2671,13 +2677,13 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				{
 					new MySqlParameter { Value = newSlot },
 					new MySqlParameter { Value = itemObjectId },
-					new MySqlParameter { Value = playerObjectId },
+					new MySqlParameter { Value = itemOwnerId },
 				});
 			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "Could not save inventory slot update for player {PlayerObjectId}", playerObjectId);
+			_logger.LogError(ex, "Could not save inventory slot update for owner {ItemOwnerId}", itemOwnerId);
 			return false;
 		}
 	}
