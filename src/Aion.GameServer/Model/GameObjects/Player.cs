@@ -158,7 +158,7 @@ public sealed class Player
 
 	public int NpcExpands { get; set; }
 
-	public int QuestExpands { get; init; }
+	public int QuestExpands { get; set; }
 
 	public int ItemExpands { get; set; }
 

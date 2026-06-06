@@ -459,6 +459,52 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesCubeExpansionAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1009, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1009, "REWARD", QuestVars: 0xF2, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1010,
+			Name = "QuestFinishCubeBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			NpcExpands = 2,
+			QuestExpands = 1,
+			ItemExpands = 3,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1009,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300431, message.MessageId);
+			},
+			packet => AssertCubeSize(packet, expectedNpcExpands: 2, expectedQuestExpands: 2, expectedItemExpands: 3),
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.Equal(2, player.QuestExpands);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -496,6 +542,23 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(1, reader.ReadH());
 		Assert.Equal(expectedTitleId, reader.ReadD());
 		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertCubeSize(
+		GameServerPacket packet,
+		int expectedNpcExpands,
+		int expectedQuestExpands,
+		int expectedItemExpands)
+	{
+		var cubeUpdate = Assert.IsType<SmCubeUpdate>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(cubeUpdate));
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedNpcExpands, (int)reader.ReadC());
+		Assert.Equal(expectedQuestExpands, (int)reader.ReadC());
+		Assert.Equal(expectedItemExpands, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -590,6 +653,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						</quest>
 						<quest id="1008" can_report="true" reward_repeat_count="1">
 							<rewards gp="50" />
+						</quest>
+						<quest id="1009" can_report="true" reward_repeat_count="1">
+							<rewards extend_inventory="1" />
 						</quest>
 					</quests>
 				</static_data>

@@ -5284,6 +5284,10 @@ public sealed class GameServerConnection : BaseClientConnection
 							await SendPacketAsync(gpPacket, cancellationToken);
 					}
 					break;
+				case QuestFinishRewardNonItemAction.CubeExpansion:
+					if (!await TryApplyQuestFinishCubeExpansionRewardAsync(player, cancellationToken))
+						return true;
+					break;
 				default:
 					return true;
 			}
@@ -5522,6 +5526,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
+	private async Task<bool> TryApplyQuestFinishCubeExpansionRewardAsync(Player player, CancellationToken cancellationToken)
+	{
+		// Java parity: services/QuestService.giveReward -> CubeExpandService.questExpand -> expand(player, 3).
+		var expansionPlan = QuestRewardSideEffectPlanService.CreateCubeExpansionPlan(player, _options.Custom.CubeExpansionLimit);
+		switch (expansionPlan.Status)
+		{
+			case QuestExpansionRewardStatus.Applied:
+				await SendPacketAsync(SmSystemMessage.InventorySizeExtended(CubeExpandNotificationPlanService.SlotsPerExpansion), cancellationToken);
+				player.QuestExpands = expansionPlan.NewExpansionCount;
+				await SendPacketAsync(SmCubeUpdate.CubeSize(player), cancellationToken);
+				return true;
+			case QuestExpansionRewardStatus.CannotExpand:
+				if (expansionPlan.RequestedExpansionLevel >= 0)
+					await SendPacketAsync(SmSystemMessage.InventoryCantExtendMore(), cancellationToken);
+				return true;
+			case QuestExpansionRewardStatus.MissingPlayer:
+				return false;
+			default:
+				return false;
+		}
+	}
+
 	private QuestRewardService CreateQuestRewardService()
 	{
 		return new QuestRewardService(
@@ -5641,7 +5667,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					and not QuestFinishRewardNonItemAction.Title
 					and not QuestFinishRewardNonItemAction.AbyssPoints
 					and not QuestFinishRewardNonItemAction.DivinePoints
-					and not QuestFinishRewardNonItemAction.GloryPoints))
+					and not QuestFinishRewardNonItemAction.GloryPoints
+					and not QuestFinishRewardNonItemAction.CubeExpansion))
 		{
 			return false;
 		}
