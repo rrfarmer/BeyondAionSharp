@@ -1935,6 +1935,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
 			var dirtyItems = player.GetDirtyItemsToUpdate();
+			ApplyInventoryStoreOwnerIds(player, dirtyItems);
 			if (!await DeleteInventoryItemSnapshotAsync(
 				connection,
 				dirtyItems.Where(item => item.PersistentState == InventoryItemPersistentState.Deleted).ToArray(),
@@ -2072,6 +2073,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			var dirtyItems = player.GetDirtyItemsToUpdate();
+			ApplyInventoryStoreOwnerIds(player, dirtyItems);
 			if (!await DeleteInventoryItemSnapshotAsync(
 				connection,
 				dirtyItems.Where(item => item.PersistentState == InventoryItemPersistentState.Deleted).ToArray(),
@@ -2150,11 +2152,23 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		foreach (var item in items)
 		{
-			if (!await DeleteInventoryItemAsync(connection, null, item.OwnerId, item.ObjectId, cancellationToken))
+			if (!await DeleteInventoryItemSnapshotRowAsync(connection, item.ObjectId, cancellationToken))
 				return false;
 		}
 
 		return true;
+	}
+
+	private static void ApplyInventoryStoreOwnerIds(Player player, IEnumerable<InventoryItem> items)
+	{
+		foreach (var item in items)
+			item.OwnerId = ResolveInventoryStoreOwnerId(player, item);
+	}
+
+	internal static int ResolveInventoryStoreOwnerId(Player player, InventoryItem item)
+	{
+		// Java parity: dao/InventoryDAO.getItemOwnerId invoked by InventoryDAO.store(player).
+		return GetStorageOwnerId(player.ObjectId, player.AccountId, player.LegionId, item.Location);
 	}
 
 	public async Task<bool> SaveItemChargeMutationAsync(
@@ -4017,6 +4031,26 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = itemObjectId },
 				new MySqlParameter { Value = playerObjectId },
 			});
+		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static async Task<bool> DeleteInventoryItemSnapshotRowAsync(
+		MySqlConnection connection,
+		int itemObjectId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/InventoryDAO.DELETE_QUERY used by InventoryDAO.store(player)
+		// deletes dirty storage rows by item_unique_id after item stones are removed.
+		await using (var stoneCommand = connection.CreateCommand())
+		{
+			stoneCommand.CommandText = "DELETE FROM item_stones WHERE item_unique_id = ?";
+			stoneCommand.Parameters.Add(new MySqlParameter { Value = itemObjectId });
+			await stoneCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		await using var command = connection.CreateCommand();
+		command.CommandText = "DELETE FROM inventory WHERE item_unique_id = ?";
+		command.Parameters.Add(new MySqlParameter { Value = itemObjectId });
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 

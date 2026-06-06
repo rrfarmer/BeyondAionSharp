@@ -31,6 +31,26 @@ public sealed class PlayerEnterWorldRepositoryItemStonePersistenceTests
 	}
 
 	[Fact]
+	public void ResolveInventoryStoreOwnerId_UsesLegionOwnerForLegionWarehouseLikeJava()
+	{
+		// Java source breadcrumbs: InventoryDAO.store(player) -> getItemOwnerId.
+		var player = new Player { ObjectId = 1001, AccountId = 77, LegionId = 501 };
+
+		Assert.Equal(1001, MySqlPlayerEnterWorldRepository.ResolveInventoryStoreOwnerId(
+			player,
+			new InventoryItem { ObjectId = 9001, Location = 0, OwnerId = 9999 }));
+		Assert.Equal(77, MySqlPlayerEnterWorldRepository.ResolveInventoryStoreOwnerId(
+			player,
+			new InventoryItem { ObjectId = 9002, Location = 2, OwnerId = 9999 }));
+		Assert.Equal(501, MySqlPlayerEnterWorldRepository.ResolveInventoryStoreOwnerId(
+			player,
+			new InventoryItem { ObjectId = 9003, Location = 3, OwnerId = 9999 }));
+		Assert.Equal(1001, MySqlPlayerEnterWorldRepository.ResolveInventoryStoreOwnerId(
+			new Player { ObjectId = 1001, AccountId = 77 },
+			new InventoryItem { ObjectId = 9004, Location = 3, OwnerId = 9999 }));
+	}
+
+	[Fact]
 	public void BuildItemStonePersistenceRows_MapsAllInheritedTargetStoneCategories()
 	{
 		var item = new InventoryItem

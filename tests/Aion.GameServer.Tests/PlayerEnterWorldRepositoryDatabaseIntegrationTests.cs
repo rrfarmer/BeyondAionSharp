@@ -212,6 +212,54 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePlayerLogoutAsync_PersistsLoadedLegionWarehouseRowsLikeJava_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: InventoryDAO.store(player) recomputes item_owner through
+		// getItemOwnerId, so LEGION_WAREHOUSE rows are written under the player's legion id.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9651, itemId: 110100001, count: 1, ownerId: PlayerObjectId, location: 3);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			AccountId = 1,
+			LegionId = 501,
+			Name = "LegionLogoutIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 9651,
+					ItemId = 110100001,
+					Count = 9,
+					OwnerId = PlayerObjectId,
+					Location = 3,
+					Enchant = 11,
+					PersistentState = InventoryItemPersistentState.UpdateRequired,
+				},
+			],
+		};
+
+		var saved = await repository.SavePlayerLogoutAsync(player, new DateTime(2026, 5, 30, 13, 20, 0, DateTimeKind.Local));
+
+		Assert.True(saved);
+		Assert.Equal(501, await ExecuteScalarLongAsync("SELECT item_owner FROM inventory WHERE item_unique_id = 9651"));
+		Assert.Equal(3, await ExecuteScalarLongAsync("SELECT item_location FROM inventory WHERE item_unique_id = 9651"));
+		Assert.Equal(9, await ExecuteScalarLongAsync("SELECT item_count FROM inventory WHERE item_unique_id = 9651"));
+		Assert.Equal(11, await ExecuteScalarLongAsync("SELECT enchant FROM inventory WHERE item_unique_id = 9651"));
+		Assert.Equal(501, player.InventoryItems.Single().OwnerId);
+	}
+
+	[Fact]
 	public async Task SavePeriodicPlayerItemsAsync_ReplacesCurrentItemStonesEvenWhenItemRowIsCleanAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
@@ -269,6 +317,54 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal(169000010, await ExecuteScalarLongAsync("SELECT item_id FROM item_stones WHERE item_unique_id = 9701 AND category = 3 AND slot = 0"));
 		Assert.Equal(9, await ExecuteScalarLongAsync("SELECT polishNumber FROM item_stones WHERE item_unique_id = 9701 AND category = 3 AND slot = 0"));
 		Assert.Equal(250, await ExecuteScalarLongAsync("SELECT polishCharge FROM item_stones WHERE item_unique_id = 9701 AND category = 3 AND slot = 0"));
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+	}
+
+	[Fact]
+	public async Task SavePeriodicPlayerItemsAsync_PersistsLoadedLegionWarehouseRowsLikeJava_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerEnterWorldService.ItemUpdateTask.run calls
+		// InventoryDAO.store(player), which maps LEGION_WAREHOUSE dirty rows to legion id.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9751, itemId: 110100001, count: 1, ownerId: PlayerObjectId, location: 3);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			AccountId = 1,
+			LegionId = 501,
+			Name = "PeriodicLegionWarehouseIntegration",
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 9751,
+					ItemId = 110100001,
+					Count = 12,
+					OwnerId = PlayerObjectId,
+					Location = 3,
+					Enchant = 13,
+					PersistentState = InventoryItemPersistentState.UpdateRequired,
+				},
+			],
+		};
+
+		var saved = await repository.SavePeriodicPlayerItemsAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(501, await ExecuteScalarLongAsync("SELECT item_owner FROM inventory WHERE item_unique_id = 9751"));
+		Assert.Equal(3, await ExecuteScalarLongAsync("SELECT item_location FROM inventory WHERE item_unique_id = 9751"));
+		Assert.Equal(12, await ExecuteScalarLongAsync("SELECT item_count FROM inventory WHERE item_unique_id = 9751"));
+		Assert.Equal(13, await ExecuteScalarLongAsync("SELECT enchant FROM inventory WHERE item_unique_id = 9751"));
+		Assert.Equal(501, player.InventoryItems.Single().OwnerId);
 		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
 	}
 
@@ -974,14 +1070,16 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		int itemId,
 		long count,
 		int enchant = 0,
-		int charge = 0)
+		int charge = 0,
+		int ownerId = PlayerObjectId,
+		int location = 0)
 	{
 		return ExecuteNonQueryAsync(
 			$"""
 			INSERT INTO inventory (
 				item_unique_id, item_id, item_count, item_owner, item_location, enchant, charge
 			)
-			VALUES ({objectId}, {itemId}, {count}, {PlayerObjectId}, 0, {enchant}, {charge})
+			VALUES ({objectId}, {itemId}, {count}, {ownerId}, {location}, {enchant}, {charge})
 			""");
 	}
 
