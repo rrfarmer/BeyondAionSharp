@@ -21,6 +21,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	private const int KinahItemId = 182400001;
 	private const int RewardItemId = 186000001;
 	private const int WorkItemId = 182200003;
+	private const int RewardTitleId = 5;
 
 	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesXpAndCompletesQuest()
@@ -230,6 +231,97 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAddsTitleAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1005, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1005, "REWARD", QuestVars: 0x9A, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1005,
+			Name = "QuestFinishTitleBoundary",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1005,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300035, message.MessageId);
+			},
+			packet => AssertTitleListPacket(packet, RewardTitleId),
+			packet => Assert.IsType<SmQuestAction>(packet));
+		var title = Assert.Single(player.Titles);
+		Assert.Equal(RewardTitleId, title.Id);
+		Assert.Equal(0, title.ExpireTimeSeconds);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestWithKnownTitleSendsDuplicateMessageAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1005, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1005, "REWARD", QuestVars: 0xBC, Flags: 0, CompleteCount: 0);
+		var knownTitle = new PlayerTitle(RewardTitleId, ExpireTimeSeconds: 0);
+		var player = new Player
+		{
+			ObjectId = 1006,
+			Name = "QuestFinishKnownTitleBoundary",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Titles = [knownTitle],
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1005,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(901714, message.MessageId);
+			},
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.Same(knownTitle, Assert.Single(player.Titles));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -255,6 +347,18 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(deletePacket));
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertTitleListPacket(GameServerPacket packet, int expectedTitleId)
+	{
+		var titleInfo = Assert.IsType<SmTitleInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(titleInfo));
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedTitleId, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -311,6 +415,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						<item_template id="182200003" name="Quest Work Item" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100" price="1" />
 						<item_template id="186000001" name="Quest Reward Item" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100" price="1" />
 					</item_templates>
+					<player_titles>
+						<title id="5" nameId="412994" desc="1" race="ELYOS" />
+					</player_titles>
 					<quests>
 						<quest id="1001" can_report="true" reward_repeat_count="1">
 							<rewards exp="300" />
@@ -328,6 +435,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 								<quest_work_item item_id="182200003" count="1" />
 							</quest_work_items>
 							<rewards exp="50" />
+						</quest>
+						<quest id="1005" can_report="true" reward_repeat_count="1">
+							<rewards title="5" />
 						</quest>
 					</quests>
 				</static_data>

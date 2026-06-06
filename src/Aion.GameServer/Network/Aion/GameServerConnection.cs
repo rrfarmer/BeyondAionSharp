@@ -5260,6 +5260,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					foreach (var responsePacket in xpResult.Packets)
 						await SendPacketAsync(responsePacket, cancellationToken);
 					break;
+				case QuestFinishRewardNonItemAction.Title:
+					if (!await TryApplyQuestFinishTitleRewardAsync(player, reward, staticData, cancellationToken))
+						return true;
+					break;
 				default:
 					return true;
 			}
@@ -5430,6 +5434,53 @@ public sealed class GameServerConnection : BaseClientConnection
 		return true;
 	}
 
+	private async Task<bool> TryApplyQuestFinishTitleRewardAsync(
+		Player player,
+		QuestFinishRewardNonItemProjectionDescriptor reward,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		var titlePlan = QuestRewardSideEffectPlanService.CreateTitleRewardPlan(
+			player,
+			checked((int)reward.Amount),
+			staticData.TitleTemplates);
+
+		switch (titlePlan.Status)
+		{
+			case QuestTitleRewardStatus.Applied:
+				var title = titlePlan.Title!;
+				if (_playerEnterWorldService != null
+					&& !await _playerEnterWorldService.SaveTitleAddActionMutationAsync(
+						player,
+						title,
+						sourceItemUpdate: null,
+						deletedSourceItemObjectId: null,
+						cancellationToken))
+				{
+					return false;
+				}
+
+				player.Titles = player.Titles
+					.Where(existing => existing.Id != title.Id)
+					.Append(title)
+					.ToArray();
+				_expirableTaskService?.RegisterTitle(player, title);
+				await SendPacketAsync(SmSystemMessage.QuestGetRewardTitle(titlePlan.TitleName!), cancellationToken);
+				await SendPacketAsync(new SmTitleInfo(player.Titles), cancellationToken);
+				return true;
+			case QuestTitleRewardStatus.AlreadyKnown:
+				await SendPacketAsync(SmSystemMessage.TooltipLearnedTitle(), cancellationToken);
+				return true;
+			case QuestTitleRewardStatus.InvalidRace:
+				return true;
+			case QuestTitleRewardStatus.InvalidTitle:
+			case QuestTitleRewardStatus.MissingPlayer:
+				return false;
+			default:
+				return false;
+		}
+	}
+
 	private QuestRewardService CreateQuestRewardService()
 	{
 		return new QuestRewardService(
@@ -5545,7 +5596,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (projectionPlan.Warnings.Count != 0
 			|| projectionPlan.Descriptors.Any(descriptor =>
 				descriptor.Action is not QuestFinishRewardNonItemAction.Kinah
-					and not QuestFinishRewardNonItemAction.Experience))
+					and not QuestFinishRewardNonItemAction.Experience
+					and not QuestFinishRewardNonItemAction.Title))
 		{
 			return false;
 		}
