@@ -1505,7 +1505,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
-				SELECT id, account_id, name, player_class, race, gender, note, exp, recoverexp, dp, reposte_energy, online, last_online,
+				SELECT id, account_id, name, player_class, race, gender, note, creation_date, exp, recoverexp, dp, reposte_energy, online, last_online,
 					quest_expands, npc_expands, item_expands, wh_npc_expands, wh_bonus_expands, title_id, bonus_title_id,
 					lm.legion_id, lm.`rank` AS legion_rank, l.level AS legion_level, l.name AS legion_name,
 					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
@@ -1547,6 +1547,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				Race = ReadString(reader, "race"),
 				Gender = ReadString(reader, "gender"),
 				Note = ReadString(reader, "note"),
+				CreationDate = ReadDateTime(reader, "creation_date") ?? DateTime.UnixEpoch,
 				LegionId = ReadInt(reader, "legion_id"),
 				LegionRank = ReadString(reader, "legion_rank"), // Java parity: LegionMember rank (enum name); empty when no legion.
 				LegionLevel = ReadInt(reader, "legion_level"),

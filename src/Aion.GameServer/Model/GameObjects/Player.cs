@@ -33,6 +33,13 @@ public sealed class Player
 	// SM_ACCOUNT_AUTH_RESPONSE and later consumed by FactionPackService/VeteranRewardService.
 	public long? AccountCreationEpochMillis { get; set; }
 
+	// Java parity: model/gameobjects/player/Player.getCreationDate consumed by SM_ATREIAN_PASSPORT.
+	public DateTime CreationDate { get; set; } = DateTime.UnixEpoch;
+
+	public int PassportStamps { get; set; }
+
+	public IReadOnlyList<PlayerPassport> Passports { get; set; } = Array.Empty<PlayerPassport>();
+
 	// Java parity: model/team/legion/LegionMember data used by chat/player info packets.
 	public int LegionId { get; set; }
 

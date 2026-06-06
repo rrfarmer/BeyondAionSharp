@@ -1881,8 +1881,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Java parity: network/aion/clientpackets/CM_CHECK_MAIL_UNK.runImpl is TODO/no-op.
 				break;
 			case CmAtreianPassport:
-				// Java parity: network/aion/clientpackets/CM_ATREIAN_PASSPORT.runImpl calls AtreianPassportService.takeReward.
-				// Reward execution/account passport mutation remain unported; keep this parser-only for now.
+				// Java parity: CM_ATREIAN_PASSPORT.runImpl -> AtreianPassportService.takeReward -> sendPassport.
+				// Reward execution/account passport mutation remain unported; send the currently modeled snapshot.
+				if (_activePlayer != null)
+					await SendPacketAsync(new SmAtreianPassport(
+						_activePlayer.Passports,
+						_activePlayer.PassportStamps,
+						_activePlayer.CreationDate));
 				break;
 			case CmObjectSearch objectSearch:
 				if (_activePlayer != null)
