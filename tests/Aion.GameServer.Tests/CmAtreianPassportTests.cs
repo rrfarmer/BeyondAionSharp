@@ -215,6 +215,95 @@ public sealed class CmAtreianPassportTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_AtreianPassportFullInventoryBlocksStackMergeClaim()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			new GameWorld(NullLogger<GameWorld>.Instance),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			AtreianPassportActiveClock);
+		var arriveDate = DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime;
+		var rewardStack = new InventoryItem
+		{
+			ObjectId = 9100,
+			ItemId = 166000010,
+			Count = 1,
+			OwnerId = 5009,
+			Location = 0,
+		};
+		var fillerItems = Enumerable.Range(0, 26)
+			.Select(index => new InventoryItem
+			{
+				ObjectId = 9200 + index,
+				ItemId = 100000000 + index,
+				Count = 1,
+				OwnerId = 5009,
+				Location = 0,
+			});
+		var player = new Player
+		{
+			ObjectId = 5009,
+			AccountId = 85,
+			Name = "PassportFullCube",
+			Level = 50,
+			CreationDate = new DateTime(2021, 3, 4, 12, 30, 0, DateTimeKind.Utc),
+			PassportStamps = 5,
+			Passports =
+			[
+				new PlayerPassport(
+					PassportId: 9,
+					Rewarded: false,
+					ArriveDate: arriveDate)
+			],
+			InventoryItems = [rewardStack, .. fillerItems],
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		SetActivePlayer(pair.Connection, player);
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteH(1);
+		buffer.WriteD(9);
+		buffer.WriteD(1_717_286_400);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		Assert.Equal(0, repository.SaveInventoryRewardMutationCalls);
+		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
+		Assert.Equal(0, repository.DeleteAccountPassportCalls);
+		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == rewardStack.ObjectId).Count);
+		Assert.False(Assert.Single(player.Passports).Rewarded);
+		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300762, message.MessageId);
+			},
+			packet =>
+			{
+				var passport = Assert.IsType<SmAtreianPassport>(packet);
+				var payload = SerializeUnencryptedPayload(passport);
+				Assert.Equal(1, ReadShort(payload, 6));
+				Assert.Equal(9, ReadInt(payload, 8));
+				Assert.Equal(5, ReadInt(payload, 12));
+				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
+				Assert.Equal(1_717_286_400, ReadInt(payload, 20));
+			});
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_AtreianPassportDeletesExpiredRewardClaim()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

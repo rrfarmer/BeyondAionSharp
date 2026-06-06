@@ -4348,6 +4348,13 @@ public sealed class GameServerConnection : BaseClientConnection
 				continue;
 			}
 
+			if (InventoryCapacity.GetFreeCubeSlots(player, staticData.ItemTemplates) <= 0)
+			{
+				// Java parity: AtreianPassportService.takeReward checks Inventory.isFull before ItemService.addItem.
+				await SendPacketAsync(SmSystemMessage.FullInventory());
+				break;
+			}
+
 			var rewardPlan = InventoryAddService.CreateAddItemPlan(
 				player,
 				player.InventoryItems,
