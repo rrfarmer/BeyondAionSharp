@@ -4276,16 +4276,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					items.Remove(item);
 					player.InventoryItems = [.. items];
 
-					if (packet.Source == 0)
-					{
-						await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.MoveDeleteType));
-						await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-					}
-					else
-					{
-						await SendPacketAsync(new SmDeleteWarehouseItem(packet.Source, item.ObjectId, SmDeleteItem.MoveDeleteType));
-						await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-					}
+					await SendItemDeletePacketAsync(player, packet.Source, item.ObjectId, SmDeleteItem.MoveDeleteType);
 					return;
 				}
 

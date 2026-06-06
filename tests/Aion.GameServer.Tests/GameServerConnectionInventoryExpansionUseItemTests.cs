@@ -687,6 +687,54 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_FullWarehouseSourceAutoMergeUsesJavaStorageSize()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 3, location: 1);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 200,
+					Count = 97,
+					Location = 0,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 1, destination: 0, slot: -1));
+
+		var targetStack = Assert.Single(player.InventoryItems);
+		Assert.Equal(6001, targetStack.ObjectId);
+		Assert.Equal(100, targetStack.Count);
+		Assert.Equal(0, targetStack.Location);
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMerge = Assert.NotNull(repository.SavedItemMergeMutation);
+		Assert.Equal(1001, savedMerge.PlayerObjectId);
+		Assert.Equal(0, savedMerge.SourceItem.Count);
+		Assert.Equal(100, savedMerge.TargetItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 6001,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect),
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 1,
+				expectedObjectId: 5001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 1));
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_PartialAutoSlotMergeMovesRemainingStackLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
