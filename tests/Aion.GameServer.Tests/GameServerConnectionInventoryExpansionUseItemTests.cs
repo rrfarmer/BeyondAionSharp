@@ -1151,6 +1151,31 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_LegionWarehouseSameStorageSlotPersistsWithLegionOwnerLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 2, location: 3);
+		player.LegionId = 88;
+		player.LegionRank = "VOLUNTEER";
+		var item = Assert.Single(player.InventoryItems);
+		item.OwnerId = 88;
+		item.Slot = 6;
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 3, destination: 3, slot: 9));
+
+		var movedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(9, movedItem.Slot);
+		Assert.Equal(88, movedItem.OwnerId);
+		Assert.Equal(1, repository.SaveInventoryItemSlotCalls);
+		Assert.Equal((88, 5001, 9L), Assert.Single(repository.SavedInventoryItemSlots));
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_FullCubeDestinationSendsJavaStorageFullMessageAndUnlocksSource()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

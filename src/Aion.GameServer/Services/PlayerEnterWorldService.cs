@@ -628,8 +628,13 @@ public sealed class PlayerEnterWorldService
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: ItemMoveService.moveInSameStorage -> item.setEquipmentSlot -> InventoryDAO stores updated slot.
-		var itemOwnerId = storageType == 2 ? player.AccountId : player.ObjectId;
+		// Java parity: ItemMoveService.moveInSameStorage -> item.setEquipmentSlot -> InventoryDAO.getItemOwnerId.
+		var itemOwnerId = storageType switch
+		{
+			2 => player.AccountId,
+			3 when player.LegionId > 0 => player.LegionId,
+			_ => player.ObjectId,
+		};
 		return _repository.SaveInventoryItemSlotAsync(itemOwnerId, itemObjectId, newSlot, cancellationToken);
 	}
 
