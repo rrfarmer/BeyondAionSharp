@@ -754,6 +754,45 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_CrossStorageWarehouseCubeUpdatesUseJavaStorageSize()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 2);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 4;
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 1, slot: 9));
+
+		var movedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, movedItem.ObjectId);
+		Assert.Equal(1, movedItem.Location);
+		Assert.Equal(9, movedItem.Slot);
+		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMove = Assert.NotNull(repository.SavedItemCrossStorageMoveMutation);
+		Assert.Equal(1001, savedMove.PlayerObjectId);
+		Assert.Equal(5001, savedMove.ItemObjectId);
+		Assert.Equal(1, savedMove.NewLocation);
+		Assert.Equal(9, savedMove.NewSlot);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedSlot: 9),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
 	public async Task HandleSplitItemAsync_FullSourceMergeDeletesSourceStackLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

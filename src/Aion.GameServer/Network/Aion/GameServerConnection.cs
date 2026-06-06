@@ -4316,35 +4316,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		// Java parity: sendItemDeletePacket for source storage.
-		if (oldLocation == 0 /* cube */)
-		{
-			// Java parity: SM_DELETE_ITEM(objectId, MOVE=0x14) + SM_CUBE_UPDATE for cube source.
-			await SendPacketAsync(new SmDeleteItem(item.ObjectId, SmDeleteItem.MoveDeleteType));
-			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-		}
-		else
-		{
-			// Java parity: SM_DELETE_WAREHOUSE_ITEM(storageTypeId, objectId, MOVE=0x14) + SM_CUBE_UPDATE for warehouse source.
-			await SendPacketAsync(new SmDeleteWarehouseItem(oldLocation, item.ObjectId, SmDeleteItem.MoveDeleteType));
-			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-		}
+		await SendItemDeletePacketAsync(player, oldLocation, item.ObjectId, SmDeleteItem.MoveDeleteType);
 
 		// Java parity: sendStorageUpdatePacket for destination storage.
-		if (packet.Destination == 0 /* cube */)
-		{
-			// Java parity: SM_INVENTORY_ADD_ITEM(item, ITEM_COLLECT) + SM_CUBE_UPDATE.
-			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(item, template));
-			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-		}
-		else
-		{
-			// Java parity: SM_WAREHOUSE_ADD_ITEM(item, warehouseType, ITEM_COLLECT) + SM_CUBE_UPDATE.
-			await SendPacketAsync(new SmWarehouseAddItem(
-				packet.Destination,
-				[new SmWarehouseAddItem.WarehousePacketItem(item, template)],
-				SmInventoryAddItem.ItemCollect));
-			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
-		}
+		await SendStorageUpdatePacketAsync(player, item, template, packet.Destination, SmInventoryAddItem.ItemCollect);
 	}
 
 	private async Task HandleReplaceItemAsync(Player player, CmReplaceItem packet)
