@@ -1,13 +1,16 @@
+using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Model;
+using Aion.GameServer.Network;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Microsoft.Extensions.Logging.Abstractions;
+using GameChatServer = Aion.GameServer.Network.ChatServer.ChatServer;
 
 namespace Aion.GameServer.Tests;
 
@@ -62,6 +65,30 @@ public sealed class CmVersionCheckTests
 		Assert.Equal(EventTheme.None, versionCheck.CityDecoration);
 	}
 
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_CompatibleVersionAdvertisesAuthenticatedChatEndpoint()
+	{
+		await using var mockChatBridge = await MockBridgeServer.StartAsync(CreateChatAuthResponseFrame(IPAddress.Loopback, 10241));
+		await using var chatServer = new GameChatServer(
+			NullLogger<GameChatServer>.Instance,
+			CreateChatConnectorOptions(mockChatBridge.EndPoint));
+		await chatServer.StartAsync();
+		await mockChatBridge.ReadClientFrameAsync();
+		await WaitUntilAsync(() => chatServer.IsAuthed);
+
+		await using var pair = await TestConnectionPair.CreateAsync(chatServer);
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		WriteVersionCheckPayload(buffer, SmVersionCheck.InternalVersion);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		var response = Assert.Single(pair.SentPackets);
+		var versionCheck = Assert.IsType<SmVersionCheck>(response);
+		Assert.Equal(new IPEndPoint(IPAddress.Loopback, 10241), versionCheck.PublicChatEndPoint);
+	}
+
 	private static CmVersionCheck CreatePacket()
 	{
 		return new CmVersionCheck(0, new HashSet<GameConnectionState> { GameConnectionState.Connected });
@@ -97,6 +124,39 @@ public sealed class CmVersionCheckTests
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
 	}
 
+	private static GameServerOptions CreateChatConnectorOptions(IPEndPoint chatEndPoint)
+	{
+		return new GameServerOptions
+		{
+			Network = new GameServerNetworkOptions
+			{
+				ChatEndPoint = chatEndPoint,
+				ChatPassword = "secret"
+			}
+		};
+	}
+
+	private static byte[] CreateChatAuthResponseFrame(IPAddress publicAddress, int port)
+	{
+		var addressBytes = publicAddress.GetAddressBytes();
+		var payload = new byte[2 + 1 + addressBytes.Length + 2];
+		payload[0] = 0x00;
+		payload[1] = 0x00;
+		payload[2] = (byte)addressBytes.Length;
+		addressBytes.CopyTo(payload.AsSpan(3));
+		BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(3 + addressBytes.Length, 2), (ushort)port);
+		return BridgePacketFrameCodec.CreateFrame(payload);
+	}
+
+	private static async Task WaitUntilAsync(Func<bool> condition)
+	{
+		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+		while (!condition())
+		{
+			await Task.Delay(20, timeout.Token);
+		}
+	}
+
 	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -121,7 +181,7 @@ public sealed class CmVersionCheckTests
 		public GameServerConnection Connection { get; }
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync()
+		public static async Task<TestConnectionPair> CreateAsync(GameChatServer? chatServer = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -141,6 +201,7 @@ public sealed class CmVersionCheckTests
 					"version-check-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions { Core = new GameServerCoreOptions { TimeZoneId = "UTC" } },
+					chatServer: chatServer,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
@@ -156,5 +217,75 @@ public sealed class CmVersionCheckTests
 			await Connection.DisposeAsync();
 			_client.Dispose();
 		}
+	}
+
+	private sealed class MockBridgeServer : IAsyncDisposable
+	{
+		private readonly TcpListener _listener;
+		private readonly Task<TcpClient> _acceptTask;
+		private readonly byte[] _responseFrame;
+		private TcpClient? _client;
+
+		private MockBridgeServer(TcpListener listener, Task<TcpClient> acceptTask, byte[] responseFrame)
+		{
+			_listener = listener;
+			_acceptTask = acceptTask;
+			_responseFrame = responseFrame;
+			EndPoint = (IPEndPoint)listener.LocalEndpoint;
+		}
+
+		public IPEndPoint EndPoint { get; }
+
+		public static Task<MockBridgeServer> StartAsync(byte[] responseFrame)
+		{
+			var listener = new TcpListener(IPAddress.Loopback, 0);
+			listener.Start();
+			return Task.FromResult(new MockBridgeServer(listener, listener.AcceptTcpClientAsync(), responseFrame));
+		}
+
+		public async Task<byte[]> ReadClientFrameAsync()
+		{
+			_client ??= await _acceptTask;
+			var stream = _client.GetStream();
+			var frame = await ReadFrameAsync(stream);
+			await stream.WriteAsync(_responseFrame);
+			await stream.FlushAsync();
+			return frame;
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			if (_client != null)
+				_client.Dispose();
+			await Task.CompletedTask;
+			_listener.Stop();
+		}
+	}
+
+	private static async Task<byte[]> ReadFrameAsync(NetworkStream stream)
+	{
+		var header = await ReadExactAsync(stream, 2);
+		var frameLength = BinaryPrimitives.ReadUInt16LittleEndian(header);
+		var frame = new byte[frameLength];
+		header.CopyTo(frame, 0);
+		var payload = await ReadExactAsync(stream, frameLength - 2);
+		payload.CopyTo(frame.AsSpan(2));
+		return frame;
+	}
+
+	private static async Task<byte[]> ReadExactAsync(NetworkStream stream, int length)
+	{
+		var buffer = new byte[length];
+		var offset = 0;
+		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+		while (offset < length)
+		{
+			var read = await stream.ReadAsync(buffer.AsMemory(offset, length - offset), timeout.Token);
+			if (read == 0)
+				throw new EndOfStreamException("Socket closed before the expected frame was read.");
+			offset += read;
+		}
+
+		return buffer;
 	}
 }

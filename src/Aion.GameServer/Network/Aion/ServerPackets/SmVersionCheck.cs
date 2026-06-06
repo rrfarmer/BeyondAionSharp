@@ -1,3 +1,4 @@
+using System.Net;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Model;
@@ -16,7 +17,8 @@ public sealed class SmVersionCheck : GameServerPacket
 		EventTheme cityDecoration,
 		GameServerOptions? options = null,
 		Func<DateTimeOffset>? clock = null,
-		DateTimeOffset? serverStartTime = null)
+		DateTimeOffset? serverStartTime = null,
+		IPEndPoint? publicChatEndPoint = null)
 		: base(PacketOpCode)
 	{
 		Version = version;
@@ -24,11 +26,13 @@ public sealed class SmVersionCheck : GameServerPacket
 		_runtimeOptions = SmVersionCheckRuntimeOptions.FromOptions(
 			options ?? new GameServerOptions(),
 			clock ?? (() => DateTimeOffset.UtcNow),
-			serverStartTime ?? ProcessStartTime);
+			serverStartTime ?? ProcessStartTime,
+			publicChatEndPoint);
 	}
 
 	public int Version { get; }
 	public EventTheme CityDecoration { get; }
+	public IPEndPoint? PublicChatEndPoint => _runtimeOptions.PublicChatEndPoint;
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
@@ -101,7 +105,24 @@ public sealed class SmVersionCheck : GameServerPacket
 		buffer.WriteD(1000);
 		buffer.WriteC(0);
 		buffer.WriteF(3.0f);
-		buffer.WriteH(0);
+		WriteChatServerAddress(buffer);
+	}
+
+	private void WriteChatServerAddress(PacketBuffer buffer)
+	{
+		// Java parity: SM_VERSION_CHECK.writeImpl advertises ChatServer.getPublicIP/getPublicPort when present.
+		var publicChatEndPoint = _runtimeOptions.PublicChatEndPoint;
+		var addressBytes = publicChatEndPoint?.Address.GetAddressBytes();
+		if (publicChatEndPoint == null || addressBytes is not { Length: > 0 })
+		{
+			buffer.WriteH(0);
+			return;
+		}
+
+		buffer.WriteH(1);
+		buffer.WriteC(0);
+		buffer.WriteB(addressBytes);
+		buffer.WriteH(publicChatEndPoint.Port);
 	}
 }
 
@@ -117,12 +138,14 @@ internal sealed record SmVersionCheckRuntimeOptions(
 	int StandardOffsetSecondsFromUtc,
 	int DaylightSavingsSecondsFromUtc,
 	bool AtreianPassportDisabled,
-	int ItemWrapLimit)
+	int ItemWrapLimit,
+	IPEndPoint? PublicChatEndPoint)
 {
 	public static SmVersionCheckRuntimeOptions FromOptions(
 		GameServerOptions options,
 		Func<DateTimeOffset> clock,
-		DateTimeOffset serverStartTime)
+		DateTimeOffset serverStartTime,
+		IPEndPoint? publicChatEndPoint)
 	{
 		var now = clock();
 		var timeZone = options.Core.GetTimeZone();
@@ -146,7 +169,8 @@ internal sealed record SmVersionCheckRuntimeOptions(
 			standardOffset,
 			daylightSavings,
 			AtreianPassportDisabled: false,
-			options.Core.ItemWrapLimit);
+			options.Core.ItemWrapLimit,
+			publicChatEndPoint);
 	}
 
 	private static int ClampByte(int value)

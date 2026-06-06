@@ -1,3 +1,4 @@
+using System.Net;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -61,7 +62,26 @@ public sealed class SmVersionCheckTests
 		Assert.Equal(0, ReadInt(payload, 48)); // UTC standard offset written as -offset
 		Assert.Equal(0, ReadInt(payload, 72)); // UTC daylight savings bias
 		Assert.Equal(12, ReadInt(payload, 90));
-		Assert.Equal(0, ReadShort(payload, 143)); // ChatServersCount, chat server not modeled yet
+		Assert.Equal(0, ReadShort(payload, 143)); // ChatServersCount when chat server is not authenticated
+	}
+
+	[Fact]
+	public void WritePayload_CompatibleClientVersionWritesAuthenticatedChatEndpoint()
+	{
+		var packet = new SmVersionCheck(
+			SmVersionCheck.InternalVersion,
+			EventTheme.None,
+			new GameServerOptions { Core = new GameServerCoreOptions { TimeZoneId = "UTC" } },
+			clock: () => DateTimeOffset.FromUnixTimeSeconds(1_700_000_000),
+			serverStartTime: DateTimeOffset.FromUnixTimeSeconds(1_690_000_000),
+			publicChatEndPoint: new IPEndPoint(IPAddress.Parse("127.0.0.1"), 10241));
+
+		var payload = SerializeUnencryptedPayload(packet);
+
+		Assert.Equal(1, ReadShort(payload, 143)); // ChatServersCount
+		Assert.Equal(0, payload[145]); // Java writes an extra C(0) before the public IP bytes.
+		Assert.Equal([127, 0, 0, 1], payload[146..150]);
+		Assert.Equal(10241, ReadShort(payload, 150));
 	}
 
 	private const int ChristmasThemeId = 1;
