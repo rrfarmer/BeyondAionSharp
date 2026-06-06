@@ -110,6 +110,11 @@ public sealed class PlayerEnterWorldService
 			player.InventoryItems = await _repository.LoadPlayerItemsAsync(playerObjectId, cancellationToken);
 			player.WarehouseItems = await _repository.LoadPlayerWarehouseItemsAsync(playerObjectId, cancellationToken);
 			player.AccountWarehouseItems = await _repository.LoadAccountWarehouseItemsAsync(player.AccountId, cancellationToken);
+			if (player.LegionId > 0)
+			{
+				var legionWarehouseItems = await _repository.LoadLegionWarehouseItemsAsync(player.LegionId, cancellationToken);
+				player.InventoryItems = player.InventoryItems.Concat(legionWarehouseItems).ToArray();
+			}
 			player.Skills = await _repository.LoadPlayerSkillsAsync(playerObjectId, cancellationToken);
 			player.SkillCooldowns = await _repository.LoadPlayerSkillCooldownsAsync(playerObjectId, cancellationToken);
 			player.ItemCooldowns = await _repository.LoadPlayerItemCooldownsAsync(playerObjectId, cancellationToken);

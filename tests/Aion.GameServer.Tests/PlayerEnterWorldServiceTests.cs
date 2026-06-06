@@ -192,6 +192,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, repository.LoadItemsCalls);
 		Assert.Equal(1, repository.LoadWarehouseItemsCalls);
 		Assert.Equal(1, repository.LoadAccountWarehouseItemsCalls);
+		Assert.Equal(0, repository.LoadLegionWarehouseItemsCalls);
 		Assert.Equal(1, repository.LoadSkillsCalls);
 		Assert.Equal(1, repository.LoadSkillCooldownsCalls);
 		Assert.Equal(1, repository.LoadItemCooldownsCalls);
@@ -217,6 +218,34 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, repository.MarkOnlineCalls);
 		Assert.True(world.TryGetObject(1001, out var stored));
 		Assert.Same(repository.Player, stored);
+	}
+
+	[Fact]
+	public async Task EnterWorldAsync_LoadsLegionWarehouseItemsForLegionMemberLikeJava()
+	{
+		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
+		player.LegionId = 88;
+		player.LegionRank = "VOLUNTEER";
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = player,
+			Items = [new InventoryItem { ObjectId = 2001, ItemId = 100000094, OwnerId = 1001, Location = 0, Slot = 1 }],
+			LegionWarehouseItems = [new InventoryItem { ObjectId = 2006, ItemId = 100000095, OwnerId = 88, Location = 3, Slot = 4 }],
+		};
+		var service = CreateService(repository, CreateWorld());
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.Equal(2, player.InventoryItems.Count);
+		var cubeItem = Assert.Single(player.InventoryItems, item => item.Location == 0);
+		Assert.Equal(2001, cubeItem.ObjectId);
+		var legionItem = Assert.Single(player.InventoryItems, item => item.Location == 3);
+		Assert.Equal(2006, legionItem.ObjectId);
+		Assert.Equal(88, legionItem.OwnerId);
+		Assert.Equal(4, legionItem.Slot);
+		Assert.Equal(1, repository.LoadLegionWarehouseItemsCalls);
+		Assert.Equal(88, repository.LoadedLegionWarehouseId);
 	}
 
 	[Fact]
@@ -3200,6 +3229,8 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<InventoryItem> AccountWarehouseItems { get; init; } = Array.Empty<InventoryItem>();
 
+		public IReadOnlyList<InventoryItem> LegionWarehouseItems { get; init; } = Array.Empty<InventoryItem>();
+
 		public IReadOnlyList<PlayerSkill> Skills { get; init; } = Array.Empty<PlayerSkill>();
 
 		public IReadOnlyDictionary<int, long> SkillCooldowns { get; init; } = new Dictionary<int, long>();
@@ -3251,6 +3282,10 @@ public sealed class PlayerEnterWorldServiceTests
 		public int LoadWarehouseItemsCalls { get; private set; }
 
 		public int LoadAccountWarehouseItemsCalls { get; private set; }
+
+		public int LoadLegionWarehouseItemsCalls { get; private set; }
+
+		public int LoadedLegionWarehouseId { get; private set; }
 
 		public int LoadSkillsCalls { get; private set; }
 
@@ -3617,6 +3652,13 @@ public sealed class PlayerEnterWorldServiceTests
 		{
 			LoadAccountWarehouseItemsCalls++;
 			return Task.FromResult(AccountWarehouseItems);
+		}
+
+		public Task<IReadOnlyList<InventoryItem>> LoadLegionWarehouseItemsAsync(int legionId, CancellationToken cancellationToken = default)
+		{
+			LoadLegionWarehouseItemsCalls++;
+			LoadedLegionWarehouseId = legionId;
+			return Task.FromResult(LegionWarehouseItems);
 		}
 
 		public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)

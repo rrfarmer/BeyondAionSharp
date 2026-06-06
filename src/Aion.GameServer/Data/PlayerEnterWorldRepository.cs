@@ -24,6 +24,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<IReadOnlyList<InventoryItem>> LoadAccountWarehouseItemsAsync(int accountId, CancellationToken cancellationToken = default);
 
+	Task<IReadOnlyList<InventoryItem>> LoadLegionWarehouseItemsAsync(int legionId, CancellationToken cancellationToken = default);
+
 	Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default);
 
 	Task<IReadOnlyDictionary<int, long>> LoadPlayerSkillCooldownsAsync(int playerObjectId, CancellationToken cancellationToken = default);
@@ -678,6 +680,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	}
 
 	public Task<IReadOnlyList<InventoryItem>> LoadAccountWarehouseItemsAsync(int accountId, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult<IReadOnlyList<InventoryItem>>(Array.Empty<InventoryItem>());
+	}
+
+	public Task<IReadOnlyList<InventoryItem>> LoadLegionWarehouseItemsAsync(int legionId, CancellationToken cancellationToken = default)
 	{
 		return Task.FromResult<IReadOnlyList<InventoryItem>>(Array.Empty<InventoryItem>());
 	}
@@ -4635,6 +4642,17 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			location: 2,
 			accountId,
 			"account warehouse",
+			cancellationToken);
+	}
+
+	public async Task<IReadOnlyList<InventoryItem>> LoadLegionWarehouseItemsAsync(int legionId, CancellationToken cancellationToken = default)
+	{
+		// Java parity: LegionWarehouse uses InventoryDAO.loadStorage(legionId, LEGION_WAREHOUSE).
+		return await LoadStorageItemsAsync(
+			ownerId: legionId,
+			location: 3,
+			legionId,
+			"legion warehouse",
 			cancellationToken);
 	}
 
