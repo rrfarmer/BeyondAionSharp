@@ -285,6 +285,17 @@ public sealed class GameServerOptions
 					GetIntWithEnvironment(loader, "gameserver.legion.level7requiredcontribution", 12500000),
 					GetIntWithEnvironment(loader, "gameserver.legion.level8requiredcontribution", 62500000),
 				],
+				LevelMaxMembers =
+				[
+					GetIntWithEnvironment(loader, "gameserver.legion.level1maxmembers", 30),
+					GetIntWithEnvironment(loader, "gameserver.legion.level2maxmembers", 60),
+					GetIntWithEnvironment(loader, "gameserver.legion.level3maxmembers", 90),
+					GetIntWithEnvironment(loader, "gameserver.legion.level4maxmembers", 120),
+					GetIntWithEnvironment(loader, "gameserver.legion.level5maxmembers", 150),
+					GetIntWithEnvironment(loader, "gameserver.legion.level6maxmembers", 180),
+					GetIntWithEnvironment(loader, "gameserver.legion.level7maxmembers", 210),
+					GetIntWithEnvironment(loader, "gameserver.legion.level8maxmembers", 240),
+				],
 				ChallengeTaskRequirementEnabled = GetBoolWithEnvironment(loader, "gameserver.legion.task.requirement.enable", true),
 			},
 			AutoGroup = new GameServerAutoGroupOptions
@@ -713,6 +724,9 @@ public sealed class GameServerLegionOptions
 
 	// Java parity: configs/main/LegionConfig.LEGION_LEVEL{2..8}_REQUIRED_CONTRIBUTION.
 	public IReadOnlyList<int> LevelRequiredContribution { get; init; } = [0, 20000, 100000, 500000, 2500000, 12500000, 62500000];
+
+	// Java parity: configs/main/LegionConfig.LEGION_LEVEL{1..8}_MAX_MEMBERS.
+	public IReadOnlyList<int> LevelMaxMembers { get; init; } = [30, 60, 90, 120, 150, 180, 210, 240];
 
 	// Java parity: configs/main/LegionConfig.ENABLE_GUILD_TASK_REQ.
 	public bool ChallengeTaskRequirementEnabled { get; init; } = true;

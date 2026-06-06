@@ -1599,6 +1599,44 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteAcceptFullLegionNotifiesInviterAndDoesNotPersistLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { CountLegionMembersResult = 2 };
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var player = CreateBrigadeGeneralPlayer();
+		var registry = new CapturingConnectionRegistry(player, target);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			registry,
+			options: CreateLegionInviteLimitOptions(level4MaxMembers: 2));
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+		pair.SentPackets.Clear();
+		registry.DirectPackets.Clear();
+		registry.VisibleBroadcasts.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 1));
+
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Equal(1, repository.CountLegionMembersCalls);
+		Assert.Equal(77, repository.CountedLegionMembersLegionId);
+		Assert.Equal(0, repository.SaveNewLegionMemberCalls);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Equal(0, target.LegionId);
+		Assert.Equal(string.Empty, target.LegionName);
+		Assert.Equal(string.Empty, target.LegionRank);
+		Assert.Empty(pair.SentPackets);
+		var notification = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == player.ObjectId);
+		var message = Assert.IsType<SmSystemMessage>(notification.Packet);
+		Assert.Equal(1300257, message.MessageId);
+		Assert.Empty(message.Parameters);
+		Assert.Empty(registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_BrigadeGeneralTransferStoresRequesterConfirmAndSendsQuestionLikeJava()
 	{
 		var target = CreateLegionPlayer(2002, "Lurion");
@@ -2386,6 +2424,17 @@ public sealed class CmLegionTests
 				LevelRequiredMembers = [requiredMembers, 1, 1, 1, 1, 1, 1],
 				LevelRequiredContribution = [requiredContribution, 0, 0, 0, 0, 0, 0],
 				ChallengeTaskRequirementEnabled = challengeTaskRequirementEnabled,
+			},
+		};
+	}
+
+	private static GameServerOptions CreateLegionInviteLimitOptions(int level4MaxMembers)
+	{
+		return new GameServerOptions
+		{
+			Legion = new GameServerLegionOptions
+			{
+				LevelMaxMembers = [30, 60, 90, level4MaxMembers, 150, 180, 210, 240],
 			},
 		};
 	}

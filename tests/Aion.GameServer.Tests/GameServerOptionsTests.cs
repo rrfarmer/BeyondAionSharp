@@ -184,6 +184,7 @@ public class GameServerOptionsTests
 				gameserver.legion.warehouse = false
 				gameserver.legion.nicknamepattern = .{1,8}
 				gameserver.legion.selfintropattern = .{1,16}
+				gameserver.legion.level4maxmembers = 222
 				gameserver.instances.group.requirement = 7
 				gameserver.autogroup.enable = false
 				gameserver.administration.instance.enter_all = 4
@@ -225,6 +226,7 @@ public class GameServerOptionsTests
 			Assert.False(options.Legion.WarehouseEnabled);
 			Assert.Equal(".{1,8}", options.Legion.NicknamePattern);
 			Assert.Equal(".{1,16}", options.Legion.SelfIntroPattern);
+			Assert.Equal([30, 60, 90, 222, 150, 180, 210, 240], options.Legion.LevelMaxMembers);
 			Assert.Equal(7, options.Membership.InstancesGroupRequirement);
 			Assert.False(options.AutoGroup.Enabled);
 			Assert.Equal(4, options.Administration.InstanceEnterAllAccessLevel);

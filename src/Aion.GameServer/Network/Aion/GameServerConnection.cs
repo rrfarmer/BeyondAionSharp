@@ -15780,6 +15780,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (!await CanAddLegionInviteMemberAsync(inviter.LegionId, inviter.LegionLevel))
+		{
+			await _connectionRegistry!.SendPacketToPlayerAsync(
+				inviter.ObjectId,
+				SmSystemMessage.GuildInviteCanNotAddMemberAnyMore());
+			return;
+		}
+
 		if (!await _playerEnterWorldRepository.SaveNewLegionMemberAsync(inviter.LegionId, responder.ObjectId, LegionRanks.Volunteer))
 			return;
 
@@ -15810,6 +15818,22 @@ public sealed class GameServerConnection : BaseClientConnection
 		await BroadcastLegionInviteEmblemAsync(responder);
 		await BroadcastToOnlineLegionAsync(responder.LegionId, SmLegionEdit.RefreshAnnouncement);
 		await BroadcastLegionJoinTitleAsync(responder);
+	}
+
+	private async Task<bool> CanAddLegionInviteMemberAsync(int legionId, int legionLevel)
+	{
+		// Java parity: Legion.canAddMember switches on levels 1..8 and rejects unknown levels.
+		var maxMembers = GetLegionLevelMaxMembers(_options.Legion.LevelMaxMembers, legionLevel);
+		if (maxMembers <= 0 || _playerEnterWorldRepository == null)
+			return false;
+
+		return await _playerEnterWorldRepository.CountLegionMembersAsync(legionId) < maxMembers;
+	}
+
+	private static int GetLegionLevelMaxMembers(IReadOnlyList<int> maxMembers, int legionLevel)
+	{
+		var index = legionLevel - 1;
+		return index >= 0 && index < maxMembers.Count ? maxMembers[index] : 0;
 	}
 
 	private static void BindLegionInviteAcceptedPlayer(Player inviter, Player responder)

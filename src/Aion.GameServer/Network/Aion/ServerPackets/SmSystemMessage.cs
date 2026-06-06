@@ -299,6 +299,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300256, memberName);
 	}
 
+	public static SmSystemMessage GuildInviteCanNotAddMemberAnyMore()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_ADD_MEMBER_ANY_MORE.
+		return new SmSystemMessage(1300257);
+	}
+
 	public static SmSystemMessage GuildInviteSentInviteMsgToHim(string memberName)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_SENT_INVITE_MSG_TO_HIM(String).
