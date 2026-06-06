@@ -118,6 +118,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PetDopingTable? _petDopings;
 	private readonly PetFeedDataTable? _petFeedData;
 	private readonly Func<int, int> _petLovedRewardIndexSelector;
+	private readonly Func<DateTimeOffset> _atreianPassportClock;
 	private readonly ConcurrentDictionary<int, ScheduledTask> _petRefeedTasks = new();
 	private readonly ConcurrentDictionary<int, ScheduledTask> _petMoodUpdateTasks = new();
 	private readonly ConcurrentDictionary<int, long> _petMoodUpdateSaveStartMillis = new();
@@ -227,6 +228,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		PetDopingTable? buyItemPetDopings = null,
 		PetFeedDataTable? buyItemPetFeedData = null,
 		Func<int, int>? petLovedRewardIndexSelector = null,
+		Func<DateTimeOffset>? atreianPassportClock = null,
 		LimitedItemTradeService? limitedItemTradeService = null,
 		long? buyItemCurrentSellLimit = null,
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
@@ -308,6 +310,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		_petDopings = buyItemPetDopings;
 		_petFeedData = buyItemPetFeedData;
 		_petLovedRewardIndexSelector = petLovedRewardIndexSelector ?? (count => Random.Shared.Next(count));
+		_atreianPassportClock = atreianPassportClock ?? (() => DateTimeOffset.UtcNow);
 		_limitedItemTradeService = limitedItemTradeService ?? runtimeContext?.LimitedItems;
 		_buyItemCurrentSellLimit = buyItemCurrentSellLimit;
 		_buyItemDiagnosticObjectIdProvider = buyItemDiagnosticObjectIdProvider;
@@ -4287,6 +4290,9 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: services/AtreianPassportService.takeReward grants the reward item before marking the Passport row rewarded.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData?.AtreianPassports.IsDisabled(_atreianPassportClock().UtcDateTime) == true)
+			return;
+
 		var passports = player.Passports.ToArray();
 		var deletedPassportIndexes = new HashSet<int>();
 		var mutated = false;

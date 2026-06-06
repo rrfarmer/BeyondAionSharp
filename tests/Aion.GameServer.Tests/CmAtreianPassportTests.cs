@@ -152,7 +152,8 @@ public sealed class CmAtreianPassportTests
 			repository,
 			runtimeContext,
 			playerEnterWorldService,
-			new IDFactory());
+			new IDFactory(),
+			AtreianPassportActiveClock);
 		var arriveDate = DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime;
 		var player = new Player
 		{
@@ -229,7 +230,8 @@ public sealed class CmAtreianPassportTests
 			repository,
 			runtimeContext,
 			playerEnterWorldService,
-			new IDFactory());
+			new IDFactory(),
+			AtreianPassportActiveClock);
 		var arriveDate = DateTimeOffset.FromUnixTimeSeconds(1_400_000_000).UtcDateTime;
 		var player = new Player
 		{
@@ -275,9 +277,68 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, ReadShort(payload, 6));
 	}
 
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_AtreianPassportDisabledGateSuppressesSnapshotAndClaims()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			new GameWorld(NullLogger<GameWorld>.Instance),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			() => new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+		var arriveDate = DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime;
+		var player = new Player
+		{
+			ObjectId = 5004,
+			AccountId = 80,
+			Name = "PassportDisabled",
+			Level = 50,
+			CreationDate = new DateTime(2021, 3, 4, 12, 30, 0, DateTimeKind.Utc),
+			PassportStamps = 7,
+			Passports =
+			[
+				new PlayerPassport(
+					PassportId: 9,
+					Rewarded: false,
+					ArriveDate: arriveDate)
+			],
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		SetActivePlayer(pair.Connection, player);
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteH(1);
+		buffer.WriteD(9);
+		buffer.WriteD(1_717_286_400);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		Assert.Equal(0, repository.SaveInventoryRewardMutationCalls);
+		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
+		Assert.Equal(0, repository.DeleteAccountPassportCalls);
+		Assert.Empty(player.InventoryItems);
+		Assert.False(Assert.Single(player.Passports).Rewarded);
+		Assert.Empty(pair.SentPackets);
+	}
+
 	private static CmAtreianPassport CreatePacket()
 	{
 		return new CmAtreianPassport(248, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+	}
+
+	private static DateTimeOffset AtreianPassportActiveClock()
+	{
+		return new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writeBody)
@@ -353,7 +414,8 @@ public sealed class CmAtreianPassportTests
 			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 			GameServerRuntimeContext? runtimeContext = null,
 			PlayerEnterWorldService? playerEnterWorldService = null,
-			IDFactory? idFactory = null)
+			IDFactory? idFactory = null,
+			Func<DateTimeOffset>? atreianPassportClock = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -376,6 +438,7 @@ public sealed class CmAtreianPassportTests
 					playerEnterWorldService: playerEnterWorldService,
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					idFactory: idFactory,
+					atreianPassportClock: atreianPassportClock,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
