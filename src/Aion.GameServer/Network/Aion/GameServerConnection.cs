@@ -3688,6 +3688,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		player.LegionSelfIntro = newSelfIntro;
 		await SendPacketAsync(new SmLegionUpdateSelfIntro(player.ObjectId, newSelfIntro));
+		await BroadcastLegionSelfIntroUpdateAsync(player, newSelfIntro);
 		await SendPacketAsync(SmSystemMessage.GuildWriteIntroDone());
 	}
 
@@ -15869,6 +15870,25 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		foreach (var recipientObjectId in recipientObjectIds)
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packetFactory());
+	}
+
+	private async Task BroadcastLegionSelfIntroUpdateAsync(Player activePlayer, string selfIntro)
+	{
+		// Java parity: LegionService.changeSelfIntro -> PacketSendUtility.broadcastToLegion.
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId == activePlayer.LegionId && candidate.ObjectId != activePlayer.ObjectId)
+				recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				recipientObjectId,
+				new SmLegionUpdateSelfIntro(activePlayer.ObjectId, selfIntro));
 	}
 
 	private LegionMemberSnapshot CreateOnlineLegionMemberSnapshot(Player player)

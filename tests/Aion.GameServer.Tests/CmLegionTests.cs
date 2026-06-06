@@ -409,7 +409,9 @@ public sealed class CmLegionTests
 	[Fact]
 	public async Task HandleInfrastructurePacketAsync_ChangeSelfIntroInvalidValueReturnsWithoutMutationLikeJava()
 	{
-		await using var pair = await TestConnectionPair.CreateAsync();
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var registry = new CapturingConnectionRegistry(bystander);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
 		var player = CreateLegionPlayer();
 		player.LegionSelfIntro = "Old intro";
 		SetActivePlayer(pair.Connection, player);
@@ -417,13 +419,18 @@ public sealed class CmLegionTests
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeSelfIntroPacket(string.Empty));
 
 		Assert.Empty(pair.SentPackets);
+		Assert.Empty(registry.DirectPackets);
 		Assert.Equal("Old intro", player.LegionSelfIntro);
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_ChangeSelfIntroMutatesRuntimeStateAndSendsPacketsLikeJava()
+	public async Task HandleInfrastructurePacketAsync_ChangeSelfIntroMutatesStateAndBroadcastsLikeJava()
 	{
-		await using var pair = await TestConnectionPair.CreateAsync();
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var outsider = CreateLegionPlayer(3003, "Outsider");
+		outsider.LegionId = 88;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
 		var player = CreateLegionPlayer();
 		SetActivePlayer(pair.Connection, player);
 
@@ -444,6 +451,12 @@ public sealed class CmLegionTests
 				var response = Assert.IsType<SmSystemMessage>(packet);
 				Assert.Equal(1300282, response.MessageId);
 			});
+		var bystanderDelivery = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionUpdateSelfIntroPacket(
+			bystanderDelivery.Packet,
+			player.ObjectId,
+			"Ready for sieges");
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
@@ -1939,6 +1952,14 @@ public sealed class CmLegionTests
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
 		Assert.Equal(playerObjectId, reader.ReadD());
 		Assert.Equal(nickname, reader.ReadS());
+	}
+
+	private static void AssertLegionUpdateSelfIntroPacket(GameServerPacket packet, int playerObjectId, string selfIntro)
+	{
+		var response = Assert.IsType<SmLegionUpdateSelfIntro>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(selfIntro, reader.ReadS());
 	}
 
 	private static void AssertLegionUpdateMemberPacket(
