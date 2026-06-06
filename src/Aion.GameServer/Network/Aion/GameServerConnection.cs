@@ -4216,7 +4216,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static void AddMoveStorageItem(Player player, int storageType, InventoryItem item)
 	{
-		if (storageType == 1 && player.WarehouseItems.Count > 0)
+		if (storageType == 1)
 		{
 			player.WarehouseItems = player.WarehouseItems.Concat([item]).ToArray();
 			return;

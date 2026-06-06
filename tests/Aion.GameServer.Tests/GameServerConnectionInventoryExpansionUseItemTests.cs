@@ -860,7 +860,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
-	public async Task HandleMoveItemAsync_CrossStorageWarehouseCubeUpdatesUseJavaStorageSize()
+	public async Task HandleMoveItemAsync_CubeSourceMovesItemToRestoredRegularWarehouseLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
@@ -873,8 +873,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			player,
 			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 1, slot: 9));
 
-		var movedItem = Assert.Single(player.InventoryItems);
+		Assert.Empty(player.InventoryItems);
+		var movedItem = Assert.Single(player.WarehouseItems);
 		Assert.Equal(5001, movedItem.ObjectId);
+		Assert.Equal(1001, movedItem.OwnerId);
 		Assert.Equal(1, movedItem.Location);
 		Assert.Equal(9, movedItem.Slot);
 		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
