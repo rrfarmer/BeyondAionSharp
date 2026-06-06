@@ -134,6 +134,40 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetUnhandledQuestDialogSendsDialogWindowFallback()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		var player = new Player
+		{
+			ObjectId = 44,
+			Name = "QuestDialogFallbackBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [new PlayerQuestState(1001, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.Select1_1,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(
+				packet,
+				QuestReportNpcObjectId,
+				CmDialogSelect.Select1_1,
+				questId: 1001));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Equal("START", unchangedQuest.Status);
+		Assert.Equal(0, player.Exp);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesKinahAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
@@ -1016,6 +1050,22 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(statusValue, (int)reader.ReadC());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertDialogWindow(
+		GameServerPacket packet,
+		int expectedTargetObjectId,
+		int expectedDialogPageId,
+		int questId)
+	{
+		var dialogWindow = Assert.IsType<SmDialogWindow>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(dialogWindow));
+		Assert.Equal(expectedTargetObjectId, reader.ReadD());
+		Assert.Equal(expectedDialogPageId, reader.ReadH());
+		Assert.Equal(questId, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
 	}

@@ -5203,13 +5203,49 @@ public sealed class GameServerConnection : BaseClientConnection
 			_ => 0,
 		};
 		if (chargeWay == 0)
+		{
+			await TrySendNpcTargetDialogFallbackAsync(player, packet);
 			return;
+		}
 
 		// Full known-list NPC lookup and supportsAction validation are deferred with the NPC/dialog engine.
 		if (packet.TargetObjectId == 0 || player.TargetObjectId != packet.TargetObjectId)
 			return;
 
 		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
+	}
+
+	private async Task<bool> TrySendNpcTargetDialogFallbackAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: DialogService.handleQuestDialogueOrSendNextPage falls back to
+		// SM_DIALOG_WINDOW(npc.getObjectId(), dialogActionId, questId) after quest/AI handling.
+		if (packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| !ShouldUseNpcDialogFallback(packet)
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		await SendPacketAsync(
+			new SmDialogWindow(packet.TargetObjectId, packet.DialogActionId, packet.QuestId),
+			cancellationToken);
+		return true;
+	}
+
+	private static bool ShouldUseNpcDialogFallback(CmDialogSelect packet)
+	{
+		const int useObject = -1;
+		const int exchangeCoin = 59;
+		return packet.QuestId != 0 || packet.DialogActionId is useObject or exchangeCoin;
 	}
 
 	private async Task<bool> TryHandleQuestFinishAutoRewardAsync(
