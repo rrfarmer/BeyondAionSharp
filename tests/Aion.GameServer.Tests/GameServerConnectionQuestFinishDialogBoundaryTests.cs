@@ -92,6 +92,59 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableChallengeTaskQuestUpdatesLegionProgressLikeJava()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync(
+			withPlayerEnterWorldService: true,
+			loadedLegionChallengeTasks:
+			[
+				new ChallengeTaskProgressRow(300, 1025, CompleteCount: 1),
+			]);
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1025, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1025, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Name = "ChallengeTaskFinishBoundary",
+			PlayerClass = "RANGER",
+			Race = "ELYOS",
+			Level = 5,
+			LegionId = 77,
+			LegionLevel = 5,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1025,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		var savedProgress = Assert.Single(fixture.PlayerEnterWorldRepository.SavedLegionChallengeTaskProgress);
+		Assert.Equal(77, savedProgress.LegionId);
+		Assert.Equal(300, savedProgress.TaskId);
+		Assert.Equal(1025, savedProgress.QuestId);
+		Assert.Equal(2, savedProgress.CompleteCount);
+		Assert.True(savedProgress.CompleteTimeEpochSeconds > 0);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => AssertQuestAction(packet, SmQuestAction.UpdateActionId, questId: 1025, statusValue: 5));
+		var completedQuest = Assert.Single(player.Quests);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		Assert.Equal(1, completedQuest.CompleteCount);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetReportableAutoRewardQuestAppliesXpAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
@@ -1671,7 +1724,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 
 		public EmptyPlayerEnterWorldRepository PlayerEnterWorldRepository { get; }
 
-		public static async Task<QuestFinishDialogFixture> CreateAsync(bool withPlayerEnterWorldService = false)
+		public static async Task<QuestFinishDialogFixture> CreateAsync(
+			bool withPlayerEnterWorldService = false,
+			IReadOnlyList<ChallengeTaskProgressRow>? loadedLegionChallengeTasks = null)
 		{
 			var tempRoot = Path.Combine(Path.GetTempPath(), "aion-quest-finish-dialog-" + Guid.NewGuid().ToString("N"));
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
@@ -1898,7 +1953,15 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 							</start_conditions>
 							<rewards exp="5" />
 						</quest>
+						<quest id="1025" category="CHALLENGE_TASK" can_report="true" reward_repeat_count="1">
+							<rewards exp="1" />
+						</quest>
 					</quests>
+					<challenge_tasks>
+						<task id="300" type="LEGION" race="ELYOS" min_level="5" max_level="5" legion_level_task="true">
+							<quest id="1025" repeat_count="3" score="5" />
+						</task>
+					</challenge_tasks>
 				</static_data>
 				""");
 			var dataManager = await DataManager.LoadAsync(
@@ -1927,7 +1990,10 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					new WorldPosition(210010000, 1, 2, 3, 0)));
 			var sentPackets = new List<GameServerPacket>();
 			var connectionRegistry = new CapturingConnectionRegistry();
-			var playerEnterWorldRepository = new EmptyPlayerEnterWorldRepository();
+			var playerEnterWorldRepository = new EmptyPlayerEnterWorldRepository
+			{
+				LoadedLegionChallengeTasks = loadedLegionChallengeTasks ?? Array.Empty<ChallengeTaskProgressRow>(),
+			};
 			var playerEnterWorldService = withPlayerEnterWorldService
 				? new PlayerEnterWorldService(
 					new GameServerOptions(),
@@ -1954,6 +2020,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
+					playerEnterWorldRepository: playerEnterWorldRepository,
 					playerEnterWorldService: playerEnterWorldService,
 					world: world,
 					connectionRegistry: connectionRegistry,

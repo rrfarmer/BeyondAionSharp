@@ -3706,6 +3706,17 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveLegionChallengeTaskProgressAsync(
+			int legionId,
+			int taskId,
+			int questId,
+			int completeCount,
+			int completeTimeEpochSeconds,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveLegionCurrentDominionAsync(
 			int legionId,
 			int currentLegionDominion,

@@ -16,12 +16,17 @@ public sealed record ChallengeTaskSummary(
 public sealed class ChallengeTaskTable
 {
 	private readonly IReadOnlyDictionary<int, ChallengeTaskSummary> _tasksById;
+	private readonly IReadOnlyDictionary<int, ChallengeTaskSummary> _tasksByQuestId;
 	private readonly IReadOnlyList<ChallengeTaskSummary> _legionTasks;
 	private readonly IReadOnlyList<ChallengeTaskSummary> _legionLevelTasks;
 
 	public ChallengeTaskTable(IReadOnlyList<ChallengeTaskSummary> tasks)
 	{
 		_tasksById = tasks.ToDictionary(task => task.TaskId);
+		_tasksByQuestId = tasks
+			.SelectMany(task => task.Quests.Select(quest => (quest.QuestId, Task: task)))
+			.GroupBy(entry => entry.QuestId)
+			.ToDictionary(group => group.Key, group => group.First().Task);
 		_legionTasks = tasks
 			.Where(task => string.Equals(task.Type, "LEGION", StringComparison.Ordinal))
 			.ToArray();
@@ -35,6 +40,12 @@ public sealed class ChallengeTaskTable
 	public ChallengeTaskSummary? GetTaskById(int taskId)
 	{
 		return _tasksById.GetValueOrDefault(taskId);
+	}
+
+	public ChallengeTaskSummary? GetTaskByQuestId(int questId)
+	{
+		// Java parity: DataManager.CHALLENGE_DATA.getTaskByQuestId(questId).
+		return _tasksByQuestId.GetValueOrDefault(questId);
 	}
 
 	public IReadOnlyList<ChallengeTaskSummary> GetRequiredLegionLevelTasks(int legionLevel)

@@ -62,6 +62,14 @@ public interface IPlayerEnterWorldRepository
 		ChallengeTaskSummary task,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveLegionChallengeTaskProgressAsync(
+		int legionId,
+		int taskId,
+		int questId,
+		int completeCount,
+		int completeTimeEpochSeconds,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveLegionCurrentDominionAsync(
 		int legionId,
 		int currentLegionDominion,
@@ -862,6 +870,22 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		SavedNewLegionChallengeTasks.Add((legionId, task));
 		return Task.FromResult(SaveNewLegionChallengeTaskResult);
+	}
+
+	public List<(int LegionId, int TaskId, int QuestId, int CompleteCount, int CompleteTimeEpochSeconds)> SavedLegionChallengeTaskProgress { get; } = [];
+
+	public bool SaveLegionChallengeTaskProgressResult { get; init; } = true;
+
+	public Task<bool> SaveLegionChallengeTaskProgressAsync(
+		int legionId,
+		int taskId,
+		int questId,
+		int completeCount,
+		int completeTimeEpochSeconds,
+		CancellationToken cancellationToken = default)
+	{
+		SavedLegionChallengeTaskProgress.Add((legionId, taskId, questId, completeCount, completeTimeEpochSeconds));
+		return Task.FromResult(SaveLegionChallengeTaskProgressResult);
 	}
 
 	public bool SaveLegionCurrentDominionResult { get; init; } = true;
@@ -2446,6 +2470,47 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not insert legion challenge task {TaskId} for legion {LegionId}", task.TaskId, legionId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveLegionChallengeTaskProgressAsync(
+		int legionId,
+		int taskId,
+		int questId,
+		int completeCount,
+		int completeTimeEpochSeconds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ChallengeTasksDAO.storeTask updates UPDATE_REQUIRED quest entries.
+		if (legionId <= 0 || taskId <= 0 || questId <= 0 || completeCount < 0)
+			return false;
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE challenge_tasks
+				SET complete_count = ?, complete_time = ?
+				WHERE task_id = ? AND quest_id = ? AND owner_id = ? AND owner_type = 'LEGION'
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = completeCount });
+			command.Parameters.Add(new MySqlParameter { Value = DateTimeOffset.FromUnixTimeSeconds(Math.Max(0, completeTimeEpochSeconds)).UtcDateTime });
+			command.Parameters.Add(new MySqlParameter { Value = taskId });
+			command.Parameters.Add(new MySqlParameter { Value = questId });
+			command.Parameters.Add(new MySqlParameter { Value = legionId });
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not update legion challenge task {TaskId}/{QuestId} for legion {LegionId}",
+				taskId,
+				questId,
+				legionId);
 			return false;
 		}
 	}

@@ -1,5 +1,6 @@
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
 
@@ -17,6 +18,14 @@ public interface IChallengeTaskService
 		int legionLevel,
 		string playerRace,
 		CancellationToken cancellationToken = default);
+
+	Task<ChallengeTaskFinishResult> OnChallengeQuestFinishAsync(
+		ChallengeTaskTable challengeTasks,
+		IPlayerEnterWorldRepository repository,
+		Player player,
+		int questId,
+		int currentEpochSeconds,
+		CancellationToken cancellationToken = default);
 }
 
 public sealed record ChallengeQuestState(int QuestId, int MaxRepeats, int ScorePerQuest, int CompleteCount);
@@ -28,6 +37,28 @@ public sealed record ChallengeTaskState(
 	IReadOnlyList<ChallengeQuestState> Quests)
 {
 	public bool IsCompleted => Quests.All(quest => quest.CompleteCount >= quest.MaxRepeats);
+}
+
+public sealed record ChallengeTaskFinishResult(
+	ChallengeTaskFinishStatus Status,
+	int TaskId = 0,
+	int QuestId = 0,
+	int CompleteCount = 0,
+	int CompleteTimeEpochSeconds = 0)
+{
+	public bool Updated => Status == ChallengeTaskFinishStatus.Updated;
+}
+
+public enum ChallengeTaskFinishStatus
+{
+	Updated,
+	MissingTaskTemplate,
+	TownTaskDeferred,
+	UnsupportedTaskType,
+	NoLegion,
+	NoLoadedProgress,
+	AlreadyComplete,
+	PersistenceFailed,
 }
 
 public sealed class ChallengeTaskService : IChallengeTaskService
@@ -102,6 +133,66 @@ public sealed class ChallengeTaskService : IChallengeTaskService
 		}
 
 		return availableTasks;
+	}
+
+	public async Task<ChallengeTaskFinishResult> OnChallengeQuestFinishAsync(
+		ChallengeTaskTable challengeTasks,
+		IPlayerEnterWorldRepository repository,
+		Player player,
+		int questId,
+		int currentEpochSeconds,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: QuestService.finishQuest invokes ChallengeTaskService.onChallengeQuestFinish
+		// for CHALLENGE_TASK templates, then the service dispatches by ChallengeTaskTemplate.type.
+		var taskTemplate = challengeTasks.GetTaskByQuestId(questId);
+		if (taskTemplate == null)
+			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.MissingTaskTemplate);
+
+		if (string.Equals(taskTemplate.Type, "TOWN", StringComparison.Ordinal))
+			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.TownTaskDeferred, taskTemplate.TaskId, questId);
+
+		if (!string.Equals(taskTemplate.Type, "LEGION", StringComparison.Ordinal))
+			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.UnsupportedTaskType, taskTemplate.TaskId, questId);
+
+		if (player.LegionId <= 0)
+			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.NoLegion, taskTemplate.TaskId, questId);
+
+		var questTemplate = taskTemplate.Quests.FirstOrDefault(quest => quest.QuestId == questId);
+		if (questTemplate == null)
+			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.MissingTaskTemplate, taskTemplate.TaskId, questId);
+
+		var loadedProgress = await repository.LoadLegionChallengeTasksAsync(player.LegionId, cancellationToken);
+		var progress = loadedProgress.FirstOrDefault(row => row.TaskId == taskTemplate.TaskId && row.QuestId == questId);
+		if (progress == null)
+			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.NoLoadedProgress, taskTemplate.TaskId, questId);
+
+		if (progress.CompleteCount >= questTemplate.RepeatCount)
+			return new ChallengeTaskFinishResult(
+				ChallengeTaskFinishStatus.AlreadyComplete,
+				taskTemplate.TaskId,
+				questId,
+				progress.CompleteCount,
+				progress.CompleteTimeEpochSeconds);
+
+		var completeCount = progress.CompleteCount + 1;
+		var completeTime = Math.Max(0, currentEpochSeconds);
+		var saved = await repository.SaveLegionChallengeTaskProgressAsync(
+			player.LegionId,
+			taskTemplate.TaskId,
+			questId,
+			completeCount,
+			completeTime,
+			cancellationToken);
+
+		return saved
+			? new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.Updated, taskTemplate.TaskId, questId, completeCount, completeTime)
+			: new ChallengeTaskFinishResult(
+				ChallengeTaskFinishStatus.PersistenceFailed,
+				taskTemplate.TaskId,
+				questId,
+				progress.CompleteCount,
+				progress.CompleteTimeEpochSeconds);
 	}
 
 	private static IReadOnlyList<ChallengeTaskState> BuildStates(

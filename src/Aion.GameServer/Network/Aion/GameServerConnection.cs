@@ -5714,6 +5714,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
+		await CompleteChallengeTaskQuestAsync(player, inputPlan.Template, staticData, cancellationToken);
+
 		var workItemDeletions = QuestWorkItemRemovalService.RemoveQuestWorkItems(
 			player,
 			inputPlan.Template,
@@ -5777,6 +5779,28 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		return true;
+	}
+
+	private async Task CompleteChallengeTaskQuestAsync(
+		Player player,
+		NearbyQuestTemplateSummary template,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		if (!string.Equals(template.QuestCategory, "CHALLENGE_TASK", StringComparison.Ordinal))
+			return;
+
+		if (_playerEnterWorldRepository == null)
+			return;
+
+		var challengeTasks = _challengeTaskTableOverride ?? staticData.ChallengeTasks;
+		await _challengeTaskService.OnChallengeQuestFinishAsync(
+			challengeTasks,
+			_playerEnterWorldRepository,
+			player,
+			template.QuestId,
+			(int)DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+			cancellationToken);
 	}
 
 	private sealed record NpcSelectedRewardPostFinishDialogResult(

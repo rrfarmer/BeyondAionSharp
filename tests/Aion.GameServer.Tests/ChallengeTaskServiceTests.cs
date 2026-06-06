@@ -1,5 +1,6 @@
 using Aion.GameServer.Data;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Tests;
@@ -97,6 +98,60 @@ public sealed class ChallengeTaskServiceTests
 			});
 	}
 
+	[Fact]
+	public async Task OnChallengeQuestFinishAsync_UpdatesLoadedLegionQuestProgressLikeJava()
+	{
+		var table = CreateChallengeTaskTable();
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionChallengeTasks =
+			[
+				new ChallengeTaskProgressRow(300, 17000, CompleteCount: 5),
+				new ChallengeTaskProgressRow(300, 17001, CompleteCount: 0),
+				new ChallengeTaskProgressRow(300, 17002, CompleteCount: 0),
+			],
+		};
+		var player = CreateLegionPlayer();
+
+		var result = await _service.OnChallengeQuestFinishAsync(
+			table,
+			repository,
+			player,
+			questId: 17000,
+			currentEpochSeconds: 1_800_000_000);
+
+		Assert.True(result.Updated);
+		Assert.Equal(ChallengeTaskFinishStatus.Updated, result.Status);
+		Assert.Equal(300, result.TaskId);
+		Assert.Equal(17000, result.QuestId);
+		Assert.Equal(6, result.CompleteCount);
+		var saved = Assert.Single(repository.SavedLegionChallengeTaskProgress);
+		Assert.Equal((77, 300, 17000, 6, 1_800_000_000), saved);
+	}
+
+	[Fact]
+	public async Task OnChallengeQuestFinishAsync_DoesNotUpdateCompletedLegionQuestLikeJava()
+	{
+		var table = CreateChallengeTaskTable();
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionChallengeTasks =
+			[
+				new ChallengeTaskProgressRow(300, 17000, CompleteCount: 6, CompleteTimeEpochSeconds: 1_700_000_000),
+			],
+		};
+
+		var result = await _service.OnChallengeQuestFinishAsync(
+			table,
+			repository,
+			CreateLegionPlayer(),
+			questId: 17000,
+			currentEpochSeconds: 1_800_000_000);
+
+		Assert.Equal(ChallengeTaskFinishStatus.AlreadyComplete, result.Status);
+		Assert.Empty(repository.SavedLegionChallengeTaskProgress);
+	}
+
 	private static ChallengeTaskTable CreateChallengeTaskTable()
 	{
 		return new ChallengeTaskTable(
@@ -140,5 +195,16 @@ public sealed class ChallengeTaskServiceTests
 			new ChallengeTaskProgressRow(300, 17001, 12),
 			new ChallengeTaskProgressRow(300, 17002, 42),
 		];
+	}
+
+	private static Player CreateLegionPlayer()
+	{
+		return new Player
+		{
+			ObjectId = 1001,
+			LegionId = 77,
+			Race = "ELYOS",
+			LegionLevel = 5,
+		};
 	}
 }
