@@ -38,6 +38,8 @@ public sealed class Player
 
 	public int PassportStamps { get; set; }
 
+	public DateTime? LastPassportStamp { get; set; }
+
 	public IReadOnlyList<PlayerPassport> Passports { get; set; } = Array.Empty<PlayerPassport>();
 
 	// Java parity: model/team/legion/LegionMember data used by chat/player info packets.

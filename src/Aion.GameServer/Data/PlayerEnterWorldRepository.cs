@@ -1483,6 +1483,11 @@ internal sealed record ItemStonePersistenceRow(
 	int PolishCharge,
 	int ProcCount);
 
+internal sealed record AccountPassportRestoreSnapshot(
+	IReadOnlyList<PlayerPassport> Passports,
+	int Stamps,
+	DateTime? LastStamp);
+
 public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepository
 {
 	private readonly GameServerRuntimeContext _runtimeContext;
@@ -1534,57 +1539,136 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new MySqlParameter { Value = accountId },
 				});
 
-			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-			if (!await reader.ReadAsync(cancellationToken))
-				return null;
-
-			return new Player
+			Player? player;
+			await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
 			{
-				ObjectId = reader.GetInt32(reader.GetOrdinal("id")),
-				AccountId = reader.GetInt32(reader.GetOrdinal("account_id")),
-				Name = ReadString(reader, "name"),
-				PlayerClass = ReadString(reader, "player_class"),
-				Race = ReadString(reader, "race"),
-				Gender = ReadString(reader, "gender"),
-				Note = ReadString(reader, "note"),
-				CreationDate = ReadDateTime(reader, "creation_date") ?? DateTime.UnixEpoch,
-				LegionId = ReadInt(reader, "legion_id"),
-				LegionRank = ReadString(reader, "legion_rank"), // Java parity: LegionMember rank (enum name); empty when no legion.
-				LegionLevel = ReadInt(reader, "legion_level"),
-				LegionName = ReadString(reader, "legion_name"),
-				LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
-				LegionEmblemType = ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
-				LegionEmblemColorA = (byte)ReadInt(reader, "legion_emblem_color_a"),
-				LegionEmblemColorR = (byte)ReadInt(reader, "legion_emblem_color_r"),
-				LegionEmblemColorG = (byte)ReadInt(reader, "legion_emblem_color_g"),
-				LegionEmblemColorB = (byte)ReadInt(reader, "legion_emblem_color_b"),
-				Appearance = ReadAppearance(reader),
-				Exp = reader.GetInt64(reader.GetOrdinal("exp")),
-				RecoverableExp = ReadLong(reader, "recoverexp"),
-				Dp = ReadInt(reader, "dp"),
-				ReposeEnergy = ReadLong(reader, "reposte_energy"),
-				IsOnline = ReadBoolean(reader, "online"),
-				LastOnline = ReadDateTime(reader, "last_online"),
-				NpcExpands = ReadInt(reader, "npc_expands"),
-				QuestExpands = ReadInt(reader, "quest_expands"),
-				ItemExpands = ReadInt(reader, "item_expands"),
-				WarehouseNpcExpands = ReadInt(reader, "wh_npc_expands"),
-				WarehouseBonusExpands = ReadInt(reader, "wh_bonus_expands"),
-				TitleId = ReadInt(reader, "title_id"),
-				BonusTitleId = ReadInt(reader, "bonus_title_id"),
-				Position = new WorldPosition(
-					ReadInt(reader, "world_id"),
-					reader.GetFloat(reader.GetOrdinal("x")),
-					reader.GetFloat(reader.GetOrdinal("y")),
-					reader.GetFloat(reader.GetOrdinal("z")),
-					(byte)ReadInt(reader, "heading")),
-			};
+				if (!await reader.ReadAsync(cancellationToken))
+					return null;
+
+				player = new Player
+				{
+					ObjectId = reader.GetInt32(reader.GetOrdinal("id")),
+					AccountId = reader.GetInt32(reader.GetOrdinal("account_id")),
+					Name = ReadString(reader, "name"),
+					PlayerClass = ReadString(reader, "player_class"),
+					Race = ReadString(reader, "race"),
+					Gender = ReadString(reader, "gender"),
+					Note = ReadString(reader, "note"),
+					CreationDate = ReadDateTime(reader, "creation_date") ?? DateTime.UnixEpoch,
+					LegionId = ReadInt(reader, "legion_id"),
+					LegionRank = ReadString(reader, "legion_rank"), // Java parity: LegionMember rank (enum name); empty when no legion.
+					LegionLevel = ReadInt(reader, "legion_level"),
+					LegionName = ReadString(reader, "legion_name"),
+					LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
+					LegionEmblemType = ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
+					LegionEmblemColorA = (byte)ReadInt(reader, "legion_emblem_color_a"),
+					LegionEmblemColorR = (byte)ReadInt(reader, "legion_emblem_color_r"),
+					LegionEmblemColorG = (byte)ReadInt(reader, "legion_emblem_color_g"),
+					LegionEmblemColorB = (byte)ReadInt(reader, "legion_emblem_color_b"),
+					Appearance = ReadAppearance(reader),
+					Exp = reader.GetInt64(reader.GetOrdinal("exp")),
+					RecoverableExp = ReadLong(reader, "recoverexp"),
+					Dp = ReadInt(reader, "dp"),
+					ReposeEnergy = ReadLong(reader, "reposte_energy"),
+					IsOnline = ReadBoolean(reader, "online"),
+					LastOnline = ReadDateTime(reader, "last_online"),
+					NpcExpands = ReadInt(reader, "npc_expands"),
+					QuestExpands = ReadInt(reader, "quest_expands"),
+					ItemExpands = ReadInt(reader, "item_expands"),
+					WarehouseNpcExpands = ReadInt(reader, "wh_npc_expands"),
+					WarehouseBonusExpands = ReadInt(reader, "wh_bonus_expands"),
+					TitleId = ReadInt(reader, "title_id"),
+					BonusTitleId = ReadInt(reader, "bonus_title_id"),
+					Position = new WorldPosition(
+						ReadInt(reader, "world_id"),
+						reader.GetFloat(reader.GetOrdinal("x")),
+						reader.GetFloat(reader.GetOrdinal("y")),
+						reader.GetFloat(reader.GetOrdinal("z")),
+						(byte)ReadInt(reader, "heading")),
+				};
+			}
+
+			RestoreAccountPassportState(
+				player,
+				await LoadAccountPassportStateAsync(connection, accountId, cancellationToken));
+			return player;
 		}
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not load player {PlayerObjectId} for enter-world", playerObjectId);
 			return null;
 		}
+	}
+
+	internal static void RestoreAccountPassportState(Player player, AccountPassportRestoreSnapshot snapshot)
+	{
+		player.Passports = snapshot.Passports;
+		player.PassportStamps = snapshot.Stamps;
+		player.LastPassportStamp = snapshot.LastStamp;
+	}
+
+	private static async Task<AccountPassportRestoreSnapshot> LoadAccountPassportStateAsync(
+		MySqlConnection connection,
+		int accountId,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/AccountPassportsDAO.loadPassport(Account).
+		var passports = new List<PlayerPassport>();
+		await using (var command = connection.CreateCommand())
+		{
+			command.CommandText = """
+				SELECT passport_id, rewarded, arrive_date
+				FROM account_passports
+				WHERE account_id = ?
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = accountId });
+
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				passports.Add(new PlayerPassport(
+					ReadInt(reader, "passport_id"),
+					ReadBoolean(reader, "rewarded"),
+					ReadDateTime(reader, "arrive_date") ?? DateTime.UnixEpoch));
+			}
+		}
+
+		await using (var command = connection.CreateCommand())
+		{
+			command.CommandText = """
+				SELECT stamps, last_stamp
+				FROM account_stamps
+				WHERE account_id = ?
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = accountId });
+
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			if (await reader.ReadAsync(cancellationToken))
+			{
+				return new AccountPassportRestoreSnapshot(
+					passports,
+					ReadInt(reader, "stamps"),
+					ReadDateTime(reader, "last_stamp"));
+			}
+		}
+
+		await using (var insertCommand = connection.CreateCommand())
+		{
+			insertCommand.CommandText = """
+				INSERT INTO account_stamps (account_id, stamps, last_stamp)
+				VALUES (?, ?, ?)
+				""";
+			insertCommand.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = accountId },
+					new MySqlParameter { Value = 0 },
+					new MySqlParameter { Value = DBNull.Value },
+				});
+			await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		return new AccountPassportRestoreSnapshot(passports, Stamps: 0, LastStamp: null);
 	}
 
 	public async Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default)
