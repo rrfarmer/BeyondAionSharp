@@ -5824,20 +5824,35 @@ public sealed class GameServerConnection : BaseClientConnection
 					questId);
 			}
 
-			if (npcHasActiveQuest || HasNpcSelectedRewardPostFinishNewQuest(player, staticData, questNpc))
+			if (TryCreateNpcSelectedRewardPostFinishNewQuestDialog(
+				player,
+				staticData,
+				questNpc,
+				completedQuestId,
+				targetObjectId) is { } newQuestDialog)
+			{
+				return newQuestDialog;
+			}
+
+			if (npcHasActiveQuest)
 				return new SmDialogWindow(targetObjectId, 10, 0);
 		}
 
 		return new SmDialogWindow(targetObjectId, 0, 0);
 	}
 
-	private static bool HasNpcSelectedRewardPostFinishNewQuest(
+	private static SmDialogWindow? TryCreateNpcSelectedRewardPostFinishNewQuestDialog(
 		Player player,
 		StaticData staticData,
-		QuestNpcStartRegistration questNpc)
+		QuestNpcStartRegistration questNpc,
+		int completedQuestId,
+		int targetObjectId)
 	{
 		// Java parity: AbstractQuestHandler.sendQuestEndDialog scans QuestNpc.getOnQuestStart()
-		// and calls QuestService.checkStartConditions(player, questId, false) before keeping page 10 open.
+		// and calls QuestService.checkStartConditions(player, questId, false). A startable quest with
+		// a matching acceptable <finished> precondition opens the follow-up start page; otherwise any
+		// startable new quest keeps the generic selection page open.
+		var npcHasNewQuest = false;
 		foreach (var questId in questNpc.OnQuestStart)
 		{
 			var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
@@ -5846,11 +5861,50 @@ public sealed class GameServerConnection : BaseClientConnection
 				staticData.NearbyQuestTemplates,
 				DateTimeOffset.Now,
 				allowedDiffToMinLevel: 0);
-			if (startConditions.CanStart)
-				return true;
+			if (!startConditions.CanStart)
+				continue;
+
+			npcHasNewQuest = true;
+			if (staticData.NearbyQuestTemplates.TryGetQuest(questId, out var template)
+				&& template != null
+				&& IsNpcSelectedRewardPostFinishPreQuestContinuation(template, staticData, completedQuestId))
+			{
+				return new SmDialogWindow(targetObjectId, 1011, questId);
+			}
 		}
 
-		return false;
+		return npcHasNewQuest ? new SmDialogWindow(targetObjectId, 10, 0) : null;
+	}
+
+	private static bool IsNpcSelectedRewardPostFinishPreQuestContinuation(
+		NearbyQuestTemplateSummary template,
+		StaticData staticData,
+		int completedQuestId)
+	{
+		// Java parity: AbstractQuestHandler.isAcceptableQuest rejects minlevel 99 and quests
+		// without rewards, extended rewards, bonus, quest drops, or class-selectable rewards.
+		if (template.MinLevelPermitted == 99 || !IsNpcSelectedRewardPostFinishAcceptableQuest(template, staticData))
+			return false;
+
+		return template.XmlStartConditions.Any(startCondition =>
+			startCondition.Finished.Any(finished => finished.QuestId == completedQuestId));
+	}
+
+	private static bool IsNpcSelectedRewardPostFinishAcceptableQuest(
+		NearbyQuestTemplateSummary template,
+		StaticData staticData)
+	{
+		if (staticData.QuestDrops.QuestDrops.Any(drop => drop.QuestId == template.QuestId))
+			return true;
+
+		if (!staticData.QuestFinishRewardProjections.TryGetQuest(template.QuestId, out var projectionEntry)
+			|| projectionEntry == null)
+		{
+			return false;
+		}
+
+		return projectionEntry.RewardGroupProjections.Values.Any(projection =>
+			projection.HasItemRewards || projection.HasNonItemRewards);
 	}
 
 	private static bool IsNpcSelectedRewardPostFinishActiveTalkQuest(
