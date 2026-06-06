@@ -2696,6 +2696,103 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodInteractionMutatesCounterCooldownAndSendsEmotionPackets()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var startedMillis = DateTimeOffset.Now.AddSeconds(-12).ToUnixTimeMilliseconds();
+		var giftStartedMillis = DateTimeOffset.Now.AddMinutes(-70).ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: startedMillis,
+				GiftCooldownStartedMillis: giftStartedMillis),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 1, emotionId: 7));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(1, pet.ShuggleCounter);
+		Assert.True(pet.MoodCooldownStartedMillis > 0);
+		Assert.Equal(0, pet.GiftCooldownStartedMillis);
+		Assert.True(pet.LastSentMoodPoints >= 1000);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetMoodEmotionPacket(Assert.IsType<SmPet>(packet), expectedEmotionId: 7, minimumMoodPoints: 1000),
+			packet => AssertPetMoodPeriodicPacket(Assert.IsType<SmPet>(packet), minimumMoodPoints: 1000, minimumMoodRemainingSeconds: 599));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodInteractionDuringCooldownDoesNotSendPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: nowMillis - 10_000,
+				ShuggleCounter: 1,
+				MoodCooldownStartedMillis: nowMillis),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 1, emotionId: 7));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(1, pet.ShuggleCounter);
+		Assert.Equal(nowMillis, pet.MoodCooldownStartedMillis);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodInteractionWithoutEmotionDoesNothing()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 1, emotionId: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(0, pet.ShuggleCounter);
+		Assert.Equal(0, pet.MoodCooldownStartedMillis);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodCancelMutatesActivePetAndSendsCancelPackets()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();
@@ -5554,6 +5651,34 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal((int)PetAction.Mood, reader.ReadH());
 		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(expectedDelta, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetMoodEmotionPacket(
+		SmPet packet,
+		int expectedEmotionId,
+		int minimumMoodPoints)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(2, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.True(reader.ReadD() >= minimumMoodPoints);
+		Assert.Equal(expectedEmotionId, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetMoodPeriodicPacket(
+		SmPet packet,
+		int minimumMoodPoints,
+		int minimumMoodRemainingSeconds)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(4, (int)reader.ReadC());
+		Assert.True(reader.ReadD() >= minimumMoodPoints);
+		Assert.True(reader.ReadD() >= minimumMoodRemainingSeconds);
+		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 

@@ -629,9 +629,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandlePetMoodAsync(Player player, CmPet packet)
 	{
-		// Java parity: CM_PET.runImpl routes MOOD subtype 0 through PetMoodService.startCheckingMood
-		// only when an active pet has no mood cooldown remaining.
-		if (packet.SubType != 0 || !player.HasPetSummon || player.PetSummonObjectId == 0)
+		if (!player.HasPetSummon || player.PetSummonObjectId == 0)
 			return;
 
 		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == player.PetSummonObjectId);
@@ -640,6 +638,21 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 		var timing = CreatePetMoodTiming(ownedPet);
+		switch (packet.SubType)
+		{
+			case 0:
+				await HandlePetMoodStartAsync(player, ownedPet, timing, nowMillis);
+				break;
+			case 1 when packet.EmotionId != 0:
+				await HandlePetMoodInteractionAsync(player, ownedPet, timing, packet.EmotionId, nowMillis);
+				break;
+		}
+	}
+
+	private async Task HandlePetMoodStartAsync(Player player, PlayerOwnedPet ownedPet, PetCommonDataTiming timing, long nowMillis)
+	{
+		// Java parity: CM_PET.runImpl routes MOOD subtype 0 through PetMoodService.startCheckingMood
+		// only when an active pet has no mood cooldown remaining.
 		if (timing.GetMoodRemainingTime(nowMillis) != 0)
 		{
 			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
@@ -654,6 +667,41 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (timing.LastSentPoints >= moodPoints)
 			timing.SetLastSentPoints(moodPoints);
+
+		UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+	}
+
+	private async Task HandlePetMoodInteractionAsync(
+		Player player,
+		PlayerOwnedPet ownedPet,
+		PetCommonDataTiming timing,
+		int shuggleEmotion,
+		long nowMillis)
+	{
+		// Java parity: PetMoodService.interactWithPet calls PetCommonData.increaseShuggleCounter,
+		// then sends SM_PET subtype 2 followed by subtype 4 when the cooldown gate accepts the interaction.
+		if (!timing.IncreaseShuggleCounter(nowMillis))
+		{
+			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+			return;
+		}
+
+		var moodPoints = timing.GetMoodPoints(forPacket: true, nowMillis);
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 2,
+			MoodPoints: moodPoints,
+			ShuggleEmotion: shuggleEmotion)));
+		timing.SetLastSentPoints(moodPoints);
+		timing.SetMoodCooldownStarted(nowMillis);
+
+		var moodRemainingSeconds = timing.GetMoodRemainingTime(nowMillis);
+		var giftRemainingSeconds = timing.GetGiftRemainingTime(nowMillis);
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 4,
+			MoodPoints: moodPoints,
+			MoodRemainingSeconds: moodRemainingSeconds,
+			GiftRemainingSeconds: giftRemainingSeconds)));
+		timing.SetLastSentPoints(moodPoints);
 
 		UpdateOwnedPetMoodTiming(player, ownedPet, timing);
 	}
