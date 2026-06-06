@@ -15851,13 +15851,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendLegionBonusIconAsync(member, display: true);
 	}
 
-	private async Task RemoveLegionBonusIfEligibleAsync(int legionId)
+	private async Task RemoveLegionBonusIfEligibleAsync(int legionId, int? excludedPlayerObjectId = null)
 	{
 		// Java parity: Legion.removeBonus toggles once below ten online members and sends SM_ICON_INFO(1, false).
 		if (legionId <= 0)
 			return;
 
-		var onlineMembers = CollectOnlineLegionMembers(legionId);
+		var onlineMembers = CollectOnlineLegionMembers(legionId, excludedPlayerObjectId);
 		if (!_legionBonuses.TryDeactivate(legionId, onlineMembers.Count))
 			return;
 
@@ -15881,15 +15881,19 @@ public sealed class GameServerConnection : BaseClientConnection
 		await AddLegionBonusIfEligibleAsync(player.LegionId);
 	}
 
-	private List<Player> CollectOnlineLegionMembers(int legionId)
+	private List<Player> CollectOnlineLegionMembers(int legionId, int? excludedPlayerObjectId = null)
 	{
 		var membersByObjectId = new Dictionary<int, Player>();
-		if (_activePlayer is { } activePlayer && activePlayer.LegionId == legionId)
+		if (_activePlayer is { } activePlayer
+			&& activePlayer.LegionId == legionId
+			&& activePlayer.ObjectId != excludedPlayerObjectId)
+		{
 			membersByObjectId[activePlayer.ObjectId] = activePlayer;
+		}
 
 		_connectionRegistry?.ForEachOnlinePlayer(candidate =>
 		{
-			if (candidate.LegionId == legionId)
+			if (candidate.LegionId == legionId && candidate.ObjectId != excludedPlayerObjectId)
 				membersByObjectId[candidate.ObjectId] = candidate;
 		});
 
@@ -17989,6 +17993,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_connectionRegistry != null)
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(player.Position, player.ObjectId, new SmDelete(player.ObjectId));
 		_connectionRegistry?.UnregisterPlayerConnection(player.ObjectId, this);
+		await RemoveLegionBonusIfEligibleAsync(player.LegionId, player.ObjectId);
 		// Java parity: World.despawn -> MapRegion.revalidateZones on an unspawned Creature leaves tracked zones.
 		_creaturePvpZoneCounterService?.ClearCounters(player.ObjectId);
 		if (_playerEnterWorldService != null)

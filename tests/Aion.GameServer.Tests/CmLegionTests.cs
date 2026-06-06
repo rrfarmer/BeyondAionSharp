@@ -2320,6 +2320,73 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task LeaveActivePlayerAsync_DeactivatesLegionBonusBelowJavaOnlineThresholdOnLogout()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		Assert.True(runtimeContext.LegionBonuses.TryActivate(77, LegionBonusRuntime.OnlineMemberThreshold));
+		var bystanders = Enumerable.Range(0, LegionBonusRuntime.OnlineMemberThreshold - 1)
+			.Select(index => CreateLegionPlayer(3000 + index, $"Watcher{index}"))
+			.ToArray();
+		var registry = new CapturingConnectionRegistry(bystanders);
+		var player = CreateOnlineLegionPlayerForLogout();
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var playerEnterWorldService = CreatePlayerEnterWorldService(
+			repository,
+			connectionRegistry: registry,
+			runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			registry,
+			runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeLeaveActivePlayerAsync(pair.Connection, notifyPostmanClient: false);
+
+		Assert.False(runtimeContext.LegionBonuses.IsActive(77));
+		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmIconInfo);
+		var bystanderIcons = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmIconInfo)
+			.OrderBy(delivery => delivery.PlayerObjectId)
+			.ToArray();
+		Assert.Equal(LegionBonusRuntime.OnlineMemberThreshold - 1, bystanderIcons.Length);
+		for (var index = 0; index < bystanderIcons.Length; index++)
+		{
+			Assert.Equal(bystanders[index].ObjectId, bystanderIcons[index].PlayerObjectId);
+			AssertIconInfoPacket(bystanderIcons[index].Packet, buffId: 1, display: false);
+		}
+	}
+
+	[Fact]
+	public async Task LeaveActivePlayerAsync_KeepsLegionBonusWhenJavaOnlineThresholdRemainsAfterLogout()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		Assert.True(runtimeContext.LegionBonuses.TryActivate(77, LegionBonusRuntime.OnlineMemberThreshold));
+		var bystanders = Enumerable.Range(0, LegionBonusRuntime.OnlineMemberThreshold)
+			.Select(index => CreateLegionPlayer(3000 + index, $"Watcher{index}"))
+			.ToArray();
+		var registry = new CapturingConnectionRegistry(bystanders);
+		var player = CreateOnlineLegionPlayerForLogout();
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var playerEnterWorldService = CreatePlayerEnterWorldService(
+			repository,
+			connectionRegistry: registry,
+			runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			registry,
+			runtimeContext,
+			playerEnterWorldService: playerEnterWorldService);
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeLeaveActivePlayerAsync(pair.Connection, notifyPostmanClient: false);
+
+		Assert.True(runtimeContext.LegionBonuses.IsActive(77));
+		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmIconInfo);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.Packet is SmIconInfo);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_LeaveRejectsBrigadeGeneralLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -2758,6 +2825,15 @@ public sealed class CmLegionTests
 	{
 		var player = CreateLegionPlayer(accountId: 7);
 		player.IsOnline = false;
+		player.LastOnline = DateTime.Now.AddMinutes(-5);
+		player.Position = new WorldPosition(210010000, 0, 0, 0, 0);
+		return player;
+	}
+
+	private static Player CreateOnlineLegionPlayerForLogout()
+	{
+		var player = CreateLegionPlayer();
+		player.IsOnline = true;
 		player.LastOnline = DateTime.Now.AddMinutes(-5);
 		player.Position = new WorldPosition(210010000, 0, 0, 0, 0);
 		return player;
@@ -3374,6 +3450,14 @@ public sealed class CmLegionTests
 		Assert.NotNull(method);
 		using var packet = new PacketBuffer(payload);
 		var task = (Task)method.Invoke(connection, [packet])!;
+		await task;
+	}
+
+	private static async Task InvokeLeaveActivePlayerAsync(GameServerConnection connection, bool notifyPostmanClient)
+	{
+		var method = typeof(GameServerConnection).GetMethod("LeaveActivePlayerAsync", BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = (Task)method.Invoke(connection, [notifyPostmanClient])!;
 		await task;
 	}
 
