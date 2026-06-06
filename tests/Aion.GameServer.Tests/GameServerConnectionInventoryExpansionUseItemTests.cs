@@ -1067,6 +1067,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		var sourceItem = Assert.Single(player.InventoryItems);
 		sourceItem.Slot = 4;
 		player.LegionId = 88;
+		player.LegionLevel = 4;
 		player.LegionRank = "VOLUNTEER";
 		player.LegionVolunteerPermission = 0x1000;
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
@@ -1109,7 +1110,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedItemId: 200,
 				expectedCount: 2,
 				expectedSlot: 12),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3));
+			packet => AssertCubeUpdatePayload(
+				Assert.IsType<SmCubeUpdate>(packet),
+				expectedItemsCount: 1,
+				expectedStorage: 3,
+				expectedNpcExpands: 3));
 	}
 
 	[Fact]
@@ -2054,10 +2059,10 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					Location = 3,
 					Slot = 27,
 				},
-			])
-			.ToArray();
-		player.LegionId = 88;
-		player.LegionRank = "VOLUNTEER";
+		])
+		.ToArray();
+	player.LegionId = 88;
+	player.LegionRank = "VOLUNTEER";
 		player.LegionVolunteerPermission = 0x4;
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
 
@@ -4220,6 +4225,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
 		var player = CreatePlayer(itemId: 200, count: 5, accountId: 77);
 		player.LegionId = 88;
+		player.LegionLevel = 6;
 		player.LegionRank = "VOLUNTEER";
 		player.LegionVolunteerPermission = 0x1000;
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
@@ -4280,7 +4286,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedItemId: 200,
 				expectedCount: 2,
 				expectedSlot: 0),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3));
+			packet => AssertCubeUpdatePayload(
+				Assert.IsType<SmCubeUpdate>(packet),
+				expectedItemsCount: 1,
+				expectedStorage: 3,
+				expectedNpcExpands: 5));
 	}
 
 	[Fact]
@@ -4290,6 +4300,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
 		var player = CreatePlayer(itemId: 200, count: 5, location: 3);
 		player.LegionId = 88;
+		player.LegionLevel = 5;
 		player.LegionRank = "VOLUNTEER";
 		player.LegionVolunteerPermission = 0x4;
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
@@ -4333,7 +4344,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedObjectId: 5001,
 				expectedWarehouseType: 3,
 				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplitMove),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3),
+			packet => AssertCubeUpdatePayload(
+				Assert.IsType<SmCubeUpdate>(packet),
+				expectedItemsCount: 1,
+				expectedStorage: 3,
+				expectedNpcExpands: 4),
 			packet => AssertInventoryAddPayload(
 				Assert.IsType<SmInventoryAddItem>(packet),
 				expectedObjectId: 1,
@@ -4351,6 +4366,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
 		var player = CreatePlayer(itemId: 200, count: 7, location: 3);
 		player.LegionId = 77;
+		player.LegionLevel = 3;
 		player.LegionRank = "VOLUNTEER";
 		player.LegionVolunteerPermission = 0x4;
 		SetActivePlayerForPacketDispatch(fixture.Connection, player);
@@ -4383,7 +4399,11 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedWarehouseType: 3,
 				expectedObjectId: 5001,
 				expectedDeleteType: SmDeleteItem.MoveDeleteType),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 3),
+			packet => AssertCubeUpdatePayload(
+				Assert.IsType<SmCubeUpdate>(packet),
+				expectedItemsCount: 0,
+				expectedStorage: 3,
+				expectedNpcExpands: 2),
 			packet => AssertInventoryAddPayload(
 				Assert.IsType<SmInventoryAddItem>(packet),
 				expectedObjectId: 5001,

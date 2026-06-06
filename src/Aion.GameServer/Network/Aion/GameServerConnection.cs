@@ -4971,7 +4971,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				player.WarehouseBonusExpands),
 			3 => SmCubeUpdate.LegionWarehouseSizeSnapshot(
 				player.InventoryItems.Count(item => item.Location == 3 && item.ItemId != KinahItemId),
-				0),
+				player.LegionWarehouseExpansions),
 			_ => SmCubeUpdate.ZeroSizeForJavaStorageId(storageType),
 		};
 	}

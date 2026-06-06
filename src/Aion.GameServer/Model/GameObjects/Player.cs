@@ -48,6 +48,9 @@ public sealed class Player
 	// Java parity: Player.getLegion().getLegionLevel() used by DialogService BUY goods-list filtering.
 	public int LegionLevel { get; set; }
 
+	// Java parity: model/team/legion/Legion.getWarehouseExpansions() returns getLegionLevel() - 1.
+	public int LegionWarehouseExpansions => Math.Max(0, LegionLevel - 1);
+
 	public string LegionName { get; set; } = string.Empty;
 
 	// Java parity: model/team/legion/LegionMember.getRank() — legion_members.rank stores the LegionRank enum name.
