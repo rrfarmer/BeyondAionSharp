@@ -5360,27 +5360,21 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (existingQuest != null && !string.Equals(existingQuest.Status, "LOCKED", StringComparison.Ordinal))
 				continue;
 
-			if (registration.PreQuestIds.Count != 0
-				&& !registration.PreQuestIds.All(preQuestId =>
-					player.Quests.Any(quest =>
-						quest.QuestId == preQuestId
-						&& string.Equals(quest.Status, "COMPLETE", StringComparison.Ordinal))))
-			{
-				continue;
-			}
-
 			if (!staticData.NearbyQuestTemplates.TryGetQuest(registration.QuestId, out var template) || template == null)
 				continue;
 
-			var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+			var targetStatus = GetQuestCompletionFollowUpStatus(
 				player,
-				registration.QuestId,
+				completedQuestId,
+				registration,
+				template,
 				staticData.NearbyQuestTemplates,
-				DateTimeOffset.Now);
-			if (!startConditions.CanStart)
+				existingQuest);
+			if (targetStatus == null)
 				continue;
 
-			if (!template.IsNoCount
+			if (string.Equals(targetStatus, "START", StringComparison.Ordinal)
+				&& !template.IsNoCount
 				&& !CanStartNormalQuest(player, staticData.NearbyQuestTemplates)
 				&& !HasPermission(player, _options.Membership.QuestLimitDisabled))
 			{
@@ -5389,8 +5383,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			var isNewQuestState = existingQuest == null;
 			var finalQuestState = existingQuest == null
-				? new PlayerQuestState(registration.QuestId, "START", QuestVars: 0, Flags: 0, CompleteCount: 0)
-				: existingQuest with { Status = "START" };
+				? new PlayerQuestState(registration.QuestId, targetStatus, QuestVars: 0, Flags: 0, CompleteCount: 0)
+				: existingQuest with { Status = targetStatus };
 
 			if (_playerEnterWorldService != null
 				&& !await _playerEnterWorldService.PersistQuestStartAsync(player, finalQuestState, isNewQuestState, cancellationToken))
@@ -5411,6 +5405,54 @@ public sealed class GameServerConnection : BaseClientConnection
 				: SmQuestAction.Update(finalQuestState);
 			await SendPacketAsync(packet, cancellationToken);
 		}
+	}
+
+	private static string? GetQuestCompletionFollowUpStatus(
+		Player player,
+		int completedQuestId,
+		QuestCompletionFollowUpRegistration registration,
+		NearbyQuestTemplateSummary template,
+		NearbyQuestTemplateTable questTemplates,
+		PlayerQuestState? existingQuest)
+	{
+		// Java parity: AbstractQuestHandler.defaultOnQuestCompletedEvent only starts null/LOCKED
+		// handler quests, locks mission follow-ups when a prerequisite chain is partially complete,
+		// and otherwise starts the handler quest after QuestService.checkStartConditions succeeds.
+		var completedPreQuestCount = registration.PreQuestIds.Count(preQuestId =>
+			player.Quests.Any(quest =>
+				quest.QuestId == preQuestId
+				&& string.Equals(quest.Status, "COMPLETE", StringComparison.Ordinal)));
+		var allPreQuestsComplete = completedPreQuestCount == registration.PreQuestIds.Count;
+		var isMission = string.Equals(template.QuestCategory, "MISSION", StringComparison.Ordinal);
+
+		if (!allPreQuestsComplete)
+		{
+			if (existingQuest == null
+				&& isMission
+				&& (completedPreQuestCount > 0 || registration.PreQuestIds.Contains(completedQuestId)))
+			{
+				return "LOCKED";
+			}
+
+			return null;
+		}
+
+		if (existingQuest == null
+			&& isMission
+			&& template.MinLevelPermitted > 0
+			&& player.Level < template.MinLevelPermitted
+			&& player.Level >= template.MinLevelPermitted - 15
+			&& registration.PreQuestIds.Contains(completedQuestId))
+		{
+			return "LOCKED";
+		}
+
+		var startConditions = NearbyQuestStartConditionService.CheckNearbyStartConditions(
+			player,
+			registration.QuestId,
+			questTemplates,
+			DateTimeOffset.Now);
+		return startConditions.CanStart ? "START" : null;
 	}
 
 	private async Task CompleteQuestFinishNpcFactionAsync(

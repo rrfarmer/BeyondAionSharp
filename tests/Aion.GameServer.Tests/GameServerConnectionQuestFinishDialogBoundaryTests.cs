@@ -790,6 +790,53 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, followUpQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestLocksDefaultCompletionFollowUpMissionForPartialChain()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1017, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+		Assert.Contains(
+			fixture.StaticData.QuestCompletionFollowUps.Registrations,
+			registration => registration.QuestId == 1018 && registration.PreQuestIds.SequenceEqual([1016, 1017]));
+
+		var rewardQuestState = new PlayerQuestState(1017, "REWARD", QuestVars: 0xF6, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1017,
+			Name = "QuestFinishCallbackLockBoundary",
+			PlayerClass = "RANGER",
+			Level = 10,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1017,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => AssertQuestAction(packet, SmQuestAction.UpdateActionId, questId: 1017, statusValue: 5),
+			packet => AssertQuestAction(packet, SmQuestAction.AddActionId, questId: 1018, statusValue: 6));
+		Assert.Equal(2, player.Quests.Count);
+		var completedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1017);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		var lockedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1018);
+		Assert.Equal("LOCKED", lockedQuest.Status);
+		Assert.Equal(0, lockedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -951,6 +998,30 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 				}
 				""");
 			await File.WriteAllTextAsync(
+				Path.Combine(questHandlerDirectory, "_1018LockedFollowUp.java"),
+				"""
+				package quest.test;
+
+				import com.aionemu.gameserver.questEngine.handlers.AbstractQuestHandler;
+				import com.aionemu.gameserver.questEngine.model.QuestEnv;
+
+				public class _1018LockedFollowUp extends AbstractQuestHandler {
+					public _1018LockedFollowUp() {
+						super(1018);
+					}
+
+					@Override
+					public void register() {
+						qe.registerOnQuestCompleted(questId);
+					}
+
+					@Override
+					public void onQuestCompletedEvent(QuestEnv env) {
+						defaultOnQuestCompletedEvent(env, 1016, 1017);
+					}
+				}
+				""");
+			await File.WriteAllTextAsync(
 				Path.Combine(tempRoot, "game-server", "data", "static_data", "static_data.xml"),
 				"""
 				<?xml version="1.0" encoding="UTF-8"?>
@@ -1028,6 +1099,12 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 							<rewards exp="1" />
 						</quest>
 						<quest id="1016" minlevel_permitted="1">
+							<rewards />
+						</quest>
+						<quest id="1017" can_report="true" reward_repeat_count="1">
+							<rewards exp="1" />
+						</quest>
+						<quest id="1018" category="MISSION" minlevel_permitted="1">
 							<rewards />
 						</quest>
 					</quests>
