@@ -5288,6 +5288,10 @@ public sealed class GameServerConnection : BaseClientConnection
 					if (!await TryApplyQuestFinishCubeExpansionRewardAsync(player, cancellationToken))
 						return true;
 					break;
+				case QuestFinishRewardNonItemAction.WarehouseExpansion:
+					if (!await TryApplyQuestFinishWarehouseExpansionRewardAsync(player, staticData, cancellationToken))
+						return true;
+					break;
 				default:
 					return true;
 			}
@@ -5548,6 +5552,35 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 	}
 
+	private async Task<bool> TryApplyQuestFinishWarehouseExpansionRewardAsync(Player player, StaticData staticData, CancellationToken cancellationToken)
+	{
+		// Java parity: services/QuestService.giveReward -> WarehouseService.expand(player, false).
+		var expansionPlan = QuestRewardSideEffectPlanService.CreateWarehouseExpansionPlan(player);
+		switch (expansionPlan.Status)
+		{
+			case QuestExpansionRewardStatus.Applied:
+				await SendPacketAsync(SmSystemMessage.WarehouseSizeExtended(InventoryExpansionService.WarehouseSlotsPerExpansion), cancellationToken);
+				player.WarehouseBonusExpands = expansionPlan.NewExpansionCount;
+				foreach (var packet in SmWarehouseInfo.CreateRegularWarehouseUpdatePackets(
+					player,
+					staticData.ItemTemplates,
+					staticData.ItemRestrictionCleanups))
+				{
+					await SendPacketAsync(packet, cancellationToken);
+				}
+
+				return true;
+			case QuestExpansionRewardStatus.CannotExpand:
+				if (expansionPlan.RequestedExpansionLevel >= 0)
+					await SendPacketAsync(SmSystemMessage.WarehouseCantExtendMore(), cancellationToken);
+				return true;
+			case QuestExpansionRewardStatus.MissingPlayer:
+				return false;
+			default:
+				return false;
+		}
+	}
+
 	private QuestRewardService CreateQuestRewardService()
 	{
 		return new QuestRewardService(
@@ -5668,7 +5701,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					and not QuestFinishRewardNonItemAction.AbyssPoints
 					and not QuestFinishRewardNonItemAction.DivinePoints
 					and not QuestFinishRewardNonItemAction.GloryPoints
-					and not QuestFinishRewardNonItemAction.CubeExpansion))
+					and not QuestFinishRewardNonItemAction.CubeExpansion
+					and not QuestFinishRewardNonItemAction.WarehouseExpansion))
 		{
 			return false;
 		}

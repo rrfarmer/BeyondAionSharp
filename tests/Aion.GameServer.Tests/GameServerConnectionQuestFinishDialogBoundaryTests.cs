@@ -22,6 +22,8 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	private const int RewardItemId = 186000001;
 	private const int WorkItemId = 182200003;
 	private const int RewardTitleId = 5;
+	private const int RegularWarehouse = 1;
+	private const int AccountWarehouse = 2;
 
 	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesXpAndCompletesQuest()
@@ -505,6 +507,52 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesWarehouseExpansionAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1010, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1010, "REWARD", QuestVars: 0xF3, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1011,
+			Name = "QuestFinishWarehouseBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			WarehouseNpcExpands = 2,
+			WarehouseBonusExpands = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1010,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300433, message.MessageId);
+			},
+			packet => AssertWarehouseInfo(packet, expectedWarehouseType: RegularWarehouse, expectedFirstPacket: false, expectedExpandLevel: 4),
+			packet => AssertWarehouseInfo(packet, expectedWarehouseType: AccountWarehouse, expectedFirstPacket: false, expectedExpandLevel: 0),
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.Equal(2, player.WarehouseBonusExpands);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -559,6 +607,22 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(expectedNpcExpands, (int)reader.ReadC());
 		Assert.Equal(expectedQuestExpands, (int)reader.ReadC());
 		Assert.Equal(expectedItemExpands, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertWarehouseInfo(
+		GameServerPacket packet,
+		int expectedWarehouseType,
+		bool expectedFirstPacket,
+		int expectedExpandLevel)
+	{
+		var warehouseInfo = Assert.IsType<SmWarehouseInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(warehouseInfo));
+		Assert.Equal(expectedWarehouseType, (int)reader.ReadC());
+		Assert.Equal(expectedFirstPacket ? 1 : 0, (int)reader.ReadC());
+		Assert.Equal(expectedExpandLevel, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
 	}
 
@@ -656,6 +720,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						</quest>
 						<quest id="1009" can_report="true" reward_repeat_count="1">
 							<rewards extend_inventory="1" />
+						</quest>
+						<quest id="1010" can_report="true" reward_repeat_count="1">
+							<rewards extend_inventory="2" />
 						</quest>
 					</quests>
 				</static_data>
