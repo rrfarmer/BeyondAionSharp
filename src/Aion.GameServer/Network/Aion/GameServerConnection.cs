@@ -4342,7 +4342,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(new SmSystemMessage(
 					1402573,
 					passportTemplate.RewardPermitLevel.ToString(CultureInfo.InvariantCulture),
-					rewardTemplate.Name));
+					rewardTemplate.GetClientName() ?? string.Empty));
 				continue;
 			}
 

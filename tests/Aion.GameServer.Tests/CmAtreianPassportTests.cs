@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Globalization;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
@@ -313,6 +314,88 @@ public sealed class CmAtreianPassportTests
 				Assert.Equal(5, ReadInt(payload, 12));
 				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
 				Assert.Equal(1_717_286_400, ReadInt(payload, 20));
+			});
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_AtreianPassportInvalidLevelUsesRewardItemClientName()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var passportTemplate = runtimeContext.DataManager!.StaticData.AtreianPassports.GetAtreianPassportId(43);
+		Assert.NotNull(passportTemplate);
+		var rewardTemplate = runtimeContext.DataManager.StaticData.ItemTemplates.GetItemTemplate(passportTemplate.RewardItemId);
+		Assert.NotNull(rewardTemplate);
+		var expectedItemName = rewardTemplate.GetClientName();
+		Assert.NotNull(expectedItemName);
+		Assert.NotEqual(rewardTemplate.Name, expectedItemName);
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			new GameWorld(NullLogger<GameWorld>.Instance),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext,
+			atreianPassportClock: AtreianPassportCumulativeLoginClock);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory(),
+			AtreianPassportCumulativeLoginClock);
+		var arriveDate = new DateTime(2014, 4, 2, 0, 0, 0, DateTimeKind.Utc);
+		var player = new Player
+		{
+			ObjectId = 5013,
+			AccountId = 89,
+			Name = "PassportInvalidLevel",
+			Level = 1,
+			CreationDate = new DateTime(2014, 1, 1, 12, 30, 0, DateTimeKind.Utc),
+			PassportStamps = 27,
+			LastPassportStamp = AtreianPassportCumulativeLoginClock().UtcDateTime,
+			Passports =
+			[
+				new PlayerPassport(
+					PassportId: 43,
+					Rewarded: false,
+					ArriveDate: arriveDate)
+			],
+			Position = new WorldPosition(210010000, 0, 0, 0, 0),
+		};
+		SetActivePlayer(pair.Connection, player);
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteH(1);
+		buffer.WriteD(43);
+		buffer.WriteD((int)new DateTimeOffset(arriveDate, TimeSpan.Zero).ToUnixTimeSeconds());
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
+
+		Assert.Equal(0, repository.SaveInventoryRewardMutationCalls);
+		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
+		Assert.Equal(0, repository.DeleteAccountPassportCalls);
+		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
+		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 43 && passport.ArriveDate == arriveDate).Rewarded);
+		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1402573, message.MessageId);
+				Assert.Equal(
+					[passportTemplate.RewardPermitLevel.ToString(CultureInfo.InvariantCulture), expectedItemName],
+					message.Parameters);
+			},
+			packet =>
+			{
+				var passport = Assert.IsType<SmAtreianPassport>(packet);
+				var payload = SerializeUnencryptedPayload(passport);
+				Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
+				Assert.Equal(43, ReadInt(payload, 8));
+				Assert.Equal(27, ReadInt(payload, 12));
+				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
 			});
 	}
 
