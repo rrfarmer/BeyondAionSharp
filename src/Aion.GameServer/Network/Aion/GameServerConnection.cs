@@ -5666,6 +5666,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			|| itemPlan.Items.Any(item =>
 				item.Source is not QuestFinishRewardItemSource.RegularFixed
 					and not QuestFinishRewardItemSource.RegularSelectable
+					and not QuestFinishRewardItemSource.ClassSelectable
 					and not QuestFinishRewardItemSource.ExtendedFixed))
 		{
 			return false;
