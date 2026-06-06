@@ -3338,6 +3338,11 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> SaveExpExtractActionMutationAsync(
 			int playerObjectId,
 			long newExp,

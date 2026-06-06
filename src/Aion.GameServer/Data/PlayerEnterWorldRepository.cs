@@ -150,6 +150,8 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> UpdateAccountPassportRewardedAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default);
 
+	Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default);
+
 	Task<bool> SaveExpExtractActionMutationAsync(
 		int playerObjectId,
 		long newExp,
@@ -840,6 +842,19 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		UpdateAccountPassportRewardedCalls++;
 		UpdatedAccountPassportRewarded = (accountId, passport);
 		return Task.FromResult(UpdateAccountPassportRewardedResult);
+	}
+
+	public int DeleteAccountPassportCalls { get; private set; }
+
+	public (int AccountId, PlayerPassport Passport)? DeletedAccountPassport { get; private set; }
+
+	public bool DeleteAccountPassportResult { get; init; } = true;
+
+	public Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+	{
+		DeleteAccountPassportCalls++;
+		DeletedAccountPassport = (accountId, passport);
+		return Task.FromResult(DeleteAccountPassportResult);
 	}
 
 	public Task<bool> SaveExpExtractActionMutationAsync(
@@ -5384,6 +5399,38 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(
 				ex,
 				"Could not update account passport {PassportId} for account {AccountId}",
+				passport.PassportId,
+				accountId);
+			return false;
+		}
+	}
+
+	public async Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+	{
+		// Java parity: dao/AccountPassportsDAO.deletePassport for PersistentState.DELETED.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				DELETE FROM account_passports
+				WHERE account_id = ? AND passport_id = ? AND arrive_date = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = accountId },
+					new MySqlParameter { Value = passport.PassportId },
+					new MySqlParameter { Value = passport.ArriveDate },
+				});
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(
+				ex,
+				"Could not delete account passport {PassportId} for account {AccountId}",
 				passport.PassportId,
 				accountId);
 			return false;

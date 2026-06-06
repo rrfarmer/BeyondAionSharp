@@ -4288,6 +4288,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: services/AtreianPassportService.takeReward grants the reward item before marking the Passport row rewarded.
 		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var passports = player.Passports.ToArray();
+		var deletedPassportIndexes = new HashSet<int>();
 		var mutated = false;
 		for (var i = 0; i < passports.Length; i++)
 		{
@@ -4316,7 +4317,14 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (passportTemplate.RewardExpireMinutes > 0
 				&& DateTimeOffset.UtcNow > new DateTimeOffset(passport.ArriveDate, TimeSpan.Zero).AddMinutes(passportTemplate.RewardExpireMinutes))
+			{
+				if (await _playerEnterWorldRepository.DeleteAccountPassportAsync(player.AccountId, passport))
+				{
+					deletedPassportIndexes.Add(i);
+					mutated = true;
+				}
 				continue;
+			}
 
 			var rewardPlan = InventoryAddService.CreateAddItemPlan(
 				player,
@@ -4369,7 +4377,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (mutated)
-			player.Passports = passports;
+			player.Passports = deletedPassportIndexes.Count == 0
+				? passports
+				: passports.Where((_, index) => !deletedPassportIndexes.Contains(index)).ToArray();
 
 		await SendPacketAsync(new SmAtreianPassport(
 			player.Passports,
