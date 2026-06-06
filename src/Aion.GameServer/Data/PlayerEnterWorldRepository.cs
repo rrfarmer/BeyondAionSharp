@@ -402,7 +402,9 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		int playerObjectId,
+		int accountId,
 		int itemObjectId,
+		int oldLocation,
 		int newLocation,
 		long newSlot,
 		CancellationToken cancellationToken = default);
@@ -545,9 +547,9 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveItemCrossStorageMoveMutationCalls { get; private set; }
 
-	public (int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
+	public (int PlayerObjectId, int AccountId, int ItemObjectId, int OldLocation, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
 
-	public List<(int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)> SavedItemCrossStorageMoveMutations { get; } = [];
+	public List<(int PlayerObjectId, int AccountId, int ItemObjectId, int OldLocation, int NewLocation, long NewSlot)> SavedItemCrossStorageMoveMutations { get; } = [];
 
 	public bool SaveItemStorageSwitchMutationResult { get; init; } = true;
 
@@ -1480,14 +1482,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		int playerObjectId,
+		int accountId,
 		int itemObjectId,
+		int oldLocation,
 		int newLocation,
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
 		SaveItemCrossStorageMoveMutationCalls++;
-		SavedItemCrossStorageMoveMutation = (playerObjectId, itemObjectId, newLocation, newSlot);
-		SavedItemCrossStorageMoveMutations.Add((playerObjectId, itemObjectId, newLocation, newSlot));
+		SavedItemCrossStorageMoveMutation = (playerObjectId, accountId, itemObjectId, oldLocation, newLocation, newSlot);
+		SavedItemCrossStorageMoveMutations.Add((playerObjectId, accountId, itemObjectId, oldLocation, newLocation, newSlot));
 		return Task.FromResult(SaveItemCrossStorageMoveMutationResult);
 	}
 
@@ -3033,17 +3037,27 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		int playerObjectId,
+		int accountId,
 		int itemObjectId,
+		int oldLocation,
 		int newLocation,
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: dao/InventoryDAO.store updates item_location and slot after ItemMoveService.moveItem cross-storage.
+		// Java parity: dao/InventoryDAO.store updates item_owner, item_location, and slot after ItemMoveService.moveItem cross-storage.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
-			return await SaveInventoryItemLocationAsync(connection, null, playerObjectId, itemObjectId, newLocation, newSlot, cancellationToken);
+			return await SaveInventoryItemLocationAsync(
+				connection,
+				null,
+				GetStorageOwnerId(playerObjectId, accountId, oldLocation),
+				GetStorageOwnerId(playerObjectId, accountId, newLocation),
+				itemObjectId,
+				newLocation,
+				newSlot,
+				cancellationToken);
 		}
 		catch (Exception ex)
 		{
@@ -3072,6 +3086,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				connection,
 				transaction,
 				playerObjectId,
+				playerObjectId,
 				sourceItemObjectId,
 				sourceNewLocation,
 				sourceNewSlot,
@@ -3080,6 +3095,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await SaveInventoryItemLocationAsync(
 				connection,
 				transaction,
+				playerObjectId,
 				playerObjectId,
 				replaceItemObjectId,
 				replaceNewLocation,
@@ -3100,7 +3116,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	private static async Task<bool> SaveInventoryItemLocationAsync(
 		MySqlConnection connection,
 		MySqlTransaction? transaction,
-		int playerObjectId,
+		int oldOwnerId,
+		int newOwnerId,
 		int itemObjectId,
 		int newLocation,
 		long newSlot,
@@ -3108,16 +3125,23 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		await using var command = connection.CreateCommand();
 		command.Transaction = transaction;
-		command.CommandText = "UPDATE inventory SET item_location = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
+		command.CommandText = "UPDATE inventory SET item_owner = ?, item_location = ?, slot = ? WHERE item_unique_id = ? AND item_owner = ?";
 		command.Parameters.AddRange(
 			new[]
 			{
+				new MySqlParameter { Value = newOwnerId },
 				new MySqlParameter { Value = newLocation },
 				new MySqlParameter { Value = newSlot },
 				new MySqlParameter { Value = itemObjectId },
-				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = oldOwnerId },
 			});
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+	}
+
+	private static int GetStorageOwnerId(int playerObjectId, int accountId, int storageLocation)
+	{
+		// Java parity: InventoryDAO.getItemOwnerId uses account id for ACCOUNT_WAREHOUSE rows and player id otherwise.
+		return storageLocation == 2 ? accountId : playerObjectId;
 	}
 
 	public async Task<bool> SaveEquipmentMutationAsync(

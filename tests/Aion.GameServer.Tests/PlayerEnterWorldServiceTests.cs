@@ -4455,7 +4455,9 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public Task<bool> SaveItemCrossStorageMoveMutationAsync(
 			int playerObjectId,
+			int accountId,
 			int itemObjectId,
+			int oldLocation,
 			int newLocation,
 			long newSlot,
 			CancellationToken cancellationToken = default)

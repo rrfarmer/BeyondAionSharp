@@ -48,7 +48,8 @@ public sealed class InventoryItem
 
 	public int ActivationCount { get; init; }
 
-	public int OwnerId { get; init; }
+	// Java parity: InventoryDAO.getItemOwnerId rewrites row owner when an item crosses account/legion/player storage.
+	public int OwnerId { get; set; }
 
 	public bool IsEquipped { get; init; }
 

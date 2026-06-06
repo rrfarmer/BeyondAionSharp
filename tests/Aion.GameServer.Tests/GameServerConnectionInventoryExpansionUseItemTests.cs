@@ -841,6 +841,106 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_AccountWarehouseSourceMovesRestoredItemToCubeLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 0, accountId: 77);
+		player.InventoryItems = [];
+		player.AccountWarehouseItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 5001,
+				ItemId = 200,
+				Count = 2,
+				OwnerId = 77,
+				Location = 2,
+				Slot = 6,
+			},
+		];
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 2, destination: 0, slot: 9));
+
+		Assert.Empty(player.AccountWarehouseItems);
+		var movedItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, movedItem.ObjectId);
+		Assert.Equal(1001, movedItem.OwnerId);
+		Assert.Equal(0, movedItem.Location);
+		Assert.Equal(9, movedItem.Slot);
+		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMove = Assert.NotNull(repository.SavedItemCrossStorageMoveMutation);
+		Assert.Equal(1001, savedMove.PlayerObjectId);
+		Assert.Equal(77, savedMove.AccountId);
+		Assert.Equal(5001, savedMove.ItemObjectId);
+		Assert.Equal(2, savedMove.OldLocation);
+		Assert.Equal(0, savedMove.NewLocation);
+		Assert.Equal(9, savedMove.NewSlot);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 2,
+				expectedObjectId: 5001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 9),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
+	public async Task HandleMoveItemAsync_CubeSourceMovesItemToAccountWarehouseOwnerLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 2, accountId: 77);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 4;
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 2, slot: 12));
+
+		Assert.Empty(player.InventoryItems);
+		var movedItem = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(5001, movedItem.ObjectId);
+		Assert.Equal(77, movedItem.OwnerId);
+		Assert.Equal(2, movedItem.Location);
+		Assert.Equal(12, movedItem.Slot);
+		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMove = Assert.NotNull(repository.SavedItemCrossStorageMoveMutation);
+		Assert.Equal(1001, savedMove.PlayerObjectId);
+		Assert.Equal(77, savedMove.AccountId);
+		Assert.Equal(5001, savedMove.ItemObjectId);
+		Assert.Equal(0, savedMove.OldLocation);
+		Assert.Equal(2, savedMove.NewLocation);
+		Assert.Equal(12, savedMove.NewSlot);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2));
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_FullCubeDestinationSendsJavaStorageFullMessageAndUnlocksSource()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -3707,11 +3807,13 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		int location = 0,
 		string gender = "MALE",
 		int level = 1,
-		byte accountMembership = 0)
+		byte accountMembership = 0,
+		int accountId = 0)
 	{
 		return new Player
 		{
 			ObjectId = 1001,
+			AccountId = accountId,
 			Name = "TicketUser",
 			AccountMembership = accountMembership,
 			Race = race,
@@ -3726,6 +3828,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					ObjectId = 5001,
 					ItemId = itemId,
 					Count = count,
+					OwnerId = location == 2 ? accountId : 1001,
 					Location = location,
 					IsEquipped = isEquipped,
 				},

@@ -4179,11 +4179,53 @@ public sealed class GameServerConnection : BaseClientConnection
 		return Math.Max(0, InventoryCapacity.GetWarehouseLimit(player) - usedSlots);
 	}
 
+	private static IReadOnlyList<InventoryItem> GetMoveStorageItems(Player player, int storageType)
+	{
+		// Java parity: Player.getStorage(ACCOUNT_WAREHOUSE) returns the account warehouse, whose rows are restored separately.
+		return storageType == 2 ? player.AccountWarehouseItems : player.InventoryItems;
+	}
+
+	private static InventoryItem? FindMoveStorageItem(Player player, int objectId, int storageType)
+	{
+		return GetMoveStorageItems(player, storageType)
+			.FirstOrDefault(item => item.ObjectId == objectId && item.Location == storageType);
+	}
+
+	private static void RemoveMoveStorageItem(Player player, int storageType, InventoryItem item)
+	{
+		var items = GetMoveStorageItems(player, storageType).ToList();
+		items.Remove(item);
+		SetMoveStorageItems(player, storageType, items);
+	}
+
+	private static void MoveItemBetweenRuntimeStorages(Player player, int sourceStorageType, int destinationStorageType, InventoryItem item)
+	{
+		if (sourceStorageType == destinationStorageType)
+			return;
+
+		RemoveMoveStorageItem(player, sourceStorageType, item);
+		var destinationItems = GetMoveStorageItems(player, destinationStorageType).ToList();
+		destinationItems.Add(item);
+		SetMoveStorageItems(player, destinationStorageType, destinationItems);
+	}
+
+	private static void SetMoveStorageItems(Player player, int storageType, IReadOnlyList<InventoryItem> items)
+	{
+		if (storageType == 2)
+			player.AccountWarehouseItems = items;
+		else
+			player.InventoryItems = items;
+	}
+
+	private static int GetMoveStorageOwnerId(Player player, int storageType)
+	{
+		return storageType == 2 ? player.AccountId : player.ObjectId;
+	}
+
 	private async Task HandleMoveItemAsync(Player player, CmMoveItem packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_MOVE_ITEM.runImpl -> ItemMoveService.moveItem.
-		var item = player.InventoryItems.FirstOrDefault(
-			i => i.ObjectId == packet.ItemObjectId && i.Location == packet.Source);
+		var item = FindMoveStorageItem(player, packet.ItemObjectId, packet.Source);
 		if (item == null)
 			return;
 
@@ -4230,9 +4272,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// Java parity: ItemMoveService.moveItem auto-merges stackable items into existing destination stacks
 		// when the client asks for automatic placement (slot == -1) before falling back to a normal move.
-		if (packet.Slot == -1 && template.MaxStackCount > 1)
+		if (packet.Slot == -1 && template.MaxStackCount > 1 && packet.Source != 2 && packet.Destination != 2)
 		{
-			var targetStacks = player.InventoryItems
+			var targetStacks = GetMoveStorageItems(player, packet.Destination)
 				.Where(i => i.Location == packet.Destination && i.ItemId == item.ItemId && i.ObjectId != item.ObjectId)
 				.ToArray();
 
@@ -4268,9 +4310,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 				if (item.Count <= 0)
 				{
-					var items = player.InventoryItems.ToList();
-					items.Remove(item);
-					player.InventoryItems = [.. items];
+					RemoveMoveStorageItem(player, packet.Source, item);
 
 					await SendItemDeletePacketAsync(player, packet.Source, item.ObjectId, SmDeleteItem.MoveDeleteType);
 					return;
@@ -4294,18 +4334,23 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Mutate item location and slot in memory.
 		var oldLocation = item.Location;
 		var oldSlot = item.Slot;
+		var oldOwnerId = item.OwnerId;
 		item.Location = packet.Destination;
 		item.Slot = packet.Slot;
+		item.OwnerId = GetMoveStorageOwnerId(player, packet.Destination);
+		MoveItemBetweenRuntimeStorages(player, oldLocation, packet.Destination, item);
 
 		if (_playerEnterWorldService != null)
 		{
 			var saved = await _playerEnterWorldService.SaveItemCrossStorageMoveMutationAsync(
-				player, item.ObjectId, packet.Destination, packet.Slot);
+				player, item.ObjectId, oldLocation, packet.Destination, packet.Slot);
 			if (!saved)
 			{
 				// Rollback in-memory changes.
+				MoveItemBetweenRuntimeStorages(player, packet.Destination, oldLocation, item);
 				item.Location = oldLocation;
 				item.Slot = oldSlot;
+				item.OwnerId = oldOwnerId;
 				return;
 			}
 		}

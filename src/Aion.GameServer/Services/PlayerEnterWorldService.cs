@@ -664,12 +664,20 @@ public sealed class PlayerEnterWorldService
 	public Task<bool> SaveItemCrossStorageMoveMutationAsync(
 		Player player,
 		int itemObjectId,
+		int oldLocation,
 		int newLocation,
 		long newSlot,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: ItemMoveService.moveItem cross-storage — item row item_location and slot updated.
-		return _repository.SaveItemCrossStorageMoveMutationAsync(player.ObjectId, itemObjectId, newLocation, newSlot, cancellationToken);
+		// Java parity: ItemMoveService.moveItem cross-storage — InventoryDAO.store updates row owner, item_location, and slot.
+		return _repository.SaveItemCrossStorageMoveMutationAsync(
+			player.ObjectId,
+			player.AccountId,
+			itemObjectId,
+			oldLocation,
+			newLocation,
+			newSlot,
+			cancellationToken);
 	}
 
 	public Task<bool> SaveItemStorageSwitchMutationAsync(
