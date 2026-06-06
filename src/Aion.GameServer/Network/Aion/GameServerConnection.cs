@@ -3770,10 +3770,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (announcement.Length == 0)
 		{
 			await SendPacketAsync(SmSystemMessage.MsgClearGuildNotice());
+			await BroadcastLegionAnnouncementClearAsync(player);
 		}
 		else
 		{
 			await SendPacketAsync(SmSystemMessage.GuildWriteNoticeDone());
+			await BroadcastLegionAnnouncementUpdateAsync(player, player.LegionAnnouncement, player.LegionAnnouncementEpochSeconds);
 		}
 	}
 
@@ -15954,6 +15956,53 @@ public sealed class GameServerConnection : BaseClientConnection
 				recipientObjectId,
 				SmLegionEdit.Permissions(deputyPermission, centurionPermission, legionaryPermission, volunteerPermission));
 		}
+	}
+
+	private async Task BroadcastLegionAnnouncementUpdateAsync(Player activePlayer, string announcement, int announcementEpochSeconds)
+	{
+		// Java parity: LegionService.changeAnnouncement broadcasts SM_LEGION_EDIT(announcement) after the active done message.
+		await SendPacketAsync(SmLegionEdit.Announcement(announcement, announcementEpochSeconds));
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != activePlayer.LegionId || candidate.ObjectId == activePlayer.ObjectId)
+				return;
+
+			candidate.LegionAnnouncement = announcement;
+			candidate.LegionAnnouncementEpochSeconds = announcementEpochSeconds;
+			recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				recipientObjectId,
+				SmLegionEdit.Announcement(announcement, announcementEpochSeconds));
+		}
+	}
+
+	private async Task BroadcastLegionAnnouncementClearAsync(Player activePlayer)
+	{
+		// Java parity: LegionService.changeAnnouncement broadcasts SM_LEGION_INFO to the legion, excluding the active player.
+		if (_connectionRegistry == null)
+			return;
+
+		var recipients = new List<Player>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != activePlayer.LegionId || candidate.ObjectId == activePlayer.ObjectId)
+				return;
+
+			candidate.LegionAnnouncement = string.Empty;
+			candidate.LegionAnnouncementEpochSeconds = 0;
+			recipients.Add(candidate);
+		});
+
+		foreach (var recipient in recipients)
+			await _connectionRegistry.SendPacketToPlayerAsync(recipient.ObjectId, SmLegionInfo.FromPlayer(recipient));
 	}
 
 	private LegionMemberSnapshot CreateOnlineLegionMemberSnapshot(Player player)

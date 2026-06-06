@@ -1600,8 +1600,10 @@ public sealed class CmLegionTests
 	[Fact]
 	public async Task HandleInfrastructurePacketAsync_ChangeAnnouncementWithoutEditRightSendsNoRightLikeJava()
 	{
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var registry = new CapturingConnectionRegistry(bystander);
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateLegionPlayer();
 		player.LegionRank = LegionRanks.Volunteer;
 		player.LegionVolunteerPermission = 0;
@@ -1612,28 +1614,47 @@ public sealed class CmLegionTests
 		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
 		Assert.Equal(1300276, response.MessageId);
 		Assert.Equal(string.Empty, player.LegionAnnouncement);
+		Assert.Equal(string.Empty, bystander.LegionAnnouncement);
+		Assert.Empty(registry.DirectPackets);
 		Assert.Equal(0, repository.SaveLegionAnnouncementCalls);
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_ChangeAnnouncementPersistsRuntimeStateAndSuccessLikeJava()
+	public async Task HandleInfrastructurePacketAsync_ChangeAnnouncementPersistsStateAndBroadcastsLikeJava()
 	{
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		var outsider = CreateLegionPlayer(3003, "Outsider");
+		outsider.LegionId = 99;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		SetActivePlayer(pair.Connection, player);
 
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeAnnouncementPacket("New notice"));
 
-		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
-		Assert.Equal(1300277, response.MessageId);
 		Assert.Equal("New notice", player.LegionAnnouncement);
 		Assert.True(player.LegionAnnouncementEpochSeconds > 0);
+		Assert.Equal("New notice", bystander.LegionAnnouncement);
+		Assert.Equal(player.LegionAnnouncementEpochSeconds, bystander.LegionAnnouncementEpochSeconds);
+		Assert.Equal(string.Empty, outsider.LegionAnnouncement);
+		Assert.Equal(0, outsider.LegionAnnouncementEpochSeconds);
 		Assert.Equal(1, repository.SaveLegionAnnouncementCalls);
 		Assert.NotNull(repository.SavedLegionAnnouncement);
 		Assert.Equal(player.LegionId, repository.SavedLegionAnnouncement.Value.LegionId);
 		Assert.Equal("New notice", repository.SavedLegionAnnouncement.Value.Announcement);
 		Assert.NotNull(repository.SavedLegionAnnouncement.Value.AnnouncementTime);
+		Assert.Collection(
+			pair.SentPackets,
+			packet =>
+			{
+				var response = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1300277, response.MessageId);
+			},
+			packet => AssertLegionEditAnnouncementPacket(packet, "New notice", player.LegionAnnouncementEpochSeconds));
+		var bystanderPacket = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionEditAnnouncementPacket(bystanderPacket.Packet, "New notice", player.LegionAnnouncementEpochSeconds);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
@@ -1651,13 +1672,25 @@ public sealed class CmLegionTests
 		Assert.Equal(new string('A', 256), player.LegionAnnouncement);
 		Assert.NotNull(repository.SavedLegionAnnouncement);
 		Assert.Equal(new string('A', 256), repository.SavedLegionAnnouncement.Value.Announcement);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmSystemMessage>(packet),
+			packet => AssertLegionEditAnnouncementPacket(packet, new string('A', 256), player.LegionAnnouncementEpochSeconds));
 	}
 
 	[Fact]
-	public async Task HandleInfrastructurePacketAsync_ClearAnnouncementPersistsNullAndSendsClearLikeJava()
+	public async Task HandleInfrastructurePacketAsync_ClearAnnouncementPersistsNullAndBroadcastsInfoLikeJava()
 	{
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		bystander.LegionAnnouncement = "Old notice";
+		bystander.LegionAnnouncementEpochSeconds = 1_771_234_500;
+		var outsider = CreateLegionPlayer(3003, "Outsider");
+		outsider.LegionId = 99;
+		outsider.LegionAnnouncement = "Other notice";
+		outsider.LegionAnnouncementEpochSeconds = 1_771_234_501;
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		player.LegionAnnouncement = "Old notice";
 		player.LegionAnnouncementEpochSeconds = 1_771_234_500;
@@ -1669,11 +1702,18 @@ public sealed class CmLegionTests
 		Assert.Equal(1390128, response.MessageId);
 		Assert.Equal(string.Empty, player.LegionAnnouncement);
 		Assert.Equal(0, player.LegionAnnouncementEpochSeconds);
+		Assert.Equal(string.Empty, bystander.LegionAnnouncement);
+		Assert.Equal(0, bystander.LegionAnnouncementEpochSeconds);
+		Assert.Equal("Other notice", outsider.LegionAnnouncement);
+		Assert.Equal(1_771_234_501, outsider.LegionAnnouncementEpochSeconds);
 		Assert.Equal(1, repository.SaveLegionAnnouncementCalls);
 		Assert.NotNull(repository.SavedLegionAnnouncement);
 		Assert.Equal(player.LegionId, repository.SavedLegionAnnouncement.Value.LegionId);
 		Assert.Null(repository.SavedLegionAnnouncement.Value.Announcement);
 		Assert.Null(repository.SavedLegionAnnouncement.Value.AnnouncementTime);
+		var bystanderPacket = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionInfoAnnouncementPacket(bystanderPacket.Packet, string.Empty, 0);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	private static CmLegion CreatePacket()
@@ -2113,6 +2153,16 @@ public sealed class CmLegionTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertLegionEditAnnouncementPacket(GameServerPacket packet, string announcement, int announcementEpochSeconds)
+	{
+		var response = Assert.IsType<SmLegionEdit>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(0x05, reader.ReadC());
+		Assert.Equal(announcement, reader.ReadS());
+		Assert.Equal(announcementEpochSeconds, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertLegionInfoPacket(GameServerPacket packet, int currentLegionDominion)
 	{
 		var response = Assert.IsType<SmLegionInfo>(packet);
@@ -2131,6 +2181,30 @@ public sealed class CmLegionTests
 		reader.ReadD();
 		reader.ReadD();
 		Assert.Equal(currentLegionDominion, reader.ReadD());
+	}
+
+	private static void AssertLegionInfoAnnouncementPacket(GameServerPacket packet, string announcement, int announcementEpochSeconds)
+	{
+		var response = Assert.IsType<SmLegionInfo>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal("Hydrated Legion", reader.ReadS());
+		reader.ReadC();
+		reader.ReadD();
+		reader.ReadSignedH();
+		reader.ReadSignedH();
+		reader.ReadSignedH();
+		reader.ReadSignedH();
+		reader.ReadQ();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		reader.ReadD();
+		Assert.Equal(announcement, reader.ReadS());
+		if (!string.IsNullOrEmpty(announcement))
+			Assert.Equal(announcementEpochSeconds, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
 	}
 
 	private static void AssertLegionDominionRankRow(
