@@ -212,6 +212,67 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePeriodicPlayerItemsAsync_ReplacesCurrentItemStonesEvenWhenItemRowIsCleanAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerEnterWorldService.ItemUpdateTask.run calls
+		// InventoryDAO.store(player), then ItemStoneListDAO.save(player.getAllItems()).
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await SeedInventoryItemAsync(9701, itemId: 110100001, count: 1);
+		await SeedItemStoneAsync(9701, itemId: 167000001, slot: 0, category: 0);
+		await SeedItemStoneAsync(9701, itemId: 168000001, slot: 0, category: 1, procCount: 7);
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PeriodicStoneIntegration",
+			InventoryItems =
+			[
+				new InventoryItem
+				{
+					ObjectId = 9701,
+					ItemId = 110100001,
+					Count = 1,
+					OwnerId = PlayerObjectId,
+					Location = 0,
+					PersistentState = InventoryItemPersistentState.Updated,
+					ManaStones =
+					[
+						new ItemStoneSocket(167000010, 1),
+					],
+					FusionStones =
+					[
+						new ItemStoneSocket(167100010, 2),
+					],
+					Godstone = new PlayerGodstone(168000010, ProcCount: 44),
+					IdianStone = new PlayerIdianStone(169000010, PolishNumber: 9, PolishCharge: 250),
+				},
+			],
+		};
+
+		var saved = await repository.SavePeriodicPlayerItemsAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(4, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM item_stones WHERE item_unique_id = 9701"));
+		Assert.Equal(0, await ExecuteScalarLongAsync("SELECT COUNT(*) FROM item_stones WHERE item_unique_id = 9701 AND item_id IN (167000001, 168000001)"));
+		Assert.Equal(167000010, await ExecuteScalarLongAsync("SELECT item_id FROM item_stones WHERE item_unique_id = 9701 AND category = 0 AND slot = 1"));
+		Assert.Equal(168000010, await ExecuteScalarLongAsync("SELECT item_id FROM item_stones WHERE item_unique_id = 9701 AND category = 1 AND slot = 0"));
+		Assert.Equal(44, await ExecuteScalarLongAsync("SELECT proc_count FROM item_stones WHERE item_unique_id = 9701 AND category = 1 AND slot = 0"));
+		Assert.Equal(167100010, await ExecuteScalarLongAsync("SELECT item_id FROM item_stones WHERE item_unique_id = 9701 AND category = 2 AND slot = 2"));
+		Assert.Equal(169000010, await ExecuteScalarLongAsync("SELECT item_id FROM item_stones WHERE item_unique_id = 9701 AND category = 3 AND slot = 0"));
+		Assert.Equal(9, await ExecuteScalarLongAsync("SELECT polishNumber FROM item_stones WHERE item_unique_id = 9701 AND category = 3 AND slot = 0"));
+		Assert.Equal(250, await ExecuteScalarLongAsync("SELECT polishCharge FROM item_stones WHERE item_unique_id = 9701 AND category = 3 AND slot = 0"));
+		Assert.Equal(StoragePersistentState.Updated, player.InventoryStoragePersistentState);
+	}
+
+	[Fact]
 	public async Task SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

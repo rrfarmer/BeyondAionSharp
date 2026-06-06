@@ -1768,7 +1768,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public async Task<bool> SavePeriodicPlayerItemsAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: PlayerEnterWorldService.ItemUpdateTask.run calls InventoryDAO.store(player)
-		// followed by ItemStoneListDAO.save(player). C# currently flushes tracked dirty/deleted item rows.
+		// followed by ItemStoneListDAO.save(player). C# flushes tracked dirty/deleted item rows
+		// and snapshots the modeled player-owned item_stones rows from live inventory state.
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
@@ -1788,6 +1789,13 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			{
 				return false;
 			}
+			if (!await SaveInventoryItemStonesSnapshotAsync(
+				connection,
+				GetPlayerItemStoneSnapshotItems(player),
+				cancellationToken))
+			{
+				return false;
+			}
 			player.MarkDirtyItemsPersisted();
 			return true;
 		}
@@ -1796,6 +1804,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(ex, "Could not save periodic item state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
+	}
+
+	internal static IReadOnlyList<InventoryItem> GetPlayerItemStoneSnapshotItems(Player player)
+	{
+		// Java parity: Player.getAllItems feeds ItemStoneListDAO.save(player). The currently
+		// modeled C# storages are cube/equipment, regular warehouse, and account warehouse.
+		var items = new List<InventoryItem>();
+		items.AddRange(player.InventoryItems);
+		items.AddRange(player.WarehouseItems);
+		items.AddRange(player.AccountWarehouseItems);
+		return items
+			.Where(item => item.PersistentState is not InventoryItemPersistentState.Deleted and not InventoryItemPersistentState.NoAction)
+			.GroupBy(item => item.ObjectId)
+			.Select(group => group.First())
+			.ToArray();
 	}
 
 	private static async Task<bool> SaveInventoryItemSnapshotAsync(
@@ -1808,6 +1831,17 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (!await SaveInventoryItemFullStateAsync(connection, item, cancellationToken))
 				return false;
 		}
+
+		return true;
+	}
+
+	private static async Task<bool> SaveInventoryItemStonesSnapshotAsync(
+		MySqlConnection connection,
+		IReadOnlyList<InventoryItem> items,
+		CancellationToken cancellationToken)
+	{
+		foreach (var item in items)
+			await ReplaceInventoryItemStonesAsync(connection, transaction: null, item, cancellationToken);
 
 		return true;
 	}
@@ -3400,6 +3434,23 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		await InsertInventoryItemStonesAsync(connection, transaction, item, cancellationToken);
 	}
 
+	private static async Task ReplaceInventoryItemStonesAsync(
+		MySqlConnection connection,
+		MySqlTransaction? transaction,
+		InventoryItem item,
+		CancellationToken cancellationToken)
+	{
+		await using (var deleteCommand = connection.CreateCommand())
+		{
+			deleteCommand.Transaction = transaction;
+			deleteCommand.CommandText = "DELETE FROM item_stones WHERE item_unique_id = ?";
+			deleteCommand.Parameters.Add(new MySqlParameter { Value = item.ObjectId });
+			await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+		}
+
+		await InsertInventoryItemStonesAsync(connection, transaction, item, cancellationToken);
+	}
+
 	internal static IReadOnlyList<ItemStonePersistenceRow> BuildItemStonePersistenceRows(InventoryItem item)
 	{
 		// Java parity: dao/ItemStoneListDAO.ItemStoneType ordinal mapping.
@@ -3427,7 +3478,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	private static async Task InsertInventoryItemStonesAsync(
 		MySqlConnection connection,
-		MySqlTransaction transaction,
+		MySqlTransaction? transaction,
 		InventoryItem item,
 		CancellationToken cancellationToken)
 	{

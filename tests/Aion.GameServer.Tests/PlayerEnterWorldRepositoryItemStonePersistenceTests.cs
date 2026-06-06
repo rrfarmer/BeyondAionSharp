@@ -6,6 +6,31 @@ namespace Aion.GameServer.Tests;
 public sealed class PlayerEnterWorldRepositoryItemStonePersistenceTests
 {
 	[Fact]
+	public void GetPlayerItemStoneSnapshotItems_ReturnsModeledCurrentPlayerItems()
+	{
+		var cubeItem = new InventoryItem { ObjectId = 9001, ItemId = 100000001 };
+		var equippedDuplicate = new InventoryItem { ObjectId = 9001, ItemId = 100000001, IsEquipped = true };
+		var warehouseItem = new InventoryItem { ObjectId = 9002, ItemId = 100000002 };
+		var accountWarehouseItem = new InventoryItem { ObjectId = 9003, ItemId = 100000003 };
+		var deletedItem = new InventoryItem
+		{
+			ObjectId = 9004,
+			ItemId = 100000004,
+			PersistentState = InventoryItemPersistentState.Deleted,
+		};
+		var player = new Player
+		{
+			InventoryItems = [cubeItem, equippedDuplicate, deletedItem],
+			WarehouseItems = [warehouseItem],
+			AccountWarehouseItems = [accountWarehouseItem],
+		};
+
+		var items = MySqlPlayerEnterWorldRepository.GetPlayerItemStoneSnapshotItems(player);
+
+		Assert.Equal([9001, 9002, 9003], items.Select(item => item.ObjectId).OrderBy(id => id));
+	}
+
+	[Fact]
 	public void BuildItemStonePersistenceRows_MapsAllInheritedTargetStoneCategories()
 	{
 		var item = new InventoryItem
@@ -45,4 +70,3 @@ public sealed class PlayerEnterWorldRepositoryItemStonePersistenceTests
 		Assert.Empty(rows);
 	}
 }
-
