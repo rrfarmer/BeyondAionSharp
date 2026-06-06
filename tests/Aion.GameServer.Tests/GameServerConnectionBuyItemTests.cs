@@ -2219,6 +2219,147 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnSchedulesMoodUpdateAndSendsPeriodicMoodPacket()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"mood pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [])),
+			threadPoolManager: threadPoolManager);
+		fixture.Connection.PetMoodUpdateInterval = TimeSpan.FromMilliseconds(25);
+		fixture.Connection.PetMoodSaveInterval = TimeSpan.FromSeconds(5);
+		var startedMillis = DateTimeOffset.Now.AddSeconds(-12).ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Mood Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: startedMillis),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+
+		await WaitUntilAsync(() => fixture.SentPackets.Count(packet => packet is SmPet) >= 2);
+		AssertPetSpawnPacket(
+			Assert.IsType<SmPet>(fixture.SentPackets[0]),
+			expectedName: "Mood Mate",
+			expectedTemplateId: 900210,
+			expectedObjectId: 7001,
+			expectedPlayerObjectId: player.ObjectId,
+			expectedPosition: player.Position,
+			expectedDecoration: 188051001);
+		AssertPetMoodPeriodicPacket(
+			Assert.IsType<SmPet>(fixture.SentPackets.Last()),
+			minimumMoodPoints: 12,
+			minimumMoodRemainingSeconds: 0);
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.True(pet.LastSentMoodPoints >= 12);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetSpawnMoodUpdatePersistsMoodDataAtSaveCadence()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"mood pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [])),
+			playerEnterWorldRepository: playerRepository,
+			threadPoolManager: threadPoolManager);
+		fixture.Connection.PetMoodUpdateInterval = TimeSpan.FromMilliseconds(20);
+		fixture.Connection.PetMoodSaveInterval = TimeSpan.FromMilliseconds(30);
+		var startedMillis = DateTimeOffset.Now.AddSeconds(-3).ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Mood Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: startedMillis,
+				ShuggleCounter: 1),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+
+		await WaitUntilAsync(() => playerRepository.SavePlayerPetMoodDataCalls > 0);
+		Assert.NotNull(playerRepository.SavedPlayerPetMoodData);
+		var savedMood = playerRepository.SavedPlayerPetMoodData.Value;
+		Assert.Equal((player.ObjectId, 7001, 1), (
+			savedMood.PlayerObjectId,
+			savedMood.PetObjectId,
+			savedMood.ShuggleCounter));
+		Assert.True(savedMood.MoodStartedMillis >= startedMillis);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetDismissCancelsPendingMoodUpdateCallback()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"mood pet",
+					NameId: 1600210,
+					ConditionReward: 0,
+					Functions: [])),
+			threadPoolManager: threadPoolManager);
+		fixture.Connection.PetMoodUpdateInterval = TimeSpan.FromMilliseconds(25);
+		fixture.Connection.PetMoodSaveInterval = TimeSpan.FromSeconds(5);
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Mood Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: DateTimeOffset.Now.AddSeconds(-3).ToUnixTimeMilliseconds()),
+		];
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Spawn, templateId: 900210));
+		await WaitUntilAsync(() => fixture.SentPackets.Count(packet => packet is SmPet) >= 2);
+		fixture.SentPackets.Clear();
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetTemplateActionPayload(PetAction.Dismiss, templateId: 123456));
+		await Task.Delay(100);
+
+		Assert.False(player.HasPetSummon);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetDismissPacket(
+				Assert.IsType<SmPet>(packet),
+				expectedObjectId: 7001,
+				expectedAnimation: ObjectDeleteAnimation.FadeOut));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetDismissClearsActivePetStateAndSendsDismissPacket()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();

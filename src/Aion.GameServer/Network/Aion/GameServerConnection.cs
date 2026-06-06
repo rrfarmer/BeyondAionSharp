@@ -42,6 +42,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private const int OpenVendorDialogAction = 33;
 	private const string PowerShardItemGroup = "POWER_SHARDS";
 	private static readonly TimeSpan ClientPingInterval = TimeSpan.FromMilliseconds(180000);
+	private static readonly TimeSpan JavaPetUpdateInterval = TimeSpan.FromSeconds(10);
+	private static readonly TimeSpan JavaPetMoodSaveInterval = TimeSpan.FromMinutes(1);
 	private static readonly ConcurrentDictionary<int, int> HouseObjectOccupants = new();
 	private readonly GamePacketProcessor<string> _packetProcessor;
 	private readonly GameCrypt _crypt;
@@ -116,6 +118,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PetFeedDataTable? _petFeedData;
 	private readonly Func<int, int> _petLovedRewardIndexSelector;
 	private readonly ConcurrentDictionary<int, ScheduledTask> _petRefeedTasks = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _petMoodUpdateTasks = new();
+	private readonly ConcurrentDictionary<int, long> _petMoodUpdateSaveStartMillis = new();
 	private readonly LimitedItemTradeService? _limitedItemTradeService;
 	private readonly long? _buyItemCurrentSellLimit;
 	private readonly Func<int>? _buyItemDiagnosticObjectIdProvider;
@@ -139,6 +143,10 @@ public sealed class GameServerConnection : BaseClientConnection
 	private DateTimeOffset? _lastPingTime;
 	private PendingItemUse? _pendingItemUse;
 	private PendingHouseObjectUse? _pendingHouseObjectUse;
+
+	internal TimeSpan PetMoodUpdateInterval { get; set; } = JavaPetUpdateInterval;
+
+	internal TimeSpan PetMoodSaveInterval { get; set; } = JavaPetMoodSaveInterval;
 
 	public GameServerConnection(
 		ILogger logger,
@@ -446,6 +454,8 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoLoot, Active: true)));
 		if (ownedPet.IsSelling)
 			await SendPacketAsync(SmPet.SpecialFunction(new SmPetSpecialFunctionSnapshot(PetSpecialFunction.AutoSell, Active: true)));
+
+		SchedulePetMoodUpdate(player, ownedPet.ObjectId);
 	}
 
 	private PlayerOwnedPet ApplyPetSpawnRefeedState(
@@ -1089,6 +1099,127 @@ public sealed class GameServerConnection : BaseClientConnection
 			existingTask.Cancel();
 	}
 
+	internal void SchedulePetMoodUpdate(Player player, int petObjectId)
+	{
+		// Java parity: PetSpawnService.summonPet registers TaskId.PET_UPDATE with
+		// ThreadPoolManager.scheduleAtFixedRate(new PetController.PetUpdateTask(player), PLAYER_PETS, PLAYER_PETS).
+		CancelPetMoodUpdateTask(petObjectId);
+
+		if (_threadPoolManager == null || PetMoodUpdateInterval <= TimeSpan.Zero)
+			return;
+
+		ScheduledTask? scheduledTask = null;
+		scheduledTask = _threadPoolManager.ScheduleAtFixedRateTask(
+			async cancellationToken =>
+			{
+				if (scheduledTask == null)
+					return;
+
+				await ExecutePetMoodUpdateAsync(player, petObjectId, cancellationToken);
+			},
+			PetMoodUpdateInterval,
+			PetMoodUpdateInterval);
+		_petMoodUpdateTasks[petObjectId] = scheduledTask;
+	}
+
+	private async ValueTask ExecutePetMoodUpdateAsync(Player player, int petObjectId, CancellationToken cancellationToken)
+	{
+		// Java parity: PetController.PetUpdateTask.run returns for an unspawned player, and cancels
+		// TaskId.PET_UPDATE on unexpected failures such as a missing active pet.
+		if (!player.IsOnline)
+			return;
+
+		if (!player.HasPetSummon || player.PetSummonObjectId != petObjectId)
+		{
+			CancelPetMoodUpdateTask(petObjectId);
+			return;
+		}
+
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
+		if (ownedPet == null)
+		{
+			CancelPetMoodUpdateTask(petObjectId);
+			return;
+		}
+
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var startMillis = _petMoodUpdateSaveStartMillis.GetOrAdd(petObjectId, nowMillis);
+		var timing = CreatePetMoodTiming(ownedPet);
+		var currentPoints = 0;
+		var saved = false;
+		if (timing.GetMoodPoints(forPacket: false, nowMillis) < 9000
+			&& nowMillis - startMillis >= (long)PetMoodSaveInterval.TotalMilliseconds)
+		{
+			currentPoints = timing.GetMoodPoints(forPacket: false, nowMillis);
+			if (currentPoints == 9000)
+			{
+				await SendPetMoodPeriodicPacketAsync(timing, nowMillis);
+			}
+
+			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+			await PersistPetMoodUpdateAsync(player, petObjectId, timing, ownedPet.DespawnTime?.DateTime, cancellationToken);
+			saved = true;
+			_petMoodUpdateSaveStartMillis[petObjectId] = nowMillis;
+		}
+
+		if (currentPoints < 9000)
+		{
+			await SendPetMoodPeriodicPacketAsync(timing, nowMillis);
+			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+			return;
+		}
+
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 3,
+			ConditionReward: GetPetTemplate(ownedPet.TemplateId)?.ConditionReward ?? 0)), cancellationToken);
+		timing.SetGiftCooldownStarted(nowMillis);
+		UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+		if (!saved)
+			await PersistPetMoodUpdateAsync(player, petObjectId, timing, ownedPet.DespawnTime?.DateTime, cancellationToken);
+	}
+
+	private async Task SendPetMoodPeriodicPacketAsync(PetCommonDataTiming timing, long nowMillis)
+	{
+		var moodPoints = timing.GetMoodPoints(forPacket: true, nowMillis);
+		var moodRemainingSeconds = timing.GetMoodRemainingTime(nowMillis);
+		var giftRemainingSeconds = timing.GetGiftRemainingTime(nowMillis);
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 4,
+			MoodPoints: moodPoints,
+			MoodRemainingSeconds: moodRemainingSeconds,
+			GiftRemainingSeconds: giftRemainingSeconds)));
+		timing.SetLastSentPoints(moodPoints);
+	}
+
+	private async Task PersistPetMoodUpdateAsync(
+		Player player,
+		int petObjectId,
+		PetCommonDataTiming timing,
+		DateTime? despawnTime,
+		CancellationToken cancellationToken)
+	{
+		if (_playerEnterWorldService == null)
+			return;
+
+		await _playerEnterWorldService.SavePlayerPetMoodDataAsync(
+			player,
+			petObjectId,
+			timing.StartMoodTimeMillis,
+			timing.ShuggleCounter,
+			timing.MoodCooldownStartedMillis,
+			timing.GiftCooldownStartedMillis,
+			despawnTime,
+			cancellationToken);
+	}
+
+	private void CancelPetMoodUpdateTask(int petObjectId)
+	{
+		// Java parity: PetController.onDelete -> player.getController().cancelTask(TaskId.PET_UPDATE).
+		_petMoodUpdateSaveStartMillis.TryRemove(petObjectId, out _);
+		if (_petMoodUpdateTasks.TryRemove(petObjectId, out var existingTask))
+			existingTask.Cancel();
+	}
+
 	private PetFeedReward? SelectLovedPetFeedReward(IReadOnlyList<PetFeedReward> rewards)
 	{
 		// Java parity: PetFeedCalculator.getReward loved-food branch uses Rnd.get(validRewards).
@@ -1283,6 +1414,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		var petObjectId = player.PetSummonObjectId;
 		CancelPetRefeedTask(petObjectId);
+		CancelPetMoodUpdateTask(petObjectId);
 		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == petObjectId);
 		if (ownedPet != null)
 		{
