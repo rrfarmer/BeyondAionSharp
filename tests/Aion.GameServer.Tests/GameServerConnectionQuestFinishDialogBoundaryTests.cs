@@ -17,6 +17,7 @@ namespace Aion.GameServer.Tests;
 public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 {
 	private const int SelectedQuestAutoReward = 108;
+	private const int KinahItemId = 182400001;
 
 	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesXpAndCompletesQuest()
@@ -69,6 +70,56 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(300, player.Exp);
 		Assert.Equal(1, player.Level);
 		Assert.Empty(player.InventoryItems);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesKinahAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1002, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1002, "REWARD", QuestVars: 0x34, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1002,
+			Name = "QuestFinishKinahBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 5001, ItemId = KinahItemId, Count = 25, OwnerId = 1002, Location = 0 },
+			],
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1002,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet =>
+			{
+				var inventoryUpdate = Assert.IsType<SmInventoryUpdateItem>(packet);
+				Assert.Equal(SmInventoryUpdateItem.IncreaseKinahQuest, inventoryUpdate.UpdateType);
+			},
+			packet => Assert.IsType<SmQuestAction>(packet));
+		var kinahItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, kinahItem.ObjectId);
+		Assert.Equal(KinahItemId, kinahItem.ItemId);
+		Assert.Equal(125, kinahItem.Count);
+		Assert.Equal(0, player.Exp);
 		var unchangedQuest = Assert.Single(player.Quests);
 		Assert.NotSame(rewardQuestState, unchangedQuest);
 		Assert.Equal("COMPLETE", unchangedQuest.Status);
@@ -135,9 +186,15 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						<exp>1000</exp>
 						<exp>3000</exp>
 					</player_experience_table>
+					<item_templates>
+						<item_template id="182400001" name="Kinah" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="2147483647" price="1" />
+					</item_templates>
 					<quests>
 						<quest id="1001" can_report="true" reward_repeat_count="1">
 							<rewards exp="300" />
+						</quest>
+						<quest id="1002" can_report="true" reward_repeat_count="1">
+							<rewards gold="100" />
 						</quest>
 					</quests>
 				</static_data>

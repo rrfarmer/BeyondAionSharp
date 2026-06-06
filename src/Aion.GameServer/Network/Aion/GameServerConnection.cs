@@ -5234,18 +5234,29 @@ public sealed class GameServerConnection : BaseClientConnection
 			return true;
 		}
 
-		if (!TryCreateQuestFinishXpRewards(inputPlan, out var xpRewards))
+		if (!TryCreateQuestFinishAutoRewards(inputPlan, out var rewards))
 			return true;
 
 		var questRewardService = CreateQuestRewardService();
-		foreach (var xpReward in xpRewards)
+		foreach (var reward in rewards)
 		{
-			var xpResult = questRewardService.ApplyXpReward(
-				player,
-				staticData.PlayerExperienceTable,
-				xpReward.Amount);
-			foreach (var responsePacket in xpResult.Packets)
-				await SendPacketAsync(responsePacket, cancellationToken);
+			switch (reward.Action)
+			{
+				case QuestFinishRewardNonItemAction.Kinah:
+					if (!await TryApplyQuestFinishKinahRewardAsync(player, questRewardService, reward, staticData, cancellationToken))
+						return true;
+					break;
+				case QuestFinishRewardNonItemAction.Experience:
+					var xpResult = questRewardService.ApplyXpReward(
+						player,
+						staticData.PlayerExperienceTable,
+						reward.Amount);
+					foreach (var responsePacket in xpResult.Packets)
+						await SendPacketAsync(responsePacket, cancellationToken);
+					break;
+				default:
+					return true;
+			}
 		}
 
 		var mutation = QuestFinishStateMutationService.ApplyRewardCompletion(
@@ -5268,6 +5279,64 @@ public sealed class GameServerConnection : BaseClientConnection
 		return true;
 	}
 
+	private async Task<bool> TryApplyQuestFinishKinahRewardAsync(
+		Player player,
+		QuestRewardService questRewardService,
+		QuestFinishRewardNonItemProjectionDescriptor reward,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		if (staticData.ItemTemplates.GetItemTemplate(KinahItemId) is not { } kinahTemplate)
+			return false;
+
+		var rewardPlan = questRewardService.CreateKinahRewardPlan(
+			player,
+			player.InventoryItems,
+			reward.Amount,
+			_idFactory == null ? null : () => _idFactory.NextId());
+		if (rewardPlan.Status is QuestKinahRewardStatus.MissingPlayer or QuestKinahRewardStatus.MissingKinahObjectId)
+			return false;
+
+		var kinahItemUpdate = rewardPlan.KinahItemUpdate;
+		if (kinahItemUpdate == null)
+			return true;
+
+		var updatedItems = rewardPlan.CreatesMissingKinahItem ? Array.Empty<InventoryItem>() : new[] { kinahItemUpdate };
+		var addedItems = rewardPlan.CreatesMissingKinahItem ? new[] { kinahItemUpdate } : Array.Empty<InventoryItem>();
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SaveInventoryRewardMutationAsync(
+				player,
+				updatedItems,
+				addedItems,
+				cancellationToken))
+		{
+			return false;
+		}
+
+		var inventoryItems = player.InventoryItems.ToList();
+		if (rewardPlan.CreatesMissingKinahItem)
+			inventoryItems.Add(kinahItemUpdate);
+		else
+			ReplaceInventoryItem(inventoryItems, kinahItemUpdate);
+		player.InventoryItems = inventoryItems.ToArray();
+
+		if (rewardPlan.CreatesMissingKinahItem)
+		{
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+				kinahItemUpdate,
+				kinahTemplate,
+				GetGeneralInfoWarehouseRestrictionFlag(kinahItemUpdate.ItemId, staticData.ItemRestrictionCleanups)), cancellationToken);
+			return true;
+		}
+
+		await SendPacketAsync(new SmInventoryUpdateItem(
+			kinahItemUpdate,
+			kinahTemplate,
+			rewardPlan.PacketUpdateType,
+			GetGeneralInfoWarehouseRestrictionFlag(kinahItemUpdate.ItemId, staticData.ItemRestrictionCleanups)), cancellationToken);
+		return true;
+	}
+
 	private QuestRewardService CreateQuestRewardService()
 	{
 		return new QuestRewardService(
@@ -5279,11 +5348,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			_runtimeContext);
 	}
 
-	private static bool TryCreateQuestFinishXpRewards(
+	private static bool TryCreateQuestFinishAutoRewards(
 		QuestFinishSocketInputAssemblyPlan inputPlan,
-		out IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> xpRewards)
+		out IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> rewards)
 	{
-		xpRewards = Array.Empty<QuestFinishRewardNonItemProjectionDescriptor>();
+		rewards = Array.Empty<QuestFinishRewardNonItemProjectionDescriptor>();
 		var template = inputPlan.Template;
 		var projection = inputPlan.RewardProjection;
 		var questState = inputPlan.QuestState;
@@ -5291,7 +5360,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return false;
 
 		var descriptors = new List<QuestFinishRewardNonItemProjectionDescriptor>();
-		if (!TryAddXpRewards(
+		if (!TryAddQuestFinishAutoRewards(
 			descriptors,
 			template,
 			projection,
@@ -5303,7 +5372,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var isLastRepeat = questState.CompleteCount == template.RewardRepeatCount - 1;
 		if (isLastRepeat
-			&& !TryAddXpRewards(
+			&& !TryAddQuestFinishAutoRewards(
 				descriptors,
 				template,
 				projection,
@@ -5316,11 +5385,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (descriptors.Count == 0)
 			return false;
 
-		xpRewards = descriptors;
+		rewards = descriptors;
 		return true;
 	}
 
-	private static bool TryAddXpRewards(
+	private static bool TryAddQuestFinishAutoRewards(
 		ICollection<QuestFinishRewardNonItemProjectionDescriptor> rewards,
 		NearbyQuestTemplateSummary template,
 		QuestFinishRewardTemplateProjection projection,
@@ -5339,7 +5408,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				source),
 			nonItemProjection);
 		if (projectionPlan.Warnings.Count != 0
-			|| projectionPlan.Descriptors.Any(descriptor => descriptor.Action != QuestFinishRewardNonItemAction.Experience))
+			|| projectionPlan.Descriptors.Any(descriptor =>
+				descriptor.Action is not QuestFinishRewardNonItemAction.Kinah
+					and not QuestFinishRewardNonItemAction.Experience))
 		{
 			return false;
 		}
