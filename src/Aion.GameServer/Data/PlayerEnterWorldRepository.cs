@@ -1709,11 +1709,13 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	public async Task<bool> SavePeriodicPlayerGeneralAsync(Player player, CancellationToken cancellationToken = default)
 	{
 		// Java parity: PlayerEnterWorldService.GeneralUpdateTask.run persists live player state
-		// without changing online state. This covers the currently modeled C# general state.
+		// without changing online state. This covers the currently modeled C# general state,
+		// including AbyssRankDAO.storeAbyssRank(player).
 		try
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
+			await SavePeriodicAbyssRankAsync(connection, player.ObjectId, player.AbyssRank, cancellationToken);
 			if (player.LifeStats != null)
 				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
 			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -3584,6 +3586,60 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new MySqlParameter { Value = rank.DailyKill },
 				new MySqlParameter { Value = rank.WeeklyKill },
 				new MySqlParameter { Value = rank.AllKill },
+				new MySqlParameter { Value = rank.LastKill },
+				new MySqlParameter { Value = rank.LastAp },
+				new MySqlParameter { Value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },
+				new MySqlParameter { Value = rank.DailyGp },
+				new MySqlParameter { Value = rank.WeeklyGp },
+				new MySqlParameter { Value = rank.Gp },
+				new MySqlParameter { Value = rank.LastGp },
+			});
+		await command.ExecuteNonQueryAsync(cancellationToken);
+	}
+
+	private static async Task SavePeriodicAbyssRankAsync(
+		MySqlConnection connection,
+		int playerObjectId,
+		PlayerAbyssRank rank,
+		CancellationToken cancellationToken)
+	{
+		// Java parity: dao/AbyssRankDAO.storeAbyssRank insert/update columns; ranking list positions
+		// are maintained by AbyssRankDAO.updateRankingLists, not periodic player saves.
+		await using var command = connection.CreateCommand();
+		command.CommandText = """
+			INSERT INTO abyss_rank (
+				player_id, daily_ap, weekly_ap, ap, `rank`, daily_kill, weekly_kill, all_kill,
+				max_rank, last_kill, last_ap, last_update, daily_gp, weekly_gp, gp, last_gp)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE
+				daily_ap = VALUES(daily_ap),
+				weekly_ap = VALUES(weekly_ap),
+				ap = VALUES(ap),
+				`rank` = VALUES(`rank`),
+				daily_kill = VALUES(daily_kill),
+				weekly_kill = VALUES(weekly_kill),
+				all_kill = VALUES(all_kill),
+				max_rank = VALUES(max_rank),
+				last_kill = VALUES(last_kill),
+				last_ap = VALUES(last_ap),
+				last_update = VALUES(last_update),
+				daily_gp = VALUES(daily_gp),
+				weekly_gp = VALUES(weekly_gp),
+				gp = VALUES(gp),
+				last_gp = VALUES(last_gp)
+			""";
+		command.Parameters.AddRange(
+			new[]
+			{
+				new MySqlParameter { Value = playerObjectId },
+				new MySqlParameter { Value = rank.DailyAp },
+				new MySqlParameter { Value = rank.WeeklyAp },
+				new MySqlParameter { Value = rank.Ap },
+				new MySqlParameter { Value = rank.Rank },
+				new MySqlParameter { Value = rank.DailyKill },
+				new MySqlParameter { Value = rank.WeeklyKill },
+				new MySqlParameter { Value = rank.AllKill },
+				new MySqlParameter { Value = rank.MaxRank },
 				new MySqlParameter { Value = rank.LastKill },
 				new MySqlParameter { Value = rank.LastAp },
 				new MySqlParameter { Value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },

@@ -273,6 +273,73 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task SavePeriodicPlayerGeneralAsync_WritesAbyssRankWithoutChangingRankingPositionAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: PlayerEnterWorldService.GeneralUpdateTask.run calls
+		// AbyssRankDAO.storeAbyssRank(player), whose INSERT/UPDATE columns exclude rank_pos.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO abyss_rank (
+				player_id, daily_ap, weekly_ap, ap, `rank`, max_rank, rank_pos, old_rank_pos,
+				daily_kill, weekly_kill, all_kill, last_kill, last_ap, last_update,
+				daily_gp, weekly_gp, gp, last_gp)
+			VALUES (1001, 1, 2, 3, 1, 1, 77, 55, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13)
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+		var player = new Player
+		{
+			ObjectId = PlayerObjectId,
+			Name = "PeriodicAbyssIntegration",
+			Position = new WorldPosition(210010000, 11, 22, 33, 44),
+			AbyssRank = new PlayerAbyssRank(
+				DailyAp: 101,
+				WeeklyAp: 202,
+				Ap: 303,
+				DailyGp: 404,
+				WeeklyGp: 505,
+				Gp: 606,
+				Rank: 7,
+				DailyKill: 8,
+				WeeklyKill: 9,
+				AllKill: 10,
+				MaxRank: 11,
+				LastKill: 12,
+				LastAp: 13,
+				LastGp: 14,
+				RankingListPosition: 99),
+		};
+
+		var saved = await repository.SavePeriodicPlayerGeneralAsync(player);
+
+		Assert.True(saved);
+		Assert.Equal(101, await ExecuteScalarLongAsync("SELECT daily_ap FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(202, await ExecuteScalarLongAsync("SELECT weekly_ap FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(303, await ExecuteScalarLongAsync("SELECT ap FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(7, await ExecuteScalarLongAsync("SELECT `rank` FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(8, await ExecuteScalarLongAsync("SELECT daily_kill FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(9, await ExecuteScalarLongAsync("SELECT weekly_kill FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(10, await ExecuteScalarLongAsync("SELECT all_kill FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(11, await ExecuteScalarLongAsync("SELECT max_rank FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(12, await ExecuteScalarLongAsync("SELECT last_kill FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(13, await ExecuteScalarLongAsync("SELECT last_ap FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(404, await ExecuteScalarLongAsync("SELECT daily_gp FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(505, await ExecuteScalarLongAsync("SELECT weekly_gp FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(606, await ExecuteScalarLongAsync("SELECT gp FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(14, await ExecuteScalarLongAsync("SELECT last_gp FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(77, await ExecuteScalarLongAsync("SELECT rank_pos FROM abyss_rank WHERE player_id = 1001"));
+		Assert.Equal(55, await ExecuteScalarLongAsync("SELECT old_rank_pos FROM abyss_rank WHERE player_id = 1001"));
+	}
+
+	[Fact]
 	public async Task SavePlayerCraftCooldownsAsync_ReplacesRowsAndKeepsOnlyActiveCooldownsAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
