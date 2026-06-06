@@ -951,6 +951,43 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSplitItemAsync_WarehouseSourceRestrictionUnlockUsesJavaStorageSize()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 166000030, count: 3, location: 1);
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 1,
+				sourceStorageType: 1,
+				destinationItemObjectId: 0,
+				destinationStorageType: 2,
+				slotNumber: 0));
+
+		var sourceItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, sourceItem.ObjectId);
+		Assert.Equal(3, sourceItem.Count);
+		Assert.Equal(1, sourceItem.Location);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 166000030,
+				expectedCount: 3,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
 	public async Task HandleReplaceItemAsync_CrossStorageSwitchDeletesThenAddsLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

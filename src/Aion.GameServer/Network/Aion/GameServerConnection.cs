@@ -3984,14 +3984,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				|| (packet.DestinationStorageType == 2 && !sourceItem.IsStorableInAccountWarehouse(template));
 			if (isRestrictedToDestination)
 			{
-				if (packet.SourceStorageType == 0)
-					await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(sourceItem, template));
-				else
-					await SendPacketAsync(new SmWarehouseAddItem(
-						packet.SourceStorageType,
-						[new SmWarehouseAddItem.WarehousePacketItem(sourceItem, template)],
-						SmInventoryAddItem.ItemCollect));
-				await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+				await SendStorageUpdatePacketAsync(player, sourceItem, template, packet.SourceStorageType, SmInventoryAddItem.ItemCollect);
 				return;
 			}
 		}
