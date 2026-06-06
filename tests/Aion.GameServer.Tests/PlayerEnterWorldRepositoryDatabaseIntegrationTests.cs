@@ -1033,6 +1033,65 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task LoadLegionMembersAsync_LoadsPersistedRosterRowsAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: Legion.getMembers -> LegionMemberDAO.loadLegionMembers
+		// -> LegionMemberDAO.loadLegionMember + PlayerDAO.loadPlayerCommonData.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO players (
+				id, name, account_id, account_name, exp, recoverexp, old_level, x, y, z, heading, world_id,
+				gender, race, player_class, online, last_online, creation_date
+			)
+			VALUES (1002, 'OfflineLegionary', 1, 'integration', 0, 0, 0, 0, 0, 0, 0, 220010000,
+				'FEMALE', 'ELYOS', 'SORCERER', 0, '1970-01-01 00:50:00', CURRENT_TIMESTAMP)
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level)
+			VALUES (5001, 'Hydrated Legion', 4)
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legion_members (legion_id, player_id, nickname, `rank`, selfintro)
+			VALUES
+				(5001, 1001, 'Scout', 'BRIGADE_GENERAL', 'Ready'),
+				(5001, 1002, 'Crafter', 'CENTURION', 'Sleeping')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var rows = await repository.LoadLegionMembersAsync(5001);
+
+		Assert.Equal(2, rows.Count);
+		var leader = Assert.Single(rows, row => row.PlayerObjectId == 1001);
+		Assert.Equal("PurifyIntegration", leader.Name);
+		Assert.Equal(LegionRanks.BrigadeGeneral, leader.Rank);
+		Assert.Equal("Scout", leader.Nickname);
+		Assert.Equal("Ready", leader.SelfIntro);
+		Assert.Equal("RANGER", leader.PlayerClass);
+		Assert.Equal(210010000, leader.WorldId);
+
+		var offline = Assert.Single(rows, row => row.PlayerObjectId == 1002);
+		Assert.Equal("OfflineLegionary", offline.Name);
+		Assert.Equal(LegionRanks.Centurion, offline.Rank);
+		Assert.Equal("Crafter", offline.Nickname);
+		Assert.Equal("Sleeping", offline.SelfIntro);
+		Assert.False(offline.IsOnline);
+		Assert.Equal("SORCERER", offline.PlayerClass);
+		Assert.Equal(220010000, offline.WorldId);
+		Assert.NotNull(offline.LastOnline);
+	}
+
+	[Fact]
 	public async Task SaveLegionCurrentDominionAsync_WritesJavaLegionDominionColumn_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

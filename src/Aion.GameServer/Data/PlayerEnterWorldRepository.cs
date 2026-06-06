@@ -87,6 +87,10 @@ public interface IPlayerEnterWorldRepository
 		string memberName,
 		CancellationToken cancellationToken = default);
 
+	Task<IReadOnlyList<LegionMemberSnapshot>> LoadLegionMembersAsync(
+		int legionId,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveLegionMemberNicknameAsync(
 		int playerObjectId,
 		string nickname,
@@ -930,6 +934,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public (int LegionId, string MemberName)? LoadedLegionMemberByNameRequest { get; private set; }
 
+	public IReadOnlyList<LegionMemberSnapshot> LoadedLegionMembers { get; init; } = Array.Empty<LegionMemberSnapshot>();
+
+	public int LoadLegionMembersCalls { get; private set; }
+
+	public int LoadedLegionMembersLegionId { get; private set; }
+
 	public Task<LegionMemberSnapshot?> LoadLegionMemberByNameAsync(
 		int legionId,
 		string memberName,
@@ -942,6 +952,15 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			&& string.Equals(member.Name, memberName, StringComparison.Ordinal)
 				? member
 				: null);
+	}
+
+	public Task<IReadOnlyList<LegionMemberSnapshot>> LoadLegionMembersAsync(
+		int legionId,
+		CancellationToken cancellationToken = default)
+	{
+		LoadLegionMembersCalls++;
+		LoadedLegionMembersLegionId = legionId;
+		return Task.FromResult(LoadedLegionMembers);
 	}
 
 	public bool SaveLegionMemberNicknameResult { get; init; } = true;
@@ -2641,6 +2660,56 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not load legion member {MemberName} for legion {LegionId}", memberName, legionId);
 			return null;
+		}
+	}
+
+	public async Task<IReadOnlyList<LegionMemberSnapshot>> LoadLegionMembersAsync(
+		int legionId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: Legion.getMembers -> LegionMemberDAO.loadLegionMembers + PlayerService.getOrLoadPlayerCommonData.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT lm.player_id, lm.legion_id, p.name, lm.`rank`, lm.nickname, lm.selfintro,
+					p.online, p.player_class, p.exp, p.world_id, p.last_online
+				FROM legion_members lm
+				JOIN players p ON p.id = lm.player_id
+				WHERE lm.legion_id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = legionId },
+				});
+
+			var members = new List<LegionMemberSnapshot>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				members.Add(new LegionMemberSnapshot(
+					ReadInt(reader, "player_id"),
+					ReadInt(reader, "legion_id"),
+					ReadString(reader, "name"),
+					ReadString(reader, "rank"),
+					ReadString(reader, "nickname"),
+					ReadString(reader, "selfintro"),
+					ReadBoolean(reader, "online"),
+					ReadString(reader, "player_class"),
+					ReadLong(reader, "exp"),
+					ReadInt(reader, "world_id"),
+					ReadDateTime(reader, "last_online")));
+			}
+
+			return members;
+		}
+		catch (MySqlException ex)
+		{
+			_logger.LogError(ex, "Could not load legion members for legion {LegionId}", legionId);
+			return Array.Empty<LegionMemberSnapshot>();
 		}
 	}
 

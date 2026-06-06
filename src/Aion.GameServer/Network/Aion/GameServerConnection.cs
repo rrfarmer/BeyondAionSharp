@@ -15888,14 +15888,30 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (_connectionRegistry == null)
 			return;
 
-		var members = new List<LegionMemberListEntry>();
+		var persistedMembers = _playerEnterWorldRepository == null
+			? Array.Empty<LegionMemberSnapshot>()
+			: await _playerEnterWorldRepository.LoadLegionMembersAsync(joinedPlayer.LegionId);
+		var onlineMembersById = new Dictionary<int, Player>();
 		_connectionRegistry.ForEachOnlinePlayer(candidate =>
 		{
-			if (candidate.LegionId != joinedPlayer.LegionId || candidate.ObjectId == joinedPlayer.ObjectId)
-				return;
-
-			members.Add(CreateLegionMemberListEntry(candidate));
+			if (candidate.LegionId == joinedPlayer.LegionId && candidate.ObjectId != joinedPlayer.ObjectId)
+				onlineMembersById[candidate.ObjectId] = candidate;
 		});
+
+		var members = new List<LegionMemberListEntry>();
+		foreach (var persistedMember in persistedMembers)
+		{
+			if (persistedMember.PlayerObjectId == joinedPlayer.ObjectId)
+				continue;
+
+			if (onlineMembersById.Remove(persistedMember.PlayerObjectId, out var onlineMember))
+				members.Add(CreateLegionMemberListEntry(onlineMember));
+			else
+				members.Add(CreateLegionMemberListEntry(persistedMember));
+		}
+
+		foreach (var onlineMember in onlineMembersById.Values)
+			members.Add(CreateLegionMemberListEntry(onlineMember));
 
 		await _connectionRegistry.SendPacketToPlayerAsync(
 			joinedPlayer.ObjectId,
@@ -15915,6 +15931,21 @@ public sealed class GameServerConnection : BaseClientConnection
 			player.LegionSelfIntro,
 			player.LegionNickname,
 			player.LastOnline);
+	}
+
+	private LegionMemberListEntry CreateLegionMemberListEntry(LegionMemberSnapshot member)
+	{
+		return new LegionMemberListEntry(
+			member.PlayerObjectId,
+			member.Name,
+			member.PlayerClass,
+			GetLegionMemberLevel(member),
+			member.Rank,
+			member.WorldId,
+			member.IsOnline,
+			member.SelfIntro,
+			member.Nickname,
+			member.LastOnline);
 	}
 
 	private async Task BroadcastLegionInviteEmblemAsync(Player joinedPlayer)

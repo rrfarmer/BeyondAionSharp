@@ -3746,6 +3746,13 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult<LegionMemberSnapshot?>(null);
 		}
 
+		public Task<IReadOnlyList<LegionMemberSnapshot>> LoadLegionMembersAsync(
+			int legionId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<IReadOnlyList<LegionMemberSnapshot>>(Array.Empty<LegionMemberSnapshot>());
+		}
+
 		public Task<bool> SaveLegionMemberNicknameAsync(
 			int playerObjectId,
 			string nickname,

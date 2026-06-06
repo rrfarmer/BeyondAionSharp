@@ -1409,7 +1409,6 @@ public sealed class CmLegionTests
 	[Fact]
 	public async Task HandleQuestionResponseAsync_LegionInviteAcceptPersistsMemberMutatesStateAndBroadcastsLikeJava()
 	{
-		var repository = new EmptyPlayerEnterWorldRepository();
 		var target = CreateUnguildedPlayer(2002, "Lurion");
 		target.Level = 14;
 		var player = CreateBrigadeGeneralPlayer();
@@ -1437,6 +1436,60 @@ public sealed class CmLegionTests
 		};
 		var outsider = CreateLegionPlayer(4004, "Outsider");
 		outsider.LegionId = 99;
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMembers =
+			[
+				new LegionMemberSnapshot(
+					player.ObjectId,
+					77,
+					player.Name,
+					LegionRanks.BrigadeGeneral,
+					string.Empty,
+					string.Empty,
+					true,
+					player.PlayerClass,
+					player.Exp,
+					player.Position.WorldId,
+					player.LastOnline),
+				new LegionMemberSnapshot(
+					target.ObjectId,
+					77,
+					target.Name,
+					LegionRanks.Volunteer,
+					string.Empty,
+					string.Empty,
+					true,
+					target.PlayerClass,
+					target.Exp,
+					target.Position.WorldId,
+					target.LastOnline),
+				new LegionMemberSnapshot(
+					bystander.ObjectId,
+					77,
+					bystander.Name,
+					LegionRanks.Legionary,
+					"Stale",
+					"Old intro",
+					false,
+					"RANGER",
+					0,
+					110010000,
+					DateTimeOffset.FromUnixTimeSeconds(2_000).UtcDateTime),
+				new LegionMemberSnapshot(
+					5005,
+					77,
+					"Offline",
+					LegionRanks.Centurion,
+					"Crafter",
+					"Sleeping",
+					false,
+					"SORCERER",
+					0,
+					120010000,
+					DateTimeOffset.FromUnixTimeSeconds(3_000).UtcDateTime),
+			],
+		};
 		var registry = new CapturingConnectionRegistry(player, target, bystander, outsider);
 		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		SetActivePlayer(pair.Connection, player);
@@ -1451,6 +1504,8 @@ public sealed class CmLegionTests
 
 		Assert.Equal(0, target.ResponseRequester.Count);
 		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Equal(1, repository.LoadLegionMembersCalls);
+		Assert.Equal(77, repository.LoadedLegionMembersLegionId);
 		Assert.Equal(1, repository.SaveNewLegionMemberCalls);
 		Assert.Equal((77, target.ObjectId, LegionRanks.Volunteer), repository.SavedNewLegionMember);
 		Assert.Equal(1, repository.InsertLegionHistoryCalls);
@@ -1483,7 +1538,7 @@ public sealed class CmLegionTests
 		AssertLegionMemberListPacket(
 			memberList.Packet,
 			isFirst: true,
-			signedCount: -2,
+			signedCount: -3,
 			[
 				new ExpectedLegionMemberListRow(
 					PlayerObjectId: player.ObjectId,
@@ -1510,6 +1565,20 @@ public sealed class CmLegionTests
 					SelfIntro: "Standing by",
 					Nickname: "Healer",
 					LastOnlineEpochSeconds: 0,
+					HouseAddressId: 0,
+					HouseDoorStateId: 0,
+					GameServerId: 1),
+				new ExpectedLegionMemberListRow(
+					PlayerObjectId: 5005,
+					Name: "Offline",
+					ClassId: 7,
+					Level: 1,
+					RankId: LegionRanks.GetRankId(LegionRanks.Centurion),
+					WorldId: 120010000,
+					Online: false,
+					SelfIntro: "Sleeping",
+					Nickname: "Crafter",
+					LastOnlineEpochSeconds: 3000,
 					HouseAddressId: 0,
 					HouseDoorStateId: 0,
 					GameServerId: 1),
