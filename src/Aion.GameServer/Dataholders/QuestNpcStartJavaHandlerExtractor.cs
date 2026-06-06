@@ -5,8 +5,8 @@ namespace Aion.GameServer.Dataholders;
 
 public sealed class QuestNpcStartJavaHandlerExtractor
 {
-	private static readonly Regex StartRegistrationPattern = new(
-		@"registerQuestNpc\s*\(\s*(?<npc>[^)]*?)\s*\)\s*\.\s*addOnQuestStart\s*\(\s*(?<quest>[^)]*?)\s*\)",
+	private static readonly Regex QuestNpcRegistrationPattern = new(
+		@"registerQuestNpc\s*\(\s*(?<npc>[^)]*?)\s*\)\s*\.\s*addOn(?<event>QuestStart|TalkEvent)\s*\(\s*(?<quest>[^)]*?)\s*\)",
 		RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
 	private static readonly Regex IntAssignmentPattern = new(
@@ -54,10 +54,13 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 		var sources = new List<QuestNpcStartRegistrationSource>();
 		var unresolved = new List<QuestNpcStartJavaHandlerUnresolvedRegistration>();
 
-		foreach (Match match in StartRegistrationPattern.Matches(javaSource))
+		foreach (Match match in QuestNpcRegistrationPattern.Matches(javaSource))
 		{
 			var npcExpression = match.Groups["npc"].Value.Trim();
 			var questExpression = match.Groups["quest"].Value.Trim();
+			var eventKind = match.Groups["event"].Value.Equals("TalkEvent", StringComparison.Ordinal)
+				? QuestNpcRegistrationEventKind.OnTalkEvent
+				: QuestNpcRegistrationEventKind.OnQuestStart;
 			var lineNumber = GetLineNumber(javaSource, match.Index);
 
 			if (!TryResolveNpcIds(npcExpression, scalarConstants, arrayConstants, setConstants, setAliases, out var npcIds, out var npcReason))
@@ -89,7 +92,8 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 					NpcId: npcId,
 					QuestId: questId,
 					SourceKind: QuestNpcStartRegistrationSourceKind.JavaHandler,
-					SourcePath: sourcePath));
+					SourcePath: sourcePath,
+					EventKind: eventKind));
 			}
 		}
 

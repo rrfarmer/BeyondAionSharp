@@ -5760,8 +5760,61 @@ public sealed class GameServerConnection : BaseClientConnection
 		await CompleteQuestFinishNpcFactionAsync(player, inputPlan.Template, cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
 		if (closeDialogTargetObjectId.HasValue)
-			await SendPacketAsync(new SmDialogWindow(closeDialogTargetObjectId.Value, 0, 0), cancellationToken);
+		{
+			var followUpDialog = CreateNpcSelectedRewardPostFinishDialog(
+				player,
+				staticData,
+				inputPlan,
+				mutation.QuestState.QuestId,
+				closeDialogTargetObjectId.Value);
+			await SendPacketAsync(followUpDialog, cancellationToken);
+		}
+
 		return true;
+	}
+
+	private static SmDialogWindow CreateNpcSelectedRewardPostFinishDialog(
+		Player player,
+		StaticData staticData,
+		QuestFinishSocketInputAssemblyPlan completedInputPlan,
+		int completedQuestId,
+		int targetObjectId)
+	{
+		if (completedInputPlan.RewardProjection?.TargetNpcId is > 0 and var npcId)
+		{
+			var questNpc = staticData.QuestNpcStarts.GetQuestNpc(npcId);
+			foreach (var questId in questNpc.OnTalkEvent)
+			{
+				if (questId == completedQuestId)
+					continue;
+
+				var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == questId);
+				if (questState == null || !string.Equals(questState.Status, "REWARD", StringComparison.Ordinal))
+					continue;
+
+				if (!staticData.QuestFinishRewardProjections.TryGetQuest(questId, out var projectionEntry)
+					|| projectionEntry?.Template.CanReport != true)
+				{
+					continue;
+				}
+
+				var rewardGroupCount = projectionEntry.RewardGroupProjections.Values.FirstOrDefault()?.RewardGroupCount;
+				var correction = QuestFinishRewardPlanService.CorrectRewardGroup(questState, rewardGroupCount);
+				if (!ReferenceEquals(correction.QuestState, questState))
+				{
+					player.Quests = player.Quests
+						.Select(quest => quest.QuestId == correction.QuestState.QuestId ? correction.QuestState : quest)
+						.ToArray();
+				}
+
+				return new SmDialogWindow(
+					targetObjectId,
+					GetQuestRewardSelectionDialogPageId(correction.QuestState.RewardGroup),
+					questId);
+			}
+		}
+
+		return new SmDialogWindow(targetObjectId, 0, 0);
 	}
 
 	private async Task<bool> TryHandleNpcTargetQuestFinishAutoRewardAsync(

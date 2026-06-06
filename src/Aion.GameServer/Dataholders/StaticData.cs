@@ -3358,7 +3358,12 @@ public sealed class StaticData
 		var result = new QuestNpcStartRegistrationSourceLoader()
 			.Load(questScriptDirectory, questHandlerDirectory, cancellationToken);
 		foreach (var source in result.Sources)
-			table.RegisterOnQuestStart(source);
+		{
+			if (source.EventKind == QuestNpcRegistrationEventKind.OnTalkEvent)
+				table.RegisterOnTalkEvent(source);
+			else
+				table.RegisterOnQuestStart(source);
+		}
 
 		return table;
 	}

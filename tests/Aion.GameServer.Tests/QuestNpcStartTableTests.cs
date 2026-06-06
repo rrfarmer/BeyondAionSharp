@@ -16,10 +16,15 @@ public sealed class QuestNpcStartTableTests
 		Assert.True(questNpc.AddOnQuestStart(1192));
 		Assert.False(questNpc.AddOnQuestStart(1192));
 		Assert.True(questNpc.AddOnQuestStart(1194));
+		Assert.True(questNpc.AddOnTalkEvent(1192));
+		Assert.False(questNpc.AddOnTalkEvent(1192));
+		Assert.True(questNpc.AddOnTalkEvent(1194));
 		Assert.Equal([1192, 1194], questNpc.OnQuestStart.Order());
+		Assert.Equal([1192, 1194], questNpc.OnTalkEvent);
 		Assert.Same(questNpc, table.RegisterQuestNpc(203098, questRange: 35));
 		Assert.Equal(QuestNpcStartRegistration.DefaultQuestRange, questNpc.QuestRange);
 		Assert.Equal([1192, 1194], table.GetQuestNpc(203098).OnQuestStart.Order());
+		Assert.Equal([1192, 1194], table.GetQuestNpc(203098).OnTalkEvent);
 	}
 
 	[Fact]
@@ -32,6 +37,7 @@ public sealed class QuestNpcStartTableTests
 		Assert.Equal(999999, missing.NpcId);
 		Assert.Equal(QuestNpcStartRegistration.DefaultQuestRange, missing.QuestRange);
 		Assert.Empty(missing.OnQuestStart);
+		Assert.Empty(missing.OnTalkEvent);
 		Assert.Empty(table.Registrations);
 	}
 
@@ -50,15 +56,24 @@ public sealed class QuestNpcStartTableTests
 			SourceKind: QuestNpcStartRegistrationSourceKind.XmlQuest,
 			SourcePath: "game-server/data/static_data/quest_script_data/sample.xml",
 			QuestRange: 30);
+		var talkSource = new QuestNpcStartRegistrationSource(
+			NpcId: 278151,
+			QuestId: 30364,
+			SourceKind: QuestNpcStartRegistrationSourceKind.JavaHandler,
+			SourcePath: "game-server/data/handlers/quest/abyssal_splinter/_30364Talk.java",
+			EventKind: QuestNpcRegistrationEventKind.OnTalkEvent);
 
 		Assert.True(table.RegisterOnQuestStart(handlerSource));
 		Assert.False(table.RegisterOnQuestStart(handlerSource));
 		Assert.True(table.RegisterOnQuestStart(xmlSource));
+		Assert.True(table.RegisterOnTalkEvent(talkSource));
+		Assert.False(table.RegisterOnTalkEvent(talkSource));
 
 		Assert.Equal([30363], table.GetQuestNpc(278151).OnQuestStart.Order());
+		Assert.Equal([30364], table.GetQuestNpc(278151).OnTalkEvent);
 		Assert.Equal([28303], table.GetQuestNpc(799530).OnQuestStart.Order());
 		Assert.Equal(30, table.GetQuestNpc(799530).QuestRange);
-		Assert.Equal([handlerSource, handlerSource, xmlSource], table.Sources);
+		Assert.Equal([handlerSource, handlerSource, xmlSource, talkSource, talkSource], table.Sources);
 	}
 
 	[Fact]

@@ -26,6 +26,13 @@ public sealed class QuestNpcStartTable
 		return RegisterQuestNpc(source.NpcId, source.QuestRange).AddOnQuestStart(source.QuestId);
 	}
 
+	public bool RegisterOnTalkEvent(QuestNpcStartRegistrationSource source)
+	{
+		// Java parity: QuestEngine handler registration eventually calls QuestNpc.addOnTalkEvent.
+		_sources.Add(source);
+		return RegisterQuestNpc(source.NpcId, source.QuestRange).AddOnTalkEvent(source.QuestId);
+	}
+
 	public QuestNpcStartRegistration GetQuestNpc(int npcId)
 	{
 		// Java parity: questEngine/QuestEngine.getQuestNpc returns an unregistered empty QuestNpc.
@@ -42,6 +49,7 @@ public sealed class QuestNpcStartRegistration
 	public const int DefaultQuestRange = 20;
 
 	private readonly HashSet<int> _onQuestStart = new();
+	private readonly List<int> _onTalkEvent = new();
 
 	public QuestNpcStartRegistration(int npcId, int questRange)
 	{
@@ -55,10 +63,22 @@ public sealed class QuestNpcStartRegistration
 
 	public IReadOnlySet<int> OnQuestStart => _onQuestStart;
 
+	public IReadOnlyList<int> OnTalkEvent => _onTalkEvent;
+
 	public bool AddOnQuestStart(int questId)
 	{
 		// Java parity: model/templates/quest/QuestNpc.addOnQuestStart stores each quest id once.
 		return _onQuestStart.Add(questId);
+	}
+
+	public bool AddOnTalkEvent(int questId)
+	{
+		// Java parity: model/templates/quest/QuestNpc.addOnTalkEvent stores each quest id once and preserves insertion order.
+		if (_onTalkEvent.Contains(questId))
+			return false;
+
+		_onTalkEvent.Add(questId);
+		return true;
 	}
 }
 
@@ -67,11 +87,18 @@ public sealed record QuestNpcStartRegistrationSource(
 	int QuestId,
 	QuestNpcStartRegistrationSourceKind SourceKind,
 	string SourcePath,
-	int QuestRange = QuestNpcStartRegistration.DefaultQuestRange);
+	int QuestRange = QuestNpcStartRegistration.DefaultQuestRange,
+	QuestNpcRegistrationEventKind EventKind = QuestNpcRegistrationEventKind.OnQuestStart);
 
 public enum QuestNpcStartRegistrationSourceKind
 {
 	JavaHandler = 0,
 	XmlQuest = 1,
 	Manual = 2,
+}
+
+public enum QuestNpcRegistrationEventKind
+{
+	OnQuestStart = 0,
+	OnTalkEvent = 1,
 }

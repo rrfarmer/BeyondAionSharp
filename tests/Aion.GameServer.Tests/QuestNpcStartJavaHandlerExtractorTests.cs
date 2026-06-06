@@ -15,6 +15,7 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 
 				public void register() {
 					qe.registerQuestNpc(799403).addOnQuestStart(questId);
+					qe.registerQuestNpc(799404).addOnTalkEvent(questId);
 				}
 			}
 			""";
@@ -23,7 +24,10 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 		var result = extractor.Extract(javaSource, "game-server/data/handlers/quest/chantra_dredgion/_4725CeaselessAttack.java");
 
 		Assert.Empty(result.Unresolved);
-		Assert.Collection(result.Sources, source => AssertSource(source, 799403, 4725));
+		Assert.Collection(
+			result.Sources,
+			source => AssertSource(source, 799403, 4725, QuestNpcRegistrationEventKind.OnQuestStart),
+			source => AssertSource(source, 799404, 4725, QuestNpcRegistrationEventKind.OnTalkEvent));
 	}
 
 	[Fact]
@@ -43,6 +47,7 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 					qe.registerQuestNpc(START_NPC_ID).addOnQuestStart(questId);
 					qe.registerQuestNpc(questStartNpcId).addOnQuestStart(questId);
 					qe.registerQuestNpc(npcIds[0]).addOnQuestStart(questId);
+					qe.registerQuestNpc(npcIds[1]).addOnTalkEvent(questId);
 				}
 			}
 			""";
@@ -55,7 +60,8 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 			result.Sources,
 			source => AssertSource(source, 804869, 30772),
 			source => AssertSource(source, 203631, 30772),
-			source => AssertSource(source, 799530, 30772));
+			source => AssertSource(source, 799530, 30772),
+			source => AssertSource(source, 730375, 30772, QuestNpcRegistrationEventKind.OnTalkEvent));
 	}
 
 	[Fact]
@@ -69,7 +75,7 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 
 				public void register() {
 					qe.registerQuestNpc(npcIds[i]).addOnQuestStart(questId);
-					qe.registerQuestNpc(799403).addOnQuestStart(dynamicQuestId);
+					qe.registerQuestNpc(799403).addOnTalkEvent(dynamicQuestId);
 				}
 			}
 			""";
@@ -147,6 +153,7 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 
 				public void register() {
 					qe.registerQuestNpc(278151).addOnQuestStart(questId);
+					qe.registerQuestNpc(278151).addOnTalkEvent(questId);
 				}
 			}
 			""";
@@ -154,17 +161,28 @@ public sealed class QuestNpcStartJavaHandlerExtractorTests
 		var table = new QuestNpcStartTable();
 
 		foreach (var source in extractor.Extract(javaSource, "game-server/data/handlers/quest/abyssal_splinter/_30363FoolsRushIn.java").Sources)
-			table.RegisterOnQuestStart(source);
+		{
+			if (source.EventKind == QuestNpcRegistrationEventKind.OnTalkEvent)
+				table.RegisterOnTalkEvent(source);
+			else
+				table.RegisterOnQuestStart(source);
+		}
 
 		Assert.Equal([30363], table.GetQuestNpc(278151).OnQuestStart.Order());
-		Assert.Single(table.Sources);
+		Assert.Equal([30363], table.GetQuestNpc(278151).OnTalkEvent);
+		Assert.Equal(2, table.Sources.Count);
 	}
 
-	private static void AssertSource(QuestNpcStartRegistrationSource source, int npcId, int questId)
+	private static void AssertSource(
+		QuestNpcStartRegistrationSource source,
+		int npcId,
+		int questId,
+		QuestNpcRegistrationEventKind eventKind = QuestNpcRegistrationEventKind.OnQuestStart)
 	{
 		Assert.Equal(npcId, source.NpcId);
 		Assert.Equal(questId, source.QuestId);
 		Assert.Equal(QuestNpcStartRegistrationSourceKind.JavaHandler, source.SourceKind);
 		Assert.Equal(QuestNpcStartRegistration.DefaultQuestRange, source.QuestRange);
+		Assert.Equal(eventKind, source.EventKind);
 	}
 }

@@ -691,6 +691,46 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetSelectedRewardOpensNextRegisteredRewardPage()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnTalkEvent);
+
+		var completedRewardQuestState = new PlayerQuestState(1011, "REWARD", QuestVars: 0x57, Flags: 0, CompleteCount: 0);
+		var nextRewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 0x12, Flags: 0, CompleteCount: 0, RewardGroup: 0);
+		var player = new Player
+		{
+			ObjectId = 1014,
+			Name = "QuestFinishSelectedNpcNextRewardBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [completedRewardQuestState, nextRewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: SelectedQuestReward1,
+			questId: 1011,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => Assert.IsType<SmQuestAction>(packet),
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, 5, 1001));
+		Assert.Equal(2, player.Quests.Count);
+		var completedQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1011);
+		Assert.Equal("COMPLETE", completedQuest.Status);
+		var nextRewardQuest = Assert.Single(player.Quests, quest => quest.QuestId == 1001);
+		Assert.Equal("REWARD", nextRewardQuest.Status);
+		Assert.Equal(0, nextRewardQuest.RewardGroup);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAddsClassSelectedItemOnLastRepeatAndCompletesQuest()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
@@ -1502,6 +1542,24 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			Directory.CreateDirectory(Path.Combine(tempRoot, "game-server", "data", "static_data"));
 			var questHandlerDirectory = Path.Combine(tempRoot, "game-server", "data", "handlers", "quest", "test");
 			Directory.CreateDirectory(questHandlerDirectory);
+			await File.WriteAllTextAsync(
+				Path.Combine(questHandlerDirectory, "_1001ReportTalk.java"),
+				"""
+				package quest.test;
+
+				import com.aionemu.gameserver.questEngine.handlers.AbstractQuestHandler;
+
+				public class _1001ReportTalk extends AbstractQuestHandler {
+					public _1001ReportTalk() {
+						super(1001);
+					}
+
+					@Override
+					public void register() {
+						qe.registerQuestNpc(203001).addOnTalkEvent(questId);
+					}
+				}
+				""");
 			await File.WriteAllTextAsync(
 				Path.Combine(questHandlerDirectory, "_1016FollowUp.java"),
 				"""
