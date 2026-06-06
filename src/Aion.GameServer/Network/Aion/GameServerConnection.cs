@@ -385,6 +385,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case PetAction.Food:
 				await HandlePetFoodAsync(player, packet);
 				break;
+			case PetAction.Mood:
+				await HandlePetMoodAsync(player, packet);
+				break;
 		}
 	}
 
@@ -622,6 +625,63 @@ public sealed class GameServerConnection : BaseClientConnection
 		await SendPacketAsync(new SmEmotion(player, EmotionType.StartFeeding, 0, player.ObjectId));
 
 		await SchedulePetFeedingCheckAsync(player, feedingPet.ObjectId, foodItem.ObjectId, packet.Count);
+	}
+
+	private async Task HandlePetMoodAsync(Player player, CmPet packet)
+	{
+		// Java parity: CM_PET.runImpl routes MOOD subtype 0 through PetMoodService.startCheckingMood
+		// only when an active pet has no mood cooldown remaining.
+		if (packet.SubType != 0 || !player.HasPetSummon || player.PetSummonObjectId == 0)
+			return;
+
+		var ownedPet = player.OwnedPets.FirstOrDefault(pet => pet.ObjectId == player.PetSummonObjectId);
+		if (ownedPet == null)
+			return;
+
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var timing = CreatePetMoodTiming(ownedPet);
+		if (timing.GetMoodRemainingTime(nowMillis) != 0)
+		{
+			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+			return;
+		}
+
+		var moodPoints = timing.GetMoodPoints(forPacket: true, nowMillis);
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 0,
+			MoodPoints: moodPoints,
+			LastSentPoints: timing.LastSentPoints)));
+
+		if (timing.LastSentPoints >= moodPoints)
+			timing.SetLastSentPoints(moodPoints);
+
+		UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+	}
+
+	private static PetCommonDataTiming CreatePetMoodTiming(PlayerOwnedPet ownedPet)
+	{
+		var timing = new PetCommonDataTiming();
+		timing.SetStartMoodTime(ownedPet.MoodStartedMillis);
+		timing.SetShuggleCounter(ownedPet.ShuggleCounter);
+		timing.SetLastSentPoints(ownedPet.LastSentMoodPoints);
+		timing.SetMoodCooldownStarted(ownedPet.MoodCooldownStartedMillis);
+		timing.SetGiftCooldownStarted(ownedPet.GiftCooldownStartedMillis);
+		return timing;
+	}
+
+	private static void UpdateOwnedPetMoodTiming(Player player, PlayerOwnedPet ownedPet, PetCommonDataTiming timing)
+	{
+		var updatedPet = ownedPet with
+		{
+			MoodStartedMillis = timing.StartMoodTimeMillis,
+			ShuggleCounter = timing.ShuggleCounter,
+			LastSentMoodPoints = timing.LastSentPoints,
+			MoodCooldownStartedMillis = timing.MoodCooldownStartedMillis,
+			GiftCooldownStartedMillis = timing.GiftCooldownStartedMillis,
+		};
+		player.OwnedPets = player.OwnedPets
+			.Select(pet => pet.ObjectId == ownedPet.ObjectId ? updatedPet : pet)
+			.ToArray();
 	}
 
 	private async Task SchedulePetFeedingCheckAsync(Player player, int petObjectId, int itemObjectId, int count)

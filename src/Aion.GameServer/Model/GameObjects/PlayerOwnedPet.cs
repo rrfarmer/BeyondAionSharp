@@ -20,6 +20,7 @@ public sealed record PlayerOwnedPet(
 	DateTimeOffset? DespawnTime = null,
 	long MoodStartedMillis = 0,
 	int ShuggleCounter = 0,
+	int LastSentMoodPoints = 0,
 	long MoodCooldownStartedMillis = 0,
 	long GiftCooldownStartedMillis = 0)
 {

@@ -2637,6 +2637,65 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodStartSendsMoodCheckPacketAndInitializesTiming()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 0, emotionId: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.True(pet.MoodStartedMillis > 0);
+		Assert.Equal(0, pet.LastSentMoodPoints);
+		var packet = Assert.Single(fixture.SentPackets);
+		AssertPetMoodCheckPacket(Assert.IsType<SmPet>(packet), expectedDelta: 0);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodStartDuringCooldownDoesNotSendPacket()
+	{
+		await using var fixture = await BuyItemFixture.CreateAsync();
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Merchant Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: nowMillis - 10_000,
+				MoodCooldownStartedMillis: nowMillis),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 0, emotionId: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(nowMillis, pet.MoodCooldownStartedMillis);
+		Assert.Empty(fixture.SentPackets);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodCancelMutatesActivePetAndSendsCancelPackets()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();
@@ -5339,6 +5398,19 @@ public sealed class GameServerConnectionBuyItemTests
 		return buffer.ToArray();
 	}
 
+	private static byte[] CreatePetMoodPayload(int subType, int emotionId)
+	{
+		using var buffer = new PacketBuffer();
+		var encodedOpcode = EncodeClientPacketOpcode(22);
+		buffer.WriteH(encodedOpcode);
+		buffer.WriteC(0x65);
+		buffer.WriteH(~encodedOpcode);
+		buffer.WriteH((int)PetAction.Mood);
+		buffer.WriteD(subType);
+		buffer.WriteD(emotionId);
+		return buffer.ToArray();
+	}
+
 	private static byte[] CreatePetFoodFeedPayload(int actionType, int objectId, int count, int unknown2)
 	{
 		using var buffer = new PacketBuffer();
@@ -5473,6 +5545,15 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.Equal((int)PetAction.Rename, reader.ReadH());
 		Assert.Equal(expectedObjectId, reader.ReadD());
 		Assert.Equal(expectedPetName, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetMoodCheckPacket(SmPet packet, int expectedDelta)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedDelta, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 
