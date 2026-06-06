@@ -4117,17 +4117,43 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (sourceKinah.Count < moveAmount)
 			return;
 
-		const int KinahItemId = 182400001;
 		var destKinah = GetMoveStorageItems(player, destinationStorageType).FirstOrDefault(
 			i => i.ItemId == KinahItemId && i.Location == destinationStorageType);
+		var destinationKinahWasCreated = false;
 		if (destKinah == null)
-			return;
+		{
+			// Java parity: Storage.increaseKinah creates a zero-count Kinah item before applying INC_KINAH_MERGE.
+			if (_idFactory == null)
+				return;
+
+			var newDestKinahObjectId = _idFactory.NextId();
+			destKinah = new InventoryItem
+			{
+				ObjectId = newDestKinahObjectId,
+				ItemId = KinahItemId,
+				Count = 0,
+				OwnerId = GetMoveStorageOwnerId(player, destinationStorageType),
+				Location = destinationStorageType,
+				Slot = 0,
+				TuneCount = 0,
+				PersistentState = InventoryItemPersistentState.New,
+			};
+			AddMoveStorageItem(player, destinationStorageType, destKinah);
+			destinationKinahWasCreated = true;
+		}
 
 		// Java parity: checksum validation prevents arithmetic overflow issues.
 		var newSourceCount = sourceKinah.Count - moveAmount;
 		var newDestCount = destKinah.Count + moveAmount;
 		if (newSourceCount + newDestCount != sourceKinah.Count + destKinah.Count)
+		{
+			if (destinationKinahWasCreated)
+			{
+				RemoveMoveStorageItem(player, destinationStorageType, destKinah);
+				_idFactory?.ReleaseId(destKinah.ObjectId);
+			}
 			return;
+		}
 
 		sourceKinah.Count = newSourceCount;
 		destKinah.Count = newDestCount;
@@ -4140,6 +4166,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				// Rollback in-memory changes.
 				sourceKinah.Count += moveAmount;
 				destKinah.Count -= moveAmount;
+				if (destinationKinahWasCreated)
+				{
+					RemoveMoveStorageItem(player, destinationStorageType, destKinah);
+					_idFactory?.ReleaseId(destKinah.ObjectId);
+				}
 				return;
 			}
 		}
@@ -4152,9 +4183,25 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// Java parity: destination.increaseKinah(splitAmount, INC_KINAH_MERGE) — update dest kinah in UI.
 		if (destinationStorageType == 0 /* cube */)
+		{
+			if (destinationKinahWasCreated)
+			{
+				destKinah.Count = 0;
+				await SendStorageUpdatePacketAsync(player, destKinah, kinahTemplate, destinationStorageType, SmInventoryAddItem.ItemCollect);
+				destKinah.Count = newDestCount;
+			}
 			await SendPacketAsync(new SmInventoryUpdateItem(destKinah, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahMerge));
+		}
 		else
+		{
+			if (destinationKinahWasCreated)
+			{
+				destKinah.Count = 0;
+				await SendStorageUpdatePacketAsync(player, destKinah, kinahTemplate, destinationStorageType, SmInventoryAddItem.ItemCollect);
+				destKinah.Count = newDestCount;
+			}
 			await SendPacketAsync(new SmWarehouseUpdateItem(destKinah, kinahTemplate, destinationStorageType, SmInventoryUpdateItem.IncreaseKinahMerge));
+		}
 	}
 
 	private static SmSystemMessage? CreateStorageFullMessage(Player player, int storageType, ItemTemplateTable itemTemplates)

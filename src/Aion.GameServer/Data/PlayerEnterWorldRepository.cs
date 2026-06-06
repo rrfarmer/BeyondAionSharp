@@ -3043,7 +3043,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				return false;
 			}
 
-			if (!await SaveInventoryItemCountAsync(connection, transaction, targetItem.OwnerId, targetItem, cancellationToken))
+			if (targetItem.PersistentState == InventoryItemPersistentState.New)
+				await InsertInventoryItemAsync(connection, transaction, targetItem, cancellationToken);
+			else if (!await SaveInventoryItemCountAsync(connection, transaction, targetItem.OwnerId, targetItem, cancellationToken))
 				return false;
 
 			await transaction.CommitAsync(cancellationToken);

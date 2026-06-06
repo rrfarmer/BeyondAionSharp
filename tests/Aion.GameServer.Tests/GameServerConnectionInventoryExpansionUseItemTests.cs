@@ -466,7 +466,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: 0),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
 				Assert.IsType<SmInventoryUpdateItem>(packet),
 				expectedObjectId: 5001,
@@ -496,7 +496,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Collection(
 			fixture.SentPackets,
 			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 6001, expectedDeleteType: 0),
-			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
 			packet => AssertInventoryUpdatePayloadWithCleanupSealFlag(
 				Assert.IsType<SmInventoryUpdateItem>(packet),
 				expectedObjectId: 5001,
@@ -1605,6 +1605,135 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCount: 2,
 				expectedSlot: 0),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2));
+	}
+
+	[Fact]
+	public async Task HandleSplitItemAsync_CubeKinahMoveCreatesMissingAccountWarehouseKinahLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: InventoryItemFactory.KinahItemId, count: 100, accountId: 77);
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 30,
+				sourceStorageType: 0,
+				destinationItemObjectId: 0,
+				destinationStorageType: 2,
+				slotNumber: 0));
+
+		var sourceKinah = Assert.Single(player.InventoryItems);
+		Assert.Equal(5001, sourceKinah.ObjectId);
+		Assert.Equal(70, sourceKinah.Count);
+		Assert.Equal(1001, sourceKinah.OwnerId);
+		Assert.Equal(0, sourceKinah.Location);
+		var accountKinah = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(1, accountKinah.ObjectId);
+		Assert.Equal(InventoryItemFactory.KinahItemId, accountKinah.ItemId);
+		Assert.Equal(30, accountKinah.Count);
+		Assert.Equal(77, accountKinah.OwnerId);
+		Assert.Equal(2, accountKinah.Location);
+		Assert.Equal(InventoryItemPersistentState.New, accountKinah.PersistentState);
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		var savedMerge = Assert.NotNull(repository.SavedItemMergeMutation);
+		Assert.Equal(1001, savedMerge.PlayerObjectId);
+		Assert.Equal(70, savedMerge.SourceItem.Count);
+		Assert.Equal(30, savedMerge.TargetItem.Count);
+		Assert.Equal(77, savedMerge.TargetItem.OwnerId);
+		Assert.Equal(InventoryItemPersistentState.New, savedMerge.TargetItem.PersistentState);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplit),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 1,
+				expectedWarehouseType: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: InventoryItemFactory.KinahItemId,
+				expectedCount: 30,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0, expectedStorage: 2),
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 1,
+				expectedWarehouseType: 2,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseKinahMerge));
+	}
+
+	[Fact]
+	public async Task HandleSplitItemAsync_AccountWarehouseKinahMoveCreatesMissingCubeKinahLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: InventoryItemFactory.KinahItemId, count: 0, accountId: 77);
+		player.InventoryItems = [];
+		player.AccountWarehouseItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 5001,
+				ItemId = InventoryItemFactory.KinahItemId,
+				Count = 100,
+				OwnerId = 77,
+				Location = 2,
+			},
+		];
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 40,
+				sourceStorageType: 2,
+				destinationItemObjectId: 0,
+				destinationStorageType: 0,
+				slotNumber: 0));
+
+		var sourceKinah = Assert.Single(player.AccountWarehouseItems);
+		Assert.Equal(5001, sourceKinah.ObjectId);
+		Assert.Equal(60, sourceKinah.Count);
+		Assert.Equal(77, sourceKinah.OwnerId);
+		Assert.Equal(2, sourceKinah.Location);
+		var cubeKinah = Assert.Single(player.InventoryItems);
+		Assert.Equal(1, cubeKinah.ObjectId);
+		Assert.Equal(InventoryItemFactory.KinahItemId, cubeKinah.ItemId);
+		Assert.Equal(40, cubeKinah.Count);
+		Assert.Equal(1001, cubeKinah.OwnerId);
+		Assert.Equal(0, cubeKinah.Location);
+		Assert.Equal(InventoryItemPersistentState.New, cubeKinah.PersistentState);
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		var savedMerge = Assert.NotNull(repository.SavedItemMergeMutation);
+		Assert.Equal(1001, savedMerge.PlayerObjectId);
+		Assert.Equal(60, savedMerge.SourceItem.Count);
+		Assert.Equal(40, savedMerge.TargetItem.Count);
+		Assert.Equal(1001, savedMerge.TargetItem.OwnerId);
+		Assert.Equal(InventoryItemPersistentState.New, savedMerge.TargetItem.PersistentState);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 2,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplit),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 1,
+				expectedItemId: InventoryItemFactory.KinahItemId,
+				expectedCount: 40,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 1,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseKinahMerge));
 	}
 
 	[Fact]
