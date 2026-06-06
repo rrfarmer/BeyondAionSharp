@@ -14,6 +14,9 @@ public static class InventoryCapacity
 	private const int WarehouseSlotsPerExpansion = 8;
 	private const int AccountWarehouseStorageId = 2;
 	private const int BaseAccountWarehouseSlots = 16;
+	private const int LegionWarehouseStorageId = 3;
+	private const int BaseLegionWarehouseSlots = 24;
+	private const int LegionWarehouseSlotsPerExpansion = 8;
 	private const int SpecialCubeSlots = 102;
 
 	public static int GetCubeLimit(Player player)
@@ -129,6 +132,22 @@ public static class InventoryCapacity
 	public static int GetFreeAccountWarehouseSlots(Player player)
 	{
 		return Math.Max(0, GetAccountWarehouseLimit() - GetUsedAccountWarehouseSlots(player));
+	}
+
+	public static int GetLegionWarehouseLimit(Player player)
+	{
+		// Java parity: model/team/legion/LegionWarehouse.updateLimit uses (3 + expansions) rows * 8 slots.
+		return BaseLegionWarehouseSlots + player.LegionWarehouseExpansions * LegionWarehouseSlotsPerExpansion;
+	}
+
+	public static int GetUsedLegionWarehouseSlots(Player player)
+	{
+		return player.InventoryItems.Count(item => item.Location == LegionWarehouseStorageId && item.ItemId != KinahItemId);
+	}
+
+	public static int GetFreeLegionWarehouseSlots(Player player)
+	{
+		return Math.Max(0, GetLegionWarehouseLimit(player) - GetUsedLegionWarehouseSlots(player));
 	}
 
 	private static bool IsNormalCubeItem(InventoryItem item, ItemTemplateTable itemTemplates)

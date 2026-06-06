@@ -4294,6 +4294,47 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CubeSourceSplitToFullLegionWarehouseSendsJavaFullMessageWithoutMutation()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5, accountId: 77);
+		player.LegionId = 88;
+		player.LegionLevel = 1;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x1000;
+		player.InventoryItems = player.InventoryItems
+			.Concat(CreateStorageFillerItems(location: 3, count: InventoryCapacity.GetLegionWarehouseLimit(player), ownerId: player.LegionId))
+			.ToArray();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(157, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteQ(2L);
+				buffer.WriteC(0);
+				buffer.WriteD(0);
+				buffer.WriteC(3);
+				buffer.WriteH(8);
+			}));
+
+		Assert.Equal(25, player.InventoryItems.Count);
+		var sourceItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(1001, sourceItem.OwnerId);
+		Assert.Equal(0, sourceItem.Location);
+		Assert.Equal(5, sourceItem.Count);
+		Assert.DoesNotContain(player.InventoryItems, item => item.ObjectId == 1);
+		Assert.Equal(0, repository.SaveItemSplitMutationCalls);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421));
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_LegionWarehouseSourceSplitsItemToCubeHistoryLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -4411,6 +4452,55 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 				expectedCount: 7,
 				expectedAddType: SmInventoryAddItem.ItemCollect,
 				expectedSlot: 11),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CubeSourceMoveToFullLegionWarehouseSendsJavaFullMessageAndUnlocksSource()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 7);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		player.LegionId = 77;
+		player.LegionLevel = 1;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x1000;
+		player.InventoryItems = player.InventoryItems
+			.Concat(CreateStorageFillerItems(location: 3, count: InventoryCapacity.GetLegionWarehouseLimit(player), ownerId: player.LegionId))
+			.ToArray();
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(156, buffer =>
+			{
+				buffer.WriteD(5001);
+				buffer.WriteC(0);
+				buffer.WriteC(3);
+				buffer.WriteH(8);
+			}));
+
+		Assert.Equal(25, player.InventoryItems.Count);
+		var unchangedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(1001, unchangedItem.OwnerId);
+		Assert.Equal(0, unchangedItem.Location);
+		Assert.Equal(12, unchangedItem.Slot);
+		Assert.Equal(7, unchangedItem.Count);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 7,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 12),
 			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
 	}
 
