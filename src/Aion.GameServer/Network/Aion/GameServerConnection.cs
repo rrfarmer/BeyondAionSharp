@@ -2871,10 +2871,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (packet.ActionType == 1)
 			await HandleLegionWarehouseKinahDepositAsync(player, packet.Amount);
 		else
-		{
-			// Java parity gap: successful legion warehouse Kinah withdrawal remains deferred until
-			// shared LegionWarehouse storage can be modeled safely for source-legion currency rows.
-		}
+			await HandleLegionWarehouseKinahWithdrawalAsync(player, packet.Amount);
 	}
 
 	private async Task HandleLegionWarehouseKinahDepositAsync(Player player, long amount)
@@ -2953,6 +2950,82 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 		await SendPacketAsync(new SmWarehouseUpdateItem(legionKinah, kinahTemplate, 3, SmInventoryUpdateItem.IncreaseKinahCollect));
 		// Java parity gap: LegionService.addHistory(KINAH_DEPOSIT) is not yet modeled.
+	}
+
+	private async Task HandleLegionWarehouseKinahWithdrawalAsync(Player player, long amount)
+	{
+		// Java parity: CM_LEGION_WH_KINAH action 0 -> LEGION_WAREHOUSE.tryDecreaseKinah(amount) ->
+		// inventory.increaseKinah(amount) through LegionStorageProxy.
+		if (amount <= 0)
+			return;
+
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var kinahTemplate = templates?.GetItemTemplate(KinahItemId);
+		if (kinahTemplate == null)
+			return;
+
+		var sourceKinah = GetMoveStorageItems(player, 3).FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == 3);
+		if (sourceKinah == null || sourceKinah.Count < amount)
+			return;
+
+		var cubeKinah = player.InventoryItems.FirstOrDefault(item => item.ItemId == KinahItemId && item.Location == 0);
+		var cubeKinahWasCreated = false;
+		if (cubeKinah == null)
+		{
+			if (_idFactory == null)
+				return;
+
+			cubeKinah = new InventoryItem
+			{
+				ObjectId = _idFactory.NextId(),
+				ItemId = KinahItemId,
+				Count = 0,
+				OwnerId = GetMoveStorageOwnerId(player, 0),
+				Location = 0,
+				Slot = 0,
+				TuneCount = 0,
+				PersistentState = InventoryItemPersistentState.New,
+			};
+			AddMoveStorageItem(player, 0, cubeKinah);
+			cubeKinahWasCreated = true;
+		}
+
+		var newSourceCount = sourceKinah.Count - amount;
+		var newCubeCount = cubeKinah.Count + amount;
+		if (newSourceCount + newCubeCount != sourceKinah.Count + cubeKinah.Count)
+		{
+			if (cubeKinahWasCreated)
+			{
+				RemoveMoveStorageItem(player, 0, cubeKinah);
+				_idFactory?.ReleaseId(cubeKinah.ObjectId);
+			}
+			return;
+		}
+
+		sourceKinah.Count = newSourceCount;
+		cubeKinah.Count = newCubeCount;
+
+		if (_playerEnterWorldService != null)
+		{
+			var saved = await _playerEnterWorldService.SaveItemMergeMutationAsync(player, sourceKinah, cubeKinah);
+			if (!saved)
+			{
+				sourceKinah.Count += amount;
+				cubeKinah.Count -= amount;
+				if (cubeKinahWasCreated)
+				{
+					RemoveMoveStorageItem(player, 0, cubeKinah);
+					_idFactory?.ReleaseId(cubeKinah.ObjectId);
+				}
+				return;
+			}
+		}
+
+		await SendPacketAsync(new SmWarehouseUpdateItem(sourceKinah, kinahTemplate, 3, SmInventoryUpdateItem.DecreaseKinahBuy));
+		if (cubeKinahWasCreated)
+			await SendStorageUpdatePacketAsync(player, CloneInventoryItemWithCount(cubeKinah, 0), kinahTemplate, 0, SmInventoryAddItem.ItemCollect);
+		await SendPacketAsync(new SmInventoryUpdateItem(cubeKinah, kinahTemplate, SmInventoryUpdateItem.IncreaseKinahCollect));
+		// Java parity gap: LegionService.addHistory(KINAH_WITHDRAW) is not yet modeled.
 	}
 
 	private static InventoryItem CloneInventoryItemWithCount(InventoryItem item, long count)
