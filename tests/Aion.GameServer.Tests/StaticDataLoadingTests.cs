@@ -3,6 +3,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Tests;
@@ -198,6 +199,34 @@ public sealed class StaticDataLoadingTests
 				Assert.Equal(42, quest.RepeatCount);
 				Assert.Equal(7, quest.Score);
 			});
+	}
+
+	[Fact]
+	public async Task StaticData_LoadsLegionDominionLocationsWithJavaL10nEncoding()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<legion_dominion_template>
+					<legion_dominion_location id="4" world_id="210070000" zone="LegionDominionArea_04" race="ELYOS" name_id="404633" />
+					<legion_dominion_location id="5" world_id="210070000" zone="LegionDominionArea_05" race="ELYOS" name_id="404634" />
+				</legion_dominion_template>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(2, staticData.LegionDominions.Count);
+		var location = staticData.LegionDominions.GetLocation(5);
+		Assert.NotNull(location);
+		Assert.Equal(5, location.Id);
+		Assert.Equal(404634, location.NameId);
+		Assert.Equal(ChatUtil.L10n(404634), location.L10n);
+		Assert.Null(staticData.LegionDominions.GetLocation(999));
 	}
 
 	[Fact]

@@ -11,6 +11,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -876,10 +877,12 @@ public sealed class CmLegionTests
 		outsider.LegionCurrentLegionDominion = 0;
 		var repository = new EmptyPlayerEnterWorldRepository();
 		var registry = new CapturingConnectionRegistry(bystander, outsider);
-		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		var runtimeContext = await CreateRuntimeContextWithLegionDominionDataAsync();
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry, runtimeContext);
 		var player = CreateBrigadeGeneralPlayer();
 		player.LegionCurrentLegionDominion = 0;
 		SetActivePlayer(pair.Connection, player);
+		var expectedDominionName = ChatUtil.L10n(404634);
 
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionDominionSelectionPacket(5));
 
@@ -896,14 +899,31 @@ public sealed class CmLegionTests
 			{
 				var message = Assert.IsType<SmSystemMessage>(packet);
 				Assert.Equal(1402902, message.MessageId);
-				Assert.Equal(["5"], message.Parameters);
+				Assert.Equal([expectedDominionName], message.Parameters);
 			},
 			packet => AssertLegionInfoPacket(packet, currentLegionDominion: 5));
 		Assert.Equal(2, registry.DirectPackets.Count(delivery => delivery.PlayerObjectId == bystander.ObjectId));
 		var directMessage = Assert.IsType<SmSystemMessage>(registry.DirectPackets[0].Packet);
 		Assert.Equal(1402902, directMessage.MessageId);
+		Assert.Equal([expectedDominionName], directMessage.Parameters);
 		AssertLegionInfoPacket(registry.DirectPackets[1].Packet, currentLegionDominion: 5);
 		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_DominionJoinFallsBackToIdWhenStaticDataMissing()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionCurrentLegionDominion = 0;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionDominionSelectionPacket(5));
+
+		var message = Assert.IsType<SmSystemMessage>(pair.SentPackets[0]);
+		Assert.Equal(1402902, message.MessageId);
+		Assert.Equal(["5"], message.Parameters);
 	}
 
 	[Fact]
@@ -1502,6 +1522,40 @@ public sealed class CmLegionTests
 			string.Empty,
 			string.Empty,
 			isOnline);
+	}
+
+	private static async Task<GameServerRuntimeContext> CreateRuntimeContextWithLegionDominionDataAsync()
+	{
+		var tempPath = Path.Combine(Path.GetTempPath(), "aion-cm-legion-" + Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempPath);
+		try
+		{
+			var cacheFile = Path.Combine(tempPath, "static_data.xml");
+			File.WriteAllText(
+				cacheFile,
+				"""
+				<?xml version="1.0" encoding="UTF-8"?>
+				<static_data>
+					<legion_dominion_template>
+						<legion_dominion_location id="5" world_id="210070000" zone="LegionDominionArea_05" race="ELYOS" name_id="404634" />
+					</legion_dominion_template>
+				</static_data>
+				""");
+			var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+			var dataManagerConstructor = typeof(DataManager).GetConstructor(
+				BindingFlags.Instance | BindingFlags.NonPublic,
+				null,
+				[typeof(StaticData)],
+				null);
+			Assert.NotNull(dataManagerConstructor);
+			var runtimeContext = new GameServerRuntimeContext();
+			runtimeContext.SetDataManager((DataManager)dataManagerConstructor.Invoke([staticData]));
+			return runtimeContext;
+		}
+		finally
+		{
+			Directory.Delete(tempPath, recursive: true);
+		}
 	}
 
 	private static byte[] CreateClientPayload(int opcode, Action<PacketBuffer> writeBody)

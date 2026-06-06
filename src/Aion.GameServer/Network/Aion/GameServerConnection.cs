@@ -3290,8 +3290,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task BroadcastLegionDominionJoinedAsync(Player player, int legionDominionId)
 	{
-		// Java uses LegionDominionLocation.getL10n(); dominion static l10n loading remains a narrower follow-up.
-		var dominionName = legionDominionId.ToString(CultureInfo.InvariantCulture);
+		var dominionName = GetLegionDominionL10n(legionDominionId);
 		player.LegionCurrentLegionDominion = legionDominionId;
 		await SendPacketAsync(SmSystemMessage.MsgGuildApplyDominion(dominionName));
 		await SendPacketAsync(SmLegionInfo.FromPlayer(player));
@@ -3315,6 +3314,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmSystemMessage.MsgGuildApplyDominion(dominionName));
 			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, SmLegionInfo.FromPlayer(player));
 		}
+	}
+
+	private string GetLegionDominionL10n(int legionDominionId)
+	{
+		// Java parity: LegionService.joinLegionDominion -> LegionDominionLocation.getL10n()
+		// -> LegionDominionLocationTemplate.getL10nId -> ChatUtil.l10n(name_id).
+		return _runtimeContext?.DataManager?.StaticData.LegionDominions.GetLocation(legionDominionId)?.L10n
+			?? legionDominionId.ToString(CultureInfo.InvariantCulture);
 	}
 
 	private async Task HandleLegionLeaveAsync(Player player)

@@ -72,6 +72,7 @@ public sealed class StaticData
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
 		ChallengeTaskTable challengeTasks,
+		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
 		WindstreamTable windstreamLocations,
 		Task? validationTask)
@@ -138,6 +139,7 @@ public sealed class StaticData
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
 		ChallengeTasks = challengeTasks;
+		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
 		WindstreamLocations = windstreamLocations;
 		ValidationTask = validationTask;
@@ -269,6 +271,8 @@ public sealed class StaticData
 
 	public ChallengeTaskTable ChallengeTasks { get; }
 
+	public LegionDominionTable LegionDominions { get; }
+
 	public AtreianPassportTable AtreianPassports { get; }
 
 	public WindstreamTable WindstreamLocations { get; }
@@ -370,6 +374,7 @@ public sealed class StaticData
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var questBonusItemGroups = new List<QuestBonusItemGroupProjection>();
 		var challengeTasks = new List<ChallengeTaskSummary>();
+		var legionDominions = new List<LegionDominionLocationSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
 		var windstreamLocations = new List<WindstreamLocationSummary>();
 		int currentWindstreamMapId = 0;
@@ -2510,6 +2515,17 @@ public sealed class StaticData
 			}
 
 			if (reader.Depth == 2
+				&& reader.LocalName == "legion_dominion_location"
+				&& elementPath.GetValueOrDefault(1) == "legion_dominion_template")
+			{
+				// Java parity: model/templates/LegionDominionLocationTemplate id/name_id used by L10n.getL10n.
+				legionDominions.Add(new LegionDominionLocationSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadRequiredIntAttribute(reader, "name_id")));
+				continue;
+			}
+
+			if (reader.Depth == 2
 				&& reader.LocalName == "login_event"
 				&& elementPath.GetValueOrDefault(1) == "login_events")
 			{
@@ -3314,6 +3330,7 @@ public sealed class StaticData
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
+			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			new WindstreamTable(windstreamLocations.AsReadOnly()),
 			validationTask);
