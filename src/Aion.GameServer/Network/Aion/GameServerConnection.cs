@@ -3998,6 +3998,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.DialogActionId == CmDialogSelect.OpenLegionWarehouse)
+		{
+			await HandleOpenLegionWarehouseDialogAsync(player, packet.TargetObjectId);
+			return;
+		}
+
 		if (packet.DialogActionId is CmDialogSelect.Buy or CmDialogSelect.BuyAgain or CmDialogSelect.TradeIn)
 		{
 			var plan = CreateNonLiveTradeDialogSelectPlan(player, packet);
@@ -4020,6 +4026,46 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		await StartChargingEquippedItemsAsync(player, packet.TargetObjectId, chargeWay);
+	}
+
+	private async Task HandleOpenLegionWarehouseDialogAsync(Player player, int targetObjectId)
+	{
+		// Java parity: DialogService.onDialogSelect OPEN_LEGION_WAREHOUSE -> LegionService.openLegionWarehouse.
+		if (NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, targetObjectId, CmDialogSelect.OpenLegionWarehouse, _world) !=
+			NpcDialogTargetingResult.Valid)
+		{
+			return;
+		}
+
+		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
+			return;
+
+		if (!HasLegionWarehouseRight(player, LegionWarehouseDepositPermission)
+			&& !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))
+		{
+			await SendPacketAsync(SmSystemMessage.GuildWarehouseNoRight());
+			return;
+		}
+
+		var itemTemplates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		if (itemTemplates == null)
+			return;
+
+		await SendPacketAsync(SmLegionEdit.WarehouseKinah(GetLegionWarehouseKinah(player)));
+		foreach (var packet in SmWarehouseInfo.CreateLegionWarehouseOpenPackets(
+			player,
+			itemTemplates,
+			_runtimeContext?.DataManager?.StaticData.ItemRestrictionCleanups))
+		{
+			await SendPacketAsync(packet);
+		}
+
+		await SendPacketAsync(new SmDialogWindow(targetObjectId, SmDialogWindow.LegionWarehousePageId));
+	}
+
+	private static long GetLegionWarehouseKinah(Player player)
+	{
+		return player.InventoryItems.FirstOrDefault(item => item.Location == 3 && item.ItemId == KinahItemId)?.Count ?? 0;
 	}
 
 	private QuestDialogNpcTargetBranchInputAssemblyPlan? CreateNonLiveTradeDialogSelectPlan(Player player, CmDialogSelect packet)

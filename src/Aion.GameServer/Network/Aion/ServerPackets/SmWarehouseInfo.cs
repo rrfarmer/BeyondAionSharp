@@ -9,6 +9,7 @@ public sealed class SmWarehouseInfo : GameServerPacket
 	public const int PacketOpCode = 168;
 	private const int RegularWarehouse = 1;
 	private const int AccountWarehouse = 2;
+	private const int LegionWarehouse = 3;
 	private const int KinahItemId = 182400001;
 	private const int ItemsPerPacket = 10;
 
@@ -51,6 +52,34 @@ public sealed class SmWarehouseInfo : GameServerPacket
 		var packets = new List<SmWarehouseInfo>();
 		AddRegularWarehousePackets(packets, player, itemTemplates, itemRestrictionCleanups);
 		packets.Add(new SmWarehouseInfo(AccountWarehouse, expandLevel: 0, isFirstPacket: false, Array.Empty<WarehousePacketItem>()));
+		return packets;
+	}
+
+	public static IReadOnlyList<SmWarehouseInfo> CreateLegionWarehouseOpenPackets(
+		Player player,
+		ItemTemplateTable itemTemplates,
+		ItemRestrictionCleanupTable? itemRestrictionCleanups = null)
+	{
+		// Java parity: services/LegionService.openLegionWarehouse builds SM_WAREHOUSE_INFO chunks
+		// with StorageType.LEGION_WAREHOUSE id and Legion.getWarehouseExpansions().
+		var packets = new List<SmWarehouseInfo>();
+		var legionItems = player.InventoryItems
+			.Where(item => item.Location == LegionWarehouse && item.ItemId != KinahItemId)
+			.OrderBy(item => item.Slot)
+			.ThenBy(item => item.ObjectId);
+		var items = BuildWarehouseItems(legionItems, itemTemplates, itemRestrictionCleanups);
+		var expandLevel = player.LegionWarehouseExpansions;
+		for (var offset = 0; offset < items.Length; offset += ItemsPerPacket)
+		{
+			packets.Add(
+				new SmWarehouseInfo(
+					LegionWarehouse,
+					expandLevel,
+					offset == 0,
+					items.Skip(offset).Take(ItemsPerPacket).ToArray()));
+		}
+
+		packets.Add(new SmWarehouseInfo(LegionWarehouse, expandLevel, isFirstPacket: items.Length == 0, Array.Empty<WarehousePacketItem>()));
 		return packets;
 	}
 

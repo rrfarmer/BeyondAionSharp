@@ -59,6 +59,62 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseSendsJavaPacketSequence()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9011, legionId: 77, legionLevel: 4);
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x1000;
+		player.InventoryItems =
+		[
+			new InventoryItem
+			{
+				ObjectId = 7101,
+				ItemId = SwordItemId,
+				Count = 1,
+				OwnerId = player.LegionId,
+				Location = 3,
+				Slot = 2,
+			},
+			new InventoryItem
+			{
+				ObjectId = 7102,
+				ItemId = KinahItemId,
+				Count = 98765,
+				OwnerId = player.LegionId,
+				Location = 3,
+			},
+		];
+		var npc = CreateExpansionNpc(9011, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertLegionWarehouseKinahPayload(Assert.IsType<SmLegionEdit>(packet), expectedKinah: 98765),
+			packet => AssertWarehouseInfoPayload(
+				Assert.IsType<SmWarehouseInfo>(packet),
+				expectedWarehouseType: 3,
+				expectedExpandLevel: 3,
+				expectedIsFirst: true,
+				expectedItemCount: 1,
+				expectedFirstObjectId: 7101,
+				expectedFirstItemId: SwordItemId),
+			packet => AssertWarehouseInfoPayload(
+				Assert.IsType<SmWarehouseInfo>(packet),
+				expectedWarehouseType: 3,
+				expectedExpandLevel: 3,
+				expectedIsFirst: false,
+				expectedItemCount: 0),
+			packet => AssertDialogWindowPayload(
+				Assert.IsType<SmDialogWindow>(packet),
+				expectedTargetObjectId: npc.ObjectId,
+				expectedPageId: SmDialogWindow.LegionWarehousePageId));
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_BuyTradeListRemainsDisabledAtSocketBoundaryUntilRoutingReady()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
@@ -477,6 +533,50 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		return frame[7..];
 	}
 
+	private static void AssertLegionWarehouseKinahPayload(SmLegionEdit packet, long expectedKinah)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(0x04, (int)reader.ReadC());
+		Assert.Equal(expectedKinah, reader.ReadQ());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertWarehouseInfoPayload(
+		SmWarehouseInfo packet,
+		int expectedWarehouseType,
+		int expectedExpandLevel,
+		bool expectedIsFirst,
+		int expectedItemCount,
+		int? expectedFirstObjectId = null,
+		int? expectedFirstItemId = null)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(expectedWarehouseType, (int)reader.ReadC());
+		Assert.Equal(expectedIsFirst ? 1 : 0, (int)reader.ReadC());
+		Assert.Equal(expectedExpandLevel, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(expectedItemCount, reader.ReadH());
+		if (expectedFirstObjectId.HasValue)
+		{
+			Assert.Equal(expectedFirstObjectId.Value, reader.ReadD());
+			Assert.Equal(expectedFirstItemId!.Value, reader.ReadD());
+		}
+	}
+
+	private static void AssertDialogWindowPayload(SmDialogWindow packet, int expectedTargetObjectId, int expectedPageId)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(expectedTargetObjectId, reader.ReadD());
+		Assert.Equal(expectedPageId, reader.ReadH());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static ItemTemplateTable CreateItemTemplates()
 	{
 		return new ItemTemplateTable([CreateItemTemplate(SwordItemId, price: 1_000)]);
@@ -500,6 +600,7 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	private const int SwordItemId = 100000001;
+	private const int KinahItemId = 182400001;
 	private const int MissingTemplateItemId = 100000099;
 
 	private sealed class StorageExpansionDialogFixture : IAsyncDisposable

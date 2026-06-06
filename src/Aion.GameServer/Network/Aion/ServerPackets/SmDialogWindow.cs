@@ -6,6 +6,7 @@ public sealed class SmDialogWindow : GameServerPacket
 {
 	public const int PacketOpCode = 60;
 	public const int MailPageId = 18;
+	public const int LegionWarehousePageId = 25;
 	public const int NoRightPageId = 27;
 
 	private readonly int _targetObjectId;
