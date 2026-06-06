@@ -1167,6 +1167,56 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleReplaceItemAsync_RegularWarehouseRestrictionSendsDenialAndUnlocksBothLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 999900202, count: 1);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		var replaceItem = new InventoryItem
+		{
+			ObjectId = 6001,
+			ItemId = 200,
+			Count = 2,
+			Location = 1,
+			Slot = 27,
+		};
+		player.InventoryItems = player.InventoryItems.Concat([replaceItem]).ToArray();
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 0, sourceItemObjectId: 5001, replaceStorageType: 1, replaceItemObjectId: 6001));
+
+		Assert.Equal(0, sourceItem.Location);
+		Assert.Equal(12, sourceItem.Slot);
+		Assert.Equal(1, replaceItem.Location);
+		Assert.Equal(27, replaceItem.Slot);
+		Assert.Equal(0, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300418),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 999900202,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 6001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedSlot: 27),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
 	public async Task HandleReplaceItemAsync_ShutdownSoonUnlocksBothItemsLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -5226,6 +5276,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 						<item_template id="100000500" name="Test Mythic Extraction Sword" level="65" mask="65536" item_group="SWORD" item_type="NORMAL" quality="MYTHIC" race="PC_ALL" max_stack_count="1"/>
 						{extractionRewardTemplateXml}
 						<item_template id="200" name="Test Decompose Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
+						<item_template id="999900202" name="Test Restricted Warehouse Reward" level="1" mask="115" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex0ItemId}" name="Test Selectable Reward 1" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="{selectableFixture.RewardIndex1ItemId}" name="Test Selectable Reward 2" level="1" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>
 						<item_template id="188053996" name="Restricted Assembly Reward" level="1" mask="123" item_group="NONE" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100"/>

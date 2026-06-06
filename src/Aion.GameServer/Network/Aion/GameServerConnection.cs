@@ -4320,12 +4320,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		var sourceRestrictionMessage = CreateRestrictedToStorageMessage(sourceItem, sourceTemplate, packet.ReplaceStorageType);
+		var replaceRestrictionMessage = CreateRestrictedToStorageMessage(replaceItem, replaceTemplate, packet.SourceStorageType);
 		var isShuttingDownSoon = _isShuttingDownSoon();
 		if (player.IsTrading
-			|| IsRestrictedToStorage(sourceItem, sourceTemplate, packet.ReplaceStorageType)
-			|| IsRestrictedToStorage(replaceItem, replaceTemplate, packet.SourceStorageType)
+			|| sourceRestrictionMessage != null
+			|| replaceRestrictionMessage != null
 			|| isShuttingDownSoon)
 		{
+			var restrictionMessage = sourceRestrictionMessage ?? replaceRestrictionMessage;
+			if (restrictionMessage != null)
+				await SendPacketAsync(restrictionMessage);
 			// Java parity: ItemMoveService.switchItemsInStorages restriction branch unlocks both items.
 			await SendStorageUpdatePacketAsync(player, sourceItem, sourceTemplate, packet.SourceStorageType, SmInventoryAddItem.AllSlot);
 			await SendStorageUpdatePacketAsync(player, replaceItem, replaceTemplate, packet.ReplaceStorageType, SmInventoryAddItem.AllSlot);
@@ -4392,13 +4397,13 @@ public sealed class GameServerConnection : BaseClientConnection
 		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
 	}
 
-	private static bool IsRestrictedToStorage(InventoryItem item, ItemTemplateSummary template, int storageType)
+	private static SmSystemMessage? CreateRestrictedToStorageMessage(InventoryItem item, ItemTemplateSummary template, int storageType)
 	{
 		return storageType switch
 		{
-			1 => !template.IsStorableInWarehouse,
-			2 => !item.IsStorableInAccountWarehouse(template),
-			_ => false,
+			1 when !template.IsStorableInWarehouse => SmSystemMessage.WarehouseCantDepositItem(),
+			2 when !item.IsStorableInAccountWarehouse(template) => SmSystemMessage.WarehouseCantAccountDeposit(),
+			_ => null,
 		};
 	}
 
