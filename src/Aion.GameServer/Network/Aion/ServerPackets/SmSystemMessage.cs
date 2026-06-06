@@ -305,6 +305,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300258, memberName);
 	}
 
+	public static SmSystemMessage GuildInviteHeRejectedInvitation(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_HE_REJECTED_INVITATION(String).
+		return new SmSystemMessage(1300259, memberName);
+	}
+
 	public static SmSystemMessage GuildInviteCanNotInviteOtherRace()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_INVITE_CAN_NOT_INVITE_OTHER_RACE.

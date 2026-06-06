@@ -1293,6 +1293,56 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteDenyConsumesRequestAndNotifiesInviterLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var player = CreateBrigadeGeneralPlayer();
+		var registry = new CapturingConnectionRegistry(player, target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+		pair.SentPackets.Clear();
+		registry.DirectPackets.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 0));
+
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Empty(pair.SentPackets);
+		var notification = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == player.ObjectId);
+		var message = Assert.IsType<SmSystemMessage>(notification.Packet);
+		Assert.Equal(1300259, message.MessageId);
+		Assert.Equal(["Lurion"], message.Parameters);
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteDenyWithoutPendingRequestIsSideEffectFreeLikeJava()
+	{
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		target.PendingLegionInviteRequest = new PendingLegionInviteRequest(
+			1001,
+			"Tester",
+			target.ObjectId,
+			target.Name,
+			77,
+			"Hydrated Legion",
+			4);
+		var registry = new CapturingConnectionRegistry(CreateBrigadeGeneralPlayer(), target);
+		await using var pair = await TestConnectionPair.CreateAsync(connectionRegistry: registry);
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 0));
+
+		Assert.NotNull(target.PendingLegionInviteRequest);
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Empty(pair.SentPackets);
+		Assert.Empty(registry.DirectPackets);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_BrigadeGeneralTransferStoresRequesterConfirmAndSendsQuestionLikeJava()
 	{
 		var target = CreateLegionPlayer(2002, "Lurion");

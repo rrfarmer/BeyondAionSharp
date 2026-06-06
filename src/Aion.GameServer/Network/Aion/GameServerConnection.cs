@@ -15702,6 +15702,12 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		if (packet.QuestionId == SmQuestionWindow.GuildInviteDoYouAcceptInvitation && packet.Response == 0)
+		{
+			await HandleLegionInviteDenyResponseAsync(responder, packet);
+			return;
+		}
+
 		if (packet.QuestionId != SmQuestionWindow.BuddyListAddBuddyRequest)
 			return;
 
@@ -15735,6 +15741,26 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		await AcceptFriendRequestAsync(requester, responder);
+	}
+
+	private async Task HandleLegionInviteDenyResponseAsync(Player responder, CmQuestionResponse packet)
+	{
+		// Java parity: LegionService.invitePlayerToLegion RequestResponseHandler.denyRequest.
+		var dispatch = responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
+		if (dispatch?.Request.Kind != QuestionResponseRequestKind.LegionInvite)
+			return;
+
+		var request = dispatch.Request.Payload as PendingLegionInviteRequest ?? responder.PendingLegionInviteRequest;
+		responder.PendingLegionInviteRequest = null;
+		if (request == null || _connectionRegistry == null)
+			return;
+
+		if (!_connectionRegistry.TryGetOnlinePlayerByName(request.InviterName, out var inviter) || inviter == null)
+			return;
+
+		await _connectionRegistry.SendPacketToPlayerAsync(
+			inviter.ObjectId,
+			SmSystemMessage.GuildInviteHeRejectedInvitation(responder.Name));
 	}
 
 	private void HandleVortexDefenderInvitationQuestionResponse(Player responder, CmQuestionResponse packet)
