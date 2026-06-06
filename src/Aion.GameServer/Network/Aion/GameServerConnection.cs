@@ -4311,6 +4311,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var passports = player.Passports.ToArray();
 		var deletedPassportIndexes = new HashSet<int>();
+		var fullInventoryBlockedPassportIds = new HashSet<int>();
 		var mutated = false;
 		for (var i = 0; i < passports.Length; i++)
 		{
@@ -4322,9 +4323,10 @@ public sealed class GameServerConnection : BaseClientConnection
 
 			if (staticData != null && InventoryCapacity.GetFreeCubeSlots(player, staticData.ItemTemplates) <= 0)
 			{
-				// Java parity: AtreianPassportService.takeReward checks Inventory.isFull before template level/expiry checks.
-				await SendPacketAsync(SmSystemMessage.FullInventory());
-				break;
+				// Java parity: AtreianPassportService.takeReward breaks only the timestamp loop for this passId.
+				if (fullInventoryBlockedPassportIds.Add(passport.PassportId))
+					await SendPacketAsync(SmSystemMessage.FullInventory());
+				continue;
 			}
 
 			var passportTemplate = staticData?.AtreianPassports.GetAtreianPassportId(passport.PassportId);
@@ -4364,8 +4366,9 @@ public sealed class GameServerConnection : BaseClientConnection
 				itemTemplates: staticData.ItemTemplates);
 			if (rewardPlan.InventoryFull)
 			{
-				await SendPacketAsync(SmSystemMessage.FullInventory());
-				break;
+				if (fullInventoryBlockedPassportIds.Add(passport.PassportId))
+					await SendPacketAsync(SmSystemMessage.FullInventory());
+				continue;
 			}
 
 			if (!rewardPlan.Succeeded)
