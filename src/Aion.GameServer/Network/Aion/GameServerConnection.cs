@@ -15806,6 +15806,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				_options.Network.GameServerId,
 				1300260,
 				responder.Name));
+		await BroadcastLegionInviteEmblemAsync(responder);
 		await BroadcastToOnlineLegionAsync(responder.LegionId, SmLegionEdit.RefreshAnnouncement);
 		await BroadcastLegionJoinTitleAsync(responder);
 	}
@@ -15842,6 +15843,31 @@ public sealed class GameServerConnection : BaseClientConnection
 			joinedPlayer.LegionId,
 			joinedPlayer.LegionName,
 			joinedPlayer.LegionRank);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				joinedPlayer.Position,
+				joinedPlayer.ObjectId,
+				packet,
+				includeSourcePlayer: true);
+			return;
+		}
+
+		if (_activePlayer?.ObjectId == joinedPlayer.ObjectId)
+			await SendPacketAsync(packet);
+	}
+
+	private async Task BroadcastLegionInviteEmblemAsync(Player joinedPlayer)
+	{
+		// Java parity: LegionService.addLegionMember broadcasts SM_LEGION_UPDATE_EMBLEM around the joined player.
+		var packet = new SmLegionUpdateEmblem(
+			joinedPlayer.LegionId,
+			joinedPlayer.LegionEmblemId,
+			joinedPlayer.LegionEmblemType,
+			joinedPlayer.LegionEmblemColorA,
+			joinedPlayer.LegionEmblemColorR,
+			joinedPlayer.LegionEmblemColorG,
+			joinedPlayer.LegionEmblemColorB);
 		if (_connectionRegistry != null)
 		{
 			await _connectionRegistry.BroadcastToVisiblePlayersAsync(

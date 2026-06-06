@@ -1450,7 +1450,20 @@ public sealed class CmLegionTests
 		foreach (var delivery in refreshPackets)
 			AssertLegionEditPacket(delivery.Packet, expectedType: 0x08);
 
-		var titleBroadcast = Assert.Single(registry.VisibleBroadcasts);
+		var emblemBroadcast = Assert.Single(registry.VisibleBroadcasts, broadcast => broadcast.Packet is SmLegionUpdateEmblem);
+		Assert.Equal(target.ObjectId, emblemBroadcast.SourceObjectId);
+		Assert.True(emblemBroadcast.IncludeSourcePlayer);
+		AssertLegionUpdateEmblemPacket(
+			emblemBroadcast.Packet,
+			legionId: 77,
+			emblemId: 3,
+			emblemType: 1,
+			colorA: 255,
+			colorR: 10,
+			colorG: 20,
+			colorB: 30);
+
+		var titleBroadcast = Assert.Single(registry.VisibleBroadcasts, broadcast => broadcast.Packet is SmLegionUpdateTitle);
 		Assert.Equal(target.ObjectId, titleBroadcast.SourceObjectId);
 		Assert.True(titleBroadcast.IncludeSourcePlayer);
 		AssertLegionUpdateTitlePacket(
@@ -2483,6 +2496,28 @@ public sealed class CmLegionTests
 		Assert.Equal(gameServerId, reader.ReadD());
 		Assert.Equal(messageId, reader.ReadD());
 		Assert.Equal(text, reader.ReadS());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertLegionUpdateEmblemPacket(
+		GameServerPacket packet,
+		int legionId,
+		int emblemId,
+		int emblemType,
+		int colorA,
+		int colorR,
+		int colorG,
+		int colorB)
+	{
+		var response = Assert.IsType<SmLegionUpdateEmblem>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(legionId, reader.ReadD());
+		Assert.Equal(emblemId, reader.ReadC());
+		Assert.Equal(emblemType, reader.ReadC());
+		Assert.Equal(colorA, reader.ReadC());
+		Assert.Equal(colorR, reader.ReadC());
+		Assert.Equal(colorG, reader.ReadC());
+		Assert.Equal(colorB, reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 
