@@ -150,7 +150,7 @@ public sealed class Player
 
 	public float ResurrectionPositionZ { get; set; }
 
-	public long ReposeEnergy { get; init; }
+	public long ReposeEnergy { get; set; }
 
 	public bool IsOnline { get; set; }
 

@@ -1,6 +1,7 @@
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Services;
@@ -9,11 +10,16 @@ public sealed class QuestRewardService
 {
 	private readonly GameServerRateOptions _rateOptions;
 	private readonly WorldNpcResourceStatsService _resourceStats;
+	private readonly LegionBonusRuntime? _legionBonuses;
 
-	public QuestRewardService(WorldNpcResourceStatsService resourceStats, GameServerOptions? options = null)
+	public QuestRewardService(
+		WorldNpcResourceStatsService resourceStats,
+		GameServerOptions? options = null,
+		GameServerRuntimeContext? runtimeContext = null)
 	{
 		_resourceStats = resourceStats;
 		_rateOptions = options?.Rates ?? new GameServerRateOptions();
+		_legionBonuses = runtimeContext?.LegionBonuses;
 	}
 
 	public async ValueTask<QuestDpRewardResult> ApplyDpRewardAsync(
@@ -95,6 +101,7 @@ public sealed class QuestRewardService
 		bool isDaeva = true,
 		IReadOnlyList<float>? xpQuestRates = null)
 	{
+		var effectiveHasLegionBonus = hasLegionBonus || HasActiveLegionBonus(player);
 		return CreateXpRewardPlanFromRates(
 			player,
 			experienceTable,
@@ -103,9 +110,49 @@ public sealed class QuestRewardService
 			npcName,
 			noExp,
 			questXpBoostStat,
-			hasLegionBonus,
+			effectiveHasLegionBonus,
 			salvationPercent,
 			isDaeva);
+	}
+
+	public QuestXpRewardApplicationResult ApplyXpReward(
+		Player? player,
+		PlayerExperienceTable experienceTable,
+		long rewardXp,
+		string? npcName = null,
+		bool noExp = false,
+		int questXpBoostStat = 100,
+		bool hasLegionBonus = false,
+		byte salvationPercent = 0,
+		bool isDaeva = true,
+		IReadOnlyList<float>? xpQuestRates = null)
+	{
+		var plan = CreateXpRewardPlan(
+			player,
+			experienceTable,
+			rewardXp,
+			npcName,
+			noExp,
+			questXpBoostStat,
+			hasLegionBonus,
+			salvationPercent,
+			isDaeva,
+			xpQuestRates);
+		if (!plan.Applied || player == null)
+			return QuestXpRewardApplicationResult.Skipped(plan);
+
+		var shouldSendStatUpdate = plan.CurrentExp != plan.PreviousExp
+			|| plan.PreviousLevel == 0 && plan.CurrentExp == 0;
+		player.Exp = plan.CurrentExp;
+		player.Level = plan.CurrentLevel;
+		player.ReposeEnergy = plan.CurrentReposeEnergy;
+
+		var packets = new List<GameServerPacket>();
+		if (shouldSendStatUpdate)
+			packets.Add(new SmStatUpdateExp(player, experienceTable));
+		packets.AddRange(CreateXpSystemMessagePackets(plan));
+
+		return QuestXpRewardApplicationResult.Applied(plan, packets);
 	}
 
 	public static QuestXpRewardPlan CreateXpRewardPlanFromRates(
@@ -437,6 +484,11 @@ public sealed class QuestRewardService
 		};
 	}
 
+	private bool HasActiveLegionBonus(Player? player)
+	{
+		return player?.LegionId > 0 && (_legionBonuses?.IsActive(player.LegionId) ?? false);
+	}
+
 	private static IReadOnlyList<QuestXpRewardPacketIntent> CreateXpPacketIntents(int previousLevel, int currentLevel)
 	{
 		var intents = new List<QuestXpRewardPacketIntent>();
@@ -623,6 +675,49 @@ public enum QuestGpRewardStatus
 	MissingPlayer,
 	NoGpReward,
 	GpBoundarySkipped,
+}
+
+public sealed record QuestXpRewardApplicationResult(
+	QuestXpRewardPlan Plan,
+	bool DidMutatePlayer,
+	IReadOnlyList<GameServerPacket> Packets,
+	string JavaSource)
+{
+	public QuestXpRewardStatus Status => Plan.Status;
+
+	public int ObjectId => Plan.ObjectId;
+
+	public long PreviousExp => Plan.PreviousExp;
+
+	public long CurrentExp => Plan.CurrentExp;
+
+	public int PreviousLevel => Plan.PreviousLevel;
+
+	public int CurrentLevel => Plan.CurrentLevel;
+
+	public long PreviousReposeEnergy => Plan.PreviousReposeEnergy;
+
+	public long CurrentReposeEnergy => Plan.CurrentReposeEnergy;
+
+	public static QuestXpRewardApplicationResult Applied(
+		QuestXpRewardPlan plan,
+		IReadOnlyList<GameServerPacket> packets)
+	{
+		return new QuestXpRewardApplicationResult(
+			plan,
+			DidMutatePlayer: true,
+			packets,
+			"PlayerCommonData.addExp -> setExp mutates exp/level/repose and sends XP packets");
+	}
+
+	public static QuestXpRewardApplicationResult Skipped(QuestXpRewardPlan plan)
+	{
+		return new QuestXpRewardApplicationResult(
+			plan,
+			DidMutatePlayer: false,
+			Array.Empty<GameServerPacket>(),
+			plan.JavaSource);
+	}
 }
 
 public sealed record QuestXpRewardPlan(

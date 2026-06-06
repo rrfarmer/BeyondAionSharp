@@ -337,6 +337,83 @@ public sealed class QuestRewardServiceTests
 	}
 
 	[Fact]
+	public void ApplyXpReward_UsesRuntimeLegionBonusAndMutatesPlayerState()
+	{
+		var runtimeContext = new GameServerRuntimeContext();
+		Assert.True(runtimeContext.LegionBonuses.TryActivate(77, LegionBonusRuntime.OnlineMemberThreshold));
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					XpQuestRates = [1f],
+				},
+			},
+			runtimeContext);
+		var player = CreatePlayer(
+			objectId: 1315,
+			playerClass: "RANGER",
+			dp: 500,
+			level: 15,
+			exp: 14_000,
+			legionId: 77);
+
+		var result = service.ApplyXpReward(
+			player,
+			CreateLinearExperienceTable(),
+			rewardXp: 200,
+			npcName: "legion quest");
+
+		Assert.Equal(QuestXpRewardStatus.Applied, result.Status);
+		Assert.True(result.DidMutatePlayer);
+		Assert.Equal(220, result.Plan.AppliedBaseXp);
+		Assert.Equal(220, result.Plan.FinalRewardXp);
+		Assert.Equal(14_220, result.CurrentExp);
+		Assert.Equal(14_220, player.Exp);
+		Assert.Equal(result.CurrentLevel, player.Level);
+		Assert.Collection(
+			result.Packets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
+	public void ApplyXpReward_LeavesJavaRateUnboostedWhenRuntimeLegionBonusIsInactive()
+	{
+		var service = CreateService(
+			out _,
+			new GameServerOptions
+			{
+				Rates = new GameServerRateOptions
+				{
+					XpQuestRates = [1f],
+				},
+			},
+			new GameServerRuntimeContext());
+		var player = CreatePlayer(
+			objectId: 1316,
+			playerClass: "RANGER",
+			dp: 500,
+			level: 15,
+			exp: 14_000,
+			legionId: 77);
+
+		var result = service.ApplyXpReward(
+			player,
+			CreateLinearExperienceTable(),
+			rewardXp: 200);
+
+		Assert.True(result.DidMutatePlayer);
+		Assert.Equal(200, result.Plan.AppliedBaseXp);
+		Assert.Equal(14_200, player.Exp);
+		Assert.Collection(
+			result.Packets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet => Assert.IsType<SmSystemMessage>(packet));
+	}
+
+	[Fact]
 	public void CreateXpRewardPlan_RecordsJavaGuardsAndNonDaevaLevelCap()
 	{
 		var service = CreateService(out _);
@@ -602,14 +679,15 @@ public sealed class QuestRewardServiceTests
 
 	private static QuestRewardService CreateService(
 		out CapturingConnectionRegistry registry,
-		GameServerOptions? options = null)
+		GameServerOptions? options = null,
+		GameServerRuntimeContext? runtimeContext = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
 			new WorldNpcLifeStatsService(new WorldNpcDeathDropWorkflowService(null!, null!)),
 			registry,
 			new PlayerVisualStatsUpdateService(registry));
-		return new QuestRewardService(resourceStats, options);
+		return new QuestRewardService(resourceStats, options, runtimeContext);
 	}
 
 	private static Player CreatePlayer(
@@ -622,11 +700,13 @@ public sealed class QuestRewardServiceTests
 		int level = 10,
 		long exp = 0,
 		long reposeEnergy = 0,
+		int legionId = 0,
 		WorldPosition? position = null)
 	{
 		return new Player
 		{
 			ObjectId = objectId,
+			LegionId = legionId,
 			Race = "ELYOS",
 			PlayerClass = playerClass,
 			Level = level,
