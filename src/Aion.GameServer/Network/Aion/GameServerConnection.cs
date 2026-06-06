@@ -4320,6 +4320,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (!packet.Passports.TryGetValue(passport.PassportId, out var timestamps) || !timestamps.Contains(passport.ArriveEpochSeconds))
 				continue;
 
+			if (staticData != null && InventoryCapacity.GetFreeCubeSlots(player, staticData.ItemTemplates) <= 0)
+			{
+				// Java parity: AtreianPassportService.takeReward checks Inventory.isFull before template level/expiry checks.
+				await SendPacketAsync(SmSystemMessage.FullInventory());
+				break;
+			}
+
 			var passportTemplate = staticData?.AtreianPassports.GetAtreianPassportId(passport.PassportId);
 			if (passportTemplate == null)
 				continue;
@@ -4346,13 +4353,6 @@ public sealed class GameServerConnection : BaseClientConnection
 					mutated = true;
 				}
 				continue;
-			}
-
-			if (InventoryCapacity.GetFreeCubeSlots(player, staticData.ItemTemplates) <= 0)
-			{
-				// Java parity: AtreianPassportService.takeReward checks Inventory.isFull before ItemService.addItem.
-				await SendPacketAsync(SmSystemMessage.FullInventory());
-				break;
 			}
 
 			var rewardPlan = InventoryAddService.CreateAddItemPlan(
