@@ -2033,6 +2033,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300322);
 	}
 
+	public static SmSystemMessage NoGuildToDeposit()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_NO_GUILD_TO_DEPOSIT. Legion membership is required for the Legion warehouse.
+		return new SmSystemMessage(1300278);
+	}
+
 	public static SmSystemMessage WarehouseCantDepositItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM. You cannot store this in the warehouse.

@@ -404,6 +404,8 @@ public class GamePacketTests
 		AssertSystemMessage(SmSystemMessage.DontRankUp(), 1390233);
 		AssertSystemMessage(SmSystemMessage.DontRankUpGathering(), 1390253);
 		AssertSystemMessage(SmSystemMessage.CraftCantExtendGrandMaster(), 1400286);
+		AssertSystemMessage(SmSystemMessage.NoGuildToDeposit(), 1300278);
+		AssertSystemMessage(SmSystemMessage.GuildWarehouseNoRight(), 1300322);
 		AssertSystemMessage(SmSystemMessage.PartyHeRejectInvitation("Responder"), 1300161, "Responder");
 		AssertSystemMessage(SmSystemMessage.PartyInvitedHim("Invited"), 1300173, "Invited");
 		AssertSystemMessage(SmSystemMessage.PartyAllianceHeRejectInvitation("Responder"), 1300190, "Responder");

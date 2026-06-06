@@ -4038,7 +4038,10 @@ public sealed class GameServerConnection : BaseClientConnection
 		}
 
 		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
+		{
+			await SendPacketAsync(SmSystemMessage.NoGuildToDeposit());
 			return;
+		}
 
 		if (!HasLegionWarehouseRight(player, LegionWarehouseDepositPermission)
 			&& !HasLegionWarehouseRight(player, LegionWarehouseWithdrawalPermission))

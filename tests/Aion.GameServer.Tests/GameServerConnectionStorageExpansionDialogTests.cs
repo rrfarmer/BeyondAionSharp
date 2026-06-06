@@ -115,6 +115,38 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseWithoutLegionSendsJavaDenial()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9012);
+		var npc = CreateExpansionNpc(9012, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300278);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseWithoutWarehouseRightsSendsJavaDenial()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9013, legionId: 77, legionLevel: 4);
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0;
+		var npc = CreateExpansionNpc(9013, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300322);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_BuyTradeListRemainsDisabledAtSocketBoundaryUntilRoutingReady()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
@@ -574,6 +606,19 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 		Assert.Equal(0, reader.ReadD());
 		Assert.Equal(0, reader.ReadH());
 		Assert.Equal(0, reader.ReadH());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertSystemMessagePayload(SmSystemMessage packet, int expectedMessageId)
+	{
+		var payload = SerializeUnencryptedPayload(packet);
+		using var reader = new PacketBuffer(payload);
+		Assert.Equal(25, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(expectedMessageId, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, (int)reader.ReadC());
 		Assert.Equal(0, reader.Remaining);
 	}
 
