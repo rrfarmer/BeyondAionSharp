@@ -368,6 +368,51 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesDivinePointsAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1007, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1007, "REWARD", QuestVars: 0xEF, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1008,
+			Name = "QuestFinishDpBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Dp = 100,
+			IsOnline = true,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1007,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.RegistryPackets,
+			packet => Assert.IsType<SmDpInfo>(packet),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => Assert.IsType<SmEmotion>(packet),
+			packet => Assert.IsType<SmStatUpdateDp>(packet));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmQuestAction>(packet));
+		Assert.Equal(700, player.Dp);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -427,12 +472,14 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			GameServerConnection connection,
 			StaticData staticData,
 			List<GameServerPacket> sentPackets,
+			CapturingConnectionRegistry connectionRegistry,
 			string tempRoot)
 		{
 			_client = client;
 			_connection = connection;
 			StaticData = staticData;
 			SentPackets = sentPackets;
+			ConnectionRegistry = connectionRegistry;
 			_tempRoot = tempRoot;
 		}
 
@@ -441,6 +488,10 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		public StaticData StaticData { get; }
 
 		public List<GameServerPacket> SentPackets { get; }
+
+		public CapturingConnectionRegistry ConnectionRegistry { get; }
+
+		public List<GameServerPacket> RegistryPackets => ConnectionRegistry.PacketOrder;
 
 		public static async Task<QuestFinishDialogFixture> CreateAsync()
 		{
@@ -488,6 +539,9 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						<quest id="1006" can_report="true" reward_repeat_count="1">
 							<rewards ap="200" />
 						</quest>
+						<quest id="1007" can_report="true" reward_repeat_count="1">
+							<rewards dp="600" />
+						</quest>
 					</quests>
 				</static_data>
 				""");
@@ -500,6 +554,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			var world = new GameWorld(NullLogger<GameWorld>.Instance);
 			world.Initialize();
 			var sentPackets = new List<GameServerPacket>();
+			var connectionRegistry = new CapturingConnectionRegistry();
 
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -520,10 +575,11 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					world: world,
+					connectionRegistry: connectionRegistry,
 					idFactory: new IDFactory(),
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
-				return new QuestFinishDialogFixture(client, connection, dataManager.StaticData, sentPackets, tempRoot);
+				return new QuestFinishDialogFixture(client, connection, dataManager.StaticData, sentPackets, connectionRegistry, tempRoot);
 			}
 			finally
 			{
@@ -537,6 +593,79 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 			_client.Dispose();
 			if (Directory.Exists(_tempRoot))
 				Directory.Delete(_tempRoot, recursive: true);
+		}
+	}
+
+	private sealed class CapturingConnectionRegistry : IGameClientConnectionRegistry
+	{
+		public List<GameServerPacket> PacketOrder { get; } = [];
+
+		public void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection)
+		{
+		}
+
+		public bool TryGetOnlinePlayerByName(string playerName, out Player? player)
+		{
+			player = null;
+			return false;
+		}
+
+		public void ForEachOnlinePlayer(Action<Player> action)
+		{
+		}
+
+		public Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet)
+		{
+			PacketOrder.Add(packet);
+			return Task.FromResult(true);
+		}
+
+		public Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastToVisiblePlayersAsync(
+			WorldPosition sourcePosition,
+			int sourceObjectId,
+			GameServerPacket packet,
+			bool includeSourcePlayer = false,
+			Func<Player, bool>? filter = null)
+		{
+			PacketOrder.Add(packet);
+			return Task.FromResult(1);
+		}
+
+		public Task<int> RefreshHousingVisibilityAsync(
+			IReadOnlyList<WorldHouse> houses,
+			HousingTemplateTable? housingTemplates,
+			int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> RefreshNpcVisibilityAsync(IReadOnlyList<IWorldNpcObject> npcs, int? playerObjectId = null)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<int> BroadcastHouseUpdateAsync(WorldHouse house, HousingTemplateTable? housingTemplates)
+		{
+			return Task.FromResult(0);
+		}
+
+		public Task<bool> NotifyMailReceivedAsync(int recipientObjectId, PlayerMail mail)
+		{
+			return Task.FromResult(false);
+		}
+
+		public Task<bool> NotifyBrokerSettledAsync(int sellerObjectId, long settledKinah)
+		{
+			return Task.FromResult(false);
 		}
 	}
 }

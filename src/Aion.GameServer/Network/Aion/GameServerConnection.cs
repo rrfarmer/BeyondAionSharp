@@ -5273,6 +5273,9 @@ public sealed class GameServerConnection : BaseClientConnection
 						staticData,
 						cancellationToken);
 					break;
+				case QuestFinishRewardNonItemAction.DivinePoints:
+					await questRewardService.ApplyDpRewardAsync(player, checked((int)reward.Amount));
+					break;
 				default:
 					return true;
 			}
@@ -5628,7 +5631,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				descriptor.Action is not QuestFinishRewardNonItemAction.Kinah
 					and not QuestFinishRewardNonItemAction.Experience
 					and not QuestFinishRewardNonItemAction.Title
-					and not QuestFinishRewardNonItemAction.AbyssPoints))
+					and not QuestFinishRewardNonItemAction.AbyssPoints
+					and not QuestFinishRewardNonItemAction.DivinePoints))
 		{
 			return false;
 		}
