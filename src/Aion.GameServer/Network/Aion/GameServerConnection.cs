@@ -4815,14 +4815,11 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (staticData == null || itemTemplates == null || packet.ItemObjectIds.Count == 0)
 			return;
 
-		var selectedObjectIds = packet.ItemObjectIds.ToHashSet();
 		var inventoryItems = player.InventoryItems.ToList();
 		var completedChargeWays = new HashSet<int>();
-		foreach (var selectedItem in inventoryItems
-			.Where(item => selectedObjectIds.Contains(item.ObjectId) && item.Location == CubeStorageId)
-			.ToArray())
+		foreach (var itemObjectId in packet.ItemObjectIds)
 		{
-			var currentItem = inventoryItems.FirstOrDefault(item => item.ObjectId == selectedItem.ObjectId);
+			var currentItem = inventoryItems.FirstOrDefault(item => item.ObjectId == itemObjectId && item.Location == CubeStorageId);
 			if (currentItem == null)
 				continue;
 

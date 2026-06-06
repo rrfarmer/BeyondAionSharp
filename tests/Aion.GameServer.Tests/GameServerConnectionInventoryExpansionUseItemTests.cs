@@ -615,6 +615,33 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleChargeItemAsync_ProcessesSelectedItemsInPacketOrderLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreateChargeAllPaymentPlayerWithTwoItems();
+		player.AbyssRank = PlayerAbyssRank.Default() with { Ap = 500 };
+
+		await InvokeHandleChargeItemAsync(fixture.Connection, player, CreateChargeItems(chargeLevel: 1, 7002, 7001));
+
+		Assert.Equal(0, player.AbyssRank.Ap);
+		Assert.Equal(1, repository.SaveItemChargeMutationCalls);
+		Assert.Equal(0, repository.ChargePaymentAbyssRank?.Ap);
+		var firstInventoryItem = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7001);
+		var packetFirstItem = Assert.Single(player.InventoryItems, inventoryItem => inventoryItem.ObjectId == 7002);
+		Assert.Equal(0, firstInventoryItem.Charge);
+		Assert.Equal(ItemChargeService.Level1ChargePoints, packetFirstItem.Charge);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300965, "500"),
+			packet => Assert.IsType<SmAbyssRank>(packet),
+			packet => AssertChargeInventoryUpdatePayload(Assert.IsType<SmInventoryUpdateItem>(packet), expectedObjectId: 7002),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401335, "Test Conditioning Sword", "1"),
+			packet => Assert.IsType<SmStatsInfo>(packet),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1401340));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_SaveFailureStopsBeforeInMemoryMutationAndPackets()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeMutationResult = false };
@@ -3264,11 +3291,17 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 
 	private static CmChargeItem CreateChargeItem(int itemObjectId, int chargeLevel)
 	{
+		return CreateChargeItems(chargeLevel, itemObjectId);
+	}
+
+	private static CmChargeItem CreateChargeItems(int chargeLevel, params int[] itemObjectIds)
+	{
 		using var writer = new PacketBuffer();
 		writer.WriteD(0);
 		writer.WriteC((byte)chargeLevel);
-		writer.WriteH(1);
-		writer.WriteD(itemObjectId);
+		writer.WriteH(itemObjectIds.Length);
+		foreach (var itemObjectId in itemObjectIds)
+			writer.WriteD(itemObjectId);
 		var packet = new CmChargeItem(78, new HashSet<GameConnectionState> { GameConnectionState.InGame });
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
