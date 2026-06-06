@@ -5017,6 +5017,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestFinishAutoRewardAsync(player, packet))
 			return;
 
+		if (await TryHandleNpcTargetQuestSetSucceedCloseDialogAsync(player, packet))
+			return;
+
 		if (await TryHandleNpcTargetQuestRewardSelectionPageAsync(player, packet))
 			return;
 
@@ -5260,6 +5263,59 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		const int exchangeCoin = 59;
 		return packet.QuestId != 0 || packet.DialogActionId is CmDialogSelect.UseObject or exchangeCoin;
+	}
+
+	private async Task<bool> TryHandleNpcTargetQuestSetSucceedCloseDialogAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestEndDialog handles SET_SUCCEED
+		// by closing the dialog window without finishing the quest.
+		if (packet.DialogActionId != CmDialogSelect.SetSucceed
+			|| packet.QuestId <= 0
+			|| packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null
+			|| !staticData.QuestFinishRewardProjections.TryGetQuest(packet.QuestId, out var projectionEntry)
+			|| projectionEntry == null
+			|| projectionEntry.Template.CanReport != true)
+		{
+			return false;
+		}
+
+		var questState = player.Quests.FirstOrDefault(quest => quest.QuestId == packet.QuestId);
+		if (questState == null || !string.Equals(questState.Status, "REWARD", StringComparison.Ordinal))
+			return false;
+
+		var interactionPlan = NpcDialogInteractionAllowedPlanService.CreatePlan(
+			new NpcDialogInteractionAllowedInput(
+				player.ObjectId,
+				SubDialogType: npc.Template.SubDialogType,
+				SubDialogValue: npc.Template.SubDialogValue,
+				PlayerHasSubDialogSkill: player.Skills.Any(skill => skill.SkillId == npc.Template.SubDialogValue),
+				PlayerHasSubDialogItem: player.InventoryItems.Any(item => item.ItemId == npc.Template.SubDialogValue),
+				PlayerHasReturnItem: player.InventoryItems.Any(item => item.ItemId == 164000335),
+				PlayerAbyssRankId: player.AbyssRank.Rank,
+				PlayerAbyssRankingPosition: player.AbyssRank.RankingListPosition,
+				PlayerHasLegion: player.LegionId > 0,
+				PlayerLevel: player.Level));
+		if (!interactionPlan.IsAllowed)
+			return false;
+
+		await SendPacketAsync(new SmDialogWindow(packet.TargetObjectId, 0, 0), cancellationToken);
+		return true;
 	}
 
 	private async Task<bool> TryHandleNpcTargetQuestRewardSelectionPageAsync(

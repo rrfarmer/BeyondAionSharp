@@ -30,6 +30,7 @@ public sealed class CmDialogSelect : GameClientPacket
 	public const int Select1_1 = 1012;
 	public const int SelectNone1 = 4763;
 	public const int SelectNone2 = 4848;
+	public const int SetSucceed = 10255;
 	public const int QuestAcceptSimple = 20000;
 	public const int QuestRefuseSimple = 20001;
 	public const int CheckUserHasQuestItemSimple = 20002;

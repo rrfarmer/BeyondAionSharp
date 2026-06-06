@@ -238,6 +238,41 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetSetSucceedClosesDialogWithoutFinishingRewardQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1001, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+		var rewardQuestState = new PlayerQuestState(1001, "REWARD", QuestVars: 5, Flags: 0, CompleteCount: 0, RewardGroup: 0);
+		var player = new Player
+		{
+			ObjectId = 54,
+			Name = "SetSucceedBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.SetSucceed,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 0, questId: 0));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Same(rewardQuestState, unchangedQuest);
+		Assert.Equal("REWARD", unchangedQuest.Status);
+		Assert.Equal(0, unchangedQuest.RewardGroup);
+		Assert.Equal(5, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_NpcTargetQuestAcceptSimpleStartsQuestAndClosesDialog()
 	{
 		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
