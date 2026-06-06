@@ -4350,10 +4350,6 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleReplaceItemAsync(Player player, CmReplaceItem packet)
 	{
 		// Java parity: network/aion/clientpackets/CM_REPLACE_ITEM.runImpl -> ItemMoveService.switchItemsInStorages.
-		// Restrictions (trading/shutdown) are checked like CM_MOVE_ITEM.
-		if (player.IsTrading)
-			return;
-
 		var sourceItem = player.InventoryItems.FirstOrDefault(
 			i => i.ObjectId == packet.SourceItemObjectId && i.Location == packet.SourceStorageType);
 		if (sourceItem == null)
@@ -4364,9 +4360,62 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (replaceItem == null)
 			return;
 
+		var templates = _runtimeContext?.DataManager?.StaticData.ItemTemplates;
+		var sourceTemplate = templates?.GetItemTemplate(sourceItem.ItemId);
+		var replaceTemplate = templates?.GetItemTemplate(replaceItem.ItemId);
+		if (sourceTemplate == null || replaceTemplate == null)
+			return;
+
+		if (packet.SourceStorageType == 3 || packet.ReplaceStorageType == 3)
+		{
+			// Legion warehouse requires LegionService history/permission integration; deferred.
+			return;
+		}
+
+		if (player.IsTrading
+			|| IsRestrictedToStorage(sourceItem, sourceTemplate, packet.ReplaceStorageType)
+			|| IsRestrictedToStorage(replaceItem, replaceTemplate, packet.SourceStorageType))
+		{
+			// Java parity: ItemMoveService.switchItemsInStorages restriction branch unlocks both items.
+			await SendStorageUpdatePacketAsync(player, sourceItem, sourceTemplate, packet.SourceStorageType, SmInventoryAddItem.AllSlot);
+			await SendStorageUpdatePacketAsync(player, replaceItem, replaceTemplate, packet.ReplaceStorageType, SmInventoryAddItem.AllSlot);
+			return;
+		}
+
 		if (packet.SourceStorageType != packet.ReplaceStorageType)
 		{
-			// Java parity: cross-storage switch requires StorageType add/remove — deferred until cross-storage item swap is ported.
+			var sourceOldLocation = sourceItem.Location;
+			var sourceCrossStorageOldSlot = sourceItem.Slot;
+			var replaceOldLocation = replaceItem.Location;
+			var replaceCrossStorageOldSlot = replaceItem.Slot;
+
+			sourceItem.Location = replaceOldLocation;
+			sourceItem.Slot = replaceCrossStorageOldSlot;
+			replaceItem.Location = sourceOldLocation;
+			replaceItem.Slot = sourceCrossStorageOldSlot;
+
+			if (_playerEnterWorldService != null)
+			{
+				var savedSource = await _playerEnterWorldService.SaveItemCrossStorageMoveMutationAsync(
+					player, sourceItem.ObjectId, sourceItem.Location, sourceItem.Slot);
+				var savedReplace = savedSource
+					&& await _playerEnterWorldService.SaveItemCrossStorageMoveMutationAsync(
+						player, replaceItem.ObjectId, replaceItem.Location, replaceItem.Slot);
+				if (!savedReplace)
+				{
+					sourceItem.Location = sourceOldLocation;
+					sourceItem.Slot = sourceCrossStorageOldSlot;
+					replaceItem.Location = replaceOldLocation;
+					replaceItem.Slot = replaceCrossStorageOldSlot;
+					return;
+				}
+			}
+
+			// Java parity: ItemMoveService.switchItemsInStorages sends deletes for both old storages before add packets.
+			await SendItemDeletePacketAsync(player, sourceOldLocation, sourceItem.ObjectId, SmDeleteItem.MoveDeleteType);
+			await SendItemDeletePacketAsync(player, replaceOldLocation, replaceItem.ObjectId, SmDeleteItem.MoveDeleteType);
+			await SendStorageUpdatePacketAsync(player, replaceItem, replaceTemplate, sourceOldLocation, SmInventoryAddItem.ItemCollect);
+			await SendStorageUpdatePacketAsync(player, sourceItem, sourceTemplate, replaceOldLocation, SmInventoryAddItem.ItemCollect);
 			return;
 		}
 
@@ -4386,6 +4435,56 @@ public sealed class GameServerConnection : BaseClientConnection
 			await _playerEnterWorldService.SaveInventoryItemSlotAsync(player, replaceItem.ObjectId, sourceOldSlot);
 		}
 		// Java parity: same-storage switch sends no response packet; client already reordered its UI.
+	}
+
+	private static bool IsRestrictedToStorage(InventoryItem item, ItemTemplateSummary template, int storageType)
+	{
+		return storageType switch
+		{
+			1 => !template.IsStorableInWarehouse,
+			2 => !item.IsStorableInAccountWarehouse(template),
+			_ => false,
+		};
+	}
+
+	private async Task SendItemDeletePacketAsync(Player player, int storageType, int itemObjectId, int deleteType)
+	{
+		if (storageType == 0)
+			await SendPacketAsync(new SmDeleteItem(itemObjectId, deleteType));
+		else
+			await SendPacketAsync(new SmDeleteWarehouseItem(storageType, itemObjectId, deleteType));
+		await SendPacketAsync(CreateStorageSizePacket(player, storageType));
+	}
+
+	private async Task SendStorageUpdatePacketAsync(
+		Player player,
+		InventoryItem item,
+		ItemTemplateSummary template,
+		int storageType,
+		int addType)
+	{
+		if (storageType == 0)
+			await SendPacketAsync(new SmInventoryAddItem([new SmInventoryAddItem.InventoryPacketItem(item, template)], addType));
+		else
+			await SendPacketAsync(new SmWarehouseAddItem(storageType, [new SmWarehouseAddItem.WarehousePacketItem(item, template)], addType));
+		await SendPacketAsync(CreateStorageSizePacket(player, storageType));
+	}
+
+	private static SmCubeUpdate CreateStorageSizePacket(Player player, int storageType)
+	{
+		return storageType switch
+		{
+			0 => SmCubeUpdate.CubeSizeSnapshot(
+				player.InventoryItems.Count(item => item.Location == 0 && item.ItemId != KinahItemId),
+				player.NpcExpands,
+				player.QuestExpands,
+				player.ItemExpands),
+			1 => SmCubeUpdate.RegularWarehouseSizeSnapshot(
+				player.InventoryItems.Count(item => item.Location == 1 && item.ItemId != KinahItemId),
+				player.WarehouseNpcExpands,
+				player.WarehouseBonusExpands),
+			_ => SmCubeUpdate.ZeroSizeForJavaStorageId(storageType),
+		};
 	}
 
 	private async Task HandleAtreianPassportAsync(Player player, CmAtreianPassport packet)

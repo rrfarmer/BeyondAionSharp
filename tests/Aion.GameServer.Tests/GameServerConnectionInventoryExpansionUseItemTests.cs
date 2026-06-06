@@ -864,6 +864,81 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleReplaceItemAsync_CrossStorageSwitchDeletesThenAddsLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 1);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 201,
+					Count = 2,
+					Location = 1,
+					Slot = 27,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 0, sourceItemObjectId: 5001, replaceStorageType: 1, replaceItemObjectId: 6001));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(1, item.Location);
+				Assert.Equal(27, item.Slot);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(0, item.Location);
+				Assert.Equal(12, item.Slot);
+			});
+		Assert.Equal(2, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			repository.SavedItemCrossStorageMoveMutations,
+			mutation => Assert.Equal((1001, 5001, 1, 27L), mutation),
+			mutation => Assert.Equal((1001, 6001, 0, 12L), mutation));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 1,
+				expectedObjectId: 6001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 6001,
+				expectedItemId: 201,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 200,
+				expectedCount: 1,
+				expectedSlot: 27),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_SaveFailureStopsBeforeInMemoryMutationAndPackets()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeMutationResult = false };
@@ -3543,6 +3618,19 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		return packet;
 	}
 
+	private static CmReplaceItem CreateReplaceItem(byte sourceStorageType, int sourceItemObjectId, byte replaceStorageType, int replaceItemObjectId)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteC(sourceStorageType);
+		writer.WriteD(sourceItemObjectId);
+		writer.WriteC(replaceStorageType);
+		writer.WriteD(replaceItemObjectId);
+		var packet = new CmReplaceItem(178, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
 	private static CmSplitItem CreateSplitItem(
 		int sourceItemObjectId,
 		long itemAmount,
@@ -3702,6 +3790,16 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		await task;
 	}
 
+	private static async Task InvokeHandleReplaceItemAsync(GameServerConnection connection, Player player, CmReplaceItem packet)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"HandleReplaceItemAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
+		await task;
+	}
+
 	private static async Task InvokeHandleSplitItemAsync(GameServerConnection connection, Player player, CmSplitItem packet)
 	{
 		var method = typeof(GameServerConnection).GetMethod(
@@ -3801,13 +3899,32 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		SmWarehouseAddItem packet,
 		int expectedObjectId,
 		int expectedWarehouseType,
-		int expectedAddType)
+		int expectedAddType,
+		int? expectedItemId = null,
+		long? expectedCount = null,
+		int? expectedSlot = null)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(expectedWarehouseType, (int)reader.ReadC());
 		Assert.Equal(expectedAddType, reader.ReadH());
 		Assert.Equal(1, reader.ReadH());
 		Assert.Equal(expectedObjectId, reader.ReadD());
+		var actualItemId = reader.ReadD();
+		Assert.Equal(expectedItemId ?? actualItemId, actualItemId);
+		Assert.Equal(0, (int)reader.ReadC());
+		reader.ReadS();
+		var blobSize = reader.ReadH();
+		var blob = reader.ReadB(blobSize);
+		var actualSlot = reader.ReadH();
+		Assert.Equal(expectedSlot ?? actualSlot, actualSlot);
+		Assert.Equal(0, reader.Remaining);
+		if (expectedCount.HasValue)
+		{
+			using var blobReader = new PacketBuffer(blob);
+			Assert.Equal(0, (int)blobReader.ReadC());
+			blobReader.ReadH();
+			Assert.Equal(expectedCount.Value, blobReader.ReadQ());
+		}
 	}
 
 	private static void AssertInventoryUpdatePayloadWithCleanupSealFlag(
@@ -3937,16 +4054,30 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		Assert.Equal(0, reader.Remaining);
 	}
 
+	private static void AssertDeleteWarehouseItemPayload(
+		SmDeleteWarehouseItem packet,
+		int expectedWarehouseType,
+		int expectedObjectId,
+		int expectedDeleteType)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedWarehouseType, (int)reader.ReadC());
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(expectedDeleteType, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
 	private static void AssertCubeUpdatePayload(
 		SmCubeUpdate packet,
 		int expectedItemsCount,
 		int expectedNpcExpands = 0,
 		int expectedQuestExpands = 0,
-		int expectedItemExpands = 0)
+		int expectedItemExpands = 0,
+		int expectedStorage = 0)
 	{
 		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
 		Assert.Equal(0, (int)reader.ReadC());
-		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(expectedStorage, (int)reader.ReadC());
 		Assert.Equal(expectedItemsCount, reader.ReadD());
 		Assert.Equal(expectedNpcExpands, (int)reader.ReadC());
 		Assert.Equal(expectedQuestExpands, (int)reader.ReadC());

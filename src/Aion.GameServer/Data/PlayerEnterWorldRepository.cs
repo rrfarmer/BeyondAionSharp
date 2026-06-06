@@ -537,6 +537,8 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public (int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)? SavedItemCrossStorageMoveMutation { get; private set; }
 
+	public List<(int PlayerObjectId, int ItemObjectId, int NewLocation, long NewSlot)> SavedItemCrossStorageMoveMutations { get; } = [];
+
 	public bool InsertPlayerQuestResult { get; init; } = true;
 
 	public int InsertPlayerQuestCalls { get; private set; }
@@ -1468,6 +1470,7 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		SaveItemCrossStorageMoveMutationCalls++;
 		SavedItemCrossStorageMoveMutation = (playerObjectId, itemObjectId, newLocation, newSlot);
+		SavedItemCrossStorageMoveMutations.Add((playerObjectId, itemObjectId, newLocation, newSlot));
 		return Task.FromResult(SaveItemCrossStorageMoveMutationResult);
 	}
 
