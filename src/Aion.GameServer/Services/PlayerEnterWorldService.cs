@@ -717,6 +717,20 @@ public sealed class PlayerEnterWorldService
 			cancellationToken);
 	}
 
+	public Task<bool> SaveInventoryRewardMutationAsync(
+		Player player,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemService.addItem reward-only mutations such as PetMoodService.requestPresent.
+		return _repository.SaveInventoryRewardMutationAsync(
+			player.ObjectId,
+			updatedRewardItems,
+			addedRewardItems,
+			cancellationToken);
+	}
+
 	public Task<bool> SaveExpExtractActionMutationAsync(
 		Player player,
 		long newExp,

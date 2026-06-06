@@ -142,6 +142,12 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<InventoryItem> addedRewardItems,
 		CancellationToken cancellationToken = default);
 
+	Task<bool> SaveInventoryRewardMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default);
+
 	Task<bool> SaveExpExtractActionMutationAsync(
 		int playerObjectId,
 		long newExp,
@@ -524,6 +530,12 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveAssemblyItemActionMutationCalls { get; private set; }
 
+	public int SaveInventoryRewardMutationCalls { get; private set; }
+
+	public (int PlayerObjectId, InventoryItem[] UpdatedRewardItems, InventoryItem[] AddedRewardItems)? SavedInventoryRewardMutation { get; private set; }
+
+	public bool SaveInventoryRewardMutationResult { get; init; } = true;
+
 	public PlayerAbyssRank? ApExtractAbyssRank { get; private set; }
 
 	public PlayerAbyssRank? ItemPurificationAbyssRank { get; private set; }
@@ -795,6 +807,20 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		SaveAssemblyItemActionMutationCalls++;
 		return Task.FromResult(true);
+	}
+
+	public Task<bool> SaveInventoryRewardMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		SaveInventoryRewardMutationCalls++;
+		SavedInventoryRewardMutation = (
+			playerObjectId,
+			updatedRewardItems.ToArray(),
+			addedRewardItems.ToArray());
+		return Task.FromResult(SaveInventoryRewardMutationResult);
 	}
 
 	public Task<bool> SaveExpExtractActionMutationAsync(
@@ -4848,6 +4874,41 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save assembly item action for player {PlayerObjectId}", playerObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SaveInventoryRewardMutationAsync(
+		int playerObjectId,
+		IReadOnlyList<InventoryItem> updatedRewardItems,
+		IReadOnlyList<InventoryItem> addedRewardItems,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ItemService.addItem persists reward stack updates and inserted cube rows.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+			foreach (var item in updatedRewardItems)
+			{
+				if (!await SaveInventoryItemCountAsync(connection, transaction, playerObjectId, item, cancellationToken))
+				{
+					await transaction.RollbackAsync(cancellationToken);
+					return false;
+				}
+			}
+
+			foreach (var item in addedRewardItems)
+				await InsertInventoryItemAsync(connection, transaction, item, cancellationToken);
+
+			await transaction.CommitAsync(cancellationToken);
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save inventory reward mutation for player {PlayerObjectId}", playerObjectId);
 			return false;
 		}
 	}

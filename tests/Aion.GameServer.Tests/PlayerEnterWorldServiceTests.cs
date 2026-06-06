@@ -2761,6 +2761,12 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public IReadOnlyList<InventoryItem> AssemblyAddedRewardItems { get; private set; } = Array.Empty<InventoryItem>();
 
+		public int SaveInventoryRewardMutationCalls { get; private set; }
+
+		public IReadOnlyList<InventoryItem> InventoryRewardUpdatedItems { get; private set; } = Array.Empty<InventoryItem>();
+
+		public IReadOnlyList<InventoryItem> InventoryRewardAddedItems { get; private set; } = Array.Empty<InventoryItem>();
+
 		public int SaveExpExtractActionMutationCalls { get; private set; }
 
 		public long ExpExtractNewExp { get; private set; }
@@ -3172,6 +3178,18 @@ public sealed class PlayerEnterWorldServiceTests
 			AssemblyDeletedPartObjectIds = deletedPartObjectIds;
 			AssemblyUpdatedRewardItems = updatedRewardItems;
 			AssemblyAddedRewardItems = addedRewardItems;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SaveInventoryRewardMutationAsync(
+			int playerObjectId,
+			IReadOnlyList<InventoryItem> updatedRewardItems,
+			IReadOnlyList<InventoryItem> addedRewardItems,
+			CancellationToken cancellationToken = default)
+		{
+			SaveInventoryRewardMutationCalls++;
+			InventoryRewardUpdatedItems = updatedRewardItems;
+			InventoryRewardAddedItems = addedRewardItems;
 			return Task.FromResult(true);
 		}
 

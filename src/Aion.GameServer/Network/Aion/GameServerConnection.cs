@@ -646,6 +646,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 1 when packet.EmotionId != 0:
 				await HandlePetMoodInteractionAsync(player, ownedPet, timing, packet.EmotionId, nowMillis);
 				break;
+			case 3:
+				await HandlePetMoodGiftAsync(player, ownedPet, timing, nowMillis);
+				break;
 		}
 	}
 
@@ -704,6 +707,97 @@ public sealed class GameServerConnection : BaseClientConnection
 		timing.SetLastSentPoints(moodPoints);
 
 		UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+	}
+
+	private async Task HandlePetMoodGiftAsync(Player player, PlayerOwnedPet ownedPet, PetCommonDataTiming timing, long nowMillis)
+	{
+		// Java parity: PetMoodService.requestPresent only succeeds at full mood and with no gift cooldown.
+		if (timing.GetGiftRemainingTime(nowMillis) > 0)
+		{
+			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+			return;
+		}
+
+		if (timing.GetMoodPoints(forPacket: false, nowMillis) < 9000)
+		{
+			_logger.LogWarning("Requested pet present before mood fill up: {PlayerName}", player.Name);
+			UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+			return;
+		}
+
+		var conditionReward = GetPetTemplate(ownedPet.TemplateId)?.ConditionReward ?? 0;
+		var itemTemplates = GetItemTemplates();
+		var rewardTemplate = conditionReward == 0 ? null : itemTemplates?.GetItemTemplate(conditionReward);
+		if (conditionReward != 0 && (rewardTemplate == null || _idFactory == null))
+			return;
+
+		var rewardPlan = InventoryAddPlan.Empty;
+		if (rewardTemplate != null)
+		{
+			rewardPlan = InventoryAddService.CreateAddItemPlan(
+				player,
+				player.InventoryItems,
+				rewardTemplate,
+				1,
+				() => _idFactory!.NextId(),
+				itemTemplates: itemTemplates);
+			if (rewardPlan.InventoryFull)
+			{
+				await SendPacketAsync(SmSystemMessage.FullInventory());
+				UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+				return;
+			}
+
+			if (!rewardPlan.Succeeded)
+				return;
+
+			if (_playerEnterWorldService != null
+				&& !await _playerEnterWorldService.SaveInventoryRewardMutationAsync(
+					player,
+					rewardPlan.UpdatedItems,
+					rewardPlan.AddedItems))
+			{
+				return;
+			}
+		}
+
+		timing.ClearMoodStatistics();
+		var moodPoints = timing.GetMoodPoints(forPacket: true, nowMillis);
+		var moodRemainingSeconds = timing.GetMoodRemainingTime(nowMillis);
+		var giftRemainingSeconds = timing.GetGiftRemainingTime(nowMillis);
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 4,
+			MoodPoints: moodPoints,
+			MoodRemainingSeconds: moodRemainingSeconds,
+			GiftRemainingSeconds: giftRemainingSeconds)));
+		timing.SetLastSentPoints(moodPoints);
+
+		await SendPacketAsync(SmPet.Mood(new SmPetMoodSnapshot(
+			SubType: 3,
+			ConditionReward: conditionReward)));
+		timing.SetGiftCooldownStarted(nowMillis);
+		UpdateOwnedPetMoodTiming(player, ownedPet, timing);
+
+		var inventoryItems = player.InventoryItems.ToList();
+		foreach (var rewardItemUpdate in rewardPlan.UpdatedItems)
+		{
+			ReplaceInventoryItem(inventoryItems, rewardItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				rewardItemUpdate,
+				rewardTemplate!,
+				SmInventoryUpdateItem.IncreaseItemCollect,
+				GetGeneralInfoWarehouseRestrictionFlag(rewardItemUpdate.ItemId, _runtimeContext?.DataManager?.StaticData.ItemRestrictionCleanups)));
+		}
+
+		foreach (var rewardItemAdd in rewardPlan.AddedItems)
+		{
+			inventoryItems.Add(rewardItemAdd);
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+				rewardItemAdd,
+				rewardTemplate!,
+				GetGeneralInfoWarehouseRestrictionFlag(rewardItemAdd.ItemId, _runtimeContext?.DataManager?.StaticData.ItemRestrictionCleanups)));
+		}
+		player.InventoryItems = inventoryItems;
 	}
 
 	private static PetCommonDataTiming CreatePetMoodTiming(PlayerOwnedPet ownedPet)

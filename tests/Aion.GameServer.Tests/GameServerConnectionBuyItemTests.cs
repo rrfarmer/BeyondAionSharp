@@ -2793,6 +2793,131 @@ public sealed class GameServerConnectionBuyItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodGiftClearsMoodStartsCooldownPersistsRewardAndSendsPackets()
+	{
+		const int rewardItemId = 188053001;
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(
+			buyItemItemTemplates: CreateItemTemplates(Template(rewardItemId, price: 1, maxStackCount: 100)),
+			buyItemPetTemplates: CreatePetTemplates(
+				new PetTemplateSummary(
+					900210,
+					"gift pet",
+					NameId: 1600210,
+					ConditionReward: rewardItemId,
+					Functions: [])),
+			playerEnterWorldRepository: playerRepository,
+			idFactory: new IDFactory([500001]));
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Gift Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: nowMillis - 1000,
+				ShuggleCounter: 9),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 3, emotionId: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(0, pet.ShuggleCounter);
+		Assert.True(pet.MoodStartedMillis >= nowMillis);
+		Assert.Equal(0, pet.LastSentMoodPoints);
+		Assert.True(pet.GiftCooldownStartedMillis >= nowMillis);
+		var rewardItem = Assert.Single(player.InventoryItems);
+		Assert.True(rewardItem.ObjectId > 0);
+		Assert.Equal((rewardItemId, 1L), (rewardItem.ItemId, rewardItem.Count));
+		Assert.Equal(1, playerRepository.SaveInventoryRewardMutationCalls);
+		Assert.NotNull(playerRepository.SavedInventoryRewardMutation);
+		var savedReward = playerRepository.SavedInventoryRewardMutation.Value;
+		Assert.Equal(player.ObjectId, savedReward.PlayerObjectId);
+		Assert.Empty(savedReward.UpdatedRewardItems);
+		var savedAdd = Assert.Single(savedReward.AddedRewardItems);
+		Assert.Equal((rewardItem.ObjectId, rewardItemId, 1L), (savedAdd.ObjectId, savedAdd.ItemId, savedAdd.Count));
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertPetMoodPeriodicPacket(Assert.IsType<SmPet>(packet), minimumMoodPoints: 0, minimumMoodRemainingSeconds: 0),
+			packet => AssertPetMoodGiftPacket(Assert.IsType<SmPet>(packet), expectedRewardItemId: rewardItemId),
+			packet => AssertInventoryAddItemPacket(Assert.IsType<SmInventoryAddItem>(packet), SmInventoryAddItem.ItemCollect));
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodGiftBeforeFullMoodDoesNothing()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Gift Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: nowMillis - 1000),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 3, emotionId: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(0, pet.ShuggleCounter);
+		Assert.Equal(0, pet.GiftCooldownStartedMillis);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, playerRepository.SaveInventoryRewardMutationCalls);
+	}
+
+	[Fact]
+	public async Task ProcessPacketAsync_CmPetMoodGiftDuringCooldownDoesNotSendPacket()
+	{
+		var playerRepository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await BuyItemFixture.CreateAsync(playerEnterWorldRepository: playerRepository);
+		var nowMillis = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+		var player = CreatePlayer();
+		player.OwnedPets =
+		[
+			new PlayerOwnedPet(
+				ObjectId: 7001,
+				TemplateId: 900210,
+				Name: "Gift Mate",
+				Decoration: 188051001,
+				MoodStartedMillis: nowMillis - 1000,
+				ShuggleCounter: 9,
+				GiftCooldownStartedMillis: nowMillis),
+		];
+		player.HasPetSummon = true;
+		player.PetSummonObjectId = 7001;
+		player.PetSummonNpcId = 900210;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreatePetMoodPayload(subType: 3, emotionId: 0));
+
+		var pet = Assert.Single(player.OwnedPets);
+		Assert.Equal(9, pet.ShuggleCounter);
+		Assert.Equal(nowMillis, pet.GiftCooldownStartedMillis);
+		Assert.Empty(fixture.SentPackets);
+		Assert.Equal(0, playerRepository.SaveInventoryRewardMutationCalls);
+	}
+
+	[Fact]
 	public async Task ProcessPacketAsync_CmPetFoodCancelMutatesActivePetAndSendsCancelPackets()
 	{
 		await using var fixture = await BuyItemFixture.CreateAsync();
@@ -5679,6 +5804,15 @@ public sealed class GameServerConnectionBuyItemTests
 		Assert.True(reader.ReadD() >= minimumMoodPoints);
 		Assert.True(reader.ReadD() >= minimumMoodRemainingSeconds);
 		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertPetMoodGiftPacket(SmPet packet, int expectedRewardItemId)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal((int)PetAction.Mood, reader.ReadH());
+		Assert.Equal(3, (int)reader.ReadC());
+		Assert.Equal(expectedRewardItemId, reader.ReadD());
 		Assert.Equal(0, reader.Remaining);
 	}
 
