@@ -269,6 +269,74 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, startedQuest.CompleteCount);
 	}
 
+	[Theory]
+	[InlineData(CmDialogSelect.QuestRefuse1)]
+	[InlineData(CmDialogSelect.QuestRefuse2)]
+	public async Task HandleDialogSelectAsync_NpcTargetQuestRefuseSendsRefusePageWithoutStartingQuest(int dialogActionId)
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var existingQuest = new PlayerQuestState(1001, "LOCKED", QuestVars: 7, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 48,
+			Name = "QuestRefuseBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [existingQuest],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: dialogActionId,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 1004, questId: 1001));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Same(existingQuest, unchangedQuest);
+		Assert.Equal("LOCKED", unchangedQuest.Status);
+		Assert.Equal(7, unchangedQuest.QuestVars);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_NpcTargetQuestRefuseSimpleClosesDialogWithoutStartingQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.Contains(1001, fixture.StaticData.QuestNpcStarts.GetQuestNpc(QuestReportNpcTemplateId).OnQuestStart);
+		var existingQuest = new PlayerQuestState(1001, "LOCKED", QuestVars: 8, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 49,
+			Name = "QuestRefuseSimpleBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			TargetObjectId = QuestReportNpcObjectId,
+			Quests = [existingQuest],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: QuestReportNpcObjectId,
+			dialogActionId: CmDialogSelect.QuestRefuseSimple,
+			questId: 1001,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDialogWindow(packet, QuestReportNpcObjectId, expectedDialogPageId: 0, questId: 0));
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.Same(existingQuest, unchangedQuest);
+		Assert.Equal("LOCKED", unchangedQuest.Status);
+		Assert.Equal(8, unchangedQuest.QuestVars);
+	}
+
 	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesKinahAndCompletesQuest()
 	{

@@ -5020,6 +5020,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (await TryHandleNpcTargetQuestStartAcceptAsync(player, packet))
 			return;
 
+		if (await TryHandleNpcTargetQuestStartRefuseAsync(player, packet))
+			return;
+
 		if (packet.DialogActionId == CmDialogSelect.InstanceEntry
 			&& IsBeshmundirsWalkTarget(packet.TargetObjectId))
 		{
@@ -5348,6 +5351,45 @@ public sealed class GameServerConnection : BaseClientConnection
 		return packet.DialogActionId == CmDialogSelect.QuestAcceptSimple
 			? new SmDialogWindow(packet.TargetObjectId, 0)
 			: new SmDialogWindow(packet.TargetObjectId, 1003, packet.QuestId);
+	}
+
+	private async Task<bool> TryHandleNpcTargetQuestStartRefuseAsync(
+		Player player,
+		CmDialogSelect packet,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: AbstractQuestHandler.sendQuestStartDialog handles QUEST_REFUSE_1
+		// and QUEST_REFUSE_2 with sendQuestDialog(..., 1004), while QUEST_REFUSE_SIMPLE closes.
+		if (packet.DialogActionId is not (CmDialogSelect.QuestRefuse1 or CmDialogSelect.QuestRefuse2 or CmDialogSelect.QuestRefuseSimple)
+			|| packet.QuestId <= 0
+			|| packet.TargetObjectId == 0
+			|| packet.TargetObjectId == player.ObjectId
+			|| _world == null
+			|| !_world.TryGetObject(packet.TargetObjectId, out var target)
+			|| target is not IWorldNpcObject npc)
+		{
+			return false;
+		}
+
+		if (_isKnownNpc?.Invoke(player, packet.TargetObjectId) == false)
+			return false;
+
+		var staticData = _runtimeContext?.DataManager?.StaticData;
+		if (staticData == null
+			|| !staticData.QuestNpcStarts.GetQuestNpc(npc.TemplateId).OnQuestStart.Contains(packet.QuestId))
+		{
+			return false;
+		}
+
+		await SendPacketAsync(CreateQuestStartRefuseDialogWindow(packet), cancellationToken);
+		return true;
+	}
+
+	private static SmDialogWindow CreateQuestStartRefuseDialogWindow(CmDialogSelect packet)
+	{
+		return packet.DialogActionId == CmDialogSelect.QuestRefuseSimple
+			? new SmDialogWindow(packet.TargetObjectId, 0)
+			: new SmDialogWindow(packet.TargetObjectId, 1004, packet.QuestId);
 	}
 
 	private async Task<bool> TryHandleQuestFinishAutoRewardAsync(
