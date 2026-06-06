@@ -4041,17 +4041,10 @@ public sealed class GameServerConnection : BaseClientConnection
 			else
 				await SendPacketAsync(new SmWarehouseUpdateItem(sourceItem, template, packet.SourceStorageType, sourceDecreaseType));
 			// Java parity: SM_CUBE_UPDATE.cubeSize after split.
-			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+			await SendPacketAsync(CreateStorageSizePacket(player, packet.SourceStorageType));
 
 			// Java parity: sendStorageUpdatePacket for destination storage.
-			if (packet.DestinationStorageType == 0 /* cube */)
-				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(newItem, template));
-			else
-				await SendPacketAsync(new SmWarehouseAddItem(
-					packet.DestinationStorageType,
-					[new SmWarehouseAddItem.WarehousePacketItem(newItem, template)],
-					SmInventoryAddItem.ItemCollect));
-			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+			await SendStorageUpdatePacketAsync(player, newItem, template, packet.DestinationStorageType, SmInventoryAddItem.ItemCollect);
 		}
 		else if (targetItem.ItemId == sourceItem.ItemId)
 		{

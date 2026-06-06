@@ -988,6 +988,59 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSplitItemAsync_CrossStorageEmptySlotUsesJavaStorageSize()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, idFactory: new IDFactory([5001]));
+		var player = CreatePlayer(itemId: 200, count: 5, location: 1);
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 2,
+				sourceStorageType: 1,
+				destinationItemObjectId: 0,
+				destinationStorageType: 0,
+				slotNumber: 8));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(1, item.ObjectId);
+				Assert.Equal(2, item.Count);
+				Assert.Equal(0, item.Location);
+				Assert.Equal(0, item.Slot);
+			},
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(3, item.Count);
+				Assert.Equal(1, item.Location);
+			});
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 1,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplitMove),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 1,
+				expectedItemId: 200,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleReplaceItemAsync_CrossStorageSwitchDeletesThenAddsLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
