@@ -766,11 +766,16 @@ public sealed class CmLegionTests
 			LegionLegionaryPermission = 13,
 			LegionVolunteerPermission = 14,
 		};
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		bystander.LegionRank = LegionRanks.Centurion;
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 99;
+		outsider.LegionName = "Other Legion";
 		var repository = new EmptyPlayerEnterWorldRepository
 		{
 			LoadedLegionMemberByName = CreateMemberSnapshot(target.ObjectId, target.Name, LegionRanks.Legionary, isOnline: true),
 		};
-		var registry = new CapturingConnectionRegistry(target);
+		var registry = new CapturingConnectionRegistry(target, bystander, outsider);
 		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
 		var player = CreateBrigadeGeneralPlayer();
 		SetActivePlayer(pair.Connection, player);
@@ -783,9 +788,12 @@ public sealed class CmLegionTests
 		Assert.Equal(string.Empty, target.LegionNickname);
 		Assert.Equal(string.Empty, target.LegionSelfIntro);
 		AssertLegionLeaveMemberPacket(Assert.Single(pair.SentPackets), target.ObjectId, 1300247, "Tester", "Lurion");
-		var directPacket = Assert.Single(registry.DirectPackets);
-		Assert.Equal(target.ObjectId, directPacket.PlayerObjectId);
-		AssertLegionLeaveMemberPacket(directPacket.Packet, 0, 1300246, "Hydrated Legion", string.Empty);
+		Assert.Equal(2, registry.DirectPackets.Count);
+		var bystanderPacket = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == bystander.ObjectId);
+		AssertLegionLeaveMemberPacket(bystanderPacket.Packet, target.ObjectId, 1300247, "Tester", "Lurion");
+		var targetPacket = Assert.Single(registry.DirectPackets, delivery => delivery.PlayerObjectId == target.ObjectId);
+		AssertLegionLeaveMemberPacket(targetPacket.Packet, 0, 1300246, "Hydrated Legion", string.Empty);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 	}
 
 	[Fact]
@@ -829,10 +837,16 @@ public sealed class CmLegionTests
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
 		var runtimeContext = new GameServerRuntimeContext();
+		var bystander = CreateLegionPlayer(2002, "Watcher");
+		bystander.LegionRank = LegionRanks.Centurion;
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 99;
+		outsider.LegionName = "Other Legion";
+		var registry = new CapturingConnectionRegistry(bystander, outsider);
 		var player = CreateLegionPlayer();
 		player.LegionRank = LegionRanks.Legionary;
-		Assert.True(runtimeContext.LegionWarehouses.TrySetInUse(player.LegionId, 2002));
-		await using var pair = await TestConnectionPair.CreateAsync(repository, runtimeContext: runtimeContext);
+		Assert.True(runtimeContext.LegionWarehouses.TrySetInUse(player.LegionId, 3003));
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry, runtimeContext);
 		SetActivePlayer(pair.Connection, player);
 
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLeavePacket());
@@ -844,7 +858,11 @@ public sealed class CmLegionTests
 		Assert.Equal(0, player.LegionId);
 		Assert.Equal(string.Empty, player.LegionName);
 		Assert.Equal(string.Empty, player.LegionRank);
-		Assert.Equal(2002, runtimeContext.LegionWarehouses.GetCurrentUser(77));
+		Assert.Equal(3003, runtimeContext.LegionWarehouses.GetCurrentUser(77));
+		var bystanderPacket = Assert.Single(registry.DirectPackets);
+		Assert.Equal(bystander.ObjectId, bystanderPacket.PlayerObjectId);
+		AssertLegionLeaveMemberPacket(bystanderPacket.Packet, 1001, 1300240, "Tester", "Hydrated Legion");
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
 		AssertLegionLeaveMemberPacket(
 			Assert.Single(pair.SentPackets),
 			playerObjectId: 0,
@@ -1064,12 +1082,12 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
-	private static Player CreateLegionPlayer()
+	private static Player CreateLegionPlayer(int objectId = 1001, string name = "Tester")
 	{
 		return new Player
 		{
-			ObjectId = 1001,
-			Name = "Tester",
+			ObjectId = objectId,
+			Name = name,
 			LegionId = 77,
 			LegionName = "Hydrated Legion",
 			LegionLevel = 4,

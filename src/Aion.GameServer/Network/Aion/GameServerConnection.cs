@@ -3130,6 +3130,11 @@ public sealed class GameServerConnection : BaseClientConnection
 			memberName,
 			string.Empty);
 
+		await BroadcastLegionLeaveMemberAsync(
+			legionId,
+			player.ObjectId,
+			() => new SmLegionLeaveMember(1300240, player.ObjectId, memberName, legionName));
+
 		_legionWarehouses.UnsetInUse(legionId, player.ObjectId);
 		ResetLegionMember(player);
 		await SendPacketAsync(new SmLegionLeaveMember(1300241, 0, legionName));
@@ -3183,14 +3188,44 @@ public sealed class GameServerConnection : BaseClientConnection
 			targetMember.Name,
 			string.Empty);
 
+		await BroadcastLegionLeaveMemberAsync(
+			player.LegionId,
+			targetMember.PlayerObjectId,
+			() => new SmLegionLeaveMember(1300247, targetMember.PlayerObjectId, player.Name, targetMember.Name),
+			player.ObjectId);
+
 		if (ResolveOnlinePlayerByObjectId(targetMember.PlayerObjectId) is { } onlineTarget)
 		{
 			if (_connectionRegistry != null)
 				await _connectionRegistry.SendPacketToPlayerAsync(targetMember.PlayerObjectId, new SmLegionLeaveMember(1300246, 0, player.LegionName));
 			ResetLegionMember(onlineTarget);
 		}
+	}
 
-		await SendPacketAsync(new SmLegionLeaveMember(1300247, targetMember.PlayerObjectId, player.Name, targetMember.Name));
+	private async Task BroadcastLegionLeaveMemberAsync(
+		int legionId,
+		int removedPlayerObjectId,
+		Func<GameServerPacket> packetFactory,
+		int? activeRecipientObjectId = null)
+	{
+		// Java parity: PacketSendUtility.broadcastToLegion(..., excludedObjectId) in LegionService.removeLegionMember.
+		if (activeRecipientObjectId is { } activeObjectId && activeObjectId != removedPlayerObjectId)
+			await SendPacketAsync(packetFactory());
+
+		if (_connectionRegistry == null)
+			return;
+
+		var recipientObjectIds = new List<int>();
+		_connectionRegistry.ForEachOnlinePlayer(candidate =>
+		{
+			if (candidate.LegionId != legionId || candidate.ObjectId == removedPlayerObjectId || candidate.ObjectId == activeRecipientObjectId)
+				return;
+
+			recipientObjectIds.Add(candidate.ObjectId);
+		});
+
+		foreach (var recipientObjectId in recipientObjectIds)
+			await _connectionRegistry.SendPacketToPlayerAsync(recipientObjectId, packetFactory());
 	}
 
 	private async Task HandleLegionRankChangeAsync(Player player, string memberName, int rankId)
