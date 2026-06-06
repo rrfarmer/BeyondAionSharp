@@ -147,6 +147,38 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseUnsupportedActionSendsJavaDenial()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9014, legionId: 77, legionLevel: 4);
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x1000;
+		var npc = CreateExpansionNpc(9014, templateId: 203200, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300279);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseUnsupportedActionWithoutLegionKeepsJavaMembershipOrder()
+	{
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();
+		var player = CreatePlayer(targetObjectId: 9015);
+		var npc = CreateExpansionNpc(9015, templateId: 203200, dialogActionId: CmDialogSelect.Buy);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300278);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_BuyTradeListRemainsDisabledAtSocketBoundaryUntilRoutingReady()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();

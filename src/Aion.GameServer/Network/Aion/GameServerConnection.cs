@@ -4031,8 +4031,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private async Task HandleOpenLegionWarehouseDialogAsync(Player player, int targetObjectId)
 	{
 		// Java parity: DialogService.onDialogSelect OPEN_LEGION_WAREHOUSE -> LegionService.openLegionWarehouse.
-		if (NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, targetObjectId, CmDialogSelect.OpenLegionWarehouse, _world) !=
-			NpcDialogTargetingResult.Valid)
+		var targetingResult = NpcDialogTargetingService.ValidateTargetingNpcWithFunction(player, targetObjectId, CmDialogSelect.OpenLegionWarehouse, _world);
+		if (targetingResult is NpcDialogTargetingResult.NotTargeted or NpcDialogTargetingResult.UnknownTarget)
 		{
 			return;
 		}
@@ -4040,6 +4040,12 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player.LegionId <= 0 || string.IsNullOrEmpty(player.LegionRank))
 		{
 			await SendPacketAsync(SmSystemMessage.NoGuildToDeposit());
+			return;
+		}
+
+		if (targetingResult == NpcDialogTargetingResult.UnsupportedAction)
+		{
+			await SendPacketAsync(SmSystemMessage.CantUseGuildStorage());
 			return;
 		}
 

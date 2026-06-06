@@ -2039,6 +2039,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300278);
 	}
 
+	public static SmSystemMessage CantUseGuildStorage()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANT_USE_GUILD_STORAGE. The selected target cannot open Legion storage.
+		return new SmSystemMessage(1300279);
+	}
+
 	public static SmSystemMessage WarehouseCantDepositItem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM. You cannot store this in the warehouse.
