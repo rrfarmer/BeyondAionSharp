@@ -4087,10 +4087,26 @@ public sealed class GameServerConnection : BaseClientConnection
 			else
 				await SendPacketAsync(new SmWarehouseUpdateItem(targetItem, template, packet.DestinationStorageType, destIncreaseType));
 
-			if (packet.SourceStorageType == 0)
+			if (sourceItem.Count <= 0)
+			{
+				var items = player.InventoryItems.ToList();
+				items.Remove(sourceItem);
+				player.InventoryItems = [.. items];
+				var deleteType = isSameStorage ? SmDeleteItem.SplitDeleteType : SmDeleteItem.MoveDeleteType;
+				if (packet.SourceStorageType == 0)
+					await SendPacketAsync(new SmDeleteItem(sourceItem.ObjectId, deleteType));
+				else
+					await SendPacketAsync(new SmDeleteWarehouseItem(packet.SourceStorageType, sourceItem.ObjectId, deleteType));
+				await SendPacketAsync(SmCubeUpdate.CubeSize(player));
+			}
+			else if (packet.SourceStorageType == 0)
+			{
 				await SendPacketAsync(new SmInventoryUpdateItem(sourceItem, template, srcDecreaseType));
+			}
 			else
+			{
 				await SendPacketAsync(new SmWarehouseUpdateItem(sourceItem, template, packet.SourceStorageType, srcDecreaseType));
+			}
 		}
 	}
 

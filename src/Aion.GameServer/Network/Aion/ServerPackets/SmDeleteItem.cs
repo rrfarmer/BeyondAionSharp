@@ -6,6 +6,8 @@ public sealed class SmDeleteItem : GameServerPacket
 {
 	public const int PacketOpCode = 28;
 	public const int UseDeleteType = 0x17;
+	// Java parity: services/item/ItemPacketService.ItemDeleteType.SPLIT = 0x04
+	public const int SplitDeleteType = 0x04;
 	// Java parity: ItemPacketService.ItemDeleteType.QUEST_COMPLETE = 0x31.
 	public const int QuestCompleteDeleteType = 0x31;
 	// Java parity: ItemPacketService.ItemDeleteType.QUEST_START = 0x34.

@@ -754,6 +754,58 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleSplitItemAsync_FullSourceMergeDeletesSourceStackLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 3);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 200,
+					Count = 97,
+					Location = 0,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleSplitItemAsync(
+			fixture.Connection,
+			player,
+			CreateSplitItem(
+				sourceItemObjectId: 5001,
+				itemAmount: 3,
+				sourceStorageType: 0,
+				destinationItemObjectId: 6001,
+				destinationStorageType: 0,
+				slotNumber: 0));
+
+		var targetStack = Assert.Single(player.InventoryItems);
+		Assert.Equal(6001, targetStack.ObjectId);
+		Assert.Equal(100, targetStack.Count);
+		Assert.Equal(0, targetStack.Location);
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		var savedMerge = Assert.NotNull(repository.SavedItemMergeMutation);
+		Assert.Equal(1001, savedMerge.PlayerObjectId);
+		Assert.Equal(0, savedMerge.SourceItem.Count);
+		Assert.Equal(100, savedMerge.TargetItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 6001,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseItemMerge),
+			packet => AssertDeleteItemPayload(
+				Assert.IsType<SmDeleteItem>(packet),
+				expectedObjectId: 5001,
+				expectedDeleteType: SmDeleteItem.SplitDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_SaveFailureStopsBeforeInMemoryMutationAndPackets()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeMutationResult = false };
@@ -3433,6 +3485,27 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		return packet;
 	}
 
+	private static CmSplitItem CreateSplitItem(
+		int sourceItemObjectId,
+		long itemAmount,
+		byte sourceStorageType,
+		int destinationItemObjectId,
+		byte destinationStorageType,
+		short slotNumber)
+	{
+		using var writer = new PacketBuffer();
+		writer.WriteD(sourceItemObjectId);
+		writer.WriteQ(itemAmount);
+		writer.WriteC(sourceStorageType);
+		writer.WriteD(destinationItemObjectId);
+		writer.WriteC(destinationStorageType);
+		writer.WriteH(slotNumber);
+		var packet = new CmSplitItem(157, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+		using var reader = new PacketBuffer(writer.ToArray());
+		packet.ReadFrom(reader);
+		return packet;
+	}
+
 	private static CmQuestionResponse CreateQuestionResponse(int questionId, byte response)
 	{
 		using var writer = new PacketBuffer();
@@ -3565,6 +3638,16 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	{
 		var method = typeof(GameServerConnection).GetMethod(
 			"HandleMoveItemAsync",
+			BindingFlags.Instance | BindingFlags.NonPublic);
+		Assert.NotNull(method);
+		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
+		await task;
+	}
+
+	private static async Task InvokeHandleSplitItemAsync(GameServerConnection connection, Player player, CmSplitItem packet)
+	{
+		var method = typeof(GameServerConnection).GetMethod(
+			"HandleSplitItemAsync",
 			BindingFlags.Instance | BindingFlags.NonPublic);
 		Assert.NotNull(method);
 		var task = Assert.IsAssignableFrom<Task>(method.Invoke(connection, [player, packet]));
