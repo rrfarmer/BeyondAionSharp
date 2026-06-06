@@ -213,39 +213,47 @@ public sealed class PlayerEnterWorldService
 		await PurgeExpiredAtreianPassportsAsync(player, atreianPassports, now, cancellationToken);
 		var doReward = CheckAtreianPassportOnlineDate(player.LastPassportStamp, nowOffset) && player.PassportStamps < 28;
 		var newPassports = new List<PlayerPassport>();
-		if (doReward)
+		var attendDay = GetAtreianPassportAttendDay(nowOffset);
+		foreach (var template in atreianPassports.Passports)
 		{
-			var attendDay = GetAtreianPassportAttendDay(nowOffset);
-			foreach (var template in atreianPassports.Passports)
-			{
-				if (!template.Active || template.PeriodStart >= now || template.PeriodEnd <= now)
-					continue;
+			if (!template.Active || template.PeriodStart >= now || template.PeriodEnd <= now)
+				continue;
 
-				switch (template.AttendType)
-				{
-					case "DAILY":
-						if (!HasAtreianPassportForDay(player.Passports.Concat(newPassports), template.Id, attendDay))
-						{
-							var passport = new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now));
-							newPassports.Add(passport);
-						}
-						break;
-					case "CUMULATIVE" when template.AttendNum == player.PassportStamps + 1:
+			switch (template.AttendType)
+			{
+				case "DAILY":
+					if (doReward && !HasAtreianPassportForDay(player.Passports.Concat(newPassports), template.Id, attendDay))
 						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
-						break;
-				}
+					break;
+				case "CUMULATIVE":
+					if (doReward && template.AttendNum == player.PassportStamps + 1)
+					{
+						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
+					}
+					else if (!HasAtreianPassport(player.Passports.Concat(newPassports), template.Id))
+					{
+						newPassports.Add(new PlayerPassport(
+							template.Id,
+							Rewarded: template.AttendNum <= player.PassportStamps,
+							NormalizePassportTimestamp(now),
+							FakeStamp: true));
+					}
+					break;
 			}
 		}
+
+		if (newPassports.Count > 0)
+			player.Passports = player.Passports.Concat(newPassports).ToArray();
 
 		if (doReward)
 		{
 			var lastStamp = NormalizePassportTimestamp(now);
-			player.Passports = player.Passports.Concat(newPassports).ToArray();
 			player.PassportStamps++;
 			player.LastPassportStamp = lastStamp;
+			var persistentNewPassports = newPassports.Where(passport => !passport.FakeStamp).ToArray();
 			await _repository.SaveAccountPassportLoginMutationAsync(
 				player.AccountId,
-				newPassports,
+				persistentNewPassports,
 				player.PassportStamps,
 				lastStamp,
 				cancellationToken);
@@ -307,6 +315,12 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: PassportsList.hasPassportForDay compares the stored arrive-date calendar day.
 		return passports.Any(passport => passport.PassportId == passportId && DateOnly.FromDateTime(passport.ArriveDate) == attendDay);
+	}
+
+	private static bool HasAtreianPassport(IEnumerable<PlayerPassport> passports, int passportId)
+	{
+		// Java parity: PassportsList.isPassportPresent compares only the Passport template id.
+		return passports.Any(passport => passport.PassportId == passportId);
 	}
 
 	private static DateTime NormalizePassportTimestamp(DateTime value)

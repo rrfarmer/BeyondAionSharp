@@ -396,14 +396,25 @@ public sealed class CmAtreianPassportTests
 		var runtimeContext = new GameServerRuntimeContext();
 		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
 		var now = AtreianPassportCumulativeLoginClock();
-		var startingStamps = 6;
+		var startingStamps = 13;
 		var expectedDailyPassportIds = GetActiveDailyPassportIds(
 			runtimeContext.DataManager!.StaticData.AtreianPassports,
 			now.UtcDateTime);
 		var expectedCumulativePassportIds = GetActiveCumulativePassportIds(
 			runtimeContext.DataManager!.StaticData.AtreianPassports,
+			now.UtcDateTime);
+		var expectedThresholdPassportIds = GetActiveCumulativePassportIds(
+			runtimeContext.DataManager!.StaticData.AtreianPassports,
 			now.UtcDateTime,
 			startingStamps + 1);
+		var expectedTakenFakePassportIds = expectedCumulativePassportIds
+			.Where(id => runtimeContext.DataManager!.StaticData.AtreianPassports.GetAtreianPassportId(id)!.AttendNum <= startingStamps)
+			.ToArray();
+		var expectedUpcomingFakePassportIds = expectedCumulativePassportIds
+			.Except(expectedThresholdPassportIds)
+			.Except(expectedTakenFakePassportIds)
+			.Order()
+			.ToArray();
 		var expectedPassportIds = expectedDailyPassportIds
 			.Concat(expectedCumulativePassportIds)
 			.Order()
@@ -451,14 +462,23 @@ public sealed class CmAtreianPassportTests
 		Assert.NotNull(passportPacket);
 		Assert.NotEmpty(expectedCumulativePassportIds);
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
-		Assert.Equal(7, player.PassportStamps);
+		Assert.Equal(14, player.PassportStamps);
+		Assert.NotEmpty(expectedTakenFakePassportIds);
+		Assert.NotEmpty(expectedUpcomingFakePassportIds);
 		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
 		var payload = SerializeUnencryptedPayload(passportPacket);
+		var passportRows = ReadPassportRows(payload);
 		Assert.Equal(2014, ReadShort(payload, 0));
 		Assert.Equal(1, ReadShort(payload, 2));
 		Assert.Equal(1, ReadShort(payload, 4));
 		Assert.Equal(expectedPassportIds.Length, ReadShort(payload, 6));
-		Assert.Equal(expectedPassportIds, ReadPassportIds(payload).Order().ToArray());
+		Assert.Equal(expectedPassportIds, passportRows.Keys.Order().ToArray());
+		foreach (var passportId in expectedThresholdPassportIds)
+			Assert.Equal((int)PlayerPassportRewardStatus.Available, passportRows[passportId]);
+		foreach (var passportId in expectedTakenFakePassportIds)
+			Assert.Equal((int)PlayerPassportRewardStatus.Taken, passportRows[passportId]);
+		foreach (var passportId in expectedUpcomingFakePassportIds)
+			Assert.Equal((int)PlayerPassportRewardStatus.Upcoming, passportRows[passportId]);
 	}
 
 	[Fact]
@@ -567,14 +587,29 @@ public sealed class CmAtreianPassportTests
 			.ToArray();
 	}
 
-	private static int[] ReadPassportIds(byte[] payload)
+	private static int[] GetActiveCumulativePassportIds(AtreianPassportTable passports, DateTime now)
+	{
+		return passports.Passports
+			.Where(passport => passport.Active
+				&& passport.AttendType == "CUMULATIVE"
+				&& passport.PeriodStart < now
+				&& passport.PeriodEnd > now)
+			.Select(passport => passport.Id)
+			.Order()
+			.ToArray();
+	}
+
+	private static Dictionary<int, int> ReadPassportRows(byte[] payload)
 	{
 		var count = ReadShort(payload, 6);
-		var ids = new int[count];
+		var rows = new Dictionary<int, int>();
 		for (var i = 0; i < count; i++)
-			ids[i] = ReadInt(payload, 8 + (i * 16));
+		{
+			var offset = 8 + (i * 16);
+			rows.Add(ReadInt(payload, offset), ReadInt(payload, offset + 8));
+		}
 
-		return ids;
+		return rows;
 	}
 
 	private static GameWorld CreateWorld()
