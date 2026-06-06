@@ -1167,6 +1167,56 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleReplaceItemAsync_ShutdownSoonUnlocksBothItemsLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository, isShuttingDownSoon: () => true);
+		var player = CreatePlayer(itemId: 200, count: 1);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		var replaceItem = new InventoryItem
+		{
+			ObjectId = 6001,
+			ItemId = 201,
+			Count = 2,
+			Location = 1,
+			Slot = 27,
+		};
+		player.InventoryItems = player.InventoryItems.Concat([replaceItem]).ToArray();
+
+		await InvokeHandleReplaceItemAsync(
+			fixture.Connection,
+			player,
+			CreateReplaceItem(sourceStorageType: 0, sourceItemObjectId: 5001, replaceStorageType: 1, replaceItemObjectId: 6001));
+
+		Assert.Equal(0, sourceItem.Location);
+		Assert.Equal(12, sourceItem.Slot);
+		Assert.Equal(1, replaceItem.Location);
+		Assert.Equal(27, replaceItem.Slot);
+		Assert.Equal(0, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 6001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedItemId: 201,
+				expectedCount: 2,
+				expectedSlot: 27),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1),
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1390230, "Shutdown Progress"));
+	}
+
+	[Fact]
 	public async Task HandleReplaceItemAsync_StorageSwitchSaveFailureRollsBackBothItems()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { SaveItemStorageSwitchMutationResult = false };
@@ -4988,7 +5038,8 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 			SelectableDecomposeTestData? selectableData = null,
 			GameServerOptions? options = null,
 			int extractionRewardMaxStackCount = 100,
-			bool includeExtractionRewardTemplate = true)
+			bool includeExtractionRewardTemplate = true,
+			Func<bool>? isShuttingDownSoon = null)
 		{
 			options ??= new GameServerOptions();
 			var selectableFixture = selectableData ?? SelectableDecomposeTestData.Default;
@@ -5304,6 +5355,7 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 					playerEnterWorldService: playerEnterWorldService,
 					threadPoolManager: threadPoolManager,
 					idFactory: idFactory,
+					isShuttingDownSoon: isShuttingDownSoon,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new InventoryExpansionUseItemFixture(client, connection, threadPoolManager, sentPackets, dataManager.StaticData, tempRoot);

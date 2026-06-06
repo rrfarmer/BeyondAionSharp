@@ -4320,13 +4320,17 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
+		var isShuttingDownSoon = _isShuttingDownSoon();
 		if (player.IsTrading
 			|| IsRestrictedToStorage(sourceItem, sourceTemplate, packet.ReplaceStorageType)
-			|| IsRestrictedToStorage(replaceItem, replaceTemplate, packet.SourceStorageType))
+			|| IsRestrictedToStorage(replaceItem, replaceTemplate, packet.SourceStorageType)
+			|| isShuttingDownSoon)
 		{
 			// Java parity: ItemMoveService.switchItemsInStorages restriction branch unlocks both items.
 			await SendStorageUpdatePacketAsync(player, sourceItem, sourceTemplate, packet.SourceStorageType, SmInventoryAddItem.AllSlot);
 			await SendStorageUpdatePacketAsync(player, replaceItem, replaceTemplate, packet.ReplaceStorageType, SmInventoryAddItem.AllSlot);
+			if (isShuttingDownSoon)
+				await SendPacketAsync(SmSystemMessage.Disable("Shutdown Progress"));
 			return;
 		}
 

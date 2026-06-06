@@ -2045,6 +2045,12 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400356);
 	}
 
+	public static SmSystemMessage Disable(string value)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_DISABLE. You cannot use this function in %0.
+		return new SmSystemMessage(1390230, value);
+	}
+
 	public static SmSystemMessage CaptchaRecovered()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_CAPTCHA_RECOVERED.
