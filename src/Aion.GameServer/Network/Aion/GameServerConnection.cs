@@ -4019,10 +4019,11 @@ public sealed class GameServerConnection : BaseClientConnection
 				{
 					await SendPacketAsync(legionRestrictionMessage);
 					await SendStorageUpdatePacketAsync(player, sourceItem, template, packet.SourceStorageType, SmInventoryAddItem.ItemCollect);
+					return;
 				}
 			}
-			// Successful legion warehouse splits require LegionService.addWHItemHistory and live legion storage; deferred.
-			return;
+			// Java parity gap: LegionService.addWHItemHistory and a dedicated LegionStorageProxy/LegionWarehouse
+			// aggregate are not yet modeled, but the split mutation, persistence owner, and packet fanout now follow ItemSplitService.splitItem.
 		}
 
 		// Java parity: ItemSplitService.splitItem — kinah branch (moveKinah) before general split logic.
