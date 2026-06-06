@@ -280,6 +280,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300265, memberName);
 	}
 
+	public static SmSystemMessage GuildLeaveCantLeaveGuildWhileUsingWarehouse()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_LEAVE_CANT_LEAVE_GUILD_WHILE_USING_WAREHOUSE.
+		return new SmSystemMessage(1300237);
+	}
+
+	public static SmSystemMessage GuildLeaveMasterCantLeaveBeforeChangeMaster()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_LEAVE_MASTER_CANT_LEAVE_BEFORE_CHANGE_MASTER.
+		return new SmSystemMessage(1300238);
+	}
+
 	public static SmSystemMessage GuildBanishCantBanishSelf()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_BANISH_CANT_BANISH_SELF.

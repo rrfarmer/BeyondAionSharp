@@ -9,6 +9,7 @@ using Aion.GameServer.Model.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -72,6 +73,14 @@ public sealed class CmLegionTests
 
 		Assert.Equal(0x04, packet.ExOpcode);
 		Assert.Equal("Lurion", packet.CharacterName);
+	}
+
+	[Fact]
+	public void ReadFrom_LeaveBranchConsumesJavaEmptyFields()
+	{
+		var packet = CreateLeavePacket();
+
+		Assert.Equal(0x02, packet.ExOpcode);
 	}
 
 	[Fact]
@@ -143,6 +152,8 @@ public sealed class CmLegionTests
 		var rankNotMember = SmSystemMessage.GuildChangeMemberRankHeIsNotMyGuildMember("Lurion");
 		Assert.Equal(1300265, rankNotMember.MessageId);
 		Assert.Equal(["Lurion"], rankNotMember.Parameters);
+		Assert.Equal(1300237, SmSystemMessage.GuildLeaveCantLeaveGuildWhileUsingWarehouse().MessageId);
+		Assert.Equal(1300238, SmSystemMessage.GuildLeaveMasterCantLeaveBeforeChangeMaster().MessageId);
 		Assert.Equal(1300243, SmSystemMessage.GuildBanishCantBanishSelf().MessageId);
 		Assert.Equal(1300244, SmSystemMessage.GuildBanishDontHaveRight().MessageId);
 		var banishNotMember = SmSystemMessage.GuildBanishHeIsNotMyGuildMember("Lurion");
@@ -775,6 +786,88 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LeaveRejectsBrigadeGeneralLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLeavePacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300238, response.MessageId);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+		Assert.Equal(77, player.LegionId);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LeaveRejectsCurrentWarehouseUserLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var runtimeContext = new GameServerRuntimeContext();
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Legionary;
+		Assert.True(runtimeContext.LegionWarehouses.TrySetInUse(player.LegionId, player.ObjectId));
+		await using var pair = await TestConnectionPair.CreateAsync(repository, runtimeContext: runtimeContext);
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLeavePacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300237, response.MessageId);
+		Assert.Equal(0, repository.DeleteLegionMemberCalls);
+		Assert.Equal(player.ObjectId, runtimeContext.LegionWarehouses.GetCurrentUser(77));
+		Assert.Equal(77, player.LegionId);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LeaveDeletesMemberAddsKickHistoryResetsPlayerAndSendsDonePacketLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var runtimeContext = new GameServerRuntimeContext();
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Legionary;
+		Assert.True(runtimeContext.LegionWarehouses.TrySetInUse(player.LegionId, 2002));
+		await using var pair = await TestConnectionPair.CreateAsync(repository, runtimeContext: runtimeContext);
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLeavePacket());
+
+		Assert.Equal(1, repository.DeleteLegionMemberCalls);
+		Assert.Equal(player.ObjectId, repository.DeletedLegionMemberObjectId);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.Kick, "Tester", string.Empty), repository.InsertedLegionHistory);
+		Assert.Equal(0, player.LegionId);
+		Assert.Equal(string.Empty, player.LegionName);
+		Assert.Equal(string.Empty, player.LegionRank);
+		Assert.Equal(2002, runtimeContext.LegionWarehouses.GetCurrentUser(77));
+		AssertLegionLeaveMemberPacket(
+			Assert.Single(pair.SentPackets),
+			playerObjectId: 0,
+			messageId: 1300241,
+			name: "Hydrated Legion",
+			name1: string.Empty);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LeaveDeleteFailureDoesNotResetOrSendLikeJavaAbort()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { DeleteLegionMemberResult = false };
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Legionary;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLeavePacket());
+
+		Assert.Equal(1, repository.DeleteLegionMemberCalls);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Equal(77, player.LegionId);
+		Assert.Empty(pair.SentPackets);
+	}
+
+	[Fact]
 	public void ReadFrom_ChangeAnnouncementReadsJavaMessage()
 	{
 		var packet = CreateChangeAnnouncementPacket("New notice");
@@ -918,6 +1011,17 @@ public sealed class CmLegionTests
 		buffer.WriteC(0x06);
 		buffer.WriteD(rankId);
 		buffer.WriteS(memberName);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
+	private static CmLegion CreateLeavePacket()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x02);
+		buffer.WriteD(0);
+		buffer.WriteH(0);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 		return packet;
 	}
@@ -1115,7 +1219,8 @@ public sealed class CmLegionTests
 
 		public static async Task<TestConnectionPair> CreateAsync(
 			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
-			IGameClientConnectionRegistry? connectionRegistry = null)
+			IGameClientConnectionRegistry? connectionRegistry = null,
+			GameServerRuntimeContext? runtimeContext = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1134,6 +1239,7 @@ public sealed class CmLegionTests
 					serverClient,
 					"legion-info-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					runtimeContext: runtimeContext,
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					connectionRegistry: connectionRegistry,
 					sentPacketObserver: sentPackets.Add,

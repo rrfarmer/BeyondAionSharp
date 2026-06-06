@@ -3067,6 +3067,9 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		switch (packet.ExOpcode)
 		{
+			case 0x02:
+				await HandleLegionLeaveAsync(player);
+				break;
 			case 0x07:
 				await SendPacketAsync(string.IsNullOrEmpty(player.LegionAnnouncement)
 					? SmSystemMessage.MsgNoSetGuildNotice()
@@ -3094,6 +3097,42 @@ public sealed class GameServerConnection : BaseClientConnection
 				await HandleLegionNicknameChangeAsync(player, packet.CharacterName, packet.NewNickname);
 				break;
 		}
+	}
+
+	private async Task HandleLegionLeaveAsync(Player player)
+	{
+		// Java parity: LegionService.leaveLegion -> LegionRestrictions.canLeave -> removeLegionMember.
+		if (player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildLeaveMasterCantLeaveBeforeChangeMaster());
+			return;
+		}
+
+		if (_legionWarehouses.GetCurrentUser(player.LegionId) == player.ObjectId)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildLeaveCantLeaveGuildWhileUsingWarehouse());
+			return;
+		}
+
+		if (_playerEnterWorldRepository == null)
+			return;
+
+		var legionId = player.LegionId;
+		var legionName = player.LegionName;
+		var memberName = player.Name;
+		var deleted = await _playerEnterWorldRepository.DeleteLegionMemberAsync(player.ObjectId);
+		if (!deleted)
+			return;
+
+		await _playerEnterWorldRepository.InsertLegionHistoryAsync(
+			legionId,
+			LegionHistoryActions.Kick,
+			memberName,
+			string.Empty);
+
+		_legionWarehouses.UnsetInUse(legionId, player.ObjectId);
+		ResetLegionMember(player);
+		await SendPacketAsync(new SmLegionLeaveMember(1300241, 0, legionName));
 	}
 
 	private async Task HandleLegionKickMemberAsync(Player player, string memberName)
