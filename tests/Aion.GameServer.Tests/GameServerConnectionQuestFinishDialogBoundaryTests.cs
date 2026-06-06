@@ -8,6 +8,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
@@ -18,6 +19,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 {
 	private const int SelectedQuestAutoReward = 108;
 	private const int KinahItemId = 182400001;
+	private const int RewardItemId = 186000001;
 
 	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesXpAndCompletesQuest()
@@ -127,6 +129,50 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAddsFixedItemAndCompletesQuest()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1003, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+
+		var rewardQuestState = new PlayerQuestState(1003, "REWARD", QuestVars: 0x56, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1003,
+			Name = "QuestFinishItemBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1003,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => Assert.IsType<SmQuestAction>(packet));
+		var rewardItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(RewardItemId, rewardItem.ItemId);
+		Assert.Equal(2, rewardItem.Count);
+		Assert.Equal(player.ObjectId, rewardItem.OwnerId);
+		Assert.Equal(0, rewardItem.Location);
+		Assert.Equal(0, player.Exp);
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -188,6 +234,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					</player_experience_table>
 					<item_templates>
 						<item_template id="182400001" name="Kinah" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="2147483647" price="1" />
+						<item_template id="186000001" name="Quest Reward Item" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100" price="1" />
 					</item_templates>
 					<quests>
 						<quest id="1001" can_report="true" reward_repeat_count="1">
@@ -195,6 +242,11 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 						</quest>
 						<quest id="1002" can_report="true" reward_repeat_count="1">
 							<rewards gold="100" />
+						</quest>
+						<quest id="1003" can_report="true" reward_repeat_count="1">
+							<rewards>
+								<reward_item item_id="186000001" count="2" />
+							</rewards>
 						</quest>
 					</quests>
 				</static_data>
@@ -228,6 +280,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					options: new GameServerOptions(),
 					runtimeContext: runtimeContext,
 					world: world,
+					idFactory: new IDFactory(),
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new QuestFinishDialogFixture(client, connection, dataManager.StaticData, sentPackets, tempRoot);

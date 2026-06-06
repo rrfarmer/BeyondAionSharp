@@ -5238,7 +5238,13 @@ public sealed class GameServerConnection : BaseClientConnection
 			return true;
 
 		var questRewardService = CreateQuestRewardService();
-		foreach (var reward in rewards)
+		foreach (var itemReward in rewards.ItemRewards)
+		{
+			if (!await TryApplyQuestFinishItemRewardAsync(player, itemReward, staticData, cancellationToken))
+				return true;
+		}
+
+		foreach (var reward in rewards.NonItemRewards)
 		{
 			switch (reward.Action)
 			{
@@ -5276,6 +5282,64 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		await SendPacketAsync(SmQuestAction.Update(mutation.QuestState), cancellationToken);
 		await SendNearbyQuestRefreshAsync(player, cancellationToken);
+		return true;
+	}
+
+	private async Task<bool> TryApplyQuestFinishItemRewardAsync(
+		Player player,
+		QuestFinishRewardItemProjectionDescriptor reward,
+		StaticData staticData,
+		CancellationToken cancellationToken)
+	{
+		if (_idFactory == null)
+			return false;
+		if (staticData.ItemTemplates.GetItemTemplate(reward.ItemId) is not { } rewardTemplate)
+			return false;
+
+		var rewardPlan = InventoryAddService.CreateAddItemPlan(
+			player,
+			player.InventoryItems,
+			rewardTemplate,
+			reward.Count,
+			() => _idFactory.NextId(),
+			allowInventoryOverflow: true,
+			itemTemplates: staticData.ItemTemplates);
+		if (!rewardPlan.Succeeded)
+			return false;
+
+		if (_playerEnterWorldService != null
+			&& !await _playerEnterWorldService.SaveInventoryRewardMutationAsync(
+				player,
+				rewardPlan.UpdatedItems,
+				rewardPlan.AddedItems,
+				cancellationToken))
+		{
+			return false;
+		}
+
+		var inventoryItems = player.InventoryItems.ToList();
+		foreach (var rewardItemUpdate in rewardPlan.UpdatedItems)
+		{
+			ReplaceInventoryItem(inventoryItems, rewardItemUpdate);
+			await SendPacketAsync(new SmInventoryUpdateItem(
+				rewardItemUpdate,
+				rewardTemplate,
+				SmInventoryUpdateItem.IncreaseItemCollect,
+				GetGeneralInfoWarehouseRestrictionFlag(rewardItemUpdate.ItemId, staticData.ItemRestrictionCleanups)), cancellationToken);
+		}
+
+		foreach (var rewardItemAdd in rewardPlan.AddedItems)
+		{
+			inventoryItems.Add(rewardItemAdd);
+			player.InventoryItems = inventoryItems.ToArray();
+			await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+				rewardItemAdd,
+				rewardTemplate,
+				GetGeneralInfoWarehouseRestrictionFlag(rewardItemAdd.ItemId, staticData.ItemRestrictionCleanups)), cancellationToken);
+			await SendPacketAsync(SmCubeUpdate.CubeSize(player), cancellationToken);
+		}
+
+		player.InventoryItems = inventoryItems.ToArray();
 		return true;
 	}
 
@@ -5350,18 +5414,28 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private static bool TryCreateQuestFinishAutoRewards(
 		QuestFinishSocketInputAssemblyPlan inputPlan,
-		out IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> rewards)
+		out QuestFinishAutoRewards rewards)
 	{
-		rewards = Array.Empty<QuestFinishRewardNonItemProjectionDescriptor>();
+		rewards = QuestFinishAutoRewards.Empty;
 		var template = inputPlan.Template;
 		var projection = inputPlan.RewardProjection;
 		var questState = inputPlan.QuestState;
-		if (template == null || projection == null || questState == null || projection.HasItemRewards)
+		if (template == null || projection == null || questState == null)
 			return false;
 
-		var descriptors = new List<QuestFinishRewardNonItemProjectionDescriptor>();
+		var itemDescriptors = new List<QuestFinishRewardItemProjectionDescriptor>();
+		if (!TryAddQuestFinishItemRewards(
+			itemDescriptors,
+			template,
+			projection,
+			questState))
+		{
+			return false;
+		}
+
+		var nonItemDescriptors = new List<QuestFinishRewardNonItemProjectionDescriptor>();
 		if (!TryAddQuestFinishAutoRewards(
-			descriptors,
+			nonItemDescriptors,
 			template,
 			projection,
 			projection.NonItemProjection,
@@ -5373,7 +5447,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		var isLastRepeat = questState.CompleteCount == template.RewardRepeatCount - 1;
 		if (isLastRepeat
 			&& !TryAddQuestFinishAutoRewards(
-				descriptors,
+				nonItemDescriptors,
 				template,
 				projection,
 				projection.ExtendedNonItemProjection,
@@ -5382,10 +5456,42 @@ public sealed class GameServerConnection : BaseClientConnection
 			return false;
 		}
 
-		if (descriptors.Count == 0)
+		if (itemDescriptors.Count == 0 && nonItemDescriptors.Count == 0)
 			return false;
 
-		rewards = descriptors;
+		rewards = new QuestFinishAutoRewards(itemDescriptors, nonItemDescriptors);
+		return true;
+	}
+
+	private static bool TryAddQuestFinishItemRewards(
+		ICollection<QuestFinishRewardItemProjectionDescriptor> rewards,
+		NearbyQuestTemplateSummary template,
+		QuestFinishRewardTemplateProjection projection,
+		PlayerQuestState questState)
+	{
+		if (projection.ItemProjection == null)
+			return true;
+
+		var itemPlan = QuestFinishRewardPlanService.CreateRewardItemProjection(
+			new QuestFinishRewardItemProjectionInput(
+				template.QuestId,
+				projection.DialogActionId,
+				projection.ExtendedRewardIndex,
+				questState.CompleteCount,
+				template.RewardRepeatCount,
+				questState.RewardGroup,
+				projection.PlayerClass),
+			projection.ItemProjection);
+		if (itemPlan.Warnings.Count != 0
+			|| itemPlan.Items.Any(item =>
+				item.Source is not QuestFinishRewardItemSource.RegularFixed
+					and not QuestFinishRewardItemSource.ExtendedFixed))
+		{
+			return false;
+		}
+
+		foreach (var item in itemPlan.Items)
+			rewards.Add(item);
 		return true;
 	}
 
@@ -5418,6 +5524,15 @@ public sealed class GameServerConnection : BaseClientConnection
 		foreach (var descriptor in projectionPlan.Descriptors)
 			rewards.Add(descriptor);
 		return true;
+	}
+
+	private sealed record QuestFinishAutoRewards(
+		IReadOnlyList<QuestFinishRewardItemProjectionDescriptor> ItemRewards,
+		IReadOnlyList<QuestFinishRewardNonItemProjectionDescriptor> NonItemRewards)
+	{
+		public static QuestFinishAutoRewards Empty { get; } = new(
+			Array.Empty<QuestFinishRewardItemProjectionDescriptor>(),
+			Array.Empty<QuestFinishRewardNonItemProjectionDescriptor>());
 	}
 
 	private async Task HandleOpenLegionWarehouseDialogAsync(Player player, int targetObjectId)
