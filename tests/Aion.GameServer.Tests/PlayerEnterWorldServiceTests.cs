@@ -3762,6 +3762,15 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<bool> SaveNewLegionMemberAsync(
+			int legionId,
+			int playerObjectId,
+			string rank,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<bool> DeleteLegionMemberAsync(
 			int playerObjectId,
 			CancellationToken cancellationToken = default)

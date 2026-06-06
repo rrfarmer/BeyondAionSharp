@@ -15,6 +15,7 @@ public static class LegionHistoryActions
 	public const string KinahWithdraw = "KINAH_WITHDRAW";
 	public const string ItemDeposit = "ITEM_DEPOSIT";
 	public const string ItemWithdraw = "ITEM_WITHDRAW";
+	public const string Join = "JOIN";
 	public const string Kick = "KICK";
 	public const string LevelUp = "LEVEL_UP";
 	public const string Appointed = "APPOINTED";
@@ -31,7 +32,7 @@ public static class LegionHistoryActions
 		(actionId, typeOrdinal) = actionName switch
 		{
 			"CREATE" => ((byte)0, TypeLegion),
-			"JOIN" => ((byte)1, TypeLegion),
+			Join => ((byte)1, TypeLegion),
 			Kick => ((byte)2, TypeLegion),
 			LevelUp => ((byte)3, TypeLegion),
 			Appointed => ((byte)4, TypeLegion),

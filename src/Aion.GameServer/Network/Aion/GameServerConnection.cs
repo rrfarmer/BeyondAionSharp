@@ -15702,9 +15702,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (packet.QuestionId == SmQuestionWindow.GuildInviteDoYouAcceptInvitation && packet.Response == 0)
+		if (packet.QuestionId == SmQuestionWindow.GuildInviteDoYouAcceptInvitation)
 		{
-			await HandleLegionInviteDenyResponseAsync(responder, packet);
+			await HandleLegionInviteResponseAsync(responder, packet);
 			return;
 		}
 
@@ -15743,9 +15743,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		await AcceptFriendRequestAsync(requester, responder);
 	}
 
-	private async Task HandleLegionInviteDenyResponseAsync(Player responder, CmQuestionResponse packet)
+	private async Task HandleLegionInviteResponseAsync(Player responder, CmQuestionResponse packet)
 	{
-		// Java parity: LegionService.invitePlayerToLegion RequestResponseHandler.denyRequest.
+		// Java parity: LegionService.invitePlayerToLegion RequestResponseHandler.acceptRequest/denyRequest.
 		var dispatch = responder.ResponseRequester.Respond(packet.QuestionId, packet.Response);
 		if (dispatch?.Request.Kind != QuestionResponseRequestKind.LegionInvite)
 			return;
@@ -15758,9 +15758,102 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (!_connectionRegistry.TryGetOnlinePlayerByName(request.InviterName, out var inviter) || inviter == null)
 			return;
 
+		if (packet.Response != 0)
+		{
+			await AcceptLegionInviteAsync(inviter, responder, request);
+			return;
+		}
+
 		await _connectionRegistry.SendPacketToPlayerAsync(
 			inviter.ObjectId,
 			SmSystemMessage.GuildInviteHeRejectedInvitation(responder.Name));
+	}
+
+	private async Task AcceptLegionInviteAsync(Player inviter, Player responder, PendingLegionInviteRequest request)
+	{
+		// Java parity: LegionService.addToLegion -> addLegionMember -> displayLegionAnnouncement -> addHistory.
+		if (_playerEnterWorldRepository == null
+			|| inviter.LegionId <= 0
+			|| inviter.LegionId != request.LegionId
+			|| responder.LegionId > 0)
+		{
+			return;
+		}
+
+		if (!await _playerEnterWorldRepository.SaveNewLegionMemberAsync(inviter.LegionId, responder.ObjectId, LegionRanks.Volunteer))
+			return;
+
+		BindLegionInviteAcceptedPlayer(inviter, responder);
+		await _connectionRegistry!.SendPacketToPlayerAsync(responder.ObjectId, SmLegionInfo.FromPlayer(responder));
+		if (!string.IsNullOrEmpty(responder.LegionAnnouncement))
+		{
+			await _connectionRegistry.SendPacketToPlayerAsync(
+				responder.ObjectId,
+				SmSystemMessage.GuildNotice(responder.LegionAnnouncement, responder.LegionAnnouncementEpochSeconds));
+		}
+
+		await _playerEnterWorldRepository.InsertLegionHistoryAsync(
+			responder.LegionId,
+			LegionHistoryActions.Join,
+			responder.Name,
+			string.Empty);
+
+		await BroadcastToOnlineLegionAsync(
+			responder.LegionId,
+			() => new SmLegionUpdateMember(
+				CreateOnlineLegionMemberSnapshot(responder),
+				GetLegionMemberLevel(responder),
+				_options.Network.GameServerId,
+				1300260,
+				responder.Name));
+		await BroadcastToOnlineLegionAsync(responder.LegionId, SmLegionEdit.RefreshAnnouncement);
+		await BroadcastLegionJoinTitleAsync(responder);
+	}
+
+	private static void BindLegionInviteAcceptedPlayer(Player inviter, Player responder)
+	{
+		responder.LegionId = inviter.LegionId;
+		responder.LegionName = inviter.LegionName;
+		responder.LegionLevel = inviter.LegionLevel;
+		responder.LegionDisbandTime = inviter.LegionDisbandTime;
+		responder.LegionContributionPoints = inviter.LegionContributionPoints;
+		responder.LegionOccupiedLegionDominion = inviter.LegionOccupiedLegionDominion;
+		responder.LegionLastLegionDominion = inviter.LegionLastLegionDominion;
+		responder.LegionCurrentLegionDominion = inviter.LegionCurrentLegionDominion;
+		responder.LegionDeputyPermission = inviter.LegionDeputyPermission;
+		responder.LegionCenturionPermission = inviter.LegionCenturionPermission;
+		responder.LegionLegionaryPermission = inviter.LegionLegionaryPermission;
+		responder.LegionVolunteerPermission = inviter.LegionVolunteerPermission;
+		responder.LegionAnnouncement = inviter.LegionAnnouncement;
+		responder.LegionAnnouncementEpochSeconds = inviter.LegionAnnouncementEpochSeconds;
+		responder.LegionEmblemId = inviter.LegionEmblemId;
+		responder.LegionEmblemType = inviter.LegionEmblemType;
+		responder.LegionEmblemColorA = inviter.LegionEmblemColorA;
+		responder.LegionEmblemColorR = inviter.LegionEmblemColorR;
+		responder.LegionEmblemColorG = inviter.LegionEmblemColorG;
+		responder.LegionEmblemColorB = inviter.LegionEmblemColorB;
+		responder.LegionRank = LegionRanks.Volunteer;
+	}
+
+	private async Task BroadcastLegionJoinTitleAsync(Player joinedPlayer)
+	{
+		var packet = new SmLegionUpdateTitle(
+			joinedPlayer.ObjectId,
+			joinedPlayer.LegionId,
+			joinedPlayer.LegionName,
+			joinedPlayer.LegionRank);
+		if (_connectionRegistry != null)
+		{
+			await _connectionRegistry.BroadcastToVisiblePlayersAsync(
+				joinedPlayer.Position,
+				joinedPlayer.ObjectId,
+				packet,
+				includeSourcePlayer: true);
+			return;
+		}
+
+		if (_activePlayer?.ObjectId == joinedPlayer.ObjectId)
+			await SendPacketAsync(packet);
 	}
 
 	private void HandleVortexDefenderInvitationQuestionResponse(Player responder, CmQuestionResponse packet)

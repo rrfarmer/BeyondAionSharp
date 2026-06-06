@@ -1343,6 +1343,133 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteAcceptPersistsMemberMutatesStateAndBroadcastsLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		target.Level = 14;
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionAnnouncement = "Welcome aboard";
+		player.LegionAnnouncementEpochSeconds = 1_771_234_500;
+		player.LegionEmblemId = 3;
+		player.LegionEmblemType = 1;
+		player.LegionEmblemColorA = 255;
+		player.LegionEmblemColorR = 10;
+		player.LegionEmblemColorG = 20;
+		player.LegionEmblemColorB = 30;
+		var bystander = CreateLegionPlayer(3003, "Watcher");
+		var outsider = CreateLegionPlayer(4004, "Outsider");
+		outsider.LegionId = 99;
+		var registry = new CapturingConnectionRegistry(player, target, bystander, outsider);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+		pair.SentPackets.Clear();
+		registry.DirectPackets.Clear();
+		registry.VisibleBroadcasts.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 1));
+
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Equal(1, repository.SaveNewLegionMemberCalls);
+		Assert.Equal((77, target.ObjectId, LegionRanks.Volunteer), repository.SavedNewLegionMember);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.Join, "Lurion", string.Empty), repository.InsertedLegionHistory);
+		Assert.Equal(77, target.LegionId);
+		Assert.Equal("Hydrated Legion", target.LegionName);
+		Assert.Equal(4, target.LegionLevel);
+		Assert.Equal(LegionRanks.Volunteer, target.LegionRank);
+		Assert.Equal("Welcome aboard", target.LegionAnnouncement);
+		Assert.Equal(1_771_234_500, target.LegionAnnouncementEpochSeconds);
+		Assert.Equal(3, target.LegionEmblemId);
+		Assert.Empty(pair.SentPackets);
+		Assert.DoesNotContain(registry.DirectPackets, delivery => delivery.PlayerObjectId == outsider.ObjectId);
+
+		var info = Assert.Single(
+			registry.DirectPackets,
+			delivery => delivery.PlayerObjectId == target.ObjectId && delivery.Packet is SmLegionInfo);
+		AssertLegionInfoAnnouncementPacket(info.Packet, "Welcome aboard", 1_771_234_500);
+		var notice = Assert.Single(
+			registry.DirectPackets,
+				delivery => delivery.PlayerObjectId == target.ObjectId
+				&& delivery.Packet is SmSystemMessage message
+				&& message.MessageId == 1400019);
+		var noticePacket = Assert.IsType<SmSystemMessage>(notice.Packet);
+		Assert.Equal(["Welcome aboard", "1771234500", "2"], noticePacket.Parameters);
+
+		var memberUpdates = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmLegionUpdateMember)
+			.ToArray();
+		Assert.Equal([player.ObjectId, target.ObjectId, bystander.ObjectId], memberUpdates.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in memberUpdates)
+		{
+			AssertLegionUpdateMemberPacket(
+				delivery.Packet,
+				playerObjectId: target.ObjectId,
+				rankId: LegionRanks.GetRankId(LegionRanks.Volunteer),
+				classId: 5,
+				level: 1,
+				worldId: 0,
+				online: true,
+				lastOnlineEpochSeconds: 0,
+				gameServerId: 1,
+				messageId: 1300260,
+				text: "Lurion");
+		}
+
+		var refreshPackets = registry.DirectPackets
+			.Where(delivery => delivery.Packet is SmLegionEdit)
+			.ToArray();
+		Assert.Equal([player.ObjectId, target.ObjectId, bystander.ObjectId], refreshPackets.Select(delivery => delivery.PlayerObjectId));
+		foreach (var delivery in refreshPackets)
+			AssertLegionEditPacket(delivery.Packet, expectedType: 0x08);
+
+		var titleBroadcast = Assert.Single(registry.VisibleBroadcasts);
+		Assert.Equal(target.ObjectId, titleBroadcast.SourceObjectId);
+		Assert.True(titleBroadcast.IncludeSourcePlayer);
+		AssertLegionUpdateTitlePacket(
+			titleBroadcast.Packet,
+			target.ObjectId,
+			77,
+			"Hydrated Legion",
+			LegionRanks.GetRankId(LegionRanks.Volunteer));
+	}
+
+	[Fact]
+	public async Task HandleQuestionResponseAsync_LegionInviteAcceptFailedInsertDoesNotMutateLikeJavaPersistenceGuard()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository { SaveNewLegionMemberResult = false };
+		var target = CreateUnguildedPlayer(2002, "Lurion");
+		var player = CreateBrigadeGeneralPlayer();
+		var registry = new CapturingConnectionRegistry(player, target);
+		await using var pair = await TestConnectionPair.CreateAsync(repository, registry);
+		SetActivePlayer(pair.Connection, player);
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLegionInvitePacket("lurion"));
+		pair.SentPackets.Clear();
+		registry.DirectPackets.Clear();
+		registry.VisibleBroadcasts.Clear();
+
+		await pair.Connection.HandleQuestionResponseAsync(
+			target,
+			CreateQuestionResponse(SmQuestionWindow.GuildInviteDoYouAcceptInvitation, response: 1));
+
+		Assert.Equal(0, target.ResponseRequester.Count);
+		Assert.Null(target.PendingLegionInviteRequest);
+		Assert.Equal(1, repository.SaveNewLegionMemberCalls);
+		Assert.Equal((77, target.ObjectId, LegionRanks.Volunteer), repository.SavedNewLegionMember);
+		Assert.Equal(0, repository.InsertLegionHistoryCalls);
+		Assert.Equal(0, target.LegionId);
+		Assert.Equal(string.Empty, target.LegionName);
+		Assert.Equal(string.Empty, target.LegionRank);
+		Assert.Empty(pair.SentPackets);
+		Assert.Empty(registry.DirectPackets);
+		Assert.Empty(registry.VisibleBroadcasts);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_BrigadeGeneralTransferStoresRequesterConfirmAndSendsQuestionLikeJava()
 	{
 		var target = CreateLegionPlayer(2002, "Lurion");
@@ -2100,6 +2227,7 @@ public sealed class CmLegionTests
 			ObjectId = objectId,
 			Name = name,
 			Race = race,
+			PlayerClass = "RANGER",
 		};
 	}
 
@@ -2422,7 +2550,10 @@ public sealed class CmLegionTests
 		reader.ReadD();
 		Assert.Equal(announcement, reader.ReadS());
 		if (!string.IsNullOrEmpty(announcement))
+		{
 			Assert.Equal(announcementEpochSeconds, reader.ReadD());
+			Assert.Equal(string.Empty, reader.ReadS());
+		}
 		Assert.Equal(0, reader.Remaining);
 	}
 
