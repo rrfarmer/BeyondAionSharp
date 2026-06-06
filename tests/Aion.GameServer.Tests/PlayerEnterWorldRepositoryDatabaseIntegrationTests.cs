@@ -1064,6 +1064,14 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 				(5001, 1001, 'Scout', 'BRIGADE_GENERAL', 'Ready'),
 				(5001, 1002, 'Crafter', 'CENTURION', 'Sleeping')
 			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO houses (id, address, building_id, player_id, acquire_time, settings)
+			VALUES
+				(9101, 700100, 353001, 1001, '2026-01-01 00:00:00', 513),
+				(9102, 700200, 353002, 1002, '2026-01-01 00:00:00', 257),
+				(9103, 2001, 353003, 1002, '2026-01-02 00:00:00', 769)
+			""");
 
 		var repository = new MySqlPlayerEnterWorldRepository(
 			new GameServerRuntimeContext(),
@@ -1079,6 +1087,8 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal("Ready", leader.SelfIntro);
 		Assert.Equal("RANGER", leader.PlayerClass);
 		Assert.Equal(210010000, leader.WorldId);
+		Assert.Equal(700100, leader.HouseAddressId);
+		Assert.Equal(PlayerHouse.DoorClosedExceptFriends, leader.HouseDoorStateId);
 
 		var offline = Assert.Single(rows, row => row.PlayerObjectId == 1002);
 		Assert.Equal("OfflineLegionary", offline.Name);
@@ -1089,6 +1099,8 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 		Assert.Equal("SORCERER", offline.PlayerClass);
 		Assert.Equal(220010000, offline.WorldId);
 		Assert.NotNull(offline.LastOnline);
+		Assert.Equal(2001, offline.HouseAddressId);
+		Assert.Equal(PlayerHouse.DoorClosed, offline.HouseDoorStateId);
 	}
 
 	[Fact]

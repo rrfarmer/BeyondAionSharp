@@ -1414,7 +1414,9 @@ public sealed class CmLegionTests
 					WorldId: 210010000,
 					IsOnline: true,
 					SelfIntro: "Ready",
-					Nickname: "Scout"),
+					Nickname: "Scout",
+					HouseAddressId: 700100,
+					HouseDoorStateId: PlayerHouse.DoorClosedExceptFriends),
 			],
 			isFirst: true,
 			isLast: true,
@@ -1436,8 +1438,8 @@ public sealed class CmLegionTests
 					SelfIntro: "Ready",
 					Nickname: "Scout",
 					LastOnlineEpochSeconds: 0,
-					HouseAddressId: 0,
-					HouseDoorStateId: 0,
+					HouseAddressId: 700100,
+					HouseDoorStateId: PlayerHouse.DoorClosedExceptFriends,
 					GameServerId: 1),
 			]);
 	}
@@ -1470,6 +1472,10 @@ public sealed class CmLegionTests
 		var target = CreateUnguildedPlayer(2002, "Lurion");
 		target.Level = 14;
 		var player = CreateBrigadeGeneralPlayer();
+		player.Houses =
+		[
+			new PlayerHouse(9101, 700101, 353001, DateTime.UtcNow.AddDays(-3), null, IsInactive: false, PlayerHouse.DoorClosed),
+		];
 		player.LegionAnnouncement = "Welcome aboard";
 		player.LegionAnnouncementEpochSeconds = 1_771_234_500;
 		player.LegionEmblemId = 3;
@@ -1491,6 +1497,11 @@ public sealed class CmLegionTests
 			LegionNickname = "Healer",
 			LegionSelfIntro = "Standing by",
 			Position = new WorldPosition(220010000, 0, 0, 0, 0),
+			Houses =
+			[
+				new PlayerHouse(9201, 700201, 353002, DateTime.UtcNow.AddDays(-2), null, IsInactive: true, PlayerHouse.DoorOpen),
+				new PlayerHouse(9202, 700202, 353003, DateTime.UtcNow.AddDays(-1), null, IsInactive: false, PlayerHouse.DoorClosedExceptFriends),
+			],
 		};
 		var outsider = CreateLegionPlayer(4004, "Outsider");
 		outsider.LegionId = 99;
@@ -1533,7 +1544,9 @@ public sealed class CmLegionTests
 					"RANGER",
 					0,
 					110010000,
-					DateTimeOffset.FromUnixTimeSeconds(2_000).UtcDateTime),
+					DateTimeOffset.FromUnixTimeSeconds(2_000).UtcDateTime,
+					HouseAddressId: 700999,
+					HouseDoorStateId: PlayerHouse.DoorClosed),
 				new LegionMemberSnapshot(
 					5005,
 					77,
@@ -1545,7 +1558,9 @@ public sealed class CmLegionTests
 					"SORCERER",
 					0,
 					120010000,
-					DateTimeOffset.FromUnixTimeSeconds(3_000).UtcDateTime),
+					DateTimeOffset.FromUnixTimeSeconds(3_000).UtcDateTime,
+					HouseAddressId: 700301,
+					HouseDoorStateId: PlayerHouse.DoorClosedExceptFriends),
 			],
 		};
 		var registry = new CapturingConnectionRegistry(player, target, bystander, outsider);
@@ -1609,8 +1624,8 @@ public sealed class CmLegionTests
 					SelfIntro: string.Empty,
 					Nickname: string.Empty,
 					LastOnlineEpochSeconds: 0,
-					HouseAddressId: 0,
-					HouseDoorStateId: 0,
+					HouseAddressId: 700101,
+					HouseDoorStateId: PlayerHouse.DoorClosed,
 					GameServerId: 1),
 				new ExpectedLegionMemberListRow(
 					PlayerObjectId: bystander.ObjectId,
@@ -1623,8 +1638,8 @@ public sealed class CmLegionTests
 					SelfIntro: "Standing by",
 					Nickname: "Healer",
 					LastOnlineEpochSeconds: 0,
-					HouseAddressId: 0,
-					HouseDoorStateId: 0,
+					HouseAddressId: 700202,
+					HouseDoorStateId: PlayerHouse.DoorClosedExceptFriends,
 					GameServerId: 1),
 				new ExpectedLegionMemberListRow(
 					PlayerObjectId: 5005,
@@ -1637,8 +1652,8 @@ public sealed class CmLegionTests
 					SelfIntro: "Sleeping",
 					Nickname: "Crafter",
 					LastOnlineEpochSeconds: 3000,
-					HouseAddressId: 0,
-					HouseDoorStateId: 0,
+					HouseAddressId: 700301,
+					HouseDoorStateId: PlayerHouse.DoorClosedExceptFriends,
 					GameServerId: 1),
 			]);
 

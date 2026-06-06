@@ -2627,7 +2627,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
 				SELECT lm.player_id, lm.legion_id, p.name, lm.`rank`, lm.nickname, lm.selfintro,
-					p.online, p.player_class, p.exp, p.world_id, p.last_online
+					p.online, p.player_class, p.exp, p.world_id, p.last_online,
+					COALESCE((
+						SELECT h.address
+						FROM houses h
+						WHERE h.player_id = lm.player_id
+						ORDER BY CASE WHEN h.address IN (2001, 3001) THEN 0 ELSE 1 END, h.acquire_time, h.address
+						LIMIT 1
+					), 0) AS house_address,
+					COALESCE((
+						SELECT h.settings
+						FROM houses h
+						WHERE h.player_id = lm.player_id
+						ORDER BY CASE WHEN h.address IN (2001, 3001) THEN 0 ELSE 1 END, h.acquire_time, h.address
+						LIMIT 1
+					), 0) AS house_settings
 				FROM legion_members lm
 				JOIN players p ON p.id = lm.player_id
 				WHERE p.name = ?
@@ -2654,7 +2668,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				ReadString(reader, "player_class"),
 				ReadLong(reader, "exp"),
 				ReadInt(reader, "world_id"),
-				ReadDateTime(reader, "last_online"));
+				ReadDateTime(reader, "last_online"),
+				ReadInt(reader, "house_address"),
+				ReadInt(reader, "house_address") == 0
+					? 0
+					: PlayerHouse.GetDoorStateFromSettings(ReadInt(reader, "house_settings")));
 		}
 		catch (MySqlException ex)
 		{
@@ -2675,7 +2693,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var command = connection.CreateCommand();
 			command.CommandText = """
 				SELECT lm.player_id, lm.legion_id, p.name, lm.`rank`, lm.nickname, lm.selfintro,
-					p.online, p.player_class, p.exp, p.world_id, p.last_online
+					p.online, p.player_class, p.exp, p.world_id, p.last_online,
+					COALESCE((
+						SELECT h.address
+						FROM houses h
+						WHERE h.player_id = lm.player_id
+						ORDER BY CASE WHEN h.address IN (2001, 3001) THEN 0 ELSE 1 END, h.acquire_time, h.address
+						LIMIT 1
+					), 0) AS house_address,
+					COALESCE((
+						SELECT h.settings
+						FROM houses h
+						WHERE h.player_id = lm.player_id
+						ORDER BY CASE WHEN h.address IN (2001, 3001) THEN 0 ELSE 1 END, h.acquire_time, h.address
+						LIMIT 1
+					), 0) AS house_settings
 				FROM legion_members lm
 				JOIN players p ON p.id = lm.player_id
 				WHERE lm.legion_id = ?
@@ -2701,7 +2733,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					ReadString(reader, "player_class"),
 					ReadLong(reader, "exp"),
 					ReadInt(reader, "world_id"),
-					ReadDateTime(reader, "last_online")));
+					ReadDateTime(reader, "last_online"),
+					ReadInt(reader, "house_address"),
+					ReadInt(reader, "house_address") == 0
+						? 0
+						: PlayerHouse.GetDoorStateFromSettings(ReadInt(reader, "house_settings"))));
 			}
 
 			return members;

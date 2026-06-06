@@ -15951,6 +15951,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private LegionMemberListEntry CreateLegionMemberListEntry(Player player)
 	{
+		var activeHouse = PlayerActiveHouseResolverService.FindActiveHouse(player);
 		return new LegionMemberListEntry(
 			player.ObjectId,
 			player.Name,
@@ -15961,7 +15962,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			IsOnline: true,
 			player.LegionSelfIntro,
 			player.LegionNickname,
-			player.LastOnline);
+			player.LastOnline,
+			activeHouse?.AddressId ?? 0,
+			activeHouse?.DoorState ?? 0);
 	}
 
 	private LegionMemberListEntry CreateLegionMemberListEntry(LegionMemberSnapshot member)
@@ -15976,7 +15979,9 @@ public sealed class GameServerConnection : BaseClientConnection
 			member.IsOnline,
 			member.SelfIntro,
 			member.Nickname,
-			member.LastOnline);
+			member.LastOnline,
+			member.HouseAddressId,
+			member.HouseDoorStateId);
 	}
 
 	private async Task BroadcastLegionInviteEmblemAsync(Player joinedPlayer)
