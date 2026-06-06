@@ -1752,6 +1752,20 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					lm.legion_id, lm.`rank` AS legion_rank, l.level AS legion_level, l.name AS legion_name,
 					l.disband_time AS legion_disband_time,
 					l.deputy_permission, l.centurion_permission, l.legionary_permission, l.volunteer_permission,
+					(
+						SELECT la.announcement
+						FROM legion_announcement_list la
+						WHERE la.legion_id = lm.legion_id
+						ORDER BY la.date DESC
+						LIMIT 1
+					) AS legion_announcement,
+					(
+						SELECT la.date
+						FROM legion_announcement_list la
+						WHERE la.legion_id = lm.legion_id
+						ORDER BY la.date DESC
+						LIMIT 1
+					) AS legion_announcement_date,
 					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
 					le.color_a AS legion_emblem_color_a, le.color_r AS legion_emblem_color_r,
 					le.color_g AS legion_emblem_color_g, le.color_b AS legion_emblem_color_b,
@@ -1803,6 +1817,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					LegionCenturionPermission = ReadInt(reader, "centurion_permission"),
 					LegionLegionaryPermission = ReadInt(reader, "legionary_permission"),
 					LegionVolunteerPermission = ReadInt(reader, "volunteer_permission"),
+					LegionAnnouncement = ReadString(reader, "legion_announcement"),
+					LegionAnnouncementEpochSeconds = ToUnixSeconds(ReadDateTimeOffset(reader, "legion_announcement_date")),
 					LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
 					LegionEmblemType = ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
 					LegionEmblemColorA = (byte)ReadInt(reader, "legion_emblem_color_a"),
@@ -7409,6 +7425,15 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		return value.Value.Kind == DateTimeKind.Unspecified
 			? new DateTimeOffset(value.Value)
 			: new DateTimeOffset(value.Value.ToUniversalTime(), TimeSpan.Zero);
+	}
+
+	private static int ToUnixSeconds(DateTimeOffset? value)
+	{
+		if (!value.HasValue)
+			return 0;
+
+		var seconds = value.Value.ToUnixTimeSeconds();
+		return seconds < int.MinValue ? int.MinValue : seconds > int.MaxValue ? int.MaxValue : (int)seconds;
 	}
 
 	private static InventoryItem ReadItem(MySqlDataReader reader)

@@ -220,6 +220,22 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300835);
 	}
 
+	public static SmSystemMessage MsgNoSetGuildNotice()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_NOSET_GUILD_NOTICE.
+		return new SmSystemMessage(1390127);
+	}
+
+	public static SmSystemMessage GuildNotice(string announcement, int unixTime)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_NOTICE(String, long) -> params: message, Unix seconds, date display mode.
+		return new SmSystemMessage(
+			1400019,
+			announcement,
+			unixTime.ToString(System.Globalization.CultureInfo.InvariantCulture),
+			"2");
+	}
+
 	public static SmSystemMessage GuildWarnFailureUploadEmblem()
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_WARN_FAILURE_UPLOAD_EMBLEM.

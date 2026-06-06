@@ -1027,6 +1027,45 @@ public sealed class PlayerEnterWorldRepositoryDatabaseIntegrationTests
 	}
 
 	[Fact]
+	public async Task LoadPlayerAsync_HydratesLatestLegionAnnouncementAgainstJavaSchema_WhenEnabled()
+	{
+		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")
+			return;
+
+		// Java source breadcrumbs: LegionDAO.loadAnnouncement reads legion_announcement_list ordered by date DESC LIMIT 1.
+		InitializeDatabaseFactory();
+		await InitializeSchemaAsync();
+		await SeedPlayerAsync();
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legions (id, name, level, disband_time)
+			VALUES (5001, 'Hydrated Legion', 4, 0)
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legion_members (legion_id, player_id, `rank`)
+			VALUES (5001, 1001, 'VOLUNTEER')
+			""");
+		await ExecuteNonQueryAsync(
+			"""
+			INSERT INTO legion_announcement_list (legion_id, announcement, date)
+			VALUES
+				(5001, 'Old notice', '2026-01-01 00:00:00'),
+				(5001, 'Current notice', '2026-02-01 00:00:00')
+			""");
+
+		var repository = new MySqlPlayerEnterWorldRepository(
+			new GameServerRuntimeContext(),
+			NullLogger<MySqlPlayerEnterWorldRepository>.Instance);
+
+		var player = await repository.LoadPlayerAsync(accountId: 1, playerObjectId: PlayerObjectId);
+
+		Assert.NotNull(player);
+		Assert.Equal("Current notice", player.LegionAnnouncement);
+		Assert.True(player.LegionAnnouncementEpochSeconds > 0);
+	}
+
+	[Fact]
 	public async Task LoadPlayerAsync_DefaultsLegionFactsWhenNoLegionMemberAgainstJavaSchema_WhenEnabled()
 	{
 		if (Environment.GetEnvironmentVariable("AION_GAMESERVER_DB_INTEGRATION") != "1")

@@ -3063,8 +3063,17 @@ public sealed class GameServerConnection : BaseClientConnection
 		if (player.LegionId <= 0)
 			return;
 
-		if (packet.ExOpcode == 0x08)
-			await SendPacketAsync(SmLegionInfo.FromPlayer(player));
+		switch (packet.ExOpcode)
+		{
+			case 0x07:
+				await SendPacketAsync(string.IsNullOrEmpty(player.LegionAnnouncement)
+					? SmSystemMessage.MsgNoSetGuildNotice()
+					: SmSystemMessage.GuildNotice(player.LegionAnnouncement, player.LegionAnnouncementEpochSeconds));
+				break;
+			case 0x08:
+				await SendPacketAsync(SmLegionInfo.FromPlayer(player));
+				break;
+		}
 	}
 
 	private async Task HandleLegionHistoryAsync(Player player, CmLegionHistory packet)

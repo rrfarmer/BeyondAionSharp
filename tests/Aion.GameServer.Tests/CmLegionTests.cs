@@ -76,6 +76,32 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void ReadFrom_ShowNoticeConsumesJavaEmptyFields()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x07);
+		buffer.WriteD(0);
+		buffer.WriteH(0);
+
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+
+		Assert.Equal(0x07, packet.ExOpcode);
+	}
+
+	[Fact]
+	public void SmSystemMessage_LegionNoticeHelpersUseJavaIdsAndParameters()
+	{
+		var noNotice = SmSystemMessage.MsgNoSetGuildNotice();
+		Assert.Equal(1390127, noNotice.MessageId);
+		Assert.Empty(noNotice.Parameters);
+
+		var notice = SmSystemMessage.GuildNotice("Assemble", 1_771_234_500);
+		Assert.Equal(1400019, notice.MessageId);
+		Assert.Equal(["Assemble", "1771234500", "2"], notice.Parameters);
+	}
+
+	[Fact]
 	public void SmLegionInfo_WritesJavaPayloadWithCurrentRuntimeFields()
 	{
 		var packet = new SmLegionInfo(
@@ -116,6 +142,34 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void SmLegionInfo_FromPlayerWritesLoadedAnnouncementLikeJava()
+	{
+		var player = CreateLegionPlayer();
+		player.LegionAnnouncement = "Assemble";
+		player.LegionAnnouncementEpochSeconds = 1_771_234_500;
+
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(SmLegionInfo.FromPlayer(player)));
+
+		Assert.Equal("Hydrated Legion", reader.ReadS());
+		Assert.Equal(4, reader.ReadC());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(11, reader.ReadSignedH());
+		Assert.Equal(12, reader.ReadSignedH());
+		Assert.Equal(13, reader.ReadSignedH());
+		Assert.Equal(14, reader.ReadSignedH());
+		Assert.Equal(0, reader.ReadQ());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(1_771_234_567, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal(0, reader.ReadD());
+		Assert.Equal("Assemble", reader.ReadS());
+		Assert.Equal(1_771_234_500, reader.ReadD());
+		Assert.Equal(string.Empty, reader.ReadS());
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_RefreshInfoSendsActivePlayerLegionInfoLikeJava()
 	{
 		await using var pair = await TestConnectionPair.CreateAsync();
@@ -143,6 +197,35 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ShowNoticeSendsNoNoticeMessageWhenAnnouncementMissingLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		SetActivePlayer(pair.Connection, CreateLegionPlayer());
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateShowNoticePacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1390127, response.MessageId);
+		Assert.Empty(response.Parameters);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ShowNoticeSendsLoadedAnnouncementLikeJava()
+	{
+		await using var pair = await TestConnectionPair.CreateAsync();
+		var player = CreateLegionPlayer();
+		player.LegionAnnouncement = "Assemble";
+		player.LegionAnnouncementEpochSeconds = 1_771_234_500;
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateShowNoticePacket());
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1400019, response.MessageId);
+		Assert.Equal(["Assemble", "1771234500", "2"], response.Parameters);
+	}
+
+	[Fact]
 	public async Task HandleInfrastructurePacketAsync_RefreshInfoSkipsPlayerWithoutLegionLikeJava()
 	{
 		await using var pair = await TestConnectionPair.CreateAsync();
@@ -156,6 +239,17 @@ public sealed class CmLegionTests
 	private static CmLegion CreatePacket()
 	{
 		return new CmLegion(45, new HashSet<GameConnectionState> { GameConnectionState.InGame });
+	}
+
+	private static CmLegion CreateShowNoticePacket()
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x07);
+		buffer.WriteD(0);
+		buffer.WriteH(0);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
 	}
 
 	private static CmLegion CreateRefreshInfoPacket()

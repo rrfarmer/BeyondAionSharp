@@ -74,6 +74,12 @@ public sealed class Player
 
 	public int LegionVolunteerPermission { get; set; }
 
+	// Java parity: model/team/legion/Legion.Announcement.message loaded by LegionDAO.loadAnnouncement.
+	public string LegionAnnouncement { get; set; } = string.Empty;
+
+	// Java parity: Legion.Announcement.time().getTime() / 1000.
+	public int LegionAnnouncementEpochSeconds { get; set; }
+
 	public byte LegionEmblemId { get; set; }
 
 	public byte LegionEmblemType { get; set; }

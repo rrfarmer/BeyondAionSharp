@@ -72,7 +72,9 @@ public sealed class SmLegionInfo : GameServerPacket
 			player.LegionDisbandTime,
 			occupiedLegionDominion: 0,
 			lastLegionDominion: 0,
-			currentLegionDominion: 0);
+			currentLegionDominion: 0,
+			player.LegionAnnouncement,
+			player.LegionAnnouncementEpochSeconds);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
