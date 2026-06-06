@@ -10,6 +10,7 @@ namespace Aion.GameServer.Tests;
 public sealed class QuestFinishSocketInputAssemblyPlanServiceTests
 {
 	private const int SelectedQuestReward1 = 8;
+	private const int SelectedQuestNoReward = 23;
 	private const int SelectedQuestAutoReward = 108;
 
 	[Fact]
@@ -39,7 +40,7 @@ public sealed class QuestFinishSocketInputAssemblyPlanServiceTests
 		Assert.Equal(QuestFinishRewardGroupCorrectionStatus.DefaultedFirstRewardGroup, plan.RewardGroupCorrectionStatus);
 		Assert.Equal(0, plan.QuestState?.RewardGroup);
 		Assert.Equal(55, plan.RewardProjection?.NonItemProjection?.Kinah);
-		Assert.Equal(SelectedQuestAutoReward, plan.RewardProjection?.DialogActionId);
+		Assert.Equal(SelectedQuestNoReward, plan.RewardProjection?.DialogActionId);
 		Assert.Equal("RANGER", plan.RewardProjection?.PlayerClass);
 		Assert.Empty(plan.Diagnostics);
 	}

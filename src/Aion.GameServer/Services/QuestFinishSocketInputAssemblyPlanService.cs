@@ -33,6 +33,7 @@ public static class QuestFinishSocketInputAssemblyPlanService
 	private const int SelectedQuestAutoReward1 = 110;
 	private const int SelectedQuestAutoReward15 = 124;
 	private const int SelectedQuestReward1 = 8;
+	private const int SelectedQuestNoReward = 23;
 
 	public static QuestFinishSocketInputAssemblyPlan CreatePlan(
 		Player player,
@@ -121,6 +122,12 @@ public static class QuestFinishSocketInputAssemblyPlanService
 
 	private static int NormalizeQuestRewardDialogAction(int dialogActionId)
 	{
+		// Java parity: plain auto reward is the reportable socket action for "no regular selectable reward".
+		// QuestService.getRewardItems consumes SELECTED_QUEST_NOREWARD when extendedRewardIndex selects
+		// an extended selectable reward.
+		if (dialogActionId == SelectedQuestAutoReward)
+			return SelectedQuestNoReward;
+
 		// Java parity: DialogAction.SELECTED_QUEST_AUTO_REWARD1..15 mirror SELECTED_QUEST_REWARD1..15
 		// for reportable quests, while QuestService.getRewardItems still indexes the selected reward list.
 		if (dialogActionId >= SelectedQuestAutoReward1 && dialogActionId <= SelectedQuestAutoReward15)

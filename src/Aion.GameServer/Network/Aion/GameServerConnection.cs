@@ -5688,7 +5688,8 @@ public sealed class GameServerConnection : BaseClientConnection
 				item.Source is not QuestFinishRewardItemSource.RegularFixed
 					and not QuestFinishRewardItemSource.RegularSelectable
 					and not QuestFinishRewardItemSource.ClassSelectable
-					and not QuestFinishRewardItemSource.ExtendedFixed))
+					and not QuestFinishRewardItemSource.ExtendedFixed
+					and not QuestFinishRewardItemSource.ExtendedSelectable))
 		{
 			return false;
 		}
