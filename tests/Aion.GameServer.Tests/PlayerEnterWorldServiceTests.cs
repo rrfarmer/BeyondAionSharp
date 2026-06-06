@@ -3691,6 +3691,13 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<IReadOnlyList<ChallengeTaskProgressRow>> LoadLegionChallengeTasksAsync(
+			int legionId,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<IReadOnlyList<ChallengeTaskProgressRow>>(Array.Empty<ChallengeTaskProgressRow>());
+		}
+
 		public Task<bool> SaveLegionAnnouncementAsync(
 			int legionId,
 			string? announcement,

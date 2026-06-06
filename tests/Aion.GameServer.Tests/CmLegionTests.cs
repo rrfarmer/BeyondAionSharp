@@ -693,7 +693,10 @@ public sealed class CmLegionTests
 	public async Task HandleInfrastructurePacketAsync_LevelUpRejectsMissingChallengeTaskForLevelFivePlusLikeJavaDefault()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository, options: CreateLevelUpOptions());
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			options: CreateLevelUpOptions(),
+			challengeTaskTable: CreateChallengeTaskTable());
 		var player = CreateBrigadeGeneralPlayer();
 		player.LegionLevel = 5;
 		player.InventoryItems = [CreateKinah(1000, player.ObjectId)];
@@ -704,8 +707,50 @@ public sealed class CmLegionTests
 		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
 		Assert.Equal(904452, response.MessageId);
 		Assert.Equal(["5"], response.Parameters);
+		Assert.Equal(1, repository.LoadLegionChallengeTasksCalls);
+		Assert.Equal(77, repository.LoadedLegionChallengeTasksLegionId);
 		Assert.Equal(0, repository.CountLegionMembersCalls);
 		Assert.Equal(0, repository.SaveLegionLevelUpMutationCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_LevelUpWithCompletedChallengeTasksMutatesLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			CountLegionMembersResult = 1,
+			LoadedLegionChallengeTasks = CreateCompletedLevelFiveChallengeRows(),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			options: CreateLevelUpOptions(),
+			challengeTaskTable: CreateChallengeTaskTable());
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionLevel = 5;
+		player.InventoryItems = [CreateKinah(1500, player.ObjectId)];
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateLevelUpPacket());
+
+		Assert.Equal(1, repository.LoadLegionChallengeTasksCalls);
+		Assert.Equal(77, repository.LoadedLegionChallengeTasksLegionId);
+		Assert.Equal(1, repository.CountLegionMembersCalls);
+		Assert.Equal(77, repository.CountedLegionMembersLegionId);
+		Assert.Equal(1, repository.SaveLegionLevelUpMutationCalls);
+		Assert.Equal(6, repository.SavedLegionLevelUpMutation?.LegionLevel);
+		Assert.Equal(500, repository.SavedLegionLevelUpMutation?.KinahItemUpdate?.Count);
+		Assert.Equal(1, repository.InsertLegionHistoryCalls);
+		Assert.Equal((77, LegionHistoryActions.LevelUp, "Tester", "6"), repository.InsertedLegionHistory);
+		Assert.Equal(6, player.LegionLevel);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => AssertLegionEditLevelPacket(packet, 6),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(900700, message.MessageId);
+				Assert.Equal(["6"], message.Parameters);
+			});
 	}
 
 	[Fact]
@@ -1275,6 +1320,47 @@ public sealed class CmLegionTests
 		};
 	}
 
+	private static ChallengeTaskTable CreateChallengeTaskTable()
+	{
+		return new ChallengeTaskTable(
+			[
+				new ChallengeTaskSummary(
+					300,
+					"LEGION",
+					"ELYOS",
+					5,
+					5,
+					true,
+					[
+						new ChallengeQuestSummary(17000, 6),
+						new ChallengeQuestSummary(17001, 12),
+						new ChallengeQuestSummary(17002, 42),
+					]),
+				new ChallengeTaskSummary(
+					400,
+					"LEGION",
+					"ASMODIANS",
+					5,
+					5,
+					true,
+					[
+						new ChallengeQuestSummary(27000, 6),
+						new ChallengeQuestSummary(27001, 12),
+						new ChallengeQuestSummary(27002, 42),
+					]),
+			]);
+	}
+
+	private static ChallengeTaskProgressRow[] CreateCompletedLevelFiveChallengeRows()
+	{
+		return
+		[
+			new ChallengeTaskProgressRow(300, 17000, 6),
+			new ChallengeTaskProgressRow(300, 17001, 12),
+			new ChallengeTaskProgressRow(300, 17002, 42),
+		];
+	}
+
 	private static Player CreateBrigadeGeneralPlayer()
 	{
 		var player = CreateLegionPlayer();
@@ -1437,7 +1523,8 @@ public sealed class CmLegionTests
 			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
 			IGameClientConnectionRegistry? connectionRegistry = null,
 			GameServerRuntimeContext? runtimeContext = null,
-			GameServerOptions? options = null)
+			GameServerOptions? options = null,
+			ChallengeTaskTable? challengeTaskTable = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -1461,7 +1548,8 @@ public sealed class CmLegionTests
 					playerEnterWorldRepository: playerEnterWorldRepository,
 					connectionRegistry: connectionRegistry,
 					sentPacketObserver: sentPackets.Add,
-					crypt: crypt);
+					crypt: crypt,
+					challengeTaskTable: challengeTaskTable);
 				return new TestConnectionPair(client, connection, sentPackets);
 			}
 			finally

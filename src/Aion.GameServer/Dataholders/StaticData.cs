@@ -71,6 +71,7 @@ public sealed class StaticData
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
+		ChallengeTaskTable challengeTasks,
 		AtreianPassportTable atreianPassports,
 		WindstreamTable windstreamLocations,
 		Task? validationTask)
@@ -136,6 +137,7 @@ public sealed class StaticData
 		QuestHandlers = questHandlers;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
+		ChallengeTasks = challengeTasks;
 		AtreianPassports = atreianPassports;
 		WindstreamLocations = windstreamLocations;
 		ValidationTask = validationTask;
@@ -265,6 +267,8 @@ public sealed class StaticData
 
 	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
 
+	public ChallengeTaskTable ChallengeTasks { get; }
+
 	public AtreianPassportTable AtreianPassports { get; }
 
 	public WindstreamTable WindstreamLocations { get; }
@@ -365,6 +369,7 @@ public sealed class StaticData
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var questBonusItemGroups = new List<QuestBonusItemGroupProjection>();
+		var challengeTasks = new List<ChallengeTaskSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
 		var windstreamLocations = new List<WindstreamLocationSummary>();
 		int currentWindstreamMapId = 0;
@@ -449,6 +454,7 @@ public sealed class StaticData
 		float currentQuestBonusGroupChance = 100f;
 		QuestBonusItemShape currentQuestBonusGroupShape = default;
 		List<QuestBonusItemProjection>? currentQuestBonusItems = null;
+		ChallengeTaskBuilder? currentChallengeTask = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -816,6 +822,11 @@ public sealed class StaticData
 					currentQuestBonusGroupChance = 100f;
 					currentQuestBonusGroupShape = default;
 					currentQuestBonusItems = null;
+				}
+				if (reader.Depth == 2 && reader.LocalName == "task" && currentChallengeTask != null)
+				{
+					challengeTasks.Add(currentChallengeTask.ToSummary());
+					currentChallengeTask = null;
 				}
 				elementPath.Remove(reader.Depth);
 				continue;
@@ -2464,6 +2475,38 @@ public sealed class StaticData
 			}
 
 			if (reader.Depth == 2
+				&& reader.LocalName == "task"
+				&& elementPath.GetValueOrDefault(1) == "challenge_tasks")
+			{
+				// Java parity: model/templates/challenge/ChallengeTaskTemplate fields used by ChallengeTaskService.canRaiseLegionLevel.
+				currentChallengeTask = new ChallengeTaskBuilder(
+					ReadRequiredIntAttribute(reader, "id"),
+					reader.GetAttribute("type") ?? string.Empty,
+					reader.GetAttribute("race") ?? string.Empty,
+					ReadRequiredIntAttribute(reader, "min_level"),
+					ReadRequiredIntAttribute(reader, "max_level"),
+					ReadOptionalBoolAttribute(reader, "legion_level_task", false));
+				if (reader.IsEmptyElement)
+				{
+					challengeTasks.Add(currentChallengeTask.ToSummary());
+					currentChallengeTask = null;
+				}
+
+				continue;
+			}
+
+			if (reader.Depth == 3
+				&& reader.LocalName == "quest"
+				&& currentChallengeTask != null
+				&& elementPath.GetValueOrDefault(2) == "task")
+			{
+				currentChallengeTask.AddQuest(new ChallengeQuestSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadRequiredIntAttribute(reader, "repeat_count")));
+				continue;
+			}
+
+			if (reader.Depth == 2
 				&& reader.LocalName == "login_event"
 				&& elementPath.GetValueOrDefault(1) == "login_events")
 			{
@@ -3267,6 +3310,7 @@ public sealed class StaticData
 			questHandlers,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
+			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			new WindstreamTable(windstreamLocations.AsReadOnly()),
 			validationTask);
@@ -3447,6 +3491,50 @@ public sealed class StaticData
 				NameId,
 				ConditionReward,
 				_functions.AsReadOnly());
+		}
+	}
+
+	private sealed class ChallengeTaskBuilder
+	{
+		private readonly List<ChallengeQuestSummary> _quests = [];
+
+		public ChallengeTaskBuilder(int taskId, string type, string race, int minLevel, int maxLevel, bool isLegionLevelTask)
+		{
+			TaskId = taskId;
+			Type = type;
+			Race = race;
+			MinLevel = minLevel;
+			MaxLevel = maxLevel;
+			IsLegionLevelTask = isLegionLevelTask;
+		}
+
+		private int TaskId { get; }
+
+		private string Type { get; }
+
+		private string Race { get; }
+
+		private int MinLevel { get; }
+
+		private int MaxLevel { get; }
+
+		private bool IsLegionLevelTask { get; }
+
+		public void AddQuest(ChallengeQuestSummary quest)
+		{
+			_quests.Add(quest);
+		}
+
+		public ChallengeTaskSummary ToSummary()
+		{
+			return new ChallengeTaskSummary(
+				TaskId,
+				Type,
+				Race,
+				MinLevel,
+				MaxLevel,
+				IsLegionLevelTask,
+				_quests.AsReadOnly());
 		}
 	}
 

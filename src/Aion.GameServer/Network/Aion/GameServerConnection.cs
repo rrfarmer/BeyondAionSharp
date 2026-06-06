@@ -103,6 +103,8 @@ public sealed class GameServerConnection : BaseClientConnection
 	private readonly PlayerAllianceInviteRequestService _playerAllianceInviteRequestService;
 	private readonly PlayerDuelRequestService _playerDuelRequestService;
 	private readonly PlayerExchangeRequestService _playerExchangeRequestService;
+	private readonly IChallengeTaskService _challengeTaskService;
+	private readonly ChallengeTaskTable? _challengeTaskTableOverride;
 	private readonly PlayerAllianceGroupChangeServicePlanner _playerAllianceGroupChangeServicePlanner;
 	private readonly PlayerShowBrandCommandPlanner _showBrandCommandPlanner;
 	private readonly PlayerCastSpellEarlyExitService _castSpellEarlyExitService;
@@ -247,7 +249,9 @@ public sealed class GameServerConnection : BaseClientConnection
 		Func<int>? buyItemDiagnosticObjectIdProvider = null,
 		PriceInfluenceRates? buyItemPriceInfluenceRates = null,
 		WorldNpcSpawnService? worldNpcSpawnService = null,
-		InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null)
+		InstanceEmptyInstanceCheckerService? emptyInstanceCheckerService = null,
+		IChallengeTaskService? challengeTaskService = null,
+		ChallengeTaskTable? challengeTaskTable = null)
 		: base(logger, client, clientId)
 	{
 		_packetProcessor = packetProcessor;
@@ -296,6 +300,8 @@ public sealed class GameServerConnection : BaseClientConnection
 		_playerAllianceInviteRequestService = playerAllianceInviteRequestService ?? new PlayerAllianceInviteRequestService();
 		_playerDuelRequestService = playerDuelRequestService ?? new PlayerDuelRequestService();
 		_playerExchangeRequestService = playerExchangeRequestService ?? new PlayerExchangeRequestService();
+		_challengeTaskService = challengeTaskService ?? new ChallengeTaskService();
+		_challengeTaskTableOverride = challengeTaskTable;
 		_playerAllianceGroupChangeServicePlanner = new PlayerAllianceGroupChangeServicePlanner(_playerAllianceRuntime);
 		_showBrandCommandPlanner = showBrandCommandPlanner
 			?? new PlayerShowBrandCommandPlanner(_playerGroupRuntime, _playerAllianceRuntime);
@@ -3120,10 +3126,17 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (_options.Legion.ChallengeTaskRequirementEnabled && player.LegionLevel >= 5)
 		{
-			// Java calls ChallengeTaskService.canRaiseLegionLevel here. That live service is not ported yet, so the
-			// C# runtime preserves the Java default gate by denying 5+ raises instead of silently bypassing it.
-			await SendPacketAsync(SmSystemMessage.GuildLevelUpChallengeTask(player.LegionLevel));
-			return;
+			var challengeTasks = _challengeTaskTableOverride ?? _runtimeContext?.DataManager?.StaticData.ChallengeTasks;
+			if (_playerEnterWorldRepository == null
+				|| challengeTasks == null
+				|| !_challengeTaskService.CanRaiseLegionLevel(
+					challengeTasks,
+					await _playerEnterWorldRepository.LoadLegionChallengeTasksAsync(player.LegionId),
+					player.LegionLevel))
+			{
+				await SendPacketAsync(SmSystemMessage.GuildLevelUpChallengeTask(player.LegionLevel));
+				return;
+			}
 		}
 
 		var requiredKinah = GetLegionLevelRequirement(_options.Legion.LevelRequiredKinah, player.LegionLevel);

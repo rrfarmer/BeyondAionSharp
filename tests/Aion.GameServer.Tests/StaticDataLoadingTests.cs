@@ -147,6 +147,57 @@ public sealed class StaticDataLoadingTests
 	}
 
 	[Fact]
+	public async Task StaticData_LoadsChallengeTasksForLegionLevelGateLikeJavaDataholder()
+	{
+		using var temp = TempDirectory.Create();
+		var cacheFile = Path.Combine(temp.Path, "static_data.xml");
+		File.WriteAllText(
+			cacheFile,
+			"""
+			<?xml version="1.0" encoding="UTF-8"?>
+			<static_data>
+				<challenge_tasks>
+					<task id="300" type="LEGION" race="ELYOS" min_level="5" max_level="5" legion_level_task="true">
+						<quest id="17000" repeat_count="6" />
+						<quest id="17001" repeat_count="12" />
+						<quest id="17002" repeat_count="42" />
+					</task>
+					<task id="900" type="TOWN" race="ELYOS" min_level="1" max_level="1" legion_level_task="true">
+						<quest id="18000" repeat_count="1" />
+					</task>
+				</challenge_tasks>
+			</static_data>
+			""");
+
+		var staticData = await StaticData.LoadFromCacheAsync(cacheFile, []);
+
+		Assert.Equal(2, staticData.ChallengeTasks.Count);
+		var requiredTasks = staticData.ChallengeTasks.GetRequiredLegionLevelTasks(5);
+		var requiredTask = Assert.Single(requiredTasks);
+		Assert.Equal(300, requiredTask.TaskId);
+		Assert.Equal("LEGION", requiredTask.Type);
+		Assert.Equal("ELYOS", requiredTask.Race);
+		Assert.True(requiredTask.IsLegionLevelTask);
+		Assert.Collection(
+			requiredTask.Quests,
+			quest =>
+			{
+				Assert.Equal(17000, quest.QuestId);
+				Assert.Equal(6, quest.RepeatCount);
+			},
+			quest =>
+			{
+				Assert.Equal(17001, quest.QuestId);
+				Assert.Equal(12, quest.RepeatCount);
+			},
+			quest =>
+			{
+				Assert.Equal(17002, quest.QuestId);
+				Assert.Equal(42, quest.RepeatCount);
+			});
+	}
+
+	[Fact]
 	public async Task StaticData_LoadsAutoGroupsLikeJavaDataholder()
 	{
 		using var temp = TempDirectory.Create();

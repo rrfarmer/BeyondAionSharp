@@ -14,6 +14,8 @@ using MySqlConnector;
 
 namespace Aion.GameServer.Data;
 
+public sealed record ChallengeTaskProgressRow(int TaskId, int QuestId, int CompleteCount);
+
 public interface IPlayerEnterWorldRepository
 {
 	Task<Player?> LoadPlayerAsync(int accountId, int playerObjectId, CancellationToken cancellationToken = default);
@@ -42,6 +44,10 @@ public interface IPlayerEnterWorldRepository
 		int legionId,
 		int legionLevel,
 		InventoryItem? kinahItemUpdate,
+		CancellationToken cancellationToken = default);
+
+	Task<IReadOnlyList<ChallengeTaskProgressRow>> LoadLegionChallengeTasksAsync(
+		int legionId,
 		CancellationToken cancellationToken = default);
 
 	Task<bool> SaveLegionAnnouncementAsync(
@@ -792,6 +798,21 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		SaveLegionLevelUpMutationCalls++;
 		SavedLegionLevelUpMutation = (playerObjectId, legionId, legionLevel, kinahItemUpdate);
 		return Task.FromResult(SaveLegionLevelUpMutationResult);
+	}
+
+	public IReadOnlyList<ChallengeTaskProgressRow> LoadedLegionChallengeTasks { get; init; } = Array.Empty<ChallengeTaskProgressRow>();
+
+	public int LoadLegionChallengeTasksCalls { get; private set; }
+
+	public int LoadedLegionChallengeTasksLegionId { get; private set; }
+
+	public Task<IReadOnlyList<ChallengeTaskProgressRow>> LoadLegionChallengeTasksAsync(
+		int legionId,
+		CancellationToken cancellationToken = default)
+	{
+		LoadLegionChallengeTasksCalls++;
+		LoadedLegionChallengeTasksLegionId = legionId;
+		return Task.FromResult(LoadedLegionChallengeTasks);
 	}
 
 	public bool SaveLegionAnnouncementResult { get; init; } = true;
@@ -2217,6 +2238,45 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			_logger.LogError(ex, "Could not save level-up mutation for legion {LegionId}", legionId);
 			return false;
+		}
+	}
+
+	public async Task<IReadOnlyList<ChallengeTaskProgressRow>> LoadLegionChallengeTasksAsync(
+		int legionId,
+		CancellationToken cancellationToken = default)
+	{
+		// Java parity: ChallengeTasksDAO.load(ownerId, ChallengeType.LEGION).
+		if (legionId <= 0)
+			return Array.Empty<ChallengeTaskProgressRow>();
+
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				SELECT task_id, quest_id, complete_count
+				FROM challenge_tasks
+				WHERE owner_id = ? AND owner_type = 'LEGION'
+				""";
+			command.Parameters.Add(new MySqlParameter { Value = legionId });
+
+			var rows = new List<ChallengeTaskProgressRow>();
+			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+			while (await reader.ReadAsync(cancellationToken))
+			{
+				rows.Add(new ChallengeTaskProgressRow(
+					ReadInt(reader, "task_id"),
+					ReadInt(reader, "quest_id"),
+					ReadInt(reader, "complete_count")));
+			}
+
+			return rows;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not load legion challenge tasks for legion {LegionId}", legionId);
+			return Array.Empty<ChallengeTaskProgressRow>();
 		}
 	}
 
