@@ -101,6 +101,16 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public void ReadFrom_ChangeNicknameConsumesMemberAndNicknameLikeJava()
+	{
+		var packet = CreateChangeNicknamePacket("tester", "Siege Lead");
+
+		Assert.Equal(0x0F, packet.ExOpcode);
+		Assert.Equal("tester", packet.CharacterName);
+		Assert.Equal("Siege Lead", packet.NewNickname);
+	}
+
+	[Fact]
 	public void SmSystemMessage_LegionNoticeHelpersUseJavaIdsAndParameters()
 	{
 		var noNotice = SmSystemMessage.MsgNoSetGuildNotice();
@@ -116,6 +126,10 @@ public sealed class CmLegionTests
 		Assert.Equal(1390128, SmSystemMessage.MsgClearGuildNotice().MessageId);
 		Assert.Equal(1300283, SmSystemMessage.GuildChangeRightDontHaveRight().MessageId);
 		Assert.Equal(1300282, SmSystemMessage.GuildWriteIntroDone().MessageId);
+		Assert.Equal(1300313, SmSystemMessage.GuildChangeMemberNicknameDontHaveRight().MessageId);
+		var notMember = SmSystemMessage.GuildChangeMemberNicknameHeIsNotMyGuildMember("Lurion");
+		Assert.Equal(1300314, notMember.MessageId);
+		Assert.Equal(["Lurion"], notMember.Parameters);
 	}
 
 	[Fact]
@@ -335,6 +349,100 @@ public sealed class CmLegionTests
 	}
 
 	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknameMutatesActiveMemberAndSendsUpdateLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionNickname = "Old";
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("tester", "Siege Lead"));
+
+		Assert.Equal("Siege Lead", player.LegionNickname);
+		Assert.Equal(0, repository.LoadLegionMemberByNameCalls);
+		Assert.Equal(0, repository.SaveLegionMemberNicknameCalls);
+		AssertLegionUpdateNicknamePacket(Assert.Single(pair.SentPackets), player.ObjectId, "Siege Lead");
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknamePersistsOfflineMemberAndSendsUpdateLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository
+		{
+			LoadedLegionMemberByName = new LegionMemberSnapshot(
+				2002,
+				77,
+				"Lurion",
+				LegionRanks.Centurion,
+				string.Empty,
+				string.Empty,
+				IsOnline: false),
+		};
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("lurion", "Scout"));
+
+		Assert.Equal(1, repository.LoadLegionMemberByNameCalls);
+		Assert.Equal((77, "Lurion"), repository.LoadedLegionMemberByNameRequest);
+		Assert.Equal(1, repository.SaveLegionMemberNicknameCalls);
+		Assert.Equal((2002, "Scout"), repository.SavedLegionMemberNickname);
+		AssertLegionUpdateNicknamePacket(Assert.Single(pair.SentPackets), 2002, "Scout");
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknameWithoutBrigadeGeneralSendsNoRightLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateLegionPlayer();
+		player.LegionRank = LegionRanks.Deputy;
+		player.LegionNickname = "Old";
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("Tester", "Scout"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300313, response.MessageId);
+		Assert.Equal("Old", player.LegionNickname);
+		Assert.Equal(0, repository.SaveLegionMemberNicknameCalls);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknameMissingMemberSendsNotMyGuildMemberLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("missing", "Scout"));
+
+		var response = Assert.IsType<SmSystemMessage>(Assert.Single(pair.SentPackets));
+		Assert.Equal(1300314, response.MessageId);
+		Assert.Equal(["Missing"], response.Parameters);
+		Assert.Equal((77, "Missing"), repository.LoadedLegionMemberByNameRequest);
+	}
+
+	[Fact]
+	public async Task HandleInfrastructurePacketAsync_ChangeNicknameInvalidValueReturnsWithoutMutationLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var player = CreateBrigadeGeneralPlayer();
+		player.LegionNickname = "Old";
+		SetActivePlayer(pair.Connection, player);
+
+		await InvokeHandleInfrastructurePacketAsync(pair.Connection, CreateChangeNicknamePacket("Tester", string.Empty));
+
+		Assert.Empty(pair.SentPackets);
+		Assert.Equal("Old", player.LegionNickname);
+		Assert.Equal(0, repository.SaveLegionMemberNicknameCalls);
+	}
+
+	[Fact]
 	public void ReadFrom_ChangeAnnouncementReadsJavaMessage()
 	{
 		var packet = CreateChangeAnnouncementPacket("New notice");
@@ -460,6 +568,17 @@ public sealed class CmLegionTests
 		return packet;
 	}
 
+	private static CmLegion CreateChangeNicknamePacket(string memberName, string nickname)
+	{
+		var packet = CreatePacket();
+		using var buffer = new PacketBuffer();
+		buffer.WriteC(0x0F);
+		buffer.WriteS(memberName);
+		buffer.WriteS(nickname);
+		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
+		return packet;
+	}
+
 	private static CmLegion CreateRefreshInfoPacket()
 	{
 		var packet = CreatePacket();
@@ -538,6 +657,14 @@ public sealed class CmLegionTests
 		crypt.EnableKey();
 		var frame = packet.SerializeFrame(crypt);
 		return frame[7..];
+	}
+
+	private static void AssertLegionUpdateNicknamePacket(GameServerPacket packet, int playerObjectId, string nickname)
+	{
+		var response = Assert.IsType<SmLegionUpdateNickname>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(response));
+		Assert.Equal(playerObjectId, reader.ReadD());
+		Assert.Equal(nickname, reader.ReadS());
 	}
 
 	private static async Task InvokeHandleInfrastructurePacketAsync(GameServerConnection connection, GameClientPacket packet)

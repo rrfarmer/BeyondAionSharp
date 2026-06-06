@@ -75,6 +75,9 @@ public sealed class Player
 	// Java parity: model/team/legion/LegionMember.getSelfIntro().
 	public string LegionSelfIntro { get; set; } = string.Empty;
 
+	// Java parity: model/team/legion/LegionMember.getNickname().
+	public string LegionNickname { get; set; } = string.Empty;
+
 	// Java parity: model/team/legion/LegionMember.isBrigadeGeneral().
 	public bool IsBrigadeGeneral => Legion.LegionRanks.IsBrigadeGeneral(LegionRank);
 

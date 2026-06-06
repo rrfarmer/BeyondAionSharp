@@ -3083,6 +3083,71 @@ public sealed class GameServerConnection : BaseClientConnection
 			case 0x0D:
 				await HandleLegionPermissionChangeAsync(player, packet);
 				break;
+			case 0x0F:
+				await HandleLegionNicknameChangeAsync(player, packet.CharacterName, packet.NewNickname);
+				break;
+		}
+	}
+
+	private async Task HandleLegionNicknameChangeAsync(Player player, string memberName, string newNickname)
+	{
+		// Java parity: LegionService.changeNickname -> LegionRestrictions.canChangeNickname -> LegionMember.setNickname.
+		var normalizedMemberName = ConvertCharacterName(memberName);
+		var targetMember = await ResolveLegionMemberForNicknameChangeAsync(player, normalizedMemberName);
+		if (targetMember == null)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMemberNicknameHeIsNotMyGuildMember(normalizedMemberName));
+			return;
+		}
+
+		if (!player.IsBrigadeGeneral)
+		{
+			await SendPacketAsync(SmSystemMessage.GuildChangeMemberNicknameDontHaveRight());
+			return;
+		}
+
+		if (!IsValidLegionNickname(newNickname))
+			return;
+
+		if (targetMember.PlayerObjectId == player.ObjectId)
+			player.LegionNickname = newNickname;
+
+		if (!targetMember.IsOnline && _playerEnterWorldRepository != null)
+			await _playerEnterWorldRepository.SaveLegionMemberNicknameAsync(targetMember.PlayerObjectId, newNickname);
+
+		await SendPacketAsync(new SmLegionUpdateNickname(targetMember.PlayerObjectId, newNickname));
+	}
+
+	private async Task<LegionMemberSnapshot?> ResolveLegionMemberForNicknameChangeAsync(Player player, string normalizedMemberName)
+	{
+		if (string.Equals(player.Name, normalizedMemberName, StringComparison.Ordinal))
+		{
+			return new LegionMemberSnapshot(
+				player.ObjectId,
+				player.LegionId,
+				player.Name,
+				player.LegionRank,
+				player.LegionNickname,
+				player.LegionSelfIntro,
+				IsOnline: true);
+		}
+
+		if (_playerEnterWorldRepository == null)
+			return null;
+
+		return await _playerEnterWorldRepository.LoadLegionMemberByNameAsync(player.LegionId, normalizedMemberName);
+	}
+
+	private bool IsValidLegionNickname(string nickname)
+	{
+		try
+		{
+			return Regex.IsMatch(nickname, $@"\A(?:{_options.Legion.NicknamePattern})\z", RegexOptions.CultureInvariant);
+		}
+		catch (ArgumentException ex)
+		{
+			_logger.LogWarning(ex, "Invalid legion nickname regex {Pattern}", _options.Legion.NicknamePattern);
+			return false;
 		}
 	}
 

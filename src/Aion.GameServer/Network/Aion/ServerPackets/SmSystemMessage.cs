@@ -256,6 +256,18 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1300282);
 	}
 
+	public static SmSystemMessage GuildChangeMemberNicknameDontHaveRight()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_NICKNAME_DONT_HAVE_RIGHT_TO_CHANGE_NICKNAME.
+		return new SmSystemMessage(1300313);
+	}
+
+	public static SmSystemMessage GuildChangeMemberNicknameHeIsNotMyGuildMember(string memberName)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_MEMBER_NICKNAME_HE_IS_NOT_MY_GUILD_MEMBER(String).
+		return new SmSystemMessage(1300314, memberName);
+	}
+
 	public static SmSystemMessage GuildNotice(string announcement, int unixTime)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.STR_GUILD_NOTICE(String, long) -> params: message, Unix seconds, date display mode.

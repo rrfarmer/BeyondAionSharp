@@ -30,6 +30,7 @@ public class GameServerOptionsTests
 		Assert.Equal(600, options.Group.GroupRemoveTimeSeconds);
 		Assert.Equal(600, options.Group.AllianceRemoveTimeSeconds);
 		Assert.True(options.Legion.WarehouseEnabled);
+		Assert.Equal(".{1,10}", options.Legion.NicknamePattern);
 		Assert.Equal(".{1,32}", options.Legion.SelfIntroPattern);
 		Assert.True(options.AutoGroup.Enabled);
 		Assert.Equal(1, options.Administration.UnrestrictedItemTradeAccessLevel);
@@ -181,6 +182,7 @@ public class GameServerOptionsTests
 				gameserver.playergroup.removetime = 450
 				gameserver.playeralliance.removetime = 720
 				gameserver.legion.warehouse = false
+				gameserver.legion.nicknamepattern = .{1,8}
 				gameserver.legion.selfintropattern = .{1,16}
 				gameserver.instances.group.requirement = 7
 				gameserver.autogroup.enable = false
@@ -221,6 +223,7 @@ public class GameServerOptionsTests
 			Assert.Equal(450, options.Group.GroupRemoveTimeSeconds);
 			Assert.Equal(720, options.Group.AllianceRemoveTimeSeconds);
 			Assert.False(options.Legion.WarehouseEnabled);
+			Assert.Equal(".{1,8}", options.Legion.NicknamePattern);
 			Assert.Equal(".{1,16}", options.Legion.SelfIntroPattern);
 			Assert.Equal(7, options.Membership.InstancesGroupRequirement);
 			Assert.False(options.AutoGroup.Enabled);

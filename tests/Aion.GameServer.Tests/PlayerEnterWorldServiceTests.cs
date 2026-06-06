@@ -3685,6 +3685,22 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
+		public Task<LegionMemberSnapshot?> LoadLegionMemberByNameAsync(
+			int legionId,
+			string memberName,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult<LegionMemberSnapshot?>(null);
+		}
+
+		public Task<bool> SaveLegionMemberNicknameAsync(
+			int playerObjectId,
+			string nickname,
+			CancellationToken cancellationToken = default)
+		{
+			return Task.FromResult(true);
+		}
+
 		public Task<IReadOnlyList<PlayerSkill>> LoadPlayerSkillsAsync(int playerObjectId, CancellationToken cancellationToken = default)
 		{
 			LoadSkillsCalls++;
