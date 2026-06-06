@@ -4548,9 +4548,10 @@ public sealed class GameServerConnection : BaseClientConnection
 				await SendPacketAsync(legionRestrictionMessage);
 				await SendStorageUpdatePacketAsync(player, sourceItem, sourceTemplate, packet.SourceStorageType, SmInventoryAddItem.AllSlot);
 				await SendStorageUpdatePacketAsync(player, replaceItem, replaceTemplate, packet.ReplaceStorageType, SmInventoryAddItem.AllSlot);
+				return;
 			}
-			// Successful legion warehouse replacements require LegionService.addWHItemHistory and live legion storage; deferred.
-			return;
+            // Java parity gap: a dedicated LegionStorageProxy/LegionWarehouse aggregate is not yet modeled,
+            // but the storage switch, persistence owner, and packet fanout now follow ItemMoveService.switchItemsInStorages.
 		}
 
 		var sourceRestrictionMessage = CreateRestrictedToStorageMessage(sourceItem, sourceTemplate, packet.ReplaceStorageType);

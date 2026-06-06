@@ -2032,6 +2032,91 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task ProcessPacketAsync_CubeAndLegionWarehouseReplaceSwitchesOwnersLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 1, accountId: 77);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 201,
+					Count = 2,
+					OwnerId = 88,
+					Location = 3,
+					Slot = 27,
+				},
+			])
+			.ToArray();
+		player.LegionId = 88;
+		player.LegionRank = "VOLUNTEER";
+		player.LegionVolunteerPermission = 0x4;
+		SetActivePlayerForPacketDispatch(fixture.Connection, player);
+
+		await InvokeProcessPacketAsync(
+			fixture.Connection,
+			CreateClientPayload(178, buffer =>
+			{
+				buffer.WriteC(0);
+				buffer.WriteD(5001);
+				buffer.WriteC(3);
+				buffer.WriteD(6001);
+			}));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(88, item.OwnerId);
+				Assert.Equal(3, item.Location);
+				Assert.Equal(27, item.Slot);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(1001, item.OwnerId);
+				Assert.Equal(0, item.Location);
+				Assert.Equal(12, item.Slot);
+			});
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Equal(1, repository.SaveItemStorageSwitchMutationCalls);
+		Assert.Equal((1001, 77, 88, 5001, 0, 3, 27L, 6001, 3, 0, 12L), repository.SavedItemStorageSwitchMutation);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertDeleteWarehouseItemPayload(
+				Assert.IsType<SmDeleteWarehouseItem>(packet),
+				expectedWarehouseType: 3,
+				expectedObjectId: 6001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 6001,
+				expectedItemId: 201,
+				expectedCount: 2,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 3,
+				expectedAddType: SmInventoryAddItem.ItemCollect,
+				expectedItemId: 200,
+				expectedCount: 1,
+				expectedSlot: 27),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 3));
+	}
+
+	[Fact]
 	public async Task HandleReplaceItemAsync_RegularWarehouseRestrictionSendsDenialAndUnlocksBothLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
