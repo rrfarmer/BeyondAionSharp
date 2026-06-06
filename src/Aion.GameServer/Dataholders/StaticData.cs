@@ -71,6 +71,7 @@ public sealed class StaticData
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
+		AtreianPassportTable atreianPassports,
 		WindstreamTable windstreamLocations,
 		Task? validationTask)
 	{
@@ -135,6 +136,7 @@ public sealed class StaticData
 		QuestHandlers = questHandlers;
 		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
+		AtreianPassports = atreianPassports;
 		WindstreamLocations = windstreamLocations;
 		ValidationTask = validationTask;
 	}
@@ -263,6 +265,8 @@ public sealed class StaticData
 
 	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
 
+	public AtreianPassportTable AtreianPassports { get; }
+
 	public WindstreamTable WindstreamLocations { get; }
 
 	public Task? ValidationTask { get; }
@@ -361,6 +365,7 @@ public sealed class StaticData
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var questBonusItemGroups = new List<QuestBonusItemGroupProjection>();
+		var atreianPassports = new List<AtreianPassportSummary>();
 		var windstreamLocations = new List<WindstreamLocationSummary>();
 		int currentWindstreamMapId = 0;
 		var learnableEmotionIds = new HashSet<int>();
@@ -2453,6 +2458,25 @@ public sealed class StaticData
 			}
 
 			if (reader.Depth == 2
+				&& reader.LocalName == "login_event"
+				&& elementPath.GetValueOrDefault(1) == "login_events")
+			{
+				// Java parity: model/templates/event/AtreianPassport JAXB attributes.
+				atreianPassports.Add(new AtreianPassportSummary(
+					ReadRequiredIntAttribute(reader, "id"),
+					ReadXmlBoolAttribute(reader, "active"),
+					ReadRequiredDateTimeAttribute(reader, "period_start"),
+					ReadRequiredDateTimeAttribute(reader, "period_end"),
+					reader.GetAttribute("attend_type") ?? throw new FormatException("login_event is missing required attend_type."),
+					ReadOptionalIntAttribute(reader, "attend_num", 0),
+					ReadRequiredIntAttribute(reader, "reward_item"),
+					ReadRequiredIntAttribute(reader, "reward_item_num"),
+					ReadOptionalIntAttribute(reader, "reward_item_expire_time", 0),
+					ReadOptionalIntAttribute(reader, "reward_permit_level", 0)));
+				continue;
+			}
+
+			if (reader.Depth == 2
 				&& reader.LocalName == "pet"
 				&& elementPath.GetValueOrDefault(1) == "pets")
 			{
@@ -3237,6 +3261,7 @@ public sealed class StaticData
 			questHandlers,
 			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
+			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			new WindstreamTable(windstreamLocations.AsReadOnly()),
 			validationTask);
 	}
@@ -6117,6 +6142,18 @@ public sealed class StaticData
 		return bool.Parse(value);
 	}
 
+	private static bool ReadXmlBoolAttribute(XmlReader reader, string attributeName)
+	{
+		var value = reader.GetAttribute(attributeName)
+			?? throw new FormatException($"Element <{reader.LocalName}> is missing required attribute '{attributeName}'.");
+		return value switch
+		{
+			"1" => true,
+			"0" => false,
+			_ => bool.Parse(value),
+		};
+	}
+
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
@@ -6184,6 +6221,12 @@ public sealed class StaticData
 			out var parsed)
 			? parsed
 			: null;
+	}
+
+	private static DateTime ReadRequiredDateTimeAttribute(XmlReader reader, string attributeName)
+	{
+		return ReadDateTimeAttribute(reader, attributeName)
+			?? throw new FormatException($"Element <{reader.LocalName}> is missing required DateTime attribute '{attributeName}'.");
 	}
 
 	private static bool IsStatModifierElement(string elementName)

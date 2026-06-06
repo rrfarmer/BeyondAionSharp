@@ -4285,7 +4285,8 @@ public sealed class GameServerConnection : BaseClientConnection
 
 	private async Task HandleAtreianPassportAsync(Player player, CmAtreianPassport packet)
 	{
-		// Java parity: services/AtreianPassportService.takeReward mutates matching Passport rows before sendPassport.
+		// Java parity: services/AtreianPassportService.takeReward grants the reward item before marking the Passport row rewarded.
+		var staticData = _runtimeContext?.DataManager?.StaticData;
 		var passports = player.Passports.ToArray();
 		var mutated = false;
 		for (var i = 0; i < passports.Length; i++)
@@ -4296,11 +4297,73 @@ public sealed class GameServerConnection : BaseClientConnection
 			if (!packet.Passports.TryGetValue(passport.PassportId, out var timestamps) || !timestamps.Contains(passport.ArriveEpochSeconds))
 				continue;
 
-			var rewardedPassport = passport.ClaimReward();
-			if (_playerEnterWorldRepository == null
-				|| !await _playerEnterWorldRepository.UpdateAccountPassportRewardedAsync(player.AccountId, rewardedPassport))
+			var passportTemplate = staticData?.AtreianPassports.GetAtreianPassportId(passport.PassportId);
+			if (passportTemplate == null)
 				continue;
 
+			var rewardTemplate = staticData!.ItemTemplates.GetItemTemplate(passportTemplate.RewardItemId);
+			if (rewardTemplate == null || _idFactory == null || _playerEnterWorldService == null || _playerEnterWorldRepository == null)
+				continue;
+
+			if (passportTemplate.RewardPermitLevel > 0 && player.Level < passportTemplate.RewardPermitLevel)
+			{
+				await SendPacketAsync(new SmSystemMessage(
+					1402573,
+					passportTemplate.RewardPermitLevel.ToString(CultureInfo.InvariantCulture),
+					rewardTemplate.Name));
+				continue;
+			}
+
+			if (passportTemplate.RewardExpireMinutes > 0
+				&& DateTimeOffset.UtcNow > new DateTimeOffset(passport.ArriveDate, TimeSpan.Zero).AddMinutes(passportTemplate.RewardExpireMinutes))
+				continue;
+
+			var rewardPlan = InventoryAddService.CreateAddItemPlan(
+				player,
+				player.InventoryItems,
+				rewardTemplate,
+				passportTemplate.RewardItemCount,
+				() => _idFactory.NextId(),
+				itemTemplates: staticData.ItemTemplates);
+			if (rewardPlan.InventoryFull)
+			{
+				await SendPacketAsync(SmSystemMessage.FullInventory());
+				break;
+			}
+
+			if (!rewardPlan.Succeeded)
+				continue;
+
+			if (!await _playerEnterWorldService.SaveInventoryRewardMutationAsync(
+					player,
+					rewardPlan.UpdatedItems,
+					rewardPlan.AddedItems))
+				continue;
+
+			var rewardedPassport = passport.ClaimReward();
+			if (!await _playerEnterWorldRepository.UpdateAccountPassportRewardedAsync(player.AccountId, rewardedPassport))
+				continue;
+
+			var inventoryItems = player.InventoryItems.ToList();
+			foreach (var rewardItemUpdate in rewardPlan.UpdatedItems)
+			{
+				ReplaceInventoryItem(inventoryItems, rewardItemUpdate);
+				await SendPacketAsync(new SmInventoryUpdateItem(
+					rewardItemUpdate,
+					rewardTemplate,
+					SmInventoryUpdateItem.IncreaseItemCollect,
+					GetGeneralInfoWarehouseRestrictionFlag(rewardItemUpdate.ItemId, staticData.ItemRestrictionCleanups)));
+			}
+
+			foreach (var rewardItemAdd in rewardPlan.AddedItems)
+			{
+				inventoryItems.Add(rewardItemAdd);
+				await SendPacketAsync(SmInventoryAddItem.CreateItemCollect(
+					rewardItemAdd,
+					rewardTemplate,
+					GetGeneralInfoWarehouseRestrictionFlag(rewardItemAdd.ItemId, staticData.ItemRestrictionCleanups)));
+			}
+			player.InventoryItems = inventoryItems;
 			passports[i] = rewardedPassport;
 			mutated = true;
 		}

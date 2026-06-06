@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using Aion.Commons.Network;
+using Aion.GameServer.Configuration;
 using Aion.GameServer.Data;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
@@ -10,6 +12,9 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ClientPackets;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.World;
+using Aion.GameServer.Services;
+using Aion.GameServer.Utils.IdFactory;
+using GameWorld = Aion.GameServer.World.World;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Tests;
@@ -135,19 +140,32 @@ public sealed class CmAtreianPassportTests
 	public async Task HandleInfrastructurePacketAsync_AtreianPassportClaimsMatchingRestoredPassport()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
-		await using var pair = await TestConnectionPair.CreateAsync(repository);
+		var runtimeContext = new GameServerRuntimeContext();
+		runtimeContext.SetDataManager(await DataManager.LoadAsync(FindRepoRoot(), validateWhenCacheChanges: false));
+		var playerEnterWorldService = new PlayerEnterWorldService(
+			new GameServerOptions(),
+			repository,
+			new GameWorld(NullLogger<GameWorld>.Instance),
+			NullLogger<PlayerEnterWorldService>.Instance,
+			runtimeContext: runtimeContext);
+		await using var pair = await TestConnectionPair.CreateAsync(
+			repository,
+			runtimeContext,
+			playerEnterWorldService,
+			new IDFactory());
 		var arriveDate = DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime;
 		var player = new Player
 		{
 			ObjectId = 5002,
 			AccountId = 78,
 			Name = "PassportClaimer",
+			Level = 50,
 			CreationDate = new DateTime(2021, 3, 4, 12, 30, 0, DateTimeKind.Utc),
 			PassportStamps = 5,
 			Passports =
 			[
 				new PlayerPassport(
-					PassportId: 3003,
+					PassportId: 9,
 					Rewarded: false,
 					ArriveDate: arriveDate)
 			],
@@ -157,25 +175,39 @@ public sealed class CmAtreianPassportTests
 		var packet = CreatePacket();
 		using var buffer = new PacketBuffer();
 		buffer.WriteH(1);
-		buffer.WriteD(3003);
+		buffer.WriteD(9);
 		buffer.WriteD(1_717_286_400);
 		packet.ReadFrom(new PacketBuffer(buffer.ToArray()));
 
 		await InvokeHandleInfrastructurePacketAsync(pair.Connection, packet);
 
+		Assert.Equal(1, repository.SaveInventoryRewardMutationCalls);
+		Assert.NotNull(repository.SavedInventoryRewardMutation);
+		var savedReward = repository.SavedInventoryRewardMutation.Value;
+		Assert.Equal(5002, savedReward.PlayerObjectId);
+		Assert.Empty(savedReward.UpdatedRewardItems);
+		var addedReward = Assert.Single(savedReward.AddedRewardItems);
+		Assert.Equal(166000010, addedReward.ItemId);
+		Assert.Equal(1, addedReward.Count);
+		Assert.Contains(player.InventoryItems, item => item.ObjectId == addedReward.ObjectId && item.ItemId == 166000010);
+
 		Assert.Equal(1, repository.UpdateAccountPassportRewardedCalls);
 		Assert.NotNull(repository.UpdatedAccountPassportRewarded);
 		var update = repository.UpdatedAccountPassportRewarded.Value;
 		Assert.Equal(78, update.AccountId);
-		Assert.Equal(3003, update.Passport.PassportId);
+		Assert.Equal(9, update.Passport.PassportId);
 		Assert.True(update.Passport.Rewarded);
 		Assert.True(Assert.Single(player.Passports).Rewarded);
 
-		var response = Assert.Single(pair.SentPackets);
+		Assert.Collection(
+			pair.SentPackets,
+			packet => Assert.IsType<SmInventoryAddItem>(packet),
+			packet => Assert.IsType<SmAtreianPassport>(packet));
+		var response = pair.SentPackets[1];
 		var passport = Assert.IsType<SmAtreianPassport>(response);
 		var payload = SerializeUnencryptedPayload(passport);
 		Assert.Equal(1, ReadShort(payload, 6));
-		Assert.Equal(3003, ReadInt(payload, 8));
+		Assert.Equal(9, ReadInt(payload, 8));
 		Assert.Equal(5, ReadInt(payload, 12));
 		Assert.Equal(2, ReadInt(payload, 16)); // Passport.RewardStatus.TAKEN.
 		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
@@ -255,7 +287,11 @@ public sealed class CmAtreianPassportTests
 		public GameServerConnection Connection { get; }
 		public List<GameServerPacket> SentPackets { get; }
 
-		public static async Task<TestConnectionPair> CreateAsync(IPlayerEnterWorldRepository? playerEnterWorldRepository = null)
+		public static async Task<TestConnectionPair> CreateAsync(
+			IPlayerEnterWorldRepository? playerEnterWorldRepository = null,
+			GameServerRuntimeContext? runtimeContext = null,
+			PlayerEnterWorldService? playerEnterWorldService = null,
+			IDFactory? idFactory = null)
 		{
 			var listener = new TcpListener(IPAddress.Loopback, 0);
 			listener.Start();
@@ -274,7 +310,10 @@ public sealed class CmAtreianPassportTests
 					serverClient,
 					"atreian-passport-test",
 					new GamePacketProcessor<string>((_, _) => Task.CompletedTask),
+					runtimeContext: runtimeContext,
+					playerEnterWorldService: playerEnterWorldService,
 					playerEnterWorldRepository: playerEnterWorldRepository,
+					idFactory: idFactory,
 					sentPacketObserver: sentPackets.Add,
 					crypt: crypt);
 				return new TestConnectionPair(client, connection, sentPackets);
@@ -290,5 +329,18 @@ public sealed class CmAtreianPassportTests
 			await Connection.DisposeAsync();
 			_client.Dispose();
 		}
+	}
+
+	private static string FindRepoRoot()
+	{
+		var directory = new DirectoryInfo(AppContext.BaseDirectory);
+		while (directory != null)
+		{
+			if (File.Exists(Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
+				return directory.FullName;
+			directory = directory.Parent;
+		}
+
+		throw new DirectoryNotFoundException("Could not find repository root from test output directory.");
 	}
 }
