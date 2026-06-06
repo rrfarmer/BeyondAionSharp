@@ -266,6 +266,22 @@ public sealed class GameServerConnectionStorageExpansionDialogTests
 	}
 
 	[Fact]
+	public async Task HandleDialogSelectAsync_OpenLegionWarehouseDisabledByConfigSendsJavaDenial()
+	{
+		var options = new GameServerOptions { Legion = new GameServerLegionOptions { WarehouseEnabled = false } };
+		await using var fixture = await StorageExpansionDialogFixture.CreateAsync(options);
+		var player = CreateLegionWarehousePlayer(targetObjectId: 9022, objectId: 1001, legionId: 77);
+		var npc = CreateExpansionNpc(9022, templateId: 203200, dialogActionId: CmDialogSelect.OpenLegionWarehouse);
+		fixture.World.TryAddObject(npc.ObjectId, npc);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, CreateDialogSelect(npc.ObjectId, CmDialogSelect.OpenLegionWarehouse));
+
+		var message = Assert.IsType<SmSystemMessage>(Assert.Single(fixture.SentPackets));
+		AssertSystemMessagePayload(message, expectedMessageId: 1300279);
+		Assert.Empty(fixture.DialogSelectPlans);
+	}
+
+	[Fact]
 	public async Task HandleDialogSelectAsync_OpenLegionWarehouseDisbandingLegionSendsJavaDenial()
 	{
 		await using var fixture = await StorageExpansionDialogFixture.CreateAsync();

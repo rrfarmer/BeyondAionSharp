@@ -4045,7 +4045,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 		}
 
-		if (targetingResult == NpcDialogTargetingResult.UnsupportedAction)
+		if (!_options.Legion.WarehouseEnabled || targetingResult == NpcDialogTargetingResult.UnsupportedAction)
 		{
 			await SendPacketAsync(SmSystemMessage.CantUseGuildStorage());
 			return;

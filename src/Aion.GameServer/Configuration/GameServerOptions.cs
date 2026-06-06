@@ -31,6 +31,8 @@ public sealed class GameServerOptions
 
 	public GameServerGroupOptions Group { get; init; } = new();
 
+	public GameServerLegionOptions Legion { get; init; } = new();
+
 	public GameServerAutoGroupOptions AutoGroup { get; init; } = new();
 
 	public GameServerAdministrationOptions Administration { get; init; } = new();
@@ -246,6 +248,10 @@ public sealed class GameServerOptions
 			{
 				GroupRemoveTimeSeconds = GetIntWithEnvironment(loader, "gameserver.playergroup.removetime", 600),
 				AllianceRemoveTimeSeconds = GetIntWithEnvironment(loader, "gameserver.playeralliance.removetime", 600),
+			},
+			Legion = new GameServerLegionOptions
+			{
+				WarehouseEnabled = GetBoolWithEnvironment(loader, "gameserver.legion.warehouse", true),
 			},
 			AutoGroup = new GameServerAutoGroupOptions
 			{
@@ -649,6 +655,12 @@ public sealed class GameServerGroupOptions
 
 	// Java parity: configs/main/GroupConfig.ALLIANCE_REMOVE_TIME.
 	public int AllianceRemoveTimeSeconds { get; init; } = 600;
+}
+
+public sealed class GameServerLegionOptions
+{
+	// Java parity: configs/main/LegionConfig.LEGION_WAREHOUSE.
+	public bool WarehouseEnabled { get; init; } = true;
 }
 
 public sealed class GameServerAutoGroupOptions
