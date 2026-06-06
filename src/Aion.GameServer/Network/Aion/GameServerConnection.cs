@@ -5265,6 +5265,35 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
+		var workItemDeletions = QuestWorkItemRemovalService.RemoveQuestWorkItems(
+			player,
+			inputPlan.Template,
+			inputPlan.QuestState);
+		if (workItemDeletions.Count != 0)
+		{
+			if (_playerEnterWorldService != null)
+			{
+				var persistedObjectIds = new List<int>();
+				foreach (var objectId in workItemDeletions.Select(deletion => deletion.Item.ObjectId).Distinct())
+				{
+					if (await _playerEnterWorldService.DeleteInventoryItemAsync(player, objectId, cancellationToken))
+						persistedObjectIds.Add(objectId);
+				}
+
+				player.MarkDeletedInventoryItemsPersisted(persistedObjectIds);
+			}
+
+			foreach (var deletion in workItemDeletions)
+			{
+				await SendPacketAsync(new SmDeleteItem(deletion.Item.ObjectId, deletion.DeleteType), cancellationToken);
+				await SendPacketAsync(SmCubeUpdate.CubeSizeSnapshot(
+					deletion.CubeItemCountAfterDeletion,
+					player.NpcExpands,
+					player.QuestExpands,
+					player.ItemExpands), cancellationToken);
+			}
+		}
+
 		var mutation = QuestFinishStateMutationService.ApplyRewardCompletion(
 			inputPlan.QuestState,
 			inputPlan.Template,

@@ -20,6 +20,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 	private const int SelectedQuestAutoReward = 108;
 	private const int KinahItemId = 182400001;
 	private const int RewardItemId = 186000001;
+	private const int WorkItemId = 182200003;
 
 	[Fact]
 	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestAppliesXpAndCompletesQuest()
@@ -173,6 +174,62 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		Assert.Equal(0, unchangedQuest.QuestVars);
 	}
 
+	[Fact]
+	public async Task HandleDialogSelectAsync_ReportableAutoRewardQuestRemovesQuestWorkItemsBeforeCompletion()
+	{
+		await using var fixture = await QuestFinishDialogFixture.CreateAsync();
+		Assert.True(fixture.StaticData.QuestFinishRewardProjections.TryGetQuest(1004, out var lookupEntry));
+		Assert.NotNull(lookupEntry);
+		Assert.True(lookupEntry.Template.HasQuestWorkItems);
+
+		var rewardQuestState = new PlayerQuestState(1004, "REWARD", QuestVars: 0x78, Flags: 0, CompleteCount: 0);
+		var player = new Player
+		{
+			ObjectId = 1004,
+			Name = "QuestFinishWorkItemBoundary",
+			PlayerClass = "RANGER",
+			Level = 1,
+			Exp = 0,
+			Position = new WorldPosition(210010000, 1, 2, 3, 0),
+			InventoryItems =
+			[
+				new InventoryItem { ObjectId = 6001, ItemId = WorkItemId, Count = 4, OwnerId = 1004, Location = 0 },
+				new InventoryItem { ObjectId = 6002, ItemId = WorkItemId, Count = 1, OwnerId = 1004, Location = 0 },
+				new InventoryItem { ObjectId = 6003, ItemId = RewardItemId, Count = 1, OwnerId = 1004, Location = 0 },
+			],
+			Quests = [rewardQuestState],
+		};
+		var packet = CreateDialogSelect(
+			targetObjectId: 0,
+			dialogActionId: SelectedQuestAutoReward,
+			questId: 1004,
+			extendedRewardIndex: 0);
+
+		await fixture.Connection.HandleDialogSelectAsync(player, packet);
+
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => Assert.IsType<SmStatUpdateExp>(packet),
+			packet =>
+			{
+				var message = Assert.IsType<SmSystemMessage>(packet);
+				Assert.Equal(1370002, message.MessageId);
+			},
+			packet => AssertQuestWorkItemDelete(packet, 6001),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => AssertQuestWorkItemDelete(packet, 6002),
+			packet => Assert.IsType<SmCubeUpdate>(packet),
+			packet => Assert.IsType<SmQuestAction>(packet));
+		var remainingItem = Assert.Single(player.InventoryItems);
+		Assert.Equal(6003, remainingItem.ObjectId);
+		Assert.Equal([6001, 6002], player.DeletedInventoryItems.Select(item => item.ObjectId).Order());
+		var unchangedQuest = Assert.Single(player.Quests);
+		Assert.NotSame(rewardQuestState, unchangedQuest);
+		Assert.Equal("COMPLETE", unchangedQuest.Status);
+		Assert.Equal(1, unchangedQuest.CompleteCount);
+		Assert.Equal(0, unchangedQuest.QuestVars);
+	}
+
 	private static CmDialogSelect CreateDialogSelect(
 		int targetObjectId,
 		int dialogActionId,
@@ -190,6 +247,23 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 		using var reader = new PacketBuffer(writer.ToArray());
 		packet.ReadFrom(reader);
 		return packet;
+	}
+
+	private static void AssertQuestWorkItemDelete(GameServerPacket packet, int expectedObjectId)
+	{
+		var deletePacket = Assert.IsType<SmDeleteItem>(packet);
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(deletePacket));
+		Assert.Equal(expectedObjectId, reader.ReadD());
+		Assert.Equal(0, (int)reader.ReadC());
+		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
+	{
+		var crypt = new GameCrypt(() => 0x01020304);
+		crypt.EnableKey();
+		var frame = packet.SerializeFrame(crypt);
+		return frame[7..];
 	}
 
 	private sealed class QuestFinishDialogFixture : IAsyncDisposable
@@ -234,6 +308,7 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 					</player_experience_table>
 					<item_templates>
 						<item_template id="182400001" name="Kinah" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="2147483647" price="1" />
+						<item_template id="182200003" name="Quest Work Item" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100" price="1" />
 						<item_template id="186000001" name="Quest Reward Item" desc="1" mask="0" level="1" item_group="NORMAL" item_type="NORMAL" quality="COMMON" race="PC_ALL" max_stack_count="100" price="1" />
 					</item_templates>
 					<quests>
@@ -247,6 +322,12 @@ public sealed class GameServerConnectionQuestFinishDialogBoundaryTests
 							<rewards>
 								<reward_item item_id="186000001" count="2" />
 							</rewards>
+						</quest>
+						<quest id="1004" can_report="true" reward_repeat_count="1">
+							<quest_work_items>
+								<quest_work_item item_id="182200003" count="1" />
+							</quest_work_items>
+							<rewards exp="50" />
 						</quest>
 					</quests>
 				</static_data>
