@@ -841,6 +841,78 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_FullCubeDestinationSendsJavaStorageFullMessageAndUnlocksSource()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 5, location: 1);
+		player.InventoryItems = player.InventoryItems
+			.Concat(CreateStorageFillerItems(location: 0, count: InventoryCapacity.GetCubeLimit(player)))
+			.ToArray();
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 1, destination: 0, slot: 8));
+
+		Assert.Equal(28, player.InventoryItems.Count);
+		var sourceItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(5, sourceItem.Count);
+		Assert.Equal(1, sourceItem.Location);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1390149),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedItemId: 200,
+				expectedCount: 5,
+				expectedSlot: 0),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1, expectedStorage: 1));
+	}
+
+	[Fact]
+	public async Task HandleMoveItemAsync_FullWarehouseDestinationSendsJavaStorageFullMessageAndUnlocksSource()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 5);
+		var sourceItem = Assert.Single(player.InventoryItems);
+		sourceItem.Slot = 12;
+		player.InventoryItems = player.InventoryItems
+			.Concat(CreateStorageFillerItems(location: 1, count: InventoryCapacity.GetWarehouseLimit(player)))
+			.ToArray();
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 1, slot: 8));
+
+		Assert.Equal(25, player.InventoryItems.Count);
+		var unchangedItem = Assert.Single(player.InventoryItems, item => item.ObjectId == 5001);
+		Assert.Equal(5, unchangedItem.Count);
+		Assert.Equal(0, unchangedItem.Location);
+		Assert.Equal(12, unchangedItem.Slot);
+		Assert.Equal(0, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertSystemMessagePayload(Assert.IsType<SmSystemMessage>(packet), expectedMessageId: 1300421),
+			packet => AssertInventoryAddPayload(
+				Assert.IsType<SmInventoryAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedItemId: 200,
+				expectedCount: 5,
+				expectedAddType: SmInventoryAddItem.AllSlot,
+				expectedSlot: 12),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 1));
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_RegularWarehouseRestrictionSendsDenialAndUnlocksSourceLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();

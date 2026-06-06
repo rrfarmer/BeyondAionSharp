@@ -4283,6 +4283,14 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 		}
 
+		var storageFullMessage = CreateStorageFullMessage(player, packet.Destination, templates!);
+		if (storageFullMessage != null)
+		{
+			await SendPacketAsync(storageFullMessage);
+			await SendStorageUpdatePacketAsync(player, item, template, packet.Source, SmInventoryAddItem.AllSlot);
+			return;
+		}
+
 		// Mutate item location and slot in memory.
 		var oldLocation = item.Location;
 		var oldSlot = item.Slot;
