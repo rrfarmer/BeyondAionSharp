@@ -4320,7 +4320,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			await SendPacketAsync(new SmWarehouseAddItem(
 				packet.Destination,
 				[new SmWarehouseAddItem.WarehousePacketItem(item, template)],
-				SmWarehouseAddItem.AllSlot));
+				SmInventoryAddItem.ItemCollect));
 			await SendPacketAsync(SmCubeUpdate.CubeSize(player));
 		}
 	}

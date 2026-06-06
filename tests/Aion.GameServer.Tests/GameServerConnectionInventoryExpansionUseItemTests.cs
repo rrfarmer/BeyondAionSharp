@@ -687,6 +687,73 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_PartialAutoSlotMergeMovesRemainingStackLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 5);
+		player.InventoryItems = player.InventoryItems
+			.Concat(
+			[
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 200,
+					Count = 97,
+					Location = 1,
+				},
+			])
+			.ToArray();
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 1, slot: -1));
+
+		Assert.Collection(
+			player.InventoryItems.OrderBy(item => item.ObjectId),
+			item =>
+			{
+				Assert.Equal(5001, item.ObjectId);
+				Assert.Equal(2, item.Count);
+				Assert.Equal(1, item.Location);
+				Assert.Equal(-1, item.Slot);
+			},
+			item =>
+			{
+				Assert.Equal(6001, item.ObjectId);
+				Assert.Equal(100, item.Count);
+				Assert.Equal(1, item.Location);
+			});
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(1, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMove = Assert.NotNull(repository.SavedItemCrossStorageMoveMutation);
+		Assert.Equal(1001, savedMove.PlayerObjectId);
+		Assert.Equal(5001, savedMove.ItemObjectId);
+		Assert.Equal(1, savedMove.NewLocation);
+		Assert.Equal(-1, savedMove.NewSlot);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 6001,
+				expectedWarehouseType: 1,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect),
+			packet => AssertInventoryUpdatePayload(
+				Assert.IsType<SmInventoryUpdateItem>(packet),
+				expectedObjectId: 5001,
+				expectedUpdateType: SmInventoryUpdateItem.DecreaseItemSplitMove),
+			packet => AssertDeleteItemPayload(Assert.IsType<SmDeleteItem>(packet), expectedObjectId: 5001, expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0),
+			packet => AssertWarehouseAddPayload(
+				Assert.IsType<SmWarehouseAddItem>(packet),
+				expectedObjectId: 5001,
+				expectedWarehouseType: 1,
+				expectedAddType: SmInventoryAddItem.ItemCollect),
+			packet => Assert.IsType<SmCubeUpdate>(packet));
+	}
+
+	[Fact]
 	public async Task HandleChargeItemAsync_SaveFailureStopsBeforeInMemoryMutationAndPackets()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository { SaveItemChargeMutationResult = false };
@@ -3587,6 +3654,19 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		reader.ReadB(blobSize);
 		Assert.Equal(expectedUpdateType, reader.ReadH());
 		Assert.Equal(0, reader.Remaining);
+	}
+
+	private static void AssertWarehouseAddPayload(
+		SmWarehouseAddItem packet,
+		int expectedObjectId,
+		int expectedWarehouseType,
+		int expectedAddType)
+	{
+		using var reader = new PacketBuffer(SerializeUnencryptedPayload(packet));
+		Assert.Equal(expectedWarehouseType, (int)reader.ReadC());
+		Assert.Equal(expectedAddType, reader.ReadH());
+		Assert.Equal(1, reader.ReadH());
+		Assert.Equal(expectedObjectId, reader.ReadD());
 	}
 
 	private static void AssertInventoryUpdatePayloadWithCleanupSealFlag(
