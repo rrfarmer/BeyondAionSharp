@@ -735,6 +735,64 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 	}
 
 	[Fact]
+	public async Task HandleMoveItemAsync_AccountWarehouseAutoMergeFillsExistingStackBeforeFullCheckLikeJava()
+	{
+		var repository = new EmptyPlayerEnterWorldRepository();
+		await using var fixture = await InventoryExpansionUseItemFixture.CreateAsync(repository);
+		var player = CreatePlayer(itemId: 200, count: 3, accountId: 77);
+		player.AccountWarehouseItems = new[]
+			{
+				new InventoryItem
+				{
+					ObjectId = 6001,
+					ItemId = 200,
+					Count = 97,
+					OwnerId = 77,
+					Location = 2,
+					Slot = 12,
+				},
+			}
+			.Concat(CreateStorageFillerItems(
+				location: 2,
+				count: InventoryCapacity.GetAccountWarehouseLimit() - 1,
+				ownerId: 77,
+				startObjectId: 7000))
+			.ToArray();
+
+		await InvokeHandleMoveItemAsync(
+			fixture.Connection,
+			player,
+			CreateMoveItem(itemObjectId: 5001, source: 0, destination: 2, slot: -1));
+
+		Assert.Empty(player.InventoryItems);
+		Assert.Equal(InventoryCapacity.GetAccountWarehouseLimit(), player.AccountWarehouseItems.Count);
+		var targetStack = Assert.Single(player.AccountWarehouseItems, item => item.ObjectId == 6001);
+		Assert.Equal(100, targetStack.Count);
+		Assert.Equal(77, targetStack.OwnerId);
+		Assert.Equal(2, targetStack.Location);
+		Assert.Equal(1, repository.SaveItemMergeMutationCalls);
+		Assert.Equal(0, repository.SaveItemCrossStorageMoveMutationCalls);
+		var savedMerge = Assert.NotNull(repository.SavedItemMergeMutation);
+		Assert.Equal(1001, savedMerge.PlayerObjectId);
+		Assert.Equal(1001, savedMerge.SourceItem.OwnerId);
+		Assert.Equal(0, savedMerge.SourceItem.Count);
+		Assert.Equal(77, savedMerge.TargetItem.OwnerId);
+		Assert.Equal(100, savedMerge.TargetItem.Count);
+		Assert.Collection(
+			fixture.SentPackets,
+			packet => AssertWarehouseUpdatePayload(
+				Assert.IsType<SmWarehouseUpdateItem>(packet),
+				expectedObjectId: 6001,
+				expectedWarehouseType: 2,
+				expectedUpdateType: SmInventoryUpdateItem.IncreaseItemCollect),
+			packet => AssertDeleteItemPayload(
+				Assert.IsType<SmDeleteItem>(packet),
+				expectedObjectId: 5001,
+				expectedDeleteType: SmDeleteItem.MoveDeleteType),
+			packet => AssertCubeUpdatePayload(Assert.IsType<SmCubeUpdate>(packet), expectedItemsCount: 0));
+	}
+
+	[Fact]
 	public async Task HandleMoveItemAsync_PartialAutoSlotMergeMovesRemainingStackLikeJava()
 	{
 		var repository = new EmptyPlayerEnterWorldRepository();
@@ -4214,12 +4272,12 @@ public sealed class GameServerConnectionInventoryExpansionUseItemTests
 		};
 	}
 
-	private static InventoryItem[] CreateStorageFillerItems(int location, int count, int ownerId = 1001)
+	private static InventoryItem[] CreateStorageFillerItems(int location, int count, int ownerId = 1001, int startObjectId = 6000)
 	{
 		return Enumerable.Range(0, count)
 			.Select(index => new InventoryItem
 			{
-				ObjectId = 6000 + index,
+				ObjectId = startObjectId + index,
 				ItemId = 200,
 				Count = 1,
 				OwnerId = ownerId,

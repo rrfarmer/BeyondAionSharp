@@ -4273,7 +4273,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		// Java parity: ItemMoveService.moveItem auto-merges stackable items into existing destination stacks
 		// when the client asks for automatic placement (slot == -1) before falling back to a normal move.
-		if (packet.Slot == -1 && template.MaxStackCount > 1 && packet.Source != 2 && packet.Destination != 2)
+		if (packet.Slot == -1 && template.MaxStackCount > 1)
 		{
 			var targetStacks = GetMoveStorageItems(player, packet.Destination)
 				.Where(i => i.Location == packet.Destination && i.ItemId == item.ItemId && i.ObjectId != item.ObjectId)
