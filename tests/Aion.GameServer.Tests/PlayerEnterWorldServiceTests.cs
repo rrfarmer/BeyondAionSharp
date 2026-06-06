@@ -6,6 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging.Abstractions;
 using GameWorld = Aion.GameServer.World.World;
@@ -14,6 +15,110 @@ namespace Aion.GameServer.Tests;
 
 public sealed class PlayerEnterWorldServiceTests
 {
+	[Fact]
+	public async Task EnterWorld_SchedulesPeriodicGeneralAndItemSavesFromJavaConfigCadence()
+	{
+		var observations = new List<ThreadPoolScheduleObservation>();
+		await using var threadPoolManager = new ThreadPoolManager(
+			NullLogger<ThreadPoolManager>.Instance,
+			observations.Add);
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5)),
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			options: new GameServerOptions
+			{
+				PeriodicSave = new GameServerPeriodicSaveOptions
+				{
+					PlayerGeneralSeconds = 4,
+					PlayerItemsSeconds = 6,
+				},
+			},
+			threadPoolManager: threadPoolManager);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.Collection(
+			observations.Where(observation => observation.Kind == ThreadPoolScheduleKind.FixedRate).OrderBy(observation => observation.Delay),
+			observation =>
+			{
+				Assert.Equal(TimeSpan.FromSeconds(4), observation.Delay);
+				Assert.Equal(TimeSpan.FromSeconds(4), observation.Period);
+			},
+			observation =>
+			{
+				Assert.Equal(TimeSpan.FromSeconds(6), observation.Delay);
+				Assert.Equal(TimeSpan.FromSeconds(6), observation.Period);
+			});
+	}
+
+	[Fact]
+	public async Task EnterWorld_PeriodicSaveCallbacksPersistLivePlayerStateWithoutLogout()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5)),
+		};
+		var service = CreateService(
+			repository,
+			CreateWorld(),
+			options: new GameServerOptions
+			{
+				PeriodicSave = new GameServerPeriodicSaveOptions
+				{
+					PlayerGeneralSeconds = 1,
+					PlayerItemsSeconds = 1,
+				},
+			},
+			threadPoolManager: threadPoolManager);
+
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+
+		await WaitUntilAsync(() => repository.SavePeriodicGeneralCalls > 0 && repository.SavePeriodicItemsCalls > 0);
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+		Assert.Same(result.Player, repository.PeriodicGeneralPlayer);
+		Assert.Same(result.Player, repository.PeriodicItemsPlayer);
+		Assert.True(result.Player!.IsOnline);
+		Assert.Equal(0, repository.SaveLogoutCalls);
+	}
+
+	[Fact]
+	public async Task LeaveWorld_CancelsPeriodicSaveCallbacksBeforeTheyPersistAgain()
+	{
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		var repository = new CapturingEnterWorldRepository
+		{
+			Player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5)),
+		};
+		var world = CreateWorld();
+		var service = CreateService(
+			repository,
+			world,
+			options: new GameServerOptions
+			{
+				PeriodicSave = new GameServerPeriodicSaveOptions
+				{
+					PlayerGeneralSeconds = 1,
+					PlayerItemsSeconds = 1,
+				},
+			},
+			threadPoolManager: threadPoolManager);
+		var result = await service.EnterWorldAsync(accountId: 10, playerObjectId: 1001);
+		Assert.Equal(EnterWorldCheckMessage.Ok, result.Message);
+
+		await service.LeaveWorldAsync(result.Player!);
+		await Task.Delay(1_200);
+
+		Assert.Equal(0, repository.SavePeriodicGeneralCalls);
+		Assert.Equal(0, repository.SavePeriodicItemsCalls);
+		Assert.Equal(1, repository.SaveLogoutCalls);
+	}
+
 	[Fact]
 	public async Task EnterWorld_MarksPlayerOnlineAndStoresInWorld()
 	{
@@ -2082,6 +2187,29 @@ public sealed class PlayerEnterWorldServiceTests
 		return CreateService(repository, world, out _);
 	}
 
+	private static PlayerEnterWorldService CreateService(
+		CapturingEnterWorldRepository repository,
+		GameWorld world,
+		GameServerOptions options,
+		ThreadPoolManager? threadPoolManager = null)
+	{
+		return CreateService(repository, world, out _, options: options, threadPoolManager: threadPoolManager);
+	}
+
+	private static async Task WaitUntilAsync(Func<bool> predicate, int timeoutMillis = 2_000)
+	{
+		var deadline = DateTimeOffset.UtcNow.AddMilliseconds(timeoutMillis);
+		while (DateTimeOffset.UtcNow < deadline)
+		{
+			if (predicate())
+				return;
+
+			await Task.Delay(25);
+		}
+
+		Assert.True(predicate(), "Timed out waiting for expected condition.");
+	}
+
 	private static void AssertGroupOfflineMessage(PacketDelivery delivery, int expectedPlayerObjectId, string expectedPlayerName)
 	{
 		AssertGroupSystemMessage(delivery, expectedPlayerObjectId, 1300175, expectedPlayerName);
@@ -2224,7 +2352,9 @@ public sealed class PlayerEnterWorldServiceTests
 		Action<FindGroupLogoutCleanupPlan>? findGroupLogoutCleanupPlanObserver = null,
 		PlayerGroupRuntime? playerGroupRuntime = null,
 		PlayerAllianceRuntime? playerAllianceRuntime = null,
-		PlayerLeagueRuntime? playerLeagueRuntime = null)
+		PlayerLeagueRuntime? playerLeagueRuntime = null,
+		GameServerOptions? options = null,
+		ThreadPoolManager? threadPoolManager = null)
 	{
 		registry = new CapturingConnectionRegistry();
 		var resourceStats = new WorldNpcResourceStatsService(
@@ -2232,20 +2362,21 @@ public sealed class PlayerEnterWorldServiceTests
 			registry,
 			new PlayerVisualStatsUpdateService(registry));
 		return new PlayerEnterWorldService(
-			new GameServerOptions(),
+			options ?? new GameServerOptions(),
 			repository,
 			world,
 			NullLogger<PlayerEnterWorldService>.Instance,
-			resourceStats,
-			creaturePvpZoneCounterService,
-			registry,
-			runtimeContext,
-			repurchaseStateRemovePlanObserver,
-			findGroupService,
-			findGroupLogoutCleanupPlanObserver,
-			playerGroupRuntime,
-			playerAllianceRuntime,
-			playerLeagueRuntime);
+			resourceStats: resourceStats,
+			creaturePvpZoneCounterService: creaturePvpZoneCounterService,
+			connectionRegistry: registry,
+			threadPoolManager: threadPoolManager,
+			runtimeContext: runtimeContext,
+			repurchaseStateRemovePlanObserver: repurchaseStateRemovePlanObserver,
+			findGroupService: findGroupService,
+			findGroupLogoutCleanupPlanObserver: findGroupLogoutCleanupPlanObserver,
+			playerGroupRuntime: playerGroupRuntime,
+			playerAllianceRuntime: playerAllianceRuntime,
+			playerLeagueRuntime: playerLeagueRuntime);
 	}
 
 	private static PlayerEnterWorldService CreateService(
@@ -2610,6 +2741,14 @@ public sealed class PlayerEnterWorldServiceTests
 		public int SaveLogoutCalls { get; private set; }
 
 		public Player? SavedLogoutPlayer { get; private set; }
+
+		public int SavePeriodicGeneralCalls { get; private set; }
+
+		public Player? PeriodicGeneralPlayer { get; private set; }
+
+		public int SavePeriodicItemsCalls { get; private set; }
+
+		public Player? PeriodicItemsPlayer { get; private set; }
 
 		public bool CaptureAndPersistDirtyItemsOnLogout { get; init; }
 
@@ -3450,6 +3589,20 @@ public sealed class PlayerEnterWorldServiceTests
 			MarkOnlineCalls++;
 			LastOnline = lastOnline;
 			return Task.FromResult(MarkOnlineResult);
+		}
+
+		public Task<bool> SavePeriodicPlayerGeneralAsync(Player player, CancellationToken cancellationToken = default)
+		{
+			SavePeriodicGeneralCalls++;
+			PeriodicGeneralPlayer = player;
+			return Task.FromResult(true);
+		}
+
+		public Task<bool> SavePeriodicPlayerItemsAsync(Player player, CancellationToken cancellationToken = default)
+		{
+			SavePeriodicItemsCalls++;
+			PeriodicItemsPlayer = player;
+			return Task.FromResult(true);
 		}
 
 		public Task<bool> SaveItemChargeMutationAsync(

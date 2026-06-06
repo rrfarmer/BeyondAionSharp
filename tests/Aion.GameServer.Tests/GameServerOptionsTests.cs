@@ -53,6 +53,8 @@ public class GameServerOptionsTests
 		Assert.Equal(100, options.Prices.DefaultTaxes);
 		Assert.Equal(100, options.Prices.VendorBuyModifier);
 		Assert.Equal(20, options.Prices.VendorSellModifier);
+		Assert.Equal(900, options.PeriodicSave.PlayerGeneralSeconds);
+		Assert.Equal(900, options.PeriodicSave.PlayerItemsSeconds);
 		Assert.Equal(10, options.PeriodicSave.PlayerPetsSeconds);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
@@ -168,6 +170,8 @@ public class GameServerOptionsTests
 				gameserver.prices.default.taxes = 105
 				gameserver.prices.vendor.buymod = 125
 				gameserver.prices.vendor.sellmod = 22
+				gameserver.periodicsave.player.general = 31
+				gameserver.periodicsave.player.items = 33
 				gameserver.periodicsave.player.pets = 27
 				gameserver.instance_group.form_anywhere = true
 				gameserver.instance.destroy_delay_seconds = 900
@@ -204,6 +208,8 @@ public class GameServerOptionsTests
 			Assert.Equal(105, options.Prices.DefaultTaxes);
 			Assert.Equal(125, options.Prices.VendorBuyModifier);
 			Assert.Equal(22, options.Prices.VendorSellModifier);
+			Assert.Equal(31, options.PeriodicSave.PlayerGeneralSeconds);
+			Assert.Equal(33, options.PeriodicSave.PlayerItemsSeconds);
 			Assert.Equal(27, options.PeriodicSave.PlayerPetsSeconds);
 			Assert.True(options.Instance.FormInstanceGroupAnywhere);
 			Assert.Equal(900, options.Instance.DestroyDelaySeconds);

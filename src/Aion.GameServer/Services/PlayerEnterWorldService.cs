@@ -5,6 +5,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
@@ -22,6 +23,7 @@ public sealed class PlayerEnterWorldService
 	private readonly WorldNpcResourceStatsService? _resourceStats;
 	private readonly CreaturePvpZoneCounterService? _creaturePvpZoneCounterService;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly Action<RepurchaseStateRemovePlan>? _repurchaseStateRemovePlanObserver;
 	private readonly FindGroupRecruitmentPlanService? _findGroupService;
@@ -30,6 +32,8 @@ public sealed class PlayerEnterWorldService
 	private readonly PlayerAllianceRuntime? _playerAllianceRuntime;
 	private readonly PlayerLeagueRuntime? _playerLeagueRuntime;
 	private readonly ConcurrentDictionary<int, byte> _enteringWorld = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _periodicGeneralUpdateTasks = new();
+	private readonly ConcurrentDictionary<int, ScheduledTask> _periodicItemUpdateTasks = new();
 	private readonly ILogger<PlayerEnterWorldService> _logger;
 
 	public PlayerEnterWorldService(
@@ -40,6 +44,7 @@ public sealed class PlayerEnterWorldService
 		WorldNpcResourceStatsService? resourceStats = null,
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null,
 		IGameClientConnectionRegistry? connectionRegistry = null,
+		ThreadPoolManager? threadPoolManager = null,
 		GameServerRuntimeContext? runtimeContext = null,
 		Action<RepurchaseStateRemovePlan>? repurchaseStateRemovePlanObserver = null,
 		FindGroupRecruitmentPlanService? findGroupService = null,
@@ -54,6 +59,7 @@ public sealed class PlayerEnterWorldService
 		_resourceStats = resourceStats;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
 		_connectionRegistry = connectionRegistry;
+		_threadPoolManager = threadPoolManager;
 		_runtimeContext = runtimeContext;
 		_repurchaseStateRemovePlanObserver = repurchaseStateRemovePlanObserver;
 		_findGroupService = findGroupService;
@@ -151,6 +157,7 @@ public sealed class PlayerEnterWorldService
 			player.FriendListStatus = FriendListStatusOnline;
 			await ApplyOfflineDpResetAsync(player, previousLastOnline, now);
 			player.LastOnline = now;
+			SchedulePeriodicPlayerSaves(player);
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged on", player.Name, playerObjectId);
 			return new PlayerEnterWorldResult(EnterWorldCheckMessage.Ok, player);
 		}
@@ -1137,6 +1144,7 @@ public sealed class PlayerEnterWorldService
 	{
 		// Java parity: services/player/PlayerLeaveWorldService.leaveWorld baseline persistence.
 		RecordFindGroupLogoutCleanup(player);
+		CancelPeriodicPlayerSaves(player.ObjectId);
 		await ClearPendingQuestionResponsesAsync(player);
 		RecordLogoutRepurchaseStateRemoval(player);
 		var lastOnline = DateTime.Now;
@@ -1152,6 +1160,72 @@ public sealed class PlayerEnterWorldService
 			_logger.LogInformation("Player {PlayerName} ({PlayerObjectId}) logged off", player.Name, player.ObjectId);
 		else
 			_logger.LogWarning("Player {PlayerName} ({PlayerObjectId}) logout state was not fully persisted", player.Name, player.ObjectId);
+	}
+
+	private void SchedulePeriodicPlayerSaves(Player player)
+	{
+		// Java parity: services/player/PlayerEnterWorldService.enterWorld schedules TaskId.PLAYER_UPDATE
+		// and TaskId.INVENTORY_UPDATE with PeriodicSaveConfig.PLAYER_GENERAL/PLAYER_ITEMS.
+		if (_threadPoolManager == null)
+			return;
+
+		var generalInterval = TimeSpan.FromSeconds(_options.PeriodicSave.PlayerGeneralSeconds);
+		if (generalInterval > TimeSpan.Zero)
+		{
+			CancelPeriodicPlayerSaveTask(_periodicGeneralUpdateTasks, player.ObjectId);
+			_periodicGeneralUpdateTasks[player.ObjectId] = _threadPoolManager.ScheduleAtFixedRateTask(
+				async cancellationToken => await ExecutePeriodicGeneralUpdateAsync(player, cancellationToken),
+				generalInterval,
+				generalInterval);
+		}
+
+		var itemInterval = TimeSpan.FromSeconds(_options.PeriodicSave.PlayerItemsSeconds);
+		if (itemInterval > TimeSpan.Zero)
+		{
+			CancelPeriodicPlayerSaveTask(_periodicItemUpdateTasks, player.ObjectId);
+			_periodicItemUpdateTasks[player.ObjectId] = _threadPoolManager.ScheduleAtFixedRateTask(
+				async cancellationToken => await ExecutePeriodicItemUpdateAsync(player, cancellationToken),
+				itemInterval,
+				itemInterval);
+		}
+	}
+
+	private async ValueTask ExecutePeriodicGeneralUpdateAsync(Player player, CancellationToken cancellationToken)
+	{
+		// Java GeneralUpdateTask looks up the player from World and skips when they are gone.
+		if (!_world.TryGetObject(player.ObjectId, out var worldObject) || !ReferenceEquals(player, worldObject))
+		{
+			CancelPeriodicPlayerSaveTask(_periodicGeneralUpdateTasks, player.ObjectId);
+			return;
+		}
+
+		await _repository.SavePeriodicPlayerGeneralAsync(player, cancellationToken);
+	}
+
+	private async ValueTask ExecutePeriodicItemUpdateAsync(Player player, CancellationToken cancellationToken)
+	{
+		// Java ItemUpdateTask looks up the player from World and skips when they are gone.
+		if (!_world.TryGetObject(player.ObjectId, out var worldObject) || !ReferenceEquals(player, worldObject))
+		{
+			CancelPeriodicPlayerSaveTask(_periodicItemUpdateTasks, player.ObjectId);
+			return;
+		}
+
+		await _repository.SavePeriodicPlayerItemsAsync(player, cancellationToken);
+	}
+
+	private void CancelPeriodicPlayerSaves(int playerObjectId)
+	{
+		CancelPeriodicPlayerSaveTask(_periodicGeneralUpdateTasks, playerObjectId);
+		CancelPeriodicPlayerSaveTask(_periodicItemUpdateTasks, playerObjectId);
+	}
+
+	private static void CancelPeriodicPlayerSaveTask(
+		ConcurrentDictionary<int, ScheduledTask> tasks,
+		int playerObjectId)
+	{
+		if (tasks.TryRemove(playerObjectId, out var task))
+			task.Cancel();
 	}
 
 	private async Task DispatchGroupDisconnectedLogoutAsync(Player player)

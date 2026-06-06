@@ -289,6 +289,8 @@ public sealed class GameServerOptions
 			},
 			PeriodicSave = new GameServerPeriodicSaveOptions
 			{
+				PlayerGeneralSeconds = GetIntWithEnvironment(loader, "gameserver.periodicsave.player.general", 900),
+				PlayerItemsSeconds = GetIntWithEnvironment(loader, "gameserver.periodicsave.player.items", 900),
 				PlayerPetsSeconds = GetIntWithEnvironment(loader, "gameserver.periodicsave.player.pets", 10),
 			},
 			LoadedPropertyCount = loader.Count,
@@ -990,5 +992,9 @@ public sealed class GameThreadOptions
 
 public sealed class GameServerPeriodicSaveOptions
 {
+	public int PlayerGeneralSeconds { get; init; } = 900;
+
+	public int PlayerItemsSeconds { get; init; } = 900;
+
 	public int PlayerPetsSeconds { get; init; } = 10;
 }

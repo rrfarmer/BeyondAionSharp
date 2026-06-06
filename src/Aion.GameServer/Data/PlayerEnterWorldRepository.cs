@@ -270,6 +270,10 @@ public interface IPlayerEnterWorldRepository
 
 	Task<bool> MarkPlayerOnlineAsync(int playerObjectId, DateTime lastOnline, CancellationToken cancellationToken = default);
 
+	Task<bool> SavePeriodicPlayerGeneralAsync(Player player, CancellationToken cancellationToken = default);
+
+	Task<bool> SavePeriodicPlayerItemsAsync(Player player, CancellationToken cancellationToken = default);
+
 	Task<bool> SaveItemChargeMutationAsync(
 		int playerObjectId,
 		InventoryItem chargedItem,
@@ -1419,6 +1423,16 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	{
 		return Task.FromResult(false);
 	}
+
+	public Task<bool> SavePeriodicPlayerGeneralAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
+
+	public Task<bool> SavePeriodicPlayerItemsAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		return Task.FromResult(false);
+	}
 }
 
 public sealed record PrivateStorePurchasePersistenceCapture(
@@ -1688,6 +1702,98 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		catch (Exception ex)
 		{
 			_logger.LogError(ex, "Could not save logout state for player {PlayerObjectId}", player.ObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePeriodicPlayerGeneralAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: PlayerEnterWorldService.GeneralUpdateTask.run persists live player state
+		// without changing online state. This covers the currently modeled C# general state.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			if (player.LifeStats != null)
+				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
+			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+			await SavePlayerSkillCooldownsAsync(connection, player.ObjectId, player.SkillCooldowns, nowMillis, cancellationToken);
+			await SavePlayerItemCooldownsAsync(connection, player.ObjectId, player.ItemCooldowns, nowMillis, cancellationToken);
+			await SavePlayerPortalCooldownsAsync(connection, player.ObjectId, player.PortalCooldowns, nowMillis, cancellationToken);
+			await SavePlayerCraftCooldownsAsync(player.ObjectId, player.CraftCooldowns, nowMillis, cancellationToken);
+			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
+			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
+
+			await using var command = connection.CreateCommand();
+			command.CommandText = """
+				UPDATE players
+				SET exp = ?, recoverexp = ?, x = ?, y = ?, z = ?, heading = ?, world_id = ?,
+					quest_expands = ?, npc_expands = ?, item_expands = ?, wh_npc_expands = ?, wh_bonus_expands = ?,
+					note = ?, title_id = ?, bonus_title_id = ?, dp = ?, mailbox_letters = ?, reposte_energy = ?
+				WHERE id = ?
+				""";
+			command.Parameters.AddRange(
+				new[]
+				{
+					new MySqlParameter { Value = player.Exp },
+					new MySqlParameter { Value = player.RecoverableExp },
+					new MySqlParameter { Value = player.Position.X },
+					new MySqlParameter { Value = player.Position.Y },
+					new MySqlParameter { Value = player.Position.Z },
+					new MySqlParameter { Value = player.Position.Heading },
+					new MySqlParameter { Value = player.Position.WorldId },
+					new MySqlParameter { Value = player.QuestExpands },
+					new MySqlParameter { Value = player.NpcExpands },
+					new MySqlParameter { Value = player.ItemExpands },
+					new MySqlParameter { Value = player.WarehouseNpcExpands },
+					new MySqlParameter { Value = player.WarehouseBonusExpands },
+					new MySqlParameter { Value = player.Note },
+					new MySqlParameter { Value = player.TitleId },
+					new MySqlParameter { Value = player.BonusTitleId },
+					new MySqlParameter { Value = player.Dp },
+					new MySqlParameter { Value = player.Mailbox.Count },
+					new MySqlParameter { Value = player.ReposeEnergy },
+					new MySqlParameter { Value = player.ObjectId },
+				});
+
+			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save periodic general state for player {PlayerObjectId}", player.ObjectId);
+			return false;
+		}
+	}
+
+	public async Task<bool> SavePeriodicPlayerItemsAsync(Player player, CancellationToken cancellationToken = default)
+	{
+		// Java parity: PlayerEnterWorldService.ItemUpdateTask.run calls InventoryDAO.store(player)
+		// followed by ItemStoneListDAO.save(player). C# currently flushes tracked dirty/deleted item rows.
+		try
+		{
+			await using var connection = DatabaseFactory.GetConnection();
+			await connection.OpenAsync(cancellationToken);
+			var dirtyItems = player.GetDirtyItemsToUpdate();
+			if (!await DeleteInventoryItemSnapshotAsync(
+				connection,
+				dirtyItems.Where(item => item.PersistentState == InventoryItemPersistentState.Deleted).ToArray(),
+				cancellationToken))
+			{
+				return false;
+			}
+			if (!await SaveInventoryItemSnapshotAsync(
+				connection,
+				dirtyItems.Where(item => item.PersistentState != InventoryItemPersistentState.Deleted).ToArray(),
+				cancellationToken))
+			{
+				return false;
+			}
+			player.MarkDirtyItemsPersisted();
+			return true;
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Could not save periodic item state for player {PlayerObjectId}", player.ObjectId);
 			return false;
 		}
 	}
