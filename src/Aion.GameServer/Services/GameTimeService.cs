@@ -3,12 +3,16 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.Time.Gametime;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Services;
 
 public sealed class GameTimeService : GameEngine
 {
+	// Java parity: SingletonHolder pattern — set in constructor, accessed via GetInstance().
+	private static GameTimeService? _instance;
+
 	private const string GameTimeVariable = "time";
 	private static readonly TimeSpan DefaultTickDelay = TimeSpan.FromSeconds(5);
 	private static readonly TimeSpan DefaultTickPeriod = TimeSpan.FromSeconds(5);
@@ -64,7 +68,17 @@ public sealed class GameTimeService : GameEngine
 		_tickPeriod = tickPeriod;
 		_saveDelay = saveDelay;
 		_savePeriod = savePeriod;
+		_instance = this; // Java parity: SingletonHolder registers on construction
 	}
+
+	// Java parity: GameTimeService.getInstance()
+	public static GameTimeService GetInstance() =>
+		_instance ?? throw new InvalidOperationException("GameTimeService has not been initialized yet.");
+
+	// Java parity: GameTimeService.getGameTime() — snapshot of current game-minutes.
+	// Java keeps a mutable GameTime object and advances it via addMinutes; C# stores raw minutes
+	// and wraps on demand. Callers that need current hour/dayTime get an accurate snapshot.
+	public GameTime GetGameTime() => new(GameMinutes);
 
 	public string Name => "GameTimeService";
 
