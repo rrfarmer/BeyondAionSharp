@@ -1,0 +1,55 @@
+namespace Aion.GameServer.Model.GameObjects;
+
+/// <summary>
+/// Base class for all in-game objects a player can interact with (npcs, monsters, players, items).
+/// Each AionObject is uniquely identified by its objectId.
+/// Java parity: model/gameobjects/AionObject.
+/// </summary>
+/// <remarks>
+/// This is the dependency-free core of the Java class. Java also has an
+/// <c>AionObject(int objId, boolean autoReleaseObjectId)</c> constructor that registers a GC
+/// Cleaner to release the objectId via RespawnService.setAutoReleaseId / IDFactory.releaseId.
+/// That behavior belongs to the respawn/id-release layer (not a foundation leaf) and has no
+/// caller yet; it is ported as its own unit when RespawnService is faithfully ported. It is
+/// intentionally absent here rather than stubbed.
+/// </remarks>
+public abstract class AionObject
+{
+	private readonly int _objectId;
+
+	// Java parity: AionObject(int objId).
+	protected AionObject(int objectId)
+	{
+		_objectId = objectId;
+	}
+
+	/// <summary>Unique objectId of this AionObject. Java parity: getObjectId().</summary>
+	public int ObjectId => _objectId;
+
+	/// <summary>
+	/// Name of the object. Unique for players, common for NPCs/items/etc.
+	/// Java parity: abstract getName().
+	/// </summary>
+	public abstract string Name { get; }
+
+	// Java parity: final hashCode() returns objectId.
+	public sealed override int GetHashCode() => _objectId;
+
+	// Java parity: final equals(Object) — reference-equal, type-check, objectId==0 dummy guard, then objectId compare.
+	public sealed override bool Equals(object? obj)
+	{
+		if (ReferenceEquals(this, obj))
+			return true;
+
+		if (obj is not AionObject)
+			return false;
+
+		if (_objectId == 0) // object is a dummy (no unique ID from IDFactory)
+			return false;
+
+		return GetHashCode() == obj.GetHashCode();
+	}
+
+	// Java parity: toString() -> "SimpleClassName [name=..., objectId=...]".
+	public override string ToString() => $"{GetType().Name} [name={Name}, objectId={_objectId}]";
+}
