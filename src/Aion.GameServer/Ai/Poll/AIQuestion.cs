@@ -1,0 +1,18 @@
+namespace Aion.GameServer.Ai.Poll;
+
+/// <summary>
+/// Java parity: ai/poll/AIQuestion (ATracer).
+/// </summary>
+public enum AIQuestion
+{
+    ALLOW_DECAY,
+    ALLOW_RESPAWN,
+    CAN_SHOUT,
+    CONSIDER_BOUNDS_IN_CAN_SEE_CHECK_WHEN_ATTACKED,
+    CONSIDER_BOUNDS_IN_CAN_SEE_CHECK_WHEN_ATTACKING,
+    IS_IMMUNE_TO_ABNORMAL_STATES,
+    REMOVE_EFFECTS_ON_MAP_REGION_DEACTIVATE,
+    REWARD_AP,
+    REWARD_AP_XP_DP_LOOT,
+    REWARD_LOOT,
+}
