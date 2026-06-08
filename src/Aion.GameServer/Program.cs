@@ -232,6 +232,11 @@ var builder = Host.CreateDefaultBuilder(args)
 
 var host = builder.Build();
 
+// Singleton-bridge wiring (see docs/HANDOFF.md "SINGLETON-BRIDGE"): bind DI-created engine
+// services to their Java-style static accessors so per-instance domain objects (Creature,
+// AggroList, life/game stats, ...) can reach them exactly as Java's getInstance() does.
+ThreadPoolManager.RegisterInstance(host.Services.GetRequiredService<ThreadPoolManager>());
+
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Aion Game Server starting...");
 

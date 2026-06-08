@@ -11,6 +11,11 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 	private readonly CancellationTokenSource _shutdownTokenSource = new();
 	private int _isShutdown;
 
+	// Singleton-bridge slot (see docs/HANDOFF.md "SINGLETON-BRIDGE"): the instance is created via DI;
+	// the composition root calls RegisterInstance(...) once at startup so per-instance domain objects
+	// (Creature, AggroList, life/game stats, ...) can reach it exactly as Java's getInstance() does.
+	private static ThreadPoolManager? _instance;
+
 	public ThreadPoolManager(
 		ILogger<ThreadPoolManager> logger,
 		Action<ThreadPoolScheduleObservation>? scheduleObserver = null)
@@ -18,6 +23,13 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		_logger = logger;
 		_scheduleObserver = scheduleObserver;
 	}
+
+	// Java parity: ThreadPoolManager.getInstance().
+	public static ThreadPoolManager GetInstance() =>
+		_instance ?? throw new InvalidOperationException("ThreadPoolManager singleton bridge not initialized; call RegisterInstance(...) at startup.");
+
+	/// <summary>Composition-root hook: bind the DI-created instance to the Java-style static accessor.</summary>
+	public static void RegisterInstance(ThreadPoolManager instance) => _instance = instance;
 
 	public ScheduledTask Schedule(
 		Func<CancellationToken, ValueTask> action,
