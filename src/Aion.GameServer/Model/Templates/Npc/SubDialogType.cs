@@ -1,0 +1,26 @@
+namespace Aion.GameServer.Model.Templates.Npc;
+
+/// <summary>
+/// Condition gating an NPC sub-dialog.
+/// Java parity: model/templates/npc/SubDialogType.
+/// </summary>
+public enum SubDialogType
+{
+    FORT_CAPTURE, // Allow when fort was captured
+    SKILL_ID, // Allow when player skill is present
+    ITEM_ID, // Allow when item in the inventory exists
+    RETURN, // Allow when Abbey Return Stone is in inventory to access Wisplight/Fatebound Abbey
+    PCBANG, // Allow when connected from an internet cafe
+    PAID_USER, // Allow for players with certain membership
+    NEWBIE, // Allow for new players
+    ABYSSRANK,
+    ABYSSRANKING,
+    LEVEL,
+    LEVEL_LOW,
+    LEVEL_HIGH,
+    LEGION_DOMINION_NPC,
+    TARGET_LEGION_DOMINION,
+    PACK_3,
+    PACK_4,
+    CASH,
+}
