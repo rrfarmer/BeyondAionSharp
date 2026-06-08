@@ -194,7 +194,7 @@ public abstract class EffectTemplate
     }
 
     /// <summary>Calculate effect result.</summary>
-    public void Calculate(SkillEngine.Model.Effect effect)
+    public virtual void Calculate(SkillEngine.Model.Effect effect)
     {
         Calculate(effect, null, null, Element);
     }
