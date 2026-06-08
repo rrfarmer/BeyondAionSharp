@@ -125,7 +125,7 @@ public abstract class CreatureGameStats<T> where T : Creature
         return value > 0 ? value : 0;
     }
 
-    public Stat2 GetStat(StatEnum statEnum, float baseValue, params CalculationType[] calculationTypes)
+    public virtual Stat2 GetStat(StatEnum statEnum, float baseValue, params CalculationType[] calculationTypes)
     {
         Stat2 stat = new AdditionStat(statEnum, baseValue, owner);
         return GetStat(statEnum, stat, calculationTypes);
@@ -291,7 +291,7 @@ public abstract class CreatureGameStats<T> where T : Creature
         return GetStat(StatEnum.PHYSICAL_ACCURACY, GetStatsTemplate().GetAccuracy());
     }
 
-    public Stat2 GetMainHandMAttack(params CalculationType[] calculationTypes)
+    public virtual Stat2 GetMainHandMAttack(params CalculationType[] calculationTypes)
     {
         return GetStat(StatEnum.MAGICAL_ATTACK, GetStatsTemplate().GetMagicalAttack(), calculationTypes);
     }
@@ -301,12 +301,12 @@ public abstract class CreatureGameStats<T> where T : Creature
         return GetStat(StatEnum.MAGICAL_CRITICAL, GetStatsTemplate().GetMcrit());
     }
 
-    public Stat2 GetMAccuracy()
+    public virtual Stat2 GetMAccuracy()
     {
         return GetStat(StatEnum.MAGICAL_ACCURACY, GetStatsTemplate().GetMacc());
     }
 
-    public Stat2 GetMBoost()
+    public virtual Stat2 GetMBoost()
     {
         return GetStat(StatEnum.BOOST_MAGICAL_SKILL, GetStatsTemplate().GetMagicBoost());
     }
