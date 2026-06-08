@@ -1,4 +1,4 @@
-namespace Aion.GameServer.SkillEngine.Change;
+namespace Aion.GameServer.SkillEngine.change;
 
 /// <summary>
 /// How a stat-change value is applied (additive, percentage, or replacement).
