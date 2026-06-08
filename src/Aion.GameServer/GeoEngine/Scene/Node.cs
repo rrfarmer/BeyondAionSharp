@@ -20,8 +20,8 @@ public class Node : Spatial
     /// <summary>This node's children.</summary>
     protected List<Spatial> children = new List<Spatial>(1);
 
-    protected sbyte collisionIntentions;
-    protected sbyte materialId;
+    protected internal sbyte collisionIntentions; // Java 'protected' (package) → C# protected internal
+    protected internal sbyte materialId;
 
     /// <summary>Do not use this constructor. Serialization purposes only.</summary>
     protected Node()

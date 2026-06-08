@@ -32,7 +32,7 @@ public abstract class Spatial : Collidable
     protected BoundingVolume? worldBound;
 
     /// <summary>This spatial's name.</summary>
-    protected string? name;
+    protected internal string? name; // Java 'protected' (package-accessible) → C# protected internal
 
     /// <summary>Spatial's parent, or null if it has none.</summary>
     protected Node? parent;
