@@ -105,7 +105,7 @@ public abstract class Spatial : Collidable
     public abstract void UpdateModelBound();
 
     /// <summary>Sets the bounding object for this Spatial.</summary>
-    public abstract void SetModelBound(BoundingVolume modelBound);
+    public abstract void SetModelBound(BoundingVolume? modelBound);
 
     /// <summary>The sum of all vertices under this Spatial.</summary>
     public abstract int GetVertexCount();

@@ -21,7 +21,7 @@ public class Geometry : Spatial
     }
 
     /// <summary>Create a geometry node with mesh data.</summary>
-    public Geometry(string name, Mesh mesh)
+    public Geometry(string? name, Mesh mesh)
         : base(name)
     {
         if (mesh == null)
@@ -68,7 +68,7 @@ public class Geometry : Spatial
         return cachedWorldMat;
     }
 
-    public override void SetModelBound(BoundingVolume modelBound)
+    public override void SetModelBound(BoundingVolume? modelBound)
     {
         mesh.SetBound(modelBound);
     }
