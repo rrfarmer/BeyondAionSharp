@@ -11,7 +11,7 @@ namespace Aion.GameServer.SkillEngine.change;
 public class Change
 {
     [XmlAttribute("stat")]
-    public StatEnum Stat;
+    public StatEnum? Stat;
 
     [XmlAttribute("func")]
     public Func Func;
@@ -25,7 +25,7 @@ public class Change
     [XmlElement("conditions")]
     public Conditions? Conditions;
 
-    public StatEnum GetStat()
+    public StatEnum? GetStat()
     {
         return Stat;
     }
