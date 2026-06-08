@@ -113,7 +113,7 @@ public class BoundingBox : BoundingVolume
         zExtent = maxZ - center.Z;
     }
 
-    public override BoundingVolume Transform(Matrix4f trans, BoundingVolume store)
+    public override BoundingVolume Transform(Matrix4f trans, BoundingVolume? store)
     {
         BoundingBox box;
         if (store == null || store.GetTypeValue() != Type.AABB)
@@ -240,7 +240,7 @@ public class BoundingBox : BoundingVolume
         return this;
     }
 
-    public override BoundingBox Clone(BoundingVolume store)
+    public override BoundingBox Clone(BoundingVolume? store)
     {
         BoundingBox rVal;
         if (store != null && store.GetTypeValue() == Type.AABB)

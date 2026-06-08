@@ -41,7 +41,7 @@ public abstract class BoundingVolume : Collidable
     /// <summary>
     /// Alters the location of the bounding volume by a rotation, translation and a scalar.
     /// </summary>
-    public abstract BoundingVolume Transform(Matrix4f trans, BoundingVolume store);
+    public abstract BoundingVolume Transform(Matrix4f trans, BoundingVolume? store);
 
     /// <summary>Generates a bounding volume that encompasses a collection of points.</summary>
     public abstract void ComputeFromPoints(FloatBuffer points);
@@ -54,7 +54,7 @@ public abstract class BoundingVolume : Collidable
     /// <summary>
     /// Creates a new BoundingVolume object containing the same data as this one.
     /// </summary>
-    public abstract BoundingVolume Clone(BoundingVolume store);
+    public abstract BoundingVolume Clone(BoundingVolume? store);
 
     public Vector3f GetCenter()
     {
