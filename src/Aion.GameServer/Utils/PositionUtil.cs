@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.Geometry;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Zone;
 
 namespace Aion.GameServer.Utils;
@@ -108,10 +109,47 @@ public static class PositionUtil
     // TODO-backlog F2: getHeadingTowards(VisibleObject, float, float) — needs VisibleObject
     // TODO-backlog F2: getHeadingTowards(VisibleObject, VisibleObject) — needs VisibleObject
     // TODO-backlog F2: getDirectionalBound(VisibleObject, VisibleObject[, boolean]) — needs VisibleObject.getObjectTemplate().getBoundRadius()
-    // TODO-backlog F2: getDistance(VisibleObject, float, float, float) — needs VisibleObject
-    // TODO-backlog F2: getDistance(VisibleObject, VisibleObject[, boolean]) — needs VisibleObject
-    // TODO-backlog F2: isInRange(VisibleObject, VisibleObject, float[, boolean]) — needs VisibleObject
-    // TODO-backlog F2: isInRange(VisibleObject, float, float, float, float) — needs VisibleObject
+    // Java parity: getDistance(VisibleObject, float, float, float)
+    public static double GetDistance(VisibleObject obj, float x, float y, float z) =>
+        GetDistance(obj.GetX(), obj.GetY(), obj.GetZ(), x, y, z);
+
+    // Java parity: getDistance(VisibleObject, VisibleObject)
+    public static double GetDistance(VisibleObject obj, VisibleObject obj2) => GetDistance(obj, obj2, true);
+
+    // Java parity: getDistance(VisibleObject, VisibleObject, boolean centerToCenter)
+    public static double GetDistance(VisibleObject obj, VisibleObject obj2, bool centerToCenter)
+    {
+        double distance = GetDistance(obj.GetX(), obj.GetY(), obj.GetZ(), obj2.GetX(), obj2.GetY(), obj2.GetZ());
+        if (!centerToCenter)
+        {
+            distance -= obj.GetObjectTemplate().GetBoundRadius().GetMaxOfFrontAndSide();
+            distance -= obj2.GetObjectTemplate().GetBoundRadius().GetMaxOfFrontAndSide();
+            if (distance < 0)
+                distance = 0;
+        }
+        return distance;
+    }
+
+    // Java parity: isInRange(VisibleObject, VisibleObject, float)
+    public static bool IsInRange(VisibleObject obj, VisibleObject obj2, float range) => IsInRange(obj, obj2, range, true);
+
+    // Java parity: isInRange(VisibleObject, VisibleObject, float, boolean centerToCenter)
+    public static bool IsInRange(VisibleObject obj, VisibleObject obj2, float range, bool centerToCenter)
+    {
+        if (obj.GetWorldId() != obj2.GetWorldId() || obj.GetInstanceId() != obj2.GetInstanceId())
+            return false;
+        if (!centerToCenter)
+        {
+            range += obj.GetObjectTemplate().GetBoundRadius().GetMaxOfFrontAndSide();
+            range += obj2.GetObjectTemplate().GetBoundRadius().GetMaxOfFrontAndSide();
+        }
+        return IsInRange(obj.GetX(), obj.GetY(), obj.GetZ(), obj2.GetX(), obj2.GetY(), obj2.GetZ(), range);
+    }
+
+    // Java parity: isInRange(VisibleObject, float, float, float, float)
+    public static bool IsInRange(VisibleObject obj, float x, float y, float z, float range) =>
+        IsInRange(obj.GetX(), obj.GetY(), obj.GetZ(), x, y, z, range);
+
     // TODO-backlog F2: isInRangeLimited(VisibleObject, VisibleObject, float, float) — needs VisibleObject
     // TODO-backlog F2: isInsideAttackCylinder(VisibleObject, VisibleObject, ...) — needs AreaDirections
     // TODO-backlog F3: isInAttackRange(Creature, Creature, float) — needs Creature + CreatureMoveController
