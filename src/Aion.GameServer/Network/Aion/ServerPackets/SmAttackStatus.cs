@@ -1,128 +1,145 @@
 using Aion.Commons.Network;
+using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
+/// <summary>
+/// Java parity: network/aion/serverpackets/SM_ATTACK_STATUS. Faithful 1:1 rewrite replacing the divergent
+/// SmAttackStatusType/SmAttackStatusLog port (rule 8). Class name kept PascalCase per the C# packet convention.
+/// </summary>
+/// <remarks>
+/// <see cref="TYPE"/> is modeled as a Java-style class-enum (static instances) because Java's TYPE has multiple
+/// constants sharing the same id in DIFFERENT write branches (e.g. DAMAGE_MP and ABSORBED_MP are both 20 but one
+/// writes -value, the other +value). A plain C# enum would collapse these aliases and cannot distinguish them in a
+/// switch. <see cref="LOG"/> has no duplicate ids, so it stays a plain enum.
+/// </remarks>
 public sealed class SmAttackStatus : GameServerPacket
 {
-	public const int PacketOpCode = 5;
+    public const int PacketOpCode = 5;
 
-	private readonly int _creatureObjectId;
-	private readonly SmAttackStatusType _type;
-	private readonly int _skillId;
-	private readonly int _value;
-	private readonly int _hpOrMpPercentage;
-	private readonly SmAttackStatusLog _log;
-	private readonly bool? _usesNegativeValueOverride;
+    private readonly Creature creature;
+    private readonly TYPE type;
+    private readonly int skillId;
+    private readonly int value;
+    private readonly int logId;
 
-	public SmAttackStatus(
-		int creatureObjectId,
-		SmAttackStatusType type,
-		int skillId,
-		int value,
-		int hpOrMpPercentage,
-		SmAttackStatusLog log = SmAttackStatusLog.Regular,
-		bool? usesNegativeValue = null)
-		: base(PacketOpCode)
-	{
-		// Java parity: network/aion/serverpackets/SM_ATTACK_STATUS.writeImpl.
-		_creatureObjectId = creatureObjectId;
-		_type = type;
-		_skillId = skillId;
-		_value = value;
-		_hpOrMpPercentage = Math.Clamp(hpOrMpPercentage, 0, 100);
-		_log = log;
-		_usesNegativeValueOverride = usesNegativeValue;
-	}
+    public SmAttackStatus(Creature creature, TYPE type, int skillId, int value, LOG log)
+        : base(PacketOpCode)
+    {
+        this.creature = creature;
+        this.type = type;
+        this.skillId = skillId;
+        this.value = value;
+        this.logId = (int)log;
+    }
 
-	public int CreatureObjectId => _creatureObjectId;
+    public SmAttackStatus(Creature creature, TYPE type, int skillId, int value)
+        : this(creature, type, skillId, value, LOG.REGULAR)
+    {
+    }
 
-	public SmAttackStatusType Type => _type;
+    public SmAttackStatus(Creature creature, int value)
+        : this(creature, TYPE.REGULAR, 0, value, LOG.REGULAR)
+    {
+    }
 
-	public int SkillId => _skillId;
+    protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
+    {
+        int hpOrMp;
+        buffer.WriteD(creature.GetObjectId());
+        if (type == TYPE.DAMAGE || type == TYPE.DELAYDAMAGE || type == TYPE.FALL_DAMAGE || type == TYPE.FP_DAMAGE
+            || type == TYPE.MAGICCOUNTERATK || type == TYPE.DISPELBUFFCOUNTERATK || type == TYPE.USED_HP || type == TYPE.DROWNING)
+        {
+            buffer.WriteD(-value);
+            hpOrMp = creature.GetLifeStats().GetHpPercentage();
+        }
+        else if (type == TYPE.USED_MP || type == TYPE.DAMAGE_MP)
+        {
+            buffer.WriteD(-value);
+            hpOrMp = creature.GetLifeStats().GetMpPercentage();
+        }
+        else if (type == TYPE.MP || type == TYPE.NATURAL_MP || type == TYPE.HEAL_MP || type == TYPE.ABSORBED_MP)
+        {
+            buffer.WriteD(value);
+            hpOrMp = creature.GetLifeStats().GetMpPercentage();
+        }
+        else
+        {
+            buffer.WriteD(value);
+            hpOrMp = creature.GetLifeStats().GetHpPercentage();
+        }
+        buffer.WriteC(type.GetValue());
+        buffer.WriteC(hpOrMp);
+        buffer.WriteH(skillId);
+        buffer.WriteH(logId);
+    }
 
-	public int Value => _value;
+    /// <summary>Java parity: SM_ATTACK_STATUS.TYPE (class-enum; constants may share ids).</summary>
+    public sealed class TYPE
+    {
+        public static readonly TYPE TYPE1 = new TYPE(1);
+        public static readonly TYPE TYPE2 = new TYPE(2);
+        public static readonly TYPE TYPE9 = new TYPE(9);
+        public static readonly TYPE TYPE11 = new TYPE(11);
+        public static readonly TYPE TYPE12 = new TYPE(12);
+        public static readonly TYPE TYPE14 = new TYPE(14);
+        public static readonly TYPE TYPE25 = new TYPE(25);
+        public static readonly TYPE NATURAL_HP = new TYPE(3);
+        public static readonly TYPE USED_HP = new TYPE(4); // when skill uses hp as cost parameter
+        public static readonly TYPE REGULAR = new TYPE(5);
+        public static readonly TYPE ABSORBED_HP = new TYPE(6);
+        public static readonly TYPE DAMAGE = new TYPE(7);
+        public static readonly TYPE HP = new TYPE(7);
+        public static readonly TYPE PROTECTDMG = new TYPE(8);
+        public static readonly TYPE DELAYDAMAGE = new TYPE(10);
+        public static readonly TYPE DROWNING = new TYPE(12);
+        public static readonly TYPE HPAFTERRES = new TYPE(13); // when setting hp after resurrection, TODO implement
+        public static readonly TYPE MAGICCOUNTERATK = new TYPE(15);
+        public static readonly TYPE DISPELBUFFCOUNTERATK = new TYPE(16); // TODO implement
+        public static readonly TYPE FALL_DAMAGE = new TYPE(17);
+        public static readonly TYPE DOOR_REPAIR = new TYPE(18);
+        public static readonly TYPE HEAL_MP = new TYPE(19);
+        public static readonly TYPE DAMAGE_MP = new TYPE(20);
+        public static readonly TYPE ABSORBED_MP = new TYPE(20);
+        public static readonly TYPE MP = new TYPE(21);
+        public static readonly TYPE NATURAL_MP = new TYPE(22);
+        public static readonly TYPE USED_MP = new TYPE(23); // when skill uses mp as cost parameter
+        public static readonly TYPE FP_RINGS = new TYPE(24);
+        public static readonly TYPE FP = new TYPE(26);
+        public static readonly TYPE FP_DAMAGE = new TYPE(26);
+        public static readonly TYPE NATURAL_FP = new TYPE(27);
 
-	public int HpOrMpPercentage => _hpOrMpPercentage;
+        private readonly int value;
 
-	public SmAttackStatusLog Log => _log;
+        private TYPE(int value)
+        {
+            this.value = value;
+        }
 
-	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
-	{
-		buffer.WriteD(_creatureObjectId);
-		buffer.WriteD((_usesNegativeValueOverride ?? UsesNegativeValue(_type)) ? -_value : _value);
-		buffer.WriteC((int)_type);
-		buffer.WriteC(_hpOrMpPercentage);
-		buffer.WriteH(_skillId);
-		buffer.WriteH((int)_log);
-	}
+        public int GetValue()
+        {
+            return this.value;
+        }
+    }
 
-	private static bool UsesNegativeValue(SmAttackStatusType type)
-	{
-		return type
-			is SmAttackStatusType.Damage
-			or SmAttackStatusType.DelayDamage
-			or SmAttackStatusType.FallDamage
-			or SmAttackStatusType.FpDamage
-			or SmAttackStatusType.MagicCounterAttack
-			or SmAttackStatusType.DispelBuffCounterAttack
-			or SmAttackStatusType.UsedHp
-			or SmAttackStatusType.Drowning
-			or SmAttackStatusType.UsedMp
-			or SmAttackStatusType.DamageMp;
-	}
-}
-
-public enum SmAttackStatusType
-{
-	Type1 = 1,
-	Type2 = 2,
-	NaturalHp = 3,
-	UsedHp = 4,
-	Regular = 5,
-	AbsorbedHp = 6,
-	Damage = 7,
-	Hp = 7,
-	ProtectDamage = 8,
-	Type9 = 9,
-	DelayDamage = 10,
-	Type11 = 11,
-	Type12 = 12,
-	Drowning = 12,
-	HpAfterResurrection = 13,
-	Type14 = 14,
-	MagicCounterAttack = 15,
-	DispelBuffCounterAttack = 16,
-	FallDamage = 17,
-	DoorRepair = 18,
-	HealMp = 19,
-	DamageMp = 20,
-	AbsorbedMp = 20,
-	Mp = 21,
-	NaturalMp = 22,
-	UsedMp = 23,
-	FpRings = 24,
-	Type25 = 25,
-	Fp = 26,
-	FpDamage = 26,
-	NaturalFp = 27,
-}
-
-public enum SmAttackStatusLog
-{
-	SpellAttack = 1,
-	Heal = 3,
-	MpHeal = 4,
-	CaseHeal = 21,
-	SkillAttackDrainInstant = 23,
-	SpellAttackDrainInstant = 24,
-	Poison = 25,
-	Bleed = 26,
-	ProcAttackInstant = 93,
-	DelayedSpellAttackInstant = 97,
-	MagicCounterAttack = 112,
-	SpellAttackDrain = 132,
-	FpHeal = 134,
-	FpAttack = 137,
-	MpAttack = 141,
-	Regular = 191,
+    /// <summary>Java parity: SM_ATTACK_STATUS.LOG.</summary>
+    public enum LOG
+    {
+        SPELLATK = 1,
+        HEAL = 3,
+        MPHEAL = 4,
+        CASEHEAL = 21,
+        SKILLLATKDRAININSTANT = 23,
+        SPELLATKDRAININSTANT = 24,
+        POISON = 25,
+        BLEED = 26,
+        PROCATKINSTANT = 93, // changed in 4.5
+        DELAYEDSPELLATKINSTANT = 97, // changed in 4.5
+        MAGICCOUNTERATK = 112,
+        SPELLATKDRAIN = 132, // changed in 4.5
+        FPHEAL = 134, // changed in 4.5
+        FPATTACK = 137,
+        MPATTACK = 141,
+        REGULAR = 191 // 4.8
+    }
 }
