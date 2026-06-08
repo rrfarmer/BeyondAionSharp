@@ -251,7 +251,7 @@ public abstract class CreatureGameStats<T> where T : Creature
         return GetStat(StatEnum.EVASION, GetStatsTemplate().GetEvasion());
     }
 
-    public Stat2 GetParry()
+    public virtual Stat2 GetParry()
     {
         return GetStat(StatEnum.PARRY, GetStatsTemplate().GetParry());
     }
@@ -276,17 +276,17 @@ public abstract class CreatureGameStats<T> where T : Creature
         return GetStat(StatEnum.MAGICAL_CRITICAL_RESIST, GetStatsTemplate().GetSpellResist());
     }
 
-    public Stat2 GetMainHandPAttack(params CalculationType[] calculationTypes)
+    public virtual Stat2 GetMainHandPAttack(params CalculationType[] calculationTypes)
     {
         return GetStat(StatEnum.PHYSICAL_ATTACK, GetStatsTemplate().GetAttack(), calculationTypes);
     }
 
-    public Stat2 GetMainHandPCritical()
+    public virtual Stat2 GetMainHandPCritical()
     {
         return GetStat(StatEnum.PHYSICAL_CRITICAL, GetStatsTemplate().GetPcrit());
     }
 
-    public Stat2 GetMainHandPAccuracy()
+    public virtual Stat2 GetMainHandPAccuracy()
     {
         return GetStat(StatEnum.PHYSICAL_ACCURACY, GetStatsTemplate().GetAccuracy());
     }
@@ -296,7 +296,7 @@ public abstract class CreatureGameStats<T> where T : Creature
         return GetStat(StatEnum.MAGICAL_ATTACK, GetStatsTemplate().GetMagicalAttack(), calculationTypes);
     }
 
-    public Stat2 GetMCritical()
+    public virtual Stat2 GetMCritical()
     {
         return GetStat(StatEnum.MAGICAL_CRITICAL, GetStatsTemplate().GetMcrit());
     }
@@ -394,7 +394,7 @@ public abstract class CreatureGameStats<T> where T : Creature
         PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed));
     }
 
-    protected bool CheckSpeedStats()
+    protected virtual bool CheckSpeedStats()
     {
         int currentSpeed = GetMovementSpeed().GetCurrent();
         if (currentSpeed != cachedSpeed)
