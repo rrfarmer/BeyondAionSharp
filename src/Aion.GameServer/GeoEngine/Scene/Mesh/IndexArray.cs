@@ -1,7 +1,7 @@
 using System;
 using Aion.GameServer.Commons.Nio;
 
-namespace Aion.GameServer.GeoEngine.Scene.Mesh;
+namespace Aion.GameServer.GeoEngine.Scene.mesh;
 
 /// <summary>
 /// Java parity: geoEngine/scene/mesh/IndexArray.
