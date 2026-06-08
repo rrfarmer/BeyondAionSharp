@@ -219,7 +219,7 @@ public abstract class CreatureLifeStats<T> where T : Creature
     }
 
     /// <summary>Will trigger restore task if not already running.</summary>
-    public void TriggerRestoreTask()
+    public virtual void TriggerRestoreTask()
     {
         lock (restoreLock)
         {

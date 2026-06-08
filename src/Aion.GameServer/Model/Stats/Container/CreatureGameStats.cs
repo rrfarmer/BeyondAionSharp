@@ -149,7 +149,7 @@ public abstract class CreatureGameStats<T> where T : Creature
         return GetStat(statEnum, stat);
     }
 
-    public Stat2 GetStat(StatEnum statEnum, Stat2 stat, params CalculationType[] calculationTypes)
+    public virtual Stat2 GetStat(StatEnum statEnum, Stat2 stat, params CalculationType[] calculationTypes)
     {
         List<IStatFunction> functions = GetStatsSorted(statEnum);
         if (functions != null)
@@ -391,7 +391,7 @@ public abstract class CreatureGameStats<T> where T : Creature
     /// <summary>Send packet about speed info.</summary>
     public virtual void UpdateSpeedInfo()
     {
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED));
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed));
     }
 
     protected bool CheckSpeedStats()

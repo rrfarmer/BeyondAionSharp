@@ -853,12 +853,12 @@ public class EffectController
 
         // TODO move to observer?
         // if player is sitting when setting certain abnormal states, he is forcefully made to stand up
-        if (owner is Player && owner.IsInState(CreatureState.RESTING))
+        if (owner is Player && owner.IsInState(CreatureState.Resting))
         {
             if (IsInAnyAbnormalState(AbnormalState.AUTOMATICALLY_STANDUP))
             {
-                owner.UnsetState(CreatureState.RESTING);
-                PacketSendUtility.BroadcastPacket((Player)owner, new SM_EMOTION(owner, EmotionType.STAND), true);
+                owner.UnsetState(CreatureState.Resting);
+                PacketSendUtility.BroadcastPacket((Player)owner, new SM_EMOTION(owner, EmotionType.Stand), true);
             }
         }
     }
