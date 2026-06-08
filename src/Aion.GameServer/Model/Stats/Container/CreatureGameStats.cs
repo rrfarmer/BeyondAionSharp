@@ -20,17 +20,17 @@ namespace Aion.GameServer.Model.Stats.Container;
 /// wildcard <c>CreatureGameStats&lt;?&gt;</c>; C# has no wildcard generics, so the non-generic return type for
 /// <c>Creature.GetGameStats()</c> will be settled when Creature is ported (likely via a non-generic base/interface).
 /// </remarks>
-public abstract class CreatureGameStats<T> where T : Creature
+public abstract class CreatureGameStats
 {
     private const int ATTACK_MAX_COUNTER = int.MaxValue;
 
-    protected readonly T owner;
+    protected readonly Creature owner;
     private readonly ConcurrentDictionary<StatEnum, List<IStatFunction>> stats = new ConcurrentDictionary<StatEnum, List<IStatFunction>>();
 
     private int attackCounter = 0;
     private int cachedMaxHp, cachedMaxMp, cachedSpeed;
 
-    protected CreatureGameStats(T owner)
+    protected CreatureGameStats(Creature owner)
     {
         this.owner = owner;
     }
@@ -455,4 +455,19 @@ public abstract class CreatureGameStats<T> where T : Creature
             }
         }
     }
+}
+
+/// <summary>
+/// Java parity: generic typing of <see cref="CreatureGameStats"/> (Java <c>CreatureGameStats&lt;T extends Creature&gt;</c>).
+/// Split into a non-generic base + this generic shim so that <c>Creature.GetGameStats()</c> can return the non-generic
+/// base (C# has no wildcard generics for Java's <c>CreatureGameStats&lt;? extends Creature&gt;</c>). Subclasses extend
+/// <c>CreatureGameStats&lt;Npc&gt;</c> etc. and see <c>owner</c> typed as T via the shadowing property.
+/// </summary>
+public abstract class CreatureGameStats<T> : CreatureGameStats where T : Creature
+{
+    protected CreatureGameStats(T owner) : base(owner)
+    {
+    }
+
+    protected new T owner => (T)base.owner;
 }

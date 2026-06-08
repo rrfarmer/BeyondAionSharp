@@ -12,23 +12,23 @@ namespace Aion.GameServer.Model.Stats.Container;
 /// <summary>
 /// Java parity: model/stats/container/CreatureLifeStats&lt;T extends Creature&gt; (@author ATracer).
 /// </summary>
-public abstract class CreatureLifeStats<T> where T : Creature
+public abstract class CreatureLifeStats
 {
     private int currentHp;
     private int currentMp;
     private int killingBlow; // for long animation skills that will kill - last damage
-    protected readonly T owner;
+    protected readonly Creature owner;
     protected readonly object restoreLock = new object();
     protected ScheduledTask lifeRestoreTask;
 
-    public CreatureLifeStats(T owner, int currentHp, int currentMp)
+    public CreatureLifeStats(Creature owner, int currentHp, int currentMp)
     {
         this.owner = owner;
         this.currentHp = currentHp;
         this.currentMp = currentMp;
     }
 
-    public T GetOwner()
+    public Creature GetOwner()
     {
         return owner;
     }
@@ -374,4 +374,20 @@ public abstract class CreatureLifeStats<T> where T : Creature
     {
         SetCurrentMp((int)((long)GetMaxMp() * mpPercent / 100));
     }
+}
+
+/// <summary>
+/// Java parity: generic typing of <see cref="CreatureLifeStats"/> (Java <c>CreatureLifeStats&lt;T extends Creature&gt;</c>).
+/// Non-generic base + generic shim so <c>Creature.GetLifeStats()</c> can return the non-generic base (no C# wildcard
+/// generics). Subclasses extend <c>CreatureLifeStats&lt;Player&gt;</c> etc. and see <c>owner</c>/<c>GetOwner()</c> typed as T.
+/// </summary>
+public abstract class CreatureLifeStats<T> : CreatureLifeStats where T : Creature
+{
+    public CreatureLifeStats(T owner, int currentHp, int currentMp) : base(owner, currentHp, currentMp)
+    {
+    }
+
+    protected new T owner => (T)base.owner;
+
+    public new T GetOwner() => (T)base.owner;
 }
