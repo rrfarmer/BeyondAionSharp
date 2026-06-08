@@ -25,8 +25,8 @@ public static class SiegeRaceExtensions
     // Java parity: SiegeRace::getRaceId() — matches Java constructor raceId
     public static int GetRaceId(this SiegeRace race) => race switch
     {
-        SiegeRace.Elyos => (int)Model.Race.Elyos,       // Race.ELYOS.getRaceId() = 0
-        SiegeRace.Asmodians => (int)Model.Race.Asmodians, // Race.ASMODIANS.getRaceId() = 1
+        SiegeRace.Elyos => (int)Model.Race.ELYOS,       // Race.ELYOS.getRaceId() = 0
+        SiegeRace.Asmodians => (int)Model.Race.ASMODIANS, // Race.ASMODIANS.getRaceId() = 1
         SiegeRace.Balaur => 2,
         _ => 2,
     };
@@ -43,8 +43,8 @@ public static class SiegeRaceExtensions
     // Java parity: SiegeRace::getByRace(Race race)
     public static SiegeRace GetByRace(Model.Race race) => race switch
     {
-        Model.Race.Asmodians => SiegeRace.Asmodians,
-        Model.Race.Elyos => SiegeRace.Elyos,
+        Model.Race.ASMODIANS => SiegeRace.Asmodians,
+        Model.Race.ELYOS => SiegeRace.Elyos,
         _ => SiegeRace.Balaur,
     };
 }

@@ -4,98 +4,110 @@ namespace Aion.GameServer.Model;
 
 /// <summary>
 /// Race identifiers for players and NPCs.
-/// Java parity: model/Race — implements L10n (via extension methods; C# enums cannot implement interfaces directly).
-/// Note: enum value = raceId from Java constructor (not ordinal).
-/// Java @XmlEnum omitted — C# XmlSerializer handles enums natively by name.
+/// Java parity: model/Race (@XmlEnum, implements L10n).
 /// </summary>
+/// <remarks>
+/// SCREAMING_SNAKE_CASE member names are preserved so @XmlEnum data (and DB values) deserialize
+/// identically to Java (data backward-compat rule). Enum value = Java raceId (not ordinal).
+/// Java declares both LIVINGWATER(28) and DEFORM(28); in C# DEFORM is an alias of value 28
+/// (LIVINGWATER declared first, matching Java order). C# enums cannot implement interfaces, so the
+/// L10n contract is provided via <see cref="RaceExtensions"/> (closest-to-1:1 per doctrine).
+/// </remarks>
 public enum Race
 {
     // Playable races
-    Elyos = 0,
-    Asmodians = 1,
-    // NPC races
-    Lycan = 2,
-    Construct = 3,
-    Carrier = 4,
-    Drakan = 5,
-    Lizardman = 6,
-    Teleporter = 7,
-    Naga = 8,
-    Brownie = 9,
-    Krall = 10,
-    Shulack = 11,
-    Barrier = 12,
-    PcLightCastleDoor = 13,
-    PcDarkCastleDoor = 14,
-    DragonCastleDoor = 15,
-    GchiefLight = 16,
-    GchiefDark = 17,
-    Dragon = 18,
-    Outsider = 19,
-    Ratman = 20,
-    Demihumanoid = 21,
-    Undead = 22,
-    Beast = 23,
-    Magicalmonster = 24,
-    Elemental = 25,
+    ELYOS = 0,
+    ASMODIANS = 1,
+    // Npc races
+    LYCAN = 2,
+    CONSTRUCT = 3,
+    CARRIER = 4,
+    DRAKAN = 5,
+    LIZARDMAN = 6,
+    TELEPORTER = 7,
+    NAGA = 8,
+    BROWNIE = 9,
+    KRALL = 10,
+    SHULACK = 11,
+    BARRIER = 12,
+    PC_LIGHT_CASTLE_DOOR = 13,
+    PC_DARK_CASTLE_DOOR = 14,
+    DRAGON_CASTLE_DOOR = 15,
+    GCHIEF_LIGHT = 16,
+    GCHIEF_DARK = 17,
+    DRAGON = 18,
+    OUTSIDER = 19,
+    RATMAN = 20,
+    DEMIHUMANOID = 21,
+    UNDEAD = 22,
+    BEAST = 23,
+    MAGICALMONSTER = 24,
+    ELEMENTAL = 25,
+    LIVINGWATER = 28,
     // Special races
-    None = 26,
-    PcAll = 27,
-    // Note: LIVINGWATER(28) and DEFORM(28) share value 28 in Java; DEFORM listed second (C# keeps last)
-    Deform = 28,
-    Neut = 29,
-    GhenchmanLight = 30,
-    GhenchmanDark = 31,
-    EventTowerDark = 32,
-    EventTowerLight = 33,
-    Goblin = 34,
-    Tricodark = 35,
-    Npc = 36,
-    Light = 37,
-    Dark = 38,
-    WorldEventDeftower = 39,
-    Orc = 40,
-    Dragonet = 41,
-    Siegedrakan = 42,
-    GchiefDragon = 43,
-    WorldEventBonfire = 44,
-    DoorKiller = 45,
-    Lf5QItem = 46,
+    NONE = 26,
+    PC_ALL = 27,
+    DEFORM = 28, // Java: DEFORM(28) — shares value 28 with LIVINGWATER (alias)
+    // 2.6
+    NEUT = 29,
+    // 2.7
+    GHENCHMAN_LIGHT = 30,
+    GHENCHMAN_DARK = 31,
+    // 3.0
+    EVENT_TOWER_DARK = 32,
+    EVENT_TOWER_LIGHT = 33,
+    GOBLIN = 34,
+    TRICODARK = 35,
+    NPC = 36,
+    // 3.5
+    LIGHT = 37,
+    DARK = 38,
+    WORLD_EVENT_DEFTOWER = 39,
+    // 4.3
+    ORC = 40,
+    DRAGONET = 41,
+    SIEGEDRAKAN = 42,
+    GCHIEF_DRAGON = 43,
+    WORLD_EVENT_BONFIRE = 44,
+    // 4.7.5
+    DOOR_KILLER = 45,
+    // 4.8.0
+    LF5_Q_ITEM = 46,
 }
 
 /// <summary>
-/// Extension methods mirroring Race's Java instance methods and L10n interface.
-/// Java parity: model/Race — getL10nId(), getRaceId(), isAsmoOrEly(), isPlayerRace(), getRaceByString().
+/// Java parity: model/Race instance methods + L10n.
 /// </summary>
 public static class RaceExtensions
 {
-    // Java parity: Race::getRaceId() — returns raceId (= enum int value)
+    // Java parity: getRaceId() — returns raceId (= enum int value)
     public static int GetRaceId(this Race race) => (int)race;
 
-    // Java parity: Race::getL10nId() — L10n interface implementation; only Elyos/Asmodians have non-zero l10n
+    // Java parity: getL10nId() — only ELYOS/ASMODIANS have a non-zero l10n id
     public static int GetL10nId(this Race race) => race switch
     {
-        Race.Elyos => 900240,
-        Race.Asmodians => 900241,
+        Race.ELYOS => 900240,
+        Race.ASMODIANS => 900241,
         _ => 0,
     };
 
-    // Java parity: Race::getL10n() — default L10n method via ChatUtil.l10n(l10nId)
+    // Java parity: L10n default getL10n() via ChatUtil.l10n(l10nId)
     public static string? GetL10n(this Race race) => race.GetL10nId() == 0 ? null : Utils.ChatUtil.L10n(race.GetL10nId());
 
-    // Java parity: Race::isAsmoOrEly()
-    public static bool IsAsmoOrEly(this Race race) => race == Race.Elyos || race == Race.Asmodians;
+    // Java parity: isAsmoOrEly()
+    public static bool IsAsmoOrEly(this Race race) => race == Race.ELYOS || race == Race.ASMODIANS;
 
-    // Java parity: Race::isPlayerRace()
-    public static bool IsPlayerRace(this Race race) => race.IsAsmoOrEly() || race == Race.PcAll;
+    // Java parity: isPlayerRace()
+    public static bool IsPlayerRace(this Race race) => race.IsAsmoOrEly() || race == Race.PC_ALL;
 
-    // Java parity: Race::getRaceByString(String fieldName) — returns null if not found
+    // Java parity: static getRaceByString(String fieldName) — iterates all constant names (incl. the
+    // LIVINGWATER/DEFORM aliases); returns null if not found.
     public static Race? GetRaceByString(string fieldName)
     {
-        foreach (Race r in Enum.GetValues<Race>())
+        foreach (string name in Enum.GetNames<Race>())
         {
-            if (r.ToString().Equals(fieldName, StringComparison.Ordinal))
-                return r;
+            if (name.Equals(fieldName, StringComparison.Ordinal))
+                return Enum.Parse<Race>(name);
         }
         return null;
     }

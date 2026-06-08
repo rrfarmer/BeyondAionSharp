@@ -88,8 +88,8 @@ public static class BaseOccupierExtensions
     // Java parity: BaseOccupier::findBy(Race)
     public static BaseOccupier FindBy(Race race) => race switch
     {
-        Race.Elyos => BaseOccupier.Elyos,
-        Race.Asmodians => BaseOccupier.Asmodians,
+        Race.ELYOS => BaseOccupier.Elyos,
+        Race.ASMODIANS => BaseOccupier.Asmodians,
         _ => BaseOccupier.Balaur,
     };
 }
