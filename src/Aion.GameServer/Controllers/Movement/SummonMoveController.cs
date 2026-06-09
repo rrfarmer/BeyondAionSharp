@@ -10,7 +10,7 @@ public class SummonMoveController : PlayableMoveController<Summon>
     {
     }
 
-    public void MoveToTargetObject()
+    public virtual void MoveToTargetObject()
     {
     }
 }
