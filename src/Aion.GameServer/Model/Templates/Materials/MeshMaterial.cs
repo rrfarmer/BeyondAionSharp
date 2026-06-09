@@ -6,9 +6,10 @@ namespace Aion.GameServer.Model.Templates.Materials;
 [XmlType("MeshMaterial")]
 public class MeshMaterial
 {
-    [XmlAttribute("material_id")] protected int materialId;
+    // Java parity: package-private fields accessed by sibling MeshList → internal (closest C# analog).
+    [XmlAttribute("material_id")] internal int materialId;
 
-    [XmlAttribute("path")] protected string path;
+    [XmlAttribute("path")] internal string path;
 
     [XmlAttribute("zone")] private string zoneName;
 
