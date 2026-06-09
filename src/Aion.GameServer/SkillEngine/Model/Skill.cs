@@ -255,7 +255,7 @@ public class Skill
             castStartTime = CurrentTimeMillis();
             StartCast();
             if (effector is Npc)
-                effector.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.CAST);
+                effector.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AiSubState.Cast);
         }
 
         effector.GetObserveController().Attach(moveListener);
@@ -758,7 +758,7 @@ public class Skill
             {
                 effect.GetEffected().GetAggroList().AddHate(effector, 1);
                 effect.GetEffected().GetKnownList()
-                    .ForEachNpc(obj => obj.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AIEventType.CREATURE_NEEDS_SUPPORT, effect.GetEffected()));
+                    .ForEachNpc(obj => obj.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsSupport, effect.GetEffected()));
             }
         }
     }
@@ -782,7 +782,7 @@ public class Skill
         }
         else
         {
-            Aion.GameServer.Ai.Event.AIEventType? et = skillTemplate.GetSubType() == SkillSubType.ATTACK ? Aion.GameServer.Ai.Event.AIEventType.CREATURE_NEEDS_HELP : (Aion.GameServer.Ai.Event.AIEventType?)null;
+            Aion.GameServer.Ai.Event.AiEventType? et = skillTemplate.GetSubType() == SkillSubType.ATTACK ? Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsHelp : (Aion.GameServer.Ai.Event.AiEventType?)null;
             switch (targetType)
             {
                 case 0: // PlayerObjectId as Target

@@ -71,7 +71,7 @@ public class NpcGameStats : CreatureGameStats<Npc>
         else if (owner.IsInState(CreatureState.WalkMode))
         {
             float speed;
-            if (owner.GetWalkerGroup() != null && owner.GetAi().GetSubState() == AISubState.WALK_PATH)
+            if (owner.GetWalkerGroup() != null && owner.GetAi().GetSubState() == Aion.GameServer.Ai.AiSubState.WalkPath)
                 speed = GetStatsTemplate().GetGroupWalkSpeed();
             else
                 speed = GetStatsTemplate().GetWalkSpeed();

@@ -38,7 +38,7 @@ public abstract class CreatureController : VisibleObjectController
     public override void NotSee(VisibleObject obj, Aion.GameServer.Model.Animations.ObjectDeleteAnimation animation)
     {
         base.NotSee(obj, animation);
-        if (obj.Equals(GetOwner().GetTarget()) && GetOwner().GetAi().GetSubState() != Aion.GameServer.Ai.AISubState.TARGET_LOST)
+        if (obj.Equals(GetOwner().GetTarget()) && GetOwner().GetAi().GetSubState() != Aion.GameServer.Ai.AiSubState.TargetLost)
             GetOwner().SetTarget(null);
     }
 
@@ -133,7 +133,7 @@ public abstract class CreatureController : VisibleObjectController
     /// <summary>Called when the creature gains or loses hate towards the attacker.</summary>
     public virtual void OnAddHate(Creature attacker, bool isNewInAggroList)
     {
-        GetOwner().GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AIEventType.ATTACK, attacker);
+        GetOwner().GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.Attack, attacker);
     }
 
     /// <summary>Perform tasks when Creature was attacked.</summary>
@@ -194,7 +194,7 @@ public abstract class CreatureController : VisibleObjectController
         GetOwner().GetAggroList().AddDamage(attacker, damage, notifyAttack, hopType);
 
         // notify all NPC's around that creature is attacking me
-        GetOwner().GetKnownList().ForEachNpc(npc => npc.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AIEventType.CREATURE_NEEDS_SUPPORT, GetOwner()));
+        GetOwner().GetKnownList().ForEachNpc(npc => npc.GetAi().OnCreatureEvent(Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsSupport, GetOwner()));
         GetOwner().GetLifeStats().ReduceHp(type, damage, effect == null ? 0 : effect.GetSkillId(), logId, attacker);
         GetOwner().IncrementAttackedCount();
 
@@ -306,7 +306,7 @@ public abstract class CreatureController : VisibleObjectController
         }
         PacketSendUtility.BroadcastPacketAndReceive(GetOwner(),
             new SM_ATTACK(GetOwner(), target, GetOwner().GetGameStats().GetAttackCounter(), time, attackTypeAnimation, attackHandAnimation, attackResult, criticalEffect),
-            Aion.GameServer.Ai.Event.AIEventType.CREATURE_NEEDS_HELP);
+            Aion.GameServer.Ai.Event.AiEventType.CreatureNeedsHelp);
 
         GetOwner().GetGameStats().IncreaseAttackCounter();
         if (addAttackObservers)
@@ -483,7 +483,7 @@ public abstract class CreatureController : VisibleObjectController
         }
         if (creature is Npc npc)
         {
-            creature.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.NONE);
+            creature.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AiSubState.None);
             npc.GetGameStats().SetLastSkill(null);
         }
         return castingSkill;
@@ -504,7 +504,7 @@ public abstract class CreatureController : VisibleObjectController
         PacketSendUtility.BroadcastPacketAndReceive(GetOwner(), new SM_SKILL_CANCEL(GetOwner(), castingSkill.GetSkillTemplate().GetSkillId()));
         if (GetOwner().GetAi() is Aion.GameServer.Ai.NpcAI npcAI)
         {
-            npcAI.OnGeneralEvent(Aion.GameServer.Ai.Event.AIEventType.ATTACK_COMPLETE);
+            npcAI.OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.AttackComplete);
         }
         if (lastAttacker is Player.Player)
         {
