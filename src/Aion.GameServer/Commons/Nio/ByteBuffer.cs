@@ -56,6 +56,18 @@ public abstract class ByteBuffer : Buffer
 
     public abstract ByteBuffer Put(int index, byte b);
 
+    /// <summary>Java parity: array() — the backing byte array.</summary>
+    public byte[] Array()
+    {
+        return hb!;
+    }
+
+    /// <summary>Java parity: arrayOffset() — offset within the backing array of this buffer's first element.</summary>
+    public int ArrayOffset()
+    {
+        return offset;
+    }
+
     /// <summary>Java parity: get(byte[] dst, int offset, int length).</summary>
     public ByteBuffer Get(byte[] dst, int offset, int length)
     {
