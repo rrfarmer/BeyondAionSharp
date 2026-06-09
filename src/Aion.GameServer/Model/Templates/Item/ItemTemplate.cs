@@ -182,6 +182,16 @@ public partial class ItemTemplate : VisibleObjectTemplate
         return itemGroup.GetEquipType();
     }
 
+    public Aion.GameServer.Model.Templates.Item.Enums.ItemGroup GetItemGroup()
+    {
+        return itemGroup;
+    }
+
+    public string GetTemperingName()
+    {
+        return temperingName;
+    }
+
     public long GetPrice()
     {
         return price;
