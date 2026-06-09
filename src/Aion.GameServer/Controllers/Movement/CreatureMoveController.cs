@@ -45,7 +45,7 @@ public abstract class CreatureMoveController
     }
 
     // Java parity: protected setNewDirection(float, float, float)
-    protected void SetNewDirection(float x, float y, float z)
+    protected virtual void SetNewDirection(float x, float y, float z)
     {
         TargetDestX = x;
         TargetDestY = y;
