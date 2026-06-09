@@ -21,8 +21,8 @@ public class KnownList
         Owner = owner;
     }
 
-    // Java parity: update()
-    public void Update()
+    // Java parity: update() (virtual — overridden by NpcKnownList)
+    public virtual void Update()
     {
         lock (this)
         {
