@@ -29,7 +29,7 @@ public abstract class GeneralTeam<M, TM> : AionObject
     {
     }
 
-    public void OnEvent(TeamEvent @event)
+    public void OnEvent(ITeamEvent @event)
     {
         Lock();
         try
