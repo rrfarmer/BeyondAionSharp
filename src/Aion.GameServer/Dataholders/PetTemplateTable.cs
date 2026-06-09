@@ -26,7 +26,7 @@ public sealed class PetTemplateTable
 
 	public int? GetMerchantSellModifier(int petId)
 	{
-		return GetPetTemplate(petId)?.GetFunction(PetFunctionType.Merchant)?.RatePrice;
+		return GetPetTemplate(petId)?.GetFunction(PetFunctionType.MERCHANT)?.RatePrice;
 	}
 }
 

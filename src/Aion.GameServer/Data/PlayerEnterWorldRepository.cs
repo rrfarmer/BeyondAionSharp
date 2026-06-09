@@ -7981,8 +7981,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				var projection = PlayerPetRowProjection.Project(
 					row,
 					new PlayerPetProjectionOptions(
-						HasFoodFunction: template?.ContainsFunction(PetFunctionType.Food) == true,
-						HasDopingFunction: template?.ContainsFunction(PetFunctionType.Doping) == true),
+						HasFoodFunction: template?.ContainsFunction(PetFunctionType.FOOD) == true,
+						HasDopingFunction: template?.ContainsFunction(PetFunctionType.DOPING) == true),
 					() => DateTimeOffset.Now);
 				pets.Add(new PlayerOwnedPet(
 					projection.PetObjectId,

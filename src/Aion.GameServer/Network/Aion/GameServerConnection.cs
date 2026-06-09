@@ -451,7 +451,7 @@ public sealed class GameServerConnection : BaseClientConnection
 		player.PetSummonObjectId = ownedPet.ObjectId;
 		player.PetSummonNpcId = ownedPet.TemplateId;
 
-		var merchantFunction = petTemplate.GetFunction(PetFunctionType.Merchant);
+		var merchantFunction = petTemplate.GetFunction(PetFunctionType.MERCHANT);
 		ownedPet = ApplyPetSpawnRefeedState(player, ownedPet, petTemplate, DateTimeOffset.Now);
 		var worldPet = new WorldPet(
 			ownedPet.ObjectId,
@@ -504,7 +504,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return ownedPet;
 		}
 
-		if (!petTemplate.ContainsFunction(PetFunctionType.Food))
+		if (!petTemplate.ContainsFunction(PetFunctionType.FOOD))
 			return ownedPet;
 
 		var hungryPet = ownedPet with
@@ -900,7 +900,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var feedData = GetPetFeedData();
-		var foodFunction = GetPetTemplate(ownedPet.TemplateId)?.GetFunction(PetFunctionType.Food);
+		var foodFunction = GetPetTemplate(ownedPet.TemplateId)?.GetFunction(PetFunctionType.FOOD);
 		if (feedData == null || foodFunction == null)
 			return;
 
@@ -1285,7 +1285,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var activate = packet.ActivateSpecialFunction != 0;
 		var template = GetPetTemplate(ownedPet.TemplateId);
-		if (activate && template?.ContainsFunction(PetFunctionType.Loot) != true)
+		if (activate && template?.ContainsFunction(PetFunctionType.LOOT) != true)
 			return;
 
 		if (activate)
@@ -1309,7 +1309,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		var template = GetPetTemplate(ownedPet.TemplateId);
-		if (template?.ContainsFunction(PetFunctionType.Doping) != true)
+		if (template?.ContainsFunction(PetFunctionType.DOPING) != true)
 			return;
 
 		if (packet.DopingAction < 2)
@@ -1357,7 +1357,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	private bool ValidateSetPetDopingItem(PetTemplateSummary petTemplate, int itemId, int slot)
 	{
 		// Java parity: services/toypet/PetService.validateSetDopeItem resolves the DOPING PetFunction id in DataManager.PET_DOPING_DATA.
-		var petFunction = petTemplate.GetFunction(PetFunctionType.Doping);
+		var petFunction = petTemplate.GetFunction(PetFunctionType.DOPING);
 		var doping = petFunction == null ? null : GetPetDopingTemplate(petFunction.Id);
 		if (doping == null)
 			return false;
@@ -1430,7 +1430,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		var activate = packet.ActivateSpecialFunction != 0;
 		var template = GetPetTemplate(ownedPet.TemplateId);
-		if (activate && template?.ContainsFunction(PetFunctionType.Merchant) != true)
+		if (activate && template?.ContainsFunction(PetFunctionType.MERCHANT) != true)
 			return;
 
 		var updatedPet = ownedPet with { IsSelling = activate };
@@ -1489,7 +1489,7 @@ public sealed class GameServerConnection : BaseClientConnection
 	{
 		// Java parity: PetController.onDelete sets cancelFeed and persists PlayerPetsDAO.saveFeedStatus
 		// only when PetCommonData has feed progress, which food-function pets provide.
-		if (GetPetTemplate(ownedPet.TemplateId)?.ContainsFunction(PetFunctionType.Food) != true)
+		if (GetPetTemplate(ownedPet.TemplateId)?.ContainsFunction(PetFunctionType.FOOD) != true)
 			return;
 
 		var updatedPet = ownedPet with { CancelFeed = true };
@@ -11443,15 +11443,15 @@ public sealed class GameServerConnection : BaseClientConnection
 			return Array.Empty<SmPetFunctionSnapshot>();
 
 		var functions = new List<SmPetFunctionSnapshot>(capacity: 2);
-		if (template.ContainsFunction(PetFunctionType.Warehouse))
-			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.Warehouse));
-		if (template.ContainsFunction(PetFunctionType.Loot))
-			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.Loot));
-		if (template.ContainsFunction(PetFunctionType.Doping))
-			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.Doping, pet.DopingItemIds ?? []));
-		if (template.ContainsFunction(PetFunctionType.Food))
+		if (template.ContainsFunction(PetFunctionType.WAREHOUSE))
+			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.WAREHOUSE));
+		if (template.ContainsFunction(PetFunctionType.LOOT))
+			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.LOOT));
+		if (template.ContainsFunction(PetFunctionType.DOPING))
+			functions.Add(new SmPetFunctionSnapshot(PetFunctionType.DOPING, pet.DopingItemIds ?? []));
+		if (template.ContainsFunction(PetFunctionType.FOOD))
 			functions.Add(new SmPetFunctionSnapshot(
-				PetFunctionType.Food,
+				PetFunctionType.FOOD,
 				FeedProgressData: pet.FeedProgressData,
 				RefeedDelaySeconds: pet.RefeedDelaySeconds(currentTime)));
 

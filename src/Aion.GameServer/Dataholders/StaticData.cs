@@ -6161,16 +6161,16 @@ public sealed class StaticData
 		// Java parity: model/templates/pet/PetFunctionType JAXB enum names.
 		return value switch
 		{
-			"WAREHOUSE" => PetFunctionType.Warehouse,
-			"FOOD" => PetFunctionType.Food,
-			"DOPING" => PetFunctionType.Doping,
-			"LOOT" => PetFunctionType.Loot,
-			"BUFF" => PetFunctionType.Buff,
-			"MERCHANT" => PetFunctionType.Merchant,
-			"NONE" => PetFunctionType.None,
-			"APPEARANCE" => PetFunctionType.Appearance,
-			"BAG" => PetFunctionType.Bag,
-			"WING" => PetFunctionType.Wing,
+			"WAREHOUSE" => PetFunctionType.WAREHOUSE,
+			"FOOD" => PetFunctionType.FOOD,
+			"DOPING" => PetFunctionType.DOPING,
+			"LOOT" => PetFunctionType.LOOT,
+			"BUFF" => PetFunctionType.BUFF,
+			"MERCHANT" => PetFunctionType.MERCHANT,
+			"NONE" => PetFunctionType.NONE,
+			"APPEARANCE" => PetFunctionType.APPEARANCE,
+			"BAG" => PetFunctionType.BAG,
+			"WING" => PetFunctionType.WING,
 			_ => throw new FormatException($"Unexpected PetFunctionType value '{value}'."),
 		};
 	}

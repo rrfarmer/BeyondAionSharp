@@ -403,7 +403,7 @@ public sealed class SmPet : GameServerPacket
 
 	private static void WriteAppearance(PacketBuffer buffer, int decoration)
 	{
-		buffer.WriteH((int)PetFunctionType.Appearance);
+		buffer.WriteH(PetFunctionType.APPEARANCE.GetId());
 		buffer.WriteC(0);
 		buffer.WriteC(0);
 		buffer.WriteC(0);
@@ -437,12 +437,12 @@ public sealed class SmPet : GameServerPacket
 
 		if (writableFunctions.Length == 0)
 		{
-			buffer.WriteH((int)PetFunctionType.None);
-			buffer.WriteH((int)PetFunctionType.None);
+			buffer.WriteH(PetFunctionType.NONE.GetId());
+			buffer.WriteH(PetFunctionType.NONE.GetId());
 		}
 		else if (writableFunctions.Length == 1)
 		{
-			buffer.WriteH((int)PetFunctionType.None);
+			buffer.WriteH(PetFunctionType.NONE.GetId());
 		}
 
 		WriteAppearance(buffer, petData.Decoration);
@@ -469,7 +469,7 @@ public sealed class SmPet : GameServerPacket
 	private static IEnumerable<SmPetFunctionSnapshot> OrderedWritableFunctions(IReadOnlyList<SmPetFunctionSnapshot> functions)
 	{
 		// Java checks functions in this fixed order, not XML order.
-		foreach (var type in new[] { PetFunctionType.Warehouse, PetFunctionType.Loot, PetFunctionType.Doping, PetFunctionType.Food })
+		foreach (var type in new[] { PetFunctionType.WAREHOUSE, PetFunctionType.LOOT, PetFunctionType.DOPING, PetFunctionType.FOOD })
 		{
 			foreach (var function in functions)
 			{
@@ -485,22 +485,22 @@ public sealed class SmPet : GameServerPacket
 	{
 		switch (function.FunctionType)
 		{
-			case PetFunctionType.Warehouse:
-				buffer.WriteC((byte)PetFunctionType.Warehouse);
+			case PetFunctionType.WAREHOUSE:
+				buffer.WriteC((byte)PetFunctionType.WAREHOUSE.GetId());
 				buffer.WriteC(0);
 				break;
-			case PetFunctionType.Loot:
-				buffer.WriteC((byte)PetFunctionType.Loot);
+			case PetFunctionType.LOOT:
+				buffer.WriteC((byte)PetFunctionType.LOOT.GetId());
 				buffer.WriteC(1);
 				buffer.WriteC(0);
 				break;
-			case PetFunctionType.Doping:
-				buffer.WriteC((byte)PetFunctionType.Doping);
+			case PetFunctionType.DOPING:
+				buffer.WriteC((byte)PetFunctionType.DOPING.GetId());
 				buffer.WriteC(PetDopingBagMaxItems * 4);
 				WriteDopingItems(buffer, function.DopingItemIds ?? []);
 				break;
-			case PetFunctionType.Food:
-				buffer.WriteC((byte)PetFunctionType.Food);
+			case PetFunctionType.FOOD:
+				buffer.WriteC((byte)PetFunctionType.FOOD.GetId());
 				buffer.WriteC(8);
 				buffer.WriteD(function.FeedProgressData);
 				buffer.WriteD(function.RefeedDelaySeconds);
