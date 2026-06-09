@@ -1,7 +1,7 @@
 namespace Aion.GameServer.Model.GameObjects.Player;
 
 /// <summary>Java parity: model/gameobjects/player/AbsoluteStatOwner implements StatOwner.</summary>
-public class AbsoluteStatOwner : Aion.GameServer.Model.Stats.Calc.StatOwner
+public class AbsoluteStatOwner : Aion.GameServer.Model.Stats.Calc.IStatOwner
 {
     internal Player target;
     internal Aion.GameServer.Model.Templates.Stats.ModifiersTemplate template;
