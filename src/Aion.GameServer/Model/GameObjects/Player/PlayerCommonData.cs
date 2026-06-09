@@ -667,7 +667,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
         if (playerClass.IsStartingClass())
             return false;
 
-        Aion.GameServer.Questengine.Model.QuestStateList qsl;
+        Aion.GameServer.Model.GameObjects.Player.QuestStateList qsl;
         Player player = GetPlayer();
         if (player != null)
             qsl = player.GetQuestStateList();
