@@ -23,30 +23,30 @@ public class SummonController : CreatureController<Summon>
     }
 
     /// <summary>Release summon.</summary>
-    public void Release(UnsummonType unsummonType)
+    public virtual void Release(UnsummonType unsummonType)
     {
         Aion.GameServer.Services.Summons.SummonsService.Release(GetOwner(), unsummonType);
     }
 
     /// <summary>Change to rest mode.</summary>
-    public void RestMode()
+    public virtual void RestMode()
     {
         Aion.GameServer.Services.Summons.SummonsService.RestMode(GetOwner());
     }
 
-    public void SetUnkMode()
+    public virtual void SetUnkMode()
     {
         Aion.GameServer.Services.Summons.SummonsService.SetUnkMode(GetOwner());
     }
 
     /// <summary>Change to guard mode.</summary>
-    public void GuardMode()
+    public virtual void GuardMode()
     {
         Aion.GameServer.Services.Summons.SummonsService.GuardMode(GetOwner());
     }
 
     /// <summary>Change to attackMode.</summary>
-    public void AttackMode(int targetObjId)
+    public virtual void AttackMode(int targetObjId)
     {
         VisibleObject obj = GetOwner().GetKnownList().GetObject(targetObjId);
         if (obj is Creature)
