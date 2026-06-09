@@ -6,7 +6,8 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("DoorRepairStone")]
 public class DoorRepairStone
 {
-    [XmlAttribute("static_id")] protected int staticId;
+    // Java parity: package-private field accessed by sibling DoorRepairData → internal (closest C# analog).
+    [XmlAttribute("static_id")] internal int staticId;
     [XmlAttribute("door_id")] protected int doorId;
 
     public int GetStaticId()
