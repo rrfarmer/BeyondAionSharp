@@ -32,6 +32,9 @@ public abstract class AionObject
 	/// </summary>
 	public abstract string Name { get; }
 
+	// Java parity: getName() (method form, bridges Java callers to the C# Name property).
+	public string GetName() => Name;
+
 	// Java parity: final hashCode() returns objectId.
 	public sealed override int GetHashCode() => _objectId;
 
