@@ -197,6 +197,14 @@ public partial class ItemTemplate : VisibleObjectTemplate
         return enchantName;
     }
 
+    public void ModifyMask(bool apply, int filter)
+    {
+        if (apply)
+            mask |= filter;
+        else
+            mask &= ~filter;
+    }
+
     public long GetPrice()
     {
         return price;
