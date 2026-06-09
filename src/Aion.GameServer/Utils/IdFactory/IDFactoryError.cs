@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Utils.Idfactory;
+namespace Aion.GameServer.Utils.IdFactory;
 
 /// <summary>
 /// Java parity: utils/idfactory/IDFactoryError (SoulKeeper). Java <c>extends Error</c> (serious, uncatchable-by-convention) →
