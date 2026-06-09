@@ -168,7 +168,7 @@ public abstract class Creature : VisibleObject
     }
 
     /// <summary>All abnormal effects are checked that disable movements.</summary>
-    public bool CanPerformMove()
+    public virtual bool CanPerformMove()
     {
         return (!(GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_MOVE_STATE) && IsSpawned() && CanUseSkillInMove()));
     }
@@ -381,7 +381,7 @@ public abstract class Creature : VisibleObject
         return GetMaster();
     }
 
-    public bool IsSkillDisabled(SkillTemplate template)
+    public virtual bool IsSkillDisabled(SkillTemplate template)
     {
         if (skillCoolDowns == null)
             return false;

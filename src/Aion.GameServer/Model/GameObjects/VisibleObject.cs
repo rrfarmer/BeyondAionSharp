@@ -117,7 +117,7 @@ public abstract class VisibleObject : AionObject
     public virtual VisibleObjectTemplate GetObjectTemplate() => _objectTemplate;
 
     // Java parity: setPosition(WorldPosition)
-    public void SetPosition(WorldPosition position) => Position = position;
+    public virtual void SetPosition(WorldPosition position) => Position = position;
 
     // Java parity: getVisibleDistance()
     public virtual float GetVisibleDistance() => 95;
