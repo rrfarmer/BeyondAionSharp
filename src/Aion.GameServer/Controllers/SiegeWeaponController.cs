@@ -89,7 +89,7 @@ public class SiegeWeaponController : SummonController
     private bool IsBalaurBoss(Creature creature)
     {
         return creature.GetRace() == Race.DRAKAN && creature is Aion.GameServer.Model.GameObjects.Siege.SiegeNpc
-            && ((Aion.GameServer.Model.GameObjects.Siege.SiegeNpc)creature).GetObjectTemplate().GetRating() == Aion.GameServer.Model.Templates.Npc.NpcRating.LEGENDARY;
+            && ((Aion.GameServer.Model.GameObjects.Siege.SiegeNpc)creature).GetObjectTemplate().GetRating() == Aion.GameServer.Model.Templates.Npc.NpcRating.Legendary;
     }
 
     public override void OnDie(Creature lastAttacker)
