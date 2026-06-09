@@ -243,7 +243,7 @@ public class Npc : Creature
     }
 
     // Java parity: getType(Creature) — renamed to avoid Object.GetType clash.
-    public CreatureType GetTypeValue(Creature creature)
+    public virtual CreatureType GetTypeValue(Creature creature)
     {
         if (type != null)
             return type.Value;
@@ -286,7 +286,7 @@ public class Npc : Creature
         return Math.Max(skillSeeState, congenitalSeeState);
     }
 
-    public string GetMasterName()
+    public virtual string GetMasterName()
     {
         return masterName;
     }
@@ -296,7 +296,7 @@ public class Npc : Creature
         this.masterName = masterName;
     }
 
-    public int GetCreatorId()
+    public virtual int GetCreatorId()
     {
         return creatorId;
     }
@@ -306,7 +306,7 @@ public class Npc : Creature
         this.creatorId = creatorId;
     }
 
-    public VisibleObject GetCreator()
+    public virtual VisibleObject GetCreator()
     {
         return creatorId == 0 ? null : World.World.GetInstance().FindVisibleObject(creatorId);
     }
