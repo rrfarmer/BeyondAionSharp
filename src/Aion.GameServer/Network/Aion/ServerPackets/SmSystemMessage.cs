@@ -3189,6 +3189,102 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400618, petName, itemName);
 	}
 
+	public static SmSystemMessage CannotFindPoll()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_CANNOT_FIND_POLL -> 1300684.
+		return new SmSystemMessage(1300684);
+	}
+
+	public static SmSystemMessage GetPollRewardMoney(long num0)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_POLL_REWARD_MONEY(long) -> 1300947.
+		return new SmSystemMessage(1300947, num0.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	}
+
+	public static SmSystemMessage GetPollRewardItem(string value0)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_POLL_REWARD_ITEM(String) -> 1300945.
+		return new SmSystemMessage(1300945, value0);
+	}
+
+	public static SmSystemMessage GetPollRewardItemMulti(long num1, string value0)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_GET_POLL_REWARD_ITEM_MULTI(long num1, String value0) -> 1300946.
+		return new SmSystemMessage(1300946, num1.ToString(System.Globalization.CultureInfo.InvariantCulture), value0);
+	}
+
+	public static SmSystemMessage CompoundErrorEquipedItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_EQUIPED_ITEM -> 1400648.
+		return new SmSystemMessage(1400648);
+	}
+
+	public static SmSystemMessage CompoundItemNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ITEM_NO_TARGET_ITEM -> 1400717.
+		return new SmSystemMessage(1400717);
+	}
+
+	public static SmSystemMessage CompoundErrorNotAvailable(string value0)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_AVAILABLE(String) -> 1400289.
+		return new SmSystemMessage(1400289, value0);
+	}
+
+	public static SmSystemMessage CompoundErrorNotEnoughMoney(string value0, string value1)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_ENOUGH_MONEY(String, String) -> 1400337.
+		return new SmSystemMessage(1400337, value0, value1);
+	}
+
+	public static SmSystemMessage CompoundErrorTemporaryExchangeItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_TEMPORARY_EXCHANGE_ITEM -> 1400853.
+		return new SmSystemMessage(1400853);
+	}
+
+	public static SmSystemMessage CompoundErrorDifferentType()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_DIFFERENT_TYPE -> 1400364.
+		return new SmSystemMessage(1400364);
+	}
+
+	public static SmSystemMessage CompoundErrorMainRequireHigherLevel()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_MAIN_REQUIRE_HIGHER_LEVEL -> 1400288.
+		return new SmSystemMessage(1400288);
+	}
+
+	public static SmSystemMessage CompoundErrorNotComparableItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_COMPARABLE_ITEM -> 1400365.
+		return new SmSystemMessage(1400365);
+	}
+
+	public static SmSystemMessage CompoundSuccess(string value0, string value1)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUND_SUCCESS(String, String) -> 1400336.
+		return new SmSystemMessage(1400336, value0, value1);
+	}
+
+	public static SmSystemMessage DecompoundItemNoTargetItem()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOUND_ITEM_NO_TARGET_ITEM -> 1400718.
+		return new SmSystemMessage(1400718);
+	}
+
+	public static SmSystemMessage DecompoundErrorNotAvailable(string value0)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_DECOMPOUND_ERROR_NOT_AVAILABLE(String) -> 1400373.
+		return new SmSystemMessage(1400373, value0);
+	}
+
+	public static SmSystemMessage CompoundedItemDecompoundSuccess(string value0)
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_COMPOUNDED_ITEM_DECOMPOUND_SUCCESS(String) -> 1400335.
+		return new SmSystemMessage(1400335, value0);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.
