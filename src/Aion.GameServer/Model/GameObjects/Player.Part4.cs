@@ -82,13 +82,13 @@ public partial class Player
     }
 
     /// <summary>Returns the emotions.</summary>
-    public Aion.GameServer.Model.GameObjects.Player.EmotionList GetEmotions()
+    public Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList GetEmotions()
     {
         return emotions;
     }
 
     /// <param name="emotions">The emotions to set.</param>
-    public void SetEmotions(Aion.GameServer.Model.GameObjects.Player.EmotionList emotions)
+    public void SetEmotions(Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList emotions)
     {
         this.emotions = emotions;
     }
@@ -157,13 +157,13 @@ public partial class Player
     }
 
     /// <summary>the motions</summary>
-    public Aion.GameServer.Model.GameObjects.Player.MotionList GetMotions()
+    public Aion.GameServer.Model.GameObjects.Player.Motion.MotionList GetMotions()
     {
         return motions;
     }
 
     /// <param name="motions">the motions to set</param>
-    public void SetMotions(Aion.GameServer.Model.GameObjects.Player.MotionList motions)
+    public void SetMotions(Aion.GameServer.Model.GameObjects.Player.Motion.MotionList motions)
     {
         this.motions = motions;
     }

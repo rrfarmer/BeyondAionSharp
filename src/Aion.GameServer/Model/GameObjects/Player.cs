@@ -100,8 +100,8 @@ public partial class Player : Creature
     private Aion.GameServer.Model.Flightpath.FlyPathEntry flyLocationId;
     private long flyStartTime;
 
-    private Aion.GameServer.Model.GameObjects.Player.EmotionList emotions;
-    private Aion.GameServer.Model.GameObjects.Player.MotionList motions;
+    private Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList emotions;
+    private Aion.GameServer.Model.GameObjects.Player.Motion.MotionList motions;
 
     private long flyReuseTime;
 

@@ -19,10 +19,10 @@ public interface IExpirable
     bool IsExpired() => SecondsUntilExpiration() < 0;
 
     // Java parity: default onBeforeExpire(Player, int)
-    void OnBeforeExpire(Player player, int remainingMinutes) { }
+    void OnBeforeExpire(Aion.GameServer.Model.GameObjects.Player.Player player, int remainingMinutes) { }
 
     // Java parity: onExpire(Player)
-    void OnExpire(Player player);
+    void OnExpire(Aion.GameServer.Model.GameObjects.Player.Player player);
 
     // Java parity: default canExpireNow()
     bool CanExpireNow() => true;
