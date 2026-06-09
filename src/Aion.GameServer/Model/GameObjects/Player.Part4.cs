@@ -413,7 +413,7 @@ public partial class Player
         return rideObservers;
     }
 
-    public Aion.GameServer.Model.Stats.Calc.AbsoluteStatOwner GetAbsoluteStats()
+    public Aion.GameServer.Model.GameObjects.Player.AbsoluteStatOwner GetAbsoluteStats()
     {
         return absStatsHolder;
     }
