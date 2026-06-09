@@ -180,6 +180,9 @@ public sealed class ScheduledTask
 
 	public Task Completion { get; }
 
+	// Java parity: Future.isCancelled()
+	public bool IsCancelled => _cancellationTokenSource.IsCancellationRequested;
+
 	public bool Cancel()
 	{
 		if (Volatile.Read(ref _isComplete) != 0)
