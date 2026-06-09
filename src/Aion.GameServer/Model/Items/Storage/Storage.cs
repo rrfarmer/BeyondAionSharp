@@ -32,17 +32,17 @@ public abstract class Storage : IStorage
             this.deletedItems = new ConcurrentQueue<Item>();
     }
 
-    public long GetKinah()
+    public virtual long GetKinah()
     {
         return kinahItem == null ? 0 : kinahItem.GetItemCount();
     }
 
-    public Item GetKinahItem()
+    public virtual Item GetKinahItem()
     {
         return kinahItem;
     }
 
-    public StorageType GetStorageType()
+    public virtual StorageType GetStorageType()
     {
         return storageType;
     }
@@ -211,7 +211,7 @@ public abstract class Storage : IStorage
     }
 
     /// <summary>Remove item from storage without changing its state.</summary>
-    public Item Remove(Item item)
+    public virtual Item Remove(Item item)
     {
         return itemStorage.RemoveItem(item.GetObjectId());
     }
@@ -288,12 +288,12 @@ public abstract class Storage : IStorage
         return DecreaseItemCount(item, count, updateType, actor) == 0;
     }
 
-    public Item GetFirstItemByItemId(int itemId)
+    public virtual Item GetFirstItemByItemId(int itemId)
     {
         return this.itemStorage.GetFirstItemById(itemId);
     }
 
-    public List<Item> GetItemsWithKinah()
+    public virtual List<Item> GetItemsWithKinah()
     {
         List<Item> items = this.itemStorage.GetItems();
         if (this.kinahItem != null)
@@ -303,22 +303,22 @@ public abstract class Storage : IStorage
         return items;
     }
 
-    public List<Item> GetItems()
+    public virtual List<Item> GetItems()
     {
         return this.itemStorage.GetItems();
     }
 
-    public List<Item> GetItemsByItemId(int itemId)
+    public virtual List<Item> GetItemsByItemId(int itemId)
     {
         return this.itemStorage.GetItemsById(itemId);
     }
 
-    public ConcurrentQueue<Item> GetDeletedItems()
+    public virtual ConcurrentQueue<Item> GetDeletedItems()
     {
         return deletedItems;
     }
 
-    public Item GetItemByObjId(int itemObjId)
+    public virtual Item GetItemByObjId(int itemObjId)
     {
         return this.itemStorage.GetItemByObjId(itemObjId);
     }
@@ -336,7 +336,7 @@ public abstract class Storage : IStorage
         return cnt;
     }
 
-    public bool IsFull()
+    public virtual bool IsFull()
     {
         return this.itemStorage.IsFull();
     }
@@ -369,17 +369,17 @@ public abstract class Storage : IStorage
         return this.itemStorage.GetSpecialCubeFreeSlots();
     }
 
-    public int GetFreeSlots()
+    public virtual int GetFreeSlots()
     {
         return this.itemStorage.GetFreeSlots();
     }
 
-    public void SetLimit(int limit)
+    public virtual void SetLimit(int limit)
     {
         itemStorage.SetLimit(limit);
     }
 
-    public int GetLimit()
+    public virtual int GetLimit()
     {
         return this.itemStorage.GetLimit();
     }
@@ -401,7 +401,7 @@ public abstract class Storage : IStorage
         this.persistentState = persistentState;
     }
 
-    public int Size()
+    public virtual int Size()
     {
         return itemStorage.Size();
     }
