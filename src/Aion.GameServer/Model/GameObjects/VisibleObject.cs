@@ -111,7 +111,7 @@ public abstract class VisibleObject : AionObject
     public bool IsTargeting(int objectId) => _target != null && _target.ObjectId == objectId;
 
     // Java parity: getSpawn()
-    public SpawnTemplate? GetSpawn() => _spawnTemplate;
+    public virtual SpawnTemplate? GetSpawn() => _spawnTemplate;
 
     // Java parity: getObjectTemplate()
     public virtual VisibleObjectTemplate GetObjectTemplate() => _objectTemplate;
