@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Aion.GameServer.Dataholders.Loadingutils.Adapters;
+namespace Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 
 /// <summary>
 /// JAXB supports space separated int lists; this adapter works the same way for bytes. Java parity:
