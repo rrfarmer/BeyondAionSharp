@@ -133,7 +133,7 @@ public partial class Player
         Aion.GameServer.Model.TribeClass? transformTribe = GetTransformModel().GetTribe();
         if (transformTribe != null)
         {
-            return Aion.GameServer.DataManager.TRIBE_RELATIONS_DATA.GetBaseTribe(transformTribe.Value);
+            return Aion.GameServer.Dataholders.DataManager.TRIBE_RELATIONS_DATA.GetBaseTribe(transformTribe.Value);
         }
         return GetTribe();
     }
