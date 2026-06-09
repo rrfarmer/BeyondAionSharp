@@ -217,7 +217,7 @@ public abstract class Base
             throw new BaseException("No flag found for base! ID: " + id);
     }
 
-    public BaseOccupier GetOccupier(Creature bossKiller)
+    public virtual BaseOccupier GetOccupier(Creature bossKiller)
     {
         return bossKiller == null ? GetLocation().GetTemplate().GetDefaultOccupier() : BaseOccupier.FindBy(bossKiller.GetRace());
     }
