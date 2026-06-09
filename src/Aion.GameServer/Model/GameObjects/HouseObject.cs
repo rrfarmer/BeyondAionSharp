@@ -317,6 +317,13 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
     }
 
+    // Java parity: Expirable.canExpireNow() is a default method; C# default-interface methods aren't class-overridable,
+    // so HouseObject declares it virtual (returns the interface default true) to let subclasses override (rule 8 diff).
+    public virtual bool CanExpireNow()
+    {
+        return true;
+    }
+
     public virtual void OnUse(Player player)
     {
     }
