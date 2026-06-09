@@ -39,6 +39,12 @@ public static class ChatUtil
 		return $"{wordForMales}[f:\"{textForFemales}\"]";
 	}
 
+	// Java parity: utils/ChatUtil.name(Player) — see Name(String).
+	public static string Name(Aion.GameServer.Model.GameObjects.Player.Player player)
+	{
+		return Name(player.GetName(true));
+	}
+
 	public static string Name(string name)
 	{
 		// Java parity: utils/ChatUtil.name(String). Returns a clickable character name link.
