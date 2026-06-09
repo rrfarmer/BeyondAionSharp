@@ -9,11 +9,11 @@ namespace Aion.GameServer.Controllers.Movement;
 /// Base movement controller for a creature/visible object.
 /// Java parity: controllers/movement/CreatureMoveController&lt;T extends VisibleObject&gt;.
 /// </summary>
-public abstract class CreatureMoveController<T> where T : VisibleObject
+public abstract class CreatureMoveController
 {
     public const float MOVE_CHECK_OFFSET = 0.1f;
 
-    protected T Owner;
+    protected VisibleObject Owner;
     protected byte Heading;
     protected long LastMoveUpdate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
     protected bool IsInMoveField;
@@ -25,7 +25,7 @@ public abstract class CreatureMoveController<T> where T : VisibleObject
     protected float TargetDestZ;
     private bool _isJumping;
 
-    protected CreatureMoveController(T owner)
+    protected CreatureMoveController(VisibleObject owner)
     {
         Owner = owner;
     }
@@ -83,4 +83,18 @@ public abstract class CreatureMoveController<T> where T : VisibleObject
     public void SetIsJumping(bool isJumping) => _isJumping = isJumping;
     public bool IsInMove() => IsInMoveField;
     public void SetInMove(bool value) => IsInMoveField = value;
+}
+
+/// <summary>
+/// Java parity: generic typing of <see cref="CreatureMoveController"/>
+/// (Java <c>CreatureMoveController&lt;T extends VisibleObject&gt;</c>). Non-generic base + generic shim so
+/// <c>Creature.GetMoveController()</c> returns the non-generic base (no C# wildcard generics).
+/// </summary>
+public abstract class CreatureMoveController<T> : CreatureMoveController where T : VisibleObject
+{
+    protected CreatureMoveController(T owner) : base(owner)
+    {
+    }
+
+    protected new T Owner => (T)base.Owner;
 }
