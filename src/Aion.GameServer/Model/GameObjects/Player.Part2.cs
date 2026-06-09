@@ -48,7 +48,7 @@ public partial class Player
     {
         List<Item> dirtyItems = new List<Item>();
 
-        foreach (Aion.GameServer.Model.Items.Storage.StorageType st in Enum.GetValues<Aion.GameServer.Model.Items.Storage.StorageType>())
+        foreach (Aion.GameServer.Model.Items.Storage.StorageType st in Aion.GameServer.Model.Items.Storage.StorageType.Values())
         {
             Aion.GameServer.Model.Items.Storage.IStorage storage = GetStorage(st.GetId());
             if (storage != null && storage.GetPersistentState() == Aion.GameServer.Model.Items.PersistentState.UPDATE_REQUIRED)
