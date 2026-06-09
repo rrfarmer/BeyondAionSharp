@@ -738,7 +738,7 @@ public class PlayerController : CreatureController<Player.Player>
                     return;
             }
 
-        if (!player.HasPermission(Aion.GameServer.Configs.Administration.MembershipConfig.DISABLE_SOULSICKNESS))
+        if (!player.HasPermission(Aion.GameServer.Configs.Main.MembershipConfig.DISABLE_SOULSICKNESS))
         {
             int deathCount = player.GetCommonData().GetDeathCount();
             if (deathCount < 10)
