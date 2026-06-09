@@ -147,7 +147,7 @@ public abstract class Storage : IStorage
     /// <summary>
     /// Called only for new items added to inventory (loading from DB). Kinah is stored separately.
     /// </summary>
-    public void OnLoadHandler(Item item)
+    public virtual void OnLoadHandler(Item item)
     {
         if (item.GetItemTemplate().IsKinah())
             kinahItem = item;
