@@ -83,7 +83,7 @@ public partial class Player
         }
         else if (worldId == 110010000 || worldId == 120010000 || IsInInstance())
         {
-            return IsInsideZoneType(Aion.GameServer.World.Zone.ZoneType.PVP) && enemy.IsInsideZoneType(Aion.GameServer.World.Zone.ZoneType.PVP) && !IsInSameTeam(enemy);
+            return IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.Pvp) && enemy.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.Pvp) && !IsInSameTeam(enemy);
         }
         return false;
     }

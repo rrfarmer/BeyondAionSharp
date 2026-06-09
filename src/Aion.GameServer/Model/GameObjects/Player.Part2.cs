@@ -295,12 +295,12 @@ public partial class Player
         this.flyController = flyController;
     }
 
-    public void SetCraftingTask(Aion.GameServer.Model.Gametime.CraftingTask craftingTask)
+    public void SetCraftingTask(Aion.GameServer.SkillEngine.Task.CraftingTask craftingTask)
     {
         this.craftingTask = craftingTask;
     }
 
-    public Aion.GameServer.Model.Gametime.CraftingTask GetCraftingTask()
+    public Aion.GameServer.SkillEngine.Task.CraftingTask GetCraftingTask()
     {
         return craftingTask;
     }
