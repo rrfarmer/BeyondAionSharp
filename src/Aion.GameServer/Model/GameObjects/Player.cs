@@ -35,7 +35,7 @@ public partial class Player : Creature
     private Aion.GameServer.Model.GameObjects.Player.BlockList blockList;
     private Aion.GameServer.Model.GameObjects.Player.PetList toyPetList;
     private Aion.GameServer.Model.GameObjects.Player.Mailbox mailbox;
-    private Aion.GameServer.Model.GameObjects.PrivateStore store;
+    private Aion.GameServer.Model.GameObjects.Player.PrivateStore store;
     private Aion.GameServer.Model.GameObjects.Player.Title.TitleList titleList;
     private Aion.GameServer.Questengine.Model.QuestStateList questStateList;
     private Aion.GameServer.Model.GameObjects.Player.RecipeList recipeList;
@@ -404,12 +404,12 @@ public partial class Player : Creature
         this.usingItem = usingItem;
     }
 
-    public Aion.GameServer.Model.GameObjects.PrivateStore GetStore()
+    public Aion.GameServer.Model.GameObjects.Player.PrivateStore GetStore()
     {
         return store;
     }
 
-    public void SetStore(Aion.GameServer.Model.GameObjects.PrivateStore store)
+    public void SetStore(Aion.GameServer.Model.GameObjects.Player.PrivateStore store)
     {
         this.store = store;
     }
