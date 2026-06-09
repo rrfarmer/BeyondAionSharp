@@ -129,6 +129,142 @@ public abstract class ByteBuffer : Buffer
         return BitConverter.Int32BitsToSingle(GetInt(index));
     }
 
+    public long GetLong()
+    {
+        return GetLong(NextGetIndex(8));
+    }
+
+    public long GetLong(int index)
+    {
+        long b0 = Get(index) & 0xFFL;
+        long b1 = Get(index + 1) & 0xFFL;
+        long b2 = Get(index + 2) & 0xFFL;
+        long b3 = Get(index + 3) & 0xFFL;
+        long b4 = Get(index + 4) & 0xFFL;
+        long b5 = Get(index + 5) & 0xFFL;
+        long b6 = Get(index + 6) & 0xFFL;
+        long b7 = Get(index + 7) & 0xFFL;
+        return bigEndian
+            ? (b0 << 56) | (b1 << 48) | (b2 << 40) | (b3 << 32) | (b4 << 24) | (b5 << 16) | (b6 << 8) | b7
+            : (b7 << 56) | (b6 << 48) | (b5 << 40) | (b4 << 32) | (b3 << 24) | (b2 << 16) | (b1 << 8) | b0;
+    }
+
+    public double GetDouble()
+    {
+        return BitConverter.Int64BitsToDouble(GetLong());
+    }
+
+    public double GetDouble(int index)
+    {
+        return BitConverter.Int64BitsToDouble(GetLong(index));
+    }
+
+    public char GetChar()
+    {
+        return (char)GetShort();
+    }
+
+    public char GetChar(int index)
+    {
+        return (char)GetShort(index);
+    }
+
+    // --- multi-byte put accessors (honor byte order) ---
+    public ByteBuffer PutShort(short value)
+    {
+        return PutShort(NextPutIndex(2), value);
+    }
+
+    public ByteBuffer PutShort(int index, short value)
+    {
+        int v = value & 0xFFFF;
+        if (bigEndian)
+        {
+            Put(index, (byte)(v >> 8));
+            Put(index + 1, (byte)v);
+        }
+        else
+        {
+            Put(index, (byte)v);
+            Put(index + 1, (byte)(v >> 8));
+        }
+        return this;
+    }
+
+    public ByteBuffer PutInt(int value)
+    {
+        return PutInt(NextPutIndex(4), value);
+    }
+
+    public ByteBuffer PutInt(int index, int value)
+    {
+        if (bigEndian)
+        {
+            Put(index, (byte)(value >> 24));
+            Put(index + 1, (byte)(value >> 16));
+            Put(index + 2, (byte)(value >> 8));
+            Put(index + 3, (byte)value);
+        }
+        else
+        {
+            Put(index, (byte)value);
+            Put(index + 1, (byte)(value >> 8));
+            Put(index + 2, (byte)(value >> 16));
+            Put(index + 3, (byte)(value >> 24));
+        }
+        return this;
+    }
+
+    public ByteBuffer PutLong(long value)
+    {
+        return PutLong(NextPutIndex(8), value);
+    }
+
+    public ByteBuffer PutLong(int index, long value)
+    {
+        if (bigEndian)
+        {
+            for (int i = 0; i < 8; i++)
+                Put(index + i, (byte)(value >> (56 - 8 * i)));
+        }
+        else
+        {
+            for (int i = 0; i < 8; i++)
+                Put(index + i, (byte)(value >> (8 * i)));
+        }
+        return this;
+    }
+
+    public ByteBuffer PutChar(char value)
+    {
+        return PutShort((short)value);
+    }
+
+    public ByteBuffer PutChar(int index, char value)
+    {
+        return PutShort(index, (short)value);
+    }
+
+    public ByteBuffer PutFloat(float value)
+    {
+        return PutInt(BitConverter.SingleToInt32Bits(value));
+    }
+
+    public ByteBuffer PutFloat(int index, float value)
+    {
+        return PutInt(index, BitConverter.SingleToInt32Bits(value));
+    }
+
+    public ByteBuffer PutDouble(double value)
+    {
+        return PutLong(BitConverter.DoubleToInt64Bits(value));
+    }
+
+    public ByteBuffer PutDouble(int index, double value)
+    {
+        return PutLong(index, BitConverter.DoubleToInt64Bits(value));
+    }
+
     /// <summary>Java parity: order().</summary>
     public ByteOrder Order()
     {
