@@ -42,7 +42,7 @@ public class ItemRaceEntry : IChance
         return 1L;
     }
 
-    public float GetChance()
+    public virtual float GetChance()
     {
         return 100f;
     }
