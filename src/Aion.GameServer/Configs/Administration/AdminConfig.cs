@@ -16,61 +16,61 @@ public static class AdminConfig
     public static string[] NAME_TAGS;
 
     /// <summary>Key: gameserver.administration.unrestricted_itemtrade</summary>
-    public static sbyteUNRESTRICTED_ITEMTRADE = 1;
+    public static sbyte UNRESTRICTED_ITEMTRADE = 1;
 
     /// <summary>Key: gameserver.administration.gm_panel</summary>
-    public static sbyteGM_PANEL = 2;
+    public static sbyte GM_PANEL = 2;
 
     /// <summary>Key: gameserver.administration.gm_skills</summary>
-    public static sbyteGM_SKILLS = 8;
+    public static sbyte GM_SKILLS = 8;
 
     /// <summary>Key: gameserver.administration.flight.free_fly</summary>
-    public static sbyteFREE_FLIGHT = 1;
+    public static sbyte FREE_FLIGHT = 1;
 
     /// <summary>Key: gameserver.administration.flight.unlimited_time</summary>
-    public static sbyteUNLIMITED_FLIGHT_TIME = 1;
+    public static sbyte UNLIMITED_FLIGHT_TIME = 1;
 
     /// <summary>Key: gameserver.administration.auto_res</summary>
-    public static sbyteAUTO_RES = 1;
+    public static sbyte AUTO_RES = 1;
 
     /// <summary>Key: gameserver.administration.view_player_details</summary>
-    public static sbyteVIEW_PLAYER_DETAILS = 5;
+    public static sbyte VIEW_PLAYER_DETAILS = 5;
 
     /// <summary>Key: gameserver.administration.instance.enter_all</summary>
-    public static sbyteINSTANCE_ENTER_ALL = 2;
+    public static sbyte INSTANCE_ENTER_ALL = 2;
 
     /// <summary>Key: gameserver.administration.instance.open_doors</summary>
-    public static sbyteINSTANCE_OPEN_DOORS = 6;
+    public static sbyte INSTANCE_OPEN_DOORS = 6;
 
     /// <summary>Key: gameserver.administration.instance.door_info</summary>
-    public static sbyteINSTANCE_DOOR_INFO = 9;
+    public static sbyte INSTANCE_DOOR_INFO = 9;
 
     /// <summary>Key: gameserver.administration.house.enter_all</summary>
-    public static sbyteHOUSE_ENTER_ALL = 9;
+    public static sbyte HOUSE_ENTER_ALL = 9;
 
     /// <summary>Key: gameserver.administration.house.show_address</summary>
-    public static sbyteHOUSE_SHOW_ADDRESS = 9;
+    public static sbyte HOUSE_SHOW_ADDRESS = 9;
 
     /// <summary>Key: gameserver.administration.dialog_info</summary>
-    public static sbyteDIALOG_INFO = 9;
+    public static sbyte DIALOG_INFO = 9;
 
     /// <summary>Key: gameserver.administration.enchant_info</summary>
-    public static sbyteENCHANT_INFO = 9;
+    public static sbyte ENCHANT_INFO = 9;
 
     /// <summary>Key: gameserver.administration.zone_info</summary>
-    public static sbyteZONE_INFO = 9;
+    public static sbyte ZONE_INFO = 9;
 
     /// <summary>Key: gameserver.administration.audit_info</summary>
-    public static sbyteAUDIT_INFO = 9;
+    public static sbyte AUDIT_INFO = 9;
 
     /// <summary>Special command permissions. Key: gameserver.administration.command.quest.advanced_parameters</summary>
-    public static sbyteCMD_QUEST_ADV_PARAMS = 9;
+    public static sbyte CMD_QUEST_ADV_PARAMS = 9;
 
     /// <summary>Key: gameserver.administration.login.execute_commands. Default: //invis, //invul, //enemy none, //see</summary>
     public static List<string> LOGIN_EXECUTE_COMMANDS;
 
     /// <summary>Key: gameserver.administration.login.print_revision</summary>
-    public static sbyteREVISION_INFO_ON_LOGIN = 9;
+    public static sbyte REVISION_INFO_ON_LOGIN = 9;
 
     /// <summary>Key: gameserver.administration.login.announce_levels. Default: *</summary>
     public static List<string> ANNOUNCE_LEVELS;
