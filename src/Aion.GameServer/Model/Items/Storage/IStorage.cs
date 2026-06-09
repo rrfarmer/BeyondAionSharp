@@ -85,7 +85,7 @@ public interface IStorage : IPersistable
 
     int Size();
 
-    Queue<Item> GetDeletedItems();
+    System.Collections.Concurrent.ConcurrentQueue<Item> GetDeletedItems();
 
     void OnLoadHandler(Item item);
 
