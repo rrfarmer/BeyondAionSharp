@@ -93,7 +93,7 @@ public abstract class Creature : VisibleObject
 
     public abstract sbyte GetLevel();
 
-    public EffectController GetEffectController()
+    public virtual EffectController GetEffectController()
     {
         return effectController;
     }
