@@ -1,0 +1,31 @@
+using System.Xml.Serialization;
+
+namespace Aion.GameServer.Model.Templates.Npcskill;
+
+/// <summary>Java parity: model/templates/npcskill/NpcSkillCondition (Yeats).</summary>
+[XmlType("ConditionType")]
+public enum NpcSkillCondition
+{
+    NONE,
+    HELP_FRIEND,
+    TARGET_IS_IN_ANY_STUN,
+    TARGET_IS_IN_RANGE,
+    TARGET_IS_IN_STUMBLE,
+    TARGET_IS_STUNNED,
+    TARGET_IS_SLEEPING,
+    TARGET_IS_AETHERS_HOLD,
+    TARGET_IS_POISONED,
+    TARGET_IS_BLEEDING,
+    TARGET_IS_FLYING,
+    TARGET_IS_GATE,
+    TARGET_IS_PLAYER,
+    TARGET_IS_NPC,
+    TARGET_IS_PHYSICAL_CLASS,
+    TARGET_IS_MAGICAL_CLASS,
+    TARGET_HAS_CARVED_SIGNET,
+    TARGET_HAS_CARVED_SIGNET_LEVEL_II,
+    TARGET_HAS_CARVED_SIGNET_LEVEL_III,
+    TARGET_HAS_CARVED_SIGNET_LEVEL_IV,
+    TARGET_HAS_CARVED_SIGNET_LEVEL_V,
+    NPC_IS_ALIVE
+}
