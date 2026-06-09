@@ -192,6 +192,11 @@ public partial class ItemTemplate : VisibleObjectTemplate
         return temperingName;
     }
 
+    public string GetEnchantName()
+    {
+        return enchantName;
+    }
+
     public long GetPrice()
     {
         return price;
