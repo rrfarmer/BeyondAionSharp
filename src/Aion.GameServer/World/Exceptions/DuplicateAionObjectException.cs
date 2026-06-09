@@ -1,16 +1,28 @@
+using System;
+using System.Text;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Player;
 
 namespace Aion.GameServer.World.Exceptions;
 
-/// <summary>Java parity: world/exceptions/DuplicateAionObjectException.</summary>
+/// <summary>Java parity: world/exceptions/DuplicateAionObjectException (RuntimeException→Exception).</summary>
 public class DuplicateAionObjectException : Exception
 {
     public DuplicateAionObjectException(AionObject obj, AionObject presentObject)
-        : base(CreateMessage(obj, presentObject)) { }
+        : base(CreateMessage(obj, presentObject))
+    {
+    }
 
     private static string CreateMessage(AionObject obj, AionObject presentObject)
     {
-        // TODO-backlog: append Player.GetPosition() when Player extends VisibleObject (F4)
-        return $"Duplicate object: {obj}, already present object: {presentObject}";
+        StringBuilder sb = new StringBuilder("Duplicate object: ");
+        sb.Append(obj);
+        if (obj is Player)
+            sb.Append(' ').Append(((Player) obj).GetPosition());
+        sb.Append(", already present object: ");
+        sb.Append(presentObject);
+        if (presentObject is Player)
+            sb.Append(' ').Append(((Player) presentObject).GetPosition());
+        return sb.ToString();
     }
 }
