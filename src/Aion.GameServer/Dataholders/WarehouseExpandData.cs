@@ -1,0 +1,34 @@
+using System.Collections.Generic;
+using System.Xml.Serialization;
+using Aion.GameServer.Model.Templates;
+
+namespace Aion.GameServer.Dataholders;
+
+/// <summary>Java parity: dataholders/WarehouseExpandData (Warehouse Expanders). @XmlRootElement(warehouse_expander); afterUnmarshal→AfterUnmarshal(object).</summary>
+[XmlRoot("warehouse_expander")]
+public class WarehouseExpandData
+{
+    [XmlElement("expansion_npc")] private List<StorageExpansionTemplate> expansionTemplates;
+
+    [XmlIgnore] private readonly Dictionary<int, StorageExpansionTemplate> expansionTemplatesByNpcId = new();
+
+    public void AfterUnmarshal(object parent)
+    {
+        foreach (StorageExpansionTemplate expansionTemplate in expansionTemplates)
+        {
+            foreach (int npcId in expansionTemplate.GetNpcIds())
+                expansionTemplatesByNpcId[npcId] = expansionTemplate;
+        }
+        expansionTemplates = null;
+    }
+
+    public int Size()
+    {
+        return expansionTemplatesByNpcId.Count;
+    }
+
+    public StorageExpansionTemplate GetWarehouseExpansionTemplate(int id)
+    {
+        return expansionTemplatesByNpcId.TryGetValue(id, out var v) ? v : null;
+    }
+}
