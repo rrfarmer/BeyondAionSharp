@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Model.GameObjects;
+namespace Aion.GameServer.Model.GameObjects.Player;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player — partial #4 (Java lines ~1210-1655): resurrection positional

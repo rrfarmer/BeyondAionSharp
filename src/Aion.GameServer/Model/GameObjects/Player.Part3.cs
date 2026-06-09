@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Model.GameObjects;
+namespace Aion.GameServer.Model.GameObjects.Player;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player — partial #3 (Java lines ~863-1209): enemy/pvp relations,

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.State;
 
-namespace Aion.GameServer.Model.GameObjects;
+namespace Aion.GameServer.Model.GameObjects.Player;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player — partial #2 (Java lines ~515-861): storage/warehouse,

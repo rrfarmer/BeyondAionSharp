@@ -9,7 +9,7 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Model.GameObjects;
+namespace Aion.GameServer.Model.GameObjects.Player;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player extends Creature. The central player object.
