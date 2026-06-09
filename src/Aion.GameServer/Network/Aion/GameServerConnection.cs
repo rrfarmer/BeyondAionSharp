@@ -955,7 +955,7 @@ public sealed class GameServerConnection : BaseClientConnection
 
 		if (plan.Status is not (PetFeedServiceOperationPlanStatus.ConsumedContinue
 			or PetFeedServiceOperationPlanStatus.ConsumedStop
-			or PetFeedServiceOperationPlanStatus.Rewarded))
+			or PetFeedServiceOperationPlanStatus.IsRewarded()))
 			return;
 
 		var sourceItemUpdate = foodItem.Count > 1 ? CopyInventoryItem(foodItem, count: foodItem.Count - 1) : null;
@@ -970,7 +970,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			ReplaceInventoryItem(workingInventoryItems, sourceItemUpdate);
 
 		var rewardPlan = InventoryAddPlan.Empty;
-		if (plan.Status == PetFeedServiceOperationPlanStatus.Rewarded)
+		if (plan.Status == PetFeedServiceOperationPlanStatus.IsRewarded())
 		{
 			if (rewardTemplate == null || _idFactory == null)
 				return;
@@ -986,7 +986,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				return;
 		}
 
-		if (plan.Status == PetFeedServiceOperationPlanStatus.Rewarded)
+		if (plan.Status == PetFeedServiceOperationPlanStatus.IsRewarded())
 			progress.Reset();
 
 		var feedProgressData = progress.GetDataForPacket();
@@ -1035,7 +1035,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			FeedProgressData: feedProgressData,
 			ItemObjectId: foodItem.ObjectId,
 			Count: plan.RemainingRequestedCount)));
-		if (plan.Status == PetFeedServiceOperationPlanStatus.Rewarded)
+		if (plan.Status == PetFeedServiceOperationPlanStatus.IsRewarded())
 		{
 			await SendPacketAsync(SmPet.Food(new SmPetFoodSnapshot(
 				SubType: 6,
@@ -7713,20 +7713,20 @@ public sealed class GameServerConnection : BaseClientConnection
 		for (var i = 0; i < passports.Length; i++)
 		{
 			var passport = passports[i];
-			if (passport.Rewarded || passport.FakeStamp)
+			if (passport.IsRewarded() || passport.IsFakeStamp())
 				continue;
-			if (!packet.Passports.TryGetValue(passport.PassportId, out var timestamps) || !timestamps.Contains(passport.ArriveEpochSeconds))
+			if (!packet.Passports.TryGetValue(passport.GetId(), out var timestamps) || !timestamps.Contains((int)(new DateTimeOffset(passport.GetArriveDate()).ToUnixTimeMilliseconds() / 1000)))
 				continue;
 
 			if (staticData != null && InventoryCapacity.GetFreeCubeSlots(player, staticData.ItemTemplates) <= 0)
 			{
 				// Java parity: AtreianPassportService.takeReward breaks only the timestamp loop for this passId.
-				if (fullInventoryBlockedPassportIds.Add(passport.PassportId))
+				if (fullInventoryBlockedPassportIds.Add(passport.GetId()))
 					await SendPacketAsync(SmSystemMessage.FullInventory());
 				continue;
 			}
 
-			var passportTemplate = staticData?.AtreianPassports.GetAtreianPassportId(passport.PassportId);
+			var passportTemplate = staticData?.AtreianPassports.GetAtreianPassportId(passport.GetId());
 			if (passportTemplate == null)
 				continue;
 
@@ -7744,7 +7744,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			}
 
 			if (passportTemplate.RewardExpireMinutes > 0
-				&& DateTimeOffset.UtcNow > new DateTimeOffset(passport.ArriveDate, TimeSpan.Zero).AddMinutes(passportTemplate.RewardExpireMinutes))
+				&& DateTimeOffset.UtcNow > new DateTimeOffset(passport.GetArriveDate(), TimeSpan.Zero).AddMinutes(passportTemplate.RewardExpireMinutes))
 			{
 				if (await _playerEnterWorldRepository.DeleteAccountPassportAsync(player.AccountId, passport))
 				{
@@ -7763,7 +7763,7 @@ public sealed class GameServerConnection : BaseClientConnection
 				itemTemplates: staticData.ItemTemplates);
 			if (rewardPlan.InventoryFull)
 			{
-				if (fullInventoryBlockedPassportIds.Add(passport.PassportId))
+				if (fullInventoryBlockedPassportIds.Add(passport.GetId()))
 					await SendPacketAsync(SmSystemMessage.FullInventory());
 				continue;
 			}
@@ -7777,8 +7777,8 @@ public sealed class GameServerConnection : BaseClientConnection
 					rewardPlan.AddedItems))
 				continue;
 
-			var rewardedPassport = passport.ClaimReward();
-			if (!await _playerEnterWorldRepository.UpdateAccountPassportRewardedAsync(player.AccountId, rewardedPassport))
+			passport.SetRewarded(true);
+			if (!await _playerEnterWorldRepository.UpdateAccountPassportRewardedAsync(player.AccountId, passport))
 				continue;
 
 			var inventoryItems = player.InventoryItems.ToList();
@@ -7801,7 +7801,7 @@ public sealed class GameServerConnection : BaseClientConnection
 					GetGeneralInfoWarehouseRestrictionFlag(rewardItemAdd.ItemId, staticData.ItemRestrictionCleanups)));
 			}
 			player.InventoryItems = inventoryItems;
-			passports[i] = rewardedPassport;
+			passports[i] = passport;
 			mutated = true;
 		}
 

@@ -244,13 +244,13 @@ public interface IPlayerEnterWorldRepository
 		IReadOnlyList<InventoryItem> addedRewardItems,
 		CancellationToken cancellationToken = default);
 
-	Task<bool> UpdateAccountPassportRewardedAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default);
+	Task<bool> UpdateAccountPassportRewardedAsync(int accountId, Passport passport, CancellationToken cancellationToken = default);
 
-	Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default);
+	Task<bool> DeleteAccountPassportAsync(int accountId, Passport passport, CancellationToken cancellationToken = default);
 
 	Task<bool> SaveAccountPassportLoginMutationAsync(
 		int accountId,
-		IReadOnlyList<PlayerPassport> newPassports,
+		IReadOnlyList<Passport> newPassports,
 		int stamps,
 		DateTime lastStamp,
 		CancellationToken cancellationToken = default);
@@ -1283,11 +1283,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int UpdateAccountPassportRewardedCalls { get; private set; }
 
-	public (int AccountId, PlayerPassport Passport)? UpdatedAccountPassportRewarded { get; private set; }
+	public (int AccountId, Passport Passport)? UpdatedAccountPassportRewarded { get; private set; }
 
 	public bool UpdateAccountPassportRewardedResult { get; init; } = true;
 
-	public Task<bool> UpdateAccountPassportRewardedAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+	public Task<bool> UpdateAccountPassportRewardedAsync(int accountId, Passport passport, CancellationToken cancellationToken = default)
 	{
 		UpdateAccountPassportRewardedCalls++;
 		UpdatedAccountPassportRewarded = (accountId, passport);
@@ -1296,11 +1296,11 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int DeleteAccountPassportCalls { get; private set; }
 
-	public (int AccountId, PlayerPassport Passport)? DeletedAccountPassport { get; private set; }
+	public (int AccountId, Passport Passport)? DeletedAccountPassport { get; private set; }
 
 	public bool DeleteAccountPassportResult { get; init; } = true;
 
-	public Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+	public Task<bool> DeleteAccountPassportAsync(int accountId, Passport passport, CancellationToken cancellationToken = default)
 	{
 		DeleteAccountPassportCalls++;
 		DeletedAccountPassport = (accountId, passport);
@@ -1309,13 +1309,13 @@ public sealed class EmptyPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public int SaveAccountPassportLoginMutationCalls { get; private set; }
 
-	public (int AccountId, IReadOnlyList<PlayerPassport> NewPassports, int Stamps, DateTime LastStamp)? SavedAccountPassportLoginMutation { get; private set; }
+	public (int AccountId, IReadOnlyList<Passport> NewPassports, int Stamps, DateTime LastStamp)? SavedAccountPassportLoginMutation { get; private set; }
 
 	public bool SaveAccountPassportLoginMutationResult { get; init; } = true;
 
 	public Task<bool> SaveAccountPassportLoginMutationAsync(
 		int accountId,
-		IReadOnlyList<PlayerPassport> newPassports,
+		IReadOnlyList<Passport> newPassports,
 		int stamps,
 		DateTime lastStamp,
 		CancellationToken cancellationToken = default)
@@ -2046,7 +2046,7 @@ internal sealed record ItemStonePersistenceRow(
 	int ProcCount);
 
 internal sealed record AccountPassportRestoreSnapshot(
-	IReadOnlyList<PlayerPassport> Passports,
+	IReadOnlyList<Passport> Passports,
 	int Stamps,
 	DateTime? LastStamp);
 
@@ -2942,7 +2942,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/AccountPassportsDAO.loadPassport(Account).
-		var passports = new List<PlayerPassport>();
+		var passports = new List<Passport>();
 		await using (var command = connection.CreateCommand())
 		{
 			command.CommandText = """
@@ -2955,7 +2955,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 			while (await reader.ReadAsync(cancellationToken))
 			{
-				passports.Add(new PlayerPassport(
+				passports.Add(new Passport(
 					ReadInt(reader, "passport_id"),
 					ReadBoolean(reader, "rewarded"),
 					ReadDateTime(reader, "arrive_date") ?? DateTime.UnixEpoch));
@@ -6901,7 +6901,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		}
 	}
 
-	public async Task<bool> UpdateAccountPassportRewardedAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+	public async Task<bool> UpdateAccountPassportRewardedAsync(int accountId, Passport passport, CancellationToken cancellationToken = default)
 	{
 		// Java parity: dao/AccountPassportsDAO.updatePassport for PersistentState.UPDATE_REQUIRED.
 		try
@@ -6917,10 +6917,10 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			command.Parameters.AddRange(
 				new[]
 				{
-					new MySqlParameter { Value = passport.Rewarded ? 1 : 0 },
+					new MySqlParameter { Value = passport.IsRewarded() ? 1 : 0 },
 					new MySqlParameter { Value = accountId },
-					new MySqlParameter { Value = passport.PassportId },
-					new MySqlParameter { Value = passport.ArriveDate },
+					new MySqlParameter { Value = passport.GetId() },
+					new MySqlParameter { Value = passport.GetArriveDate() },
 				});
 			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 		}
@@ -6929,13 +6929,13 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(
 				ex,
 				"Could not update account passport {PassportId} for account {AccountId}",
-				passport.PassportId,
+				passport.GetId(),
 				accountId);
 			return false;
 		}
 	}
 
-	public async Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+	public async Task<bool> DeleteAccountPassportAsync(int accountId, Passport passport, CancellationToken cancellationToken = default)
 	{
 		// Java parity: dao/AccountPassportsDAO.deletePassport for PersistentState.DELETED.
 		try
@@ -6951,8 +6951,8 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new[]
 				{
 					new MySqlParameter { Value = accountId },
-					new MySqlParameter { Value = passport.PassportId },
-					new MySqlParameter { Value = passport.ArriveDate },
+					new MySqlParameter { Value = passport.GetId() },
+					new MySqlParameter { Value = passport.GetArriveDate() },
 				});
 			return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 		}
@@ -6961,7 +6961,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			_logger.LogError(
 				ex,
 				"Could not delete account passport {PassportId} for account {AccountId}",
-				passport.PassportId,
+				passport.GetId(),
 				accountId);
 			return false;
 		}
@@ -6969,7 +6969,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	public async Task<bool> SaveAccountPassportLoginMutationAsync(
 		int accountId,
-		IReadOnlyList<PlayerPassport> newPassports,
+		IReadOnlyList<Passport> newPassports,
 		int stamps,
 		DateTime lastStamp,
 		CancellationToken cancellationToken = default)
@@ -6994,9 +6994,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					new[]
 					{
 						new MySqlParameter { Value = accountId },
-						new MySqlParameter { Value = passport.PassportId },
-						new MySqlParameter { Value = passport.Rewarded ? 1 : 0 },
-						new MySqlParameter { Value = passport.ArriveDate },
+						new MySqlParameter { Value = passport.GetId() },
+						new MySqlParameter { Value = passport.IsRewarded() ? 1 : 0 },
+						new MySqlParameter { Value = passport.GetArriveDate() },
 					});
 				await passportCommand.ExecuteNonQueryAsync(cancellationToken);
 			}

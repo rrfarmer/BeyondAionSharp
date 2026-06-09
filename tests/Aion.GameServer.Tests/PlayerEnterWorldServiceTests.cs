@@ -308,12 +308,12 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.True(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
 		Assert.Equal(1, player.PassportStamps);
 		Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), player.LastPassportStamp);
-		Assert.Equal(expectedDailyPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedDailyPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
 		Assert.All(player.Passports, passport =>
 		{
-			Assert.False(passport.Rewarded);
-			Assert.False(passport.FakeStamp);
-			Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), passport.ArriveDate);
+			Assert.False(passport.IsRewarded());
+			Assert.False(passport.IsFakeStamp());
+			Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), passport.GetArriveDate());
 		});
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
@@ -321,7 +321,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(10, saved.AccountId);
 		Assert.Equal(1, saved.Stamps);
 		Assert.Equal(new DateTime(2014, 3, 20, 10, 15, 30, DateTimeKind.Utc), saved.LastStamp);
-		Assert.Equal(expectedDailyPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedDailyPassportIds, saved.NewPassports.Select(passport => passport.GetId()).Order().ToArray());
 	}
 
 	[Fact]
@@ -371,21 +371,21 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(7, player.PassportStamps);
 		Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), player.LastPassportStamp);
 		Assert.NotEmpty(expectedCumulativePassportIds);
-		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
 		Assert.All(player.Passports, passport =>
 		{
-			Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), passport.ArriveDate);
+			Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), passport.GetArriveDate());
 		});
-		foreach (var passport in player.Passports.Where(passport => expectedThresholdPassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedThresholdPassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.False(passport.FakeStamp);
+			Assert.False(passport.IsRewarded());
+			Assert.False(passport.IsFakeStamp());
 		}
-		foreach (var passport in player.Passports.Where(passport => expectedCumulativePassportIds.Contains(passport.PassportId)
-			&& !expectedThresholdPassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedCumulativePassportIds.Contains(passport.GetId())
+			&& !expectedThresholdPassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
+			Assert.False(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
 		}
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
@@ -393,7 +393,7 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(10, saved.AccountId);
 		Assert.Equal(7, saved.Stamps);
 		Assert.Equal(new DateTime(2014, 4, 2, 10, 15, 30, DateTimeKind.Utc), saved.LastStamp);
-		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.GetId()).Order().ToArray());
 	}
 
 	[Fact]
@@ -449,29 +449,29 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(14, player.PassportStamps);
 		Assert.NotEmpty(expectedTakenFakePassportIds);
 		Assert.NotEmpty(expectedUpcomingFakePassportIds);
-		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
-		foreach (var passport in player.Passports.Where(passport => expectedTakenFakePassportIds.Contains(passport.PassportId)))
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
+		foreach (var passport in player.Passports.Where(passport => expectedTakenFakePassportIds.Contains(passport.GetId())))
 		{
-			Assert.True(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Taken, passport.RewardStatus);
+			Assert.True(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().TAKEN, passport.GetRewardStatus());
 		}
-		foreach (var passport in player.Passports.Where(passport => expectedThresholdPassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedThresholdPassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.False(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Available, passport.RewardStatus);
+			Assert.False(passport.IsRewarded());
+			Assert.False(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().AVAILABLE, passport.GetRewardStatus());
 		}
-		foreach (var passport in player.Passports.Where(passport => expectedUpcomingFakePassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedUpcomingFakePassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Upcoming, passport.RewardStatus);
+			Assert.False(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().UPCOMING, passport.GetRewardStatus());
 		}
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
 		var saved = repository.SavedAccountPassportLoginMutation.Value;
-		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.GetId()).Order().ToArray());
 	}
 
 	[Fact]
@@ -515,18 +515,18 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(now.UtcDateTime, player.LastPassportStamp);
 		Assert.NotEmpty(expectedTakenFakePassportIds);
 		Assert.NotEmpty(expectedUpcomingFakePassportIds);
-		Assert.Equal(expectedCumulativePassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
-		foreach (var passport in player.Passports.Where(passport => expectedTakenFakePassportIds.Contains(passport.PassportId)))
+		Assert.Equal(expectedCumulativePassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
+		foreach (var passport in player.Passports.Where(passport => expectedTakenFakePassportIds.Contains(passport.GetId())))
 		{
-			Assert.True(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Taken, passport.RewardStatus);
+			Assert.True(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().TAKEN, passport.GetRewardStatus());
 		}
-		foreach (var passport in player.Passports.Where(passport => expectedUpcomingFakePassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedUpcomingFakePassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Upcoming, passport.RewardStatus);
+			Assert.False(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().UPCOMING, passport.GetRewardStatus());
 		}
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 	}
@@ -584,23 +584,23 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal(1, player.PassportStamps);
 		Assert.NotEmpty(expectedRealAnniversaryPassportIds);
 		Assert.NotEmpty(expectedFakeAnniversaryPassportIds);
-		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
-		foreach (var passport in player.Passports.Where(passport => expectedRealAnniversaryPassportIds.Contains(passport.PassportId)))
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
+		foreach (var passport in player.Passports.Where(passport => expectedRealAnniversaryPassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.False(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Available, passport.RewardStatus);
+			Assert.False(passport.IsRewarded());
+			Assert.False(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().AVAILABLE, passport.GetRewardStatus());
 		}
-		foreach (var passport in player.Passports.Where(passport => expectedFakeAnniversaryPassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedFakeAnniversaryPassportIds.Contains(passport.GetId())))
 		{
-			Assert.True(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Taken, passport.RewardStatus);
+			Assert.True(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().TAKEN, passport.GetRewardStatus());
 		}
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
 		var saved = repository.SavedAccountPassportLoginMutation.Value;
-		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedPersistentPassportIds, saved.NewPassports.Select(passport => passport.GetId()).Order().ToArray());
 	}
 
 	[Fact]
@@ -650,18 +650,18 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.False(result.AtreianPassportLogin.ShouldSendAttendRewardMessage);
 		Assert.Equal(0, player.PassportStamps);
 		Assert.Equal(now.UtcDateTime, player.LastPassportStamp);
-		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
-		foreach (var passport in player.Passports.Where(passport => expectedRealAnniversaryPassportIds.Contains(passport.PassportId)))
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
+		foreach (var passport in player.Passports.Where(passport => expectedRealAnniversaryPassportIds.Contains(passport.GetId())))
 		{
-			Assert.False(passport.Rewarded);
-			Assert.False(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Available, passport.RewardStatus);
+			Assert.False(passport.IsRewarded());
+			Assert.False(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().AVAILABLE, passport.GetRewardStatus());
 		}
-		foreach (var passport in player.Passports.Where(passport => expectedFakeAnniversaryPassportIds.Contains(passport.PassportId)))
+		foreach (var passport in player.Passports.Where(passport => expectedFakeAnniversaryPassportIds.Contains(passport.GetId())))
 		{
-			Assert.True(passport.Rewarded);
-			Assert.True(passport.FakeStamp);
-			Assert.Equal(PlayerPassportRewardStatus.Taken, passport.RewardStatus);
+			Assert.True(passport.IsRewarded());
+			Assert.True(passport.IsFakeStamp());
+			Assert.Equal(Passport.GetRewardStatus().TAKEN, passport.GetRewardStatus());
 		}
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 	}
@@ -677,12 +677,14 @@ public sealed class PlayerEnterWorldServiceTests
 		var player = CreatePlayer(lastOnline: DateTime.Now.AddMinutes(-5));
 		player.PassportStamps = 3;
 		player.LastPassportStamp = now.UtcDateTime;
+		var fakeStampPassport = new Passport(1, rewarded: false, expiredArriveDate);
+		fakeStampPassport.SetFakeStamp(true);
 		player.Passports =
 		[
-			new PlayerPassport(1, Rewarded: false, expiredArriveDate),
-			new PlayerPassport(1, Rewarded: true, expiredArriveDate),
-			new PlayerPassport(1, Rewarded: false, expiredArriveDate, FakeStamp: true),
-			new PlayerPassport(9, Rewarded: false, expiredArriveDate),
+			new Passport(1, rewarded: false, expiredArriveDate),
+			new Passport(1, rewarded: true, expiredArriveDate),
+			fakeStampPassport,
+			new Passport(9, rewarded: false, expiredArriveDate),
 		];
 		var repository = new CapturingEnterWorldRepository
 		{
@@ -707,12 +709,12 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.NotNull(repository.DeletedAccountPassport);
 		Assert.Equal((10, 1, expiredArriveDate), (
 			repository.DeletedAccountPassport.Value.AccountId,
-			repository.DeletedAccountPassport.Value.Passport.PassportId,
-			repository.DeletedAccountPassport.Value.Passport.ArriveDate));
+			repository.DeletedAccountPassport.Value.Passport.GetId(),
+			repository.DeletedAccountPassport.Value.Passport.GetArriveDate()));
 		Assert.Equal(3, player.Passports.Count);
-		Assert.Contains(player.Passports, passport => passport.PassportId == 1 && passport.Rewarded);
-		Assert.Contains(player.Passports, passport => passport.PassportId == 1 && passport.FakeStamp);
-		Assert.Contains(player.Passports, passport => passport.PassportId == 9 && !passport.Rewarded && !passport.FakeStamp);
+		Assert.Contains(player.Passports, passport => passport.GetId() == 1 && passport.IsRewarded());
+		Assert.Contains(player.Passports, passport => passport.GetId() == 1 && passport.IsFakeStamp());
+		Assert.Contains(player.Passports, passport => passport.GetId() == 9 && !passport.IsRewarded() && !passport.IsFakeStamp());
 		Assert.Equal(3, player.PassportStamps);
 		Assert.Equal(now.UtcDateTime, player.LastPassportStamp);
 	}
@@ -728,9 +730,9 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.NotEmpty(activeDailyPassportIds);
 		var activeDailyPassportId = activeDailyPassportIds[0];
 		var existingPassports = Enumerable.Range(0, 45)
-			.Select(index => new PlayerPassport(
+			.Select(index => new Passport(
 				activeDailyPassportId,
-				Rewarded: true,
+				rewarded: true,
 				new DateTime(2014, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(index)))
 			.ToArray();
 		var oldest = existingPassports[0];
@@ -759,16 +761,16 @@ public sealed class PlayerEnterWorldServiceTests
 		Assert.Equal([expectedRemovedItemName], result.AtreianPassportLogin.ExcessRewardRemovedItemNames);
 		Assert.Equal(1, repository.DeleteAccountPassportCalls);
 		Assert.NotNull(repository.DeletedAccountPassport);
-		Assert.Equal((10, oldest.PassportId, oldest.ArriveDate), (
+		Assert.Equal((10, oldest.GetId(), oldest.GetArriveDate()), (
 			repository.DeletedAccountPassport.Value.AccountId,
-			repository.DeletedAccountPassport.Value.Passport.PassportId,
-			repository.DeletedAccountPassport.Value.Passport.ArriveDate));
-		Assert.DoesNotContain(player.Passports, passport => passport.PassportId == oldest.PassportId && passport.ArriveDate == oldest.ArriveDate);
+			repository.DeletedAccountPassport.Value.Passport.GetId(),
+			repository.DeletedAccountPassport.Value.Passport.GetArriveDate()));
+		Assert.DoesNotContain(player.Passports, passport => passport.GetId() == oldest.GetId() && passport.GetArriveDate() == oldest.GetArriveDate());
 		Assert.Equal(existingPassports.Length - 1 + result.AtreianPassportLogin.NewPassports.Count, player.Passports.Count);
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.NotNull(repository.SavedAccountPassportLoginMutation);
-		Assert.All(repository.SavedAccountPassportLoginMutation.Value.NewPassports, passport => Assert.False(passport.FakeStamp));
-		Assert.DoesNotContain(repository.SavedAccountPassportLoginMutation.Value.NewPassports, passport => passport.ArriveDate == oldest.ArriveDate);
+		Assert.All(repository.SavedAccountPassportLoginMutation.Value.NewPassports, passport => Assert.False(passport.IsFakeStamp()));
+		Assert.DoesNotContain(repository.SavedAccountPassportLoginMutation.Value.NewPassports, passport => passport.GetArriveDate() == oldest.GetArriveDate());
 		Assert.Equal(1, player.PassportStamps);
 		Assert.Equal(now.UtcDateTime, player.LastPassportStamp);
 	}
@@ -4089,12 +4091,12 @@ public sealed class PlayerEnterWorldServiceTests
 			return Task.FromResult(true);
 		}
 
-		public Task<bool> UpdateAccountPassportRewardedAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+		public Task<bool> UpdateAccountPassportRewardedAsync(int accountId, Passport passport, CancellationToken cancellationToken = default)
 		{
 			return Task.FromResult(true);
 		}
 
-		public Task<bool> DeleteAccountPassportAsync(int accountId, PlayerPassport passport, CancellationToken cancellationToken = default)
+		public Task<bool> DeleteAccountPassportAsync(int accountId, Passport passport, CancellationToken cancellationToken = default)
 		{
 			DeleteAccountPassportCalls++;
 			DeletedAccountPassport = (accountId, passport);
@@ -4103,15 +4105,15 @@ public sealed class PlayerEnterWorldServiceTests
 
 		public int DeleteAccountPassportCalls { get; private set; }
 
-		public (int AccountId, PlayerPassport Passport)? DeletedAccountPassport { get; private set; }
+		public (int AccountId, Passport Passport)? DeletedAccountPassport { get; private set; }
 
 		public int SaveAccountPassportLoginMutationCalls { get; private set; }
 
-		public (int AccountId, IReadOnlyList<PlayerPassport> NewPassports, int Stamps, DateTime LastStamp)? SavedAccountPassportLoginMutation { get; private set; }
+		public (int AccountId, IReadOnlyList<Passport> NewPassports, int Stamps, DateTime LastStamp)? SavedAccountPassportLoginMutation { get; private set; }
 
 		public Task<bool> SaveAccountPassportLoginMutationAsync(
 			int accountId,
-			IReadOnlyList<PlayerPassport> newPassports,
+			IReadOnlyList<Passport> newPassports,
 			int stamps,
 			DateTime lastStamp,
 			CancellationToken cancellationToken = default)

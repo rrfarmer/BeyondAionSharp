@@ -16,7 +16,7 @@ public enum EnterWorldCheckMessage : byte
 public sealed record AtreianPassportLoginResult(
 	bool ShouldSendSnapshot,
 	bool ShouldSendAttendRewardMessage,
-	IReadOnlyList<PlayerPassport> NewPassports,
+	IReadOnlyList<Passport> NewPassports,
 	IReadOnlyList<string?> ExcessRewardRemovedItemNames);
 
 public sealed record PlayerEnterWorldResult(

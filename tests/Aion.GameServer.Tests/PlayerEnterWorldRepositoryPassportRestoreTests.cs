@@ -21,10 +21,10 @@ public sealed class PlayerEnterWorldRepositoryPassportRestoreTests
 		var lastStamp = new DateTime(2026, 6, 1, 9, 0, 0, DateTimeKind.Utc);
 		var snapshot = new AccountPassportRestoreSnapshot(
 			[
-				new PlayerPassport(
-					PassportId: 3003,
-					Rewarded: true,
-					ArriveDate: DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime)
+				new Passport(
+					id: 3003,
+					rewarded: true,
+					arriveDate: DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime)
 			],
 			Stamps: 9,
 			LastStamp: lastStamp);
@@ -45,7 +45,7 @@ public sealed class PlayerEnterWorldRepositoryPassportRestoreTests
 		Assert.Equal(1, ReadShort(payload, 6));
 		Assert.Equal(3003, ReadInt(payload, 8));
 		Assert.Equal(9, ReadInt(payload, 12));
-		Assert.Equal(2, ReadInt(payload, 16)); // Passport.RewardStatus.TAKEN.
+		Assert.Equal(2, ReadInt(payload, 16)); // Passport.GetRewardStatus().TAKEN.
 		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
 	}
 

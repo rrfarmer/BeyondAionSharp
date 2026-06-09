@@ -77,10 +77,10 @@ public sealed class CmAtreianPassportTests
 	[Fact]
 	public void SmAtreianPassport_WritePayload_WritesJavaSnapshotFields()
 	{
-		var passport = new PlayerPassport(
-			PassportId: 1001,
-			Rewarded: false,
-			ArriveDate: DateTimeOffset.FromUnixTimeSeconds(1_717_200_000).UtcDateTime);
+		var passport = new Passport(
+			id: 1001,
+			rewarded: false,
+			arriveDate: DateTimeOffset.FromUnixTimeSeconds(1_717_200_000).UtcDateTime);
 		var payload = SerializeUnencryptedPayload(new SmAtreianPassport(
 			[passport],
 			stamps: 7,
@@ -92,7 +92,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(1, ReadShort(payload, 6));
 		Assert.Equal(1001, ReadInt(payload, 8));
 		Assert.Equal(7, ReadInt(payload, 12));
-		Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
+		Assert.Equal(1, ReadInt(payload, 16)); // Passport.GetRewardStatus().AVAILABLE.
 		Assert.Equal(1_717_200_000, ReadInt(payload, 20));
 	}
 
@@ -109,10 +109,10 @@ public sealed class CmAtreianPassportTests
 			PassportStamps = 3,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 2002,
-					Rewarded: true,
-					ArriveDate: DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime)
+				new Passport(
+					id: 2002,
+					rewarded: true,
+					arriveDate: DateTimeOffset.FromUnixTimeSeconds(1_717_286_400).UtcDateTime)
 			],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
@@ -133,7 +133,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(1, ReadShort(payload, 6));
 		Assert.Equal(2002, ReadInt(payload, 8));
 		Assert.Equal(3, ReadInt(payload, 12));
-		Assert.Equal(2, ReadInt(payload, 16)); // Passport.RewardStatus.TAKEN.
+		Assert.Equal(2, ReadInt(payload, 16)); // Passport.GetRewardStatus().TAKEN.
 		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
 	}
 
@@ -167,10 +167,10 @@ public sealed class CmAtreianPassportTests
 			PassportStamps = 5,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 9,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 9,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
@@ -198,9 +198,9 @@ public sealed class CmAtreianPassportTests
 		Assert.NotNull(repository.UpdatedAccountPassportRewarded);
 		var update = repository.UpdatedAccountPassportRewarded.Value;
 		Assert.Equal(78, update.AccountId);
-		Assert.Equal(9, update.Passport.PassportId);
-		Assert.True(update.Passport.Rewarded);
-		Assert.True(Assert.Single(player.Passports, passport => passport.PassportId == 9 && passport.ArriveDate == arriveDate).Rewarded);
+		Assert.Equal(9, update.Passport.GetId());
+		Assert.True(update.Passport.IsRewarded());
+		Assert.True(Assert.Single(player.Passports, passport => passport.GetId() == 9 && passport.GetArriveDate() == arriveDate).IsRewarded());
 
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.Equal(6, player.PassportStamps);
@@ -221,7 +221,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
 		Assert.Equal(9, ReadInt(payload, 8));
 		Assert.Equal(6, ReadInt(payload, 12));
-		Assert.Equal(2, ReadInt(payload, 16)); // Passport.RewardStatus.TAKEN.
+		Assert.Equal(2, ReadInt(payload, 16)); // Passport.GetRewardStatus().TAKEN.
 		Assert.Equal(1_717_286_400, ReadInt(payload, 20));
 	}
 
@@ -273,10 +273,10 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = AtreianPassportActiveClock().UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 9,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 9,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			InventoryItems = [rewardStack, .. fillerItems],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
@@ -296,7 +296,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.DeleteAccountPassportCalls);
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.Equal(1, player.InventoryItems.Single(item => item.ObjectId == rewardStack.ObjectId).Count);
-		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 9 && passport.ArriveDate == arriveDate).Rewarded);
+		Assert.False(Assert.Single(player.Passports, passport => passport.GetId() == 9 && passport.GetArriveDate() == arriveDate).IsRewarded());
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
 		Assert.Collection(
 			pair.SentPackets,
@@ -312,7 +312,7 @@ public sealed class CmAtreianPassportTests
 				Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
 				Assert.Equal(9, ReadInt(payload, 8));
 				Assert.Equal(5, ReadInt(payload, 12));
-				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
+				Assert.Equal(1, ReadInt(payload, 16)); // Passport.GetRewardStatus().AVAILABLE.
 				Assert.Equal(1_717_286_400, ReadInt(payload, 20));
 			});
 	}
@@ -355,10 +355,10 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = AtreianPassportCumulativeLoginClock().UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 43,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 43,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
@@ -376,7 +376,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(0, repository.DeleteAccountPassportCalls);
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
-		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 43 && passport.ArriveDate == arriveDate).Rewarded);
+		Assert.False(Assert.Single(player.Passports, passport => passport.GetId() == 43 && passport.GetArriveDate() == arriveDate).IsRewarded());
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
 		Assert.Collection(
 			pair.SentPackets,
@@ -395,7 +395,7 @@ public sealed class CmAtreianPassportTests
 				Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
 				Assert.Equal(43, ReadInt(payload, 8));
 				Assert.Equal(27, ReadInt(payload, 12));
-				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
+				Assert.Equal(1, ReadInt(payload, 16)); // Passport.GetRewardStatus().AVAILABLE.
 			});
 	}
 
@@ -440,14 +440,14 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = AtreianPassportCumulativeLoginClock().UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 9,
-					Rewarded: false,
-					ArriveDate: arriveDate),
-				new PlayerPassport(
-					PassportId: 43,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 9,
+					rewarded: false,
+					arriveDate: arriveDate),
+				new Passport(
+					id: 43,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			InventoryItems = fullCubeItems.ToArray(),
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
@@ -468,8 +468,8 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(0, repository.DeleteAccountPassportCalls);
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
-		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 9 && passport.ArriveDate == arriveDate).Rewarded);
-		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 43 && passport.ArriveDate == arriveDate).Rewarded);
+		Assert.False(Assert.Single(player.Passports, passport => passport.GetId() == 9 && passport.GetArriveDate() == arriveDate).IsRewarded());
+		Assert.False(Assert.Single(player.Passports, passport => passport.GetId() == 43 && passport.GetArriveDate() == arriveDate).IsRewarded());
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
 		Assert.Collection(
 			pair.SentPackets,
@@ -532,10 +532,10 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = AtreianPassportCumulativeLoginClock().UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 43,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 43,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			InventoryItems = fullCubeItems.ToArray(),
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
@@ -554,7 +554,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(0, repository.DeleteAccountPassportCalls);
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
-		Assert.False(Assert.Single(player.Passports, passport => passport.PassportId == 43 && passport.ArriveDate == arriveDate).Rewarded);
+		Assert.False(Assert.Single(player.Passports, passport => passport.GetId() == 43 && passport.GetArriveDate() == arriveDate).IsRewarded());
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmSystemMessage { MessageId: 1402573 });
 		Assert.Collection(
@@ -571,7 +571,7 @@ public sealed class CmAtreianPassportTests
 				Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
 				Assert.Equal(43, ReadInt(payload, 8));
 				Assert.Equal(27, ReadInt(payload, 12));
-				Assert.Equal(1, ReadInt(payload, 16)); // Passport.RewardStatus.AVAILABLE.
+				Assert.Equal(1, ReadInt(payload, 16)); // Passport.GetRewardStatus().AVAILABLE.
 			});
 	}
 
@@ -615,10 +615,10 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = AtreianPassportActiveClock().UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 1,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 1,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			InventoryItems = fullCubeItems.ToArray(),
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
@@ -637,7 +637,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(1, repository.DeleteAccountPassportCalls);
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
-		Assert.DoesNotContain(player.Passports, passport => passport.PassportId == 1 && passport.ArriveDate == arriveDate);
+		Assert.DoesNotContain(player.Passports, passport => passport.GetId() == 1 && passport.GetArriveDate() == arriveDate);
 		Assert.DoesNotContain(pair.SentPackets, packet => packet is SmInventoryUpdateItem or SmInventoryAddItem);
 		Assert.Collection(
 			pair.SentPackets,
@@ -687,10 +687,10 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = AtreianPassportActiveClock().UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 1,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 1,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
@@ -708,13 +708,13 @@ public sealed class CmAtreianPassportTests
 		Assert.NotNull(repository.DeletedAccountPassport);
 		var deleted = repository.DeletedAccountPassport.Value;
 		Assert.Equal(79, deleted.AccountId);
-		Assert.Equal(1, deleted.Passport.PassportId);
-		Assert.Equal(arriveDate, deleted.Passport.ArriveDate);
+		Assert.Equal(1, deleted.Passport.GetId());
+		Assert.Equal(arriveDate, deleted.Passport.GetArriveDate());
 		Assert.Equal(0, repository.SaveInventoryRewardMutationCalls);
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(0, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.Empty(player.InventoryItems);
-		Assert.DoesNotContain(player.Passports, passport => passport.PassportId == 1 && passport.ArriveDate == arriveDate);
+		Assert.DoesNotContain(player.Passports, passport => passport.GetId() == 1 && passport.GetArriveDate() == arriveDate);
 
 		var response = Assert.Single(pair.SentPackets);
 		var passport = Assert.IsType<SmAtreianPassport>(response);
@@ -752,10 +752,10 @@ public sealed class CmAtreianPassportTests
 			PassportStamps = 7,
 			Passports =
 			[
-				new PlayerPassport(
-					PassportId: 9,
-					Rewarded: false,
-					ArriveDate: arriveDate)
+				new Passport(
+					id: 9,
+					rewarded: false,
+					arriveDate: arriveDate)
 			],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};
@@ -773,7 +773,7 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(0, repository.UpdateAccountPassportRewardedCalls);
 		Assert.Equal(0, repository.DeleteAccountPassportCalls);
 		Assert.Empty(player.InventoryItems);
-		Assert.False(Assert.Single(player.Passports).Rewarded);
+		Assert.False(Assert.Single(player.Passports).IsRewarded());
 		Assert.Empty(pair.SentPackets);
 	}
 
@@ -827,7 +827,7 @@ public sealed class CmAtreianPassportTests
 		Assert.NotNull(passportPacket);
 		Assert.Equal(1, repository.SaveAccountPassportLoginMutationCalls);
 		Assert.Equal(1, player.PassportStamps);
-		Assert.Equal(expectedDailyPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedDailyPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
 		var payload = SerializeUnencryptedPayload(passportPacket);
 		Assert.Equal(2014, ReadShort(payload, 0));
 		Assert.Equal(1, ReadShort(payload, 2));
@@ -848,9 +848,9 @@ public sealed class CmAtreianPassportTests
 		Assert.NotEmpty(activeDailyPassportIds);
 		var activeDailyPassportId = activeDailyPassportIds[0];
 		var existingPassports = Enumerable.Range(0, 45)
-			.Select(index => new PlayerPassport(
+			.Select(index => new Passport(
 				activeDailyPassportId,
-				Rewarded: true,
+				rewarded: true,
 				new DateTime(2014, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddDays(index)))
 			.ToArray();
 		var oldest = existingPassports[0];
@@ -901,21 +901,21 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal([expectedRemovedItemName], removeMessage.Parameters);
 		Assert.Equal(1, repository.DeleteAccountPassportCalls);
 		Assert.NotNull(repository.DeletedAccountPassport);
-		Assert.Equal((player.AccountId, oldest.PassportId, oldest.ArriveDate), (
+		Assert.Equal((player.AccountId, oldest.GetId(), oldest.GetArriveDate()), (
 			repository.DeletedAccountPassport.Value.AccountId,
-			repository.DeletedAccountPassport.Value.Passport.PassportId,
-			repository.DeletedAccountPassport.Value.Passport.ArriveDate));
-		Assert.DoesNotContain(player.Passports, passport => passport.PassportId == oldest.PassportId && passport.ArriveDate == oldest.ArriveDate);
+			repository.DeletedAccountPassport.Value.Passport.GetId(),
+			repository.DeletedAccountPassport.Value.Passport.GetArriveDate()));
+		Assert.DoesNotContain(player.Passports, passport => passport.GetId() == oldest.GetId() && passport.GetArriveDate() == oldest.GetArriveDate());
 
 		var passportPacket = pair.SentPackets.OfType<SmAtreianPassport>().LastOrDefault();
 		Assert.NotNull(passportPacket);
 		var payload = SerializeUnencryptedPayload(passportPacket);
 		Assert.Equal(player.Passports.Count, ReadShort(payload, 6));
-		var removedArriveSeconds = (int)new DateTimeOffset(oldest.ArriveDate, TimeSpan.Zero).ToUnixTimeSeconds();
+		var removedArriveSeconds = (int)new DateTimeOffset(oldest.GetArriveDate(), TimeSpan.Zero).ToUnixTimeSeconds();
 		for (var i = 0; i < ReadShort(payload, 6); i++)
 		{
 			var offset = 8 + (i * 16);
-			Assert.False(ReadInt(payload, offset) == oldest.PassportId
+			Assert.False(ReadInt(payload, offset) == oldest.GetId()
 				&& ReadInt(payload, offset + 12) == removedArriveSeconds);
 		}
 	}
@@ -1013,7 +1013,7 @@ public sealed class CmAtreianPassportTests
 		Assert.NotEmpty(expectedUpcomingFakePassportIds);
 		Assert.NotEmpty(expectedRealAnniversaryPassportIds);
 		Assert.NotEmpty(expectedFakeAnniversaryPassportIds);
-		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.PassportId).Order().ToArray());
+		Assert.Equal(expectedPassportIds, player.Passports.Select(passport => passport.GetId()).Order().ToArray());
 		var payload = SerializeUnencryptedPayload(passportPacket);
 		var passportRows = ReadPassportRows(payload);
 		Assert.Equal(2014, ReadShort(payload, 0));
@@ -1022,15 +1022,15 @@ public sealed class CmAtreianPassportTests
 		Assert.Equal(expectedPassportIds.Length, ReadShort(payload, 6));
 		Assert.Equal(expectedPassportIds, passportRows.Keys.Order().ToArray());
 		foreach (var passportId in expectedThresholdPassportIds)
-			Assert.Equal((int)PlayerPassportRewardStatus.Available, passportRows[passportId]);
+			Assert.Equal((int)Passport.GetRewardStatus().AVAILABLE, passportRows[passportId]);
 		foreach (var passportId in expectedTakenFakePassportIds)
-			Assert.Equal((int)PlayerPassportRewardStatus.Taken, passportRows[passportId]);
+			Assert.Equal((int)Passport.GetRewardStatus().TAKEN, passportRows[passportId]);
 		foreach (var passportId in expectedUpcomingFakePassportIds)
-			Assert.Equal((int)PlayerPassportRewardStatus.Upcoming, passportRows[passportId]);
+			Assert.Equal((int)Passport.GetRewardStatus().UPCOMING, passportRows[passportId]);
 		foreach (var passportId in expectedRealAnniversaryPassportIds)
-			Assert.Equal((int)PlayerPassportRewardStatus.Available, passportRows[passportId]);
+			Assert.Equal((int)Passport.GetRewardStatus().AVAILABLE, passportRows[passportId]);
 		foreach (var passportId in expectedFakeAnniversaryPassportIds)
-			Assert.Equal((int)PlayerPassportRewardStatus.Taken, passportRows[passportId]);
+			Assert.Equal((int)Passport.GetRewardStatus().TAKEN, passportRows[passportId]);
 	}
 
 	[Fact]
@@ -1052,7 +1052,7 @@ public sealed class CmAtreianPassportTests
 			LastPassportStamp = now.UtcDateTime,
 			Passports =
 			[
-				new PlayerPassport(1, Rewarded: false, expiredArriveDate),
+				new Passport(1, rewarded: false, expiredArriveDate),
 			],
 			Position = new WorldPosition(210010000, 0, 0, 0, 0),
 		};

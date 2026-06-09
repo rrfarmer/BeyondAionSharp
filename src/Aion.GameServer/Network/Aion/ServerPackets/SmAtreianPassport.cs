@@ -7,11 +7,11 @@ public sealed class SmAtreianPassport : GameServerPacket
 {
 	public const int PacketOpCode = 299;
 	private readonly DateOnly _creationDate;
-	private readonly IReadOnlyList<PlayerPassport> _passports;
+	private readonly IReadOnlyList<Passport> _passports;
 	private readonly int _stamps;
 
 	public SmAtreianPassport(
-		IReadOnlyList<PlayerPassport> passports,
+		IReadOnlyList<Passport> passports,
 		int stamps,
 		DateTime creationDate)
 		: base(PacketOpCode)
@@ -30,10 +30,10 @@ public sealed class SmAtreianPassport : GameServerPacket
 		buffer.WriteH(_passports.Count);
 		foreach (var passport in _passports)
 		{
-			buffer.WriteD(passport.PassportId);
+			buffer.WriteD(passport.GetId());
 			buffer.WriteD(_stamps);
-			buffer.WriteD((int)passport.RewardStatus);
-			buffer.WriteD(passport.ArriveEpochSeconds);
+			buffer.WriteD(passport.GetRewardStatus().GetId());
+			buffer.WriteD((int)(new DateTimeOffset(passport.GetArriveDate()).ToUnixTimeMilliseconds() / 1000));
 		}
 	}
 }

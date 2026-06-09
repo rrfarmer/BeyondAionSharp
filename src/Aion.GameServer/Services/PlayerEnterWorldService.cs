@@ -226,7 +226,7 @@ public sealed class PlayerEnterWorldService
 
 		await PurgeExpiredAtreianPassportsAsync(player, atreianPassports, now, cancellationToken);
 		var doReward = CheckAtreianPassportOnlineDate(player.LastPassportStamp, nowOffset) && player.PassportStamps < 28;
-		var newPassports = new List<PlayerPassport>();
+		var newPassports = new List<Passport>();
 		var attendDay = GetAtreianPassportAttendDay(nowOffset);
 		var accountAgeMonths = GetAtreianPassportAccountAgeInMonths(player.CreationDate, now);
 		foreach (var template in atreianPassports.Passports)
@@ -238,20 +238,21 @@ public sealed class PlayerEnterWorldService
 			{
 				case "DAILY":
 					if (doReward && !HasAtreianPassportForDay(player.Passports.Concat(newPassports), template.Id, attendDay))
-						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
+						newPassports.Add(new Passport(template.Id, rewarded: false, NormalizePassportTimestamp(now)));
 					break;
 				case "CUMULATIVE":
 					if (doReward && template.AttendNum == player.PassportStamps + 1)
 					{
-						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
+						newPassports.Add(new Passport(template.Id, rewarded: false, NormalizePassportTimestamp(now)));
 					}
 					else if (!HasAtreianPassport(player.Passports.Concat(newPassports), template.Id))
 					{
-						newPassports.Add(new PlayerPassport(
+						var fakeStampPassport = new Passport(
 							template.Id,
-							Rewarded: template.AttendNum <= player.PassportStamps,
-							NormalizePassportTimestamp(now),
-							FakeStamp: true));
+							rewarded: template.AttendNum <= player.PassportStamps,
+							NormalizePassportTimestamp(now));
+						fakeStampPassport.SetFakeStamp(true);
+						newPassports.Add(fakeStampPassport);
 					}
 					break;
 				case "ANNIVERSARY":
@@ -260,15 +261,16 @@ public sealed class PlayerEnterWorldService
 
 					if (accountAgeMonths == template.AttendNum)
 					{
-						newPassports.Add(new PlayerPassport(template.Id, Rewarded: false, NormalizePassportTimestamp(now)));
+						newPassports.Add(new Passport(template.Id, rewarded: false, NormalizePassportTimestamp(now)));
 					}
 					else if (accountAgeMonths > template.AttendNum)
 					{
-						newPassports.Add(new PlayerPassport(
+						var fakeStampPassport = new Passport(
 							template.Id,
-							Rewarded: true,
-							NormalizePassportTimestamp(now),
-							FakeStamp: true));
+							rewarded: true,
+							NormalizePassportTimestamp(now));
+						fakeStampPassport.SetFakeStamp(true);
+						newPassports.Add(fakeStampPassport);
 					}
 					break;
 			}
@@ -288,7 +290,7 @@ public sealed class PlayerEnterWorldService
 				atreianPassports,
 				newPassports,
 				cancellationToken);
-			var persistentNewPassports = newPassports.Where(passport => !passport.FakeStamp).ToArray();
+			var persistentNewPassports = newPassports.Where(passport => !passport.IsFakeStamp()).ToArray();
 			await _repository.SaveAccountPassportLoginMutationAsync(
 				player.AccountId,
 				persistentNewPassports,
@@ -307,7 +309,7 @@ public sealed class PlayerEnterWorldService
 	private async Task<IReadOnlyList<string?>> CheckAtreianPassportLimitAsync(
 		Player player,
 		AtreianPassportTable atreianPassports,
-		List<PlayerPassport> newPassports,
+		List<Passport> newPassports,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: AtreianPassportService.checkPassportLimit.
@@ -315,10 +317,10 @@ public sealed class PlayerEnterWorldService
 			return [];
 
 		var oldest = player.Passports
-			.Where(passport => !passport.FakeStamp)
-			.OrderBy(passport => passport.ArriveDate)
+			.Where(passport => !passport.IsFakeStamp())
+			.OrderBy(passport => passport.GetArriveDate())
 			.FirstOrDefault()
-			?? player.Passports.OrderBy(passport => passport.ArriveDate).FirstOrDefault();
+			?? player.Passports.OrderBy(passport => passport.GetArriveDate()).FirstOrDefault();
 		if (oldest == null)
 			return [];
 
@@ -337,7 +339,7 @@ public sealed class PlayerEnterWorldService
 		if (newPassportIndex >= 0)
 			newPassports.RemoveAt(newPassportIndex);
 
-		var passportTemplate = atreianPassports.GetAtreianPassportId(oldest.PassportId);
+		var passportTemplate = atreianPassports.GetAtreianPassportId(oldest.GetId());
 		var itemTemplate = passportTemplate == null
 			? null
 			: _runtimeContext?.DataManager?.StaticData.ItemTemplates.GetItemTemplate(passportTemplate.RewardItemId);
@@ -356,14 +358,14 @@ public sealed class PlayerEnterWorldService
 		for (var i = 0; i < passports.Length; i++)
 		{
 			var passport = passports[i];
-			if (passport.Rewarded || passport.FakeStamp)
+			if (passport.IsRewarded() || passport.IsFakeStamp())
 				continue;
 
-			var template = atreianPassports.GetAtreianPassportId(passport.PassportId);
+			var template = atreianPassports.GetAtreianPassportId(passport.GetId());
 			if (template == null || template.RewardExpireMinutes <= 0)
 				continue;
 
-			var deadline = passport.ArriveDate.AddMinutes(template.RewardExpireMinutes);
+			var deadline = passport.GetArriveDate().AddMinutes(template.RewardExpireMinutes);
 			if (now <= deadline)
 				continue;
 
@@ -390,24 +392,24 @@ public sealed class PlayerEnterWorldService
 		return DateOnly.FromDateTime(serverTime.AddHours(-AtreianPassportAttendPlanService.AttendResetHour).DateTime);
 	}
 
-	private static bool HasAtreianPassportForDay(IEnumerable<PlayerPassport> passports, int passportId, DateOnly attendDay)
+	private static bool HasAtreianPassportForDay(IEnumerable<Passport> passports, int passportId, DateOnly attendDay)
 	{
 		// Java parity: PassportsList.hasPassportForDay compares the stored arrive-date calendar day.
-		return passports.Any(passport => passport.PassportId == passportId && DateOnly.FromDateTime(passport.ArriveDate) == attendDay);
+		return passports.Any(passport => passport.GetId() == passportId && DateOnly.FromDateTime(passport.GetArriveDate()) == attendDay);
 	}
 
-	private static bool HasAtreianPassport(IEnumerable<PlayerPassport> passports, int passportId)
+	private static bool HasAtreianPassport(IEnumerable<Passport> passports, int passportId)
 	{
 		// Java parity: PassportsList.isPassportPresent compares only the Passport template id.
-		return passports.Any(passport => passport.PassportId == passportId);
+		return passports.Any(passport => passport.GetId() == passportId);
 	}
 
-	private static bool IsSameAtreianPassportRow(PlayerPassport left, PlayerPassport right)
+	private static bool IsSameAtreianPassportRow(Passport left, Passport right)
 	{
-		return left.PassportId == right.PassportId
-			&& left.ArriveDate == right.ArriveDate
-			&& left.Rewarded == right.Rewarded
-			&& left.FakeStamp == right.FakeStamp;
+		return left.GetId() == right.GetId()
+			&& left.GetArriveDate() == right.GetArriveDate()
+			&& left.IsRewarded() == right.IsRewarded()
+			&& left.IsFakeStamp() == right.IsFakeStamp();
 	}
 
 	private static int GetAtreianPassportAccountAgeInMonths(DateTime creationDate, DateTime now)
