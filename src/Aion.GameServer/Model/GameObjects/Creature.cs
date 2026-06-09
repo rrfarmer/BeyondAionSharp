@@ -125,7 +125,7 @@ public abstract class Creature : VisibleObject
     }
 
     /// <summary>Set current casting skill or null when skill ends.</summary>
-    public void SetCasting(Skill castingSkill)
+    public virtual void SetCasting(Skill castingSkill)
     {
         if (castingSkill != null)
             skillNumber++;
