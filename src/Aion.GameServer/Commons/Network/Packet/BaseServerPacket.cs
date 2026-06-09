@@ -1,0 +1,87 @@
+using Aion.GameServer.Commons.Nio;
+
+namespace Aion.GameServer.Commons.Network.Packet;
+
+/// <summary>Base class for every Server Packet. Java parity: commons/network/packet/BaseServerPacket (-Nemesiss-). writeS uses UTF-16 chars + '\0' terminator (java.nio putChar).</summary>
+public abstract class BaseServerPacket : BasePacket
+{
+    /// <summary>ByteBuffer that contains this packet data.</summary>
+    public ByteBuffer buf;
+
+    protected BaseServerPacket() : base()
+    {
+    }
+
+    protected BaseServerPacket(int opCode) : base(opCode)
+    {
+    }
+
+    public void SetBuf(ByteBuffer buf)
+    {
+        this.buf = buf;
+    }
+
+    /// <summary>Write int to buffer.</summary>
+    protected void WriteD(int value)
+    {
+        buf.PutInt(value);
+    }
+
+    /// <summary>Write short to buffer.</summary>
+    protected void WriteH(int value)
+    {
+        buf.PutShort((short)value);
+    }
+
+    /// <summary>Write byte to buffer.</summary>
+    protected void WriteC(int value)
+    {
+        buf.Put((byte)value);
+    }
+
+    /// <summary>Write byte to buffer.</summary>
+    protected void WriteC(byte value)
+    {
+        buf.Put(value);
+    }
+
+    /// <summary>Write double to buffer.</summary>
+    protected void WriteDF(double value)
+    {
+        buf.PutDouble(value);
+    }
+
+    /// <summary>Write float to buffer.</summary>
+    protected void WriteF(float value)
+    {
+        buf.PutFloat(value);
+    }
+
+    /// <summary>Write long to buffer.</summary>
+    protected void WriteQ(long value)
+    {
+        buf.PutLong(value);
+    }
+
+    /// <summary>Write String to buffer (UTF-16 LE chars + null terminator).</summary>
+    protected void WriteS(string text)
+    {
+        if (text == null)
+        {
+            buf.PutChar('\0');
+        }
+        else
+        {
+            int len = text.Length;
+            for (int i = 0; i < len; i++)
+                buf.PutChar(text[i]);
+            buf.PutChar('\0');
+        }
+    }
+
+    /// <summary>Write byte array to buffer.</summary>
+    protected void WriteB(byte[] data)
+    {
+        buf.Put(data);
+    }
+}
