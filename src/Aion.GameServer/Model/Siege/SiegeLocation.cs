@@ -201,11 +201,11 @@ public class SiegeLocation : IZoneHandler
         return false;
     }
 
-    public void ClearLocation()
+    public virtual void ClearLocation()
     {
     }
 
-    public void OnEnterZone(Creature creature, ZoneInstance zone)
+    public virtual void OnEnterZone(Creature creature, ZoneInstance zone)
     {
         if (!creatures.ContainsKey(creature.GetObjectId()))
         {
@@ -217,7 +217,7 @@ public class SiegeLocation : IZoneHandler
         }
     }
 
-    public void OnLeaveZone(Creature creature, ZoneInstance zone)
+    public virtual void OnLeaveZone(Creature creature, ZoneInstance zone)
     {
         if (!IsInsideLocation(creature))
         {
