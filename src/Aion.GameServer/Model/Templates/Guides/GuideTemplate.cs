@@ -9,9 +9,9 @@ namespace Aion.GameServer.Model.Templates.Guides;
 public class GuideTemplate
 {
     [XmlAttribute("level")] private int level;
-    [XmlAttribute("classType")] private PlayerClass classType;
+    [XmlAttribute("classType")] private PlayerClass? classType;
     [XmlAttribute("title")] private string title;
-    [XmlAttribute("race")] private Race race;
+    [XmlAttribute("race")] private Race? race;
     [XmlElement("reward_info")] private string rewardInfo = "";
     [XmlElement("message")] private string message = "";
     [XmlElement("select")] private string select = "";
@@ -26,7 +26,7 @@ public class GuideTemplate
     }
 
     /// <returns>the classId</returns>
-    public PlayerClass GetPlayerClass()
+    public PlayerClass? GetPlayerClass()
     {
         return this.classType;
     }
@@ -38,7 +38,7 @@ public class GuideTemplate
     }
 
     /// <returns>the race</returns>
-    public Race GetRace()
+    public Race? GetRace()
     {
         return this.race;
     }
