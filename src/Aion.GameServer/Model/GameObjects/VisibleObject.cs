@@ -114,7 +114,7 @@ public abstract class VisibleObject : AionObject
     public SpawnTemplate? GetSpawn() => _spawnTemplate;
 
     // Java parity: getObjectTemplate()
-    public VisibleObjectTemplate GetObjectTemplate() => _objectTemplate;
+    public virtual VisibleObjectTemplate GetObjectTemplate() => _objectTemplate;
 
     // Java parity: setPosition(WorldPosition)
     public void SetPosition(WorldPosition position) => Position = position;

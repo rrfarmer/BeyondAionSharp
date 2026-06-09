@@ -56,7 +56,7 @@ public abstract class Creature : VisibleObject
         this.aggroList = CreateAggroList();
     }
 
-    public Aion.GameServer.Controllers.Movement.CreatureMoveController GetMoveController()
+    public virtual Aion.GameServer.Controllers.Movement.CreatureMoveController GetMoveController()
     {
         return moveController;
     }
@@ -71,7 +71,7 @@ public abstract class Creature : VisibleObject
         return (CreatureController)base.GetController();
     }
 
-    public CreatureLifeStats GetLifeStats()
+    public virtual CreatureLifeStats GetLifeStats()
     {
         return lifeStats;
     }
@@ -81,7 +81,7 @@ public abstract class Creature : VisibleObject
         this.lifeStats = lifeStats;
     }
 
-    public CreatureGameStats GetGameStats()
+    public virtual CreatureGameStats GetGameStats()
     {
         return gameStats;
     }
@@ -258,7 +258,7 @@ public abstract class Creature : VisibleObject
         return visualState != CreatureVisualState.Visible.GetId() && visualState != CreatureVisualState.Blinking.GetId();
     }
 
-    public int GetSeeState()
+    public virtual int GetSeeState()
     {
         return seeState;
     }
@@ -310,7 +310,7 @@ public abstract class Creature : VisibleObject
         return observeController;
     }
 
-    public bool IsEnemy(Creature creature)
+    public virtual bool IsEnemy(Creature creature)
     {
         return creature.IsEnemyFrom(this);
     }
