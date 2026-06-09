@@ -119,7 +119,7 @@ public partial class Player
         return flyStartTime;
     }
 
-    public Aion.GameServer.Model.Flightpath.FlyPathEntry GetCurrentFlyPath()
+    public Aion.GameServer.Model.Templates.Flypath.FlyPathEntry GetCurrentFlyPath()
     {
         return flyLocationId;
     }

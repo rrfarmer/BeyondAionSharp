@@ -307,15 +307,15 @@ public partial class Player
 
     public void SetFlightTeleportId(int flightTeleportId)
     {
-        SetFlightPath(new Aion.GameServer.Model.Flightpath.FlightPath(Aion.GameServer.Model.Flightpath.FlightPath.Type.FLIGHT_TRANSPORTER, flightTeleportId, 0));
+        SetFlightPath(new Aion.GameServer.Model.Templates.Flypath.FlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type.FLIGHT_TRANSPORTER, flightTeleportId, 0));
     }
 
-    public void SetFlightPath(Aion.GameServer.Model.Flightpath.FlightPath flightPath)
+    public void SetFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath flightPath)
     {
         this.flightPath = flightPath;
     }
 
-    public bool IsUsingFlightPath(Aion.GameServer.Model.Flightpath.FlightPath.Type type)
+    public bool IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type type)
     {
         return flightPath != null && flightPath.GetType_() == type && IsInState(CreatureState.Flying);
     }
@@ -325,12 +325,12 @@ public partial class Player
         return flightPath != null && IsInState(CreatureState.Flying);
     }
 
-    public Aion.GameServer.Model.Flightpath.FlightPath GetFlightPath()
+    public Aion.GameServer.Model.Templates.Flypath.FlightPath GetFlightPath()
     {
         return flightPath;
     }
 
-    public void SetCurrentFlypath(Aion.GameServer.Model.Flightpath.FlyPathEntry path)
+    public void SetCurrentFlypath(Aion.GameServer.Model.Templates.Flypath.FlyPathEntry path)
     {
         this.flyLocationId = path;
         if (path != null)

@@ -62,7 +62,7 @@ public partial class Player : Creature
     private int flyState = 0;
     private Aion.GameServer.Controllers.FlyController flyController;
     private Aion.GameServer.Model.Gametime.CraftingTask craftingTask;
-    private Aion.GameServer.Model.Flightpath.FlightPath flightPath;
+    private Aion.GameServer.Model.Templates.Flypath.FlightPath flightPath;
     private Summon summon;
     private Pet pet;
     private Kisk kisk;
@@ -97,7 +97,7 @@ public partial class Player : Creature
 
     /// <summary>Connection of this Player.</summary>
     private Aion.GameServer.Network.Aion.AionConnection clientConnection;
-    private Aion.GameServer.Model.Flightpath.FlyPathEntry flyLocationId;
+    private Aion.GameServer.Model.Templates.Flypath.FlyPathEntry flyLocationId;
     private long flyStartTime;
 
     private Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList emotions;

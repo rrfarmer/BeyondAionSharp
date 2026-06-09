@@ -659,7 +659,7 @@ public class PlayerController : CreatureController<Player.Player>
     public void OnFlyTeleportEnd()
     {
         Player.Player player = GetOwner();
-        if (player.IsUsingFlightPath(Aion.GameServer.Model.Flightpath.FlightPath.Type.WINDSTREAM))
+        if (player.IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type.WINDSTREAM))
         {
             player.UnsetState(CreatureState.Flying);
             player.UnsetFlyState(Aion.GameServer.Model.FlyState.FLYING);
@@ -675,7 +675,7 @@ public class PlayerController : CreatureController<Player.Player>
             if (Aion.GameServer.Configs.Main.SecurityConfig.ENABLE_FLYPATH_VALIDATOR)
             {
                 long diff = (CurrentTimeMillis() - player.GetFlyStartTime());
-                Aion.GameServer.Model.Flightpath.FlyPathEntry path = player.GetCurrentFlyPath();
+                Aion.GameServer.Model.Templates.Flypath.FlyPathEntry path = player.GetCurrentFlyPath();
 
                 if (player.GetWorldId() != path.GetEndWorldId())
                 {
