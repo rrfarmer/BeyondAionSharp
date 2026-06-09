@@ -3285,6 +3285,162 @@ public sealed class SmSystemMessage : GameServerPacket
 		return new SmSystemMessage(1400335, value0);
 	}
 
+	public static SmSystemMessage MsgLdf4AdvanceChiefV01()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V01 -> 1402506.
+		return new SmSystemMessage(1402506);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV02()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V02 -> 1402507.
+		return new SmSystemMessage(1402507);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV03()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V03 -> 1402508.
+		return new SmSystemMessage(1402508);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV04()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V04 -> 1402509.
+		return new SmSystemMessage(1402509);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV05()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V05 -> 1402510.
+		return new SmSystemMessage(1402510);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV06()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V06 -> 1402511.
+		return new SmSystemMessage(1402511);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV07()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V07 -> 1402512.
+		return new SmSystemMessage(1402512);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV08()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V08 -> 1402513.
+		return new SmSystemMessage(1402513);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV09()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V09 -> 1402514.
+		return new SmSystemMessage(1402514);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV10()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V10 -> 1402515.
+		return new SmSystemMessage(1402515);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV11()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V11 -> 1402516.
+		return new SmSystemMessage(1402516);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV12()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V12 -> 1402517.
+		return new SmSystemMessage(1402517);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceChiefV13()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V13 -> 1402518.
+		return new SmSystemMessage(1402518);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV01()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V01 -> 1402519.
+		return new SmSystemMessage(1402519);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV02()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V02 -> 1402520.
+		return new SmSystemMessage(1402520);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV03()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V03 -> 1402521.
+		return new SmSystemMessage(1402521);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV04()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V04 -> 1402522.
+		return new SmSystemMessage(1402522);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV05()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V05 -> 1402523.
+		return new SmSystemMessage(1402523);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV06()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V06 -> 1402524.
+		return new SmSystemMessage(1402524);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV07()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V07 -> 1402525.
+		return new SmSystemMessage(1402525);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV08()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V08 -> 1402526.
+		return new SmSystemMessage(1402526);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV09()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V09 -> 1402527.
+		return new SmSystemMessage(1402527);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV10()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V10 -> 1402528.
+		return new SmSystemMessage(1402528);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV11()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V11 -> 1402529.
+		return new SmSystemMessage(1402529);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV12()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V12 -> 1402530.
+		return new SmSystemMessage(1402530);
+	}
+
+	public static SmSystemMessage MsgLdf4AdvanceKillerV13()
+	{
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V13 -> 1402531.
+		return new SmSystemMessage(1402531);
+	}
+
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: SM_SYSTEM_MESSAGE.writeImpl.
