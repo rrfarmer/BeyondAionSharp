@@ -36,7 +36,7 @@ public partial class Player : Creature
     private Aion.GameServer.Model.GameObjects.Player.PetList toyPetList;
     private Aion.GameServer.Model.GameObjects.Player.Mailbox mailbox;
     private Aion.GameServer.Model.GameObjects.PrivateStore store;
-    private Aion.GameServer.Model.GameObjects.Player.TitleList titleList;
+    private Aion.GameServer.Model.GameObjects.Player.Title.TitleList titleList;
     private Aion.GameServer.Questengine.Model.QuestStateList questStateList;
     private Aion.GameServer.Model.GameObjects.Player.RecipeList recipeList;
     private List<Aion.GameServer.Model.House.House> houses;
@@ -135,7 +135,7 @@ public partial class Player : Creature
 
         this.requester = new Aion.GameServer.Network.Aion.ResponseRequester(this);
         this.questStateList = new Aion.GameServer.Questengine.Model.QuestStateList();
-        this.titleList = new Aion.GameServer.Model.GameObjects.Player.TitleList();
+        this.titleList = new Aion.GameServer.Model.GameObjects.Player.Title.TitleList();
         this.equipment = new Aion.GameServer.Model.GameObjects.Player.Equipment(this);
         this.inventory = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.CUBE);
         this.regularWarehouse = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.REGULAR_WAREHOUSE);

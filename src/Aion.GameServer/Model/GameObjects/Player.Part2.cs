@@ -97,12 +97,12 @@ public partial class Player
         this.playerSettings = playerSettings;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.TitleList GetTitleList()
+    public Aion.GameServer.Model.GameObjects.Player.Title.TitleList GetTitleList()
     {
         return titleList;
     }
 
-    public void SetTitleList(Aion.GameServer.Model.GameObjects.Player.TitleList titleList)
+    public void SetTitleList(Aion.GameServer.Model.GameObjects.Player.Title.TitleList titleList)
     {
         this.titleList = titleList;
         titleList.SetOwner(this);
