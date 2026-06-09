@@ -23,7 +23,7 @@ public class AuditLogger
         if (LoggingConfig.LOG_AUDIT)
             log.LogInformation(player + " " + message);
 
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player gm in Aion.GameServer.Services.GMService.GetInstance().GetOnlineStaffMembers())
+        foreach (Aion.GameServer.Model.GameObjects.Player.Player gm in GMService.GetInstance().GetOnlineStaffMembers())
         {
             if (gm.HasAccess(AdminConfig.AUDIT_INFO))
                 Aion.GameServer.Utils.PacketSendUtility.SendMessage(gm, Aion.GameServer.Utils.ChatUtil.Name(player) + " " + message, ChatType.YELLOW);
