@@ -129,12 +129,12 @@ public partial class Player
         this.abyssRankListUpdateMask = 0;
     }
 
-    public void SetAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Player.AbyssRankUpdateType type)
+    public void SetAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Player.AbyssRank.AbyssRankUpdateType type)
     {
         this.abyssRankListUpdateMask |= type.Value();
     }
 
-    public bool IsAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Player.AbyssRankUpdateType type)
+    public bool IsAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Player.AbyssRank.AbyssRankUpdateType type)
     {
         return (abyssRankListUpdateMask & type.Value()) == type.Value();
     }
