@@ -50,19 +50,19 @@ public abstract class CreatureController : VisibleObjectController
     }
 
     /// <summary>Removes owner from the visualObjects lists of all known objects who can't see him anymore.</summary>
-    public void OnHide()
+    public virtual void OnHide()
     {
         GetOwner().GetKnownList().ForEachObject(other => other.GetKnownList().UpdateVisibleObject(GetOwner()));
     }
 
     /// <summary>Re-adds owner to the visualObjects lists of all known objects.</summary>
-    public void OnHideEnd()
+    public virtual void OnHideEnd()
     {
         GetOwner().GetKnownList().ForEachObject(other => other.GetKnownList().UpdateVisibleObject(GetOwner()));
     }
 
     /// <summary>Perform tasks on Creature starting to move.</summary>
-    public void OnStartMove()
+    public virtual void OnStartMove()
     {
         GetOwner().GetMoveController().SetInMove(true);
         GetOwner().GetObserveController().NotifyMoveObservers();
@@ -70,7 +70,7 @@ public abstract class CreatureController : VisibleObjectController
     }
 
     /// <summary>Perform tasks on Creature move in progress.</summary>
-    public void OnMove()
+    public virtual void OnMove()
     {
         GetOwner().GetObserveController().NotifyMoveObservers();
         NotifyAIOnMove();
@@ -78,7 +78,7 @@ public abstract class CreatureController : VisibleObjectController
     }
 
     /// <summary>Perform tasks on Creature stop move.</summary>
-    public void OnStopMove()
+    public virtual void OnStopMove()
     {
         GetOwner().GetMoveController().SetInMove(false);
         GetOwner().GetObserveController().NotifyMoveObservers();
@@ -489,13 +489,13 @@ public abstract class CreatureController : VisibleObjectController
         return castingSkill;
     }
 
-    public void CancelCurrentSkill(Creature lastAttacker)
+    public virtual void CancelCurrentSkill(Creature lastAttacker)
     {
         CancelCurrentSkill(lastAttacker, null);
     }
 
     /// <summary>Cancel current skill and remove cooldown.</summary>
-    public void CancelCurrentSkill(Creature lastAttacker, SM_SYSTEM_MESSAGE msg)
+    public virtual void CancelCurrentSkill(Creature lastAttacker, SM_SYSTEM_MESSAGE msg)
     {
         Skill castingSkill = AbortCast();
         if (castingSkill == null)
