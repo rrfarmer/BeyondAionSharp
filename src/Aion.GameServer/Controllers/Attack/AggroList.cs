@@ -223,7 +223,7 @@ public class AggroList
         return new DamageList(_aggroList.Values, Owner);
     }
 
-    protected bool IsAware(Creature creature)
+    protected virtual bool IsAware(Creature creature)
     {
         return creature != null && Owner.GetKnownList().Knows(creature) && !Owner.GetEffectController().IsAbnormalSet(AbnormalState.SANCTUARY)
             && (_aggroList.ContainsKey(creature.ObjectId) || creature.IsEnemy(Owner) || DataManager.TRIBE_RELATIONS_DATA.IsHostileRelation(Owner.GetTribe(), creature.GetTribe()));
