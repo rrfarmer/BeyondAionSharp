@@ -1,0 +1,38 @@
+using System.Collections.Generic;
+using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Skillengine.Model;
+
+namespace Aion.GameServer.Network.Aion.Serverpackets;
+
+/// <summary>Java parity: network/aion/serverpackets/SM_ABNORMAL_STATE (Avol, ATracer). Sends a creature's active abnormal effect icons (effector/skill/level/slot/remaining time) + abnormal bitmask. Converges PlayerEffectController. Collection->ICollection; getTargetSlot().ordinal()->(int)GetTargetSlot(). Effect/AionServerPacket red-tolerated.</summary>
+public class SM_ABNORMAL_STATE : AionServerPacket
+{
+    private ICollection<Effect> effects;
+    private int abnormals;
+    private int slot;
+
+    public SM_ABNORMAL_STATE(ICollection<Effect> effects, int abnormals, int slot)
+    {
+        this.effects = effects;
+        this.abnormals = abnormals;
+        this.slot = slot;
+    }
+
+    protected override void WriteImpl(AionConnection con)
+    {
+        WriteD(abnormals);
+        WriteD(0);
+        WriteD(0); // 4.5
+        WriteC(slot);
+        WriteH(effects.Count);
+
+        foreach (Effect effect in effects)
+        {
+            WriteD(effect.GetEffectorId());
+            WriteH(effect.GetSkillId());
+            WriteC(effect.GetSkillLevel());
+            WriteC((int)effect.GetTargetSlot());
+            WriteD(effect.GetRemainingTimeToDisplay());
+        }
+    }
+}
