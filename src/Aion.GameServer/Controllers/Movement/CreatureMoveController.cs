@@ -33,9 +33,9 @@ public abstract class CreatureMoveController
     // Java parity: moveToDestination()
     public virtual void MoveToDestination() { }
 
-    public float GetTargetX2() => TargetDestX;
-    public float GetTargetY2() => TargetDestY;
-    public float GetTargetZ2() => TargetDestZ;
+    public virtual float GetTargetX2() => TargetDestX;
+    public virtual float GetTargetY2() => TargetDestY;
+    public virtual float GetTargetZ2() => TargetDestZ;
 
     // Java parity: setNewDirection(float, float, float, byte)
     public void SetNewDirection(float x, float y, float z, byte heading)
