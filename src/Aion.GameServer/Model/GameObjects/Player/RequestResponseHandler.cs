@@ -3,10 +3,21 @@ using Aion.GameServer.Model.GameObjects;
 namespace Aion.GameServer.Model.GameObjects.Player;
 
 /// <summary>
+/// Non-generic base for RequestResponseHandler&lt;T&gt;. Java has only the single generic class; C# adds this base so
+/// heterogeneous handlers can be stored together and invoked through the type-independent Handle() — the C#
+/// equivalent of Java's <c>RequestResponseHandler&lt;? extends Creature&gt;</c> wildcard (Handle does not use T).
+/// </summary>
+public abstract class RequestResponseHandler
+{
+    /// <summary>Called when a response is received (0 = no, 1 = yes).</summary>
+    public abstract void Handle(Player responder, int response);
+}
+
+/// <summary>
 /// Implemented by handlers of CM_QUESTION_RESPONSE responses.
 /// Java parity: model/gameobjects/player/RequestResponseHandler&lt;T extends Creature&gt;.
 /// </summary>
-public abstract class RequestResponseHandler<T> where T : Creature
+public abstract class RequestResponseHandler<T> : RequestResponseHandler where T : Creature
 {
     private readonly T requester;
 
@@ -16,7 +27,7 @@ public abstract class RequestResponseHandler<T> where T : Creature
     }
 
     /// <summary>Called when a response is received (0 = no, 1 = yes).</summary>
-    public void Handle(Player responder, int response)
+    public override void Handle(Player responder, int response)
     {
         if (response == 0)
             DenyRequest(requester, responder);
