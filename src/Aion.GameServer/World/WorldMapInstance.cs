@@ -118,11 +118,12 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
                 }
                 if (updateNearbyQuests && updateNearbyQuestsTask == null) // delayed with null check to prevent packet spam on multispawns (bases, siege, ...)
                 {
-                    updateNearbyQuestsTask = ThreadPoolManager.GetInstance().Schedule(() =>
+                    updateNearbyQuestsTask = ThreadPoolManager.GetInstance().Schedule(ct =>
                     {
                         updateNearbyQuestsTask = null;
                         ForEachPlayer(player => player.GetController().UpdateNearbyQuests());
-                    }, 1500);
+                        return System.Threading.Tasks.ValueTask.CompletedTask;
+                    }, System.TimeSpan.FromMilliseconds(1500));
                 }
             }
         }
