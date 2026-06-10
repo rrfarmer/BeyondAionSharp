@@ -183,7 +183,7 @@ public abstract class EffectTemplate
     public int GetAccMod2() => AccMod2;
 
     /// <summary>The base value (damage, heal, etc.) per the skill template (matches the description value).</summary>
-    protected int CalculateBaseValue(SkillEngine.Model.Effect effect)
+    protected virtual int CalculateBaseValue(SkillEngine.Model.Effect effect)
     {
         return Value + Delta * effect.GetSkillLevel();
     }
@@ -260,7 +260,7 @@ public abstract class EffectTemplate
         return CanDodgeOrResist(effect) && (!CheckEffectResistRate(effect, statEnum) || !CheckDodgeOrResistRate(effect));
     }
 
-    protected bool CanDodgeOrResist(SkillEngine.Model.Effect effect)
+    protected virtual bool CanDodgeOrResist(SkillEngine.Model.Effect effect)
     {
         if (NoResist)
             return false;
@@ -295,7 +295,7 @@ public abstract class EffectTemplate
     {
     }
 
-    public void CalculateDamage(SkillEngine.Model.Effect effect)
+    public virtual void CalculateDamage(SkillEngine.Model.Effect effect)
     {
         // evaluate skill reflect for non-dmg skills
         AttackResult attackResult = new AttackResult(0, effect.GetAttackStatus(), Hittype);
