@@ -190,6 +190,12 @@ public class Account : IEnumerable<PlayerAccountData>
         return new List<PlayerAccountData>(players.Values);
     }
 
+    /// <summary>C# adaptation of Java `iterator().remove()` (players.values() iterator): removes the entry from the backing map with no side effects.</summary>
+    public void Remove(PlayerAccountData pad)
+    {
+        players.Remove(pad.GetPlayerCommonData().GetPlayerObjId());
+    }
+
     public IEnumerator<PlayerAccountData> GetEnumerator()
     {
         return players.Values.GetEnumerator();
