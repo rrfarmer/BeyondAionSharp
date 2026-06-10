@@ -149,7 +149,7 @@ public abstract class EffectTemplate
 
     public bool IsNoResist() => NoResist;
 
-    public int GetCritProbMod2() => CritProbMod2;
+    public virtual int GetCritProbMod2() => CritProbMod2;
 
     public int GetCritAddDmg1() => CritAddDmg1;
 
