@@ -11,6 +11,13 @@ public static class ChatUtil
 		return string.Concat("$", (char)(shifted & 0xffff), (char)((shifted >>> 16) & 0xffff));
 	}
 
+	public static string Color(string message, System.Drawing.Color? color)
+	{
+		// Java parity: utils/ChatUtil.color(String, java.awt.Color). null defaults to WHITE.
+		System.Drawing.Color c = color ?? System.Drawing.Color.White;
+		return Color(message, c.R, c.G, c.B);
+	}
+
 	public static string Color(string message, int rgb)
 	{
 		// Java parity: utils/ChatUtil.color(String, int).
