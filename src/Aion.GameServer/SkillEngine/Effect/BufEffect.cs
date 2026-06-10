@@ -1,32 +1,30 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.SkillEngine.change;
-using Aion.GameServer.SkillEngine.condition;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Skillengine.Change;
+using Aion.GameServer.Skillengine.Condition;
+using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.Skillengine.Effect;
 
-/// <summary>
-/// Java parity: skillengine/effect/BufEffect (ATracer). Base for stat-modifying buff effects.
-/// </summary>
+/// <summary>Java parity: skillengine/effect/BufEffect (ATracer) abstract : EffectTemplate. @XmlAttribute→[XmlAttribute]; **CreatureGameStats&lt;? extends Creature&gt;→non-generic CreatureGameStats**; inline LoggerFactory.getLogger().warn→inline ILogger; switch(Func) ADD/PERCENT/REPLACE. Inherited `change` + EffectTemplate/StatXFunction red-tolerated.</summary>
+[XmlType("BufEffect")]
 public abstract class BufEffect : EffectTemplate
 {
-    private static readonly ILogger log = NullLogger.Instance;
+    [XmlAttribute]
+    protected bool maxstat;
 
-    [XmlAttribute("maxstat")]
-    public bool maxstat;
-
-    public override void ApplyEffect(SkillEngine.Model.Effect effect)
+    public override void ApplyEffect(Effect effect)
     {
         effect.AddToEffectedController();
     }
 
-    /// <summary>Will be called from effect controller when effect starts.</summary>
-    public override void StartEffect(SkillEngine.Model.Effect effect)
+    /// <summary>Will be called from effect controller when effect starts</summary>
+    public override void StartEffect(Effect effect)
     {
         Creature effected = effect.GetEffected();
         CreatureGameStats cgs = effected.GetGameStats();
@@ -40,7 +38,7 @@ public abstract class BufEffect : EffectTemplate
             effected.GetLifeStats().SynchronizeWithMaxStats();
     }
 
-    protected virtual List<IStatFunction> GetModifiers(SkillEngine.Model.Effect effect)
+    protected List<IStatFunction> GetModifiers(Effect effect)
     {
         int skillId = effect.GetSkillId();
         int skillLvl = effect.GetSkillLevel();
@@ -54,23 +52,23 @@ public abstract class BufEffect : EffectTemplate
         {
             if (changeItem.GetStat() == null)
             {
-                log.LogWarning("Skill stat has wrong name for skillid: " + skillId);
+                NullLoggerFactory.Instance.CreateLogger(nameof(BufEffect)).LogWarning("Skill stat has wrong name for skillid: " + skillId);
                 continue;
             }
 
             int valueWithDelta = changeItem.GetValue() + changeItem.GetDelta() * skillLvl;
 
-            Conditions? conditions = changeItem.GetConditions();
+            Conditions conditions = changeItem.GetConditions();
             switch (changeItem.GetFunc())
             {
                 case Func.ADD:
-                    modifiers.Add(new StatAddFunction(changeItem.GetStat()!.Value, valueWithDelta, true).WithConditions(conditions));
+                    modifiers.Add(new StatAddFunction(changeItem.GetStat(), valueWithDelta, true).WithConditions(conditions));
                     break;
                 case Func.PERCENT:
-                    modifiers.Add(new StatRateFunction(changeItem.GetStat()!.Value, valueWithDelta, true).WithConditions(conditions));
+                    modifiers.Add(new StatRateFunction(changeItem.GetStat(), valueWithDelta, true).WithConditions(conditions));
                     break;
                 case Func.REPLACE:
-                    modifiers.Add(new StatSetFunction(changeItem.GetStat()!.Value, valueWithDelta).WithConditions(conditions));
+                    modifiers.Add(new StatSetFunction(changeItem.GetStat(), valueWithDelta).WithConditions(conditions));
                     break;
             }
         }
