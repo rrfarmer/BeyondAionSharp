@@ -42,8 +42,8 @@ public class StatFunction : IStatFunction
     // Java parity: getPriority()
     public virtual int GetPriority() => 0x10;
 
-    // Java parity: getValue()
-    public int GetValue() => Value;
+    // Java parity: getValue() — non-final in Java (StatArmorMasteryFunction overrides it), so virtual.
+    public virtual int GetValue() => Value;
 
     // Java parity: validate(Stat2)
     public bool Validate(Stat2 stat) => _conditions == null || _conditions.Validate(stat, this);
