@@ -33,8 +33,8 @@ public class ZoneInstance
     public bool Revalidate(Creature creature) =>
         _mapId == creature.GetWorldId() && _template.GetArea().IsInside3D(creature.GetX(), creature.GetY(), creature.GetZ());
 
-    // Java parity: synchronized onEnter(Creature)
-    public bool OnEnter(Creature creature)
+    // Java parity: synchronized onEnter(Creature) — non-final in Java (Fly/NoFly/PvP ZoneInstance override), so virtual.
+    public virtual bool OnEnter(Creature creature)
     {
         lock (this)
         {
@@ -49,8 +49,8 @@ public class ZoneInstance
         }
     }
 
-    // Java parity: synchronized onLeave(Creature)
-    public bool OnLeave(Creature creature)
+    // Java parity: synchronized onLeave(Creature) — non-final in Java (Fly/NoFly/PvP ZoneInstance override), so virtual.
+    public virtual bool OnLeave(Creature creature)
     {
         lock (this)
         {
