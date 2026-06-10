@@ -307,7 +307,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
         {
             if (zoneInstance.GetAreaTemplate().IntersectsRectangle(regionZone))
                 return true;
-            if (zoneInstance.GetZoneTemplate().GetZoneType() == ZoneClassName.DUMMY)
+            if (zoneInstance.GetZoneTemplate().GetZoneType() == ZoneClassName.Dummy)
                 log.LogError("Region " + regionId + " should intersect with whole map zone!!! (map=" + mapId + ")");
             return false;
         }).ToArray();
