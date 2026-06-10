@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Aion.Commons.Utils;
 using Aion.GameServer.Custom.Instance.Neuralnetwork;
 using Aion.GameServer.Dao;
@@ -198,7 +199,7 @@ public class RoahCustomInstanceHandler : GeneralInstanceHandler
                     PlayerCommonData pcd = PlayerService.GetOrLoadPlayerCommonData(playerObjId);
                     float usedTime = (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - Interlocked.Read(ref startTime)) / 1000f;
                     achievedDps = (int)Math.Floor(npc.GetLifeStats().GetMaxHp() / usedTime + 0.5f);
-                    log.Info(string.Format(
+                    log.LogInformation(string.Format(
                         "[CI_ROAH] Player [id={0}, name={1}, class={2}, rank={3}({4}), isPrebuffed={5}] succeeded in destroying the artifact in {6:F3}s (DPS:{7}).",
                         pcd.GetPlayerObjId(), pcd.GetName(), pcd.GetPlayerClass(), CustomInstanceRankEnumExtensions.GetRankDescription(rank), rank, isPrebuffed, usedTime,
                         achievedDps));
@@ -368,7 +369,7 @@ public class RoahCustomInstanceHandler : GeneralInstanceHandler
             if (CustomInstanceService.GetInstance().ChangePlayerRank(playerObjId, rank, achievedDps))
             {
                 string name = player != null ? player.GetName() : PlayerDAO.GetPlayerNameByObjId(playerObjId);
-                log.Info(string.Format("[CI_ROAH] Rank changed for Player [id={0}, name={1}, oldRank={2}({3}), newRank={4}({5})]", playerObjId, name,
+                log.LogInformation(string.Format("[CI_ROAH] Rank changed for Player [id={0}, name={1}, oldRank={2}({3}), newRank={4}({5})]", playerObjId, name,
                     CustomInstanceRankEnumExtensions.GetRankDescription(oldRank), oldRank, CustomInstanceRankEnumExtensions.GetRankDescription(rank), rank));
             }
         }
