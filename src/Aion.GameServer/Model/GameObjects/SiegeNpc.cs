@@ -3,7 +3,7 @@ namespace Aion.GameServer.Model.GameObjects.Siege;
 /// <summary>Java parity: model/gameobjects/siege/SiegeNpc extends Npc.</summary>
 public class SiegeNpc : Npc
 {
-    public SiegeNpc(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.Siege.SiegeSpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate)
+    public SiegeNpc(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.Siegespawns.SiegeSpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate)
         : base(controller, spawnTemplate, objectTemplate)
     {
     }
@@ -18,9 +18,9 @@ public class SiegeNpc : Npc
         return GetSpawn().GetSiegeId();
     }
 
-    public override Aion.GameServer.Model.Templates.Spawns.Siege.SiegeSpawnTemplate GetSpawn()
+    public override Aion.GameServer.Model.Templates.Spawns.Siegespawns.SiegeSpawnTemplate GetSpawn()
     {
-        return (Aion.GameServer.Model.Templates.Spawns.Siege.SiegeSpawnTemplate)base.GetSpawn();
+        return (Aion.GameServer.Model.Templates.Spawns.Siegespawns.SiegeSpawnTemplate)base.GetSpawn();
     }
 
     public override bool IsEnemyFrom(Creature creature)
