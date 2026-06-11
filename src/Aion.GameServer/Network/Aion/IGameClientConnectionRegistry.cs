@@ -6,10 +6,6 @@ namespace Aion.GameServer.Network.Aion;
 
 public interface IGameClientConnectionRegistry
 {
-	void RegisterPlayerConnection(int playerObjectId, GameServerConnection connection);
-
-	void UnregisterPlayerConnection(int playerObjectId, GameServerConnection connection);
-
 	bool TryGetOnlinePlayerByName(string playerName, out Player? player);
 
 	void ForEachOnlinePlayer(Action<Player> action);
