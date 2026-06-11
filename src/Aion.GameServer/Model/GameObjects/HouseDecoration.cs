@@ -8,7 +8,7 @@ public class HouseDecoration : AionObject, IPersistable
 {
     private readonly int templateId;
     private sbyte room;
-    private PersistentState persistentState;
+    private IPersistable.PersistentState persistentState;
 
     public HouseDecoration(int objectId, int templateId) : this(objectId, templateId, -1)
     {
@@ -18,7 +18,7 @@ public class HouseDecoration : AionObject, IPersistable
     {
         this.templateId = templateId;
         this.room = (sbyte)room;
-        this.persistentState = PersistentState.NEW;
+        this.persistentState = IPersistable.PersistentState.NEW;
     }
 
     public int GetTemplateId()
@@ -31,12 +31,12 @@ public class HouseDecoration : AionObject, IPersistable
         return DataManager.HOUSE_PARTS_DATA.GetPartById(templateId);
     }
 
-    public PersistentState GetPersistentState()
+    public IPersistable.PersistentState GetPersistentState()
     {
         return persistentState;
     }
 
-    public void SetPersistentState(PersistentState persistentState)
+    public void SetPersistentState(IPersistable.PersistentState persistentState)
     {
         this.persistentState = persistentState;
     }

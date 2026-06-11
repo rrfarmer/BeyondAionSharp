@@ -16,3 +16,8 @@ global using Item = Aion.GameServer.Model.GameObjects.Item;
 // java.lang.Runnable has no ambient C# equivalent; ported 1:1 as a commons interface and
 // surfaced project-wide so `implements Runnable` / `(Runnable)` / `where T : Runnable` resolve.
 global using Runnable = Aion.Commons.Lang.Runnable;
+
+// The L10n template interface was ported as IL10n (C# I-prefix), but Java-faithful code
+// references the bare name `L10n` as a base type. Alias it (bare type-position only; the
+// ChatUtil.L10n(int) method and GetL10n()/l10nId members are member-access and unaffected).
+global using L10n = Aion.GameServer.Model.Templates.IL10n;

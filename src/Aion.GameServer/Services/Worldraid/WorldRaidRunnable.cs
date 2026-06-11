@@ -3,6 +3,7 @@ using System.Linq;
 using Aion.GameServer.Commons.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Configs.Schedule;
 
 namespace Aion.GameServer.Services.Worldraid;
 
