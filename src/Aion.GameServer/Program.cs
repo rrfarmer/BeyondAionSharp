@@ -78,8 +78,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<QuestRewardService>();
 			services.AddSingleton<CustomLevelRewardExecutionService>();
 			services.AddSingleton<QuestXpCustomRewardRuntimeInputAdapterService>();
-			services.AddSingleton<QuestFinishCustomRewardRuntimeSideEffectAdapterService>();
-			services.AddSingleton<SystemMailRewardPersistenceExecutionService>();
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
 			services.AddSingleton<WorldNpcTeamApRewardService>();
 			services.AddSingleton<PvpApRewardService>();
@@ -135,7 +133,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();
-			services.AddSingleton<VortexInvasionRuntime>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
 			services.AddSingleton<HousingWorldService>();
@@ -174,7 +171,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<ICharacterCreationRepository, MySqlCharacterCreationRepository>();
 			services.AddSingleton<IPlayerEnterWorldRepository, MySqlPlayerEnterWorldRepository>();
 			services.AddSingleton<IMailRepository, MySqlMailRepository>();
-			services.AddSingleton<ISystemMailRewardPersistenceOperationExecutor, SystemMailRewardPersistenceOperationExecutor>();
 			services.AddSingleton<ICustomLevelRewardRepository, MySqlCustomLevelRewardRepository>();
 			services.AddSingleton<IBrokerRepository, MySqlBrokerRepository>();
 			services.AddSingleton<ISocialRepository, MySqlSocialRepository>();
