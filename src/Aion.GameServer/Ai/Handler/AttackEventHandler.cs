@@ -8,7 +8,7 @@ namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
 /// Java parity: ai/handler/AttackEventHandler (ATracer). Attack/forced-attack/attack-complete/finish dispatch with fear/confuse gating.
-/// AIState.RETURNING/IDLE/WALKING/FEAR/CONFUSE/FIGHT -> PascalCase; AIEventType.NOT_AT_HOME -> AiEventType.NotAtHome; AbnormalState
+/// AIState.RETURNING/IDLE/WALKING/FEAR/CONFUSE/FIGHT -> PascalCase; AiEventType.NOT_AT_HOME -> AiEventType.NotAtHome; AbnormalState
 /// .FEAR/CONFUSE SCREAMING. AttackManager/EmoteManager/WalkManager red-tolerated where unported.
 /// </summary>
 public class AttackEventHandler

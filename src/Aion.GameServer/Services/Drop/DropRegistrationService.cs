@@ -92,7 +92,7 @@ public class DropRegistrationService
         }
 
         npc.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnDropRegistered(npc, winnerObj);
-        npc.GetAi().OnGeneralEvent(AIEventType.DROP_REGISTERED);
+        npc.GetAi().OnGeneralEvent(AiEventType.DROP_REGISTERED);
 
         foreach (Player p in allowedLooters)
         {

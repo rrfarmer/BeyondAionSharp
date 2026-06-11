@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.Team.Common.Events;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Model.Team.Common.Legacy;
 
 namespace Aion.GameServer.Model.Team.Alliance.Events;
 

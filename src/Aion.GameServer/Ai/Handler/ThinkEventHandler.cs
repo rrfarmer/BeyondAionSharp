@@ -13,7 +13,7 @@ namespace Aion.GameServer.Ai.Handler;
 /// <summary>
 /// Java parity: ai/handler/ThinkEventHandler (ATracer). NPC think tick: dead/thinking guards, inactive-region branch, fight/idle
 /// dispatch. try/finally unsetThinking; switch on AiState (Fight/Idle/Walking); instanceof+pattern -> is Creature; AISubState.FREEZE/NONE;
-/// AIEventType.NOT_AT_HOME/ATTACK_FINISH/BACK_HOME -> NotAtHome/AttackFinish/BackHome; schedule(Runnable,500) -> async ThreadPool idiom.
+/// AiEventType.NOT_AT_HOME/ATTACK_FINISH/BACK_HOME -> NotAtHome/AttackFinish/BackHome; schedule(Runnable,500) -> async ThreadPool idiom.
 /// AttackManager/WalkManager/SM_HEADING_UPDATE red-tolerated where unported.
 /// </summary>
 public class ThinkEventHandler

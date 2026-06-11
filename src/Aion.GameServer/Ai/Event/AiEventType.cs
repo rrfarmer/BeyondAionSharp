@@ -2,7 +2,7 @@ namespace Aion.GameServer.Ai.Event;
 
 /// <summary>
 /// Event types dispatched to the AI system.
-/// Java parity: ai/event/AIEventType.
+/// Java parity: ai/event/AiEventType.
 /// </summary>
 public enum AiEventType
 {

@@ -8,7 +8,7 @@ namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
 /// Java parity: ai/handler/FollowEventHandler (ATracer). Follow/creatureMoved/stopFollow dispatch. AIState.FOLLOWING/IDLE -> Following/
-/// Idle; AIEventType.TARGET_TOOFAR -> AiEventType.TargetToofar; isInRange(AbstractAI&lt;? extends Creature&gt;) -> generic method
+/// Idle; AiEventType.TARGET_TOOFAR -> AiEventType.TargetToofar; isInRange(AbstractAI&lt;? extends Creature&gt;) -> generic method
 /// IsInRange&lt;T&gt;(AbstractAI&lt;T&gt;) where T : Creature (NpcAI=AbstractAI&lt;Npc&gt; can't satisfy an invariant AbstractAI&lt;Creature&gt; param).
 /// EmoteManager/AIActions red-tolerated where unported.
 /// </summary>

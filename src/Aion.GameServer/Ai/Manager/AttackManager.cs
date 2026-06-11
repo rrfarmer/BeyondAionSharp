@@ -10,7 +10,7 @@ namespace Aion.GameServer.Ai.Manager;
 
 /// <summary>
 /// Java parity: ai/manager/AttackManager (ATracer). Drives NPC attack scheduling/intention + target-too-far chase/giveup logic.
-/// AttackIntention SCREAMING (SIMPLE_ATTACK/SKILL_ATTACK/FINISH_ATTACK); AISubState.NONE/TARGET_LOST -> None/TargetLost; AIEventType.
+/// AttackIntention SCREAMING (SIMPLE_ATTACK/SKILL_ATTACK/FINISH_ATTACK); AISubState.NONE/TARGET_LOST -> None/TargetLost; AiEventType.
 /// TARGET_CHANGED/TARGET_GIVEUP -> TargetChanged/TargetGiveup; AggroTarget.MOST_HATED SCREAMING; instanceof -> is. schedule(Runnable,2000)
 /// -> async ThreadPool idiom. SimpleAttackManager/SkillAttackManager red-tolerated (port next ticks).
 /// </summary>

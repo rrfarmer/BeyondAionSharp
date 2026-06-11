@@ -76,7 +76,7 @@ public class ConfuseEffect : EffectTemplate
         if (effect.GetEffected() is Npc)
         {
             effect.GetEffected().GetAi().SetStateIfNot(AIState.IDLE);
-            effect.GetEffected().GetAi().OnCreatureEvent(AIEventType.ATTACK, effect.GetEffected());
+            effect.GetEffected().GetAi().OnCreatureEvent(AiEventType.ATTACK, effect.GetEffected());
         }
     }
 

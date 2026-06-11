@@ -13,7 +13,7 @@ namespace Aion.GameServer.Utils;
 
 /// <summary>
 /// Java parity: utils/PacketSendUtility (Luno, Neon). Static packet-send/broadcast helpers that interact only with their parameters
-/// (kept out of Player to keep it a pure data holder). Object... -> params object[]; Predicate<Player>; Runnable -> Action. AIEventType/World red-tolerated.
+/// (kept out of Player to keep it a pure data holder). Object... -> params object[]; Predicate<Player>; Runnable -> Action. AiEventType/World red-tolerated.
 /// </summary>
 public class PacketSendUtility
 {
@@ -98,7 +98,7 @@ public class PacketSendUtility
         BroadcastPacket(visibleObject, packet);
     }
 
-    public static void BroadcastPacketAndReceive(Creature creature, AionServerPacket packet, AIEventType et)
+    public static void BroadcastPacketAndReceive(Creature creature, AionServerPacket packet, AiEventType et)
     {
         if (creature is Player player)
             SendPacket(player, packet);
@@ -106,7 +106,7 @@ public class PacketSendUtility
         BroadcastPacketAndAIEvent(creature, packet, et);
     }
 
-    public static void BroadcastPacketAndAIEvent(Creature creature, AionServerPacket packet, AIEventType et)
+    public static void BroadcastPacketAndAIEvent(Creature creature, AionServerPacket packet, AiEventType et)
     {
         creature.GetKnownList().ForEachObject(obj =>
         {

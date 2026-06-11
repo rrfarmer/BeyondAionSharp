@@ -23,7 +23,7 @@ namespace Aion.GameServer.World.Zone;
 /// <summary>
 /// Java parity: world/zone/ZoneService (ATracer, antness). Builds per-map ZoneInstances and registers zone/material handlers. Twin of
 /// InstanceEngine: implements GameEngine via Java-faithful Init() (the reworked async GameEngine contract is red-tolerated, matching
-/// InstanceEngine). Class&lt;? extends ZoneHandler&gt; -> Type; getAnnotation -> GetCustomAttribute; newInstance -> Activator.CreateInstance;
+/// InstanceEngine). Class&lt;? extends IZoneHandler&gt; -> Type; getAnnotation -> GetCustomAttribute; newInstance -> Activator.CreateInstance;
 /// switch-case on ZoneClassName (PascalCase); synchronized -> lock; SingletonHolder nested. Most zone/data deps red-tolerated.
 /// </summary>
 public sealed class ZoneService : GameEngine

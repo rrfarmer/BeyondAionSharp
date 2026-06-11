@@ -16,7 +16,7 @@ namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
 /// Java parity: ai/handler/CreatureEventHandler (ATracer). Creature-moved/-see aggro detection. instanceof+cast -> is patterns;
-/// AISubState.TARGET_LOST/NONE; AIState.FIGHT/RETURNING; AIEventType.CREATURE_AGGRO -> AiEventType.CreatureAggro;
+/// AISubState.TARGET_LOST/NONE; AIState.FIGHT/RETURNING; AiEventType.CREATURE_AGGRO -> AiEventType.CreatureAggro;
 /// CreatureVisualState.BLINKING -> .Blinking; CustomPlayerState/NpcTemplateType/AbnormalState SCREAMING. Quest/Tribe/Geo red-tolerated.
 /// </summary>
 public class CreatureEventHandler
@@ -77,7 +77,7 @@ public class CreatureEventHandler
 
         if (IsInSeeRange(creature, owner))
         {
-            ai.HandleCreatureDetected(creature); // TODO: Move to AIEventType, prevent calling multiple times
+            ai.HandleCreatureDetected(creature); // TODO: Move to AiEventType, prevent calling multiple times
             bool isPlayer = creature is Player;
             if (isPlayer && ((Player)creature).IsInCustomState(CustomPlayerState.ENEMY_OF_ALL_NPCS)
                 || TribeRelationService.IsAggressive(owner, creature) && (isPlayer || creature.IsEnemyFrom(owner)))

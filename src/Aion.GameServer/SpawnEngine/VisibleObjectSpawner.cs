@@ -271,7 +271,7 @@ public class VisibleObjectSpawner
 
         SpawnEngine.BringIntoWorld(summon, spawn, instanceId);
         if (isSiegeWeapon)
-            summon.GetAi().OnGeneralEvent(AIEventType.SPAWNED);
+            summon.GetAi().OnGeneralEvent(AiEventType.SPAWNED);
         return summon;
     }
 

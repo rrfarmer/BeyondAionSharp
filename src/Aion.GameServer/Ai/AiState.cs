@@ -24,7 +24,7 @@ public enum AiState
 public static class AiStateExtensions
 {
     // Java parity: per-constant EnumSet of handled events. States absent here use the
-    // no-arg constructor = EnumSet.allOf(AIEventType) (handle every event).
+    // no-arg constructor = EnumSet.allOf(AiEventType) (handle every event).
     private static readonly Dictionary<AiState, HashSet<AiEventType>> HandledEvents = new()
     {
         [AiState.Created] = new() { AiEventType.BeforeSpawned, AiEventType.Spawned },
@@ -36,7 +36,7 @@ public static class AiStateExtensions
         },
     };
 
-    // Java parity: canHandle(AIEventType)
+    // Java parity: canHandle(AiEventType)
     public static bool CanHandle(this AiState state, AiEventType evt) =>
         !HandledEvents.TryGetValue(state, out var set) || set.Contains(evt);
 }

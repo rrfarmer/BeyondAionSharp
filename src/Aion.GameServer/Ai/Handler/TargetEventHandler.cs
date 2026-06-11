@@ -7,7 +7,7 @@ namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
 /// Java parity: ai/handler/TargetEventHandler (ATracer). Target reached/too-far/giveup/change dispatch, switched on AiState. switch with
-/// fallthrough -> shared case labels; AiState PascalCase (Fight/Returning/Following/Confuse/Fear/Walking/ForcedWalking); AIEventType.
+/// fallthrough -> shared case labels; AiState PascalCase (Fight/Returning/Following/Confuse/Fear/Walking/ForcedWalking); AiEventType.
 /// BACK_HOME/NOT_AT_HOME -> BackHome/NotAtHome; AISubState.TARGET_LOST/NONE. AttackManager/FollowManager/WalkManager red-tolerated.
 /// </summary>
 public class TargetEventHandler

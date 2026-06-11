@@ -14,7 +14,7 @@ namespace Aion.GameServer.Ai.Handler;
 /// <summary>
 /// Java parity: ai/handler/AggroEventHandler (ATracer). Aggro acquisition + guard/creature support requests. Nested Runnable
 /// AggroNotifier -> nested class with Run() invoked via the async ThreadPool idiom (Schedule(ct => {...Run();...}, TimeSpan)).
-/// instanceof+cast -> is patterns; CustomPlayerState/NpcTemplateType SCREAMING; AIEventType.CREATURE_NEEDS_SUPPORT ->
+/// instanceof+cast -> is patterns; CustomPlayerState/NpcTemplateType SCREAMING; AiEventType.CREATURE_NEEDS_SUPPORT ->
 /// AiEventType.CreatureNeedsSupport. TribeRelationService/GeoService red-tolerated where unported.
 /// </summary>
 public class AggroEventHandler

@@ -50,7 +50,7 @@ public class SummonSkillAreaEffect : SummonServantEffect
 
         Servant servant = SpawnServant(effect, spawnDuration, NpcObjectType.SKILLAREA, x, y, z);
         if (effect.GetEffected() != null) // point skill without any initial target (we cannot trigger handleAttack with a null target)
-            servant.GetAi().OnCreatureEvent(AIEventType.ATTACK, effect.GetEffected());
+            servant.GetAi().OnCreatureEvent(AiEventType.ATTACK, effect.GetEffected());
 
         SkillAreaTask msTask = new SkillAreaTask(servant);
         ScheduledTask task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(ct => { msTask.Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(tickDelay));

@@ -13,7 +13,7 @@ namespace Aion.GameServer.World;
 /// <summary>
 /// Java parity: world/MapRegion (-Nemesiss-). Just some part of map. Comparator chain -> Comparison; ArrayUtils.add -> Array.Resize;
 /// ConcurrentHashMap -> ConcurrentDictionary; synchronized methods -> single lock; volatile kept. ZoneClassName/WorldMapType/ZoneName
-/// confirmed PascalCase ports; AIEventType -> AiEventType.Activate/Deactivate. WorldMap.IsInstanceType red-tolerated.
+/// confirmed PascalCase ports; AiEventType -> AiEventType.Activate/Deactivate. WorldMap.IsInstanceType red-tolerated.
 /// </summary>
 public class MapRegion
 {

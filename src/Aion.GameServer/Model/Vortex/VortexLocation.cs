@@ -13,8 +13,8 @@ using Aion.GameServer.World.Zone.Handler;
 
 namespace Aion.GameServer.Model.Vortex;
 
-/// <summary>Java parity: model/vortex/VortexLocation (Source). implements ZoneHandler; instanceof→is; Map.put/remove→[]=/Remove; Race.equals→==; anonymous Runnable→Schedule(ct=>{...;return ValueTask.CompletedTask;}, TimeSpan). DimensionalVortex/RVController/InvasionZoneInstance/ZoneHandler/Kisk/VortexTemplate/WorldPosition red-tolerated.</summary>
-public class VortexLocation : ZoneHandler
+/// <summary>Java parity: model/vortex/VortexLocation (Source). implements IZoneHandler; instanceof→is; Map.put/remove→[]=/Remove; Race.equals→==; anonymous Runnable→Schedule(ct=>{...;return ValueTask.CompletedTask;}, TimeSpan). DimensionalVortex/RVController/InvasionZoneInstance/IZoneHandler/Kisk/VortexTemplate/WorldPosition red-tolerated.</summary>
+public class VortexLocation : IZoneHandler
 {
     private bool isActive;
     private DimensionalVortex<VortexLocation> activeVortex;

@@ -28,7 +28,7 @@ namespace Aion.GameServer.QuestEngine.Handlers;
 /// Java parity: questEngine/handlers/AbstractQuestHandler (MrPoke, vlog, Majka). Quest-handler base: register + onX event
 /// dispatch + send*/quest-state helpers. RED-by-design branch: many refs (QuestEngine/QuestService/ItemService/SM_* packets/
 /// SpawnEngine/GeoService/DialogPage/EmotionId/CreatureType/TaskId/QuestTasks) are red-tolerated by the name guardrail.
-/// Idioms: static import DialogAction.*→DialogAction.X; AIEventType→AiEventType; anonymous Runnable→ThreadPoolManager lambda;
+/// Idioms: static import DialogAction.*→DialogAction.X; AiEventType→AiEventType; anonymous Runnable→ThreadPoolManager lambda;
 /// Math.toRadians→deg*Math.PI/180; Stream.of(values()).allMatch→Enum.GetValues().All.
 /// </summary>
 public abstract class AbstractQuestHandler

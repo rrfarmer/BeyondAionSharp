@@ -12,7 +12,7 @@ using System.Xml.Serialization;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/SummonHomingEffect (ATracer) : SummonEffect. @XmlAttribute(name="npc_count"/"attack_count",required=true)→[XmlAttribute(...)]; per-npc newSingleTimeSpawn+spawnHoming; anonymous ActionObserver(ATTACK)→nested HomingAttackObserver capturing homing; Future→ScheduledTask, schedule(lambda,15*1000); onCreatureEvent(ATTACK). Homing/AIEventType red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/SummonHomingEffect (ATracer) : SummonEffect. @XmlAttribute(name="npc_count"/"attack_count",required=true)→[XmlAttribute(...)]; per-npc newSingleTimeSpawn+spawnHoming; anonymous ActionObserver(ATTACK)→nested HomingAttackObserver capturing homing; Future→ScheduledTask, schedule(lambda,15*1000); onCreatureEvent(ATTACK). Homing/AiEventType red-tolerated.</summary>
 [XmlType("SummonHomingEffect")]
 public class SummonHomingEffect : SummonEffect
 {
@@ -43,7 +43,7 @@ public class SummonHomingEffect : SummonEffect
             // Schedule a despawn just in case
             ScheduledTask task = ThreadPoolManager.GetInstance().Schedule(ct => { homing.GetController().Delete(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(15 * 1000));
             homing.GetController().AddTask(TaskId.DESPAWN, task);
-            homing.GetAi().OnCreatureEvent(AIEventType.ATTACK, effect.GetEffected());
+            homing.GetAi().OnCreatureEvent(AiEventType.ATTACK, effect.GetEffected());
         }
     }
 

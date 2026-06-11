@@ -11,7 +11,7 @@ namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
 /// Java parity: ai/handler/ReturningEventHandler (ATracer). NPC return-home / back-home dispatch (returning state, walk/move, dispel,
-/// post-spawn skills, instance handler onBackHome). AIEventType.BACK_HOME -> AiEventType.BackHome; AIState.RETURNING/IDLE -> Returning/
+/// post-spawn skills, instance handler onBackHome). AiEventType.BACK_HOME -> AiEventType.BackHome; AIState.RETURNING/IDLE -> Returning/
 /// Idle. EmoteManager/WalkManager/SkillEngine/DispelSlotType red-tolerated where unported.
 /// </summary>
 public class ReturningEventHandler

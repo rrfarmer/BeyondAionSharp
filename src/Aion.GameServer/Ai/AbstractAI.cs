@@ -150,7 +150,7 @@ public abstract class AbstractAI : AI
                 int depth = DEPTH.Value;
                 if (depth > 20)
                     throw new StackOverflowException(
-                        "Aborted abnormal AI event recursion for " + owner + " with AIEventType." + @event + " and target: " + creature + ", most hated: "
+                        "Aborted abnormal AI event recursion for " + owner + " with AiEventType." + @event + " and target: " + creature + ", most hated: "
                             + owner.GetAggroList().GetTarget(Aion.GameServer.Controllers.Attack.AggroTarget.MOST_HATED));
                 DEPTH.Value = depth + 1;
                 HandleCreatureEvent(@event, creature);

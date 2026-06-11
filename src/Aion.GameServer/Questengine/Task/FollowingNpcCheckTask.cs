@@ -8,7 +8,7 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.QuestEngine.Task;
 
-/// <summary>Java parity: questEngine/task/FollowingNpcCheckTask (ATracer). Runnable→method Run; AIEventType→AiEventType; QuestEngine/PositionUtil/Npc.GetAi red-tolerated.</summary>
+/// <summary>Java parity: questEngine/task/FollowingNpcCheckTask (ATracer). Runnable→method Run; AiEventType→AiEventType; QuestEngine/PositionUtil/Npc.GetAi red-tolerated.</summary>
 public class FollowingNpcCheckTask
 {
     private readonly QuestEnv env;

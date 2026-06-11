@@ -86,7 +86,7 @@ public class ZoneInstance
     // Java parity: isInsideCordinate(float, float, float)
     public bool IsInsideCordinate(float x, float y, float z) => _template.GetArea().IsInside3D(x, y, z);
 
-    // Java parity: addHandler(ZoneHandler)
+    // Java parity: addHandler(IZoneHandler)
     public void AddHandler(IZoneHandler handler) => Handlers.Add(handler);
 
     private WorldMap Map => World.GetInstance().GetWorldMap(_mapId);

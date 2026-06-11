@@ -2,6 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

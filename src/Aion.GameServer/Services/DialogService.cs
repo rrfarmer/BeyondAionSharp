@@ -44,7 +44,7 @@ public class DialogService
 
         if (target is Npc npc)
         {
-            npc.GetAi().OnCreatureEvent(AIEventType.DIALOG_FINISH, player);
+            npc.GetAi().OnCreatureEvent(AiEventType.DIALOG_FINISH, player);
 
             if (npc.GetObjectTemplate().SupportsAction(DialogAction.OPEN_LEGION_WAREHOUSE) && player.IsLegionMember())
                 player.GetLegion().GetLegionWarehouse().UnsetInUse(player.GetObjectId());

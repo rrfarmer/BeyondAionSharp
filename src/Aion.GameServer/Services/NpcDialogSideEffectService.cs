@@ -58,7 +58,7 @@ public sealed class NpcDialogCloseSideEffectPlanService
 
 		// Java parity: DialogService.onCloseDialog closes an open mailbox unconditionally.
 		var wouldCloseMailbox = player.MailboxState != PlayerMailboxState.Closed;
-		// Java parity: npc.getAi().onCreatureEvent(AIEventType.DIALOG_FINISH, player) fires when target is an NPC.
+		// Java parity: npc.getAi().onCreatureEvent(AiEventType.DIALOG_FINISH, player) fires when target is an NPC.
 		var wouldFireDialogFinishAiEvent = isNpcTarget;
 		// Java parity: OPEN_LEGION_WAREHOUSE unsetInUse when player is a legion member and NPC supports action.
 		// C# does not yet model LegionWarehouse.unsetInUse or Player.isLegionMember(); this flag documents the intent.

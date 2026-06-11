@@ -30,7 +30,7 @@ public class SummonServantEffect : SummonEffect
         Vector3f pos = GeoService.GetInstance().GetClosestCollision(effector, x, y, effector.GetZ(), true, CollisionIntention.DEFAULT_COLLISIONS.GetId(),
             IgnoreProperties.Of(effector.GetRace()));
         Servant servant = SpawnServant(effect, time, NpcObjectType.SERVANT, pos.GetX(), pos.GetY(), pos.GetZ());
-        servant.GetAi().OnCreatureEvent(AIEventType.ATTACK, effect.GetEffected());
+        servant.GetAi().OnCreatureEvent(AiEventType.ATTACK, effect.GetEffected());
     }
 
     protected Servant SpawnServant(Effect effect, int spawnDuration, NpcObjectType npcObjectType, float x, float y, float z)

@@ -4,7 +4,7 @@ namespace Aion.GameServer.World.Zone.Handler;
 
 /// <summary>
 /// Handler invoked when a creature enters/leaves a zone.
-/// Java parity: world/zone/handler/ZoneHandler.
+/// Java parity: world/zone/handler/IZoneHandler.
 /// </summary>
 public interface IZoneHandler
 {
