@@ -13,6 +13,7 @@ using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using static Aion.GameServer.Configs.Main.AutoGroupConfig;
+using Quartz;
 
 namespace Aion.GameServer.Services.Instance;
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using Quartz;
 
 namespace Aion.GameServer.Services.Cron;
 

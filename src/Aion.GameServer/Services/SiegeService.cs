@@ -22,6 +22,7 @@ using Aion.GameServer.Services.Siege;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
+using Quartz;
 
 namespace Aion.GameServer.Services;
 
@@ -347,7 +348,7 @@ public class SiegeService
 
     private Dictionary<int, DateTimeOffset> CollectNextSiegeStartDates()
     {
-        Dictionary<SiegeStartRunnable, DateTimeOffset> dates = CronService.GetInstance().FindNextFireTimes(typeof(SiegeStartRunnable), true);
+        Dictionary<SiegeStartRunnable, DateTimeOffset> dates = CronService.GetInstance().FindNextFireTimes<SiegeStartRunnable>(true);
         Dictionary<int, DateTimeOffset> nextSiegeStartDates = new Dictionary<int, DateTimeOffset>(dates.Count);
         foreach (KeyValuePair<SiegeStartRunnable, DateTimeOffset> entry in dates)
         {

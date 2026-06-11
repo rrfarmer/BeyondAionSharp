@@ -18,6 +18,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time;
 using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 using Aion.GameServer.Model.Templates.GlobalDrops;
+using Quartz;
 
 namespace Aion.GameServer.Services.Event;
 
@@ -26,7 +27,7 @@ public class EventService
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(EventService));
 
-    private volatile JobDetail checkTask = null;
+    private volatile IJobDetail checkTask = null;
     private volatile HashSet<Event> activeEvents = new HashSet<Event>();
     private volatile List<GlobalRule> activeEventDropRules = new List<GlobalRule>();
     private volatile HashSet<int> activeEventQuests = new HashSet<int>();

@@ -25,6 +25,7 @@ using Aion.GameServer.World;
 using Aion.GameServer.World.Zone;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Quartz;
 
 namespace Aion.GameServer.QuestEngine;
 
@@ -38,7 +39,7 @@ public class QuestEngine : GameEngine
     public System.Threading.Tasks.ValueTask ShutdownAsync(System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
     private static readonly ILogger log = NullLogger.Instance;
     private readonly ScriptManager scriptManager = new();
-    private JobDetail messageTask;
+    private IJobDetail messageTask;
     private readonly Dictionary<int, AbstractQuestHandler> questHandlers = new();
     private readonly Dictionary<int, QuestNpc> questNpcs = new();
     private readonly Dictionary<int, List<int>> questItemRelated = new();
