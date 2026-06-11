@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Summons;

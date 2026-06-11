@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/ReviveType. Java enum w/ per-instance typeId (non-sequential: 0,1,2,3,4,6,8) → enum + extensions.</summary>
 public enum ReviveType

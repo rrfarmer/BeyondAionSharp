@@ -15,7 +15,7 @@ public class AuditLogger
     /// Logs message, if audit log is enabled. Notifies permitted online staff members.
     /// Automatically punishes player, if punishments are enabled.
     /// </summary>
-    public static void Log(Aion.GameServer.Model.GameObjects.Player.Player player, string message)
+    public static void Log(Aion.GameServer.Model.GameObjects.Players.Player player, string message)
     {
         if (PunishmentConfig.PUNISHMENT_ENABLE)
             AutoBan.Punishment(player);
@@ -23,7 +23,7 @@ public class AuditLogger
         if (LoggingConfig.LOG_AUDIT)
             log.LogInformation(player + " " + message);
 
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player gm in GMService.GetInstance().GetOnlineStaffMembers())
+        foreach (Aion.GameServer.Model.GameObjects.Players.Player gm in GMService.GetInstance().GetOnlineStaffMembers())
         {
             if (gm.HasAccess(AdminConfig.AUDIT_INFO))
                 Aion.GameServer.Utils.PacketSendUtility.SendMessage(gm, Aion.GameServer.Utils.ChatUtil.Name(player) + " " + message, ChatType.YELLOW);

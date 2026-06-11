@@ -4,7 +4,7 @@ using System.Threading;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Effect;
 using Aion.GameServer.SkillEngine.Model;

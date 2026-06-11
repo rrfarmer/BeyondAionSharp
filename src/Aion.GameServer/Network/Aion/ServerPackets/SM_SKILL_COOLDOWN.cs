@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Dataholders;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Network.Aion;
 

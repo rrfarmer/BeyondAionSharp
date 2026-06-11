@@ -9,7 +9,7 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player extends Creature. The central player object.
@@ -23,41 +23,41 @@ namespace Aion.GameServer.Model.GameObjects.Player;
 public partial class Player : Creature
 {
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
-    public volatile Aion.GameServer.Model.GameObjects.Player.InRoll inRoll;
+    public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
     public Aion.GameServer.Model.Ingameshop.InGameShop inGameShop;
     private readonly Aion.GameServer.Model.Account.PlayerAccountData playerAccountData;
     private readonly Aion.GameServer.Model.Account.Account playerAccount;
-    private Aion.GameServer.Model.GameObjects.Player.LegionMember legionMember;
+    private Aion.GameServer.Model.GameObjects.Players.LegionMember legionMember;
 
-    private Aion.GameServer.Model.GameObjects.Player.Macros macros;
+    private Aion.GameServer.Model.GameObjects.Players.Macros macros;
     private Aion.GameServer.Model.Skill.PlayerSkillList skillList;
-    private Aion.GameServer.Model.GameObjects.Player.FriendList friendList;
-    private Aion.GameServer.Model.GameObjects.Player.BlockList blockList;
-    private Aion.GameServer.Model.GameObjects.Player.PetList toyPetList;
-    private Aion.GameServer.Model.GameObjects.Player.Mailbox mailbox;
-    private Aion.GameServer.Model.GameObjects.Player.PrivateStore store;
-    private Aion.GameServer.Model.GameObjects.Player.Title.TitleList titleList;
+    private Aion.GameServer.Model.GameObjects.Players.FriendList friendList;
+    private Aion.GameServer.Model.GameObjects.Players.BlockList blockList;
+    private Aion.GameServer.Model.GameObjects.Players.PetList toyPetList;
+    private Aion.GameServer.Model.GameObjects.Players.Mailbox mailbox;
+    private Aion.GameServer.Model.GameObjects.Players.PrivateStore store;
+    private Aion.GameServer.Model.GameObjects.Players.Title.TitleList titleList;
     private Aion.GameServer.Questengine.Model.QuestStateList questStateList;
-    private Aion.GameServer.Model.GameObjects.Player.RecipeList recipeList;
+    private Aion.GameServer.Model.GameObjects.Players.RecipeList recipeList;
     private List<Aion.GameServer.Model.House.House> houses;
 
     private Aion.GameServer.Network.Aion.ResponseRequester requester;
     private bool lookingForGroup = false;
-    private readonly Aion.GameServer.Model.GameObjects.Player.Equipment equipment;
+    private readonly Aion.GameServer.Model.GameObjects.Players.Equipment equipment;
     private readonly Aion.GameServer.Model.Items.Storage.Storage inventory;
     private readonly Aion.GameServer.Model.Items.Storage.Storage regularWarehouse;
     private readonly Aion.GameServer.Model.Items.Storage.Storage[] petBags = new Aion.GameServer.Model.Items.Storage.Storage[Aion.GameServer.Model.Items.Storage.StorageType.PET_BAG_MAX - Aion.GameServer.Model.Items.Storage.StorageType.PET_BAG_MIN + 1];
     private readonly Aion.GameServer.Model.Items.Storage.Storage[] cabinets = new Aion.GameServer.Model.Items.Storage.Storage[Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MAX - Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MIN + 1];
     private Item usingItem;
 
-    private readonly Aion.GameServer.Model.GameObjects.Player.AbsoluteStatOwner absStatsHolder;
-    private Aion.GameServer.Model.GameObjects.Player.PlayerSettings playerSettings;
+    private readonly Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner absStatsHolder;
+    private Aion.GameServer.Model.GameObjects.Players.PlayerSettings playerSettings;
 
     private Aion.GameServer.Model.Team.Group.PlayerGroup playerGroup;
     private Aion.GameServer.Model.Team.Alliance.PlayerAllianceGroup playerAllianceGroup;
 
-    private Aion.GameServer.Model.GameObjects.Player.AbyssRank abyssRank;
-    private Aion.GameServer.Model.GameObjects.Player.Npcfaction.NpcFactions npcFactions;
+    private Aion.GameServer.Model.GameObjects.Players.AbyssRank abyssRank;
+    private Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFactions npcFactions;
 
     private int flyState = 0;
     private Aion.GameServer.Controllers.FlyController flyController;
@@ -77,12 +77,12 @@ public partial class Player : Creature
 
     private int abyssRankListUpdateMask = 0;
 
-    private Aion.GameServer.Model.GameObjects.Player.BindPointPosition bindPoint;
+    private Aion.GameServer.Model.GameObjects.Players.BindPointPosition bindPoint;
 
     private readonly ConcurrentDictionary<int, Aion.GameServer.Model.Items.ItemCooldown> itemCoolDowns = new ConcurrentDictionary<int, Aion.GameServer.Model.Items.ItemCooldown>();
-    private readonly Aion.GameServer.Model.GameObjects.Player.PortalCooldownList portalCooldownList;
-    private readonly Aion.GameServer.Model.GameObjects.Player.Cooldowns craftCooldowns;
-    private readonly Aion.GameServer.Model.GameObjects.Player.Cooldowns houseObjectCooldowns;
+    private readonly Aion.GameServer.Model.GameObjects.Players.PortalCooldownList portalCooldownList;
+    private readonly Aion.GameServer.Model.GameObjects.Players.Cooldowns craftCooldowns;
+    private readonly Aion.GameServer.Model.GameObjects.Players.Cooldowns houseObjectCooldowns;
     private long nextSkillUse;
     private SkillTemplate lastSkill;
     private long hitTimeBoostExpireTimeMillis;
@@ -100,8 +100,8 @@ public partial class Player : Creature
     private Aion.GameServer.Model.Templates.Flypath.FlyPathEntry flyLocationId;
     private long flyStartTime;
 
-    private Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList emotions;
-    private Aion.GameServer.Model.GameObjects.Player.Motion.MotionList motions;
+    private Aion.GameServer.Model.GameObjects.Players.Emotion.EmotionList emotions;
+    private Aion.GameServer.Model.GameObjects.Players.Motion.MotionList motions;
 
     private long flyReuseTime;
 
@@ -125,7 +125,7 @@ public partial class Player : Creature
     private int robotId;
     private bool isInFfaTeamMode;
     private int customStates;
-    private Aion.GameServer.Model.GameObjects.Player.PanesterraFaction panesterraFaction;
+    private Aion.GameServer.Model.GameObjects.Players.PanesterraFaction panesterraFaction;
 
     public Player(Aion.GameServer.Model.Account.PlayerAccountData playerAccountData, Aion.GameServer.Model.Account.Account account)
         : base(playerAccountData.GetPlayerCommonData().GetPlayerObjId(), new PlayerController(), null, playerAccountData.GetPlayerCommonData(), null, false)
@@ -135,25 +135,25 @@ public partial class Player : Creature
 
         this.requester = new Aion.GameServer.Network.Aion.ResponseRequester(this);
         this.questStateList = new Aion.GameServer.Questengine.Model.QuestStateList();
-        this.titleList = new Aion.GameServer.Model.GameObjects.Player.Title.TitleList();
-        this.equipment = new Aion.GameServer.Model.GameObjects.Player.Equipment(this);
+        this.titleList = new Aion.GameServer.Model.GameObjects.Players.Title.TitleList();
+        this.equipment = new Aion.GameServer.Model.GameObjects.Players.Equipment(this);
         this.inventory = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.CUBE);
         this.regularWarehouse = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.REGULAR_WAREHOUSE);
         for (int i = 0; i < petBags.Length; i++)
             petBags[i] = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.GetStorageTypeById(Aion.GameServer.Model.Items.Storage.StorageType.PET_BAG_MIN + i));
         for (int i = 0; i < cabinets.Length; i++)
             cabinets[i] = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.GetStorageTypeById(Aion.GameServer.Model.Items.Storage.StorageType.HOUSE_WH_MIN + i));
-        this.portalCooldownList = new Aion.GameServer.Model.GameObjects.Player.PortalCooldownList(this);
-        this.craftCooldowns = new Aion.GameServer.Model.GameObjects.Player.Cooldowns();
-        this.houseObjectCooldowns = new Aion.GameServer.Model.GameObjects.Player.Cooldowns();
-        this.toyPetList = new Aion.GameServer.Model.GameObjects.Player.PetList(this);
+        this.portalCooldownList = new Aion.GameServer.Model.GameObjects.Players.PortalCooldownList(this);
+        this.craftCooldowns = new Aion.GameServer.Model.GameObjects.Players.Cooldowns();
+        this.houseObjectCooldowns = new Aion.GameServer.Model.GameObjects.Players.Cooldowns();
+        this.toyPetList = new Aion.GameServer.Model.GameObjects.Players.PetList(this);
         GetController().SetOwner(this);
         moveController = new Aion.GameServer.Controllers.Movement.PlayerMoveController(this);
 
         SetGameStats(new PlayerGameStats(this));
         SetLifeStats(new PlayerLifeStats(this));
         inGameShop = new Aion.GameServer.Model.Ingameshop.InGameShop();
-        absStatsHolder = new Aion.GameServer.Model.GameObjects.Player.AbsoluteStatOwner(this, 0);
+        absStatsHolder = new Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner(this, 0);
     }
 
     public bool IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode mode)
@@ -181,7 +181,7 @@ public partial class Player : Creature
         return new PlayerAggroList(this);
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PlayerCommonData GetCommonData()
+    public Aion.GameServer.Model.GameObjects.Players.PlayerCommonData GetCommonData()
     {
         return playerAccountData.GetPlayerCommonData();
     }
@@ -199,12 +199,12 @@ public partial class Player : Creature
         return GetCommonData().GetName();
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PlayerAppearance GetPlayerAppearance()
+    public Aion.GameServer.Model.GameObjects.Players.PlayerAppearance GetPlayerAppearance()
     {
         return playerAccountData.GetAppearance();
     }
 
-    public void SetPlayerAppearance(Aion.GameServer.Model.GameObjects.Player.PlayerAppearance playerAppearance)
+    public void SetPlayerAppearance(Aion.GameServer.Model.GameObjects.Players.PlayerAppearance playerAppearance)
     {
         playerAccountData.SetAppearance(playerAppearance);
     }
@@ -219,12 +219,12 @@ public partial class Player : Creature
         return clientConnection;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Macros GetMacros()
+    public Aion.GameServer.Model.GameObjects.Players.Macros GetMacros()
     {
         return macros;
     }
 
-    public void SetMacros(Aion.GameServer.Model.GameObjects.Player.Macros macros)
+    public void SetMacros(Aion.GameServer.Model.GameObjects.Players.Macros macros)
     {
         this.macros = macros;
     }
@@ -249,7 +249,7 @@ public partial class Player : Creature
         this.pet = pet;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.FriendList GetFriendList()
+    public Aion.GameServer.Model.GameObjects.Players.FriendList GetFriendList()
     {
         return friendList;
     }
@@ -309,22 +309,22 @@ public partial class Player : Creature
         this.captchaImage = captchaImage;
     }
 
-    public void SetFriendList(Aion.GameServer.Model.GameObjects.Player.FriendList list)
+    public void SetFriendList(Aion.GameServer.Model.GameObjects.Players.FriendList list)
     {
         this.friendList = list;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.BlockList GetBlockList()
+    public Aion.GameServer.Model.GameObjects.Players.BlockList GetBlockList()
     {
         return blockList;
     }
 
-    public void SetBlockList(Aion.GameServer.Model.GameObjects.Player.BlockList list)
+    public void SetBlockList(Aion.GameServer.Model.GameObjects.Players.BlockList list)
     {
         this.blockList = list;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PetList GetPetList()
+    public Aion.GameServer.Model.GameObjects.Players.PetList GetPetList()
     {
         return toyPetList;
     }
@@ -389,7 +389,7 @@ public partial class Player : Creature
         return (sbyte)GetCommonData().GetLevel();
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Equipment GetEquipment()
+    public Aion.GameServer.Model.GameObjects.Players.Equipment GetEquipment()
     {
         return equipment;
     }
@@ -404,12 +404,12 @@ public partial class Player : Creature
         this.usingItem = usingItem;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PrivateStore GetStore()
+    public Aion.GameServer.Model.GameObjects.Players.PrivateStore GetStore()
     {
         return store;
     }
 
-    public void SetStore(Aion.GameServer.Model.GameObjects.Player.PrivateStore store)
+    public void SetStore(Aion.GameServer.Model.GameObjects.Players.PrivateStore store)
     {
         this.store = store;
     }
@@ -424,12 +424,12 @@ public partial class Player : Creature
         this.questStateList = questStateList;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.RecipeList GetRecipeList()
+    public Aion.GameServer.Model.GameObjects.Players.RecipeList GetRecipeList()
     {
         return recipeList;
     }
 
-    public void SetRecipeList(Aion.GameServer.Model.GameObjects.Player.RecipeList recipeList)
+    public void SetRecipeList(Aion.GameServer.Model.GameObjects.Players.RecipeList recipeList)
     {
         this.recipeList = recipeList;
     }

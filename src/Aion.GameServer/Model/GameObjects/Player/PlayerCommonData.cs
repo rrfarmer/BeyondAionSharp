@@ -2,7 +2,7 @@ using System;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// This class is holding base information about player, that may be used even when player itself is not online.
@@ -667,7 +667,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
         if (playerClass.IsStartingClass())
             return false;
 
-        Aion.GameServer.Model.GameObjects.Player.QuestStateList qsl;
+        Aion.GameServer.Model.GameObjects.Players.QuestStateList qsl;
         Player player = GetPlayer();
         if (player != null)
             qsl = player.GetQuestStateList();

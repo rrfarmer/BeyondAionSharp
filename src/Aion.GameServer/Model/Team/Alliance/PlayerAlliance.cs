@@ -46,7 +46,7 @@ public class PlayerAlliance : TemporaryPlayerTeam<PlayerAllianceMember>
     public override int GetMinExpPlayerLevel()
     {
         int minLvl = 99;
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player member in GetMembers())
+        foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetMembers())
         {
             if (member.GetLevel() < minLvl)
             {
@@ -59,7 +59,7 @@ public class PlayerAlliance : TemporaryPlayerTeam<PlayerAllianceMember>
     public override int GetMaxExpPlayerLevel()
     {
         int maxLvl = 1;
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player member in GetMembers())
+        foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetMembers())
         {
             if (member.GetLevel() > maxLvl)
             {
@@ -103,12 +103,12 @@ public class PlayerAlliance : TemporaryPlayerTeam<PlayerAllianceMember>
         return viceCaptainIds;
     }
 
-    public bool IsViceCaptain(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public bool IsViceCaptain(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         return viceCaptainIds.Contains(player.GetObjectId());
     }
 
-    public bool IsSomeCaptain(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public bool IsSomeCaptain(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         return IsLeader(player) || IsViceCaptain(player);
     }

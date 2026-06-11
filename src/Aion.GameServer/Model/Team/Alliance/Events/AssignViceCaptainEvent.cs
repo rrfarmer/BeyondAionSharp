@@ -1,4 +1,4 @@
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Common.Events;
 using Aion.GameServer.Network.Aion.Serverpackets;

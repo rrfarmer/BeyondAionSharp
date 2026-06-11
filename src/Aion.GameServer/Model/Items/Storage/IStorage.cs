@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Items.Storage;
 /// </summary>
 public interface IStorage : IPersistable
 {
-    void SetOwner(Aion.GameServer.Model.GameObjects.Player.Player player);
+    void SetOwner(Aion.GameServer.Model.GameObjects.Players.Player player);
 
     long GetKinah();
 

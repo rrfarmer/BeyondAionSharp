@@ -29,13 +29,13 @@ public class InstanceTimeClear : AbstractItemAction
         }
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int syncId = (int)@params[0];
         if (!syncIds.Contains(syncId))
             return false;
         int worldId = DataManager.INSTANCE_COOLTIME_DATA.GetWorldId(syncId);
-        Aion.GameServer.Model.GameObjects.Player.PortalCooldown portalCooldown = player.GetPortalCooldownList().GetPortalCooldown(worldId);
+        Aion.GameServer.Model.GameObjects.Players.PortalCooldown portalCooldown = player.GetPortalCooldownList().GetPortalCooldown(worldId);
         if (portalCooldown == null || (portalCooldown.GetReuseTime() < DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() && portalCooldown.GetEnterCount() == 0))
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANT_INSTANCE_COOL_TIME_INIT());
@@ -44,7 +44,7 @@ public class InstanceTimeClear : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int syncId = (int)@params[0];
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
@@ -65,7 +65,7 @@ public class InstanceTimeClear : AbstractItemAction
             }
 
             int worldId = DataManager.INSTANCE_COOLTIME_DATA.GetWorldId(syncId);
-            Aion.GameServer.Model.GameObjects.Player.PortalCooldown portalCD = player.GetPortalCooldownList().GetPortalCooldown(worldId);
+            Aion.GameServer.Model.GameObjects.Players.PortalCooldown portalCD = player.GetPortalCooldownList().GetPortalCooldown(worldId);
             if (portalCD == null || portalCD.GetEnterCount() < 1)
                 return ValueTask.CompletedTask; // don't spam with not needed packets!
 
@@ -83,10 +83,10 @@ public class InstanceTimeClear : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class InstanceTimeClearUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public InstanceTimeClearUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public InstanceTimeClearUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;

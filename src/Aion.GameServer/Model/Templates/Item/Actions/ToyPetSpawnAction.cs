@@ -23,7 +23,7 @@ public class ToyPetSpawnAction : AbstractItemAction
         return time;
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (player.IsFlying())
         {
@@ -48,7 +48,7 @@ public class ToyPetSpawnAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         // ShowAction
         player.GetController().CancelUseItem();
@@ -94,7 +94,7 @@ public class ToyPetSpawnAction : AbstractItemAction
         }, TimeSpan.FromMilliseconds(10000)));
     }
 
-    private bool IsPutKiskZone(Aion.GameServer.Model.GameObjects.Player.Player player)
+    private bool IsPutKiskZone(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         foreach (Aion.GameServer.World.Zone.ZoneInstance zone in player.FindZones())
         {
@@ -107,10 +107,10 @@ public class ToyPetSpawnAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act() (note: Java's abort does not removeObserver).
     private sealed class ToyPetUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public ToyPetUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public ToyPetUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;

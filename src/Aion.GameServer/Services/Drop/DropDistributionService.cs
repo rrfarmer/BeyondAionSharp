@@ -5,7 +5,7 @@ using Aion.Commons.Utils;
 using Aion.GameServer.Model.Actions;
 using Aion.GameServer.Model.Drop;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;

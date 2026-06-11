@@ -13,14 +13,14 @@ public class ChatBanService
     private static readonly ConcurrentDictionary<int, long> chatBans = new ConcurrentDictionary<int, long>();
 
     /// <summary>Bans a player from all chats.</summary>
-    public static void BanPlayer(Aion.GameServer.Model.GameObjects.Player.Player player, long durationMillis)
+    public static void BanPlayer(Aion.GameServer.Model.GameObjects.Players.Player player, long durationMillis)
     {
         Aion.GameServer.Network.Chatserver.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), durationMillis);
         chatBans[player.GetObjectId()] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + durationMillis;
         RegisterUnban(player, durationMillis);
     }
 
-    public static void UnbanPlayer(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public static void UnbanPlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetController().CancelTask(TaskId.GAG);
         Aion.GameServer.Network.Chatserver.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), 0);
@@ -28,7 +28,7 @@ public class ChatBanService
             PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CAN_CHAT_NOW());
     }
 
-    private static void RegisterUnban(Aion.GameServer.Model.GameObjects.Player.Player player, long delay)
+    private static void RegisterUnban(Aion.GameServer.Model.GameObjects.Players.Player player, long delay)
     {
         player.GetController().AddTask(TaskId.GAG, ThreadPoolManager.GetInstance().Schedule(ct =>
         {
@@ -37,7 +37,7 @@ public class ChatBanService
         }, TimeSpan.FromMilliseconds(delay)));
     }
 
-    public static bool IsBanned(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public static bool IsBanned(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         return GetBanMinutes(player) > 0;
     }
@@ -47,7 +47,7 @@ public class ChatBanService
     /// If not and an unban task is missing (e.g. after logout), starts one.
     /// </summary>
     /// <returns>The remaining ban time in minutes. Only returns 0 if ban time is really over.</returns>
-    public static int GetBanMinutes(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public static int GetBanMinutes(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (!chatBans.TryGetValue(player.GetObjectId(), out long expireTime))
             return 0;

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Aion.GameServer.Model.GameObjects;
 
 /// <summary>Java parity: model/gameobjects/Kisk (Sarynth, nrg). extends SummonedObject&lt;Player&gt;.</summary>
-public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Player>
+public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Players.Player>
 {
     private static readonly ILogger log = NullLogger.Instance;
 
@@ -21,7 +21,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
 
     private readonly ConcurrentDictionary<int, byte> kiskMemberIds;
 
-    public Kisk(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.GameObjects.Player.Player owner)
+    public Kisk(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.GameObjects.Players.Player owner)
         : base(controller, spawnTemplate, (sbyte)Aion.GameServer.Dataholders.DataManager.NPC_DATA.GetNpcTemplate(spawnTemplate.GetNpcId()).GetLevel(), null)
     {
         this.kiskStatsTemplate = GetObjectTemplate().GetKiskStatsTemplate() == null ? new Aion.GameServer.Model.Templates.Stats.KiskStatsTemplate()
@@ -42,14 +42,14 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
     }
 
     /// <summary>Required so that the enemy race can attack the Kisk!</summary>
-    public override bool IsEnemyFrom(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public override bool IsEnemyFrom(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         return !player.GetRace().Equals(ownerRace) && IsInsidePvPZone() && player.IsInsidePvPZone();
     }
 
     public override CreatureType GetTypeValue(Creature creature)
     {
-        if (creature is Aion.GameServer.Model.GameObjects.Player.Player player)
+        if (creature is Aion.GameServer.Model.GameObjects.Players.Player player)
             return IsEnemyFrom(player) ? CreatureType.ATTACKABLE : CreatureType.SUPPORT;
         return base.GetTypeValue(creature);
     }
@@ -66,13 +66,13 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
         return kiskStatsTemplate.GetUseMask();
     }
 
-    public List<Aion.GameServer.Model.GameObjects.Player.Player> GetCurrentMemberList()
+    public List<Aion.GameServer.Model.GameObjects.Players.Player> GetCurrentMemberList()
     {
-        List<Aion.GameServer.Model.GameObjects.Player.Player> currentMemberList = new List<Aion.GameServer.Model.GameObjects.Player.Player>();
+        List<Aion.GameServer.Model.GameObjects.Players.Player> currentMemberList = new List<Aion.GameServer.Model.GameObjects.Players.Player>();
 
         foreach (int memberId in kiskMemberIds.Keys)
         {
-            Aion.GameServer.Model.GameObjects.Player.Player member = Aion.GameServer.World.World.GetInstance().GetPlayer(memberId);
+            Aion.GameServer.Model.GameObjects.Players.Player member = Aion.GameServer.World.World.GetInstance().GetPlayer(memberId);
             if (member != null)
                 currentMemberList.Add(member);
         }
@@ -115,12 +115,12 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
     }
 
     /// <returns>True if the player may bind to this kisk.</returns>
-    public bool CanBind(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public bool CanBind(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         return GetCurrentMemberCount() < GetMaxMembers() && IsUseAllowed(player);
     }
 
-    private bool IsUseAllowed(Aion.GameServer.Model.GameObjects.Player.Player player)
+    private bool IsUseAllowed(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         switch (GetUseMask())
         {
@@ -152,7 +152,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
         return false;
     }
 
-    public void AddPlayer(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void AddPlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (kiskMemberIds.TryAdd(player.GetObjectId(), 0))
         {
@@ -165,7 +165,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
         player.SetKisk(this);
     }
 
-    public void RemovePlayer(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void RemovePlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.SetKisk(null);
         if (kiskMemberIds.TryRemove(player.GetObjectId(), out _))
@@ -175,7 +175,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
     private void BroadcastKiskUpdate()
     {
         // on all members, but not the ones in knownlist, they will receive the update in the next step
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player member in GetCurrentMemberList())
+        foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetCurrentMemberList())
         {
             if (!GetKnownList().Knows(member))
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(this));
@@ -187,7 +187,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Player.Play
 
     public void BroadcastPacket(Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage message)
     {
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player member in GetCurrentMemberList())
+        foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetCurrentMemberList())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, message);
         }

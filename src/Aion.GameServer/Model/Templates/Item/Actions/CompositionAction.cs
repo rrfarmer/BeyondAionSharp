@@ -10,16 +10,16 @@ namespace Aion.GameServer.Model.Templates.Item.Actions;
 [XmlType("CompositionAction")]
 public class CompositionAction : AbstractItemAction
 {
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         return false;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
     }
 
-    public bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item tools, Item first, Item second)
+    public bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item tools, Item first, Item second)
     {
         if (!tools.GetItemTemplate().IsCombinationItem())
             return false;
@@ -39,7 +39,7 @@ public class CompositionAction : AbstractItemAction
         return true;
     }
 
-    public void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item tools, Item first, Item second)
+    public void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item tools, Item first, Item second)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
         player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
@@ -85,10 +85,10 @@ public class CompositionAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class CompositionUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item tools;
 
-        public CompositionUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item tools)
+        public CompositionUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item tools)
         {
             this.player = player;
             this.tools = tools;

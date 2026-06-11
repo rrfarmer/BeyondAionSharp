@@ -64,7 +64,7 @@ public class SiegeWeaponController : SummonController
 
     public bool IsValidTarget(Creature target)
     {
-        Aion.GameServer.Model.GameObjects.Player.Player master = GetOwner().GetMaster();
+        Aion.GameServer.Model.GameObjects.Players.Player master = GetOwner().GetMaster();
         if (master == null)
         {
             return false;

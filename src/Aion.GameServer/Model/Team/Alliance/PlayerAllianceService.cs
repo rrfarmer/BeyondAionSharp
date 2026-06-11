@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Collections.Concurrent;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Team.Alliance.Events;
 using Aion.GameServer.Model.Team.Common.Events;

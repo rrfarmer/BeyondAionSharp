@@ -16,7 +16,7 @@ namespace Aion.GameServer.Services.Summons;
 public class SummonsService
 {
     /// <summary>create summon</summary>
-    public static Summon CreateSummon(Aion.GameServer.Model.GameObjects.Player.Player master, int npcId, int skillId, int skillLevel, int time)
+    public static Summon CreateSummon(Aion.GameServer.Model.GameObjects.Players.Player master, int npcId, int skillId, int skillLevel, int time)
     {
         if (master.GetSummon() != null)
         {
@@ -56,7 +56,7 @@ public class SummonsService
 
         public void Run()
         {
-            Aion.GameServer.Model.GameObjects.Player.Player master = summon.GetMaster();
+            Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
             VisibleObject summonObj = Aion.GameServer.World.World.GetInstance().FindVisibleObject(summon.GetObjectId());
             // transformed npc via SM_TRANSFORM_IN_SUMMON
             if (summonObj != null && summonObj is Npc npc)
@@ -155,7 +155,7 @@ public class SummonsService
     {
         summon.GetController().CancelCurrentSkill((Creature)null);
         summon.SetMode(SummonMode.REST);
-        Aion.GameServer.Model.GameObjects.Player.Player master = summon.GetMaster();
+        Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_REST_MODE(summon.GetL10n()));
         PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
         summon.GetLifeStats().TriggerRestoreTask();
@@ -164,7 +164,7 @@ public class SummonsService
     public static void SetUnkMode(Summon summon)
     {
         summon.SetMode(SummonMode.UNK);
-        Aion.GameServer.Model.GameObjects.Player.Player master = summon.GetMaster();
+        Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
     }
 
@@ -173,7 +173,7 @@ public class SummonsService
     {
         summon.GetController().CancelCurrentSkill((Creature)null);
         summon.SetMode(SummonMode.GUARD);
-        Aion.GameServer.Model.GameObjects.Player.Player master = summon.GetMaster();
+        Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_GUARD_MODE(summon.GetL10n()));
         PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
         summon.GetLifeStats().TriggerRestoreTask();
@@ -183,7 +183,7 @@ public class SummonsService
     public static void AttackMode(Summon summon)
     {
         summon.SetMode(SummonMode.ATTACK);
-        Aion.GameServer.Model.GameObjects.Player.Player master = summon.GetMaster();
+        Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_ATTACK_MODE(summon.GetL10n()));
         PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
         summon.GetLifeStats().CancelRestoreTask();

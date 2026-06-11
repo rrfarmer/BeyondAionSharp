@@ -7,7 +7,7 @@ using Aion.Commons.Scripting;
 using Aion.GameServer.Configs;
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Utils.ChatHandlers;

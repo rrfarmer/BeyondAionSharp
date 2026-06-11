@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/DeniedStatus (id-bearing enum).</summary>
 public enum DeniedStatus

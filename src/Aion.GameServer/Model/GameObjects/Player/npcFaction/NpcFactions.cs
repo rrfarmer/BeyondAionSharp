@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Npcfaction;
+namespace Aion.GameServer.Model.GameObjects.Players.Npcfaction;
 
 /// <summary>Java parity: model/gameobjects/player/npcFaction/NpcFactions.</summary>
 public class NpcFactions
@@ -165,7 +165,7 @@ public class NpcFactions
         Aion.GameServer.Model.Templates.Factions.NpcFactionTemplate npcFactionTemplate = Aion.GameServer.Dataholders.DataManager.NPC_FACTIONS_DATA.GetNpcFactionByNpcId(npc.GetNpcId());
         NpcFaction activeNpcFactionLocal = GetActiveNpcFaction(npcFactionTemplate.IsMentor());
         Aion.GameServer.Model.Templates.Factions.NpcFactionTemplate activeNpcFactionTemplate = Aion.GameServer.Dataholders.DataManager.NPC_FACTIONS_DATA.GetNpcFactionById(activeNpcFactionLocal.GetId());
-        Aion.GameServer.Model.GameObjects.Player.RequestResponseHandler<Player> responseHandler = new AskLeaveResponseHandler(owner, this, npc, activeNpcFactionLocal);
+        Aion.GameServer.Model.GameObjects.Players.RequestResponseHandler<Player> responseHandler = new AskLeaveResponseHandler(owner, this, npc, activeNpcFactionLocal);
         bool requested = owner.GetResponseRequester().PutRequest(Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow.STR_ASK_JOIN_NEW_FACTION, responseHandler);
         if (requested)
         {
@@ -175,7 +175,7 @@ public class NpcFactions
     }
 
     // Java parity: anonymous RequestResponseHandler<Player> in askLeaveNpcFaction.
-    private sealed class AskLeaveResponseHandler : Aion.GameServer.Model.GameObjects.Player.RequestResponseHandler<Player>
+    private sealed class AskLeaveResponseHandler : Aion.GameServer.Model.GameObjects.Players.RequestResponseHandler<Player>
     {
         private readonly NpcFactions outer;
         private readonly Npc npc;

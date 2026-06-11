@@ -1,6 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Recipe;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;

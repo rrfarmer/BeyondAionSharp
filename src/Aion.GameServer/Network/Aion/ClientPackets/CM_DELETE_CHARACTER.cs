@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Account;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using ConnectType = Aion.GameServer.Model.Account.CharacterPasskey.ConnectType;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 

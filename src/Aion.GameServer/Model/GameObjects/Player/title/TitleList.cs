@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Title;
+namespace Aion.GameServer.Model.GameObjects.Players.Title;
 
 /// <summary>Java parity: model/gameobjects/player/title/TitleList.</summary>
 public class TitleList
 {
     // Java parity: LinkedHashMap — insertion-ordered.
     private readonly Dictionary<int, Title> titles;
-    private Aion.GameServer.Model.GameObjects.Player.Player owner;
+    private Aion.GameServer.Model.GameObjects.Players.Player owner;
 
     public TitleList()
     {
@@ -16,12 +16,12 @@ public class TitleList
         this.owner = null;
     }
 
-    public void SetOwner(Aion.GameServer.Model.GameObjects.Player.Player owner)
+    public void SetOwner(Aion.GameServer.Model.GameObjects.Players.Player owner)
     {
         this.owner = owner;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Player GetOwner()
+    public Aion.GameServer.Model.GameObjects.Players.Player GetOwner()
     {
         return owner;
     }

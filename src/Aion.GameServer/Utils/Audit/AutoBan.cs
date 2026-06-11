@@ -8,7 +8,7 @@ public class AutoBan
 {
     // TODO merge with AntiHackService punishment system / rework
     // Java parity: protected static (package-private call from AuditLogger) → internal.
-    internal static void Punishment(Aion.GameServer.Model.GameObjects.Player.Player player)
+    internal static void Punishment(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         string reason = "You have been punished due to illegal actions";
         string accountIp = player.GetClientConnection().GetIP();

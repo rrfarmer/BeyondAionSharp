@@ -1,8 +1,8 @@
 using System;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;

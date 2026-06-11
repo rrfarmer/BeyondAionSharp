@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/PlayerMailboxState. Java byte → sbyte.</summary>
 public class PlayerMailboxState

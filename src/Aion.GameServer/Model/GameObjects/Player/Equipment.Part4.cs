@@ -5,7 +5,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Equipment — partial #4 (Java ~699-802): soulBindItem (with
@@ -53,7 +53,7 @@ public partial class Equipment
             return false;
         }
 
-        Aion.GameServer.Model.GameObjects.Player.RequestResponseHandler<Player> responseHandler = new SoulBindResponseHandler(player, this, item, slot);
+        Aion.GameServer.Model.GameObjects.Players.RequestResponseHandler<Player> responseHandler = new SoulBindResponseHandler(player, this, item, slot);
 
         bool requested = player.GetResponseRequester().PutRequest(Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow.STR_SOUL_BOUND_ITEM_DO_YOU_WANT_SOUL_BOUND, responseHandler);
         if (requested)
@@ -69,7 +69,7 @@ public partial class Equipment
     }
 
     // Java parity: anonymous RequestResponseHandler<Player> in soulBindItem.
-    private sealed class SoulBindResponseHandler : Aion.GameServer.Model.GameObjects.Player.RequestResponseHandler<Player>
+    private sealed class SoulBindResponseHandler : Aion.GameServer.Model.GameObjects.Players.RequestResponseHandler<Player>
     {
         private readonly Equipment eq;
         private readonly Item item;

@@ -2,21 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/Mailbox.</summary>
 public class Mailbox
 {
     private readonly ConcurrentDictionary<int, Aion.GameServer.Model.GameObjects.Letter> mails = new ConcurrentDictionary<int, Aion.GameServer.Model.GameObjects.Letter>();
     private readonly ConcurrentDictionary<int, Aion.GameServer.Model.GameObjects.Letter> reserveMail = new ConcurrentDictionary<int, Aion.GameServer.Model.GameObjects.Letter>();
-    private Aion.GameServer.Model.GameObjects.Player.Player owner;
+    private Aion.GameServer.Model.GameObjects.Players.Player owner;
 
     // 0x00 - closed
     // 0x01 - regular
     // 0x02 - express
     public byte mailBoxState = 0;
 
-    public Mailbox(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public Mailbox(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         this.owner = player;
     }
@@ -141,7 +141,7 @@ public class Mailbox
         }
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Player GetOwner()
+    public Aion.GameServer.Model.GameObjects.Players.Player GetOwner()
     {
         return owner;
     }

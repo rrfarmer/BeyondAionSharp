@@ -102,7 +102,7 @@ public partial class Item
         this.temporaryExchangeTime = temporaryExchangeTime;
     }
 
-    public void OnExpire(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (IsEquipped())
             player.GetEquipment().UnEquipItem(GetObjectId());
@@ -128,7 +128,7 @@ public partial class Item
         }
     }
 
-    public void OnBeforeExpire(Aion.GameServer.Model.GameObjects.Player.Player player, int remainingMinutes)
+    public void OnBeforeExpire(Aion.GameServer.Model.GameObjects.Players.Player player, int remainingMinutes)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CASH_ITEM_TIME_LEFT(GetL10n(), remainingMinutes));
     }
@@ -184,7 +184,7 @@ public partial class Item
     }
 
     /// <summary>Check for disabled charge levels due to recommend rank restriction.</summary>
-    public int CalculateAvailableChargeLevel(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public int CalculateAvailableChargeLevel(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         int maxAvailableChargeLevel = CalculateMaxChargeLevel();
         Aion.GameServer.Model.Templates.Item.ItemUseLimits limits = HasFusionedItem() && fusionedItemTemplate.GetLevel() > itemTemplate.GetLevel()

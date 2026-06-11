@@ -385,7 +385,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public override void AttackTarget(Creature target, int time, bool skipChecks)
     {
-        if (!Aion.GameServer.Model.GameObjects.Player.PlayerRestrictions.CanAttack(GetOwner(), target))
+        if (!Aion.GameServer.Model.GameObjects.Players.PlayerRestrictions.CanAttack(GetOwner(), target))
             return;
 
         PlayerGameStats gameStats = GetOwner().GetGameStats();
@@ -461,7 +461,7 @@ public class PlayerController : CreatureController<Player.Player>
 
         if (skill != null)
         {
-            if (!Aion.GameServer.Model.GameObjects.Player.PlayerRestrictions.CanUseSkill(player, skill))
+            if (!Aion.GameServer.Model.GameObjects.Players.PlayerRestrictions.CanUseSkill(player, skill))
                 return;
 
             skill.SetTargetType(targetType, x, y, z);

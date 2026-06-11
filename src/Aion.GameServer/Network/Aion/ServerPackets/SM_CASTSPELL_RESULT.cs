@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Skillengine.Model;
 

@@ -13,7 +13,7 @@ public class PolishAction : AbstractItemAction
 {
     [XmlAttribute("set_id")] private int polishSetId;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (parentItem.GetItemTemplate().GetLevel() > targetItem.GetItemTemplate().GetLevel())
         {
@@ -28,7 +28,7 @@ public class PolishAction : AbstractItemAction
         return !player.IsInAttackMode() && targetItem.GetItemTemplate().IsWeapon() && targetItem.GetItemTemplate().IsCanPolish();
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
             new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 5000, 0, 0), true);
@@ -73,10 +73,10 @@ public class PolishAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class PolishUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public PolishUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public PolishUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;

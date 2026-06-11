@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Npcfaction;
+namespace Aion.GameServer.Model.GameObjects.Players.Npcfaction;
 
 /// <summary>Java parity: model/gameobjects/player/npcFaction/NpcFaction implements Persistable.</summary>
 public class NpcFaction : IPersistable

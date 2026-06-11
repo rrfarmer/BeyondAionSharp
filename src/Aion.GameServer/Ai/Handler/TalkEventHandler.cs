@@ -1,7 +1,7 @@
 using Aion.GameServer.Ai;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Skillengine.Properties;

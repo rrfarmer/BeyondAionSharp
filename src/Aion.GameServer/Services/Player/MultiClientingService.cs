@@ -6,11 +6,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/MultiClientingService. Enforces multi-clienting restriction modes: FULL (block same IP + (MAC|HDD) already online), SAME_FACTION (per-account session tracking with faction-switch cooldown). Nested AccountSession (synchronized identifier list, last-online-per-race) + Identifiers record. ConcurrentHashMap->ConcurrentDictionary; values().removeIf->ToArray()+TryRemove; computeIfAbsent->GetOrAdd; synchronized->lock; LinkedList addFirst/removeLast/getFirst; Duration.ofMinutes(x).toMillis()->x*60000; currentTimeMillis->UtcNow; Integer->int?; stream findAny.map.orElse->LINQ FirstOrDefault. SecurityConfig nested enum / AionConnection red-tolerated.</summary>
 public class MultiClientingService

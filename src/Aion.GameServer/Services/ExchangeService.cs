@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Trade;
 using Aion.GameServer.Network.Aion.Serverpackets;

@@ -1,4 +1,4 @@
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Model.Instance.Instanceposition;
 

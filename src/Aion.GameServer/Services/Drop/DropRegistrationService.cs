@@ -7,7 +7,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Drop;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Team.Common.Legacy;

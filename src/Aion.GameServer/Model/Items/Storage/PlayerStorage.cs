@@ -5,14 +5,14 @@ namespace Aion.GameServer.Model.Items.Storage;
 /// <summary>Java parity: model/items/storage/PlayerStorage extends Storage.</summary>
 public class PlayerStorage : Storage
 {
-    private Aion.GameServer.Model.GameObjects.Player.Player actor;
+    private Aion.GameServer.Model.GameObjects.Players.Player actor;
 
-    public PlayerStorage(Aion.GameServer.Model.GameObjects.Player.Player owner, StorageType storageType) : base(storageType)
+    public PlayerStorage(Aion.GameServer.Model.GameObjects.Players.Player owner, StorageType storageType) : base(storageType)
     {
         this.actor = owner;
     }
 
-    public sealed override void SetOwner(Aion.GameServer.Model.GameObjects.Player.Player actor)
+    public sealed override void SetOwner(Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         this.actor = actor;
     }

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.Account;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 

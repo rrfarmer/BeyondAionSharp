@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Loginserver;
 using Aion.GameServer.Network.Loginserver.Serverpackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Item;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 
 namespace Aion.GameServer.Services.Transfers;
 

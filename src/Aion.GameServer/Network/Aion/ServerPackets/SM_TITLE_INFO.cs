@@ -1,5 +1,5 @@
-using Aion.GameServer.Model.GameObjects.Player;
-using Aion.GameServer.Model.GameObjects.Player.Title;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Model.GameObjects.Players.Title;
 using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;

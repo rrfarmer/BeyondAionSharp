@@ -2,7 +2,7 @@ using System.Drawing;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;

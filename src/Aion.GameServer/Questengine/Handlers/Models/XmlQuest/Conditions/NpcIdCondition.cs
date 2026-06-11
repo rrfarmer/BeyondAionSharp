@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Questengine.Model;
 
 namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Conditions;

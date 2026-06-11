@@ -15,12 +15,12 @@ public class MultiReturnAction : AbstractItemAction
 
     [XmlIgnore] private const short USAGE_DELAY = 5000;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item item, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item item, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
         int indexReturn = (int)@params[0];
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), USAGE_DELAY, 0, 0), true);
@@ -48,10 +48,10 @@ public class MultiReturnAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class MultiReturnUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item item;
 
-        public MultiReturnUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item item)
+        public MultiReturnUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
         {
             this.player = player;
             this.item = item;

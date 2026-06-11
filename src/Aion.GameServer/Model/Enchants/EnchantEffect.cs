@@ -10,7 +10,7 @@ public class EnchantEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
 {
     private ItemSlot itemSlot;
 
-    public EnchantEffect(Item item, Aion.GameServer.Model.GameObjects.Player.Player player, List<EnchantStat> enchantStats)
+    public EnchantEffect(Item item, Aion.GameServer.Model.GameObjects.Players.Player player, List<EnchantStat> enchantStats)
     {
         List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction> functions = new List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction>();
         long itemSlot = item.GetEquipmentSlot();
@@ -38,7 +38,7 @@ public class EnchantEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
         player.GetGameStats().AddEffect(this, functions);
     }
 
-    public void EndEffect(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void EndEffect(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetGameStats().EndEffect(this);
     }

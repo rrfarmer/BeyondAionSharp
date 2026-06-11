@@ -137,7 +137,7 @@ public class SummonController : CreatureController<Summon>
         Aion.GameServer.Taskmanager.Tasks.PlayerMoveTaskManager.GetInstance().RemovePlayer(GetOwner());
     }
 
-    protected Aion.GameServer.Model.GameObjects.Player.Player GetMaster()
+    protected Aion.GameServer.Model.GameObjects.Players.Player GetMaster()
     {
         return GetOwner().GetMaster();
     }

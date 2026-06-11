@@ -10,7 +10,7 @@ public class ApExtractAction : AbstractItemAction
     [XmlAttribute("target")] protected UseTarget target;
     [XmlAttribute("rate")] protected float rate;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (targetItem == null || !targetItem.CanApExtract())
             return false;
@@ -87,7 +87,7 @@ public class ApExtractAction : AbstractItemAction
         return (target == UseTarget.EQUIPMENT || target == type);
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Model.Templates.Item.Acquisition acquisition = targetItem.GetItemTemplate().GetAcquisition();
         if (acquisition == null || acquisition.GetRequiredAp() == 0)

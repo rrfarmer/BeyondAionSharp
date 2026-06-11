@@ -23,7 +23,7 @@ public class SkillUseAction : AbstractItemAction
         return level;
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (mapid != 0 && player.GetWorldId() != mapid)
         {
@@ -84,7 +84,7 @@ public class SkillUseAction : AbstractItemAction
             && (mpHealEffects == 0 || effectedList.All(effected => effected.GetLifeStats().IsFullyRestoredMp()));
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.SkillEngine.Model.Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(player, skillid, level, player.GetTarget(), parentItem.GetItemTemplate());
         if (skill != null)

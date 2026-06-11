@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;

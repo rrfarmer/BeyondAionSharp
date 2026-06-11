@@ -1,6 +1,6 @@
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.GeoEngine.Math;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Templates.Cp;
 using Aion.GameServer.Network.Aion;

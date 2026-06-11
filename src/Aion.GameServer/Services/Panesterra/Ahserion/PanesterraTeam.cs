@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.World;
 using static Aion.GameServer.Services.Panesterra.Ahserion.PanesterraFaction;

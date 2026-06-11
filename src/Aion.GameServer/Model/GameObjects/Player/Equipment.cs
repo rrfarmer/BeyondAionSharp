@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Items;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Equipment implements Persistable. Ported as partials (802L).

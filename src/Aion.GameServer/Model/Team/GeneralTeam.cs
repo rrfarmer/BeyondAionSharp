@@ -230,7 +230,7 @@ public abstract class GeneralTeam<M, TM> : AionObject
 
     public abstract int GetMaxMemberCount();
 
-    public abstract List<Aion.GameServer.Model.GameObjects.Player.Player> GetOnlineMembers();
+    public abstract List<Aion.GameServer.Model.GameObjects.Players.Player> GetOnlineMembers();
 
     public abstract LootGroupRules GetLootGroupRules();
 

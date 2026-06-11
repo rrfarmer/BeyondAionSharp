@@ -85,12 +85,12 @@ public class LegionMember
         this.challengeScore += amount;
     }
 
-    public void SetPlayerData(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void SetPlayerData(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         SetPlayerData(player.GetCommonData());
     }
 
-    public void SetPlayerData(Aion.GameServer.Model.GameObjects.Player.PlayerCommonData playerCommonData)
+    public void SetPlayerData(Aion.GameServer.Model.GameObjects.Players.PlayerCommonData playerCommonData)
     {
         name = playerCommonData.GetName();
         playerClass = playerCommonData.GetPlayerClass();

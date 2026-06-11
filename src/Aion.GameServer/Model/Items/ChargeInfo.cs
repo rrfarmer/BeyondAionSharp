@@ -37,12 +37,12 @@ public class ChargeInfo : ActionObserver
         return chargePoints;
     }
 
-    private Aion.GameServer.Model.GameObjects.Player.Player GetPlayer()
+    private Aion.GameServer.Model.GameObjects.Players.Player GetPlayer()
     {
         return playerId == 0 ? null : Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
     }
 
-    public void SetPlayer(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void SetPlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         this.playerId = player == null ? 0 : player.GetObjectId();
     }
@@ -61,7 +61,7 @@ public class ChargeInfo : ActionObserver
             int currentChargeBarStep = chargePoints / 50000;
             int newChargeBarStep = newChargePoints / 50000;
             chargePoints = newChargePoints;
-            Aion.GameServer.Model.GameObjects.Player.Player player;
+            Aion.GameServer.Model.GameObjects.Players.Player player;
             if (item.IsEquipped() && (player = GetPlayer()) != null)
                 player.GetEquipment().SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
             item.SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
@@ -89,7 +89,7 @@ public class ChargeInfo : ActionObserver
 
     private void SendItemUpdate()
     {
-        Aion.GameServer.Model.GameObjects.Player.Player player = GetPlayer();
+        Aion.GameServer.Model.GameObjects.Players.Player player = GetPlayer();
         if (player != null)
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.CHARGE));
     }

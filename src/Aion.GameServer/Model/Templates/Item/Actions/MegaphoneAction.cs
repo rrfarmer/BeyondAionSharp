@@ -16,12 +16,12 @@ public class MegaphoneAction : AbstractItemAction
         return rgb;
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item item, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item item, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
         string message = (string)@params[0];
         Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = item.GetItemTemplate();

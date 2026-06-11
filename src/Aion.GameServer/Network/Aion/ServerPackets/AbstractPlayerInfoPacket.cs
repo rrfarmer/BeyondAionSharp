@@ -3,12 +3,12 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;
 

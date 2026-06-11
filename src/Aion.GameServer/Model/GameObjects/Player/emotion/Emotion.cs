@@ -1,6 +1,6 @@
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Emotion;
+namespace Aion.GameServer.Model.GameObjects.Players.Emotion;
 
 /// <summary>Java parity: model/gameobjects/player/emotion/Emotion implements Expirable.</summary>
 public class Emotion : IExpirable
@@ -25,7 +25,7 @@ public class Emotion : IExpirable
         return expireTime;
     }
 
-    public void OnExpire(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetEmotions().Remove(id);
         // TODO emotion templates -> parse nameIds for system message, like 600228 for STR_EMOTION_CASH_DISCODANCE (Aion Boogie) etc.

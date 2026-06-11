@@ -14,14 +14,14 @@ public class ExpExtractAction : AbstractItemAction
     [XmlAttribute("percent")] private bool isPercent;
     [XmlAttribute("item_id")] private int itemId;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Model.GameObjects.Player.PlayerCommonData cd = player.GetCommonData();
+        Aion.GameServer.Model.GameObjects.Players.PlayerCommonData cd = player.GetCommonData();
         long newExp = cd.GetExp() - GetRequiredExp(cd);
         return CanExtractExp(player, newExp);
     }
 
-    private bool CanExtractExp(Aion.GameServer.Model.GameObjects.Player.Player player, long newExp)
+    private bool CanExtractExp(Aion.GameServer.Model.GameObjects.Players.Player player, long newExp)
     {
         if (player.GetInventory().IsFull())
         {
@@ -36,7 +36,7 @@ public class ExpExtractAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
             new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
@@ -50,7 +50,7 @@ public class ExpExtractAction : AbstractItemAction
         {
             player.GetObserveController().RemoveObserver(observer);
 
-            Aion.GameServer.Model.GameObjects.Player.PlayerCommonData cd = player.GetCommonData();
+            Aion.GameServer.Model.GameObjects.Players.PlayerCommonData cd = player.GetCommonData();
             long requiredExp = GetRequiredExp(cd);
             long newExp = cd.GetExp() - requiredExp;
             if (!CanExtractExp(player, newExp) || !player.GetInventory().DecreaseByItemId(parentItem.GetItemId(), 1))
@@ -71,7 +71,7 @@ public class ExpExtractAction : AbstractItemAction
         }, TimeSpan.FromMilliseconds(5000)));
     }
 
-    private long GetRequiredExp(Aion.GameServer.Model.GameObjects.Player.PlayerCommonData cd)
+    private long GetRequiredExp(Aion.GameServer.Model.GameObjects.Players.PlayerCommonData cd)
     {
         if (isPercent)
         {
@@ -83,10 +83,10 @@ public class ExpExtractAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class ExpExtractUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public ExpExtractUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public ExpExtractUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;

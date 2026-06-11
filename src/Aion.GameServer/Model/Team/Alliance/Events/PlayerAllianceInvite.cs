@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion.Serverpackets;

@@ -7,7 +7,7 @@ using Aion.GameServer.Dao;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
@@ -26,7 +26,7 @@ using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
 using LocationData = Aion.GameServer.Dataholders.PlayerInitialData.LocationData;
 
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/PlayerLeaveWorldService (ATracer, Neon). leaveWorldDelayed (schedule disconnect cleanup as DESPAWN task) and leaveWorld (full logout: safe-position fallback, service onLogout hooks, dead->revive, store effects/cooldowns/lifestats, group/alliance/legion logout, release summon/pet/postman, quest onLogout, persist common data + last-online, chat server logout). Future->ScheduledTask; schedule(Runnable,ms)->Schedule(ct-lambda); new Timestamp(currentTimeMillis)->DateTimeOffset.FromUnixTimeMilliseconds(UtcNow...). Many service/DAO/model types red-tolerated.</summary>
 public class PlayerLeaveWorldService

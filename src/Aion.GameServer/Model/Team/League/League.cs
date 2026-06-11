@@ -20,7 +20,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         SetLeader(leader);
     }
 
-    public override List<Aion.GameServer.Model.GameObjects.Player.Player> GetOnlineMembers()
+    public override List<Aion.GameServer.Model.GameObjects.Players.Player> GetOnlineMembers()
     {
         return GetMembers().SelectMany(alliance => alliance.GetOnlineMembers()).ToList();
     }
@@ -63,7 +63,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         return GetLeaderObject().GetRace();
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Player GetCaptain()
+    public Aion.GameServer.Model.GameObjects.Players.Player GetCaptain()
     {
         return GetLeaderObject().GetLeaderObject();
     }
@@ -86,10 +86,10 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
 
     /// <summary>Reorganize alliances positions in league from 0 to size.</summary>
     /// <returns>new league leader</returns>
-    public Aion.GameServer.Model.GameObjects.Player.Player Reorganize()
+    public Aion.GameServer.Model.GameObjects.Players.Player Reorganize()
     {
         int position = 0;
-        Aion.GameServer.Model.GameObjects.Player.Player newLeader = null;
+        Aion.GameServer.Model.GameObjects.Players.Player newLeader = null;
         foreach (LeagueMember alliance in GetSortedMembers())
         {
             if (alliance.GetLeaguePosition() > position)
@@ -108,7 +108,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
 
     /// <summary>Search for player member in all alliances.</summary>
     /// <returns>player object</returns>
-    public Aion.GameServer.Model.GameObjects.Player.Player GetPlayerMember(int playerObjId)
+    public Aion.GameServer.Model.GameObjects.Players.Player GetPlayerMember(int playerObjId)
     {
         foreach (PlayerAlliance member in GetMembers())
         {
@@ -123,10 +123,10 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
 
     public void Broadcast()
     {
-        Broadcast((PlayerAlliance)null, (Aion.GameServer.Model.GameObjects.Player.Player)null);
+        Broadcast((PlayerAlliance)null, (Aion.GameServer.Model.GameObjects.Players.Player)null);
     }
 
-    public void Broadcast(Aion.GameServer.Model.GameObjects.Player.Player skippedPlayer)
+    public void Broadcast(Aion.GameServer.Model.GameObjects.Players.Player skippedPlayer)
     {
         Broadcast(null, skippedPlayer);
     }
@@ -136,7 +136,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         Broadcast(skippedAlliance, null);
     }
 
-    public void Broadcast(PlayerAlliance skippedAlliance, Aion.GameServer.Model.GameObjects.Player.Player skippedPlayer)
+    public void Broadcast(PlayerAlliance skippedAlliance, Aion.GameServer.Model.GameObjects.Players.Player skippedPlayer)
     {
         Lock();
         try
@@ -146,7 +146,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
                 PlayerAlliance targetAlliance = memberAlliance.GetObject();
                 if (!targetAlliance.Equals(skippedAlliance))
                 {
-                    Predicate<Aion.GameServer.Model.GameObjects.Player.Player> predicate = Predicates.AlwaysTrue<Aion.GameServer.Model.GameObjects.Player.Player>();
+                    Predicate<Aion.GameServer.Model.GameObjects.Players.Player> predicate = Predicates.AlwaysTrue<Aion.GameServer.Model.GameObjects.Players.Player>();
                     if (skippedPlayer != null)
                     {
                         predicate = Predicates.Players.AllExcept(skippedPlayer);
@@ -161,12 +161,12 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         }
     }
 
-    public ICollection<Aion.GameServer.Model.GameObjects.Player.Player> GetCaptains()
+    public ICollection<Aion.GameServer.Model.GameObjects.Players.Player> GetCaptains()
     {
-        List<Aion.GameServer.Model.GameObjects.Player.Player> captains = new List<Aion.GameServer.Model.GameObjects.Player.Player>();
+        List<Aion.GameServer.Model.GameObjects.Players.Player> captains = new List<Aion.GameServer.Model.GameObjects.Players.Player>();
         foreach (LeagueMember member in GetSortedMembers())
         {
-            Aion.GameServer.Model.GameObjects.Player.Player leader = member.GetObject().GetLeaderObject();
+            Aion.GameServer.Model.GameObjects.Players.Player leader = member.GetObject().GetLeaderObject();
             if (!captains.Contains(leader))
             {
                 captains.Add(leader);

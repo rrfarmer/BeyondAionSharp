@@ -47,12 +47,12 @@ public abstract class Storage : IStorage
         return storageType;
     }
 
-    internal void IncreaseKinah(long amount, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal void IncreaseKinah(long amount, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         IncreaseKinah(amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.INC_KINAH_COLLECT, actor);
     }
 
-    internal void IncreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal void IncreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (kinahItem == null)
         {
@@ -65,7 +65,7 @@ public abstract class Storage : IStorage
     }
 
     /// <summary>Decrease kinah by amount but check first that it's enough in storage. Returns true if decrease was successful.</summary>
-    internal bool TryDecreaseKinah(long amount, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool TryDecreaseKinah(long amount, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (GetKinah() >= amount)
         {
@@ -75,7 +75,7 @@ public abstract class Storage : IStorage
         return false;
     }
 
-    internal bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (GetKinah() >= amount)
         {
@@ -86,12 +86,12 @@ public abstract class Storage : IStorage
     }
 
     /// <summary>Just decrease kinah without any checks.</summary>
-    internal void DecreaseKinah(long amount, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal void DecreaseKinah(long amount, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         DecreaseKinah(amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.DEC_KINAH_BUY, actor);
     }
 
-    internal void DecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal void DecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (amount > 0)
         {
@@ -99,13 +99,13 @@ public abstract class Storage : IStorage
         }
     }
 
-    internal long IncreaseItemCount(Item item, long count, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal long IncreaseItemCount(Item item, long count, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return IncreaseItemCount(item, count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.DEC_ITEM_USE, actor);
     }
 
     /// <summary>Increase item count and return left count.</summary>
-    internal long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         long leftCount = item.IncreaseItemCount(count);
         if (actor != null)
@@ -114,18 +114,18 @@ public abstract class Storage : IStorage
         return leftCount;
     }
 
-    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return DecreaseItemCount(item, count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.DEC_ITEM_USE, actor);
     }
 
     /// <summary>Decrease item count and return left count.</summary>
-    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return DecreaseItemCount(item, count, updateType, null, actor);
     }
 
-    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (item == null)
             return 0;
@@ -155,12 +155,12 @@ public abstract class Storage : IStorage
             itemStorage.PutItem(item);
     }
 
-    internal Item Add(Item item, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal Item Add(Item item, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return Add(item, Aion.GameServer.Services.Item.ItemService.DEFAULT_UPDATE_PREDICATE.GetAddType(), actor);
     }
 
-    internal Item Add(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemAddType addType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal Item Add(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemAddType addType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (item.GetItemTemplate().IsKinah())
         {
@@ -198,7 +198,7 @@ public abstract class Storage : IStorage
     }
 
     // a bit misleading name - but looks like it's used only for equipment
-    internal Item Put(Item item, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal Item Put(Item item, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (!itemStorage.PutItem(item))
         {
@@ -217,13 +217,13 @@ public abstract class Storage : IStorage
     }
 
     /// <summary>Delete item from storage and mark for DB update.</summary>
-    internal Item Delete(Item item, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal Item Delete(Item item, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return Delete(item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType.DEFAULT, actor);
     }
 
     /// <summary>Delete item from storage and mark for DB update.</summary>
-    internal Item Delete(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType deleteType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal Item Delete(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType deleteType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (Remove(item) != null)
         {
@@ -242,12 +242,12 @@ public abstract class Storage : IStorage
         return null;
     }
 
-    internal bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return DecreaseByItemId(itemId, count, null, actor);
     }
 
-    internal bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         List<Item> items = itemStorage.GetItemsById(itemId);
         if (items.Count == 0)
@@ -265,12 +265,12 @@ public abstract class Storage : IStorage
         return count == 0;
     }
 
-    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         return DecreaseByObjectId(itemObjId, count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.DEC_ITEM_USE, actor);
     }
 
-    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         Item item = itemStorage.GetItemByObjId(itemObjId);
         if (item == null || item.GetItemCount() < count)
@@ -279,7 +279,7 @@ public abstract class Storage : IStorage
         return DecreaseItemCount(item, count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.DEC_ITEM_USE, questStatus, actor) == 0;
     }
 
-    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         Item item = itemStorage.GetItemByObjId(itemObjId);
         if (item == null || item.GetItemCount() < count)
@@ -407,7 +407,7 @@ public abstract class Storage : IStorage
     }
 
     // ----- IStorage public (no-actor) members implemented by subclasses (Java: abstract via subclass) -----
-    public abstract void SetOwner(Aion.GameServer.Model.GameObjects.Player.Player player);
+    public abstract void SetOwner(Aion.GameServer.Model.GameObjects.Players.Player player);
 
     public abstract void IncreaseKinah(long amount);
 

@@ -1,5 +1,5 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
  using Aion.GameServer.Skillengine.Model;
 
 namespace Aion.GameServer.Skillengine.Effect;

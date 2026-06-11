@@ -11,11 +11,11 @@ public sealed class ShoutEventHandler
 {
     public static void OnSee(NpcAI npcAI, Creature target)
     {
-        if (target is Aion.GameServer.Model.GameObjects.Player.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
+        if (target is Aion.GameServer.Model.GameObjects.Players.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
         {
             Npc npc = npcAI.GetOwner();
             List<Aion.GameServer.Model.Templates.Npcshout.NpcShout> shouts = DataManager.NPC_SHOUT_DATA.GetNpcShouts(npc.GetPosition().GetMapId(), npc.GetNpcId(), Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.SEE);
-            Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Player.Player)target, shouts, 0);
+            Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Players.Player)target, shouts, 0);
         }
     }
 
@@ -55,8 +55,8 @@ public sealed class ShoutEventHandler
                 int stepCount = tp.GetRouteSteps().Count;
                 if (Aion.Commons.Utils.Rnd.NextInt(stepCount) < 2)
                 {
-                    if (npc.GetTarget() is Aion.GameServer.Model.GameObjects.Player.Player)
-                        Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Player.Player)npc.GetTarget(), shouts, 0);
+                    if (npc.GetTarget() is Aion.GameServer.Model.GameObjects.Players.Player)
+                        Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Players.Player)npc.GetTarget(), shouts, 0);
                     else
                         Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, null, shouts, 0);
                 }
@@ -66,11 +66,11 @@ public sealed class ShoutEventHandler
 
     public static void OnSwitchedTarget(NpcAI npcAI, Creature target)
     {
-        if (target is Aion.GameServer.Model.GameObjects.Player.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
+        if (target is Aion.GameServer.Model.GameObjects.Players.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
         {
             Npc npc = npcAI.GetOwner();
             List<Aion.GameServer.Model.Templates.Npcshout.NpcShout> shouts = DataManager.NPC_SHOUT_DATA.GetNpcShouts(npc.GetPosition().GetMapId(), npc.GetNpcId(), Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.SWITCH_TARGET);
-            Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Player.Player)target, shouts, 0);
+            Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Players.Player)target, shouts, 0);
         }
     }
 
@@ -103,18 +103,18 @@ public sealed class ShoutEventHandler
         if (npcAI.Ask(AIQuestion.CAN_SHOUT))
         {
             Npc npc = npcAI.GetOwner();
-            if (attacker.GetActingCreature() is Aion.GameServer.Model.GameObjects.Player.Player)
+            if (attacker.GetActingCreature() is Aion.GameServer.Model.GameObjects.Players.Player)
             {
                 if (npc.GetAttackedCount() == 0)
                 {
                     List<Aion.GameServer.Model.Templates.Npcshout.NpcShout> shouts = DataManager.NPC_SHOUT_DATA.GetNpcShouts(npc.GetPosition().GetMapId(), npc.GetNpcId(), Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.ATTACKED);
                     if (shouts != null && shouts.Count != 0)
                     {
-                        Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Player.Player)attacker.GetActingCreature(), shouts, 0);
+                        Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Players.Player)attacker.GetActingCreature(), shouts, 0);
                         return;
                     }
                     shouts = DataManager.NPC_SHOUT_DATA.GetNpcShouts(npc.GetPosition().GetMapId(), npc.GetNpcId(), Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.HELPCALL);
-                    Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Player.Player)attacker.GetActingCreature(), shouts, 0);
+                    Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Players.Player)attacker.GetActingCreature(), shouts, 0);
                 }
             }
             else
@@ -131,18 +131,18 @@ public sealed class ShoutEventHandler
 
     public static void OnCast(NpcAI npcAI, Creature firstTarget)
     {
-        if (firstTarget is Aion.GameServer.Model.GameObjects.Player.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
-            HandleNumericEvent(npcAI, (Aion.GameServer.Model.GameObjects.Player.Player)firstTarget, Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.CAST_K);
+        if (firstTarget is Aion.GameServer.Model.GameObjects.Players.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
+            HandleNumericEvent(npcAI, (Aion.GameServer.Model.GameObjects.Players.Player)firstTarget, Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.CAST_K);
     }
 
     /// <summary>Handle target attacked events.</summary>
     public static void OnAttack(NpcAI npcAI, Creature attacked)
     {
-        if (attacked is Aion.GameServer.Model.GameObjects.Player.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
-            HandleNumericEvent(npcAI, (Aion.GameServer.Model.GameObjects.Player.Player)attacked, Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.ATTACK_K);
+        if (attacked is Aion.GameServer.Model.GameObjects.Players.Player && npcAI.Ask(AIQuestion.CAN_SHOUT))
+            HandleNumericEvent(npcAI, (Aion.GameServer.Model.GameObjects.Players.Player)attacked, Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.ATTACK_K);
     }
 
-    private static void HandleNumericEvent(NpcAI npcAI, Aion.GameServer.Model.GameObjects.Player.Player creature, Aion.GameServer.Model.Templates.Npcshout.ShoutEventType eventType)
+    private static void HandleNumericEvent(NpcAI npcAI, Aion.GameServer.Model.GameObjects.Players.Player creature, Aion.GameServer.Model.Templates.Npcshout.ShoutEventType eventType)
     {
         Npc npc = npcAI.GetOwner();
         List<Aion.GameServer.Model.Templates.Npcshout.NpcShout> shouts = DataManager.NPC_SHOUT_DATA.GetNpcShouts(npc.GetPosition().GetMapId(), npc.GetNpcId(), eventType);

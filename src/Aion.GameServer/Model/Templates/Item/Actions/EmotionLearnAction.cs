@@ -22,7 +22,7 @@ public class EmotionLearnAction : AbstractItemAction
         LEARNABLE_IDS[emotionId] = 0;
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (emotionId == 0 || parentItem == null)
         {
@@ -37,7 +37,7 @@ public class EmotionLearnAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,

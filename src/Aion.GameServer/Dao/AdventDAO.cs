@@ -1,7 +1,7 @@
 using System;
 using MySqlConnector;
 using Aion.Commons.Database;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Dao;
 

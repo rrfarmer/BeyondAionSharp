@@ -1,7 +1,7 @@
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Animations;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Road;
 using Aion.GameServer.Model.Templates.Road;
 using Aion.GameServer.Services.Teleport;

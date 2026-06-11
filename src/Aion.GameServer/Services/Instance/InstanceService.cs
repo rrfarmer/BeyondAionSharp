@@ -8,7 +8,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Instance;
 using Aion.GameServer.Instance.Handlers;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Templates.Housing;

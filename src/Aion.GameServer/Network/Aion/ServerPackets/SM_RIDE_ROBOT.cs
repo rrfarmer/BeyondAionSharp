@@ -1,4 +1,4 @@
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;

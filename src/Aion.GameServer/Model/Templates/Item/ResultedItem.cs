@@ -4,7 +4,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Model.Templates.Item;
 

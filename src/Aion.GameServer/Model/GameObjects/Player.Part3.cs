@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player — partial #3 (Java lines ~863-1209): enemy/pvp relations,
@@ -39,7 +39,7 @@ public partial class Player
     {
         if (Equals(enemy))
             return false;
-        if (IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState.ENEMY_OF_ALL_PLAYERS) || enemy.IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState.ENEMY_OF_ALL_PLAYERS))
+        if (IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.ENEMY_OF_ALL_PLAYERS) || enemy.IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.ENEMY_OF_ALL_PLAYERS))
         {
             return !isInFfaTeamMode || !enemy.IsInFfaTeamMode() || !IsInSameTeam(enemy);
         }
@@ -48,7 +48,7 @@ public partial class Player
 
     public bool IsAggroIconTo(Player enemy)
     {
-        if (IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState.ENEMY_OF_ALL_PLAYERS) || enemy.IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState.ENEMY_OF_ALL_PLAYERS))
+        if (IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.ENEMY_OF_ALL_PLAYERS) || enemy.IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.ENEMY_OF_ALL_PLAYERS))
         {
             return !isInFfaTeamMode || !enemy.IsInFfaTeamMode() || !IsInSameTeam(enemy);
         }
@@ -286,17 +286,17 @@ public partial class Player
         return team == null ? 0 : team.GetTeamId();
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PortalCooldownList GetPortalCooldownList()
+    public Aion.GameServer.Model.GameObjects.Players.PortalCooldownList GetPortalCooldownList()
     {
         return portalCooldownList;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Cooldowns GetCraftCooldowns()
+    public Aion.GameServer.Model.GameObjects.Players.Cooldowns GetCraftCooldowns()
     {
         return craftCooldowns;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Cooldowns GetHouseObjectCooldowns()
+    public Aion.GameServer.Model.GameObjects.Players.Cooldowns GetHouseObjectCooldowns()
     {
         return houseObjectCooldowns;
     }

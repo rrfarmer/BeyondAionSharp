@@ -9,7 +9,7 @@ using Aion.Commons.Threading;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Instance.Handlers;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.World;

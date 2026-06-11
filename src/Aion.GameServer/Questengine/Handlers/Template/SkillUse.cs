@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Questengine.Handlers.Models;
 using Aion.GameServer.Questengine.Model;
 

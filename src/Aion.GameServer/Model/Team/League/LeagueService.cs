@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.League.Events;

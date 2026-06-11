@@ -7,7 +7,7 @@ using MySqlConnector;
 using Aion.Commons.Database;
 using Aion.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Questengine.Model;
 
 namespace Aion.GameServer.Dao;

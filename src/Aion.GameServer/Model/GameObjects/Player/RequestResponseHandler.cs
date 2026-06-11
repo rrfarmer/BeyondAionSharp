@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Non-generic base for RequestResponseHandler&lt;T&gt;. Java has only the single generic class; C# adds this base so

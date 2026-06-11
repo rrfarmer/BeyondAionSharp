@@ -2,9 +2,9 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.GeoEngine.Collision;
 using Aion.GameServer.GeoEngine.Scene;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Siege;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Controllers.Observer;

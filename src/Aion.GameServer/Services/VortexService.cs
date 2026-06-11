@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Spawns.Vortexspawns;
 using Aion.GameServer.Model.Vortex;

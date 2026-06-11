@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Commons.Nio;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Instance;
 using Aion.GameServer.Model.Instance.Instancescore;
 using Aion.GameServer.Model.Instance.Playerreward;

@@ -8,10 +8,10 @@ namespace Aion.GameServer.Model.Items.Storage;
 /// <summary>Java parity: model/items/storage/LegionStorageProxy extends Storage.</summary>
 public class LegionStorageProxy : Storage
 {
-    private readonly Aion.GameServer.Model.GameObjects.Player.Player actor;
+    private readonly Aion.GameServer.Model.GameObjects.Players.Player actor;
     private readonly Storage storage;
 
-    public LegionStorageProxy(Aion.GameServer.Model.Team.Legion.LegionWarehouse storage, Aion.GameServer.Model.GameObjects.Player.Player actor)
+    public LegionStorageProxy(Aion.GameServer.Model.Team.Legion.LegionWarehouse storage, Aion.GameServer.Model.GameObjects.Players.Player actor)
         : base(storage.GetStorageType(), false)
     {
         this.actor = actor;
@@ -203,7 +203,7 @@ public class LegionStorageProxy : Storage
         return storage.Size();
     }
 
-    public override void SetOwner(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public override void SetOwner(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         throw new NotSupportedException("LWH doesnt have owner");
     }

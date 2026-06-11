@@ -12,7 +12,7 @@ public class DropItem
     private List<int> playerObjIds;
     private bool isFreeForAll = false;
     private long highestValue = 0;
-    private Aion.GameServer.Model.GameObjects.Player.Player winningPlayer = null;
+    private Aion.GameServer.Model.GameObjects.Players.Player winningPlayer = null;
     private bool isItemWonNotCollected = false;
     private bool isDistributeItem = false;
     private int npcObj;
@@ -93,12 +93,12 @@ public class DropItem
         this.highestValue = highestValue;
     }
 
-    public void SetWinningPlayer(Aion.GameServer.Model.GameObjects.Player.Player winningPlayer)
+    public void SetWinningPlayer(Aion.GameServer.Model.GameObjects.Players.Player winningPlayer)
     {
         this.winningPlayer = winningPlayer;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Player GetWinningPlayer()
+    public Aion.GameServer.Model.GameObjects.Players.Player GetWinningPlayer()
     {
         if (winningPlayer != null)
         {
@@ -108,7 +108,7 @@ public class DropItem
             }
             else
             {
-                Aion.GameServer.Model.GameObjects.Player.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(winningPlayer.GetObjectId());
+                Aion.GameServer.Model.GameObjects.Players.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(winningPlayer.GetObjectId());
                 if (player != null)
                 {
                     return player;
@@ -157,7 +157,7 @@ public class DropItem
         return optionalSocket;
     }
 
-    public bool IsOnlyPossibleLooter(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public bool IsOnlyPossibleLooter(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (playerObjIds.Count != 1)
             return false;

@@ -9,8 +9,8 @@ using Aion.GameServer.Utils.Collections;
 namespace Aion.GameServer.Model.Team;
 
 /// <summary>Java parity: model/team/TemporaryPlayerTeam (ATracer). extends GeneralTeam&lt;Player, TM&gt;.</summary>
-public abstract class TemporaryPlayerTeam<TM> : GeneralTeam<Aion.GameServer.Model.GameObjects.Player.Player, TM>
-    where TM : class, ITeamMember<Aion.GameServer.Model.GameObjects.Player.Player>
+public abstract class TemporaryPlayerTeam<TM> : GeneralTeam<Aion.GameServer.Model.GameObjects.Players.Player, TM>
+    where TM : class, ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>
 {
     private LootGroupRules lootGroupRules = new LootGroupRules();
     protected readonly ConcurrentDictionary<int, int> targetIdsByBrandId = new();
@@ -32,7 +32,7 @@ public abstract class TemporaryPlayerTeam<TM> : GeneralTeam<Aion.GameServer.Mode
         SendPackets(new Aion.GameServer.Network.Aion.ServerPackets.SmShowBrand(brandId, targetObjectId));
     }
 
-    public void SendBrands(Aion.GameServer.Model.GameObjects.Player.Player member)
+    public void SendBrands(Aion.GameServer.Model.GameObjects.Players.Player member)
     {
         PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmShowBrand(targetIdsByBrandId));
     }
@@ -44,10 +44,10 @@ public abstract class TemporaryPlayerTeam<TM> : GeneralTeam<Aion.GameServer.Mode
 
     public override void SendPackets(params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
     {
-        SendPacket(Predicates.AlwaysTrue<Aion.GameServer.Model.GameObjects.Player.Player>(), packets);
+        SendPacket(Predicates.AlwaysTrue<Aion.GameServer.Model.GameObjects.Players.Player>(), packets);
     }
 
-    public override void SendPacket(Predicate<Aion.GameServer.Model.GameObjects.Player.Player> predicate, params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
+    public override void SendPacket(Predicate<Aion.GameServer.Model.GameObjects.Players.Player> predicate, params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
     {
         ForEach(player =>
         {
@@ -59,7 +59,7 @@ public abstract class TemporaryPlayerTeam<TM> : GeneralTeam<Aion.GameServer.Mode
         });
     }
 
-    public override List<Aion.GameServer.Model.GameObjects.Player.Player> GetOnlineMembers()
+    public override List<Aion.GameServer.Model.GameObjects.Players.Player> GetOnlineMembers()
     {
         return FilterMembers(Predicates.Players.ONLINE);
     }

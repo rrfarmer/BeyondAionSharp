@@ -1,5 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Geometry;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Templates.Shield;

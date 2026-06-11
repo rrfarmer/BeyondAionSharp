@@ -126,22 +126,22 @@ public class ItemPacketService
         }
     }
 
-    public static void UpdateItemAfterInfoChange(Aion.GameServer.Model.GameObjects.Player.Player player, Item item)
+    public static void UpdateItemAfterInfoChange(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item));
     }
 
-    public static void UpdateItemAfterInfoChange(Aion.GameServer.Model.GameObjects.Player.Player player, Item item, ItemUpdateType updateType)
+    public static void UpdateItemAfterInfoChange(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, ItemUpdateType updateType)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, updateType));
     }
 
-    public static void UpdateItemAfterEquip(Aion.GameServer.Model.GameObjects.Player.Player player, Item item)
+    public static void UpdateItemAfterEquip(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, ItemUpdateType.EQUIP_UNEQUIP));
     }
 
-    public static void SendItemPacket(Aion.GameServer.Model.GameObjects.Player.Player player, StorageType storageType, Item item, ItemUpdateType updateType)
+    public static void SendItemPacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemUpdateType updateType)
     {
         if (item.GetItemCount() <= 0 && !item.GetItemTemplate().IsKinah())
         {
@@ -154,7 +154,7 @@ public class ItemPacketService
     }
 
     /// <summary>Item will be deleted from UI slot.</summary>
-    public static void SendItemDeletePacket(Aion.GameServer.Model.GameObjects.Player.Player player, StorageType storageType, Item item, ItemDeleteType deleteType)
+    public static void SendItemDeletePacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemDeleteType deleteType)
     {
         if (storageType == StorageType.CUBE)
         {
@@ -168,7 +168,7 @@ public class ItemPacketService
     }
 
     /// <summary>Item will be updated in UI slot (stacked items). Java fallthrough: LEGION_WAREHOUSE (non-kinah) → default.</summary>
-    public static void SendItemUpdatePacket(Aion.GameServer.Model.GameObjects.Player.Player player, StorageType storageType, Item item, ItemUpdateType updateType)
+    public static void SendItemUpdatePacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemUpdateType updateType)
     {
         if (storageType == StorageType.CUBE)
         {
@@ -184,13 +184,13 @@ public class ItemPacketService
         }
     }
 
-    public static void SendStorageUpdatePacket(Aion.GameServer.Model.GameObjects.Player.Player player, StorageType storageType, Item item)
+    public static void SendStorageUpdatePacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item)
     {
         SendStorageUpdatePacket(player, storageType, item, ItemAddType.ITEM_COLLECT);
     }
 
     /// <summary>New item will be displayed in storage. Java fallthrough: LEGION_WAREHOUSE (non-kinah) → default.</summary>
-    public static void SendStorageUpdatePacket(Aion.GameServer.Model.GameObjects.Player.Player player, StorageType storageType, Item item, ItemAddType addType)
+    public static void SendStorageUpdatePacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemAddType addType)
     {
         Aion.GameServer.Services.Toypet.PetFeedUnusualStorageArtifactCapture.RegisterStorageUpdate(player, storageType, item, addType);
         if (storageType == StorageType.CUBE)
@@ -208,7 +208,7 @@ public class ItemPacketService
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmCubeUpdate.CubeSize(storageType, player));
     }
 
-    public static void SendItemUnlockPacket(Aion.GameServer.Model.GameObjects.Player.Player player, Item item)
+    public static void SendItemUnlockPacket(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
         StorageType storageType = StorageType.GetStorageTypeById(item.GetItemLocation());
         if (storageType != null)

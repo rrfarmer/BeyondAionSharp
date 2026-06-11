@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 

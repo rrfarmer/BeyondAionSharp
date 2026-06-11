@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Abyss;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
-using AbyssRankUpdateType = Aion.GameServer.Model.GameObjects.Player.AbyssRank.AbyssRankUpdateType;
+using AbyssRankUpdateType = Aion.GameServer.Model.GameObjects.Players.AbyssRank.AbyssRankUpdateType;
 
 namespace Aion.GameServer.Network.Aion.Clientpackets;
 

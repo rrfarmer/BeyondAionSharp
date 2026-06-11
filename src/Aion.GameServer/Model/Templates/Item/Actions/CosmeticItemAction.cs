@@ -14,7 +14,7 @@ public class CosmeticItemAction : AbstractItemAction
 
     [XmlAttribute("name")] private string cosmeticName;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Model.Templates.Cosmeticitems.CosmeticItemTemplate template = DataManager.COSMETIC_ITEMS_DATA.GetCosmeticItemsTemplate(cosmeticName);
         if (template == null)
@@ -42,10 +42,10 @@ public class CosmeticItemAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Model.Templates.Cosmeticitems.CosmeticItemTemplate template = DataManager.COSMETIC_ITEMS_DATA.GetCosmeticItemsTemplate(cosmeticName);
-        Aion.GameServer.Model.GameObjects.Player.PlayerAppearance playerAppearance = player.GetPlayerAppearance();
+        Aion.GameServer.Model.GameObjects.Players.PlayerAppearance playerAppearance = player.GetPlayerAppearance();
         string type = template.GetType_();
         int id = template.GetId();
         switch (type)

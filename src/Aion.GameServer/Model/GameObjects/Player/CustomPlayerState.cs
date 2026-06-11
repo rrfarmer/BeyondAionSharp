@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/CustomPlayerState. Per-instance bit mask (composite members OR others)

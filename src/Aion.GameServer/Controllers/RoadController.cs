@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Road;
 
 namespace Aion.GameServer.Controllers;

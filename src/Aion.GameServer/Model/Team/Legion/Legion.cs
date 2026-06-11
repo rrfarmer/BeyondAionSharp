@@ -66,7 +66,7 @@ public class Legion : AionObject
         return memberIds.Select(id => Aion.GameServer.Services.LegionService.GetInstance().GetLegionMember(id)).Where(m => m != null);
     }
 
-    public List<Aion.GameServer.Model.GameObjects.Player.Player> GetOnlinePlayers()
+    public List<Aion.GameServer.Model.GameObjects.Players.Player> GetOnlinePlayers()
     {
         return memberIds.Select(id => Aion.GameServer.World.World.GetInstance().GetPlayer(id)).Where(p => p != null).ToList();
     }
@@ -339,12 +339,12 @@ public class Legion : AionObject
 
     public void AddBonus()
     {
-        List<Aion.GameServer.Model.GameObjects.Player.Player> members = GetOnlinePlayers();
+        List<Aion.GameServer.Model.GameObjects.Players.Player> members = GetOnlinePlayers();
         if (members.Count >= 10)
         {
             if (hasBonus.CompareAndSet(false, true))
             {
-                foreach (Aion.GameServer.Model.GameObjects.Player.Player member in members)
+                foreach (Aion.GameServer.Model.GameObjects.Players.Player member in members)
                 {
                     Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmIconInfo(1, true));
                 }
@@ -354,12 +354,12 @@ public class Legion : AionObject
 
     public void RemoveBonus()
     {
-        List<Aion.GameServer.Model.GameObjects.Player.Player> members = GetOnlinePlayers();
+        List<Aion.GameServer.Model.GameObjects.Players.Player> members = GetOnlinePlayers();
         if (members.Count < 10)
         {
             if (hasBonus.CompareAndSet(true, false))
             {
-                foreach (Aion.GameServer.Model.GameObjects.Player.Player member in members)
+                foreach (Aion.GameServer.Model.GameObjects.Players.Player member in members)
                 {
                     Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmIconInfo(1, false));
                 }

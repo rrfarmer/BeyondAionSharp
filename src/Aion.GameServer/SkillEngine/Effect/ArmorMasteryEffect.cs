@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Templates.Item.Enums;
 using Aion.GameServer.Skillengine.Model;

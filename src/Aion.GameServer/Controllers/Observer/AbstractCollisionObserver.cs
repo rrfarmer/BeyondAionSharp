@@ -5,7 +5,7 @@ using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.GeoEngine.Models;
 using Aion.GameServer.GeoEngine.Scene;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;

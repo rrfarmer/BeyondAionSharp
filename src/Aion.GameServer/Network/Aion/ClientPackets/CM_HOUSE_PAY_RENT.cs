@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;

@@ -10,7 +10,7 @@ public class FollowSummonTaskAI
 {
     private Creature target;
     private Summon summon;
-    private Aion.GameServer.Model.GameObjects.Player.Player master;
+    private Aion.GameServer.Model.GameObjects.Players.Player master;
     private float targetX;
     private float targetY;
     private float targetZ;

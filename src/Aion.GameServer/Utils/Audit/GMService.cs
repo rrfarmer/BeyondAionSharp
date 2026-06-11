@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.SkillEngine.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -22,7 +22,7 @@ public class GMService
         return SingletonHolder.instance;
     }
 
-    private readonly ConcurrentDictionary<int, Aion.GameServer.Model.GameObjects.Player.Player> staffMembers = new();
+    private readonly ConcurrentDictionary<int, Aion.GameServer.Model.GameObjects.Players.Player> staffMembers = new();
     private readonly List<SkillTemplate> gmSkills;
 
     private GMService()
@@ -33,12 +33,12 @@ public class GMService
             log.LogWarning("No GM skills found, possibly because of changed or missing skill templates.");
     }
 
-    public ICollection<Aion.GameServer.Model.GameObjects.Player.Player> GetOnlineStaffMembers()
+    public ICollection<Aion.GameServer.Model.GameObjects.Players.Player> GetOnlineStaffMembers()
     {
         return staffMembers.Values;
     }
 
-    public void OnPlayerLogin(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnPlayerLogin(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (player.IsStaff())
         {
@@ -48,20 +48,20 @@ public class GMService
         }
     }
 
-    public void OnPlayerLogout(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnPlayerLogout(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (staffMembers.TryRemove(player.GetObjectId(), out _) && IsAnnounceable(player))
             BroadcastConnectionStatus(player, false);
     }
 
-    public bool IsAnnounceable(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public bool IsAnnounceable(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         return player.IsOnline() && player.IsStaff() && !player.IsInCustomState(CustomPlayerState.NO_WHISPERS_MODE)
             && player.GetFriendList().GetStatus() != FriendList.Status.OFFLINE
             && (AdminConfig.ANNOUNCE_LEVELS.Contains(player.GetAccount().GetAccessLevel().ToString()) || AdminConfig.ANNOUNCE_LEVELS.Contains("*"));
     }
 
-    private void BroadcastConnectionStatus(Aion.GameServer.Model.GameObjects.Player.Player gm, bool connected)
+    private void BroadcastConnectionStatus(Aion.GameServer.Model.GameObjects.Players.Player gm, bool connected)
     {
         string name = Aion.GameServer.Utils.ChatUtil.Name(gm);
         Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage sysMsg = connected
@@ -78,7 +78,7 @@ public class GMService
         }
     }
 
-    private void ScheduleBroadcastLogin(Aion.GameServer.Model.GameObjects.Player.Player gm)
+    private void ScheduleBroadcastLogin(Aion.GameServer.Model.GameObjects.Players.Player gm)
     {
         if (!IsAnnounceable(gm))
             return;
@@ -101,7 +101,7 @@ public class GMService
         }, System.TimeSpan.FromMilliseconds(delay * 1000));
     }
 
-    public void AddGmSkills(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void AddGmSkills(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         foreach (SkillTemplate t in gmSkills)
         {

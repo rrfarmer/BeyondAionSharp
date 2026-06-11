@@ -1,7 +1,7 @@
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Questengine.Model;
 using Aion.GameServer.Questengine.Task.Checker;
 using Aion.GameServer.Utils;

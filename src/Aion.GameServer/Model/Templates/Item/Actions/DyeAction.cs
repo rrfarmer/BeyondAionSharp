@@ -20,7 +20,7 @@ public class DyeAction : AbstractItemAction
         set => minutes = string.IsNullOrEmpty(value) ? (int?)null : int.Parse(value);
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> targetHouseObject = (HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject>)@params[0];
         if (targetHouseObject == null && targetItem == null) // nothing to dye
@@ -44,7 +44,7 @@ public class DyeAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> targetHouseObject = (HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject>)@params[0];
         if (targetHouseObject == null)
@@ -53,7 +53,7 @@ public class DyeAction : AbstractItemAction
             DyeHouseObject(player, parentItem, targetHouseObject);
     }
 
-    private void DyeItem(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem)
+    private void DyeItem(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem)
     {
         if (!targetItem.GetItemSkinTemplate().IsItemDyePermitted())
             return;
@@ -94,7 +94,7 @@ public class DyeAction : AbstractItemAction
         return color.Equals("no") ? (int?)null : Convert.ToInt32(color, 16);
     }
 
-    private void DyeHouseObject(Aion.GameServer.Model.GameObjects.Player.Player player, Item dyeItem, HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> houseObject)
+    private void DyeHouseObject(Aion.GameServer.Model.GameObjects.Players.Player player, Item dyeItem, HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> houseObject)
     {
         if (!player.GetInventory().DecreaseByObjectId(dyeItem.GetObjectId(), 1))
             return;

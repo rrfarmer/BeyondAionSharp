@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Represents a player who has been blocked. Java parity: model/gameobjects/player/BlockedPlayer.</summary>
 public class BlockedPlayer

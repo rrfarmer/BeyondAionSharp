@@ -10,7 +10,7 @@ public class QuestStartAction : AbstractItemAction
 {
     [XmlAttribute("questid")] protected int questid;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Questengine.Model.QuestState qs = player.GetQuestStateList().GetQuestState(questid);
         if (qs == null || qs.IsStartable())
@@ -24,7 +24,7 @@ public class QuestStartAction : AbstractItemAction
         return false;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId()));
         Aion.GameServer.Questengine.QuestEngine.GetInstance().OnDialog(new Aion.GameServer.Questengine.Model.QuestEnv(null, player, questid, Aion.GameServer.Model.DialogAction.ASK_QUEST_ACCEPT));

@@ -1,5 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Taskmanager;
 
 namespace Aion.GameServer.World.Zone;

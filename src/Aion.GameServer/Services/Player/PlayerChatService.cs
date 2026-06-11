@@ -2,9 +2,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/PlayerChatService (Source, Neon). Chat flood detection (isFlooding) and chat logging (logWhisper/logMessage) routed to CHAT_LOG or ADMINAUDIT_LOG (when GM involved in a whisper), honoring private/general chat logging settings, with per-ChatType formatting. String.format(%s/%d)->string.Format({0}); enum.toString()->ToString(). ChatType/SecurityConfig/LoggingConfig red-tolerated.</summary>
 public class PlayerChatService

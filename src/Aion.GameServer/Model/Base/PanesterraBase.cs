@@ -1,6 +1,6 @@
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Model.Base;
 

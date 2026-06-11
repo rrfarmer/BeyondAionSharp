@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Aion.GameServer.Model.GameObjects.Player.Emotion;
+using Aion.GameServer.Model.GameObjects.Players.Emotion;
 using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;

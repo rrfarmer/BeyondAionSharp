@@ -9,7 +9,7 @@ public class AbyssService
     private static readonly int[] killAnnounceMaps = { 210050000, 210070000, 220070000, 220080000, 400010000, 400020000, 400030000, 400040000, 400050000,
         400060000, 600010000, 600070000, 600090000, 600100000 };
 
-    private static bool ShouldAnnounceHighRankedDeath(Aion.GameServer.Model.GameObjects.Player.Player victim)
+    private static bool ShouldAnnounceHighRankedDeath(Aion.GameServer.Model.GameObjects.Players.Player victim)
     {
         if (victim.GetAbyssRank().GetRank().GetId() >= AbyssRankEnum.GRADE1_SOLDIER.GetId())
         {
@@ -22,7 +22,7 @@ public class AbyssService
         return false;
     }
 
-    public static void AnnounceHighRankedDeath(Aion.GameServer.Model.GameObjects.Player.Player victim)
+    public static void AnnounceHighRankedDeath(Aion.GameServer.Model.GameObjects.Players.Player victim)
     {
         if (!ShouldAnnounceHighRankedDeath(victim))
             return;
@@ -30,7 +30,7 @@ public class AbyssService
             p => p != victim && victim.GetWorldType() == p.GetWorldType() && !p.IsInInstance());
     }
 
-    public static void AnnounceAbyssSkillUsage(Aion.GameServer.Model.GameObjects.Player.Player player, string skillL10n)
+    public static void AnnounceAbyssSkillUsage(Aion.GameServer.Model.GameObjects.Players.Player player, string skillL10n)
     {
         PacketSendUtility.BroadcastToWorld(Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_ABYSS_SKILL_IS_FIRED(player, skillL10n),
             p => p != player && player.GetWorldType() == p.GetWorldType() && !p.IsInInstance());

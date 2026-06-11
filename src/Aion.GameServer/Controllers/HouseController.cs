@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Model.Templates.Spawns;

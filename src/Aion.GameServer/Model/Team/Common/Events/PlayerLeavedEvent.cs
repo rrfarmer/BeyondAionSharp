@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Event;

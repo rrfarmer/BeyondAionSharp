@@ -21,7 +21,7 @@ public class LegionWarehouse : Storage
     public override void IncreaseKinah(long amount)
     {
         int currentWhUser = GetCurrentUser();
-        Aion.GameServer.Model.GameObjects.Player.Player player = currentWhUser == 0 ? null : Aion.GameServer.World.World.GetInstance().GetPlayer(currentWhUser);
+        Aion.GameServer.Model.GameObjects.Players.Player player = currentWhUser == 0 ? null : Aion.GameServer.World.World.GetInstance().GetPlayer(currentWhUser);
         new LegionStorageProxy(this, player).IncreaseKinah(amount);
     }
 
@@ -125,7 +125,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override void SetOwner(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public override void SetOwner(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         throw new NotSupportedException("LWH doesnt have owner");
     }

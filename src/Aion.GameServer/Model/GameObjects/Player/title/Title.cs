@@ -1,6 +1,6 @@
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Title;
+namespace Aion.GameServer.Model.GameObjects.Players.Title;
 
 /// <summary>Java parity: model/gameobjects/player/title/Title implements Expirable.</summary>
 public class Title : IExpirable
@@ -33,7 +33,7 @@ public class Title : IExpirable
         return expireTime;
     }
 
-    public void OnExpire(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetTitleList().RemoveTitle(id);
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DELETE_CASH_TITLE_BY_TIMEOUT(template.GetL10n()));

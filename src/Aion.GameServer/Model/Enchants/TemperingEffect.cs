@@ -12,12 +12,12 @@ public class TemperingEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    private TemperingEffect(Aion.GameServer.Model.GameObjects.Player.Player player, List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction> functions)
+    private TemperingEffect(Aion.GameServer.Model.GameObjects.Players.Player player, List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction> functions)
     {
         player.GetGameStats().AddEffect(this, functions);
     }
 
-    public void EndEffect(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void EndEffect(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetGameStats().EndEffect(this);
     }
@@ -52,7 +52,7 @@ public class TemperingEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
         functions.Add(new Aion.GameServer.Model.Stats.Calc.Functions.StatAddFunction(StatEnum.MAXHP, PlumStatEnum.PLUM_HP.GetBoostValue() * item.GetTempering(), true));
     }
 
-    public static void Apply(Aion.GameServer.Model.GameObjects.Player.Player player, Item item)
+    public static void Apply(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
         List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction> functions = new List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction>();
         if (item.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.PLUME)

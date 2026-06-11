@@ -10,7 +10,7 @@ public class PetController : VisibleObjectController<Pet>
     public override void OnDelete()
     {
         base.OnDelete();
-        Aion.GameServer.Model.GameObjects.Player.PetCommonData commonData = GetOwner().GetCommonData();
+        Aion.GameServer.Model.GameObjects.Players.PetCommonData commonData = GetOwner().GetCommonData();
         Aion.GameServer.Services.Toypet.PetFeedProgress progress = commonData.GetFeedProgress();
         commonData.CancelRefeedTask();
         if (progress != null)
@@ -29,10 +29,10 @@ public class PetController : VisibleObjectController<Pet>
 
     public class PetUpdateTask
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private long startTime = 0;
 
-        public PetUpdateTask(Aion.GameServer.Model.GameObjects.Player.Player player)
+        public PetUpdateTask(Aion.GameServer.Model.GameObjects.Players.Player player)
         {
             this.player = player;
         }

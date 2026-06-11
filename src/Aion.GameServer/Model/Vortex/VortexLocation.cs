@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Controllers;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Vortex;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Vortex;

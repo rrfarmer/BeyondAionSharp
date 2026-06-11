@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects;
 namespace Aion.GameServer.Model.Skill;
 
 /// <summary>Java parity: model/skill/PlayerSkillList implements SkillList&lt;Player&gt;.</summary>
-public sealed class PlayerSkillList : SkillList<Aion.GameServer.Model.GameObjects.Player.Player>
+public sealed class PlayerSkillList : SkillList<Aion.GameServer.Model.GameObjects.Players.Player>
 {
     private readonly ConcurrentDictionary<int, PlayerSkillEntry> skills = new ConcurrentDictionary<int, PlayerSkillEntry>();
     private readonly List<PlayerSkillEntry> deletedSkills = new List<PlayerSkillEntry>();
@@ -38,17 +38,17 @@ public sealed class PlayerSkillList : SkillList<Aion.GameServer.Model.GameObject
         return skills.TryGetValue(skillId, out PlayerSkillEntry entry) ? entry : null;
     }
 
-    public bool AddSkill(Aion.GameServer.Model.GameObjects.Player.Player player, int skillId, int skillLevel)
+    public bool AddSkill(Aion.GameServer.Model.GameObjects.Players.Player player, int skillId, int skillLevel)
     {
         return AddSkill(player, skillId, skillLevel, false);
     }
 
-    public bool AddTemporarySkill(Aion.GameServer.Model.GameObjects.Player.Player player, int skillId, int skillLevel)
+    public bool AddTemporarySkill(Aion.GameServer.Model.GameObjects.Players.Player player, int skillId, int skillLevel)
     {
         return AddSkill(player, skillId, skillLevel, true);
     }
 
-    private bool AddSkill(Aion.GameServer.Model.GameObjects.Player.Player player, int skillId, int skillLevel, bool isTemporary)
+    private bool AddSkill(Aion.GameServer.Model.GameObjects.Players.Player player, int skillId, int skillLevel, bool isTemporary)
     {
         lock (this)
         {
@@ -81,7 +81,7 @@ public sealed class PlayerSkillList : SkillList<Aion.GameServer.Model.GameObject
     }
 
     /// <summary>Only for usage with gathering and crafting skills.</summary>
-    public bool AddSkillXp(Aion.GameServer.Model.GameObjects.Player.Player player, int skillId, int xpReward, int objSkillLvl)
+    public bool AddSkillXp(Aion.GameServer.Model.GameObjects.Players.Player player, int skillId, int xpReward, int objSkillLvl)
     {
         lock (this)
         {

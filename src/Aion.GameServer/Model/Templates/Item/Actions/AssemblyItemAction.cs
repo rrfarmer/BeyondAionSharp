@@ -13,7 +13,7 @@ public class AssemblyItemAction : AbstractItemAction
 {
     [XmlAttribute("item")] private int item;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Model.Templates.Item.AssemblyItem assemblyItem = GetAssemblyItem();
         if (assemblyItem == null)
@@ -30,7 +30,7 @@ public class AssemblyItemAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 1000, 0, 0), true);
         ItemUseObserver observer = new AssemblyUseObserver(player, parentItem);
@@ -57,10 +57,10 @@ public class AssemblyItemAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class AssemblyUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public AssemblyUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public AssemblyUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;

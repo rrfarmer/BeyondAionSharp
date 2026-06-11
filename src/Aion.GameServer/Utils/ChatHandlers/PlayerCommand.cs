@@ -1,4 +1,4 @@
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services;
 
 namespace Aion.GameServer.Utils.ChatHandlers;

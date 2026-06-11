@@ -11,7 +11,7 @@ public class TitleAddAction : AbstractItemAction
     [XmlAttribute("titleid")] protected int titleid;
     [XmlAttribute("minutes")] protected int? minutes;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (titleid == 0 || parentItem == null)
         {
@@ -26,7 +26,7 @@ public class TitleAddAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,

@@ -1,7 +1,7 @@
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

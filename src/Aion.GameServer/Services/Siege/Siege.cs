@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.Commons.Utils;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Siege;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Templates.Npc;
@@ -13,7 +13,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Services.Mail;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

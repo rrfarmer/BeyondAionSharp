@@ -20,7 +20,7 @@ public class PunishmentService
         Aion.GameServer.Dao.PlayerPunishmentsDAO.PunishPlayer(playerId, PunishmentType.CHARBAN, CalculateDuration(dayCount), reason);
 
         // if player is online - kick him
-        Aion.GameServer.Model.GameObjects.Player.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
+        Aion.GameServer.Model.GameObjects.Players.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
         if (player != null)
             player.GetClientConnection().Close(new Aion.GameServer.Network.Aion.ServerPackets.SmQuitResponse());
     }
@@ -35,7 +35,7 @@ public class PunishmentService
     }
 
     /// <summary>Handle moving or removing a player from prison.</summary>
-    public static void SetIsInPrison(Aion.GameServer.Model.GameObjects.Player.Player player, bool state, long delayInMinutes, string reason)
+    public static void SetIsInPrison(Aion.GameServer.Model.GameObjects.Players.Player player, bool state, long delayInMinutes, string reason)
     {
         if (state)
         {
@@ -63,7 +63,7 @@ public class PunishmentService
     }
 
     /// <summary>Update the prison status.</summary>
-    public static void UpdatePrisonStatus(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public static void UpdatePrisonStatus(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         int prisonDurationSeconds = player.GetPrisonDurationSeconds();
         if (prisonDurationSeconds > 0)
@@ -89,7 +89,7 @@ public class PunishmentService
     }
 
     /// <summary>Schedule a prison task.</summary>
-    private static void SchedulePrisonTask(Aion.GameServer.Model.GameObjects.Player.Player player, long prisonTimer)
+    private static void SchedulePrisonTask(Aion.GameServer.Model.GameObjects.Players.Player player, long prisonTimer)
     {
         player.GetController().AddTask(TaskId.PRISON, ThreadPoolManager.GetInstance().Schedule(ct =>
         {
@@ -99,7 +99,7 @@ public class PunishmentService
     }
 
     /// <summary>Handle can or can't gathering.</summary>
-    public static void SetIsNotGatherable(Aion.GameServer.Model.GameObjects.Player.Player player, int captchaCount, bool state, long delay)
+    public static void SetIsNotGatherable(Aion.GameServer.Model.GameObjects.Players.Player player, int captchaCount, bool state, long delay)
     {
         if (state)
         {

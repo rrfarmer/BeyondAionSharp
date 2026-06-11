@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 
 namespace Aion.GameServer.Model.House;
 

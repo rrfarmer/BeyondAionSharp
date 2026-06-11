@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Aion.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Spawns;

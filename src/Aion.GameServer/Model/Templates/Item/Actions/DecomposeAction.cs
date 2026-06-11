@@ -79,7 +79,7 @@ public class DecomposeAction : AbstractItemAction
                 152221434, 152221435, 152221436, 152221437, 152221450, 152221451, 152221452, 152221453, 152221454, 152221455, 152221576 };
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (player.IsDead() || !player.IsSpawned())
             return false;
@@ -100,7 +100,7 @@ public class DecomposeAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         player.GetController().CancelUseItem();
         ICollection<ResultedItem> selectable = DataManager.DECOMPOSABLE_ITEMS_DATA.GetSelectableItems(parentItem.GetItemId());
@@ -363,7 +363,7 @@ public class DecomposeAction : AbstractItemAction
     }
 
     // Java parity: postValidate(player, parentItem) — nested in the anonymous Runnable; targetItem captured from enclosing scope.
-    private bool PostValidate(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem)
+    private bool PostValidate(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem)
     {
         if (!CanAct(player, parentItem, targetItem))
         {
@@ -378,7 +378,7 @@ public class DecomposeAction : AbstractItemAction
     }
 
     /// <summary>Add to result collection only items which suit player's level.</summary>
-    private ICollection<ExtractedItemsCollection> FilterItemsByLevel(Aion.GameServer.Model.GameObjects.Player.Player player, List<ExtractedItemsCollection> itemsCollections)
+    private ICollection<ExtractedItemsCollection> FilterItemsByLevel(Aion.GameServer.Model.GameObjects.Players.Player player, List<ExtractedItemsCollection> itemsCollections)
     {
         if (itemsCollections == null)
         {
@@ -397,7 +397,7 @@ public class DecomposeAction : AbstractItemAction
         return result;
     }
 
-    private bool ContainsSpecialCubeItems(List<ExtractedItemsCollection> itemGroups, Aion.GameServer.Model.GameObjects.Player.Player player)
+    private bool ContainsSpecialCubeItems(List<ExtractedItemsCollection> itemGroups, Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         foreach (ExtractedItemsCollection items in itemGroups)
         {
@@ -445,10 +445,10 @@ public class DecomposeAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class DecomposeUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public DecomposeUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public DecomposeUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion;
 

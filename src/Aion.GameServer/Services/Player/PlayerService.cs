@@ -7,7 +7,7 @@ using Aion.GameServer.Dao;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
@@ -26,7 +26,7 @@ using ItemType = Aion.GameServer.Dataholders.PlayerInitialData.PlayerCreationDat
 using PunishmentType = Aion.GameServer.Services.PunishmentService.PunishmentType;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/PlayerService (SoulKeeper, Saelya, Cura). Loads/stores/creates players: isNameUsedOrReserved, storeNewPlayer, storePlayer (all DAO persistence), getPlayer (full load: legion/macros/skills/lists/effects/cooldowns/inventory/warehouse/pet bags/cabinets/equipment stats/punishments/emotions), newPlayer (spawn loc, starting skills + creation items auto-equip, mailbox), getOrLoadPlayerCommonData, cancel/deletePlayer (deletion timer), deletePlayerFromDB, storeCreationTime, add/removeMacro, getPlayerName. Timestamp->DateTimeOffset (getTime->ToUnixTimeMilliseconds, new Timestamp(ms)->FromUnixTimeMilliseconds); currentTimeMillis->UtcNow. Most DAO/model types red-tolerated.</summary>
 public class PlayerService

@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Manages the asking of and responding to SM_QUESTION_WINDOW (Java parity: model/gameobjects/player/ResponseRequester, Ben).

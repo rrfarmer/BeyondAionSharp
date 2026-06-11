@@ -2,7 +2,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Flyring;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.SkillEngine.Model;

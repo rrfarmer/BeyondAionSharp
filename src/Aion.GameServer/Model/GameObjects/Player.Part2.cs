@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.State;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player — partial #2 (Java lines ~515-861): storage/warehouse,
@@ -87,22 +87,22 @@ public partial class Player
         return inventory;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PlayerSettings GetPlayerSettings()
+    public Aion.GameServer.Model.GameObjects.Players.PlayerSettings GetPlayerSettings()
     {
         return playerSettings;
     }
 
-    public void SetPlayerSettings(Aion.GameServer.Model.GameObjects.Player.PlayerSettings playerSettings)
+    public void SetPlayerSettings(Aion.GameServer.Model.GameObjects.Players.PlayerSettings playerSettings)
     {
         this.playerSettings = playerSettings;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Title.TitleList GetTitleList()
+    public Aion.GameServer.Model.GameObjects.Players.Title.TitleList GetTitleList()
     {
         return titleList;
     }
 
-    public void SetTitleList(Aion.GameServer.Model.GameObjects.Player.Title.TitleList titleList)
+    public void SetTitleList(Aion.GameServer.Model.GameObjects.Players.Title.TitleList titleList)
     {
         this.titleList = titleList;
         titleList.SetOwner(this);
@@ -118,12 +118,12 @@ public partial class Player
         this.playerGroup = playerGroup;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.AbyssRank GetAbyssRank()
+    public Aion.GameServer.Model.GameObjects.Players.AbyssRank GetAbyssRank()
     {
         return abyssRank;
     }
 
-    public void SetAbyssRank(Aion.GameServer.Model.GameObjects.Player.AbyssRank abyssRank)
+    public void SetAbyssRank(Aion.GameServer.Model.GameObjects.Players.AbyssRank abyssRank)
     {
         this.abyssRank = abyssRank;
     }
@@ -139,12 +139,12 @@ public partial class Player
         return legionMember != null;
     }
 
-    public void SetLegionMember(Aion.GameServer.Model.GameObjects.Player.LegionMember legionMember)
+    public void SetLegionMember(Aion.GameServer.Model.GameObjects.Players.LegionMember legionMember)
     {
         this.legionMember = legionMember;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.LegionMember GetLegionMember()
+    public Aion.GameServer.Model.GameObjects.Players.LegionMember GetLegionMember()
     {
         return legionMember;
     }
@@ -272,15 +272,15 @@ public partial class Player
 
     public override bool IsInvulnerable()
     {
-        return IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState.INVULNERABLE);
+        return IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.INVULNERABLE);
     }
 
-    public void SetMailbox(Aion.GameServer.Model.GameObjects.Player.Mailbox mailbox)
+    public void SetMailbox(Aion.GameServer.Model.GameObjects.Players.Mailbox mailbox)
     {
         this.mailbox = mailbox;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Mailbox GetMailbox()
+    public Aion.GameServer.Model.GameObjects.Players.Mailbox GetMailbox()
     {
         return mailbox;
     }

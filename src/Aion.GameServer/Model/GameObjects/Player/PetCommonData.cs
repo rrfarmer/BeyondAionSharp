@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/PetCommonData implements Expirable.</summary>
 public class PetCommonData : IExpirable
@@ -300,7 +300,7 @@ public class PetCommonData : IExpirable
         return expireTime;
     }
 
-    public void OnExpire(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PET_ABANDON_EXPIRE_TIME_COMPLETE(name));
         Aion.GameServer.Services.Toypet.PetAdoptionService.SurrenderPet(player, templateId);

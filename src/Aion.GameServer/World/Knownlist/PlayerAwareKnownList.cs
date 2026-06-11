@@ -12,6 +12,6 @@ public class PlayerAwareKnownList : KnownList
 
     protected sealed override bool IsAwareOf(VisibleObject newObject)
     {
-        return base.IsAwareOf(newObject) && newObject is Aion.GameServer.Model.GameObjects.Player.Player;
+        return base.IsAwareOf(newObject) && newObject is Aion.GameServer.Model.GameObjects.Players.Player;
     }
 }

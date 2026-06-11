@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Limiteditems;
 using Aion.GameServer.Model.Templates.Goods;
 using Aion.GameServer.Model.Templates.Tradelist;

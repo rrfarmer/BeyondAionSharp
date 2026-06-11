@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Instance.Instancescore;
 using Aion.GameServer.Model.Instance.Playerreward;
 using Aion.GameServer.Model.Team;

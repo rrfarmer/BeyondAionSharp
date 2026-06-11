@@ -121,15 +121,15 @@ public class LootGroupRules
         this.nrMisc = nrMisc;
     }
 
-    public void SetPlayersInRoll(ICollection<Aion.GameServer.Model.GameObjects.Player.Player> players, int time, int index, int npcId)
+    public void SetPlayersInRoll(ICollection<Aion.GameServer.Model.GameObjects.Players.Player> players, int time, int index, int npcId)
     {
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            foreach (Aion.GameServer.Model.GameObjects.Player.Player player in players)
+            foreach (Aion.GameServer.Model.GameObjects.Players.Player player in players)
             {
                 if (player.IsInPlayerMode(PlayerMode.IN_ROLL))
                 {
-                    Aion.GameServer.Model.GameObjects.Player.InRoll inRoll = player.inRoll;
+                    Aion.GameServer.Model.GameObjects.Players.InRoll inRoll = player.inRoll;
                     if (inRoll.GetIndex() == index && inRoll.GetNpcId() == npcId)
                         Aion.GameServer.Services.Drop.DropDistributionService.GetInstance().HandleRollOrBid(player, inRoll.GetRollType(), 0, 0, inRoll.GetItemId(), inRoll.GetNpcId(),
                             inRoll.GetIndex());

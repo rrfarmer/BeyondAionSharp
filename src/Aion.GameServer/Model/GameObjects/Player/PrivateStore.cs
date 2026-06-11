@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/PrivateStore.</summary>
 public class PrivateStore

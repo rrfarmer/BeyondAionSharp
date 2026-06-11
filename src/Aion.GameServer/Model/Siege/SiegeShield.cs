@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.GeoEngine.Scene;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services;
 using Aion.GameServer.World.Zone;
 using Aion.GameServer.World.Zone.Handler;

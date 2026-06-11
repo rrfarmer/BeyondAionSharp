@@ -20,12 +20,12 @@ public class RandomBonusEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
         return statBonusId;
     }
 
-    public void ApplyEffect(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void ApplyEffect(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetGameStats().AddEffect(this, stats);
     }
 
-    public void EndEffect(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void EndEffect(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetGameStats().EndEffect(this);
     }

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.Challenge;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Challenge;
 using Aion.GameServer.Network.Aion;
 

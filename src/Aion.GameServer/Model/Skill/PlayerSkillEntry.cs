@@ -11,7 +11,7 @@ public class PlayerSkillEntry : SkillEntry, IPersistable
     private volatile int currentXp; // for crafting skills
     private IPersistable.PersistentState persistentState;
 
-    public PlayerSkillEntry(Aion.GameServer.Model.GameObjects.Player.Player player, int skillId, int skillLvl, IPersistable.PersistentState persistentState)
+    public PlayerSkillEntry(Aion.GameServer.Model.GameObjects.Players.Player player, int skillId, int skillLvl, IPersistable.PersistentState persistentState)
         : this(skillId, skillLvl, 0, persistentState)
     {
         List<Aion.GameServer.SkillEngine.Model.SkillLearnTemplate> learnTemplates = Aion.GameServer.Dataholders.DataManager.SKILL_TREE_DATA.GetTemplatesForSkill(skillId, player.GetPlayerClass(), player.GetRace());

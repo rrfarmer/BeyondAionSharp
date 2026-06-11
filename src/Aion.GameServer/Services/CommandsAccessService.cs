@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Dao;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Chathandlers;
 

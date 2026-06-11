@@ -9,7 +9,7 @@ public class CraftLearnAction : AbstractItemAction
 {
     [XmlAttribute("recipeid")] protected int recipeid;
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         player.GetController().CancelUseItem();
         if (player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
@@ -21,7 +21,7 @@ public class CraftLearnAction : AbstractItemAction
         }
     }
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         return Aion.GameServer.Services.RecipeService.ValidateNewRecipe(player, recipeid) != null;
     }

@@ -1,6 +1,6 @@
 using System;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.SkillEngine.Model;

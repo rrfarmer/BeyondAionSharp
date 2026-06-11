@@ -17,7 +17,7 @@ public class RideAction : AbstractItemAction
 {
     [XmlAttribute("npc_id")] protected int npcId;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (!player.IsInPlayerMode(PlayerMode.RIDE)) // RideAction is for mounting and dismounting, canAct should never forbid dismounting
         {
@@ -49,7 +49,7 @@ public class RideAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         player.GetController().CancelUseItem();
         if (player.IsInPlayerMode(PlayerMode.RIDE))
@@ -103,10 +103,10 @@ public class RideAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class RideUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
 
-        public RideUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem)
+        public RideUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem)
         {
             this.player = player;
             this.parentItem = parentItem;
@@ -126,9 +126,9 @@ public class RideAction : AbstractItemAction
     // Java parity: anonymous ActionObserver(ObserverType.ABNORMALSETTED) in act().
     private sealed class RideAbnormalObserver : ActionObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
 
-        public RideAbnormalObserver(Aion.GameServer.Model.GameObjects.Player.Player player)
+        public RideAbnormalObserver(Aion.GameServer.Model.GameObjects.Players.Player player)
             : base(ObserverType.ABNORMALSETTED)
         {
             this.player = player;
@@ -147,9 +147,9 @@ public class RideAction : AbstractItemAction
     // Java parity: anonymous ActionObserver(ObserverType.ATTACKED) in act().
     private sealed class RideAttackedObserver : ActionObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
 
-        public RideAttackedObserver(Aion.GameServer.Model.GameObjects.Player.Player player)
+        public RideAttackedObserver(Aion.GameServer.Model.GameObjects.Players.Player player)
             : base(ObserverType.ATTACKED)
         {
             this.player = player;
@@ -165,9 +165,9 @@ public class RideAction : AbstractItemAction
     // Java parity: anonymous ActionObserver(ObserverType.DOT_ATTACKED) in act().
     private sealed class RideDotAttackedObserver : ActionObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
 
-        public RideDotAttackedObserver(Aion.GameServer.Model.GameObjects.Player.Player player)
+        public RideDotAttackedObserver(Aion.GameServer.Model.GameObjects.Players.Player player)
             : base(ObserverType.DOT_ATTACKED)
         {
             this.player = player;

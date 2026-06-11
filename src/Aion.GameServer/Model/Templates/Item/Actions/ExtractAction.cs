@@ -10,7 +10,7 @@ namespace Aion.GameServer.Model.Templates.Item.Actions;
 [XmlType("ExtractAction")]
 public class ExtractAction : AbstractItemAction
 {
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (targetItem == null)
         {
@@ -31,7 +31,7 @@ public class ExtractAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
         player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
@@ -49,11 +49,11 @@ public class ExtractAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class ExtractUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
         private readonly Item targetItem;
 
-        public ExtractUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem)
+        public ExtractUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem)
         {
             this.player = player;
             this.parentItem = parentItem;

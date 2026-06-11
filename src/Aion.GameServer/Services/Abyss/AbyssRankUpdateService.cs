@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;

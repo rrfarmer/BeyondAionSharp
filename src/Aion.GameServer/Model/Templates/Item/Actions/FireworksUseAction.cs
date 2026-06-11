@@ -7,12 +7,12 @@ namespace Aion.GameServer.Model.Templates.Item.Actions;
 [XmlType("FireworksUseAction")]
 public class FireworksUseAction : AbstractItemAction
 {
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (parentItem.GetActivationCount() > 1)
             parentItem.SetActivationCount(parentItem.GetActivationCount() - 1);

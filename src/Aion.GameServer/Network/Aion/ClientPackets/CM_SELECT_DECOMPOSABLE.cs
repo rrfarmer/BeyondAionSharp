@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.Commons.Utils;
 using Aion.GameServer.DataHolders;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Item;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;

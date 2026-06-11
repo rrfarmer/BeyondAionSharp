@@ -1,6 +1,6 @@
 using Aion.GameServer.Instance.Handlers;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 

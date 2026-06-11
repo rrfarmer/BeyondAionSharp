@@ -13,7 +13,7 @@ public class TamperingAction : AbstractItemAction
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int maxTemp = targetItem.GetItemTemplate().GetMaxTampering();
         if (!(maxTemp > 0) || targetItem.GetTempering() >= maxTemp)
@@ -23,7 +23,7 @@ public class TamperingAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int parentItemId = parentItem.GetItemId();
         int parntObjectId = parentItem.GetObjectId();
@@ -93,7 +93,7 @@ public class TamperingAction : AbstractItemAction
         }, TimeSpan.FromMilliseconds(5000)));
     }
 
-    public static void SetTemperingLevel(Item item, Aion.GameServer.Model.GameObjects.Player.Player player, int temperingLevel)
+    public static void SetTemperingLevel(Item item, Aion.GameServer.Model.GameObjects.Players.Player player, int temperingLevel)
     {
         int oldTemperingLevel = item.GetTempering();
         item.SetTempering(temperingLevel);
@@ -126,25 +126,25 @@ public class TamperingAction : AbstractItemAction
             player.GetInventory().SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
     }
 
-    private float CalculateChance(Aion.GameServer.Model.GameObjects.Player.Player player, Item item)
+    private float CalculateChance(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
         if (item.GetTempering() == 0) // +0 -> +1 is always safe
             return 100;
         if (item.GetItemTemplate().GetItemGroup() == ItemGroup.PLUME)
             return Math.Max(25, 100 - (item.GetTempering() * 10));
-        return Aion.GameServer.Model.GameObjects.Player.Rates.Get(player, Aion.GameServer.Configs.Main.RatesConfig.TEMPERING_CHANCES);
+        return Aion.GameServer.Model.GameObjects.Players.Rates.Get(player, Aion.GameServer.Configs.Main.RatesConfig.TEMPERING_CHANCES);
     }
 
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class TamperUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
         private readonly Item targetItem;
         private readonly int parentItemId;
         private readonly int parntObjectId;
 
-        public TamperUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, int parentItemId, int parntObjectId)
+        public TamperUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, int parentItemId, int parntObjectId)
         {
             this.player = player;
             this.parentItem = parentItem;

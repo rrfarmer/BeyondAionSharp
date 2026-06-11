@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Services.Mail;
 

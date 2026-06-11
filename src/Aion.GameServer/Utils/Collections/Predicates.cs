@@ -17,22 +17,22 @@ public class Predicates
 
     public static class Players
     {
-        public static readonly Predicate<Aion.GameServer.Model.GameObjects.Player.Player> ONLINE = player => player.IsOnline();
+        public static readonly Predicate<Aion.GameServer.Model.GameObjects.Players.Player> ONLINE = player => player.IsOnline();
 
-        public static readonly Predicate<Aion.GameServer.Model.GameObjects.Player.Player> WITH_LOOT_PET = player => player.GetPet() != null
+        public static readonly Predicate<Aion.GameServer.Model.GameObjects.Players.Player> WITH_LOOT_PET = player => player.GetPet() != null
             && player.GetPet().GetObjectTemplate().ContainsFunction(PetFunctionType.LOOT);
 
-        public static Predicate<Aion.GameServer.Model.GameObjects.Player.Player> SameRace(Aion.GameServer.Model.GameObjects.Player.Player p)
+        public static Predicate<Aion.GameServer.Model.GameObjects.Players.Player> SameRace(Aion.GameServer.Model.GameObjects.Players.Player p)
         {
             return player => p.GetRace() == player.GetRace();
         }
 
-        public static Predicate<Aion.GameServer.Model.GameObjects.Player.Player> AllExcept(Aion.GameServer.Model.GameObjects.Player.Player ignored)
+        public static Predicate<Aion.GameServer.Model.GameObjects.Players.Player> AllExcept(Aion.GameServer.Model.GameObjects.Players.Player ignored)
         {
             return player => !player.Equals(ignored);
         }
 
-        public static Predicate<Aion.GameServer.Model.GameObjects.Player.Player> CanBeMentoredBy(Aion.GameServer.Model.GameObjects.Player.Player mentor)
+        public static Predicate<Aion.GameServer.Model.GameObjects.Players.Player> CanBeMentoredBy(Aion.GameServer.Model.GameObjects.Players.Player mentor)
         {
             return player => player.GetLevel() + 10 <= mentor.GetLevel();
         }

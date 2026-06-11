@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Motion;
+namespace Aion.GameServer.Model.GameObjects.Players.Motion;
 
 /// <summary>Java parity: model/gameobjects/player/motion/MotionList.</summary>
 public class MotionList
 {
-    private Aion.GameServer.Model.GameObjects.Player.Player owner;
+    private Aion.GameServer.Model.GameObjects.Players.Player owner;
     // Java parity: LinkedHashMap — insertion-ordered.
     private Dictionary<int, Motion> activeMotions;
     private Dictionary<int, Motion> motions;
 
-    public MotionList(Aion.GameServer.Model.GameObjects.Player.Player owner)
+    public MotionList(Aion.GameServer.Model.GameObjects.Players.Player owner)
     {
         this.owner = owner;
     }

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.Clientpackets;

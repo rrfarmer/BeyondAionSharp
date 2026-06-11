@@ -1,16 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Emotion;
+namespace Aion.GameServer.Model.GameObjects.Players.Emotion;
 
 /// <summary>Java parity: model/gameobjects/player/emotion/EmotionList.</summary>
 public class EmotionList
 {
     // Java parity: LinkedHashMap — insertion-ordered; Dictionary preserves insertion order absent removals.
     private Dictionary<int, Emotion> emotions;
-    private Aion.GameServer.Model.GameObjects.Player.Player owner;
+    private Aion.GameServer.Model.GameObjects.Players.Player owner;
 
-    public EmotionList(Aion.GameServer.Model.GameObjects.Player.Player owner)
+    public EmotionList(Aion.GameServer.Model.GameObjects.Players.Player owner)
     {
         this.owner = owner;
     }

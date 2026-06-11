@@ -1,6 +1,6 @@
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;

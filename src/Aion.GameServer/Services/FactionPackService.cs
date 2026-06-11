@@ -4,7 +4,7 @@ using Aion.GameServer.Dao;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Item;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Services.Mail;

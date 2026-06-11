@@ -2,7 +2,7 @@ using System;
 using MySqlConnector;
 using Aion.Commons.Database;
 using Aion.GameServer.Model.Account;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using PunishmentType = Aion.GameServer.Services.PunishmentService.PunishmentType;
 
 namespace Aion.GameServer.Dao;

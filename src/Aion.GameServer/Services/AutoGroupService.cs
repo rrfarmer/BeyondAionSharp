@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Autogroup;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion.Serverpackets;

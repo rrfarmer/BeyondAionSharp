@@ -172,7 +172,7 @@ public class NpcController : CreatureController<Npc>
             return null;
         if (dropNpc.GetAllowedLooters().Count != 1) // auto looting is not available in FFA loot mode
             return null;
-        Aion.GameServer.Model.GameObjects.Player.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(dropNpc.GetAllowedLooters().GetEnumerator().Current);
+        Aion.GameServer.Model.GameObjects.Players.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(dropNpc.GetAllowedLooters().GetEnumerator().Current);
         if (player == null) // looter got disconnected
             return null;
         Pet pet = player.GetPet();
@@ -194,11 +194,11 @@ public class NpcController : CreatureController<Npc>
         {
             AionObject attacker = info.GetAttacker();
             float percentage = info.GetDamage() / (float)finalList.GetTotalDamage();
-            if (attacker is Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.TeamMember<Aion.GameServer.Model.GameObjects.Player.Player>> tmpPlayerTeam)
+            if (attacker is Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.TeamMember<Aion.GameServer.Model.GameObjects.Players.Player>> tmpPlayerTeam)
             {
                 Aion.GameServer.Model.Team.Common.Service.PlayerTeamDistributionService.DoReward(tmpPlayerTeam, percentage, GetOwner(), winner, finalList);
             }
-            else if (attacker is Aion.GameServer.Model.GameObjects.Player.Player player)
+            else if (attacker is Aion.GameServer.Model.GameObjects.Players.Player player)
             {
                 if (!player.IsDead())
                 {
@@ -217,7 +217,7 @@ public class NpcController : CreatureController<Npc>
                     if (shouldNotifyQuestEngine)
                         Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnKill(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), player, 0));
                     Aion.GameServer.Services.Event.EventService.GetInstance().OnPveKill(player, GetOwner());
-                    player.GetCommonData().AddExp(rewardXp, Aion.GameServer.Model.GameObjects.Player.Rates.XP_HUNTING, GetOwner().GetObjectTemplate().GetL10n());
+                    player.GetCommonData().AddExp(rewardXp, Aion.GameServer.Model.GameObjects.Players.Rates.XP_HUNTING, GetOwner().GetObjectTemplate().GetL10n());
                     player.GetCommonData().AddDp(rewardDp);
                     if (GetOwner().GetAi().Ask(AIQuestion.REWARD_AP))
                     {
@@ -235,7 +235,7 @@ public class NpcController : CreatureController<Npc>
         }
     }
 
-    public override void OnDialogRequest(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public override void OnDialogRequest(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         // notify npc dialog request observer
         if (!GetOwner().GetObjectTemplate().CanInteract())
@@ -252,7 +252,7 @@ public class NpcController : CreatureController<Npc>
         GetOwner().GetAi().OnCreatureEvent(AiEventType.DialogStart, player);
     }
 
-    public override void OnDialogSelect(int dialogActionId, int prevDialogId, Aion.GameServer.Model.GameObjects.Player.Player player, int questId, int extendedRewardIndex)
+    public override void OnDialogSelect(int dialogActionId, int prevDialogId, Aion.GameServer.Model.GameObjects.Players.Player player, int questId, int extendedRewardIndex)
     {
         if (!PositionUtil.IsInTalkRange(player, GetOwner()))
             return;
@@ -264,16 +264,16 @@ public class NpcController : CreatureController<Npc>
 
     public override void OnAddHate(Creature attacker, bool isNewInAggroList)
     {
-        if (isNewInAggroList && attacker is Aion.GameServer.Model.GameObjects.Player.Player)
+        if (isNewInAggroList && attacker is Aion.GameServer.Model.GameObjects.Players.Player)
         {
-            if (((Aion.GameServer.Model.GameObjects.Player.Player)attacker).IsInTeam())
+            if (((Aion.GameServer.Model.GameObjects.Players.Player)attacker).IsInTeam())
             {
-                foreach (Aion.GameServer.Model.GameObjects.Player.Player player in ((Aion.GameServer.Model.GameObjects.Player.Player)attacker).GetCurrentTeam().FilterMembers(m => PositionUtil.IsInRange(GetOwner(), m, 50)))
+                foreach (Aion.GameServer.Model.GameObjects.Players.Player player in ((Aion.GameServer.Model.GameObjects.Players.Player)attacker).GetCurrentTeam().FilterMembers(m => PositionUtil.IsInRange(GetOwner(), m, 50)))
                     Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), player, 0));
             }
             else
             {
-                Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), (Aion.GameServer.Model.GameObjects.Player.Player)attacker, 0));
+                Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), (Aion.GameServer.Model.GameObjects.Players.Player)attacker, 0));
             }
         }
         base.OnAddHate(attacker, isNewInAggroList);
@@ -296,8 +296,8 @@ public class NpcController : CreatureController<Npc>
 
         Npc npc = GetOwner();
         Aion.GameServer.Ai.Handler.ShoutEventHandler.OnEnemyAttack((Aion.GameServer.Ai.NpcAI)npc.GetAi(), attacker);
-        if (actingCreature is Aion.GameServer.Model.GameObjects.Player.Player)
-            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAttack(new Aion.GameServer.Questengine.Model.QuestEnv(npc, (Aion.GameServer.Model.GameObjects.Player.Player)actingCreature, 0));
+        if (actingCreature is Aion.GameServer.Model.GameObjects.Players.Player)
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAttack(new Aion.GameServer.Questengine.Model.QuestEnv(npc, (Aion.GameServer.Model.GameObjects.Players.Player)actingCreature, 0));
     }
 
     public override void OnStartMove()

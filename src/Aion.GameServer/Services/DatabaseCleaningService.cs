@@ -9,7 +9,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Team.Legion;
-using Aion.GameServer.Services.Player;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils.Xml;
 
 namespace Aion.GameServer.Services;

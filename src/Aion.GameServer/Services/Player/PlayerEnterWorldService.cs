@@ -15,7 +15,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Siege;
@@ -48,12 +48,12 @@ using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;
 using static Aion.GameServer.Configs.Main.SecurityConfig.MultiClientingRestrictionMode;
 using Msg = Aion.GameServer.Network.Aion.Serverpackets.SM_ENTER_WORLD_CHECK.Msg;
-using Status = Aion.GameServer.Model.GameObjects.Player.FriendList.Status;
+using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 using ConnectType = Aion.GameServer.Model.Account.CharacterPasskey.ConnectType;
 using PunishmentType = Aion.GameServer.Services.PunishmentService.PunishmentType;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/PlayerEnterWorldService (ATracer, Neon). Full enter-world handshake: validation (account/pcd, online/reentry, ban, passkey, dupe), multi-client gate, then the retail login packet sequence (skills/quests/titles/UI/items/warehouse/abyss/legion/group/mail/housing/etc.), energy-of-repose, passive skill activation, fortress/vortex zone relocation, expirable registration, periodic save tasks. ConcurrentLinkedQueue<Integer> dedupe gate -> ConcurrentDictionary<int,byte> set (ContainsKey/TryAdd/TryRemove); stream findAny.map.orElse->LINQ; Timestamp->DateTimeOffset (getTime->ToUnixTimeMilliseconds); Throwable->Exception; IllegalState->InvalidOperation; Math.round->(long)Floor(x+0.5); lossy long*=float->explicit cast; static-import enum->using static; nested aliases. Named Runnable tasks GeneralUpdateTask/ItemUpdateTask -> classes w/ Run(). Many service/DAO/packet/SplitList types red-tolerated.</summary>
 public sealed class PlayerEnterWorldService

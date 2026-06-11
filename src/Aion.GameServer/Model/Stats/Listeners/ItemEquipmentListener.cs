@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Enchants;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Stats.Container;

@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MySqlConnector;
 using Aion.Commons.Database;
-using Aion.GameServer.Model.GameObjects.Player;
-using Aion.GameServer.Model.GameObjects.Player.Emotion;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Model.GameObjects.Players.Emotion;
 
 namespace Aion.GameServer.Dao;
 

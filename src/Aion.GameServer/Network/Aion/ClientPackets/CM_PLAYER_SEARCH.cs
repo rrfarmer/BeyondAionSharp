@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using Status = Aion.GameServer.Model.GameObjects.Player.FriendList.Status;
+using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.Clientpackets;

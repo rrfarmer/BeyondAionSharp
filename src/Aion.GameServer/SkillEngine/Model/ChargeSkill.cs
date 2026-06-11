@@ -1,7 +1,7 @@
 using System;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Skillengine.Properties;
 
 namespace Aion.GameServer.Skillengine.Model;

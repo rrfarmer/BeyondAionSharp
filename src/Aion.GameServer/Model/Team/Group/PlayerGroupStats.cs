@@ -7,8 +7,8 @@ public class PlayerGroupStats
     private int minExpPlayerLevel;
     private int maxExpPlayerLevel;
 
-    private Aion.GameServer.Model.GameObjects.Player.Player minLevelPlayer;
-    private Aion.GameServer.Model.GameObjects.Player.Player maxLevelPlayer;
+    private Aion.GameServer.Model.GameObjects.Players.Player minLevelPlayer;
+    private Aion.GameServer.Model.GameObjects.Players.Player maxLevelPlayer;
 
     internal PlayerGroupStats(PlayerGroup group)
     {

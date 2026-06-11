@@ -30,11 +30,11 @@ public class KiskService
             }
         }
         // remove the "2h place cooldown" for the kisk creator
-        Aion.GameServer.Model.GameObjects.Player.Player creator = Aion.GameServer.World.World.GetInstance().GetPlayer(kisk.GetCreatorId());
+        Aion.GameServer.Model.GameObjects.Players.Player creator = Aion.GameServer.World.World.GetInstance().GetPlayer(kisk.GetCreatorId());
         if (creator != null)
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(creator, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(kisk));
 
-        foreach (Aion.GameServer.Model.GameObjects.Player.Player member in kisk.GetCurrentMemberList())
+        foreach (Aion.GameServer.Model.GameObjects.Players.Player member in kisk.GetCurrentMemberList())
         {
             Aion.GameServer.Services.Teleport.TeleportService.SendKiskBindPoint(member);
             member.SetKisk(null);
@@ -43,7 +43,7 @@ public class KiskService
         }
     }
 
-    public void OnBind(Kisk kisk, Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnBind(Kisk kisk, Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (player.GetKisk() != null)
             player.GetKisk().RemovePlayer(player);
@@ -55,7 +55,7 @@ public class KiskService
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmActionAnimation(player.GetObjectId(), ActionAnimation.BindKisk), true);
     }
 
-    public void OnLogin(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnLogin(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         Kisk kisk = this.boundButOfflinePlayer.TryGetValue(player.GetObjectId(), out Kisk k) ? k : null;
         if (kisk != null)
@@ -65,7 +65,7 @@ public class KiskService
         }
     }
 
-    public void OnLogout(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnLogout(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         Kisk kisk = player.GetKisk();
         // store binding if existent

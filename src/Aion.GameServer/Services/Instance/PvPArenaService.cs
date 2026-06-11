@@ -1,7 +1,7 @@
 using System;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.Autogroup;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;

@@ -12,7 +12,7 @@ public class SkillLearnAction : AbstractItemAction
     [XmlAttribute("level")] protected int level;
     [XmlAttribute("class")] protected PlayerClass? playerClass;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         // 1. check player level
         if (player.GetCommonData().GetLevel() < level)
@@ -33,7 +33,7 @@ public class SkillLearnAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         // item animation and message
         Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();

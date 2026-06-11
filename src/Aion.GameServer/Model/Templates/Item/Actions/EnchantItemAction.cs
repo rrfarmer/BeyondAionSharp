@@ -17,7 +17,7 @@ public class EnchantItemAction : AbstractItemAction
     [XmlAttribute("manastone_only")] private bool manastone_only;
     [XmlAttribute("chance")] private float chance;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (IsSupplementAction())
             return false;
@@ -59,13 +59,13 @@ public class EnchantItemAction : AbstractItemAction
         return (msID == 167 || msID == 166) && tID < 120;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Act(player, parentItem, targetItem, null, 1);
     }
 
     // necessary overloading to not change AbstractItemAction
-    public void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, Item supplementItem, int targetWeapon)
+    public void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, Item supplementItem, int targetWeapon)
     {
         if (supplementItem != null && !CheckSupplementLevel(player, supplementItem.GetItemTemplate(), targetItem.GetItemTemplate()))
             return;
@@ -116,7 +116,7 @@ public class EnchantItemAction : AbstractItemAction
     }
 
     /// <summary>Check if the item enchant will be successful.</summary>
-    private bool IsSuccess(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, Item supplementItem, int targetWeapon)
+    private bool IsSuccess(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, Item supplementItem, int targetWeapon)
     {
         if (parentItem.GetItemTemplate() != null)
         {
@@ -163,7 +163,7 @@ public class EnchantItemAction : AbstractItemAction
         return GetMinLevel() > 0 || GetMaxLevel() > 0 || GetChance() > 0 || IsManastoneOnly();
     }
 
-    private bool CheckSupplementLevel(Aion.GameServer.Model.GameObjects.Player.Player player, Aion.GameServer.Model.Templates.Item.ItemTemplate supplementTemplate, Aion.GameServer.Model.Templates.Item.ItemTemplate targetItemTemplate)
+    private bool CheckSupplementLevel(Aion.GameServer.Model.GameObjects.Players.Player player, Aion.GameServer.Model.Templates.Item.ItemTemplate supplementTemplate, Aion.GameServer.Model.Templates.Item.ItemTemplate targetItemTemplate)
     {
         // Is item manastone? True - check if player can use supplement
         if (supplementTemplate.GetItemGroup() != ItemGroup.ENCHANTMENT)
@@ -193,11 +193,11 @@ public class EnchantItemAction : AbstractItemAction
     // Java parity: anonymous StartMovingListener in act().
     private sealed class EnchantStartMovingListener : StartMovingListener
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item targetItem;
         private readonly bool isEnchantmentStone;
 
-        public EnchantStartMovingListener(Aion.GameServer.Model.GameObjects.Player.Player player, Item targetItem, bool isEnchantmentStone)
+        public EnchantStartMovingListener(Aion.GameServer.Model.GameObjects.Players.Player player, Item targetItem, bool isEnchantmentStone)
         {
             this.player = player;
             this.targetItem = targetItem;

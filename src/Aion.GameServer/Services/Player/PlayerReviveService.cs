@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
@@ -21,7 +21,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Services.Player;
+namespace Aion.GameServer.Services.Players;
 
 /// <summary>Java parity: services/player/PlayerReviveService (Jego, xTz). All revive variants: duel/skill/rebirth/bind/kisk/instance/itemSelf revives + the shared revive() (hp/mp restore honoring no-resurrect-penalty, DP/soul-sickness, aggro clear, group/alliance movement update, resurrect emotion) and scheduleReviveAtBase. DimensionalVortex<?> -> <VortexLocation>; method-ref predicate->lambda; forEachPlayer lambda; schedule(Runnable,ms)->Schedule(ct-lambda); currentTimeMillis->UtcNow. Effect/enums/TeleportService/PanesterraService red-tolerated.</summary>
 public class PlayerReviveService

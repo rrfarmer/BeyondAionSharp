@@ -14,7 +14,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
     private int gatherCount;
     private Aion.GameServer.SkillEngine.Task.GatheringTask gatheringTask;
 
-    public void StartGathering(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void StartGathering(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         Aion.GameServer.Model.Templates.Gather.GatherableTemplate template = GetOwner().GetObjectTemplate();
         if (player.GetLevel() < template.GetLevelLimit())
@@ -106,7 +106,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
     }
 
     /// <summary>Checks whether player has the needed skill for gathering and skill level is sufficient.</summary>
-    private bool CheckPlayerSkill(Aion.GameServer.Model.GameObjects.Player.Player player, Aion.GameServer.Model.Templates.Gather.GatherableTemplate template)
+    private bool CheckPlayerSkill(Aion.GameServer.Model.GameObjects.Players.Player player, Aion.GameServer.Model.Templates.Gather.GatherableTemplate template)
     {
         int harvestSkillId = template.GetHarvestSkill();
         if (!player.GetSkillList().IsSkillPresent(harvestSkillId))
@@ -131,7 +131,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
         return true;
     }
 
-    private List<Aion.GameServer.Model.Templates.Gather.Material> GetMaterials(Aion.GameServer.Model.GameObjects.Player.Player player, Aion.GameServer.Model.Templates.Gather.GatherableTemplate template)
+    private List<Aion.GameServer.Model.Templates.Gather.Material> GetMaterials(Aion.GameServer.Model.GameObjects.Players.Player player, Aion.GameServer.Model.Templates.Gather.GatherableTemplate template)
     {
         if (template.GetRequiredItemId() > 0)
         {
@@ -170,7 +170,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
         }
     }
 
-    public void RewardPlayer(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void RewardPlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (player != null)
         {
@@ -178,7 +178,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
             int xpReward = (int)((0.0031 * (skillLvl + 5.3) * (skillLvl + 1592.8) + 60));
 
             int skillId = GetOwner().GetObjectTemplate().GetHarvestSkill();
-            int gainedGatherXp = Aion.GameServer.Model.GameObjects.Player.Rates.SKILL_XP_GATHERING.CalcResult(player, xpReward);
+            int gainedGatherXp = Aion.GameServer.Model.GameObjects.Players.Rates.SKILL_XP_GATHERING.CalcResult(player, xpReward);
             StatEnum? boostStat = StatEnum.GetModifier(skillId);
             if (boostStat != null)
                 gainedGatherXp = (int)(gainedGatherXp * (player.GetGameStats().GetStat(boostStat.Value, 100).GetCurrent() / 100f));
@@ -187,7 +187,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
             if (player.GetSkillList().AddSkillXp(player, skillId, gainedGatherXp, skillLvl))
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_EXTRACT_GATHERING_SUCCESS_GETEXP());
-                player.GetCommonData().AddExp(xpReward, Aion.GameServer.Model.GameObjects.Player.Rates.XP_GATHERING);
+                player.GetCommonData().AddExp(xpReward, Aion.GameServer.Model.GameObjects.Players.Rates.XP_GATHERING);
             }
             else
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage

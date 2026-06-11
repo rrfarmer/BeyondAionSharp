@@ -6,7 +6,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.DataHolders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.QuestEngine;

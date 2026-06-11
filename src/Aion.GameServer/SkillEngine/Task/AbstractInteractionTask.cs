@@ -12,10 +12,10 @@ public abstract class AbstractInteractionTask
     protected int interval = 2500;
     protected int delay = 1000;
 
-    protected readonly Aion.GameServer.Model.GameObjects.Player.Player requester;
+    protected readonly Aion.GameServer.Model.GameObjects.Players.Player requester;
     protected readonly VisibleObject responder;
 
-    public AbstractInteractionTask(Aion.GameServer.Model.GameObjects.Player.Player requester, VisibleObject responder)
+    public AbstractInteractionTask(Aion.GameServer.Model.GameObjects.Players.Player requester, VisibleObject responder)
     {
         this.requester = requester;
         if (responder == null)

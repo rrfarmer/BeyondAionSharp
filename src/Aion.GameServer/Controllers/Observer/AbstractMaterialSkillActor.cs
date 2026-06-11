@@ -6,7 +6,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.GeoEngine.Scene;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Materials;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Services;

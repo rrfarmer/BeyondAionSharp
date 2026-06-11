@@ -15,7 +15,7 @@ public class GatheringTask : AbstractCraftTask
     private int showBarDelay;
     private int executionSpeed;
 
-    public GatheringTask(Aion.GameServer.Model.GameObjects.Player.Player requester, Gatherable gatherable, Aion.GameServer.Model.Templates.Gather.Material material, int skillLvlDiff)
+    public GatheringTask(Aion.GameServer.Model.GameObjects.Players.Player requester, Gatherable gatherable, Aion.GameServer.Model.Templates.Gather.Material material, int skillLvlDiff)
         : base(requester, gatherable, skillLvlDiff)
     {
         this.template = gatherable.GetObjectTemplate();
@@ -66,7 +66,7 @@ public class GatheringTask : AbstractCraftTask
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, currentSuccessValue, currentFailureValue, 6, 0, 0));
         if (template.GetEraseValue() > 0)
             requester.GetInventory().DecreaseByItemId(template.GetRequiredItemId(), template.GetEraseValue());
-        Aion.GameServer.Services.Item.ItemService.AddItem(requester, material.GetItemId(), Aion.GameServer.Model.GameObjects.Player.Rates.GATHERING_COUNT.CalcResult(requester, 1));
+        Aion.GameServer.Services.Item.ItemService.AddItem(requester, material.GetItemId(), Aion.GameServer.Model.GameObjects.Players.Rates.GATHERING_COUNT.CalcResult(requester, 1));
         requester.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnGather(requester, (Gatherable)responder);
         ((Gatherable)responder).GetController().RewardPlayer(requester);
         return true;

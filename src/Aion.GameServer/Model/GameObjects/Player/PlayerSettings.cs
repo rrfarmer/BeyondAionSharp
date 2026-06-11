@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/PlayerSettings implements Persistable.</summary>
 public class PlayerSettings : IPersistable

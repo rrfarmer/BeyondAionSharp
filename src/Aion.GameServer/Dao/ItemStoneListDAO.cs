@@ -8,7 +8,7 @@ using Aion.Commons.Database;
 using Aion.Commons.Utils;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Templates.Item.Enums;
 using ItemStoneType = Aion.GameServer.Model.Items.ItemStone.ItemStoneType;

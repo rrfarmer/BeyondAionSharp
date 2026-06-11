@@ -7,18 +7,18 @@ namespace Aion.GameServer.Questengine.Model;
 public class QuestEnv
 {
     private VisibleObject visibleObject;
-    private Aion.GameServer.Model.GameObjects.Player.Player player;
+    private Aion.GameServer.Model.GameObjects.Players.Player player;
     private int questId;
     private int dialogActionId;
     private bool isDialogContinuationFromPreQuest;
     private int extendedRewardIndex;
 
-    public QuestEnv(VisibleObject visibleObject, Aion.GameServer.Model.GameObjects.Player.Player player, int questId)
+    public QuestEnv(VisibleObject visibleObject, Aion.GameServer.Model.GameObjects.Players.Player player, int questId)
         : this(visibleObject, player, questId, DialogAction.NULL)
     {
     }
 
-    public QuestEnv(VisibleObject visibleObject, Aion.GameServer.Model.GameObjects.Player.Player player, int questId, int dialogActionId)
+    public QuestEnv(VisibleObject visibleObject, Aion.GameServer.Model.GameObjects.Players.Player player, int questId, int dialogActionId)
     {
         this.visibleObject = visibleObject;
         this.player = player;
@@ -36,12 +36,12 @@ public class QuestEnv
         this.visibleObject = visibleObject;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.Player GetPlayer()
+    public Aion.GameServer.Model.GameObjects.Players.Player GetPlayer()
     {
         return player;
     }
 
-    public void SetPlayer(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void SetPlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         this.player = player;
     }

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.GameObjects.Player.Motion;
+namespace Aion.GameServer.Model.GameObjects.Players.Motion;
 
 /// <summary>Java parity: model/gameobjects/player/motion/Motion implements Expirable.</summary>
 public class Motion : IExpirable
@@ -49,7 +49,7 @@ public class Motion : IExpirable
         return deletionTime;
     }
 
-    public void OnExpire(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetMotions().Remove(id);
         // TODO motion templates -> parse nameIds for system message, like 600533 for STR_CMOTION_CASH_NINJA_IDLE (Ninja Idle) etc.

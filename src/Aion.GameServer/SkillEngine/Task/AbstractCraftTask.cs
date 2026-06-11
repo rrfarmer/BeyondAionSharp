@@ -31,7 +31,7 @@ public abstract class AbstractCraftTask : AbstractInteractionTask
         }
     }
 
-    public AbstractCraftTask(Aion.GameServer.Model.GameObjects.Player.Player requester, VisibleObject responder, int skillLvlDiff)
+    public AbstractCraftTask(Aion.GameServer.Model.GameObjects.Players.Player requester, VisibleObject responder, int skillLvlDiff)
         : base(requester, responder)
     {
         this.skillLvlDiff = skillLvlDiff;

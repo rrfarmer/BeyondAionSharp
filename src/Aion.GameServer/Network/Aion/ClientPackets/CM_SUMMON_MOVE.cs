@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Controllers.Effect;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.SkillEngine.Effect;

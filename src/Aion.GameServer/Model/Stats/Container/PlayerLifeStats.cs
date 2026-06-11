@@ -1,5 +1,5 @@
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE;

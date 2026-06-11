@@ -14,7 +14,7 @@ public class TuningAction : AbstractItemAction
     [XmlAttribute("target")] private UseTarget target;
     [XmlAttribute("no_reduce")] private bool shouldNotReduceTuneCount;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (targetItem.IsEquipped())
             return false;
@@ -43,7 +43,7 @@ public class TuningAction : AbstractItemAction
         return shouldNotReduceTuneCount || targetItem.GetTuneCount() < targetItem.GetItemTemplate().GetMaxTuneCount();
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int tuningScrollItemId = parentItem.GetItemId();
         int tuningScrollObjectId = parentItem.GetObjectId();
@@ -88,13 +88,13 @@ public class TuningAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class TuneUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
         private readonly Item targetItem;
         private readonly int tuningScrollItemId;
         private readonly int tuningScrollObjectId;
 
-        public TuneUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, int tuningScrollItemId, int tuningScrollObjectId)
+        public TuneUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, int tuningScrollItemId, int tuningScrollObjectId)
         {
             this.player = player;
             this.parentItem = parentItem;

@@ -8,9 +8,9 @@ namespace Aion.GameServer.Controllers;
 public class FlyController
 {
     private const long FLY_REUSE_TIME = 10000;
-    private Aion.GameServer.Model.GameObjects.Player.Player player;
+    private Aion.GameServer.Model.GameObjects.Players.Player player;
 
-    public FlyController(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public FlyController(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         this.player = player;
     }
@@ -81,7 +81,7 @@ public class FlyController
         return true;
     }
 
-    private static bool CanFly(Aion.GameServer.Model.GameObjects.Player.Player player)
+    private static bool CanFly(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (!player.GetCommonData().IsDaeva())
         {
@@ -130,7 +130,7 @@ public class FlyController
         return true;
     }
 
-    private static bool CanGlide(Aion.GameServer.Model.GameObjects.Player.Player player)
+    private static bool CanGlide(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (!player.GetCommonData().IsDaeva())
         {

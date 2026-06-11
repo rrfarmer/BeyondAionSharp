@@ -6,7 +6,7 @@ namespace Aion.GameServer.Taskmanager.Tasks;
 /// Supports PlayerGroup and PlayerAlliance movement updating.
 /// Java parity: taskmanager/tasks/TeamMoveUpdater (Sarynth).
 /// </summary>
-public sealed class TeamMoveUpdater : AbstractFIFOPeriodicTaskManager<Aion.GameServer.Model.GameObjects.Player.Player>
+public sealed class TeamMoveUpdater : AbstractFIFOPeriodicTaskManager<Aion.GameServer.Model.GameObjects.Players.Player>
 {
     private static class SingletonHolder
     {
@@ -23,7 +23,7 @@ public sealed class TeamMoveUpdater : AbstractFIFOPeriodicTaskManager<Aion.GameS
     {
     }
 
-    protected override void CallTask(Aion.GameServer.Model.GameObjects.Player.Player player)
+    protected override void CallTask(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (player.IsOnline())
         {

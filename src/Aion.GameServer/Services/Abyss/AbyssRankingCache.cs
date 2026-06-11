@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;

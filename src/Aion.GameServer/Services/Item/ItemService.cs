@@ -21,41 +21,41 @@ public class ItemService
     public static readonly ItemUpdatePredicate DEFAULT_UPDATE_PREDICATE = new ItemUpdatePredicate(ItemAddType.ITEM_COLLECT,
         ItemUpdateType.INC_ITEM_COLLECT);
 
-    public static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, int itemId, long count, bool allowInventoryOverflow)
+    public static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, int itemId, long count, bool allowInventoryOverflow)
     {
         return AddItem(player, itemId, count, null, allowInventoryOverflow, DEFAULT_UPDATE_PREDICATE);
     }
 
-    public static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, int itemId, long count)
+    public static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, int itemId, long count)
     {
         return AddItem(player, itemId, count, null, false, DEFAULT_UPDATE_PREDICATE);
     }
 
-    public static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, int itemId, long count, bool allowInventoryOverflow, ItemUpdatePredicate predicate)
+    public static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, int itemId, long count, bool allowInventoryOverflow, ItemUpdatePredicate predicate)
     {
         return AddItem(player, itemId, count, null, allowInventoryOverflow, predicate);
     }
 
     /// <summary>Add new item based on all sourceItem values.</summary>
-    public static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, Item sourceItem)
+    public static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, Item sourceItem)
     {
         return AddItem(player, sourceItem.GetItemId(), sourceItem.GetItemCount(), sourceItem, true, DEFAULT_UPDATE_PREDICATE);
     }
 
     /// <summary>Add new item based on all sourceItem values, but with different count.</summary>
-    public static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, Item sourceItem, long count)
+    public static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, Item sourceItem, long count)
     {
         return AddItem(player, sourceItem.GetItemId(), count, sourceItem, false, DEFAULT_UPDATE_PREDICATE);
     }
 
     /// <summary>Add new item based on all sourceItem values, but with different count.</summary>
-    public static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, Item sourceItem, long count, bool allowInventoryOverflow, ItemUpdatePredicate predicate)
+    public static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, Item sourceItem, long count, bool allowInventoryOverflow, ItemUpdatePredicate predicate)
     {
         return AddItem(player, sourceItem.GetItemId(), count, sourceItem, allowInventoryOverflow, predicate);
     }
 
     /// <summary>Add new item based on sourceItem values.</summary>
-    private static long AddItem(Aion.GameServer.Model.GameObjects.Player.Player player, int itemId, long count, Item sourceItem, bool allowInventoryOverflow, ItemUpdatePredicate predicate)
+    private static long AddItem(Aion.GameServer.Model.GameObjects.Players.Player player, int itemId, long count, Item sourceItem, bool allowInventoryOverflow, ItemUpdatePredicate predicate)
     {
         if (count <= 0)
             return 0;
@@ -90,7 +90,7 @@ public class ItemService
     }
 
     /// <summary>Add non-stackable item to inventory.</summary>
-    private static long AddNonStackableItem(Aion.GameServer.Model.GameObjects.Player.Player player, ItemTemplate itemTemplate, long count, Item sourceItem, bool allowInventoryOverflow,
+    private static long AddNonStackableItem(Aion.GameServer.Model.GameObjects.Players.Player player, ItemTemplate itemTemplate, long count, Item sourceItem, bool allowInventoryOverflow,
         ItemUpdatePredicate predicate)
     {
         Storage inventory = player.GetInventory();
@@ -136,14 +136,14 @@ public class ItemService
     }
 
     /// <summary>Add stackable item to inventory.</summary>
-    private static long AddStackableItem(Aion.GameServer.Model.GameObjects.Player.Player player, ItemTemplate itemTemplate, long count, bool allowInventoryOverflow,
+    private static long AddStackableItem(Aion.GameServer.Model.GameObjects.Players.Player player, ItemTemplate itemTemplate, long count, bool allowInventoryOverflow,
         ItemUpdatePredicate predicate)
     {
         ICollection<Item> items;
         // dirty & hacky check for arrows and shards...
         if (itemTemplate.GetItemGroup() == ItemGroup.POWER_SHARDS)
         {
-            Aion.GameServer.Model.GameObjects.Player.Equipment equipment = player.GetEquipment();
+            Aion.GameServer.Model.GameObjects.Players.Equipment equipment = player.GetEquipment();
             items = equipment.GetEquippedItemsByItemId(itemTemplate.GetTemplateId());
             foreach (Item item in items)
             {

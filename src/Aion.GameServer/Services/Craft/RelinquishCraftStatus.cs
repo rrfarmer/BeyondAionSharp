@@ -1,7 +1,7 @@
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Craft;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Templates.Recipe;
 using Aion.GameServer.Network.Aion.Serverpackets;

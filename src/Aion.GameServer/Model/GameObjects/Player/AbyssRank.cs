@@ -1,7 +1,7 @@
 using System;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>Java parity: model/gameobjects/player/AbyssRank implements Persistable.</summary>
 public class AbyssRank : IPersistable

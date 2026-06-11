@@ -56,14 +56,14 @@ public class NpcShoutsService
         return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() >= cd;
     }
 
-    public void ShoutRandom(Npc sender, Aion.GameServer.Model.GameObjects.Player.Player target, List<NpcShout> shouts, int shoutCooldown)
+    public void ShoutRandom(Npc sender, Aion.GameServer.Model.GameObjects.Players.Player target, List<NpcShout> shouts, int shoutCooldown)
     {
         if (shouts == null || shouts.Count == 0)
             return;
         Shout(sender, target, Aion.Commons.Utils.Rnd.Get(shouts), shoutCooldown);
     }
 
-    public void Shout(Npc sender, Aion.GameServer.Model.GameObjects.Player.Player target, NpcShout shout, int shoutCooldown)
+    public void Shout(Npc sender, Aion.GameServer.Model.GameObjects.Players.Player target, NpcShout shout, int shoutCooldown)
     {
         if (sender == null || shout == null)
             return;

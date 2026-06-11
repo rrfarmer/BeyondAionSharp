@@ -6,7 +6,7 @@ using Aion.GameServer.Dao;
 using Aion.GameServer.DataHolders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Templates.Item.Actions;
 using Aion.GameServer.Model.Templates.Pet;

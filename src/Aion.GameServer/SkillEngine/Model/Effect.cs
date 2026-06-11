@@ -8,7 +8,7 @@ using Aion.GameServer.Controllers.Effect;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Templates.Item;
 using Aion.GameServer.SkillEngine.Effect;

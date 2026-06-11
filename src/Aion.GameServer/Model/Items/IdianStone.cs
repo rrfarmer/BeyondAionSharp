@@ -26,7 +26,7 @@ public class IdianStone : ItemStone
         rndBonusEffect = new RandomBonusEffect(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType.POLISH, actions.GetPolishAction().GetPolishSetId(), polishNumber);
     }
 
-    public void OnEquip(Aion.GameServer.Model.GameObjects.Player.Player player, long slot)
+    public void OnEquip(Aion.GameServer.Model.GameObjects.Players.Player player, long slot)
     {
         if (polishCharge > 0 && (slot & ItemSlot.MAIN_HAND.GetSlotIdMask()) != 0)
         {
@@ -40,9 +40,9 @@ public class IdianStone : ItemStone
     private sealed class IdianActionObserver : ActionObserver
     {
         private readonly IdianStone outer;
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
 
-        public IdianActionObserver(IdianStone outer, Aion.GameServer.Model.GameObjects.Player.Player player) : base(ObserverType.DOT_ATTACK_DEFEND)
+        public IdianActionObserver(IdianStone outer, Aion.GameServer.Model.GameObjects.Players.Player player) : base(ObserverType.DOT_ATTACK_DEFEND)
         {
             this.outer = outer;
             this.player = player;
@@ -65,17 +65,17 @@ public class IdianStone : ItemStone
         }
     }
 
-    private void DecreasePolishCharge(Aion.GameServer.Model.GameObjects.Player.Player player, bool isAttacked)
+    private void DecreasePolishCharge(Aion.GameServer.Model.GameObjects.Players.Player player, bool isAttacked)
     {
         DecreasePolishCharge(player, isAttacked, 0);
     }
 
-    public void DecreasePolishCharge(Aion.GameServer.Model.GameObjects.Player.Player player, int skillValue)
+    public void DecreasePolishCharge(Aion.GameServer.Model.GameObjects.Players.Player player, int skillValue)
     {
         DecreasePolishCharge(player, false, skillValue);
     }
 
-    private void DecreasePolishCharge(Aion.GameServer.Model.GameObjects.Player.Player player, bool isAttacked, int skillValue)
+    private void DecreasePolishCharge(Aion.GameServer.Model.GameObjects.Players.Player player, bool isAttacked, int skillValue)
     {
         lock (this)
         {
@@ -125,7 +125,7 @@ public class IdianStone : ItemStone
         return polishCharge;
     }
 
-    public void OnUnEquip(Aion.GameServer.Model.GameObjects.Player.Player player)
+    public void OnUnEquip(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         if (actionListener != null)
         {

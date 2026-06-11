@@ -13,12 +13,12 @@ public class ChargeAction : AbstractItemAction
 {
     [XmlAttribute("capacity")] private int maxChargeLevel;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         return Aion.GameServer.Services.Item.ItemChargeService.FilterItemsToCondition(player, null, parentItem.GetImprovement().GetChargeWay()).Count != 0;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int chargeWay = parentItem.GetImprovement().GetChargeWay();
         ICollection<Item> conditioningItems = Aion.GameServer.Services.Item.ItemChargeService.FilterItemsToCondition(player, null, chargeWay);
@@ -42,11 +42,11 @@ public class ChargeAction : AbstractItemAction
     // Java parity: anonymous ItemUseObserver in act().
     private sealed class ChargeUseObserver : ItemUseObserver
     {
-        private readonly Aion.GameServer.Model.GameObjects.Player.Player player;
+        private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private readonly Item parentItem;
         private readonly int chargeWay;
 
-        public ChargeUseObserver(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, int chargeWay)
+        public ChargeUseObserver(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, int chargeWay)
         {
             this.player = player;
             this.parentItem = parentItem;

@@ -9,7 +9,7 @@ public class PackAction : AbstractItemAction
 {
     [XmlAttribute("target")] protected UseTarget target;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (targetItem == null)
         {
@@ -94,7 +94,7 @@ public class PackAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int parentItemId = parentItem.GetItemId();
         int parentObjectId = parentItem.GetObjectId();

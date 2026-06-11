@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Model.GameObjects.Player;
+namespace Aion.GameServer.Model.GameObjects.Players;
 
 /// <summary>
 /// Java parity: model/gameobjects/player/Player — partial #4 (Java lines ~1210-1655): resurrection positional
@@ -82,23 +82,23 @@ public partial class Player
     }
 
     /// <summary>Returns the emotions.</summary>
-    public Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList GetEmotions()
+    public Aion.GameServer.Model.GameObjects.Players.Emotion.EmotionList GetEmotions()
     {
         return emotions;
     }
 
     /// <param name="emotions">The emotions to set.</param>
-    public void SetEmotions(Aion.GameServer.Model.GameObjects.Player.Emotion.EmotionList emotions)
+    public void SetEmotions(Aion.GameServer.Model.GameObjects.Players.Emotion.EmotionList emotions)
     {
         this.emotions = emotions;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.BindPointPosition GetBindPoint()
+    public Aion.GameServer.Model.GameObjects.Players.BindPointPosition GetBindPoint()
     {
         return bindPoint;
     }
 
-    public void SetBindPoint(Aion.GameServer.Model.GameObjects.Player.BindPointPosition bindPoint)
+    public void SetBindPoint(Aion.GameServer.Model.GameObjects.Players.BindPointPosition bindPoint)
     {
         this.bindPoint = bindPoint;
     }
@@ -129,12 +129,12 @@ public partial class Player
         this.abyssRankListUpdateMask = 0;
     }
 
-    public void SetAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Player.AbyssRank.AbyssRankUpdateType type)
+    public void SetAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Players.AbyssRank.AbyssRankUpdateType type)
     {
         this.abyssRankListUpdateMask |= type.Value();
     }
 
-    public bool IsAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Player.AbyssRank.AbyssRankUpdateType type)
+    public bool IsAbyssRankListUpdated(Aion.GameServer.Model.GameObjects.Players.AbyssRank.AbyssRankUpdateType type)
     {
         return (abyssRankListUpdateMask & type.Value()) == type.Value();
     }
@@ -157,25 +157,25 @@ public partial class Player
     }
 
     /// <summary>the motions</summary>
-    public Aion.GameServer.Model.GameObjects.Player.Motion.MotionList GetMotions()
+    public Aion.GameServer.Model.GameObjects.Players.Motion.MotionList GetMotions()
     {
         return motions;
     }
 
     /// <param name="motions">the motions to set</param>
-    public void SetMotions(Aion.GameServer.Model.GameObjects.Player.Motion.MotionList motions)
+    public void SetMotions(Aion.GameServer.Model.GameObjects.Players.Motion.MotionList motions)
     {
         this.motions = motions;
     }
 
     /// <summary>the npcFactions</summary>
-    public Aion.GameServer.Model.GameObjects.Player.Npcfaction.NpcFactions GetNpcFactions()
+    public Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFactions GetNpcFactions()
     {
         return npcFactions;
     }
 
     /// <param name="npcFactions">the npcFactions to set</param>
-    public void SetNpcFactions(Aion.GameServer.Model.GameObjects.Player.Npcfaction.NpcFactions npcFactions)
+    public void SetNpcFactions(Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFactions npcFactions)
     {
         this.npcFactions = npcFactions;
     }
@@ -271,7 +271,7 @@ public partial class Player
 
     public override int GetSkillCooldown(SkillTemplate template)
     {
-        return IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState.NO_SKILL_COOLDOWN_MODE) ? 0 : template.GetCooldown();
+        return IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState.NO_SKILL_COOLDOWN_MODE) ? 0 : template.GetCooldown();
     }
 
     public void SetLastMessageTime()
@@ -413,7 +413,7 @@ public partial class Player
         return rideObservers;
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.AbsoluteStatOwner GetAbsoluteStats()
+    public Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner GetAbsoluteStats()
     {
         return absStatsHolder;
     }
@@ -459,27 +459,27 @@ public partial class Player
         return "Player [id=" + GetObjectId() + ", name=" + GetName() + "]";
     }
 
-    public void SetCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState state)
+    public void SetCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState state)
     {
         customStates |= state.GetMask();
     }
 
-    public void UnsetCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState state)
+    public void UnsetCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState state)
     {
         customStates &= ~state.GetMask();
     }
 
-    public bool IsInCustomState(Aion.GameServer.Model.GameObjects.Player.CustomPlayerState state)
+    public bool IsInCustomState(Aion.GameServer.Model.GameObjects.Players.CustomPlayerState state)
     {
         return (customStates & state.GetMask()) == state.GetMask();
     }
 
-    public Aion.GameServer.Model.GameObjects.Player.PanesterraFaction GetPanesterraFaction()
+    public Aion.GameServer.Model.GameObjects.Players.PanesterraFaction GetPanesterraFaction()
     {
         return panesterraFaction;
     }
 
-    public void SetPanesterraFaction(Aion.GameServer.Model.GameObjects.Player.PanesterraFaction panesterraFaction)
+    public void SetPanesterraFaction(Aion.GameServer.Model.GameObjects.Players.PanesterraFaction panesterraFaction)
     {
         this.panesterraFaction = panesterraFaction;
     }

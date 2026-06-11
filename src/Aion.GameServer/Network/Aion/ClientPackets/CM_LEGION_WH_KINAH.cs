@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Globalization;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;

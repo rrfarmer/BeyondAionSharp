@@ -7,6 +7,6 @@
 // CS0118 ("namespace used like a type") / CS0246 clashes with zero churn. This is the
 // authorized "alias allowed" fix for the namespace/type collision.
 
-// Player class lives in namespace Aion.GameServer.Model.GameObjects.Player (FQN ...Player.Player),
+// Player class lives in namespace Aion.GameServer.Model.GameObjects.Players (FQN ...Player.Player),
 // which is also a namespace -> alias the bare name to the type.
-global using Player = Aion.GameServer.Model.GameObjects.Player.Player;
+global using Player = Aion.GameServer.Model.GameObjects.Players.Player;

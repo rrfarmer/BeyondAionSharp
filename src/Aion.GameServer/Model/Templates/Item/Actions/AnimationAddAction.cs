@@ -16,7 +16,7 @@ public class AnimationAddAction : AbstractItemAction
     [XmlAttribute("shop")] protected int? shop;
     [XmlAttribute("minutes")] protected int? minutes;
 
-    public override bool CanAct(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         if (parentItem == null) // no item selected.
         {
@@ -27,7 +27,7 @@ public class AnimationAddAction : AbstractItemAction
         return true;
     }
 
-    public override void Act(Aion.GameServer.Model.GameObjects.Player.Player player, Item parentItem, Item targetItem, params object[] @params)
+    public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         player.GetController().CancelUseItem();
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 1000, 0, 0));
@@ -52,9 +52,9 @@ public class AnimationAddAction : AbstractItemAction
         }, TimeSpan.FromMilliseconds(1000)));
     }
 
-    private void AddMotion(Aion.GameServer.Model.GameObjects.Player.Player player, int motionId)
+    private void AddMotion(Aion.GameServer.Model.GameObjects.Players.Player player, int motionId)
     {
-        Aion.GameServer.Model.GameObjects.Player.Motion.Motion motion = new Aion.GameServer.Model.GameObjects.Player.Motion.Motion(motionId, minutes == null ? 0 : (int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000) + minutes.Value * 60, true);
+        Aion.GameServer.Model.GameObjects.Players.Motion.Motion motion = new Aion.GameServer.Model.GameObjects.Players.Motion.Motion(motionId, minutes == null ? 0 : (int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000) + minutes.Value * 60, true);
         player.GetMotions().Add(motion, true);
         // Java parity: default interface method — C# requires an explicit IExpirable cast (foundational diff).
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmMotion((short)motion.GetId(), ((Aion.GameServer.Model.IExpirable)motion).SecondsUntilExpiration()));

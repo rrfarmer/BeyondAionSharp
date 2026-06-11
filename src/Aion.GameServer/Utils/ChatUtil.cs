@@ -47,7 +47,7 @@ public static class ChatUtil
 	}
 
 	// Java parity: utils/ChatUtil.name(Player) — see Name(String).
-	public static string Name(Aion.GameServer.Model.GameObjects.Player.Player player)
+	public static string Name(Aion.GameServer.Model.GameObjects.Players.Player player)
 	{
 		return Name(player.GetName(true));
 	}

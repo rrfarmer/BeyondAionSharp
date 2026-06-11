@@ -7,7 +7,7 @@ using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.GameObjects.Player;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Spawns.Panesterra;
 using Aion.GameServer.Network.Aion.Serverpackets;
