@@ -40,7 +40,7 @@ public class PlayerPetsDAO
         }
     }
 
-    public static void SaveDopingBag(int petObjectId, Aion.GameServer.Services.ToyPet.PetDopingBag bag)
+    public static void SaveDopingBag(int petObjectId, Aion.GameServer.Model.Templates.Pet.PetDopingBag bag)
     {
         try
         {

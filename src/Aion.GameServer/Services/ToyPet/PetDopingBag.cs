@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Services.ToyPet;
+namespace Aion.GameServer.Model.Templates.Pet;
 
 public sealed class PetDopingBag
 {

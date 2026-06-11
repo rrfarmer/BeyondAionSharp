@@ -385,22 +385,22 @@ public partial class Player
         return chainSkills;
     }
 
-    public void SetLastCounterSkill(Aion.GameServer.SkillEngine.Model.AttackStatus status)
+    public void SetLastCounterSkill(Aion.GameServer.Controllers.Attack.AttackStatus status)
     {
-        Aion.GameServer.SkillEngine.Model.AttackStatus result = Aion.GameServer.SkillEngine.Model.AttackStatusExtensions.GetBaseStatus(status);
+        Aion.GameServer.Controllers.Attack.AttackStatus result = Aion.GameServer.Controllers.Attack.AttackStatusExtensions.GetBaseStatus(status);
 
         switch (result)
         {
-            case Aion.GameServer.SkillEngine.Model.AttackStatus.DODGE:
-            case Aion.GameServer.SkillEngine.Model.AttackStatus.PARRY:
-            case Aion.GameServer.SkillEngine.Model.AttackStatus.BLOCK:
-            case Aion.GameServer.SkillEngine.Model.AttackStatus.RESIST:
+            case Aion.GameServer.Controllers.Attack.AttackStatus.DODGE:
+            case Aion.GameServer.Controllers.Attack.AttackStatus.PARRY:
+            case Aion.GameServer.Controllers.Attack.AttackStatus.BLOCK:
+            case Aion.GameServer.Controllers.Attack.AttackStatus.RESIST:
                 lastCounterSkill[result] = System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 break;
         }
     }
 
-    public long GetLastCounterSkill(Aion.GameServer.SkillEngine.Model.AttackStatus status)
+    public long GetLastCounterSkill(Aion.GameServer.Controllers.Attack.AttackStatus status)
     {
         if (!lastCounterSkill.TryGetValue(status, out long t))
             return 0;

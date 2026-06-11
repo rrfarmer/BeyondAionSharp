@@ -41,7 +41,7 @@ public partial class Player : Creature
     private Aion.GameServer.Model.GameObjects.Players.RecipeList recipeList;
     private List<Aion.GameServer.Model.House.House> houses;
 
-    private Aion.GameServer.Network.Aion.ResponseRequester requester;
+    private Aion.GameServer.Model.GameObjects.Players.ResponseRequester requester;
     private bool lookingForGroup = false;
     private readonly Aion.GameServer.Model.GameObjects.Players.Equipment equipment;
     private readonly Aion.GameServer.Model.Items.Storage.Storage inventory;
@@ -133,7 +133,7 @@ public partial class Player : Creature
         this.playerAccountData = playerAccountData;
         this.playerAccount = account;
 
-        this.requester = new Aion.GameServer.Network.Aion.ResponseRequester(this);
+        this.requester = new Aion.GameServer.Model.GameObjects.Players.ResponseRequester(this);
         this.questStateList = new Aion.GameServer.Model.GameObjects.Players.QuestStateList();
         this.titleList = new Aion.GameServer.Model.GameObjects.Players.Title.TitleList();
         this.equipment = new Aion.GameServer.Model.GameObjects.Players.Equipment(this);
@@ -341,7 +341,7 @@ public partial class Player : Creature
         return (PlayerGameStats)base.GetGameStats();
     }
 
-    public Aion.GameServer.Network.Aion.ResponseRequester GetResponseRequester()
+    public Aion.GameServer.Model.GameObjects.Players.ResponseRequester GetResponseRequester()
     {
         return requester;
     }
