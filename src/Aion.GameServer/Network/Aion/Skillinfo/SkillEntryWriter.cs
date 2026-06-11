@@ -8,7 +8,7 @@ namespace Aion.GameServer.Network.Aion.Skillinfo;
 /// Java parity: network/aion/skillinfo/SkillEntryWriter. Buffer-writer for a single PlayerSkillEntry, extending PacketWriteHelper.
 /// Function&lt;PlayerSkillEntry, Integer&gt; -> Func&lt;PlayerSkillEntry, int&gt;. PlayerSkillEntry red-tolerated.
 /// </summary>
-public class SkillEntryWriter : Aion.GameServer.Network.PacketWriteHelper
+public class SkillEntryWriter : global::Aion.GameServer.Network.PacketWriteHelper
 {
     public static readonly Func<PlayerSkillEntry, int> DYNAMIC_BODY_PART_SIZE_CALCULATOR = skill => 11;
 

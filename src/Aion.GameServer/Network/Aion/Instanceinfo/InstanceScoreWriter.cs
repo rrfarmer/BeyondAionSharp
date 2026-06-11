@@ -7,7 +7,7 @@ namespace Aion.GameServer.Network.Aion.Instanceinfo;
 /// PacketWriteHelper. Java bound &lt;T extends InstanceScore&lt;?&gt;&gt; relaxed to where T : class (base uses no InstanceScore API; keeps
 /// the deferred *ScoreWriter subclasses 1:1 single-parameter with Java). Default WriteMe is an empty override (subclasses override it).
 /// </summary>
-public abstract class InstanceScoreWriter<T> : Aion.GameServer.Network.PacketWriteHelper
+public abstract class InstanceScoreWriter<T> : global::Aion.GameServer.Network.PacketWriteHelper
     where T : class
 {
     protected readonly T instanceScore;

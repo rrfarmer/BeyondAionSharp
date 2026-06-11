@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.GameObjects;
 using System;
 using System.Threading;
 using System.Collections.Concurrent;
