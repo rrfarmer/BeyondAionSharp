@@ -31,7 +31,7 @@ using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 
 namespace Aion.GameServer.Services.Event;
 
-/// <summary>Java parity: services/event/Event (Neon). One active event instance: spawns, inventory-drop task, surveys, buffs (EventBuffHandler), quest start/maintain, hooks. AtomicBoolean started; Future->ScheduledTask inventoryDropTask; List&lt;Runnable&gt; onEventEndTasks; Java int[] count capture-hack->C# mutable captured local; synchronized(this)->lock; scheduleAtFixedRate->async delegate; forEachPlayer/forEachObject lambdas; TemporaryPlayerTeam&lt;? extends TeamMember&lt;Player&gt;&gt;-><TeamMember<Player>>; ServerTime.atDate(...).toLocalDateTime->.DateTime; isAfter->>; ActionType/ItemAddType/ItemUpdateType/ItemUpdatePredicate/ForceType aliases. EventTemplate/EventBuffHandler/Spawn/DAO red-tolerated.</summary>
+/// <summary>Java parity: services/event/Event (Neon). One active event instance: spawns, inventory-drop task, surveys, buffs (EventBuffHandler), quest start/maintain, hooks. AtomicBoolean started; Future->ScheduledTask inventoryDropTask; List&lt;Runnable&gt; onEventEndTasks; Java int[] count capture-hack->C# mutable captured local; synchronized(this)->lock; scheduleAtFixedRate->async delegate; forEachPlayer/forEachObject lambdas; TemporaryPlayerTeam&lt;? extends TeamMember&lt;Player&gt;&gt;-><ITeamMember<Player>>; ServerTime.atDate(...).toLocalDateTime->.DateTime; isAfter->>; ActionType/ItemAddType/ItemUpdateType/ItemUpdatePredicate/ForceType aliases. EventTemplate/EventBuffHandler/Spawn/DAO red-tolerated.</summary>
 public class Event
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(Event));
@@ -217,13 +217,13 @@ public class Event
             PacketSendUtility.SendMessage(player, eventTemplate.GetLoginMessage());
     }
 
-    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<TeamMember<Player>> team)
+    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         if (eventBuffHandler != null)
             eventBuffHandler.OnEnteredTeam(player, team);
     }
 
-    public void OnLeftTeam(Player player, TemporaryPlayerTeam<TeamMember<Player>> team)
+    public void OnLeftTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         if (eventBuffHandler != null)
             eventBuffHandler.OnLeftTeam(player, team);

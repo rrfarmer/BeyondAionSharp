@@ -22,7 +22,7 @@ using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 
 namespace Aion.GameServer.Services.Event;
 
-/// <summary>Java parity: services/event/EventBuffHandler (Neon). Per-event buff pools/day-restrictions w/ DB persistence; trigger-driven buff application (enter-map/team, pve/pvp-kill), restriction checks (day/map/team-size/instance-level). ConcurrentHashMap->ConcurrentDictionary; Collections.shuffle->generic Fisher-Yates; IntStream.rangeClosed.boxed->Enumerable.Range; getOrDefault; containsAll->IsSupersetOf; Consumer<Player>->Action<Player>; TemporaryPlayerTeam<? extends TeamMember<Player>>/<?>-><TeamMember<Player>>; team.forEach method-group; ServerTime.now toLocalDate().lengthOfMonth->DateTime.DaysInMonth; Rnd.chance->Rnd.Chance; buff.isPermanent?0:null->int?; ForceType alias. Buff/EventDAO/SkillEngine red-tolerated.</summary>
+/// <summary>Java parity: services/event/EventBuffHandler (Neon). Per-event buff pools/day-restrictions w/ DB persistence; trigger-driven buff application (enter-map/team, pve/pvp-kill), restriction checks (day/map/team-size/instance-level). ConcurrentHashMap->ConcurrentDictionary; Collections.shuffle->generic Fisher-Yates; IntStream.rangeClosed.boxed->Enumerable.Range; getOrDefault; containsAll->IsSupersetOf; Consumer<Player>->Action<Player>; TemporaryPlayerTeam<? extends ITeamMember<Player>>/<?>-><ITeamMember<Player>>; team.forEach method-group; ServerTime.now toLocalDate().lengthOfMonth->DateTime.DaysInMonth; Rnd.chance->Rnd.Chance; buff.isPermanent?0:null->int?; ForceType alias. Buff/EventDAO/SkillEngine red-tolerated.</summary>
 public class EventBuffHandler
 {
     private readonly string eventName;
@@ -139,13 +139,13 @@ public class EventBuffHandler
         TryBuff(player, Buff.TriggerCondition.ENTER_MAP);
     }
 
-    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<TeamMember<Player>> team)
+    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         team.ForEach(EndRestrictedEventBuffs);
         TryBuff(player, Buff.TriggerCondition.ENTER_TEAM);
     }
 
-    public void OnLeftTeam(Player player, TemporaryPlayerTeam<TeamMember<Player>> team)
+    public void OnLeftTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         EndRestrictedEventBuffs(player); // player isn't in team anymore
         team.ForEach(member =>
@@ -200,7 +200,7 @@ public class EventBuffHandler
 
     private bool ApplyOnTeam(Player player, Action<Player> memberAction)
     {
-        TemporaryPlayerTeam<TeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
         if (team != null)
         {
             team.ForEach(memberAction);
@@ -298,7 +298,7 @@ public class EventBuffHandler
     {
         if (buff.GetRestriction() == null || buff.GetRestriction().GetTeamSizeMaxPercent() == 0)
             return true;
-        TemporaryPlayerTeam<TeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
         if (team != null)
         {
             int maxAllowedTeamSize = DataManager.INSTANCE_COOLTIME_DATA.GetMaxMemberCount(player.GetWorldId(), player.GetRace());

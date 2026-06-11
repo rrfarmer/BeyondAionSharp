@@ -40,7 +40,7 @@ public class FindGroupService
         PacketSendUtility.SendPacket(player, new SM_FIND_GROUP(4, applications));
     }
 
-    public GroupRecruitment RemoveRecruitment(TemporaryPlayerTeam<TeamMember<Player>> team)
+    public GroupRecruitment RemoveRecruitment(TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         return RemoveRecruitment(team.GetTeamId(), (byte)NetworkConfig.GAMESERVER_ID, (byte)0, (byte)0, (byte)0);
     }
@@ -206,7 +206,7 @@ public class FindGroupService
             instanceGroups.TryRemove(player.GetObjectId(), out _);
         RemoveApplication(player);
         GroupRecruitment recruitment = RemoveRecruitment(player.GetObjectId(), (byte)NetworkConfig.GAMESERVER_ID, (byte)0, (byte)0, (byte)16);
-        TemporaryPlayerTeam<TeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
         if (recruitment != null && team.IsLeader(player))
             AddRecruitment(player, recruitment.GetMessage(), recruitment.GetGroupType());
         else if (team.IsFull())

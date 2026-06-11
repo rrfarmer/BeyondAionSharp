@@ -10,7 +10,7 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services.Autogroup;
 
-/// <summary>Java parity: services/autogroup/AutoGroupUtility (Estrayl). Registration gating for the auto-group / instance matchmaking system: canRegisterNewEntry/QuickEntry/GroupEntry, checkGroupRequirements (leader, member-count caps for periodic/harmony arenas, per-member item/cooldown/level/searching checks), sendSuccessfulRegistration, sendWindow*, hasCoolDown. TemporaryPlayerTeam&lt;?&gt;-><TeamMember<Player>>; keySet->Keys; AutoGroupType/LookingForParty/SM_ packets red-tolerated.</summary>
+/// <summary>Java parity: services/autogroup/AutoGroupUtility (Estrayl). Registration gating for the auto-group / instance matchmaking system: canRegisterNewEntry/QuickEntry/GroupEntry, checkGroupRequirements (leader, member-count caps for periodic/harmony arenas, per-member item/cooldown/level/searching checks), sendSuccessfulRegistration, sendWindow*, hasCoolDown. TemporaryPlayerTeam&lt;?&gt;-><ITeamMember<Player>>; keySet->Keys; AutoGroupType/LookingForParty/SM_ packets red-tolerated.</summary>
 public class AutoGroupUtility
 {
     public static bool CanRegisterNewEntry(Player player, AutoGroupType agt)
@@ -44,7 +44,7 @@ public class AutoGroupUtility
 
     public static bool CheckGroupRequirements(Player player, AutoGroupType agt, int mapId, int maskId)
     {
-        TemporaryPlayerTeam<TeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
         if (team == null || !team.IsLeader(player))
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_NOT_LEADER());

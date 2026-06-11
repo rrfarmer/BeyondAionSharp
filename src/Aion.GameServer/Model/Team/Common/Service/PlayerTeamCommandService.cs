@@ -14,7 +14,7 @@ public class PlayerTeamCommandService
 {
     public static void ExecuteCommand(Player player, TeamCommand command, int memberObjId)
     {
-        TemporaryPlayerTeam<TeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
         if (team == null) // team might have been disbanded or player can have been kicked out of his team by the time the packet arrived
             return;
         switch (command)
@@ -69,7 +69,7 @@ public class PlayerTeamCommandService
         }
     }
 
-    private static LeagueMember FindLeagueAlliance(TemporaryPlayerTeam<TeamMember<Player>> team, Player player, int leagueAllianceId)
+    private static LeagueMember FindLeagueAlliance(TemporaryPlayerTeam<ITeamMember<Player>> team, Player player, int leagueAllianceId)
     {
         League league = team is PlayerAlliance pa ? pa.GetLeague() : null;
         if (league == null)
@@ -80,11 +80,11 @@ public class PlayerTeamCommandService
         return member;
     }
 
-    private static Player FindMember(TemporaryPlayerTeam<TeamMember<Player>> team, Player player, int memberObjId)
+    private static Player FindMember(TemporaryPlayerTeam<ITeamMember<Player>> team, Player player, int memberObjId)
     {
         if (memberObjId == 0)
             return player;
-        TeamMember<Player> member = team.GetMember(memberObjId);
+        ITeamMember<Player> member = team.GetMember(memberObjId);
         if (member == null)
             throw new ArgumentNullException(null, player + " tried to execute team command on non-existent member with ID " + memberObjId);
         return member.GetObject();

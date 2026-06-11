@@ -176,7 +176,7 @@ public class FirstTargetProperty
         if (skill.GetFirstTarget() is Player && skill.GetEffector() is Player)
         {
             Player effector = (Player)skill.GetEffector();
-            TemporaryPlayerTeam<TeamMember<Player>> team = onlyGroup ? effector.GetCurrentGroup() : effector.GetCurrentTeam();
+            TemporaryPlayerTeam<ITeamMember<Player>> team = onlyGroup ? effector.GetCurrentGroup() : effector.GetCurrentTeam();
             if (team != null)
             {
                 foreach (Player member in team.GetMembers())

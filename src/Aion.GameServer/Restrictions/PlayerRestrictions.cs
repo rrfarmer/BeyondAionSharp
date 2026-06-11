@@ -151,7 +151,7 @@ public class PlayerRestrictions
         return CanInviteToTeam(player, target, true, player.GetPlayerAlliance());
     }
 
-    private static bool CanInviteToTeam(Player player, Player target, bool isAlliance, TemporaryPlayerTeam<TeamMember<Player>> team)
+    private static bool CanInviteToTeam(Player player, Player target, bool isAlliance, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         if (player.IsDead())
         {
@@ -207,7 +207,7 @@ public class PlayerRestrictions
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_UI_PARTY_DEAD());
             return false;
         }
-        TemporaryPlayerTeam<TeamMember<Player>> targetTeam = target.GetCurrentTeam();
+        TemporaryPlayerTeam<ITeamMember<Player>> targetTeam = target.GetCurrentTeam();
         if (targetTeam != null)
         {
             if (targetTeam == team)

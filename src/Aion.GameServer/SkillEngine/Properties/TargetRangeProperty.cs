@@ -57,7 +57,7 @@ public class TargetRangeProperty
                     break;
                 if (skillEffector is Player effector)
                 {
-                    TemporaryPlayerTeam<TeamMember<Player>> team;
+                    TemporaryPlayerTeam<ITeamMember<Player>> team;
                     if (value == TargetRangeAttribute.PARTY_WITHPET)
                     {
                         team = effector.GetCurrentTeam(); // group or whole alliance

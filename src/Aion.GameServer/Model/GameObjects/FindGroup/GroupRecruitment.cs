@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Team;
 
 namespace Aion.GameServer.Model.GameObjects.FindGroup;
 
-/// <summary>Java parity: model/gameobjects/findGroup/GroupRecruitment (MrPoke) implements FindGroupEntry. A "Recruit Group Members" tab entry wrapping a Player or team (AionObject): message/group-type, class/level (explicit or derived from player/team leader), name/size/race, last-update timestamp. instanceof X x->is X x; TemporaryPlayerTeam&lt;?&gt;-><TeamMember<Player>>; currentTimeMillis/1000->UtcNow.ToUnixTimeMilliseconds()/1000; getName(true)->GetName(true); getRace nullable. AionObject/TemporaryPlayerTeam red-tolerated.</summary>
+/// <summary>Java parity: model/gameobjects/findGroup/GroupRecruitment (MrPoke) implements FindGroupEntry. A "Recruit Group Members" tab entry wrapping a Player or team (AionObject): message/group-type, class/level (explicit or derived from player/team leader), name/size/race, last-update timestamp. instanceof X x->is X x; TemporaryPlayerTeam&lt;?&gt;-><ITeamMember<Player>>; currentTimeMillis/1000->UtcNow.ToUnixTimeMilliseconds()/1000; getName(true)->GetName(true); getRace nullable. AionObject/TemporaryPlayerTeam red-tolerated.</summary>
 public sealed class GroupRecruitment : FindGroupEntry
 {
     private readonly AionObject obj;
@@ -57,7 +57,7 @@ public sealed class GroupRecruitment : FindGroupEntry
             return classId;
         if (obj is Player player)
             return player.GetPlayerClass().GetClassId();
-        if (obj is TemporaryPlayerTeam<TeamMember<Player>> team)
+        if (obj is TemporaryPlayerTeam<ITeamMember<Player>> team)
             return team.GetLeaderObject().GetPlayerClass().GetClassId();
         return 0;
     }
@@ -73,7 +73,7 @@ public sealed class GroupRecruitment : FindGroupEntry
             return level;
         if (obj is Player player)
             return player.GetLevel();
-        if (obj is TemporaryPlayerTeam<TeamMember<Player>> team)
+        if (obj is TemporaryPlayerTeam<ITeamMember<Player>> team)
             return team.GetMinExpPlayerLevel();
         return 1;
     }
@@ -87,19 +87,19 @@ public sealed class GroupRecruitment : FindGroupEntry
     {
         if (obj is Player player)
             return player.GetLevel();
-        else if (obj is TemporaryPlayerTeam<TeamMember<Player>> team)
+        else if (obj is TemporaryPlayerTeam<ITeamMember<Player>> team)
             return team.GetMaxExpPlayerLevel();
         return 1;
     }
 
     public string GetName()
     {
-        return obj is TemporaryPlayerTeam<TeamMember<Player>> team ? team.GetLeaderObject().GetName(true) : ((Player)obj).GetName(true);
+        return obj is TemporaryPlayerTeam<ITeamMember<Player>> team ? team.GetLeaderObject().GetName(true) : ((Player)obj).GetName(true);
     }
 
     public int GetSize()
     {
-        return obj is TemporaryPlayerTeam<TeamMember<Player>> team ? team.Size() : 1;
+        return obj is TemporaryPlayerTeam<ITeamMember<Player>> team ? team.Size() : 1;
     }
 
     public int GetLastUpdate()
@@ -114,6 +114,6 @@ public sealed class GroupRecruitment : FindGroupEntry
 
     public Race? GetRace()
     {
-        return obj is Player player ? player.GetRace() : obj is TemporaryPlayerTeam<TeamMember<Player>> team ? team.GetRace() : (Race?)null;
+        return obj is Player player ? player.GetRace() : obj is TemporaryPlayerTeam<ITeamMember<Player>> team ? team.GetRace() : (Race?)null;
     }
 }
