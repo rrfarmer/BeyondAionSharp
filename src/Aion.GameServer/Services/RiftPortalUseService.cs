@@ -5,7 +5,6 @@ using Aion.GameServer.World;
 namespace Aion.GameServer.Services;
 
 public sealed class RiftPortalUseService(
-	VortexInvasionRuntime? vortexInvasionRuntime = null,
 	VortexLocationService? vortexLocationService = null)
 {
 	public RiftPortalUseResult AcceptPortal(
@@ -38,10 +37,10 @@ public sealed class RiftPortalUseService(
 			// Java parity: RVController vortex branch records passedPlayers, then syncPassed(true).
 			portal.AddPassedPlayer(player.ObjectId);
 			portal.SyncPassed(usePassedPlayerCount: true, passedPlayerCount: portal.PassedPlayerCount);
-			var vortexLocation = vortexLocationResolver?.Invoke(portal)
+			// Java parity: RVController.onAccept records the vortex pass; the faithful path runs through VortexService
+			// (the reworked VortexInvasionRuntime recorder was deleted), so no per-pass recorder call here.
+			_ = vortexLocationResolver?.Invoke(portal)
 				?? vortexLocationService?.GetLocationByRift(portal.MasterNpc.TemplateId);
-			if (vortexLocation != null)
-				vortexInvasionRuntime?.RecordPortalPass(vortexLocation, player);
 		}
 		else
 		{

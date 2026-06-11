@@ -253,13 +253,9 @@ public static class InstanceRuntimeService
 		return CreatePlayerForcedExitResolutionPlans(playerList, worldId, instanceId, instanceExits, worldMaps)
 			.Select(plan =>
 			{
-				var bindFallback = plan.ExitResolution.Status == InstanceExitResolutionStatus.BindLocationFallback
-					? PlayerTeleportService.ResolveBindLocation(playersByObjectId[plan.ForcedExit.PlayerObjectId], playerInitialData)
-					: null;
-				var destination = plan.ExitResolution.Destination ?? bindFallback?.Destination;
+				var destination = plan.ExitResolution.Destination;
 				return new InstancePlayerForcedExitTeleportPlan(
 					plan,
-					bindFallback,
 					destination,
 					"InstanceService.destroyInstance -> moveToExitPoint -> TeleportService.moveToInstanceExit");
 			})
@@ -320,7 +316,6 @@ public sealed record InstancePlayerForcedExitResolutionPlan(
 
 public sealed record InstancePlayerForcedExitTeleportPlan(
 	InstancePlayerForcedExitResolutionPlan ForcedExitResolution,
-	BindLocationResolutionPlan? BindFallback,
 	WorldPosition? Destination,
 	string JavaSource);
 
