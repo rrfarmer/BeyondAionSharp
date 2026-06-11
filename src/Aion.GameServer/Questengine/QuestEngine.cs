@@ -31,6 +31,11 @@ namespace Aion.GameServer.QuestEngine;
 /// <summary>Java parity: questEngine/QuestEngine (MrPoke, Hilgert, vlog, Neon). The central quest registration/dispatch god-class every handler's `qe` references. EnumMap→Dictionary; computeIfAbsent→TryGetValue+init; putIfAbsent→TryAdd; Object...→params object[]; SingletonHolder→static readonly. C# GameEngine interface is a divergent async redesign — Java's void Init() mirrored faithfully, interface satisfaction left red. ScriptManager/CronService/Quartz JobDetail/SplitList/World red-tolerated.</summary>
 public class QuestEngine : GameEngine
 {
+
+    // GameEngine async lifecycle (infra adapter over the faithful Init()).
+    public string Name => GetType().Name;
+    public System.Threading.Tasks.ValueTask InitAsync(System.Threading.CancellationToken cancellationToken) { Init(); return System.Threading.Tasks.ValueTask.CompletedTask; }
+    public System.Threading.Tasks.ValueTask ShutdownAsync(System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
     private static readonly ILogger log = NullLogger.Instance;
     private readonly ScriptManager scriptManager = new();
     private JobDetail messageTask;

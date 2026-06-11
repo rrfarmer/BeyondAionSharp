@@ -23,6 +23,11 @@ namespace Aion.GameServer.World.Geo;
 /// </summary>
 public class GeoService : GameEngine
 {
+
+    // GameEngine async lifecycle (infra adapter over the faithful Init()).
+    public string Name => GetType().Name;
+    public System.Threading.Tasks.ValueTask InitAsync(System.Threading.CancellationToken cancellationToken) { Init(); return System.Threading.Tasks.ValueTask.CompletedTask; }
+    public System.Threading.Tasks.ValueTask ShutdownAsync(System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
     private static readonly ILogger log = NullLogger.Instance;
 
     private readonly Dictionary<int, GeoMap> geoMaps = new();

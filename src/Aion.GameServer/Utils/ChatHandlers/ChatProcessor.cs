@@ -15,6 +15,11 @@ namespace Aion.GameServer.Utils.ChatHandlers;
 /// <summary>Java parity: utils/chathandlers/ChatProcessor (KID, Rolandas, Neon). Registers and dispatches chat/console commands. ScriptManager/GameEngine (scripting pillar) red-tolerated.</summary>
 public class ChatProcessor : GameEngine
 {
+
+    // GameEngine async lifecycle (infra adapter over the faithful Init()).
+    public string Name => GetType().Name;
+    public System.Threading.Tasks.ValueTask InitAsync(System.Threading.CancellationToken cancellationToken) { Init(); return System.Threading.Tasks.ValueTask.CompletedTask; }
+    public System.Threading.Tasks.ValueTask ShutdownAsync(System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(ChatProcessor));
     private readonly Dictionary<string, ChatCommand> commandHandlers = new Dictionary<string, ChatCommand>();
 

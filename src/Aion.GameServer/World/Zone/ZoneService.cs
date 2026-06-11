@@ -28,6 +28,11 @@ namespace Aion.GameServer.World.Zone;
 /// </summary>
 public sealed class ZoneService : GameEngine
 {
+
+    // GameEngine async lifecycle (infra adapter over the faithful Init()).
+    public string Name => GetType().Name;
+    public System.Threading.Tasks.ValueTask InitAsync(System.Threading.CancellationToken cancellationToken) { Init(); return System.Threading.Tasks.ValueTask.CompletedTask; }
+    public System.Threading.Tasks.ValueTask ShutdownAsync(System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(ZoneService));
     private readonly Dictionary<ZoneName, Type> zoneHandlers = new Dictionary<ZoneName, Type>();
     private readonly Dictionary<ZoneName, IZoneHandler> collidableHandlers = new Dictionary<ZoneName, IZoneHandler>();

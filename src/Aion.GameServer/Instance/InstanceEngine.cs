@@ -15,6 +15,11 @@ namespace Aion.GameServer.Instance;
 /// <summary>Java parity: instance/InstanceEngine (ATracer) implements GameEngine. Map&lt;Integer,Class&lt;? extends IInstanceHandler&gt;&gt;→Dictionary&lt;int,Type&gt;; getAnnotation(InstanceID.class)→GetCustomAttribute&lt;InstanceID&gt;(); getDeclaredConstructor(X).newInstance(arg)→Activator.CreateInstance; slf4j→ILogger. GameEngine async-interface satisfaction left red-tolerated (per QuestEngine precedent). ScriptManager red-tolerated (commons compiler pillar).</summary>
 public class InstanceEngine : GameEngine
 {
+
+    // GameEngine async lifecycle (infra adapter over the faithful Init()).
+    public string Name => GetType().Name;
+    public System.Threading.Tasks.ValueTask InitAsync(System.Threading.CancellationToken cancellationToken) { Init(); return System.Threading.Tasks.ValueTask.CompletedTask; }
+    public System.Threading.Tasks.ValueTask ShutdownAsync(System.Threading.CancellationToken cancellationToken) => System.Threading.Tasks.ValueTask.CompletedTask;
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(InstanceEngine));
     private readonly Dictionary<int, Type> instanceHandlers = new Dictionary<int, Type>();
 
