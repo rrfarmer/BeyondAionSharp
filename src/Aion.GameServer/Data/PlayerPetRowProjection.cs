@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services.ToyPet;
 
 namespace Aion.GameServer.Data;
