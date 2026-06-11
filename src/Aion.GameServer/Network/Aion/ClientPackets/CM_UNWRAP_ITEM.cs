@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;

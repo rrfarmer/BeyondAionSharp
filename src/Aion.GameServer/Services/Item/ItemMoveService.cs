@@ -9,7 +9,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Services.Items.ItemPacketService;
 using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Items;
 

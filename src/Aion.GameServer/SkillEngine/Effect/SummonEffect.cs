@@ -7,6 +7,7 @@ using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Services.Summons;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
+using System.Xml.Serialization;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 

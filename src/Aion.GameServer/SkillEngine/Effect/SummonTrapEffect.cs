@@ -10,6 +10,7 @@ using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
+using System.Xml.Serialization;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 

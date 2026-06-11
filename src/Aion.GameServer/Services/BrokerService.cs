@@ -21,7 +21,7 @@ using Aion.GameServer.Taskmanager;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Collections;
 using Aion.GameServer.World;
-using static Aion.GameServer.Model.GameObjects.Persistable;
+using static Aion.GameServer.Model.GameObjects.IPersistable;
 
 namespace Aion.GameServer.Services;
 

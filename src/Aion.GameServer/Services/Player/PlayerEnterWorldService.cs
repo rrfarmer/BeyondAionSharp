@@ -51,7 +51,7 @@ using Msg = Aion.GameServer.Network.Aion.ServerPackets.SM_ENTER_WORLD_CHECK.Msg;
 using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 using ConnectType = Aion.GameServer.Model.Account.CharacterPasskey.ConnectType;
 using PunishmentType = Aion.GameServer.Services.PunishmentService.PunishmentType;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Players;
 

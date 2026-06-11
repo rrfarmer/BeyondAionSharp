@@ -5,6 +5,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
+using System.Xml.Serialization;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 

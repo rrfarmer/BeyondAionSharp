@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.Items;
+using System.Xml.Serialization;
 
 namespace Aion.GameServer.Model.Templates.Items.Enums;
 

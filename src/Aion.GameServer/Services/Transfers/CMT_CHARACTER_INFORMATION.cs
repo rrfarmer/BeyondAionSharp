@@ -24,7 +24,7 @@ using Aion.GameServer.Services.Players;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Transfers;
 

@@ -22,7 +22,7 @@ using Aion.GameServer.Utils.Collections;
 using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Mail;
 

@@ -14,7 +14,7 @@ using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.Utils.IdFactory;
 using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;

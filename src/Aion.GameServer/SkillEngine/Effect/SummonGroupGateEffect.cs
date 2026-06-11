@@ -6,6 +6,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
+using System.Xml.Serialization;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 

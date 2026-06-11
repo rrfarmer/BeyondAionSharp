@@ -16,7 +16,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Items;
 

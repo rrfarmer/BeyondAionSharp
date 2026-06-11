@@ -24,7 +24,7 @@ using LocationData = Aion.GameServer.Dataholders.PlayerInitialData.LocationData;
 using PlayerCreationData = Aion.GameServer.Dataholders.PlayerInitialData.PlayerCreationData;
 using ItemType = Aion.GameServer.Dataholders.PlayerInitialData.PlayerCreationData.ItemType;
 using PunishmentType = Aion.GameServer.Services.PunishmentService.PunishmentType;
-using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
+using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
 
 namespace Aion.GameServer.Services.Players;
 
