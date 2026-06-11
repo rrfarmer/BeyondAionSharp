@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Aion.GameServer.Model.Vortex;
 using Aion.GameServer.Services;
 using Aion.GameServer.World;
 

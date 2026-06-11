@@ -9,6 +9,7 @@ using Aion.GameServer.Model.Templates.Siegelocation;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World.Zone;
+using Aion.GameServer.Controllers.Observer;
 
 namespace Aion.GameServer.Model.Siege;
 
