@@ -57,19 +57,6 @@ public sealed class LimitedItemTradeService
 		return new LimitedItemTradeService(limitedTradeNpcs);
 	}
 
-	public IReadOnlyList<NpcDialogLimitedItemFact> GetLimitedItemFacts(int npcId, int playerObjectId)
-	{
-		lock (_sync)
-		{
-			if (!_limitedTradeNpcs.TryGetValue(npcId, out var limitedItems))
-				return Array.Empty<NpcDialogLimitedItemFact>();
-
-			return limitedItems
-				.Select(item => item.ToFact(playerObjectId))
-				.ToArray();
-		}
-	}
-
 	public bool CanBuy(int npcId, int itemId, int playerObjectId, long count)
 	{
 		lock (_sync)
@@ -247,16 +234,6 @@ internal sealed class LimitedItemRuntimeState
 	public int DefaultSellLimit { get; }
 
 	public string? SalesTime { get; }
-
-	public NpcDialogLimitedItemFact ToFact(int playerObjectId)
-	{
-		return new NpcDialogLimitedItemFact(
-			ItemId,
-			SellLimit,
-			BuyLimit,
-			_buyCounts.GetValueOrDefault(playerObjectId),
-			SalesTime);
-	}
 
 	public bool CanBuy(int playerObjectId, long count)
 	{
