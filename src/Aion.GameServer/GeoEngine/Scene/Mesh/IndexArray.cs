@@ -14,7 +14,7 @@ public interface IndexArray
 
     void Swap(int i1, int i2);
 
-    static IndexArray From(Buffer buffer)
+    static IndexArray From(Aion.Commons.Nio.Buffer buffer)
     {
         return buffer switch
         {

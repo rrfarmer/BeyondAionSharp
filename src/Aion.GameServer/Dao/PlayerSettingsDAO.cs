@@ -20,9 +20,9 @@ public class PlayerSettingsDAO
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(PlayerSettingsDAO));
 
-    public static PlayerSettings LoadSettings(int playerId)
+    public static Aion.GameServer.Model.GameObjects.Players.PlayerSettings LoadSettings(int playerId)
     {
-        PlayerSettings playerSettings = new PlayerSettings();
+        Aion.GameServer.Model.GameObjects.Players.PlayerSettings playerSettings = new Aion.GameServer.Model.GameObjects.Players.PlayerSettings();
         try
         {
             using MySqlConnection con = DatabaseFactory.GetConnection();
@@ -57,7 +57,7 @@ public class PlayerSettingsDAO
         }
         catch (Exception e)
         {
-            log.LogError(e, "Could not restore PlayerSettings data for player " + playerId + " from DB: " + e.Message);
+            log.LogError(e, "Could not restore Aion.GameServer.Model.GameObjects.Players.PlayerSettings data for player " + playerId + " from DB: " + e.Message);
         }
         playerSettings.SetPersistentState(IPersistable.PersistentState.UPDATED);
         return playerSettings;
@@ -67,7 +67,7 @@ public class PlayerSettingsDAO
     {
         int playerId = player.GetObjectId();
 
-        PlayerSettings playerSettings = player.GetPlayerSettings();
+        Aion.GameServer.Model.GameObjects.Players.PlayerSettings playerSettings = player.GetPlayerSettings();
         if (playerSettings.GetPersistentState() == IPersistable.PersistentState.UPDATED)
             return;
 

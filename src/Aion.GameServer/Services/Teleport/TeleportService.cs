@@ -36,7 +36,7 @@ public class TeleportService
     private static double[] eventPosAsmodians;
     private static double[] eventPosElyos;
 
-    public static void TeleportToFirstTeleportLocation(Player player, Npc teleporter, TeleportAnimation animation)
+    public static void TeleportToFirstTeleportLocation(Player player, Npc teleporter, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
         TeleporterTemplate teleporterTemplate = ValidateTeleporterAndGetTemplate(player, teleporter);
         if (teleporterTemplate == null)
@@ -44,7 +44,7 @@ public class TeleportService
         Teleport(player, teleporterTemplate.GetTeleLocIdData().GetTelelocations()[0], animation);
     }
 
-    public static void Teleport(Player player, TeleportLocation location, TeleportAnimation animation)
+    public static void Teleport(Player player, TeleportLocation location, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
         TelelocationTemplate locationTemplate = DataManager.TELELOCATION_DATA.GetTelelocationTemplate(location.GetLocId());
         if (locationTemplate == null)
@@ -172,14 +172,14 @@ public class TeleportService
         return true;
     }
 
-    private static void SendLoc(Player player, int worldId, int instanceId, float x, float y, float z, byte h, TeleportAnimation animation)
+    private static void SendLoc(Player player, int worldId, int instanceId, float x, float y, float z, byte h, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
         AbortPlayerActions(player);
         // despawn from world and send animation to others (also ends flying)
         World.World.GetInstance().Despawn(player, animation.GetDefaultObjectDeleteAnimation());
 
         SpawnTask spawnTask = new SpawnTask(player, worldId, instanceId, x, y, z, h, animation);
-        if (animation == TeleportAnimation.NONE) // instant teleport (don't wait for player fade-out)
+        if (animation == Aion.GameServer.Model.Animations.TeleportAnimation.NONE) // instant teleport (don't wait for player fade-out)
             spawnTask.Run();
         else
         {
@@ -227,7 +227,7 @@ public class TeleportService
         }
         else
         {
-            TeleportTo(player, pos.GetMapId(), pos.GetInstanceId(), pos.GetX(), pos.GetY(), pos.GetZ(), pos.GetHeading(), TeleportAnimation.NONE);
+            TeleportTo(player, pos.GetMapId(), pos.GetInstanceId(), pos.GetX(), pos.GetY(), pos.GetZ(), pos.GetHeading(), Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
         }
     }
 
@@ -250,46 +250,46 @@ public class TeleportService
 
     public static void TeleportTo(Player player, int worldId, float x, float y, float z)
     {
-        TeleportTo(player, worldId, x, y, z, player.GetHeading(), TeleportAnimation.NONE);
+        TeleportTo(player, worldId, x, y, z, player.GetHeading(), Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
     public static void TeleportTo(Player player, int worldId, float x, float y, float z, byte h)
     {
-        TeleportTo(player, worldId, x, y, z, h, TeleportAnimation.NONE);
+        TeleportTo(player, worldId, x, y, z, h, Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
-    public static void TeleportTo(Player player, int worldId, float x, float y, float z, byte h, TeleportAnimation animation)
+    public static void TeleportTo(Player player, int worldId, float x, float y, float z, byte h, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
         TeleportTo(player, worldId, player.GetWorldId() != worldId ? 1 : player.GetInstanceId(), x, y, z, h, animation);
     }
 
     public static void TeleportTo(Player player, int worldId, int instanceId, float x, float y, float z)
     {
-        TeleportTo(player, worldId, instanceId, x, y, z, player.GetHeading(), TeleportAnimation.NONE);
+        TeleportTo(player, worldId, instanceId, x, y, z, player.GetHeading(), Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
     public static void TeleportTo(Player player, int worldId, int instanceId, float x, float y, float z, byte h)
     {
-        TeleportTo(player, worldId, instanceId, x, y, z, h, TeleportAnimation.NONE);
+        TeleportTo(player, worldId, instanceId, x, y, z, h, Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
     public static void TeleportTo(Player player, WorldMapInstance instance, float x, float y, float z)
     {
-        TeleportTo(player, instance.GetMapId(), instance.GetInstanceId(), x, y, z, player.GetHeading(), TeleportAnimation.NONE);
+        TeleportTo(player, instance.GetMapId(), instance.GetInstanceId(), x, y, z, player.GetHeading(), Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
     public static void TeleportTo(Player player, WorldMapInstance instance, float x, float y, float z, byte h)
     {
-        TeleportTo(player, instance.GetMapId(), instance.GetInstanceId(), x, y, z, h, TeleportAnimation.NONE);
+        TeleportTo(player, instance.GetMapId(), instance.GetInstanceId(), x, y, z, h, Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
-    public static void TeleportTo(Player player, WorldMapInstance instance, float x, float y, float z, byte h, TeleportAnimation animation)
+    public static void TeleportTo(Player player, WorldMapInstance instance, float x, float y, float z, byte h, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
         TeleportTo(player, instance.GetMapId(), instance.GetInstanceId(), x, y, z, h, animation);
     }
 
     public static void TeleportTo(Player player, int worldId, int instanceId, float x, float y, float z,
-        byte heading, TeleportAnimation animation)
+        byte heading, Aion.GameServer.Model.Animations.TeleportAnimation animation)
     {
         if (player.IsDead())
         {
@@ -347,7 +347,7 @@ public class TeleportService
             z = spot.GetZ() + 0.5f;
         byte heading = (byte)((spot.GetHeading() & 0xFF) >= 60 ? spot.GetHeading() - 60 : spot.GetHeading() + 60); // look towards npc
 
-        TeleportTo(player, instance, x, y, z, heading, TeleportAnimation.NONE);
+        TeleportTo(player, instance, x, y, z, heading, Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
     }
 
     /// <summary>This method will send the set bind point packet</summary>
@@ -494,7 +494,7 @@ public class TeleportService
         if (pos == null)
             MoveToBindLocation(player);
         else
-            TeleportTo(player, (int)pos[0], (int)pos[1], (float)pos[2], (float)pos[3], (float)pos[4], (byte)pos[5], TeleportAnimation.FADE_OUT_BEAM);
+            TeleportTo(player, (int)pos[0], (int)pos[1], (float)pos[2], (float)pos[3], (float)pos[4], (byte)pos[5], Aion.GameServer.Model.Animations.TeleportAnimation.FADE_OUT_BEAM);
     }
 
     /// <summary>Sends a teleport request to the player. He will only be teleported to the Npc if he accepts the request. Returns true if the request was sent.</summary>
@@ -531,9 +531,9 @@ public class TeleportService
         private readonly int worldId, instanceId;
         private readonly float x, y, z;
         private readonly byte h;
-        private readonly TeleportAnimation animation;
+        private readonly Aion.GameServer.Model.Animations.TeleportAnimation animation;
 
-        public SpawnTask(Player player, int worldId, int instanceId, float x, float y, float z, byte h, TeleportAnimation animation)
+        public SpawnTask(Player player, int worldId, int instanceId, float x, float y, float z, byte h, Aion.GameServer.Model.Animations.TeleportAnimation animation)
         {
             this.player = player;
             this.worldId = worldId;
@@ -550,7 +550,7 @@ public class TeleportService
             if (player.IsSpawned())
                 return;
 
-            if (animation != TeleportAnimation.NONE)
+            if (animation != Aion.GameServer.Model.Animations.TeleportAnimation.NONE)
             { // this is a delayed teleport (triggered after animation end)
                 if (player.IsDead() || !InstanceService.InstanceExists(worldId, instanceId))
                 { // instance might be destroyed after animation end if unlucky

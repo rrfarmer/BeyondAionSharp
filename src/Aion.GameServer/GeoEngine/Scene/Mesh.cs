@@ -87,7 +87,7 @@ public class Mesh
         vertices.Get(this.vertices);
     }
 
-    public void SetIndices(Buffer indices)
+    public void SetIndices(Aion.Commons.Nio.Buffer indices)
     {
         collisionTree = null;
         this.indices = IndexArray.From(indices);
