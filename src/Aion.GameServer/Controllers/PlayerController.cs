@@ -198,7 +198,7 @@ public class PlayerController : CreatureController<Player>
             {
                 if (player.IsInGlidingState())
                 {
-                    player.UnsetFlyState(Aion.GameServer.Model.FlyState.FLYING);
+                    player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
                     player.UnsetState(CreatureState.Flying);
                     player.GetLifeStats().TriggerFpReduce();
                     player.GetGameStats().UpdateStatsAndSpeedVisually();
@@ -284,8 +284,8 @@ public class PlayerController : CreatureController<Player>
 
         player.UnsetState(CreatureState.Flying);
         player.UnsetState(CreatureState.Gliding);
-        player.UnsetFlyState(Aion.GameServer.Model.FlyState.FLYING);
-        player.UnsetFlyState(Aion.GameServer.Model.FlyState.GLIDING);
+        player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
+        player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.GLIDING);
 
         // Effects removed with base.OnDie()
         base.OnDie(lastAttacker);
@@ -662,8 +662,8 @@ public class PlayerController : CreatureController<Player>
         if (player.IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type.WINDSTREAM))
         {
             player.UnsetState(CreatureState.Flying);
-            player.UnsetFlyState(Aion.GameServer.Model.FlyState.FLYING);
-            player.SetFlyState(Aion.GameServer.Model.FlyState.GLIDING);
+            player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
+            player.SetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.GLIDING);
             player.SetState(CreatureState.Active);
             player.SetState(CreatureState.Gliding);
             player.GetLifeStats().TriggerFpReduce();

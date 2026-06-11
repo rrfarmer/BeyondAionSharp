@@ -17,6 +17,7 @@ using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time;
 using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
+using Aion.GameServer.Model.Templates.GlobalDrops;
 
 namespace Aion.GameServer.Services.Event;
 

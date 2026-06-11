@@ -25,6 +25,7 @@ using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Zone;
 using Status = Aion.GameServer.Network.Aion.ServerPackets.SM_LOOT_STATUS.Status;
+using Aion.GameServer.Model.Templates.GlobalDrops;
 
 namespace Aion.GameServer.Services.Drop;
 

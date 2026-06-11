@@ -208,17 +208,17 @@ public partial class Player
         return flyState;
     }
 
-    public void SetFlyState(Aion.GameServer.Model.FlyState flyState)
+    public void SetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState flyState)
     {
         this.flyState |= flyState.GetId();
     }
 
-    public void UnsetFlyState(Aion.GameServer.Model.FlyState flyState)
+    public void UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState flyState)
     {
         this.flyState &= ~flyState.GetId();
     }
 
-    public bool IsInFlyState(Aion.GameServer.Model.FlyState flyState)
+    public bool IsInFlyState(Aion.GameServer.Model.GameObjects.State.FlyState flyState)
     {
         return (this.flyState & flyState.GetId()) == flyState.GetId();
     }
@@ -232,12 +232,12 @@ public partial class Player
     /// <summary>CreatureState is unreliable for players; returns true if player is flying.</summary>
     public override bool IsInFlyingState()
     {
-        return IsInFlyState(Aion.GameServer.Model.FlyState.FLYING);
+        return IsInFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
     }
 
     public bool IsInGlidingState()
     {
-        return IsInFlyState(Aion.GameServer.Model.FlyState.GLIDING);
+        return IsInFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.GLIDING);
     }
 
     public bool IsTrading()
