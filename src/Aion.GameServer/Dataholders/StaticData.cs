@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using Aion.GameServer.Model.Vortex;
 using System.Globalization;
 using System.Xml;
 using Aion.GameServer.Model.Templates.Pet;
@@ -71,7 +72,6 @@ public sealed class StaticData
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestNpcStartTable questNpcStarts,
 		QuestCompletionFollowUpTable questCompletionFollowUps,
-		QuestFinishRewardProjectionLookupTable questFinishRewardProjections,
 		QuestBonusItemGroupTable questBonusItemGroups,
 		ChallengeTaskTable challengeTasks,
 		LegionDominionTable legionDominions,
@@ -140,7 +140,6 @@ public sealed class StaticData
 		QuestHandlers = questHandlers;
 		QuestNpcStarts = questNpcStarts;
 		QuestCompletionFollowUps = questCompletionFollowUps;
-		QuestFinishRewardProjections = questFinishRewardProjections;
 		QuestBonusItemGroups = questBonusItemGroups;
 		ChallengeTasks = challengeTasks;
 		LegionDominions = legionDominions;
@@ -272,8 +271,6 @@ public sealed class StaticData
 	public QuestNpcStartTable QuestNpcStarts { get; }
 
 	public QuestCompletionFollowUpTable QuestCompletionFollowUps { get; }
-
-	public QuestFinishRewardProjectionLookupTable QuestFinishRewardProjections { get; }
 
 	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
 
@@ -3225,9 +3222,6 @@ public sealed class StaticData
 		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var questNpcStarts = LoadQuestNpcStarts(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var questCompletionFollowUps = QuestCompletionFollowUpTable.Load(questHandlerDirectory, cancellationToken);
-		using var questFinishRewardProjectionStream = File.OpenRead(cacheFilePath);
-		var questFinishRewardProjections = new QuestFinishRewardProjectionLookupTableXmlFactory()
-			.Create(questFinishRewardProjectionStream);
 		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
 
 		return new StaticData(
@@ -3339,7 +3333,6 @@ public sealed class StaticData
 			questHandlers,
 			questNpcStarts,
 			questCompletionFollowUps,
-			questFinishRewardProjections,
 			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
 			new LegionDominionTable(legionDominions.AsReadOnly()),

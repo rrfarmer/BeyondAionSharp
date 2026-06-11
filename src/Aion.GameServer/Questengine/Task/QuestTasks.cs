@@ -10,37 +10,45 @@ using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.QuestEngine.Task;
 
-/// <summary>Java parity: questEngine/task/QuestTasks (ATracer). Future&lt;?&gt;→IScheduledFuture; scheduleAtFixedRate(task,1000,1000); IllegalArgumentException→ArgumentException; ThreadPoolManager red-tolerated.</summary>
+/// <summary>Java parity: questEngine/task/QuestTasks (ATracer). Future&lt;?&gt;→ScheduledTask (the repo's idiomatic
+/// async ThreadPoolManager handle); Java scheduleAtFixedRate(Runnable,1000,1000)→ScheduleAtFixedRateTask(ct=>{run;return},
+/// TimeSpan,TimeSpan); IllegalArgumentException→ArgumentException.</summary>
 public class QuestTasks
 {
-    /// <summary>Schedule new following checker task</summary>
-    public static IScheduledFuture NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, Npc target)
+    private static readonly TimeSpan Interval = TimeSpan.FromMilliseconds(1000);
+
+    private static ScheduledTask Schedule(FollowingNpcCheckTask task)
     {
-        return ThreadPoolManager.GetInstance().ScheduleAtFixedRate(new FollowingNpcCheckTask(env, new TargetDestinationChecker(npc, target)), 1000, 1000);
+        return ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+            ct => { task.Run(); return ValueTask.CompletedTask; }, Interval, Interval);
     }
 
     /// <summary>Schedule new following checker task</summary>
-    public static IScheduledFuture NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, int npcTargetId)
+    public static ScheduledTask NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, Npc target)
+    {
+        return Schedule(new FollowingNpcCheckTask(env, new TargetDestinationChecker(npc, target)));
+    }
+
+    /// <summary>Schedule new following checker task</summary>
+    public static ScheduledTask NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, int npcTargetId)
     {
         SpawnSearchResult searchResult = DataManager.SPAWNS_DATA.GetFirstSpawnByNpcId(npc.GetWorldId(), npcTargetId);
         if (searchResult == null)
         {
             throw new ArgumentException("Supplied npc doesn't exist: " + npcTargetId);
         }
-        return ThreadPoolManager.GetInstance().ScheduleAtFixedRate(
-            new FollowingNpcCheckTask(env, new CoordinateDestinationChecker(npc, searchResult.GetSpot().GetX(), searchResult.GetSpot().GetY(), searchResult
-                .GetSpot().GetZ())), 1000, 1000);
+        return Schedule(new FollowingNpcCheckTask(env, new CoordinateDestinationChecker(npc, searchResult.GetSpot().GetX(), searchResult.GetSpot().GetY(), searchResult
+                .GetSpot().GetZ())));
     }
 
     /// <summary>Schedule new following checker task</summary>
-    public static IScheduledFuture NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, float x, float y, float z)
+    public static ScheduledTask NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, float x, float y, float z)
     {
-        return ThreadPoolManager.GetInstance().ScheduleAtFixedRate(new FollowingNpcCheckTask(env, new CoordinateDestinationChecker(npc, x, y, z)), 1000,
-            1000);
+        return Schedule(new FollowingNpcCheckTask(env, new CoordinateDestinationChecker(npc, x, y, z)));
     }
 
-    public static IScheduledFuture NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, ZoneName zoneName)
+    public static ScheduledTask NewFollowingToTargetCheckTask(QuestEnv env, Npc npc, ZoneName zoneName)
     {
-        return ThreadPoolManager.GetInstance().ScheduleAtFixedRate(new FollowingNpcCheckTask(env, new ZoneChecker(npc, zoneName)), 1000, 1000);
+        return Schedule(new FollowingNpcCheckTask(env, new ZoneChecker(npc, zoneName)));
     }
 }

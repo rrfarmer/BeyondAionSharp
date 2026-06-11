@@ -183,6 +183,10 @@ public sealed class ScheduledTask
 	// Java parity: Future.isCancelled()
 	public bool IsCancelled => _cancellationTokenSource.IsCancellationRequested;
 
+	// Java parity: Future.cancel(boolean mayInterruptIfRunning). The flag is advisory; C# cooperative
+	// cancellation always signals the token, so we ignore it and defer to the no-arg Cancel().
+	public bool Cancel(bool mayInterruptIfRunning) => Cancel();
+
 	public bool Cancel()
 	{
 		if (Volatile.Read(ref _isComplete) != 0)

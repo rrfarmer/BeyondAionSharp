@@ -105,7 +105,7 @@ public class AuctionEndTask : AbstractCronTask
     {
         private readonly int houseObjectId;
         internal long auctionEndMillis;
-        internal IScheduledFuture task;
+        internal ScheduledTask task;
 
         internal ProlongedAuction(int houseObjectId, long delayMillis)
         {
