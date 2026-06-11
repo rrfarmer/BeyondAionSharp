@@ -9,7 +9,6 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using Effect = Aion.GameServer.SkillEngine.Model.Effect;
 
 namespace Aion.GameServer.Controllers.Effects;
 

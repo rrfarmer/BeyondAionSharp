@@ -11,7 +11,6 @@ using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.SkillEngine.Properties;
 using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
-using Effect = Aion.GameServer.SkillEngine.Model.Effect;
 
 namespace Aion.GameServer.SkillEngine;
 

@@ -11,7 +11,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Players.Emotion;
 using Aion.GameServer.Model.GameObjects.Players.Motion;
-using Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFaction;
+using Aion.GameServer.Model.GameObjects.Players.Npcfaction;
 using Aion.GameServer.Model.GameObjects.Players.Title;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Skill;

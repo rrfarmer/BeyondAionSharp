@@ -17,12 +17,12 @@ public class ArtifactAssault : Assault<ArtifactSiege, ArtifactLocation>
     {
     }
 
-    public override void HandleAssault()
+    protected override void HandleAssault()
     {
         SpawnAssaulter();
     }
 
-    public override void OnAssaultFinish(bool captured)
+    protected override void OnAssaultFinish(bool captured)
     {
         if (captured)
             siegeLocation.ForEachPlayer(p => PacketSendUtility.SendPacket(p, SM_SYSTEM_MESSAGE.STR_ABYSS_DRAGON_BOSS_KILLED(GetBossNpcL10n())));

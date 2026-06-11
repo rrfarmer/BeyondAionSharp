@@ -16,7 +16,7 @@ public class PenaltySkill : Skill
         return true;
     }
 
-    public override void InitializeSkillMethod()
+    protected override void InitializeSkillMethod()
     {
         skillMethod = SkillMethod.PENALTY;
     }
