@@ -20,7 +20,7 @@ using Aion.GameServer.Model.Templates.Flyring;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Drop;
 using Aion.GameServer.Services.Event;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;

@@ -27,7 +27,7 @@ using Aion.GameServer.QuestEngine.Handlers.Models;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Services.Drop;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Reward;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
@@ -36,7 +36,7 @@ using Aion.GameServer.Utils.Time;
 using static Aion.GameServer.Model.DialogAction;
 using ActionType = Aion.GameServer.Network.Aion.Serverpackets.SM_QUEST_ACTION.ActionType;
 using Status = Aion.GameServer.Network.Aion.Serverpackets.SM_LOOT_STATUS.Status;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
 namespace Aion.GameServer.Services;
 

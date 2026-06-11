@@ -5,7 +5,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/MultiReturnAction.</summary>
 [XmlType("MultiReturnAction")]
@@ -29,7 +29,7 @@ public class MultiReturnAction : AbstractItemAction
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            Aion.GameServer.Model.Templates.Item.ReturnLocList loc = DataManager.MULTIRETURN_DATA.GetReturnLocListById(id)[indexReturn];
+            Aion.GameServer.Model.Templates.Items.ReturnLocList loc = DataManager.MULTIRETURN_DATA.GetReturnLocListById(id)[indexReturn];
             if (loc != null && loc.GetAlias() != null && loc.GetWorldid() > 0)
             {
                 if (!player.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1))

@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SleepEffect (ATracer) : EffectTemplate. **Converges BuffSleepEffect.** super.calculate→base.Calculate; instanceof Player→is Player; sets/unsets AbnormalState.SLEEP, setCancelOnDmg(true). EffectTemplate/Effect/StatEnum red-tolerated.</summary>
 [XmlType("SleepEffect")]

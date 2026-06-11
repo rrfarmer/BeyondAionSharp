@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BoostSkillCostEffect (Rama, Sippolo) : BufEffect. @XmlAttribute percent; super.startEffect then anonymous ActionObserver(BOOSTSKILLCOST).boostSkillCost(skill)→skill.setBoostSkillCost(value) → nested BoostSkillCostObserver capturing outer. Skill red-tolerated.</summary>
 [XmlType("BoostSkillCostEffect")]

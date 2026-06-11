@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.Clientpackets;

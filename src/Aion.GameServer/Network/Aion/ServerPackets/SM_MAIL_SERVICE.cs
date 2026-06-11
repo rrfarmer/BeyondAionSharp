@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Mail;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;

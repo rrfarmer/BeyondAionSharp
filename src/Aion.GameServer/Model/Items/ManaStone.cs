@@ -11,7 +11,7 @@ public class ManaStone : ItemStone
     public ManaStone(int itemObjId, int itemId, int slot, Aion.GameServer.Model.GameObjects.IPersistable.PersistentState persistentState)
         : base(itemObjId, itemId, slot, persistentState)
     {
-        Aion.GameServer.Model.Templates.Item.ItemTemplate stoneTemplate = DataManager.ITEM_DATA.GetItemTemplate(itemId);
+        Aion.GameServer.Model.Templates.Items.ItemTemplate stoneTemplate = DataManager.ITEM_DATA.GetItemTemplate(itemId);
         if (stoneTemplate != null && stoneTemplate.GetModifiers() != null)
         {
             this.modifiers = stoneTemplate.GetModifiers();

@@ -3,7 +3,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/SkillUseAction.</summary>
 [XmlType("SkillUseAction")]
@@ -33,17 +33,17 @@ public class SkillUseAction : AbstractItemAction
         Aion.GameServer.SkillEngine.Model.Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(player, skillid, level, player.GetTarget(), parentItem.GetItemTemplate());
         if (skill == null)
             return false;
-        List<Aion.GameServer.SkillEngine.Effect.EffectTemplate> effects = skill.GetSkillTemplate().GetEffects().GetEffects();
+        List<Aion.GameServer.SkillEngine.Effects.EffectTemplate> effects = skill.GetSkillTemplate().GetEffects().GetEffects();
         if (effects.Count != 0)
         {
-            foreach (Aion.GameServer.SkillEngine.Effect.EffectTemplate template in effects)
+            foreach (Aion.GameServer.SkillEngine.Effects.EffectTemplate template in effects)
             {
-                if (player.IsTransformed() && template is Aion.GameServer.SkillEngine.Effect.TransformEffect) // Cant use transform items while already transformed
+                if (player.IsTransformed() && template is Aion.GameServer.SkillEngine.Effects.TransformEffect) // Cant use transform items while already transformed
                 {
                     Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_CAN_NOT_CAST_IN_SHAPECHANGE());
                     return false;
                 }
-                if (player.GetSummon() != null && template is Aion.GameServer.SkillEngine.Effect.SummonEffect)
+                if (player.GetSummon() != null && template is Aion.GameServer.SkillEngine.Effects.SummonEffect)
                 {
                     Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER());
                     return false;
@@ -60,18 +60,18 @@ public class SkillUseAction : AbstractItemAction
         return true;
     }
 
-    private static bool IsIneffectiveHealSkill(List<Aion.GameServer.SkillEngine.Effect.EffectTemplate> effects, List<Creature> effectedList)
+    private static bool IsIneffectiveHealSkill(List<Aion.GameServer.SkillEngine.Effects.EffectTemplate> effects, List<Creature> effectedList)
     {
         int hpHealEffects = 0, mpHealEffects = 0;
-        foreach (Aion.GameServer.SkillEngine.Effect.EffectTemplate template in effects)
+        foreach (Aion.GameServer.SkillEngine.Effects.EffectTemplate template in effects)
         {
             if (template.GetValue() < 0) // negative heal value means damage
                 return false;
-            if (template is Aion.GameServer.SkillEngine.Effect.HealEffect || template is Aion.GameServer.SkillEngine.Effect.HealInstantEffect || template is Aion.GameServer.SkillEngine.Effect.ProcHealInstantEffect)
+            if (template is Aion.GameServer.SkillEngine.Effects.HealEffect || template is Aion.GameServer.SkillEngine.Effects.HealInstantEffect || template is Aion.GameServer.SkillEngine.Effects.ProcHealInstantEffect)
             {
                 hpHealEffects++;
             }
-            else if (template is Aion.GameServer.SkillEngine.Effect.MPHealEffect || template is Aion.GameServer.SkillEngine.Effect.MPHealInstantEffect || template is Aion.GameServer.SkillEngine.Effect.ProcMPHealInstantEffect)
+            else if (template is Aion.GameServer.SkillEngine.Effects.MPHealEffect || template is Aion.GameServer.SkillEngine.Effects.MPHealInstantEffect || template is Aion.GameServer.SkillEngine.Effects.ProcMPHealInstantEffect)
             {
                 mpHealEffects++;
             }

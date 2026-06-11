@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Weapon type, each with its required gathering/crafting skills and hand-slot count.

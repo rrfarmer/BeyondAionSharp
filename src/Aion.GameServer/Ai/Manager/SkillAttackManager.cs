@@ -10,7 +10,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Templates.Npcskill;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.SkillEngine.Properties;
 using Aion.GameServer.Utils;

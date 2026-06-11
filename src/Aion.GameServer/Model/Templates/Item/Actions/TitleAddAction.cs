@@ -2,7 +2,7 @@ using System;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/TitleAddAction.</summary>
 [XmlType("TitleAddAction")]
@@ -28,7 +28,7 @@ public class TitleAddAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
+        Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
             new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), itemTemplate.GetTemplateId()), true);
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Skillengine.Effect;
+using Aion.GameServer.Skillengine.Effects;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 

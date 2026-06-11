@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.Items;
 
-namespace Aion.GameServer.Model.Templates.Item.Enums;
+namespace Aion.GameServer.Model.Templates.Items.Enums;
 
 /// <summary>
 /// Item group (weapon/armor/accessory class + misc), each carrying valid equip slots,

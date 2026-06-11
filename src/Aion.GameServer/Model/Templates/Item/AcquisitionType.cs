@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// How an item is acquired (AP/abyss/reward/coupon).

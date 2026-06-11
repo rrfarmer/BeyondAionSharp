@@ -1,9 +1,9 @@
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;

@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SwitchHostileEffect (Luzien) : EffectTemplate. applyEffect: effector instanceof Player player→summon else null; if summon: swap hate between effector and summon (stopHating both, addHate cross). AggroList red-tolerated.</summary>
 [XmlType("SwitchHostileEffect")]

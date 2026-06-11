@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Skills required to use/equip an item.

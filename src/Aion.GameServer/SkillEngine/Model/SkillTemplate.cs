@@ -5,7 +5,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.SkillEngine.action;
 using Aion.GameServer.SkillEngine.condition;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.periodicaction;
 using Aion.GameServer.SkillEngine.properties;
 

@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/FallEffect : EffectTemplate. instanceof Player→is Player; super.calculate(effect,null,null)→base.Calculate; ends fly unless INVULNERABLE_WING. EffectTemplate/Effect/flyController red-tolerated.</summary>
 [XmlType("FallEffect")]

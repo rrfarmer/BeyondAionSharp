@@ -6,7 +6,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>Java parity: model/templates/item/ResultedItem (antness, Neon).</summary>
 [XmlType("ResultedItem")]

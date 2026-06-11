@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Model.Templates.Item.Purification;
+using Aion.GameServer.Model.Templates.Items.Purification;
 
 namespace Aion.GameServer.Dataholders;
 

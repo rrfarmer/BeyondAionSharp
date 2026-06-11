@@ -1,6 +1,6 @@
 using System;
 using System.Xml.Serialization;
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -11,7 +11,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/PulledEffect (Sarynth, Wakizashi, Sippolo) : EffectTemplate. applyEffect→addToEffectedController; calculate: PULLED/STUMBLE/OPENAERIAL guard, canSee guard, PULLED_RESISTANCE, subEffect→PULL/PULL_NPC, reflected→originalEffected, pull to 1.5m from effector via getClosestCollision/setTargetLoc; startEffect: !reflected→cancelCurrentSkill+Player glide/move stop, World.updatePosition, Player SM_FORCED_MOVE, set PULLED; endEffect→unset. Math.toRadians→*PI/180. red-tolerated.</summary>
 [XmlType("PulledEffect")]

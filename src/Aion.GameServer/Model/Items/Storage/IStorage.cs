@@ -19,30 +19,30 @@ public interface IStorage : IPersistable
 
     void IncreaseKinah(long amount);
 
-    void IncreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType);
+    void IncreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
     bool TryDecreaseKinah(long amount);
 
-    bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType);
+    bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
     void DecreaseKinah(long amount);
 
-    void DecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType);
+    void DecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
     long IncreaseItemCount(Item item, long count);
 
-    long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType);
+    long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
     long DecreaseItemCount(Item item, long count);
 
-    long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType);
+    long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
-    long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
 
     /// <summary>Add operation should be used for new items incoming into storage from outside.</summary>
     Item Add(Item item);
 
-    Item Add(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemAddType addType);
+    Item Add(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemAddType addType);
 
     /// <summary>Put operation is used in some operations like unequip.</summary>
     Item Put(Item item);
@@ -51,7 +51,7 @@ public interface IStorage : IPersistable
 
     Item Delete(Item item);
 
-    Item Delete(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType deleteType);
+    Item Delete(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType deleteType);
 
     bool DecreaseByItemId(int itemId, long count);
 
@@ -59,7 +59,7 @@ public interface IStorage : IPersistable
 
     bool DecreaseByObjectId(int itemObjId, long count);
 
-    bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType);
+    bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
     bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
 

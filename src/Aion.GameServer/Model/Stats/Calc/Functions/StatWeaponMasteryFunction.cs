@@ -3,7 +3,7 @@ using Aion.Commons.Utils;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Utils.Stats;
 
 namespace Aion.GameServer.Model.Stats.Calc.Functions;

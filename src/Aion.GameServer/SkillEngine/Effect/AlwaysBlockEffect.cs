@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AlwaysBlockEffect (ATracer) : EffectTemplate. applyEffect→addToEffectedController; anonymous AttackStatusObserver(value, BLOCK).checkStatus→nested BlockObserver capturing effect, --Value&lt;=0→endEffect. AttackStatusObserver/AttackStatus red-tolerated.</summary>
 [XmlType("AlwaysBlockEffect")]

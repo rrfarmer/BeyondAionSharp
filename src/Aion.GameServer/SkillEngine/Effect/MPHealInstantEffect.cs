@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
  using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/MPHealInstantEffect : AbstractHealEffect. MP instant heal; calculate/applyEffect delegate to base with HealType.MP. Effect/lifeStats red-tolerated.</summary>
 [XmlType("MPHealInstantEffect")]

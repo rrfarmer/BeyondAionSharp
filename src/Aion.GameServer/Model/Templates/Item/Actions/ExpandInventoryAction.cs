@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/ExpandInventoryAction.</summary>
 [XmlType("ExpandInventoryAction")]
@@ -26,7 +26,7 @@ public class ExpandInventoryAction : AbstractItemAction
     {
         if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
             return;
-        Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
+        Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
             new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), itemTemplate.GetTemplateId()), true);
 

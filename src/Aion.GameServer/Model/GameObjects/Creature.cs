@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Aion.GameServer.Controllers;
 using Aion.GameServer.Controllers.Attack;
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 
@@ -434,9 +434,9 @@ public abstract class Creature : VisibleObject
         return false;
     }
 
-    public virtual Aion.GameServer.Model.Templates.Item.ItemAttackType GetAttackType()
+    public virtual Aion.GameServer.Model.Templates.Items.ItemAttackType GetAttackType()
     {
-        return Aion.GameServer.Model.Templates.Item.ItemAttackType.PHYSICAL;
+        return Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL;
     }
 
     /// <summary>Creature is flying (FLY or GLIDE states).</summary>

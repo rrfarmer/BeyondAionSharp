@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// What the left hand holds (shield vs dual-wield).

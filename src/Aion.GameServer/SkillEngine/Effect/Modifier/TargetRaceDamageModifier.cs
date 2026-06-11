@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.SkillEngine.Effect.Modifier;
+namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
 /// <summary>
 /// Java parity: skillengine/effect/modifier/TargetRaceDamageModifier (ATracer, Sippolo, kecimis).

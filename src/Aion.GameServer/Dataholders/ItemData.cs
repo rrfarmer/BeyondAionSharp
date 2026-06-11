@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Items;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Model.Templates.Restriction;
 
 namespace Aion.GameServer.Dataholders;

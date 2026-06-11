@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.SkillEngine.Effect.Modifier;
+namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
 /// <summary>
 /// Java parity: skillengine/effect/modifier/ActionModifiers (ATracer). Polymorphic XML list of

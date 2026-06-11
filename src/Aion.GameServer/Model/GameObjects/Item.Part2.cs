@@ -157,7 +157,7 @@ public partial class Item
 
     public void AddGodStone(int itemId, int activatedCount)
     {
-        Aion.GameServer.Model.Templates.Item.GodstoneInfo godstoneInfo = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetGodstoneInfo();
+        Aion.GameServer.Model.Templates.Items.GodstoneInfo godstoneInfo = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetGodstoneInfo();
         if (godstoneInfo == null)
         {
             log.LogWarning("Item " + itemId + " has no godstone info");
@@ -250,10 +250,10 @@ public partial class Item
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
     }
 
-    public Aion.GameServer.Model.Templates.Item.Enums.EquipType GetEquipmentType()
+    public Aion.GameServer.Model.Templates.Items.Enums.EquipType GetEquipmentType()
     {
         if (itemTemplate.IsStigma())
-            return Aion.GameServer.Model.Templates.Item.Enums.EquipType.STIGMA;
+            return Aion.GameServer.Model.Templates.Items.Enums.EquipType.STIGMA;
         return itemTemplate.GetEquipmentType();
     }
 
@@ -272,7 +272,7 @@ public partial class Item
         return fusionedItemTemplate != null;
     }
 
-    public Aion.GameServer.Model.Templates.Item.ItemTemplate GetFusionedItemTemplate()
+    public Aion.GameServer.Model.Templates.Items.ItemTemplate GetFusionedItemTemplate()
     {
         return fusionedItemTemplate;
     }
@@ -290,7 +290,7 @@ public partial class Item
             SetFusionedItem(fusionedItem.GetItemTemplate(), fusionedItem.GetBonusStatsId(), fusionedItem.GetOptionalSockets());
     }
 
-    public void SetFusionedItem(Aion.GameServer.Model.Templates.Item.ItemTemplate template, int bonusStatsId, int optionalSockets)
+    public void SetFusionedItem(Aion.GameServer.Model.Templates.Items.ItemTemplate template, int bonusStatsId, int optionalSockets)
     {
         RemoveAllFusionStones();
         fusionedItemTemplate = template;

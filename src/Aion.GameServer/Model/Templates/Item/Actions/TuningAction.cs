@@ -5,7 +5,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/TuningAction.</summary>
 [XmlType("TuningAction")]
@@ -82,7 +82,7 @@ public class TuningAction : AbstractItemAction
 
     public static int GetRandomStatBonusIdFor(Item item)
     {
-        return DataManager.ITEM_RANDOM_BONUSES.SelectRandomBonusNumber(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType.INVENTORY, item.GetItemTemplate().GetStatBonusSetId());
+        return DataManager.ITEM_RANDOM_BONUSES.SelectRandomBonusNumber(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType.INVENTORY, item.GetItemTemplate().GetStatBonusSetId());
     }
 
     // Java parity: anonymous ItemUseObserver in act().

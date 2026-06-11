@@ -7,11 +7,11 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/DecomposeAction (oslo(a00441234)).</summary>
 [XmlType("DecomposeAction")]
@@ -141,8 +141,8 @@ public class DecomposeAction : AbstractItemAction
                     if (resultItem.IsObtainableFor(player))
                     {
                         int count = Aion.Commons.Utils.Rnd.Get(resultItem.GetMinCount(), resultItem.GetMaxCount());
-                        Aion.GameServer.Services.Item.ItemService.AddItem(player, resultItem.GetItemId(), count, true,
-                            new Aion.GameServer.Services.Item.ItemService.ItemUpdatePredicate(Aion.GameServer.Services.Item.ItemPacketService.ItemAddType.DECOMPOSABLE, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT));
+                        Aion.GameServer.Services.Items.ItemService.AddItem(player, resultItem.GetItemId(), count, true,
+                            new Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate(Aion.GameServer.Services.Items.ItemPacketService.ItemAddType.DECOMPOSABLE, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT));
                     }
                 }
                 foreach (RandomItem randomItem in selectedCollection.GetRandomItems())
@@ -350,8 +350,8 @@ public class DecomposeAction : AbstractItemAction
                         if (randomId != 0)
                         {
                             int count = Aion.Commons.Utils.Rnd.Get(randomItem.GetMinCount(), randomItem.GetMaxCount());
-                            Aion.GameServer.Services.Item.ItemService.AddItem(player, randomId, count, true,
-                                new Aion.GameServer.Services.Item.ItemService.ItemUpdatePredicate(Aion.GameServer.Services.Item.ItemPacketService.ItemAddType.DECOMPOSABLE, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT));
+                            Aion.GameServer.Services.Items.ItemService.AddItem(player, randomId, count, true,
+                                new Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate(Aion.GameServer.Services.Items.ItemPacketService.ItemAddType.DECOMPOSABLE, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT));
                         }
                     }
                 }

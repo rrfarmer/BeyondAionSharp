@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Model.Enchants;
 

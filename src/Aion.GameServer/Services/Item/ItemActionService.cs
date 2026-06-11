@@ -6,13 +6,13 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemActionService (Estrayl). identifyItem (5s cast w/ abort observer, then roll optional sockets/bonus stats/enchant bonus + increment tune count) and applyTuneResult (apply pending tune). Anonymous ItemUseObserver -> nested IdentifyItemObserver capturing outer (uses this in removeObserver); anonymous scheduled Runnable -> Schedule ct-lambda closure; Rnd.get->Get. PendingTuneResult/TuningAction/SM_ packets red-tolerated.</summary>
 public class ItemActionService

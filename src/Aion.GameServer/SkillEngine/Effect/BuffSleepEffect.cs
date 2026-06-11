@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BuffSleepEffect (kecimis) : SleepEffect. calculate→addSuccessEffect(this); startEffect: cancelCurrentSkill(effector), setAbnormal(SLEEP) on effect + effectController. AbnormalState red-tolerated.</summary>
 [XmlType("BuffSleepEffect")]

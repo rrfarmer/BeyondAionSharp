@@ -18,7 +18,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/FearEffect (Sarynth) : EffectTemplate. @XmlAttribute resistchance=100; applyEffect: removeHideEffects, Player gliding→onStopGliding, addToEffectedController; calculate→FEAR_RESISTANCE; startEffect: reflected→originalEffected, cancelCurrentSkill, set FEAR, abortMove; Npc→emoteStartAttacking+AIState.FEAR, Player WALK_MODE→unset+SM_EMOTION RUN; FEAR_ENABLE→scheduleAtFixedRate FearTask(0,1000)→setPeriodicTask(Position); resistchance&lt;100→anonymous ATTACKED observer→nested FearResistObserver (Rnd.Chance>=resistchance→removeEffect); endEffect→unset+abortMove+SM_POSITION, Npc→IDLE+ATTACK. inner Runnable FearTask→nested (isUnderFear+isInRange 40, calculateAngleFrom, findMovementCollision). Many types red-tolerated.</summary>
 [XmlType("FearEffect")]

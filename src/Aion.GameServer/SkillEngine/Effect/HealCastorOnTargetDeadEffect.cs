@@ -5,7 +5,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HealCastorOnTargetDeadEffect (Sippolo) : EffectTemplate. @XmlAttribute type(useless)/range/healparty; applyEffect→addToEffectedController; endEffect: effected.isDead→healValue=base; group=healparty&&effector is Player p?currentGroup:null; no-group→isInRange heal effector HP, group→per online member isInRange heal effector HP. HealType/PositionUtil red-tolerated.</summary>
 [XmlType("HealCastorOnTargetDeadEffect")]

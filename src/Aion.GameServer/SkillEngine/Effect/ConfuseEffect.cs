@@ -17,7 +17,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ConfuseEffect (Yeats) : EffectTemplate. applyEffect: removeHideEffects, Player gliding→onStopGliding, addToEffectedController; calculate→CONFUSE_RESISTANCE; startEffect: reflected→originalEffected, cancelCurrentSkill, set CONFUSE, abortMove; Npc→emoteStartAttacking+AIState.CONFUSE, Player WALK_MODE→unset+SM_EMOTION RUN; FEAR_ENABLE→scheduleAtFixedRate ConfuseTask(0,1000ms)→setPeriodicTask(Position); endEffect→unset+abortMove+SM_POSITION, Npc→IDLE+ATTACK. inner Runnable ConfuseTask→nested. ScheduledFuture→ScheduledTask. Many types red-tolerated.</summary>
 [XmlType("ConfuseEffect")]

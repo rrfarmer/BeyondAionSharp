@@ -2,7 +2,7 @@ using System;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/DyeAction (IceReaper, Neon).</summary>
 [XmlType("DyeAction")]
@@ -86,7 +86,7 @@ public class DyeAction : AbstractItemAction
             player.GetInventory().SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
         }
 
-        Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterInfoChange(player, targetItem);
+        Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(player, targetItem);
     }
 
     public int? GetColor()

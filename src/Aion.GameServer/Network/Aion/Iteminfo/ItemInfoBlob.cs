@@ -4,8 +4,8 @@ using Aion.GameServer.Commons.Nio;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc.Functions;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
 namespace Aion.GameServer.Network.Aion.Iteminfo;
 

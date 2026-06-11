@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.DataHolders;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.TaskManager.Tasks;
 using Aion.GameServer.Utils;

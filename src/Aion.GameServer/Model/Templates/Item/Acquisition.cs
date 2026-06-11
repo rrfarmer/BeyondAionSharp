@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Cost/source descriptor for acquiring an item (AP or currency item + count).

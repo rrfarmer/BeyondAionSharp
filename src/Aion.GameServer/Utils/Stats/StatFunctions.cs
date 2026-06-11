@@ -9,10 +9,10 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Model.Templates.Npc;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 

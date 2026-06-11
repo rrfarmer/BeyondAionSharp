@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Exceed-enchant skill set id (per rank/set/class/slot).

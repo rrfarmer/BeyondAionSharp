@@ -2,7 +2,7 @@ using Aion.GameServer.GeoEngine.Collision;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Effect;
+using Aion.GameServer.Skillengine.Effects;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;

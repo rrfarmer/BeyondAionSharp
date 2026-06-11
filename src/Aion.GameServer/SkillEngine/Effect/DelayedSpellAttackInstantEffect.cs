@@ -7,7 +7,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DelayedSpellAttackInstantEffect (ATracer) : DamageEffect. @XmlAttribute delay; applyEffect: base value, element!=NONE→*knowledge/100 (int division per Java); calculateSkillResult ignoreShields=true; finalPosition=this.position; anonymous Runnable→async delegate at delay ms: onAttack(DELAYDAMAGE, reserveds(finalPosition), true, LOG.DELAYEDSPELLATKINSTANT, hopType) + notifyAttackObservers; calculateDamage empty. AttackUtil/Effect red-tolerated.</summary>
 [XmlType("DelayedSpellAttackInstantEffect")]

@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
  using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DPHealInstantEffect : AbstractHealEffect. DP instant heal; calculate/applyEffect delegate to base with HealType.DP. Effect/lifeStats red-tolerated.</summary>
 [XmlType("DPHealInstantEffect")]

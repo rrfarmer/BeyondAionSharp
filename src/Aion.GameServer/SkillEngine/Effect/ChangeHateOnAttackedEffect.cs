@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ChangeHateOnAttackedEffect (Sippolo) : EffectTemplate. @XmlAttribute value1(delta)/value2; applyEffect→addToEffectedController; startEffect: finalValue=value1+value2; anonymous ActionObserver(ATTACKED).attacked→nested HateObserver capturing effect+finalValue: creature is Npc→aggroList.addHate(effected, finalValue). Npc red-tolerated.</summary>
 [XmlType("ChangeHateOnAttackedEffect")]

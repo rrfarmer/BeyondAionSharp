@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SlowEffect (ATracer) : BufEffect. applyEffect→addToEffectedController; calculate→base.Calculate(effect, SLOW_RESISTANCE, null); start/end set/unset AbnormalState.SLOW. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("SlowEffect")]

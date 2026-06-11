@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/Effects (ATracer). @XmlType("Effects"); JAXB @XmlElements polymorphic list→repeated [XmlElement(name, typeof(T))] on `effects`; @XmlTransient effectTypes; afterUnmarshal→AfterUnmarshal(object) building EnumSet→HashSet&lt;EffectType&gt; from class simple name (strip "Effect", upper) via Enum.Parse, IllegalArgumentException→ArgumentException; getEffects; hasAnyEffectType(params). All effect subtypes red-tolerated until converged.</summary>
 [XmlType("Effects")]

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;

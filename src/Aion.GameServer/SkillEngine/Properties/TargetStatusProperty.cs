@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Effect;
+using Aion.GameServer.Skillengine.Effects;
 using Aion.GameServer.Skillengine.Model;
 
 namespace Aion.GameServer.Skillengine.Properties;

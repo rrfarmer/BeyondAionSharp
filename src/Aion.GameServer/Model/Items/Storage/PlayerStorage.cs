@@ -32,7 +32,7 @@ public class PlayerStorage : Storage
         IncreaseKinah(amount, actor);
     }
 
-    public override void IncreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override void IncreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         IncreaseKinah(amount, updateType, actor);
     }
@@ -42,7 +42,7 @@ public class PlayerStorage : Storage
         return TryDecreaseKinah(amount, actor);
     }
 
-    public override bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return TryDecreaseKinah(amount, updateType, actor);
     }
@@ -52,7 +52,7 @@ public class PlayerStorage : Storage
         DecreaseKinah(amount, actor);
     }
 
-    public override void DecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override void DecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         DecreaseKinah(amount, updateType, actor);
     }
@@ -62,7 +62,7 @@ public class PlayerStorage : Storage
         return IncreaseItemCount(item, count, actor);
     }
 
-    public override long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return IncreaseItemCount(item, count, updateType, actor);
     }
@@ -72,12 +72,12 @@ public class PlayerStorage : Storage
         return DecreaseItemCount(item, count, actor);
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return DecreaseItemCount(item, count, updateType, actor);
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
     {
         return DecreaseItemCount(item, count, updateType, questStatus, actor);
     }
@@ -87,7 +87,7 @@ public class PlayerStorage : Storage
         return Add(item, actor);
     }
 
-    public override Item Add(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemAddType addType)
+    public override Item Add(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemAddType addType)
     {
         return Add(item, addType, actor);
     }
@@ -102,7 +102,7 @@ public class PlayerStorage : Storage
         return Delete(item, actor);
     }
 
-    public override Item Delete(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType deleteType)
+    public override Item Delete(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType deleteType)
     {
         return Delete(item, deleteType, actor);
     }
@@ -127,7 +127,7 @@ public class PlayerStorage : Storage
         return DecreaseByObjectId(itemObjId, count, questStatus, actor);
     }
 
-    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return DecreaseByObjectId(itemObjId, count, updateType, actor);
     }

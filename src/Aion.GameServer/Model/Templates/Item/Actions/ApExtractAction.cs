@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/ApExtractAction.</summary>
 public class ApExtractAction : AbstractItemAction
@@ -89,7 +89,7 @@ public class ApExtractAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Model.Templates.Item.Acquisition acquisition = targetItem.GetItemTemplate().GetAcquisition();
+        Aion.GameServer.Model.Templates.Items.Acquisition acquisition = targetItem.GetItemTemplate().GetAcquisition();
         if (acquisition == null || acquisition.GetRequiredAp() == 0)
             return;
         int ap = (int)(acquisition.GetRequiredAp() * rate);

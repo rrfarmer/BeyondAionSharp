@@ -4,9 +4,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/TamperingAction.</summary>
 public class TamperingAction : AbstractItemAction
@@ -119,7 +119,7 @@ public class TamperingAction : AbstractItemAction
         if (item.IsEquipped() && item.GetTempering() > 0)
             Aion.GameServer.Model.Enchants.TemperingEffect.Apply(player, item);
 
-        Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterInfoChange(player, item, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.STATS_CHANGE);
+        Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(player, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.STATS_CHANGE);
         if (item.IsEquipped())
             player.GetEquipment().SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
         else

@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SearchEffect (Sweetkr) : EffectTemplate. @XmlAttribute state(CreatureSeeState); applyEffect→addToEffectedController; startEffect: setSeeState+updateKnownlist+SM_PLAYER_STATE; endEffect: unsetSeeState+updateKnownlist+SM_PLAYER_STATE. CreatureSeeState red-tolerated.</summary>
 [XmlType("SearchEffect")]

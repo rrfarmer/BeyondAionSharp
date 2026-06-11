@@ -14,7 +14,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using ForceType = Aion.GameServer.Skillengine.Model.Effect.ForceType;
 
-namespace Aion.GameServer.Controllers.Effect;
+namespace Aion.GameServer.Controllers.Effects;
 
 /// <summary>Java parity: controllers/effect/PlayerEffectController (ATracer) extends EffectController. Player-specific effect handling: duel-condition debuff guard, icon + group/alliance updates on add/clear/removeAll, removeNonStorableEffectsForLogout, addSavedEffect (restore persisted buffs, deity-avatar logout timing), cumulative-resist duration tracking, keep-buffs-on-die. EnumMap->Dictionary; synchronized->lock; computeIfAbsent->TryGetValue-or-add; covariant override GetOwner->Player; stream.filter.forEach->LINQ; Collections.singletonList->new List; currentTimeMillis->UtcNow. EffectController/Effect/SkillTargetSlot/CumulativeResist red-tolerated.</summary>
 public class PlayerEffectController : EffectController

@@ -93,7 +93,7 @@ public class FlyController
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FLYING_FORBIDDEN_HERE());
             return false;
         }
-        if (player.GetEffectController().IsAbnormalSet(Aion.GameServer.SkillEngine.Effect.AbnormalState.NOFLY))
+        if (player.GetEffectController().IsAbnormalSet(Aion.GameServer.SkillEngine.Effects.AbnormalState.NOFLY))
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANT_FLY_NOW_DUE_TO_NOFLY());
             return false;

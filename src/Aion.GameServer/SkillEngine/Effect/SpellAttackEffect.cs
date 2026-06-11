@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SpellAttackEffect (kecimis) : AbstractOverTimeEffect. DoT magical damage; useMagicBoost excludes skill 21110. Inherited position/hopType/CalculateBaseValue + AttackUtil/EffectReserved/SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("SpellAttackEffect")]

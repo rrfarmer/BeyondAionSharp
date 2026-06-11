@@ -4,14 +4,14 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using ItemAddType = Aion.GameServer.Services.Item.ItemPacketService.ItemAddType;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemService (KID).</summary>
 public class ItemService

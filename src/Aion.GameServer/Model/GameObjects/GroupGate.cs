@@ -1,5 +1,5 @@
 using Aion.GameServer.Controllers;
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.World.Knownlist;
 

@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Trade;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Restrictions;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Taskmanager.Tasks;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;

@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SignetEffect : EffectTemplate. applyEffect→AddToEffectedController; calculate→AddSuccessEffect(this). EffectTemplate/Effect red-tolerated.</summary>
 [XmlType("SignetEffect")]

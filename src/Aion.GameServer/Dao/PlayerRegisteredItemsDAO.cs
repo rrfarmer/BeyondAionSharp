@@ -8,7 +8,7 @@ using Aion.Commons.Database;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils.Idfactory;
 using Aion.GameServer.World;
 

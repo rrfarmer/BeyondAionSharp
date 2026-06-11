@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Model.Templates.Item.Purification;
+namespace Aion.GameServer.Model.Templates.Items.Purification;
 
 /// <summary>Java parity: model/templates/item/purification/ItemPurificationTemplate (Ranastic, Navyan, Estrayl).</summary>
 [XmlRoot("ItemPurification")]

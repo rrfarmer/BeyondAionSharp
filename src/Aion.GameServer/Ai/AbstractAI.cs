@@ -455,7 +455,7 @@ public abstract class AbstractAI : AI
     {
     }
 
-    public virtual Aion.GameServer.Model.Templates.Item.ItemAttackType ModifyAttackType(Aion.GameServer.Model.Templates.Item.ItemAttackType type)
+    public virtual Aion.GameServer.Model.Templates.Items.ItemAttackType ModifyAttackType(Aion.GameServer.Model.Templates.Items.ItemAttackType type)
     {
         return type;
     }

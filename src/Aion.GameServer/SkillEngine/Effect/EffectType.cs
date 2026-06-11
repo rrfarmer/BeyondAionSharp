@@ -1,4 +1,4 @@
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>
 /// Discriminator for the concrete effect template kind (one per Java EffectTemplate subclass).

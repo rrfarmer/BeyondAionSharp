@@ -7,7 +7,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HostileUpEffect (ATracer, Yeats) : EffectTemplate. @XmlAttribute(name="temp_duration"/"temp_value"/"temp_delta"); applyEffect: Npc→addHate(tauntHate [+effectHate if sole successEffect] + tempHate); tempHate>0→schedule(tempDuration) remove tempHate + detach observer, DeathObserver cancels task. AtomicReference&lt;DeathObserver&gt; forward-ref→plain C# locals (closures capture by ref; single-threaded apply). calculate: base 3-arg false→return; setTauntHate(base), tempHate=tempValue+tempDelta*lvl, >0→StatFunctions.calculateHate. ScheduledFuture→ScheduledTask. DeathObserver/StatFunctions red-tolerated.</summary>
 [XmlType("HostileUpEffect")]

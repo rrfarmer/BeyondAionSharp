@@ -6,7 +6,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DelayedFpAtkInstantEffect (kecimis) : EffectTemplate (no @XmlType→defaults to class name). @XmlAttribute delay/percent; calculate: Player-only→base.Calculate(effect,null,null); applyEffect: anonymous Runnable→async delegate at delay ms→calculateAndApplyDamage; calculateAndApplyDamage: isEnemy guard, base value, maxFP, percent→(maxFP*v)/100, reduceFp(FP_DAMAGE, newValue, skillId, LOG.FPATTACK). Effect/Player red-tolerated.</summary>
 [XmlType("DelayedFpAtkInstantEffect")]

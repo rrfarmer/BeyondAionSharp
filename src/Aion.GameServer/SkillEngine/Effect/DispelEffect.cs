@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>
 /// Java parity: skillengine/effect/DispelEffect (ATracer).

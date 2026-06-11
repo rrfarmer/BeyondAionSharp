@@ -33,7 +33,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Players.Pla
         SetCreatorId(owner.GetObjectId());
         SetMasterName(owner.GetName());
         SetKnownlist(new Aion.GameServer.World.Knownlist.PlayerAwareKnownList(this));
-        SetEffectController(new Aion.GameServer.Controllers.Effect.EffectController(this));
+        SetEffectController(new Aion.GameServer.Controllers.Effects.EffectController(this));
     }
 
     public override bool IsEnemy(Creature creature)

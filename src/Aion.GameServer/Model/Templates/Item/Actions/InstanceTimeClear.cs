@@ -6,7 +6,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/InstanceTimeClear.</summary>
 [XmlType("InstanceTimeClear")]

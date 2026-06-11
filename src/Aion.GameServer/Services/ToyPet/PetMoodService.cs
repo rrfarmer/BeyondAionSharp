@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 

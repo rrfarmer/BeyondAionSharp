@@ -8,18 +8,18 @@ using Aion.GameServer.Model.Actions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Recipe;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Skillengine.Task;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
-using ItemAddType = Aion.GameServer.Services.Item.ItemPacketService.ItemAddType;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
-using ItemUpdatePredicate = Aion.GameServer.Services.Item.ItemService.ItemUpdatePredicate;
+using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
+using ItemUpdatePredicate = Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate;
 
 namespace Aion.GameServer.Services.Craft;
 

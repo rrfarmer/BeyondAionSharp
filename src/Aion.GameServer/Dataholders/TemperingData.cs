@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Enchants;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Dataholders;
 

@@ -1,4 +1,4 @@
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Stats.Container;
 

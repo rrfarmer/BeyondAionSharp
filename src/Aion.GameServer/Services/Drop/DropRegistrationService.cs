@@ -13,7 +13,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Templates.Globaldrops;
 using Aion.GameServer.Model.Templates.Housing;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Spawns.Basespawns;
 using Aion.GameServer.Model.Templates.Spawns.Siegespawns;

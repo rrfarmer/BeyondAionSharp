@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/PoisonEffect (ATracer, kecimis) : AbstractOverTimeEffect. DoT damage; super.calculate/startEffect/endEffect→base.* w/ AbnormalState.POISON; EffectReserved.ResourceType.HP nested. Inherited position/hopType/CalculateBaseValue + AttackUtil/EffectReserved/SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("PoisonEffect")]

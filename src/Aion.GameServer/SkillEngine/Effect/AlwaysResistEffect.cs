@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AlwaysResistEffect (ATracer) : EffectTemplate. applyEffect→addToEffectedController; anonymous AttackStatusObserver(value, RESIST).checkStatus→nested ResistObserver capturing effect, --Value&lt;=0→endEffect. AttackStatusObserver/AttackStatus red-tolerated.</summary>
 [XmlType("AlwaysResistEffect")]

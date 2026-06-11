@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Restrictions;

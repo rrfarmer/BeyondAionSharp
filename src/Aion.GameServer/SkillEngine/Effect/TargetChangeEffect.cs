@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/TargetChangeEffect (Bobobear) : EffectTemplate. applyEffect: effected is Player player; switch(Delta) case 1→target=effector (case 0 implicit null = Shimmerbomb); player.setTarget(target). VisibleObject red-tolerated.</summary>
 [XmlType("TargetChangeEffect")]

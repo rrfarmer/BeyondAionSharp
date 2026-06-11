@@ -3,11 +3,11 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Utils.Idfactory;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/HouseObjectFactory (Rolandas). Instantiates the right HouseObject subclass from a placeable-house template (DB load) and transfers an inventory item into a house registry object with expiry. instanceof->is; Objects.requireNonNull->null-check+NullReferenceException; TimeUnit.DAYS.toSeconds->*86400; currentTimeMillis/1000->UtcNow.ToUnixTimeMilliseconds()/1000; HouseObject&lt;?&gt;->HouseObject&lt;PlaceableHouseObject&gt; (invariance bound). Housing templates / object subclasses red-tolerated.</summary>
 public sealed class HouseObjectFactory

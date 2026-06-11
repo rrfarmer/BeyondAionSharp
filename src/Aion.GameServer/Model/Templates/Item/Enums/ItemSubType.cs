@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.Templates.Item.Enums;
+namespace Aion.GameServer.Model.Templates.Items.Enums;
 
 /// <summary>
 /// Item sub-type, each carrying its armor and equip classification.

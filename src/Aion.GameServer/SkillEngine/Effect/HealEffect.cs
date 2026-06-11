@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HealEffect (kecimis) : HealOverTimeEffect. HP heal-over-time; delegates to base 2-arg StartEffect/OnPeriodicAction with HealType.HP. Effect/lifeStats red-tolerated.</summary>
 [XmlType("HealEffect")]

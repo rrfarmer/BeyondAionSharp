@@ -91,6 +91,6 @@ public class ChargeInfo : ActionObserver
     {
         Aion.GameServer.Model.GameObjects.Players.Player player = GetPlayer();
         if (player != null)
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.CHARGE));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.CHARGE));
     }
 }

@@ -8,7 +8,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 

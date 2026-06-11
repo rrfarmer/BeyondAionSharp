@@ -18,7 +18,7 @@ public partial class Item
         {
             if (isFusionItem)
             {
-                Aion.GameServer.Model.Templates.Item.ItemTemplate fusedTemp = GetFusionedItemTemplate();
+                Aion.GameServer.Model.Templates.Items.ItemTemplate fusedTemp = GetFusionedItemTemplate();
                 if (fusedTemp == null)
                     return 0;
                 numSockets = fusedTemp.GetManastoneSlots() + GetFusionedItemOptionalSockets();
@@ -187,7 +187,7 @@ public partial class Item
     public int CalculateAvailableChargeLevel(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         int maxAvailableChargeLevel = CalculateMaxChargeLevel();
-        Aion.GameServer.Model.Templates.Item.ItemUseLimits limits = HasFusionedItem() && fusionedItemTemplate.GetLevel() > itemTemplate.GetLevel()
+        Aion.GameServer.Model.Templates.Items.ItemUseLimits limits = HasFusionedItem() && fusionedItemTemplate.GetLevel() > itemTemplate.GetLevel()
             ? fusionedItemTemplate.GetUseLimits()
             : itemTemplate.GetUseLimits();
         if (limits.GetRecommendRank() > 0)
@@ -198,7 +198,7 @@ public partial class Item
         return Math.Max(0, maxAvailableChargeLevel);
     }
 
-    public Aion.GameServer.Model.Templates.Item.Improvement GetImprovement()
+    public Aion.GameServer.Model.Templates.Items.Improvement GetImprovement()
     {
         if (itemTemplate.GetImprovement() != null)
             return itemTemplate.GetImprovement();
@@ -248,7 +248,7 @@ public partial class Item
         if (statBonusId == 0)
             bonusStatsEffect = null;
         else
-            bonusStatsEffect = new Aion.GameServer.Model.Items.RandomBonusEffect(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType.INVENTORY, itemTemplate.GetStatBonusSetId(), statBonusId);
+            bonusStatsEffect = new Aion.GameServer.Model.Items.RandomBonusEffect(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType.INVENTORY, itemTemplate.GetStatBonusSetId(), statBonusId);
     }
 
     public int GetTuneCount()
@@ -292,7 +292,7 @@ public partial class Item
         if (statBonusId == 0)
             fusionedItemBonusStatsEffect = null;
         else
-            fusionedItemBonusStatsEffect = new Aion.GameServer.Model.Items.RandomBonusEffect(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType.INVENTORY, fusionedItemTemplate.GetStatBonusSetId(), statBonusId);
+            fusionedItemBonusStatsEffect = new Aion.GameServer.Model.Items.RandomBonusEffect(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType.INVENTORY, fusionedItemTemplate.GetStatBonusSetId(), statBonusId);
     }
 
     public void SetTemperingEffect(Aion.GameServer.Model.Enchants.TemperingEffect temperingEffect)

@@ -9,7 +9,7 @@ public class RandomBonusEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
     private readonly int statBonusId;
     private readonly List<Aion.GameServer.Model.Stats.Calc.Functions.StatFunction> stats;
 
-    public RandomBonusEffect(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType type, int statBonusSetId, int statBonusId)
+    public RandomBonusEffect(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType type, int statBonusSetId, int statBonusId)
     {
         this.statBonusId = statBonusId;
         this.stats = DataManager.ITEM_RANDOM_BONUSES.GetTemplate(type, statBonusSetId, statBonusId).GetModifiers();

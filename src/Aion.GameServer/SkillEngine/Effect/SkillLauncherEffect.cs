@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Skillengine;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SkillLauncherEffect : EffectTemplate. @XmlAttribute(name="skill_id")→[XmlAttribute("skill_id")]; applyEffect→SkillEngine.ApplyEffect; calculate→addSuccessEffect. EffectTemplate/Effect/SkillEngine red-tolerated.</summary>
 [XmlType("SkillLauncherEffect")]

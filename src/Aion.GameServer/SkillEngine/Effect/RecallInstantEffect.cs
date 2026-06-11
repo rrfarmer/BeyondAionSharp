@@ -6,7 +6,7 @@ using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/RecallInstantEffect (Bio, Sippolo) : EffectTemplate. applyEffect: anonymous RequestResponseHandler&lt;Creature&gt; capturing effect world/instance/loc→nested RecallRequestHandler; deny→STR_MSG_Recall_Rejected_EFFECT both sides, accept→TeleportService.teleportTo; putRequest STR_SUMMON_PARTY_DO_YOU_ACCEPT_REQUEST→SM_QUESTION_WINDOW (30s); calculate: Player + not in combat + same world + effector not in instance + not enemy→setTargetPosition + addSuccessEffect. RequestResponseHandler/SM_QUESTION_WINDOW red-tolerated.</summary>
 [XmlType("RecallInstantEffect")]

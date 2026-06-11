@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Restrictions;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;

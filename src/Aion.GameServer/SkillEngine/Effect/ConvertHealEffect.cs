@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ConvertHealEffect (kecimis) : ShieldEffect. No @XmlType in Java (defaults to class name); @XmlAttribute type (HealType); @XmlAttribute(name="hitpercent")→[XmlAttribute("hitpercent")]; AttackShieldObserver 12-arg ctor (0,0,type,0); empty endEffect; getType()→CONVERT. HealType/base fields red-tolerated.</summary>
 [XmlType("ConvertHealEffect")]

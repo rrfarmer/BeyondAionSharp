@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SilenceEffect (ATracer) : EffectTemplate. @XmlType(name)→[XmlType]; super.calculate→base.Calculate; getType()→GetType_(). EffectTemplate/Effect red-tolerated.</summary>
 [XmlType("SilenceEffect")]

@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/CompositionAction.</summary>
 [XmlType("CompositionAction")]
@@ -54,7 +54,7 @@ public class CompositionAction : AbstractItemAction
             bool result2 = player.GetInventory().DecreaseByItemId(second.GetItemId(), 1);
             if (result && result1 && result2)
             {
-                Aion.GameServer.Services.Item.ItemService.AddItem(player, GetItemId(CalcLevel(first.GetItemTemplate().GetLevel(), second.GetItemTemplate().GetLevel())), 1);
+                Aion.GameServer.Services.Items.ItemService.AddItem(player, GetItemId(CalcLevel(first.GetItemTemplate().GetLevel(), second.GetItemTemplate().GetLevel())), 1);
             }
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 0, 1, 0));
             return ValueTask.CompletedTask;

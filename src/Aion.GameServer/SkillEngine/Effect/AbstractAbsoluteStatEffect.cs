@@ -4,7 +4,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Templates.Stats;
 
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AbstractAbsoluteStatEffect.</summary>
 public abstract class AbstractAbsoluteStatEffect : BufEffect

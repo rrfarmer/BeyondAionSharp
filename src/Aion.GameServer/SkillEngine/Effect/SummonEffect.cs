@@ -8,7 +8,7 @@ using Aion.GameServer.Services.Summons;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonEffect (Simple) : EffectTemplate. @XmlAttribute(name="npc_id"/"time", required=true)→[XmlAttribute("npc_id"/"time")]; (Player) cast→(Player); Future&lt;?&gt;→ScheduledTask; schedule(lambda, time*1000)→Schedule(async delegate, TimeSpan.FromMilliseconds); release(UnsummonType.UNSPECIFIED); addTask(TaskId.DESPAWN, task); addSuccessEffect(this). SummonsService/Summon red-tolerated.</summary>
 [XmlType("SummonEffect")]

@@ -6,7 +6,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonFunctionalNpcEffect (ginho1) : SummonEffect. @XmlAttribute(name="owner")→[XmlAttribute("owner")]; VisibleObjectSpawner.spawnFunctionalNpc; anonymous Runnable→async delegate; schedule(...,300000)→Schedule(async,TimeSpan.FromMilliseconds(300000)). SummonOwner/Npc red-tolerated.</summary>
 [XmlType("SummonFunctionalNpcEffect")]

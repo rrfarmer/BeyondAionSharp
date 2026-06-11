@@ -15,14 +15,14 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Team.Common.Legacy;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Toypet;
 using Aion.GameServer.Taskmanager.Tasks;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using static Aion.GameServer.Services.Item.ItemService;
+using static Aion.GameServer.Services.Items.ItemService;
 using Status = Aion.GameServer.Network.Aion.Serverpackets.SM_LOOT_STATUS.Status;
 
 namespace Aion.GameServer.Services.Drop;

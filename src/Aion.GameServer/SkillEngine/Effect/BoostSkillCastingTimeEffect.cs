@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Change;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BoostSkillCastingTimeEffect (ATracer) : BufEffect. calculate override: isEnemy + change has c.getValue()&lt;0 → base.Calculate(effect, SLOW_RESISTANCE, null) early return, else base.Calculate(effect). Change/StatEnum red-tolerated.</summary>
 [XmlType("BoostSkillCastingTimeEffect")]

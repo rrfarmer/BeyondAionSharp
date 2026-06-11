@@ -225,8 +225,8 @@ public abstract class CreatureController : VisibleObjectController
         if (!godStone.TryActivate(isMainHandWeapon, GetOwner()))
             return;
 
-        Aion.GameServer.Model.Templates.Item.GodstoneInfo godstoneInfo = godStone.GetGodstoneInfo();
-        Aion.GameServer.Model.Templates.Item.ItemTemplate template = DataManager.ITEM_DATA.GetItemTemplate(godStone.GetItemId());
+        Aion.GameServer.Model.Templates.Items.GodstoneInfo godstoneInfo = godStone.GetGodstoneInfo();
+        Aion.GameServer.Model.Templates.Items.ItemTemplate template = DataManager.ITEM_DATA.GetItemTemplate(godStone.GetItemId());
         Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(attacker, godstoneInfo.GetSkillId(), godstoneInfo.GetSkillLevel(), GetOwner(), template);
         skill.SetFirstTargetRangeCheck(false);
         if (!skill.CanUseSkill(Aion.GameServer.SkillEngine.properties.Properties.CastState.CAST_START))
@@ -244,7 +244,7 @@ public abstract class CreatureController : VisibleObjectController
                 weapon.SetGodStone(null);
                 PacketSendUtility.SendPacket(attacker,
                     SM_SYSTEM_MESSAGE.STR_MSG_BREAK_PROC(weapon.GetL10n(), DataManager.ITEM_DATA.GetItemTemplate(godStone.GetItemId()).GetL10n()));
-                Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterInfoChange(attacker, weapon);
+                Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(attacker, weapon);
             }
         }
     }
@@ -275,7 +275,7 @@ public abstract class CreatureController : VisibleObjectController
         CalculationType[] calculationTypes = new CalculationType[] { CalculationType.APPLY_POWER_SHARD_DAMAGE, CalculationType.REMOVE_POWER_SHARD };
         if (GetOwner() is Player.Player p && p.GetEquipment().IsDualWeaponEquipped())
             calculationTypes = ArrAdd(calculationTypes, CalculationType.DUAL_WIELD);
-        if (GetOwner().GetAttackType() == Aion.GameServer.Model.Templates.Item.ItemAttackType.PHYSICAL)
+        if (GetOwner().GetAttackType() == Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL)
             attackResult = AttackUtil.CalculatePhysAttackResult(GetOwner(), target, calculationTypes);
         else
         {

@@ -316,11 +316,11 @@ public class PlayerController : CreatureController<Player.Player>
         List<Effect> effects = player.GetEffectController().GetAbnormalEffects();
         foreach (Effect effect in effects)
         {
-            foreach (Aion.GameServer.SkillEngine.Effect.EffectTemplate template in effect.GetEffectTemplates())
+            foreach (Aion.GameServer.SkillEngine.Effects.EffectTemplate template in effect.GetEffectTemplates())
             {
-                if (template.GetEffectId() == 160 && template is Aion.GameServer.SkillEngine.Effect.RebirthEffect)
+                if (template.GetEffectId() == 160 && template is Aion.GameServer.SkillEngine.Effects.RebirthEffect)
                 {
-                    player.SetRebirthEffect((Aion.GameServer.SkillEngine.Effect.RebirthEffect)template);
+                    player.SetRebirthEffect((Aion.GameServer.SkillEngine.Effects.RebirthEffect)template);
                     return;
                 }
             }

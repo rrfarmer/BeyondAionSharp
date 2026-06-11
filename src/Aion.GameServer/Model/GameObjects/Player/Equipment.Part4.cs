@@ -104,7 +104,7 @@ public partial class Equipment
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_ITEM_SUCCEED(item.GetL10n()));
 
                 item.SetSoulBound(true);
-                Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterInfoChange(eq.owner, item);
+                Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(eq.owner, item);
 
                 eq.Equip(slot, item);
                 Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder, new Aion.GameServer.Network.Aion.ServerPackets.SmUpdatePlayerAppearance(responder.GetObjectId(), eq.GetEquippedForAppearance()), true);

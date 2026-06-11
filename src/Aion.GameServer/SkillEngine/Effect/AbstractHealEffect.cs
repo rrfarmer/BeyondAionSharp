@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AbstractHealEffect (ATracer, Wakizashi, kecimis) abstract : EffectTemplate, HealEffectTemplate. calculate/applyEffect take HealType; instanceof Proc*HealInstantEffect→is; switch HP/MP/FP/DP; HealEffectTemplate.super.calculateHealValue→HealEffectTemplate.CalculateHealValueDefault(this,...); ResourceType.of→EffectReserved.ResourceType.Of. GetCurrentStatValue/GetMaxStatValue left abstract. EffectTemplate/EffectReserved/Proc effects red-tolerated.</summary>
 [XmlType("AbstractHealEffect")]

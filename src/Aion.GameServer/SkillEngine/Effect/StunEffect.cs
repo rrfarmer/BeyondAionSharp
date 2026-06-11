@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/StunEffect (ATracer) : EffectTemplate. @XmlType(name)→[XmlType]; super.calculate→base.Calculate; instanceof Player→is Player. EffectTemplate/Effect red-tolerated.</summary>
 [XmlType("StunEffect")]

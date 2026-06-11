@@ -6,7 +6,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BackDashEffect (ATracer) : DamageEffect. @XmlAttribute(name="distance") float; calculate override: setDashStatus(BACKDASH); getHeadingTowards; inverseAngle=convertHeadingToAngle+180; findMovementCollision; setTargetPosition; World.updatePosition; super.calculate. Vector3f/DashStatus/World red-tolerated.</summary>
 [XmlType("BackDashEffect")]

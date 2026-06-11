@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/ReadAction.</summary>
 [XmlType("ReadAction")]

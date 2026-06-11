@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.SkillEngine.change;
 
-namespace Aion.GameServer.SkillEngine.Effect.Modifier;
+namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
 /// <summary>
 /// Java parity: skillengine/effect/modifier/ActionModifier (ATracer). Base of the action-modifier cone.

@@ -38,10 +38,10 @@ public partial class Equipment : IPersistable
         if (item == null || item.IsEquipped())
             return null;
 
-        Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = item.GetItemTemplate();
+        Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = item.GetItemTemplate();
         if (itemTemplate.IsTwoHandWeapon()) // client only sends main+sub slot when equipping via right click / double click
             slot = ItemSlot.MAIN_OR_SUB.GetSlotIdMask();
-        else if (itemTemplate.IsOneHandWeapon() && !Aion.GameServer.SkillEngine.Effect.WeaponDualEffect.HasDualWieldEffect(owner))
+        else if (itemTemplate.IsOneHandWeapon() && !Aion.GameServer.SkillEngine.Effects.WeaponDualEffect.HasDualWieldEffect(owner))
             slot = ItemSlot.MAIN_HAND.GetSlotIdMask();
 
         if (!itemTemplate.IsClassSpecific(owner.GetPlayerClass()))
@@ -70,7 +70,7 @@ public partial class Equipment : IPersistable
             return null;
         }
 
-        Aion.GameServer.Model.Templates.Item.ItemUseLimits limits = itemTemplate.GetUseLimits();
+        Aion.GameServer.Model.Templates.Items.ItemUseLimits limits = itemTemplate.GetUseLimits();
         if (limits.GetGenderPermitted() != null && limits.GetGenderPermitted() != owner.GetGender())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_GENDER());
@@ -148,7 +148,7 @@ public partial class Equipment : IPersistable
 
     private bool CheckDualWieldRestriction(Item item, long slot)
     {
-        if (item.GetItemTemplate().IsOneHandWeapon() && (slot & ItemSlot.LEFT_HAND.GetSlotIdMask()) == slot && !Aion.GameServer.SkillEngine.Effect.WeaponDualEffect.HasDualWieldEffect(owner))
+        if (item.GetItemTemplate().IsOneHandWeapon() && (slot & ItemSlot.LEFT_HAND.GetSlotIdMask()) == slot && !Aion.GameServer.SkillEngine.Effects.WeaponDualEffect.HasDualWieldEffect(owner))
             return false;
         return true;
     }
@@ -173,7 +173,7 @@ public partial class Equipment : IPersistable
                 equipment[slot.GetSlotIdMask()] = item;
             item.SetEquipped(true);
             item.SetEquipmentSlot(itemSlotToEquip);
-            Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterEquip(owner, item);
+            Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterEquip(owner, item);
 
             // update stats
             NotifyItemEquipped(item);
@@ -251,7 +251,7 @@ public partial class Equipment : IPersistable
             }
 
             // if unequip power shard
-            if (itemToUnequip.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.POWER_SHARDS)
+            if (itemToUnequip.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.POWER_SHARDS)
             {
                 owner.UnsetState(CreatureState.Powershard);
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(owner, Aion.GameServer.Model.EmotionType.PowershardOff, 0, 0));

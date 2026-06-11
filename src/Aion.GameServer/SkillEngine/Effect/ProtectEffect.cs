@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ProtectEffect (Sippolo, kecimis) : ShieldEffect. AttackShieldObserver 12-arg ctor (null healType); effector instanceof Summon→is Summon: anonymous SUMMONRELEASE observer→nested SummonReleaseObserver, else DeathObserver(_=>endEffect); empty endEffect override; getType()→PROTECT. base Value/Hittype/HitTypeProb red-tolerated.</summary>
 [XmlType("ProtectEffect")]

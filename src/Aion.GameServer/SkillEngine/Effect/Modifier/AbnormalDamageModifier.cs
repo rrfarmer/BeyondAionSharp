@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
-using AbnormalState = Aion.GameServer.SkillEngine.Effect.AbnormalState;
+using AbnormalState = Aion.GameServer.SkillEngine.Effects.AbnormalState;
 
-namespace Aion.GameServer.SkillEngine.Effect.Modifier;
+namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
 /// <summary>
 /// Java parity: skillengine/effect/modifier/AbnormalDamageModifier (kecimis).

@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonSkillAreaEffect (ATracer) : SummonServantEffect. x==0&&y==0→effected pos fallback; group switch-arrows→switch statement (KN_THREATENINGWAVE/WI_SUMMONTORNADO/WI_DELAYEDSTRIKE); spawnServant(SKILLAREA); stateful anonymous Runnable(skillPos)→nested SkillAreaTask capturing servant; scheduleAtFixedRate(0,tickDelay)→ScheduleAtFixedRateTask; addTask(SKILL_USE). Servant/group red-tolerated.</summary>
 [XmlType("SummonSkillAreaEffect")]

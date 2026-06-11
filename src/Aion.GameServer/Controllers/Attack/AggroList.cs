@@ -6,7 +6,7 @@ using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Services;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;

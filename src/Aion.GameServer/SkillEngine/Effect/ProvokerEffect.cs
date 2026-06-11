@@ -9,7 +9,7 @@ using Aion.GameServer.Skillengine;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ProvokerEffect (ATracer, kecimis) : ShieldEffect. @XmlAttribute(name="provoke_target"/"skill_id"); observerType from Hittype NMLATK/BACKATK→ATTACK else ATTACKED; anonymous ActionObserver(attack/attacked + private tryApplyEffect)→nested ProvokeObserver capturing outer+effector; shouldApply switch-expr (PHHIT/MAHIT/BACKATK/default); getProvokeTarget switch-expr (ME/OPPONENT); Rnd.chance→Rnd.Chance; hitTypeProb→HitTypeProb; SM_SYSTEM_MESSAGE.STR_SKILL_PROC_EFFECT_OCCURRED static. ProvokeTarget/SkillType red-tolerated.</summary>
 [XmlType("ProvokerEffect")]

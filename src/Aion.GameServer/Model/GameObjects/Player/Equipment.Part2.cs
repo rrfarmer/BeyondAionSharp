@@ -213,8 +213,8 @@ public partial class Equipment
         Item subHandItem = GetEquip(ItemSlot.SUB_HAND.GetSlotIdMask());
         if (subHandItem == null)
             return false;
-        Aion.GameServer.Model.Templates.Item.Enums.ItemSubType shieldType = subHandItem.GetItemTemplate().GetItemSubType();
-        return shieldType == Aion.GameServer.Model.Templates.Item.Enums.ItemSubType.SHIELD;
+        Aion.GameServer.Model.Templates.Items.Enums.ItemSubType shieldType = subHandItem.GetItemTemplate().GetItemSubType();
+        return shieldType == Aion.GameServer.Model.Templates.Items.Enums.ItemSubType.SHIELD;
     }
 
     public Item GetEquippedShield()
@@ -222,12 +222,12 @@ public partial class Equipment
         Item subHandItem = GetEquip(ItemSlot.SUB_HAND.GetSlotIdMask());
         if (subHandItem == null)
             return null;
-        Aion.GameServer.Model.Templates.Item.Enums.ItemSubType shieldType = subHandItem.GetItemTemplate().GetItemSubType();
-        return (shieldType == Aion.GameServer.Model.Templates.Item.Enums.ItemSubType.SHIELD) ? subHandItem : null;
+        Aion.GameServer.Model.Templates.Items.Enums.ItemSubType shieldType = subHandItem.GetItemTemplate().GetItemSubType();
+        return (shieldType == Aion.GameServer.Model.Templates.Items.Enums.ItemSubType.SHIELD) ? subHandItem : null;
     }
 
     /// <summary>WeaponType of current weapon in main hand or null.</summary>
-    public Aion.GameServer.Model.Templates.Item.Enums.ItemGroup? GetMainHandWeaponType()
+    public Aion.GameServer.Model.Templates.Items.Enums.ItemGroup? GetMainHandWeaponType()
     {
         Item mainHandItem = GetEquip(ItemSlot.MAIN_HAND.GetSlotIdMask());
         if (mainHandItem == null)
@@ -237,7 +237,7 @@ public partial class Equipment
     }
 
     /// <summary>WeaponType of current weapon in off hand or null.</summary>
-    public Aion.GameServer.Model.Templates.Item.Enums.ItemGroup? GetOffHandWeaponType()
+    public Aion.GameServer.Model.Templates.Items.Enums.ItemGroup? GetOffHandWeaponType()
     {
         Item offHandItem = GetEquip(ItemSlot.SUB_HAND.GetSlotIdMask());
         Item mainHandItem = GetEquip(ItemSlot.MAIN_HAND.GetSlotIdMask());

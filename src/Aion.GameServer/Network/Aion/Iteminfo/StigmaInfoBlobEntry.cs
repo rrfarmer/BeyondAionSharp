@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Commons.Nio;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Skillengine.Model;
 using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 

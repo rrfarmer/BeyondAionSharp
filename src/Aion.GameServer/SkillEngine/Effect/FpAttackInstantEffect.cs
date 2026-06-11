@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/FpAttackInstantEffect (Sippolo) : EffectTemplate. @XmlAttribute percent; calculate: Player-only, maxFP, percent→(maxFP*Value)/100, setReserveds(new EffectReserved(Position, newValue, FP, true), false), base.Calculate(effect,null,null); applyEffect: Player-only, reduceFp(TYPE.FP_DAMAGE, reserveds(Position), skillId, LOG.FPATTACK). EffectReserved/ResourceType red-tolerated.</summary>
 [XmlType("FpAttackInstantEffect")]

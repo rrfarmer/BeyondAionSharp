@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ResurrectPositionalEffect (Sippolo) : ResurrectEffect. applyEffect: (Player) effector/effected casts; setPlayerResActivate(true), setResurrectionSkill(skillId), SM_RESURRECT, setResPosState(true), setResPos{X,Y,Z}(effector pos); calculate: effector Player && effected Player && isDead→base.Calculate(effect,null,null). SM_RESURRECT/Player red-tolerated.</summary>
 [XmlType("ResurrectPositionalEffect")]

@@ -1,6 +1,6 @@
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SanctuaryEffect : EffectTemplate. equals→Equals; setAbnormal/unsetAbnormal SANCTUARY; AbnormalState same-namespace. EffectTemplate/Effect red-tolerated.</summary>
 public class SanctuaryEffect : EffectTemplate

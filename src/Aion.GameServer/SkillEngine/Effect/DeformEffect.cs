@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DeformEffect (ATracer) : TransformEffect. super.calculate(effect, StatEnum.DEFORM_RESISTANCE, null)→base.Calculate(effect, StatEnum.DEFORM_RESISTANCE, null) (3-arg overload, SpellStatus null); effectController.setAbnormal/unsetAbnormal(AbnormalState.DEFORM); effect.setAbnormal. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("DeformEffect")]

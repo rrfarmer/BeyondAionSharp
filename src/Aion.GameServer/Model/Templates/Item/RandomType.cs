@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Random-item bag category (enchantment/manastone grades, ancient items, chunks, etc.).

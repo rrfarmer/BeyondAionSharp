@@ -8,18 +8,18 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Common.Legacy;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Model.Trade;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.SkillEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World.Zone;
 using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
 namespace Aion.GameServer.Services.Toypet;
 

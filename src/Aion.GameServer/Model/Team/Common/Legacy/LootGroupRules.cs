@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aion.GameServer.Model.Actions;
 using Aion.GameServer.Model.Drop;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Team.Common.Legacy;

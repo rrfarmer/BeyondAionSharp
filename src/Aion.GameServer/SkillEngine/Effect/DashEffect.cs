@@ -7,7 +7,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DashEffect (ATracer) : DamageEffect. calculate override: only when effected==skill.firstTarget; setDashStatus(DASH); getHeadingTowards; Math.toRadians→*PI/180; boundRadius.getMaxOfFrontAndSide; cos/sin(PI+radian)*distance; getClosestCollision; setTargetPosition; World.updatePosition; super.calculate. Vector3f/DashStatus/World red-tolerated.</summary>
 [XmlType("DashEffect")]

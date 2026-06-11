@@ -22,8 +22,8 @@ public class IdianStone : ItemStone
         burnDefend = item.GetItemTemplate().GetIdianAction().GetBurnDefend();
         burnAttack = item.GetItemTemplate().GetIdianAction().GetBurnAttack();
         this.polishCharge = polishCharge;
-        Aion.GameServer.Model.Templates.Item.Actions.ItemActions actions = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetActions();
-        rndBonusEffect = new RandomBonusEffect(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType.POLISH, actions.GetPolishAction().GetPolishSetId(), polishNumber);
+        Aion.GameServer.Model.Templates.Items.Actions.ItemActions actions = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetActions();
+        rndBonusEffect = new RandomBonusEffect(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType.POLISH, actions.GetPolishAction().GetPolishSetId(), polishNumber);
     }
 
     public void OnEquip(Aion.GameServer.Model.GameObjects.Players.Player player, long slot)
@@ -98,7 +98,7 @@ public class IdianStone : ItemStone
             }
             if (polishCharge <= 300000 && polishCharge + result > 300000) // we just dropped to or below 300k
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.POLISH_CHARGE));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.POLISH_CHARGE));
             }
             else if (polishCharge < 0)
             {

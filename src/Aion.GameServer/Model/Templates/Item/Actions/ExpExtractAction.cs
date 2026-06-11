@@ -5,7 +5,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/ExpExtractAction.</summary>
 public class ExpExtractAction : AbstractItemAction
@@ -62,7 +62,7 @@ public class ExpExtractAction : AbstractItemAction
             }
 
             cd.SetExp(newExp);
-            Aion.GameServer.Services.Item.ItemService.AddItem(player, itemId, 1);
+            Aion.GameServer.Services.Items.ItemService.AddItem(player, itemId, 1);
             string rewardItem = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetL10n();
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_EXP_EXTRACTION_USE(parentItem.GetL10n(), requiredExp, rewardItem));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,

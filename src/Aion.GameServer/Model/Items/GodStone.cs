@@ -9,17 +9,17 @@ namespace Aion.GameServer.Model.Items;
 public class GodStone : ItemStone
 {
     private long cooldownExpireTimeMillis; // Java parity: AtomicLong via Volatile
-    private readonly Aion.GameServer.Model.Templates.Item.GodstoneInfo godstoneInfo;
+    private readonly Aion.GameServer.Model.Templates.Items.GodstoneInfo godstoneInfo;
     private int activatedCount;
 
-    public GodStone(Item parentItem, int activatedCount, int itemId, Aion.GameServer.Model.Templates.Item.GodstoneInfo godstoneInfo, Aion.GameServer.Model.GameObjects.IPersistable.PersistentState state)
+    public GodStone(Item parentItem, int activatedCount, int itemId, Aion.GameServer.Model.Templates.Items.GodstoneInfo godstoneInfo, Aion.GameServer.Model.GameObjects.IPersistable.PersistentState state)
         : base(parentItem.GetObjectId(), itemId, 0, state)
     {
         this.godstoneInfo = godstoneInfo;
         this.activatedCount = activatedCount;
     }
 
-    public Aion.GameServer.Model.Templates.Item.GodstoneInfo GetGodstoneInfo()
+    public Aion.GameServer.Model.Templates.Items.GodstoneInfo GetGodstoneInfo()
     {
         return godstoneInfo;
     }

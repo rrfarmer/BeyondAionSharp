@@ -6,15 +6,15 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
-using Aion.GameServer.Model.Templates.Item.Actions;
-using Aion.GameServer.Model.Templates.Item.Bonuses;
-using Aion.GameServer.Model.Templates.Item.Purification;
+using Aion.GameServer.Model.Templates.Items.Actions;
+using Aion.GameServer.Model.Templates.Items.Bonuses;
+using Aion.GameServer.Model.Templates.Items.Purification;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemPurificationService (Ranastic, Estrayl). isPurificationAllowed (validate template/result/identify/enchant/AP/kinah/materials), decreaseMaterials (consume materials + AP + kinah + base item), upgradeItem (build result item carrying over sockets/creator/tune/enchant/amplify/fusion/stones/godstone/tempering/soulbound/bonus stats/color). Map.get->GetValueOrDefault; Math.max/min->Math.Max/Min. PurificationResult/RequiredMaterial/templates/SM_ red-tolerated.</summary>
 public class ItemPurificationService

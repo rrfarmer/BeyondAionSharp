@@ -42,7 +42,7 @@ public interface AI
     /// <summary>Used to manipulate any game stat of the owner.</summary>
     void ModifyOwnerStat(Stat2 stat);
 
-    Aion.GameServer.Model.Templates.Item.ItemAttackType ModifyAttackType(Aion.GameServer.Model.Templates.Item.ItemAttackType type);
+    Aion.GameServer.Model.Templates.Items.ItemAttackType ModifyAttackType(Aion.GameServer.Model.Templates.Items.ItemAttackType type);
 
     int ModifyAggroRange(int value);
 

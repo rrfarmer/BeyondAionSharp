@@ -2,14 +2,14 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Actions;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Actions;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemRemodelService (Sarynth, Wakizashi). remodelItem: applies an extract item's skin to a keep item (level/gender/kinah checks, Pattern Reshaper 168100000 to revert skin, item-group/subtype compatibility, remodelable checks, dye transfer). getItemSubType().equals/== preserved; ItemPacketService.updateItemAfterInfoChange. Gender/ItemGroup/ItemSubType/ItemActions/SM_ red-tolerated.</summary>
 public class ItemRemodelService

@@ -10,7 +10,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/StaggerEffect (ATracer) : EffectTemplate. applyEffect→addToEffectedController; startEffect: cancelCurrentSkill, removeParalyzeEffects, Player glide/move stop, World.updatePosition to targetLoc, Player→SM_FORCED_MOVE, set STAGGER; calculate: 4-state guard, STAGGER_RESISTANCE+SpellStatus.STAGGER, subEffect non-Player→SubEffectType.STAGGER, 2m backward via getClosestCollision, setTargetLoc; endEffect→unset. Math.toRadians→*PI/180. red-tolerated.</summary>
 [XmlType("StaggerEffect")]

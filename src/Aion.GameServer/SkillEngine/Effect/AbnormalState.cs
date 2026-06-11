@@ -1,4 +1,4 @@
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>
 /// Bit-flag altered/abnormal states plus compound masks used by effect/skill checks.

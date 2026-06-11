@@ -8,7 +8,7 @@ using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Network;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time;
 using Microsoft.Extensions.Logging;

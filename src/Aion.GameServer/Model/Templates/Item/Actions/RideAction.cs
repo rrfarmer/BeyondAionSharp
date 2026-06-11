@@ -7,9 +7,9 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.Actions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/RideAction (Rolandas, ginho1).</summary>
 [XmlType("RideAction")]
@@ -70,7 +70,7 @@ public class RideAction : AbstractItemAction
             if (player.IsInFlyingState())
                 player.SetState(CreatureState.FloatingCorpse);
             player.GetObserveController().RemoveObserver(observer);
-            Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
+            Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
             player.SetPlayerMode(PlayerMode.RIDE, GetRideInfo());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.ChangeSpeed, 0, 0), true);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.Ride, 0, GetRideInfo().GetNpcId()), true);

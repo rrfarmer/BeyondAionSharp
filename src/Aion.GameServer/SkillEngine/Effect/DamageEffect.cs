@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Change;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DamageEffect (ATracer) abstract : EffectTemplate. @XmlAttribute fields→[XmlAttribute]; nested SM_ATTACK_STATUS.TYPE/LOG qualified; int*=float (lossy compound) preserved. Inherited position/hopType/element/change/CalculateBaseValue + EffectTemplate/AttackUtil red-tolerated.</summary>
 [XmlType("DamageEffect")]

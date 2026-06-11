@@ -5,7 +5,7 @@ using Aion.GameServer.Ai.Poll;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Controllers.Attack;
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -13,13 +13,13 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.SkillEngine.change;
 using Aion.GameServer.SkillEngine.condition;
-using Aion.GameServer.SkillEngine.Effect.Modifier;
+using Aion.GameServer.SkillEngine.Effects.Modifier;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.Stats;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>
 /// Base of the effect-template hierarchy (~170 subclasses). Java parity: skillengine/effect/EffectTemplate.

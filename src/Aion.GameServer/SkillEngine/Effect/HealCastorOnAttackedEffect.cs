@@ -6,7 +6,7 @@ using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HealCastorOnAttackedEffect : EffectTemplate. @XmlAttribute type(useless)/range; applyEffect→addToEffectedController; startEffect: anonymous ActionObserver(ATTACKED).attacked→nested HealObserver capturing outer+effect: group=effector is Player p?currentGroup:null; healValue=base; no-group→isInRange heal HP, group→per online member isInRange heal HP. HealType/PositionUtil red-tolerated.</summary>
 [XmlType("HealCastorOnAttackedEffect")]

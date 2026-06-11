@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Stats.Calc.Functions;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.SkillEngine.condition;

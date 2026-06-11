@@ -10,15 +10,15 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemSocketService (ATracer, Sykra). Manastone/fusion-stone socketing: addManaStone (next slot or specific slot, special/normal slot accounting), copyFusionStones, removeManastone (kinah cost), removeAllManastone, socketGodstone (move-cancel listener + 2s cast). Set->ISet/HashSet; stream.filter.findFirst.orElse->LINQ; Collections.singleton->new HashSet; anonymous StartMovingListener->nested GodstoneMoveListener (super.moved->base.Moved); anonymous Runnable->Schedule ct-lambda. ManaStone/templates/SM_/DAO red-tolerated.</summary>
 public class ItemSocketService

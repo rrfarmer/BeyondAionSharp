@@ -1,5 +1,5 @@
 using Aion.GameServer.Network.Aion;
-using ItemDeleteType = Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType;
+using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;
 

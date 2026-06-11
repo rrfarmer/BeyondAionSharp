@@ -7,7 +7,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/MoveBehindEffect (Sarynth, Bobobear) : DamageEffect. calculate override: setDashStatus(MOVEBEHIND); Math.toRadians(effected.heading)→*PI/180; boundRadius.getMaxOfFrontAndSide; cos/sin(PI+radian)*distance; getClosestCollision; getHeadingTowards; World.updatePosition; setTargetPosition (SM_CASTSPELL_RESULT); super.calculate. Vector3f/DashStatus/World red-tolerated.</summary>
 [XmlType("MoveBehindEffect")]

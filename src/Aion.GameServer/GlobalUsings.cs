@@ -10,3 +10,5 @@
 // Player class lives in namespace Aion.GameServer.Model.GameObjects.Players (FQN ...Player.Player),
 // which is also a namespace -> alias the bare name to the type.
 global using Player = Aion.GameServer.Model.GameObjects.Players.Player;
+global using Effect = Aion.GameServer.SkillEngine.Model.Effect;
+global using Item = Aion.GameServer.Model.GameObjects.Item;

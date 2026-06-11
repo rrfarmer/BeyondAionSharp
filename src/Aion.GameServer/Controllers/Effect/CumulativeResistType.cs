@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.Stats.Container;
 
-namespace Aion.GameServer.Controllers.Effect;
+namespace Aion.GameServer.Controllers.Effects;
 
 /// <summary>
 /// Abnormal-state categories that accumulate diminishing-returns resistance.

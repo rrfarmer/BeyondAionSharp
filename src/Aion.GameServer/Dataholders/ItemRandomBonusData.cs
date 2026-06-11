@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Commons.Utils;
-using Aion.GameServer.Model.Templates.Item.Bonuses;
+using Aion.GameServer.Model.Templates.Items.Bonuses;
 using Aion.GameServer.Model.Templates.Stats;
 
 namespace Aion.GameServer.Dataholders;

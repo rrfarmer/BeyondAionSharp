@@ -7,7 +7,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/RandomMoveLocEffect (Bio) : EffectTemplate. @XmlAttribute(name="distance"/"direction"/"reserved5"); applyEffect: World.updatePosition to skill x/y/z/h, PlayerMoveController→setHasMovedByRandomMoveLocEffect; calculate: addSuccessEffect, DashStatus RANDOMMOVELOC_NEW/RANDOMMOVELOC by reserved5, findMovementCollision (direction==1→dir+180), setTargetPosition. Vector3f/DashStatus/PlayerMoveController red-tolerated.</summary>
 [XmlType("RandomMoveLocEffect")]

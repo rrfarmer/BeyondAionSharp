@@ -25,7 +25,7 @@ public class LegionWarehouse : Storage
         new LegionStorageProxy(this, player).IncreaseKinah(amount);
     }
 
-    public override void IncreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override void IncreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -35,7 +35,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -45,7 +45,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override void DecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override void DecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -55,7 +55,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -65,12 +65,12 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -80,7 +80,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override Item Add(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemAddType addType)
+    public override Item Add(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemAddType addType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -95,7 +95,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override Item Delete(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType deleteType)
+    public override Item Delete(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType deleteType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -115,7 +115,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }

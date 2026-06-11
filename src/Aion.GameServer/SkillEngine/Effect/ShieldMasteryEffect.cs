@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ShieldMasteryEffect (VladimirZ) : BufEffect. getModifiers→GetModifiers; per-modifier StatShieldMasteryFunction; size()>0→Count>0 guard; gameStats.addEffect. IStatFunction/StatShieldMasteryFunction red-tolerated.</summary>
 [XmlType("ShieldMasteryEffect")]

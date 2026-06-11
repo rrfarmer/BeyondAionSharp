@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/TransformEffect (Sweetkr, kecimis) abstract : EffectTemplate. @XmlAttribute fields→[XmlAttribute]; instanceof TransformEffect+cast→is TransformEffect te. EffectTemplate/Effect/Creature/TransformType/transformModel red-tolerated.</summary>
 [XmlType("TransformEffect")]

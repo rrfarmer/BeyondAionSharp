@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SnareEffect (ATracer) : BufEffect. applyEffect→addToEffectedController; calculate→base.Calculate(effect, SNARE_RESISTANCE, null); start/end set/unset AbnormalState.SNARE. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("SnareEffect")]

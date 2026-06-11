@@ -1,6 +1,6 @@
 using System.Linq;
 using Aion.GameServer.Dataholders;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Model.Broker.Filter;
 

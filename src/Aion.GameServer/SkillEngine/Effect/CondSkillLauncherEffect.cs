@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Skillengine;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/CondSkillLauncherEffect (Sippolo) : EffectTemplate. @XmlAttribute(name="skill_id")/type(HealType); applyEffect→addToEffectedController; startEffect: anonymous ActionObserver(HP_CHANGED) w/ conditionalEffect field + synchronized + onRemoved→nested CondObserver capturing outer+effect: hp&lt;=Value*maxHp/100 && null→applyEffectDirectly (PASSIVE→duration 0 else null int?), else above-threshold→endEffect+null; lock(this). ActivationAttribute/SkillEngine red-tolerated.</summary>
 [XmlType("CondSkillLauncherEffect")]

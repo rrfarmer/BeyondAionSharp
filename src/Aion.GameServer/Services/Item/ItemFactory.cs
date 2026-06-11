@@ -1,10 +1,10 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemFactory (ATracer).</summary>
 public class ItemFactory

@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;
-using ItemDeleteType = Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType;
+using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.Clientpackets;

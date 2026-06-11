@@ -4,13 +4,13 @@ using System.Linq;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Utils;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemChargeService (ATracer). Equipment charging (Improvement chargeWay 1=kinah/2=AP): filterItemsToCondition, startChargingEquippedItems (confirm window + payment), chargeItems/chargeItem (rank-gated level, charge points, stat update), pay-amount math (level ratios), payment processing. Collections.singletonList->new List; stream.filter.collect->LINQ; switch-expr->C# switch-expr; anonymous RequestResponseHandler->nested ChargeRequestHandler; Math.round->Floor(x+0.5); Math.ceil->Ceiling; IllegalArgument->Argument. ChargeInfo/Improvement/SM_ red-tolerated.</summary>
 public class ItemChargeService

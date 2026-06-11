@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BlindEffect (ATracer) : EffectTemplate. applyEffect: visualState &amp; ~BLINKING &lt; HIDE10→removeHideEffects, addToEffectedController; calculate→BLIND_RESISTANCE; startEffect: set BLIND, anonymous AttackStatusObserver(value, DODGE) overriding checkAttackerStatus→nested BlindObserver (Rnd.Chance&lt;Value); endEffect→unset. CreatureVisualState/AttackStatusObserver red-tolerated.</summary>
 [XmlType("BlindEffect")]

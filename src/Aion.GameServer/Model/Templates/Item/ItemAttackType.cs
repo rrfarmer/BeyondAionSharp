@@ -1,6 +1,6 @@
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Physical vs magical attack type of a weapon/item, with its element.

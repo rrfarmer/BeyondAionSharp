@@ -6,13 +6,13 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Skillengine.Model.Skill;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HideEffect (Sweetkr, Cura) : BufEffect. @XmlAttribute state(CreatureVisualState)/bufcount/type; startEffect: set HIDE + visualState, AttackUtil.cancelCastOn, SM_PLAYER_STATE broadcast, schedule(500ms) removeTargetFrom, onHide; Player→4 anonymous observers (STARTSKILLCAST stateful buffNumber, ATTACK, ITEMUSE)→nested; type==0→setCancelOnDmg(true); else Npc type==0→cancelOnDmg + ATTACK/STARTSKILLCAST observers; endEffect: unset visual/HIDE, onHideEnd, SM_PLAYER_STATE. ItemActions/Skill.SkillMethod red-tolerated.</summary>
 [XmlType("HideEffect")]

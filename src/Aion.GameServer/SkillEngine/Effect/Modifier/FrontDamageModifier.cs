@@ -1,6 +1,6 @@
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.SkillEngine.Effect.Modifier;
+namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
 /// <summary>
 /// Java parity: skillengine/effect/modifier/FrontDamageModifier (ATracer).

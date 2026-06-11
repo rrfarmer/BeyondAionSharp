@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>Java parity: model/templates/item/ExtractedItemsCollection (antness).</summary>
 [XmlType("ExtractedItemsCollection")]

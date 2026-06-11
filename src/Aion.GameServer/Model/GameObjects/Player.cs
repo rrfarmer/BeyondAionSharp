@@ -111,7 +111,7 @@ public partial class Player : Creature
     private int floodMsgCount = 0;
 
     private int lootingNpcOid;
-    private Aion.GameServer.SkillEngine.Effect.RebirthEffect rebirthEffect;
+    private Aion.GameServer.SkillEngine.Effects.RebirthEffect rebirthEffect;
 
     // Needed to remove supplements queue
     private int subtractedSupplementsCount;

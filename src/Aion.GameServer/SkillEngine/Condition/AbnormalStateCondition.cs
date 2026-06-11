@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 using Aion.GameServer.SkillEngine.Model;
-using AbnormalState = Aion.GameServer.SkillEngine.Effect.AbnormalState;
+using AbnormalState = Aion.GameServer.SkillEngine.Effects.AbnormalState;
 
 namespace Aion.GameServer.SkillEngine.condition;
 

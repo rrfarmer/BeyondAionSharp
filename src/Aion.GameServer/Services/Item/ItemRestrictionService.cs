@@ -3,12 +3,12 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Team.Legion;
-using Aion.GameServer.Model.Templates.Item;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemRestrictionService (ATracer). Storage move restrictions: isItemRestrictedFrom (legion-warehouse withdrawal rights), isItemRestrictedTo (warehouse/account/legion deposit storability + legion rights), canRemoveItem (quest-item placeholder). switch-on-enum->switch statement; getItemGroup().equals->Equals. StorageType/LegionPermissionsMask/ItemGroup/SM_ red-tolerated.</summary>
 public class ItemRestrictionService

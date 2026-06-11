@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/MpAttackInstantEffect (Sippolo) : EffectTemplate. @XmlAttribute percent; calculate: maxMP, percent→(maxMP*Value)/100, setReserveds(new EffectReserved(Position, newValue, MP, true), false), this.Calculate(effect,null,null,Element) [4-arg]; applyEffect: reduceMp(DAMAGE_MP, reserveds(Position), skillId, MPATTACK). EffectReserved/ResourceType red-tolerated.</summary>
 [XmlType("MpAttackInstantEffect")]

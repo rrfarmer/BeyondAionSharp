@@ -11,7 +11,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Event;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Cron;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.Utils.Time;

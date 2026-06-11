@@ -7,10 +7,10 @@ using Aion.GameServer.Model.Actions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
-using Aion.GameServer.Model.Templates.Item.Actions;
+using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 

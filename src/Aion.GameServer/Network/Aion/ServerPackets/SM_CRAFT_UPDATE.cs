@@ -1,4 +1,4 @@
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;

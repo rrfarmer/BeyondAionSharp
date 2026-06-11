@@ -5,7 +5,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/ChargeAction.</summary>
 [XmlType("ChargeItemAction")]
@@ -15,13 +15,13 @@ public class ChargeAction : AbstractItemAction
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        return Aion.GameServer.Services.Item.ItemChargeService.FilterItemsToCondition(player, null, parentItem.GetImprovement().GetChargeWay()).Count != 0;
+        return Aion.GameServer.Services.Items.ItemChargeService.FilterItemsToCondition(player, null, parentItem.GetImprovement().GetChargeWay()).Count != 0;
     }
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         int chargeWay = parentItem.GetImprovement().GetChargeWay();
-        ICollection<Item> conditioningItems = Aion.GameServer.Services.Item.ItemChargeService.FilterItemsToCondition(player, null, chargeWay);
+        ICollection<Item> conditioningItems = Aion.GameServer.Services.Items.ItemChargeService.FilterItemsToCondition(player, null, chargeWay);
 
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
             new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 3000, 0, 0), true);
@@ -34,7 +34,7 @@ public class ChargeAction : AbstractItemAction
                 new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0), true);
             if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
                 return ValueTask.CompletedTask;
-            Aion.GameServer.Services.Item.ItemChargeService.ChargeItems(player, conditioningItems, maxChargeLevel, false, false);
+            Aion.GameServer.Services.Items.ItemChargeService.ChargeItems(player, conditioningItems, maxChargeLevel, false, false);
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(3000)));
     }

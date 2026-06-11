@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Mail;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Network.Loginserver;
 using Aion.GameServer.Network.Loginserver.Serverpackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;

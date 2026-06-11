@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Ai.Poll;
 using Aion.GameServer.Controllers.Attack;
-using Aion.GameServer.Controllers.Effect;
+using Aion.GameServer.Controllers.Effects;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Container;

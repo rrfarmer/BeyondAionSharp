@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ReturnEffect : EffectTemplate. applyEffect→TeleportService.MoveToBindLocation((Player)effector); calculate→addSuccessEffect if spawned. EffectTemplate/Effect/TeleportService red-tolerated.</summary>
 [XmlType("ReturnEffect")]

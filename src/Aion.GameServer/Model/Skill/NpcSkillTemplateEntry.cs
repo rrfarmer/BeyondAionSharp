@@ -8,7 +8,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Npcskill;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Services;
-using Aion.GameServer.Skillengine.Effect;
+using Aion.GameServer.Skillengine.Effects;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;

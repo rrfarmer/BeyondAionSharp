@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Java parity: model/templates/item/ItemTemplate — partial #2 (Java ~389-569): enchant/expire, weapon-stats,
@@ -123,7 +123,7 @@ public partial class ItemTemplate
     public bool IsCloth()
     {
         // not sure about LT_HEAD and CL_HEAD, check in retail
-        return IsArmor() && (itemGroup.GetArmorType() != Aion.GameServer.Model.Templates.Item.Enums.ArmorType.ACCESSORY && GetItemGroup() != Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.BELT || itemGroup == Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.HEAD);
+        return IsArmor() && (itemGroup.GetArmorType() != Aion.GameServer.Model.Templates.Items.Enums.ArmorType.ACCESSORY && GetItemGroup() != Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.BELT || itemGroup == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.HEAD);
     }
 
     public bool IsPotion()
@@ -138,12 +138,12 @@ public partial class ItemTemplate
 
     public bool IsCombinationItem()
     {
-        return GetItemGroup() == Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.COMBINATION;
+        return GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.COMBINATION;
     }
 
     public bool IsEnchantmentStone()
     {
-        return GetItemGroup() == Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.ENCHANTMENT;
+        return GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.ENCHANTMENT;
     }
 
     public ItemActivationTarget GetActivationTarget()
@@ -180,7 +180,7 @@ public partial class ItemTemplate
         return maxTampering;
     }
 
-    public Aion.GameServer.Model.Templates.Item.Enums.ItemGroup GetItemGroup()
+    public Aion.GameServer.Model.Templates.Items.Enums.ItemGroup GetItemGroup()
     {
         return itemGroup;
     }

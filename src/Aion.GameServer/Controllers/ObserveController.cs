@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.Controllers;

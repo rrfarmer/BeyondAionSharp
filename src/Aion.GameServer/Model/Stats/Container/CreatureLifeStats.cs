@@ -1,6 +1,6 @@
 using System;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE;

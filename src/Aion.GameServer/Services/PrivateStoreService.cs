@@ -9,8 +9,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Trade;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Services.Item;
-using Aion.GameServer.Skillengine.Effect;
+using Aion.GameServer.Services.Items;
+using Aion.GameServer.Skillengine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 

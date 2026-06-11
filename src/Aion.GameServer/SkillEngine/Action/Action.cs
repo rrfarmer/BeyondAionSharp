@@ -1,4 +1,4 @@
-using Aion.GameServer.SkillEngine.Effect.Modifier;
+using Aion.GameServer.SkillEngine.Effects.Modifier;
 
 namespace Aion.GameServer.SkillEngine.action;
 

@@ -8,10 +8,10 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.action;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Properties;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
@@ -592,7 +592,7 @@ public class Skill
             }
             else
             {
-                if (!((Player)effector).GetInventory().DecreaseByObjectId(item.GetObjectId(), 1, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.DEC_ITEM_USE))
+                if (!((Player)effector).GetInventory().DecreaseByObjectId(item.GetObjectId(), 1, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.DEC_ITEM_USE))
                     return;
             }
         }

@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/PackAction.</summary>
 public class PackAction : AbstractItemAction

@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/CaseHealEffect (kecimis) : AbstractHealEffect. @XmlAttribute(name="cond_value")→[XmlAttribute("cond_value")]; switch-expr on HealType→C# switch expr; anonymous ActionObserver(HP_CHANGED) overriding hpChanged→nested CaseHealObserver capturing effect; heals when current ≤ cond% of max. AbstractHealEffect/ActionObserver/Effect/SM_ATTACK_STATUS red-tolerated.</summary>
 public class CaseHealEffect : AbstractHealEffect

@@ -106,12 +106,12 @@ public partial class Player
     public int speedHackCounter;
     public int abnormalHackCounter;
 
-    public override Aion.GameServer.Model.Templates.Item.ItemAttackType GetAttackType()
+    public override Aion.GameServer.Model.Templates.Items.ItemAttackType GetAttackType()
     {
         Item weapon = GetEquipment().GetMainHandWeapon();
         if (weapon != null)
             return weapon.GetItemTemplate().GetAttackType();
-        return Aion.GameServer.Model.Templates.Item.ItemAttackType.PHYSICAL;
+        return Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL;
     }
 
     public long GetFlyStartTime()
@@ -288,12 +288,12 @@ public partial class Player
         return floodMsgCount;
     }
 
-    public void SetRebirthEffect(Aion.GameServer.SkillEngine.Effect.RebirthEffect rebirthEffect)
+    public void SetRebirthEffect(Aion.GameServer.SkillEngine.Effects.RebirthEffect rebirthEffect)
     {
         this.rebirthEffect = rebirthEffect;
     }
 
-    public Aion.GameServer.SkillEngine.Effect.RebirthEffect GetRebirthEffect()
+    public Aion.GameServer.SkillEngine.Effects.RebirthEffect GetRebirthEffect()
     {
         return rebirthEffect;
     }

@@ -9,7 +9,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Vortex;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;

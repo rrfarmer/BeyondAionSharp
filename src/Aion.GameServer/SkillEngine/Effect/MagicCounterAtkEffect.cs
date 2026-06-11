@@ -6,7 +6,7 @@ using Aion.GameServer.Skillengine.Model;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 using static Aion.GameServer.Skillengine.Model.Skill;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/MagicCounterAtkEffect (ViAl) : EffectTemplate. @XmlAttribute maxdmg; applyEffect→addToEffectedController; startEffect: anonymous ActionObserver(ENDSKILLCAST).endSkillCast→nested CounterObserver capturing outer+effect+effected: non-ITEM && MAGICAL→damage=min(maxdmg, maxHp.base/100f*Value), onAttack(MAGICCOUNTERATK, ..., Hoptype). Skill.SkillMethod/SkillType red-tolerated.</summary>
 [XmlType("MagicCounterAtkEffect")]

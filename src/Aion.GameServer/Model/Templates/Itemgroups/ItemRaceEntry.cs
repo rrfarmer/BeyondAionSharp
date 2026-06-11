@@ -3,7 +3,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Templates;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Rewards;
 
 namespace Aion.GameServer.Model.Templates.Itemgroups;

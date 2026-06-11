@@ -1,5 +1,5 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Dataholders.Loadingutils.Adapters;
 

@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Controllers.Effect;
+namespace Aion.GameServer.Controllers.Effects;
 
 /// <summary>
 /// Per-target diminishing-returns tracker for a cumulative abnormal-state resistance.

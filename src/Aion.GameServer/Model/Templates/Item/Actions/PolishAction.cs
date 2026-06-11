@@ -5,7 +5,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/PolishAction.</summary>
 [XmlType("PolishAction")]
@@ -44,7 +44,7 @@ public class PolishAction : AbstractItemAction
             {
                 return ValueTask.CompletedTask;
             }
-            int bonusNumber = DataManager.ITEM_RANDOM_BONUSES.SelectRandomBonusNumber(Aion.GameServer.Model.Templates.Item.Bonuses.StatBonusType.POLISH, polishSetId);
+            int bonusNumber = DataManager.ITEM_RANDOM_BONUSES.SelectRandomBonusNumber(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType.POLISH, polishSetId);
             if (bonusNumber == 0)
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ENCHANT_ITEM_FAILED(parentItem.GetL10n()));

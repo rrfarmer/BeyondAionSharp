@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.QuestEngine.Model;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Utils;

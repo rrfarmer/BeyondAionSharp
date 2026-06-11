@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/CloseAerialEffect : EffectTemplate. applyEffect→removeEffect(8224); super.calculate(effect,null,SpellStatus.CLOSEAERIAL)→base.Calculate. EffectTemplate/Effect/SpellStatus red-tolerated.</summary>
 [XmlType("CloseAerialEffect")]

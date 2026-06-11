@@ -128,9 +128,9 @@ public partial class Player
         this.abyssRank = abyssRank;
     }
 
-    public override Aion.GameServer.Controllers.Effect.PlayerEffectController GetEffectController()
+    public override Aion.GameServer.Controllers.Effects.PlayerEffectController GetEffectController()
     {
-        return (Aion.GameServer.Controllers.Effect.PlayerEffectController)base.GetEffectController();
+        return (Aion.GameServer.Controllers.Effects.PlayerEffectController)base.GetEffectController();
     }
 
     /// <summary>Returns true if has valid LegionMember.</summary>

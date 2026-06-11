@@ -2,7 +2,7 @@ using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 
 namespace Aion.GameServer.Ai.Handler;
 

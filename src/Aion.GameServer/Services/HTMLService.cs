@@ -9,7 +9,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Guide;
 using Aion.GameServer.Model.Templates.Guides;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Logging;

@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Skillengine;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DelayedSkillEffect (kecimis, Cheatkiller) : EffectTemplate. @XmlAttribute(name="skill_id")→[XmlAttribute("skill_id")] (no @XmlType in Java); endEffect→base + applyEffectsDirectly if ended by time. EffectTemplate/Effect/SkillEngine red-tolerated.</summary>
 public class DelayedSkillEffect : EffectTemplate

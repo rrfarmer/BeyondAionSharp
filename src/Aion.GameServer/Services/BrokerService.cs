@@ -14,7 +14,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Restrictions;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Taskmanager;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>Java parity: model/templates/item/ItemUseLimits.</summary>
 [XmlType("UseLimits")]

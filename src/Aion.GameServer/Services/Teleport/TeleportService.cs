@@ -25,7 +25,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
 namespace Aion.GameServer.Services.Teleport;
 

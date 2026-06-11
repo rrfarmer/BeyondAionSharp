@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/OneTimeBoostSkillCriticalEffect (Sippolo) : EffectTemplate. @XmlAttribute count/percent; applyEffect→addToEffectedController; startEffect: anonymous AttackerCriticalStatusObserver(CRITICAL, count, value, percent) overriding checkAttackerCriticalStatus→nested CritObserver capturing effect: stat==Status&&isSkill→GetCount&lt;=1 endEffect else DecreaseCount, AcStatus.SetResult(true) else (false). AttackerCriticalStatus red-tolerated.</summary>
 [XmlType("OneTimeBoostSkillCriticalEffect")]

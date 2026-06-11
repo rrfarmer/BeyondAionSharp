@@ -1,6 +1,6 @@
 using Aion.GameServer.Model;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// What an item activates on (standalone/target/mento, or a specific NPC race).

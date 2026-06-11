@@ -6,12 +6,12 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Effect = Aion.GameServer.SkillEngine.Model.Effect;
 
-namespace Aion.GameServer.Controllers.Effect;
+namespace Aion.GameServer.Controllers.Effects;
 
 /// <summary>
 /// Java parity: controllers/effect/EffectController (@author ATracer, Wakizashi, Sippolo, Cheatkiller, Neon).

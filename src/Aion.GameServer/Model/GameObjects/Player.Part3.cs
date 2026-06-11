@@ -170,7 +170,7 @@ public partial class Player
 
     public bool HasCooldown(Item item)
     {
-        Aion.GameServer.Model.Templates.Item.ItemUseLimits limits = item.GetItemTemplate().GetUseLimits();
+        Aion.GameServer.Model.Templates.Items.ItemUseLimits limits = item.GetItemTemplate().GetUseLimits();
         if (limits == null)
             return false;
 

@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.SkillEngine.Effect;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>A secondary skill effect triggered by a parent effect. Java parity: skillengine/effect/SubEffect (@XmlType("SubEffect")).</summary>
 [XmlType("SubEffect")]

@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/RootEffect (ATracer) : EffectTemplate. @XmlAttribute resistchance=100; calculate→ROOT_RESISTANCE; startEffect: set ROOT, Player glide/move abort, anonymous ActionObserver(ATTACKED)→nested RootResistObserver capturing outer+effect+effected: Rnd.Chance>=resistchance→removeEffect; endEffect→unset. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("RootEffect")]

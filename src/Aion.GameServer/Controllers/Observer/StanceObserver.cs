@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item.Actions;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.Model.Templates.Items.Actions;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.Controllers.Observer;

@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;

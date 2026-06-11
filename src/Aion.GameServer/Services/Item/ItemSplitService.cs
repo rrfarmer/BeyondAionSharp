@@ -7,10 +7,10 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Idfactory;
-using static Aion.GameServer.Services.Item.ItemPacketService;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using static Aion.GameServer.Services.Items.ItemPacketService;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemSplitService (ATracer). splitItem (split part of a stack into another slot/storage incl. kinah move, restriction checks, new-item creation or merge), mergeStacks, moveKinah (cube&lt;->account-warehouse with checksum), updateKinahCount. static-import ItemPacketService->using static; nested ItemUpdateType alias; String.format->string.Format; switch-on-StorageType->switch w/ block scopes. IStorage/SM_/LegionService red-tolerated.</summary>
 public class ItemSplitService

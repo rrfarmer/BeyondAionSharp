@@ -4,7 +4,7 @@ using System.Linq;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.SkillEngine.Effect;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
@@ -100,9 +100,9 @@ public class Npc : Creature
         return (Aion.GameServer.Controllers.NpcController)base.GetController();
     }
 
-    public override Aion.GameServer.Model.Templates.Item.ItemAttackType GetAttackType()
+    public override Aion.GameServer.Model.Templates.Items.ItemAttackType GetAttackType()
     {
-        return GetAi().ModifyAttackType(Aion.GameServer.Model.Templates.Item.ItemAttackType.PHYSICAL);
+        return GetAi().ModifyAttackType(Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL);
     }
 
     public Aion.GameServer.Model.Skill.NpcSkillList GetSkillList()

@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/PetOrderUseUltraSkillEffect (ATracer, Sippolo) : EffectTemplate. @XmlAttribute release; applyEffect: Player effector; summon==null→return; PET_SKILL_DATA.getPetOrderSkill(orderSkillId, npcId), SKILL_DATA template; null→inline LoggerFactory.warn; addSkillOrder(petUseSkillId, lvl, effected, hate, release) + SM_SUMMON_USESKILL; calculate: Player && effected!=null→base.Calculate(effect,null,null). SkillTemplate/SM_SUMMON_USESKILL red-tolerated.</summary>
 [XmlType("PetOrderUseUltraSkillEffect")]

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Items.Storage;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>
 /// Java parity: services/item/ItemPacketService (ATracer).

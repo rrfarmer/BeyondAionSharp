@@ -15,9 +15,9 @@ public partial class Item : AionObject, Aion.GameServer.Model.IExpirable, Aion.G
     private int? itemColor;
     private int colorExpireTime = 0;
     private string itemCreator;
-    private readonly Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate;
-    private Aion.GameServer.Model.Templates.Item.ItemTemplate itemSkinTemplate;
-    private Aion.GameServer.Model.Templates.Item.ItemTemplate fusionedItemTemplate;
+    private readonly Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate;
+    private Aion.GameServer.Model.Templates.Items.ItemTemplate itemSkinTemplate;
+    private Aion.GameServer.Model.Templates.Items.ItemTemplate fusionedItemTemplate;
     private bool isEquipped = false;
     private long equipmentSlot = Aion.GameServer.Model.Items.Storage.ItemStorage.FIRST_AVAILABLE_SLOT;
     private IPersistable.PersistentState persistentState;
@@ -50,7 +50,7 @@ public partial class Item : AionObject, Aion.GameServer.Model.IExpirable, Aion.G
     private Aion.GameServer.Model.Items.PendingTuneResult pendingTuneResult;
 
     /// <summary>Create simple item with minimum information</summary>
-    public Item(int objId, Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate)
+    public Item(int objId, Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate)
         : base(objId)
     {
         this.itemTemplate = itemTemplate;
@@ -65,7 +65,7 @@ public partial class Item : AionObject, Aion.GameServer.Model.IExpirable, Aion.G
     }
 
     /// <summary>This constructor should be called from ItemService for newly created items and loadedFromDb</summary>
-    public Item(int objId, Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate, long itemCount, bool isEquipped, long equipmentSlot)
+    public Item(int objId, Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate, long itemCount, bool isEquipped, long equipmentSlot)
         : this(objId, itemTemplate)
     {
         this.itemCount = itemCount;
@@ -213,20 +213,20 @@ public partial class Item : AionObject, Aion.GameServer.Model.IExpirable, Aion.G
     }
 
     /// <summary>the itemTemplate</summary>
-    public Aion.GameServer.Model.Templates.Item.ItemTemplate GetItemTemplate()
+    public Aion.GameServer.Model.Templates.Items.ItemTemplate GetItemTemplate()
     {
         return itemTemplate;
     }
 
     /// <summary>the itemAppearanceTemplate</summary>
-    public Aion.GameServer.Model.Templates.Item.ItemTemplate GetItemSkinTemplate()
+    public Aion.GameServer.Model.Templates.Items.ItemTemplate GetItemSkinTemplate()
     {
         if (this.itemSkinTemplate == null)
             return this.itemTemplate;
         return this.itemSkinTemplate;
     }
 
-    public void SetItemSkinTemplate(Aion.GameServer.Model.Templates.Item.ItemTemplate newTemplate)
+    public void SetItemSkinTemplate(Aion.GameServer.Model.Templates.Items.ItemTemplate newTemplate)
     {
         this.itemSkinTemplate = newTemplate;
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);

@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DispelNpcDebuffEffect : AbstractDispelEffect. applyEffect→base.ApplyEffect(effect, NPC_DEBUFF_PHYSICAL, DEBUFF). EffectTemplate/Effect/enums red-tolerated.</summary>
 [XmlType("DispelNpcDebuffEffect")]

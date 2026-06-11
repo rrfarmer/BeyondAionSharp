@@ -1,5 +1,5 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Model.Templates.Item;
+using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Itemgroups;
 
 namespace Aion.GameServer.Model.Templates.Rewards;

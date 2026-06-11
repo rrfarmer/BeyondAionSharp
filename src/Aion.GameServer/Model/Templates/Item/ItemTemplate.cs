@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Templates;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Java parity: model/templates/item/ItemTemplate extends VisibleObjectTemplate. Ported as partials (569L).
@@ -15,12 +15,12 @@ public partial class ItemTemplate : VisibleObjectTemplate
 {
     private int itemId;
     [XmlElement("modifiers")] private Aion.GameServer.Model.Templates.Stats.ModifiersTemplate modifiers;
-    [XmlElement("actions")] private Aion.GameServer.Model.Templates.Item.Actions.ItemActions actions;
+    [XmlElement("actions")] private Aion.GameServer.Model.Templates.Items.Actions.ItemActions actions;
     [XmlAttribute("mask")] private int mask;
     [XmlAttribute("weapon_boost")] private int weaponBoost;
     [XmlAttribute("price")] private int price;
     [XmlAttribute("max_stack_count")] private int maxStackCount = 1;
-    [XmlAttribute("item_group")] private Aion.GameServer.Model.Templates.Item.Enums.ItemGroup itemGroup = Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.NONE;
+    [XmlAttribute("item_group")] private Aion.GameServer.Model.Templates.Items.Enums.ItemGroup itemGroup = Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.NONE;
     [XmlAttribute("pack_count")] private int packCount;
     [XmlAttribute("level")] private int level;
     [XmlAttribute("quality")] private ItemQuality itemQuality;
@@ -167,22 +167,22 @@ public partial class ItemTemplate : VisibleObjectTemplate
         return null;
     }
 
-    public Aion.GameServer.Model.Templates.Item.Actions.ItemActions GetActions()
+    public Aion.GameServer.Model.Templates.Items.Actions.ItemActions GetActions()
     {
         return actions;
     }
 
-    public Aion.GameServer.Model.Templates.Item.Enums.ItemSubType GetItemSubType()
+    public Aion.GameServer.Model.Templates.Items.Enums.ItemSubType GetItemSubType()
     {
         return itemGroup.GetItemSubType();
     }
 
-    public Aion.GameServer.Model.Templates.Item.Enums.EquipType GetEquipmentType()
+    public Aion.GameServer.Model.Templates.Items.Enums.EquipType GetEquipmentType()
     {
         return itemGroup.GetEquipType();
     }
 
-    public Aion.GameServer.Model.Templates.Item.Enums.ItemGroup GetItemGroup()
+    public Aion.GameServer.Model.Templates.Items.Enums.ItemGroup GetItemGroup()
     {
         return itemGroup;
     }
@@ -283,12 +283,12 @@ public partial class ItemTemplate : VisibleObjectTemplate
 
     public bool IsWeapon()
     {
-        return GetEquipmentType() == Aion.GameServer.Model.Templates.Item.Enums.EquipType.WEAPON;
+        return GetEquipmentType() == Aion.GameServer.Model.Templates.Items.Enums.EquipType.WEAPON;
     }
 
     public bool IsArmor()
     {
-        return GetEquipmentType() == Aion.GameServer.Model.Templates.Item.Enums.EquipType.ARMOR;
+        return GetEquipmentType() == Aion.GameServer.Model.Templates.Items.Enums.EquipType.ARMOR;
     }
 
     public bool IsKinah()
@@ -407,14 +407,14 @@ public partial class ItemTemplate : VisibleObjectTemplate
     {
         if (!IsWeapon())
             return false;
-        return GetItemSubType() == Aion.GameServer.Model.Templates.Item.Enums.ItemSubType.TWO_HAND;
+        return GetItemSubType() == Aion.GameServer.Model.Templates.Items.Enums.ItemSubType.TWO_HAND;
     }
 
     public bool IsOneHandWeapon()
     {
         if (!IsWeapon())
             return false;
-        return GetItemSubType() == Aion.GameServer.Model.Templates.Item.Enums.ItemSubType.ONE_HAND;
+        return GetItemSubType() == Aion.GameServer.Model.Templates.Items.Enums.ItemSubType.ONE_HAND;
     }
 
     public int GetTempExchangeTime()

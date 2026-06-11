@@ -55,7 +55,7 @@ public class TemperingEffect : Aion.GameServer.Model.Stats.Calc.IStatOwner
     public static void Apply(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
         List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction> functions = new List<Aion.GameServer.Model.Stats.Calc.Functions.IStatFunction>();
-        if (item.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.PLUME)
+        if (item.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.PLUME)
         {
             AddPlumeStatFunctions(item, functions);
         }

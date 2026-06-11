@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/MpAttackEffect (Sippolo) : AbstractOverTimeEffect. onPeriodicAction reduces MP (percent-aware). Inherited value/percent + SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("MpAttackEffect")]

@@ -45,7 +45,7 @@ public class EmotionList
 
     public bool CanUse(int emotionId)
     {
-        return !Aion.GameServer.Model.Templates.Item.Actions.EmotionLearnAction.IsLearnable(emotionId) || Contains(emotionId);
+        return !Aion.GameServer.Model.Templates.Items.Actions.EmotionLearnAction.IsLearnable(emotionId) || Contains(emotionId);
     }
 
     public ICollection<Emotion> GetEmotions()

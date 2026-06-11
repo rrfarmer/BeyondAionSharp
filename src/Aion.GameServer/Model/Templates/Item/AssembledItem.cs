@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Model.Templates.Item;
+namespace Aion.GameServer.Model.Templates.Items;
 
 /// <summary>
 /// Assembled-item id reference.

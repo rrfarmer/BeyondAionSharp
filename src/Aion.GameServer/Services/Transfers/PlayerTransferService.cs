@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Loginserver;
 using Aion.GameServer.Network.Loginserver.Serverpackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
 
 namespace Aion.GameServer.Services.Transfers;

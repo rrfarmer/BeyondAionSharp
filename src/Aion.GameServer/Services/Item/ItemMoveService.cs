@@ -7,11 +7,11 @@ using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
-using static Aion.GameServer.Services.Item.ItemPacketService;
-using ItemDeleteType = Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType;
+using static Aion.GameServer.Services.Items.ItemPacketService;
+using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 
-namespace Aion.GameServer.Services.Item;
+namespace Aion.GameServer.Services.Items;
 
 /// <summary>Java parity: services/item/ItemMoveService (ATracer). moveItem (same-storage reslot or cross-storage move w/ restriction/trade/shutdown checks, stackable merge, full-storage handling, WH history), moveInSameStorage, switchItemsInStorages (swap two items between storages). static-import ItemPacketService.*->using static; nested ItemDeleteType alias; GameServer.isShuttingDownSoon red-tolerated. IStorage/SM_/LegionService red-tolerated.</summary>
 public class ItemMoveService

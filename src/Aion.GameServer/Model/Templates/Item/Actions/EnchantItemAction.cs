@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
-namespace Aion.GameServer.Model.Templates.Item.Actions;
+namespace Aion.GameServer.Model.Templates.Items.Actions;
 
 /// <summary>Java parity: model/templates/item/actions/EnchantItemAction.</summary>
 [XmlType("EnchantItemAction")]
@@ -121,7 +121,7 @@ public class EnchantItemAction : AbstractItemAction
         if (parentItem.GetItemTemplate() != null)
         {
             // Item template
-            Aion.GameServer.Model.Templates.Item.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
+            Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
             // Enchantment stone
             if (itemTemplate.GetItemGroup() == ItemGroup.ENCHANTMENT)
             {
@@ -163,7 +163,7 @@ public class EnchantItemAction : AbstractItemAction
         return GetMinLevel() > 0 || GetMaxLevel() > 0 || GetChance() > 0 || IsManastoneOnly();
     }
 
-    private bool CheckSupplementLevel(Aion.GameServer.Model.GameObjects.Players.Player player, Aion.GameServer.Model.Templates.Item.ItemTemplate supplementTemplate, Aion.GameServer.Model.Templates.Item.ItemTemplate targetItemTemplate)
+    private bool CheckSupplementLevel(Aion.GameServer.Model.GameObjects.Players.Player player, Aion.GameServer.Model.Templates.Items.ItemTemplate supplementTemplate, Aion.GameServer.Model.Templates.Items.ItemTemplate targetItemTemplate)
     {
         // Is item manastone? True - check if player can use supplement
         if (supplementTemplate.GetItemGroup() != ItemGroup.ENCHANTMENT)

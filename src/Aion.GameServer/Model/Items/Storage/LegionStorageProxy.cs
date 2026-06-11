@@ -23,7 +23,7 @@ public class LegionStorageProxy : Storage
         storage.IncreaseKinah(amount, actor);
     }
 
-    public override void IncreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override void IncreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         storage.IncreaseKinah(amount, updateType, actor);
     }
@@ -33,7 +33,7 @@ public class LegionStorageProxy : Storage
         return storage.TryDecreaseKinah(amount, actor);
     }
 
-    public override bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override bool TryDecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return storage.TryDecreaseKinah(amount, updateType, actor);
     }
@@ -43,7 +43,7 @@ public class LegionStorageProxy : Storage
         storage.DecreaseKinah(amount, actor);
     }
 
-    public override void DecreaseKinah(long amount, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override void DecreaseKinah(long amount, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         storage.DecreaseKinah(amount, updateType, actor);
     }
@@ -53,7 +53,7 @@ public class LegionStorageProxy : Storage
         return storage.IncreaseItemCount(item, count, actor);
     }
 
-    public override long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override long IncreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return storage.IncreaseItemCount(item, count, updateType, actor);
     }
@@ -63,12 +63,12 @@ public class LegionStorageProxy : Storage
         return storage.DecreaseItemCount(item, count, actor);
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return storage.DecreaseItemCount(item, count, updateType, actor);
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("Quests should not update LWH!");
     }
@@ -78,7 +78,7 @@ public class LegionStorageProxy : Storage
         return storage.Add(item, actor);
     }
 
-    public override Item Add(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemAddType addType)
+    public override Item Add(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemAddType addType)
     {
         return storage.Add(item, addType, actor);
     }
@@ -93,7 +93,7 @@ public class LegionStorageProxy : Storage
         return storage.Delete(item, actor);
     }
 
-    public override Item Delete(Item item, Aion.GameServer.Services.Item.ItemPacketService.ItemDeleteType deleteType)
+    public override Item Delete(Item item, Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType deleteType)
     {
         return storage.Delete(item, deleteType, actor);
     }
@@ -113,7 +113,7 @@ public class LegionStorageProxy : Storage
         return storage.DecreaseByObjectId(itemObjId, count, actor);
     }
 
-    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType updateType)
+    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType)
     {
         return storage.DecreaseByObjectId(itemObjId, count, updateType, actor);
     }

@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Utils;
-using ItemUpdateType = Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
 namespace Aion.GameServer.Services.Craft;
 

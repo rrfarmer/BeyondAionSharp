@@ -6,7 +6,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SignetBurstEffect (ATracer, kecimis) : DamageEffect. @XmlAttribute signetlvl/signet; @XmlAttribute(name="add_effect_prob_multi"); calculateDamage: base value, element!=NONE→*knowledge/100f (lossy int*=float preserved); SIGNET_DATA_TEMPLATES.getSignetData(SignetEnum.valueOf(signet)→Enum.Parse, lvl); *damageMultiplier, effectProb*=multi; AttackUtil.calculateSkillResult; setLaunchSubEffect(Rnd.chance<effectProb); endEffect. calculate: base.Calculate(effect,null,null) false→endEffect. SignetData/SignetEnum red-tolerated.</summary>
 [XmlType("SignetBurstEffect")]

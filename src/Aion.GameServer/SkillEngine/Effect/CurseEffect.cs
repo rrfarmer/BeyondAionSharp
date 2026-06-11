@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Skillengine.Model;
 
-namespace Aion.GameServer.Skillengine.Effect;
+namespace Aion.GameServer.Skillengine.Effects;
 
 /// <summary>Java parity: skillengine/effect/CurseEffect (ATracer) : BufEffect. calculate→base.Calculate(effect, CURSE_RESISTANCE, null); start/end set/unset AbnormalState.CURSE. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("CurseEffect")]

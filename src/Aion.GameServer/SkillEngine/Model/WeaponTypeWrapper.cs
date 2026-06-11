@@ -1,4 +1,4 @@
-using Aion.GameServer.Model.Templates.Item.Enums;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
 namespace Aion.GameServer.SkillEngine.Model;
 

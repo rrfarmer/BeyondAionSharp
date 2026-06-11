@@ -21,7 +21,7 @@ using Aion.GameServer.Questengine.Model;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 using Aion.GameServer.Services.Event;
-using Aion.GameServer.Services.Item;
+using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.Utils.Collections;

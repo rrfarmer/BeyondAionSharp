@@ -34,11 +34,11 @@ public partial class Equipment
     public long IncreaseEquippedItemCount(Item item, long count)
     {
         // Only Shards can be increased
-        if (item.GetItemTemplate().GetItemGroup() != Aion.GameServer.Model.Templates.Item.Enums.ItemGroup.POWER_SHARDS)
+        if (item.GetItemTemplate().GetItemGroup() != Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.POWER_SHARDS)
             return count;
 
         long leftCount = item.IncreaseItemCount(count);
-        Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterInfoChange(owner, item, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.STATS_CHANGE);
+        Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(owner, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.STATS_CHANGE);
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
         return leftCount;
     }
@@ -60,7 +60,7 @@ public partial class Equipment
         }
         else
         {
-            Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterInfoChange(owner, equippedItem, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.STATS_CHANGE);
+            Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(owner, equippedItem, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.STATS_CHANGE);
         }
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmUpdatePlayerAppearance(owner.GetObjectId(), owner.GetEquipment().GetEquippedForAppearance()), true);
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
@@ -88,7 +88,7 @@ public partial class Equipment
         foreach (Item item in equippedWeapon)
         {
             Unequip(item);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(owner, item, Aion.GameServer.Services.Item.ItemPacketService.ItemUpdateType.EQUIP_UNEQUIP));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(owner, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.EQUIP_UNEQUIP));
             if (owner.GetGameStats() != null)
             {
                 if ((item.GetEquipmentSlot() & ItemSlot.MAIN_HAND.GetSlotIdMask()) != 0
@@ -122,7 +122,7 @@ public partial class Equipment
                 equipment[item.GetEquipmentSlot()] = item;
             }
             item.SetEquipped(true);
-            Aion.GameServer.Services.Item.ItemPacketService.UpdateItemAfterEquip(owner, item);
+            Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterEquip(owner, item);
         }
 
         if (owner.GetGameStats() != null)
@@ -142,7 +142,7 @@ public partial class Equipment
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
     }
 
-    public bool IsWeaponEquipped(Aion.GameServer.Model.Templates.Item.Enums.ItemSubType subType)
+    public bool IsWeaponEquipped(Aion.GameServer.Model.Templates.Items.Enums.ItemSubType subType)
     {
         Item weapon = GetMainHandWeapon();
         if (weapon != null && weapon.GetItemTemplate().GetItemSubType() == subType)
