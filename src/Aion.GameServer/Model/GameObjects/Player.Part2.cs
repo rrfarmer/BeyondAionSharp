@@ -139,12 +139,12 @@ public partial class Player
         return legionMember != null;
     }
 
-    public void SetLegionMember(Aion.GameServer.Model.GameObjects.Players.LegionMember legionMember)
+    public void SetLegionMember(Aion.GameServer.Model.Team.Legion.LegionMember legionMember)
     {
         this.legionMember = legionMember;
     }
 
-    public Aion.GameServer.Model.GameObjects.Players.LegionMember GetLegionMember()
+    public Aion.GameServer.Model.Team.Legion.LegionMember GetLegionMember()
     {
         return legionMember;
     }

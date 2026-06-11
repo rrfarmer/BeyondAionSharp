@@ -474,12 +474,12 @@ public partial class Player
         return (customStates & state.GetMask()) == state.GetMask();
     }
 
-    public Aion.GameServer.Model.GameObjects.Players.PanesterraFaction GetPanesterraFaction()
+    public Aion.GameServer.Services.Panesterra.Ahserion.PanesterraFaction GetPanesterraFaction()
     {
         return panesterraFaction;
     }
 
-    public void SetPanesterraFaction(Aion.GameServer.Model.GameObjects.Players.PanesterraFaction panesterraFaction)
+    public void SetPanesterraFaction(Aion.GameServer.Services.Panesterra.Ahserion.PanesterraFaction panesterraFaction)
     {
         this.panesterraFaction = panesterraFaction;
     }

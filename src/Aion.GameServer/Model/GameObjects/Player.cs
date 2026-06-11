@@ -27,7 +27,7 @@ public partial class Player : Creature
     public Aion.GameServer.Model.Ingameshop.InGameShop inGameShop;
     private readonly Aion.GameServer.Model.Account.PlayerAccountData playerAccountData;
     private readonly Aion.GameServer.Model.Account.Account playerAccount;
-    private Aion.GameServer.Model.GameObjects.Players.LegionMember legionMember;
+    private Aion.GameServer.Model.Team.Legion.LegionMember legionMember;
 
     private Aion.GameServer.Model.GameObjects.Players.Macros macros;
     private Aion.GameServer.Model.Skill.PlayerSkillList skillList;
@@ -125,7 +125,7 @@ public partial class Player : Creature
     private int robotId;
     private bool isInFfaTeamMode;
     private int customStates;
-    private Aion.GameServer.Model.GameObjects.Players.PanesterraFaction panesterraFaction;
+    private Aion.GameServer.Services.Panesterra.Ahserion.PanesterraFaction panesterraFaction;
 
     public Player(Aion.GameServer.Model.Account.PlayerAccountData playerAccountData, Aion.GameServer.Model.Account.Account account)
         : base(playerAccountData.GetPlayerCommonData().GetPlayerObjId(), new PlayerController(), null, playerAccountData.GetPlayerCommonData(), null, false)

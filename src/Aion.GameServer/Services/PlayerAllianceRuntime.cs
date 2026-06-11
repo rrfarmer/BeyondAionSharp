@@ -1,5 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 using System.Threading;
+using Aion.GameServer.Model.Team.Alliance;
 
 namespace Aion.GameServer.Services;
 

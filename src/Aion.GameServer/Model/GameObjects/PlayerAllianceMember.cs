@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.GameObjects;
+namespace Aion.GameServer.Model.Team.Alliance;
 
 public sealed class PlayerAllianceMember
 {
