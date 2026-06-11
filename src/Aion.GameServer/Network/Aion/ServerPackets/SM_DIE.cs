@@ -6,7 +6,7 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
-/// <summary>Java parity: network/aion/serverpackets/SM_DIE (orz, Sarynth, Rhys2002). On death, tells the client which revive options are allowed (skill/item/instance), remaining kisk time, and invasion-world flag. InstanceHandler/WorldMapType red-tolerated.</summary>
+/// <summary>Java parity: network/aion/serverpackets/SM_DIE (orz, Sarynth, Rhys2002). On death, tells the client which revive options are allowed (skill/item/instance), remaining kisk time, and invasion-world flag. IInstanceHandler/WorldMapType red-tolerated.</summary>
 public class SM_DIE : AionServerPacket
 {
     private readonly bool allowReviveBySkill;
@@ -17,7 +17,7 @@ public class SM_DIE : AionServerPacket
 
     public SM_DIE(Player player)
     {
-        InstanceHandler instanceHandler = player.GetWorldMapInstance().GetInstanceHandler();
+        IInstanceHandler instanceHandler = player.GetWorldMapInstance().GetInstanceHandler();
         allowReviveBySkill = instanceHandler.AllowSelfReviveBySkill() && player.CanUseRebirthRevive();
         allowReviveByItem = instanceHandler.AllowSelfReviveByItem() && player.HaveSelfRezItem();
         remainingKiskTimeSeconds = instanceHandler.AllowKiskRevive() && player.GetKisk() != null ? player.GetKisk().GetRemainingLifetime() : 0;

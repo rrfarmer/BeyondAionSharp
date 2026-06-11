@@ -26,7 +26,7 @@ namespace Aion.GameServer.World;
 /// Java parity: world/WorldMapInstance (-Nemesiss-). World map instance object. Iterable&lt;VisibleObject&gt; -> IEnumerable;
 /// Function/Consumer -> Func/Action; ConcurrentHashMap.newKeySet() -> ConcurrentDictionary-backed set (here HashSet under the existing
 /// concurrent usage pattern); Future -> ScheduledTask; putIfAbsent != null -> !TryAdd; GeneralTeam&lt;?,?&gt; wildcard erased to
-/// &lt;AionObject, ITeamMember&lt;AionObject&gt;&gt;. WorldMap/MapRegion/InstanceHandler/QuestNpc red-tolerated.
+/// &lt;AionObject, ITeamMember&lt;AionObject&gt;&gt;. WorldMap/MapRegion/IInstanceHandler/QuestNpc red-tolerated.
 /// </summary>
 public abstract class WorldMapInstance : IEnumerable<VisibleObject>
 {
@@ -41,7 +41,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
     private readonly ISet<int> registeredObjects = new HashSet<int>();
     private readonly ISet<int> questIds = new HashSet<int>();
     private readonly Dictionary<ZoneName, ZoneInstance> zones;
-    private readonly InstanceHandler instanceHandler;
+    private readonly IInstanceHandler instanceHandler;
     private readonly int instanceId; // Id of this instance (channel)
     private readonly int maxPlayers;
     private WorldPosition startPos;
@@ -49,7 +49,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
     private GeneralTeam<AionObject, ITeamMember<AionObject>> registeredTeam;
     private ScheduledTask emptyInstanceTask, updateNearbyQuestsTask;
 
-    public WorldMapInstance(WorldMap parent, int instanceId, int maxPlayers, Func<WorldMapInstance, InstanceHandler> instanceHandlerSupplier)
+    public WorldMapInstance(WorldMap parent, int instanceId, int maxPlayers, Func<WorldMapInstance, IInstanceHandler> instanceHandlerSupplier)
     {
         this.parent = parent;
         this.zones = ZoneService.GetInstance().GetZoneInstancesByWorldId(parent.GetMapId());
@@ -286,7 +286,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
         return questIds;
     }
 
-    public InstanceHandler GetInstanceHandler()
+    public IInstanceHandler GetInstanceHandler()
     {
         return instanceHandler;
     }

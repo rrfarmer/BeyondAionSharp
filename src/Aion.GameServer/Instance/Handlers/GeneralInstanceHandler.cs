@@ -19,7 +19,7 @@ using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.Instance.Handlers;
 
-/// <summary>Java parity: instance/handlers/GeneralInstanceHandler (ATracer) implements InstanceHandler. Concrete base of all instance handlers. Methods virtual (Java overridable). slf4j "INSTANCE_LOG"→ILogger named (info/warn→LogInformation/LogWarning, parameterized {}→named placeholders); UnsupportedOperationException→NotSupportedException; getClass()→GetType(); InstanceScore&lt;?&gt;→non-generic InstanceScore. World/Item/Storage/SpawnEngine red-tolerated.</summary>
+/// <summary>Java parity: instance/handlers/GeneralInstanceHandler (ATracer) implements IInstanceHandler. Concrete base of all instance handlers. Methods virtual (Java overridable). slf4j "INSTANCE_LOG"→ILogger named (info/warn→LogInformation/LogWarning, parameterized {}→named placeholders); UnsupportedOperationException→NotSupportedException; getClass()→GetType(); InstanceScore&lt;?&gt;→non-generic InstanceScore. World/Item/Storage/SpawnEngine red-tolerated.</summary>
 public class GeneralInstanceHandler : IInstanceHandler
 {
     protected static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger("INSTANCE_LOG");

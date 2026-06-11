@@ -23,12 +23,12 @@ using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.Services.Instance;
 
-/// <summary>Java parity: services/instance/InstanceService (ATracer) — instance lifecycle/registration. getNextAvailableInstance overloads (Function&lt;WorldMapInstance,InstanceHandler&gt;->Func, method-group supplier InstanceEngine.GetInstance().GetNewInstanceHandler, event spawn streams->LINQ), destroyInstance, register/get/personal/house instance, login/logout/enter/leave instance+zone hooks, rates. scheduleAtFixedRate EmptyInstanceCheckerTask->nested+async delegate; GeneralTeam&lt;?,?&gt;->GeneralTeam; currentTimeMillis->UtcNow.ToUnixTimeMilliseconds; UnsupportedOperation->NotSupported; NullPointer->NullReference; instanceof Player->is. World/WorldMapInstance/InstanceHandler/DAO red-tolerated.</summary>
+/// <summary>Java parity: services/instance/InstanceService (ATracer) — instance lifecycle/registration. getNextAvailableInstance overloads (Function&lt;WorldMapInstance,IInstanceHandler&gt;->Func, method-group supplier InstanceEngine.GetInstance().GetNewInstanceHandler, event spawn streams->LINQ), destroyInstance, register/get/personal/house instance, login/logout/enter/leave instance+zone hooks, rates. scheduleAtFixedRate EmptyInstanceCheckerTask->nested+async delegate; GeneralTeam&lt;?,?&gt;->GeneralTeam; currentTimeMillis->UtcNow.ToUnixTimeMilliseconds; UnsupportedOperation->NotSupported; NullPointer->NullReference; instanceof Player->is. World/WorldMapInstance/IInstanceHandler/DAO red-tolerated.</summary>
 public class InstanceService
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(InstanceService));
 
-    public static WorldMapInstance GetNextAvailableInstance(int worldId, int ownerId, byte difficultyId, Func<WorldMapInstance, InstanceHandler> instanceHandlerSupplier, int maxPlayers, bool autoDestroy)
+    public static WorldMapInstance GetNextAvailableInstance(int worldId, int ownerId, byte difficultyId, Func<WorldMapInstance, IInstanceHandler> instanceHandlerSupplier, int maxPlayers, bool autoDestroy)
     {
         WorldMap map = World.World.GetInstance().GetWorldMap(worldId);
 

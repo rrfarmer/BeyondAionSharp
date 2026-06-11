@@ -14553,7 +14553,7 @@ public sealed class GameServerConnection : BaseClientConnection
 			return;
 
 		// Java parity: InstanceService.onLeaveInstance invokes the instance handler before reset-warning message selection.
-		instance.InstanceHandler.OnLeaveInstance(player);
+		instance.IInstanceHandler.OnLeaveInstance(player);
 
 		var plan = InstanceLeaveMessageService.CreateLeaveMessagePlan(
 			instance,

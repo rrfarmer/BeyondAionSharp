@@ -8,11 +8,11 @@ namespace Aion.GameServer.World;
 
 /// <summary>
 /// Java parity: world/WorldMap3DInstance (ATracer). 3D (x,y,z) region grid map instance. parallelStream().forEach ->
-/// Parallel.ForEach with lock(regions); Math.round(float) -> floor(x+0.5f). MapRegion/InstanceHandler red-tolerated.
+/// Parallel.ForEach with lock(regions); Math.round(float) -> floor(x+0.5f). MapRegion/IInstanceHandler red-tolerated.
 /// </summary>
 public class WorldMap3DInstance : WorldMapInstance
 {
-    public WorldMap3DInstance(WorldMap parent, int instanceId, int maxPlayers, Func<WorldMapInstance, InstanceHandler> instanceHandlerSupplier)
+    public WorldMap3DInstance(WorldMap parent, int instanceId, int maxPlayers, Func<WorldMapInstance, IInstanceHandler> instanceHandlerSupplier)
         : base(parent, instanceId, maxPlayers, instanceHandlerSupplier)
     {
     }

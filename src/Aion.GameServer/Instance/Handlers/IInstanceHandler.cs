@@ -7,7 +7,7 @@ using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.Instance.Handlers;
 
-/// <summary>Java parity: instance/handlers/InstanceHandler (ATracer) interface. Named IInstanceHandler (matches IPersistable convention). `InstanceScore&lt;?&gt; getInstanceScore()`→non-generic `InstanceScore GetInstanceScore()` (wildcard erasure via non-generic base). StageList/StageType/ZoneInstance/Effect/Skill red-tolerated.</summary>
+/// <summary>Java parity: instance/handlers/IInstanceHandler (ATracer) interface. Named IInstanceHandler (matches IPersistable convention). `InstanceScore&lt;?&gt; getInstanceScore()`→non-generic `InstanceScore GetInstanceScore()` (wildcard erasure via non-generic base). StageList/StageType/ZoneInstance/Effect/Skill red-tolerated.</summary>
 public interface IInstanceHandler
 {
     /// <summary>Executed during instance creation. This method will run after spawns are loaded.</summary>

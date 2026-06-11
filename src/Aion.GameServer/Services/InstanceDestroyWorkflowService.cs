@@ -70,7 +70,7 @@ public sealed class InstanceDestroyWorkflowService
 			destroyPlan,
 			unregisteredTemporarySpawnCount,
 			walkerCleanup,
-			"InstanceService.destroyInstance -> TemporarySpawnEngine.onInstanceDestroy -> player forced exit -> VisibleObjectController.delete -> InstanceHandler.onInstanceDestroy -> WalkerFormator.onInstanceDestroy");
+			"InstanceService.destroyInstance -> TemporarySpawnEngine.onInstanceDestroy -> player forced exit -> VisibleObjectController.delete -> IInstanceHandler.onInstanceDestroy -> WalkerFormator.onInstanceDestroy");
 	}
 }
 

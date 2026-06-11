@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Model.GameObjects;
+namespace Aion.GameServer.Model.GameObjects.Siege;
 
 /// <summary>Java parity: model/gameobjects/siege/SiegeNpc extends Npc.</summary>
 public class SiegeNpc : Npc

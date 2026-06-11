@@ -26,7 +26,7 @@ public sealed class WorldMapInstanceRuntimeState
 		OwnerId = ownerId;
 		MaxPlayers = maxPlayers;
 		DifficultyId = difficultyId;
-		InstanceHandler = instanceHandler ?? GeneralInstanceLifecycleHandler.Instance;
+		IInstanceHandler = instanceHandler ?? GeneralInstanceLifecycleHandler.Instance;
 	}
 
 	public int InstanceId { get; }
@@ -37,7 +37,7 @@ public sealed class WorldMapInstanceRuntimeState
 
 	public byte DifficultyId { get; }
 
-	public IInstanceLifecycleHandler InstanceHandler { get; }
+	public IInstanceLifecycleHandler IInstanceHandler { get; }
 
 	public bool InstanceCreateNotified
 	{
@@ -262,7 +262,7 @@ public sealed class WorldMapInstanceRuntimeState
 		}
 
 		// Java parity: services/instance/InstanceService.getNextAvailableInstance calls instance.getInstanceHandler().onInstanceCreate().
-		InstanceHandler.OnInstanceCreate(this);
+		IInstanceHandler.OnInstanceCreate(this);
 		return true;
 	}
 
@@ -277,7 +277,7 @@ public sealed class WorldMapInstanceRuntimeState
 		}
 
 		// Java parity: services/instance/InstanceService.destroyInstance calls instance.getInstanceHandler().onInstanceDestroy().
-		InstanceHandler.OnInstanceDestroy(this);
+		IInstanceHandler.OnInstanceDestroy(this);
 		return true;
 	}
 }

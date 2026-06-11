@@ -12,7 +12,7 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Instance;
 
-/// <summary>Java parity: instance/InstanceEngine (ATracer) implements GameEngine. Map&lt;Integer,Class&lt;? extends InstanceHandler&gt;&gt;→Dictionary&lt;int,Type&gt;; getAnnotation(InstanceID.class)→GetCustomAttribute&lt;InstanceID&gt;(); getDeclaredConstructor(X).newInstance(arg)→Activator.CreateInstance; slf4j→ILogger. GameEngine async-interface satisfaction left red-tolerated (per QuestEngine precedent). ScriptManager red-tolerated (commons compiler pillar).</summary>
+/// <summary>Java parity: instance/InstanceEngine (ATracer) implements GameEngine. Map&lt;Integer,Class&lt;? extends IInstanceHandler&gt;&gt;→Dictionary&lt;int,Type&gt;; getAnnotation(InstanceID.class)→GetCustomAttribute&lt;InstanceID&gt;(); getDeclaredConstructor(X).newInstance(arg)→Activator.CreateInstance; slf4j→ILogger. GameEngine async-interface satisfaction left red-tolerated (per QuestEngine precedent). ScriptManager red-tolerated (commons compiler pillar).</summary>
 public class InstanceEngine : GameEngine
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(InstanceEngine));

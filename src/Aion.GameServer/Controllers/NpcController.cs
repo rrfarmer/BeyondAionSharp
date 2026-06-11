@@ -188,7 +188,7 @@ public class NpcController : CreatureController<Npc>
         if (winner == null)
             return;
 
-        Aion.GameServer.Instance.Handlers.InstanceHandler instanceHandler = GetOwner().GetPosition().GetWorldMapInstance().GetInstanceHandler();
+        Aion.GameServer.Instance.Handlers.IInstanceHandler instanceHandler = GetOwner().GetPosition().GetWorldMapInstance().GetInstanceHandler();
         float apMultiplier = instanceHandler.GetApMultiplier();
         foreach (DamageInfo<AionObject> info in finalList.GetCreatureOrTeamDamages())
         {

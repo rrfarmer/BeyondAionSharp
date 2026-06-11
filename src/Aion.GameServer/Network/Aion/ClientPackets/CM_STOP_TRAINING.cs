@@ -5,7 +5,7 @@ using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
-/// <summary>Java parity: network/aion/clientpackets/CM_STOP_TRAINING (xTz). Notifies the instance handler that the player stopped training. WorldMapInstance/InstanceHandler red-tolerated.</summary>
+/// <summary>Java parity: network/aion/clientpackets/CM_STOP_TRAINING (xTz). Notifies the instance handler that the player stopped training. WorldMapInstance/IInstanceHandler red-tolerated.</summary>
 public class CM_STOP_TRAINING : AionClientPacket
 {
     public CM_STOP_TRAINING(int opcode, ISet<State> validStates)

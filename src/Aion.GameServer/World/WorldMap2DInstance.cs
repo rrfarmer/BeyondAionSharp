@@ -6,13 +6,13 @@ namespace Aion.GameServer.World;
 
 /// <summary>
 /// Java parity: world/WorldMap2DInstance (ATracer). 2D (x,y) region grid map instance. Function->Func; Math.round(float) kept as
-/// floor(x+0.5f) for Java round-half-up semantics. MapRegion/InstanceHandler red-tolerated.
+/// floor(x+0.5f) for Java round-half-up semantics. MapRegion/IInstanceHandler red-tolerated.
 /// </summary>
 public class WorldMap2DInstance : WorldMapInstance
 {
     private readonly int ownerId;
 
-    public WorldMap2DInstance(WorldMap parent, int instanceId, int ownerId, int maxPlayers, Func<WorldMapInstance, InstanceHandler> instanceHandlerSupplier)
+    public WorldMap2DInstance(WorldMap parent, int instanceId, int ownerId, int maxPlayers, Func<WorldMapInstance, IInstanceHandler> instanceHandlerSupplier)
         : base(parent, instanceId, maxPlayers, instanceHandlerSupplier)
     {
         this.ownerId = ownerId;

@@ -12,7 +12,7 @@ public class WorldMapInstanceFactory
         return CreateWorldMapInstance(parent, 0, InstanceEngine.GetInstance().GetNewInstanceHandler, maxPlayers);
     }
 
-    public static WorldMapInstance CreateWorldMapInstance(WorldMap parent, int ownerId, Func<WorldMapInstance, InstanceHandler> instanceHandlerSupplier, int maxPlayers)
+    public static WorldMapInstance CreateWorldMapInstance(WorldMap parent, int ownerId, Func<WorldMapInstance, IInstanceHandler> instanceHandlerSupplier, int maxPlayers)
     {
         WorldMapInstance instance;
         if (parent.GetMapId() == WorldMapType.RESHANTA.GetId())
