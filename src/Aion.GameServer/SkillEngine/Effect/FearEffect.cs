@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using System.Xml.Serialization;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
@@ -13,7 +13,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;

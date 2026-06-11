@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CLOSE_DIALOG. Client closes (or unselects) a dialog with a target object. DialogService red-tolerated.</summary>
 public class CM_CLOSE_DIALOG : AionClientPacket

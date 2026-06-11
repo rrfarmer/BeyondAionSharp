@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MACRO_RESULT (xavier). Macro create/delete result (static instances).</summary>
 public class SM_MACRO_RESULT : AionServerPacket

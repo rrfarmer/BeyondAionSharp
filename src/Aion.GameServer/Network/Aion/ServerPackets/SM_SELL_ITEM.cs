@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Trade;
 using TradeTab = Aion.GameServer.Model.Templates.Tradelist.TradeListTemplate.TradeTab;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SELL_ITEM (orz, Sarynth, Artur, Neon). Opens a vendor trade window (npc type/buy rate/buy-sell tabs/trade tabs). TradeListTemplate.TradeTab nested via alias; ArrayList->new List. Npc/TradeListTemplate/TradeNpcType/PricesService red-tolerated.</summary>
 public class SM_SELL_ITEM : AionServerPacket

@@ -6,11 +6,11 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SUMMON_CASTSPELL (ATracer, KID). Summon/mercenary skill cast w/ pet vs mercenary handling + skill-order validation. SkillOrder/DataManager.PET_SKILL_DATA red-tolerated.</summary>
 public class CM_SUMMON_CASTSPELL : AionClientPacket

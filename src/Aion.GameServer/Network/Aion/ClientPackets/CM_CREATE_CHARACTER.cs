@@ -4,13 +4,13 @@ using System.Linq;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils.IdFactory;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CREATE_CHARACTER (-Nemesiss-, cura, Neon). Client requests character creation or to open the creation menu (type 1). PlayerService/AccountService/IDFactory/SM_CREATE_CHARACTER red-tolerated.</summary>
 public class CM_CREATE_CHARACTER : AbstractCharacterEditPacket

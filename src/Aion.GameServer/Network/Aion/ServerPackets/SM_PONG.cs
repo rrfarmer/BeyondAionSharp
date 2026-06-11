@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PONG. Ping response. AionServerPacket red-tolerated.</summary>
 public class SM_PONG : AionServerPacket

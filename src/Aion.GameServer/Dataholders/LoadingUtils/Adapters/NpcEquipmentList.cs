@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Templates.Items;
 
-namespace Aion.GameServer.Dataholders.Loadingutils.Adapters;
+namespace Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 
 /// <summary>Java parity: dataholders/loadingutils/adapters/NpcEquipmentList (Luno).</summary>
 public class NpcEquipmentList

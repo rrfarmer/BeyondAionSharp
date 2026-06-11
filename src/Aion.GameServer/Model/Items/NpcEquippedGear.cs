@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using Aion.GameServer.Dataholders.Loadingutils.Adapters;
+using Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Model.Items;

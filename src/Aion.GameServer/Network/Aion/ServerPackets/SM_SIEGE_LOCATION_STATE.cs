@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SIEGE_LOCATION_STATE (Source). Siege location vulnerability state (locationId + state). SiegeLocation red-tolerated.</summary>
 public class SM_SIEGE_LOCATION_STATE : AionServerPacket

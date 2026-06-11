@@ -3,7 +3,7 @@ using Aion.GameServer.Model.LegionDominion;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_DOMINION_RANK (Yeats). Legion-dominion ranking (top 25 + the requesting legion if outside top). indexOf/subList/set/get -> IndexOf/GetRange/indexer; subList view-copy semantics fine since ranking is not read afterward. LegionDominion* red-tolerated.</summary>
 public class SM_LEGION_DOMINION_RANK : AionServerPacket

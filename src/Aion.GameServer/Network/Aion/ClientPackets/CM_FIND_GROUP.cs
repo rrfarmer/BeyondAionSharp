@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.FindGroup;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_FIND_GROUP (cura, MrPoke). Find-group / find-instance-group window actions. FindGroupService red-tolerated.</summary>
 public class CM_FIND_GROUP : AionClientPacket

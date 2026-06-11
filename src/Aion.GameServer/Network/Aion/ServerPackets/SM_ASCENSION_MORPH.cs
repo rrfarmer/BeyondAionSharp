@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ASCENSION_MORPH (wylovech). Ascension quest morph flag (1 = morph).</summary>
 public class SM_ASCENSION_MORPH : AionServerPacket

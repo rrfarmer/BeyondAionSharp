@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RESURRECT (ATracer, Jego). Resurrect prompt (creature name + skillId). Creature red-tolerated.</summary>
 public class SM_RESURRECT : AionServerPacket

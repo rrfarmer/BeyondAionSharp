@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TARGET_SELECTED (Sweetkr, -Enomine-). Sends the selected target's id, level, and HP/MP (current+max) for creatures. instanceof Creature->is Creature creature. VisibleObject/Creature/AionServerPacket red-tolerated.</summary>
 public class SM_TARGET_SELECTED : AionServerPacket

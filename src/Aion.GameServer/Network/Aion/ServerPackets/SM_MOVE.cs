@@ -2,7 +2,7 @@ using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MOVE (-Nemesiss-). Broadcasts a creature's movement (position/heading/mask, manual target vector, glide flag/geyser, vehicle data). Converges AntiHackService. CreatureMoveController&lt;?&gt;/PlayableMoveController&lt;?&gt;->&lt;Creature&gt; invariance bound; instanceof->is; MovementMask/GlideFlag red-tolerated.</summary>
 public class SM_MOVE : AionServerPacket

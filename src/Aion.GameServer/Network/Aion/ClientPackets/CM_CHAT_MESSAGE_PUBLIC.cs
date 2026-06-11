@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
@@ -11,7 +11,7 @@ using Aion.GameServer.Utils.ChatHandlers;
 using Aion.GameServer.Utils.Stats;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHAT_MESSAGE_PUBLIC (SoulKeeper). Reads normal chat messages and broadcasts by ChatType (group/alliance/legion/league/normal/shout/command). ChatProcessor/PlayerChatService/SM_MESSAGE red-tolerated.</summary>
 public class CM_CHAT_MESSAGE_PUBLIC : AionClientPacket

@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHARACTER_LIST (-Nemesiss-). Client requests the character list; replies with account properties + the character list. SM_ACCOUNT_PROPERTIES/SM_CHARACTER_LIST red-tolerated.</summary>
 public class CM_CHARACTER_LIST : AionClientPacket

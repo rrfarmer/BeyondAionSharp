@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CASTSPELL_RESULT (alexa026, Sweetkr). Cast-spell result incl. hit time, targeting, per-effect results (effect result/hp%, spell status, reserved effects, shield/reflect). getType()->GetType_() collision; instanceof Player->is Player + cast; Skill.SkillMethod/SubEffectType/AttackStatus/EffectResult red-tolerated.</summary>
 public class SM_CASTSPELL_RESULT : AionServerPacket

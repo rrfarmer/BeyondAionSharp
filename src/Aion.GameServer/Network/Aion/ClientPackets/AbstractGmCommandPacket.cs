@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.ChatHandlers;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/AbstractGmCommandPacket. Base for GM console-command packets; reads the command string and dispatches to ChatProcessor. Java regex excludes the U+0000..U+013E range; built from char codes here to keep source clean. ChatProcessor red-tolerated.</summary>
 public abstract class AbstractGmCommandPacket : AionClientPacket

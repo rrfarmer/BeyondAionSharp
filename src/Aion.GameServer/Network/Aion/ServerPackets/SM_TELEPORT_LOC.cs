@@ -2,7 +2,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TELEPORT_LOC (Luno, orz, xTz). Teleports the player with a port animation. DataManager/TeleportAnimation red-tolerated.</summary>
 public class SM_TELEPORT_LOC : AionServerPacket

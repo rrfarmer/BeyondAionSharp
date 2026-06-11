@@ -16,7 +16,7 @@ using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Portal;
 using Aion.GameServer.Model.Templates.World;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;

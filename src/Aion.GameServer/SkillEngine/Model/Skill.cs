@@ -16,7 +16,7 @@ using Aion.GameServer.SkillEngine.Properties;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using CastState = Aion.GameServer.SkillEngine.properties.Properties.CastState;
+using CastState = Aion.GameServer.SkillEngine.Properties.Properties.CastState;
 
 namespace Aion.GameServer.SkillEngine.Model;
 

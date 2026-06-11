@@ -2,7 +2,7 @@ using Aion.GameServer.Configs.Network;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_ADD_MEMBER (Simple). New legion member info (objId/name/rank/isMember/class/level/map + msg). Player/NetworkConfig red-tolerated.</summary>
 public class SM_LEGION_ADD_MEMBER : AionServerPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SUMMON_OWNER_REMOVE (ATracer). Removes a summon from its owner's view (summon objId).</summary>
 public class SM_SUMMON_OWNER_REMOVE : AionServerPacket

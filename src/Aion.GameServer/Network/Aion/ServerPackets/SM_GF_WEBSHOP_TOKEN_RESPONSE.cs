@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GF_WEBSHOP_TOKEN_RESPONSE (Artur). Sends a webshop token (fixed 32-char string).</summary>
 public class SM_GF_WEBSHOP_TOKEN_RESPONSE : AionServerPacket

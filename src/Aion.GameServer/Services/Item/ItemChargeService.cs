@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Templates.Items;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Utils;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;

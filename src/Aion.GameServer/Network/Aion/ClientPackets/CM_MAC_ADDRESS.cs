@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.LoginServer;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_MAC_ADDRESS (-Nemesiss-, KID, ViAl, Neon). Client sends connection/system info (IP traceroute, MAC, HDD serial); triggers loginserver auth. LoginServer red-tolerated.</summary>
 public class CM_MAC_ADDRESS : AionClientPacket

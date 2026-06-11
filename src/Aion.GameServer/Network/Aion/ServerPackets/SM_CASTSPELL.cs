@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CASTSPELL (alexa026, rhys2002). Shows a casting-spell animation (effector, spell/level, target by type: object id, ground point, or ground point + 8 unks), cast duration/speed, animation-boost flag. switch-on-targetType (0/3/4, 1, 2). AionServerPacket/Creature/write* red-tolerated.</summary>
 public class SM_CASTSPELL : AionServerPacket

@@ -1,7 +1,7 @@
 using System;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_QUESTION_WINDOW (Ben, avol, Lyahim, Neon). Opens a yes/no question window keyed by a client_strings.xml code, with up to 3 params, a sender id and a range/cooldown. Converges FindGroupService/Invasion/ItemChargeService etc. Object...->params object[]; String.valueOf->ToString; field params->parameters (keyword); IllegalArgument->Argument. Constant codes preserved verbatim. AionServerPacket red-tolerated.</summary>
 public class SM_QUESTION_WINDOW : AionServerPacket

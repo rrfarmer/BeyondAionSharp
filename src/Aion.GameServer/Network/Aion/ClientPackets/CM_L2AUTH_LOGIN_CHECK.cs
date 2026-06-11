@@ -3,7 +3,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.LoginServer;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_L2AUTH_LOGIN_CHECK (-Nemesiss-). Client authenticates with accountId + session-key parts; validated against the login server. LoginServer red-tolerated.</summary>
 // TODO: L2AUTH? Really? :O

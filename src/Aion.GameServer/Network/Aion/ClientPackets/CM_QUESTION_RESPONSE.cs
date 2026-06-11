@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_QUESTION_RESPONSE (Ben, Sarynth, Neon). Response to SM_QUESTION_WINDOW; cancels exchange if answered yes mid-trade then dispatches the response. ExchangeService red-tolerated.</summary>
 public class CM_QUESTION_RESPONSE : AionClientPacket

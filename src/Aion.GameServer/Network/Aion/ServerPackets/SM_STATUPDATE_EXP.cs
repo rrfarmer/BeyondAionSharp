@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_STATUPDATE_EXP (Luno, alexa026). Updates current/recoverable/max exp + boost exp.</summary>
 public class SM_STATUPDATE_EXP : AionServerPacket

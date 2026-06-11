@@ -1,6 +1,6 @@
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

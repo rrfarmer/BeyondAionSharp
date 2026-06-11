@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MANTRA_EFFECT (Sweetkr). Plays a mantra sub-effect (effector objId + subEffectId). Creature red-tolerated.</summary>
 public class SM_MANTRA_EFFECT : AionServerPacket

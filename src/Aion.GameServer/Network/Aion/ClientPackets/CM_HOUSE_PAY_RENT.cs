@@ -4,12 +4,12 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.TaskManager.Tasks.Housing;
 using Aion.GameServer.Utils.Time;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_HOUSE_PAY_RENT (Rolandas). Pays house maintenance for N weeks (client caps at 4 weeks ahead). Java java.time arithmetic mapped to DateTimeOffset; ChronoUnit.WEEKS.between -> TotalDays/7. MaintenanceTask/ServerTime red-tolerated.</summary>
 public class CM_HOUSE_PAY_RENT : AionClientPacket

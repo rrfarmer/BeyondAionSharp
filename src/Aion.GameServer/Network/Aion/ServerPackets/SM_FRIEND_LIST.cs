@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FRIEND_LIST (Ben, Neon). Sends the player's friend list (id/name/level/class/gender/map/online-or-lastonline/note/status + active house address+door + memo). Converges PlayerEnterWorldService. FriendList/Friend/House/HousingService/AionServerPacket red-tolerated.</summary>
 public class SM_FRIEND_LIST : AionServerPacket

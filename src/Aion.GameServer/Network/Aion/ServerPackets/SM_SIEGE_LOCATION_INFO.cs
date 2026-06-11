@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SIEGE_LOCATION_INFO (Sarynth, Neon). All-siege-locations (reset) or single (update) info: owner legion/emblem/race/vulnerability/teleport/next-state/timer. Map.values iteration; SiegeConfig/SiegeService/LegionService red-tolerated.</summary>
 public class SM_SIEGE_LOCATION_INFO : AionServerPacket

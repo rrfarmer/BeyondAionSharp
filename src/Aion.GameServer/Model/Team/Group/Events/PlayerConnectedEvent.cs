@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Common.Events;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Team.Group.Events;

@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.League;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Model.Team.League.Events;
 

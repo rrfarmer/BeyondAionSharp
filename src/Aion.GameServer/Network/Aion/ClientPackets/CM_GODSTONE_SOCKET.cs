@@ -6,7 +6,7 @@ using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_GODSTONE_SOCKET (ATracer). Sockets a godstone into an equipped weapon at a target NPC in talk range. ItemSocketService red-tolerated.</summary>
 public class CM_GODSTONE_SOCKET : AionClientPacket

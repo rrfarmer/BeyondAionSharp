@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Model.Templates.Items.Bonuses;
 using Aion.GameServer.Model.Templates.Items.Purification;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;

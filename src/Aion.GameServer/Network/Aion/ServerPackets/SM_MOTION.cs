@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players.Motion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MOTION (MrPoke). Motion list (action 1), add (2), set (5), remove (6), and a player's 5 active motion slots (7). Converges PlayerEnterWorldService. Collection->ICollection; Map->Dictionary; map.get->GetValueOrDefault; switch-on-action. Motion/AionServerPacket red-tolerated.</summary>
 public class SM_MOTION : AionServerPacket

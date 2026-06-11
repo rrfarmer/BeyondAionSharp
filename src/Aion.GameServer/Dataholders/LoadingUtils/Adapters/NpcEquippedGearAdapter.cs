@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.Items;
 
-namespace Aion.GameServer.Dataholders.Loadingutils.Adapters;
+namespace Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 
 /// <summary>Java parity: dataholders/loadingutils/adapters/NpcEquippedGearAdapter (Luno). JAXB XmlAdapter&lt;NpcEquipmentList,NpcEquippedGear&gt;→plain class (no C# base, per SpaceSeparatedBytesAdapter idiom); throws Exception dropped. NpcEquipmentList/NpcEquippedGear red-tolerated.</summary>
 public class NpcEquippedGearAdapter

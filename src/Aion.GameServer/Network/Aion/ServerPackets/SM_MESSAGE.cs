@@ -7,7 +7,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Effects;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MESSAGE (-Nemesiss-, Sweetkr, Neon). Chat/system message packet (sender id/name/race filter, type, shout coords); truncates over hardcap. Converges SystemMailService/MailService/PlayerEnterWorldService. instanceof->is; getName(true)/isSysMsg()/getId()->PascalCase; substring->Substring. ChatType/AbnormalState red-tolerated.</summary>
 public class SM_MESSAGE : AionServerPacket

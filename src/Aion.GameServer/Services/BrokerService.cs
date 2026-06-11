@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Broker;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;

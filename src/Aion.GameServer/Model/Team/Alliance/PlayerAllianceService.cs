@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Team.League;
 using Aion.GameServer.Model.Team.League.Events;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Findgroup;

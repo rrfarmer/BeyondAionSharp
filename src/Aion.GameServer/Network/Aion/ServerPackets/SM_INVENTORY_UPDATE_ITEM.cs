@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion.Iteminfo;
 using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INVENTORY_UPDATE_ITEM (ATracer, -Nemesiss-). Updates a single inventory item with the blob matching the update type (equipped slot / conditioning / polish / full). Converges ItemActionService/ItemChargeService. switch-on-ItemUpdateType; ItemInfoBlob.writeMe(getBuf())->WriteMe(GetBuf()); nested aliases. Item/ItemInfoBlob red-tolerated.</summary>
 public class SM_INVENTORY_UPDATE_ITEM : AionServerPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ATTACK_RESPONSE. Attack-stop/notice reply built via static factories (different-area/invalid-target/too-far/obstacle/too-close/no-message). Writes message + attack count.</summary>
 public class SM_ATTACK_RESPONSE : AionServerPacket

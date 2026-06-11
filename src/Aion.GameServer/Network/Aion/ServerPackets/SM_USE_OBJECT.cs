@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_USE_OBJECT (ATracer). Use-object animation (player/target objIds + time + action type).</summary>
 public class SM_USE_OBJECT : AionServerPacket

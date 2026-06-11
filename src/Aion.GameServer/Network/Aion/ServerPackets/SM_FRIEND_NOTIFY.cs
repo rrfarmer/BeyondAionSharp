@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FRIEND_NOTIFY (Ben). Notifies a player when a friend logs in/out or deletes them. AionServerPacket red-tolerated.</summary>
 public class SM_FRIEND_NOTIFY : AionServerPacket

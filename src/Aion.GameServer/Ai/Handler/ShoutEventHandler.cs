@@ -53,7 +53,7 @@ public sealed class ShoutEventHandler
             {
                 Aion.GameServer.Model.Templates.Walker.WalkerTemplate tp = DataManager.WALKER_DATA.GetWalkerTemplate(walkerId);
                 int stepCount = tp.GetRouteSteps().Count;
-                if (Aion.Commons.Utils.Rnd.NextInt(stepCount) < 2)
+                if (Aion.GameServer.Commons.Utils.Rnd.NextInt(stepCount) < 2)
                 {
                     if (npc.GetTarget() is Aion.GameServer.Model.GameObjects.Players.Player)
                         Aion.GameServer.Services.NpcShoutsService.GetInstance().ShoutRandom(npc, (Aion.GameServer.Model.GameObjects.Players.Player)npc.GetTarget(), shouts, 0);
@@ -122,7 +122,7 @@ public sealed class ShoutEventHandler
                 List<Aion.GameServer.Model.Templates.Npcshout.NpcShout> shouts = DataManager.NPC_SHOUT_DATA.GetNpcShouts(npc.GetPosition().GetMapId(), npc.GetNpcId(), Aion.GameServer.Model.Templates.Npcshout.ShoutEventType.ATTACKED);
                 if (shouts != null && shouts.Count != 0)
                 {
-                    Aion.GameServer.Model.Templates.Npcshout.NpcShout shout = Aion.Commons.Utils.Rnd.Get(shouts);
+                    Aion.GameServer.Model.Templates.Npcshout.NpcShout shout = Aion.GameServer.Commons.Utils.Rnd.Get(shouts);
                     Aion.GameServer.Services.NpcShoutsService.GetInstance().Shout(npc, null, shout, shout.GetPollDelay() / 1000);
                 }
             }

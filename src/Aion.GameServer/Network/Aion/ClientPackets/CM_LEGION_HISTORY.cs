@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Type = Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_LEGION_HISTORY (Simple, xTz, Sykra). Requests a page of legion history of a given type (REWARD restricted to brigade general). LegionHistoryAction.Type aliased; ordinal index via Enum.GetValues. SM_LEGION_HISTORY red-tolerated.</summary>
 public class CM_LEGION_HISTORY : AionClientPacket

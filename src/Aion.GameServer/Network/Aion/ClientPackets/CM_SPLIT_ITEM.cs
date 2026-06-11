@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Items;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SPLIT_ITEM (kosyak). Splits an item stack into a destination slot/storage. ItemSplitService red-tolerated.</summary>
 public class CM_SPLIT_ITEM : AionClientPacket

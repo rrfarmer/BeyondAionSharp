@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RIDE_ROBOT (Cheatkiller). Player mounts/dismounts a robot (objId + robotId). Player red-tolerated.</summary>
 public class SM_RIDE_ROBOT : AionServerPacket

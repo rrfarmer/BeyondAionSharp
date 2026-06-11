@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_DOMINION_LOC_INFO (Neon, Yeats). Sends each legion-dominion location with owning legion + emblem (id/type/argb) + name. Converges PlayerEnterWorldService. LegionDominionLocation/Legion/LegionEmblem/services red-tolerated.</summary>
 public class SM_LEGION_DOMINION_LOC_INFO : AionServerPacket

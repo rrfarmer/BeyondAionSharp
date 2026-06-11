@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_NPC_INFO (-Nemesiss-). Visible npc/monster/summon info. getType(player)->GetType_() collision; CreatureMoveController&lt;?&gt;->&lt;Creature&gt;; gear iterable -> foreach KeyValuePair. Npc/Summon/NpcTemplate/NpcEquippedGear/TownService red-tolerated.</summary>
 public class SM_NPC_INFO : AionServerPacket

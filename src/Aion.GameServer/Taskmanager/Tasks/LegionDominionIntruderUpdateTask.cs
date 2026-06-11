@@ -4,7 +4,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.LegionDominion;
 using Aion.GameServer.Model.Templates.Cp;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 using Aion.GameServer.Utils;

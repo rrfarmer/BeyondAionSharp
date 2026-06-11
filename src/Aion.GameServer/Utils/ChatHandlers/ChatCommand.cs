@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Utils.ChatHandlers;

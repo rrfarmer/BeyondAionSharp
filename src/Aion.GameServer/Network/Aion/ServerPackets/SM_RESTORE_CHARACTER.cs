@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RESTORE_CHARACTER (-Nemesiss-). Response for CM_RESTORE_CHARACTER (success flag + char objId).</summary>
 public class SM_RESTORE_CHARACTER : AionServerPacket

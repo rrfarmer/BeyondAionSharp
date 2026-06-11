@@ -29,7 +29,7 @@ public class NpcShoutsService
         if (shouts == null || shouts.Count == 0)
             return;
 
-        int pollDelay = Aion.Commons.Utils.Rnd.Get(180, 360) * 1000;
+        int pollDelay = Aion.GameServer.Commons.Utils.Rnd.Get(180, 360) * 1000;
         foreach (NpcShout shout in shouts)
         {
             if (shout.GetPollDelay() != 0 && shout.GetPollDelay() < pollDelay)
@@ -60,7 +60,7 @@ public class NpcShoutsService
     {
         if (shouts == null || shouts.Count == 0)
             return;
-        Shout(sender, target, Aion.Commons.Utils.Rnd.Get(shouts), shoutCooldown);
+        Shout(sender, target, Aion.GameServer.Commons.Utils.Rnd.Get(shouts), shoutCooldown);
     }
 
     public void Shout(Npc sender, Aion.GameServer.Model.GameObjects.Players.Player target, NpcShout shout, int shoutCooldown)

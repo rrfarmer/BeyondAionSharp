@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_UPDATE (Rolandas, Neon). House settings update (3 unk shorts + WriteCommonInfo). House red-tolerated.</summary>
 public class SM_HOUSE_UPDATE : AbstractHouseInfoPacket

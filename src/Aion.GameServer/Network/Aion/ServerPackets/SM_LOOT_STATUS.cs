@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Drop;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Drop;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LOOT_STATUS (alexa026). Loot enable/disable + drop-list open/close, plus loot-effect lookup. Status enum sequential 0..3; stream mapToInt/filter/findAny.orElse(0) -> Select/Where/DefaultIfEmpty(0).First; getOrDefault->GetValueOrDefault. DropItem/DropRegistrationService red-tolerated.</summary>
 public class SM_LOOT_STATUS : AionServerPacket

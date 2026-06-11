@@ -3,7 +3,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
 using RankingListLegion = Aion.GameServer.Dao.AbyssRankDAO.RankingListLegion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ABYSS_RANKING_LEGIONS (zdead, LokiReborn). Abyss legion ranking list. RankingListLegion record accessors -> PascalCase (aliased from AbyssRankDAO); Collections.emptyList->new List. AbyssRankDAO red-tolerated.</summary>
 public class SM_ABYSS_RANKING_LEGIONS : AionServerPacket

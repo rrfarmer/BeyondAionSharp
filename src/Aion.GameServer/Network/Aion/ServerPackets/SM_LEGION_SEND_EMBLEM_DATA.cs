@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_SEND_EMBLEM_DATA (cura). Streams legion emblem byte data (size + bytes), following SM_LEGION_SEND_EMBLEM.</summary>
 public class SM_LEGION_SEND_EMBLEM_DATA : AionServerPacket

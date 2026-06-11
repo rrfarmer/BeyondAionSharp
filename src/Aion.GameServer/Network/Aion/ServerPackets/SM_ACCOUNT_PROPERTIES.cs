@@ -1,7 +1,7 @@
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ACCOUNT_PROPERTIES (pixfid, Rolandas, Yeats, Neon). Account flags incl. GM panel enable; mostly fixed/zero fields + account status. AdminConfig red-tolerated.</summary>
 public class SM_ACCOUNT_PROPERTIES : AionServerPacket

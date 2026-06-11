@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_UNWRAP_ITEM (xTz). Unwrap result (item objId + count).</summary>
 public class SM_UNWRAP_ITEM : AionServerPacket

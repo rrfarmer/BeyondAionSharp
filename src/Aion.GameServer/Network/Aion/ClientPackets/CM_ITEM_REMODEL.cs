@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Items;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_ITEM_REMODEL (Sarynth). Remodels an item (keep appearance of one, extract from another). ItemRemodelService red-tolerated.</summary>
 public class CM_ITEM_REMODEL : AionClientPacket

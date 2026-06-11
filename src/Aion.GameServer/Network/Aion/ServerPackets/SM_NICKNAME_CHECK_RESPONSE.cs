@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_NICKNAME_CHECK_RESPONSE (-Nemesiss-). Response for CM_CHECK_NICKNAME (0x00 ok, 0x0A not ok, etc).</summary>
 public class SM_NICKNAME_CHECK_RESPONSE : AionServerPacket

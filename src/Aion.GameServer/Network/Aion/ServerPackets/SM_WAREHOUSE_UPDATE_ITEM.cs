@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion.Iteminfo;
 using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_WAREHOUSE_UPDATE_ITEM (kosyachok, -Nemesiss-). Updates a single warehouse item (general-info blob) for a warehouse type. ItemInfoBlob.writeMe(getBuf())->WriteMe(GetBuf()); nested aliases. Item/ItemInfoBlob red-tolerated.</summary>
 public class SM_WAREHOUSE_UPDATE_ITEM : AionServerPacket

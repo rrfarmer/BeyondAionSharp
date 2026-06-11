@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_USE_HOUSE_OBJECT (Rolandas). Triggers a house object's dialog. HouseObject&lt;?&gt; -> &lt;PlaceableHouseObject&gt;. World red-tolerated.</summary>
 public class CM_USE_HOUSE_OBJECT : AionClientPacket

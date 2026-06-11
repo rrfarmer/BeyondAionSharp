@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SHOW_MAP (Lyahim). Map action 0 triggers conqueror/protector intruder scan. ConquerorAndProtectorService red-tolerated.</summary>
 public class CM_SHOW_MAP : AionClientPacket

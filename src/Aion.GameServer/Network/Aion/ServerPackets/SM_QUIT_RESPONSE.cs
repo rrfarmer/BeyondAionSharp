@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_QUIT_RESPONSE (-Nemesiss-). Response to CM_QUIT (1 normal, 2 plastic surgery/gender switch). Converges AntiHackService/PlayerTransfer disconnect. AionServerPacket red-tolerated.</summary>
 public class SM_QUIT_RESPONSE : AionServerPacket

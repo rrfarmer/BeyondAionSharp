@@ -2,7 +2,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MEGAPHONE (Artur, Neon). -megaphone chat window message. Nested FactionLabel enum carries a byte id derived from Race.getRaceId() (not ordinal) -> sealed value-class with static readonly instances + public id field. Race/Player red-tolerated.</summary>
 public class SM_MEGAPHONE : AionServerPacket

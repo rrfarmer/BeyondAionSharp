@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_LEGION_UPLOAD_EMBLEM (Simple). Uploads a chunk of custom emblem image data. LegionService red-tolerated.</summary>
 public class CM_LEGION_UPLOAD_EMBLEM : AionClientPacket

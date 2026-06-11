@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SHOW_DIALOG (alexa026, Avol, ATracer). Requests an NPC dialog; drops hide effects if the NPC can't be talked to while invisible. Npc/TalkInfo red-tolerated.</summary>
 public class CM_SHOW_DIALOG : AionClientPacket

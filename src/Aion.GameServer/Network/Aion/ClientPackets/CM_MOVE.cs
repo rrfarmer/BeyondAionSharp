@@ -3,13 +3,13 @@ using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.AntiHack;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_MOVE (-Nemesiss-). Core player-movement packet (position/glide/vehicle masks, jumping, falling, anti-hack, bogus-packet workaround). MovementMask/PlayerMoveController red-tolerated.</summary>
 public class CM_MOVE : AionClientPacket

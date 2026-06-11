@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_ACQUIRE (Rolandas). House acquire/release notice (playerId + address + acquire flag).</summary>
 public class SM_HOUSE_ACQUIRE : AionServerPacket

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_QUEST_REPEAT (Rolandas, Neon). Sends the list of repeatable quest ids.</summary>
 public class SM_QUEST_REPEAT : AionServerPacket

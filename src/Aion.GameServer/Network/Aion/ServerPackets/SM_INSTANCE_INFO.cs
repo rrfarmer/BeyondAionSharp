@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INSTANCE_INFO (nrg, Neon). Sends per-player instance cooldown info (reuse time, max/used entries, race hide flag) for the given (or all) instance ids. Converges PlayerEnterWorldService. Integer...->params int[]; Arrays.asList->new List; keySet().toArray->Keys.ToArray; currentTimeMillis->UtcNow. PortalCooldown/InstanceCooltime red-tolerated.</summary>
 public class SM_INSTANCE_INFO : AionServerPacket

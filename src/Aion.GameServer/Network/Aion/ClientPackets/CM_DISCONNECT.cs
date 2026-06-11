@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_DISCONNECT (Neon). Sent before the client closes the connection on AFK timeout; the client does not wait for a response.</summary>
 public class CM_DISCONNECT : AionClientPacket

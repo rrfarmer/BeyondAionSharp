@@ -6,14 +6,14 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Collections;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_QUEST_SHARE (ginho1, Neon). Shares a quest with nearby online group/alliance members. Java Predicate.and() chain -> combined lambda; TemporaryPlayerTeam wildcard -> var. QuestService/DataManager/SM_* red-tolerated.</summary>
 public class CM_QUEST_SHARE : AionClientPacket

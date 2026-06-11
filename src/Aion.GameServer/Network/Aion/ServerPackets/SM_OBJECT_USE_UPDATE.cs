@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_OBJECT_USE_UPDATE (Rolandas). Updates a usable house object (postbox/storage/useable-item). HouseObject&lt;?&gt; erased to HouseObject&lt;PlaceableHouseObject&gt;; instanceof->is + cast; getCheckType() nullable Integer->int?. HouseObject/UseableItemObject/UseItemAction red-tolerated.</summary>
 public class SM_OBJECT_USE_UPDATE : AionServerPacket

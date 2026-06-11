@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INSTANCE_COUNT_INFO (xTz). Instance entry-count info (map/instance id + group-type marker).</summary>
 public class SM_INSTANCE_COUNT_INFO : AionServerPacket

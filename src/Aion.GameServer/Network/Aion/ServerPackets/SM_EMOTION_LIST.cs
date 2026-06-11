@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players.Emotion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_EMOTION_LIST. Sends the player's emotion list (id + seconds until expiration) for a given action. Converges PlayerEnterWorldService. Collection->ICollection. Emotion/AionServerPacket red-tolerated.</summary>
 public class SM_EMOTION_LIST : AionServerPacket

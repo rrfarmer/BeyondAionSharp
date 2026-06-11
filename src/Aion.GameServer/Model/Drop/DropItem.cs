@@ -29,7 +29,7 @@ public class DropItem
     /// <summary>Regenerates item count upon each call.</summary>
     public void CalculateCount()
     {
-        count = Aion.Commons.Utils.Rnd.Get(dropTemplate.GetMinAmount(), dropTemplate.GetMaxAmount());
+        count = Aion.GameServer.Commons.Utils.Rnd.Get(dropTemplate.GetMinAmount(), dropTemplate.GetMaxAmount());
     }
 
     public int GetIndex()

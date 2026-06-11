@@ -2,7 +2,7 @@ using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Abyss;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_EDIT (Simple). Legion field update by type (level/ranking-pos/permissions/contributions/warehouse-kinah/announcement/disband/recover). Converges AbyssPointsService/AbyssRankingCache. switch-on-type; Legion.Announcement record accessors; Timestamp.getTime()/1000->ToUnixTimeMilliseconds()/1000. Legion/AbyssRankingCache red-tolerated.</summary>
 public class SM_LEGION_EDIT : AionServerPacket

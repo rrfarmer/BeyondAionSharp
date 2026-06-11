@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GROUP_DATA_EXCHANGE (xTz). Group blob exchange (action + optional unk + length-prefixed bytes).</summary>
 public class SM_GROUP_DATA_EXCHANGE : AionServerPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GAMEGUARD — GameGuard challenge (size + zero-filled buffer).</summary>
 public class SM_GAMEGUARD : AionServerPacket

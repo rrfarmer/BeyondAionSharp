@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FORCED_MOVE (Sweetkr). Forces a creature to a target position (used for anti-speedhack move-back). Converges AntiHackService. Creature/AionServerPacket red-tolerated.</summary>
 public class SM_FORCED_MOVE : AionServerPacket

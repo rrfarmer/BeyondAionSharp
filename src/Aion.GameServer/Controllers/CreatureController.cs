@@ -229,7 +229,7 @@ public abstract class CreatureController : VisibleObjectController
         Aion.GameServer.Model.Templates.Items.ItemTemplate template = DataManager.ITEM_DATA.GetItemTemplate(godStone.GetItemId());
         Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(attacker, godstoneInfo.GetSkillId(), godstoneInfo.GetSkillLevel(), GetOwner(), template);
         skill.SetFirstTargetRangeCheck(false);
-        if (!skill.CanUseSkill(Aion.GameServer.SkillEngine.properties.Properties.CastState.CAST_START))
+        if (!skill.CanUseSkill(Aion.GameServer.SkillEngine.Properties.Properties.CastState.CAST_START))
             return;
         Effect effect = new Effect(skill, GetOwner());
         effect.Initialize();

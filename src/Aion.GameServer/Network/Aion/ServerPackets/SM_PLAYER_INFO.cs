@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Templates.Cp;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PLAYER_INFO (-Nemesiss-, Avol, srx47, cura, -Enomine-, -Artur-, Neon, 230L) extends AbstractPlayerInfoPacket. Sends a visible player's full info: position/ids/transform, race/class/gender, name/title/legion-emblem, hp/dp, equipped appearance, full PlayerAppearance, speeds, store message, movement vector, target/team/house/membership, conqueror/protector rank. getType()->GetType_(); getName(true)->GetName(true); movementMask&=~ABSOLUTE; Vector3f normalizeLocal/multLocal. AbstractPlayerInfoPacket/Vector3f/PlayerAppearance/CPInfo red-tolerated.</summary>
 public class SM_PLAYER_INFO : AbstractPlayerInfoPacket

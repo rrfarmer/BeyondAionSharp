@@ -192,7 +192,7 @@ public class ItemPacketService
     /// <summary>New item will be displayed in storage. Java fallthrough: LEGION_WAREHOUSE (non-kinah) → default.</summary>
     public static void SendStorageUpdatePacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemAddType addType)
     {
-        Aion.GameServer.Services.Toypet.PetFeedUnusualStorageArtifactCapture.RegisterStorageUpdate(player, storageType, item, addType);
+        Aion.GameServer.Services.ToyPet.PetFeedUnusualStorageArtifactCapture.RegisterStorageUpdate(player, storageType, item, addType);
         if (storageType == StorageType.CUBE)
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryAddItem(new List<Item> { item }, player, addType));

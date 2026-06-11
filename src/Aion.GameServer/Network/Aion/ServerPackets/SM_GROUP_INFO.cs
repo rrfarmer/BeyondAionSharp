@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GROUP_INFO (Lyahim, ATracer, xTz). Group summary: id/leader/loot rules/team type. getType()->GetType_() collision. PlayerGroup/LootGroupRules/TeamType red-tolerated.</summary>
 public class SM_GROUP_INFO : AionServerPacket

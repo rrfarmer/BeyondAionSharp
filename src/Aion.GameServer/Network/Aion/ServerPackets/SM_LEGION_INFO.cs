@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Abyss;
 using Announcement = Aion.GameServer.Model.Team.Legion.Legion.Announcement;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_INFO (Simple). Legion summary: name/level/ranking/permissions/contribution/disband/dominion + announcements. Legion.Announcement record accessors -> PascalCase; Collections.singletonList -> new List; time().getTime()/1000 -> ToUnixTimeMilliseconds()/1000. Legion/AbyssRankingCache red-tolerated.</summary>
 public class SM_LEGION_INFO : AionServerPacket

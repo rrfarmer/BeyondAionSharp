@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INVENTORY_INFO (-Nemesiss-, alexa026, Avol, ATracer, Rolandas, Artur). Sends inventory contents (cube expands + per-item info blob). removeAll(singletonList(null))->RemoveAll(x=>x==null); getBuf()->GetBuf(). Item/ItemInfoBlob red-tolerated.</summary>
 public class SM_INVENTORY_INFO : AionServerPacket

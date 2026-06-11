@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.Stats;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GM_SHOW_PLAYER_STATUS (Yeats). GM stat-sheet dump for a player (name + reserved Qs + full current/base stat block, same layout as SM_STATS_INFO). getCurrent()/getBase()->PascalCase; writeF(x/1000f); StatEnum/PlayerGameStats/CalculationType red-tolerated.</summary>
 public class SM_GM_SHOW_PLAYER_STATUS : AionServerPacket

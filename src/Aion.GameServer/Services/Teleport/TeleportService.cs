@@ -15,7 +15,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Portal;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Teleport;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Players;

@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Ingameshop;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_IN_GAME_SHOP_LIST (xTz, KID). Paged in-game shop item list (salesRanking 1) or top-sales list. computeIfAbsent->TryGetValue-or-add; Map.get->GetValueOrDefault. IGItem/InGameShopEn red-tolerated.</summary>
 public class SM_IN_GAME_SHOP_LIST : AionServerPacket

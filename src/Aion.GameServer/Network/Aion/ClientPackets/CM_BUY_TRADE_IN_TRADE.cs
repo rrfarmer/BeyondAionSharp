@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_BUY_TRADE_IN_TRADE (MrPoke, Ritsu). Buys an item from a trade-in NPC, surrendering trade-in items. TradeService red-tolerated.</summary>
 public class CM_BUY_TRADE_IN_TRADE : AionClientPacket

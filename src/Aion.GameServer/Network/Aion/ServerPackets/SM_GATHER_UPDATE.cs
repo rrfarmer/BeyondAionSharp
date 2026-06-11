@@ -1,8 +1,8 @@
 using Aion.GameServer.Model.Templates.Gather;
 using Aion.GameServer.Network.Aion;
-using static Aion.GameServer.Network.Aion.Serverpackets.SM_SYSTEM_MESSAGE;
+using static Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GATHER_UPDATE (ATracer, orz, Yeats, Neon). Updates current gathering status/progress; per-action system message. switch-arrow -> switch statement; static-import STR_* from SM_SYSTEM_MESSAGE. GatherableTemplate/Material/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class SM_GATHER_UPDATE : AionServerPacket

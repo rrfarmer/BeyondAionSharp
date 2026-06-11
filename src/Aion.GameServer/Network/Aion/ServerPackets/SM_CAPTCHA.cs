@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CAPTCHA (Cura). Captcha challenge (type 1: image data) / result (type 3: correct flag + ban time).</summary>
 public class SM_CAPTCHA : AionServerPacket

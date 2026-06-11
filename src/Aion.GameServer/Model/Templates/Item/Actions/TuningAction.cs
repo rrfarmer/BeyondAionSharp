@@ -68,8 +68,8 @@ public class TuningAction : AbstractItemAction
             {
                 targetItem.SetTuneCount(targetItem.GetTuneCount() + 1);
                 player.GetInventory().SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
-                newOptionalSockets = Aion.Commons.Utils.Rnd.Get(0, targetItem.GetItemTemplate().GetOptionSlotBonus());
-                newEnchantBonus = Aion.Commons.Utils.Rnd.Get(0, targetItem.GetItemTemplate().GetMaxEnchantBonus());
+                newOptionalSockets = Aion.GameServer.Commons.Utils.Rnd.Get(0, targetItem.GetItemTemplate().GetOptionSlotBonus());
+                newEnchantBonus = Aion.GameServer.Commons.Utils.Rnd.Get(0, targetItem.GetItemTemplate().GetMaxEnchantBonus());
             }
             newStatBonusId = GetRandomStatBonusIdFor(targetItem);
             Aion.GameServer.Model.Items.PendingTuneResult result = new Aion.GameServer.Model.Items.PendingTuneResult(newOptionalSockets, newEnchantBonus, newStatBonusId, shouldNotReduceTuneCount);

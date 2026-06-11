@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MARK_FRIENDLIST (xTz). Marks the friend list (active player objId + flags).</summary>
 public class SM_MARK_FRIENDLIST : AionServerPacket

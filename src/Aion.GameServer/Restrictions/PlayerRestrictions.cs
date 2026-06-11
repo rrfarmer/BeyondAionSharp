@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Model.Templates.Panels;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Ban;

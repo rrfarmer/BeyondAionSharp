@@ -1,9 +1,9 @@
 using System;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 

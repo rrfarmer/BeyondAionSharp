@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHECK_NICKNAME (-Nemesiss-, cura). Client asks whether a given nickname is free/valid. PlayerService/NameRestrictionService/SM_NICKNAME_CHECK_RESPONSE red-tolerated.</summary>
 public class CM_CHECK_NICKNAME : AionClientPacket

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CASTSPELL (alexa026, rhys2002). Player casts a skill at object/point/area target; validates death, pet-order, passive, and skill-cooldown timing. DataManager/SkillTemplate/AuditLogger red-tolerated.</summary>
 public class CM_CASTSPELL : AionClientPacket

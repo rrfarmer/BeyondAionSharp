@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PLAY_MOVIE (-orz-, MrPoke). Plays a cutscene/movie; sets WATCHING_CUTSCENE custom state. CustomPlayerState red-tolerated.</summary>
 public class SM_PLAY_MOVIE : AionServerPacket

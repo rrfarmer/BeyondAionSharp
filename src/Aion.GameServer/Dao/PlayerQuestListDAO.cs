@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using MySqlConnector;
 using Aion.Commons.Database;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.QuestEngine.Model;

@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHECK_PAK (ginho1). Reports data-pak integrity status; audits modified paks. AuditLogger red-tolerated.</summary>
 public class CM_CHECK_PAK : AionClientPacket

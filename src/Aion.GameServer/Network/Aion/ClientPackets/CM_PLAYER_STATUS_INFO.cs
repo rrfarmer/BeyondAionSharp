@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Team.League;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PLAYER_STATUS_INFO (Lyahim, ATracer, Simple, xTz). Team command dispatcher (LFG / alliance group change / league alliance move / generic). TeamCommand/PlayerTeamCommandService red-tolerated.</summary>
 public class CM_PLAYER_STATUS_INFO : AionClientPacket

@@ -7,7 +7,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PET (M@xx, xTz, Rolandas). Pet load/adopt/surrender/spawn/dismiss/food/rename/mood/special-function. PetAction & PetSpecialFunction are PascalCase C# enums with value==id (getActionId/getId -> (int)); PetFunctionType keeps SCREAMING names + GetId() extension. currentTimeMillis()->DateTimeOffset. Pet/PetCommonData/PetTemplate red-tolerated.</summary>
 public class SM_PET : AionServerPacket

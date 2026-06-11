@@ -7,7 +7,7 @@ using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHARACTER_EDIT (IlBuono, Neon). Client requests plastic-surgery / gender-switch edit of an existing character (in edit mode), consuming the appropriate ticket. PlayerEnterWorldService/PlayerAppearanceDAO red-tolerated.</summary>
 public class CM_CHARACTER_EDIT : AbstractCharacterEditPacket

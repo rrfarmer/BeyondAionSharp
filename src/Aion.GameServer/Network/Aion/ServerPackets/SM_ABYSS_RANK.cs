@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Abyss;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ABYSS_RANK (Nemiroff). Sends a player's abyss rank stats (AP/GP/rank/ranking position + all/daily/weekly/last kill/AP/GP). Converges AbyssPointsService/GloryPointsService/PlayerEnterWorldService. Integer rankingListPosition->int?; AbyssRank/AbyssRankingCache red-tolerated.</summary>
 public class SM_ABYSS_RANK : AionServerPacket

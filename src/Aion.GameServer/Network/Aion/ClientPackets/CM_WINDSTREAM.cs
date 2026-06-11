@@ -7,13 +7,13 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Templates.FlyPath;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_WINDSTREam. Windstream flight state transitions (enter/leave/boost). EmotionType/CreatureState PascalCase; FlyState/PlayerMode/FlightPath.Type SCREAMING. SM_WINDSTREAM/SM_EMOTION red-tolerated.</summary>
 public class CM_WINDSTREAM : AionClientPacket

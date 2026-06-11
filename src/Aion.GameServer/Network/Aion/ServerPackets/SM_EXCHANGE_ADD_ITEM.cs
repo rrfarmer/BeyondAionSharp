@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_EXCHANGE_ADD_ITEM (Avol, ATracer). Sends an item added to an exchange slot: action byte, template/object id, name, then the full ItemInfoBlob. getBuf()->GetBuf(); ItemInfoBlob red-tolerated.</summary>
 public class SM_EXCHANGE_ADD_ITEM : AionServerPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_QUESTIONNAIRE (lhw, Kaipo). Sends survey HTML data (chunked); html.length()*2 byte count. </summary>
 public class SM_QUESTIONNAIRE : AionServerPacket

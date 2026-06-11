@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_ATTACK (alexa026, Avol, ATracer, KID). Player initiates auto-attack on a creature target. Creature/controller red-tolerated.</summary>
 public class CM_ATTACK : AionClientPacket

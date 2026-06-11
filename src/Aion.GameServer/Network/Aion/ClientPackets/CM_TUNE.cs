@@ -7,7 +7,7 @@ using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_TUNE (xTz). Identifies an unidentified item or applies a tuning scroll. ItemActionService/TuningAction red-tolerated.</summary>
 public class CM_TUNE : AionClientPacket

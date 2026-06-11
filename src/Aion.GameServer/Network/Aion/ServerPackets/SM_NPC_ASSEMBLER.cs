@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Assemblednpc;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_NPC_ASSEMBLER (xTz). Spawns/despawns an assembled NPC (e.g. dredgion carrier): per-part route/object/npc/static ids + time on map, or 0 for despawn. Converges BalaurAssaultService/FortressAssault SM_NPC_ASSEMBLER. AssembledNpc/AssembledNpcPart/AionServerPacket red-tolerated.</summary>
 public class SM_NPC_ASSEMBLER : AionServerPacket

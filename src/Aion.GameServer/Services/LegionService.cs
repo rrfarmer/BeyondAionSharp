@@ -11,7 +11,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Team.Legion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Services.Trade;

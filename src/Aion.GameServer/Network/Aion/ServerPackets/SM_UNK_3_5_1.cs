@@ -1,7 +1,7 @@
 using Aion.GameServer.Configs.Network;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_UNK_3_5_1 (xTz). Fast-track info / server-switch response. Converges PlayerEnterWorldService. NetworkConfig/AionServerPacket red-tolerated.</summary>
 public class SM_UNK_3_5_1 : AionServerPacket

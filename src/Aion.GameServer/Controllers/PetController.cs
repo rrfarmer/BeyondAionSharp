@@ -11,7 +11,7 @@ public class PetController : VisibleObjectController<Pet>
     {
         base.OnDelete();
         Aion.GameServer.Model.GameObjects.Players.PetCommonData commonData = GetOwner().GetCommonData();
-        Aion.GameServer.Services.Toypet.PetFeedProgress progress = commonData.GetFeedProgress();
+        Aion.GameServer.Services.ToyPet.PetFeedProgress progress = commonData.GetFeedProgress();
         commonData.CancelRefeedTask();
         if (progress != null)
         {

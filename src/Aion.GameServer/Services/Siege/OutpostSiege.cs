@@ -4,7 +4,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Siege;
 using Aion.GameServer.Model.Siege;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.SkillEngine;

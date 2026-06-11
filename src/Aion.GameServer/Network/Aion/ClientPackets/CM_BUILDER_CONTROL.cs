@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>
 /// Java parity: network/aion/clientpackets/CM_BUILDER_CONTROL (ginho1). Sent for GM Panel buttons when "Builder control (///)" is selected, and

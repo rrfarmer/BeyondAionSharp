@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ITEM_USAGE_ANIMATION (ATracer). Broadcasts an item-use cast animation (player/target/item ids, time, end/unk flags). On a timed use it marks the player's using-item. Converges item/skill service usages (ItemActionService, ItemSocketService, PlayerReviveService). AionServerPacket/write* red-tolerated.</summary>
 public class SM_ITEM_USAGE_ANIMATION : AionServerPacket

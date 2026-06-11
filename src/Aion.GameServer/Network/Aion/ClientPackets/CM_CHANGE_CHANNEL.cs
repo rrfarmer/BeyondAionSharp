@@ -7,7 +7,7 @@ using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHANGE_CHANNEL (ATracer). Requests a world-channel change (FastTrack twin-count offset). WorldMapInstance/TeleportService red-tolerated.</summary>
 public class CM_CHANGE_CHANNEL : AionClientPacket

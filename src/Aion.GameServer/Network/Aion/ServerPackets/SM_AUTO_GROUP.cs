@@ -2,7 +2,7 @@ using System;
 using Aion.GameServer.Model.Autogroup;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_AUTO_GROUP (SheppeR, Guapo, nrg, Estrayl). Auto-group/instance matchmaking UI packet keyed by windowId (request/waiting/pass/enter/icon windows). Converges AutoGroupUtility SM_AUTO_GROUP ctors. switch-arrow grouped cases->stacked case labels; AutoGroupType.getAGTByMaskId->GetAGTByMaskId; IllegalArgument->Argument. AionServerPacket/AutoGroupType/write* red-tolerated.</summary>
 public class SM_AUTO_GROUP : AionServerPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_POSITION_SELF (cura). Instantly moves the player to a position (x/y/z + heading); client replies with CM_POSITION_SELF.</summary>
 public class SM_POSITION_SELF : AionServerPacket

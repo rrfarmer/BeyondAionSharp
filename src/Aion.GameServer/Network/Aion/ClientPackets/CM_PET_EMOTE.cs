@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PET_EMOTE (ATracer). Pet movement/emotion packet. PetEmote ported PascalCase (PetEmoteResolver.GetEmoteById). SM_PET_EMOTE/World red-tolerated.</summary>
 public class CM_PET_EMOTE : AionClientPacket

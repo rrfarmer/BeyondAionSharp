@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion.Iteminfo;
 using Aion.GameServer.Services.Players;
 using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_BROKER_SERVICE (IlBuono, kosyachok). Broker search/register/settled/sell packets. CRITICAL: BrokerPacketType has DUPLICATE ids (SHOW_SETTLED_ICON=5, SETTLED_ITEMS=5) and the switch distinguishes by identity -> sealed value-class + reference-equality if-chain (a plain enum gives duplicate case-label errors), like SM_ATTACK_STATUS. Function->Func; toArray->ToArray; TimeUnit.MILLISECONDS.toDays(ms)->ms/86400000; currentTimeMillis()->DateTimeOffset; getBuf()->GetBuf(). BrokerItem/Item/EnchantInfoBlobEntry/ItemInfoBlob red-tolerated.</summary>
 public class SM_BROKER_SERVICE : AionServerPacket

@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_UNWRAP_ITEM (xTz). Unwraps a packed item (negates pack count, flags update). SM_UNWRAP_ITEM/SM_INVENTORY_UPDATE_ITEM red-tolerated.</summary>
 public class CM_UNWRAP_ITEM : AionClientPacket

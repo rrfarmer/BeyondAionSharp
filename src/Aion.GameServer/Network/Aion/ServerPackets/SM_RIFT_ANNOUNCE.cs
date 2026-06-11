@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Controllers;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RIFT_ANNOUNCE (Sweetkr, -Enomine-). Rift map announce (12-slot counts), silentera (gelk/ingg), rift spawn master/slave info, and despawn, keyed by actionId. Converges RiftInformer SM_RIFT_ANNOUNCE ctors. Map->Dictionary; rifts.values()->Values; switch-on-actionId; writeRiftType helper. RVController/AionServerPacket/write* red-tolerated.</summary>
 public class SM_RIFT_ANNOUNCE : AionServerPacket

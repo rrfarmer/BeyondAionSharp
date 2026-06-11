@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ENTER_WORLD_CHECK (-Nemesiss-). Connection-status message box for the selected character. Nested Msg enum ids are sequential (0..6 = ordinal) so a plain C# enum + (byte) cast is faithful.</summary>
 public class SM_ENTER_WORLD_CHECK : AionServerPacket

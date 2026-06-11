@@ -5,14 +5,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
-using LOG = Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS.LOG;
-using TYPE = Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS.TYPE;
+using LOG = Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS.LOG;
+using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS.TYPE;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CAPTCHA (Cura). Client captcha answer / extract-status query. Client packet idiom: ReadImpl reads, RunImpl handles; readUC/readS->ReadUC/ReadS; equalsIgnoreCase->StringComparison.OrdinalIgnoreCase; SM_ATTACK_STATUS.TYPE/LOG aliased; AionConnection.State aliased; LoggerFactory->NullLogger. AionClientPacket base/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class CM_CAPTCHA : AionClientPacket

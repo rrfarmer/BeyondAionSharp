@@ -8,7 +8,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GROUP_MEMBER_INFO (Lyahim, ATracer). Per-GroupEvent group member update (hp/mp/fp, position, class/gender/level, abnormal effects). Field event->eventValue (keyword); SkillTargetSlot.ordinal()->Array.IndexOf(Enum.GetValues) (position, see [[enum-ordinal-vs-value-trap]]); SkillTargetSlot.values()->Enum.GetValues; FULLSLOTS/GetId on SkillTargetSlotExtensions. Effect/PlayerGroup/WorldPosition red-tolerated.</summary>
 public class SM_GROUP_MEMBER_INFO : AionServerPacket

@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Summons;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SUMMON_COMMAND (ATracer). Issues a summon mode command (attack/rest/guard/etc). SummonsService/SummonMode red-tolerated.</summary>
 public class CM_SUMMON_COMMAND : AionClientPacket

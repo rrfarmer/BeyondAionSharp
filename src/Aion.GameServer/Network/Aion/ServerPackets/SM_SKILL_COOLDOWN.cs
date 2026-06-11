@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SKILL_COOLDOWN (ATracer, nrg). Sends skill cooldown remaining/duration per skill (single, full player list keyed by cooldownId, or reset). Converges PlayerEnterWorldService. Comparator.comparingInt->Sort comparison; stream toMap->ToDictionary; Map.get null->TryGetValue; nested record Cooldown; currentTimeMillis->UtcNow. PlayerSkillEntry/SKILL_DATA/AionServerPacket red-tolerated.</summary>
 public class SM_SKILL_COOLDOWN : AionServerPacket

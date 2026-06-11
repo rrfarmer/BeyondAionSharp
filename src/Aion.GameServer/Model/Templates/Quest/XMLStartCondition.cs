@@ -4,7 +4,7 @@ using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
 

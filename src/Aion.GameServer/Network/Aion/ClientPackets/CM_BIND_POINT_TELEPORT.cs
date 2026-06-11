@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Teleport;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_BIND_POINT_TELEPORT (ginho1). Bind-point teleport request (cast/cancel). BindPointTeleportService converged; AionClientPacket base red-tolerated.</summary>
 public class CM_BIND_POINT_TELEPORT : AionClientPacket

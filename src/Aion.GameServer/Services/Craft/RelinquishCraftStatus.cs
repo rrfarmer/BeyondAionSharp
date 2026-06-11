@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Craft;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Templates.Recipe;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;

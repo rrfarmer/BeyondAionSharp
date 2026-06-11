@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_WAREHOUSE_ADD_ITEM (kosyachok, -Nemesiss-). Adds an item to a warehouse view (type/addMask + item info blob). Collections.singletonList->new List; getBuf()->GetBuf(); ItemAddType aliased. Item/ItemInfoBlob/ItemPacketService red-tolerated.</summary>
 public class SM_WAREHOUSE_ADD_ITEM : AionServerPacket

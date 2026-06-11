@@ -10,7 +10,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Spawns.Panesterra;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Panesterra;
 using Aion.GameServer.Services.Teleport;

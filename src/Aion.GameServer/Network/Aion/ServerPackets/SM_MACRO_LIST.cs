@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MACRO_LIST (-Nemesiss-). Sends the player's macro list (paged), optionally clearing first. Converges PlayerEnterWorldService SplitList paging (STATIC_BODY_SIZE + DYNAMIC_BODY_PART_SIZE_CALCULATOR). Function->Func; Macros.Macro record accessors xml()/id()->Xml()/Id(); writeH(-size) negative count preserved. Macros/AionServerPacket red-tolerated.</summary>
 public class SM_MACRO_LIST : AionServerPacket

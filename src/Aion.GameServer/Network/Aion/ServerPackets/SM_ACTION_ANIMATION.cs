@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ACTION_ANIMATION (ATracer). Plays an action animation on a target (id + optional level/objId). ActionAnimation red-tolerated.</summary>
 public class SM_ACTION_ANIMATION : AionServerPacket

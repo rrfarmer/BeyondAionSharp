@@ -1,7 +1,7 @@
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CHARACTER_SELECT (cura). Passkey window/result packet for character selection. SecurityConfig red-tolerated.</summary>
 public class SM_CHARACTER_SELECT : AionServerPacket

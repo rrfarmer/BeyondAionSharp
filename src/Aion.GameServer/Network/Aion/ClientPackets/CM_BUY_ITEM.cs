@@ -12,7 +12,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_BUY_ITEM (orz, ATracer, Simple, xTz). Buy/sell/repurchase against private store, shop, abyss/reward shop, or merchant pet. TradeService/PrivateStoreService/RepurchaseService red-tolerated.</summary>
 public class CM_BUY_ITEM : AionClientPacket

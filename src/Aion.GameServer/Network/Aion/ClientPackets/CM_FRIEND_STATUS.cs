@@ -3,11 +3,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_FRIEND_STATUS (Ben). Received when a user changes their buddylist status. FriendList.Status/SM_FRIEND_STATUS red-tolerated.</summary>
 public class CM_FRIEND_STATUS : AionClientPacket

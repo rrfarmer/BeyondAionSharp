@@ -4,13 +4,13 @@ using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SUMMON_MOVE (ATracer). Processes summon/mercenary movement packets (position/glide/vehicle masks). CreatureMoveController&lt;? extends Creature&gt; -> &lt;Creature&gt;. SM_MOVE/MovementMask red-tolerated.</summary>
 public class CM_SUMMON_MOVE : AionClientPacket

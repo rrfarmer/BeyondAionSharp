@@ -22,7 +22,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Spawns.Riftspawns;
 using Aion.GameServer.Model.Templates.Spawns.Siegespawns;
 using Aion.GameServer.Model.Templates.Spawns.Vortexspawns;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;

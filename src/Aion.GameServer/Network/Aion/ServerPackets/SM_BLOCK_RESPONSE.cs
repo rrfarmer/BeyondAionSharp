@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_BLOCK_RESPONSE (Ben). Responses to block-list requests: writes target name + a result code.</summary>
 public class SM_BLOCK_RESPONSE : AionServerPacket

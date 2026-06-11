@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INVENTORY_ADD_ITEM (ATracer). Adds items to the inventory view (mask + per-item info blob). getBuf()->GetBuf(); ItemAddType aliased from ItemPacketService. Item/ItemInfoBlob/ItemStorage red-tolerated.</summary>
 public class SM_INVENTORY_ADD_ITEM : AionServerPacket

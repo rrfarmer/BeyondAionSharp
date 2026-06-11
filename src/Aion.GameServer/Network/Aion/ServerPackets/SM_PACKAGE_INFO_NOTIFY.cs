@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PACKAGE_INFO_NOTIFY (Rolandas). Notifies of an account package (fixed fields + expiration time).</summary>
 public class SM_PACKAGE_INFO_NOTIFY : AionServerPacket

@@ -140,7 +140,7 @@ public class DecomposeAction : AbstractItemAction
                 {
                     if (resultItem.IsObtainableFor(player))
                     {
-                        int count = Aion.Commons.Utils.Rnd.Get(resultItem.GetMinCount(), resultItem.GetMaxCount());
+                        int count = Aion.GameServer.Commons.Utils.Rnd.Get(resultItem.GetMinCount(), resultItem.GetMaxCount());
                         Aion.GameServer.Services.Items.ItemService.AddItem(player, resultItem.GetItemId(), count, true,
                             new Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate(Aion.GameServer.Services.Items.ItemPacketService.ItemAddType.DECOMPOSABLE, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT));
                     }
@@ -157,7 +157,7 @@ public class DecomposeAction : AbstractItemAction
                             case RandomType.ENCHANTMENT:
                                 do
                                 {
-                                    randomId = 166000191 + (int)Math.Floor(itemLvl / 100f + 0.5f) + Aion.Commons.Utils.Rnd.NextInt(4);
+                                    randomId = 166000191 + (int)Math.Floor(itemLvl / 100f + 0.5f) + Aion.GameServer.Commons.Utils.Rnd.NextInt(4);
                                     i++;
                                     if (i > 50)
                                     {
@@ -210,13 +210,13 @@ public class DecomposeAction : AbstractItemAction
                                         itemQuality = ItemQuality.COMMON;
                                     List<ItemTemplate> selectedStones = stones
                                         .Where(t => t.GetItemQuality() == itemQuality && !t.GetName().Contains(" MP ")).ToList();
-                                    randomId = Aion.Commons.Utils.Rnd.Get(selectedStones).GetTemplateId();
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(selectedStones).GetTemplateId();
                                 }
                                 else
                                 {
                                     List<ItemTemplate> selectedStones = stones
                                         .Where(t => t.GetItemQuality() != ItemQuality.LEGEND && !t.GetName().Contains(" MP ")).ToList();
-                                    randomId = Aion.Commons.Utils.Rnd.Get(selectedStones).GetTemplateId();
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(selectedStones).GetTemplateId();
                                 }
                                 break;
                             }
@@ -244,52 +244,52 @@ public class DecomposeAction : AbstractItemAction
                                     itemQuality = ItemQuality.COMMON;
                                 List<ItemTemplate> selectedStones = ancientStones
                                     .Where(t => t.GetItemQuality() == itemQuality && !t.GetName().Contains(" MP ")).ToList();
-                                randomId = Aion.Commons.Utils.Rnd.Get(selectedStones).GetTemplateId();
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(selectedStones).GetTemplateId();
                                 break;
                             }
                             case RandomType.CHUNK_EARTH:
                             {
                                 int[] earth = chunkEarth[player.GetRace()];
-                                randomId = Aion.Commons.Utils.Rnd.Get(earth);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(earth);
                                 break;
                             }
                             case RandomType.CHUNK_SAND:
                             {
                                 int[] sand = chunkSand[player.GetRace()];
-                                randomId = Aion.Commons.Utils.Rnd.Get(sand);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(sand);
                                 break;
                             }
                             case RandomType.PREMIUM_OPHIDAN_RECIPE:
                             {
                                 int[] recipe = premiumOphidanRecipe[player.GetRace()];
-                                randomId = Aion.Commons.Utils.Rnd.Get(recipe);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(recipe);
                                 break;
                             }
                             case RandomType.CHUNK_ROCK:
-                                randomId = Aion.Commons.Utils.Rnd.Get(chunkRock);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(chunkRock);
                                 break;
                             case RandomType.CHUNK_GEMSTONE:
-                                randomId = Aion.Commons.Utils.Rnd.Get(chunkGemstone);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(chunkGemstone);
                                 break;
                             case RandomType.SCROLLS:
-                                randomId = Aion.Commons.Utils.Rnd.Get(scrolls);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(scrolls);
                                 break;
                             case RandomType.POTION:
-                                randomId = Aion.Commons.Utils.Rnd.Get(potion);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(potion);
                                 break;
                             case RandomType.LESSER_POTIONS:
-                                randomId = Aion.Commons.Utils.Rnd.Get(lesser_potions);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(lesser_potions);
                                 break;
                             case RandomType.POTION_50:
-                                randomId = Aion.Commons.Utils.Rnd.Get(potion_50);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(potion_50);
                                 break;
                             case RandomType.ILLUSION_GODSTONE:
-                                randomId = Aion.Commons.Utils.Rnd.Get(illusion_godstones);
+                                randomId = Aion.GameServer.Commons.Utils.Rnd.Get(illusion_godstones);
                                 break;
                             case RandomType.ANCIENTITEMS:
                                 do
                                 {
-                                    randomId = Aion.Commons.Utils.Rnd.Get(186000051, 186000066);
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(186000051, 186000066);
                                     i++;
                                     if (i > 50)
                                     {
@@ -301,7 +301,7 @@ public class DecomposeAction : AbstractItemAction
                             case RandomType.ANCIENT_CROWN:
                                 do
                                 {
-                                    randomId = Aion.Commons.Utils.Rnd.Get(186000051, 186000054);
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(186000051, 186000054);
                                     i++;
                                     if (i > 50)
                                     {
@@ -313,7 +313,7 @@ public class DecomposeAction : AbstractItemAction
                             case RandomType.ANCIENT_GOBLET:
                                 do
                                 {
-                                    randomId = Aion.Commons.Utils.Rnd.Get(186000055, 186000058);
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(186000055, 186000058);
                                     i++;
                                     if (i > 50)
                                     {
@@ -325,7 +325,7 @@ public class DecomposeAction : AbstractItemAction
                             case RandomType.ANCIENT_SEAL:
                                 do
                                 {
-                                    randomId = Aion.Commons.Utils.Rnd.Get(186000059, 186000062);
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(186000059, 186000062);
                                     i++;
                                     if (i > 50)
                                     {
@@ -337,7 +337,7 @@ public class DecomposeAction : AbstractItemAction
                             case RandomType.ANCIENT_ICON:
                                 do
                                 {
-                                    randomId = Aion.Commons.Utils.Rnd.Get(186000063, 186000066);
+                                    randomId = Aion.GameServer.Commons.Utils.Rnd.Get(186000063, 186000066);
                                     i++;
                                     if (i > 50)
                                     {
@@ -349,7 +349,7 @@ public class DecomposeAction : AbstractItemAction
                         }
                         if (randomId != 0)
                         {
-                            int count = Aion.Commons.Utils.Rnd.Get(randomItem.GetMinCount(), randomItem.GetMaxCount());
+                            int count = Aion.GameServer.Commons.Utils.Rnd.Get(randomItem.GetMinCount(), randomItem.GetMaxCount());
                             Aion.GameServer.Services.Items.ItemService.AddItem(player, randomId, count, true,
                                 new Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate(Aion.GameServer.Services.Items.ItemPacketService.ItemAddType.DECOMPOSABLE, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT));
                         }

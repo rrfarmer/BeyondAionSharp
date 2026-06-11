@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
+using static Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 

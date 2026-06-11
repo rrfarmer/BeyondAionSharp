@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CHANNEL_INFO (ATracer). Reports current channel + instance (twin) count for a position, honoring beginner instances and the fast-track emulation config. Converges PlayerEnterWorldService SM_CHANNEL_INFO. WorldPosition/WorldMapTemplate/WorldConfig/AionServerPacket red-tolerated.</summary>
 public class SM_CHANNEL_INFO : AionServerPacket

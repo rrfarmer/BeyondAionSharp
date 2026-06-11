@@ -47,6 +47,6 @@ public class GodStone : ItemStone
         if (procProbability > 0)
             procProbability = Math.Max(1, (int)Math.Floor(procProbability * Aion.GameServer.Configs.Main.CustomConfig.GODSTONE_ACTIVATION_RATE + 0.5f));
 
-        return Aion.Commons.Utils.Rnd.Get(1, 1000) <= procProbability;
+        return Aion.GameServer.Commons.Utils.Rnd.Get(1, 1000) <= procProbability;
     }
 }

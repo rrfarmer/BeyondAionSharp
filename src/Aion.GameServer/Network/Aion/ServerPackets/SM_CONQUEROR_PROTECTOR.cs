@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
-using static Aion.GameServer.Network.Aion.Serverpackets.AbstractPlayerInfoPacket;
+using static Aion.GameServer.Network.Aion.ServerPackets.AbstractPlayerInfoPacket;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CONQUEROR_PROTECTOR (Source, xTz; SM_SERIAL_KILLER pre-4.8). Sends conqueror/protector buff level + intruder-scan cooldown, intruder lists (rank/pos/name), or broadcast rank packets, keyed by type. Converges ConquerorAndProtectorService SM_CONQUEROR_PROTECTOR usages. switch fallthrough->stacked case labels; Collection->ICollection; getName(true)->GetName(true). AionServerPacket/write* methods red-tolerated.</summary>
 public class SM_CONQUEROR_PROTECTOR : AionServerPacket

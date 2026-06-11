@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HEADING_UPDATE (Nemesiss). Updates a visible object's heading (objId + heading). VisibleObject red-tolerated.</summary>
 public class SM_HEADING_UPDATE : AionServerPacket

@@ -16,7 +16,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_DIALOG_SELECT (KKnD, orz, avol, Pad). Handles a dialog/quest action selection against self or an NPC/creature target. QuestEngine/QuestService/DialogService/DataManager red-tolerated.</summary>
 public class CM_DIALOG_SELECT : AionClientPacket

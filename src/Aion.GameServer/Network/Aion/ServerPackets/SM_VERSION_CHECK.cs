@@ -4,12 +4,12 @@ using Aion.GameServer.Configs.Network;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Chatserver;
-using Aion.GameServer.Network.Loginserver;
+using Aion.GameServer.Network.LoginServer;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Time;
 using GameServer = Aion.GameServer.GameServer;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_VERSION_CHECK (-Nemesiss-, Novo, cura, Neon). Client version-check + full server config blob. currentTimeMillis()/1000->DateTimeOffset; GameServer type aliased (namespace clash). GSConfig/MembershipConfig/GameServer/ChatServer/LoginServer/ServerTime/AtreianPassportService red-tolerated.</summary>
 public class SM_VERSION_CHECK : AionServerPacket

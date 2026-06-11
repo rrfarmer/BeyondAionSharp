@@ -3,13 +3,13 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PLAYER_SEARCH (Ben). Social-panel / who search with race/status/lfg/name/level/class/region filters. World/SM_PLAYER_SEARCH/FriendList.Status red-tolerated.</summary>
 public class CM_PLAYER_SEARCH : AionClientPacket

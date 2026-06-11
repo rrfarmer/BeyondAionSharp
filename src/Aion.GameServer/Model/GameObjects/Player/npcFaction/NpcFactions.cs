@@ -259,7 +259,7 @@ public class NpcFactions
                 List<Aion.GameServer.Model.Templates.QuestTemplate> quests = Aion.GameServer.Dataholders.DataManager.QUEST_DATA.GetQuestsByNpcFaction(faction.GetId(), owner);
                 if (quests.Count == 0)
                     continue;
-                questId = Aion.Commons.Utils.Rnd.Get(quests).GetId();
+                questId = Aion.GameServer.Commons.Utils.Rnd.Get(quests).GetId();
                 faction.SetQuestId(questId);
                 faction.SetTime(GetNextTime());
                 faction.SetState(ENpcFactionQuestState.NOTING);

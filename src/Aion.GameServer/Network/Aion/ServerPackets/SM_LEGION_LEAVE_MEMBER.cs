@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_LEAVE_MEMBER (Simple). Member leave/kick notice (objId + msgId + name(s)).</summary>
 public class SM_LEGION_LEAVE_MEMBER : AionServerPacket

@@ -8,7 +8,7 @@ using Aion.GameServer.Model.Autogroup;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Autogroup;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;

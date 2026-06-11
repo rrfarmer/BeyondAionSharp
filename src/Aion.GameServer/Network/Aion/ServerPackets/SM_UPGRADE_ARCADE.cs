@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Event;
 using Aion.GameServer.Model.Templates.Event.Upgradearcade;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_UPGRADE_ARCADE (ginho1, Neon, Estrayl). Upgrade-arcade event packet (actions 0-10: icon/start/open/upgrade/success/fail/reward/frenzy/disable/reward-list). 10 ctors. ArcadeProgress/ArcadeRewards/DataManager/EventsConfig red-tolerated.</summary>
 public class SM_UPGRADE_ARCADE : AionServerPacket

@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Type = Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_HISTORY (Simple, KID, xTz). Paged legion history (8/page). LegionHistoryEntry record accessors -> PascalCase; Type enum is sequential (LEGION/REWARD/WAREHOUSE) so ordinal()->(int); subList->GetRange; Collections.emptyList->new List. LegionHistory* red-tolerated.</summary>
 public class SM_LEGION_HISTORY : AionServerPacket

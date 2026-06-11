@@ -3,11 +3,11 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_RELEASE_OBJECT (Rolandas, Neon). Releases a useable house object the player occupies (postbox always notifies). UseableHouseObject&lt;?&gt; -> &lt;PlaceableHouseObject&gt;. SM_USE_OBJECT red-tolerated.</summary>
 public class CM_RELEASE_OBJECT : AionClientPacket

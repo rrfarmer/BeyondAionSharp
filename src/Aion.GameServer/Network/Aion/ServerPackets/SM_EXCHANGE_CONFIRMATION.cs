@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_EXCHANGE_CONFIRMATION (-Avol-). Sends an exchange confirmation/cancel action byte.</summary>
 public class SM_EXCHANGE_CONFIRMATION : AionServerPacket

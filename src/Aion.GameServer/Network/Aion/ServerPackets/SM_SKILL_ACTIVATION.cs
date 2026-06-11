@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SKILL_ACTIVATION (Sweetkr). Toggle-skill activation state (unk=0) or stigma-remove (unk=1, active). AionServerPacket red-tolerated.</summary>
 public class SM_SKILL_ACTIVATION : AionServerPacket

@@ -3,7 +3,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Players;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_ENTER_WORLD (-Nemesiss-, Avol, Neon). Client requests the given character (by oid) to enter the game world. PlayerEnterWorldService red-tolerated.</summary>
 public class CM_ENTER_WORLD : AionClientPacket

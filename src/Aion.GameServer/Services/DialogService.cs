@@ -15,7 +15,7 @@ using Aion.GameServer.Model.Templates.Goods;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Model.Templates.Zone;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services.Abyss;

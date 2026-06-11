@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CHARACTER_LIST (Nemesiss, AEJTester, Neon). Server sends the account's character list to the client. Extends AbstractPlayerInfoPacket; writes playOk2, char count, then WritePlayerInfo per character.</summary>
 public class SM_CHARACTER_LIST : AbstractPlayerInfoPacket

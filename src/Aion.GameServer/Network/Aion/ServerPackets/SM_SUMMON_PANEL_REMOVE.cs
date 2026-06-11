@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SUMMON_PANEL_REMOVE (ATracer). Removes a summon skill panel entry (skillId + present flag).</summary>
 public class SM_SUMMON_PANEL_REMOVE : AionServerPacket

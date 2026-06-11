@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PLAYER_STATE (Luno, Sweetkr). Sends a creature's visual/see state (e.g. stop login blinking). Creature/CreatureVisualState red-tolerated.</summary>
 public class SM_PLAYER_STATE : AionServerPacket

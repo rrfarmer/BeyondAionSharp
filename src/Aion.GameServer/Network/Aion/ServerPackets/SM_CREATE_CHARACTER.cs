@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CREATE_CHARACTER (Nemesiss, AEJTester, Neon). Response for CM_CREATE_CHARACTER: writes response code, then WritePlayerInfo for the new character if RESPONSE_OK. Extends AbstractPlayerInfoPacket.</summary>
 public class SM_CREATE_CHARACTER : AbstractPlayerInfoPacket

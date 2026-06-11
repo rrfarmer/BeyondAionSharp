@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_EXCHANGE_REQUEST (-Avol-). Requests a trade with a target player (range/hide/race/deny guards) and raises a question window. Anonymous RequestResponseHandler&lt;Player&gt; -> nested ExchangeResponseHandler. ExchangeService/World/SM_* red-tolerated.</summary>
 public class CM_EXCHANGE_REQUEST : AionClientPacket

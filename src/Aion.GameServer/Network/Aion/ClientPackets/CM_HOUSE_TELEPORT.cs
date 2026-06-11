@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -10,7 +10,7 @@ using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Teleport;
@@ -18,7 +18,7 @@ using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_HOUSE_TELEPORT (Rolandas). Teleport via relationship crystal to own/friend/random-friend house. HousingService/TeleportService/InstanceService red-tolerated.</summary>
 public class CM_HOUSE_TELEPORT : AionClientPacket

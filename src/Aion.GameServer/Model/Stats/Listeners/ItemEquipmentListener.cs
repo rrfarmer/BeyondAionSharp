@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Model.Templates.Itemset;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;

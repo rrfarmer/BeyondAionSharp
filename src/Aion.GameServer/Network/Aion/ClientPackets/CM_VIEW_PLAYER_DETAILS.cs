@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_VIEW_PLAYER_DETAILS (Avol). Shows another player's equipment details unless they denied it (GM bypass). SM_VIEW_PLAYER_DETAILS red-tolerated.</summary>
 public class CM_VIEW_PLAYER_DETAILS : AionClientPacket

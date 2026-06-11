@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SET_NOTE (Ben). Sets the player's note and refreshes friend lists + broadcasts SM_UPDATE_NOTE. World/SM_FRIEND_LIST/SM_UPDATE_NOTE red-tolerated.</summary>
 public class CM_SET_NOTE : AionClientPacket

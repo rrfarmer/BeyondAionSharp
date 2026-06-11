@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_WINDSTREAM_ANNOUNCE (LokiReborn). Announces windstream state (bidirectional/map/stream/state).</summary>
 public class SM_WINDSTREAM_ANNOUNCE : AionServerPacket

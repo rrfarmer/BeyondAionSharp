@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GM_BOOKMARK_ADD (Yeats). Adds a GM teleport bookmark (name + worldId + x/y/z).</summary>
 public class SM_GM_BOOKMARK_ADD : AionServerPacket

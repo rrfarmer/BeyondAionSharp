@@ -2,7 +2,7 @@ using System;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ATREIAN_PASSPORT (ViAl, Neon). Atreian passport (daily login rewards): account creation date + per-passport id/stamps/rewardStatus/arriveDate. java.time.LocalDate -> DateOnly (Year/Month/Day); getArriveDate().getTime()/1000 -> ToUnixTimeMilliseconds()/1000. Passport/PassportsList red-tolerated.</summary>
 public class SM_ATREIAN_PASSPORT : AionServerPacket

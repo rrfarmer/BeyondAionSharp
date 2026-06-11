@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_EMOTION (SoulKeeper, -Enomine-). Broadcasts a creature emotion/state change (fly/land/sit/loot/ride/resurrect/emote/speed/windstream...) with per-EmotionType payload. Converges PlayerReviveService. switch-arrow groups->stacked case labels; getTypeId()->GetTypeId(); writeF(int hex)->WriteF (int->float). EmotionType/Stat2/AionServerPacket red-tolerated.</summary>
 public class SM_EMOTION : AionServerPacket

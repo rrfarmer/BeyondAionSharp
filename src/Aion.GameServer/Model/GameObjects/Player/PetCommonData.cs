@@ -13,7 +13,7 @@ public class PetCommonData : IExpirable
     private int decoration;
     private string name;
     private DateTime? birthday;
-    internal Aion.GameServer.Services.Toypet.PetFeedProgress feedProgress = null;
+    internal Aion.GameServer.Services.ToyPet.PetFeedProgress feedProgress = null;
     internal Aion.GameServer.Model.Templates.Pet.PetDopingBag dopingBag = null;
     private volatile bool cancelFeed = false;
     private long refeedTime;
@@ -39,7 +39,7 @@ public class PetCommonData : IExpirable
         {
             int flavourId = template.GetPetFunction(Aion.GameServer.Model.Templates.Pet.PetFunctionType.FOOD).GetId();
             int lovedLimit = Aion.GameServer.Dataholders.DataManager.PET_FEED_DATA.GetFlavourById(flavourId).GetLovedFoodLimit();
-            feedProgress = new Aion.GameServer.Services.Toypet.PetFeedProgress((byte)(lovedLimit & 0xFF));
+            feedProgress = new Aion.GameServer.Services.ToyPet.PetFeedProgress((byte)(lovedLimit & 0xFF));
         }
         if (template.ContainsFunction(Aion.GameServer.Model.Templates.Pet.PetFunctionType.DOPING))
         {
@@ -126,7 +126,7 @@ public class PetCommonData : IExpirable
         refeedTask = Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             refeedTime = 0;
-            feedProgress.SetHungryLevel(Aion.GameServer.Services.Toypet.PetHungryLevel.HUNGRY);
+            feedProgress.SetHungryLevel(Aion.GameServer.Services.ToyPet.PetHungryLevel.HUNGRY);
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(reFoodTime));
     }
@@ -265,7 +265,7 @@ public class PetCommonData : IExpirable
     }
 
     /// <summary>feedProgress, null if pet has no feed function</summary>
-    public Aion.GameServer.Services.Toypet.PetFeedProgress GetFeedProgress()
+    public Aion.GameServer.Services.ToyPet.PetFeedProgress GetFeedProgress()
     {
         return feedProgress;
     }
@@ -303,7 +303,7 @@ public class PetCommonData : IExpirable
     public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PET_ABANDON_EXPIRE_TIME_COMPLETE(name));
-        Aion.GameServer.Services.Toypet.PetAdoptionService.SurrenderPet(player, templateId);
+        Aion.GameServer.Services.ToyPet.PetAdoptionService.SurrenderPet(player, templateId);
     }
 
     // Java parity: java.sql.Timestamp.getTime() returns epoch millis.

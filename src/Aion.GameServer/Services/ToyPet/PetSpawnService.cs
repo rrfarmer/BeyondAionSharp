@@ -4,12 +4,12 @@ using Aion.GameServer.Controllers;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 
-namespace Aion.GameServer.Services.Toypet;
+namespace Aion.GameServer.Services.ToyPet;
 
 /// <summary>Java parity: services/toypet/PetSpawnService (ATracer). Summons a pet, scheduling its update task and handling mood/refeed/loot state. PetController/ThreadPoolManager/VisibleObjectSpawner red-tolerated.</summary>
 public class PetSpawnService

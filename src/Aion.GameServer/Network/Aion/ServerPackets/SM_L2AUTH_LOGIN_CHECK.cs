@@ -3,7 +3,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_L2AUTH_LOGIN_CHECK (-Nemesiss-). Login auth result + world-map list. hex2Byte->Hex2Byte (Convert.ToInt32(s,16)); Integer.parseInt(substring(2i,2i+2),16)->Convert.ToInt32(Substring(2i,2),16). DataManager/WorldMapTemplate red-tolerated.</summary>
 public class SM_L2AUTH_LOGIN_CHECK : AionServerPacket

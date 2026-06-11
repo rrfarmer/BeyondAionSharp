@@ -1,8 +1,8 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Clientpackets;
+using Aion.GameServer.Network.Aion.ClientPackets;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PLASTIC_SURGERY (IlBuono). Plastic-surgery/gender-switch prompt (objId + has-ticket + gender-switch). CM_CHARACTER_EDIT/Player red-tolerated.</summary>
 public class SM_PLASTIC_SURGERY : AionServerPacket

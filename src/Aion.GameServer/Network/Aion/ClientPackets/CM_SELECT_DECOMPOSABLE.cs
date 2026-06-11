@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
@@ -13,7 +13,7 @@ using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpda
 using ItemUpdatePredicate = Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SELECT_DECOMPOSABLE (xTz). Picks a selectable result from a decomposable item and grants it. DataManager.DECOMPOSABLE_ITEMS_DATA/ItemService red-tolerated.</summary>
 public class CM_SELECT_DECOMPOSABLE : AionClientPacket

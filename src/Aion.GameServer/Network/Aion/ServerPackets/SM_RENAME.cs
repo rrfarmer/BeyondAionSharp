@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RENAME (Rhys2002). Notifies the client of a character or legion name change (renames everywhere). Player/Legion red-tolerated.</summary>
 public class SM_RENAME : AionServerPacket

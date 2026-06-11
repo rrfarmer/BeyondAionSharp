@@ -5,7 +5,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;

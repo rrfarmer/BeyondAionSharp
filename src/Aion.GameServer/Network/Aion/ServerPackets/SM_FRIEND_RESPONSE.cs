@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FRIEND_RESPONSE (Ben, Neon). Replies to add/delete-friend requests. Writes target name + a result code. Java static-final factory methods -> C# static methods; parameterless static-final instances -> static readonly fields.</summary>
 public class SM_FRIEND_RESPONSE : AionServerPacket

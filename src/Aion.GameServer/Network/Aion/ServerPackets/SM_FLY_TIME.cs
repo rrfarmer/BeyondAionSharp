@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FLY_TIME (Nemiroff). Sends current + max fly time (FP).</summary>
 public class SM_FLY_TIME : AionServerPacket

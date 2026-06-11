@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_QUEST_ACTION (VladimirZ). Quest add/update/abandon/timer/share/unk notice. Nested ActionType enum ids 1..6 == enum value -> getId()=(int)actionType; switch labels qualified. QuestState/QuestTemplate/QuestExtraCategory red-tolerated.</summary>
 public class SM_QUEST_ACTION : AionServerPacket

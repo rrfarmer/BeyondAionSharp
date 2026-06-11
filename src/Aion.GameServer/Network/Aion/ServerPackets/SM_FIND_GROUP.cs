@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects.FindGroup;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FIND_GROUP (cura, MrPoke). Find-group / instance-group board (recruitments, applications, server-wide instance groups, prepare-for-entry windows). List&lt;? extends FindGroupEntry&gt; -> IReadOnlyList&lt;FindGroupEntry&gt; (covariant, accepts subtype lists); switch-arrow -> switch statement; instanceof->is; getName(true)->GetName(true); currentTimeMillis()/1000->DateTimeOffset. FindGroup model/NetworkConfig red-tolerated.</summary>
 public class SM_FIND_GROUP : AionServerPacket

@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.League;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ALLIANCE_INFO (Sarynth, xTz). Full alliance/league info: leader/vice-captains, loot rules, team type, league captain data. Private inner AllianceInfo POJO preserved as nested class. PlayerAlliance/League/LootGroupRules red-tolerated.</summary>
 public class SM_ALLIANCE_INFO : AionServerPacket

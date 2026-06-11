@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Stats;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_STATS_INFO (-Nemesiss-, Luno, ginho1). Full player stat sheet (current + base): primary stats, resistances, hp/mp/dp/fly, attack/defense/crit/accuracy/boost/resist, inventory limits, repose/salvation. Converges PlayerEnterWorldService. getCurrent()/getBase()->PascalCase; writeF(x/1000f); StatEnum/PlayerGameStats red-tolerated.</summary>
 public class SM_STATS_INFO : AionServerPacket

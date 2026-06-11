@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_DIALOG_WINDOW (alexa026). Opens an NPC dialog page (with optional quest id); appends mailbox state for the mail page or town id for the town-challenge page. DialogPage.id()->GetId(); mailBoxState public field. DialogPage/TownService/AionServerPacket red-tolerated.</summary>
 public class SM_DIALOG_WINDOW : AionServerPacket

@@ -7,7 +7,7 @@ using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PLAY_MOVIE_END (MrPoke). Returns SM_PLAY_MOVIE data after a cutscene finishes/skips; validates server-initiated cutscenes (book auto-movies allowed). QuestEngine red-tolerated.</summary>
 public class CM_PLAY_MOVIE_END : AionClientPacket

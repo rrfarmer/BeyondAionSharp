@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_BIND_POINT_TELEPORT (ginho1). Bind-point teleport action (action/playerId + locId/cooldown by action).</summary>
 public class SM_BIND_POINT_TELEPORT : AionServerPacket

@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PRIVATE_STORE_NAME (Simple). Sends a player's private-store message (objId + name). Player red-tolerated.</summary>
 public class SM_PRIVATE_STORE_NAME : AionServerPacket

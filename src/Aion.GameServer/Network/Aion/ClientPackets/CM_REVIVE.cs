@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Players;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_REVIVE (ATracer, orz, avol, Simple). Dispatches the chosen revive type to PlayerReviveService. ReviveType/PlayerReviveService red-tolerated.</summary>
 public class CM_REVIVE : AionClientPacket

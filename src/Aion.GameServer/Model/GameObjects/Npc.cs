@@ -375,7 +375,7 @@ public class Npc : Creature
         return GetObjectTemplate().GetGroupDrop();
     }
 
-    public void OverrideEquipmentList(Aion.GameServer.Dataholders.Loadingutils.Adapters.NpcEquipmentList v)
+    public void OverrideEquipmentList(Aion.GameServer.Dataholders.LoadingUtils.Adapters.NpcEquipmentList v)
     {
         overridenEquipment = new Aion.GameServer.Model.Items.NpcEquippedGear(v);
     }

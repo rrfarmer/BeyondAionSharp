@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHAT_GROUP_INFO (ginho1, Neon). Requests group chat-window info for a named player. World/SM_CHAT_WINDOW/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class CM_CHAT_GROUP_INFO : AionClientPacket

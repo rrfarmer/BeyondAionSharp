@@ -26,10 +26,10 @@ public class AutoBan
                 Aion.GameServer.Services.PunishmentService.BanChar(player.GetObjectId(), dayCount, reason);
                 break;
             case 3:
-                Aion.GameServer.Network.Loginserver.LoginServer.GetInstance().SendBanPacket((byte)1, accountId, accountIp, time, 0);
+                Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().SendBanPacket((byte)1, accountId, accountIp, time, 0);
                 break;
             case 4:
-                Aion.GameServer.Network.Loginserver.LoginServer.GetInstance().SendBanPacket((byte)2, accountId, accountIp, time, 0);
+                Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().SendBanPacket((byte)2, accountId, accountIp, time, 0);
                 break;
             case 5:
                 player.GetClientConnection().Close();

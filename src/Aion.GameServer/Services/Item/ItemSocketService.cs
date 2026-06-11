@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Items.Enums;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;

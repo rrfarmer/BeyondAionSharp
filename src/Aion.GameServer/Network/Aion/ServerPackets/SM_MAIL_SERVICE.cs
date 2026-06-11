@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Templates.Mail;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_MAIL_SERVICE (kosyachok, Source, Neon). Mailbox state / message / list / read / attachment / delete by serviceId. Converges MailService/SystemMailService. Function->Func; switch-arrow->switch statement; byteLengthForString (inherited static)->ByteLengthForString; writeMe(getBuf())->WriteMe(GetBuf()); int... -> params int[]. Letter/Mailbox/MailMessage/ItemInfoBlob red-tolerated.</summary>
 public class SM_MAIL_SERVICE : AionServerPacket

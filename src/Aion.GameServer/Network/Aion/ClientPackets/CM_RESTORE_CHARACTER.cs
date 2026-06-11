@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Players;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_RESTORE_CHARACTER (-Nemesiss-). Client requests cancellation of a pending character deletion. PlayerService/SM_RESTORE_CHARACTER red-tolerated.</summary>
 public class CM_RESTORE_CHARACTER : AionClientPacket

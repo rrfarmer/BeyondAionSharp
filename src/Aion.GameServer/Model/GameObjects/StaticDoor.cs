@@ -3,7 +3,7 @@ using Aion.GameServer.Controllers;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Staticdoor;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 

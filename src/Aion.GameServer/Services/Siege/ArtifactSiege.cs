@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;

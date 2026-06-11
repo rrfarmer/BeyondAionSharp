@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_EQUIP_ITEM (Avol, ATracer). Equip (0) / unequip (1) / switch-weapons (2); broadcasts appearance update on change. Equipment/PlayerRestrictions/SM_UPDATE_PLAYER_APPEARANCE red-tolerated.</summary>
 public class CM_EQUIP_ITEM : AionClientPacket

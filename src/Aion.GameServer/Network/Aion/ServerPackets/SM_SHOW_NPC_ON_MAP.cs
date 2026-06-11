@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SHOW_NPC_ON_MAP (Lyahim). Marks an npc on the map (npc/world/instance + x/y/z). Player red-tolerated.</summary>
 public class SM_SHOW_NPC_ON_MAP : AionServerPacket

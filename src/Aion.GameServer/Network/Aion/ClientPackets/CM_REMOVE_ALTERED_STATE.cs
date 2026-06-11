@@ -5,7 +5,7 @@ using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_REMOVE_ALTERED_STATE (dragoon112, Neon). Ends a removable altered-state effect (audits debuff-removal attempts). Effect/SkillSubType red-tolerated.</summary>
 public class CM_REMOVE_ALTERED_STATE : AionClientPacket

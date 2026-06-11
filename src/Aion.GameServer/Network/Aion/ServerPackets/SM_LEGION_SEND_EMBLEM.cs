@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_SEND_EMBLEM (Simple, cura, Neon). Sends a legion emblem header (id/type/dataSize/argb/name) before emblem byte data. LegionEmblem red-tolerated.</summary>
 public class SM_LEGION_SEND_EMBLEM : AionServerPacket

@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/AbstractHouseInfoPacket (Neon). Base for house info/render packets: WriteCommonInfo writes address/owner/building/door/sign/decor registry + legion emblem. PartType is a real C# enum (values()->Enum.GetValues, getRooms()->GetRooms ext); Integer decorId->int?; CHARNAME_MAX_LENGTH from AbstractPlayerInfoPacket. House/LegionMember/LegionService red-tolerated.</summary>
 public abstract class AbstractHouseInfoPacket : AionServerPacket

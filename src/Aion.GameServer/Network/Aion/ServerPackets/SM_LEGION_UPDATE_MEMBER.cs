@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_UPDATE_MEMBER (Simple). Updates a legion member entry (rank/class/level/world/online/lastonline + msg). LegionMember/NetworkConfig red-tolerated.</summary>
 public class SM_LEGION_UPDATE_MEMBER : AionServerPacket

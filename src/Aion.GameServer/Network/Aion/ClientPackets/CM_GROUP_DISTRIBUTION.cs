@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Restrictions;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_GROUP_DISTRIBUTION (Lyahim, Simple, xTz). Distributes kinah across group/alliance/league by partyType. PlayerGroupService/PlayerAllianceService/LeagueService red-tolerated.</summary>
 public class CM_GROUP_DISTRIBUTION : AionClientPacket

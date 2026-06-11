@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace Aion.GameServer.Dataholders.Loadingutils.Adapters;
+namespace Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 
 /// <summary>
 /// Java parity: dataholders/loadingutils/adapters/LocalDateTimeAdapter (Neon). JAXB XmlAdapter&lt;String, LocalDateTime&gt;

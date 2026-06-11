@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_VIEW_PLAYER_DETAILS (Avol, xTz). Shows another player's equipped items (per-item info blob). getBuf()->GetBuf(). Item/ItemInfoBlob red-tolerated.</summary>
 public class SM_VIEW_PLAYER_DETAILS : AionServerPacket

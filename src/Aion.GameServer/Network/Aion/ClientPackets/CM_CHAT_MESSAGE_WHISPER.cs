@@ -4,7 +4,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
@@ -12,7 +12,7 @@ using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHAT_MESSAGE_WHISPER (SoulKeeper). Reads whisper chat messages and routes to the named receiver with refusal/level/block/faction guards. World/SM_MESSAGE/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class CM_CHAT_MESSAGE_WHISPER : AionClientPacket

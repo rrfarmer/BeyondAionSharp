@@ -4,13 +4,13 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Siege;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Siegelocation;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

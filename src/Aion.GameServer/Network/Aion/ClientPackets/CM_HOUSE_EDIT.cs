@@ -6,7 +6,7 @@ using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
@@ -17,7 +17,7 @@ using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDele
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_HOUSE_EDIT (Rolandas). House decoration/renovation editor (enter/exit modes, add/delete/spawn/move/despawn objects, switch building). HouseObject&lt;?&gt; -> &lt;PlaceableHouseObject&gt;. HousingService/HouseObjectFactory/SM_HOUSE_EDIT red-tolerated.</summary>
 public class CM_HOUSE_EDIT : AionClientPacket

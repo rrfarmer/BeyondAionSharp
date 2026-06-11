@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEARN_RECIPE (lord_rex). Confirms a learned recipe (recipeId).</summary>
 public class SM_LEARN_RECIPE : AionServerPacket

@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_UPDATE_EMBLEM (Simple, cura, Neon). Updates a legion emblem (id/type/argb). LegionEmblem red-tolerated.</summary>
 public class SM_LEGION_UPDATE_EMBLEM : AionServerPacket

@@ -4,7 +4,7 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Templates.Ride;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Actions;

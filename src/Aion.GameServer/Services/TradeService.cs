@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Templates.Goods;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Model.Trade;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Services.Items;

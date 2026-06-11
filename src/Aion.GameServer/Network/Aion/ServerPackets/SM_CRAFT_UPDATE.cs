@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CRAFT_UPDATE (Mr. Poke, Yeats). Updates crafting status/progress; per-action system message. skillId 40009 forces delay 1000. ItemTemplate red-tolerated.</summary>
 public class SM_CRAFT_UPDATE : AionServerPacket

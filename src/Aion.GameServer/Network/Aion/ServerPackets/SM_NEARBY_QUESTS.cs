@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_NEARBY_QUESTS (MrPoke, Rolandas, Neon). Sends nearby quest ids (with not-yet-available bit). Map.entrySet->KeyValuePair iteration; -size & 0xFFFF.</summary>
 public class SM_NEARBY_QUESTS : AionServerPacket

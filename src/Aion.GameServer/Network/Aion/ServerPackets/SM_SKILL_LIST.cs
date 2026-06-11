@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Skillinfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SKILL_LIST (MrPoke, ATracer, Neon). Sends the player's skill list (silent or with a new-skill notification message). Converges PlayerEnterWorldService SplitList paging. Collections.singletonList->new List; String.valueOf->ToString; SkillEntryWriter.writeSkillEntry(...,getBuf())->WriteSkillEntry(...,GetBuf()). PlayerSkillEntry/SkillEntryWriter red-tolerated.</summary>
 public class SM_SKILL_LIST : AionServerPacket

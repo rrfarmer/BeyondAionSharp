@@ -1,10 +1,10 @@
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;

@@ -9,12 +9,12 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_EMOTION (SoulKeeper, nerolory). Handles player emotion/state transitions (sit/stand/fly/land/sprint/powershard/etc). EmotionType ported PascalCase by the loop (EmotionTypes.FromId). SM_EMOTION/AbnormalState red-tolerated.</summary>
 public class CM_EMOTION : AionClientPacket

@@ -2,7 +2,7 @@ using System;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_DUEL (xavier). Duel started/result packet built via static factories. IllegalArgumentException -> ArgumentException; DuelResult red-tolerated.</summary>
 public class SM_DUEL : AionServerPacket

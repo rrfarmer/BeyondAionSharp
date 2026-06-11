@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_OBJECTS (Rolandas). Bulk house object positions (template + x/y/z). HouseObject&lt;?&gt; erased to HouseObject&lt;PlaceableHouseObject&gt;. HouseObject red-tolerated.</summary>
 public class SM_HOUSE_OBJECTS : AionServerPacket

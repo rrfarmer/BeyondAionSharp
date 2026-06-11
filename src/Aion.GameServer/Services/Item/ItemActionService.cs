@@ -1,13 +1,13 @@
 using System;
 using System.Threading.Tasks;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Templates.Items.Actions;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;

@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Trade;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PRIVATE_STORE (Simple). Sends a private store's sold items (objId/itemId/count/price + full ItemInfoBlob). (int) count cast; getBuf()->GetBuf(); Map.values iteration. PrivateStore/TradePSItem/ItemInfoBlob red-tolerated.</summary>
 public class SM_PRIVATE_STORE : AionServerPacket

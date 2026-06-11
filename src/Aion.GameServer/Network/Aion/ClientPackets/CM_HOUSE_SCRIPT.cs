@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_HOUSE_SCRIPT (Rolandas, Neon, Sykra). Uploads/removes a house script (sign script) with size limits. PlayerScripts/SM_HOUSE_SCRIPTS red-tolerated.</summary>
 public class CM_HOUSE_SCRIPT : AionClientPacket

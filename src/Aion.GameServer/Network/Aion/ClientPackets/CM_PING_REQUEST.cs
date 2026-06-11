@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PING_REQUEST (dragoon112). Sent on /ping; replies SM_PING_RESPONSE. SM_PING_RESPONSE red-tolerated.</summary>
 public class CM_PING_REQUEST : AionClientPacket

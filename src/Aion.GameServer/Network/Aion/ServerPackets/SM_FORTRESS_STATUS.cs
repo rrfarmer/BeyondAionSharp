@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FORTRESS_STATUS. Global fortress + influence state: next-state countdown, faction influence rates, per-world influence, per-fortress next state. FortressLocation/Influence/SiegeRace/SiegeService red-tolerated.</summary>
 public class SM_FORTRESS_STATUS : AionServerPacket

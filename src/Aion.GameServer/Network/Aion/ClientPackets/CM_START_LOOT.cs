@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Drop;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_START_LOOT (alexa026, Metos, ATracer). Opens (0) or closes (1) a corpse drop list. DropService red-tolerated.</summary>
 public class CM_START_LOOT : AionClientPacket

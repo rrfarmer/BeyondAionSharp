@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CHAT_INIT (ATracer). Sends the chat-server auth token (length + bytes).</summary>
 public class SM_CHAT_INIT : AionServerPacket

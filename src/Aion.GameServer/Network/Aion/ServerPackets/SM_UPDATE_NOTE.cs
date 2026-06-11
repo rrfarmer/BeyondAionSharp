@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_UPDATE_NOTE (xavier). Updates a player's target note (objId + note). Player red-tolerated.</summary>
 public class SM_UPDATE_NOTE : AionServerPacket

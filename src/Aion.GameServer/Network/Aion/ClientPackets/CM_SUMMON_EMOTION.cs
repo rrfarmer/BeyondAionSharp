@@ -6,11 +6,11 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SUMMON_EMOTION (ATracer). Summon/mercenary emotion (fly/land/jump/attack-mode) broadcast. EmotionType ported PascalCase (EmotionTypes.FromId). SM_EMOTION/CreatureState red-tolerated.</summary>
 public class CM_SUMMON_EMOTION : AionClientPacket

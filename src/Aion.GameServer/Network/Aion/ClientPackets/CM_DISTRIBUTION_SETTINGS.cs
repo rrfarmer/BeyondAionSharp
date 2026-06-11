@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Team.League;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_DISTRIBUTION_SETTINGS (Lyahim, Simple, xTz). Sets group/alliance/league loot distribution rules + per-grade thresholds. PlayerGroupService/LeagueService/PlayerAllianceService red-tolerated.</summary>
 public class CM_DISTRIBUTION_SETTINGS : AionClientPacket

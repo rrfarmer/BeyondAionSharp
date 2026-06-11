@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CHAT_WINDOW (ginho1, Cheatkiller, Neon). Target chat-info window: group (2)/alliance (3)/no-group (4)/single (1) layouts. PlayerClass.values().length->Enum.GetValues; explicit iterator consumption for captains; getName(true)->GetName(true). PlayerGroup/PlayerAlliance red-tolerated.</summary>
 public class SM_CHAT_WINDOW : AionServerPacket

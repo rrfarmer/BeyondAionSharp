@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_STATUPDATE_MP (Luno). Updates current/max MP.</summary>
 public class SM_STATUPDATE_MP : AionServerPacket

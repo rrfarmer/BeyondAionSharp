@@ -21,7 +21,7 @@ public class GatheringTask : AbstractCraftTask
         this.template = gatherable.GetObjectTemplate();
         this.gathererObserver = CreateGathererObserver();
         this.material = material;
-        this.delay = Aion.Commons.Utils.Rnd.Get(200, 600);
+        this.delay = Aion.GameServer.Commons.Utils.Rnd.Get(200, 600);
         int gatherInterval = 2500 - (skillLvlDiff * 60);
         this.interval = gatherInterval < 1200 ? 1200 : gatherInterval;
     }
@@ -88,13 +88,13 @@ public class GatheringTask : AbstractCraftTask
         }
 
         craftType = CraftType.NORMAL;
-        float multi = Aion.Commons.Utils.Rnd.NextFloat(1f, 2f);
+        float multi = Aion.GameServer.Commons.Utils.Rnd.NextFloat(1f, 2f);
         float failReduction = Math.Max(1 - skillLvlDiff * 0.015f, 0.25f); // dynamic fail rate multiplier
-        bool success = Aion.Commons.Utils.Rnd.Chance() >= CraftConfig.MAX_GATHER_FAILURE_CHANCE * failReduction;
+        bool success = Aion.GameServer.Commons.Utils.Rnd.Chance() >= CraftConfig.MAX_GATHER_FAILURE_CHANCE * failReduction;
 
         if (success)
         {
-            float critChance = Aion.Commons.Utils.Rnd.Chance();
+            float critChance = Aion.GameServer.Commons.Utils.Rnd.Chance();
             if (critChance < (1 + skillLvlDiff / 10f)) // PURPLE CRIT = 100%
             {
                 craftType = CraftType.CRIT_PURPLE;

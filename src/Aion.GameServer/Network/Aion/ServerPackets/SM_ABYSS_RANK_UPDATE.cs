@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ABYSS_RANK_UPDATE (Nemiroff). Broadcasts a player's abyss-rank change (0), team id (1), or mentor-status (2). Converges AbyssPointsService SM_ABYSS_RANK_UPDATE(0, player). switch-on-action. AionServerPacket/AbyssRank red-tolerated.</summary>
 public class SM_ABYSS_RANK_UPDATE : AionServerPacket

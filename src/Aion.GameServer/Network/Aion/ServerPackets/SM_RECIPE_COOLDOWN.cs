@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RECIPE_COOLDOWN (zzsort, Sykra). Sends remaining craft-recipe cooldown seconds (mode 1 = update). Converges PlayerEnterWorldService SM_RECIPE_COOLDOWN. Map->Dictionary; Cooldowns.forEach->ForEach lambda; writeImpl forEach->foreach KeyValuePair. Cooldowns/AionServerPacket red-tolerated.</summary>
 public class SM_RECIPE_COOLDOWN : AionServerPacket

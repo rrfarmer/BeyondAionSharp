@@ -8,7 +8,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ALLIANCE_MEMBER_INFO (Sarynth, Rhys2002). Per-event alliance member update (hp/mp/fp, position, class/gender/level, abnormal effects). PlayerAllianceEvent switch labels qualified; getTargetSlot().ordinal() = declaration position (Array.IndexOf, see [[enum-ordinal-vs-value-trap]]); FULLSLOTS on SkillTargetSlotExtensions. Effect/team/WorldPosition red-tolerated.</summary>
 public class SM_ALLIANCE_MEMBER_INFO : AionServerPacket

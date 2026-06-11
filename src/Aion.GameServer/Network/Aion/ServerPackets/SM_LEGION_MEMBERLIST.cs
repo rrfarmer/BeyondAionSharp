@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_MEMBERLIST (Simple). Paged legion member list; WriteLegionMember is virtual so SM_GM_SHOW_LEGION_MEMBERLIST can override. isLast negates the size. LegionMember/House/HousingService/NetworkConfig red-tolerated.</summary>
 public class SM_LEGION_MEMBERLIST : AionServerPacket

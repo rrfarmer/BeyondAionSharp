@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 
 namespace Aion.GameServer.Custom.Instance.Neuralnetwork;
 

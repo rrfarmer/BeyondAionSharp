@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>
 /// Java parity: network/aion/serverpackets/SM_CUSTOM_PACKET (Luno). Admin //fsc fake-packet builder.

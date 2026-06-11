@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Team.Common.Events;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group.Events;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Services.Findgroup;
 using Aion.GameServer.Utils;

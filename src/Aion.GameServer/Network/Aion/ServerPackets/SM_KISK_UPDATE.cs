@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_KISK_UPDATE (Sarynth). Kisk status (objId/creator/useMask/member counts/resurrects/lifetime). Kisk red-tolerated.</summary>
 public class SM_KISK_UPDATE : AionServerPacket

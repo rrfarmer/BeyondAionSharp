@@ -4,7 +4,7 @@ using Aion.GameServer.Model.Instance.Instancescore;
 using Aion.GameServer.Model.Instance.Playerreward;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Team.Group;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;

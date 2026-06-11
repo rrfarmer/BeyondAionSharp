@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Ingameshop;
 using Aion.GameServer.Model.Templates.Ingameshop;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_IN_GAME_SHOP_CATEGORY_LIST (xTz). In-game shop categories (type 0) or a category's sub-categories (type 2). List.get->indexer. InGameShopProperty/InGameShopEn/IGCategory red-tolerated.</summary>
 public class SM_IN_GAME_SHOP_CATEGORY_LIST : AionServerPacket

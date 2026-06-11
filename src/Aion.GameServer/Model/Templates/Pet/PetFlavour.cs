@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
-using Aion.GameServer.Services.Toypet;
+using Aion.GameServer.Services.ToyPet;
 using System.Xml.Serialization;
 
 namespace Aion.GameServer.Model.Templates.Pet;

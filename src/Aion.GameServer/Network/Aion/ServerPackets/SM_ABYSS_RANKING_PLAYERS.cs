@@ -3,7 +3,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
 using RankingListPlayer = Aion.GameServer.Dao.AbyssRankDAO.RankingListPlayer;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ABYSS_RANKING_PLAYERS (Rhys2002, zdead, LokiReborn). Paged abyss player ranking list. RankingListPlayer record accessors -> PascalCase; Collections.emptyList()->new List; CHARNAME_MAX_LENGTH from AbstractPlayerInfoPacket. AbyssRankDAO red-tolerated.</summary>
 public class SM_ABYSS_RANKING_PLAYERS : AionServerPacket

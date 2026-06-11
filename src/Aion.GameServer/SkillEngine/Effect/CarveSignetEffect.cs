@@ -1,5 +1,5 @@
 using System;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using System.Xml.Serialization;
 using Aion.GameServer.SkillEngine;
 using Aion.GameServer.SkillEngine.Model;

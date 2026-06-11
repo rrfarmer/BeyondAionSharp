@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 
-namespace Aion.GameServer.Services.Toypet;
+namespace Aion.GameServer.Services.ToyPet;
 
 /// <summary>Java parity: services/toypet/PetMoodService (ATracer). Pet mood interactions (start/interact/request-present). ItemService/SM_PET red-tolerated.</summary>
 public class PetMoodService

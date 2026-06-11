@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_ATREIAN_PASSPORT (ViAl). Reads passport-id/timestamp pairs (count -1 = read until exhausted) and claims rewards. AtreianPassportService red-tolerated.</summary>
 public class CM_ATREIAN_PASSPORT : AionClientPacket

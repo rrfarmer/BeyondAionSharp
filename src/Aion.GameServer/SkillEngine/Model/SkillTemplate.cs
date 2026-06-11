@@ -7,7 +7,7 @@ using Aion.GameServer.SkillEngine.Action;
 using Aion.GameServer.SkillEngine.Condition;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.PeriodicAction;
-using Aion.GameServer.SkillEngine.properties;
+using Aion.GameServer.SkillEngine.Properties;
 
 namespace Aion.GameServer.SkillEngine.Model;
 

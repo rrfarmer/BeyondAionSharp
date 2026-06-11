@@ -8,7 +8,7 @@ using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_AUTO_GROUP (Shepper, Guapo, nrg). Auto-group window actions (100 start / 101 cancel-reg / 102 enter / 103 cancel-enter / 104 icon). EntryRequestType/AutoGroupService/PeriodicInstanceManager red-tolerated.</summary>
 public class CM_AUTO_GROUP : AionClientPacket

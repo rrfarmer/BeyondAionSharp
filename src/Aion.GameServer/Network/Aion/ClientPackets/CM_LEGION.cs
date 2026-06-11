@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_LEGION (Simple). Main legion command dispatcher (create/invite/leave/kick/appoint/rank/notice/permissions/level/nickname/dominion). LegionService red-tolerated.</summary>
 public class CM_LEGION : AionClientPacket

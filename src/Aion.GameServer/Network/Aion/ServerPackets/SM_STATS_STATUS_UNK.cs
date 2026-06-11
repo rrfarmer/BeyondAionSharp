@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_STATS_STATUS_UNK (Rolandas). Stat-points status (points + level-50-conditional fields).</summary>
 public class SM_STATS_STATUS_UNK : AionServerPacket

@@ -5,12 +5,12 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_READ_EXPRESS_MAIL (antness, Guapo). Closes postman (0) or summons it on icon click (1) with express/blackcloud unread + cooldown handling. VisibleObjectSpawner/ThreadPoolManager/LetterType red-tolerated.</summary>
 public class CM_READ_EXPRESS_MAIL : AionClientPacket

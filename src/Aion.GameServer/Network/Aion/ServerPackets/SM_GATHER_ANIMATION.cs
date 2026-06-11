@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GATHER_ANIMATION (orz, Yeats). Gathering animation (player/gatherable objIds + skillId + action).</summary>
 public class SM_GATHER_ANIMATION : AionServerPacket

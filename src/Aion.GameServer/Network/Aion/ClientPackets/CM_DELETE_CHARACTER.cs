@@ -3,13 +3,13 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.Account;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 using ConnectType = Aion.GameServer.Model.Account.CharacterPasskey.ConnectType;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_DELETE_CHARACTER (-Nemesiss-). Client requests character deletion; blocked while in a legion; passkey-gated. LegionService/PlayerService/PlayerPasskeyDAO red-tolerated.</summary>
 public class CM_DELETE_CHARACTER : AionClientPacket

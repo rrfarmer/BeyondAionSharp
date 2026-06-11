@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_UPDATE_SELF_INTRO (Simple). Updates a legion member's self-intro (objId + intro).</summary>
 public class SM_LEGION_UPDATE_SELF_INTRO : AionServerPacket

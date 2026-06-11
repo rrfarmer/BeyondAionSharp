@@ -5,7 +5,7 @@ using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Ai.Manager;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Ai.Handler;

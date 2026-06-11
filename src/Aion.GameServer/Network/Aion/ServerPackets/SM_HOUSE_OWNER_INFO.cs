@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Time;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_OWNER_INFO (Rolandas, Neon). Active/inactive house + owner state + weeks-until-pay. java.time ZonedDateTime->DateTimeOffset, DayOfWeek->System.DayOfWeek, Duration.between(..).toDays()->(long)(b-a).TotalDays (truncates toward zero). House/HousingService/HouseOwnerState/ServerTime red-tolerated.</summary>
 public class SM_HOUSE_OWNER_INFO : AionServerPacket

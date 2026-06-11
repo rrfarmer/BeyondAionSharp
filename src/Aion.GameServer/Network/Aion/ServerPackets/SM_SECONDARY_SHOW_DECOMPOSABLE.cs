@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SECONDARY_SHOW_DECOMPOSABLE (xTz). Secondary decomposition-result preview (objId + indexed ResultedItem list). ResultedItem red-tolerated.</summary>
 public class SM_SECONDARY_SHOW_DECOMPOSABLE : AionServerPacket

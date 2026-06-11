@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GM_SEARCH. Sends a GM player-search result string (name + world + coords). Player red-tolerated.</summary>
 public class SM_GM_SEARCH : AionServerPacket

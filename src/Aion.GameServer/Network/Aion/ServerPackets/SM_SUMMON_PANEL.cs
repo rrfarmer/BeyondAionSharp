@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.Stats;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SUMMON_PANEL (ATracer, xTz). Summon status panel: objId/level/hp/maxhp/attack/pdef/mresist/livetime. Summon/CalculationType red-tolerated.</summary>
 public class SM_SUMMON_PANEL : AionServerPacket

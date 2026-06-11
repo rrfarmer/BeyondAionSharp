@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_DELETE_CHARACTER (-Nemesiss-). Response for CM_DELETE_CHARACTER: writes objId + deletion time, or a failure triple when objId == 0.</summary>
 public class SM_DELETE_CHARACTER : AionServerPacket

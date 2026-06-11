@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_AFTER_SIEGE_LOCINFO_475 (Ritsu). Empty siege location info sent after enter-world. AionServerPacket red-tolerated.</summary>
 public class SM_AFTER_SIEGE_LOCINFO_475 : AionServerPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RECEIVE_BIDS (Rolandas). Notifies the client that auction data changed (it will request CM_GET_HOUSE_BIDS).</summary>
 public class SM_RECEIVE_BIDS : AionServerPacket

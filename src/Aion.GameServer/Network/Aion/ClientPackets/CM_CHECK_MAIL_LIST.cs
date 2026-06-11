@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Mail;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CHECK_MAIL_LIST (ginho1). Requests the mailbox list (optionally express-only). MailService red-tolerated.</summary>
 public class CM_CHECK_MAIL_LIST : AionClientPacket

@@ -4,11 +4,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_HOUSE_SETTINGS (Rolandas). Updates house door state / owner-name display / sign notice and notifies. AbstractHouseInfoPacket.SIGN_NOTICE_MAX_LENGTH; HouseDoorState red-tolerated.</summary>
 public class CM_HOUSE_SETTINGS : AionClientPacket

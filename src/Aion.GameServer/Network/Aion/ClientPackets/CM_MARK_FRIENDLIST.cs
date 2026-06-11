@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_MARK_FRIENDLIST (xTz, Rolandas). Replies with SM_MARK_FRIENDLIST. SM_MARK_FRIENDLIST red-tolerated.</summary>
 public class CM_MARK_FRIENDLIST : AionClientPacket

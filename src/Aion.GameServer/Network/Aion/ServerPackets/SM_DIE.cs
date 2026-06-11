@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_DIE (orz, Sarynth, Rhys2002). On death, tells the client which revive options are allowed (skill/item/instance), remaining kisk time, and invasion-world flag. InstanceHandler/WorldMapType red-tolerated.</summary>
 public class SM_DIE : AionServerPacket

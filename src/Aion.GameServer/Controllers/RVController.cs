@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Vortex;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Rift;
 using Aion.GameServer.Services.Teleport;

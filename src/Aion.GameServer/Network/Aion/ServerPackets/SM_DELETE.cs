@@ -2,7 +2,7 @@ using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_DELETE (-Nemesiss-, Neon). Tells the client an object is no longer visible, with an optional delete animation (NONE when out of range). ObjectDeleteAnimation/VisibleObject/AionServerPacket red-tolerated.</summary>
 public class SM_DELETE : AionServerPacket

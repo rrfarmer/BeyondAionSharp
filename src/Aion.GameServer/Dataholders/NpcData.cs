@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Dataholders.Loadingutils;
+using Aion.GameServer.Dataholders.LoadingUtils;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Stats.Container;

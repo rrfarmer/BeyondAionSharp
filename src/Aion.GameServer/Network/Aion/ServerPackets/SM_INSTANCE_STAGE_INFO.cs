@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INSTANCE_STAGE_INFO (xTz). Instance stage/event info. Field event->eventValue (C# keyword).</summary>
 public class SM_INSTANCE_STAGE_INFO : AionServerPacket

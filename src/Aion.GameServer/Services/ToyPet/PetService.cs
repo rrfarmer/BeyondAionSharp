@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Model.Trade;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.SkillEngine;
@@ -21,7 +21,7 @@ using Aion.GameServer.World.Zone;
 using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
-namespace Aion.GameServer.Services.Toypet;
+namespace Aion.GameServer.Services.ToyPet;
 
 /// <summary>Java parity: services/toypet/PetService (M@xx, IlBuono, xTz, Rolandas). Pet rename/feed/doping/loot/sell logic. PetFunctionType SCREAMING; PetSpecialFunction/EmotionType/PetHungryLevel PascalCase. TimeUnit.SECONDS delays converted to millis. Pet templates/SkillEngine/TradeService red-tolerated.</summary>
 public class PetService

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GROUP_LOOT (Rhys2002, Sykra). Group-loot roll/distribution entry (group/index/item/corpse/distribution/player/luck).</summary>
 public class SM_GROUP_LOOT : AionServerPacket

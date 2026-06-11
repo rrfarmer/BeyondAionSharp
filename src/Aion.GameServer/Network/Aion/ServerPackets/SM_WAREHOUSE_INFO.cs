@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_WAREHOUSE_INFO (kosyachok). Warehouse contents (type/firstPacket/expand + per-item info blob). Collections.emptyList->new List; getBuf()->GetBuf(); StorageType.REGULAR_WAREHOUSE.getId(). Item/ItemInfoBlob/StorageType red-tolerated.</summary>
 public class SM_WAREHOUSE_INFO : AionServerPacket

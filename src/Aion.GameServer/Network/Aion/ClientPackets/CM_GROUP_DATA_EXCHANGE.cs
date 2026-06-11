@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_GROUP_DATA_EXCHANGE (xTz). Relays opaque group/alliance/league UI exchange data (action 1 = broadcast-and-receive). SM_GROUP_DATA_EXCHANGE/NetworkUtils red-tolerated.</summary>
 public class CM_GROUP_DATA_EXCHANGE : AionClientPacket

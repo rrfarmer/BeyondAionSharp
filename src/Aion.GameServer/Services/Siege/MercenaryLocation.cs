@@ -9,7 +9,7 @@ using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Templates.Siegelocation;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Spawns.Mercenaries;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;

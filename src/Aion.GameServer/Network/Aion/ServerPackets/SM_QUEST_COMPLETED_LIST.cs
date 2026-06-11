@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_QUEST_COMPLETED_LIST (MrPoke, Neon). Completed-quest list (rewrite/insert). Function<QuestState,Integer>->Func<QuestState,int>; -size & 0xFFFF; Math.min->Math.Min. QuestState red-tolerated.</summary>
 public class SM_QUEST_COMPLETED_LIST : AionServerPacket

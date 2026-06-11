@@ -3,13 +3,13 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Services.Toypet;
+using Aion.GameServer.Services.ToyPet;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PET (M@xx, xTz). Pet command dispatcher (adopt/surrender/spawn/dismiss/food+doping+loot/rename/mood/extend). PetAction ported PascalCase (PetActionResolver.GetActionById). Pet services/SM_PET red-tolerated.</summary>
 public class CM_PET : AionClientPacket

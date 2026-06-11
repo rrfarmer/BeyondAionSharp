@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TIME_CHECK (-Nemesiss-). Server uptime + client nanoTime echo. ManagementFactory.getRuntimeMXBean().getUptime() (JVM uptime ms) -> process uptime via Process.StartTime.</summary>
 public class SM_TIME_CHECK : AionServerPacket

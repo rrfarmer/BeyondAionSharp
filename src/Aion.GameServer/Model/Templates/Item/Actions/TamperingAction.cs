@@ -51,7 +51,7 @@ public class TamperingAction : AbstractItemAction
             if (targetItem.GetTempering() < maxTemp)
             {
                 float temperingChance = CalculateChance(player, targetItem);
-                if (Aion.Commons.Utils.Rnd.Chance() < temperingChance)
+                if (Aion.GameServer.Commons.Utils.Rnd.Chance() < temperingChance)
                 {
                     SetTemperingLevel(targetItem, player, targetItem.GetTempering() + 1);
                     Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_AUTHORIZE_SUCCEEDED(targetItem.GetL10n(), targetItem.GetTempering()));
@@ -103,7 +103,7 @@ public class TamperingAction : AbstractItemAction
             {
                 int rndBonusValue = item.GetRndPlumeBonusValue();
                 for (int i = oldTemperingLevel; i < item.GetTempering(); i++) // Random chance to get 4-7 ATK/20-32 MBoost
-                    rndBonusValue += item.GetItemTemplate().GetTemperingName().Equals("TSHIRT_PHYSICAL") ? Aion.Commons.Utils.Rnd.Get(0, 3) : Aion.Commons.Utils.Rnd.Get(0, 12);
+                    rndBonusValue += item.GetItemTemplate().GetTemperingName().Equals("TSHIRT_PHYSICAL") ? Aion.GameServer.Commons.Utils.Rnd.Get(0, 3) : Aion.GameServer.Commons.Utils.Rnd.Get(0, 12);
                 item.SetRndPlumeBonusValue(rndBonusValue);
             }
             else

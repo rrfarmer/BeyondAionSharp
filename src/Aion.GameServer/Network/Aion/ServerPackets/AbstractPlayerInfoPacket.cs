@@ -10,7 +10,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/AbstractPlayerInfoPacket (AEJTester, Nemesiss, Niato, Neon). Base for character-list/select packets: writePlayerInfo (full account-data appearance + legion + visible items + ban info) and writeEquippedItems (in-world equipment mask). System.currentTimeMillis()/1000 -> DateTimeOffset; DAO/SecurityConfig/BrokerService red-tolerated.</summary>
 public abstract class AbstractPlayerInfoPacket : AionServerPacket

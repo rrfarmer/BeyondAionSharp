@@ -21,7 +21,7 @@ public abstract class AbstractPeriodicTaskManager
         {
             Run();
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(Aion.Commons.Utils.Rnd.Get(500, 550)), TimeSpan.FromMilliseconds(period));
+        }, TimeSpan.FromMilliseconds(Aion.GameServer.Commons.Utils.Rnd.Get(500, 550)), TimeSpan.FromMilliseconds(period));
     }
 
     protected abstract void Run();

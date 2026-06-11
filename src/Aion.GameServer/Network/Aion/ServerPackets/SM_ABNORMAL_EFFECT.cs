@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ABNORMAL_EFFECT (ATracer). Sends a creature's abnormal (buff/debuff) effects, optionally filtered to target slots. Java case 2->case 1 fall-through -> goto case; stream filter -> LINQ Where; ordinal()->(int); instanceof->is. Effect/SkillTargetSlot red-tolerated.</summary>
 public class SM_ABNORMAL_EFFECT : AionServerPacket

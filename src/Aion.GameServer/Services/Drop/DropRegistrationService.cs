@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.Concurrent;
-using Aion.Commons.Utils;
+using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
@@ -17,14 +17,14 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Spawns.Basespawns;
 using Aion.GameServer.Model.Templates.Spawns.Siegespawns;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Event;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Zone;
-using Status = Aion.GameServer.Network.Aion.Serverpackets.SM_LOOT_STATUS.Status;
+using Status = Aion.GameServer.Network.Aion.ServerPackets.SM_LOOT_STATUS.Status;
 
 namespace Aion.GameServer.Services.Drop;
 

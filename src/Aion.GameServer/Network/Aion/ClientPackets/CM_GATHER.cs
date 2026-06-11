@@ -8,7 +8,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_GATHER (ATracer). Starts (-1 cancel / 0,128 start) gathering from a Gatherable target. Gatherable/AuditLogger red-tolerated.</summary>
 public class CM_GATHER : AionClientPacket

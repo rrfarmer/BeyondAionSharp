@@ -69,7 +69,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
                 if (template.GetCaptchaRate() > 0)
                     rate = (int)(template.GetCaptchaRate() * 0.1f);
 
-                if (Aion.Commons.Utils.Rnd.Chance() < rate)
+                if (Aion.GameServer.Commons.Utils.Rnd.Chance() < rate)
                 {
                     player.SetCaptchaWord(Aion.GameServer.Utils.Captcha.CAPTCHAUtil.GetRandomWord());
                     player.SetCaptchaImage(Aion.GameServer.Utils.Captcha.CAPTCHAUtil.CreateCAPTCHA(player.GetCaptchaWord()).Array());
@@ -78,7 +78,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
             }
         }
 
-        int chance = Aion.Commons.Utils.Rnd.NextInt(10000000);
+        int chance = Aion.GameServer.Commons.Utils.Rnd.NextInt(10000000);
         int current = 0;
         Aion.GameServer.Model.Templates.Gather.Material curMaterial = null;
         foreach (Aion.GameServer.Model.Templates.Gather.Material mat in materials)

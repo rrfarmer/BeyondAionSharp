@@ -1,6 +1,6 @@
 using System;
 using System.Xml.Serialization;
-using Aion.GameServer.Dataholders.Loadingutils.Adapters;
+using Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Model.Templates.Event;

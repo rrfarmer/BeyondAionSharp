@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SUMMON_ATTACK (ATracer). Orders a summon/mercenary to auto-attack a creature target. Creature/AuditLogger red-tolerated.</summary>
 public class CM_SUMMON_ATTACK : AionClientPacket

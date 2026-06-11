@@ -3,7 +3,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.Autogroup;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time;
 

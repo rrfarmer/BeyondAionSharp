@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.TaskManager.Tasks;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 
-namespace Aion.GameServer.Services.Toypet;
+namespace Aion.GameServer.Services.ToyPet;
 
 /// <summary>Java parity: services/toypet/PetAdoptionService (ATracer). Adopt/add/surrender pets (with validation). DataManager/ExpireTimerTask/IDFactory/SM_PET red-tolerated.</summary>
 public class PetAdoptionService

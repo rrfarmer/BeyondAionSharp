@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.Town;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TOWNS_LIST (ViAl). Sends town id/level/levelUpDate. getLevelUpDate().getTime()/1000 -> ToUnixTimeMilliseconds()/1000; Map.values iteration. Town red-tolerated.</summary>
 public class SM_TOWNS_LIST : AionServerPacket

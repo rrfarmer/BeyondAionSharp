@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils.Stats;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SUMMON_UPDATE (ATracer). Sends a summon's level/mode/HP and full current+base stat block (attack/defense/resist/accuracy/crit/parry/evasion). Stat2/CalculationType.DISPLAY/Summon/AionServerPacket red-tolerated.</summary>
 public class SM_SUMMON_UPDATE : AionServerPacket

@@ -157,7 +157,7 @@ public class RideAction : AbstractItemAction
 
         public override void Attacked(Creature creature, int skillId)
         {
-            if (Aion.Commons.Utils.Rnd.Chance() < 20) // 20% from client action file
+            if (Aion.GameServer.Commons.Utils.Rnd.Chance() < 20) // 20% from client action file
                 player.UnsetPlayerMode(PlayerMode.RIDE);
         }
     }
@@ -175,7 +175,7 @@ public class RideAction : AbstractItemAction
 
         public override void Dotattacked(Creature creature, Aion.GameServer.SkillEngine.Model.Effect dotEffect)
         {
-            if (Aion.Commons.Utils.Rnd.Chance() < 20) // 20% from client action file
+            if (Aion.GameServer.Commons.Utils.Rnd.Chance() < 20) // 20% from client action file
                 player.UnsetPlayerMode(PlayerMode.RIDE);
         }
     }

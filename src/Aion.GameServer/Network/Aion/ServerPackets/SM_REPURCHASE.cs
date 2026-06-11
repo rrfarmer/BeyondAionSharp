@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_REPURCHASE (xTz, KID). Sends the NPC repurchase list (obj/template/name + item info blob + repurchase price). Converges RepurchaseService. Collection->ICollection; ItemInfoBlob.writeMe(getBuf())->WriteMe(GetBuf()). Item/ItemInfoBlob red-tolerated.</summary>
 public class SM_REPURCHASE : AionServerPacket

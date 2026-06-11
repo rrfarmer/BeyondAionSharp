@@ -6,7 +6,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_BUY_BROKER_ITEM (kosyak). Buys a broker-listed item by unique id/count. BrokerService/DialogAction/AuditLogger red-tolerated.</summary>
 public class CM_BUY_BROKER_ITEM : AionClientPacket

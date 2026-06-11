@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_WEATHER (ATracer, Kwazar, Nemesiss). Sends per-zone weather codes. WeatherEntry red-tolerated.</summary>
 public class SM_WEATHER : AionServerPacket

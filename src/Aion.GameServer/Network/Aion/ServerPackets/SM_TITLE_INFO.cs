@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Players.Title;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TITLE_INFO (cura, xTz, -Enomine-). Title packet by action: 0=list, 1=self set, 3=broadcast set, 4/5=mentor flag self/broadcast, 6=bonus-stat title. Converges PlayerEnterWorldService SM_TITLE_INFO(int/Player) ctors. switch-on-action; getTitles/secondsUntilExpiration->PascalCase. TitleList/Title/AionServerPacket red-tolerated.</summary>
 public class SM_TITLE_INFO : AionServerPacket

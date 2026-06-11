@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PLAYER_SEARCH (Ben). Fills the social-window player search panel (world/pos/class/gender/level/group-status/faction-prefixed name). static-import CHARNAME_MAX_LENGTH; DeniedStatus/ChatUtil red-tolerated.</summary>
 public class SM_PLAYER_SEARCH : AionServerPacket

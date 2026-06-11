@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_RECONNECT_KEY (-Nemesiss-). Response for CM_RECONNECT_AUTH with the LoginServer reconnection key.</summary>
 public class SM_RECONNECT_KEY : AionServerPacket

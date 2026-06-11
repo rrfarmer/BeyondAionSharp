@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.Team.Common.Events;
 using Aion.GameServer.Model.Team.League;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Model.Team.League.Events;
 

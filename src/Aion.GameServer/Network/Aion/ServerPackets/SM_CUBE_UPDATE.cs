@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CUBE_UPDATE (Sweetkr). Updates cube/warehouse/legion-warehouse size + expansion counts (action 0) or advanced stigma slots (action 6). Static factories stigmaSlots/cubeSize; switch-on-StorageType; type.ordinal()->(int)type. Converges ItemSplitService SM_CUBE_UPDATE.cubeSize. AionServerPacket/write* red-tolerated.</summary>
 public class SM_CUBE_UPDATE : AionServerPacket

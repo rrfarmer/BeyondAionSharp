@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GATHERABLE_INFO (ATracer). Sends a gatherable/static-object's position, ids, open/closed door state, heading, and l10n. instanceof StaticDoor->is StaticDoor. VisibleObject/StaticDoor/AionServerPacket red-tolerated.</summary>
 public class SM_GATHERABLE_INFO : AionServerPacket

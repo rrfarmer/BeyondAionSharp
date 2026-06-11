@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ALLIANCE_READY_CHECK (Sarynth, Rhys2002). Alliance ready-check status (player objId + status code).</summary>
 public class SM_ALLIANCE_READY_CHECK : AionServerPacket

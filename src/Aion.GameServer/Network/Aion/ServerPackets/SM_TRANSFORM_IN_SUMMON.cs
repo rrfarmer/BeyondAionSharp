@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TRANSFORM_IN_SUMMON (xTz). Sends a summon-transform link (summon objId + owner name + owner objId). Creature/Player red-tolerated.</summary>
 public class SM_TRANSFORM_IN_SUMMON : AionServerPacket

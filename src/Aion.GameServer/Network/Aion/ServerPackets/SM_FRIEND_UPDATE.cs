@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FRIEND_UPDATE (Ben, Neon). Updates a player's status entry in a friendlist (name/level/class/gender/map/lastonline/note/status). FriendList.Status nested enum via alias; LoggerFactory -> NullLogger.</summary>
 public class SM_FRIEND_UPDATE : AionServerPacket

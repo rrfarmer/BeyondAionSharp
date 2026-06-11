@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TRANSFORM (Sweetkr, xTz, kecimis). Sends a creature's transform model + state + restriction flags (skill/move/item/attack/fly bans, panel id), with a custom test ctor and the live transform-model path. TransformType/Creature/TransformModel/AionServerPacket red-tolerated.</summary>
 public class SM_TRANSFORM : AionServerPacket

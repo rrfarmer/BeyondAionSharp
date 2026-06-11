@@ -1,5 +1,5 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.SkillEngine.Condition;

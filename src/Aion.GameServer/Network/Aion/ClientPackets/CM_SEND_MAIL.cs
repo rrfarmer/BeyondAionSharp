@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Mail;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_SEND_MAIL (Aion Gates, xTz). Sends a mail with optional item + kinah. MailService/LetterType red-tolerated.</summary>
 public class CM_SEND_MAIL : AionClientPacket

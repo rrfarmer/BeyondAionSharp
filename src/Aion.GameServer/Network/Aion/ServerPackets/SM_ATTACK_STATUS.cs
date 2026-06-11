@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ATTACK_STATUS (alexa026, ATracer, kecimis). HP/MP/FP change status packet. CRITICAL: nested TYPE enum carries DUPLICATE int values (HP=7=DAMAGE, ABSORBED_MP=20=DAMAGE_MP, FP=26=FP_DAMAGE, DROWNING=12=TYPE12) and the switch distinguishes constants by identity not value — so TYPE/LOG ported as sealed value-classes (reference identity preserved) and the switch as reference-equality chains, like RiftInformer. getValue()->GetValue(); Creature red-tolerated.</summary>
 public class SM_ATTACK_STATUS : AionServerPacket

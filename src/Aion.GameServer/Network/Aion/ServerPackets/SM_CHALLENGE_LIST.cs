@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Challenge;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CHALLENGE_LIST (ViAl). Legion/town challenge task list (action 2) or individual task quests (action 7). currentTimeMillis()/1000 -> DateTimeOffset; ChallengeTask/ChallengeQuest/ChallengeType red-tolerated.</summary>
 public class SM_CHALLENGE_LIST : AionServerPacket

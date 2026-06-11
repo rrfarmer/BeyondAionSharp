@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Drop;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_LOOT_ITEM (alexa026, ATracer). Requests looting a specific drop-list item by index. DropService red-tolerated.</summary>
 public class CM_LOOT_ITEM : AionClientPacket

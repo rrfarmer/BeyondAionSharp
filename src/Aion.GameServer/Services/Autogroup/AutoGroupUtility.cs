@@ -2,7 +2,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Autogroup;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;

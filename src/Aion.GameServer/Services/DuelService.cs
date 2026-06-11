@@ -7,7 +7,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;

@@ -66,12 +66,12 @@ public class CompositionAction : AbstractItemAction
         int value = ((first + second) / 2);
         if (value < 11)
         {
-            value = Aion.Commons.Utils.Rnd.Get(1, 20);
+            value = Aion.GameServer.Commons.Utils.Rnd.Get(1, 20);
         }
         else
         {
-            int random = Aion.Commons.Utils.Rnd.Get(1, 10);
-            int bit = Aion.Commons.Utils.Rnd.Get(0, 1);
+            int random = Aion.GameServer.Commons.Utils.Rnd.Get(1, 10);
+            int bit = Aion.GameServer.Commons.Utils.Rnd.Get(0, 1);
             value = (bit == 0 ? value - random : value + random);
         }
         return value;

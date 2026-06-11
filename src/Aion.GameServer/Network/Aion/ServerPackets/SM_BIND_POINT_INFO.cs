@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_BIND_POINT_INFO (sweetkr, Sarynth, Sykra). Bind-point display (obelisk type 0 / Kisk type 4): map/x/y/z + kisk objId. Kisk/WorldPosition red-tolerated.</summary>
 public class SM_BIND_POINT_INFO : AionServerPacket

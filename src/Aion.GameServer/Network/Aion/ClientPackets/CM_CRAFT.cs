@@ -7,7 +7,7 @@ using Aion.GameServer.Utils;
 using GameServerMain = Aion.GameServer.GameServer;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_CRAFT (Mr. Poke). Starts crafting (recipe + materials) at a static object with range/template validation. CraftService/PositionUtil red-tolerated.</summary>
 public class CM_CRAFT : AionClientPacket

@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SECURITY_TOKEN (ginho1). Sends the security token (region byte + token + zero-padding of equal length).</summary>
 public class SM_SECURITY_TOKEN : AionServerPacket

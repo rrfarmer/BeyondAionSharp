@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Utils;
 

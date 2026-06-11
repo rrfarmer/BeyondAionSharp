@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Rewards;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Handlers.Models;
 using Aion.GameServer.QuestEngine.Model;

@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ATTACK (-Nemesiss-, Sweetkr). Physical-attack result: attacker/target ids, animations, hp%, counter/status flag switch, per-hit AttackResult list (damage, status, shield/reflect switch). instanceof Player->is Player+cast; (byte) shieldType cast; AttackResult/AttackHandAnimation/AttackTypeAnimation/Effect red-tolerated.</summary>
 public class SM_ATTACK : AionServerPacket

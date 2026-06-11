@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Services.Players;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_GM_SHOW_LEGION_MEMBERLIST (Yeats). GM variant of SM_LEGION_MEMBERLIST adding gender (via PlayerService) and omitting house fields. Overrides WriteLegionMember. PlayerService/LegionMember red-tolerated.</summary>
 public class SM_GM_SHOW_LEGION_MEMBERLIST : SM_LEGION_MEMBERLIST

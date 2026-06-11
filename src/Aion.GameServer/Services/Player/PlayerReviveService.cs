@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Vortex;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Panesterra;
 using Aion.GameServer.Services.Teleport;

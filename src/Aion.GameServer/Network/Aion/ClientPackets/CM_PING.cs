@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_PING (-Nemesiss-, Undertrey, Neon). Heartbeat ping; replies SM_PONG and detects time/speed hacks via ping-interval analysis. SM_PONG/AuditLogger red-tolerated.</summary>
 public class CM_PING : AionClientPacket

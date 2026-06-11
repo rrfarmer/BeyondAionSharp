@@ -3,7 +3,7 @@ using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Network.Aion;
 using TradeTab = Aion.GameServer.Model.Templates.Tradelist.TradeListTemplate.TradeTab;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TRADE_IN_LIST (MrPoke). Trade-in (sellback) list (npc type/buy modifier + trade tabs). TradeListTemplate.TradeTab aliased; tradeNpcType.index()->Index(). Npc/TradeListTemplate red-tolerated.</summary>
 public class SM_TRADE_IN_LIST : AionServerPacket

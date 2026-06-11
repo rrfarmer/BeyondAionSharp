@@ -48,7 +48,7 @@ public abstract class AbstractFIFOPeriodicTaskManager<T> : AbstractPeriodicTaskM
                     if (Aion.Commons.Configs.CommonsConfig.RUNNABLESTATS_ENABLE)
                     {
                         long duration = (System.Diagnostics.Stopwatch.GetTimestamp() - begin) * 1_000_000_000L / System.Diagnostics.Stopwatch.Frequency;
-                        Aion.Commons.Utils.Concurrent.RunnableStatsManager.HandleStats(task.GetType(), GetCalledMethodName(), duration);
+                        Aion.GameServer.Commons.Utils.Concurrent.RunnableStatsManager.HandleStats(task.GetType(), GetCalledMethodName(), duration);
                     }
                 }
                 catch (Exception e)

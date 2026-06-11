@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Instance.Instancescore;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;

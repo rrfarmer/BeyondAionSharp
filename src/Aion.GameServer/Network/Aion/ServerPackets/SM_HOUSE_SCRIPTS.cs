@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_SCRIPTS (Rolandas, Neon, Sykra). Sends a house's player scripts (compressed bytes + padding) or removes them. Converges PlayerEnterWorldService (SplitList paging via STATIC_BODY_SIZE/DYNAMIC_BODY_PART_SIZE_CALCULATOR). Function->Func; Collections.empty/singletonList->new List; SCRIPT_PADDING -51==0xCD; PlayerScript red-tolerated (deferred text-block).</summary>
 public class SM_HOUSE_SCRIPTS : AionServerPacket

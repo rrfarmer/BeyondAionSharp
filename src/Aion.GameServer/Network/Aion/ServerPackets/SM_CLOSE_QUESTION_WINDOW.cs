@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_CLOSE_QUESTION_WINDOW (Neon). Closes a question window with an optional reason message + up to 3 params (e.g. duel withdraw/reject). Object...->params object[]; String.valueOf->ToString; field `params`->`parameters` (C# keyword). AionServerPacket red-tolerated.</summary>
 public class SM_CLOSE_QUESTION_WINDOW : AionServerPacket

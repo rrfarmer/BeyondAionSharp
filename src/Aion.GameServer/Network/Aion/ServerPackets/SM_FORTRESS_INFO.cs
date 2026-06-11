@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_FORTRESS_INFO. Per-fortress teleport availability (locationId + teleport flag).</summary>
 public class SM_FORTRESS_INFO : AionServerPacket

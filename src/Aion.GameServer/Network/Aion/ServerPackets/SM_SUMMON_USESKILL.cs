@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SUMMON_USESKILL (ATracer). Summon casts a skill (summonId, skillId, lvl, targetId).</summary>
 public class SM_SUMMON_USESKILL : AionServerPacket

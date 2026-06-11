@@ -1,6 +1,6 @@
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TOLL_INFO (xTz). Sends the player's toll (AP-token) count.</summary>
 public class SM_TOLL_INFO : AionServerPacket

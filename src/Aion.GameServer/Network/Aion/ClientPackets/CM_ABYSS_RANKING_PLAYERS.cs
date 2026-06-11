@@ -4,12 +4,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Abyss;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 using AbyssRankUpdateType = Aion.GameServer.Model.GameObjects.Players.AbyssRank.AbyssRankUpdateType;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_ABYSS_RANKING_PLAYERS (SheppeR). Requests the abyss player ranking for a race. AbyssRank.AbyssRankUpdateType aliased; AionClientPacket base red-tolerated.</summary>
 public class CM_ABYSS_RANKING_PLAYERS : AionClientPacket

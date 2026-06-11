@@ -5,7 +5,7 @@ using Aion.GameServer.Dao;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Legion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using RankingListLegion = Aion.GameServer.Dao.AbyssRankDAO.RankingListLegion;

@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/AbstractCharacterEditPacket (Neon). Base for character create/edit packets; reads name/gender/race/class and the full appearance block. PlayerAppearance/PlayerClass red-tolerated.</summary>
 public abstract class AbstractCharacterEditPacket : AionClientPacket

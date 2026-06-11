@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_HEADING_UPDATE. Client sends this after a spin effect to update heading (already set before receipt); no response.</summary>
 public class CM_HEADING_UPDATE : AionClientPacket

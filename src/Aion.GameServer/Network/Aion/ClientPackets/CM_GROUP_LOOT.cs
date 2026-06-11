@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Drop;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_GROUP_LOOT (Rhys2002). Group-loot roll/bid response. DropDistributionService red-tolerated.</summary>
 public class CM_GROUP_LOOT : AionClientPacket

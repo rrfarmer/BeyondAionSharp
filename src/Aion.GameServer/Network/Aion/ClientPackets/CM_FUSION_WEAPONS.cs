@@ -6,7 +6,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Audit;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_FUSION_WEAPONS (zdead, Wakizashi, Neon). Fuses (compounds) two weapons at an armsfusion officer. ArmsfusionService/DialogAction/AuditLogger red-tolerated.</summary>
 public class CM_FUSION_WEAPONS : AionClientPacket

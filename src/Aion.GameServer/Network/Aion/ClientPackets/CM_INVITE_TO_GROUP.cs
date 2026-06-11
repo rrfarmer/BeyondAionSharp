@@ -6,12 +6,12 @@ using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Team.League;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_INVITE_TO_GROUP (Lyahim, ATracer, Simple, Neon). Invites a player to group (0) / alliance (12) / league (28) with dead/offline/deny guards. PlayerGroupService/PlayerAllianceService/LeagueService red-tolerated.</summary>
 public class CM_INVITE_TO_GROUP : AionClientPacket

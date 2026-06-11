@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SKILL_REMOVE (xTz, Neon). Removes a skill from the client list (skillId + level/professionFlag + type). PlayerSkillEntry red-tolerated.</summary>
 public class SM_SKILL_REMOVE : AionServerPacket

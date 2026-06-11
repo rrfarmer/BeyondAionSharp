@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SHOW_BRAND (Sweetkr). Shows target-brand icons (iconId -> targetObjectId). IntStream.range->for loop; putAll->dictionary copy; Map.forEach->foreach KeyValuePair.</summary>
 public class SM_SHOW_BRAND : AionServerPacket

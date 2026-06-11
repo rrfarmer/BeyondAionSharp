@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Network.Aion;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>
 /// Java parity: network/aion/clientpackets/CM_DEBUG_COMMAND. Sent for GM-panel commands prefixed by //// (builder control) or ///// (builder command),

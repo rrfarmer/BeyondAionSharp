@@ -2,13 +2,13 @@ using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_FRIEND_ADD (Ben, Neon). Received when a user tries to add a friend; validates and raises a buddy-request question window. Anonymous RequestResponseHandler&lt;Player&gt; -> nested FriendAddResponseHandler. SocialService/SM_FRIEND_RESPONSE/World red-tolerated.</summary>
 public class CM_FRIEND_ADD : AionClientPacket

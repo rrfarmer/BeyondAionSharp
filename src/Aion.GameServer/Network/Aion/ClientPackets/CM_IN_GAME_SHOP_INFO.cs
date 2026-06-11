@@ -3,11 +3,11 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.InGameShop;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Aion.Serverpackets;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
-namespace Aion.GameServer.Network.Aion.Clientpackets;
+namespace Aion.GameServer.Network.Aion.ClientPackets;
 
 /// <summary>Java parity: network/aion/clientpackets/CM_IN_GAME_SHOP_INFO (xTz, KID). In-game-shop actions (item info / category / list / balance / buy / gift). InGameShopEn/SM_IN_GAME_SHOP_* red-tolerated.</summary>
 public class CM_IN_GAME_SHOP_INFO : AionClientPacket

@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Network.Aion.Serverpackets;
+namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PLAYER_SPAWN (-Nemesiss-). Tells the client which map/channel to load for the entering player (personal-instance negative channel, position/heading, beginner-twin flag). Converges PlayerEnterWorldService. WorldMapType/World/AionServerPacket red-tolerated.</summary>
 public class SM_PLAYER_SPAWN : AionServerPacket
