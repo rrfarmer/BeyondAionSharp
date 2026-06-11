@@ -121,11 +121,11 @@ public abstract class EffectTemplate
     [XmlAttribute("max_damage_delta")]
     public int MaxDamageDelta;
 
-    public int GetValue() => Value;
+    public virtual int GetValue() => Value;
 
     public int GetDelta() => Delta;
 
-    public int GetDuration2() => Duration2;
+    public virtual int GetDuration2() => Duration2;
 
     public int GetDuration1() => Duration1;
 

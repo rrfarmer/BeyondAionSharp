@@ -440,12 +440,12 @@ public abstract class Creature : VisibleObject
     }
 
     /// <summary>Creature is flying (FLY or GLIDE states).</summary>
-    public bool IsFlying()
+    public virtual bool IsFlying()
     {
         return (IsInState(CreatureState.Flying) && !IsInState(CreatureState.Resting)) || IsInState(CreatureState.Gliding);
     }
 
-    public bool IsInFlyingState()
+    public virtual bool IsInFlyingState()
     {
         return IsInState(CreatureState.Flying) && !IsInState(CreatureState.Resting);
     }

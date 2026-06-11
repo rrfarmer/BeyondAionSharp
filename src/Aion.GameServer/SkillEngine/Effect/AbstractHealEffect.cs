@@ -55,12 +55,12 @@ public abstract class AbstractHealEffect : EffectTemplate, HealEffectTemplate
         return percent;
     }
 
-    public bool AllowHpHealBoost(Effect effect)
+    public virtual bool AllowHpHealBoost(Effect effect)
     {
         return !percent;
     }
 
-    public bool AllowHpHealSkillDeboost(Effect effect)
+    public virtual bool AllowHpHealSkillDeboost(Effect effect)
     {
         return true;
     }

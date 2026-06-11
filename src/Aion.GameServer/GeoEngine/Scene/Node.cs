@@ -71,7 +71,7 @@ public class Node : Spatial
     /// <summary>
     /// Attaches a child to this node, becoming its parent (detaching it from any former parent).
     /// </summary>
-    public int AttachChild(Spatial child)
+    public virtual int AttachChild(Spatial child)
     {
         if (child == null)
             throw new ArgumentNullException(nameof(child));

@@ -96,7 +96,7 @@ public class Skill
         InitializeSkillMethod();
     }
 
-    protected void InitializeSkillMethod()
+    protected virtual void InitializeSkillMethod()
     {
         if (itemTemplate != null)
             skillMethod = SkillMethod.ITEM;
@@ -216,7 +216,7 @@ public class Skill
     }
 
     /// <summary>Skill entry point. Returns true if usage is successful.</summary>
-    public bool UseSkill()
+    public virtual bool UseSkill()
     {
         return UseSkill(SecurityConfig.CHECK_ANIMATIONS, true);
     }

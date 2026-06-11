@@ -46,7 +46,7 @@ public abstract class VisibleObject : AionObject
     public int GetWorldId() => GetPosition().GetMapId();
 
     // Java parity: getWorldType()
-    public WorldType GetWorldType() => World.World.GetInstance().GetWorldMap(GetWorldId()).GetWorldType();
+    public virtual WorldType GetWorldType() => World.World.GetInstance().GetWorldMap(GetWorldId()).GetWorldType();
 
     // Java parity: getWorldDropType()
     public WorldDropType GetWorldDropType() => World.World.GetInstance().GetWorldMap(GetWorldId()).GetWorldDropType();

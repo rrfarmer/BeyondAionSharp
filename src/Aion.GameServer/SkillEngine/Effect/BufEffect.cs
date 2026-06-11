@@ -38,7 +38,7 @@ public abstract class BufEffect : EffectTemplate
             effected.GetLifeStats().SynchronizeWithMaxStats();
     }
 
-    protected List<IStatFunction> GetModifiers(Effect effect)
+    protected virtual List<IStatFunction> GetModifiers(Effect effect)
     {
         int skillId = effect.GetSkillId();
         int skillLvl = effect.GetSkillLevel();
