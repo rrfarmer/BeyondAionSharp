@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using Aion.Commons.Network.Packet;
+using Aion.GameServer.Commons.Network.Packet;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Dataholders;
@@ -11,7 +11,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Players.Emotion;
 using Aion.GameServer.Model.GameObjects.Players.Motion;
-using Aion.GameServer.Model.GameObjects.Players.NpcFaction;
+using Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFaction;
 using Aion.GameServer.Model.GameObjects.Players.Title;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Skill;

@@ -11,7 +11,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.Drop;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.GameObjects.Players.NpcFaction;
+using Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFaction;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Team.Alliance;
