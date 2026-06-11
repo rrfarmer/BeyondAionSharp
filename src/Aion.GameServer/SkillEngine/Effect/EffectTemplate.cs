@@ -35,7 +35,7 @@ public abstract class EffectTemplate
     public ActionModifiers? Modifiers;
 
     [XmlElement("change")]
-    public List<Change>? change;
+    public List<Aion.GameServer.SkillEngine.Change.Change>? change;
 
     [XmlAttribute("effectid")]
     public int Effectid;
@@ -133,7 +133,7 @@ public abstract class EffectTemplate
 
     public ActionModifiers? GetModifiers() => Modifiers;
 
-    public List<Change>? GetChange() => change;
+    public List<Aion.GameServer.SkillEngine.Change.Change>? GetChange() => change;
 
     public int GetEffectId() => Effectid;
 

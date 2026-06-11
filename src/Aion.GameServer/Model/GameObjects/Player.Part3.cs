@@ -343,9 +343,9 @@ public partial class Player
         this.nextSkillUse = nextSkillUse;
     }
 
-    public override void SetCasting(Skill castingSkill)
+    public override void SetCasting(Aion.GameServer.SkillEngine.Model.Skill castingSkill)
     {
-        Skill lastSkillObj = GetCastingSkill();
+        Aion.GameServer.SkillEngine.Model.Skill lastSkillObj = GetCastingSkill();
         base.SetCasting(castingSkill);
         if (lastSkillObj != null)
             this.lastSkill = lastSkillObj.GetSkillTemplate();

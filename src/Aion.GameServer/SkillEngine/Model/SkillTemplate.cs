@@ -19,7 +19,7 @@ namespace Aion.GameServer.SkillEngine.Model;
 public class SkillTemplate : L10n
 {
     [XmlElement("properties")]
-    public Properties? properties;
+    public Aion.GameServer.SkillEngine.Properties.Properties? properties;
 
     [XmlElement("startconditions")]
     public Conditions? startconditions;
@@ -31,7 +31,7 @@ public class SkillTemplate : L10n
     public Conditions? endconditions;
 
     [XmlElement("effects")]
-    public Effects? effects;
+    public Aion.GameServer.SkillEngine.Effects.Effects? effects;
 
     [XmlElement("actions")]
     public Actions? actions;
@@ -150,13 +150,13 @@ public class SkillTemplate : L10n
     [XmlAttribute("hostile_type")]
     public HostileType hostileType = HostileType.NONE;
 
-    public Properties? GetProperties() => properties;
+    public Aion.GameServer.SkillEngine.Properties.Properties? GetProperties() => properties;
 
     public Conditions? GetStartconditions() => startconditions;
 
     public Conditions? GetUseconditions() => useconditions;
 
-    public Effects? GetEffects() => effects;
+    public Aion.GameServer.SkillEngine.Effects.Effects? GetEffects() => effects;
 
     public Actions? GetActions() => actions;
 

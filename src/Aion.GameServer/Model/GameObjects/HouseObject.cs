@@ -228,7 +228,7 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
         return registry;
     }
 
-    public House GetOwnerHouse()
+    public Aion.GameServer.Model.House.House GetOwnerHouse()
     {
         return registry.GetOwner();
     }

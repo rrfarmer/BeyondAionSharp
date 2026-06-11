@@ -50,7 +50,7 @@ public class NpcShout
         return pollDelay;
     }
 
-    public int GetShoutRange(Npc npc)
+    public int GetShoutRange(Aion.GameServer.Model.GameObjects.Npc npc)
     {
         return npc.GetObjectTemplate().GetMinimumShoutRange();
     }

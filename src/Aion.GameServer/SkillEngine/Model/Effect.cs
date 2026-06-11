@@ -55,7 +55,7 @@ public class Effect : IStatOwner
     private int mpShieldSkillId = 0;
 
     private bool addedToController;
-    private readonly List<Action> observerRemoveTasks = new List<Action>();
+    private readonly List<System.Action> observerRemoveTasks = new List<System.Action>();
     private bool launchSubEffect = true;
     private Effect subEffect;
 
@@ -899,7 +899,7 @@ public class Effect : IStatOwner
 
     private void RemoveObservers()
     {
-        foreach (Action task in observerRemoveTasks)
+        foreach (System.Action task in observerRemoveTasks)
             task();
         observerRemoveTasks.Clear();
     }

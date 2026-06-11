@@ -14,9 +14,9 @@ public class QuestTemplate : L10n
 {
     [XmlElement("collect_items")] private CollectItems collectItems;
     [XmlElement("inventory_items")] private InventoryItems inventoryItems;
-    [XmlElement("rewards")] private List<Rewards> rewards;
+    [XmlElement("rewards")] private List<Aion.GameServer.Model.Templates.Quest.Rewards> rewards;
     [XmlElement("bonus")] private QuestBonuses bonus;
-    [XmlElement("extended_rewards")] private Rewards extendedRewards;
+    [XmlElement("extended_rewards")] private Aion.GameServer.Model.Templates.Quest.Rewards extendedRewards;
     [XmlElement("quest_drop")] private List<QuestDrop> questDrop;
     [XmlElement("quest_kill")] private List<QuestKill> questKill;
     [XmlElement("start_conditions")] private List<XMLStartCondition> startConds;
@@ -87,12 +87,12 @@ public class QuestTemplate : L10n
         return inventoryItems;
     }
 
-    public List<Rewards> GetRewards()
+    public List<Aion.GameServer.Model.Templates.Quest.Rewards> GetRewards()
     {
-        return rewards == null ? new List<Rewards>() : rewards;
+        return rewards == null ? new List<Aion.GameServer.Model.Templates.Quest.Rewards>() : rewards;
     }
 
-    public Rewards GetExtendedRewards()
+    public Aion.GameServer.Model.Templates.Quest.Rewards GetExtendedRewards()
     {
         return extendedRewards;
     }

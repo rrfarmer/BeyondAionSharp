@@ -32,7 +32,7 @@ public abstract class Creature : VisibleObject
     private int state = CreatureState.Active.GetId();
     private int visualState = CreatureVisualState.Visible.GetId();
     private int seeState = CreatureSeeState.Normal.GetId();
-    private Skill castingSkill;
+    private Aion.GameServer.SkillEngine.Model.Skill castingSkill;
     private ConcurrentDictionary<int, long> skillCoolDowns;
     private ObserveController observeController;
     private TransformModel transformModel;
@@ -125,7 +125,7 @@ public abstract class Creature : VisibleObject
     }
 
     /// <summary>Set current casting skill or null when skill ends.</summary>
-    public virtual void SetCasting(Skill castingSkill)
+    public virtual void SetCasting(Aion.GameServer.SkillEngine.Model.Skill castingSkill)
     {
         if (castingSkill != null)
             skillNumber++;
@@ -137,7 +137,7 @@ public abstract class Creature : VisibleObject
         return castingSkill != null ? castingSkill.GetSkillTemplate().GetSkillId() : 0;
     }
 
-    public Skill GetCastingSkill()
+    public Aion.GameServer.SkillEngine.Model.Skill GetCastingSkill()
     {
         return castingSkill;
     }
