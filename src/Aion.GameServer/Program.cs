@@ -127,7 +127,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<InstanceDestroyWorkflowService>();
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
-			services.AddSingleton<AutoGroupPenaltyRefreshSchedulerService>();
 			// Reworked AutoGroup runtime/registration services (depended on the deleted Player*Runtime + PlayerEnterWorldService god) removed.
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
