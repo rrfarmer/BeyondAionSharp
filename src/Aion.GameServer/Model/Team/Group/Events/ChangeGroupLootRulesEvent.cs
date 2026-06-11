@@ -19,6 +19,6 @@ public class ChangeGroupLootRulesEvent : AlwaysTrueTeamEvent
     public override void HandleEvent()
     {
         group.SetLootGroupRules(lootGroupRules);
-        group.SendPackets(new SmGroupInfo(group));
+        group.SendPackets(new SM_GROUP_INFO(group));
     }
 }
