@@ -704,15 +704,15 @@ public abstract class AbstractQuestHandler
     /// <summary>Give the quest item to player's inventory.</summary>
     public bool GiveQuestItem(QuestEnv env, int itemId, long itemCount)
     {
-        return GiveQuestItem(env, itemId, itemCount, ItemAddType.QUEST_WORK_ITEM, ItemUpdateType.INC_ITEM_COLLECT);
+        return GiveQuestItem(env, itemId, itemCount, ItemPacketService.ItemAddType.QUEST_WORK_ITEM, ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT);
     }
 
-    public bool GiveQuestItem(QuestEnv env, int itemId, long itemCount, ItemAddType addType)
+    public bool GiveQuestItem(QuestEnv env, int itemId, long itemCount, ItemPacketService.ItemAddType addType)
     {
-        return GiveQuestItem(env, itemId, itemCount, addType, ItemUpdateType.INC_ITEM_COLLECT);
+        return GiveQuestItem(env, itemId, itemCount, addType, ItemPacketService.ItemUpdateType.INC_ITEM_COLLECT);
     }
 
-    public bool GiveQuestItem(QuestEnv env, int itemId, long itemCount, ItemAddType addType, ItemUpdateType updateType)
+    public bool GiveQuestItem(QuestEnv env, int itemId, long itemCount, ItemPacketService.ItemAddType addType, ItemPacketService.ItemUpdateType updateType)
     {
         Player player = env.GetPlayer();
         ItemTemplate item = DataManager.ITEM_DATA.GetItemTemplate(itemId);

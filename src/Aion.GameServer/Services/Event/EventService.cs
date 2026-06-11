@@ -22,7 +22,7 @@ using Quartz;
 
 namespace Aion.GameServer.Services.Event;
 
-/// <summary>Java parity: services/event/EventService (Rolandas, Neon). Singleton; volatile active-events/drop-rules/quests/force-types/theme state; start/stop (CronService 5-min check), checkActiveEvents (diff old vs new via SetEquals, start/stop events, theme update), event hooks (login/team/map/pve/pvp-kill), collectActiveEvents/collectQuestIds/collectDropRules, getActiveEventConfigProperties (nullsFirst by startDate). Quartz JobDetail red-tolerated; Collections.empty*->new; TemporaryPlayerTeam<? extends TeamMember<Player>>-><TeamMember<Player>>; streams->LINQ; Set.equals->SetEquals; Objects::nonNull->!=null; ServerTime.now->DateTimeOffset/.DateTime; Properties red-tolerated. EventTemplate/Event/DAO red-tolerated.</summary>
+/// <summary>Java parity: services/event/EventService (Rolandas, Neon). Singleton; volatile active-events/drop-rules/quests/force-types/theme state; start/stop (CronService 5-min check), checkActiveEvents (diff old vs new via SetEquals, start/stop events, theme update), event hooks (login/team/map/pve/pvp-kill), collectActiveEvents/collectQuestIds/collectDropRules, getActiveEventConfigProperties (nullsFirst by startDate). Quartz JobDetail red-tolerated; Collections.empty*->new; TemporaryPlayerTeam<? extends ITeamMember<Player>>-><ITeamMember<Player>>; streams->LINQ; Set.equals->SetEquals; Objects::nonNull->!=null; ServerTime.now->DateTimeOffset/.DateTime; Properties red-tolerated. EventTemplate/Event/DAO red-tolerated.</summary>
 public class EventService
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(EventService));
@@ -115,13 +115,13 @@ public class EventService
             ev.OnPlayerLogin(player);
     }
 
-    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<TeamMember<Player>> team)
+    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         foreach (Event ev in activeEvents)
             ev.OnEnteredTeam(player, team);
     }
 
-    public void OnLeftTeam(Player player, TemporaryPlayerTeam<TeamMember<Player>> team)
+    public void OnLeftTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
     {
         foreach (Event ev in activeEvents)
             ev.OnLeftTeam(player, team);
@@ -223,9 +223,11 @@ public class EventService
         return activeEventQuests.Contains(questId);
     }
 
-    public Properties GetActiveEventConfigProperties()
+    public Dictionary<string, string> GetActiveEventConfigProperties()
     {
-        Properties eventConfigProperties = new Properties();
+        // Java parity: java.util.Properties -> Dictionary<string,string>; the source (EventTemplate.LoadConfigProperties)
+        // is already a string->string map, and there are no consumers needing Properties' wider API.
+        Dictionary<string, string> eventConfigProperties = new Dictionary<string, string>();
         activeEvents
             .Select(e => e.GetEventTemplate())
             .Where(t => t.HasConfigProperties())
@@ -235,7 +237,12 @@ public class EventService
             {
                 try
                 {
-                    eventConfigProperties.PutAll(et.LoadConfigProperties());
+                    Dictionary<string, string>? props = et.LoadConfigProperties();
+                    if (props != null)
+                    {
+                        foreach (KeyValuePair<string, string> kv in props)
+                            eventConfigProperties[kv.Key] = kv.Value;
+                    }
                 }
                 catch (Exception e)
                 {
