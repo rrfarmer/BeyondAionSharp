@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Chathandlers;
+using Aion.GameServer.Utils.ChatHandlers;
 using Aion.GameServer.Utils.Time;
 
 namespace Aion.GameServer.Services.Reward;

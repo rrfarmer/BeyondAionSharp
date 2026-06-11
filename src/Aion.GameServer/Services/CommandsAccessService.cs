@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Chathandlers;
+using Aion.GameServer.Utils.ChatHandlers;
 
 namespace Aion.GameServer.Services;
 

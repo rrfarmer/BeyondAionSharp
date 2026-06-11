@@ -5,7 +5,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.Actions;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
-using Aion.GameServer.Model.Templates.FlyPath;
+using Aion.GameServer.Model.Templates.Flypath;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;

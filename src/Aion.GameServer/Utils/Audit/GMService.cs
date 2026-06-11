@@ -42,7 +42,7 @@ public class GMService
     {
         if (player.IsStaff())
         {
-            AdminConfig.LOGIN_EXECUTE_COMMANDS.ForEach(cmd => Aion.GameServer.Utils.Chathandlers.ChatProcessor.GetInstance().HandleChatCommand(player, cmd));
+            AdminConfig.LOGIN_EXECUTE_COMMANDS.ForEach(cmd => Aion.GameServer.Utils.ChatHandlers.ChatProcessor.GetInstance().HandleChatCommand(player, cmd));
             staffMembers[player.GetObjectId()] = player;
             ScheduleBroadcastLogin(player);
         }

@@ -5,7 +5,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.TaskManager.Tasks;
+using Aion.GameServer.Taskmanager.Tasks;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 

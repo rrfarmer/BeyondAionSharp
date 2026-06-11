@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Services.AntiHack;
+using Aion.GameServer.Services.Antihack;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;

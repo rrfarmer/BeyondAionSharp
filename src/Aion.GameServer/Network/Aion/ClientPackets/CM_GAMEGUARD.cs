@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Services.AntiHack;
+using Aion.GameServer.Services.Antihack;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;

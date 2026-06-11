@@ -5,7 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.TaskManager.Tasks.Housing;
+using Aion.GameServer.Taskmanager.Tasks.Housing;
 using Aion.GameServer.Utils.Time;
 using State = Aion.GameServer.Network.Aion.AionConnection.State;
 

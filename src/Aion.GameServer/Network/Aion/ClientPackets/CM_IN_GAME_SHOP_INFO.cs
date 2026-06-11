@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Model.InGameShop;
+using Aion.GameServer.Model.Ingameshop;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
