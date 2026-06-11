@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Aion.Commons.Scripting.Classlistener;
+namespace Aion.Commons.Scripting.ClassListener;
 
 /// <summary>
 /// Java parity: commons/scripting/classlistener/AggregatedClassListener (SoulKeeper).

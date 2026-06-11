@@ -4,7 +4,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.Commons.Scripting;
-using Aion.Commons.Scripting.Classlistener;
+using Aion.Commons.Scripting.ClassListener;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Instance.Handlers;
 using Aion.GameServer.Model;

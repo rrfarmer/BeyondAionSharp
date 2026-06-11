@@ -1,5 +1,5 @@
 using System;
-using Aion.Commons.Scripting.Classlistener;
+using Aion.Commons.Scripting.ClassListener;
 using Aion.GameServer.World.Zone;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;

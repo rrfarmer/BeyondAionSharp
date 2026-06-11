@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Aion.Commons.Scripting;
-using Aion.Commons.Scripting.Classlistener;
+using Aion.Commons.Scripting.ClassListener;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;

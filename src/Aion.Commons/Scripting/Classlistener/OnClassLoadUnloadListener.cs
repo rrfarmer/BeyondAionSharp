@@ -4,7 +4,7 @@ using Aion.Commons.Scripting.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.Commons.Scripting.Classlistener;
+namespace Aion.Commons.Scripting.ClassListener;
 
 /// <summary>
 /// Java parity: commons/scripting/classlistener/OnClassLoadUnloadListener (SoulKeeper).

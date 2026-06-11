@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.Commons.Scripting.Classlistener;
+namespace Aion.Commons.Scripting.ClassListener;
 
 /// <summary>
 /// Java parity: commons/scripting/classlistener/ClassListener (SoulKeeper).

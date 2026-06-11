@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Aion.Commons.Scripting.Classlistener;
+using Aion.Commons.Scripting.ClassListener;
 using Aion.GameServer.Instance.Handlers;
 
 namespace Aion.GameServer.Instance;
