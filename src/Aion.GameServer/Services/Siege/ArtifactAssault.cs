@@ -10,7 +10,7 @@ using Aion.GameServer.Utils;
 namespace Aion.GameServer.Services.Siege;
 
 /// <summary>Java parity: services/siege/ArtifactAssault (Luzien, Whoop) extends Assault&lt;ArtifactSiege&gt;. Balaur assault on an artifact: handleAssault spawns one assaulter near the boss (level-based npc id), onAssaultFinish announces kill if captured. Math.toRadians->x*PI/180; Rnd.nextFloat->NextFloat; forEachPlayer lambda; switch on boss level. Assault&lt;ArtifactSiege&gt; constraint red-tolerated (invariance-bound erasure).</summary>
-public class ArtifactAssault : Assault<ArtifactSiege>
+public class ArtifactAssault : Assault<ArtifactSiege, ArtifactLocation>
 {
     public ArtifactAssault(ArtifactSiege siege)
         : base(siege)

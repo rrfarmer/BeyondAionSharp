@@ -10,7 +10,7 @@ using Aion.GameServer.Utils;
 namespace Aion.GameServer.Services.Siege;
 
 /// <summary>Java parity: services/siege/Assault&lt;SiegeType extends Siege&lt;?&gt;&gt; (Luzien, Estrayl) abstract base for Balaur assaults. AtomicBoolean isStarted; startAssault schedules handleAssault after delay; finishAssault cancels tasks + onAssaultFinish(captured && balaur); spawnAssaulter (heading/distance offset trig placement + aggro). Siege&lt;?&gt;->Siege&lt;SiegeLocation&gt; invariance bound; Future->ScheduledTask; method-ref this::handleAssault->ct-lambda; schedule(...,delay,SECONDS)->TimeSpan.FromSeconds; Math.toRadians->x*PI/180; Math.cos/sin->Math.Cos/Sin. Assaulter/SiegeNpc/SpawnEngine red-tolerated.</summary>
-public abstract class Assault<SiegeType> where SiegeType : Siege<SiegeLocation>
+public abstract class Assault<SiegeType, SL> where SiegeType : Siege<SL> where SL : SiegeLocation
 {
     private readonly AtomicBoolean isStarted = new AtomicBoolean();
     protected readonly SiegeLocation siegeLocation;
