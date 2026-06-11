@@ -48,7 +48,7 @@ public class CreatureEventHandler
         }
     }
 
-    protected static void CheckAggro(NpcAI ai, Creature creature)
+    internal static void CheckAggro(NpcAI ai, Creature creature)
     {
         if (ai.IsInState(AiState.Fight))
             return;
