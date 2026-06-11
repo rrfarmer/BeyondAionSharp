@@ -23,7 +23,15 @@ public sealed class ShutdownHook
 		_applicationLifetime = applicationLifetime;
 		_logger = logger;
 		_tickInterval = tickInterval;
+		_instance = this;
 	}
+
+	// Singleton-bridge slot (same idiom as ThreadPoolManager): the DI-created instance binds the Java-style
+	// static accessor so GameServer.isShuttingDownSoon()/isShutdownScheduled() can reach it as in Java.
+	private static ShutdownHook? _instance;
+
+	// Java parity: ShutdownHook.getInstance().
+	public static ShutdownHook? Instance => _instance;
 
 	public bool IsRunning => Volatile.Read(ref _remainingSeconds) != UnsetDelay;
 

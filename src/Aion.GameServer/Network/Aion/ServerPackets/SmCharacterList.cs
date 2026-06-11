@@ -145,9 +145,9 @@ public sealed class SmCharacterList : GameServerPacket
 		buffer.WriteD(0);
 		buffer.WriteD(0);
 		buffer.WriteD(0);
-		buffer.WriteD(character.BanInfo?.StartEpochSeconds ?? 0);
-		buffer.WriteD(character.BanInfo?.EndEpochSeconds ?? 0);
-		buffer.WriteS(character.BanInfo?.Reason ?? string.Empty);
+		buffer.WriteD((int)(character.BanInfo?.GetStart() ?? 0));
+		buffer.WriteD((int)(character.BanInfo?.GetEnd() ?? 0));
+		buffer.WriteS(character.BanInfo?.GetReason() ?? string.Empty);
 	}
 
 	private static void WriteFixedS(PacketBuffer buffer, string? value, int fixedLength)

@@ -109,5 +109,3 @@ public sealed class CharacterAppearance
 }
 
 public sealed record VisibleCharacterItem(byte SlotType, int ItemId, int GodStoneId, int? Color);
-
-public sealed record CharacterBanInfo(int StartEpochSeconds, int EndEpochSeconds, string Reason);
