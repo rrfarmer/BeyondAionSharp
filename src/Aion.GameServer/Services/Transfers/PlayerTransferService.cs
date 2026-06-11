@@ -6,7 +6,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.LoginServer;
-using Aion.GameServer.Network.LoginServer.Serverpackets;
+using Aion.GameServer.Network.LoginServer.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;

@@ -40,7 +40,7 @@ public abstract class UseableHouseObject<T> : HouseObject<T> where T : Placeable
         usingPlayer.Set(0);
     }
 
-    public bool HasUseCooldown()
+    public virtual bool HasUseCooldown()
     {
         return false;
     }

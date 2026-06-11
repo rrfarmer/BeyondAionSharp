@@ -10,7 +10,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Mail;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Network.LoginServer;
-using Aion.GameServer.Network.LoginServer.Serverpackets;
+using Aion.GameServer.Network.LoginServer.ServerPackets;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Players;

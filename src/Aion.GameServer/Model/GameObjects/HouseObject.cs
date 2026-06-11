@@ -293,7 +293,7 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
         return (PlaceableObjectController<T>) base.GetController();
     }
 
-    public void Spawn()
+    public virtual void Spawn()
     {
         if (!IsSpawnedByPlayer())
             return;
@@ -333,7 +333,7 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
         OnUse(player);
     }
 
-    public void OnDespawn()
+    public virtual void OnDespawn()
     {
     }
 

@@ -66,7 +66,7 @@ public class InstanceScore<T> where T : InstancePlayerReward
         return instanceProgressionType.IsStartProgress();
     }
 
-    public void Clear()
+    public virtual void Clear()
     {
         playerRewards.Clear();
     }

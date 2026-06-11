@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Chatserver;
+using Aion.GameServer.Network.ChatServer;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;

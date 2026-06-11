@@ -11,7 +11,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Templates.Event;
-using Aion.GameServer.Model.Templates.Globaldrops;
+using Aion.GameServer.Model.Templates.GlobalDrops;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Utils;

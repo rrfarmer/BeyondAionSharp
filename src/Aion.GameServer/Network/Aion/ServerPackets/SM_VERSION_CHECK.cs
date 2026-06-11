@@ -3,7 +3,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Configs.Network;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Network.Chatserver;
+using Aion.GameServer.Network.ChatServer;
 using Aion.GameServer.Network.LoginServer;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Time;

@@ -15,7 +15,7 @@ public class ChatBanService
     /// <summary>Bans a player from all chats.</summary>
     public static void BanPlayer(Aion.GameServer.Model.GameObjects.Players.Player player, long durationMillis)
     {
-        Aion.GameServer.Network.Chatserver.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), durationMillis);
+        Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), durationMillis);
         chatBans[player.GetObjectId()] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + durationMillis;
         RegisterUnban(player, durationMillis);
     }
@@ -23,7 +23,7 @@ public class ChatBanService
     public static void UnbanPlayer(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetController().CancelTask(TaskId.GAG);
-        Aion.GameServer.Network.Chatserver.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), 0);
+        Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), 0);
         if (chatBans.TryRemove(player.GetObjectId(), out _) && player.IsOnline())
             PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CAN_CHAT_NOW());
     }

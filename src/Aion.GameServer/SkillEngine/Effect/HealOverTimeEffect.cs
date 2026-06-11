@@ -12,6 +12,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 [XmlType("HealOverTimeEffect")]
 public abstract class HealOverTimeEffect : AbstractOverTimeEffect, HealEffectTemplate
 {
+    // Java parity: HealEffectTemplate interface methods, implemented by the concrete heal effects.
+    public abstract int GetCurrentStatValue(Effect effect);
+
+    public abstract int GetMaxStatValue(Effect effect);
+
     public override void Calculate(Effect effect)
     {
         if (!base.Calculate(effect, null, null))
