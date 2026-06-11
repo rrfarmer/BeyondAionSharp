@@ -178,28 +178,6 @@ public sealed class PeriodicInstanceRegistrationService
 		return new PeriodicInstanceRegistrationBroadcastDispatchResult(plan, sentPackets, stoppedRegistrations);
 	}
 
-	public Task<PeriodicInstanceRegistrationBroadcastDispatchResult> CloseRegistrationAndBroadcastAsync(
-		int maskId,
-		AutoGroupTable? autoGroups,
-		IGameClientConnectionRegistry connectionRegistry,
-		AutoGroupLookingPartyRegistrationService lookingPartyRegistrations,
-		CancellationToken cancellationToken = default)
-	{
-		return CloseRegistrationAndBroadcastAsync(
-			maskId,
-			autoGroups,
-			connectionRegistry,
-			async (closedMaskId, token) =>
-			{
-				await lookingPartyRegistrations.StopRegistrationsByMaskIdAsync(
-					closedMaskId,
-					autoGroups,
-					connectionRegistry,
-					token);
-			},
-			cancellationToken);
-	}
-
 	public IReadOnlyList<SmAutoGroup> CreateOpenRegistrationPackets(
 		Player player,
 		AutoGroupTable? autoGroups,
