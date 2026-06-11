@@ -12,3 +12,7 @@
 global using Player = Aion.GameServer.Model.GameObjects.Players.Player;
 global using Effect = Aion.GameServer.SkillEngine.Model.Effect;
 global using Item = Aion.GameServer.Model.GameObjects.Item;
+
+// java.lang.Runnable has no ambient C# equivalent; ported 1:1 as a commons interface and
+// surfaced project-wide so `implements Runnable` / `(Runnable)` / `where T : Runnable` resolve.
+global using Runnable = Aion.Commons.Lang.Runnable;
