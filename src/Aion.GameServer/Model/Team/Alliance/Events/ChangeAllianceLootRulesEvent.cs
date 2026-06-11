@@ -19,6 +19,6 @@ public class ChangeAllianceLootRulesEvent : AlwaysTrueTeamEvent
     public override void HandleEvent()
     {
         alliance.SetLootGroupRules(lootGroupRules);
-        alliance.SendPackets(new SmAllianceInfo(alliance));
+        alliance.SendPackets(new SM_ALLIANCE_INFO(alliance));
     }
 }

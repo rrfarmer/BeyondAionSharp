@@ -17,7 +17,7 @@ public class LeagueCreateEvent : AlwaysTrueTeamEvent
     {
         league.ForEach(alliance =>
         {
-            alliance.SendPackets(new SmAllianceInfo(alliance, SmAllianceInfo.LEAGUE_ALLIANCE_ENTERED, alliance.GetLeader().GetName()));
+            alliance.SendPackets(new SM_ALLIANCE_INFO(alliance, SM_ALLIANCE_INFO.LEAGUE_ALLIANCE_ENTERED, alliance.GetLeader().GetName()));
         });
     }
 }

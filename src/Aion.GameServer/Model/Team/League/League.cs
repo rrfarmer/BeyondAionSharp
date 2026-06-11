@@ -151,7 +151,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
                     {
                         predicate = Predicates.Players.AllExcept(skippedPlayer);
                     }
-                    targetAlliance.SendPacket(predicate, new Aion.GameServer.Network.Aion.ServerPackets.SmAllianceInfo(targetAlliance, skippedAlliance));
+                    targetAlliance.SendPacket(predicate, new Aion.GameServer.Network.Aion.ServerPackets.SM_ALLIANCE_INFO(targetAlliance, skippedAlliance));
                 }
             }
         }
