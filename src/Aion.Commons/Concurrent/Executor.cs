@@ -16,3 +16,9 @@ public sealed class LambdaRunnable : Runnable
     public LambdaRunnable(Action action) { this.action = action; }
     public void Run() => action();
 }
+
+/// <summary>Default Executor: runs the Runnable on the runtime thread pool (used as the reactor's disconnect executor).</summary>
+public sealed class ThreadPoolExecutor : Executor
+{
+    public void Execute(Runnable command) => System.Threading.ThreadPool.QueueUserWorkItem(_ => command.Run());
+}

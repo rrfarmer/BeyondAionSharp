@@ -211,9 +211,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<CharacterCreationService>();
 			services.AddSingleton<PlayerEnterWorldService>();
 			services.AddHostedService<GameServerBootstrapService>();
-			services.AddSingleton<GameClientSocketServer>();
-			services.AddSingleton<IGameClientConnectionRegistry>(
-				serviceProvider => serviceProvider.GetRequiredService<GameClientSocketServer>());
+			// GameClientSocketServer (reworked async god-class stack) removed; GameServerHostedService now
+			// boots the faithful NioServer + GameConnectionFactoryImpl directly.
 			services.AddHostedService<GameServerHostedService>();
 			services.AddHostedService<GameBridgeHostedService>();
 		}

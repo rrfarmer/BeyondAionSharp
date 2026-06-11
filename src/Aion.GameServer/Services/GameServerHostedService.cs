@@ -1,35 +1,45 @@
-using Aion.GameServer.Network.Aion;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Aion.Commons.Concurrent;
+using Aion.GameServer.Commons.Network;
+using Aion.GameServer.Configuration;
+using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Services;
 
+/// <summary>
+/// Boots the faithful NioServer game-client listener (Java parity: GameServer.initNioServer -> NioServer +
+/// ServerCfg + GameConnectionFactoryImpl creating AionConnections). Infrastructure boundary: a clean C#
+/// IHostedService shell around the faithful reactor (gameplay-faithful / infra-idiomatic principle), with
+/// the bind endpoint taken from idiomatic GameServerOptions rather than Java's static NetworkConfig.
+/// </summary>
 public sealed class GameServerHostedService : IHostedService
 {
-	private readonly GameClientSocketServer _clientSocketServer;
+	private readonly GameServerOptions _options;
 	private readonly ILogger<GameServerHostedService> _logger;
-	private Task? _clientSocketTask;
+	private NioServer? _nioServer;
 
-	public GameServerHostedService(GameClientSocketServer clientSocketServer, ILogger<GameServerHostedService> logger)
+	public GameServerHostedService(GameServerOptions options, ILogger<GameServerHostedService> logger)
 	{
-		_clientSocketServer = clientSocketServer;
+		_options = options;
 		_logger = logger;
 	}
 
 	public Task StartAsync(CancellationToken cancellationToken)
 	{
-		// Java parity: network/aion/GameConnectionListener bind after bootstrap.
-		_logger.LogInformation("Starting game-server client listener");
-		_clientSocketTask = Task.Run(() => _clientSocketServer.StartAsync(), cancellationToken);
+		_logger.LogInformation("Starting game-server client listener on {EndPoint}", _options.ClientEndPoint);
+		// Java game server is single-threaded for read/write (NIO_READ_WRITE_THREADS must be 1).
+		_nioServer = new NioServer(1, new ServerCfg(_options.ClientEndPoint, "Aion game clients", new GameConnectionFactoryImpl()));
+		_nioServer.Connect(new ThreadPoolExecutor());
 		return Task.CompletedTask;
 	}
 
-	public async Task StopAsync(CancellationToken cancellationToken)
+	public Task StopAsync(CancellationToken cancellationToken)
 	{
-		// Java parity: game client listener shutdown on server stop.
 		_logger.LogInformation("Stopping game-server client listener");
-		await _clientSocketServer.StopAsync();
-		if (_clientSocketTask != null)
-			await Task.WhenAny(_clientSocketTask, Task.Delay(TimeSpan.FromSeconds(5), cancellationToken));
+		_nioServer?.Shutdown();
+		return Task.CompletedTask;
 	}
 }
