@@ -329,7 +329,9 @@ public partial class Player : Creature
         return toyPetList;
     }
 
-    public override PlayerLifeStats GetLifeStats()
+    // Java covariant-return getLifeStats():PlayerLifeStats -> C# 'new' (method hiding); the body just
+    // downcasts the base result, so behaviour is identical and C#'s covariant-return rejection is avoided.
+    public new PlayerLifeStats GetLifeStats()
     {
         return (PlayerLifeStats)base.GetLifeStats();
     }
