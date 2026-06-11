@@ -1,11 +1,11 @@
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
-/// A heap-backed (short[]) short buffer. Faithful minimal port of java.nio.HeapShortBuffer.
+/// A heap-backed (float[]) float buffer. Faithful minimal port of java.nio.HeapFloatBuffer.
 /// </summary>
-public sealed class HeapShortBuffer : ShortBuffer
+public sealed class HeapFloatBuffer : FloatBuffer
 {
-    internal HeapShortBuffer(short[] buf, int off, int len)
+    internal HeapFloatBuffer(float[] buf, int off, int len)
         : base(-1, off, off + len, buf.Length, buf, 0)
     {
     }
@@ -15,25 +15,25 @@ public sealed class HeapShortBuffer : ShortBuffer
         return i + offset;
     }
 
-    public override short Get()
+    public override float Get()
     {
         return hb![Ix(NextGetIndex())];
     }
 
-    public override short Get(int index)
+    public override float Get(int index)
     {
         return hb![Ix(CheckIndex(index))];
     }
 
-    public override ShortBuffer Put(short s)
+    public override FloatBuffer Put(float f)
     {
-        hb![Ix(NextPutIndex())] = s;
+        hb![Ix(NextPutIndex())] = f;
         return this;
     }
 
-    public override ShortBuffer Put(int index, short s)
+    public override FloatBuffer Put(int index, float f)
     {
-        hb![Ix(CheckIndex(index))] = s;
+        hb![Ix(CheckIndex(index))] = f;
         return this;
     }
 

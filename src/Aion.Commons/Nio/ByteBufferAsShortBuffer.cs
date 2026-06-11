@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// A short view over a <see cref="ByteBuffer"/>'s bytes, decoding with a fixed byte order.

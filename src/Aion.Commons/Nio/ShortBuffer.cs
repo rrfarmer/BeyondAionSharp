@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// A short buffer. Faithful minimal port of java.nio.ShortBuffer (the subset used by the

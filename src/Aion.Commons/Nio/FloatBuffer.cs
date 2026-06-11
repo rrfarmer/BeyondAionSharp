@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// A float buffer. Faithful minimal port of java.nio.FloatBuffer (the subset used by the

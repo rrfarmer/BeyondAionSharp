@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// A float view over a <see cref="ByteBuffer"/>'s bytes, decoding with a fixed byte order.

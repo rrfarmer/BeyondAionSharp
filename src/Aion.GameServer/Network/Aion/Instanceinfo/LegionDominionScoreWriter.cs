@@ -1,4 +1,4 @@
-using Aion.GameServer.Commons.Nio;
+using Aion.Commons.Nio;
 using Aion.GameServer.Model.Instance.Instancescore;
 
 namespace Aion.GameServer.Network.Aion.Instanceinfo;

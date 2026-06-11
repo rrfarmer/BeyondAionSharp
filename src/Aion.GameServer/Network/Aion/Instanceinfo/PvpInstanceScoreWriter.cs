@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Aion.GameServer.Commons.Nio;
+using Aion.Commons.Nio;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Instance;

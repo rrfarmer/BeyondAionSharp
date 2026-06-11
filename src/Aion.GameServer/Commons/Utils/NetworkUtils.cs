@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Text;
-using Aion.GameServer.Commons.Nio;
+using Aion.Commons.Nio;
 
 namespace Aion.GameServer.Commons.Utils;
 

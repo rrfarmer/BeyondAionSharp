@@ -1,5 +1,5 @@
 using System;
-using Aion.GameServer.Commons.Nio;
+using Aion.Commons.Nio;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using JMath = System.Math;

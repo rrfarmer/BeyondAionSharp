@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// Byte order (endianness). Faithful minimal port of java.nio.ByteOrder, used by the geoEngine

@@ -1,5 +1,5 @@
 using System;
-using Aion.GameServer.Commons.Nio;
+using Aion.Commons.Nio;
 using Aion.GameServer.Model.Skill;
 
 namespace Aion.GameServer.Network.Aion.Skillinfo;

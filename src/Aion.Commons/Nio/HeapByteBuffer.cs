@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// A heap-backed (byte[]) byte buffer. Faithful minimal port of java.nio.HeapByteBuffer.

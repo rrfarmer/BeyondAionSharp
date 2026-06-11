@@ -1,6 +1,6 @@
 using System;
 
-namespace Aion.GameServer.Commons.Nio;
+namespace Aion.Commons.Nio;
 
 /// <summary>
 /// A byte buffer. Faithful minimal port of java.nio.ByteBuffer (the subset used by the geoEngine

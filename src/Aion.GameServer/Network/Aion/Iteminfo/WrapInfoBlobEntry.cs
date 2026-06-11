@@ -1,4 +1,4 @@
-using Aion.GameServer.Commons.Nio;
+using Aion.Commons.Nio;
 using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
 namespace Aion.GameServer.Network.Aion.Iteminfo;
