@@ -1,8 +1,9 @@
 namespace Aion.GameServer.Model.Team.Alliance;
 
-public sealed class PlayerAllianceMember
+// Java parity: model/team/alliance/PlayerAllianceMember extends PlayerTeamMember (-> ITeamMember<Player>).
+public class PlayerAllianceMember : PlayerTeamMember
 {
-	public PlayerAllianceMember(Player player, int allianceId, int allianceGroupId)
+	public PlayerAllianceMember(Player player, int allianceId, int allianceGroupId) : base(player)
 	{
 		// Java parity: model/team/alliance/PlayerAllianceMember wraps Player and stores alliance id through PlayerAllianceGroup.addMember.
 		Player = player;
