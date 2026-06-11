@@ -182,28 +182,7 @@ public partial class ItemTemplate : VisibleObjectTemplate
         return itemGroup.GetEquipType();
     }
 
-    public Aion.GameServer.Model.Templates.Items.Enums.ItemGroup GetItemGroup()
-    {
-        return itemGroup;
-    }
-
-    public string GetTemperingName()
-    {
-        return temperingName;
-    }
-
-    public string GetEnchantName()
-    {
-        return enchantName;
-    }
-
-    public void ModifyMask(bool apply, int filter)
-    {
-        if (apply)
-            mask |= filter;
-        else
-            mask &= ~filter;
-    }
+    // GetItemGroup/GetTemperingName/GetEnchantName/ModifyMask are defined in ItemTemplate.Part2.cs.
 
     public long GetPrice()
     {
