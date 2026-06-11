@@ -111,20 +111,8 @@ var builder = Host.CreateDefaultBuilder(args)
 					serviceProvider.GetRequiredService<WorldNpcCastingInterruptService>().Clear(objectId);
 				});
 			services.AddSingleton<WorldNpcDamageService>();
-			services.AddSingleton<WorldNpcSkillDamageService>(
-				serviceProvider =>
-				{
-					var runtimeContext = serviceProvider.GetRequiredService<GameServerRuntimeContext>();
-					var playerEnterWorldService = serviceProvider.GetRequiredService<PlayerEnterWorldService>();
-					return new WorldNpcSkillDamageService(
-						serviceProvider.GetRequiredService<WorldNpcDamageService>(),
-						serviceProvider.GetRequiredService<WorldNpcSkillResultCalculationService>(),
-						getItemTemplates: () => runtimeContext.DataManager?.StaticData.ItemTemplates,
-						getItemRestrictionCleanups: () => runtimeContext.DataManager?.StaticData.ItemRestrictionCleanups,
-						saveIdianPolishBurnAsync: playerEnterWorldService.SaveIdianPolishBurnMutationAsync,
-						saveItemChargeBurnAsync: playerEnterWorldService.SaveItemChargeBurnMutationAsync);
-				});
-			services.AddSingleton<WorldNpcSkillDamageFanoutService>();
+			// Reworked WorldNpcSkillDamageService/Fanout (depended on the deleted PlayerEnterWorldService god's
+			// SaveIdianPolishBurn/SaveItemChargeBurn mutations) removed.
 			services.AddSingleton<EquipmentObserverBurnFanoutService>();
 			services.AddSingleton<PlayerIncomingDamageObserverFanoutService>();
 			services.AddSingleton<WorldNpcLootService>();
@@ -141,24 +129,9 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<RiftScheduleService>();
 			services.AddSingleton<InstanceDestroyWorkflowService>();
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
-			services.AddSingleton<AutoGroupLookingPartyRegistrationService>();
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
 			services.AddSingleton<AutoGroupPenaltyRefreshSchedulerService>();
-			services.AddSingleton(
-				serviceProvider =>
-				{
-					var runtimeContext = serviceProvider.GetRequiredService<GameServerRuntimeContext>();
-					var registrations = serviceProvider.GetRequiredService<PeriodicInstanceRegistrationService>();
-					return new AutoGroupInstanceLeaveRuntimeService(
-						serviceProvider.GetRequiredService<PlayerGroupRuntime>(),
-						serviceProvider.GetRequiredService<PlayerAllianceRuntime>(),
-						serviceProvider.GetRequiredService<InstanceDestroyWorkflowService>().DestroyInstance,
-						player => registrations.CreateOpenRegistrationPackets(
-							player,
-							runtimeContext.DataManager?.StaticData.AutoGroups,
-							runtimeContext.DataManager?.StaticData.InstanceCooltimes,
-							DateTimeOffset.UtcNow));
-				});
+			// Reworked AutoGroup runtime/registration services (depended on the deleted Player*Runtime + PlayerEnterWorldService god) removed.
 			services.AddSingleton<RiftPortalDialogService>();
 			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();
