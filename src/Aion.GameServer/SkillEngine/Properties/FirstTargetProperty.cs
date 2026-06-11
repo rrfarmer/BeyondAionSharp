@@ -2,10 +2,10 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/FirstTargetProperty (ATracer). Static set(skill, properties) switch on getFirstTarget(): ME/TARGETORME (auto-retarget logic w/ targetRelation)/TARGET (skill 8000-9000 + NPC dispel exceptions, relation checks)/MYPET/MYMASTER/PASSIVE/TARGET_MYPARTY_NONVISIBLE/POINT; isTargetTeamMember (TemporaryPlayerTeam&lt;?&gt;→&lt;TeamMember&lt;Player&gt;&gt;); isTargetAllowed→TargetRelationProperty.isBuffAllowed; Npc heading update + effectedList.add. instanceof X x→is X x. Properties/enums/Summon red-tolerated.</summary>
 public class FirstTargetProperty

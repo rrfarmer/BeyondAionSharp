@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>Java parity: skillengine/condition/MpCondition (ATracer) : Condition. @XmlAttribute value/delta/ratio; validate: v=value+delta*lvl, ratio→maxMp*v/100, boostSkillCost!=0→v-=(v/(100/changeMpPercent)); if currentMp>v→reduceMp(USED_MP); return currentMp>v. SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("MpCondition")]

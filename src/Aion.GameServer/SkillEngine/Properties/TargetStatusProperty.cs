@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Effects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Effects;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/TargetStatusProperty (kecimis). Static set: RI_PROTECTIONCURTAIN stack→true; removeIf targets lacking any required abnormal state (stream anyMatch→Any); return targets contains firstTarget. hasAnyAbnormalState: any state isAbnormalSet. Properties/AbnormalState red-tolerated.</summary>
 [XmlType("TargetStatusProperty")]

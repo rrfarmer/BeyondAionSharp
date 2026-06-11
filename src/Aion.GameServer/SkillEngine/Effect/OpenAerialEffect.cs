@@ -3,12 +3,12 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/OpenAerialEffect (ATracer) : EffectTemplate. applyEffect→addToEffectedController; calculate: 5-state guard, OPENAERIAL_RESISTANCE+SpellStatus.OPENAERIAL, subEffect non-Player→SubEffectType.OPENAERIAL; if !flying→geoZ via GeoService.getZ (Float.isNaN→float.IsNaN guard), setTargetLoc(x,y,z); startEffect: cancelCurrentSkill, removeParalyzeEffects, Player glide/move stop, World.updatePosition, Player SM_FORCED_MOVE, set OPENAERIAL; endEffect→unset. red-tolerated.</summary>
 [XmlType("OpenAerialEffect")]

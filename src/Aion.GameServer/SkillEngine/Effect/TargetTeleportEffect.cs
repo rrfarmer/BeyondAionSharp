@@ -6,11 +6,11 @@ using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services.Teleport;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/TargetTeleportEffect (Rolandas) : EffectTemplate. @XmlAttribute(name="alias_location")→loc; @XmlAttribute distance; applyEffect: Player p; loc==null→teleport in front of effector (reflected→originalEffected), Math.toRadians→*PI/180, getClosestCollision, TeleportService.teleportTo; else→SKILL_ALIAS_LOCATION_DATA + Rnd.get random position, teleportTo. SkillAliasLocation/Position/TeleportService red-tolerated.</summary>
 [XmlType("TargetTeleportEffect")]

@@ -6,12 +6,12 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AuraEffect (ATracer, kecimis, xTz) : EffectTemplate. @XmlAttribute distance/distance_z/skill_id; applyEffect: Player double-cast abuse guard via AuditLogger, else addToEffectedController; onPeriodicAction: Npc→applyAuraTo self, Player online+inTeam→BOOST_MANTRA_RANGE-scaled range, group members in range/rangeZ→applyAuraTo, else self; SM_MANTRA_EFFECT broadcast; applyAuraTo→SkillEngine.applyEffect(skillId); startEffect: setPeriodicTask(scheduleAtFixedRate AuraTask 0,6500ms, Position); inner Runnable AuraTask→nested (onPeriodicAction + Thread.Yield). AuditLogger/SM_MANTRA_EFFECT red-tolerated.</summary>
 [XmlType("AuraEffect")]

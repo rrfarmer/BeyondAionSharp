@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DiseaseEffect (kecimis) : EffectTemplate. calculate→base.Calculate(effect, DISEASE_RESISTANCE, null); applyEffect→addToEffectedController (skillId 18386); start set AbnormalState.DISEASE; end isAbnormalSet guard→unset. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("DiseaseEffect")]

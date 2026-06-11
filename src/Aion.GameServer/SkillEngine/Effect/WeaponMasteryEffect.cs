@@ -3,9 +3,9 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Items.Enums;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/WeaponMasteryEffect (ATracer) : BufEffect. @XmlAttribute(name="weapon")→[XmlAttribute("weapon")] ItemGroup; change==null guard; itemGroup.getItemSubType()==TWO_HAND→single fn else PHYSICAL/MAGICAL_ATTACK→MAIN_HAND_POWER+OFF_HAND_POWER; gameStats.addEffect. IStatFunction/StatWeaponMasteryFunction/ItemGroup red-tolerated.</summary>
 [XmlType("WeaponMasteryEffect")]

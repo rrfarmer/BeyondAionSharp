@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/FlyoffEffect (Rolandas) : EffectTemplate. @XmlType(name="FlyOffEffect") (differs from class name); @XmlAttribute int distance. EffectTemplate/Effect red-tolerated.</summary>
 [XmlType("FlyOffEffect")]

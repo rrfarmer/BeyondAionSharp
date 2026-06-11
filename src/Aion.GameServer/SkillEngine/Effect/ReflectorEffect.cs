@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ReflectorEffect (ginho1, Wakizashi, kecimis, Neon) : ShieldEffect. @XmlAttribute reflectType; hit=hitvalue+hitdelta*skillLevel; AttackShieldObserver 12-arg ctor (minradius,radius,null,0); empty endEffect; getType()→reflectType==1?SKILL_REFLECTOR:REFLECTOR. base fields red-tolerated.</summary>
 [XmlType("ReflectorEffect")]

@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
- using Aion.GameServer.Skillengine.Model;
+ using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/FPHealEffect : HealOverTimeEffect. FP heal-over-time; startEffect/onPeriodicAction delegate to base with HealType.FP. Effect/lifeStats red-tolerated.</summary>
 [XmlType("FPHealEffect")]

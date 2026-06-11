@@ -6,8 +6,8 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Effects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Effects;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Controllers.Observer;

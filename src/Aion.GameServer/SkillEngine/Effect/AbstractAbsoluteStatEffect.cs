@@ -12,7 +12,7 @@ public abstract class AbstractAbsoluteStatEffect : BufEffect
     [XmlAttribute("statsetid")]
     private int statSetId;
 
-    protected override List<IStatFunction> GetModifiers(SkillEngine.Model.Effect effect)
+    protected override List<IStatFunction> GetModifiers(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         List<IStatFunction> modifiers = new List<IStatFunction>();
         modifiers.AddRange(GetModifiersSet().GetModifiers());

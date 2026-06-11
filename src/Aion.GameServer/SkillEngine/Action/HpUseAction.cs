@@ -2,10 +2,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Action;
+namespace Aion.GameServer.SkillEngine.Action;
 
 /// <summary>Java parity: skillengine/action/HpUseAction (ATracer) : Action. @XmlAttribute value/delta/ratio; act: valueWithDelta=value+delta*lvl; ratio→/100f*maxHp; Player current check→STR_SKILL_NOT_ENOUGH_HP false; reduceHp(USED_HP, ..., effector). SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("HpUseAction")]

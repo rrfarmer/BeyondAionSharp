@@ -12,13 +12,13 @@ using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Event;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time;
 using Aion.GameServer.World;
 using StoredBuffData = Aion.GameServer.Dao.EventDAO.StoredBuffData;
-using ForceType = Aion.GameServer.Skillengine.Model.Effect.ForceType;
+using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 
 namespace Aion.GameServer.Services.Event;
 

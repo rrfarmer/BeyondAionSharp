@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/MaxCountProperty (MrPoke, Neon). Static set(properties, result): maxCount==0 || targets&lt;=maxCount→true; switch AREA/PARTY/PARTY_WITHPET (fallthrough): null firstTarget→false; nearest maxCount by distance (stream sorted/limit/collect→OrderBy/Take/ToHashSet); PARTY_WITHPET→add summons; retainAll→RemoveAll(!contains). Properties/enums red-tolerated.</summary>
 public class MaxCountProperty

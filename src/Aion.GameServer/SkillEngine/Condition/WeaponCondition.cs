@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.SkillEngine.condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>
 /// Java parity: skillengine/condition/WeaponCondition (ATracer).

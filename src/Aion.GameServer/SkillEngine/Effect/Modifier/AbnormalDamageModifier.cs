@@ -11,12 +11,12 @@ public class AbnormalDamageModifier : ActionModifier
     [XmlAttribute("state")]
     public AbnormalState State;
 
-    public override int Analyze(SkillEngine.Model.Effect effect)
+    public override int Analyze(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return Value + effect.GetSkillLevel() * Delta;
     }
 
-    public override bool Check(SkillEngine.Model.Effect effect)
+    public override bool Check(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return effect.GetEffected().GetEffectController().IsAbnormalSet(State);
     }

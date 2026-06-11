@@ -3,9 +3,9 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>Java parity: skillengine/condition/LeftHandCondition (Cheatkiller) : Condition. @XmlAttribute(name="type") LeftHandSlot; validate Player: switch(type) DUAL→offHand weapon || mainHand two-hand (assignment-in-condition preserved) else STR_SKILL_NEED_DUAL_WEAPON; SHIELD→isShieldEquipped else STR_SKILL_NEED_SHIELD; default false. LeftHandSlot/Item red-tolerated.</summary>
 [XmlType("LeftHandCondition")]

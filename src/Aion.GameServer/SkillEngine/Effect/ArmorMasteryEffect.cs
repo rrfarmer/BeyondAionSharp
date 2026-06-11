@@ -4,9 +4,9 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Templates.Items.Enums;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ArmorMasteryEffect (ATracer) : BufEffect. @XmlAttribute(name="armor")→[XmlAttribute("armor")] ItemSubType; change==null guard; CalculateBaseValue; getModifiers→GetModifiers; per-modifier StatArmorMasteryFunction with equipped items; gameStats.addEffect. IStatFunction/StatArmorMasteryFunction red-tolerated.</summary>
 [XmlType("ArmorMasteryEffect")]

@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ShieldEffect (ATracer, Wakizashi, Sippolo, kecimis) : EffectTemplate. @XmlAttribute fields→[XmlAttribute]; getType()→GetType_() (Object.GetType collision); base Hittype/HitTypeProb/CalculateBaseValue from EffectTemplate; new AttackShieldObserver(hit,total,percent,effect,hitType,getType(),hitTypeProb). AttackShieldObserver/ShieldType red-tolerated.</summary>
 [XmlType("ShieldEffect")]

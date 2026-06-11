@@ -27,7 +27,7 @@ using ActionType = Aion.GameServer.Network.Aion.Serverpackets.SM_QUEST_ACTION.Ac
 using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 using ItemUpdatePredicate = Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate;
-using ForceType = Aion.GameServer.Skillengine.Model.Effect.ForceType;
+using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 
 namespace Aion.GameServer.Services.Event;
 

@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
- using Aion.GameServer.Skillengine.Model;
+ using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DPHealEffect : HealOverTimeEffect. DP heal-over-time; startEffect/onPeriodicAction delegate to base with HealType.DP. Effect/lifeStats red-tolerated.</summary>
 [XmlType("DPHealEffect")]

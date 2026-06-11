@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Model.Templates.Itemset;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Stats.Listeners;

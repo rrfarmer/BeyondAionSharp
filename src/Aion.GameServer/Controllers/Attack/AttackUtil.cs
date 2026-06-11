@@ -13,12 +13,12 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Model.Templates.Npc;
-using Aion.GameServer.Skillengine.Change;
-using Aion.GameServer.Skillengine.Effects;
-using Aion.GameServer.Skillengine.Effects.Modifier;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Change;
+using Aion.GameServer.SkillEngine.Effects;
+using Aion.GameServer.SkillEngine.Effects.Modifier;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.Stats;
-using ResourceType = Aion.GameServer.Skillengine.Model.EffectReserved.ResourceType;
+using ResourceType = Aion.GameServer.SkillEngine.Model.EffectReserved.ResourceType;
 
 namespace Aion.GameServer.Controllers.Attack;
 

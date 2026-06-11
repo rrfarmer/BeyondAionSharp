@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.SkillEngine.condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>
 /// Java parity: skillengine/condition/RideRobotCondition (Cheatkiller).

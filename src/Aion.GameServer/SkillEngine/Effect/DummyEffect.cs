@@ -5,7 +5,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 /// </summary>
 public class DummyEffect : EffectTemplate
 {
-    public override void ApplyEffect(SkillEngine.Model.Effect effect)
+    public override void ApplyEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         // TODO Auto-generated method stub
     }

@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ProcAtkInstantEffect (Wakizashi) : DamageEffect. applyEffect→onAttack(effect, TYPE.DAMAGE, reserveds(position).value, true, LOG.PROCATKINSTANT, hopType); shouldApplyAttackerMovementModifier→false; calculateBaseValue override: delta==1 && skillTemplate.isProvoked()→value else base. SM_ATTACK_STATUS.LOG/TYPE via using static. Effect red-tolerated.</summary>
 [XmlType("ProcAtkInstantEffect")]

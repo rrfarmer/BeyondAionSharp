@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/FpAttackEffect (Sippolo) : AbstractOverTimeEffect. instanceof Player→is Player; onPeriodicAction reduces FP. Inherited value/percent + SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("FpAttackEffect")]

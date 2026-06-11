@@ -11,8 +11,8 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Npc;
-using Aion.GameServer.SkillEngine.change;
-using Aion.GameServer.SkillEngine.condition;
+using Aion.GameServer.SkillEngine.Change;
+using Aion.GameServer.SkillEngine.Condition;
 using Aion.GameServer.SkillEngine.Effects.Modifier;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.Stats;
@@ -161,7 +161,7 @@ public abstract class EffectTemplate
     /// <summary>Gets the sub effect conditions status.</summary>
     public Conditions? GetEffectSubConditions() => EffectSubConditions;
 
-    public ActionModifier? GetActionModifiers(SkillEngine.Model.Effect effect)
+    public ActionModifier? GetActionModifiers(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (Modifiers == null)
             return null;
@@ -183,28 +183,28 @@ public abstract class EffectTemplate
     public int GetAccMod2() => AccMod2;
 
     /// <summary>The base value (damage, heal, etc.) per the skill template (matches the description value).</summary>
-    protected virtual int CalculateBaseValue(SkillEngine.Model.Effect effect)
+    protected virtual int CalculateBaseValue(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return Value + Delta * effect.GetSkillLevel();
     }
 
-    public int CalculateCritAddDmg(SkillEngine.Model.Effect effect)
+    public int CalculateCritAddDmg(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return CritAddDmg2 + CritAddDmg1 * effect.GetSkillLevel();
     }
 
     /// <summary>Calculate effect result.</summary>
-    public virtual void Calculate(SkillEngine.Model.Effect effect)
+    public virtual void Calculate(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         Calculate(effect, null, null, Element);
     }
 
-    public bool Calculate(SkillEngine.Model.Effect effect, StatEnum? statEnum, SpellStatus? spellStatus)
+    public bool Calculate(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum, SpellStatus? spellStatus)
     {
         return Calculate(effect, statEnum, spellStatus, Element);
     }
 
-    public bool Calculate(SkillEngine.Model.Effect effect, StatEnum? statEnum, SpellStatus? spellStatus, SkillElement element)
+    public bool Calculate(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum, SpellStatus? spellStatus, SkillElement element)
     {
         if (effect.GetSkillTemplate().IsPassive())
         {
@@ -235,12 +235,12 @@ public abstract class EffectTemplate
         return true;
     }
 
-    private bool ValidateEffectConditions(SkillEngine.Model.Effect effect)
+    private bool ValidateEffectConditions(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return EffectConditions == null || EffectConditions.Validate(effect);
     }
 
-    private bool ValidatePreEffects(SkillEngine.Model.Effect effect)
+    private bool ValidatePreEffects(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (GetPreEffects() != null)
         {
@@ -255,12 +255,12 @@ public abstract class EffectTemplate
         return true;
     }
 
-    private bool IsDodgedOrResisted(SkillEngine.Model.Effect effect, StatEnum? statEnum)
+    private bool IsDodgedOrResisted(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum)
     {
         return CanDodgeOrResist(effect) && (!CheckEffectResistRate(effect, statEnum) || !CheckDodgeOrResistRate(effect));
     }
 
-    protected virtual bool CanDodgeOrResist(SkillEngine.Model.Effect effect)
+    protected virtual bool CanDodgeOrResist(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (NoResist)
             return false;
@@ -270,7 +270,7 @@ public abstract class EffectTemplate
     }
 
     /// <returns>true = no dodge/resist, false = dodged/resisted</returns>
-    private bool CheckDodgeOrResistRate(SkillEngine.Model.Effect effect)
+    private bool CheckDodgeOrResistRate(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         int accuracyModifier = AccMod2 + AccMod1 * effect.GetSkillLevel() + effect.GetAccModBoost();
         if (effect.GetSkillTemplate().GetSubType() == SkillSubType.DEBUFF)
@@ -280,7 +280,7 @@ public abstract class EffectTemplate
         return Rnd.Get(1, 1000) > StatFunctions.CalculateMagicalResistRate(effect.GetEffector(), effect.GetEffected(), accuracyModifier, Element);
     }
 
-    private void AddSuccessEffect(SkillEngine.Model.Effect effect, SpellStatus? spellStatus)
+    private void AddSuccessEffect(Aion.GameServer.SkillEngine.Model.Effect effect, SpellStatus? spellStatus)
     {
         effect.AddSuccessEffect(this);
         if (spellStatus != null)
@@ -288,14 +288,14 @@ public abstract class EffectTemplate
     }
 
     /// <summary>Apply effect to effected.</summary>
-    public abstract void ApplyEffect(SkillEngine.Model.Effect effect);
+    public abstract void ApplyEffect(Aion.GameServer.SkillEngine.Model.Effect effect);
 
     /// <summary>Start effect on effected.</summary>
-    public virtual void StartEffect(SkillEngine.Model.Effect effect)
+    public virtual void StartEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
     }
 
-    public virtual void CalculateDamage(SkillEngine.Model.Effect effect)
+    public virtual void CalculateDamage(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         // evaluate skill reflect for non-dmg skills
         AttackResult attackResult = new AttackResult(0, effect.GetAttackStatus(), Hittype);
@@ -308,7 +308,7 @@ public abstract class EffectTemplate
         }
     }
 
-    public void CalculateSubEffect(SkillEngine.Model.Effect effect)
+    public void CalculateSubEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (SubEffectField == null)
             return;
@@ -340,7 +340,7 @@ public abstract class EffectTemplate
             level = effect.GetSignetBurstedCount();
             accBoost = short.MaxValue; // sub effects cannot be resisted by magic resist in case of signet bursts
         }
-        SkillEngine.Model.Effect newEffect = new SkillEngine.Model.Effect(effect.GetEffector(), effect.GetOriginalEffected(), template, level, null, effect.GetForceType(), true);
+        Aion.GameServer.SkillEngine.Model.Effect newEffect = new Aion.GameServer.SkillEngine.Model.Effect(effect.GetEffector(), effect.GetOriginalEffected(), template, level, null, effect.GetForceType(), true);
         newEffect.SetShieldDefense(effect.GetShieldDefense());
         newEffect.SetAccModBoost(accBoost);
         newEffect.Initialize();
@@ -352,12 +352,12 @@ public abstract class EffectTemplate
     }
 
     /// <summary>Check all sub effect condition statuses for effect.</summary>
-    private bool EffectSubConditionsCheck(SkillEngine.Model.Effect effect)
+    private bool EffectSubConditionsCheck(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return EffectSubConditions == null || EffectSubConditions.Validate(effect);
     }
 
-    public int CalculateHate(SkillEngine.Model.Effect effect)
+    public int CalculateHate(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (Hoptype != null)
         {
@@ -379,7 +379,7 @@ public abstract class EffectTemplate
         return 0;
     }
 
-    public void StartSubEffect(SkillEngine.Model.Effect effect)
+    public void StartSubEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (SubEffectField == null)
             return;
@@ -391,17 +391,17 @@ public abstract class EffectTemplate
     }
 
     /// <summary>Do periodic effect on effected.</summary>
-    public virtual void OnPeriodicAction(SkillEngine.Model.Effect effect)
+    public virtual void OnPeriodicAction(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
     }
 
     /// <summary>End effect on effected.</summary>
-    public virtual void EndEffect(SkillEngine.Model.Effect effect)
+    public virtual void EndEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
     }
 
     /// <returns>true = no resist, false = resisted</returns>
-    public bool CheckEffectResistRate(SkillEngine.Model.Effect effect, StatEnum? statEnum)
+    public bool CheckEffectResistRate(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum)
     {
         if (statEnum == null)
             return true;
@@ -447,7 +447,7 @@ public abstract class EffectTemplate
         return Rnd.Get(1, 1000) <= effectPower;
     }
 
-    private bool IsImmuneToAbnormal(SkillEngine.Model.Effect effect, StatEnum statEnum)
+    private bool IsImmuneToAbnormal(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum statEnum)
     {
         Creature effected = effect.GetEffected();
         if (effected != effect.GetEffector())

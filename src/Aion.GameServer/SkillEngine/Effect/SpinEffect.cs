@@ -2,9 +2,9 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SpinEffect (ATracer) : EffectTemplate. applyEffect→addToEffectedController; calculate: guard if any of PULLED/SPIN/OPENAERIAL/STAGGER/STUMBLE set→return, else SPIN_RESISTANCE + SpellStatus.SPIN; startEffect: cancelCurrentSkill, Player glide/move abort, removeParalyzeEffects, set SPIN; endEffect→unset. StatEnum/AbnormalState/SpellStatus red-tolerated.</summary>
 [XmlType("SpinEffect")]

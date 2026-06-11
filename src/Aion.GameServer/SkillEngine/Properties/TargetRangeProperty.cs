@@ -7,12 +7,12 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Team;
 using Aion.GameServer.Model.Templates.Zone;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Zone;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/TargetRangeProperty (ATracer, Yeats, Neon). Static set: Trap effectiveRange=attackRange; switch ONLYONE/AREA (knownList stream filters→LINQ Where chain: commonReqs, altitude, !flight-transporter, !trap-self, checkRange, checkGeo → add)/PARTY+PARTY_WITHPET (TemporaryPlayerTeam&lt;TeamMember&lt;Player&gt;&gt;, clear+rebuild, tryAddSummon)/POINT (knownList in targetDistance+1). Helpers checkCommonRequirements (resurrect→dead else !dead; BLINKING deny), isInsideDisablePvpZone (unused), checkRange (POINT/ineffective/effectiveDist angle BACK/front/cylinder), checkGeo (groundSkill geoZ NaN, canSee), tryAddSummon. streams→LINQ, Float.isNaN→float.IsNaN. Properties/AreaDirections/Trap red-tolerated.</summary>
 public class TargetRangeProperty

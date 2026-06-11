@@ -9,7 +9,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.SkillEngine.condition;
+using Aion.GameServer.SkillEngine.Condition;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;

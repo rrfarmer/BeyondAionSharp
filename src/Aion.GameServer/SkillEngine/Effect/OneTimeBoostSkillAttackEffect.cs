@@ -2,10 +2,10 @@ using System;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/OneTimeBoostSkillAttackEffect (ATracer) : BufEffect. @XmlAttribute count/type(SkillType); switch-arrow PHYSICAL/MAGICAL/ALL→switch statement; stateful anonymous AttackCalcObserver(boostCount)→nested BoostObserver capturing outer+effect+percent; getBasePhysicalDamageMultiplier(isSkill)/getBaseMagicalDamageMultiplier overrides; removeEffect→schedule(100ms) removeEffect(skillId). AttackCalcObserver/SkillType red-tolerated.</summary>
 [XmlType("OneTimeBoostSkillAttackEffect")]

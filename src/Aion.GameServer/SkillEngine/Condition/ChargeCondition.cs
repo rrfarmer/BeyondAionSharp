@@ -1,6 +1,6 @@
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.SkillEngine.condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>
 /// Java parity: skillengine/condition/ChargeCondition (Rolandas). Base for charge conditions.

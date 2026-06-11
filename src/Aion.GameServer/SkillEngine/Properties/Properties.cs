@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Effects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Effects;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/Properties (ATracer). @XmlAttribute fields (first_target/range/awr/target_relation/type/distance/maxcount/status[List&lt;AbnormalState&gt; space-sep]/revision_distance/effective_*/direction/target_species/ineffective_range); validate→FirstTargetProperty+FirstTargetRangeProperty+validateEffectedList; endCastValidate→clear+CAST_END range; validateEffectedList orchestrates TargetRange/TargetRelation/TargetStatus/TargetSpecies/MaxCount property helpers; nested CastState enum + ValidationResult (outer sets private `valid`, allowed in C#). Helper enums/TargetSpeciesProperty red-tolerated.</summary>
 [XmlType("Properties")]

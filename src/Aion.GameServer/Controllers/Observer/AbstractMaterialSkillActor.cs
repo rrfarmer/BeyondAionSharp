@@ -10,8 +10,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Materials;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Services;
-using Aion.GameServer.Skillengine;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time.Gametime;
 

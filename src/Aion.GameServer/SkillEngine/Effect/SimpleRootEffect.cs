@@ -5,12 +5,12 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SimpleRootEffect (VladimirZ, Cheatkiller) : EffectTemplate. applyEffect→addToEffectedController; calculate: CANT_MOVE_STATE guard; STAGGER_RESISTANCE + isSubEffect→SIMPLE_MOVE_BACK, getHeadingTowards, Math.toRadians→*PI/180, cos/sin*0.7f, getClosestCollision, setTargetLoc; startEffect: SpellStatus.NONE, Player onStopMove, isSubEffect→World.updatePosition + non-Player SM_POSITION broadcast, set SIMPLE_MOVE_BACK; endEffect→unset. Vector3f/SpellStatus/SubEffectType red-tolerated.</summary>
 [XmlType("SimpleRootEffect")]

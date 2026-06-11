@@ -4,10 +4,10 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items.Enums;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/RideRobotEffect (Rolandas, Cheatkiller) : EffectTemplate (no @XmlType→class name). applyEffect→addToEffectedController; startEffect: setRobotId from mainHand skin, SM_RIDE_ROBOT, anonymous UNEQUIP observer→nested UnequipObserver (WEAPON→endEffect); endEffect: setRobotId(0), SM_RIDE_ROBOT, end all rideRobotCondition effects. EquipType/SM_RIDE_ROBOT red-tolerated.</summary>
 [XmlType("RideRobotEffect")]

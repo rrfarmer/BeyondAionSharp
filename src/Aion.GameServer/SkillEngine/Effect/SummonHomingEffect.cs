@@ -5,11 +5,11 @@ using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonHomingEffect (ATracer) : SummonEffect. @XmlAttribute(name="npc_count"/"attack_count",required=true)→[XmlAttribute(...)]; per-npc newSingleTimeSpawn+spawnHoming; anonymous ActionObserver(ATTACK)→nested HomingAttackObserver capturing homing; Future→ScheduledTask, schedule(lambda,15*1000); onCreatureEvent(ATTACK). Homing/AIEventType red-tolerated.</summary>
 [XmlType("SummonHomingEffect")]

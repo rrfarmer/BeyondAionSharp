@@ -1,10 +1,10 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ResurrectEffect (ATracer) : EffectTemplate. @XmlAttribute(name="skill_id")→[XmlAttribute("skill_id")]; applyEffect: Player→setPlayerResActivate(true), setResurrectionSkill(skillId), SM_RESURRECT packet; calculate: Player && isDead→base.Calculate(effect,null,null). SM_RESURRECT/Player red-tolerated.</summary>
 [XmlType("ResurrectEffect")]

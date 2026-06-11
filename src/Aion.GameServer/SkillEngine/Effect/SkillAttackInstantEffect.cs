@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SkillAttackInstantEffect (ATracer) : DamageEffect. @XmlAttribute rnddmg/cannotmiss; getRnddmg/isCannotmiss getters; canDodgeOrResist override: cannotmiss→false else base.CanDodgeOrResist. base virtual via convergence edit. Effect red-tolerated.</summary>
 [XmlType("SkillAttackInstantEffect")]

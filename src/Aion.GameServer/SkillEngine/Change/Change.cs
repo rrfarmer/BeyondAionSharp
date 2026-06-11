@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.SkillEngine.condition;
+using Aion.GameServer.SkillEngine.Condition;
 
-namespace Aion.GameServer.SkillEngine.change;
+namespace Aion.GameServer.SkillEngine.Change;
 
 /// <summary>
 /// Java parity: skillengine/change/Change (ATracer). A conditional stat change applied by an effect.

@@ -14,7 +14,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services.Items;
-using Aion.GameServer.Skillengine.Task;
+using Aion.GameServer.SkillEngine.Task;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;

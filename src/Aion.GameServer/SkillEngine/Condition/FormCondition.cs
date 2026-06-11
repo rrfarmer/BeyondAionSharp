@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>Java parity: skillengine/condition/FormCondition (kecimis) : Condition. Defines transform type in which a player may cast. @XmlAttribute value(TransformType); validate: Player→transformModel active && type==value→true else STR_SKILL_CAN_NOT_CAST_IN_THIS_FORM false; non-Player→true. TransformType red-tolerated.</summary>
 [XmlType("FormCondition")]

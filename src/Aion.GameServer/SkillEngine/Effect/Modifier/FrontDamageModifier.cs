@@ -7,12 +7,12 @@ namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 /// </summary>
 public class FrontDamageModifier : ActionModifier
 {
-    public override int Analyze(SkillEngine.Model.Effect effect)
+    public override int Analyze(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return Value + effect.GetSkillLevel() * Delta;
     }
 
-    public override bool Check(SkillEngine.Model.Effect effect)
+    public override bool Check(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         return PositionUtil.IsInFrontOf(effect.GetEffector(), effect.GetEffected());
     }

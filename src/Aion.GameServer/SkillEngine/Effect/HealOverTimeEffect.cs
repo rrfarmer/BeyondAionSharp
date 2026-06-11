@@ -4,9 +4,9 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HealOverTimeEffect (ATracer, kecimis) abstract : AbstractOverTimeEffect, HealEffectTemplate. ResourceType.of→EffectReserved.ResourceType.Of; switch-arrows(HealType)→switch; (Player) cast for FP/DP. HealEffectTemplate interface methods + EffectReserved/SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("HealOverTimeEffect")]

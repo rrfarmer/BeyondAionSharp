@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BuffBindEffect (kecimis). @XmlType(name)→[XmlType]; calculate override→addSuccessEffect. BindEffect/Effect red-tolerated.</summary>
 [XmlType("BuffBindEffect")]

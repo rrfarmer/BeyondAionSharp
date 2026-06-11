@@ -1,4 +1,4 @@
-namespace Aion.GameServer.SkillEngine.periodicaction;
+namespace Aion.GameServer.SkillEngine.PeriodicAction;
 
 /// <summary>
 /// Java parity: skillengine/periodicaction/PeriodicAction. Abstract base for periodic effect actions.
@@ -6,5 +6,5 @@ namespace Aion.GameServer.SkillEngine.periodicaction;
 /// </summary>
 public abstract class PeriodicAction
 {
-    public abstract void Act(SkillEngine.Model.Effect effect);
+    public abstract void Act(Aion.GameServer.SkillEngine.Model.Effect effect);
 }

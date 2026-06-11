@@ -5,11 +5,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Skillengine.Change;
-using Aion.GameServer.Skillengine.Condition;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Change;
+using Aion.GameServer.SkillEngine.Condition;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/BufEffect (ATracer) abstract : EffectTemplate. @XmlAttribute→[XmlAttribute]; **CreatureGameStats&lt;? extends Creature&gt;→non-generic CreatureGameStats**; inline LoggerFactory.getLogger().warn→inline ILogger; switch(Func) ADD/PERCENT/REPLACE. Inherited `change` + EffectTemplate/StatXFunction red-tolerated.</summary>
 [XmlType("BufEffect")]

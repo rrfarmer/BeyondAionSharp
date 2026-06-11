@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Skillengine.Action;
+namespace Aion.GameServer.SkillEngine.Action;
 
 /// <summary>Java parity: skillengine/action/Actions (ATracer). @XmlType("Actions", propOrder={actions}); @XmlElements polymorphic→repeated [XmlElement(name, typeof(T))]; getActions lazily inits live list.</summary>
 [XmlType("Actions")]

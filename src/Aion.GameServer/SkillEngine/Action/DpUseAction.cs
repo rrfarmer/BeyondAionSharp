@@ -1,10 +1,10 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Action;
+namespace Aion.GameServer.SkillEngine.Action;
 
 /// <summary>Java parity: skillengine/action/DpUseAction (ATracer) : Action. @XmlAttribute value; act: currentDp<=0||currentDp<value→STR_SKILL_NOT_ENOUGH_DP false; else setDp(current-value) true. SM_SYSTEM_MESSAGE red-tolerated.</summary>
 [XmlType("DpUseAction")]

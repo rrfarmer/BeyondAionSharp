@@ -10,7 +10,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.SkillEngine.action;
+using Aion.GameServer.SkillEngine.Action;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Properties;
 using Aion.GameServer.Utils;

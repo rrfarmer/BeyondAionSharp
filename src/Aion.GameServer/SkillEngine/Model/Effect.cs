@@ -12,7 +12,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.SkillEngine.Effects;
-using Aion.GameServer.SkillEngine.periodicaction;
+using Aion.GameServer.SkillEngine.PeriodicAction;
 using Aion.GameServer.Utils;
 using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 

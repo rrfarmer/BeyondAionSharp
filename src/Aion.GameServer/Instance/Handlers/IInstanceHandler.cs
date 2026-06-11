@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Instance;
 using Aion.GameServer.Model.Instance.Instancescore;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World.Zone;
 
 namespace Aion.GameServer.Instance.Handlers;

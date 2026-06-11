@@ -3,9 +3,9 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Summons;
 using Aion.GameServer.Services.Summons;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/PetOrderUnSummonEffect (Bobobear) : EffectTemplate. applyEffect: effected is Player→summon; summon!=null→SummonsService.doMode(RELEASE, summon, UNSPECIFIED). Summon/SummonsService red-tolerated.</summary>
 [XmlType("PetOrderUnSummonEffect")]

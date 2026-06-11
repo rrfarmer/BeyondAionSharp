@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.SkillEngine.periodicaction;
+namespace Aion.GameServer.SkillEngine.PeriodicAction;
 
 /// <summary>
 /// Java parity: skillengine/periodicaction/HpUsePeriodicAction (antness). Periodically drains HP; ends effect when below required.

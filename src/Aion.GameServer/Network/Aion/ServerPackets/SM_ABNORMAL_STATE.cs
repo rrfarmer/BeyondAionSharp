@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;
 

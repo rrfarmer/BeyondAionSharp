@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AbstractDispelEffect (kecimis) abstract : EffectTemplate. @XmlAttribute(name="dispel_level")→[XmlAttribute("dispel_level")]; 3-arg applyEffect overload helper called by subclasses' applyEffect(Effect). Inherited CalculateBaseValue + EffectTemplate/Effect/DispelCategoryType/SkillTargetSlot red-tolerated.</summary>
 [XmlType("AbstractDispelEffect")]

@@ -1,8 +1,8 @@
 using System;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/HealEffectTemplate (Neon) interface w/ default calculateHealValue. C# default interface method delegates to a static helper so overriding classes can invoke the "interface default" (Java's HealEffectTemplate.super.calculateHealValue → CalculateHealValueDefault). Math.round(float)→(int)Math.Floor(+0.5f). Effect/StatEnum red-tolerated.</summary>
 public interface HealEffectTemplate

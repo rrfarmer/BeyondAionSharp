@@ -21,7 +21,7 @@ using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.Idfactory;
 using Aion.GameServer.World;
 using PersistentState = Aion.GameServer.Model.GameObjects.Persistable.PersistentState;

@@ -3,11 +3,11 @@ using System.Xml.Serialization;
 using Aion.GameServer.GeoEngine.Collision;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonTotemEffect (kecimis) : SummonServantEffect. applyEffect: firstTargetSelf→getClosestCollision offset (Math.toRadians→*PI/180); else pointSkill→effect x/y/z fallback to effector; group PR_PROVOKESERVENT→20s / FI_WARFLAG→15s; spawnServant(TOTEM). Vector3f/NpcObjectType/CollisionIntention red-tolerated.</summary>
 [XmlType("SummonTotemEffect")]

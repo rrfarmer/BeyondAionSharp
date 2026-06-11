@@ -3,11 +3,11 @@ using System.Threading.Tasks;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonGroupGateEffect (LokiReborn, Neon) : SummonEffect. SpawnEngine.newSingleTimeSpawn; VisibleObjectSpawner.spawnGroupGate; anonymous Runnable→async delegate; Future&lt;?&gt;→ScheduledTask; schedule(...,time*1000)→Schedule(async,TimeSpan.FromMilliseconds); addTask(TaskId.DESPAWN,task). GroupGate/SpawnTemplate red-tolerated.</summary>
 [XmlType("SummonGroupGateEffect")]

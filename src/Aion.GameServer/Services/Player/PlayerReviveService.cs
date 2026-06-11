@@ -16,7 +16,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Services.Panesterra;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Services.Vortex;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;

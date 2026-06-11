@@ -2,7 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.SkillEngine.Model;
 using AbnormalState = Aion.GameServer.SkillEngine.Effects.AbnormalState;
 
-namespace Aion.GameServer.SkillEngine.condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>
 /// Java parity: skillengine/condition/AbnormalStateCondition (kecimis).

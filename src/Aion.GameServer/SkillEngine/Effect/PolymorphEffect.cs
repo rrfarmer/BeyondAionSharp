@@ -2,9 +2,9 @@ using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Npc;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/PolymorphEffect (ATracer, Cheatkiller) : TransformEffect. super.startEffect→base.StartEffect; DataManager.NPC_DATA.getNpcTemplate(model); transformModel.setTribe(template.getTribe()) / setTribe(null). NpcTemplate/transformModel red-tolerated.</summary>
 [XmlType("PolymorphEffect")]

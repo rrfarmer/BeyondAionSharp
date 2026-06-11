@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>Java parity: skillengine/condition/HpCondition (Tomate) : Condition. @XmlAttribute value/delta/ratio; validate: valueWithDelta=value+delta*lvl, ratio→maxHp*v/100; if currentHp>v→reduceHp(USED_HP, ..., effector); return currentHp>=v. getHpValue getter. SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("HpCondition")]

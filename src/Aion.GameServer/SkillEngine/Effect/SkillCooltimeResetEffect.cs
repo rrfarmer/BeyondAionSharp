@@ -4,10 +4,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SkillCooltimeResetEffect (Rolandas, Luzien) : EffectTemplate. @XmlAttribute(name="first_cd"/"last_cd"); applyEffect: HashMap→Dictionary; for i in firstCd..lastCd: delay=getSkillCoolDown(i)-currentTimeMillis [UtcNow.ToUnixTimeMilliseconds]; skip if &lt;=0; Delta>0→delay-=delay*(Delta/100) else delay-=Value; setSkillCoolDown + collect; non-empty && Player→SM_SKILL_COOLDOWN. red-tolerated.</summary>
 [XmlType("SkillCooltimeResetEffect")]

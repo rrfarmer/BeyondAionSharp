@@ -2,10 +2,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
-using Aion.GameServer.Skillengine.Properties;
+using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.SkillEngine.Properties;
 
-namespace Aion.GameServer.Skillengine.Condition;
+namespace Aion.GameServer.SkillEngine.Condition;
 
 /// <summary>Java parity: skillengine/condition/TargetCondition (ATracer, kecimis) : Condition. @XmlAttribute value(TargetAttribute); getValue getter; validate: NONE/ALL→true, AREA targetType→true, firstTarget not TARGET/TARGETORME→true, TARGETORME && effector==firstTarget→true; switch(value) NPC→firstTarget is Npc / PC→is Player; !result && Player→STR_SKILL_TARGET_IS_NOT_VALID. TargetAttribute/FirstTargetAttribute/TargetRangeAttribute red-tolerated.</summary>
 [XmlType("TargetCondition")]

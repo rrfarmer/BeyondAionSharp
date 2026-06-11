@@ -10,9 +10,9 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Event;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using ForceType = Aion.GameServer.Skillengine.Model.Effect.ForceType;
+using ForceType = Aion.GameServer.SkillEngine.Model.Effect.ForceType;
 
 namespace Aion.GameServer.Controllers.Effects;
 

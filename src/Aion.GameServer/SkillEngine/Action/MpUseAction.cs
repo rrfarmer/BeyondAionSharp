@@ -2,10 +2,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Action;
+namespace Aion.GameServer.SkillEngine.Action;
 
 /// <summary>Java parity: skillengine/action/MpUseAction (ATracer) : Action. @XmlAttribute value/delta/ratio; act: valueWithDelta=value+delta*lvl; ratio→maxMp*v/100; boostSkillCost!=0→v-=(v/(100/changeMpPercent)) (negative pct); Player current check→STR_SKILL_NOT_ENOUGH_MP false; reduceMp(USED_MP). SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("MpUseAction")]

@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SpellAtkDrainEffect (Sippolo, kecimis) : AbstractOverTimeEffect. @XmlAttribute(name=)→[XmlAttribute(...)]; drains hp/mp percent of damage to effector. Inherited position/hopType/CalculateBaseValue + AttackUtil/SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("SpellAtkDrainEffect")]

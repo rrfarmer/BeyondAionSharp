@@ -6,13 +6,13 @@ using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Skillengine.Model;
-using Aion.GameServer.Skillengine.Properties;
+using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.SkillEngine.Properties;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonServantEffect (ATracer) : SummonEffect. INITIAL_SPAWN_DELAY=3000 const; Math.toRadians→*PI/180; getClosestCollision; spawnServant protected (overridden by SkillArea); IllegalArgumentException→ArgumentException; Future→ScheduledTask schedule(lambda, spawnDuration*1000L+INITIAL_SPAWN_DELAY). Servant/NpcObjectType/FirstTargetAttribute red-tolerated.</summary>
 [XmlType("SummonServantEffect")]

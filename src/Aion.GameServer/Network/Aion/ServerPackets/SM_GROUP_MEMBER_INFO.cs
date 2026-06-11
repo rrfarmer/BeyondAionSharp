@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;

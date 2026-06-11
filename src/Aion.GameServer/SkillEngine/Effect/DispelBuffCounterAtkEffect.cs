@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DispelBuffCounterAtkEffect : DamageEffect. @XmlAttribute dpower/power/hitvalue/hitdelta; @XmlAttribute(name="dispel_level"); getCritProbMod2→0 (cannot crit, base virtual via converge); applyEffect→dispelBuffCounterAtkEffect; calculateDamage: count=base, finalPower, calculateBuffsOrEffectorDebuffsToRemove, valueWithDelta formula, calculateSkillResult; shouldApplyAttackerMovementModifier→false; endEffect→resetDesignatedDispelEffect+super. AttackUtil/Creature red-tolerated.</summary>
 [XmlType("DispelBuffCounterAtkEffect")]

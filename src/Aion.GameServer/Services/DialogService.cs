@@ -25,8 +25,8 @@ using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Services.Trade;
-using Aion.GameServer.Skillengine.Effects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Effects;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Zone;
 

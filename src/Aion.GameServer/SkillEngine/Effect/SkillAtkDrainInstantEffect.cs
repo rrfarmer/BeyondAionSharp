@@ -1,11 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using static Aion.GameServer.Network.Aion.Serverpackets.SM_ATTACK_STATUS;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SkillAtkDrainInstantEffect (ATracer) : DamageEffect. @XmlAttribute(name="hp_percent"/"mp_percent"); super.applyEffect then schedule(1000ms): hp→increaseHp(ABSORBED_HP, reserveds*hpPercent/100, effect, LOG.SKILLLATKDRAININSTANT), mp→increaseMp(MP, ...*mpPercent/100, skillId, ...). anonymous Runnable→async delegate. Effect red-tolerated.</summary>
 [XmlType("SkillAtkDrainInstantEffect")]

@@ -5,10 +5,10 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Teleport;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ReturnPointEffect (ATracer) : EffectTemplate. applyEffect: effector Player; RESTING→unset+SM_EMOTION STAND w/ targetObjectId; itemTemplate returnWorldId/returnAlias→TeleportService.useTeleportScroll; calculate: itemTemplate!=null→addSuccessEffect; getTargetObjectId helper (null target→0). ItemTemplate/TeleportService red-tolerated.</summary>
 [XmlType("ReturnPointEffect")]

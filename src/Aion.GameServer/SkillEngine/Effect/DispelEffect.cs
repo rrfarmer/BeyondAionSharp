@@ -33,7 +33,7 @@ public class DispelEffect : EffectTemplate
     [XmlAttribute("dispel_level")]
     public int dispelLevel = 100;
 
-    public override void ApplyEffect(SkillEngine.Model.Effect effect)
+    public override void ApplyEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         if (effect.GetEffected() == null || effect.GetEffected().GetEffectController() == null)
             return;

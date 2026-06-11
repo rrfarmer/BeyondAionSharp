@@ -2,12 +2,12 @@ using Aion.GameServer.GeoEngine.Collision;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Effects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Effects;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/FirstTargetRangeProperty (ATracer). Static set(skill, properties, castState): skip if !firstTargetRangeCheck; POINT→canSee point or STR_SKILL_OBSTACLE; null/self short-circuits; NPC mid-cast skip; CAST_END pvp→+revisionDistance; addWeaponRange→+attackRange/1000f; in-move+not-hating→+calculateMaxCoveredDistance(50); CANT_MOVE_STATE/isInAttackRange→STR_SKILL_NOT_ENOUGH_DISTANCE; canSee→STR_SKILL_OBSTACLE. CastState/IgnoreProperties red-tolerated.</summary>
 public class FirstTargetRangeProperty

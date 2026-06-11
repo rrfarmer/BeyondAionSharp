@@ -3,10 +3,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates;
-using Aion.GameServer.SkillEngine.action;
-using Aion.GameServer.SkillEngine.condition;
+using Aion.GameServer.SkillEngine.Action;
+using Aion.GameServer.SkillEngine.Condition;
 using Aion.GameServer.SkillEngine.Effects;
-using Aion.GameServer.SkillEngine.periodicaction;
+using Aion.GameServer.SkillEngine.PeriodicAction;
 using Aion.GameServer.SkillEngine.properties;
 
 namespace Aion.GameServer.SkillEngine.Model;

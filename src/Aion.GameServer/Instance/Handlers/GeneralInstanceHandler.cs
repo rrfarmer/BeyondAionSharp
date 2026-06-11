@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;

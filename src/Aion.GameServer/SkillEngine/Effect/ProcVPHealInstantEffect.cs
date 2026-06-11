@@ -1,10 +1,10 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ProcVPHealInstantEffect (kecimis, source.com) : EffectTemplate (no @XmlType→class name). @XmlAttribute value2(cap)/percent; applyEffect: Player; cap=maxReposeEnergy*value2/100; if readyForReposeEnergy && current&lt;cap: base value, percent→maxReposeEnergy*v*0.001 else v; addReposeEnergy + SM_STATUPDATE_EXP. PlayerCommonData red-tolerated.</summary>
 [XmlType("ProcVPHealInstantEffect")]

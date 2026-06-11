@@ -5,7 +5,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Aion.GameServer.Skillengine.Effects;
+using Aion.GameServer.SkillEngine.Effects;
 
 namespace Aion.GameServer.Network.Aion.Serverpackets;
 

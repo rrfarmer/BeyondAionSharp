@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SwitchHpMpEffect (ATracer) : EffectTemplate. **CreatureLifeStats&lt;? extends Creature&gt;→non-generic CreatureLifeStats**; swaps current HP/MP. EffectTemplate/Effect/CreatureLifeStats red-tolerated.</summary>
 [XmlType("SwitchHpMpEffect")]

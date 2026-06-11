@@ -5,7 +5,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 /// </summary>
 public class StatupEffect : BufEffect
 {
-    public override void EndEffect(SkillEngine.Model.Effect effect)
+    public override void EndEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         base.EndEffect(effect);
         effect.GetEffected().GetLifeStats().UpdateCurrentStats();

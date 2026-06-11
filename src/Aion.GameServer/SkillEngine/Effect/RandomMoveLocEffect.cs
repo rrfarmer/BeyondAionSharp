@@ -2,12 +2,12 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/RandomMoveLocEffect (Bio) : EffectTemplate. @XmlAttribute(name="distance"/"direction"/"reserved5"); applyEffect: World.updatePosition to skill x/y/z/h, PlayerMoveController→setHasMovedByRandomMoveLocEffect; calculate: addSuccessEffect, DashStatus RANDOMMOVELOC_NEW/RANDOMMOVELOC by reserved5, findMovementCollision (direction==1→dir+180), setTargetPosition. Vector3f/DashStatus/PlayerMoveController red-tolerated.</summary>
 [XmlType("RandomMoveLocEffect")]

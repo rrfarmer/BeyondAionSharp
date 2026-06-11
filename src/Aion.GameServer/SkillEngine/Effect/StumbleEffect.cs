@@ -5,12 +5,12 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/StumbleEffect (ATracer) : EffectTemplate. Like Stagger but also removeStunEffects; calculate: 4-state guard, STUMBLE_RESISTANCE+SpellStatus.STUMBLE, subEffect non-Player→SubEffectType.STUMBLE, 2m backward getClosestCollision/setTargetLoc; startEffect set STUMBLE + World.updatePosition + Player SM_FORCED_MOVE; endEffect→unset. Math.toRadians→*PI/180. red-tolerated.</summary>
 [XmlType("StumbleEffect")]

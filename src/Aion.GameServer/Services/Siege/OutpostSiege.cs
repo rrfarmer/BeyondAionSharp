@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Players;
-using Aion.GameServer.Skillengine;
+using Aion.GameServer.SkillEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

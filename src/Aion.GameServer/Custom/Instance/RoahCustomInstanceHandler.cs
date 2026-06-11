@@ -22,7 +22,7 @@ using Aion.GameServer.Services.Drop;
 using Aion.GameServer.Services.Event;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

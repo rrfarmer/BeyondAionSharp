@@ -1,8 +1,8 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/DPTransferEffect (Sippolo) : EffectTemplate. applyEffect: newValue=reserveds(Position); effected.addDp(+v), effector.addDp(-v); calculate: base.Calculate false→return else setReserveds(new EffectReserved(Position, getCurrentStatValue, DP, true), false); getCurrentStatValue→effector.commonData.getDp(). EffectReserved/ResourceType red-tolerated.</summary>
 [XmlType("DPTransferEffect")]

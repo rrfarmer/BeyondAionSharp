@@ -4,10 +4,10 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Action;
+namespace Aion.GameServer.SkillEngine.Action;
 
 /// <summary>Java parity: skillengine/action/ItemUseAction (ATracer) : Action. @XmlAttribute itemid/count; act: Player→ITEM_DATA template, inventory.decreaseByItemId(itemid, count) false→STR_SKILL_NOT_ENOUGH_ITEM false. ItemTemplate/Storage red-tolerated.</summary>
 [XmlType("ItemUseAction")]

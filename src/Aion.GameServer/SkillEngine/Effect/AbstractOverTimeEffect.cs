@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/AbstractOverTimeEffect (kecimis) abstract : EffectTemplate. @XmlAttribute(required=true)→[XmlAttribute] (required dropped); Future&lt;?&gt;→ScheduledTask; scheduleAtFixedRate(lambda)→ScheduleAtFixedRateTask(ct=>{OnPeriodicAction;...}); AbnormalState param nullable. Inherited value/duration2/position/OnPeriodicAction + EffectTemplate red-tolerated.</summary>
 [XmlType("AbstractOverTimeEffect")]

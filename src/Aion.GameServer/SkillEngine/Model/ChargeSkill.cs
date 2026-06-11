@@ -2,9 +2,9 @@ using System;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Skillengine.Properties;
+using Aion.GameServer.SkillEngine.Properties;
 
-namespace Aion.GameServer.Skillengine.Model;
+namespace Aion.GameServer.SkillEngine.Model;
 
 /// <summary>Java parity: skillengine/model/ChargeSkill (Cheatkiller) : Skill. ctor super(...,startSkill.firstTarget,null) + motionId + setClientHitTime/CastStartTime/CastSpeed from startSkill; useSkill: !canUseSkill(CAST_END)→cancelCurrentSkill false; notify boost/startCast observers, setCasting, attach moveListener, hitTimeBoost carry (currentTimeMillis→UtcNow.ToUnixTimeMilliseconds +100), updateHitTime(CHECK_ANIMATIONS), endCast. CastState/Skill base red-tolerated.</summary>
 public class ChargeSkill : Skill

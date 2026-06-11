@@ -2,9 +2,9 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Siege;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Properties;
+namespace Aion.GameServer.SkillEngine.Properties;
 
 /// <summary>Java parity: skillengine/properties/TargetRelationProperty (ATracer). Static set: switch ALL/ENEMY (removeIf !isEnemy unless material)/FRIEND (removeIf enemy||!buffAllowed unless material; empty→self; else firstTarget=first)/MYPARTY (iterator keep same-team buff-allowed else remove; firstTarget=first); isBuffAllowed (SiegeNpc abyss-type deny ARTIFACT/CORE/DOOR/DOORREPAIR else sameAreaType); isSameAreaType=isInsidePvPZone equality. removeIf→RemoveAll, getFirst→[0]. Properties/SiegeNpc red-tolerated.</summary>
 public class TargetRelationProperty

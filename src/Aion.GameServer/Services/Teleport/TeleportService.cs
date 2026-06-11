@@ -20,7 +20,7 @@ using Aion.GameServer.Services.ConquerorAndProtectorSystem;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Services.Trade;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;

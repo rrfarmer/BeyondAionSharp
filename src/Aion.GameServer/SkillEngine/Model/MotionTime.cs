@@ -5,7 +5,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items.Enums;
 
-namespace Aion.GameServer.Skillengine.Model;
+namespace Aion.GameServer.SkillEngine.Model;
 
 /// <summary>Java parity: skillengine/model/MotionTime. @XmlType("motion_time"); @XmlElement race/gender Times lists + robot; @XmlAttribute name; @XmlTransient→[XmlIgnore] per-WeaponTypeWrapper maps; getTimesFor walks id..1 by race/gender/robot; afterUnmarshal→AfterUnmarshal(object) parses lists into maps then nulls lists; parseTimesFrom switch on weapon string→WeaponTypeWrapper, 2weapon adds SWORD/SWORD+MACE/MACE; computeIfAbsent→local PutInto TryGetValue; IllegalArgumentException→ArgumentException; HashMap→Dictionary, Map.get→GetValueOrDefault. Times/WeaponTypeWrapper red-tolerated.</summary>
 [XmlType("motion_time")]

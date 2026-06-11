@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Skillengine.Model;
+namespace Aion.GameServer.SkillEngine.Model;
 
 /// <summary>Java parity: skillengine/model/PenaltySkill : Skill. ctor super(skillTemplate, effector, skillLevel, effector, null); useSkill→useWithoutPropSkill + true; initializeSkillMethod→skillMethod=PENALTY. Skill base members red-tolerated.</summary>
 public class PenaltySkill : Skill

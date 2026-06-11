@@ -2,9 +2,9 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Services.Players;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/ResurrectBaseEffect : ResurrectEffect. calculate→Calculate(effect,null,null) (inherited 3-arg); applyEffect→addToEffectedController; endEffect: effected dead && is Player player && !isDueling(effector)→PlayerReviveService.scheduleReviveAtBase(player, 2500, skillId). PlayerReviveService red-tolerated.</summary>
 [XmlType("ResurrectBaseEffect")]

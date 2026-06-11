@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.SkillEngine.periodicaction;
+namespace Aion.GameServer.SkillEngine.PeriodicAction;
 
 /// <summary>
 /// Java parity: skillengine/periodicaction/PeriodicActions (antness). JAXB @XmlType(PeriodicActions) +

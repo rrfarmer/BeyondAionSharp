@@ -1,5 +1,5 @@
 using System.Xml.Serialization;
-using Aion.GameServer.SkillEngine.change;
+using Aion.GameServer.SkillEngine.Change;
 
 namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
@@ -20,10 +20,10 @@ public abstract class ActionModifier
     public Func Mode = Func.ADD;
 
     /// <summary>Applies modifier to original value.</summary>
-    public abstract int Analyze(SkillEngine.Model.Effect effect);
+    public abstract int Analyze(Aion.GameServer.SkillEngine.Model.Effect effect);
 
     /// <summary>Performs check of condition.</summary>
-    public abstract bool Check(SkillEngine.Model.Effect effect);
+    public abstract bool Check(Aion.GameServer.SkillEngine.Model.Effect effect);
 
     public Func GetFunc()
     {

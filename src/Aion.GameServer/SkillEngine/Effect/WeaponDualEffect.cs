@@ -2,9 +2,9 @@ using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Skill;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/WeaponDualEffect : BufEffect. instanceof Player p→is Player p; setSkillEfficiency(skillEfficiency/100f), setMaxDamageChance(maxDamageChance+lvl*maxDamageDelta), setMinDamageRatio((value+lvl*delta)/100f); endEffect resets+super; static hasDualWieldEffect: !isSpawned fallback loops skills for WEAPONDUAL effectType. PlayerSkillEntry/Effects/EffectType red-tolerated.</summary>
 [XmlType("WeaponDualEffect")]

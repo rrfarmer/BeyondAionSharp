@@ -3,7 +3,7 @@ using Aion.GameServer.GeoEngine.Bounding;
 using Aion.GameServer.GeoEngine.Collision;
 using Aion.GameServer.GeoEngine.Collision.Bih;
 using Aion.GameServer.GeoEngine.Math;
-using Aion.GameServer.GeoEngine.Scene.mesh;
+using Aion.GameServer.GeoEngine.Scene.Meshes;
 
 namespace Aion.GameServer.GeoEngine.Scene;
 

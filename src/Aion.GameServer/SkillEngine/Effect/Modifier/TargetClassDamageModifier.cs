@@ -12,7 +12,7 @@ public class TargetClassDamageModifier : ActionModifier
     [XmlAttribute("class")]
     public PlayerClass skillTargetClass;
 
-    public override int Analyze(SkillEngine.Model.Effect effect)
+    public override int Analyze(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         Creature effected = effect.GetEffected();
         if (effected is Player)
@@ -26,7 +26,7 @@ public class TargetClassDamageModifier : ActionModifier
         return 0;
     }
 
-    public override bool Check(SkillEngine.Model.Effect effect)
+    public override bool Check(Aion.GameServer.SkillEngine.Model.Effect effect)
     {
         Creature effected = effect.GetEffected();
         if (effected is Player)

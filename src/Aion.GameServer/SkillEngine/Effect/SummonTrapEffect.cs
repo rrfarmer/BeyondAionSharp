@@ -6,12 +6,12 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Services.Summons;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Spawnengine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/SummonTrapEffect (ATracer) : SummonEffect. Math.toRadians→*PI/180 via PositionUtil; firstTargetSelf→GeoService.getClosestCollision with IgnoreProperties.of(race); newSingleTimeSpawn+spawnTrap; TrapService.registerTrap; schedule(lambda, time*1000L). Trap/Vector3f/CollisionIntention red-tolerated.</summary>
 [XmlType("SummonTrapEffect")]

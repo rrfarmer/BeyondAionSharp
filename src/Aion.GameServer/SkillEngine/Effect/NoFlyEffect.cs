@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
-using Aion.GameServer.Skillengine.Model;
+using Aion.GameServer.SkillEngine.Model;
 
-namespace Aion.GameServer.Skillengine.Effects;
+namespace Aion.GameServer.SkillEngine.Effects;
 
 /// <summary>Java parity: skillengine/effect/NoFlyEffect (Sippolo) : EffectTemplate. calculate: Player-only→base.Calculate(effect, NOFLY_RESISTANCE, null); applyEffect→addToEffectedController; startEffect: endFly(true), set AbnormalState.NOFLY; endEffect→unset. StatEnum/AbnormalState red-tolerated.</summary>
 [XmlType("NoFlyEffect")]
