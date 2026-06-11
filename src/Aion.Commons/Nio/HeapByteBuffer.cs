@@ -62,6 +62,15 @@ public sealed class HeapByteBuffer : ByteBuffer
         return b;
     }
 
+    public override ByteBuffer Compact()
+    {
+        int rem = Remaining();
+        System.Array.Copy(hb!, Ix(Position()), hb!, Ix(0), rem);
+        SetPosition(rem);
+        SetLimit(Capacity());
+        return this;
+    }
+
     public override bool IsReadOnly()
     {
         return false;

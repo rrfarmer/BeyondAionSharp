@@ -64,6 +64,12 @@ public sealed class JavaNetSocket
 
     /// <summary>java.net.ServerSocket.bind(SocketAddress).</summary>
     public void Bind(EndPoint endpoint) => socket.Bind(endpoint);
+
+    /// <summary>java.net.Socket.setSoLinger(boolean on, int linger).</summary>
+    public void SetSoLinger(bool on, int linger) => socket.LingerState = new LingerOption(on, linger);
+
+    /// <summary>java.net.Socket.setTcpNoDelay(boolean on).</summary>
+    public void SetTcpNoDelay(bool on) => socket.NoDelay = on;
 }
 
 /// <summary>Java parity: java.net.InetAddress facade (getHostAddress()).</summary>

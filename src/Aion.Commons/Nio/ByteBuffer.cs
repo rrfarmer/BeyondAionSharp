@@ -296,6 +296,9 @@ public abstract class ByteBuffer : Buffer
     /// <summary>Java parity (JDK 13+): slice(int index, int length) — absolute subsequence view.</summary>
     public abstract ByteBuffer Slice(int index, int length);
 
+    /// <summary>Java parity: compact() — moves remaining bytes to the start, sets position=remaining, limit=capacity.</summary>
+    public abstract ByteBuffer Compact();
+
     /// <summary>Java parity: asFloatBuffer() — a float view of the remaining bytes (honors order).</summary>
     public FloatBuffer AsFloatBuffer()
     {
