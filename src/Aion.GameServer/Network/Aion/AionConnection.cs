@@ -307,17 +307,21 @@ public class AionConnection : AConnection<AionServerPacket>
     private class ConnectionAliveChecker : Runnable
     {
         private readonly AionConnection outer;
-        private ScheduledFuture task;
+        private ScheduledTask task;
 
         internal ConnectionAliveChecker(AionConnection outer)
         {
             this.outer = outer;
-            task = ThreadPoolManager.GetInstance().ScheduleAtFixedRate(this, CM_PING.CLIENT_PING_INTERVAL, CM_PING.CLIENT_PING_INTERVAL);
+            // Java scheduleAtFixedRate(Runnable, long, long) -> C# async idiom (ThreadPoolManager is async).
+            task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+                ct => { Run(); return System.Threading.Tasks.ValueTask.CompletedTask; },
+                TimeSpan.FromMilliseconds(CM_PING.CLIENT_PING_INTERVAL),
+                TimeSpan.FromMilliseconds(CM_PING.CLIENT_PING_INTERVAL));
         }
 
         internal void Stop()
         {
-            task.Cancel(false);
+            task.Cancel();
         }
 
         public void Run()
