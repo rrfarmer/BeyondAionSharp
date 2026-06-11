@@ -1,7 +1,7 @@
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Questengine.Model;
+namespace Aion.GameServer.QuestEngine.Model;
 
 /// <summary>Java parity: questEngine/model/QuestEnv (MrPoke).</summary>
 public class QuestEnv

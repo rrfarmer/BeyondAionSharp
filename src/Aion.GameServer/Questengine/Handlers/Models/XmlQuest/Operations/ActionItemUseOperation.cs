@@ -4,10 +4,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Operations;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 
 /// <summary>Java parity: .../operations/ActionItemUseOperation. Anonymous Runnable → Schedule(ct-lambda).</summary>
 [XmlType("ActionItemUseOperation")]

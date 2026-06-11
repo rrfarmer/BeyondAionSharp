@@ -11,7 +11,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 
 namespace Aion.GameServer.Dao;
 

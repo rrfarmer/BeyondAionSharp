@@ -13,8 +13,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Questengine.Model;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

@@ -72,7 +72,7 @@ public class SummonedObject : Npc
         return base.IsEnemyFrom(npc);
     }
 
-    public override bool IsEnemyFrom(Player.Player player)
+    public override bool IsEnemyFrom(Player player)
     {
         if (creator is Creature)
             return ((Creature)creator).IsEnemyFrom(player);
@@ -86,7 +86,7 @@ public class SummonedObject : Npc
 
     public override bool IsPvpTarget(Creature creature)
     {
-        return (GetActingCreature() is Player.Player) && (creature.GetActingCreature() is Player.Player);
+        return (GetActingCreature() is Player) && (creature.GetActingCreature() is Player);
     }
 }
 

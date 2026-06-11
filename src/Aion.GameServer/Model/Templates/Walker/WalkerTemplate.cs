@@ -22,7 +22,7 @@ public class WalkerTemplate
 
     [XmlAttribute("pool")] private int pool = 1;
 
-    [XmlAttribute("formation")] private Aion.GameServer.Spawnengine.WalkerGroupType formation = Aion.GameServer.Spawnengine.WalkerGroupType.POINT;
+    [XmlAttribute("formation")] private Aion.GameServer.SpawnEngine.WalkerGroupType formation = Aion.GameServer.SpawnEngine.WalkerGroupType.POINT;
 
     [XmlAttribute("rows")] private string rowValues;
 
@@ -61,11 +61,11 @@ public class WalkerTemplate
 
         if (pool == 2)
         {
-            formation = Aion.GameServer.Spawnengine.WalkerGroupType.SQUARE;
+            formation = Aion.GameServer.SpawnEngine.WalkerGroupType.SQUARE;
             rows = new int[1];
             rows[0] = 2;
         }
-        else if (formation == Aion.GameServer.Spawnengine.WalkerGroupType.SQUARE)
+        else if (formation == Aion.GameServer.SpawnEngine.WalkerGroupType.SQUARE)
         {
             if (rowValues != null)
             {
@@ -76,7 +76,7 @@ public class WalkerTemplate
             }
             else
             {
-                formation = Aion.GameServer.Spawnengine.WalkerGroupType.POINT;
+                formation = Aion.GameServer.SpawnEngine.WalkerGroupType.POINT;
             }
         }
         rowValues = null;
@@ -118,12 +118,12 @@ public class WalkerTemplate
     }
 
     // Java parity: getType() — renamed GetType_ (GetType collides with object.GetType()).
-    public Aion.GameServer.Spawnengine.WalkerGroupType GetType_()
+    public Aion.GameServer.SpawnEngine.WalkerGroupType GetType_()
     {
         return formation;
     }
 
-    public void SetType(Aion.GameServer.Spawnengine.WalkerGroupType type)
+    public void SetType(Aion.GameServer.SpawnEngine.WalkerGroupType type)
     {
         formation = type;
     }

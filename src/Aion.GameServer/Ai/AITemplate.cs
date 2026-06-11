@@ -82,11 +82,11 @@ public abstract class AITemplate<T> : AbstractAI<T> where T : Creature
     {
     }
 
-    protected override void HandleDialogStart(Player.Player player)
+    protected override void HandleDialogStart(Player player)
     {
     }
 
-    protected override void HandleDialogFinish(Player.Player player)
+    protected override void HandleDialogFinish(Player player)
     {
     }
 

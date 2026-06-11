@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.SkillEngine.Model;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.SkillEngine.Effects;

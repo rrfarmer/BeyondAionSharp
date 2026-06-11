@@ -58,7 +58,7 @@ public class PetList
 
     public PetCommonData AddPet(Player player, int petId, int decorationId, long birthday, string name, int expireTime)
     {
-        PetCommonData petCommonData = new PetCommonData(Aion.GameServer.Utils.Idfactory.IDFactory.GetInstance().NextId(), petId, player.GetObjectId(), expireTime);
+        PetCommonData petCommonData = new PetCommonData(Aion.GameServer.Utils.IdFactory.IDFactory.GetInstance().NextId(), petId, player.GetObjectId(), expireTime);
         petCommonData.SetDecoration(decorationId);
         petCommonData.SetName(name);
         petCommonData.SetBirthday(DateTimeOffset.FromUnixTimeMilliseconds(birthday).UtcDateTime);

@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.SkillEngine.Model;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Zone;

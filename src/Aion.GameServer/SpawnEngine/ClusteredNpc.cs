@@ -2,7 +2,7 @@ using System;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Walker;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/ClusteredNpc (vlog, Rolandas) : WalkerGroupShift. Stores spawn info for walker-group forming. Float.floatToIntBits→BitConverter.SingleToInt32Bits; getWalkerIndex()→int? (Integer). Npc/RouteStep/WalkerTemplate/SpawnEngine red-tolerated.</summary>
 public class ClusteredNpc : WalkerGroupShift

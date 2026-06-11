@@ -1,6 +1,6 @@
-using Aion.GameServer.Questengine.Handlers;
+using Aion.GameServer.QuestEngine.Handlers;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/AbstractTemplateQuestHandler. Base AbstractQuestHandler red until ported (god-class pillar).</summary>
 public abstract class AbstractTemplateQuestHandler : AbstractQuestHandler

@@ -19,7 +19,7 @@ using Aion.GameServer.Model.Templates.Spawns.Basespawns;
 using Aion.GameServer.Model.Templates.Spawns.Siegespawns;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Event;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;

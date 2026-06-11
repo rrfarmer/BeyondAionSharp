@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Questengine.Handlers.Models;
+namespace Aion.GameServer.QuestEngine.Handlers.Models;
 
 /// <summary>Java parity: questEngine/handlers/models/Monster. npc_ids @XmlAttribute List<Integer>→Raw space-sep.</summary>
 [XmlType("Monster")]

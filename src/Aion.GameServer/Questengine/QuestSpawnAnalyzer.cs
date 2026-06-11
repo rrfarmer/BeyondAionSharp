@@ -8,12 +8,12 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Factions;
 using Aion.GameServer.Model.Templates.Quest;
-using Aion.GameServer.Questengine.Handlers;
-using Aion.GameServer.Questengine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Handlers;
+using Aion.GameServer.QuestEngine.Handlers.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Questengine;
+namespace Aion.GameServer.QuestEngine;
 
 /// <summary>Java parity: questEngine/QuestSpawnAnalyzer. Streams→LINQ; Map&lt;Set&lt;Integer&gt;,List&lt;Integer&gt;&gt;→Dictionary with HashSet&lt;int&gt;.CreateSetComparer() for value-semantics keys; computeIfAbsent→TryGetValue+init; Files.walk→Directory.EnumerateFiles recursive; DataManager/config dirs red-tolerated.</summary>
 public class QuestSpawnAnalyzer

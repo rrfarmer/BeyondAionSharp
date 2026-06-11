@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/FountainRewards (Wakizashi, vlog, Bobobear, Luzien, Pad). static import DialogAction.*→DialogAction.X; SETPRO1 case can fall through to return false (explicit break). QuestService/PacketSendUtility/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class FountainRewards : AbstractTemplateQuestHandler

@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Worldraid;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

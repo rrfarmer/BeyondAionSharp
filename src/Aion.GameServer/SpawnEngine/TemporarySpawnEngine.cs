@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Templates.Event;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/TemporarySpawnEngine (xTz, Neon).</summary>
 public class TemporarySpawnEngine

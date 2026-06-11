@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest;
 
 /// <summary>Java parity: questEngine/handlers/models/xmlQuest/QuestNpc (distinct from model/templates/quest/QuestNpc).</summary>
 [XmlType("QuestNpc")]

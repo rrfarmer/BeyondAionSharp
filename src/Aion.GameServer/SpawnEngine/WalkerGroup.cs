@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Model.Templates.Zone;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/WalkerGroup (vlog, Rolandas). Comparator.comparing(walkerIndex, nullsLast(natural)).reversed()→OrderBy with custom Comparer (negated nulls-last); IntStream.of(rows).sum()→rows.Sum(); mapToDouble.sum→Sum; Math.signum→Math.Sign; synchronized(members)→lock(members); Integer== (small cached indices)→int? value-equality (faithful runtime behavior); slf4j→ILogger. AI/Npc/Point2D/WalkManager/RouteStep red-tolerated.</summary>
 public class WalkerGroup

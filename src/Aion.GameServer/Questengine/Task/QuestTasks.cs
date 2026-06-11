@@ -3,12 +3,12 @@ using System.Threading.Tasks;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Questengine.Model;
-using Aion.GameServer.Questengine.Task.Checker;
+using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.QuestEngine.Task.Checker;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Zone;
 
-namespace Aion.GameServer.Questengine.Task;
+namespace Aion.GameServer.QuestEngine.Task;
 
 /// <summary>Java parity: questEngine/task/QuestTasks (ATracer). Future&lt;?&gt;→IScheduledFuture; scheduleAtFixedRate(task,1000,1000); IllegalArgumentException→ArgumentException; ThreadPoolManager red-tolerated.</summary>
 public class QuestTasks

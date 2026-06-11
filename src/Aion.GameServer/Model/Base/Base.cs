@@ -190,7 +190,7 @@ public abstract class Base
             {
                 if (((BaseSpawnTemplate) template).GetOccupier() != occupier)
                     continue;
-                Npc npc = (Npc) Aion.GameServer.Spawnengine.SpawnEngine.SpawnObject(template, 1);
+                Npc npc = (Npc) Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
                 if (npc == null)
                     throw new BaseException("Npc " + template.GetNpcId() + " could not be spawned at base " + id);
                 switch (type)

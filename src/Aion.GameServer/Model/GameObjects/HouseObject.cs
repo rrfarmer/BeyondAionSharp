@@ -300,7 +300,7 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
         if (Position == null || !IsSpawned())
         {
             Position = Aion.GameServer.World.World.GetInstance().CreatePosition(registry.GetOwner().GetWorldId(), x, y, z, heading, registry.GetOwner().GetInstanceId());
-            Aion.GameServer.Spawnengine.SpawnEngine.BringIntoWorld(this);
+            Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(this);
         }
         else
         {

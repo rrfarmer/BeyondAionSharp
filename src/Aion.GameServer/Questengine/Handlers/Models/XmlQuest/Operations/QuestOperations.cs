@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Operations;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 
 /// <summary>Java parity: .../operations/QuestOperations. @XmlElements→stacked [XmlElement(name,typeof)] (ActionItemUseOperation red until ported).</summary>
 [XmlType("QuestOperations")]

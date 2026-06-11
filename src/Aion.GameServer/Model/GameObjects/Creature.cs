@@ -320,7 +320,7 @@ public abstract class Creature : VisibleObject
         return false;
     }
 
-    public virtual bool IsEnemyFrom(Player.Player player)
+    public virtual bool IsEnemyFrom(Player player)
     {
         return false;
     }

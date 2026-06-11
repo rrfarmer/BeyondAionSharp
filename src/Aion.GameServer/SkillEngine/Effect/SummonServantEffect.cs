@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.SkillEngine.Properties;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 

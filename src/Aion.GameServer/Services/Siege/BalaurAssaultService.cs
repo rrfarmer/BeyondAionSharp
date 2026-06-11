@@ -12,7 +12,7 @@ using Aion.GameServer.Model.Templates.Assemblednpc;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services.Siege;

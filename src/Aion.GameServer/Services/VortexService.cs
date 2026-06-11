@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Vortex;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Services.Rift;
 using Aion.GameServer.Services.Vortex;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Handlers.Models;
 
 namespace Aion.GameServer.Dataholders;
 

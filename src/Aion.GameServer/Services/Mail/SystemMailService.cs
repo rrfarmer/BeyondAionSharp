@@ -12,7 +12,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 
 namespace Aion.GameServer.Services.Mail;
 

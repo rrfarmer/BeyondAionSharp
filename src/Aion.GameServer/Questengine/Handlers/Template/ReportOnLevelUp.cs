@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/ReportOnLevelUp (Majka, Bobobear, Pad). Set.addAll→HashSet.UnionWith; QuestService red-tolerated.</summary>
 public class ReportOnLevelUp : AbstractTemplateQuestHandler

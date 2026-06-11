@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Conditions;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 
 /// <summary>Java parity: .../conditions/QuestVarCondition.</summary>
 [XmlType("QuestVarCondition")]

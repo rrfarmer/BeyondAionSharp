@@ -13,7 +13,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Taskmanager.Tasks.Housing;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Knownlist;

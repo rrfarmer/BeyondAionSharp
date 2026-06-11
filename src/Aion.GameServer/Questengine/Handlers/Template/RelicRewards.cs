@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/RelicRewards (Bobobear, Rolandas, Pad). Set.addAll→UnionWith; DataManager/QuestService/CommonData red-tolerated.</summary>
 public class RelicRewards : AbstractTemplateQuestHandler

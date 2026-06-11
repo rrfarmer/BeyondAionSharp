@@ -21,7 +21,7 @@ public class SiegeCounter
     public void AddDamage(Creature creature, int damage)
     {
         SiegeRace siegeRace;
-        if (creature is Player.Player)
+        if (creature is Player)
             siegeRace = SiegeRaceExtensions.GetByRace(creature.GetRace());
         else if (creature is SiegeNpc siegeNpc)
             siegeRace = siegeNpc.GetSiegeRace();
@@ -30,7 +30,7 @@ public class SiegeCounter
         siegeRaceCounters[siegeRace].AddPoints(creature, damage);
     }
 
-    public void AddAbyssPoints(Player.Player player, int ap)
+    public void AddAbyssPoints(Player player, int ap)
     {
         SiegeRace sr = SiegeRaceExtensions.GetByRace(player.GetRace());
         siegeRaceCounters[sr].AddAbyssPoints(player, ap);

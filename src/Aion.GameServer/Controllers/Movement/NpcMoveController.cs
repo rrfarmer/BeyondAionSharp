@@ -16,7 +16,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Walker;
 using Aion.GameServer.Model.Templates.Zone;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;

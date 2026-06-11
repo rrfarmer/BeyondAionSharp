@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Events;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
 
 /// <summary>Java parity: .../events/OnTalkEvent.</summary>
 [XmlType("OnTalkEvent")]

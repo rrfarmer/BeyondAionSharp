@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.World.Zone;
 
-namespace Aion.GameServer.Questengine.Task.Checker;
+namespace Aion.GameServer.QuestEngine.Task.Checker;
 
 /// <summary>Java parity: questEngine/task/checker/ZoneChecker.</summary>
 public class ZoneChecker : DestinationChecker

@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Questengine.Handlers.Models;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/KillSpawned (vlog, Pad). Set.addAll→UnionWith; Set.equals→SetEquals; isEmpty→Count==0; Collections.emptyList→new List; DataManager/SpawnSpotTemplate/spawnForFiveMinutes red-tolerated.</summary>
 public class KillSpawned : AbstractTemplateQuestHandler

@@ -1,9 +1,9 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Conditions;
-using Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Operations;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
+using Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest;
 
 /// <summary>Java parity: questEngine/handlers/models/xmlQuest/QuestDialog (@XmlType DialogAction).</summary>
 [XmlType("DialogAction")]

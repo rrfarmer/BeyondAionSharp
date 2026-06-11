@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 using static Aion.GameServer.Services.Items.ItemPacketService;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 

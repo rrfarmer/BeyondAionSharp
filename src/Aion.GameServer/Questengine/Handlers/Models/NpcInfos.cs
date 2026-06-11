@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Questengine.Handlers.Models;
+namespace Aion.GameServer.QuestEngine.Handlers.Models;
 
 /// <summary>Java parity: questEngine/handlers/models/NpcInfos (Hilgert, Pad, Neon). @XmlAttribute List&lt;Integer&gt;→Raw space-sep.</summary>
 [XmlType("NpcInfos")]

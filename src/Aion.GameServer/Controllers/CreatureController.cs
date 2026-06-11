@@ -113,7 +113,7 @@ public abstract class CreatureController : VisibleObjectController
         GetOwner().GetMoveController().AbortMove();
         GetOwner().SetCasting(null);
         GetOwner().GetEffectController().RemoveAllEffects();
-        if (GetOwner() is Player.Player && ((Player.Player)GetOwner()).GetIsFlyingBeforeDeath())
+        if (GetOwner() is Player && ((Player)GetOwner()).GetIsFlyingBeforeDeath())
         {
             GetOwner().UnsetState(CreatureState.Active);
             GetOwner().SetState(CreatureState.FloatingCorpse);
@@ -198,7 +198,7 @@ public abstract class CreatureController : VisibleObjectController
         GetOwner().GetLifeStats().ReduceHp(type, damage, effect == null ? 0 : effect.GetSkillId(), logId, attacker);
         GetOwner().IncrementAttackedCount();
 
-        if (!GetOwner().IsDead() && attacker is Player.Player player)
+        if (!GetOwner().IsDead() && attacker is Player player)
         {
             if (criticalEffect != null)
             {
@@ -211,13 +211,13 @@ public abstract class CreatureController : VisibleObjectController
             effect.BroadcastHate();
     }
 
-    private void CalculateGodStoneEffects(Player.Player attacker)
+    private void CalculateGodStoneEffects(Player attacker)
     {
         ApplyGodStoneEffect(attacker, attacker.GetEquipment().GetMainHandWeapon(), true);
         ApplyGodStoneEffect(attacker, attacker.GetEquipment().GetOffHandWeapon(), false);
     }
 
-    private void ApplyGodStoneEffect(Player.Player attacker, Item weapon, bool isMainHandWeapon)
+    private void ApplyGodStoneEffect(Player attacker, Item weapon, bool isMainHandWeapon)
     {
         if (weapon == null || !weapon.HasGodStone())
             return;
@@ -254,7 +254,7 @@ public abstract class CreatureController : VisibleObjectController
     {
     }
 
-    public virtual void OnDialogRequest(Player.Player player)
+    public virtual void OnDialogRequest(Player player)
     {
     }
 
@@ -273,7 +273,7 @@ public abstract class CreatureController : VisibleObjectController
         List<AttackResult> attackResult;
 
         CalculationType[] calculationTypes = new CalculationType[] { CalculationType.APPLY_POWER_SHARD_DAMAGE, CalculationType.REMOVE_POWER_SHARD };
-        if (GetOwner() is Player.Player p && p.GetEquipment().IsDualWeaponEquipped())
+        if (GetOwner() is Player p && p.GetEquipment().IsDualWeaponEquipped())
             calculationTypes = ArrAdd(calculationTypes, CalculationType.DUAL_WIELD);
         if (GetOwner().GetAttackType() == Aion.GameServer.Model.Templates.Items.ItemAttackType.PHYSICAL)
             attackResult = AttackUtil.CalculatePhysAttackResult(GetOwner(), target, calculationTypes);
@@ -298,7 +298,7 @@ public abstract class CreatureController : VisibleObjectController
 
         AttackStatus firstAttackStatus = AttackStatusExtensions.GetBaseStatus(attackResult[0].GetAttackStatus());
         Effect criticalEffect = null;
-        if (GetOwner() is Player.Player player && firstAttackStatus == AttackStatus.CRITICAL && Rnd.Chance() < 10)
+        if (GetOwner() is Player player && firstAttackStatus == AttackStatus.CRITICAL && Rnd.Chance() < 10)
         {
             criticalEffect = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().CreateCriticalEffect(player, target, 0);
             if (criticalEffect != null && (criticalEffect.GetEffectResult() == EffectResult.DODGE || criticalEffect.GetEffectResult() == EffectResult.RESIST))
@@ -321,7 +321,7 @@ public abstract class CreatureController : VisibleObjectController
     }
 
     /// <summary>Handle dialog select: GetOwner() is the target/dialog sender; the given player clicked the dialog.</summary>
-    public virtual void OnDialogSelect(int dialogActionId, int prevDialogId, Player.Player player, int questId, int extendedRewardIndex)
+    public virtual void OnDialogSelect(int dialogActionId, int prevDialogId, Player player, int questId, int extendedRewardIndex)
     {
     }
 
@@ -443,7 +443,7 @@ public abstract class CreatureController : VisibleObjectController
         ChargeSkillEntry chargeSkill = chargeCondition == null ? null : DataManager.SKILL_CHARGE_DATA.GetChargedSkillEntry(chargeCondition.GetValue());
         if (chargeSkill == null || chargeTimeMillis < chargeSkill.GetMinTime() * startSkill.GetCastSpeedForAnimationBoostAndChargeSkills())
         {
-            if (GetOwner() is Player.Player player)
+            if (GetOwner() is Player player)
                 AuditLogger.Log(player, "tried to use charge skill " + startSkill.GetSkillId() + " after " + chargeTimeMillis);
             return false;
         }
@@ -506,9 +506,9 @@ public abstract class CreatureController : VisibleObjectController
         {
             npcAI.OnGeneralEvent(Aion.GameServer.Ai.Event.AiEventType.AttackComplete);
         }
-        if (lastAttacker is Player.Player)
+        if (lastAttacker is Player)
         {
-            PacketSendUtility.SendPacket((Player.Player)lastAttacker, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_SKILL_CANCELED());
+            PacketSendUtility.SendPacket((Player)lastAttacker, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_SKILL_CANCELED());
         }
     }
 

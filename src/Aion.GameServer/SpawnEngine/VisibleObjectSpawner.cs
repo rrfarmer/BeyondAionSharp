@@ -27,11 +27,11 @@ using Aion.GameServer.Services;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Knownlist;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/VisibleObjectSpawner (ATracer). Object-spawn factory methods. slf4j parameterized log.error("...{}", x)→ILogger LogError("...{Name}", x); log.error(msg, ex)→LogError(ex, msg); Math.toRadians→*Math.PI/180; protected static→internal static (package access from SpawnEngine). Most controllers/models red-tolerated.</summary>
 public class VisibleObjectSpawner

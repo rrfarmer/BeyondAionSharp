@@ -77,7 +77,7 @@ public class PlayerStorage : Storage
         return DecreaseItemCount(item, count, updateType, actor);
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         return DecreaseItemCount(item, count, updateType, questStatus, actor);
     }
@@ -112,7 +112,7 @@ public class PlayerStorage : Storage
         return DecreaseByItemId(itemId, count, actor);
     }
 
-    public override bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override bool DecreaseByItemId(int itemId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         return DecreaseByItemId(itemId, count, questStatus, actor);
     }
@@ -122,7 +122,7 @@ public class PlayerStorage : Storage
         return DecreaseByObjectId(itemObjId, count, actor);
     }
 
-    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         return DecreaseByObjectId(itemObjId, count, questStatus, actor);
     }

@@ -37,7 +37,7 @@ public partial class Player : Creature
     private Aion.GameServer.Model.GameObjects.Players.Mailbox mailbox;
     private Aion.GameServer.Model.GameObjects.Players.PrivateStore store;
     private Aion.GameServer.Model.GameObjects.Players.Title.TitleList titleList;
-    private Aion.GameServer.Questengine.Model.QuestStateList questStateList;
+    private Aion.GameServer.QuestEngine.Model.QuestStateList questStateList;
     private Aion.GameServer.Model.GameObjects.Players.RecipeList recipeList;
     private List<Aion.GameServer.Model.House.House> houses;
 
@@ -134,7 +134,7 @@ public partial class Player : Creature
         this.playerAccount = account;
 
         this.requester = new Aion.GameServer.Network.Aion.ResponseRequester(this);
-        this.questStateList = new Aion.GameServer.Questengine.Model.QuestStateList();
+        this.questStateList = new Aion.GameServer.QuestEngine.Model.QuestStateList();
         this.titleList = new Aion.GameServer.Model.GameObjects.Players.Title.TitleList();
         this.equipment = new Aion.GameServer.Model.GameObjects.Players.Equipment(this);
         this.inventory = new Aion.GameServer.Model.Items.Storage.PlayerStorage(this, Aion.GameServer.Model.Items.Storage.StorageType.CUBE);
@@ -414,12 +414,12 @@ public partial class Player : Creature
         this.store = store;
     }
 
-    public Aion.GameServer.Questengine.Model.QuestStateList GetQuestStateList()
+    public Aion.GameServer.QuestEngine.Model.QuestStateList GetQuestStateList()
     {
         return questStateList;
     }
 
-    public void SetQuestStateList(Aion.GameServer.Questengine.Model.QuestStateList questStateList)
+    public void SetQuestStateList(Aion.GameServer.QuestEngine.Model.QuestStateList questStateList)
     {
         this.questStateList = questStateList;
     }

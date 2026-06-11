@@ -13,16 +13,16 @@ using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Questengine.Model;
-using Aion.GameServer.Questengine.Task;
+using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.QuestEngine.Task;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Zone;
 
-namespace Aion.GameServer.Questengine.Handlers;
+namespace Aion.GameServer.QuestEngine.Handlers;
 
 /// <summary>
 /// Java parity: questEngine/handlers/AbstractQuestHandler (MrPoke, vlog, Majka). Quest-handler base: register + onX event

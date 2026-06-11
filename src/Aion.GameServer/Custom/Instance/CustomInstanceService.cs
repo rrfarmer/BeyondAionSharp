@@ -15,7 +15,7 @@ using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.Utils.Time;
 using Aion.GameServer.World;
 

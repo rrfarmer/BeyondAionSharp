@@ -251,8 +251,8 @@ public abstract class AbstractAI : AI
     protected abstract void HandleTargetChanged(Creature creature);
     protected abstract void HandleFollowMe(Creature creature);
     protected abstract void HandleStopFollowMe(Creature creature);
-    protected abstract void HandleDialogStart(Player.Player player);
-    protected abstract void HandleDialogFinish(Player.Player player);
+    protected abstract void HandleDialogStart(Player player);
+    protected abstract void HandleDialogFinish(Player player);
     protected abstract void HandleCustomEvent(int eventId, params object[] args);
 
     public abstract bool OnPatternShout(Aion.GameServer.Model.Templates.Npcshout.ShoutEventType @event, string pattern, int skillNumber);
@@ -390,11 +390,11 @@ public abstract class AbstractAI : AI
                 LogEvent(@event);
                 break;
             case AiEventType.DialogStart:
-                HandleDialogStart((Player.Player)creature);
+                HandleDialogStart((Player)creature);
                 LogEvent(@event);
                 break;
             case AiEventType.DialogFinish:
-                HandleDialogFinish((Player.Player)creature);
+                HandleDialogFinish((Player)creature);
                 LogEvent(@event);
                 break;
         }
@@ -402,7 +402,7 @@ public abstract class AbstractAI : AI
 
     public abstract AttackIntention ChooseAttackIntention();
 
-    public virtual bool OnDialogSelect(Player.Player player, int dialogActionId, int questId, int extendedRewardIndex)
+    public virtual bool OnDialogSelect(Player player, int dialogActionId, int questId, int extendedRewardIndex)
     {
         return false;
     }

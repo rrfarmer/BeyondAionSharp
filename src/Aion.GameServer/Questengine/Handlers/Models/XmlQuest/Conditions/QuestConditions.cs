@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Conditions;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 
 /// <summary>Java parity: .../conditions/QuestConditions. @XmlElements→stacked [XmlElement(name,typeof)].</summary>
 [XmlType("QuestConditions")]

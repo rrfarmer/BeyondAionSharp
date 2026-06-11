@@ -19,7 +19,7 @@ using LOG = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG;
 namespace Aion.GameServer.Controllers;
 
 /// <summary>Java parity: controllers/PlayerController extends CreatureController&lt;Player&gt;.</summary>
-public class PlayerController : CreatureController<Player.Player>
+public class PlayerController : CreatureController<Player>
 {
     private static readonly ILogger log = NullLogger.Instance;
     private long lastAttackMillis = 0;
@@ -47,7 +47,7 @@ public class PlayerController : CreatureController<Player.Player>
                 }
                 Aion.GameServer.Services.DropService.GetInstance().See(GetOwner(), npc);
             }
-            else if (creature is Player.Player player)
+            else if (creature is Player player)
             {
                 SendPlayerInfoPackets(player);
             }
@@ -78,7 +78,7 @@ public class PlayerController : CreatureController<Player.Player>
         }
     }
 
-    private void SendPlayerInfoPackets(Player.Player player)
+    private void SendPlayerInfoPackets(Player player)
     {
         PacketSendUtility.SendPacket(GetOwner(), new SM_PLAYER_INFO(player, !player.Equals(GetOwner()) && GetOwner().IsAggroIconTo(player)));
         PacketSendUtility.SendPacket(GetOwner(), new SM_MOTION(player.GetObjectId(), player.GetMotions().GetActiveMotions()));
@@ -164,7 +164,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public override void OnEnterZone(Aion.GameServer.World.Zone.ZoneInstance zone)
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         if (!zone.CanRide() && player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
             player.UnsetPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE);
         Aion.GameServer.Services.ConquerorAndProtectorService.GetInstance().OnEnterZone(player, zone);
@@ -178,7 +178,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public override void OnLeaveZone(Aion.GameServer.World.Zone.ZoneInstance zone)
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         Aion.GameServer.Services.ConquerorAndProtectorService.GetInstance().OnLeaveZone(player, zone);
         Aion.GameServer.Services.InstanceService.OnLeaveZone(player, zone);
         Aion.GameServer.World.Zone.ZoneName zoneName = zone.GetAreaTemplate().GetZoneName();
@@ -191,7 +191,7 @@ public class PlayerController : CreatureController<Player.Player>
     /// <summary>Called when leaving a fly zone or a fly map.</summary>
     public void OnLeaveFlyArea()
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         if (!player.HasAccess(Aion.GameServer.Configs.Administration.AdminConfig.FREE_FLIGHT))
         {
             if (player.IsInFlyingState())
@@ -247,7 +247,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public override void OnDie(Creature lastAttacker)
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         player.GetController().CancelCurrentSkill(null);
         SetRebirthReviveInfo();
         Creature master = lastAttacker.GetMaster();
@@ -312,7 +312,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     private void SetRebirthReviveInfo()
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         List<Effect> effects = player.GetEffectController().GetAbnormalEffects();
         foreach (Effect effect in effects)
         {
@@ -350,7 +350,7 @@ public class PlayerController : CreatureController<Player.Player>
         PacketSendUtility.SendPacket(GetOwner(), new SM_DIE(GetOwner()));
     }
 
-    private bool IsInvader(Player.Player player)
+    private bool IsInvader(Player player)
     {
         if (player.GetRace().Equals(Race.ASMODIANS))
         {
@@ -431,7 +431,7 @@ public class PlayerController : CreatureController<Player.Player>
             return;
 
         // avoid killing players after duel
-        if (!GetOwner().Equals(attacker) && attacker.GetActingCreature() is Player.Player && !GetOwner().IsEnemy(attacker))
+        if (!GetOwner().Equals(attacker) && attacker.GetActingCreature() is Player && !GetOwner().IsEnemy(attacker))
             return;
 
         CancelUseItem();
@@ -448,7 +448,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public void UseSkill(SkillTemplate template, int targetType, float x, float y, float z, int clientHitTime, int skillLevel)
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkillFor(player, template, player.GetTarget());
         if (skill == null && player.IsTransformed())
         {
@@ -512,7 +512,7 @@ public class PlayerController : CreatureController<Player.Player>
             return;
         }
 
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         Skill castingSkill = player.GetCastingSkill();
         castingSkill.CancelCast();
         player.SetCasting(null);
@@ -534,15 +534,15 @@ public class PlayerController : CreatureController<Player.Player>
                 castingSkill.GetItemObjectId(), castingSkill.GetItemTemplate().GetTemplateId(), 0, 3, 0), true);
         }
 
-        if (lastAttacker is Player.Player && !lastAttacker.Equals(GetOwner()))
+        if (lastAttacker is Player && !lastAttacker.Equals(GetOwner()))
         {
-            PacketSendUtility.SendPacket((Player.Player)lastAttacker, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_SKILL_CANCELED());
+            PacketSendUtility.SendPacket((Player)lastAttacker, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_SKILL_CANCELED());
         }
     }
 
     public override void CancelUseItem()
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         Item usingItem = player.GetUsingItem();
         player.SetUsingItem(null);
         if (HasTask(Aion.GameServer.Model.TaskId.ITEM_USE))
@@ -553,7 +553,7 @@ public class PlayerController : CreatureController<Player.Player>
         }
     }
 
-    public override void OnDialogSelect(int dialogActionId, int prevDialogId, Player.Player player, int questId, int extendedRewardIndex)
+    public override void OnDialogSelect(int dialogActionId, int prevDialogId, Player player, int questId, int extendedRewardIndex)
     {
         switch (dialogActionId)
         {
@@ -576,7 +576,7 @@ public class PlayerController : CreatureController<Player.Player>
         if (oldLevel == newLevel)
             return;
 
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         int minNewLevel = oldLevel < newLevel ? oldLevel + 1 : oldLevel - 1;
 
         if (Aion.GameServer.Configs.Main.GSConfig.ENABLE_RATIO_LIMITATION
@@ -608,7 +608,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public void UpgradePlayer()
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         player.GetLifeStats().SynchronizeWithMaxStats();
         player.GetGameStats().UpdateStatsVisually();
 
@@ -646,7 +646,7 @@ public class PlayerController : CreatureController<Player.Player>
     public void StopProtectionActiveTask()
     {
         CancelTask(Aion.GameServer.Model.TaskId.PROTECTION_ACTIVE);
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         if (player.IsSpawned())
         {
             player.UnsetVisualState(CreatureVisualState.Blinking);
@@ -658,7 +658,7 @@ public class PlayerController : CreatureController<Player.Player>
     /// <summary>When player arrives at destination point of flying teleport.</summary>
     public void OnFlyTeleportEnd()
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         if (player.IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type.WINDSTREAM))
         {
             player.UnsetState(CreatureState.Flying);
@@ -727,7 +727,7 @@ public class PlayerController : CreatureController<Player.Player>
 
     public void UpdateSoulSickness(int skillId)
     {
-        Player.Player player = GetOwner();
+        Player player = GetOwner();
         Aion.GameServer.Model.House.House house = player.GetActiveHouse();
         if (house != null)
             switch (house.GetHouseType())

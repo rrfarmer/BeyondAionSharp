@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Questengine.Handlers.Models;
-using Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Events;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/XmlQuest (Mr.Poke, Bobobear, Pad). Set.addAll→UnionWith; Set.equals→SetEquals; List.addAll→AddRange; delegates to OnTalkEvent/OnKillEvent model operate(); DataManager/Monster/OnTalkEvent/OnKillEvent red-tolerated.</summary>
 public class XmlQuest : AbstractTemplateQuestHandler

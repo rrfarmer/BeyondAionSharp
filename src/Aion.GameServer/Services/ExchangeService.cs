@@ -14,7 +14,7 @@ using Aion.GameServer.Services.Items;
 using Aion.GameServer.Taskmanager.Tasks;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 
 namespace Aion.GameServer.Services;
 

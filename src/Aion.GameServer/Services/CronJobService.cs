@@ -6,7 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Services.Panesterra;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services;

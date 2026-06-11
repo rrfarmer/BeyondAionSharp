@@ -115,12 +115,12 @@ public class ItemPacketService
             };
         }
 
-        public static ItemDeleteType FromQuestStatus(Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+        public static ItemDeleteType FromQuestStatus(Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
         {
             return questStatus switch
             {
-                Aion.GameServer.Questengine.Model.QuestStatus.START => QUEST_START,
-                Aion.GameServer.Questengine.Model.QuestStatus.COMPLETE => QUEST_COMPLETE,
+                Aion.GameServer.QuestEngine.Model.QuestStatus.START => QUEST_START,
+                Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE => QUEST_COMPLETE,
                 _ => DEFAULT,
             };
         }

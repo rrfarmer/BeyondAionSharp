@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Questengine.Handlers.Models;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/SkillUse (vlog, Bobobear, Pad). Set.addAll→UnionWith; Set.equals→SetEquals; isEmpty→Count==0; Collections.emptyList→new List; bit-packed skill-use counters preserved; QuestSkillData red-tolerated.</summary>
 public class SkillUse : AbstractTemplateQuestHandler

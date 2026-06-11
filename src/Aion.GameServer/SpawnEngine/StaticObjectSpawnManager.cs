@@ -6,7 +6,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Knownlist;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/StaticObjectSpawnManager (ATracer). Straight transcription. StaticObject/StaticObjectController/World/DataManager/SpawnGroup red-tolerated.</summary>
 public class StaticObjectSpawnManager

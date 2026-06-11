@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Services;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Geo;
 

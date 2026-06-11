@@ -1,7 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Questengine.Task.Checker;
+namespace Aion.GameServer.QuestEngine.Task.Checker;
 
 /// <summary>Java parity: questEngine/task/checker/CoordinateDestinationChecker (ATracer, Neon).</summary>
 public class CoordinateDestinationChecker : DestinationChecker

@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.GameObjects;
 public class Gatherable : VisibleObject
 {
     public Gatherable(Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Controllers.GatherableController controller)
-        : base(Aion.GameServer.Utils.Idfactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, DataManager.GATHERABLE_DATA.GetGatherableTemplate(spawnTemplate.GetNpcId()), new WorldPosition(spawnTemplate.GetWorldId()), true)
+        : base(Aion.GameServer.Utils.IdFactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, DataManager.GATHERABLE_DATA.GetGatherableTemplate(spawnTemplate.GetNpcId()), new WorldPosition(spawnTemplate.GetWorldId()), true)
     {
         controller.SetOwner(this);
         SetKnownlist(new PlayerAwareKnownList(this));

@@ -70,7 +70,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -105,7 +105,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override bool DecreaseByItemId(int itemId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }
@@ -120,7 +120,7 @@ public class LegionWarehouse : Storage
         throw new NotSupportedException("LWH should be used behind proxy");
     }
 
-    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("LWH should be used behind proxy");
     }

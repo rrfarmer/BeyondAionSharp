@@ -6,7 +6,7 @@ using Aion.Commons.Utils;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/InstanceWalkerFormations (Rolandas). slf4j logger→ILogger (warn→LogWarning); HashMap→Dictionary (Map.get→GetValueOrDefault, put→indexer); synchronized→lock(this); stream groupingBy→GroupBy.ToDictionary; filter/collect→Where/ToList; List.add(bool)→Add+return true; Rnd.get→Rnd.Get. ClusteredNpc/WalkerGroup/DataManager red-tolerated.</summary>
 public class InstanceWalkerFormations

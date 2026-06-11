@@ -35,7 +35,7 @@ public class SummonedHouseNpc : SummonedObject<House.House>
         return false;
     }
 
-    public override bool IsEnemyFrom(Player.Player player)
+    public override bool IsEnemyFrom(Player player)
     {
         return false;
     }

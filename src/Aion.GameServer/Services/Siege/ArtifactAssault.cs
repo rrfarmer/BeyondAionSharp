@@ -4,7 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Services.Siege;

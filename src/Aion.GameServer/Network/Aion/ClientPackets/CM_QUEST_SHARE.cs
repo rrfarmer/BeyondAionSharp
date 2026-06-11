@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.DataHolders;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Quest;

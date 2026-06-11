@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/WalkerGroupShift (Rolandas).</summary>
 public class WalkerGroupShift

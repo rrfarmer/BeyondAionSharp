@@ -125,7 +125,7 @@ public abstract class Storage : IStorage
         return DecreaseItemCount(item, count, updateType, null, actor);
     }
 
-    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
+    internal long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.QuestEngine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         if (item == null)
             return 0;
@@ -176,7 +176,7 @@ public abstract class Storage : IStorage
         {
             Aion.GameServer.Services.Items.ItemPacketService.SendStorageUpdatePacket(actor, storageType, item, addType);
             if (storageType == StorageType.CUBE)
-                Aion.GameServer.Questengine.QuestEngine.GetInstance().OnItemGet(actor, item.GetItemId());
+                Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnItemGet(actor, item.GetItemId());
         }
         return item;
     }
@@ -236,7 +236,7 @@ public abstract class Storage : IStorage
                 string name = (item.GetEnchantLevel() > 0 ? "+" + item.GetEnchantLevel() + " " : "") + item.GetItemName();
                 log.LogInformation("Deleted " + item.GetItemId() + " " + name + " from " + actor + " (count: " + item.GetItemCount() + ") (deletion type: " + deleteType + ")");
             }
-            Aion.GameServer.Questengine.QuestEngine.GetInstance().OnItemRemoved(actor, item.GetItemId());
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnItemRemoved(actor, item.GetItemId());
             return item;
         }
         return null;
@@ -247,7 +247,7 @@ public abstract class Storage : IStorage
         return DecreaseByItemId(itemId, count, null, actor);
     }
 
-    internal bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
+    internal bool DecreaseByItemId(int itemId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         List<Item> items = itemStorage.GetItemsById(itemId);
         if (items.Count == 0)
@@ -270,7 +270,7 @@ public abstract class Storage : IStorage
         return DecreaseByObjectId(itemObjId, count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.DEC_ITEM_USE, actor);
     }
 
-    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
+    internal bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus? questStatus, Aion.GameServer.Model.GameObjects.Players.Player actor)
     {
         Item item = itemStorage.GetItemByObjId(itemObjId);
         if (item == null || item.GetItemCount() < count)
@@ -429,7 +429,7 @@ public abstract class Storage : IStorage
 
     public abstract long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
-    public abstract long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    public abstract long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus);
 
     public abstract Item Add(Item item);
 
@@ -443,11 +443,11 @@ public abstract class Storage : IStorage
 
     public abstract bool DecreaseByItemId(int itemId, long count);
 
-    public abstract bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    public abstract bool DecreaseByItemId(int itemId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus);
 
     public abstract bool DecreaseByObjectId(int itemObjId, long count);
 
     public abstract bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
-    public abstract bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    public abstract bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus);
 }

@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Questengine.Handlers;
+namespace Aion.GameServer.QuestEngine.Handlers;
 
 /// <summary>Java parity: questEngine/handlers/HandlerResult.</summary>
 public enum HandlerResult

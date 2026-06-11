@@ -9,7 +9,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Services.Items;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 using Aion.GameServer.World;
 
 namespace Aion.GameServer.Dao;

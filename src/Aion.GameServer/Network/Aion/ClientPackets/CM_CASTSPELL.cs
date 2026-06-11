@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Aion.GameServer.DataHolders;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Serverpackets;

@@ -675,9 +675,9 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
             qsl = Aion.GameServer.Dao.PlayerQuestListDAO.Load(playerObjId);
 
         // check both quest states in case a player changed race
-        Aion.GameServer.Questengine.Model.QuestStatus? elyAscentQuestStatus = qsl.GetQuestState(1006) != null ? qsl.GetQuestState(1006).GetStatus() : (Aion.GameServer.Questengine.Model.QuestStatus?)null;
-        Aion.GameServer.Questengine.Model.QuestStatus? asmoAscentQuestStatus = qsl.GetQuestState(2008) != null ? qsl.GetQuestState(2008).GetStatus() : (Aion.GameServer.Questengine.Model.QuestStatus?)null;
-        if (elyAscentQuestStatus != Aion.GameServer.Questengine.Model.QuestStatus.COMPLETE && asmoAscentQuestStatus != Aion.GameServer.Questengine.Model.QuestStatus.COMPLETE)
+        Aion.GameServer.QuestEngine.Model.QuestStatus? elyAscentQuestStatus = qsl.GetQuestState(1006) != null ? qsl.GetQuestState(1006).GetStatus() : (Aion.GameServer.QuestEngine.Model.QuestStatus?)null;
+        Aion.GameServer.QuestEngine.Model.QuestStatus? asmoAscentQuestStatus = qsl.GetQuestState(2008) != null ? qsl.GetQuestState(2008).GetStatus() : (Aion.GameServer.QuestEngine.Model.QuestStatus?)null;
+        if (elyAscentQuestStatus != Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE && asmoAscentQuestStatus != Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE)
             return false;
 
         SetDaeva(true);

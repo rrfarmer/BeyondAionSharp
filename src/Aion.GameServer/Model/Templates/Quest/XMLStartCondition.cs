@@ -5,7 +5,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Model.Templates.Quest;

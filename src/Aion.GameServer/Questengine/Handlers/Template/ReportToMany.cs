@@ -3,14 +3,14 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Quest;
-using Aion.GameServer.Questengine.Handlers;
-using Aion.GameServer.Questengine.Handlers.Models;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers;
+using Aion.GameServer.QuestEngine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/ReportToMany (Hilgert, vlog, Pad, Neon). Set.addAll→UnionWith; isEmpty→Count==0; super.onDialogEvent→base; HandlerResult.fromBoolean→FromBoolean/UNKNOWN; DataManager/QuestService/NpcInfos red-tolerated.</summary>
 public class ReportToMany : AbstractTemplateQuestHandler

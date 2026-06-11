@@ -37,7 +37,7 @@ public interface IStorage : IPersistable
 
     long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
-    long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus);
 
     /// <summary>Add operation should be used for new items incoming into storage from outside.</summary>
     Item Add(Item item);
@@ -55,13 +55,13 @@ public interface IStorage : IPersistable
 
     bool DecreaseByItemId(int itemId, long count);
 
-    bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    bool DecreaseByItemId(int itemId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus);
 
     bool DecreaseByObjectId(int itemObjId, long count);
 
     bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType);
 
-    bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus);
+    bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus);
 
     Item GetFirstItemByItemId(int itemId);
 

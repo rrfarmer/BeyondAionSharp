@@ -19,7 +19,7 @@ using Aion.GameServer.Network.Aion.Serverpackets;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Services.Panesterra;
 using Aion.GameServer.Services.Siege;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

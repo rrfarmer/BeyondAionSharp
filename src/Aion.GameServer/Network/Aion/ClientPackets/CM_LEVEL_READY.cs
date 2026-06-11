@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aion.GameServer.Configs.Main;
-using Aion.GameServer.DataHolders;
+using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;

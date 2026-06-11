@@ -25,7 +25,7 @@ public class SiegeRaceCounter : IComparable<SiegeRaceCounter>
     public void AddPoints(Creature creature, int damage)
     {
         AddTotalDamage(damage);
-        if (creature is Player.Player player)
+        if (creature is Player player)
             AddPlayerDamage(player, damage);
     }
 
@@ -34,12 +34,12 @@ public class SiegeRaceCounter : IComparable<SiegeRaceCounter>
         totalDamage.AddAndGet(damage);
     }
 
-    public void AddPlayerDamage(Player.Player player, int damage)
+    public void AddPlayerDamage(Player player, int damage)
     {
         AddToCounter(player.GetObjectId(), damage, playerDamageCounter);
     }
 
-    public void AddAbyssPoints(Player.Player player, int abyssPoints)
+    public void AddAbyssPoints(Player player, int abyssPoints)
     {
         AddToCounter(player.GetObjectId(), abyssPoints, playerAPCounter);
     }
@@ -112,17 +112,17 @@ public class SiegeRaceCounter : IComparable<SiegeRaceCounter>
 
     public int? GetWinnerLegionId()
     {
-        Dictionary<Player.Player, AtomicLong> teamDamageMap = new Dictionary<Player.Player, AtomicLong>();
+        Dictionary<Player, AtomicLong> teamDamageMap = new Dictionary<Player, AtomicLong>();
         foreach (int id in playerDamageCounter.Keys)
         {
-            Player.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(id);
+            Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(id);
             if (player != null)
             {
                 if (player.GetCurrentTeam() != null)
                 {
                     if (!player.IsInLeague())
                     {
-                        Player.Player teamLeader = player.GetCurrentTeam().GetLeaderObject();
+                        Player teamLeader = player.GetCurrentTeam().GetLeaderObject();
                         long damage = playerDamageCounter[id].Get();
                         if (teamLeader != null)
                         {
@@ -135,7 +135,7 @@ public class SiegeRaceCounter : IComparable<SiegeRaceCounter>
                     }
                     else
                     {
-                        Player.Player teamLeader = player.GetPlayerAlliance().GetLeague().GetLeaderObject().GetLeaderObject();
+                        Player teamLeader = player.GetPlayerAlliance().GetLeague().GetLeaderObject().GetLeaderObject();
                         long damage = playerDamageCounter[id].Get();
                         if (teamLeader != null)
                         {
@@ -162,7 +162,7 @@ public class SiegeRaceCounter : IComparable<SiegeRaceCounter>
         {
             return null;
         }
-        Player.Player topTeamLeader = GetOrderedCounterMap(teamDamageMap).Keys.First();
+        Player topTeamLeader = GetOrderedCounterMap(teamDamageMap).Keys.First();
         Legion legion = topTeamLeader.GetLegion();
         return legion != null ? legion.GetLegionId() : (int?) null;
     }

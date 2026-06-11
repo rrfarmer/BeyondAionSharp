@@ -180,7 +180,7 @@ public partial class Equipment : IPersistable
             owner.GetLifeStats().UpdateCurrentStats();
             owner.GetGameStats().UpdateStatsAndSpeedVisually();
             SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
-            Aion.GameServer.Questengine.QuestEngine.GetInstance().OnEquipItem(new Aion.GameServer.Questengine.Model.QuestEnv(null, owner, 0), item.GetItemId());
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnEquipItem(new Aion.GameServer.QuestEngine.Model.QuestEnv(null, owner, 0), item.GetItemId());
 
             if (item.GetItemTemplate().IsStigma())
                 Aion.GameServer.Services.StigmaService.AddLinkedStigmaSkills(owner);

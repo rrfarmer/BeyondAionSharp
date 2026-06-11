@@ -14,7 +14,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Services.Rift;
 using Aion.GameServer.World;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>
 /// Java parity: spawnengine/SpawnEngine (Luno, ATracer, Source, Wakizashi, xTz, nrg). NPC spawn management keystone.

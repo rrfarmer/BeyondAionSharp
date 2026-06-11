@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Conditions;
-using Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Operations;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
+using Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Events;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
 
 /// <summary>Java parity: .../events/QuestEvent. @XmlSeeAlso→[XmlInclude]; ids @XmlAttribute List<Integer>→Raw space-sep.</summary>
 [XmlType("QuestEvent")]

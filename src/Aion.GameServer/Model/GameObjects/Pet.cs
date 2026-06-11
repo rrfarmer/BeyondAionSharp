@@ -6,11 +6,11 @@ namespace Aion.GameServer.Model.GameObjects;
 /// <summary>Java parity: model/gameobjects/Pet extends VisibleObject.</summary>
 public class Pet : VisibleObject
 {
-    private readonly Player.Player master;
+    private readonly Player master;
     private CreatureMoveController<Pet> moveController;
     private readonly Aion.GameServer.Model.GameObjects.Players.PetCommonData commonData;
 
-    public Pet(Aion.GameServer.Model.Templates.Pet.PetTemplate petTemplate, Aion.GameServer.Controllers.PetController controller, Aion.GameServer.Model.GameObjects.Players.PetCommonData commonData, Player.Player master)
+    public Pet(Aion.GameServer.Model.Templates.Pet.PetTemplate petTemplate, Aion.GameServer.Controllers.PetController controller, Aion.GameServer.Model.GameObjects.Players.PetCommonData commonData, Player master)
         : base(commonData.GetObjectId(), controller, null, petTemplate, new WorldPosition(master.GetWorldId()), false)
     {
         controller.SetOwner(this);
@@ -22,7 +22,7 @@ public class Pet : VisibleObject
 
     public override string Name => commonData.GetName();
 
-    public Player.Player GetMaster()
+    public Player GetMaster()
     {
         return master;
     }

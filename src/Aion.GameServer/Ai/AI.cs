@@ -16,7 +16,7 @@ public interface AI
     void OnGeneralEvent(AiEventType @event);
 
     /// <summary>If already handled dialog return true.</summary>
-    bool OnDialogSelect(Player.Player player, int dialogActionId, int questId, int extendedRewardIndex);
+    bool OnDialogSelect(Player player, int dialogActionId, int questId, int extendedRewardIndex);
 
     void Think();
 

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Questengine.Model;
+namespace Aion.GameServer.QuestEngine.Model;
 
 /// <summary>Java parity: questEngine/model/QuestVars (MrPoke).</summary>
 public class QuestVars

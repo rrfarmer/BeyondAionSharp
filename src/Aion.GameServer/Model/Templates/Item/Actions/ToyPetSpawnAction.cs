@@ -70,9 +70,9 @@ public class ToyPetSpawnAction : AbstractItemAction
             byte heading = (byte)((player.GetHeading() + 60) % 120);
             int worldId = player.GetWorldId();
             int instanceId = player.GetInstanceId();
-            Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawn = Aion.GameServer.Spawnengine.SpawnEngine.NewSingleTimeSpawn(worldId, npcid, x, y, z, heading);
+            Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldId, npcid, x, y, z, heading);
 
-            Kisk kisk = Aion.GameServer.Spawnengine.VisibleObjectSpawner.SpawnKisk(spawn, instanceId, player);
+            Kisk kisk = Aion.GameServer.SpawnEngine.VisibleObjectSpawner.SpawnKisk(spawn, instanceId, player);
             int objOwnerId = player.GetObjectId();
             // Schedule Despawn Action
             Aion.GameServer.Utils.ScheduledTask task = Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct2 =>

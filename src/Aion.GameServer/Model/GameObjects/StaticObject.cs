@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.GameObjects;
 public class StaticObject : VisibleObject
 {
     public StaticObject(Aion.GameServer.Controllers.StaticObjectController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, VisibleObjectTemplate objectTemplate)
-        : base(Aion.GameServer.Utils.Idfactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, objectTemplate, new WorldPosition(spawnTemplate.GetWorldId()), true)
+        : base(Aion.GameServer.Utils.IdFactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, objectTemplate, new WorldPosition(spawnTemplate.GetWorldId()), true)
     {
         controller.SetOwner(this);
     }

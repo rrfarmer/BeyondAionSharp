@@ -25,7 +25,7 @@ public class Npc : Creature
     private SummonOwner summonOwner = null;
 
     public Npc(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate)
-        : base(Aion.GameServer.Utils.Idfactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, objectTemplate, new WorldPosition(spawnTemplate.GetWorldId()), true)
+        : base(Aion.GameServer.Utils.IdFactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, objectTemplate, new WorldPosition(spawnTemplate.GetWorldId()), true)
     {
         // Java: Objects.requireNonNull(objectTemplate) before super (C# cannot run code before base()).
         controller.SetOwner(this);
@@ -185,7 +185,7 @@ public class Npc : Creature
 
     public override TribeClass GetTribe()
     {
-        if (GetCreator() is Player.Player player)
+        if (GetCreator() is Player player)
             return player.GetTribe();
         TribeClass? transformTribe = IsTransformed() ? GetTransformModel().GetTribe() : (TribeClass?)null;
         if (transformTribe != null)
@@ -237,7 +237,7 @@ public class Npc : Creature
         return Aion.GameServer.Services.TribeRelationService.IsAggressive(this, npc) || Aion.GameServer.Services.TribeRelationService.IsHostile(this, npc);
     }
 
-    public override bool IsEnemyFrom(Player.Player player)
+    public override bool IsEnemyFrom(Player player)
     {
         return player.IsEnemyFrom(this);
     }

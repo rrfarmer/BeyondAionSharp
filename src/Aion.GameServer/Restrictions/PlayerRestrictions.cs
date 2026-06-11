@@ -11,7 +11,7 @@ using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Model.Templates.Items.Actions;
 using Aion.GameServer.Model.Templates.Panels;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Questengine;
+using Aion.GameServer.QuestEngine;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Ban;
 using Aion.GameServer.Services.Players;

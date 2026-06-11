@@ -4,7 +4,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates.Walker;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>
 /// Java parity: spawnengine/WalkerFormator (vlog, Rolandas). Forms walker groups on initial spawn; brings NPCs back if they die. slf4j logger→ILogger (warn→LogWarning). WalkerTemplate/WalkerGroup/DataManager red-tolerated.

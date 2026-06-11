@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine;
-using Aion.GameServer.Questengine.Handlers.Template;
+using Aion.GameServer.QuestEngine;
+using Aion.GameServer.QuestEngine.Handlers.Template;
 
-namespace Aion.GameServer.Questengine.Handlers.Models;
+namespace Aion.GameServer.QuestEngine.Handlers.Models;
 
 /// <summary>Java parity: questEngine/handlers/models/KillSpawnedData (extends MonsterHuntData; propOrder monster).</summary>
 [XmlType("KillSpawnedData")]

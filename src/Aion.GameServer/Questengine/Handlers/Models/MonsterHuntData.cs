@@ -5,10 +5,10 @@ using System.Xml.Serialization;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Quest;
-using Aion.GameServer.Questengine;
-using Aion.GameServer.Questengine.Handlers.Template;
+using Aion.GameServer.QuestEngine;
+using Aion.GameServer.QuestEngine.Handlers.Template;
 
-namespace Aion.GameServer.Questengine.Handlers.Models;
+namespace Aion.GameServer.QuestEngine.Handlers.Models;
 
 /// <summary>Java parity: questEngine/handlers/models/MonsterHuntData. @XmlSeeAlso→[XmlInclude] (KillSpawned/MentorMonsterHunt).</summary>
 [XmlType("MonsterHuntData")]

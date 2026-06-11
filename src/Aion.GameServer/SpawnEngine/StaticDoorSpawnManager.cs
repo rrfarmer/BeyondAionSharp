@@ -9,7 +9,7 @@ using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;
 using Aion.GameServer.World.Knownlist;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/StaticDoorSpawnManager (MrPoke). slf4j logger→ILogger; log.info→LogInformation. SpawnEngine/StaticObjectController/StaticDoor/GeoService/DataManager red-tolerated.</summary>
 public class StaticDoorSpawnManager

@@ -8,7 +8,7 @@ using Aion.Commons.Database;
 using Aion.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
 namespace Aion.GameServer.Dao;
 

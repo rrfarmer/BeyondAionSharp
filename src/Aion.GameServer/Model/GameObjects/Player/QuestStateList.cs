@@ -10,7 +10,7 @@ namespace Aion.GameServer.Model.GameObjects.Players;
 public class QuestStateList
 {
     private static readonly ILogger log = NullLogger.Instance;
-    private readonly SortedDictionary<int, Aion.GameServer.Questengine.Model.QuestState> quests = new SortedDictionary<int, Aion.GameServer.Questengine.Model.QuestState>();
+    private readonly SortedDictionary<int, Aion.GameServer.QuestEngine.Model.QuestState> quests = new SortedDictionary<int, Aion.GameServer.QuestEngine.Model.QuestState>();
     private readonly HashSet<int> deletedQuests = new HashSet<int>();
 
     /// <summary>Creates an empty quests list.</summary>
@@ -24,7 +24,7 @@ public class QuestStateList
         return quests.ContainsKey(questId);
     }
 
-    public bool AddQuest(int questId, Aion.GameServer.Questengine.Model.QuestState questState)
+    public bool AddQuest(int questId, Aion.GameServer.QuestEngine.Model.QuestState questState)
     {
         lock (this)
         {
@@ -39,11 +39,11 @@ public class QuestStateList
     }
 
     /// <summary>The quest that was deleted, null if it didn't exist in the list.</summary>
-    public Aion.GameServer.Questengine.Model.QuestState DeleteQuest(int questId)
+    public Aion.GameServer.QuestEngine.Model.QuestState DeleteQuest(int questId)
     {
         lock (this)
         {
-            if (!quests.Remove(questId, out Aion.GameServer.Questengine.Model.QuestState qs))
+            if (!quests.Remove(questId, out Aion.GameServer.QuestEngine.Model.QuestState qs))
                 qs = null;
             if (qs != null)
             {
@@ -54,39 +54,39 @@ public class QuestStateList
         }
     }
 
-    public Aion.GameServer.Questengine.Model.QuestState GetQuestState(int questId)
+    public Aion.GameServer.QuestEngine.Model.QuestState GetQuestState(int questId)
     {
-        return quests.TryGetValue(questId, out Aion.GameServer.Questengine.Model.QuestState qs) ? qs : null;
+        return quests.TryGetValue(questId, out Aion.GameServer.QuestEngine.Model.QuestState qs) ? qs : null;
     }
 
     /// <summary>All quests, including abandoned ones since login.</summary>
-    public List<Aion.GameServer.Questengine.Model.QuestState> GetAllQuestState()
+    public List<Aion.GameServer.QuestEngine.Model.QuestState> GetAllQuestState()
     {
-        return new List<Aion.GameServer.Questengine.Model.QuestState>(quests.Values);
+        return new List<Aion.GameServer.QuestEngine.Model.QuestState>(quests.Values);
     }
 
     /// <summary>All quests that have been completed at least once.</summary>
-    public List<Aion.GameServer.Questengine.Model.QuestState> GetCompletedQuests()
+    public List<Aion.GameServer.QuestEngine.Model.QuestState> GetCompletedQuests()
     {
         return quests.Values.Where(qs => qs.GetCompleteCount() > 0).ToList();
     }
 
     /// <summary>All quests that are currently active or locked.</summary>
-    public List<Aion.GameServer.Questengine.Model.QuestState> GetUncompletedQuests()
+    public List<Aion.GameServer.QuestEngine.Model.QuestState> GetUncompletedQuests()
     {
-        return quests.Values.Where(qs => qs.GetStatus() != Aion.GameServer.Questengine.Model.QuestStatus.COMPLETE).ToList();
+        return quests.Values.Where(qs => qs.GetStatus() != Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE).ToList();
     }
 
     /// <summary>All normal (light blue) quests that are currently active.</summary>
-    public List<Aion.GameServer.Questengine.Model.QuestState> GetNormalQuests()
+    public List<Aion.GameServer.QuestEngine.Model.QuestState> GetNormalQuests()
     {
-        List<Aion.GameServer.Questengine.Model.QuestState> questList = new List<Aion.GameServer.Questengine.Model.QuestState>();
-        foreach (Aion.GameServer.Questengine.Model.QuestState qs in GetAllQuestState())
+        List<Aion.GameServer.QuestEngine.Model.QuestState> questList = new List<Aion.GameServer.QuestEngine.Model.QuestState>();
+        foreach (Aion.GameServer.QuestEngine.Model.QuestState qs in GetAllQuestState())
         {
             Aion.GameServer.Model.Templates.Quest.QuestCategory qc = Aion.GameServer.Dataholders.DataManager.QUEST_DATA.GetQuestById(qs.GetQuestId()).GetCategory();
-            Aion.GameServer.Questengine.Model.QuestStatus s = qs.GetStatus();
+            Aion.GameServer.QuestEngine.Model.QuestStatus s = qs.GetStatus();
 
-            if (qc == Aion.GameServer.Model.Templates.Quest.QuestCategory.QUEST && s != Aion.GameServer.Questengine.Model.QuestStatus.COMPLETE && s != Aion.GameServer.Questengine.Model.QuestStatus.LOCKED)
+            if (qc == Aion.GameServer.Model.Templates.Quest.QuestCategory.QUEST && s != Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE && s != Aion.GameServer.QuestEngine.Model.QuestStatus.LOCKED)
             {
                 questList.Add(qs);
             }

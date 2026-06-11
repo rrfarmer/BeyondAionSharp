@@ -23,7 +23,7 @@ public class SummonsService
             PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER());
             return null;
         }
-        Summon summon = Aion.GameServer.Spawnengine.VisibleObjectSpawner.SpawnSummon(master, npcId, skillId, time);
+        Summon summon = Aion.GameServer.SpawnEngine.VisibleObjectSpawner.SpawnSummon(master, npcId, skillId, time);
         master.SetSummon(summon);
         PacketSendUtility.SendPacket(master, new SmSummonPanel(summon));
         PacketSendUtility.BroadcastPacket(summon, new SmEmotion(summon, EmotionType.ChangeSpeed));

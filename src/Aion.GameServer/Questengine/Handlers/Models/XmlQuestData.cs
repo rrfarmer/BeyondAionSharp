@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine;
-using Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Events;
-using Aion.GameServer.Questengine.Handlers.Template;
+using Aion.GameServer.QuestEngine;
+using Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
+using Aion.GameServer.QuestEngine.Handlers.Template;
 
-namespace Aion.GameServer.Questengine.Handlers.Models;
+namespace Aion.GameServer.QuestEngine.Handlers.Models;
 
 /// <summary>Java parity: questEngine/handlers/models/XmlQuestData (@XmlType "XmlQuest", propOrder onTalkEvents/onKillEvents).</summary>
 [XmlType("XmlQuest")]
@@ -34,7 +34,7 @@ public class XmlQuestData : XMLQuest
 
     public override void Register(QuestEngine questEngine)
     {
-        questEngine.AddQuestHandler(new Aion.GameServer.Questengine.Handlers.Template.XmlQuest(id, startNpcIds, endNpcIds, onTalkEvents, onKillEvents));
+        questEngine.AddQuestHandler(new Aion.GameServer.QuestEngine.Handlers.Template.XmlQuest(id, startNpcIds, endNpcIds, onTalkEvents, onKillEvents));
     }
 
     public override ISet<int> GetAlternativeNpcs(int npcId)

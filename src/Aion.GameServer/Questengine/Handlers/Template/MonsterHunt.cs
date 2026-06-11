@@ -6,15 +6,15 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Rift;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Vortex;
-using Aion.GameServer.Questengine.Handlers.Models;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World.Zone;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/MonsterHunt (MrPoke, vlog, Bobobear, Pad, Majka). Set.addAll→UnionWith; isEmpty→Count==0; ZoneName.get(s).name().equalsIgnoreCase→Name comparison; bit-packed quest vars preserved; DataManager/QuestService/RiftService/VortexService red-tolerated.</summary>
 public class MonsterHunt : AbstractTemplateQuestHandler

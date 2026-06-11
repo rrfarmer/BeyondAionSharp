@@ -11,14 +11,14 @@ namespace Aion.GameServer.Model.GameObjects;
 /// <summary>Java parity: model/gameobjects/Summon extends Creature (@author ATracer).</summary>
 public class Summon : Creature
 {
-    private readonly Player.Player master;
+    private readonly Player master;
     private SummonMode mode = SummonMode.GUARD;
     private readonly ConcurrentQueue<SkillOrder> skillOrders = new ConcurrentQueue<SkillOrder>();
     private ScheduledTask releaseTask;
     private SkillElement alwaysResistElement = SkillElement.NONE;
     private int summonedBySkillId, liveTime;
 
-    public Summon(int objId, Aion.GameServer.Controllers.SummonController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate, Player.Player master, int time)
+    public Summon(int objId, Aion.GameServer.Controllers.SummonController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate, Player master, int time)
         : base(objId, controller, spawnTemplate, objectTemplate, new WorldPosition(spawnTemplate.GetWorldId()), true)
     {
         controller.SetOwner(this);
@@ -62,7 +62,7 @@ public class Summon : Creature
         return (SummonGameStats)base.GetGameStats();
     }
 
-    public override Player.Player GetMaster()
+    public override Player GetMaster()
     {
         return master;
     }
@@ -119,14 +119,14 @@ public class Summon : Creature
         return master.IsEnemyFrom(npc);
     }
 
-    public override bool IsEnemyFrom(Player.Player player)
+    public override bool IsEnemyFrom(Player player)
     {
         return master.IsEnemyFrom(player);
     }
 
     public override bool IsPvpTarget(Creature creature)
     {
-        return creature.GetActingCreature() is Player.Player;
+        return creature.GetActingCreature() is Player;
     }
 
     public override TribeClass GetTribe()
@@ -146,7 +146,7 @@ public class Summon : Creature
         return (Aion.GameServer.Controllers.Movement.SummonMoveController)base.GetMoveController();
     }
 
-    public override Player.Player GetActingCreature()
+    public override Player GetActingCreature()
     {
         return GetMaster();
     }

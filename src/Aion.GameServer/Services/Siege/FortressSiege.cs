@@ -23,7 +23,7 @@ using Aion.GameServer.Services.Abyss;
 using Aion.GameServer.Services.Mail;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.SkillEngine;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 

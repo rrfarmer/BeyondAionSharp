@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Questengine.Task.Checker;
+namespace Aion.GameServer.QuestEngine.Task.Checker;
 
 /// <summary>Java parity: questEngine/task/checker/DestinationChecker.</summary>
 public abstract class DestinationChecker

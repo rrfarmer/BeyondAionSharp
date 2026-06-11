@@ -215,7 +215,7 @@ public class NpcController : CreatureController<Npc>
 
                     bool shouldNotifyQuestEngine = !(instanceHandler is Aion.GameServer.Custom.Pvpmap.PvpMapHandler); // do not include pvp map
                     if (shouldNotifyQuestEngine)
-                        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnKill(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), player, 0));
+                        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnKill(new Aion.GameServer.QuestEngine.Model.QuestEnv(GetOwner(), player, 0));
                     Aion.GameServer.Services.Event.EventService.GetInstance().OnPveKill(player, GetOwner());
                     player.GetCommonData().AddExp(rewardXp, Aion.GameServer.Model.GameObjects.Players.Rates.XP_HUNTING, GetOwner().GetObjectTemplate().GetL10n());
                     player.GetCommonData().AddDp(rewardDp);
@@ -269,11 +269,11 @@ public class NpcController : CreatureController<Npc>
             if (((Aion.GameServer.Model.GameObjects.Players.Player)attacker).IsInTeam())
             {
                 foreach (Aion.GameServer.Model.GameObjects.Players.Player player in ((Aion.GameServer.Model.GameObjects.Players.Player)attacker).GetCurrentTeam().FilterMembers(m => PositionUtil.IsInRange(GetOwner(), m, 50)))
-                    Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), player, 0));
+                    Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.QuestEngine.Model.QuestEnv(GetOwner(), player, 0));
             }
             else
             {
-                Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.Questengine.Model.QuestEnv(GetOwner(), (Aion.GameServer.Model.GameObjects.Players.Player)attacker, 0));
+                Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAddAggroList(new Aion.GameServer.QuestEngine.Model.QuestEnv(GetOwner(), (Aion.GameServer.Model.GameObjects.Players.Player)attacker, 0));
             }
         }
         base.OnAddHate(attacker, isNewInAggroList);
@@ -297,7 +297,7 @@ public class NpcController : CreatureController<Npc>
         Npc npc = GetOwner();
         Aion.GameServer.Ai.Handler.ShoutEventHandler.OnEnemyAttack((Aion.GameServer.Ai.NpcAI)npc.GetAi(), attacker);
         if (actingCreature is Aion.GameServer.Model.GameObjects.Players.Player)
-            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAttack(new Aion.GameServer.Questengine.Model.QuestEnv(npc, (Aion.GameServer.Model.GameObjects.Players.Player)actingCreature, 0));
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAttack(new Aion.GameServer.QuestEngine.Model.QuestEnv(npc, (Aion.GameServer.Model.GameObjects.Players.Player)actingCreature, 0));
     }
 
     public override void OnStartMove()

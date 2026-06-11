@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/WorldWalkerFormations (Rolandas). ConcurrentHashMap→ConcurrentDictionary; Map.get+null-check+put→TryGetValue+set. Java `protected` method→internal (same-namespace cross-class access). InstanceWalkerFormations red-tolerated.</summary>
 public class WorldWalkerFormations

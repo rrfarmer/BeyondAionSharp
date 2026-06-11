@@ -13,9 +13,9 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Network.Aion.Serverpackets;
-using Aion.GameServer.Questengine.Handlers;
-using Aion.GameServer.Questengine.Handlers.Models;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Handlers;
+using Aion.GameServer.QuestEngine.Handlers.Models;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Utils;
@@ -26,7 +26,7 @@ using Aion.GameServer.World.Zone;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Questengine;
+namespace Aion.GameServer.QuestEngine;
 
 /// <summary>Java parity: questEngine/QuestEngine (MrPoke, Hilgert, vlog, Neon). The central quest registration/dispatch god-class every handler's `qe` references. EnumMap→Dictionary; computeIfAbsent→TryGetValue+init; putIfAbsent→TryAdd; Object...→params object[]; SingletonHolder→static readonly. C# GameEngine interface is a divergent async redesign — Java's void Init() mirrored faithfully, interface satisfaction left red. ScriptManager/CronService/Quartz JobDetail/SplitList/World red-tolerated.</summary>
 public class QuestEngine : GameEngine

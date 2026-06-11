@@ -2,13 +2,13 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Aion.GameServer.Questengine.Handlers.Template;
+namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
 /// <summary>Java parity: questEngine/handlers/template/ItemOrders (Altaress, Bobobear, Pad). super.onDialogEvent→base.OnDialogEvent; HandlerResult.fromBoolean→FromBoolean; DataManager/QuestService/PacketSendUtility/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class ItemOrders : AbstractTemplateQuestHandler

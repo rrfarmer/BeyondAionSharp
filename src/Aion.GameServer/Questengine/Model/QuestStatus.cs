@@ -1,4 +1,4 @@
-namespace Aion.GameServer.Questengine.Model;
+namespace Aion.GameServer.QuestEngine.Model;
 
 /// <summary>Java parity: questEngine/model/QuestStatus (MrPoke). Id-bearing enum (backing value == Java id).</summary>
 public enum QuestStatus

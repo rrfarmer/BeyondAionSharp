@@ -2,7 +2,7 @@ using System;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 
-namespace Aion.GameServer.Questengine.Model;
+namespace Aion.GameServer.QuestEngine.Model;
 
 /// <summary>Java parity: questEngine/model/QuestState (MrPoke, vlog, Rolandas).</summary>
 public class QuestState : IPersistable

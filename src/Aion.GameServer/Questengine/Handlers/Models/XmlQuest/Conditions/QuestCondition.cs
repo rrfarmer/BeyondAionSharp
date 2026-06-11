@@ -1,7 +1,7 @@
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine.Model;
+using Aion.GameServer.QuestEngine.Model;
 
-namespace Aion.GameServer.Questengine.Handlers.Models.XmlQuest.Conditions;
+namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 
 /// <summary>Java parity: .../conditions/QuestCondition. @XmlSeeAlso→[XmlInclude] (subclasses red until ported).</summary>
 [XmlType("QuestCondition")]

@@ -1,7 +1,7 @@
 using System;
 using System.Xml.Serialization;
 
-namespace Aion.GameServer.Questengine.Model;
+namespace Aion.GameServer.QuestEngine.Model;
 
 /// <summary>Java parity: questEngine/model/ConditionOperation (@XmlEnum).</summary>
 [XmlType("ConditionOperation")]

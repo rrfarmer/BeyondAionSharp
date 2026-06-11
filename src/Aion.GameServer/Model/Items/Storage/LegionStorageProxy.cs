@@ -68,7 +68,7 @@ public class LegionStorageProxy : Storage
         return storage.DecreaseItemCount(item, count, updateType, actor);
     }
 
-    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override long DecreaseItemCount(Item item, long count, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType updateType, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("Quests should not update LWH!");
     }
@@ -103,7 +103,7 @@ public class LegionStorageProxy : Storage
         return storage.DecreaseByItemId(itemId, count, actor);
     }
 
-    public override bool DecreaseByItemId(int itemId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override bool DecreaseByItemId(int itemId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("Quests should not update LWH!");
     }
@@ -118,7 +118,7 @@ public class LegionStorageProxy : Storage
         return storage.DecreaseByObjectId(itemObjId, count, updateType, actor);
     }
 
-    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.Questengine.Model.QuestStatus questStatus)
+    public override bool DecreaseByObjectId(int itemObjId, long count, Aion.GameServer.QuestEngine.Model.QuestStatus questStatus)
     {
         throw new NotSupportedException("Quests should not update LWH!");
     }

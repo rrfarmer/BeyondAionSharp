@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Aion.GameServer.Spawnengine;
+namespace Aion.GameServer.SpawnEngine;
 
 /// <summary>Java parity: spawnengine/WalkerFormationsCache (Rolandas). Package-private class→internal; ConcurrentHashMap→ConcurrentDictionary; Map.get+null-check+put→TryGetValue+set. InstanceWalkerFormations red-tolerated.</summary>
 internal class WalkerFormationsCache

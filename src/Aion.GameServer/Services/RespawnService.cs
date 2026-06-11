@@ -193,12 +193,12 @@ public class RespawnService
             if (!Aion.GameServer.Services.Instance.InstanceService.InstanceExists(spawnTemplate.GetWorldId(), instanceId))
                 return;
 
-            VisibleObject respawn = Aion.GameServer.Spawnengine.SpawnEngine.SpawnObject(spawnTemplate.HasPool() ? spawnTemplate.ChangeTemplate(instanceId) : spawnTemplate, instanceId);
+            VisibleObject respawn = Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(spawnTemplate.HasPool() ? spawnTemplate.ChangeTemplate(instanceId) : spawnTemplate, instanceId);
             if (respawn != null)
             {
                 Aion.GameServer.Services.RiftService.GetInstance().UpdateSpawned(oldObjectId, respawn);
                 if (respawn.GetSpawn().IsTemporarySpawn() && respawn.GetObjectId() != oldObjectId)
-                    Aion.GameServer.Spawnengine.TemporarySpawnEngine.UnregisterSpawned(oldObjectId);
+                    Aion.GameServer.SpawnEngine.TemporarySpawnEngine.UnregisterSpawned(oldObjectId);
             }
         }
 

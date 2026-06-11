@@ -2,11 +2,11 @@ using Aion.GameServer.Ai.Event;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
-using Aion.GameServer.Questengine.Model;
-using Aion.GameServer.Questengine.Task.Checker;
+using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.QuestEngine.Task.Checker;
 using Aion.GameServer.Utils;
 
-namespace Aion.GameServer.Questengine.Task;
+namespace Aion.GameServer.QuestEngine.Task;
 
 /// <summary>Java parity: questEngine/task/FollowingNpcCheckTask (ATracer). Runnable→method Run; AIEventType→AiEventType; QuestEngine/PositionUtil/Npc.GetAi red-tolerated.</summary>
 public class FollowingNpcCheckTask

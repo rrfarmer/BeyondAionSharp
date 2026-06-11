@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Xml.Serialization;
-using Aion.GameServer.Questengine;
+using Aion.GameServer.QuestEngine;
 
-namespace Aion.GameServer.Questengine.Handlers.Models;
+namespace Aion.GameServer.QuestEngine.Handlers.Models;
 
 /// <summary>Java parity: questEngine/handlers/models/XMLQuest (@XmlType QuestScriptData). @XmlSeeAlso→[XmlInclude] (16 data-holder subclasses red until ported).</summary>
 [XmlType("QuestScriptData")]

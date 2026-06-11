@@ -23,7 +23,7 @@ using Aion.GameServer.Services.Cron;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.SkillEngine.Effects;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 using Aion.GameServer.World.Geo;

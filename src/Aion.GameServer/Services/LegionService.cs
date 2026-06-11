@@ -18,7 +18,7 @@ using Aion.GameServer.Services.Trade;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.Utils.Collections;
-using Aion.GameServer.Utils.Idfactory;
+using Aion.GameServer.Utils.IdFactory;
 
 namespace Aion.GameServer.Services;
 

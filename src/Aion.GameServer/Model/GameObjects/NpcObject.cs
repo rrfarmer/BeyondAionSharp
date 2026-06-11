@@ -2,7 +2,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Templates.Housing;
 using Aion.GameServer.Model.Templates.Spawns;
-using Aion.GameServer.Spawnengine;
+using Aion.GameServer.SpawnEngine;
 
 namespace Aion.GameServer.Model.GameObjects;
 

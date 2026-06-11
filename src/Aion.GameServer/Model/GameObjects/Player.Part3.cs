@@ -329,8 +329,8 @@ public partial class Player
     /// <summary>Quest completion</summary>
     public bool IsCompleteQuest(int questId)
     {
-        Aion.GameServer.Questengine.Model.QuestState qs = GetQuestStateList().GetQuestState(questId);
-        return qs != null && qs.GetStatus() == Aion.GameServer.Questengine.Model.QuestStatus.COMPLETE;
+        Aion.GameServer.QuestEngine.Model.QuestState qs = GetQuestStateList().GetQuestState(questId);
+        return qs != null && qs.GetStatus() == Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE;
     }
 
     public long GetNextSkillUse()
