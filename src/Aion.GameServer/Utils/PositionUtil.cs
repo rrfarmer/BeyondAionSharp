@@ -77,6 +77,14 @@ public static class PositionUtil
     public static byte GetHeadingTowards(float x, float y, float x2, float y2)
         => ConvertAngleToHeading(CalculateAngleFrom(x, y, x2, y2));
 
+    /// <summary>Java parity: getHeadingTowards(VisibleObject,float,float).</summary>
+    public static byte GetHeadingTowards(VisibleObject obj1, float x, float y)
+        => GetHeadingTowards(obj1.GetX(), obj1.GetY(), x, y);
+
+    /// <summary>Java parity: getHeadingTowards(VisibleObject,VisibleObject).</summary>
+    public static byte GetHeadingTowards(VisibleObject obj1, VisibleObject obj2)
+        => GetHeadingTowards(obj1, obj2.GetX(), obj2.GetY());
+
     /// <summary>Java parity: getClosestPointOnSegment(float,float,float,float,float,float).</summary>
     public static Point2D GetClosestPointOnSegment(float sx1, float sy1, float sx2, float sy2, float px, float py)
     {
