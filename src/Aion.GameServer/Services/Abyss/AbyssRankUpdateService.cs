@@ -53,7 +53,7 @@ public class AbyssRankUpdateService
 
             AbyssRankEnum minGpRank = AbyssRankEnumExtensions.Values()
                     .Where(rank => rank.GetRequiredGP() > 0)
-                    .OrderBy(rank => rank.GetId()).FirstOrDefault() ?? AbyssRankEnum.STAR1_OFFICER;
+                    .OrderBy(rank => rank.GetId()).Cast<AbyssRankEnum?>().FirstOrDefault() ?? AbyssRankEnum.STAR1_OFFICER;
             int playerLimit = AbyssRankEnumExtensions.Values()
                     .Where(rank => rank.GetRequiredGP() > 0)
                     .Select(rank => rank.GetQuota())
