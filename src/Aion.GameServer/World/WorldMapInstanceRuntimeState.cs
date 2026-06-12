@@ -161,7 +161,7 @@ public sealed class WorldMapInstanceRuntimeState
 		lock (_sync)
 		{
 			StartPosition ??= startPosition;
-			return StartPosition.Value;
+			return StartPosition;
 		}
 	}
 

@@ -35,7 +35,7 @@ public static class PlayerKiskReviveService
 		if (!resurrection.UsedCharge)
 			return PlayerKiskReviveResult.Rejected(PlayerKiskReviveStatus.KiskInactive);
 
-		return PlayerKiskReviveResult.Used(kisk, position.Value, resurrection);
+		return PlayerKiskReviveResult.Used(kisk, position, resurrection);
 	}
 
 	private static bool IsDead(Player player)

@@ -48,7 +48,7 @@ public sealed class RiftPortalUseService(
 			portal.SyncPassed(usePassedPlayerCount: false);
 		}
 
-		return RiftPortalUseResult.CreateAccepted(destination.Value);
+		return RiftPortalUseResult.CreateAccepted(destination);
 	}
 }
 
