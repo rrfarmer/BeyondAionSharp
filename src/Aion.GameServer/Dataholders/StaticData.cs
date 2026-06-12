@@ -199,6 +199,9 @@ public sealed class StaticData
 
 	public VortexLocationTable VortexLocations { get; }
 
+	// Faithful VortexData holder (empty-default; runtime XML load deferred) - summary->template re-point.
+	public VortexData VortexDataDh { get; } = new();
+
 	public NpcTemplateTable NpcTemplates { get; }
 
 	public NpcSpawnTable NpcSpawns { get; }

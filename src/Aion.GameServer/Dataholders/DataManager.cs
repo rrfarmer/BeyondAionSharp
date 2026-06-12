@@ -32,7 +32,7 @@ public sealed class DataManager
 	public static TradeListData TRADE_LIST_DATA => SD.TradeListDataDh;
 	public static NpcFactionsData NPC_FACTIONS_DATA => SD.NpcFactionsDataDh;
 	public static RecipeData RECIPE_DATA => SD.RecipeDataDh;
-	public static VortexLocationTable VORTEX_DATA => SD.VortexLocations;
+	public static VortexData VORTEX_DATA => SD.VortexDataDh;
 	public static PetData PET_DATA => SD.PetDataDh;
 	public static PetSkillTable PET_SKILL_DATA => SD.PetSkills;
 	public static TitleData TITLE_DATA => SD.TitleDataDh;
