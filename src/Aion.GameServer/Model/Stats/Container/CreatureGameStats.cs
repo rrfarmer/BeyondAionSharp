@@ -67,7 +67,8 @@ public abstract class CreatureGameStats
         }
     }
 
-    public void AddEffectOnly(IStatOwner statOwner, List<IStatFunction> functions)
+    // Java parity: List<? extends IStatFunction> -> C# covariant IEnumerable (body only iterates).
+    public void AddEffectOnly(IStatOwner statOwner, IEnumerable<IStatFunction> functions)
     {
         foreach (IStatFunction function in functions)
         {
@@ -91,7 +92,7 @@ public abstract class CreatureGameStats
         }
     }
 
-    public void AddEffect(IStatOwner statOwner, List<IStatFunction> functions)
+    public void AddEffect(IStatOwner statOwner, IEnumerable<IStatFunction> functions)
     {
         AddEffectOnly(statOwner, functions);
         OnStatsChange(statOwner is Effect effect ? effect : null);
