@@ -28,7 +28,7 @@ public class SM_NPC_ASSEMBLER : AionServerPacket
             foreach (AssembledNpcPart npc in assembledNpc.GetAssembledParts())
             {
                 WriteD(routeId); // routeId
-                WriteD(npc.GetObject()); // objectId
+                WriteD(npc.GetObject().Value); // objectId
                 WriteD(npc.GetNpcId()); // npc Id
                 WriteD(npc.GetStaticId()); // static Id
                 WriteQ(timeOnMap); // time

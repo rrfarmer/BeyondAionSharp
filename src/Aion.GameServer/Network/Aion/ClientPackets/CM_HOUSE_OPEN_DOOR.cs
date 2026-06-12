@@ -43,7 +43,7 @@ public class CM_HOUSE_OPEN_DOOR : AionClientPacket
         {
             if (house.GetAddress().GetExitMapId() != null)
             {
-                TeleportService.TeleportTo(player, house.GetAddress().GetExitMapId(), house.GetAddress().GetExitX(), house.GetAddress().GetExitY(),
+                TeleportService.TeleportTo(player, house.GetAddress().Value.GetExitMapId(), house.GetAddress().GetExitX(), house.GetAddress().GetExitY(),
                     house.GetAddress().GetExitZ(), (byte)0, TeleportAnimation.FADE_OUT_BEAM);
             }
             else

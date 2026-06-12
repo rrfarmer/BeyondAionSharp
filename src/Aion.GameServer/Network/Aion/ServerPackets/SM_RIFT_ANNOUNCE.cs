@@ -58,10 +58,10 @@ public class SM_RIFT_ANNOUNCE : AionServerPacket
                 WriteH(35); // following byte length
                 WriteC(actionId);
                 WriteD(rift.GetOwner().GetObjectId());
-                WriteD(rift.GetMaxEntries());
+                WriteD(rift.GetMaxEntries().Value);
                 WriteD(rift.GetRemainTime());
-                WriteD(rift.GetMinLevel());
-                WriteD(rift.GetMaxLevel());
+                WriteD(rift.GetMinLevel().Value);
+                WriteD(rift.GetMaxLevel().Value);
                 WriteF(rift.GetOwner().GetX());
                 WriteF(rift.GetOwner().GetY());
                 WriteF(rift.GetOwner().GetZ());

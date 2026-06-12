@@ -81,7 +81,7 @@ public class QuestEngine : GameEngine
             foreach (QuestDrop drop in data.GetQuestDrop())
             {
                 drop.SetQuestId(data.GetId());
-                QuestService.AddQuestDrop(drop.GetNpcId(), drop);
+                QuestService.AddQuestDrop(drop.GetNpcId().Value, drop);
             }
             if (data.GetInventoryItems() != null)
             {
@@ -1121,13 +1121,13 @@ public class QuestEngine : GameEngine
     public void AddHandlerSideQuestDrop(int questId, int npcId, int itemId, int amount, int chance)
     {
         HandlerSideDrop hsd = new(questId, npcId, itemId, amount, chance);
-        QuestService.AddQuestDrop(hsd.GetNpcId(), hsd);
+        QuestService.AddQuestDrop(hsd.GetNpcId().Value, hsd);
     }
 
     public void AddHandlerSideQuestDrop(int questId, int npcId, int itemId, int amount, int chance, int step)
     {
         HandlerSideDrop hsd = new(questId, npcId, itemId, amount, chance, step);
-        QuestService.AddQuestDrop(hsd.GetNpcId(), hsd);
+        QuestService.AddQuestDrop(hsd.GetNpcId().Value, hsd);
     }
 
     private void AddMessageSendingTask()

@@ -65,7 +65,7 @@ public abstract class AbstractQuestHandler
                 continue;
             if (actionItems == null)
                 actionItems = new HashSet<int>();
-            actionItems.Add(drop.GetNpcId());
+            actionItems.Add(drop.GetNpcId().Value);
         }
     }
 

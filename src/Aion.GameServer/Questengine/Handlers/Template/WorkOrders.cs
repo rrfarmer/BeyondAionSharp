@@ -88,9 +88,9 @@ public class WorkOrders : AbstractTemplateQuestHandler
                 long count = 0;
                 foreach (CollectItem collectItem in collectItems.GetCollectItem())
                 {
-                    count = player.GetInventory().GetItemCountByItemId(collectItem.GetItemId());
+                    count = player.GetInventory().GetItemCountByItemId(collectItem.GetItemId().Value);
                     if (count > 0)
-                        player.GetInventory().DecreaseByItemId(collectItem.GetItemId(), count);
+                        player.GetInventory().DecreaseByItemId(collectItem.GetItemId().Value, count);
                 }
                 player.GetRecipeList().DeleteRecipe(player, recipeId);
                 if (dialogActionId == DialogAction.USE_OBJECT)
