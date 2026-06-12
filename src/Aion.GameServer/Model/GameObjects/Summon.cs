@@ -141,6 +141,9 @@ public class Summon : Creature
         return friend ? CreatureType.SUPPORT : CreatureType.ATTACKABLE;
     }
 
+    // Java parity: getType(Creature) - GetType_ is the project-wide getType() convention name.
+    public CreatureType GetType_(Creature creature) => GetTypeValue(creature);
+
     public override Aion.GameServer.Controllers.Movement.SummonMoveController GetMoveController()
     {
         return (Aion.GameServer.Controllers.Movement.SummonMoveController)base.GetMoveController();

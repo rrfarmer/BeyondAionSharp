@@ -19,4 +19,7 @@ public class Acquisition
     public int GetItemCount() => ItemCount;
     // Java parity: getRequiredAp()
     public int GetRequiredAp() => Ap;
+
+    // Java parity: getType() - GetType_ is the project-wide getType() convention name.
+    public AcquisitionType GetType_() => Type;
 }

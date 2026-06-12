@@ -244,6 +244,9 @@ public class Npc : Creature
     }
 
     // Java parity: getType(Creature) — renamed to avoid Object.GetType clash.
+    // Java parity: getType(Creature) - GetType_ is the project-wide getType() convention name.
+    public CreatureType GetType_(Creature creature) => GetTypeValue(creature);
+
     public virtual CreatureType GetTypeValue(Creature creature)
     {
         if (type != null)

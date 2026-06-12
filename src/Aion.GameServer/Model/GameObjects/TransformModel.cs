@@ -115,6 +115,9 @@ public class TransformModel
     // Java parity: getType() — exposed as a property (a method GetType() would clash with Object.GetType()).
     public TransformType Type => _transformType;
 
+    // Java parity: getType() - GetType_ is the project-wide getType() convention name.
+    public TransformType GetType_() => _transformType;
+
     // Java parity: getPanelId()
     public int GetPanelId() => _panelId;
 

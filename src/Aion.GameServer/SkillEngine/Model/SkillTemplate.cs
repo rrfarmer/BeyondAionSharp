@@ -179,6 +179,9 @@ public class SkillTemplate : L10n
     /// <summary>Java parity: getType().</summary>
     public SkillType GetTypeValue() => type;
 
+    // Java parity: getType() - GetType_ is the project-wide getType() convention name (Object.GetType clash).
+    public SkillType GetType_() => type;
+
     public SkillSubType GetSubType() => subType;
 
     public SkillTargetSlot GetTargetSlot() => targetSlot;

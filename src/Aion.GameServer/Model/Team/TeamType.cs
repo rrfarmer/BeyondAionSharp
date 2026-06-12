@@ -30,6 +30,9 @@ public static class TeamTypeExtensions
     // Java parity: getType() — named GetTypeValue (an extension GetType() would be shadowed by Object.GetType()).
     public static int GetTypeValue(this TeamType t) => Data[t].Type;
 
+    // Java parity: getType() - GetType_ is the project-wide getType() convention name; alias to GetTypeValue.
+    public static int GetType_(this TeamType t) => Data[t].Type;
+
     // Java parity: getSubType()
     public static int GetSubType(this TeamType t) => Data[t].SubType;
 
