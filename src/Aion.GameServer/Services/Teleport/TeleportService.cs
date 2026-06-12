@@ -263,6 +263,12 @@ public class TeleportService
         TeleportTo(player, worldId, player.GetWorldId() != worldId ? 1 : player.GetInstanceId(), x, y, z, h, animation);
     }
 
+    // Java parity: house/bind coordinate getters return boxed Float (auto-unboxed at the call); accept float?.
+    public static void TeleportTo(Player player, int worldId, float? x, float? y, float? z, byte h, Aion.GameServer.Model.Animations.TeleportAnimation animation)
+    {
+        TeleportTo(player, worldId, x ?? 0, y ?? 0, z ?? 0, h, animation);
+    }
+
     public static void TeleportTo(Player player, int worldId, int instanceId, float x, float y, float z)
     {
         TeleportTo(player, worldId, instanceId, x, y, z, player.GetHeading(), Aion.GameServer.Model.Animations.TeleportAnimation.NONE);
