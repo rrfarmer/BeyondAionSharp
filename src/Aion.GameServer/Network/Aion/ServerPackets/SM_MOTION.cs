@@ -12,7 +12,7 @@ public class SM_MOTION : AionServerPacket
     int remainingTime;
 
     int playerId;
-    Dictionary<int, Motion> activeMotions;
+    IDictionary<int, Motion> activeMotions;
 
     ICollection<Motion> motions;
 
@@ -44,7 +44,7 @@ public class SM_MOTION : AionServerPacket
         this.motionId = motionId;
     }
 
-    public SM_MOTION(int playerId, Dictionary<int, Motion> activeMotions)
+    public SM_MOTION(int playerId, IDictionary<int, Motion> activeMotions)
     {
         this.action = 7;
         this.playerId = playerId;
@@ -80,7 +80,7 @@ public class SM_MOTION : AionServerPacket
                 WriteD(playerId);
                 for (int i = 1; i < 6; i++)
                 {
-                    Motion motion = activeMotions.GetValueOrDefault(i);
+                    activeMotions.TryGetValue(i, out Motion motion);
                     if (motion == null)
                         WriteH(0);
                     else
