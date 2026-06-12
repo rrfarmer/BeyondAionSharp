@@ -236,6 +236,9 @@ public sealed class StaticData
 
 	public PetFeedDataTable PetFeedData { get; }
 
+	// Faithful PetFeedData holder (empty-default; runtime XML load deferred) - see summary->template re-point.
+	public PetFeedData PetFeedDataDh { get; } = new();
+
 	public TitleTemplateTable TitleTemplates { get; }
 
 	public RecipeTemplateTable RecipeTemplates { get; }

@@ -47,7 +47,7 @@ public sealed class DataManager
 	public static WalkerVersionTable WALKER_VERSIONS_DATA => SD.WalkerVersions;
 	public static SkillTreeTable SKILL_TREE_DATA => SD.SkillTree;
 	public static PortalLocData PORTAL_LOC_DATA => SD.PortalLocDataDh;
-	public static PetFeedDataTable PET_FEED_DATA => SD.PetFeedData;
+	public static PetFeedData PET_FEED_DATA => SD.PetFeedDataDh;
 	public static NpcSkillData NPC_SKILL_DATA => SD.NpcSkillDataDh;
 	public static CosmeticItemTable COSMETIC_ITEMS_DATA => SD.CosmeticItems;
 	public static ChallengeTaskTable CHALLENGE_DATA => SD.ChallengeTasks;
