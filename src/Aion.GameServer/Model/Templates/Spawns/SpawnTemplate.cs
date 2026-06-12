@@ -6,7 +6,8 @@ namespace Aion.GameServer.Model.Templates.Spawns;
 /// <summary>Java parity: model/templates/spawns/SpawnTemplate.</summary>
 public class SpawnTemplate
 {
-    public const string NoAi = "__NO_AI__";
+    // Java parity: public static final String NO_AI.
+    public const string NO_AI = "__NO_AI__";
 
     private float              _x;
     private float              _y;
