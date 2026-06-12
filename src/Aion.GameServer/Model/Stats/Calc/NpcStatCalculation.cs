@@ -10,7 +10,7 @@ namespace Aion.GameServer.Model.Stats.Calc;
 public static class NpcStatCalculation
 {
     // Java parity: calculateStat(StatEnum, NpcRating, NpcRank, byte)
-    public static int CalculateStat(StatEnum stat, NpcRating rating, NpcRank rank, byte level)
+    public static int CalculateStat(StatEnum stat, NpcRating rating, NpcRank rank, sbyte level)
     {
         float baseValue = GetBaseValue(stat, level);
         float ratingMod = GetRatingModifier(stat, rating);
@@ -19,7 +19,7 @@ public static class NpcStatCalculation
         return (int)Math.Floor(baseValue * ratingMod * rankMod + 0.5f);
     }
 
-    private static float GetBaseValue(StatEnum stat, byte level) => stat switch
+    private static float GetBaseValue(StatEnum stat, sbyte level) => stat switch
     {
         // https://www.wolframalpha.com/input/?i=-0.0007x%5E3+%2B+0.1x%5E2+%2B+5.3x
         StatEnum.PHYSICAL_ATTACK => -0.0007f * (float)Math.Pow(level, 3) + 0.1f * (float)Math.Pow(level, 2) + 5.3f * level,
