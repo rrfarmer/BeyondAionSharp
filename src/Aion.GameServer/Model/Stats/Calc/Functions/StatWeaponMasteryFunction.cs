@@ -21,8 +21,8 @@ public class StatWeaponMasteryFunction : StatRateFunction
     public override void Apply(Stat2 stat, params CalculationType[] calculationTypes)
     {
         Player player = (Player)stat.GetOwner();
-        ItemGroup mainWeapon = player.GetEquipment().GetMainHandWeaponType();
-        ItemGroup offHandWeapon = player.GetEquipment().GetOffHandWeaponType();
+        ItemGroup? mainWeapon = player.GetEquipment().GetMainHandWeaponType();
+        ItemGroup? offHandWeapon = player.GetEquipment().GetOffHandWeaponType();
         switch (this.Stat)
         {
             case StatEnum.MAIN_HAND_POWER:
