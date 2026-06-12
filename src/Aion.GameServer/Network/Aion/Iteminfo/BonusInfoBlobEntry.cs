@@ -1,4 +1,5 @@
 using Aion.Commons.Nio;
+using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
