@@ -36,9 +36,9 @@ public static class PlayerKiskAuthorizationService
 			2 => player.ObjectId == kisk.OwnerObjectId || (kisk.OwnerLegionId != 0 && (player.GetLegion()?.GetLegionId() ?? 0) == kisk.OwnerLegionId),
 			3 => player.ObjectId == kisk.OwnerObjectId,
 			4 => player.ObjectId == kisk.OwnerObjectId
-				|| (player.IsInTeam && hasCurrentGroupMember?.Invoke(player, kisk.OwnerObjectId) == true),
+				|| (player.IsInTeam() && hasCurrentGroupMember?.Invoke(player, kisk.OwnerObjectId) == true),
 			5 => player.ObjectId == kisk.OwnerObjectId
-				|| (player.IsInTeam && hasCurrentTeamMember?.Invoke(player, kisk.OwnerObjectId) == true),
+				|| (player.IsInTeam() && hasCurrentTeamMember?.Invoke(player, kisk.OwnerObjectId) == true),
 			_ => false,
 		};
 	}
