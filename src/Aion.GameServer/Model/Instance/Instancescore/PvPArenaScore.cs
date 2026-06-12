@@ -30,7 +30,7 @@ public class PvPArenaScore : InstanceScore<PvPArenaPlayerReward>
     {
         this.instance = instance;
 
-        WorldMapType wmt = WorldMapTypeExtensions.GetWorld(instance.GetMapId());
+        WorldMapType wmt = WorldMapTypeExtensions.GetWorld(instance.GetMapId()).Value;
         bool isSolo = IsSoloArena(wmt);
         buffId = (sbyte)(isSolo ? 8 : 7);
         zones.AddRange(isSolo ? new[] { 1, 2, 3, 4 } : new[] { 1, 2, 3, 4, 5, 6 });

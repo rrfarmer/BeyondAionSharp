@@ -922,7 +922,7 @@ public class QuestEngine : GameEngine
     public void RegisterOnLevelChanged(int questId)
     {
         QuestTemplate template = DataManager.QUEST_DATA.GetQuestById(questId);
-        Race racePermitted = template.GetRacePermitted();
+        Race? racePermitted = template.GetRacePermitted();
         List<int> quests;
         if (racePermitted == null)
         {
@@ -935,7 +935,7 @@ public class QuestEngine : GameEngine
         }
         else
         {
-            quests = GetOrCreateOnLevelUpForRace(racePermitted);
+            quests = GetOrCreateOnLevelUpForRace(racePermitted.Value);
             if (!quests.Contains(questId))
                 quests.Add(questId);
         }
