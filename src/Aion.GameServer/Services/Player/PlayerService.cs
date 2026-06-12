@@ -188,7 +188,7 @@ public class PlayerService
         PlayerCreationData playerCreationData = playerInitialData.GetPlayerCreationData(playerCommonData.GetPlayerClass());
         if (playerCreationData != null)
         { // player transfer
-            List<ItemType> items = playerCreationData.GetItems();
+            IList<ItemType> items = playerCreationData.GetItems();
             foreach (ItemType itemType in items)
             {
                 int itemId = itemType.GetTemplate().GetTemplateId();

@@ -45,9 +45,9 @@ public class CraftService
         int xpReward = (int)((0.008 * (skillLvl + 100) * (skillLvl + 100) + 60));
         xpReward = xpReward + (xpReward * bonus / 100); // bonus
         int gainedCraftXp = Rates.SKILL_XP_CRAFTING.CalcResult(player, xpReward);
-        StatEnum boostStat = StatEnumExtensions.GetModifier(skillId);
+        StatEnum? boostStat = StatEnumExtensions.GetModifier(skillId);
         if (boostStat != null) // there is no boost for morphing (40009)
-            gainedCraftXp = (int)(gainedCraftXp * (player.GetGameStats().GetStat(boostStat, 100).GetCurrent() / 100f));
+            gainedCraftXp = (int)(gainedCraftXp * (player.GetGameStats().GetStat(boostStat.Value, 100).GetCurrent() / 100f));
         gainedCraftXp = Math.Max(1, gainedCraftXp);
 
         if (player.GetSkillList().AddSkillXp(player, skillId, gainedCraftXp, skillLvl))
