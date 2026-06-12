@@ -17,10 +17,19 @@ public abstract class AionObject
 {
 	private readonly int _objectId;
 
-	// Java parity: AionObject(int objId).
-	protected AionObject(int objectId)
+	// Java parity: AionObject(int objId) { this(objId, false); }
+	protected AionObject(int objectId) : this(objectId, false)
+	{
+	}
+
+	// Java parity: AionObject(int objId, boolean autoReleaseObjectId).
+	protected AionObject(int objectId, bool autoReleaseObjectId)
 	{
 		_objectId = objectId;
+		// Java parity: when autoReleaseObjectId, AionObject registers a Cleaner to auto-release the id on GC
+		// (RespawnService.setAutoReleaseId else IDFactory.releaseId). TODO-backlog: wire the Cleaner-equivalent
+		// (finalizer/ConditionalWeakTable) once IDFactory/RespawnService auto-release is reconciled.
+		_ = autoReleaseObjectId;
 	}
 
 	/// <summary>Unique objectId of this AionObject. Java parity: getObjectId().</summary>
