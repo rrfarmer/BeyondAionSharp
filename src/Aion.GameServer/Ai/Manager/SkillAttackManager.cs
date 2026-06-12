@@ -80,8 +80,8 @@ public class SkillAttackManager
         {
             AILogger.Info(npcAI, "Using skill " + skill.GetSkillId() + " level: " + skill.GetSkillLevel() + " duration: " + template.GetDuration());
         }
-        if ((template.GetSkillType() == SkillType.MAGICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
-            || (template.GetSkillType() == SkillType.PHYSICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.BIND))
+        if ((template.GetType_() == SkillType.MAGICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
+            || (template.GetType_() == SkillType.PHYSICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.BIND))
             || (owner.GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE))
             || (owner.IsTransformed() && owner.GetTransformModel().GetBanUseSkills() == 1))
         {
@@ -220,8 +220,8 @@ public class SkillAttackManager
             if (entry.ConditionReady(owner))
             {
                 SkillTemplate template = DataManager.SKILL_DATA.GetSkillTemplate(entry.GetSkillId());
-                if ((template.GetSkillType() == SkillType.MAGICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
-                    || (template.GetSkillType() == SkillType.PHYSICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.BIND))
+                if ((template.GetType_() == SkillType.MAGICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.SILENCE))
+                    || (template.GetType_() == SkillType.PHYSICAL && owner.GetEffectController().IsAbnormalSet(AbnormalState.BIND))
                     || (owner.GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE))
                     || (owner.IsTransformed() && owner.GetTransformModel().GetBanUseSkills() == 1))
                 {

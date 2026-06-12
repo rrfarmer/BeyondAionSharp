@@ -182,7 +182,7 @@ public class SkillEngine
         if (skillId != 0)
         {
             SkillTemplate skillTemplate = DataManager.SKILL_DATA.GetSkillTemplate(skillId);
-            if (skillTemplate.GetSkillType() == SkillType.MAGICAL) // magical skills do not stun
+            if (skillTemplate.GetType_() == SkillType.MAGICAL) // magical skills do not stun
                 return null;
             if (skillTemplate.HasAnyEffect(true, EffectType.PULLED, EffectType.STUMBLE, EffectType.STAGGER, EffectType.STUN, EffectType.BACKDASH,
                 EffectType.DASH, EffectType.MOVEBEHIND, EffectType.RANDOMMOVELOC, EffectType.RECALLINSTANT)
