@@ -346,9 +346,10 @@ public class AtreianPassportService
         return Math.Max(0, months);
     }
 
-    private static DateTimeOffset NowTs()
+    // Java parity: passport timestamps are java.sql.Timestamp, modeled as DateTime (whole-second UTC).
+    private static DateTime NowTs()
     {
-        return DateTimeOffset.FromUnixTimeSeconds(ServerTime.Now().ToUnixTimeSeconds());
+        return DateTimeOffset.FromUnixTimeSeconds(ServerTime.Now().ToUnixTimeSeconds()).UtcDateTime;
     }
 
     private static class SingletonHolder
