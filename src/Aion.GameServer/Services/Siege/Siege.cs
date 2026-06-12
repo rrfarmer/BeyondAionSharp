@@ -210,7 +210,7 @@ public abstract class Siege<SL> where SL : SiegeLocation
             {
                 List<int> rewardedGpPlayers = new List<int>();
                 long kinahRewardForRewardLevel = GetSiegeLocation().GetTemplate().GetKinahRewardByRewardLevel(rewardLevel);
-                AbyssSiegeLevel level = AbyssSiegeLevel.GetLevelById(++rewardLevel);
+                AbyssSiegeLevel level = AbyssSiegeLevelExtensions.GetLevelById(++rewardLevel);
                 int gp = isWinner ? topGrade.GetGpForWin() : topGrade.GetGpForDefeat();
 
                 for (int i = 0; i < topGrade.GetTop() && playerIndex < topPlayersIds.Count; i++, playerIndex++)
