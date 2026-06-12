@@ -7,4 +7,12 @@ namespace Aion.GameServer.Utils.Extensions;
 public static class CollectionIsEmptyExtension
 {
 	public static bool IsEmpty<T>(this IEnumerable<T> source) => !source.Any();
+
+	// Java parity: java.lang.Iterable.forEach(Consumer). C# only defines ForEach on List<T>;
+	// instance List<T>.ForEach takes precedence, so this only fills in for other enumerables.
+	public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
+	{
+		foreach (var element in source)
+			action(element);
+	}
 }
