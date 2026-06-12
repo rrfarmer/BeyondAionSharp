@@ -11,6 +11,11 @@ public class PlayerAllianceMember : PlayerTeamMember
 		AllianceGroupId = allianceGroupId;
 	}
 
+	// Java parity: model/team/alliance/PlayerAllianceMember(Player) — allianceId set later via PlayerAllianceGroup.addMember.
+	public PlayerAllianceMember(Player player) : this(player, 0, 0)
+	{
+	}
+
 	public Player Player { get; }
 
 	public int ObjectId => Player.ObjectId;
