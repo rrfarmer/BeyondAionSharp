@@ -101,6 +101,12 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 	public ScheduledTask ScheduleAtFixedRateTask(Runnable runnable, long initialDelayMillis, long periodMillis) =>
 		ScheduleAtFixedRateTask(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(initialDelayMillis), TimeSpan.FromMilliseconds(periodMillis));
 
+	public ScheduledTask Schedule(Action action, long delayMillis) =>
+		Schedule(_ => { action(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(delayMillis));
+
+	public Task ScheduleAtFixedRate(Action action, long initialDelayMillis, long periodMillis) =>
+		ScheduleAtFixedRate(_ => { action(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(initialDelayMillis), TimeSpan.FromMilliseconds(periodMillis));
+
 	public async Task ShutdownAsync(TimeSpan gracePeriod = default)
 	{
 		// Java parity: ThreadPoolManager shutdown during game-server stop.
