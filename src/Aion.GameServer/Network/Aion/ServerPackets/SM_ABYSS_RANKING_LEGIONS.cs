@@ -40,14 +40,14 @@ public class SM_ABYSS_RANKING_LEGIONS : AionServerPacket
         WriteH(rankingList.Count);
         foreach (RankingListLegion legion in rankingList)
         {
-            WriteD(legion.Position());
-            WriteD(legion.OldPosition());
+            WriteD(legion.Position);
+            WriteD(legion.OldPosition);
             WriteD(legion.Id());
             WriteD(race.GetRaceId());
-            WriteC(legion.Level());
-            WriteD(legion.MemberCount());
-            WriteQ(legion.ContributionPoints());
-            WriteS(legion.Name(), 40);
+            WriteC(legion.Level);
+            WriteD(legion.MemberCount);
+            WriteQ(legion.ContributionPoints);
+            WriteS(legion.Name, 40);
         }
     }
 }

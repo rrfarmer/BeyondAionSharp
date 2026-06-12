@@ -432,11 +432,11 @@ public class AbyssRankDAO
         }
     }
 
-    public record RankingListPlayerGp(int position, int playerId, int gp);
+    public record RankingListPlayerGp(int Position, int PlayerId, int Gp);
 
-    public record RankingListPlayer(int position, int oldPosition, int id, string name, Race race, int level, int abyssRank, int ap, int gp, int title,
-        PlayerClass playerClass, Gender gender, string legionName);
+    public record RankingListPlayer(int Position, int OldPosition, int Id, string Name, Race Race, int Level, int AbyssRank, int Ap, int Gp, int Title,
+        PlayerClass PlayerClass, Gender Gender, string LegionName);
 
-    public record RankingListLegion(int position, int oldPosition, int id, string name, Race race, int level, long contributionPoints,
-        int memberCount);
+    public record RankingListLegion(int Position, int OldPosition, int Id, string Name, Race Race, int Level, long ContributionPoints,
+        int MemberCount);
 }

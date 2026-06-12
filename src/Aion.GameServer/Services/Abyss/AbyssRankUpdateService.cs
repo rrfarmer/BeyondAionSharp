@@ -98,11 +98,11 @@ public class AbyssRankUpdateService
         for (int idx = 0; idx < rankingList.Count;)
         {
             RankingListPlayerGp rankingListEntry = rankingList[idx];
-            if (usedQuota >= rank.GetQuota() || rankingListEntry.Gp() < rank.GetRequiredGP())
+            if (usedQuota >= rank.GetQuota() || rankingListEntry.Gp < rank.GetRequiredGP())
                 break;
             // remove player and update its rank
             rankingList.RemoveAt(idx);
-            UpdateRankTo(rank, rankingListEntry.PlayerId(), rankingListEntry.Position());
+            UpdateRankTo(rank, rankingListEntry.PlayerId, rankingListEntry.Position);
             usedQuota++;
         }
         return usedQuota;

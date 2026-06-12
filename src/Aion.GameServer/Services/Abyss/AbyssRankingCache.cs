@@ -58,10 +58,10 @@ public class AbyssRankingCache
 
         foreach (Race race in races)
         {
-            List<RankingListPlayer> players = rankingListPlayers.Where(p => p.Race() == race).ToList();
+            List<RankingListPlayer> players = rankingListPlayers.Where(p => p.Race == race).ToList();
             newPlayerRankListPackets[race] = GetPlayerRankListPackets(updateTime, race, players);
 
-            List<RankingListLegion> legions = rankingListLegions.Where(l => l.Race() == race).ToList();
+            List<RankingListLegion> legions = rankingListLegions.Where(l => l.Race == race).ToList();
             newLegionRankListPackets[race] = new SM_ABYSS_RANKING_LEGIONS(updateTime, legions, race);
         }
 
@@ -123,13 +123,13 @@ public class AbyssRankingCache
     public int GetRankingListPosition(Player player)
     {
         RankingListPlayer rank = rankingListPlayers.GetValueOrDefault(player.GetObjectId());
-        return rank == null ? 0 : rank.Position();
+        return rank == null ? 0 : rank.Position;
     }
 
     public int GetRankingListPosition(Legion legion)
     {
         RankingListLegion rank = rankingListLegions.GetValueOrDefault(legion.GetLegionId());
-        return rank == null ? 0 : rank.Position();
+        return rank == null ? 0 : rank.Position;
     }
 
     public int GetLastUpdate()

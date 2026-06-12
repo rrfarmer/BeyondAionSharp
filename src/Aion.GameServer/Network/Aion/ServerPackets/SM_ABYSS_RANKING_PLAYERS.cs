@@ -38,21 +38,21 @@ public class SM_ABYSS_RANKING_PLAYERS : AionServerPacket
 
         foreach (RankingListPlayer player in players)
         {
-            WriteD(player.Position());
-            WriteD(player.AbyssRank());
-            WriteD(player.OldPosition());
+            WriteD(player.Position);
+            WriteD(player.AbyssRank);
+            WriteD(player.OldPosition);
             WriteD(player.Id());
             WriteD(race);
-            WriteD(player.PlayerClass().GetClassId());
-            WriteC(player.Gender().GetGenderId());
+            WriteD(player.PlayerClass.GetClassId());
+            WriteC(player.Gender.GetGenderId());
             WriteC(0); // unk
             WriteC(0); // unk
             WriteC(0); // unk
-            WriteQ(player.Ap());
-            WriteD(player.Gp());
-            WriteH(player.Level());
-            WriteS(player.Name(), AbstractPlayerInfoPacket.CHARNAME_MAX_LENGTH);// Two strings actually: player name + server name suffix (eg., SL for FastTrack)
-            WriteS(player.LegionName(), 42);
+            WriteQ(player.Ap);
+            WriteD(player.Gp);
+            WriteH(player.Level);
+            WriteS(player.Name, AbstractPlayerInfoPacket.CHARNAME_MAX_LENGTH);// Two strings actually: player name + server name suffix (eg., SL for FastTrack)
+            WriteS(player.LegionName, 42);
         }
     }
 }
