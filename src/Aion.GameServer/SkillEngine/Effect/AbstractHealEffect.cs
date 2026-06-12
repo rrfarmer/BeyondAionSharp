@@ -19,7 +19,7 @@ public abstract class AbstractHealEffect : EffectTemplate, HealEffectTemplate
     {
         if (!base.Calculate(effect, null, null))
             return;
-        effect.SetReserveds(new EffectReserved(Position, CalculateHealValue(effect, healType), EffectReserved.ResourceType.Of(healType), false), false);
+        effect.SetReserveds(new EffectReserved(Position, CalculateHealValue(effect, healType), EffectReservedResourceTypeExtensions.Of(healType), false), false);
     }
 
     public void ApplyEffect(Effect effect, HealType healType)

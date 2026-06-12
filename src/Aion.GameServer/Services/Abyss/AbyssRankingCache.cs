@@ -66,8 +66,8 @@ public class AbyssRankingCache
         }
 
         // assign the finished lists
-        this.rankingListPlayers = rankingListPlayers.ToDictionary(p => p.Id(), p => p);
-        this.rankingListLegions = rankingListLegions.ToDictionary(l => l.Id(), l => l);
+        this.rankingListPlayers = rankingListPlayers.ToDictionary(p => p.Id, p => p);
+        this.rankingListLegions = rankingListLegions.ToDictionary(l => l.Id, l => l);
         this.playerRankListPackets = newPlayerRankListPackets;
         this.legionRankListPackets = newLegionRankListPackets;
         this.lastUpdate = updateTime;

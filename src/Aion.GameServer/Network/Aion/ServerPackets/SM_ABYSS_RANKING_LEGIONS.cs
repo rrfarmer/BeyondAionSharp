@@ -42,7 +42,7 @@ public class SM_ABYSS_RANKING_LEGIONS : AionServerPacket
         {
             WriteD(legion.Position);
             WriteD(legion.OldPosition);
-            WriteD(legion.Id());
+            WriteD(legion.Id);
             WriteD(race.GetRaceId());
             WriteC(legion.Level);
             WriteD(legion.MemberCount);

@@ -41,7 +41,7 @@ public class SM_ABYSS_RANKING_PLAYERS : AionServerPacket
             WriteD(player.Position);
             WriteD(player.AbyssRank);
             WriteD(player.OldPosition);
-            WriteD(player.Id());
+            WriteD(player.Id);
             WriteD(race);
             WriteD(player.PlayerClass.GetClassId());
             WriteC(player.Gender.GetGenderId());
