@@ -34,7 +34,8 @@ public abstract class NpcAI : AITemplate<Npc>
         return GetOwner().GetSpawn();
     }
 
-    protected NpcLifeStats GetLifeStats()
+    // Java parity: getLifeStats() is protected — Java protected includes same-package access (HpPhases). C# protected internal = subclass + same-assembly.
+    protected internal NpcLifeStats GetLifeStats()
     {
         return GetOwner().GetLifeStats();
     }
