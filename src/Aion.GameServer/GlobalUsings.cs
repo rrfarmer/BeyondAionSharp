@@ -21,3 +21,6 @@ global using Runnable = Aion.Commons.Lang.Runnable;
 // references the bare name `L10n` as a base type. Alias it (bare type-position only; the
 // ChatUtil.L10n(int) method and GetL10n()/l10nId members are member-access and unaffected).
 global using L10n = Aion.GameServer.Model.Templates.IL10n;
+
+// Java parity: Collection.isEmpty() surfaced project-wide as an IEnumerable<T> extension.
+global using Aion.GameServer.Utils.Extensions;
