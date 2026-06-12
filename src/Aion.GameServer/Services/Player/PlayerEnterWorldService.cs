@@ -188,7 +188,7 @@ public sealed class PlayerEnterWorldService
         pcd.SetOnline(true);
         player.GetFriendList().SetStatus(Status.ONLINE, pcd);
         PlayerDAO.OnlinePlayer(player, true);
-        PlayerDAO.StoreLastOnlineTime(player.GetObjectId(), DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+        PlayerDAO.StoreLastOnlineTime(player.GetObjectId(), DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime);
         log.LogInformation("Player " + player.GetName() + " (" + account + ") logged on");
         pcd.SetInEditMode(false);
 

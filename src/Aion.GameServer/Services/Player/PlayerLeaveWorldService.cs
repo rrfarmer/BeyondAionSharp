@@ -116,7 +116,7 @@ public class PlayerLeaveWorldService
             player.GetCraftingTask().Stop();
 
         Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnLogOut(new QuestEnv(null, player, 0));
-        DateTimeOffset lastOnline = DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        DateTime lastOnline = DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime;
         player.GetController().Delete();
         player.GetCommonData().SetOnline(false);
         player.GetCommonData().SetLastOnline(lastOnline);

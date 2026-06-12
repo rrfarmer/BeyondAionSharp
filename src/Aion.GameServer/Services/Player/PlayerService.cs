@@ -297,7 +297,7 @@ public class PlayerService
 
     public static void StoreCreationTime(int objectId, DateTimeOffset creationDate)
     {
-        PlayerDAO.StoreCreationTime(objectId, creationDate);
+        PlayerDAO.StoreCreationTime(objectId, creationDate.UtcDateTime);
     }
 
     /// <summary>
