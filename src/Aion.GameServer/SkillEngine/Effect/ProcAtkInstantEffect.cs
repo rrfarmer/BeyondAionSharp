@@ -22,7 +22,7 @@ public class ProcAtkInstantEffect : DamageEffect
 
     protected override int CalculateBaseValue(Effect effect)
     {
-        if (delta == 1 && effect.GetSkillTemplate().IsProvoked())
+        if (Delta == 1 && effect.GetSkillTemplate().IsProvoked())
             return Value;
         else
             return base.CalculateBaseValue(effect);
