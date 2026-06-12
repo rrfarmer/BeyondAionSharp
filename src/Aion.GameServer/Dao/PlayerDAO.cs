@@ -683,5 +683,5 @@ WHERE p.exp <= ? AND p.account_id IN (SELECT account_id FROM players GROUP BY ac
         }
     }
 
-    public record PlayerAndLegionInfo(int playerId, string name, int legionId, LegionRank? legionRank);
+    public record PlayerAndLegionInfo(int PlayerId, string Name, int LegionId, LegionRank? LegionRank);
 }

@@ -63,7 +63,7 @@ public class DatabaseCleaningService
         {
             if (i % 20 == 0)
                 Console.Write(string.Format("Progress: {0,4:F1}%\r", i * 100f / players.Count));
-            PlayerService.DeletePlayerFromDB(players[i].PlayerId(), false);
+            PlayerService.DeletePlayerFromDB(players[i].PlayerId, false);
         }
         log.LogInformation("Deleted characters and related data from database in {Seconds} seconds", (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startMillis) / 1000);
     }
@@ -74,12 +74,12 @@ public class DatabaseCleaningService
         HashSet<int> deleted = new HashSet<int>();
         foreach (PlayerDAO.PlayerAndLegionInfo player in players)
         {
-            if (player.LegionId() == 0 || deleted.Contains(player.LegionId()))
+            if (player.LegionId == 0 || deleted.Contains(player.LegionId))
                 continue;
-            if (LegionMemberDAO.LoadLegionMembers(player.LegionId()).Count == 0)
+            if (LegionMemberDAO.LoadLegionMembers(player.LegionId).Count == 0)
             {
-                LegionService.DeleteLegionFromDB(player.LegionId());
-                deleted.Add(player.LegionId());
+                LegionService.DeleteLegionFromDB(player.LegionId);
+                deleted.Add(player.LegionId);
             }
             else
             {
@@ -95,21 +95,21 @@ public class DatabaseCleaningService
     {
         foreach (PlayerDAO.PlayerAndLegionInfo deletedLegionMember in deletedLegionMembers)
         {
-            if (deletedLegionMember.LegionRank() != LegionRank.BRIGADE_GENERAL)
+            if (deletedLegionMember.LegionRank != LegionRank.BRIGADE_GENERAL)
                 continue;
-            List<int> legionMembers = LegionMemberDAO.LoadLegionMembers(deletedLegionMember.LegionId());
-            if (legionMembers.Count == 0 || legionMembers.Contains(deletedLegionMember.PlayerId()))
+            List<int> legionMembers = LegionMemberDAO.LoadLegionMembers(deletedLegionMember.LegionId);
+            if (legionMembers.Count == 0 || legionMembers.Contains(deletedLegionMember.PlayerId))
                 continue;
             int newBrigadeGeneralId = legionMembers.Count == 1 ? legionMembers[0] : 0;
             if (newBrigadeGeneralId != 0 && LegionMemberDAO.SetRank(newBrigadeGeneralId, LegionRank.BRIGADE_GENERAL))
             {
                 string newBrigadeGeneralName = PlayerDAO.GetPlayerNameByObjId(newBrigadeGeneralId);
-                log.LogInformation("Transferred brigade general of legion {LegionId} from deleted player {Name} to the only remaining member {NewName}", deletedLegionMember.LegionId(), deletedLegionMember.Name(), newBrigadeGeneralName);
-                LegionDAO.InsertHistory(deletedLegionMember.LegionId(), LegionHistoryAction.APPOINTED, newBrigadeGeneralName, "");
+                log.LogInformation("Transferred brigade general of legion {LegionId} from deleted player {Name} to the only remaining member {NewName}", deletedLegionMember.LegionId, deletedLegionMember.Name, newBrigadeGeneralName);
+                LegionDAO.InsertHistory(deletedLegionMember.LegionId, LegionHistoryAction.APPOINTED, newBrigadeGeneralName, "");
             }
             else
             {
-                log.LogWarning("Legion {LegionId} has no brigade general anymore", deletedLegionMember.LegionId());
+                log.LogWarning("Legion {LegionId} has no brigade general anymore", deletedLegionMember.LegionId);
             }
         }
     }
@@ -117,7 +117,7 @@ public class DatabaseCleaningService
     private static void AddLegionHistoryLeaveEntry(List<PlayerDAO.PlayerAndLegionInfo> players)
     {
         foreach (PlayerDAO.PlayerAndLegionInfo player in players)
-            LegionDAO.InsertHistory(player.LegionId(), LegionHistoryAction.KICK, player.Name(), "");
+            LegionDAO.InsertHistory(player.LegionId, LegionHistoryAction.KICK, player.Name, "");
     }
 
     // table names cannot be used as parameters, so unfortunately we have to concat the sql query
