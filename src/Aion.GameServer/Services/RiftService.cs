@@ -43,6 +43,21 @@ public sealed class RiftService
 		_randomInclusive = randomInclusive ?? ((minInclusive, maxInclusive) => Random.Shared.Next(minInclusive, maxInclusive + 1));
 		_cancelRespawn = cancelRespawn;
 		_creaturePvpZoneCounterService = creaturePvpZoneCounterService;
+		_instance = this;
+	}
+
+	// Java parity: services/RiftService.getInstance() singleton bridge over the DI-constructed instance.
+	private static RiftService? _instance;
+
+	public static RiftService GetInstance()
+	{
+		return _instance ?? throw new InvalidOperationException("RiftService has not been initialized.");
+	}
+
+	// Java parity: services/RiftService.getDuration() => CustomConfig.RIFT_DURATION.
+	public int GetDuration()
+	{
+		return Configs.Main.CustomConfig.RIFT_DURATION;
 	}
 
 	public int ActiveRiftCount => _activeRifts.Count;
