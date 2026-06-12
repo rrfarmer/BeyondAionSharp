@@ -10,10 +10,10 @@ public class TargetSpeciesProperty
     {
         switch (properties.GetTargetSpecies())
         {
-            case TargetSpecies.NPC:
+            case TargetSpeciesAttribute.NPC:
                 result.GetTargets().RemoveAll(effected => !(effected is Npc));
                 break;
-            case TargetSpecies.PC:
+            case TargetSpeciesAttribute.PC:
                 result.GetTargets().RemoveAll(effected => !(effected is Player));
                 break;
         }
