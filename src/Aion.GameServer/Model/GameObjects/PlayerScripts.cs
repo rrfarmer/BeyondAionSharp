@@ -65,6 +65,15 @@ public sealed class PlayerScripts
 		return true;
 	}
 
+	// Java parity: PlayerScripts.set(int, byte[], int, boolean storeInDb). The storeInDb branch persists via
+	// HousingService/HouseScriptsDAO before caching; here the calling DAO owns persistence, so storeInDb only
+	// gates that (callers pass false) and the cache update is identical to the 3-arg overload.
+	public bool Set(int scriptId, byte[] compressedXml, int uncompressedSize, bool storeInDb)
+	{
+		_ = storeInDb;
+		return Set(scriptId, compressedXml, uncompressedSize);
+	}
+
 	public bool Remove(int scriptId)
 	{
 		if (IsInvalidScriptId(scriptId))
