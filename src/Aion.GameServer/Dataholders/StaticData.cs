@@ -268,7 +268,11 @@ public sealed class StaticData
 
 	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
 
+	public CubeExpandData CubeExpandDataDh { get; } = new();
+
 	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
+
+	public WarehouseExpandData WarehouseExpandDataDh { get; } = new();
 
 	public NearbyQuestTemplateTable NearbyQuestTemplates { get; }
 
@@ -284,9 +288,13 @@ public sealed class StaticData
 
 	public LegionDominionTable LegionDominions { get; }
 
+	public LegionDominionData LegionDominionDataDh { get; } = new();
+
 	public AtreianPassportTable AtreianPassports { get; }
 
 	public WindstreamTable WindstreamLocations { get; }
+
+	public WindstreamData WindstreamDataDh { get; } = new();
 
 	public Task? ValidationTask { get; }
 
