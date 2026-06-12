@@ -26,7 +26,7 @@ public class DredgionScoreWriter : InstanceScoreWriter<PvpInstanceScore<PvpInsta
         this.dredgionRooms = dredgionRooms;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         FillTableWithGroup(buf, Race.ELYOS);
         FillTableWithGroup(buf, Race.ASMODIANS);

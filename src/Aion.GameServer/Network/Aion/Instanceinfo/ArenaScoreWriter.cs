@@ -23,7 +23,7 @@ public class ArenaScoreWriter : InstanceScoreWriter<PvPArenaScore>
         this.rewardTable = rewardTable;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WritePlayerScores(buf);
         WriteOwnerRewards(buf);

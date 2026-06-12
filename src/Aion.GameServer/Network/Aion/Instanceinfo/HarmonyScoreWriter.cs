@@ -31,7 +31,7 @@ public class HarmonyScoreWriter : InstanceScoreWriter<HarmonyArenaScore>
         this.type = type;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         HarmonyGroupReward harmonyGroupReward = instanceScore.GetGroupReward(playerObjId);
         WriteC(buf, type.GetId());

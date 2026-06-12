@@ -52,7 +52,7 @@ public class PvpInstanceScoreWriter : InstanceScoreWriter<PvpInstanceScore<PvpIn
         this.participants = participants;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WriteC(buf, instanceScoreType.GetId());
         switch (instanceScoreType)

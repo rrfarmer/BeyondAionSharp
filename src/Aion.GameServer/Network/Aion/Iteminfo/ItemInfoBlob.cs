@@ -26,7 +26,7 @@ public class ItemInfoBlob : PacketWriteHelper
         this.item = item;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WriteH(buf, Size());
         foreach (ItemBlobEntry ent in itemBlobEntries)

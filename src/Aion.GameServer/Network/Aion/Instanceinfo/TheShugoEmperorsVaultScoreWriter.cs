@@ -14,7 +14,7 @@ public class TheShugoEmperorsVaultScoreWriter : InstanceScoreWriter<NormalScore>
     {
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WriteD(buf, instanceScore.GetPoints());
         WriteD(buf, instanceScore.GetBasicAp());

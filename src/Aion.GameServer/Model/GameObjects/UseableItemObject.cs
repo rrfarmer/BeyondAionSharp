@@ -48,7 +48,7 @@ public class UseableItemObject : UseableHouseObject<HousingUseableItem>
             this.obj = obj;
         }
 
-        protected override void WriteMe(ByteBuffer buffer)
+        public override void WriteMe(ByteBuffer buffer)
         {
             WriteD(buffer, obj.GetObjectTemplate().GetUseCount() == null ? 0 : obj.GetOwnerUsedCount() + obj.GetVisitorUsedCount());
             UseItemAction action = obj.GetObjectTemplate().GetAction();

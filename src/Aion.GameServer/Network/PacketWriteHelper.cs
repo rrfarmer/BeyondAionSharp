@@ -5,7 +5,7 @@ namespace Aion.GameServer.Network;
 /// <summary>Java parity: network/PacketWriteHelper (-Nemesiss-). Base for buffer-writing helpers (writeD/H/C/F/Q/S/B/DF/skip/dyeInfo over java.nio ByteBuffer). Integer rgb -> int?.</summary>
 public abstract class PacketWriteHelper
 {
-    protected abstract void WriteMe(ByteBuffer buf);
+    public abstract void WriteMe(ByteBuffer buf);
 
     /// <summary>Write int to buffer.</summary>
     protected static void WriteD(ByteBuffer buf, int value)

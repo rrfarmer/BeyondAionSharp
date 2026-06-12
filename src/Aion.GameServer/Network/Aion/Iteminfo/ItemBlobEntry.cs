@@ -35,7 +35,7 @@ public abstract class ItemBlobEntry : PacketWriteHelper
         this.modifier = modifier;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WriteC(buf, type.GetEntryId());
         WriteThisBlob(buf);

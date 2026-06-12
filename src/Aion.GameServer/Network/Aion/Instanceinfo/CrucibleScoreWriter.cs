@@ -15,7 +15,7 @@ public class CrucibleScoreWriter : InstanceScoreWriter<InstanceScore<CruciblePla
     {
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         int playerCount = 0;
         foreach (CruciblePlayerReward playerReward in instanceScore.GetPlayerRewards())

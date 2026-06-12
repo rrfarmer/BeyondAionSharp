@@ -25,7 +25,7 @@ public class SkillEntryWriter : global::Aion.GameServer.Network.PacketWriteHelpe
         this.skillEntry = skillEntry;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WriteH(buf, skillEntry.GetSkillId());
         WriteH(buf, skillEntry.IsNormalSkill() ? 1 : skillEntry.GetSkillLevel());

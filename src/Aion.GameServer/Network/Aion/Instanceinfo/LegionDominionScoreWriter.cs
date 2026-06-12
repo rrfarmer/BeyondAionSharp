@@ -14,7 +14,7 @@ public class LegionDominionScoreWriter : InstanceScoreWriter<LegionDominionScore
     {
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
         WriteD(buf, instanceScore.GetPoints());
         WriteD(buf, 0); // unk

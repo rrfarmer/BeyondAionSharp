@@ -22,7 +22,7 @@ public abstract class InstanceScoreWriter<T> : global::Aion.GameServer.Network.P
         return instanceScore;
     }
 
-    protected override void WriteMe(ByteBuffer buf)
+    public override void WriteMe(ByteBuffer buf)
     {
     }
 }
