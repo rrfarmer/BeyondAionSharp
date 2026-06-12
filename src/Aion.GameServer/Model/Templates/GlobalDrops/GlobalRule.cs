@@ -37,7 +37,7 @@ public class GlobalRule
 
     // Java parity: inner enum RestrictionRace
     [XmlType("race_restriction")]
-    public enum RestrictionRace { Asmodians, Elyos }
+    public enum RestrictionRace { ASMODIANS, ELYOS }
 
     // Java parity: getters
     public List<GlobalDropItem>? GetDropItems() => GdItems;
