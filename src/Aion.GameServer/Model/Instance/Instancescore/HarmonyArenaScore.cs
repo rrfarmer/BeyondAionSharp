@@ -28,7 +28,7 @@ public class HarmonyArenaScore : PvPArenaScore
         {
             foreach (AGPlayer agp in group.GetAssociatedPlayers())
             {
-                Player p = instance.GetPlayer(agp.ObjectId());
+                Player p = instance.GetPlayer(agp.ObjectId);
                 if (p != null)
                 {
                     harmonyGroups.Add(group);

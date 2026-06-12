@@ -87,7 +87,7 @@ public class MonsterHunt : AbstractTemplateQuestHandler
         if (invasionWorldId != 0)
             qe.RegisterOnEnterWorld(questId);
 
-        if (startZone != null && !ZoneName.Get(startZone).Name().Equals("NONE", StringComparison.OrdinalIgnoreCase))
+        if (startZone != null && !ZoneName.Get(startZone).Name.Equals("NONE", StringComparison.OrdinalIgnoreCase))
             qe.RegisterOnEnterZone(ZoneName.Get(startZone), questId);
 
         if (startDistanceNpcId != 0)
@@ -297,7 +297,7 @@ public class MonsterHunt : AbstractTemplateQuestHandler
 
     public override bool OnEnterZoneEvent(QuestEnv env, ZoneName zoneName)
     {
-        if (zoneName.Name().Equals(startZone, StringComparison.OrdinalIgnoreCase))
+        if (zoneName.Name.Equals(startZone, StringComparison.OrdinalIgnoreCase))
             return StartQuest(env);
         return false;
     }

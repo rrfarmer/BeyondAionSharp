@@ -182,7 +182,7 @@ public class RespawnService
                 if (activeEvent.GetEventTemplate().GetSpawns() == null)
                     continue;
                 // if a currently active event contains an event spawn with custom="true" for this non-event spawn, register it for respawn when the event ends
-                if (activeEvent.GetEventTemplate().GetSpawns().GetTemplates().Any(m => m.GetMapId() == spawnTemplate.GetWorldId() && m.GetSpawns().Any(spawn => spawn.GetNpcId() == spawnTemplate.GetNpcId() && spawn.IsCustom())))
+                if (activeEvent.GetEventTemplate().GetSpawns().GetTemplates().Any(m => m.GetMapId() == spawnTemplate.GetWorldId() && m.GetSpawns().Any(spawn => spawn.GetNpcId() == spawnTemplate.GetNpcId() && spawn.IsCustom)))
                     return activeEvent.AddOnEventEndTask(this);
             }
             return false;

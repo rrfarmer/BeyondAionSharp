@@ -71,7 +71,7 @@ public class WorldRaid
 
     private void CancelStopRaidTask()
     {
-        if (stopRaidTask != null && !stopRaidTask.IsCancelled())
+        if (stopRaidTask != null && !stopRaidTask.IsCancelled)
         {
             stopRaidTask.Cancel(false);
             stopRaidTask = null;

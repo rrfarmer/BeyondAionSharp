@@ -18,7 +18,7 @@ public class PetController : VisibleObjectController<Pet>
             commonData.SetCancelFeed(true);
             Aion.GameServer.Dao.PlayerPetsDAO.SaveFeedStatus(GetOwner().GetObjectId(), progress.GetHungryLevel().GetValue(), progress.GetDataForPacket(), commonData.GetRefeedTime());
         }
-        if (commonData.GetDopingBag() != null && commonData.GetDopingBag().IsDirty())
+        if (commonData.GetDopingBag() != null && commonData.GetDopingBag().IsDirty)
             Aion.GameServer.Dao.PlayerPetsDAO.SaveDopingBag(GetOwner().GetObjectId(), commonData.GetDopingBag());
 
         GetOwner().GetMaster().GetController().CancelTask(TaskId.PET_UPDATE);

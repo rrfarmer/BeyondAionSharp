@@ -78,7 +78,7 @@ public class ItemCollecting : AbstractTemplateQuestHandler
                 qe.RegisterCanAct(questId, actionItem);
             }
         }
-        if (startZone != null && !ZoneName.Get(startZone).Name().Equals("NONE", StringComparison.OrdinalIgnoreCase))
+        if (startZone != null && !ZoneName.Get(startZone).Name.Equals("NONE", StringComparison.OrdinalIgnoreCase))
             qe.RegisterOnEnterZone(ZoneName.Get(startZone), questId);
     }
 
@@ -180,7 +180,7 @@ public class ItemCollecting : AbstractTemplateQuestHandler
 
     public override bool OnEnterZoneEvent(QuestEnv env, ZoneName zoneName)
     {
-        if (zoneName.Name().Equals(startZone, StringComparison.OrdinalIgnoreCase))
+        if (zoneName.Name.Equals(startZone, StringComparison.OrdinalIgnoreCase))
         {
             Player player = env.GetPlayer();
             QuestState qs = player.GetQuestStateList().GetQuestState(questId);

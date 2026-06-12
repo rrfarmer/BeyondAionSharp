@@ -19,7 +19,7 @@ public class SM_TUNE_RESULT : AionServerPacket
         this.targetItem = targetItem;
         this.tuningScrollItemId = tuningScrollItemId;
         this.result = result;
-        this.tuneCancelPossible = this.showManastoneSlots = !result.IsAttributeOnly();
+        this.tuneCancelPossible = this.showManastoneSlots = !result.IsAttributeOnly;
     }
 
     protected override void WriteImpl(AionConnection con)

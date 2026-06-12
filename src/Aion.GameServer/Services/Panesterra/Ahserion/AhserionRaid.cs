@@ -255,7 +255,7 @@ public class AhserionRaid
 
     private void CancelProgressTask()
     {
-        if (progressTask != null && !progressTask.IsCancelled())
+        if (progressTask != null && !progressTask.IsCancelled)
             progressTask.Cancel(true);
     }
 

@@ -275,7 +275,7 @@ public class LegionService
     private void DisplayLegionAnnouncement(Player targetPlayer, Legion.Announcement announcement)
     {
         if (announcement != null)
-            PacketSendUtility.SendPacket(targetPlayer, SM_SYSTEM_MESSAGE.STR_GUILD_NOTICE(announcement.Message(), announcement.Time().ToUnixTimeMilliseconds() / 1000));
+            PacketSendUtility.SendPacket(targetPlayer, SM_SYSTEM_MESSAGE.STR_GUILD_NOTICE(announcement.Message, announcement.Time.ToUnixTimeMilliseconds() / 1000));
     }
 
     public void StartBrigadeGeneralChangeProcess(Player legionLeader, string memberName)

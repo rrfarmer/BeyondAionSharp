@@ -31,7 +31,7 @@ public class ChangeAllianceLeaderEvent : ChangeLeaderEvent<PlayerAlliance>
             foreach (int viceCaptainId in team.GetViceCaptainIds())
             {
                 PlayerAllianceMember viceCaptain = team.GetMember(viceCaptainId);
-                if (viceCaptain.IsOnline())
+                if (viceCaptain.IsOnline)
                 {
                     ChangeLeaderTo(viceCaptain.GetObject());
                     return;

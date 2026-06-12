@@ -296,7 +296,7 @@ public class PlayerAllianceService
                 alliance.ForEachTeamMember(member =>
                 {
                     int kickDelay = alliance.GetTeamType().IsAutoTeam() ? 60 : GroupConfig.ALLIANCE_REMOVE_TIME;
-                    if (!member.IsOnline() && TimeUtil.IsExpired(member.GetLastOnlineTime() + kickDelay * 1000))
+                    if (!member.IsOnline && TimeUtil.IsExpired(member.GetLastOnlineTime() + kickDelay * 1000))
                     {
                         if (alliance.GetTeamType().IsOffence())
                         {

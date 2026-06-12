@@ -33,7 +33,7 @@ public class CM_TUNE_RESULT : AionClientPacket
         Item itemToTune = player.GetInventory().GetItemByObjId(itemObjectId);
         if (itemToTune != null)
         {
-            bool auditInvalidEvent = !hasAccepted && itemToTune.GetPendingTuneResult() != null && itemToTune.GetPendingTuneResult().IsAttributeOnly();
+            bool auditInvalidEvent = !hasAccepted && itemToTune.GetPendingTuneResult() != null && itemToTune.GetPendingTuneResult().IsAttributeOnly;
             if (hasAccepted || auditInvalidEvent)
             {
                 if (auditInvalidEvent)

@@ -213,7 +213,7 @@ public class EventBuffHandler
     {
         foreach (Buff buff in buffs)
         {
-            if (!buff.IsTeam() || !ApplyOnTeam(player, member => TryBuff(buff, member, triggerCondition)))
+            if (!buff.IsTeam || !ApplyOnTeam(player, member => TryBuff(buff, member, triggerCondition)))
                 TryBuff(buff, player, triggerCondition);
         }
     }
@@ -226,7 +226,7 @@ public class EventBuffHandler
             {
                 if (player.GetEffectController().HasAbnormalEffect(skillId))
                     continue;
-                Effect effect = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(skillId, player, player, buff.IsPermanent() ? 0 : (int?)null, effectForceType);
+                Effect effect = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(skillId, player, player, buff.IsPermanent ? 0 : (int?)null, effectForceType);
                 if (effect != null)
                 {
                     int msgId = 1400697; // You received %0: %1.

@@ -710,14 +710,14 @@ public class Skill
                 if (animation != null && AllowAnimationBoostByCastSpeed())
                 {
                     int latencyToleranceMillis = 50; // animation starts after client receives SM_CASTSPELL_RESULT, so add a few milliseconds
-                    player.SetHitTimeBoost(nowMillis + animation.FullDurationMillis() + latencyToleranceMillis, GetCastSpeedForAnimationBoostAndChargeSkills());
+                    player.SetHitTimeBoost(nowMillis + animation.FullDurationMillis + latencyToleranceMillis, GetCastSpeedForAnimationBoostAndChargeSkills());
                 }
                 else
                 {
                     player.SetHitTimeBoost(0, 0);
                 }
                 if (animation != null) // Math.Max because nextSkillUse set from startCast() must not be undercut
-                    player.SetNextSkillUse(Math.Max(player.GetNextSkillUse(), nowMillis + animation.LastHitMillis()));
+                    player.SetNextSkillUse(Math.Max(player.GetNextSkillUse(), nowMillis + animation.LastHitMillis));
             }
         }
 
