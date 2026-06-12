@@ -261,7 +261,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		{
 			buffer.WriteD((_player.GetLegion()?.GetLegionId() ?? 0));
 			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetEmblemId() ?? (byte)0));
-			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default));
+			buffer.WriteC((byte)(_player.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default));
 			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_a() ?? (byte)0));
 			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_r() ?? (byte)0));
 			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_g() ?? (byte)0));

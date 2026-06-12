@@ -44,7 +44,7 @@ public sealed record WorldHouse(
 			(owner.GetLegion()?.GetLegionId() ?? 0),
 			owner.LegionName,
 			(owner.GetLegion()?.GetLegionEmblem()?.GetEmblemId() ?? (byte)0),
-			(owner.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default),
+			(byte)(owner.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default),
 			(owner.GetLegion()?.GetLegionEmblem()?.GetColor_a() ?? (byte)0),
 			(owner.GetLegion()?.GetLegionEmblem()?.GetColor_r() ?? (byte)0),
 			(owner.GetLegion()?.GetLegionEmblem()?.GetColor_g() ?? (byte)0),

@@ -111,7 +111,7 @@ internal static class HouseInfoPacketWriter
 				(player.GetLegion()?.GetLegionId() ?? 0),
 				player.LegionName,
 				(player.GetLegion()?.GetLegionEmblem()?.GetEmblemId() ?? (byte)0),
-				(player.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default),
+				(byte)(player.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default),
 				(player.GetLegion()?.GetLegionEmblem()?.GetColor_a() ?? (byte)0),
 				(player.GetLegion()?.GetLegionEmblem()?.GetColor_r() ?? (byte)0),
 				(player.GetLegion()?.GetLegionEmblem()?.GetColor_g() ?? (byte)0),
