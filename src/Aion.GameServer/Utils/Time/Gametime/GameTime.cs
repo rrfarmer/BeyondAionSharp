@@ -181,8 +181,10 @@ public class GameTime : ICloneable
         return _gameTime == other._gameTime;
     }
 
-    // Java parity: clone()
-    public object Clone() => new GameTime(_gameTime);
+    // Java parity: clone() returns GameTime (covariant); ICloneable.Clone() bridges to it.
+    public GameTime Clone() => new GameTime(_gameTime);
+
+    object ICloneable.Clone() => Clone();
 
     public override string ToString() => $"GameTime[{_gameTime}]";
 }
