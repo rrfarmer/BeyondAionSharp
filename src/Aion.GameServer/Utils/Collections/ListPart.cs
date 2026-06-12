@@ -24,6 +24,12 @@ public abstract class ListPart<TType> : List<TType>
         return partNo;
     }
 
+    // Java parity: java.util.List.size()
+    public int Size()
+    {
+        return Count;
+    }
+
     public bool IsFirst()
     {
         return partNo == 1;
