@@ -52,6 +52,8 @@ public class ZoneTemplate
         }
     }
 
+    // Java parity: getXmlName()
+    public string? GetXmlName()    => _name;
     public ZoneName? GetName()     => _zoneName;
     public Points?   GetPoints()   => Points;
     public Cylinder? GetCylinder() => Cylinder;

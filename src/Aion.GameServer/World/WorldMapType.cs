@@ -217,6 +217,9 @@ public static class WorldMapTypeExtensions
          or WorldMapType.HOUSING_IDLF_PERSONAL
          or WorldMapType.HOUSING_IDDF_PERSONAL;
 
+    // GetWorld(worldId) returns a nullable WorldMapType; mirror IsPersonal for that call site.
+    public static bool IsPersonal(this WorldMapType? t) => t.HasValue && t.Value.IsPersonal();
+
     // Java parity: getWorld(int id)
     public static WorldMapType? GetWorld(int id) =>
         Enum.IsDefined(typeof(WorldMapType), id) ? (WorldMapType)id : null;
