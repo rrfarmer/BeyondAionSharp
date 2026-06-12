@@ -2,6 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using ActionType = Aion.GameServer.Network.Aion.ServerPackets.SM_QUEST_ACTION.ActionType;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
 
