@@ -607,7 +607,7 @@ public class Skill
         var skillActions = skillTemplate.GetActions();
         if (skillActions != null)
         {
-            foreach (Action action in skillActions.GetActions())
+            foreach (Aion.GameServer.SkillEngine.Action.Action action in skillActions.GetActions())
             {
                 if (!action.Act(this))
                     return;

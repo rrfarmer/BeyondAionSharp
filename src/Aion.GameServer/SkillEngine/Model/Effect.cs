@@ -945,7 +945,7 @@ public class Effect : IStatOwner
         int checktime = periodicActions.GetChecktime();
         periodicActionsTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(_ =>
         {
-            foreach (PeriodicAction action in periodicActions.GetPeriodicActions())
+            foreach (Aion.GameServer.SkillEngine.PeriodicAction.PeriodicAction action in periodicActions.GetPeriodicActions())
                 action.Act(this);
             return System.Threading.Tasks.ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(checktime), TimeSpan.FromMilliseconds(checktime));

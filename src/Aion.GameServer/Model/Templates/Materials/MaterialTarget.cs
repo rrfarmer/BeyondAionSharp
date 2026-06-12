@@ -19,7 +19,7 @@ public static class MaterialTargetExtensions
     public static bool Matches(this MaterialTarget t, Creature creature) => t switch
     {
         MaterialTarget.ALL => true,
-        MaterialTarget.NPC => creature is Npc,
+        MaterialTarget.NPC => creature is Aion.GameServer.Model.GameObjects.Npc,
         MaterialTarget.PLAYER => creature is Player,
         MaterialTarget.PLAYER_WITH_PET => MaterialTarget.PLAYER.Matches(creature) || (creature is Summon summon && summon.GetMaster() != null),
         _ => false,

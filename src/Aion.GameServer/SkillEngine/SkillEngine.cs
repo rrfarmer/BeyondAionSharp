@@ -139,7 +139,7 @@ public class SkillEngine
     public List<Creature> ApplyEffectsDirectly(int skillId, Creature effector, Creature firstTarget, float x, float y, float z)
     {
         SkillTemplate skillTemplate = DataManager.SKILL_DATA.GetSkillTemplate(skillId);
-        Properties properties = skillTemplate.GetProperties();
+        Aion.GameServer.SkillEngine.Properties.Properties properties = skillTemplate.GetProperties();
         List<Creature> targets = new List<Creature>();
         targets.Add(firstTarget);
         if (properties != null) // add valid targets in range
