@@ -78,7 +78,7 @@ public class Event
                 foreach (Spawn spawn in map.GetSpawns())
                 {
                     spawn.SetEventTemplate(eventTemplate);
-                    if (spawn.IsCustom)
+                    if (spawn.IsCustom == true)
                         DespawnNonEventSpawns(spawn.GetNpcId(), worldMap);
                     if (difficultId == 0)
                         difficultId = spawn.GetDifficultId();

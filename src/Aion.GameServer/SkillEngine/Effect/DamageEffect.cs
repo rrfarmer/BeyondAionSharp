@@ -39,7 +39,7 @@ public abstract class DamageEffect : EffectTemplate
     {
         int valueWithDelta = CalculateBaseValue(effect);
         if (Element != SkillElement.NONE)
-            valueWithDelta *= effect.GetEffector().GetGameStats().GetKnowledge().GetCurrent() / 100f;
+            valueWithDelta = (int)(valueWithDelta * (effect.GetEffector().GetGameStats().GetKnowledge().GetCurrent() / 100f));
 
         AttackUtil.CalculateSkillResult(effect, valueWithDelta, this, false);
     }
