@@ -85,6 +85,22 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		return new ScheduledTask(task, linkedTokenSource);
 	}
 
+	// Java parity: schedule/scheduleAtFixedRate take long millisecond delays (Runnable or async delegate).
+	public ScheduledTask Schedule(Func<CancellationToken, ValueTask> action, long delayMillis) =>
+		Schedule(action, TimeSpan.FromMilliseconds(delayMillis));
+
+	public ScheduledTask Schedule(Runnable runnable, long delayMillis) =>
+		Schedule(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(delayMillis));
+
+	public Task ScheduleAtFixedRate(Func<CancellationToken, ValueTask> action, long initialDelayMillis, long periodMillis) =>
+		ScheduleAtFixedRate(action, TimeSpan.FromMilliseconds(initialDelayMillis), TimeSpan.FromMilliseconds(periodMillis));
+
+	public Task ScheduleAtFixedRate(Runnable runnable, long initialDelayMillis, long periodMillis) =>
+		ScheduleAtFixedRate(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(initialDelayMillis), TimeSpan.FromMilliseconds(periodMillis));
+
+	public ScheduledTask ScheduleAtFixedRateTask(Runnable runnable, long initialDelayMillis, long periodMillis) =>
+		ScheduleAtFixedRateTask(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(initialDelayMillis), TimeSpan.FromMilliseconds(periodMillis));
+
 	public async Task ShutdownAsync(TimeSpan gracePeriod = default)
 	{
 		// Java parity: ThreadPoolManager shutdown during game-server stop.
