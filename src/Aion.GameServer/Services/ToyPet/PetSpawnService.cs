@@ -33,7 +33,7 @@ public class PetSpawnService
         if (lastPetCommonData != null && lastPetCommonData.GetTemplateId() != templateId) // reset mood if other pet is spawned
             lastPetCommonData.ClearMoodStatistics();
 
-        player.GetController().AddTask(TaskId.PET_UPDATE, ThreadPoolManager.GetInstance().ScheduleAtFixedRate(new PetController.PetUpdateTask(player),
+        player.GetController().AddTask(TaskId.PET_UPDATE, ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(new PetController.PetUpdateTask(player),
             PeriodicSaveConfig.PLAYER_PETS * 1000, PeriodicSaveConfig.PLAYER_PETS * 1000));
 
         Pet pet = VisibleObjectSpawner.SpawnPet(player, templateId);

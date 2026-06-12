@@ -370,10 +370,10 @@ public sealed class PlayerEnterWorldService
             }
         }
         // scheduler periodic update
-        player.GetController().AddTask(TaskId.PLAYER_UPDATE, ThreadPoolManager.GetInstance().ScheduleAtFixedRate(
+        player.GetController().AddTask(TaskId.PLAYER_UPDATE, ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
             new GeneralUpdateTask(player.GetObjectId()), PeriodicSaveConfig.PLAYER_GENERAL * 1000, PeriodicSaveConfig.PLAYER_GENERAL * 1000));
         player.GetController().AddTask(TaskId.INVENTORY_UPDATE, ThreadPoolManager.GetInstance()
-            .ScheduleAtFixedRate(new ItemUpdateTask(player.GetObjectId()), PeriodicSaveConfig.PLAYER_ITEMS * 1000, PeriodicSaveConfig.PLAYER_ITEMS * 1000));
+            .ScheduleAtFixedRateTask(new ItemUpdateTask(player.GetObjectId()), PeriodicSaveConfig.PLAYER_ITEMS * 1000, PeriodicSaveConfig.PLAYER_ITEMS * 1000));
 
         SurveyService.GetInstance().ShowAvailable(player);
         EventService.GetInstance().OnPlayerLogin(player);
