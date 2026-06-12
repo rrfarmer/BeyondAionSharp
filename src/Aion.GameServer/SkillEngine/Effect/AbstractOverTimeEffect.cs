@@ -58,6 +58,6 @@ public abstract class AbstractOverTimeEffect : EffectTemplate
 
     public override int GetDuration2()
     {
-        return duration2 + 1000; // on retail these effects last one sec more than their template Value of duration2
+        return Duration2 + 1000; // on retail these effects last one sec more than their template Value of duration2
     }
 }
