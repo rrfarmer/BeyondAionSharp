@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Aion.GameServer.Model.Templates.Items.Enums;
 
 namespace Aion.GameServer.Model.Templates.Items;
 
