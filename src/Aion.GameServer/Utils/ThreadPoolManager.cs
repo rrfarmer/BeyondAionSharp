@@ -56,6 +56,18 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		return ScheduleAtFixedRateTask(action, initialDelay, period, cancellationToken).Completion;
 	}
 
+	// Java parity: ThreadPoolManager.execute(Runnable) - run on the pool immediately (zero delay).
+	public void Execute(Func<CancellationToken, ValueTask> action) => Schedule(action, TimeSpan.Zero);
+
+	public void Execute(Action action) => Schedule(_ => { action(); return ValueTask.CompletedTask; }, TimeSpan.Zero);
+
+	public void Execute(Runnable runnable) => Schedule(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.Zero);
+
+	// Java parity: ThreadPoolManager.executeLongRunning(Runnable). The long-running hint is advisory in C#.
+	public void ExecuteLongRunning(Func<CancellationToken, ValueTask> action) => Schedule(action, TimeSpan.Zero);
+
+	public void ExecuteLongRunning(Action action) => Schedule(_ => { action(); return ValueTask.CompletedTask; }, TimeSpan.Zero);
+
 	public ScheduledTask ScheduleAtFixedRateTask(
 		Func<CancellationToken, ValueTask> action,
 		TimeSpan initialDelay,

@@ -22,6 +22,10 @@ public sealed class PetFeedProgress
 
 	public PetHungryLevel HungryLevel { get; set; } = PetHungryLevel.HUNGRY;
 
+	// Java parity: getHungryLevel()/setHungryLevel()
+	public PetHungryLevel GetHungryLevel() => HungryLevel;
+	public void SetHungryLevel(PetHungryLevel level) => HungryLevel = level;
+
 	public int RegularCount => _regularConsumed & 0xFF;
 
 	public int LovedFoodRemaining => _lovedFoodMax - _lovedConsumed;

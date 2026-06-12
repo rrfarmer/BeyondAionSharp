@@ -259,6 +259,9 @@ public class AbyssRank : IPersistable
         return currentGp;
     }
 
+    // Java parity: getGp() - current glory points (exposed as a property for the reworked callers).
+    public int Gp => currentGp;
+
     public int GetLastGP()
     {
         return lastGP;
