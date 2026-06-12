@@ -34,7 +34,7 @@ public class UseableItemObject : UseableHouseObject<HousingUseableItem>
     public UseableItemObject(HouseRegistry registry, int objId, int templateId) : base(registry, objId, templateId)
     {
         UseItemAction action = GetObjectTemplate().GetAction();
-        if (action != null && action.GetFinalRewardId() != null && IsExpired())
+        if (action != null && action.GetFinalRewardId() != null && this.IsExpired())
             mustGiveLastReward = true;
         entryWriter = new UseDataWriter(this);
     }
