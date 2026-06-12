@@ -55,7 +55,7 @@ public class WorldRaid
     {
         if (preparationTask != null)
             preparationTask.Cancel(false);
-        preparationTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRate(new PreparationRunnable(this), 0, 60000);
+        preparationTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(new PreparationRunnable(this), 0, 60000);
     }
 
     private void OnWorldRaidFinish()

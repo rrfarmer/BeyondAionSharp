@@ -75,7 +75,7 @@ public class AhserionRaid
 
     private void StartInstanceTimer()
     {
-        progressTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRate(new ProgressRunnable(this), 30000, 30000);
+        progressTask = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(new ProgressRunnable(this), 30000, 30000);
     }
 
     private void CheckForIllegalMovement()
