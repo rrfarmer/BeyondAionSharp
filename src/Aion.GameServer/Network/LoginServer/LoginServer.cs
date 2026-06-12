@@ -23,6 +23,10 @@ public sealed class LoginServer : IAsyncDisposable
 	private LoginServerState _state = LoginServerState.Disconnected;
 	private bool _closed;
 
+	// Java parity: LoginServer is a singleton (SingletonHolder.instance). The C# transport is DI-constructed,
+	// so the most-recently-constructed instance is exposed as the singleton bridge for faithful callers.
+	private static LoginServer? _instance;
+
 	public LoginServer(
 		ILogger<LoginServer> logger,
 		GameServerOptions options,
@@ -31,6 +35,28 @@ public sealed class LoginServer : IAsyncDisposable
 		_logger = logger;
 		_options = options;
 		_characterSelectionRepository = characterSelectionRepository ?? new EmptyCharacterSelectionRepository();
+		_instance = this;
+	}
+
+	// Java parity: LoginServer.getInstance().
+	public static LoginServer GetInstance()
+	{
+		return _instance ?? throw new InvalidOperationException("LoginServer has not been initialized.");
+	}
+
+	// Java parity: LoginServer.getGameServerCount().
+	public int GetGameServerCount()
+	{
+		return GameServerCount;
+	}
+
+	// Java parity: LoginServer.sendPacket(LsServerPacket) - fires only when the bridge is up; returns boolean there,
+	// used as a statement by callers. The idiomatic async transport is bridged fire-and-forget.
+	public void SendPacket(LoginServerPacket packet)
+	{
+		if (_state == LoginServerState.Disconnected)
+			return;
+		_ = SendPacketAsync(packet);
 	}
 
 	public LoginServerState State => _state;
