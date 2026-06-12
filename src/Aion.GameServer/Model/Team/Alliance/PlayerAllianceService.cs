@@ -199,7 +199,7 @@ public class PlayerAllianceService
     public static void Disband(PlayerAlliance alliance, bool onBefore)
     {
         FindGroupService.GetInstance().RemoveRecruitment(alliance);
-        League league = alliance.GetLeague();
+        Aion.GameServer.Model.Team.League.League league = alliance.GetLeague();
         if (onBefore && league != null)
             league.OnEvent(new LeagueLeftEvent(league, alliance));
         alliance.OnEvent(new AllianceDisbandEvent(alliance));

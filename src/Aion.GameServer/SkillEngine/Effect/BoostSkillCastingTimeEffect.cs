@@ -15,7 +15,7 @@ public class BoostSkillCastingTimeEffect : BufEffect
         {
             if (change != null)
             {
-                foreach (Change c in change)
+                foreach (Aion.GameServer.SkillEngine.Change.Change c in change)
                 {
                     if (c.GetValue() < 0)
                     {

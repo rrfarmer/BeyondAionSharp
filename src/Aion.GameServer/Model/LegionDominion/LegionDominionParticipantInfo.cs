@@ -59,7 +59,7 @@ public class LegionDominionParticipantInfo
 
     public string GetLegionName()
     {
-        Legion legion = LegionService.GetInstance().GetLegion(legionId);
+        Aion.GameServer.Model.Team.Legion.Legion legion = LegionService.GetInstance().GetLegion(legionId);
         if (legion != null)
             return legion.GetName();
         return "NOT AVAILABLE";

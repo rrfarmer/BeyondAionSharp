@@ -48,7 +48,7 @@ public abstract class BufEffect : EffectTemplate
         if (change == null)
             return modifiers;
 
-        foreach (Change changeItem in change)
+        foreach (Aion.GameServer.SkillEngine.Change.Change changeItem in change)
         {
             if (changeItem.GetStat() == null)
             {

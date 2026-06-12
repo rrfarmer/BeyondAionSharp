@@ -137,7 +137,7 @@ public class LegionDominionLocation
     {
         foreach (LegionDominionParticipantInfo info in participantInfo.Values)
         {
-            Legion legion = LegionService.GetInstance().GetLegion(info.GetLegionId());
+            Aion.GameServer.Model.Team.Legion.Legion legion = LegionService.GetInstance().GetLegion(info.GetLegionId());
             if (legion != null)
                 PacketSendUtility.BroadcastToLegion(legion, new SM_LEGION_DOMINION_RANK(this, legion));
         }
