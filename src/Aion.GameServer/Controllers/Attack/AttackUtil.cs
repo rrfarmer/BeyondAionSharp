@@ -607,7 +607,7 @@ public class AttackUtil
                 _ => AttackStatus.CRITICAL,
             };
         }
-        return isMainHand ? status : AttackStatus.GetOffHandStats(status);
+        return isMainHand ? status : AttackStatusExtensions.GetOffHandStats(status);
     }
 
     /// <summary>
