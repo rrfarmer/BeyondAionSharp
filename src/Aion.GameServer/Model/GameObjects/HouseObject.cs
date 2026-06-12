@@ -192,12 +192,12 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
 
     public PlaceLocation GetPlaceLocation()
     {
-        return GetObjectTemplate().GetLocation();
+        return GetObjectTemplate().GetLocation().Value;
     }
 
     public PlaceArea GetPlaceArea()
     {
-        return GetObjectTemplate().GetArea();
+        return GetObjectTemplate().GetArea().Value;
     }
 
     public int GetPlacementLimit(bool trial)
