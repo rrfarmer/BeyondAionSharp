@@ -833,7 +833,7 @@ public sealed class QuestService
 
     private static DropItem RegQuestDropItem(QuestDrop drop, int index, int? winner)
     {
-        DropItem item = new DropItem(new Drop(drop.GetItemId(), 1, 1, drop.GetChance()));
+        DropItem item = new DropItem(new Aion.GameServer.Model.Drop.Drop(drop.GetItemId().Value, 1, 1, drop.GetChance()));
         item.SetPlayerObjId(winner);
         item.SetIndex(index);
         item.SetCount(1);

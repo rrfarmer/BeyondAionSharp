@@ -252,7 +252,7 @@ public class DropRegistrationService
                 {
                     foreach (GlobalDropItem drop in drops)
                     {
-                        DropItem dropitem = new DropItem(new Drop(drop.GetId(), 1, 1, 100));
+                        DropItem dropitem = new DropItem(new Aion.GameServer.Model.Drop.Drop(drop.GetId(), 1, 1, 100));
                         dropitem.SetCount(GetItemCount(drop, npc));
                         dropitem.SetIndex(index++);
                         dropitem.SetPlayerObjId(member.GetObjectId());
@@ -277,7 +277,7 @@ public class DropRegistrationService
 
     public DropItem RegDropItem(int index, int playerObjId, int objId, int itemId, long count)
     {
-        DropItem item = new DropItem(new Drop(itemId, 1, 1, 100));
+        DropItem item = new DropItem(new Aion.GameServer.Model.Drop.Drop(itemId, 1, 1, 100));
         item.SetPlayerObjId(playerObjId);
         item.SetNpcObj(objId);
         item.SetCount(count);
