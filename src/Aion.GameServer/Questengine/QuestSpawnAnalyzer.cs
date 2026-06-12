@@ -97,7 +97,7 @@ public class QuestSpawnAnalyzer
         XMLQuest quest = DataManager.XML_QUESTS.GetQuest(questId);
         if (quest == null)
             return true; // no way to get alternative npcs from non-xml based handlers, so assume the quest spawns work (lol)
-        HashSet<int> alternativeNpcs = quest.GetAlternativeNpcs(npcId);
+        ISet<int> alternativeNpcs = quest.GetAlternativeNpcs(npcId);
         if (alternativeNpcs == null)
             return false;
         return alternativeNpcs.Any(allSpawns.Contains);

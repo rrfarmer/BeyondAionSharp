@@ -59,7 +59,7 @@ public class OutpostSiege : Siege<OutpostLocation>
     private void OnAgentDefeated()
     {
         SiegeRaceCounter winnerCounter = GetWinnerRaceCounter();
-        Dictionary<int, long> topPlayerDamages = winnerCounter.GetPlayerDamageCounter();
+        IDictionary<int, long> topPlayerDamages = winnerCounter.GetPlayerDamageCounter();
         if (topPlayerDamages.Count != 0)
         {
             int topPlayerId = topPlayerDamages.Keys.First();

@@ -199,7 +199,7 @@ public abstract class Siege<SL> where SL : SiegeLocation
     {
         try
         {
-            Dictionary<int, long> playerAbyssPoints = raceCounter.GetPlayerAbyssPoints();
+            IDictionary<int, long> playerAbyssPoints = raceCounter.GetPlayerAbyssPoints();
             List<int> topPlayersIds = new List<int>(playerAbyssPoints.Keys);
             bool isWinner = raceResult == SiegeResult.OCCUPY || raceResult == SiegeResult.DEFENDER;
 
