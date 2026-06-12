@@ -144,10 +144,10 @@ public abstract class AbstractPlayerInfoPacket : AionServerPacket
         int mask = 0;
         foreach (Item item in items)
         {
-            mask |= item.GetEquipmentSlot();
+            mask |= (int)item.GetEquipmentSlot();
             // remove sub hand mask bits (sub hand is present on TwoHandeds by default and would produce display bugs)
             if (ItemSlotExtensions.IsTwoHandedWeapon(item.GetEquipmentSlot()))
-                mask &= ~ItemSlot.SUB_HAND.GetSlotIdMask();
+                mask &= (int)~ItemSlot.SUB_HAND.GetSlotIdMask();
         }
 
         WriteD(mask);
