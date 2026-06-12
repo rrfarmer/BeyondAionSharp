@@ -23,7 +23,7 @@ public class MercenaryLocation
     private List<VisibleObject> spawnedMercs = new List<VisibleObject>();
     private MercenaryZone spawns; // TODO: Change this to SpawnGroup
     private SiegeMercenaryZone smz;
-    private Race race;
+    private Race? race;
     private long lastSpawn;
     private int siegeId;
 
@@ -31,7 +31,7 @@ public class MercenaryLocation
     {
         this.smz = template;
         this.siegeId = siegeId;
-        this.race = Race.GetRaceByString(race.ToString());
+        this.race = RaceExtensions.GetRaceByString(race.ToString());
         if (this.race != null)
             spawns = GetSpawnZone();
     }
@@ -46,10 +46,10 @@ public class MercenaryLocation
         {
             foreach (SpawnSpotTemplate sst in spawn.GetSpawnSpotTemplates())
             {
-                SpawnTemplate spawnTemplate = SpawnEngine.NewSiegeSpawn(spawns.GetWorldId(), spawn.GetNpcId(), siegeId, SiegeRace.GetByRace(race),
+                SpawnTemplate spawnTemplate = Aion.GameServer.SpawnEngine.SpawnEngine.NewSiegeSpawn(spawns.GetWorldId(), spawn.GetNpcId(), siegeId, SiegeRaceExtensions.GetByRace(race.Value),
                     SiegeModType.SIEGE, sst.GetX(), sst.GetY(), sst.GetZ(), sst.GetHeading());
                 spawnTemplate.SetStaticId(sst.GetStaticId());
-                VisibleObject newMerc = SpawnEngine.SpawnObject(spawnTemplate, 1);
+                VisibleObject newMerc = Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(spawnTemplate, 1);
                 mercs.Add(newMerc);
             }
         }

@@ -26,16 +26,16 @@ public class CreatureEventHandler
         CheckAggro(npcAI, creature);
         if (creature is Player player)
         {
-            QuestEngine.GetInstance().OnAtDistance(new QuestEnv(npcAI.GetOwner(), player, 0));
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAtDistance(new QuestEnv(npcAI.GetOwner(), player, 0));
         }
     }
 
     public static void OnCreatureSee(NpcAI npcAI, Creature creature)
     {
-        if (npcAI.IsInSubState(AiSubState.TargetLost) && creature.Equals(npcAI.GetTarget()))
+        if (npcAI.IsInSubState(AISubState.TARGET_LOST) && creature.Equals(npcAI.GetTarget()))
         { // see target again after hide end
-            npcAI.SetSubStateIfNot(AiSubState.None);
-            if (npcAI.IsInState(AiState.Fight))
+            npcAI.SetSubStateIfNot(AISubState.NONE);
+            if (npcAI.IsInState(AIState.FIGHT))
             { // continue to attack
                 AttackManager.ScheduleNextAttack(npcAI);
                 return;
@@ -44,22 +44,22 @@ public class CreatureEventHandler
         CheckAggro(npcAI, creature);
         if (creature is Player player)
         {
-            QuestEngine.GetInstance().OnAtDistance(new QuestEnv(npcAI.GetOwner(), player, 0));
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAtDistance(new QuestEnv(npcAI.GetOwner(), player, 0));
         }
     }
 
     internal static void CheckAggro(NpcAI ai, Creature creature)
     {
-        if (ai.IsInState(AiState.Fight))
+        if (ai.IsInState(AIState.FIGHT))
             return;
 
-        if (ai.IsInState(AiState.Returning))
+        if (ai.IsInState(AIState.RETURNING))
             return;
 
         if (creature.IsDead())
             return;
 
-        if (creature.IsInVisualState(CreatureVisualState.Blinking))
+        if (creature.IsInVisualState(CreatureVisualState.BLINKING))
             return;
 
         Npc owner = ai.GetOwner();

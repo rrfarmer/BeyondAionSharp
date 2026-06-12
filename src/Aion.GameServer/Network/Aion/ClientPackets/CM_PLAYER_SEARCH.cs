@@ -6,8 +6,8 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using Status = global::Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -51,7 +51,7 @@ public class CM_PLAYER_SEARCH : AionClientPacket
         }
 
         List<Player> matches = new List<Player>();
-        foreach (Player player in World.GetInstance().GetAllPlayers())
+        foreach (Player player in global::Aion.GameServer.World.World.GetInstance().GetAllPlayers())
         {
             if (!activePlayer.IsStaff())
             { // staff can find all players

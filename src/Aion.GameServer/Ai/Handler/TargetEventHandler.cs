@@ -6,8 +6,8 @@ using Aion.GameServer.Model.GameObjects;
 namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
-/// Java parity: ai/handler/TargetEventHandler (ATracer). Target reached/too-far/giveup/change dispatch, switched on AiState. switch with
-/// fallthrough -> shared case labels; AiState PascalCase (Fight/Returning/Following/Confuse/Fear/Walking/ForcedWalking); AiEventType.
+/// Java parity: ai/handler/TargetEventHandler (ATracer). Target reached/too-far/giveup/change dispatch, switched on AIState. switch with
+/// fallthrough -> shared case labels; AIState PascalCase (Fight/Returning/Following/Confuse/Fear/Walking/ForcedWalking); AiEventType.
 /// BACK_HOME/NOT_AT_HOME -> BackHome/NotAtHome; AISubState.TARGET_LOST/NONE. AttackManager/FollowManager/WalkManager red-tolerated.
 /// </summary>
 public class TargetEventHandler
@@ -19,33 +19,33 @@ public class TargetEventHandler
             AILogger.Info(npcAI, "onTargetReached");
         }
 
-        AiState currentState = npcAI.GetState();
+        AIState currentState = npcAI.GetState();
         switch (currentState)
         {
-            case AiState.Fight:
+            case AIState.FIGHT:
                 npcAI.GetOwner().GetMoveController().AbortMove();
                 AttackManager.ScheduleNextAttack(npcAI);
                 break;
-            case AiState.Returning:
+            case AIState.RETURNING:
                 npcAI.GetOwner().GetMoveController().AbortMove();
                 if (npcAI.GetOwner().IsAtSpawnLocation())
                     npcAI.OnGeneralEvent(AiEventType.BackHome);
                 else
                 {
-                    npcAI.SetStateIfNot(AiState.Idle);
+                    npcAI.SetStateIfNot(AIState.IDLE);
                     npcAI.OnGeneralEvent(AiEventType.NotAtHome);
                 }
                 break;
-            case AiState.Following:
-            case AiState.Confuse:
-            case AiState.Fear:
+            case AIState.FOLLOWING:
+            case AIState.CONFUSE:
+            case AIState.FEAR:
                 npcAI.GetOwner().GetMoveController().AbortMove();
                 break;
-            case AiState.Walking:
+            case AIState.WALKING:
                 WalkManager.TargetReached(npcAI);
                 CheckAggro(npcAI);
                 break;
-            case AiState.ForcedWalking:
+            case AIState.FORCED_WALKING:
                 WalkManager.TargetReached(npcAI);
                 break;
         }
@@ -59,14 +59,14 @@ public class TargetEventHandler
         }
         switch (npcAI.GetState())
         {
-            case AiState.Fight:
+            case AIState.FIGHT:
                 AttackManager.TargetTooFar(npcAI);
                 break;
-            case AiState.Following:
+            case AIState.FOLLOWING:
                 FollowManager.TargetTooFar(npcAI);
                 break;
-            case AiState.Confuse:
-            case AiState.Fear:
+            case AIState.CONFUSE:
+            case AIState.FEAR:
                 break;
             default:
                 if (npcAI.IsLogging())
@@ -86,8 +86,8 @@ public class TargetEventHandler
         VisibleObject target = npcAI.GetOwner().GetTarget();
         if (target != null)
         {
-            if (npcAI.GetSubState() == AiSubState.TargetLost)
-                npcAI.SetSubStateIfNot(AiSubState.None);
+            if (npcAI.GetSubState() == AISubState.TARGET_LOST)
+                npcAI.SetSubStateIfNot(AISubState.NONE);
             npcAI.GetOwner().GetAggroList().StopHating(target);
         }
         if (npcAI.IsMoveSupported())
@@ -104,7 +104,7 @@ public class TargetEventHandler
         {
             AILogger.Info(npcAI, "onTargetChange");
         }
-        if (npcAI.IsInState(AiState.Fight))
+        if (npcAI.IsInState(AIState.FIGHT))
         {
             npcAI.GetOwner().SetTarget(creature);
             AttackManager.ScheduleNextAttack(npcAI);

@@ -17,7 +17,7 @@ public class SM_PLAYER_SPAWN : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
-        bool isPersonal = WorldMapType.GetWorld(player.GetWorldId()).IsPersonal();
+        bool isPersonal = WorldMapTypeExtensions.GetWorld(player.GetWorldId()).IsPersonal();
         int worldChannel = player.GetWorldId() + player.GetInstanceId() - 1;
         WriteD(isPersonal ? -worldChannel : worldChannel); // world + chnl
         WriteD(player.GetWorldId());
@@ -32,7 +32,7 @@ public class SM_PLAYER_SPAWN : AionServerPacket
         // 1 - Azphels Curse (no longer implemented since removal of serial killer system in 4.8)
         // 2-6 - Victorys Pledge tiers; 7-12 - Boost Moral arena/battlefield buffs
         WriteD(0);
-        if (World.GetInstance().GetWorldMap(player.GetWorldId()).GetTemplate().GetBeginnerTwinCount() > 0)
+        if (global::Aion.GameServer.World.World.GetInstance().GetWorldMap(player.GetWorldId()).GetTemplate().GetBeginnerTwinCount() > 0)
             WriteC(1);
         else
             WriteC(0);

@@ -3,6 +3,7 @@ namespace Aion.GameServer.Model.Templates.Pet;
 public sealed class PetDopingBag
 {
 	public const int MaxItems = 8;
+	public const int MAX_ITEMS = MaxItems;
 
 	private readonly object _sync = new();
 	private int[]? _itemBag;

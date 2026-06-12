@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -55,6 +55,6 @@ public class CM_HOUSE_DECORATE : AionClientPacket
 
         SendPacket(new SM_HOUSE_EDIT(4, 2, objectId));
         house.GetController().UpdateAppearance();
-        QuestEngine.GetInstance().OnHouseItemUseEvent(new QuestEnv(null, player, 0));
+        global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnHouseItemUseEvent(new QuestEnv(null, player, 0));
     }
 }

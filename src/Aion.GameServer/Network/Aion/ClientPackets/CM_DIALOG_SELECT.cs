@@ -14,7 +14,7 @@ using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -96,7 +96,7 @@ public class CM_DIALOG_SELECT : AionClientPacket
                         return;
                 }
             }
-            if (QuestEngine.GetInstance().OnDialog(env))
+            if (global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnDialog(env))
                 return;
             if (CustomConfig.ENABLE_SIMPLE_2NDCLASS && (questId == 1006 || questId == 2008))
                 ClassChangeService.ChangeClassToSelection(player, dialogActionId);

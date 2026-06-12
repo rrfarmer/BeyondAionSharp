@@ -22,7 +22,7 @@ public static class InventoryCapacity
 	public static int GetCubeLimit(Player player)
 	{
 		// Java parity: model/items/storage/StorageType.CUBE plus Player.setCubeLimit.
-		return BaseCubeSlots + (player.NpcExpands + player.QuestExpands + player.ItemExpands) * CubeSlotsPerExpansion;
+		return BaseCubeSlots + ((player.GetCommonData().GetNpcExpands()) + (player.GetCommonData().GetQuestExpands()) + (player.GetCommonData().GetItemExpands())) * CubeSlotsPerExpansion;
 	}
 
 	public static int GetUsedCubeSlots(Player player)
@@ -105,7 +105,7 @@ public static class InventoryCapacity
 	public static int GetWarehouseLimit(Player player)
 	{
 		// Java parity: model/items/storage/StorageType.REGULAR_WAREHOUSE plus Player.setWarehouseLimit.
-		return BaseWarehouseSlots + (player.WarehouseNpcExpands + player.WarehouseBonusExpands) * WarehouseSlotsPerExpansion;
+		return BaseWarehouseSlots + ((player.GetCommonData().GetWhNpcExpands()) + (player.GetCommonData().GetWhBonusExpands())) * WarehouseSlotsPerExpansion;
 	}
 
 	public static int GetUsedWarehouseSlots(Player player)

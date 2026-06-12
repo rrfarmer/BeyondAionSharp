@@ -50,18 +50,17 @@ public class WalkerData
 
     public void SaveData(string routeId)
     {
-        FileInfo xml = new FileInfo("./data/static_data/npc_walker/generated_npc_walker_" + routeId + ".xml");
+        // Java parity: dataholders/WalkerData.saveData — JAXB marshal → idiomatic C# XmlSerializer (infra).
+        string xmlPath = "./data/static_data/npc_walker/generated_npc_walker_" + routeId + ".xml";
         try
         {
-            JAXBContext jc = JAXBContext.NewInstance(typeof(WalkerData));
-            Marshaller marshaller = jc.CreateMarshaller();
-            marshaller.SetSchema(XmlUtil.GetSchema("./data/static_data/npc_walker/npc_walker.xsd"));
-            marshaller.SetProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.Marshal(this, xml);
+            var serializer = new XmlSerializer(typeof(WalkerData));
+            using var writer = new StreamWriter(xmlPath);
+            serializer.Serialize(writer, this);
         }
-        catch (JAXBException e)
+        catch (Exception e)
         {
-            log.LogError(e.GetCause(), "Error while saving data: " + e.GetMessage());
+            log.LogError(e, "Error while saving data: " + e.Message);
             return;
         }
         finally

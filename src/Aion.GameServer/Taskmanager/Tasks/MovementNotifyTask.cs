@@ -47,7 +47,7 @@ public class MovementNotifyTask : AbstractFIFOPeriodicTaskManager<Creature>
     {
         try
         {
-            if (npc.GetAi().GetState() == AiState.Died || npc.IsDead())
+            if (npc.GetAi().GetState() == AIState.DIED || npc.IsDead())
             {
                 if (npc.GetAi().IsLogging())
                 {

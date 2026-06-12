@@ -125,7 +125,7 @@ public class RiftInformer
 
     private static void SyncRiftsState(int worldId, List<AionServerPacket> packets, bool isDespawnInfo)
     {
-        World.GetInstance().GetWorldMap(worldId).GetMainWorldMapInstance().ForEachPlayer(player =>
+        Aion.GameServer.World.World.GetInstance().GetWorldMap(worldId).GetMainWorldMapInstance().ForEachPlayer(player =>
         {
             SyncRiftsState(player, packets);
         });

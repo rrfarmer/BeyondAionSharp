@@ -85,7 +85,7 @@ public class Event
                 }
                 DataManager.SPAWNS_DATA.AddRegularSpawns(map);
                 foreach (WorldMapInstance instance in worldMap)
-                    SpawnEngine.SpawnEventSpawns(instance, difficultId, 0, eventTemplate);
+                    Aion.GameServer.SpawnEngine.SpawnEngine.SpawnEventSpawns(instance, difficultId, 0, eventTemplate);
             }
         }
 

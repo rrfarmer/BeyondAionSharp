@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -31,7 +31,7 @@ public class CM_EXCHANGE_REQUEST : AionClientPacket
     protected override void RunImpl()
     {
         Player activePlayer = GetConnection().GetActivePlayer();
-        Player targetPlayer = World.GetInstance().GetPlayer(targetObjectId.Value);
+        Player targetPlayer = global::Aion.GameServer.World.World.GetInstance().GetPlayer(targetObjectId.Value);
 
         if (targetPlayer == null || activePlayer.Equals(targetPlayer))
         {

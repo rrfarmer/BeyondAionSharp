@@ -48,9 +48,9 @@ public sealed class SmPlayerInfo : GameServerPacket
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
 		// Java parity: network/aion/serverpackets/SM_PLAYER_INFO.writeImpl baseline path.
-		var position = _player.Position;
+		var position = _player.GetPosition();
 		var appearance = _player.Appearance;
-		var raceId = ResolveRaceId(_player.Race, _viewerContext);
+		var raceId = ResolveRaceId(_player.Race.ToString(), _viewerContext);
 		var genderId = ToGenderId(_player.Gender);
 		var templateId = 100000 + raceId * 2 + genderId;
 		buffer.WriteF(position.X);
@@ -64,7 +64,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteD(0);
 		buffer.WriteC(_enemy ? 0 : FriendlyCreatureType);
 		buffer.WriteC(raceId);
-		buffer.WriteC(ToClassId(_player.PlayerClass));
+		buffer.WriteC(ToClassId(_player.PlayerClass.ToString()));
 		buffer.WriteC(genderId);
 		buffer.WriteH(0);
 		buffer.WriteD(0);
@@ -99,7 +99,7 @@ public sealed class SmPlayerInfo : GameServerPacket
 		buffer.WriteH(_player.AbyssRank.Rank);
 		buffer.WriteH(0);
 		// Java parity: SM_PLAYER_INFO.writeImpl target/team/mentor/active-house tail.
-		buffer.WriteD(Math.Max(0, _player.TargetObjectId));
+		buffer.WriteD(Math.Max(0, (_player.GetTarget()?.GetObjectId() ?? 0)));
 		buffer.WriteC(0);
 		buffer.WriteD(0);
 		buffer.WriteC(0);
@@ -200,10 +200,10 @@ public sealed class SmPlayerInfo : GameServerPacket
 		// Java parity: SM_PLAYER_INFO movement-vector/current-position tail.
 		var movement = _player.Movement;
 		var movementMask = movement.Mask;
-		if (MovementMask.Has(movementMask, MovementMask.Absolute))
+		if (MovementMask.Has(movementMask, MovementMask.ABSOLUTE))
 		{
 			WriteAbsoluteMovementVector(buffer, movement, position, movementSpeed);
-			movementMask &= unchecked((byte)~MovementMask.Absolute);
+			movementMask &= unchecked((byte)~MovementMask.ABSOLUTE);
 		}
 		else
 		{
@@ -257,15 +257,15 @@ public sealed class SmPlayerInfo : GameServerPacket
 	private void WriteLegion(PacketBuffer buffer)
 	{
 		// Java parity: SM_PLAYER_INFO.writeImpl legion member/emblem block.
-		if (_player.LegionId > 0 && _player.LegionName.Length > 0)
+		if ((_player.GetLegion()?.GetLegionId() ?? 0) > 0 && _player.LegionName.Length > 0)
 		{
-			buffer.WriteD(_player.LegionId);
-			buffer.WriteC(_player.LegionEmblemId);
-			buffer.WriteC(_player.LegionEmblemType);
-			buffer.WriteC(_player.LegionEmblemColorA);
-			buffer.WriteC(_player.LegionEmblemColorR);
-			buffer.WriteC(_player.LegionEmblemColorG);
-			buffer.WriteC(_player.LegionEmblemColorB);
+			buffer.WriteD((_player.GetLegion()?.GetLegionId() ?? 0));
+			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetEmblemId() ?? (byte)0));
+			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetEmblemType() ?? default));
+			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_a() ?? (byte)0));
+			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_r() ?? (byte)0));
+			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_g() ?? (byte)0));
+			buffer.WriteC((_player.GetLegion()?.GetLegionEmblem()?.GetColor_b() ?? (byte)0));
 			buffer.WriteS(_player.LegionName);
 			return;
 		}

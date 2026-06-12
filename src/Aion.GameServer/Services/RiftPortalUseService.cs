@@ -31,7 +31,7 @@ public sealed class RiftPortalUseService(
 		if (destination == null)
 			return RiftPortalUseResult.Rejected(RiftPortalUseStatus.MissingVortexDestination);
 
-		player.Position = destination.Value;
+		player.GetPosition() = destination.Value;
 		if (portal.IsVortex)
 		{
 			// Java parity: RVController vortex branch records passedPlayers, then syncPassed(true).

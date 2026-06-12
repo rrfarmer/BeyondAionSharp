@@ -6,7 +6,7 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/AbstractOverTimeEffect (kecimis) abstract : EffectTemplate. @XmlAttribute(required=true)→[XmlAttribute] (required dropped); Future&lt;?&gt;→ScheduledTask; scheduleAtFixedRate(lambda)→ScheduleAtFixedRateTask(ct=>{OnPeriodicAction;...}); AbnormalState param nullable. Inherited value/duration2/position/OnPeriodicAction + EffectTemplate red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/AbstractOverTimeEffect (kecimis) abstract : EffectTemplate. @XmlAttribute(required=true)→[XmlAttribute] (required dropped); Future&lt;?&gt;→ScheduledTask; scheduleAtFixedRate(lambda)→ScheduleAtFixedRateTask(ct=>{OnPeriodicAction;...}); AbnormalState param nullable. Inherited Value/duration2/Position/OnPeriodicAction + EffectTemplate red-tolerated.</summary>
 [XmlType("AbstractOverTimeEffect")]
 public abstract class AbstractOverTimeEffect : EffectTemplate
 {
@@ -19,7 +19,7 @@ public abstract class AbstractOverTimeEffect : EffectTemplate
 
     public override int GetValue()
     {
-        return value;
+        return Value;
     }
 
     public override void ApplyEffect(Effect effect)
@@ -47,7 +47,7 @@ public abstract class AbstractOverTimeEffect : EffectTemplate
         // On retail, these skills are applied once instead of twice, so we slightly increase the initialDelay to prevent this from happening.
         long initialDelay = 300 + checktime;
         ScheduledTask task = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(ct => { OnPeriodicAction(effect); return ValueTask.CompletedTask; }, System.TimeSpan.FromMilliseconds(initialDelay), System.TimeSpan.FromMilliseconds(checktime));
-        effect.SetPeriodicTask(task, position);
+        effect.SetPeriodicTask(task, Position);
     }
 
     public void EndEffect(Effect effect, AbnormalState? abnormal)
@@ -58,6 +58,6 @@ public abstract class AbstractOverTimeEffect : EffectTemplate
 
     public override int GetDuration2()
     {
-        return duration2 + 1000; // on retail these effects last one sec more than their template value of duration2
+        return duration2 + 1000; // on retail these effects last one sec more than their template Value of duration2
     }
 }

@@ -10,19 +10,19 @@ namespace Aion.GameServer.Model.Animations;
 public enum TeleportAnimation : byte
 {
     // Java parity: NONE(0)
-    None = 0,
+    NONE = 0,
     // Java parity: FADE_OUT_BEAM(1)
-    FadeOutBeam = 1,
+    FADE_OUT_BEAM = 1,
     // Java parity: FADE_OUT(2)
-    FadeOut = 2,
+    FADE_OUT = 2,
     // Java parity: JUMP_IN(3)
-    JumpIn = 3,
+    JUMP_IN = 3,
     // Java parity: JUMP_IN_STATUE(4)
-    JumpInStatue = 4,
+    JUMP_IN_STATUE = 4,
     // Java parity: JUMP_IN_GATE(8)
-    JumpInGate = 8,
+    JUMP_IN_GATE = 8,
     // Java parity: BATTLEGROUND(0) — for custom battlegrounds/pvp-maps only; shares value 0 with None
-    Battleground = 0,
+    BATTLEGROUND = 0,
 }
 
 /// <summary>
@@ -37,10 +37,10 @@ public static class TeleportAnimationExtensions
     {
         return teleport switch
         {
-            TeleportAnimation.FadeOutBeam => ArrivalAnimation.FadeInBeam,
-            TeleportAnimation.JumpInStatue => ArrivalAnimation.JumpOutCameraFront,
-            TeleportAnimation.JumpIn or TeleportAnimation.JumpInGate => ArrivalAnimation.JumpOutCameraBehind,
-            TeleportAnimation.Battleground => ArrivalAnimation.LandingGlow,
+            TeleportAnimation.FADE_OUT_BEAM => ArrivalAnimation.FadeInBeam,
+            TeleportAnimation.JUMP_IN_STATUE => ArrivalAnimation.JumpOutCameraFront,
+            TeleportAnimation.JUMP_IN or TeleportAnimation.JUMP_IN_GATE => ArrivalAnimation.JumpOutCameraBehind,
+            TeleportAnimation.BATTLEGROUND => ArrivalAnimation.LandingGlow,
             _ => ArrivalAnimation.Landing,
         };
     }
@@ -50,8 +50,8 @@ public static class TeleportAnimationExtensions
     {
         return teleport switch
         {
-            TeleportAnimation.FadeOutBeam => ObjectDeleteAnimation.FadeOutBeam,
-            TeleportAnimation.JumpIn or TeleportAnimation.JumpInGate or TeleportAnimation.JumpInStatue
+            TeleportAnimation.FADE_OUT_BEAM => ObjectDeleteAnimation.FadeOutBeam,
+            TeleportAnimation.JUMP_IN or TeleportAnimation.JUMP_IN_GATE or TeleportAnimation.JUMP_IN_STATUE
                 => ObjectDeleteAnimation.JumpIn,
             _ => ObjectDeleteAnimation.FadeOut,
         };

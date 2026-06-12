@@ -4,7 +4,8 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
 using Aion.GameServer.Services.Players;
-using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
+using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
+using SM_ATTACK_STATUS = global::Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

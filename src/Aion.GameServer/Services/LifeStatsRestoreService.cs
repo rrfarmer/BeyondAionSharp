@@ -54,7 +54,7 @@ public class LifeStatsRestoreService
 
         public void Run()
         {
-            if (lifeStats.IsDead() || lifeStats.IsFullyRestoredHp() || !lifeStats.GetOwner().IsInWorld() || lifeStats.GetOwner().GetAi().GetState() == AiState.Fight)
+            if (lifeStats.IsDead() || lifeStats.IsFullyRestoredHp() || !lifeStats.GetOwner().IsInWorld() || lifeStats.GetOwner().GetAi().GetState() == AIState.FIGHT)
             {
                 lifeStats.CancelRestoreTask();
                 lifeStats = null;

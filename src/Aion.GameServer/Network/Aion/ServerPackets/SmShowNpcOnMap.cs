@@ -27,9 +27,9 @@ public sealed class SmShowNpcOnMap : GameServerPacket
 
 		// Java parity: instanceId adjusted for channel vs instance.
 		// If spawn is on same map as player: use player's instance/channel; otherwise use spawn worldId as-is.
-		if (player.Position.WorldId == spawnWorldId)
+		if (player.GetPosition().WorldId == spawnWorldId)
 		{
-			var worldMap = player.Position;
+			var worldMap = player.GetPosition();
 			_instanceId = worldMap.InstanceId > 1
 				? worldMap.InstanceId  // player is in a personal/shared instance
 				: spawnWorldId + worldMap.InstanceId - 1; // mapid + channelId (instanceId-1)

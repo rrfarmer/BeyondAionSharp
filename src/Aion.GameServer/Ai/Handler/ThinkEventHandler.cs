@@ -12,7 +12,7 @@ namespace Aion.GameServer.Ai.Handler;
 
 /// <summary>
 /// Java parity: ai/handler/ThinkEventHandler (ATracer). NPC think tick: dead/thinking guards, inactive-region branch, fight/idle
-/// dispatch. try/finally unsetThinking; switch on AiState (Fight/Idle/Walking); instanceof+pattern -> is Creature; AISubState.FREEZE/NONE;
+/// dispatch. try/finally unsetThinking; switch on AIState (Fight/Idle/Walking); instanceof+pattern -> is Creature; AISubState.FREEZE/NONE;
 /// AiEventType.NOT_AT_HOME/ATTACK_FINISH/BACK_HOME -> NotAtHome/AttackFinish/BackHome; schedule(Runnable,500) -> async ThreadPool idiom.
 /// AttackManager/WalkManager/SM_HEADING_UPDATE red-tolerated where unported.
 /// </summary>
@@ -32,7 +32,7 @@ public class ThinkEventHandler
         }
         try
         {
-            if (!npcAI.GetOwner().GetPosition().IsMapRegionActive() || npcAI.GetSubState() == AiSubState.Freeze)
+            if (!npcAI.GetOwner().GetPosition().IsMapRegionActive() || npcAI.GetSubState() == AISubState.FREEZE)
             {
                 ThinkInInactiveRegion(npcAI);
                 return;
@@ -43,10 +43,10 @@ public class ThinkEventHandler
             }
             switch (npcAI.GetState())
             {
-                case AiState.Fight:
+                case AIState.FIGHT:
                     ThinkAttack(npcAI);
                     break;
-                case AiState.Idle:
+                case AIState.IDLE:
                     ThinkIdle(npcAI);
                     break;
             }
@@ -59,7 +59,7 @@ public class ThinkEventHandler
 
     private static void ThinkInInactiveRegion(NpcAI npcAI)
     {
-        if (npcAI.IsInState(AiState.Walking))
+        if (npcAI.IsInState(AIState.WALKING))
         {
             WalkManager.StopWalking(npcAI);
             return;
@@ -74,7 +74,7 @@ public class ThinkEventHandler
         }
         switch (npcAI.GetState())
         {
-            case AiState.Fight:
+            case AIState.FIGHT:
                 ThinkAttack(npcAI);
                 break;
             default:
@@ -95,7 +95,7 @@ public class ThinkEventHandler
         }
         else
         {
-            npcAI.SetSubStateIfNot(AiSubState.None);
+            npcAI.SetSubStateIfNot(AISubState.NONE);
             npc.ClearQueuedSkills();
             npc.GetGameStats().SetLastSkill(null);
             npc.GetGameStats().ResetFightStats();

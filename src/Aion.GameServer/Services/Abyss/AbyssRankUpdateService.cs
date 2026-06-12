@@ -45,16 +45,16 @@ public class AbyssRankUpdateService
             long startTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
             // update and store rank statistics for all online players (offline players update on login)
-            World.GetInstance().ForEachPlayer(player =>
+            Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
             {
                 player.GetAbyssRank().DoUpdate();
                 AbyssRankDAO.StoreAbyssRank(player);
             });
 
-            AbyssRankEnum minGpRank = AbyssRankEnum.Values()
+            AbyssRankEnum minGpRank = AbyssRankEnumExtensions.Values()
                     .Where(rank => rank.GetRequiredGP() > 0)
                     .OrderBy(rank => rank.GetId()).FirstOrDefault() ?? AbyssRankEnum.STAR1_OFFICER;
-            int playerLimit = AbyssRankEnum.Values()
+            int playerLimit = AbyssRankEnumExtensions.Values()
                     .Where(rank => rank.GetRequiredGP() > 0)
                     .Select(rank => rank.GetQuota())
                     .DefaultIfEmpty(1000).Max();
@@ -85,7 +85,7 @@ public class AbyssRankUpdateService
         // calculate and set new GP ranks
         int usedQuota = 0;
         for (int i = AbyssRankEnum.SUPREME_COMMANDER.GetId(); i >= minRank.GetId(); i--)
-            usedQuota = SelectAndUpdateQuotaRank(AbyssRankEnum.GetRankById(i), rankingListSorted, usedQuota);
+            usedQuota = SelectAndUpdateQuotaRank(AbyssRankEnumExtensions.GetRankById(i), rankingListSorted, usedQuota);
 
         // set all players with an old GP rank to AP ranks if they hold no rank position anymore
         Dictionary<int, int> apByPlayerId = AbyssRankDAO.LoadApOfPlayersNotInRankingList(race, minRank);
@@ -112,7 +112,7 @@ public class AbyssRankUpdateService
     {
         foreach (KeyValuePair<int, int> entry in apByPlayerId)
         {
-            AbyssRankEnum rank = AbyssRankEnum.GetRankForPoints(entry.Value, 0); // no GP -> no officer ranks
+            AbyssRankEnum rank = AbyssRankEnumExtensions.GetRankForPoints(entry.Value, 0); // no GP -> no officer ranks
             UpdateRankTo(rank, entry.Key, 0);
         }
     }
@@ -120,7 +120,7 @@ public class AbyssRankUpdateService
     private static void UpdateRankTo(AbyssRankEnum newRank, int playerId, int rankingPosition)
     {
         // check if rank has changed for online players
-        Player player = World.GetInstance().GetPlayer(playerId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
         if (player != null)
         {
             bool rankChanged = player.GetAbyssRank().GetRank() != newRank;
@@ -140,12 +140,12 @@ public class AbyssRankUpdateService
 
     private static void UpdateDailyGpLoss()
     {
-        foreach (AbyssRankEnum rank in AbyssRankEnum.Values())
+        foreach (AbyssRankEnum rank in AbyssRankEnumExtensions.Values())
         {
             if (rank.GetGpLossPerDay() > 0)
                 AbyssRankDAO.DailyUpdateGp(rank);
         }
-        foreach (Player p in World.GetInstance().GetAllPlayers())
+        foreach (Player p in Aion.GameServer.World.World.GetInstance().GetAllPlayers())
         {
             if (p.GetAbyssRank().GetRank().GetGpLossPerDay() > 0)
             {

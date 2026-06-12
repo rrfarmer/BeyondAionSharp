@@ -1,3 +1,4 @@
+using Aion.GameServer.Dataholders;
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.State;
@@ -51,18 +52,18 @@ public partial class Player
         foreach (Aion.GameServer.Model.Items.Storage.StorageType st in Aion.GameServer.Model.Items.Storage.StorageType.Values())
         {
             Aion.GameServer.Model.Items.Storage.IStorage storage = GetStorage(st.GetId());
-            if (storage != null && storage.GetPersistentState() == Aion.GameServer.Model.Items.PersistentState.UPDATE_REQUIRED)
+            if (storage != null && storage.GetPersistentState() == Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.UPDATE_REQUIRED)
             {
                 dirtyItems.AddRange(storage.GetItemsWithKinah());
                 dirtyItems.AddRange(storage.GetDeletedItems());
-                storage.SetPersistentState(Aion.GameServer.Model.Items.PersistentState.UPDATED);
+                storage.SetPersistentState(Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.UPDATED);
             }
         }
 
-        if (equipment.GetPersistentState() == Aion.GameServer.Model.Items.PersistentState.UPDATE_REQUIRED)
+        if (equipment.GetPersistentState() == Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.UPDATE_REQUIRED)
         {
             dirtyItems.AddRange(equipment.GetEquippedItems());
-            equipment.SetPersistentState(Aion.GameServer.Model.Items.PersistentState.UPDATED);
+            equipment.SetPersistentState(Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.UPDATED);
         }
 
         return dirtyItems;
@@ -267,7 +268,7 @@ public partial class Player
 
     public bool IsProtectionActive()
     {
-        return IsInVisualState(CreatureVisualState.Blinking);
+        return IsInVisualState(CreatureVisualState.BLINKING);
     }
 
     public override bool IsInvulnerable()
@@ -317,12 +318,12 @@ public partial class Player
 
     public bool IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type type)
     {
-        return flightPath != null && flightPath.GetType_() == type && IsInState(CreatureState.Flying);
+        return flightPath != null && flightPath.GetType_() == type && IsInState(CreatureState.FLYING);
     }
 
     public bool IsUsingFlightTransporterOrWindstream()
     {
-        return flightPath != null && IsInState(CreatureState.Flying);
+        return flightPath != null && IsInState(CreatureState.FLYING);
     }
 
     public Aion.GameServer.Model.Templates.Flypath.FlightPath GetFlightPath()

@@ -6,6 +6,7 @@ using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.QuestEngine.Handlers.Models;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Model.Templates.Quest;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

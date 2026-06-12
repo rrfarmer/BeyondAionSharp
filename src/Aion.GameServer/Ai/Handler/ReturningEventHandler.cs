@@ -26,9 +26,9 @@ public class ReturningEventHandler
         {
             npcAI.OnGeneralEvent(AiEventType.BackHome);
         }
-        else if (npcAI.SetStateIfNot(AiState.Returning))
+        else if (npcAI.SetStateIfNot(AIState.RETURNING))
         {
-            npcAI.SetSubStateIfNot(AiSubState.None);
+            npcAI.SetSubStateIfNot(AISubState.NONE);
             if (npcAI.IsLogging())
             {
                 AILogger.Info(npcAI, "returning and restoring");
@@ -48,9 +48,9 @@ public class ReturningEventHandler
             AILogger.Info(npcAI, "onBackHome");
         }
         npcAI.GetOwner().GetMoveController().ClearBackSteps();
-        if (npcAI.SetStateIfNot(AiState.Idle))
+        if (npcAI.SetStateIfNot(AIState.IDLE))
         {
-            npcAI.SetSubStateIfNot(AiSubState.None);
+            npcAI.SetSubStateIfNot(AISubState.NONE);
             npcAI.GetOwner().GetEffectController().RemoveByDispelSlotType(DispelSlotType.BUFF);
             EmoteManager.EmoteStartIdling(npcAI.GetOwner());
             npcAI.Think();
@@ -58,7 +58,7 @@ public class ReturningEventHandler
             List<NpcSkillEntry> skills = npc.GetSkillList().GetPostSpawnSkills();
             if (skills.Count != 0)
                 foreach (NpcSkillEntry s in skills)
-                    SkillEngine.GetInstance().GetSkill(npc, s.GetSkillId(), s.GetSkillLevel(), npc).UseWithoutPropSkill();
+                    Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(npc, s.GetSkillId(), s.GetSkillLevel(), npc).UseWithoutPropSkill();
         }
         npcAI.GetOwner().GetPosition().GetWorldMapInstance().GetInstanceHandler().OnBackHome(npcAI.GetOwner());
     }

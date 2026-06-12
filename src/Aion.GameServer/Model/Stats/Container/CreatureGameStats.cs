@@ -391,7 +391,7 @@ public abstract class CreatureGameStats
     /// <summary>Send packet about speed info.</summary>
     public virtual void UpdateSpeedInfo()
     {
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed));
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED));
     }
 
     protected virtual bool CheckSpeedStats()

@@ -26,6 +26,9 @@ public abstract class AionObject
 	/// <summary>Unique objectId of this AionObject. Java parity: getObjectId().</summary>
 	public int ObjectId => _objectId;
 
+	// Java parity: getObjectId() (method form, bridges Java callers to the C# ObjectId property).
+	public int GetObjectId() => _objectId;
+
 	/// <summary>
 	/// Name of the object. Unique for players, common for NPCs/items/etc.
 	/// Java parity: abstract getName().

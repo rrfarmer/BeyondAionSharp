@@ -25,7 +25,7 @@ public class PlayerLimitService
         int accountId = player.GetAccount().GetId();
         if (!sellLimit.TryGetValue(accountId, out long limit))
         {
-            limit = SellLimit.GetSellLimit(player);
+            limit = SellLimitExtensions.GetSellLimit(player);
             sellLimit.TryAdd(accountId, limit);
         }
 

@@ -8,7 +8,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -73,7 +73,7 @@ public class CM_SUMMON_MOVE : AionClientPacket
         if (effectController.IsInAnyAbnormalState(AbnormalState.CANT_MOVE_STATE) || effectController.IsUnderFear() || effectController.IsConfused())
             return;
         CreatureMoveController<Creature> m = summonOrMercenary.GetMoveController();
-        m.movementMask = type;
+        m.MovementMaskField = type;
 
         if (m is SummonMoveController smc && (type & MovementMask.GLIDE) == MovementMask.GLIDE)
         {
@@ -102,7 +102,7 @@ public class CM_SUMMON_MOVE : AionClientPacket
             smc2.vehicleY = vehicleY;
             smc2.vehicleZ = vehicleZ;
         }
-        World.GetInstance().UpdatePosition(summonOrMercenary, x, y, z, heading);
+        global::Aion.GameServer.World.World.GetInstance().UpdatePosition(summonOrMercenary, x, y, z, heading);
         m.UpdateLastMove();
 
         if ((type & MovementMask.POSITION) == MovementMask.POSITION || type == MovementMask.IMMEDIATE)

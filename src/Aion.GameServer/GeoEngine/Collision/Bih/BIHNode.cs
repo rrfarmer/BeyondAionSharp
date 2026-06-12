@@ -79,8 +79,8 @@ public sealed class BIHNode
 
     public sealed class BIHStackData
     {
-        private readonly BIHNode node;
-        private readonly float min, max;
+        internal readonly BIHNode node;
+        internal readonly float min, max;
 
         internal BIHStackData(BIHNode node, float min, float max)
         {

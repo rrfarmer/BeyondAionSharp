@@ -34,11 +34,11 @@ public static class NearbyQuestRefreshInputAdapterService
 		if (staticData == null)
 			return NearbyQuestRefreshInputAdapterResult.MissingStaticData();
 		if (mapRegion == null)
-			return NearbyQuestRefreshInputAdapterResult.MissingMapRegion(player.Position);
+			return NearbyQuestRefreshInputAdapterResult.MissingMapRegion(player.GetPosition());
 
 		return NearbyQuestRefreshInputAdapterResult.CreatedFromMapRegion(
 			NearbyQuestRefreshPlanService.CreatePlan(player, mapRegion.ParentWorldInstance, staticData.NearbyQuestTemplates),
-			player.Position,
+			player.GetPosition(),
 			mapRegion.Position,
 			mapRegion.ParentWorldInstance?.InstanceId
 		);

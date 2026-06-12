@@ -1,6 +1,6 @@
 using Aion.Commons.Nio;
 using Aion.GameServer.Model.Items;
-using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
+using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
 namespace Aion.GameServer.Network.Aion.Iteminfo;
 
@@ -15,7 +15,7 @@ public class PlumeInfoBlobEntry : ItemBlobEntry
 
     public override void WriteThisBlob(ByteBuffer buf)
     {
-        WriteQ(buf, ItemSlot.GetSlotFor(ownerItem.GetItemTemplate().GetItemSlot()).GetSlotIdMask());
+        WriteQ(buf, ItemSlotExtensions.GetSlotFor(ownerItem.GetItemTemplate().GetItemSlot()).GetSlotIdMask());
         WriteQ(buf, 0x100000); // secondary slot ?
         WriteD(buf, 0); // unks
         WriteD(buf, 0);

@@ -4,6 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

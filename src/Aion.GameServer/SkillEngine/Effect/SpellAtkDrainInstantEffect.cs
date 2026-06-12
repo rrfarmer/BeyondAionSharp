@@ -3,7 +3,8 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using static Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS;
+using static Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -23,12 +24,12 @@ public class SpellAtkDrainInstantEffect : DamageEffect
         {
             if (hpPercent != 0)
             {
-                effect.GetEffector().GetLifeStats().IncreaseHp(TYPE.HP, effect.GetReserveds(position).GetValue() * hpPercent / 100, effect,
+                effect.GetEffector().GetLifeStats().IncreaseHp(TYPE.HP, effect.GetReserveds(Position).GetValue() * hpPercent / 100, effect,
                         LOG.SPELLATKDRAININSTANT);
             }
             if (mpPercent != 0)
             {
-                effect.GetEffector().GetLifeStats().IncreaseMp(TYPE.ABSORBED_MP, effect.GetReserveds(position).GetValue() * mpPercent / 100,
+                effect.GetEffector().GetLifeStats().IncreaseMp(TYPE.ABSORBED_MP, effect.GetReserveds(Position).GetValue() * mpPercent / 100,
                         effect.GetSkillId(), LOG.SPELLATKDRAININSTANT);
             }
             return ValueTask.CompletedTask;

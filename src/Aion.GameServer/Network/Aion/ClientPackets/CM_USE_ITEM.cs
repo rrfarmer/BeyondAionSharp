@@ -10,7 +10,8 @@ using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Restrictions;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -72,7 +73,7 @@ public class CM_USE_ITEM : AionClientPacket
         if (!PlayerRestrictions.CanUseItem(player, item))
             return;
 
-        HandlerResult result = QuestEngine.GetInstance().OnItemUseEvent(new QuestEnv(null, player, 0), item);
+        HandlerResult result = global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnItemUseEvent(new QuestEnv(null, player, 0), item);
 
         List<AbstractItemAction> itemActions = item.GetItemTemplate().GetActions() == null ? new List<AbstractItemAction>()
             : item.GetItemTemplate().GetActions().GetItemActions();

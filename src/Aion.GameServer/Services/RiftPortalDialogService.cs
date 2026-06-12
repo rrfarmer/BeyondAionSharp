@@ -8,7 +8,7 @@ public sealed class RiftPortalDialogService
 	public RiftPortalDialogResult CreateDialogRequest(Player player, RiftPortalState portal)
 	{
 		// Java parity: controllers/RVController.onDialogRequest blocks invasion rifts unless the player's opposite race matches the destination.
-		if (portal.IsInvasion && !IsOppositeRaceDestination(player.Race, portal.DestinationRace))
+		if (portal.IsInvasion && !IsOppositeRaceDestination(player.Race.ToString(), portal.DestinationRace))
 			return RiftPortalDialogResult.NotRequested(RiftPortalDialogStatus.InvasionRaceMismatch);
 
 		// Java parity: controllers/RVController.onRequest asks with 904304 for vortexes and STR_ASK_PASS_BY_DIRECT_PORTAL for ordinary rifts.

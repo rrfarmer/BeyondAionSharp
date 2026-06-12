@@ -91,7 +91,7 @@ public class ArtifactSiege : Siege<ArtifactLocation>
             AionServerPacket lRacePacket = SM_SYSTEM_MESSAGE.STR_GUILD_EVENT_LOSE_ARTIFACT(GetSiegeLocation().GetL10n(), wRace.GetL10n());
 
             // send update to players
-            World.GetInstance().ForEachPlayer(p => PacketSendUtility.SendPacket(p, p.GetRace().Equals(wRace) ? wRacePacket : lRacePacket));
+            Aion.GameServer.World.World.GetInstance().ForEachPlayer(p => PacketSendUtility.SendPacket(p, p.GetRace().Equals(wRace) ? wRacePacket : lRacePacket));
         }
     }
 

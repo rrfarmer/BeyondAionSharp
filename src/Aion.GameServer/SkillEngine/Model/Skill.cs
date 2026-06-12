@@ -1,3 +1,5 @@
+using Aion.GameServer.Configs.Main;
+using Aion.GameServer.SkillEngine.Condition;
 using System;
 using System.Collections.Generic;
 using Aion.GameServer.Commons.Utils;
@@ -17,6 +19,8 @@ using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using CastState = Aion.GameServer.SkillEngine.Properties.Properties.CastState;
+using Aion.GameServer.Utils.Audit;
+using Aion.GameServer.Model.Skill;
 
 namespace Aion.GameServer.SkillEngine.Model;
 
@@ -255,7 +259,7 @@ public class Skill
             castStartTime = CurrentTimeMillis();
             StartCast();
             if (effector is Npc)
-                effector.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AiSubState.Cast);
+                effector.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.CAST);
         }
 
         effector.GetObserveController().Attach(moveListener);

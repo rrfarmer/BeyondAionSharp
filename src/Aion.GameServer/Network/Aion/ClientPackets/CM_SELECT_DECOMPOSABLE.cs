@@ -8,10 +8,10 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils;
-using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
-using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
-using ItemUpdatePredicate = Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using ItemAddType = global::Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
+using ItemUpdateType = global::Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
+using ItemUpdatePredicate = global::Aion.GameServer.Services.Items.ItemService.ItemUpdatePredicate;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

@@ -31,7 +31,7 @@ public class StaggerEffect : EffectTemplate
             player.GetFlyController().OnStopGliding();
             player.GetController().OnStopMove();
         }
-        World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
+        Aion.GameServer.World.World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
         if (effected is Player)
             PacketSendUtility.BroadcastPacketAndReceive(effected, new SM_FORCED_MOVE(effect.GetEffector(), effected.GetObjectId(),
                     effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ()));

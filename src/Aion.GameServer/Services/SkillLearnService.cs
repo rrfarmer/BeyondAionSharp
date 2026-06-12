@@ -37,11 +37,11 @@ public static class SkillLearnService
 		if (playerLevel < action.Level)
 			return SkillLearnPlan.Failed(SkillLearnFailure.TooLowLevel);
 
-		if (!ValidateClass(player.PlayerClass, action.PlayerClass))
+		if (!ValidateClass(player.PlayerClass.ToString(), action.PlayerClass.ToString()))
 			return SkillLearnPlan.Failed(SkillLearnFailure.InvalidClass);
 
 		if (!string.Equals(sourceTemplate.Race, "PC_ALL", StringComparison.Ordinal)
-			&& !string.Equals(sourceTemplate.Race, player.Race, StringComparison.Ordinal))
+			&& !string.Equals(sourceTemplate.Race.ToString(), player.Race.ToString(), StringComparison.Ordinal))
 		{
 			return SkillLearnPlan.Failed(SkillLearnFailure.InvalidRace);
 		}
@@ -53,11 +53,11 @@ public static class SkillLearnService
 		var packets = new List<SkillLearnPacket>();
 		var learnTemplates = staticData.SkillTree.GetSkillsForSkill(
 			action.SkillId,
-			player.PlayerClass,
-			player.Race,
+			player.PlayerClass.ToString(),
+			player.Race.ToString(),
 			playerLevel,
 			staticData.SkillTemplates);
-		var matchingTemplates = staticData.SkillTree.GetTemplatesForSkill(action.SkillId, player.PlayerClass, player.Race);
+		var matchingTemplates = staticData.SkillTree.GetTemplatesForSkill(action.SkillId, player.PlayerClass.ToString(), player.Race.ToString());
 		var skillType = ResolveSkillType(action.SkillId, matchingTemplates, staticData.SkillTemplates);
 		foreach (var learnTemplate in learnTemplates)
 		{
@@ -96,7 +96,7 @@ public static class SkillLearnService
 		var finalSkills = player.Skills.Select(CloneSkill).ToList();
 		var descriptors = new List<SkillAutoLearnDescriptor>();
 		var playerClass = player.PlayerClass;
-		var startingClass = GetStartingClass(playerClass);
+		var startingClass = GetStartingClass(playerClass.ToString());
 
 		for (var level = toLevel; level >= fromLevel; level--)
 		{
@@ -115,8 +115,8 @@ public static class SkillLearnService
 		return new SkillAutoLearnPlan(
 			applied ? SkillAutoLearnPlanStatus.Planned : SkillAutoLearnPlanStatus.NoChanges,
 			player.ObjectId,
-			player.PlayerClass,
-			player.Race,
+			player.PlayerClass.ToString(),
+			player.Race.ToString(),
 			fromLevel,
 			toLevel,
 			isDaeva,
@@ -160,7 +160,7 @@ public static class SkillLearnService
 		bool hasEffectController,
 		bool isSpawned)
 	{
-		foreach (var template in skillTree.GetTemplatesFor(learningClass, level, player.Race))
+		foreach (var template in skillTree.GetTemplatesFor(learningClass, level, player.Race.ToString()))
 		{
 			if (!template.AutoLearn)
 			{
@@ -184,8 +184,8 @@ public static class SkillLearnService
 				continue;
 			}
 
-			var matchingTemplates = skillTree.GetTemplatesForSkill(template.SkillId, player.PlayerClass, player.Race);
-			var learnTemplates = skillTree.GetSkillsForSkill(template.SkillId, player.PlayerClass, player.Race, player.Level, skillTemplates);
+			var matchingTemplates = skillTree.GetTemplatesForSkill(template.SkillId, player.PlayerClass.ToString(), player.Race.ToString());
+			var learnTemplates = skillTree.GetSkillsForSkill(template.SkillId, player.PlayerClass.ToString(), player.Race.ToString(), player.Level, skillTemplates);
 			var skillType = ResolveSkillType(template.SkillId, matchingTemplates, skillTemplates);
 			var packet = AddOrUpgradeSkill(finalSkills, template.SkillId, template.SkillLevel, skillType, learnTemplates);
 			if (packet == null)
@@ -235,7 +235,7 @@ public static class SkillLearnService
 				EssenceTappingSkillId,
 				humanGathering.SkillLevel,
 				player.Level,
-				player.PlayerClass,
+				player.PlayerClass.ToString(),
 				SkillAutoLearnDescriptorStatus.PlannedAdd,
 				"SkillLearnService.learnNewSkills -> upgrade human gathering to daeva essence tapping",
 				essenceTapping,
@@ -249,7 +249,7 @@ public static class SkillLearnService
 			HumanGatheringSkillId,
 			humanGathering.SkillLevel,
 			player.Level,
-			player.PlayerClass,
+			player.PlayerClass.ToString(),
 			SkillAutoLearnDescriptorStatus.PlannedRemove,
 			"SkillLearnService.learnNewSkills -> removeSkill(30001)",
 			RemovedSkill: humanGathering,
@@ -454,8 +454,8 @@ public sealed record SkillAutoLearnPlan(
 		return new SkillAutoLearnPlan(
 			status,
 			player.ObjectId,
-			player.PlayerClass,
-			player.Race,
+			player.PlayerClass.ToString(),
+			player.Race.ToString(),
 			fromLevel,
 			toLevel,
 			isDaeva,

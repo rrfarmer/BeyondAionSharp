@@ -21,11 +21,11 @@ public class StaticDoorSpawnManager
         int counter = 0;
         foreach (StaticDoorTemplate data in DataManager.STATICDOOR_DATA.GetStaticDoors(instance.GetMapId()))
         {
-            SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(instance.GetMapId(), 300001, data.GetX(), data.GetY(), data.GetZ(), (byte)0);
+            SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(instance.GetMapId(), 300001, data.GetX(), data.GetY(), data.GetZ(), (byte)0);
             spawn.SetStaticId(data.GetId());
             StaticDoor staticDoor = new StaticDoor(new StaticObjectController(), spawn, data, instance.GetInstanceId());
             staticDoor.SetKnownlist(new PlayerAwareKnownList(staticDoor));
-            SpawnEngine.BringIntoWorld(staticDoor, spawn, instance.GetInstanceId());
+            Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(staticDoor, spawn, instance.GetInstanceId());
             counter++;
             GeoService.GetInstance().SetDoorState(instance.GetMapId(), instance.GetInstanceId(), data.GetId(), staticDoor.IsOpen());
         }

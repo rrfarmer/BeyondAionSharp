@@ -11,8 +11,8 @@ public enum CraftingTaskPacketPlanStatus
 
 public sealed record CraftingTaskPacketPlan(
 	CraftingTaskPacketPlanStatus Status,
-	IReadOnlyList<GameServerPacket> SelfPackets,
-	IReadOnlyList<GameServerPacket> BroadcastPackets,
+	IReadOnlyList<AionServerPacket> SelfPackets,
+	IReadOnlyList<AionServerPacket> BroadcastPackets,
 	string JavaSource,
 	bool IsLive);
 
@@ -66,7 +66,7 @@ public static class CraftingTaskPacketPlanService
 		return new CraftingTaskPacketPlan(
 			CraftingTaskPacketPlanStatus.Planned,
 			[new SmCraftUpdate(skillId, itemTemplate, success, failure, progressAction, executionSpeed, showBarDelay)],
-			Array.Empty<GameServerPacket>(),
+			Array.Empty<AionServerPacket>(),
 			"CraftingTask.sendInteractionUpdate -> send SM_CRAFT_UPDATE(action=craftType.getProgressId(), executionSpeed, showBarDelay)",
 			IsLive: false);
 	}

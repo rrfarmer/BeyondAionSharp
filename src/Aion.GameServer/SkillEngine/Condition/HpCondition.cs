@@ -1,6 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Condition;
 
@@ -22,7 +23,7 @@ public class HpCondition : Condition
             valueWithDelta = (skill.GetEffector().GetLifeStats().GetMaxHp() * valueWithDelta) / 100;
         if (skill.GetEffector().GetLifeStats().GetCurrentHp() > valueWithDelta)
             skill.GetEffector().GetLifeStats()
-                .ReduceHp(SM_ATTACK_STATUS.TYPE.USED_HP, valueWithDelta, 0, SM_ATTACK_STATUS.LOG.REGULAR, skill.GetEffector());
+                .ReduceHp(SmAttackStatus.TYPE.USED_HP, valueWithDelta, 0, SmAttackStatus.LOG.REGULAR, skill.GetEffector());
         return skill.GetEffector().GetLifeStats().GetCurrentHp() >= valueWithDelta;
     }
 

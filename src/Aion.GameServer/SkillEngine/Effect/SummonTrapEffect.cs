@@ -40,7 +40,7 @@ public class SummonTrapEffect : SummonEffect
         int worldId = effector.GetWorldId();
         int instanceId = effector.GetInstanceId();
 
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(worldId, npcId, x, y, z, heading);
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldId, npcId, x, y, z, heading);
         Trap trap = VisibleObjectSpawner.SpawnTrap(spawn, instanceId, effector);
         TrapService.RegisterTrap(effector.GetObjectId(), trap, true);
         trap.GetController().AddTask(TaskId.DESPAWN, ThreadPoolManager.GetInstance().Schedule(ct => { trap.GetController().Delete(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(time * 1000L)));

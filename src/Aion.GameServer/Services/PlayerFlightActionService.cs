@@ -22,15 +22,15 @@ public static class PlayerFlightActionService
 		var nowMillis = now.ToUnixTimeMilliseconds();
 		if (!ignoreFlightCooldown)
 		{
-			if (player.FlyReuseTimeMillis > nowMillis)
+			if ((player.GetFlyReuseTime()) > nowMillis)
 			{
-				var remainingSeconds = (player.FlyReuseTimeMillis - nowMillis) / 1000;
+				var remainingSeconds = ((player.GetFlyReuseTime()) - nowMillis) / 1000;
 				return PlayerFlightActionResult.Failed(
 					PlayerFlightActionStatus.Cooldown,
 					auditMessage: $"possibly using fly cooldown hack. Left cooldown time: {remainingSeconds}s");
 			}
 
-			player.FlyReuseTimeMillis = nowMillis + FlyReuseTimeMillis - FlyStartReuseAdjustmentMillis;
+			player.SetFlyReuseTime(nowMillis + FlyReuseTimeMillis - FlyStartReuseAdjustmentMillis);
 		}
 
 		player.StartFlying();
@@ -53,10 +53,10 @@ public static class PlayerFlightActionService
 		var nowMillis = now.ToUnixTimeMilliseconds();
 		if (player.FlyState == PlayerFlyState.None)
 		{
-			if (player.FlyReuseTimeMillis > nowMillis)
+			if ((player.GetFlyReuseTime()) > nowMillis)
 				return PlayerFlightActionResult.Failed(PlayerFlightActionStatus.Cooldown);
 
-			player.FlyReuseTimeMillis = nowMillis + FlyReuseTimeMillis;
+			player.SetFlyReuseTime(nowMillis + FlyReuseTimeMillis);
 		}
 
 		player.StartGliding();
@@ -99,7 +99,7 @@ public static class PlayerFlightActionService
 	private static bool IsDaeva(Player player)
 	{
 		// Java parity: PlayerCommonData.isDaeva rejects only starting classes in the current C# model.
-		return player.PlayerClass is not ("WARRIOR" or "SCOUT" or "MAGE" or "PRIEST" or "ENGINEER" or "ARTIST");
+		return player.PlayerClass.ToString() is not ("WARRIOR" or "SCOUT" or "MAGE" or "PRIEST" or "ENGINEER" or "ARTIST");
 	}
 
 	private static bool HasAccess(Player player, int accessLevel)

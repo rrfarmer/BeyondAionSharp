@@ -240,7 +240,7 @@ public static class DialogPageExtensions
 
     private static bool HasQuestInteraction(Player player, Npc npc)
     {
-        QuestNpc questNpc = QuestEngine.GetInstance().GetQuestNpc(npc.GetNpcId());
+        QuestNpc questNpc = Aion.GameServer.QuestEngine.QuestEngine.GetInstance().GetQuestNpc(npc.GetNpcId());
         if (questNpc == null)
             return false;
         return questNpc.GetOnQuestStart().Any(startableQuest => QuestService.CheckStartConditions(player, startableQuest, false))

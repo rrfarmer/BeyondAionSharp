@@ -34,7 +34,7 @@ public static class GloryPointsService
 		var oldGp = player.AbyssRank.Gp;
 		var updatedRank = player.AbyssRank.AddGp(amount, addToStats);
 		var added = updatedRank.Gp - oldGp;
-		var packets = new List<GameServerPacket>
+		var packets = new List<AionServerPacket>
 		{
 			amount >= 0
 				? SmSystemMessage.GloryPointGain(added)
@@ -85,7 +85,7 @@ public sealed record GloryPointsAddPlan(
 	PlayerAbyssRank? UpdatedRank,
 	bool AddsDailyWeeklyStats,
 	bool RequiresOfflineDaoUpdate,
-	IReadOnlyList<GameServerPacket> PlayerPackets,
+	IReadOnlyList<AionServerPacket> PlayerPackets,
 	string JavaSource)
 {
 	public bool Applied => Status == GloryPointsAddStatus.Applied;
@@ -97,7 +97,7 @@ public sealed record GloryPointsAddPlan(
 		int previousGp,
 		PlayerAbyssRank updatedRank,
 		bool addsDailyWeeklyStats,
-		IReadOnlyList<GameServerPacket> playerPackets)
+		IReadOnlyList<AionServerPacket> playerPackets)
 	{
 		return new GloryPointsAddPlan(
 			GloryPointsAddStatus.Applied,
@@ -123,7 +123,7 @@ public sealed record GloryPointsAddPlan(
 			null,
 			addsDailyWeeklyStats,
 			RequiresOfflineDaoUpdate: true,
-			Array.Empty<GameServerPacket>(),
+			Array.Empty<AionServerPacket>(),
 			"AbyssRankDAO.addGp offline player branch");
 	}
 
@@ -138,7 +138,7 @@ public sealed record GloryPointsAddPlan(
 			null,
 			AddsDailyWeeklyStats: false,
 			RequiresOfflineDaoUpdate: false,
-			Array.Empty<GameServerPacket>(),
+			Array.Empty<AionServerPacket>(),
 			"GloryPointsService.addGp zero GP guard");
 	}
 }

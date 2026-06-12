@@ -57,7 +57,7 @@ public class VisibleObjectSpawner
 
         try
         {
-            SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
+            Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
         }
         catch (Exception ex)
         {
@@ -70,7 +70,7 @@ public class VisibleObjectSpawner
     public static SummonedHouseNpc SpawnHouseNpc(SpawnTemplate spawn, int instanceIndex, House creator)
     {
         SummonedHouseNpc npc = new SummonedHouseNpc(new NpcController(), spawn, creator);
-        SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
         return npc;
     }
 
@@ -102,7 +102,7 @@ public class VisibleObjectSpawner
             return null;
         }
         npc.SetEffectController(new EffectController(npc));
-        SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
         return npc;
     }
 
@@ -120,7 +120,7 @@ public class VisibleObjectSpawner
         Npc npc = new SiegeNpc(new NpcController(), spawn, npcTemplate);
         npc.SetKnownlist(new NpcKnownList(npc));
         npc.SetEffectController(new EffectController(npc));
-        SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
         return npc;
     }
 
@@ -140,21 +140,21 @@ public class VisibleObjectSpawner
         Npc npc = new Npc(new NpcController(), spawn, npcTemplate);
         npc.SetKnownlist(new NpcKnownList(npc));
         npc.SetEffectController(new EffectController(npc));
-        SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, spawn, instanceIndex);
         return npc;
     }
 
     public static Gatherable SpawnGatherable(SpawnTemplate spawn, int instanceIndex)
     {
         Gatherable gatherable = new Gatherable(spawn, new GatherableController());
-        SpawnEngine.BringIntoWorld(gatherable, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(gatherable, spawn, instanceIndex);
         return gatherable;
     }
 
     public static Trap SpawnTrap(SpawnTemplate spawn, int instanceIndex, Creature creator)
     {
         Trap trap = new Trap(new TrapController(), spawn, creator);
-        SpawnEngine.BringIntoWorld(trap, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(trap, spawn, instanceIndex);
         PacketSendUtility.BroadcastPacket(trap, new SM_PLAYER_STATE(trap));
         return trap;
     }
@@ -162,14 +162,14 @@ public class VisibleObjectSpawner
     public static GroupGate SpawnGroupGate(SpawnTemplate spawn, int instanceIndex, Creature creator)
     {
         GroupGate groupgate = new GroupGate(new NpcController(), spawn, creator);
-        SpawnEngine.BringIntoWorld(groupgate, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(groupgate, spawn, instanceIndex);
         return groupgate;
     }
 
     public static Kisk SpawnKisk(SpawnTemplate spawn, int instanceIndex, Player creator)
     {
         Kisk kisk = new Kisk(new NpcController(), spawn, creator);
-        SpawnEngine.BringIntoWorld(kisk, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(kisk, spawn, instanceIndex);
         return kisk;
     }
 
@@ -181,13 +181,13 @@ public class VisibleObjectSpawner
         double radian = PositionUtil.ConvertHeadingToAngle(owner.GetHeading()) * Math.PI / 180;
         Vector3f pos = GeoService.GetInstance().GetClosestCollision(owner, owner.GetX() + (float)(Math.Cos(radian) * 7),
             owner.GetY() + (float)(Math.Sin(radian) * 7), owner.GetZ());
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(owner.GetWorldId(), npcId, pos.GetX(), pos.GetY(), pos.GetZ(), (byte)0);
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(owner.GetWorldId(), npcId, pos.GetX(), pos.GetY(), pos.GetZ(), (byte)0);
         Npc postman = new Npc(new NpcController(), spawn, template);
         postman.SetCreatorId(owner.GetObjectId());
         postman.SetMasterName(owner.GetName());
         postman.SetKnownlist(new PlayerAwareKnownList(postman));
         postman.SetEffectController(new EffectController(postman));
-        SpawnEngine.BringIntoWorld(postman, spawn, owner.GetInstanceId());
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(postman, spawn, owner.GetInstanceId());
         owner.SetPostman(postman);
         return postman;
     }
@@ -199,13 +199,13 @@ public class VisibleObjectSpawner
         Vector3f pos = GeoService.GetInstance().GetClosestCollision(owner, owner.GetX() + (float)(Math.Cos(radian) * 1),
             owner.GetY() + (float)(Math.Sin(radian) * 1), owner.GetZ());
         byte heading = PositionUtil.GetHeadingTowards(pos.GetX(), pos.GetY(), owner.GetX(), owner.GetY());
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(owner.GetWorldId(), npcId, pos.GetX(), pos.GetY(), pos.GetZ(), heading);
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(owner.GetWorldId(), npcId, pos.GetX(), pos.GetY(), pos.GetZ(), heading);
         Npc functionalNpc = new Npc(new NpcController(), spawn, template);
         functionalNpc.SetKnownlist(new PlayerAwareKnownList(functionalNpc));
         functionalNpc.SetEffectController(new EffectController(functionalNpc));
         functionalNpc.SetCreatorId(owner.GetObjectId());
         functionalNpc.SetSummonOwner(summonOwner);
-        SpawnEngine.BringIntoWorld(functionalNpc, spawn, owner.GetInstanceId());
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(functionalNpc, spawn, owner.GetInstanceId());
         return functionalNpc;
     }
 
@@ -214,7 +214,7 @@ public class VisibleObjectSpawner
         Servant servant = new Servant(new NpcController(), spawn, creator.GetLevel(), creator);
         servant.SetNpcObjectType(objectType);
         servant.SetUpStats();
-        SpawnEngine.BringIntoWorld(servant, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(servant, spawn, instanceIndex);
         if (servant.GetSkillList() != null)
         {
             NpcSkillEntry skill = servant.GetSkillList().GetRandomSkill();
@@ -235,7 +235,7 @@ public class VisibleObjectSpawner
     {
         Servant servant = new Servant(new NpcController(), spawn, servantLvl, creator);
         servant.SetNpcObjectType(NpcObjectType.SERVANT);
-        SpawnEngine.BringIntoWorld(servant, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(servant, spawn, instanceIndex);
         return servant;
     }
 
@@ -244,7 +244,7 @@ public class VisibleObjectSpawner
         Homing homing = new Homing(new NpcController(), spawn, creator.GetLevel(), creator, skillId);
         homing.SetState(CreatureState.WEAPON_EQUIPPED);
         homing.SetAttackCount(attackCount);
-        SpawnEngine.BringIntoWorld(homing, spawn, instanceIndex);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(homing, spawn, instanceIndex);
         return homing;
     }
 
@@ -258,7 +258,7 @@ public class VisibleObjectSpawner
         int worldId = creator.GetWorldId();
         int instanceId = creator.GetInstanceId();
 
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(worldId, npcId, pos.GetX(), pos.GetY(), pos.GetZ(), heading);
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldId, npcId, pos.GetX(), pos.GetY(), pos.GetZ(), heading);
         NpcTemplate npcTemplate = DataManager.NPC_DATA.GetNpcTemplate(npcId);
 
         bool isSiegeWeapon = "siege_weapon".Equals(npcTemplate.GetAiName());
@@ -269,7 +269,7 @@ public class VisibleObjectSpawner
         summon.GetLifeStats().SynchronizeWithMaxStats();
         summon.SetSummonedBySkillId(skillId);
 
-        SpawnEngine.BringIntoWorld(summon, spawn, instanceId);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(summon, spawn, instanceId);
         if (isSiegeWeapon)
             summon.GetAi().OnGeneralEvent(AiEventType.SPAWNED);
         return summon;
@@ -294,8 +294,8 @@ public class VisibleObjectSpawner
         byte heading = player.GetHeading();
         int worldId = player.GetWorldId();
         int instanceId = player.GetInstanceId();
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(worldId, templateId, x, y, z, heading);
-        SpawnEngine.BringIntoWorld(pet, spawn, instanceId);
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldId, templateId, x, y, z, heading);
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(pet, spawn, instanceId);
         player.SetPet(pet);
         return pet;
     }

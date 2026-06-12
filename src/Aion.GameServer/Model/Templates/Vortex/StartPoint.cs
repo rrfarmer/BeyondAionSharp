@@ -21,7 +21,7 @@ public class StartPoint
     public WorldPosition GetStartPoint()
     {
         WorldPosition start = new WorldPosition(map);
-        start.SetXyzh(x, y, z, h);
+        start.SetXYZH(x, y, z, h);
         return start;
     }
 }

@@ -1,6 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -26,6 +27,6 @@ public class MpAttackInstantEffect : EffectTemplate
 
     public override void ApplyEffect(Effect effect)
     {
-        effect.GetEffected().GetLifeStats().ReduceMp(SM_ATTACK_STATUS.TYPE.DAMAGE_MP, effect.GetReserveds(Position).GetValue(), effect.GetSkillId(), SM_ATTACK_STATUS.LOG.MPATTACK);
+        effect.GetEffected().GetLifeStats().ReduceMp(SmAttackStatus.TYPE.DAMAGE_MP, effect.GetReserveds(Position).GetValue(), effect.GetSkillId(), SmAttackStatus.LOG.MPATTACK);
     }
 }

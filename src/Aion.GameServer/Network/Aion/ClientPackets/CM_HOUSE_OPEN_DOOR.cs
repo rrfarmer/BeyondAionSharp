@@ -8,7 +8,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

@@ -33,7 +33,7 @@ public sealed class TeamMoveUpdater : AbstractFIFOPeriodicTaskManager<Aion.GameS
             }
             else if (player.IsInAlliance())
             {
-                Aion.GameServer.Model.Team.Alliance.PlayerAllianceService.UpdateAlliance(player, Aion.GameServer.Model.Team.Common.Legacy.PlayerAllianceEvent.MOVEMENT);
+                Aion.GameServer.Model.Team.Alliance.PlayerAllianceService.UpdateAlliance(player, Aion.GameServer.Model.GameObjects.PlayerAllianceEvent.MOVEMENT);
             }
         }
     }

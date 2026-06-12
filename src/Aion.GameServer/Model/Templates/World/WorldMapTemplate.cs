@@ -19,7 +19,7 @@ public class WorldMapTemplate
     [XmlAttribute("instance")]   public bool   Instance           { get; set; }
     [XmlAttribute("death_level")] public int   DeathLevel         { get; set; }
     [XmlAttribute("water_level")] public int   WaterLevel         { get; set; } = 16;
-    [XmlAttribute("world_type")] public WorldType WorldType       { get; set; } = WorldType.None;
+    [XmlAttribute("world_type")] public WorldType WorldType       { get; set; } = WorldType.NONE;
     [XmlAttribute("world_size")] public int    WorldSize          { get; set; }
     [XmlAttribute("drop_type")]  public WorldDropType DropWorldType { get; set; } = WorldDropType.None;
     [XmlElement("ai_info")]      public AiInfo AiInfo             { get; set; } = AiInfo.Default;

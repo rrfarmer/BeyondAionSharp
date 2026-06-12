@@ -1,3 +1,4 @@
+using Aion.GameServer.Ai;
 using System;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Model.GameObjects;
@@ -7,6 +8,7 @@ using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
+using Aion.GameServer.Model.Templates.Npc;
 
 namespace Aion.GameServer.Model.Stats.Container;
 
@@ -59,7 +61,7 @@ public class NpcGameStats : CreatureGameStats<Npc>
     public override Stat2 GetMovementSpeed()
     {
         Stat2 newSpeedStat;
-        if (owner.IsInState(CreatureState.WeaponEquipped))
+        if (owner.IsInState(CreatureState.WEAPON_EQUIPPED))
         {
             float speed;
             if (owner.GetWalkerGroup() != null)
@@ -68,10 +70,10 @@ public class NpcGameStats : CreatureGameStats<Npc>
                 speed = GetStatsTemplate().GetRunSpeedFight();
             newSpeedStat = GetStat(StatEnum.SPEED, JRound(speed * 1000));
         }
-        else if (owner.IsInState(CreatureState.WalkMode))
+        else if (owner.IsInState(CreatureState.WALK_MODE))
         {
             float speed;
-            if (owner.GetWalkerGroup() != null && owner.GetAi().GetSubState() == Aion.GameServer.Ai.AiSubState.WalkPath)
+            if (owner.GetWalkerGroup() != null && owner.GetAi().GetSubState() == Aion.GameServer.Ai.AISubState.WALK_PATH)
                 speed = GetStatsTemplate().GetGroupWalkSpeed();
             else
                 speed = GetStatsTemplate().GetWalkSpeed();

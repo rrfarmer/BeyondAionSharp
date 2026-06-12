@@ -60,7 +60,7 @@ public class FortressAssault : Assault<FortressSiege, FortressLocation>
             case 1:
             case 10:
                 List<Assaulter> teleportWave = assaultData.GetProcessedAssaulters().GetValueOrDefault(AssaulterType.TELEPORT);
-                foreach (SiegeNpc npc in World.GetInstance().GetLocalSiegeNpcs(locationId))
+                foreach (SiegeNpc npc in Aion.GameServer.World.World.GetInstance().GetLocalSiegeNpcs(locationId))
                     if (npc.GetRating() != NpcRating.LEGENDARY && npc.GetAbyssNpcType() != AbyssNpcType.ARTIFACT && Rnd.Chance() < 40)
                         SpawnAssaulter(Rnd.Get(teleportWave), npc);
                 Announce(SM_SYSTEM_MESSAGE.STR_ABYSS_WARP_DRAGON());
@@ -92,7 +92,7 @@ public class FortressAssault : Assault<FortressSiege, FortressLocation>
     {
         List<Assaulter> finalList = new List<Assaulter>();
         Dictionary<AssaulterType, List<Assaulter>> assaulterMap = assaultData.GetProcessedAssaulters();
-        foreach (AssaulterType type in AssaulterType.Values())
+        foreach (AssaulterType type in System.Enum.GetValues<AssaulterType>())
         {
             if (type == AssaulterType.TELEPORT || type == AssaulterType.COMMANDER)
                 continue;
@@ -178,7 +178,7 @@ public class FortressAssault : Assault<FortressSiege, FortressLocation>
         spawnBudget -= startBudget * (1f / possibleCommanderCount);
         if (spawnBudget < 0.1f)
         {
-            World.GetInstance().ForEachPlayer(p =>
+            Aion.GameServer.World.World.GetInstance().ForEachPlayer(p =>
             {
                 PacketSendUtility.SendPacket(p, new SM_NPC_ASSEMBLER(null));
                 PacketSendUtility.SendPacket(p, SM_SYSTEM_MESSAGE.STR_ABYSS_CARRIER_DESPAWN());

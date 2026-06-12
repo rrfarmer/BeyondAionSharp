@@ -29,8 +29,8 @@ public sealed class WorldNpcLootService
 		if (player == null || !_dropRegistrationService.TryGetRegistration(npcObjectId, out var registration) || registration == null)
 			return WorldNpcLootResult.None(WorldNpcLootStatus.UnknownDrop);
 
-		var packets = new List<GameServerPacket>();
-		var visiblePackets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
+		var visiblePackets = new List<AionServerPacket>();
 		if (player.IsLooting)
 		{
 			var closeResult = CloseDropList(player, player.LootingNpcObjectId);
@@ -58,7 +58,7 @@ public sealed class WorldNpcLootService
 		packets.Add(new SmLootItemList(npcObjectId, dropItems, player));
 		packets.Add(new SmLootStatus(npcObjectId, SmLootStatusType.OpenDropList));
 		player.StartLooting(npcObjectId);
-		visiblePackets.Add(new SmEmotion(player, EmotionType.StartLoot, 0, npcObjectId));
+		visiblePackets.Add(new SmEmotion(player, EmotionType.START_LOOT, 0, npcObjectId));
 
 		return new WorldNpcLootResult(WorldNpcLootStatus.Opened, packets, visiblePackets);
 	}
@@ -71,19 +71,19 @@ public sealed class WorldNpcLootService
 
 		var wasLootingThisNpc = player.IsLooting && player.LootingNpcObjectId == npcObjectId;
 		player.StopLooting();
-		var visiblePackets = new List<GameServerPacket>
+		var visiblePackets = new List<AionServerPacket>
 		{
-			new SmEmotion(player, EmotionType.EndLoot, 0, npcObjectId),
+			new SmEmotion(player, EmotionType.END_LOOT, 0, npcObjectId),
 		};
 
 		if (!_dropRegistrationService.TryGetRegistration(npcObjectId, out var registration) || registration == null)
-			return new WorldNpcLootResult(WorldNpcLootStatus.ClosedMissingRegistration, Array.Empty<GameServerPacket>(), visiblePackets);
+			return new WorldNpcLootResult(WorldNpcLootStatus.ClosedMissingRegistration, Array.Empty<AionServerPacket>(), visiblePackets);
 
 		if (!wasLootingThisNpc || !registration.ClearLootingPlayer(player.ObjectId))
-			return new WorldNpcLootResult(WorldNpcLootStatus.CloseRejected, Array.Empty<GameServerPacket>(), visiblePackets);
+			return new WorldNpcLootResult(WorldNpcLootStatus.CloseRejected, Array.Empty<AionServerPacket>(), visiblePackets);
 
 		ResumeDecayAfterClose(npcObjectId, registration);
-		return new WorldNpcLootResult(WorldNpcLootStatus.Closed, Array.Empty<GameServerPacket>(), visiblePackets);
+		return new WorldNpcLootResult(WorldNpcLootStatus.Closed, Array.Empty<AionServerPacket>(), visiblePackets);
 	}
 
 	public WorldNpcLootResult RequestDropItem(
@@ -121,7 +121,7 @@ public sealed class WorldNpcLootService
 			return new WorldNpcLootResult(
 				WorldNpcLootStatus.LimitOneAlreadyOwned,
 				[SmSystemMessage.CannotGetLoreItem(template.GetClientName() ?? template.Name)],
-				Array.Empty<GameServerPacket>());
+				Array.Empty<AionServerPacket>());
 		}
 
 		var addPlan = InventoryAddService.CreateAddItemPlan(
@@ -134,20 +134,20 @@ public sealed class WorldNpcLootService
 		if (!addPlan.Succeeded && addPlan.AddedItems.Count == 0 && addPlan.UpdatedItems.Count == 0)
 		{
 			var failurePackets = addPlan.InventoryFull
-				? new GameServerPacket[] { SmSystemMessage.FullInventory() }
-				: Array.Empty<GameServerPacket>();
-			return new WorldNpcLootResult(WorldNpcLootStatus.InventoryFull, failurePackets, Array.Empty<GameServerPacket>());
+				? new AionServerPacket[] { SmSystemMessage.FullInventory() }
+				: Array.Empty<AionServerPacket>();
+			return new WorldNpcLootResult(WorldNpcLootStatus.InventoryFull, failurePackets, Array.Empty<AionServerPacket>());
 		}
 
 		ApplyInventoryPlan(player, addPlan);
 		var playerPackets = CreateInventoryCollectPackets(addPlan, template, itemRestrictionCleanups).ToList();
 		var remainingDrops = _dropRegistrationService.ApplyCollectedCount(npcObjectId, itemIndex, addPlan.RemainingCount);
-		var visiblePackets = new List<GameServerPacket>();
+		var visiblePackets = new List<AionServerPacket>();
 		if (remainingDrops.Count == 0)
 		{
 			playerPackets.Add(new SmLootStatus(npcObjectId, SmLootStatusType.CloseDropList));
 			player.StopLooting();
-			visiblePackets.Add(new SmEmotion(player, EmotionType.EndLoot, 0, npcObjectId));
+			visiblePackets.Add(new SmEmotion(player, EmotionType.END_LOOT, 0, npcObjectId));
 			registration.ClearLootingPlayer(player.ObjectId);
 			DeleteEmptyDropCorpse(npcObjectId);
 		}
@@ -264,7 +264,7 @@ public sealed class WorldNpcLootService
 		player.InventoryItems = inventory;
 	}
 
-	private static IEnumerable<GameServerPacket> CreateInventoryCollectPackets(
+	private static IEnumerable<AionServerPacket> CreateInventoryCollectPackets(
 		InventoryAddPlan addPlan,
 		ItemTemplateSummary template,
 		ItemRestrictionCleanupTable? itemRestrictionCleanups)
@@ -305,12 +305,12 @@ public sealed class WorldNpcLootService
 
 public sealed record WorldNpcLootResult(
 	WorldNpcLootStatus Status,
-	IReadOnlyList<GameServerPacket> PlayerPackets,
-	IReadOnlyList<GameServerPacket> VisiblePlayerPackets)
+	IReadOnlyList<AionServerPacket> PlayerPackets,
+	IReadOnlyList<AionServerPacket> VisiblePlayerPackets)
 {
 	public static WorldNpcLootResult None(WorldNpcLootStatus status)
 	{
-		return new WorldNpcLootResult(status, Array.Empty<GameServerPacket>(), Array.Empty<GameServerPacket>());
+		return new WorldNpcLootResult(status, Array.Empty<AionServerPacket>(), Array.Empty<AionServerPacket>());
 	}
 }
 
@@ -385,7 +385,7 @@ public sealed record WorldNpcFreeForAllResult(
 		var npcRace = NormalizeRace(Npc.Template.Race);
 		return npcRace switch
 		{
-			"ELYOS" or "ASMODIANS" => !string.Equals(npcRace, NormalizeRace(player.Race), StringComparison.Ordinal),
+			"ELYOS" or "ASMODIANS" => !string.Equals(npcRace, NormalizeRace(player.Race.ToString()), StringComparison.Ordinal),
 			_ => true,
 		};
 	}

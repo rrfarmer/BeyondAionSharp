@@ -385,7 +385,7 @@ public class PlayerRestrictions
         ItemActions itemActions = item.GetItemTemplate().GetActions();
         if (itemActions == null || itemActions.GetItemActions().Count == 0)
         {
-            if (!QuestEngine.GetInstance().IsRegisteredQuestItem(item.GetItemId()))
+            if (!Aion.GameServer.QuestEngine.QuestEngine.GetInstance().IsRegisteredQuestItem(item.GetItemId()))
             {
                 PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_ITEM_IS_NOT_USABLE());
                 return false;

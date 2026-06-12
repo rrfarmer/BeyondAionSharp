@@ -36,4 +36,7 @@ public enum WorldDropType
     OtherInstances,
     // Java parity: NONE
     None,
+
+    // Java-name alias (call sites use the Java SCREAMING_SNAKE name; same value, additive).
+    NONE = None,
 }

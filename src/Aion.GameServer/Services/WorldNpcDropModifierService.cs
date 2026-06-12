@@ -17,7 +17,7 @@ public sealed class WorldNpcDropModifierService
 		// Zone names stay empty until the future CM_SUBZONE_CHANGE / MapRegion revalidation model can mirror npc.isInsideZone(...).
 		var effectiveBoostDropRate = boostRateContext?.CalculateBoostDropRate() ?? boostDropRate;
 		return new WorldNpcDropModifiers(
-			looter.Race,
+			looter.Race.ToString(),
 			effectiveBoostDropRate,
 			GetReductionDropRate(npc.Template.Level, highestLevel ?? looter.Level),
 			IsDropNpcChest: IsChest(npc));

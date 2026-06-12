@@ -35,7 +35,7 @@ public class WalkManager
     {
         if (!npcAI.GetOwner().IsRandomWalker())
             return false;
-        if (!npcAI.SetStateIfNot(AiState.Walking) || !npcAI.SetSubStateIfNot(AiSubState.WalkRandom))
+        if (!npcAI.SetStateIfNot(AIState.WALKING) || !npcAI.SetSubStateIfNot(AISubState.WALK_RANDOM))
             return false;
         EmoteManager.EmoteStartWalking(npcAI.GetOwner());
         ChooseNextRandomPoint(npcAI);
@@ -54,7 +54,7 @@ public class WalkManager
                 return false;
             owner.GetMoveController().SetWalkerTemplate(template, 0);
         }
-        if (!npcAI.SetStateIfNot(AiState.Walking) || !npcAI.SetSubStateIfNot(AiSubState.WalkPath))
+        if (!npcAI.SetStateIfNot(AIState.WALKING) || !npcAI.SetSubStateIfNot(AISubState.WALK_PATH))
             return false;
         RouteStep nextStep = FindNextRoutStep(owner);
         owner.GetMoveController().SetRouteStep(nextStep);
@@ -65,8 +65,8 @@ public class WalkManager
 
     public static void StartForcedWalking(NpcAI npcAI, float x, float y, float z)
     {
-        npcAI.SetStateIfNot(AiState.ForcedWalking);
-        npcAI.SetSubStateIfNot(AiSubState.None);
+        npcAI.SetStateIfNot(AIState.FORCED_WALKING);
+        npcAI.SetSubStateIfNot(AISubState.NONE);
         EmoteManager.EmoteStartWalking(npcAI.GetOwner());
         npcAI.GetOwner().GetMoveController().ForcedMoveToPoint(x, y, z);
     }
@@ -128,11 +128,11 @@ public class WalkManager
 
     public static void TargetReached(NpcAI npcAI)
     {
-        if (npcAI.IsInState(AiState.Walking))
+        if (npcAI.IsInState(AIState.WALKING))
         {
             switch (npcAI.GetSubState())
             {
-                case AiSubState.WalkPath:
+                case AISubState.WALK_PATH:
                     npcAI.GetOwner().UpdateKnownlist();
                     if (npcAI.GetOwner().GetWalkerGroup() != null)
                     {
@@ -143,23 +143,23 @@ public class WalkManager
                         ChooseNextRouteStep(npcAI);
                     }
                     break;
-                case AiSubState.WalkWaitGroup:
-                    npcAI.SetSubStateIfNot(AiSubState.WalkPath);
+                case AISubState.WALK_WAIT_GROUP:
+                    npcAI.SetSubStateIfNot(AISubState.WALK_PATH);
                     ChooseNextRouteStep(npcAI);
                     break;
-                case AiSubState.WalkRandom:
+                case AISubState.WALK_RANDOM:
                     ChooseNextRandomPoint(npcAI);
                     break;
-                case AiSubState.Talk:
-                    npcAI.SetStateIfNot(AiState.Idle);
+                case AISubState.TALK:
+                    npcAI.SetStateIfNot(AIState.IDLE);
                     npcAI.GetOwner().GetMoveController().AbortMove();
                     break;
             }
         }
-        else if (npcAI.IsInState(AiState.ForcedWalking))
+        else if (npcAI.IsInState(AIState.FORCED_WALKING))
         {
             npcAI.GetOwner().GetMoveController().AbortMove();
-            npcAI.SetStateIfNot(AiState.Idle);
+            npcAI.SetStateIfNot(AIState.IDLE);
             npcAI.Think();
         }
     }
@@ -180,7 +180,7 @@ public class WalkManager
             {
                 ThreadPoolManager.GetInstance().Schedule(ct =>
                 {
-                    if (npcAI.IsInState(AiState.Walking))
+                    if (npcAI.IsInState(AIState.WALKING))
                     {
                         npcAI.GetOwner().GetMoveController().MoveToNextPoint();
                     }
@@ -197,7 +197,7 @@ public class WalkManager
 
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            if (!npcAI.IsInState(AiState.Walking))
+            if (!npcAI.IsInState(AIState.WALKING))
                 return ValueTask.CompletedTask;
             int randomWalkRange = owner.GetSpawn().GetRandomWalkRange();
             int diameter = randomWalkRange * 2;
@@ -219,9 +219,9 @@ public class WalkManager
     public static void StopWalking(NpcAI npcAI)
     {
         npcAI.GetOwner().GetMoveController().AbortMove();
-        npcAI.SetStateIfNot(AiState.Idle);
-        if (npcAI.GetSubState() != AiSubState.Freeze)
-            npcAI.SetSubStateIfNot(AiSubState.None);
+        npcAI.SetStateIfNot(AIState.IDLE);
+        if (npcAI.GetSubState() != AISubState.FREEZE)
+            npcAI.SetSubStateIfNot(AISubState.NONE);
         EmoteManager.EmoteStopWalking(npcAI.GetOwner());
     }
 

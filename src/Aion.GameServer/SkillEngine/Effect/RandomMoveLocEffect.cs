@@ -23,7 +23,7 @@ public class RandomMoveLocEffect : EffectTemplate
     public override void ApplyEffect(Effect effect)
     {
         Skill skill = effect.GetSkill();
-        World.GetInstance().UpdatePosition(effect.GetEffector(), skill.GetX(), skill.GetY(), skill.GetZ(), skill.GetH());
+        Aion.GameServer.World.World.GetInstance().UpdatePosition(effect.GetEffector(), skill.GetX(), skill.GetY(), skill.GetZ(), skill.GetH());
         if (effect.GetEffector().GetMoveController() is PlayerMoveController pmc)
             pmc.SetHasMovedByRandomMoveLocEffect(skill);
     }

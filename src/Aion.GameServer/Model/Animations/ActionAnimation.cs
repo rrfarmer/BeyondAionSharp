@@ -21,4 +21,12 @@ public enum ActionAnimation : int
     CraftLevelUp = 4,
     // Java parity: CLASS_CHANGE(4) — shares value 4 with CRAFT_LEVEL_UP, same as Java
     ClassChange = 4,
+
+    // Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values, additive).
+    LEVEL_UP = LevelUp,
+    UNK = Unk,
+    BIND_KISK = BindKisk,
+    REPAIR_GATE = RepairGate,
+    CRAFT_LEVEL_UP = CraftLevelUp,
+    CLASS_CHANGE = ClassChange,
 }

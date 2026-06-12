@@ -30,7 +30,7 @@ public class PvPArenaScore : InstanceScore<PvPArenaPlayerReward>
     {
         this.instance = instance;
 
-        WorldMapType wmt = WorldMapType.GetWorld(instance.GetMapId());
+        WorldMapType wmt = WorldMapTypeExtensions.GetWorld(instance.GetMapId());
         bool isSolo = IsSoloArena(wmt);
         buffId = (sbyte)(isSolo ? 8 : 7);
         zones.AddRange(isSolo ? new[] { 1, 2, 3, 4 } : new[] { 1, 2, 3, 4, 5, 6 });
@@ -184,7 +184,7 @@ public class PvPArenaScore : InstanceScore<PvPArenaPlayerReward>
 
     public bool CanReward()
     {
-        return WorldMapType.GetWorld(instance.GetMapId()) switch
+        return WorldMapTypeExtensions.GetWorld(instance.GetMapId()) switch
         {
             WorldMapType.ARENA_OF_DISCIPLINE or WorldMapType.ARENA_OF_GLORY or WorldMapType.ARENA_OF_CHAOS or WorldMapType.ARENA_OF_HARMONY => true,
             _ => false,

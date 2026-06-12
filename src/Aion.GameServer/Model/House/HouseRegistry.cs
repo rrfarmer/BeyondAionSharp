@@ -173,7 +173,7 @@ public class HouseRegistry : IPersistable
         }
         // remove house object use cooldowns for this object
         if (obj is UseableHouseObject<PlaceableHouseObject> useableHouseObject && useableHouseObject.HasUseCooldown())
-            World.GetInstance().ForEachPlayer(player => player.GetHouseObjectCooldowns().Remove(obj.GetObjectId()));
+            Aion.GameServer.World.World.GetInstance().ForEachPlayer(player => player.GetHouseObjectCooldowns().Remove(obj.GetObjectId()));
     }
 
     /// <summary>Despawns all objects and updates DB.</summary>

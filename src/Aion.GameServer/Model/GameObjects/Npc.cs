@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.SkillEngine.Effects;

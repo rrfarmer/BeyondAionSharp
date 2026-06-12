@@ -3,21 +3,21 @@ namespace Aion.GameServer.Services.ToyPet;
 public enum PetHungryLevel : byte
 {
 	// Java parity: services/toypet/PetHungryLevel enum ids.
-	Hungry = 0,
-	Content = 1,
-	Semifull = 2,
-	Full = 3,
+	HUNGRY = 0,
+	CONTENT = 1,
+	SEMIFULL = 2,
+	FULL = 3,
 }
 
 public static class PetHungryLevelExtensions
 {
 	public static PetHungryLevel GetNextValue(this PetHungryLevel level) => level switch
 	{
-		PetHungryLevel.Hungry => PetHungryLevel.Content,
-		PetHungryLevel.Content => PetHungryLevel.Semifull,
-		PetHungryLevel.Semifull => PetHungryLevel.Full,
-		PetHungryLevel.Full => PetHungryLevel.Hungry,
-		_ => PetHungryLevel.Hungry,
+		PetHungryLevel.HUNGRY => PetHungryLevel.CONTENT,
+		PetHungryLevel.CONTENT => PetHungryLevel.SEMIFULL,
+		PetHungryLevel.SEMIFULL => PetHungryLevel.FULL,
+		PetHungryLevel.FULL => PetHungryLevel.HUNGRY,
+		_ => PetHungryLevel.HUNGRY,
 	};
 
 	public static PetHungryLevel FromId(int value)

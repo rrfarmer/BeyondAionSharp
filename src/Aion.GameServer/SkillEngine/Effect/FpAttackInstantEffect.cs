@@ -2,6 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -36,6 +37,6 @@ public class FpAttackInstantEffect : EffectTemplate
         if (!(effect.GetEffected() is Player))
             return;
         Player player = (Player)effect.GetEffected();
-        player.GetLifeStats().ReduceFp(SM_ATTACK_STATUS.TYPE.FP_DAMAGE, effect.GetReserveds(Position).GetValue(), effect.GetSkillId(), SM_ATTACK_STATUS.LOG.FPATTACK);
+        player.GetLifeStats().ReduceFp(SmAttackStatus.TYPE.FP_DAMAGE, effect.GetReserveds(Position).GetValue(), effect.GetSkillId(), SmAttackStatus.LOG.FPATTACK);
     }
 }

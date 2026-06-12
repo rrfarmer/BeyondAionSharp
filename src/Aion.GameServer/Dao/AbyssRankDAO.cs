@@ -14,7 +14,7 @@ namespace Aion.GameServer.Dao;
 
 /// <summary>
 /// Java parity: dao/AbyssRankDAO (@author ATracer, Divinity, nrg). JDBC DAO over abyss_rank + ranking lists. DatabaseFactory-style.
-/// AbyssRankEnum.GetId/GetGpLossPerDay are extension methods (Utils.Stats); Race/PlayerClass/Gender valueOf->Enum.Parse, toString()->ToString();
+/// AbyssRankEnumExtensions.GetId/GetGpLossPerDay are extension methods (Utils.Stats); Race/PlayerClass/Gender valueOf->Enum.Parse, toString()->ToString();
 /// System.currentTimeMillis()->DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(); storeAbyssRank switch NEW/UPDATE_REQUIRED->IPersistable.PersistentState.
 /// updateRankingLists mixes literal addBatch("SET @a=0;") with parameterized addBatch() on one PreparedStatement -> MySqlBatch with literal
 /// MySqlBatchCommands + parameterized MySqlBatchCommands (autocommit, no explicit transaction, as Java). Table-qualified column labels

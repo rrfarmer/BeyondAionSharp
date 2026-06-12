@@ -18,7 +18,7 @@ public static class IdianPolishBurnApplicationService
 			return IdianPolishBurnApplicationResult.NoChange();
 
 		var inventoryItems = player.InventoryItems.ToList();
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		foreach (var burn in plan.Burns)
 		{
 			ReplaceInventoryItem(inventoryItems, burn.ItemUpdate);
@@ -65,10 +65,10 @@ public static class IdianPolishBurnApplicationService
 public sealed record IdianPolishBurnApplicationResult(
 	bool Changed,
 	IReadOnlyList<InventoryItem> InventoryItems,
-	IReadOnlyList<GameServerPacket> Packets)
+	IReadOnlyList<AionServerPacket> Packets)
 {
 	public static IdianPolishBurnApplicationResult NoChange()
 	{
-		return new IdianPolishBurnApplicationResult(false, Array.Empty<InventoryItem>(), Array.Empty<GameServerPacket>());
+		return new IdianPolishBurnApplicationResult(false, Array.Empty<InventoryItem>(), Array.Empty<AionServerPacket>());
 	}
 }

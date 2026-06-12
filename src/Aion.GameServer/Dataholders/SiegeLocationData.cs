@@ -46,9 +46,9 @@ public class SiegeLocationData
                 {
                     OutpostLocation outpost = new OutpostLocation(template);
                     if (outpost.GetLocationId() == 2111)
-                        outpost.SetRace(SiegeRace.Elyos);
+                        outpost.SetRace(SiegeRace.ELYOS);
                     else if (outpost.GetLocationId() == 3111)
-                        outpost.SetRace(SiegeRace.Asmodians);
+                        outpost.SetRace(SiegeRace.ASMODIANS);
                     outpostLocations[template.GetId()] = outpost;
                     siegeLocations[template.GetId()] = outpost;
                     break;

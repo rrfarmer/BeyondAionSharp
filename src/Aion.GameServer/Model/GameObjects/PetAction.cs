@@ -18,6 +18,23 @@ public enum PetAction
 	HAdopt = 16,
 	HAbandon = 17,
 	Unknown = 255,
+
+	// Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values, additive).
+	LOAD_PETS = LoadPets,
+	ADOPT = Adopt,
+	SURRENDER = Surrender,
+	SPAWN = Spawn,
+	DISMISS = Dismiss,
+	TALK_WITH_MERCHANT = TalkWithMerchant,
+	TALK_WITH_MINDER = TalkWithMinder,
+	FOOD = Food,
+	RENAME = Rename,
+	MOOD = Mood,
+	SPECIAL_FUNCTION = SpecialFunction,
+	EXTEND_EXPIRATION = ExtendExpiration,
+	H_ADOPT = HAdopt,
+	H_ABANDON = HAbandon,
+	UNKNOWN = Unknown,
 }
 
 public static class PetActionResolver

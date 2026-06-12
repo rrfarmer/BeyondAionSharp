@@ -24,7 +24,7 @@ public class PlayerAllianceEnteredEvent : PlayerEnteredEvent<PlayerAlliance>
         PlayerAllianceMember invitedMember = PlayerAllianceService.AddPlayerToAlliance(team, player);
 
         SM_ALLIANCE_INFO allianceInfo = new SM_ALLIANCE_INFO(team);
-        SM_ALLIANCE_MEMBER_INFO allianceMemberInfo = new SM_ALLIANCE_MEMBER_INFO(invitedMember, PlayerAllianceEvent.Join);
+        SM_ALLIANCE_MEMBER_INFO allianceMemberInfo = new SM_ALLIANCE_MEMBER_INFO(invitedMember, PlayerAllianceEvent.JOIN);
         PacketSendUtility.SendPacket(player, allianceInfo);
         PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_FORCE_ENTERED_FORCE());
         PacketSendUtility.SendPacket(player, allianceMemberInfo);
@@ -37,7 +37,7 @@ public class PlayerAllianceEnteredEvent : PlayerEnteredEvent<PlayerAlliance>
                 PacketSendUtility.SendPacket(p, allianceMemberInfo);
                 PacketSendUtility.SendPacket(p, SM_SYSTEM_MESSAGE.STR_FORCE_HE_ENTERED_FORCE(player.GetName()));
                 PacketSendUtility.SendPacket(p, allianceInfo);
-                PacketSendUtility.SendPacket(player, new SM_ALLIANCE_MEMBER_INFO(member, PlayerAllianceEvent.Enter));
+                PacketSendUtility.SendPacket(player, new SM_ALLIANCE_MEMBER_INFO(member, PlayerAllianceEvent.ENTER));
             }
         });
         PacketSendUtility.BroadcastPacket(player, new SM_ABYSS_RANK_UPDATE(1, player), true);

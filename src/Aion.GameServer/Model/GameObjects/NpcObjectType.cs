@@ -6,15 +6,15 @@ namespace Aion.GameServer.Model.GameObjects;
 /// </summary>
 public enum NpcObjectType
 {
-    Normal = 1,
-    Summon = 2,
-    Homing = 16,
-    Trap = 32,
-    SkillArea = 64,
-    Totem = 128,    // TODO not implemented
-    GroupGate = 256,
-    Servant = 1024,
-    Pet = 2048,     // TODO not used
+    NORMAL = 1,
+    SUMMON = 2,
+    HOMING = 16,
+    TRAP = 32,
+    SKILLAREA = 64,
+    TOTEM = 128,    // TODO not implemented
+    GROUPGATE = 256,
+    SERVANT = 1024,
+    PET = 2048,     // TODO not used
 }
 
 public static class NpcObjectTypeExtensions

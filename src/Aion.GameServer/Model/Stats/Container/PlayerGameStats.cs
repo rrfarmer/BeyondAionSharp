@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.Actions;
 using System;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Configs.Main;
@@ -132,7 +133,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
         {
             Aion.GameServer.Model.Templates.Ride.RideInfo ride = owner.ride;
             int runSpeed = (int)pst.GetRunSpeed() * 1000;
-            if (owner.IsInState(CreatureState.Flying))
+            if (owner.IsInState(CreatureState.FLYING))
             {
                 movementSpeed = new AdditionStat(StatEnum.FLY_SPEED, runSpeed, owner);
                 movementSpeed.AddToBonus((int)(ride.GetFlySpeed() * 1000) - runSpeed);
@@ -146,9 +147,9 @@ public class PlayerGameStats : CreatureGameStats<Player>
         }
         else if (owner.IsInFlyingState())
             movementSpeed = GetStat(StatEnum.FLY_SPEED, JRound(pst.GetFlySpeed() * 1000));
-        else if (owner.IsInState(CreatureState.Flying) && !owner.IsInState(CreatureState.Resting))
+        else if (owner.IsInState(CreatureState.FLYING) && !owner.IsInState(CreatureState.RESTING))
             movementSpeed = GetStat(StatEnum.SPEED, 12000);
-        else if (owner.IsInState(CreatureState.WalkMode))
+        else if (owner.IsInState(CreatureState.WALK_MODE))
             movementSpeed = GetStat(StatEnum.SPEED, JRound(pst.GetWalkSpeed() * 1000));
         else
             movementSpeed = GetStat(StatEnum.SPEED, JRound(pst.GetRunSpeed() * 1000));
@@ -367,7 +368,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
     public override Stat2 GetHpRegenRate()
     {
         int baseV = owner.GetLevel() + 3;
-        if (owner.IsInState(CreatureState.Resting))
+        if (owner.IsInState(CreatureState.RESTING))
             baseV *= 8;
         baseV = (int)(baseV * (GetHealth().GetCurrent() / 100f));
         return GetStat(StatEnum.REGEN_HP, baseV);
@@ -376,7 +377,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
     public override Stat2 GetMpRegenRate()
     {
         int baseV = owner.GetLevel() + 8;
-        if (owner.IsInState(CreatureState.Resting))
+        if (owner.IsInState(CreatureState.RESTING))
             baseV *= 8;
         baseV = (int)(baseV * (GetWill().GetCurrent() / 100f));
         return GetStat(StatEnum.REGEN_MP, baseV);
@@ -389,7 +390,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
 
     public override void UpdateSpeedInfo()
     {
-        PacketSendUtility.BroadcastToSightedPlayers(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed), true);
+        PacketSendUtility.BroadcastToSightedPlayers(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED), true);
     }
 
     public int GetHealthDependentAdditionalHp()
@@ -434,7 +435,7 @@ public class PlayerGameStats : CreatureGameStats<Player>
 
     private int GetPowerShardDamage(bool mainHand, bool removePowerShards)
     {
-        if (owner.IsInState(CreatureState.Powershard))
+        if (owner.IsInState(CreatureState.POWERSHARD))
         {
             Equipment equipment = owner.GetEquipment();
             Item weapon = mainHand ? equipment.GetMainHandWeapon() : equipment.GetOffHandWeapon();

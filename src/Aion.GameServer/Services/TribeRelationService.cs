@@ -4,6 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Spawns.Basespawns;
+using Aion.GameServer.Services.Panesterra.Ahserion;
 
 namespace Aion.GameServer.Services;
 

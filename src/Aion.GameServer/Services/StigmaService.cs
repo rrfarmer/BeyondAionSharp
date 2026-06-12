@@ -134,7 +134,7 @@ public static class StigmaService
 		var addedSkills = new List<PlayerSkill>();
 		for (var level = 20; level <= playerLevel; level++)
 		{
-			foreach (var template in skillTree.GetTemplatesFor(player.PlayerClass, level, player.Race))
+			foreach (var template in skillTree.GetTemplatesFor(player.PlayerClass.ToString(), level, player.Race.ToString()))
 			{
 				if (!template.IsStigma)
 					continue;
@@ -188,7 +188,7 @@ public static class StigmaService
 			var template = itemTemplates.GetItemTemplate(item.ItemId);
 			if (template?.StigmaInfo == null
 				|| !IsPossibleEquippedStigma(player, item, experienceTable, stigmaSlotQuestMembership)
-				|| !template.IsClassSpecific(player.PlayerClass)
+				|| !template.IsClassSpecific(player.PlayerClass.ToString())
 				|| HasDifferentStigmaEquippedInSameSlot(inventoryItems, item))
 			{
 				var update = CopyInventoryItem(item, slot: 0, isEquipped: false);
@@ -324,7 +324,7 @@ public static class StigmaService
 		{
 			foreach (var skillTemplate in skillTemplates.GetSkillTemplatesByGroup(skillGroup))
 			{
-				foreach (var skill in skillTree.GetTemplatesForSkill(skillTemplate.SkillId, player.PlayerClass, player.Race))
+				foreach (var skill in skillTree.GetTemplatesForSkill(skillTemplate.SkillId, player.PlayerClass.ToString(), player.Race.ToString()))
 				{
 					if (playerLevel < skill.MinLevel)
 						continue;
@@ -358,7 +358,7 @@ public static class StigmaService
 		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
 		var linkedStigmaSkillLevel = stigmas.Min(stigma => stigma.Item.Enchant) + 1;
 		var addedSkills = new List<PlayerSkill>();
-		foreach (var skill in skillTree.GetSkillsForSkill(skillId, player.PlayerClass, player.Race, playerLevel, skillTemplates))
+		foreach (var skill in skillTree.GetSkillsForSkill(skillId, player.PlayerClass.ToString(), player.Race.ToString(), playerLevel, skillTemplates))
 		{
 			var learned = AddOrUpgradeTemporarySkill(skills, skill.SkillId, linkedStigmaSkillLevel, skill.IsLinkedStigma ? 3 : 1);
 			if (learned != null)
@@ -393,7 +393,7 @@ public static class StigmaService
 				if (notifyPlayer && !string.IsNullOrEmpty(skillName) && !removedSkillNames.Contains(skillName, StringComparer.Ordinal))
 					removedSkillNames.Add(skillName);
 
-				foreach (var skill in skillTree.GetSkillsForSkill(skillTemplate.SkillId, player.PlayerClass, player.Race, playerLevel: -1, skillTemplates: skillTemplates))
+				foreach (var skill in skillTree.GetSkillsForSkill(skillTemplate.SkillId, player.PlayerClass.ToString(), player.Race.ToString(), playerLevel: -1, skillTemplates: skillTemplates))
 				{
 					var removed = RemoveSkill(skills, skill.SkillId);
 					if (removed != null)
@@ -554,8 +554,8 @@ public static class StigmaService
 	private static int GetLinkedStigmaLearnSkill(Player player, IReadOnlySet<int> equippedItemIds)
 	{
 		// Java parity: services/StigmaService.getLinkedStigmaLearnSkill.
-		var isElyos = player.Race == "ELYOS";
-		return player.PlayerClass switch
+		var isElyos = player.Race.ToString() == "ELYOS";
+		return player.PlayerClass.ToString() switch
 		{
 			"GLADIATOR" => IsEquipped(equippedItemIds, 140001118) && IsEquipped(equippedItemIds, 2, 140001103, 140001104, 140001105)
 				? 731
@@ -711,8 +711,8 @@ public static class StigmaService
 		// Java parity: services/StigmaService.notifyEquipAction selects the base kinah fee,
 		// then services/trade/PricesService.getPriceForService applies global price, modifier, and tax.
 		long kinahCount = 25000;
-		if ((player.Race == "ASMODIANS" && player.Position.WorldId == 320070000)
-			|| (player.Race == "ELYOS" && player.Position.WorldId == 310070000))
+		if ((player.Race == "ASMODIANS" && player.GetPosition().WorldId == 320070000)
+			|| (player.Race == "ELYOS" && player.GetPosition().WorldId == 310070000))
 		{
 			kinahCount = 1000;
 		}
@@ -725,7 +725,7 @@ public static class StigmaService
 			kinahCount = 100000;
 		}
 
-		return PricesService.GetPriceForService(kinahCount, player.Race, priceOptions, influenceRates);
+		return PricesService.GetPriceForService(kinahCount, player.Race.ToString(), priceOptions, influenceRates);
 	}
 
 	private static bool IsRegularStigma(long slot)

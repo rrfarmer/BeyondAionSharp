@@ -107,11 +107,11 @@ public class TownService
         {
             case Race.ELYOS:
                 if (player.GetWorldId() == 700010000)
-                    PacketSendUtility.SendPacket(player, new SmTownsList(elyosTowns));
+                    PacketSendUtility.SendPacket(player, new SM_TOWNS_LIST(elyosTowns));
                 break;
             case Race.ASMODIANS:
                 if (player.GetWorldId() == 710010000)
-                    PacketSendUtility.SendPacket(player, new SmTownsList(asmosTowns));
+                    PacketSendUtility.SendPacket(player, new SM_TOWNS_LIST(asmosTowns));
                 break;
         }
     }

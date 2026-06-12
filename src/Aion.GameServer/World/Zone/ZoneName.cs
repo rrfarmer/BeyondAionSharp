@@ -13,6 +13,9 @@ public sealed class ZoneName
     // Java parity: ZoneName.NONE
     public static readonly ZoneName None = new("NONE");
 
+    // Java-name alias (call sites use the Java SCREAMING_SNAKE name; same instance, additive).
+    public static ZoneName NONE => None;
+
     static ZoneName()
     {
         _zoneNames[None.Name] = None;

@@ -24,7 +24,7 @@ public class MoveBehindEffect : DamageEffect
         float y1 = (float)Math.Sin(Math.PI + radian) * distance;
         Vector3f closestCollision = GeoService.GetInstance().GetClosestCollision(effector, effected.GetX() + x1, effected.GetY() + y1, effected.GetZ());
         byte h = PositionUtil.GetHeadingTowards(effector, effected);
-        World.GetInstance().UpdatePosition(effector, closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
+        Aion.GameServer.World.World.GetInstance().UpdatePosition(effector, closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
         // set target position for SM_CASTSPELL_RESULT
         effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
         base.Calculate(effect);

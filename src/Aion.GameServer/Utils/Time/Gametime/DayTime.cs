@@ -7,11 +7,11 @@ namespace Aion.GameServer.Utils.Time.Gametime;
 public enum DayTime
 {
     // Java parity: MORNING
-    Morning,
+    MORNING,
     // Java parity: AFTERNOON
-    Afternoon,
+    AFTERNOON,
     // Java parity: EVENING
-    Evening,
+    EVENING,
     // Java parity: NIGHT
-    Night,
+    NIGHT,
 }

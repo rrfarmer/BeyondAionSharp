@@ -34,9 +34,9 @@ public class ArtifactAssault : Assault<ArtifactSiege, ArtifactLocation>
         float x1 = (float)(boss.GetX() + Math.Cos(angleRadians));
         float y1 = (float)(boss.GetY() + Math.Sin(angleRadians));
 
-        SpawnTemplate spawnTemplate = SpawnEngine.NewSiegeSpawn(worldId, GetAssaulterIdByBossLvl(), locationId, SiegeRace.BALAUR, SiegeModType.ASSAULT,
+        SpawnTemplate spawnTemplate = Aion.GameServer.SpawnEngine.SpawnEngine.NewSiegeSpawn(worldId, GetAssaulterIdByBossLvl(), locationId, SiegeRace.BALAUR, SiegeModType.ASSAULT,
             x1, y1, boss.GetZ(), (byte)0);
-        Npc assaulter = (Npc)SpawnEngine.SpawnObject(spawnTemplate, 1);
+        Npc assaulter = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(spawnTemplate, 1);
         assaulter.GetAggroList().AddHate(boss, 1000);
     }
 

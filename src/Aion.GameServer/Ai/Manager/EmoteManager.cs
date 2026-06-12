@@ -17,19 +17,19 @@ public class EmoteManager
     /// <summary>Npc starts attacking from idle state</summary>
     public static void EmoteStartAttacking(Npc owner, Creature target)
     {
-        owner.UnsetState(CreatureState.WalkMode);
-        if (!owner.IsInState(CreatureState.WeaponEquipped))
+        owner.UnsetState(CreatureState.WALK_MODE);
+        if (!owner.IsInState(CreatureState.WEAPON_EQUIPPED))
         {
-            owner.SetState(CreatureState.WeaponEquipped);
-            PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed, 0, target.GetObjectId()));
-            PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.AttackModeInMove, 0, target.GetObjectId()));
+            owner.SetState(CreatureState.WEAPON_EQUIPPED);
+            PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED, 0, target.GetObjectId()));
+            PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ATTACKMODE_IN_MOVE, 0, target.GetObjectId()));
         }
     }
 
     /// <summary>Npc stops attacking</summary>
     public static void EmoteStopAttacking(Npc owner)
     {
-        owner.UnsetState(CreatureState.WeaponEquipped);
+        owner.UnsetState(CreatureState.WEAPON_EQUIPPED);
         VisibleObject target = owner.GetTarget();
         if (target is Player player)
         {
@@ -40,36 +40,36 @@ public class EmoteManager
     /// <summary>Npc starts following other creature</summary>
     public static void EmoteStartFollowing(Npc owner)
     {
-        owner.UnsetState(CreatureState.WalkMode);
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed, 0, 0));
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.NeutralModeInMove, 0, 0));
+        owner.UnsetState(CreatureState.WALK_MODE);
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED, 0, 0));
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.NEUTRALMODE_IN_MOVE, 0, 0));
     }
 
     /// <summary>Npc starts walking (either random or path)</summary>
     public static void EmoteStartWalking(Npc owner)
     {
-        owner.SetState(CreatureState.WalkMode);
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.Walk));
+        owner.SetState(CreatureState.WALK_MODE);
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.WALK));
     }
 
     /// <summary>Npc stops walking</summary>
     public static void EmoteStopWalking(Npc owner)
     {
-        owner.UnsetState(CreatureState.WalkMode);
+        owner.UnsetState(CreatureState.WALK_MODE);
     }
 
     /// <summary>Npc starts returning to spawn location</summary>
     public static void EmoteStartReturning(Npc owner)
     {
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed, 0, 0));
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.NeutralModeInMove, 0, 0));
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED, 0, 0));
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.NEUTRALMODE_IN_MOVE, 0, 0));
     }
 
     /// <summary>Npc starts idling</summary>
     public static void EmoteStartIdling(Npc owner)
     {
-        owner.SetState(CreatureState.WalkMode);
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.ChangeSpeed, 0, 0));
-        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.NeutralModeInMove, 0, 0));
+        owner.SetState(CreatureState.WALK_MODE);
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.CHANGE_SPEED, 0, 0));
+        PacketSendUtility.BroadcastPacket(owner, new SM_EMOTION(owner, EmotionType.NEUTRALMODE_IN_MOVE, 0, 0));
     }
 }

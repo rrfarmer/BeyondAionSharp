@@ -58,7 +58,7 @@ public class PulledEffect : EffectTemplate
                 player.GetController().OnStopMove();
             }
         }
-        World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
+        Aion.GameServer.World.World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
         if (effected is Player)
             PacketSendUtility.BroadcastPacketAndReceive(effected,
                     new SM_FORCED_MOVE(effect.IsReflected() ? effect.GetOriginalEffected() : effect.GetEffector(), effected.GetObjectId(), effect.GetTargetX(),

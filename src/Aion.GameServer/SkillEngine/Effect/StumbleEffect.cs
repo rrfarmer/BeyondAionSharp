@@ -32,7 +32,7 @@ public class StumbleEffect : EffectTemplate
             player.GetFlyController().OnStopGliding();
             player.GetController().OnStopMove();
         }
-        World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
+        Aion.GameServer.World.World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading());
         // TODO: FI_RobustCrash_G1 or FI_Whirlwind_G1 don't send anything, find pattern
         if (effected is Player)
             PacketSendUtility.BroadcastPacketAndReceive(effected, new SM_FORCED_MOVE(effect.GetEffector(), effected.GetObjectId(),

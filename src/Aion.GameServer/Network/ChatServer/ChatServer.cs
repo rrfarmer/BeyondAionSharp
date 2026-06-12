@@ -119,7 +119,7 @@ public sealed class ChatServer : IAsyncDisposable
 
 		_playerAuthCallbacks[player.ObjectId] = sendChatInit;
 		await SendPacketAsync(
-			new SmPlayerAuth(player.ObjectId, accountName, player.Name, ToRaceId(player.Race), player.AccessLevel),
+			new SmPlayerAuth(player.ObjectId, accountName, player.Name, ToRaceId(player.Race.ToString()), player.AccessLevel),
 			cancellationToken);
 		return true;
 	}

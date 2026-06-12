@@ -20,7 +20,7 @@ public sealed class PetFeedProgress
 		set => _totalPoints = value & 0x3FFF;
 	}
 
-	public PetHungryLevel HungryLevel { get; set; } = PetHungryLevel.Hungry;
+	public PetHungryLevel HungryLevel { get; set; } = PetHungryLevel.HUNGRY;
 
 	public int RegularCount => _regularConsumed & 0xFF;
 

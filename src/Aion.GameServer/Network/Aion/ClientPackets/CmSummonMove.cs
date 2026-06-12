@@ -42,11 +42,11 @@ public sealed class CmSummonMove : GameClientPacket
 
 	public bool HasManualPosition => MovementMask.HasManualPosition(Type);
 
-	public bool IsAbsolute => MovementMask.Has(Type, MovementMask.Absolute);
+	public bool IsAbsolute => MovementMask.Has(Type, MovementMask.ABSOLUTE);
 
-	public bool IsGliding => MovementMask.Has(Type, MovementMask.Glide);
+	public bool IsGliding => MovementMask.Has(Type, MovementMask.GLIDE);
 
-	public bool IsVehicle => MovementMask.Has(Type, MovementMask.Vehicle);
+	public bool IsVehicle => MovementMask.Has(Type, MovementMask.VEHICLE);
 
 	protected override void ReadPayload(PacketBuffer buffer)
 	{

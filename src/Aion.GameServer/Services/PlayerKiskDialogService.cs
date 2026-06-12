@@ -73,7 +73,7 @@ public static class PlayerKiskDialogService
 public sealed record PlayerKiskDialogResult(
 	bool Handled,
 	PlayerKiskDialogStatus Status,
-	GameServerPacket? ResponsePacket)
+	AionServerPacket? ResponsePacket)
 {
 	public static PlayerKiskDialogResult NotHandled(PlayerKiskDialogStatus status)
 	{
@@ -85,7 +85,7 @@ public sealed record PlayerKiskDialogResult(
 		return new PlayerKiskDialogResult(true, status, null);
 	}
 
-	public static PlayerKiskDialogResult WithPacket(PlayerKiskDialogStatus status, GameServerPacket packet)
+	public static PlayerKiskDialogResult WithPacket(PlayerKiskDialogStatus status, AionServerPacket packet)
 	{
 		return new PlayerKiskDialogResult(true, status, packet);
 	}

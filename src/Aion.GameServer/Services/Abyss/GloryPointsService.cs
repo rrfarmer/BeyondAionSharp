@@ -17,7 +17,7 @@ public class GloryPointsService
     {
         if (amount == 0)
             return;
-        Player player = World.GetInstance().GetPlayer(playerObjId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerObjId);
         bool addToStats = amount > 0;
         if (player == null)
         {

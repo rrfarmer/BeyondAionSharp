@@ -22,7 +22,7 @@ public enum SmAttackStatusType
     FpDamage = 26,
 }
 
-/// <summary>Java parity: SM_ATTACK_STATUS.LOG. Standalone enum, PascalCase names, Java values verbatim.</summary>
+/// <summary>Java parity: SmAttackStatus.LOG. Standalone enum, PascalCase names, Java values verbatim.</summary>
 public enum SmAttackStatusLog
 {
     SpellAttack = 1,

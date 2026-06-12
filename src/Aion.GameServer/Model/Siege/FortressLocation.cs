@@ -10,6 +10,9 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.World.Zone;
 using Aion.GameServer.Controllers.Observer;
+using Aion.GameServer.Utils;
+using Aion.GameServer.Model.Templates.Zone;
+using Aion.GameServer.Services.Teleport;
 
 namespace Aion.GameServer.Model.Siege;
 

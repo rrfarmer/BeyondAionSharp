@@ -81,7 +81,7 @@ public class AbyssRankingCache
         // update cache
         RefreshCache();
 
-        World.GetInstance().ForEachPlayer(player =>
+        Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
         {
             player.ResetAbyssRankListUpdated();
             if (player.GetLegion() != null) // update legion rank number

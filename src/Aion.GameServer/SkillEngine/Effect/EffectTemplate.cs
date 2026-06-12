@@ -427,7 +427,7 @@ public abstract class EffectTemplate
         // calculate cumulative resist chance for fear, sleep and paralyze if effector and effected are players
         bool isEffectorPlayer = (CustomConfig.COUNT_SUMMON_EFFECTS_FOR_CUMULATIVE_RESIST ? effector.GetMaster() : effector) is Player;
         if (isEffectorPlayer && effected is Player player)
-            effectPower -= player.GetEffectController().GetCumulativeResistance(CumulativeResistType.Get(statEnum.Value));
+            effectPower -= player.GetEffectController().GetCumulativeResistance(CumulativeResistTypeExtensions.Get(statEnum.Value));
 
         // penetration
         StatEnum? penetrationStat = GetPenetrationStat(statEnum.Value);

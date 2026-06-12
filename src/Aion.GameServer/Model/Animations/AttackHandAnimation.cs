@@ -9,9 +9,9 @@ namespace Aion.GameServer.Model.Animations;
 public enum AttackHandAnimation : byte
 {
     // Java parity: MAIN_HAND(0)
-    MainHand = 0,
+    MAIN_HAND = 0,
     // Java parity: OFF_HAND(1) — only some NPCs support off-hand (e.g. Hyperion)
-    OffHand = 1,
+    OFF_HAND = 1,
     // Java parity: RANDOM(2)
-    Random = 2,
+    RANDOM = 2,
 }

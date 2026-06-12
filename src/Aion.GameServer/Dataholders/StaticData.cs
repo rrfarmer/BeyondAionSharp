@@ -284,6 +284,72 @@ public sealed class StaticData
 
 	public Task? ValidationTask { get; }
 
+	// Java parity: DataManager.QUEST_DATA / TRIBE_RELATIONS_DATA / WORLD_MAPS_DATA / NPC_SHOUT_DATA / UPGRADE_ARCADE_DATA.
+	// These faithful dataholder classes are not yet populated by the bespoke XML loader; exposed here with empty
+	// defaults so the DataManager.*_DATA accessors compile. TODO(runtime): deserialize their source XML
+	// (e.g. game-server/data/static_data/quest_data/quest_data.xml is a self-contained <quests> root) and assign here.
+	public QuestsData Quests { get; } = new();
+	public TribeRelationsData TribeRelations { get; } = new();
+	public WorldMapsData WorldMaps2 { get; } = new();
+	public NpcShoutData NpcShouts { get; } = new();
+	public UpgradeArcadeData UpgradeArcade { get; } = new();
+	public SiegeLocationData SiegeLocations { get; } = new();
+	public ItemGroupsData ItemGroups { get; } = new();
+	public Aion.GameServer.Model.Templates.Mail.Mails SystemMailTemplates { get; } = new();
+	public HouseBuildingData HouseBuildings { get; } = new();
+	public GuideHtmlData GuideHtml { get; } = new();
+	public MaterialData Materials { get; } = new();
+	public ZoneData ZoneInfo { get; } = new();
+	public XMLQuests XmlQuests { get; } = new();
+	public TownSpawnsData TownSpawns { get; } = new();
+	public SkillChargeData SkillCharges { get; } = new();
+	public MotionData Motions { get; } = new();
+	public MapWeatherData MapWeathers { get; } = new();
+	public EventData Events { get; } = new();
+	public PanelSkillsData PanelSkillsDataDh { get; } = new();
+	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; } = new();
+	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; } = new();
+	public AbsoluteStatsData AbsoluteStatsDataDh { get; } = new();
+	public WorldRaidData WorldRaidDataDh { get; } = new();
+	public TeleporterData TeleporterDataDh { get; } = new();
+	public TeleLocationData TeleLocationDataDh { get; } = new();
+	public SkillAliasLocationData SkillAliasLocationDataDh { get; } = new();
+	public SignetDataTemplates SignetDataTemplatesDh { get; } = new();
+	public ShieldData ShieldDataDh { get; } = new();
+	public RoadData RoadDataDh { get; } = new();
+	public MultiReturnItemData MultiReturnItemDataDh { get; } = new();
+	public KillBountyData KillBountyDataDh { get; } = new();
+	public InstanceBuffData InstanceBuffDataDh { get; } = new();
+	public HousePartsData HousePartsDataDh { get; } = new();
+	public HouseNpcsData HouseNpcsDataDh { get; } = new();
+	public HotspotData HotspotDataDh { get; } = new();
+	public GatherableData GatherableDataDh { get; } = new();
+	public FlyRingData FlyRingDataDh { get; } = new();
+	public FlyPathData FlyPathDataDh { get; } = new();
+	public CuringObjectsData CuringObjectsDataDh { get; } = new();
+	public BaseData BaseDataDh { get; } = new();
+	public AssembledNpcsData AssembledNpcsDataDh { get; } = new();
+	public TitleData TitleDataDh { get; } = new();
+	public NpcData NpcDataDh { get; } = new();
+	public ItemData ItemDataDh { get; } = new();
+	public SkillData SkillDataDh { get; } = new();
+	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();
+	public TradeListData TradeListDataDh { get; } = new();
+	public RecipeData RecipeDataDh { get; } = new();
+	public PetData PetDataDh { get; } = new();
+	public WalkerData WalkerDataDh { get; } = new();
+	public AutoGroupData AutoGroupDataDh { get; } = new();
+	public ItemSetData ItemSetDataDh { get; } = new();
+	public RideData RideDataDh { get; } = new();
+	public GoodsListData GoodsListDataDh { get; } = new();
+	public ItemPurificationData ItemPurificationDataDh { get; } = new();
+	public AtreianPassportData AtreianPassportDataDh { get; } = new();
+	public PetDopingData PetDopingDataDh { get; } = new();
+	public NpcSkillData NpcSkillDataDh { get; } = new();
+	public NpcFactionsData NpcFactionsDataDh { get; } = new();
+	public PortalLocData PortalLocDataDh { get; } = new();
+	public AssemblyItemsData AssemblyItemsDataDh { get; } = new();
+
 	public int GetElementCount(string elementName)
 	{
 		return ElementCounts.TryGetValue(elementName, out var count) ? count : 0;
@@ -1278,7 +1344,7 @@ public sealed class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "quest" && elementPath.GetValueOrDefault(1) == "quests")
 			{
-				// Java parity: questEngine/QuestEngine.init transfers QuestTemplate.questDrop entries into QuestService by NPC id.
+				// Java parity: questEngine/Aion.GameServer.QuestEngine.QuestEngine.init transfers QuestTemplate.questDrop entries into QuestService by NPC id.
 				currentQuestDropBuilder = new QuestDropBuilder(
 					ReadRequiredIntAttribute(reader, "id"),
 					reader.GetAttribute("target") ?? "NONE",
@@ -1338,7 +1404,7 @@ public sealed class StaticData
 				&& currentQuestDropBuilder != null
 				&& elementPath.GetValueOrDefault(3) == "inventory_items")
 			{
-				// Java parity: questEngine/QuestEngine.init builds questUpdateItems from InventoryItem.item_id and ignores count.
+				// Java parity: questEngine/Aion.GameServer.QuestEngine.QuestEngine.init builds questUpdateItems from InventoryItem.item_id and ignores count.
 				var itemId = ReadRequiredIntAttribute(reader, "item_id");
 				if (questUpdateItemIdSet.Add(itemId))
 					questUpdateItemIds.Add(itemId);
@@ -6319,8 +6385,8 @@ public sealed class StaticData
 		var value = reader.GetAttribute(attributeName);
 		return value switch
 		{
-			"INVASION" => VortexStateType.Invasion,
-			"PEACE" => VortexStateType.Peace,
+			"INVASION" => VortexStateType.INVASION,
+			"PEACE" => VortexStateType.PEACE,
 			_ => throw new FormatException($"Element <{reader.LocalName}> has unexpected VortexStateType '{value}'."),
 		};
 	}

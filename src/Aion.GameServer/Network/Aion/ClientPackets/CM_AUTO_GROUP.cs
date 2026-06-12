@@ -6,7 +6,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -40,7 +40,7 @@ public class CM_AUTO_GROUP : AionClientPacket
         switch (windowId)
         {
             case 100:
-                EntryRequestType ert = EntryRequestType.GetTypeById(entryRequestId);
+                EntryRequestType ert = EntryRequestTypeExtensions.GetTypeById(entryRequestId);
                 if (ert == null)
                 {
                     return;

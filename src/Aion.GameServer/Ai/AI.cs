@@ -22,9 +22,9 @@ public interface AI
 
     bool CanThink();
 
-    AiState GetState();
+    AIState GetState();
 
-    AiSubState GetSubState();
+    AISubState GetSubState();
 
     string GetName();
 

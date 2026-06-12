@@ -10,7 +10,7 @@ using Aion.GameServer.Model.Trade;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Audit;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

@@ -46,7 +46,7 @@ public class SimpleRootEffect : EffectTemplate
             player.GetController().OnStopMove();
         if (effect.IsSubEffect())
         {
-            World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading(), false);
+            Aion.GameServer.World.World.GetInstance().UpdatePosition(effected, effect.GetTargetX(), effect.GetTargetY(), effect.GetTargetZ(), effected.GetHeading(), false);
             if (!(effected is Player))
                 PacketSendUtility.BroadcastPacket(effected, new SM_POSITION(effected));
         }

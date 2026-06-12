@@ -9,7 +9,7 @@ using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -44,7 +44,7 @@ public class CM_TELEPORT_SELECT : AionClientPacket
         if (!(obj is Npc npc))
         {
             if (obj == null)
-                obj = World.GetInstance().FindVisibleObject(targetObjId);
+                obj = global::Aion.GameServer.World.World.GetInstance().FindVisibleObject(targetObjId);
             AuditLogger.Log(player, "tried to teleport to locId " + locId + " via " + (obj == null ? "unknown npc (objId " + targetObjId + ")" : obj)
                 + " at " + player.GetPosition());
             return;

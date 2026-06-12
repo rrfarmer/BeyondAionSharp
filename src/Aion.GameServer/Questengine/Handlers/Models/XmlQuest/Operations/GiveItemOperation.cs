@@ -1,3 +1,4 @@
+using Aion.GameServer.Services.Items;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;

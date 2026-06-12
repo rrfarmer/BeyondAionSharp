@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.Commons.Nio;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Items;
-using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
+using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
 namespace Aion.GameServer.Network.Aion.Iteminfo;
 

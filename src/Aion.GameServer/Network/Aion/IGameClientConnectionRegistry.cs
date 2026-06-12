@@ -10,14 +10,14 @@ public interface IGameClientConnectionRegistry
 
 	void ForEachOnlinePlayer(Action<Player> action);
 
-	Task<bool> SendPacketToPlayerAsync(int playerObjectId, GameServerPacket packet);
+	Task<bool> SendPacketToPlayerAsync(int playerObjectId, AionServerPacket packet);
 
-	Task<int> BroadcastToWorldAsync(GameServerPacket packet, Func<Player, bool>? filter = null);
+	Task<int> BroadcastToWorldAsync(AionServerPacket packet, Func<Player, bool>? filter = null);
 
 	Task<int> BroadcastToVisiblePlayersAsync(
 		WorldPosition sourcePosition,
 		int sourceObjectId,
-		GameServerPacket packet,
+		AionServerPacket packet,
 		bool includeSourcePlayer = false,
 		Func<Player, bool>? filter = null);
 

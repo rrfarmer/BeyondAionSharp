@@ -4,7 +4,7 @@ using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/SkillLauncherEffect : EffectTemplate. @XmlAttribute(name="skill_id")→[XmlAttribute("skill_id")]; applyEffect→SkillEngine.ApplyEffect; calculate→addSuccessEffect. EffectTemplate/Effect/SkillEngine red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/SkillLauncherEffect : EffectTemplate. @XmlAttribute(name="skill_id")→[XmlAttribute("skill_id")]; applyEffect→Aion.GameServer.SkillEngine.SkillEngine.ApplyEffect; calculate→addSuccessEffect. EffectTemplate/Effect/SkillEngine red-tolerated.</summary>
 [XmlType("SkillLauncherEffect")]
 public class SkillLauncherEffect : EffectTemplate
 {
@@ -13,7 +13,7 @@ public class SkillLauncherEffect : EffectTemplate
 
     public override void ApplyEffect(Effect effect)
     {
-        SkillEngine.GetInstance().ApplyEffect(skillId, effect.GetEffector(), effect.GetEffected());
+        Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffect(skillId, effect.GetEffector(), effect.GetEffected());
     }
 
     public override void Calculate(Effect effect)

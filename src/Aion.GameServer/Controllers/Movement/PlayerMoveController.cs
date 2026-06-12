@@ -6,10 +6,11 @@ using Aion.GameServer.Services.Players;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.World;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.Controllers.Movement;
 
-/// <summary>Java parity: controllers/movement/PlayerMoveController (ATracer) : PlayableMoveController&lt;Player&gt;. Fall-damage + last-client-position tracking. Nested SM_ATTACK_STATUS.TYPE/LOG enums qualified; currentTimeMillis→UtcNow.ToUnixTimeMilliseconds; super→base. Base members (owner/getMovementMask/updateLastMove)/WorldPosition/StatFunctions red-tolerated.</summary>
+/// <summary>Java parity: controllers/movement/PlayerMoveController (ATracer) : PlayableMoveController&lt;Player&gt;. Fall-damage + last-client-position tracking. Nested SmAttackStatus.TYPE/LOG enums qualified; currentTimeMillis→UtcNow.ToUnixTimeMilliseconds; super→base. Base members (Owner/getMovementMask/updateLastMove)/WorldPosition/StatFunctions red-tolerated.</summary>
 public class PlayerMoveController : PlayableMoveController<Player>
 {
     private float fallDistance;
@@ -26,7 +27,7 @@ public class PlayerMoveController : PlayableMoveController<Player>
     public override void AbortMove()
     {
         base.AbortMove();
-        StopFalling(owner.GetZ());
+        StopFalling(Owner.GetZ());
     }
 
     public byte GetLastMovementMask()
@@ -55,17 +56,17 @@ public class PlayerMoveController : PlayableMoveController<Player>
         UpdateLastMove();
         lastMovementMask = GetMovementMask();
         lastPositionFromClientMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (lastPositionFromClient == null || lastPositionFromClient.GetMapId() != owner.GetWorldId())
-            lastPositionFromClient = new WorldPosition(owner.GetWorldId(), owner.GetX(), owner.GetY(), owner.GetZ(), owner.GetHeading());
+        if (lastPositionFromClient == null || lastPositionFromClient.GetMapId() != Owner.GetWorldId())
+            lastPositionFromClient = new WorldPosition(Owner.GetWorldId(), Owner.GetX(), Owner.GetY(), Owner.GetZ(), Owner.GetHeading());
         else
-            lastPositionFromClient.SetXYZH(owner.GetX(), owner.GetY(), owner.GetZ(), owner.GetHeading());
+            lastPositionFromClient.SetXYZH(Owner.GetX(), Owner.GetY(), Owner.GetZ(), Owner.GetHeading());
     }
 
     public void ResetToLastPositionFromClient()
     {
         AbortMove();
-        if (lastPositionFromClient != null && owner.GetWorldId() == lastPositionFromClient.GetMapId())
-            owner.GetPosition().SetXYZH(lastPositionFromClient.GetX(), lastPositionFromClient.GetY(), lastPositionFromClient.GetZ(),
+        if (lastPositionFromClient != null && Owner.GetWorldId() == lastPositionFromClient.GetMapId())
+            Owner.GetPosition().SetXYZH(lastPositionFromClient.GetX(), lastPositionFromClient.GetY(), lastPositionFromClient.GetZ(),
                 lastPositionFromClient.GetHeading());
     }
 
@@ -74,14 +75,14 @@ public class PlayerMoveController : PlayableMoveController<Player>
         if (lastFallZ != 0)
         {
             fallDistance += lastFallZ - newZ;
-            if (fallDistance >= FallDamageConfig.MAXIMUM_DISTANCE_MIDAIR && owner.GetController().Die(SM_ATTACK_STATUS.TYPE.FALL_DAMAGE, SM_ATTACK_STATUS.LOG.REGULAR, owner))
+            if (fallDistance >= FallDamageConfig.MAXIMUM_DISTANCE_MIDAIR && Owner.GetController().Die(SmAttackStatus.TYPE.FALL_DAMAGE, SmAttackStatus.LOG.REGULAR, Owner))
             {
-                PlayerReviveService.ScheduleReviveAtBase(owner, 1000, 0);
+                PlayerReviveService.ScheduleReviveAtBase(Owner, 1000, 0);
                 return;
             }
         }
         lastFallZ = newZ;
-        owner.GetObserveController().NotifyMoveObservers();
+        Owner.GetObserveController().NotifyMoveObservers();
     }
 
     public void StopFalling(float newZ)
@@ -89,19 +90,19 @@ public class PlayerMoveController : PlayableMoveController<Player>
         if (lastFallZ == 0)
             return;
 
-        if (!owner.IsFlying() && !owner.IsDead())
+        if (!Owner.IsFlying() && !Owner.IsDead())
         {
             fallDistance += lastFallZ - newZ;
-            int damage = StatFunctions.CalculateFallDamage(owner, fallDistance);
+            int damage = StatFunctions.CalculateFallDamage(Owner, fallDistance);
             if (damage > 0)
             {
-                owner.GetLifeStats().ReduceHp(SM_ATTACK_STATUS.TYPE.FALL_DAMAGE, damage, 0, SM_ATTACK_STATUS.LOG.REGULAR, owner);
-                owner.GetObserveController().NotifyAttackedObservers(owner, 0);
+                Owner.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.FALL_DAMAGE, damage, 0, SmAttackStatus.LOG.REGULAR, Owner);
+                Owner.GetObserveController().NotifyAttackedObservers(Owner, 0);
             }
         }
         fallDistance = 0;
         lastFallZ = 0;
-        owner.GetObserveController().NotifyMoveObservers();
+        Owner.GetObserveController().NotifyMoveObservers();
     }
 
     public void SetHasMovedByRandomMoveLocEffect(Skill skill)

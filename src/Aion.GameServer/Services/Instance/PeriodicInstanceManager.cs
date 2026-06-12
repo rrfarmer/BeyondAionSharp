@@ -51,8 +51,8 @@ public class PeriodicInstanceManager
         foreach (CronExpression startExpression in startExpressions)
         {
             CronService.GetInstance().Schedule(() => OpenRegistration(openingMsg, maskId, registrationPeriod), startExpression);
-            log.LogInformation("Scheduled registration opening for {Type} based on cron expression: {Cron}", AutoGroupType.GetAGTByMaskId(maskId), startExpression);
-            log.LogInformation("Scheduled " + AutoGroupType.GetAGTByMaskId(maskId) + ": based on cron expression: " + startExpression + " Duration: "
+            log.LogInformation("Scheduled registration opening for {Type} based on cron expression: {Cron}", AutoGroupTypeExtensions.GetAGTByMaskId(maskId), startExpression);
+            log.LogInformation("Scheduled " + AutoGroupTypeExtensions.GetAGTByMaskId(maskId) + ": based on cron expression: " + startExpression + " Duration: "
                 + registrationPeriod + " in minutes");
         }
     }
@@ -68,7 +68,7 @@ public class PeriodicInstanceManager
             BroadcastRegistrationUpdate(openingMsg, maskId, false);
 
             registrationCloseTasksByMaskId[maskId] = ThreadPoolManager.GetInstance().Schedule(ct => { CloseRegistration(maskId); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(registrationPeriod * 60000));
-            log.LogInformation("Scheduled registration closing for {Type} in {Period} minutes", AutoGroupType.GetAGTByMaskId(maskId), registrationPeriod);
+            log.LogInformation("Scheduled registration closing for {Type} in {Period} minutes", AutoGroupTypeExtensions.GetAGTByMaskId(maskId), registrationPeriod);
             return true;
         }
     }
@@ -96,7 +96,7 @@ public class PeriodicInstanceManager
 
     private void BroadcastRegistrationUpdate(SM_SYSTEM_MESSAGE msg, int maskId, bool isClosed)
     {
-        AutoGroupType type = AutoGroupType.GetAGTByMaskId(maskId);
+        AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
         if (type != null)
         {
             World.World.GetInstance().ForEachPlayer(player =>
@@ -122,7 +122,7 @@ public class PeriodicInstanceManager
     {
         foreach (int maskId in openedRegistrations)
         {
-            AutoGroupType agt = AutoGroupType.GetAGTByMaskId(maskId);
+            AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
             if (agt != null)
             {
                 AutoGroup data = agt.GetTemplate();
@@ -147,7 +147,7 @@ public class PeriodicInstanceManager
     {
         if (openedRegistrations.Contains(maskId))
         {
-            AutoGroupType type = AutoGroupType.GetAGTByMaskId(maskId);
+            AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
             if (type != null)
             {
                 AutoGroup template = type.GetTemplate();

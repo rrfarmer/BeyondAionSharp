@@ -11,7 +11,7 @@ using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -84,7 +84,7 @@ public class CM_APPEARANCE : AionClientPacket
 
     public static void OnPlayerNameChanged(Player player, string oldName)
     {
-        World.GetInstance().UpdateCachedPlayerName(oldName, player);
+        global::Aion.GameServer.World.World.GetInstance().UpdateCachedPlayerName(oldName, player);
         if (player.IsLegionMember())
         {
             LegionService.GetInstance().AddHistory(player.GetLegion(), oldName, LegionHistoryAction.CHARACTER_RENAME, player.GetName());

@@ -145,7 +145,7 @@ public class CraftSkillUpdateService
     {
         int mastered = 0;
 
-        foreach (Profession profession in Profession.Values())
+        foreach (Profession profession in System.Enum.GetValues<Profession>())
         {
             if (profession.IsCrafting() && player.GetSkillList().IsSkillPresent(profession.GetSkillId()))
             {
@@ -162,7 +162,7 @@ public class CraftSkillUpdateService
     {
         int mastered = 0;
 
-        foreach (Profession profession in Profession.Values())
+        foreach (Profession profession in System.Enum.GetValues<Profession>())
         {
             if (profession.IsCrafting() && player.GetSkillList().IsSkillPresent(profession.GetSkillId()))
             {

@@ -64,7 +64,7 @@ public static class InstanceRuntimeService
 		Action<int, WorldMapInstanceRuntimeState>? emptyInstanceScheduler = null)
 	{
 		// Java parity: InstanceService.getNextAvailableInstance(worldId, player) derives max players from InstanceCooltimeData.getMaxMemberCount.
-		var maxPlayers = instanceCooltimes.GetMaxMemberCount(worldId, player.Race);
+		var maxPlayers = instanceCooltimes.GetMaxMemberCount(worldId, player.Race.ToString());
 		return GetNextAvailableInstanceForPlayer(
 			worldMaps,
 			worldId,
@@ -193,12 +193,12 @@ public static class InstanceRuntimeService
 		// Java parity: InstanceService.destroyInstance sends STR_MSG_LEAVE_INSTANCE_FORCE(0)
 		// then calls TeleportService.moveToInstanceExit(player, player.getWorldId(), player.getRace()).
 		return players
-			.Where(player => player.Position.WorldId == worldId && player.Position.InstanceId == instanceId)
+			.Where(player => player.GetPosition().WorldId == worldId && player.GetPosition().InstanceId == instanceId)
 			.Select(player => new InstancePlayerForcedExitPlan(
 				player.ObjectId,
-				player.Position.WorldId,
-				player.Position.InstanceId,
-				player.Race,
+				player.GetPosition().WorldId,
+				player.GetPosition().InstanceId,
+				player.Race.ToString(),
 				SmSystemMessage.LeaveInstanceForce(0),
 				"TeleportService.moveToInstanceExit(player, player.getWorldId(), player.getRace())"))
 			.ToArray();

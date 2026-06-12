@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Templates.Rift;
+using Aion.GameServer.Utils.Xml;
 
 namespace Aion.GameServer.Configs.Schedule;
 

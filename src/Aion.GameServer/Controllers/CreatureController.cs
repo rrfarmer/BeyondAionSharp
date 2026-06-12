@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE;
 using LOG = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG;
+using Aion.GameServer.Utils.Audit;
 
 namespace Aion.GameServer.Controllers;
 
@@ -38,7 +39,7 @@ public abstract class CreatureController : VisibleObjectController
     public override void NotSee(VisibleObject obj, Aion.GameServer.Model.Animations.ObjectDeleteAnimation animation)
     {
         base.NotSee(obj, animation);
-        if (obj.Equals(GetOwner().GetTarget()) && GetOwner().GetAi().GetSubState() != Aion.GameServer.Ai.AiSubState.TargetLost)
+        if (obj.Equals(GetOwner().GetTarget()) && GetOwner().GetAi().GetSubState() != Aion.GameServer.Ai.AISubState.TARGET_LOST)
             GetOwner().SetTarget(null);
     }
 
@@ -115,14 +116,14 @@ public abstract class CreatureController : VisibleObjectController
         GetOwner().GetEffectController().RemoveAllEffects();
         if (GetOwner() is Player && ((Player)GetOwner()).GetIsFlyingBeforeDeath())
         {
-            GetOwner().UnsetState(CreatureState.Active);
-            GetOwner().SetState(CreatureState.FloatingCorpse);
+            GetOwner().UnsetState(CreatureState.ACTIVE);
+            GetOwner().SetState(CreatureState.FLOATING_CORPSE);
         }
         else
-            GetOwner().SetState(CreatureState.Dead);
+            GetOwner().SetState(CreatureState.DEAD);
         GetOwner().GetObserveController().NotifyDeathObservers(lastAttacker);
         PacketSendUtility.BroadcastPacketAndReceive(GetOwner(),
-            new SM_EMOTION(GetOwner(), EmotionType.Die, 0, GetOwner().Equals(lastAttacker) ? 0 : lastAttacker.GetObjectId()));
+            new SM_EMOTION(GetOwner(), EmotionType.DIE, 0, GetOwner().Equals(lastAttacker) ? 0 : lastAttacker.GetObjectId()));
         GetOwner().GetKnownList().ForEachObject(o =>
         {
             if (o is Creature creature)
@@ -483,7 +484,7 @@ public abstract class CreatureController : VisibleObjectController
         }
         if (creature is Npc npc)
         {
-            creature.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AiSubState.None);
+            creature.GetAi().SetSubStateIfNot(Aion.GameServer.Ai.AISubState.NONE);
             npc.GetGameStats().SetLastSkill(null);
         }
         return castingSkill;

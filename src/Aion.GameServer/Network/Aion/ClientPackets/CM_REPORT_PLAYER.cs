@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -36,7 +36,7 @@ public class CM_REPORT_PLAYER : AionClientPacket
         {
             case 0: // /accuse, /AutoReportHunting
                 Player activePlayer = GetConnection().GetActivePlayer();
-                Player player = World.GetInstance().GetPlayer(ChatUtil.GetRealCharName(playerName));
+                Player player = global::Aion.GameServer.World.World.GetInstance().GetPlayer(ChatUtil.GetRealCharName(playerName));
                 if (player != null && player.GetRace() != activePlayer.GetRace())
                 {
                     SendPacket(SM_SYSTEM_MESSAGE.STR_MSG_DO_NOT_ACCUSE());

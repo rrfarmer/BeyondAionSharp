@@ -8,6 +8,7 @@ using Aion.GameServer.Model.Team.Common.Legacy;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.World;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

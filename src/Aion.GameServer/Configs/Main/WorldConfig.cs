@@ -7,6 +7,11 @@ namespace Aion.GameServer.Configs.Main;
 /// </summary>
 public static class WorldConfig
 {
+    // Java-name aliases over the PascalCase config fields (call sites use the Java SCREAMING_SNAKE names).
+    public static int WORLD_REGION_SIZE { get => WorldRegionSize; set => WorldRegionSize = value; }
+    public static bool WORLD_EMULATE_FASTTRACK { get => WorldEmulateFasttrack; set => WorldEmulateFasttrack = value; }
+    public static string ZONE_HANDLER_DIRECTORY { get => ZoneHandlerDirectory; set => ZoneHandlerDirectory = value; }
+
     /// <summary>Java parity: WORLD_REGION_SIZE — default 128. Property key: gameserver.world.region.size</summary>
     public static int WorldRegionSize { get; set; } = 128;
 

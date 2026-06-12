@@ -94,7 +94,7 @@ public class SiegeWeaponMoveController : SummonMoveController
         Aion.GameServer.World.World.GetInstance().UpdatePosition(Owner, newX, newY, newZ, Heading, true);
         if (destinationChanged)
         {
-            MovementMaskField = MovementMask.NpcStartMove;
+            MovementMaskField = MovementMask.NPC_STARTMOVE;
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(Owner, new Aion.GameServer.Network.Aion.ServerPackets.SmMove(Owner));
         }
     }

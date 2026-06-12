@@ -3,10 +3,11 @@ using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/SpellAttackEffect (kecimis) : AbstractOverTimeEffect. DoT magical damage; useMagicBoost excludes skill 21110. Inherited position/hopType/CalculateBaseValue + AttackUtil/EffectReserved/SM_ATTACK_STATUS red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/SpellAttackEffect (kecimis) : AbstractOverTimeEffect. DoT magical damage; useMagicBoost excludes skill 21110. Inherited Position/Hoptype/CalculateBaseValue + AttackUtil/EffectReserved/SM_ATTACK_STATUS red-tolerated.</summary>
 [XmlType("SpellAttackEffect")]
 public class SpellAttackEffect : AbstractOverTimeEffect
 {
@@ -14,14 +15,14 @@ public class SpellAttackEffect : AbstractOverTimeEffect
     {
         int valueWithDelta = CalculateBaseValue(effect);
         int finalDamage = AttackUtil.CalculateMagicalOverTimeSkillResult(effect, valueWithDelta, this, UseMagicBoost(effect));
-        effect.SetReserveds(new EffectReserved(position, finalDamage, EffectReserved.ResourceType.HP, true, false), true);
+        effect.SetReserveds(new EffectReserved(Position, finalDamage, EffectReserved.ResourceType.HP, true, false), true);
         base.StartEffect(effect);
     }
 
     public override void OnPeriodicAction(Effect effect)
     {
         Creature effected = effect.GetEffected();
-        effected.GetController().OnAttack(effect, SM_ATTACK_STATUS.TYPE.DAMAGE, effect.GetReserveds(position).GetValue(), false, SM_ATTACK_STATUS.LOG.SPELLATK, hopType);
+        effected.GetController().OnAttack(effect, SmAttackStatus.TYPE.DAMAGE, effect.GetReserveds(Position).GetValue(), false, SmAttackStatus.LOG.SPELLATK, Hoptype);
         effected.GetObserveController().NotifyDotAttackedObservers(effect.GetEffector(), effect);
     }
 

@@ -114,7 +114,7 @@ public class DecomposeAction : AbstractItemAction
         }
         List<ExtractedItemsCollection> itemsCollections = DataManager.DECOMPOSABLE_ITEMS_DATA.GetInfoByItemId(parentItem.GetItemId());
         ICollection<ExtractedItemsCollection> levelSuitableItems = FilterItemsByLevel(player, itemsCollections);
-        ExtractedItemsCollection selectedCollection = Chance.SelectElement(levelSuitableItems);
+        ExtractedItemsCollection selectedCollection = IChance.SelectElement(levelSuitableItems);
         if (selectedCollection.GetRandomItems().Count == 0 && !selectedCollection.GetItems().Any(i => i.IsObtainableFor(player)))
         {
             log.LogWarning(

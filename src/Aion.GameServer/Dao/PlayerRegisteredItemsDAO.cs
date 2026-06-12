@@ -20,7 +20,7 @@ namespace Aion.GameServer.Dao;
 /// HouseObjectFactory use). getUsedIDs scrollable->forward-only List+ToArray. stream().filter(Persistable.NEW/CHANGED/DELETED)->
 /// Where(IPersistable.*) red predicates; instanceof+cast->is X; setObject(x, Types.INTEGER) null-supporting + setNull->DBNull.Value;
 /// rset.getObject("color")(Integer)->IsDBNull?null:GetInt32 (SetColor int?); store helpers per-helper MySqlTransaction+MySqlBatch+Commit;
-/// IllegalAccessException->Exception. World.GetInstance().FindVisibleObject, HouseObjectFactory.CreateNew, IDFactory.GetInstance().
+/// IllegalAccessException->Exception. Aion.GameServer.World.World.GetInstance().FindVisibleObject, HouseObjectFactory.CreateNew, IDFactory.GetInstance().
 /// ReleaseObjectIds, and registry/obj accessors are tolerated red refs. SQL verbatim.
 /// </summary>
 public class PlayerRegisteredItemsDAO
@@ -93,7 +93,7 @@ public class PlayerRegisteredItemsDAO
     private static HouseObject<PlaceableHouseObject> ConstructObject(HouseRegistry registry, MySqlDataReader rset)
     {
         int itemUniqueId = rset.GetInt32(rset.GetOrdinal("item_unique_id"));
-        VisibleObject visObj = World.GetInstance().FindVisibleObject(itemUniqueId);
+        VisibleObject visObj = Aion.GameServer.World.World.GetInstance().FindVisibleObject(itemUniqueId);
         HouseObject<PlaceableHouseObject> obj;
         if (visObj != null)
         {

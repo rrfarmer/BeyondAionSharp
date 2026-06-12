@@ -2,12 +2,13 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.PeriodicAction;
 
 /// <summary>
 /// Java parity: skillengine/periodicaction/MpUsePeriodicAction (antness). Periodically drains MP; ends effect when below required.
-/// SM_ATTACK_STATUS.TYPE/LOG faithful. Creature/Effect red-tolerated.
+/// SmAttackStatus.TYPE/LOG faithful. Creature/Effect red-tolerated.
 /// </summary>
 public class MpUsePeriodicAction : PeriodicAction
 {
@@ -27,6 +28,6 @@ public class MpUsePeriodicAction : PeriodicAction
             effect.EndEffect();
             return;
         }
-        effected.GetLifeStats().ReduceMp(SM_ATTACK_STATUS.TYPE.USED_MP, requiredMp, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+        effected.GetLifeStats().ReduceMp(SmAttackStatus.TYPE.USED_MP, requiredMp, 0, SmAttackStatus.LOG.REGULAR);
     }
 }

@@ -1,19 +1,20 @@
 namespace Aion.GameServer.Controllers.Movement;
 
+/// <summary>Java parity: controllers/movement/MovementMask (Mr. Poke, Neon). UPPER_CASE names + byte values match Java.</summary>
 public static class MovementMask
 {
-	public const byte Immediate = 0x00;
-	public const byte Glide = 0x04;
-	public const byte Fall = 0x08;
-	public const byte Vehicle = 0x10;
-	public const byte Absolute = 0x20;
-	public const byte Manual = 0x40;
-	public const byte Position = 0x80;
-	public const byte NpcWalkSlow = 0xEA;
-	public const byte NpcWalkFast = 0xE8;
-	public const byte NpcRunSlow = 0xE4;
-	public const byte NpcRunFast = 0xE2;
-	public const byte NpcStartMove = 0xE0;
+	public const byte IMMEDIATE = 0x00;
+	public const byte GLIDE = 0x04;
+	public const byte FALL = 0x08;
+	public const byte VEHICLE = 0x10;
+	public const byte ABSOLUTE = 0x20;
+	public const byte MANUAL = 0x40;
+	public const byte POSITION = 0x80;
+	public const byte NPC_WALK_SLOW = 0xEA;
+	public const byte NPC_WALK_FAST = 0xE8;
+	public const byte NPC_RUN_SLOW = 0xE4;
+	public const byte NPC_RUN_FAST = 0xE2;
+	public const byte NPC_STARTMOVE = 0xE0;
 
 	public static bool Has(byte mask, byte flag)
 	{
@@ -24,6 +25,6 @@ public static class MovementMask
 	public static bool HasManualPosition(byte mask)
 	{
 		// Java parity: (type & POSITION) == POSITION && (type & MANUAL) == MANUAL.
-		return Has(mask, Position) && Has(mask, Manual);
+		return Has(mask, POSITION) && Has(mask, MANUAL);
 	}
 }

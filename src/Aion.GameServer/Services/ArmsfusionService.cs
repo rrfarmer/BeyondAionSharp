@@ -96,7 +96,7 @@ public class ArmsfusionService
         if (!player.GetInventory().DecreaseByObjectId(fuseWeaponObjId, 1))
             return;
         mainWeapon.SetFusionedItem(fuseWeapon);
-        ItemSocketService.CopyFusionStones(fuseWeapon, mainWeapon);
+        Aion.GameServer.Services.Items.ItemSocketService.CopyFusionStones(fuseWeapon, mainWeapon);
         mainWeapon.SetPersistentState(PersistentState.UPDATE_REQUIRED);
         InventoryDAO.Store(mainWeapon, player);
 

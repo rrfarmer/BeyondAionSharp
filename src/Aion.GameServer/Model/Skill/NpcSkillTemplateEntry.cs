@@ -190,9 +190,9 @@ public class NpcSkillTemplateEntry : NpcSkillEntry
                 x1 = (float)(Math.Cos(radian) * distance);
                 y1 = (float)(Math.Sin(radian) * distance);
             }
-            SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(npc.GetWorldId(), spawn.GetNpcId(), npc.GetX() + x1, npc.GetY() + y1, npc.GetZ(),
+            SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(npc.GetWorldId(), spawn.GetNpcId(), npc.GetX() + x1, npc.GetY() + y1, npc.GetZ(),
                 npc.GetHeading(), npc, null);
-            SpawnEngine.SpawnObject(template, npc.GetInstanceId());
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, npc.GetInstanceId());
         }
     }
 

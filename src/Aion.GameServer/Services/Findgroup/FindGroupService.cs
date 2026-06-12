@@ -167,14 +167,14 @@ public class FindGroupService
 
     public void SendInstanceApplication(Player applicant, int playerOrTeamId)
     {
-        Player player = World.GetInstance().GetPlayer(playerOrTeamId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerOrTeamId);
         if (player != null)
             PacketSendUtility.SendPacket(player, new SM_FIND_GROUP(applicant));
     }
 
     public void SendInstanceApplicationResult(Player responder, int applicantId, byte instanceApplicationReply)
     {
-        Player applicant = World.GetInstance().GetPlayer(applicantId);
+        Player applicant = Aion.GameServer.World.World.GetInstance().GetPlayer(applicantId);
         if (applicant != null)
         {
             if (instanceApplicationReply == 1)

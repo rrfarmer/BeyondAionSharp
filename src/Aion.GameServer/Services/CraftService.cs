@@ -194,7 +194,7 @@ public sealed class CraftService
 		if (!validationPlan.ShouldSendCancelCraft)
 			return CraftStartFailureOrchestrationPlan.NotPlanned("CraftService.startCrafting failure did not request sendCancelCraft");
 
-		var orderedPackets = new List<GameServerPacket>();
+		var orderedPackets = new List<AionServerPacket>();
 		if (validationPlan.FailurePacket != null)
 			orderedPackets.Add(validationPlan.FailurePacket);
 
@@ -355,9 +355,9 @@ public sealed class CraftService
 		if (_itemTemplates == null)
 			return CraftStartInventoryPacketPlan.MissingItemTemplates(mutationPlan);
 		if (mutationPlan.OrderedOperations.Any(operation => operation.Kind == CraftStartInventoryMutationOperationKind.Deleted) && player == null)
-			return CraftStartInventoryPacketPlan.MissingCubeSizeSnapshot(mutationPlan, packets: Array.Empty<GameServerPacket>());
+			return CraftStartInventoryPacketPlan.MissingCubeSizeSnapshot(mutationPlan, packets: Array.Empty<AionServerPacket>());
 
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		var projectedCubeCount = player?.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId) ?? 0;
 		foreach (var operation in mutationPlan.OrderedOperations)
 		{
@@ -380,8 +380,8 @@ public sealed class CraftService
 				packets.Add(SmCubeUpdate.CubeSizeSnapshot(
 					projectedCubeCount,
 					player!.NpcExpands,
-					player.QuestExpands,
-					player.ItemExpands));
+					(player.GetCommonData().GetQuestExpands()),
+					(player.GetCommonData().GetItemExpands())));
 			}
 		}
 
@@ -560,7 +560,7 @@ public sealed class CraftService
 				ProductItemId: 0,
 				MissingComboIndex: 1,
 				MissingItemTemplateId: 0,
-				"RecipeTemplate.getComboProduct(1) calls comboproduct.get(0) when the list exists; empty list throws before QuestEngine.onFailCraft");
+				"RecipeTemplate.getComboProduct(1) calls comboproduct.get(0) when the list exists; empty list throws before Aion.GameServer.QuestEngine.QuestEngine.onFailCraft");
 		}
 
 		var productItemId = recipeTemplate.ProductId;
@@ -772,7 +772,7 @@ public sealed class CraftService
 			? addPlan.AddedItems.Select(item => CopyInventoryItem(item, productPlan.CreatorName!)).ToArray()
 			: addPlan.AddedItems;
 
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		foreach (var updatedItem in addPlan.UpdatedItems)
 		{
 			packets.Add(new SmInventoryUpdateItem(
@@ -1082,7 +1082,7 @@ public sealed record CraftStartValidationPlan(
 	bool IsMorphRecipe,
 	bool ShouldSendCancelCraft,
 	bool IsReadyForNextValidation,
-	GameServerPacket? FailurePacket,
+	AionServerPacket? FailurePacket,
 	string JavaSource)
 {
 	public const int MorphSubstancesSkillId = 40009;
@@ -1536,7 +1536,7 @@ public sealed record CraftStartValidationPlan(
 		long missingComponentAvailableCount,
 		bool shouldSendCancelCraft,
 		bool isReadyForNextValidation,
-		GameServerPacket? failurePacket,
+		AionServerPacket? failurePacket,
 		string javaSource)
 	{
 		return new CraftStartValidationPlan(
@@ -1586,8 +1586,8 @@ public sealed record MissingCraftComponent(int ItemId, long RequiredQuantity, lo
 
 public sealed record CraftStartCancelPacketPlan(
 	CraftStartCancelPacketPlanStatus Status,
-	GameServerPacket? SelfPacket,
-	GameServerPacket? BroadcastPacket,
+	AionServerPacket? SelfPacket,
+	AionServerPacket? BroadcastPacket,
 	string JavaSource,
 	bool IsLive)
 {
@@ -1601,7 +1601,7 @@ public sealed record CraftStartCancelPacketPlan(
 			IsLive: false);
 	}
 
-	public static CraftStartCancelPacketPlan Planned(GameServerPacket selfPacket, GameServerPacket broadcastPacket)
+	public static CraftStartCancelPacketPlan Planned(AionServerPacket selfPacket, AionServerPacket broadcastPacket)
 	{
 		return new CraftStartCancelPacketPlan(
 			CraftStartCancelPacketPlanStatus.Planned,
@@ -1622,17 +1622,17 @@ public sealed record CraftStartFailureOrchestrationPlan(
 	CraftStartFailureOrchestrationStatus Status,
 	CraftStartValidationPlan? ValidationPlan,
 	CraftStartCancelPacketPlan? CancelPlan,
-	IReadOnlyList<GameServerPacket> OrderedPackets,
+	IReadOnlyList<AionServerPacket> OrderedPackets,
 	string JavaSource,
 	bool IsLive)
 {
 	public bool IsPlanned => Status == CraftStartFailureOrchestrationStatus.Planned;
 
-	public GameServerPacket? FailurePacket => ValidationPlan?.FailurePacket;
+	public AionServerPacket? FailurePacket => ValidationPlan?.FailurePacket;
 
-	public GameServerPacket? SelfCancelPacket => CancelPlan?.SelfPacket;
+	public AionServerPacket? SelfCancelPacket => CancelPlan?.SelfPacket;
 
-	public GameServerPacket? BroadcastCancelPacket => CancelPlan?.BroadcastPacket;
+	public AionServerPacket? BroadcastCancelPacket => CancelPlan?.BroadcastPacket;
 
 	public static CraftStartFailureOrchestrationPlan NotPlanned(string javaSource)
 	{
@@ -1640,7 +1640,7 @@ public sealed record CraftStartFailureOrchestrationPlan(
 			CraftStartFailureOrchestrationStatus.NotPlanned,
 			ValidationPlan: null,
 			CancelPlan: null,
-			OrderedPackets: Array.Empty<GameServerPacket>(),
+			OrderedPackets: Array.Empty<AionServerPacket>(),
 			javaSource,
 			IsLive: false);
 	}
@@ -1648,7 +1648,7 @@ public sealed record CraftStartFailureOrchestrationPlan(
 	public static CraftStartFailureOrchestrationPlan Planned(
 		CraftStartValidationPlan validationPlan,
 		CraftStartCancelPacketPlan cancelPlan,
-		IReadOnlyList<GameServerPacket> orderedPackets)
+		IReadOnlyList<AionServerPacket> orderedPackets)
 	{
 		return new CraftStartFailureOrchestrationPlan(
 			CraftStartFailureOrchestrationStatus.Planned,
@@ -1662,7 +1662,7 @@ public sealed record CraftStartFailureOrchestrationPlan(
 	public static CraftStartFailureOrchestrationPlan CancelNotPlanned(
 		CraftStartValidationPlan validationPlan,
 		CraftStartCancelPacketPlan? cancelPlan,
-		IReadOnlyList<GameServerPacket> orderedPackets)
+		IReadOnlyList<AionServerPacket> orderedPackets)
 	{
 		return new CraftStartFailureOrchestrationPlan(
 			CraftStartFailureOrchestrationStatus.CancelNotPlanned,
@@ -2261,7 +2261,7 @@ public enum CraftStartInventoryPersistenceStatus
 public sealed record CraftStartInventoryPacketPlan(
 	CraftStartInventoryPacketStatus Status,
 	CraftStartInventoryMutationPlan? MutationPlan,
-	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<AionServerPacket> Packets,
 	int MissingItemTemplateId,
 	string JavaSource,
 	bool IsLive)
@@ -2273,7 +2273,7 @@ public sealed record CraftStartInventoryPacketPlan(
 		return new CraftStartInventoryPacketPlan(
 			CraftStartInventoryPacketStatus.NotPlanned,
 			MutationPlan: null,
-			Packets: Array.Empty<GameServerPacket>(),
+			Packets: Array.Empty<AionServerPacket>(),
 			MissingItemTemplateId: 0,
 			javaSource,
 			IsLive: false);
@@ -2284,7 +2284,7 @@ public sealed record CraftStartInventoryPacketPlan(
 		return new CraftStartInventoryPacketPlan(
 			CraftStartInventoryPacketStatus.MissingItemTemplates,
 			mutationPlan,
-			Packets: Array.Empty<GameServerPacket>(),
+			Packets: Array.Empty<AionServerPacket>(),
 			MissingItemTemplateId: 0,
 			"SM_INVENTORY_UPDATE_ITEM packet planning requires item templates",
 			IsLive: false);
@@ -2293,7 +2293,7 @@ public sealed record CraftStartInventoryPacketPlan(
 	public static CraftStartInventoryPacketPlan MissingUpdatedItemTemplate(
 		CraftStartInventoryMutationPlan mutationPlan,
 		int missingItemTemplateId,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<AionServerPacket> packets)
 	{
 		return new CraftStartInventoryPacketPlan(
 			CraftStartInventoryPacketStatus.MissingUpdatedItemTemplate,
@@ -2306,7 +2306,7 @@ public sealed record CraftStartInventoryPacketPlan(
 
 	public static CraftStartInventoryPacketPlan MissingCubeSizeSnapshot(
 		CraftStartInventoryMutationPlan mutationPlan,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<AionServerPacket> packets)
 	{
 		return new CraftStartInventoryPacketPlan(
 			CraftStartInventoryPacketStatus.MissingCubeSizeSnapshot,
@@ -2319,7 +2319,7 @@ public sealed record CraftStartInventoryPacketPlan(
 
 	public static CraftStartInventoryPacketPlan Planned(
 		CraftStartInventoryMutationPlan mutationPlan,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<AionServerPacket> packets)
 	{
 		return new CraftStartInventoryPacketPlan(
 			CraftStartInventoryPacketStatus.Planned,
@@ -2425,13 +2425,13 @@ public sealed record CraftStartInventoryPacketSendAdapterPlan(
 
 public sealed record CraftStartInventoryPacketSendOperation(
 	int PacketIndex,
-	GameServerPacket Packet,
+	AionServerPacket Packet,
 	string PacketTypeName,
 	string JavaUtilityMethod,
 	bool WouldCallSendPacketAsync,
 	bool DidCallSendPacketAsync)
 {
-	public static CraftStartInventoryPacketSendOperation Disabled(GameServerPacket packet, int packetIndex)
+	public static CraftStartInventoryPacketSendOperation Disabled(AionServerPacket packet, int packetIndex)
 	{
 		return new CraftStartInventoryPacketSendOperation(
 			packetIndex,
@@ -2442,7 +2442,7 @@ public sealed record CraftStartInventoryPacketSendOperation(
 			DidCallSendPacketAsync: false);
 	}
 
-	private static string GetJavaUtilityMethod(GameServerPacket packet)
+	private static string GetJavaUtilityMethod(AionServerPacket packet)
 	{
 		return packet switch
 		{
@@ -2715,7 +2715,7 @@ public sealed record CraftFinishWorkOrderPlan(
 			wouldCallQuestEngineOnFailCraft,
 			DidCallQuestEngineOnFailCraft: false,
 			failCraftItemId,
-			"CraftService.finishCrafting -> RecipeList.deleteRecipe, and QuestEngine.onFailCraft(new QuestEnv(null, player, 0), comboProduct(1) ?: 0) when critCount == 0; live mutation/callback/packet send remains disabled",
+			"CraftService.finishCrafting -> RecipeList.deleteRecipe, and Aion.GameServer.QuestEngine.QuestEngine.onFailCraft(new QuestEnv(null, player, 0), comboProduct(1) ?: 0) when critCount == 0; live mutation/callback/packet send remains disabled",
 			IsLive: false);
 	}
 }
@@ -3870,7 +3870,7 @@ public sealed record CraftFinishRewardPlan(
 	IReadOnlyList<InventoryItem> AddedItems,
 	long RemainingCount,
 	bool InventoryFull,
-	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<AionServerPacket> Packets,
 	bool ShouldSendInventoryFullMessage)
 {
 	public static CraftFinishRewardPlan FromProductFailure(CraftFinishProductPlan productPlan)
@@ -3883,7 +3883,7 @@ public sealed record CraftFinishRewardPlan(
 			Array.Empty<InventoryItem>(),
 			0,
 			false,
-			Array.Empty<GameServerPacket>(),
+			Array.Empty<AionServerPacket>(),
 			false);
 	}
 
@@ -3908,7 +3908,7 @@ public sealed record CraftFinishRewardPlan(
 			Array.Empty<InventoryItem>(),
 			productPlan.Quantity,
 			false,
-			Array.Empty<GameServerPacket>(),
+			Array.Empty<AionServerPacket>(),
 			false);
 	}
 
@@ -3919,7 +3919,7 @@ public sealed record CraftFinishRewardPlan(
 		IReadOnlyList<InventoryItem> addedItems,
 		long remainingCount,
 		bool inventoryFull,
-		IReadOnlyList<GameServerPacket> packets,
+		IReadOnlyList<AionServerPacket> packets,
 		bool shouldSendInventoryFullMessage)
 	{
 		var status = remainingCount == 0

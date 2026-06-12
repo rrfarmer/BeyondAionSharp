@@ -4,10 +4,11 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Change;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/DamageEffect (ATracer) abstract : EffectTemplate. @XmlAttribute fields→[XmlAttribute]; nested SM_ATTACK_STATUS.TYPE/LOG qualified; int*=float (lossy compound) preserved. Inherited position/hopType/element/change/CalculateBaseValue + EffectTemplate/AttackUtil red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/DamageEffect (ATracer) abstract : EffectTemplate. @XmlAttribute fields→[XmlAttribute]; nested SmAttackStatus.TYPE/LOG qualified; int*=float (lossy compound) preserved. Inherited position/Hoptype/Element/change/CalculateBaseValue + EffectTemplate/AttackUtil red-tolerated.</summary>
 [XmlType("DamageEffect")]
 public abstract class DamageEffect : EffectTemplate
 {
@@ -20,24 +21,24 @@ public abstract class DamageEffect : EffectTemplate
     {
         if (effect.GetSkillTemplate().GetActivationAttribute() == ActivationAttribute.PROVOKED)
         {
-            OnAttack(effect, SM_ATTACK_STATUS.TYPE.DAMAGE, SM_ATTACK_STATUS.LOG.PROCATKINSTANT);
+            OnAttack(effect, SmAttackStatus.TYPE.DAMAGE, SmAttackStatus.LOG.PROCATKINSTANT);
         }
         else
         {
-            OnAttack(effect, SM_ATTACK_STATUS.TYPE.REGULAR, SM_ATTACK_STATUS.LOG.REGULAR);
+            OnAttack(effect, SmAttackStatus.TYPE.REGULAR, SmAttackStatus.LOG.REGULAR);
             effect.GetEffector().GetObserveController().NotifyAttackObservers(effect.GetEffected(), effect.GetSkillId());
         }
     }
 
-    private void OnAttack(Effect effect, SM_ATTACK_STATUS.TYPE type, SM_ATTACK_STATUS.LOG log)
+    private void OnAttack(Effect effect, SmAttackStatus.TYPE type, SmAttackStatus.LOG log)
     {
-        effect.GetEffected().GetController().OnAttack(effect, type, effect.GetReserveds(this.position).GetValue(), true, log, hopType);
+        effect.GetEffected().GetController().OnAttack(effect, type, effect.GetReserveds(this.Position).GetValue(), true, log, Hoptype);
     }
 
     public override void CalculateDamage(Effect effect)
     {
         int valueWithDelta = CalculateBaseValue(effect);
-        if (element != SkillElement.NONE)
+        if (Element != SkillElement.NONE)
             valueWithDelta *= effect.GetEffector().GetGameStats().GetKnowledge().GetCurrent() / 100f;
 
         AttackUtil.CalculateSkillResult(effect, valueWithDelta, this, false);

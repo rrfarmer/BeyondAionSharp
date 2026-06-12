@@ -16,6 +16,7 @@ using Aion.GameServer.Services.Players;
 using Aion.GameServer.Taskmanager.Tasks.Housing;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Time;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Services;
 

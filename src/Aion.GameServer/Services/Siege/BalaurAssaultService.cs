@@ -135,7 +135,7 @@ public class BalaurAssaultService
             assembledParts.Add(new AssembledNpcPart(IDFactory.GetInstance().NextId(), part));
 
         AssembledNpc npc = new AssembledNpc(template.GetRouteId(), template.GetMapId(), template.GetLiveTime(), assembledParts);
-        World.GetInstance().ForEachPlayer(p =>
+        Aion.GameServer.World.World.GetInstance().ForEachPlayer(p =>
         {
             PacketSendUtility.SendPacket(p, new SM_NPC_ASSEMBLER(npc));
             PacketSendUtility.SendPacket(p, SM_SYSTEM_MESSAGE.STR_ABYSS_CARRIER_SPAWN());

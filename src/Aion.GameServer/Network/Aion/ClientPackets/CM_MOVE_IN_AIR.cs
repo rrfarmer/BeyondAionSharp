@@ -3,7 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -35,7 +35,7 @@ public class CM_MOVE_IN_AIR : AionClientPacket
         Player player = GetConnection().GetActivePlayer();
         if (!player.IsSpawned())
             return;
-        if (!player.IsInState(CreatureState.Flying))
+        if (!player.IsInState(CreatureState.FLYING))
             return;
 
         if (player.GetFlightPath() != null)
@@ -44,7 +44,7 @@ public class CM_MOVE_IN_AIR : AionClientPacket
         if (player.IsProtectionActive())
             player.GetController().StopProtectionActiveTask();
 
-        World.GetInstance().UpdatePosition(player, x, y, z, heading);
+        global::Aion.GameServer.World.World.GetInstance().UpdatePosition(player, x, y, z, heading);
         player.GetMoveController().OnMoveFromClient();
         player.GetController().OnMove();
     }

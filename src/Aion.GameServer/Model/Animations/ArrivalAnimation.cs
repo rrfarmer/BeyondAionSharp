@@ -20,4 +20,12 @@ public enum ArrivalAnimation : byte
     JumpOutCameraFront = 11,
     // Java parity: LANDING_GLOW(18)
     LandingGlow = 18,
+
+    // Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values, additive).
+    NONE = None,
+    LANDING = Landing,
+    FADE_IN_BEAM = FadeInBeam,
+    JUMP_OUT_CAMERA_BEHIND = JumpOutCameraBehind,
+    JUMP_OUT_CAMERA_FRONT = JumpOutCameraFront,
+    LANDING_GLOW = LandingGlow,
 }

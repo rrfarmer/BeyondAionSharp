@@ -34,7 +34,7 @@ public class ZoneTemplate
     [XmlAttribute("town_id")] public int TownId { get; set; }
 
     [XmlAttribute("area_type")] public AreaType AreaType { get; set; } = AreaType.Polygon;
-    [XmlAttribute("zone_type")] public ZoneClassName ZoneType { get; set; } = ZoneClassName.Sub;
+    [XmlAttribute("zone_type")] public ZoneClassName ZoneType { get; set; } = ZoneClassName.SUB;
 
     // Java: @XmlAttribute(name="name") + afterUnmarshal builds ZoneName
     private string? _name;

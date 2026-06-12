@@ -66,7 +66,7 @@ public sealed class SmInstanceInfo : GameServerPacket
 			buffer.WriteD(cooldown == null ? 0 : (int)Math.Max(0, (cooldown.ReuseTimeMillis - nowMillis) / 1000));
 			buffer.WriteD(cooltime.MaxCount);
 			buffer.WriteD(cooldown == null ? 0 : -cooldown.EntryCount);
-			buffer.WriteC(IsHiddenForPlayer(cooltime.Race, _player.Race) ? 0 : 1);
+			buffer.WriteC(IsHiddenForPlayer(cooltime.Race.ToString(), _player.Race.ToString()) ? 0 : 1);
 		}
 
 		buffer.WriteS(_player.Name);

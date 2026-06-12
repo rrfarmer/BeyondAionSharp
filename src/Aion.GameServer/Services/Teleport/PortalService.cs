@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.Stats;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -408,7 +409,7 @@ public class PortalService
         WorldMapTemplate worldTemplate = DataManager.WORLD_MAPS_DATA.GetTemplate(loc.GetWorldId());
         if (worldTemplate.IsInstance())
         {
-            bool isPersonal = WorldMapType.GetWorld(loc.GetWorldId()).IsPersonal();
+            bool isPersonal = WorldMapTypeExtensions.GetWorld(loc.GetWorldId()).IsPersonal();
             WorldMapInstance instance = InstanceService.GetNextAvailableInstance(loc.GetWorldId(), isPersonal ? requester.GetObjectId() : 0, (byte)0, maxPlayers, true);
             instance.Register(requester.GetObjectId());
             Transfer(requester, loc, instance, reenter);

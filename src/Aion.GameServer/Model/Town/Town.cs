@@ -107,7 +107,7 @@ public class Town : IPersistable, IL10n
     {
         Dictionary<int, Town> data = new Dictionary<int, Town>(1);
         data[this.id] = this;
-        SmTownsList packet = new SmTownsList(data);
+        SM_TOWNS_LIST packet = new SM_TOWNS_LIST(data);
         Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
         {
             if (player.GetRace() == race)
@@ -124,7 +124,7 @@ public class Town : IPersistable, IL10n
             SpawnGroup spawnGroup = new SpawnGroup(worldId, spawn);
             foreach (SpawnSpotTemplate sst in spawn.GetSpawnSpotTemplates())
             {
-                Npc obj = (Npc) SpawnEngine.SpawnObject(new TownSpawnTemplate(spawnGroup, sst, id), 1);
+                Npc obj = (Npc) Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(new TownSpawnTemplate(spawnGroup, sst, id), 1);
                 spawnedNpcs.Add(obj);
             }
         }

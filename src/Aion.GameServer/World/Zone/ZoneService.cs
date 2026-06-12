@@ -122,13 +122,13 @@ public sealed class ZoneService : GameEngine
             ZoneInstance instance;
             switch (area.GetZoneTemplate().GetZoneType())
             {
-                case ZoneClassName.Fly:
+                case ZoneClassName.FLY:
                     instance = new FlyZoneInstance(mapId, area);
                     break;
-                case ZoneClassName.NoFly:
+                case ZoneClassName.NO_FLY:
                     instance = new NoFlyZoneInstance(mapId, area);
                     break;
-                case ZoneClassName.Fort:
+                case ZoneClassName.FORT:
                     instance = new SiegeZoneInstance(mapId, area);
                     SiegeLocation siege = DataManager.SIEGE_LOCATION_DATA.GetSiegeLocations().GetValueOrDefault(area.GetZoneTemplate().GetSiegeId()[0]);
                     if (siege != null)
@@ -137,7 +137,7 @@ public sealed class ZoneService : GameEngine
                         ShieldService.GetInstance().AttachShield(siege);
                     }
                     break;
-                case ZoneClassName.Artifact:
+                case ZoneClassName.ARTIFACT:
                     instance = new SiegeZoneInstance(mapId, area);
                     foreach (int artifactId in area.GetZoneTemplate().GetSiegeId())
                     {
@@ -152,7 +152,7 @@ public sealed class ZoneService : GameEngine
                         }
                     }
                     break;
-                case ZoneClassName.Pvp:
+                case ZoneClassName.PVP:
                     instance = new PvPZoneInstance(mapId, area);
                     break;
                 default:

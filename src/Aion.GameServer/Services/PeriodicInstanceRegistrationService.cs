@@ -255,7 +255,7 @@ public sealed class PeriodicInstanceRegistrationService
 			if (player.Level < autoGroup.MinLevel || player.Level > autoGroup.MaxLevel)
 				continue;
 
-			var packets = new List<GameServerPacket>
+			var packets = new List<AionServerPacket>
 			{
 				new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: isClosed),
 			};
@@ -348,7 +348,7 @@ public sealed record PeriodicInstanceRegistrationBroadcastPlan(
 
 public sealed record PeriodicInstanceRegistrationPlayerBroadcast(
 	int PlayerObjectId,
-	IReadOnlyList<GameServerPacket> Packets);
+	IReadOnlyList<AionServerPacket> Packets);
 
 public sealed record PeriodicInstanceRegistrationBroadcastDispatchResult(
 	PeriodicInstanceRegistrationBroadcastPlan Plan,

@@ -33,7 +33,7 @@ public class SummonHomingEffect : SummonEffect
 
         for (int i = 0; i < npcCount; i++)
         {
-            SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(worldId, npcId, x, y, z, heading);
+            SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldId, npcId, x, y, z, heading);
             Homing homing = VisibleObjectSpawner.SpawnHoming(spawn, instanceId, effector, attackCount, effect.GetSkillId());
 
             if (attackCount > 0)

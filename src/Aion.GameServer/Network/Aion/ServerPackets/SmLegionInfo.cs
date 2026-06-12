@@ -61,7 +61,7 @@ public sealed class SmLegionInfo : GameServerPacket
 		// Ranking remains defaulted until the AbyssRankingCache legion path is ported.
 		return new SmLegionInfo(
 			player.LegionName,
-			player.LegionLevel,
+			(player.GetLegion()?.GetLegionLevel() ?? 0),
 			rankingPosition: 0,
 			player.LegionDeputyPermission,
 			player.LegionCenturionPermission,

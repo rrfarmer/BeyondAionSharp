@@ -3,7 +3,7 @@ using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

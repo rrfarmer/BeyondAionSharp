@@ -8,6 +8,9 @@ public sealed class SmFriendNotify : GameServerPacket
 	public const byte Login = 0;
 	public const byte Logout = 1;
 	public const byte Deleted = 2;
+	public const byte LOGIN = Login;
+	public const byte LOGOUT = Logout;
+	public const byte DELETED = Deleted;
 
 	private readonly byte _code;
 	private readonly string _name;

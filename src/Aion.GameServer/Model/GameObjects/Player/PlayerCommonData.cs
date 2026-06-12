@@ -112,7 +112,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
     /// <summary>calculate the lost experience must be called before setexp</summary>
     public void CalculateExpLoss()
     {
-        long expLost = Aion.GameServer.Utils.Stats.XPLossEnum.GetExpLoss(GetLevel(), this.GetExpNeed());
+        long expLost = Aion.GameServer.Utils.Stats.XPLossEnumExtensions.GetExpLoss(GetLevel(), this.GetExpNeed());
 
         int unrecoverable = (int)(expLost * 0.33333333);
         int recoverable = (int)expLost - unrecoverable;

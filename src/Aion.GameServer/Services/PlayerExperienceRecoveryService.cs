@@ -15,7 +15,7 @@ public static class PlayerExperienceRecoveryService
 	{
 		// Java parity: services/DialogService RECOVERY branch registers STR_ASK_RECOVER_EXPERIENCE
 		// before sending SM_QUESTION_WINDOW.
-		var recoverableExp = player.RecoverableExp;
+		var recoverableExp = (player.GetCommonData().GetExpRecoverable());
 		if (recoverableExp <= 0)
 			return PlayerExperienceRecoveryDialogResult.WithPacket(
 				PlayerExperienceRecoveryDialogStatus.NoRecoverableExperience,
@@ -80,9 +80,9 @@ public static class PlayerExperienceRecoveryService
 		var updatedKinah = CopyInventoryItem(kinah, kinah.Count - request.Price);
 		ReplaceInventoryItem(player, updatedKinah);
 		player.Exp += request.RecoverableExp;
-		player.RecoverableExp = 0;
+		player.GetCommonData().SetRecoverableExp(0);
 
-		var packets = new List<GameServerPacket>
+		var packets = new List<AionServerPacket>
 		{
 			SmSystemMessage.GetExp2(request.RecoverableExp),
 			SmSystemMessage.SuccessRecoverExperience(),
@@ -168,7 +168,7 @@ public static class PlayerExperienceRecoveryService
 public sealed record PlayerExperienceRecoveryDialogResult(
 	PlayerExperienceRecoveryDialogStatus Status,
 	SmQuestionWindow? QuestionWindow,
-	GameServerPacket? ResponsePacket)
+	AionServerPacket? ResponsePacket)
 {
 	public static PlayerExperienceRecoveryDialogResult Requested(SmQuestionWindow questionWindow)
 	{
@@ -180,7 +180,7 @@ public sealed record PlayerExperienceRecoveryDialogResult(
 
 	public static PlayerExperienceRecoveryDialogResult WithPacket(
 		PlayerExperienceRecoveryDialogStatus status,
-		GameServerPacket packet)
+		AionServerPacket packet)
 	{
 		return new PlayerExperienceRecoveryDialogResult(status, null, packet);
 	}
@@ -196,19 +196,19 @@ public enum PlayerExperienceRecoveryDialogStatus
 public sealed record PlayerExperienceRecoveryResponseResult(
 	bool Handled,
 	PlayerExperienceRecoveryResponseStatus Status,
-	IReadOnlyList<GameServerPacket> Packets)
+	IReadOnlyList<AionServerPacket> Packets)
 {
 	public static PlayerExperienceRecoveryResponseResult NotHandled()
 	{
 		return new PlayerExperienceRecoveryResponseResult(
 			false,
 			PlayerExperienceRecoveryResponseStatus.NotHandled,
-			Array.Empty<GameServerPacket>());
+			Array.Empty<AionServerPacket>());
 	}
 
 	public static PlayerExperienceRecoveryResponseResult CreateHandled(
 		PlayerExperienceRecoveryResponseStatus status,
-		params GameServerPacket[] packets)
+		params AionServerPacket[] packets)
 	{
 		return new PlayerExperienceRecoveryResponseResult(true, status, packets);
 	}

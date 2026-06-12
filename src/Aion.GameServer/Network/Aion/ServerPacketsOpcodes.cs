@@ -20,7 +20,7 @@ public class ServerPacketsOpcodes
         AddPacketOpcode(2, typeof(SM_GM_SHOW_PLAYER_STATUS));
         AddPacketOpcode(3, typeof(SM_STATUPDATE_HP));
         AddPacketOpcode(4, typeof(SM_STATUPDATE_MP));
-        AddPacketOpcode(5, typeof(SM_ATTACK_STATUS));
+        AddPacketOpcode(5, typeof(SmAttackStatus));
         AddPacketOpcode(6, typeof(SM_STATUPDATE_DP));
         AddPacketOpcode(7, typeof(SM_DP_INFO));
         AddPacketOpcode(8, typeof(SM_STATUPDATE_EXP));

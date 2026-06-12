@@ -18,13 +18,13 @@ public sealed class PlayerGroupMember
 
 	public bool IsOnline => Player.IsOnline;
 
-	public float X => Player.Position.X;
+	public float X => Player.GetPosition().X;
 
-	public float Y => Player.Position.Y;
+	public float Y => Player.GetPosition().Y;
 
-	public float Z => Player.Position.Z;
+	public float Z => Player.GetPosition().Z;
 
-	public byte Heading => Player.Position.Heading;
+	public byte Heading => Player.GetPosition().Heading;
 
 	public int Level => Player.Level;
 

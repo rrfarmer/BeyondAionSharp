@@ -204,7 +204,7 @@ public class DropRegistrationService
 
     private float? GetReductionDropRate(Npc npc, int highestLevel)
     {
-        int dropChance = DropRewardEnum.DropRewardFrom(npc.GetLevel() - highestLevel); // reduced chance depending on level
+        int dropChance = DropRewardEnumExtensions.DropRewardFrom(npc.GetLevel() - highestLevel); // reduced chance depending on level
         return dropChance == 100 ? (float?)null : dropChance / 100f;
     }
 
@@ -463,7 +463,7 @@ public class DropRegistrationService
             List<GlobalDropItem> allowedItems = new List<GlobalDropItem>();
             for (int i = 0; i < maxDrops && drops.Count != 0; i++)
             {
-                GlobalDropItem item = Chance.SelectElement(drops, true);
+                GlobalDropItem item = IChance.SelectElement(drops, true);
                 if (item != null)
                     allowedItems.Add(item);
             }

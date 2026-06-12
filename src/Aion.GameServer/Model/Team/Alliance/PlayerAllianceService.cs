@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.Team.Group.Events;
 using Aion.GameServer.Model.GameObjects;
 using System;
 using System.Threading;

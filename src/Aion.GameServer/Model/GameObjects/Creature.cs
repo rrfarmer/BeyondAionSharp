@@ -29,8 +29,8 @@ public abstract class Creature : VisibleObject
     private CreatureLifeStats lifeStats;
     private EffectController effectController;
     protected Aion.GameServer.Controllers.Movement.CreatureMoveController moveController;
-    private int state = CreatureState.Active.GetId();
-    private int visualState = CreatureVisualState.Visible.GetId();
+    private int state = CreatureState.ACTIVE.GetId();
+    private int visualState = CreatureVisualState.VISIBLE.GetId();
     private int seeState = CreatureSeeState.Normal.GetId();
     private Aion.GameServer.SkillEngine.Model.Skill castingSkill;
     private ConcurrentDictionary<int, long> skillCoolDowns;
@@ -190,8 +190,8 @@ public abstract class Creature : VisibleObject
     /// <summary>All abnormal effects are checked that disable attack.</summary>
     public bool CanAttack()
     {
-        return (!GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE) && !IsCasting() && !IsInState(CreatureState.Resting)
-            && !IsInState(CreatureState.PrivateShop));
+        return (!GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE) && !IsCasting() && !IsInState(CreatureState.RESTING)
+            && !IsInState(CreatureState.PRIVATE_SHOP));
     }
 
     public int GetState()
@@ -255,7 +255,7 @@ public abstract class Creature : VisibleObject
 
     public bool IsInAnyHide()
     {
-        return visualState != CreatureVisualState.Visible.GetId() && visualState != CreatureVisualState.Blinking.GetId();
+        return visualState != CreatureVisualState.VISIBLE.GetId() && visualState != CreatureVisualState.BLINKING.GetId();
     }
 
     public virtual int GetSeeState()
@@ -344,7 +344,7 @@ public abstract class Creature : VisibleObject
     {
         if (obj is Creature creature)
         {
-            int visualStateExcludingBlinking = creature.GetVisualState() & ~CreatureVisualState.Blinking.GetId();
+            int visualStateExcludingBlinking = creature.GetVisualState() & ~CreatureVisualState.BLINKING.GetId();
             if (visualStateExcludingBlinking <= GetSeeState())
                 return true;
             return Equals(creature.GetMaster()); // traps, summons, etc. should always be visible to the master
@@ -442,12 +442,12 @@ public abstract class Creature : VisibleObject
     /// <summary>Creature is flying (FLY or GLIDE states).</summary>
     public virtual bool IsFlying()
     {
-        return (IsInState(CreatureState.Flying) && !IsInState(CreatureState.Resting)) || IsInState(CreatureState.Gliding);
+        return (IsInState(CreatureState.FLYING) && !IsInState(CreatureState.RESTING)) || IsInState(CreatureState.GLIDING);
     }
 
     public virtual bool IsInFlyingState()
     {
-        return IsInState(CreatureState.Flying) && !IsInState(CreatureState.Resting);
+        return IsInState(CreatureState.FLYING) && !IsInState(CreatureState.RESTING);
     }
 
     public virtual bool IsPvpTarget(Creature creature)

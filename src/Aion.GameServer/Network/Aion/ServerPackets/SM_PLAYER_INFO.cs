@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.Stats;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -5,6 +6,7 @@ using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Templates.Cp;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.ConquerorAndProtectorSystem;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -172,7 +174,7 @@ public class SM_PLAYER_INFO : AbstractPlayerInfoPacket
 
         PlayerMoveController pmc = player.GetMoveController();
         byte movementMask = pmc.GetMovementMask();
-        if ((pmc.movementMask & MovementMask.ABSOLUTE) == MovementMask.ABSOLUTE)
+        if ((pmc.MovementMaskField & MovementMask.ABSOLUTE) == MovementMask.ABSOLUTE)
         {
             // calculate the vector, as click to move and target coords are not supported here
             Vector3f vector = new Vector3f(pmc.GetTargetX2() - player.GetX(), pmc.GetTargetY2() - player.GetY(),

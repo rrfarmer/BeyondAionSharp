@@ -46,7 +46,7 @@ public static class ItemSocketService
 			&& !candidate.IsEquipped);
 		var removalPrice = PricesService.GetPriceForService(
 			ManastoneRemovalPrice,
-			player.Race,
+			player.Race.ToString(),
 			priceOptions ?? new GameServerPriceOptions(),
 			influenceRates ?? new PriceInfluenceRates());
 		if (kinahItem == null || kinahItem.Count < removalPrice)

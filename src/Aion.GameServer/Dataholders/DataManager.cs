@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders.LoadingUtils;
+using Aion.GameServer.Services.ToyPet;
 using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Dataholders;
@@ -11,6 +12,103 @@ public sealed class DataManager
 	}
 
 	public StaticData StaticData { get; }
+
+	// Java parity: DataManager exposes its loaded tables as static fields (DataManager.ITEM_DATA, ...).
+	// The faithful C# loader is instance-based (DI), so a singleton bridge binds the DI instance at startup
+	// (RegisterInstance) and the static *_DATA accessors delegate to its StaticData tables.
+	private static DataManager? _instance;
+
+	public static void RegisterInstance(DataManager instance) => _instance = instance;
+
+	private static StaticData SD => (_instance ?? throw new InvalidOperationException(
+		"DataManager singleton bridge not initialized; call DataManager.RegisterInstance(...) at startup.")).StaticData;
+
+	public static ItemData ITEM_DATA => SD.ItemDataDh;
+	public static SkillData SKILL_DATA => SD.SkillDataDh;
+	public static NpcData NPC_DATA => SD.NpcDataDh;
+	public static NpcSpawnTable SPAWNS_DATA => SD.NpcSpawns;
+	public static InstanceCooltimeData INSTANCE_COOLTIME_DATA => SD.InstanceCooltimeDataDh;
+	public static PlayerExperienceTable PLAYER_EXPERIENCE_TABLE => SD.PlayerExperienceTable;
+	public static TradeListData TRADE_LIST_DATA => SD.TradeListDataDh;
+	public static NpcFactionsData NPC_FACTIONS_DATA => SD.NpcFactionsDataDh;
+	public static RecipeData RECIPE_DATA => SD.RecipeDataDh;
+	public static VortexLocationTable VORTEX_DATA => SD.VortexLocations;
+	public static PetData PET_DATA => SD.PetDataDh;
+	public static PetSkillTable PET_SKILL_DATA => SD.PetSkills;
+	public static TitleData TITLE_DATA => SD.TitleDataDh;
+	public static AtreianPassportData ATREIAN_PASSPORT_DATA => SD.AtreianPassportDataDh;
+	public static WalkerData WALKER_DATA => SD.WalkerDataDh;
+	public static DecomposableItemTable DECOMPOSABLE_ITEMS_DATA => SD.DecomposableItems;
+	public static ItemPurificationData ITEM_PURIFICATION_DATA => SD.ItemPurificationDataDh;
+	public static GoodsListData GOODSLIST_DATA => SD.GoodsListDataDh;
+	public static PlayerInitialDataTable PLAYER_INITIAL_DATA => SD.PlayerInitialData;
+	public static ItemRandomBonusTable ITEM_RANDOM_BONUSES => SD.ItemRandomBonuses;
+	public static AutoGroupData AUTO_GROUP => SD.AutoGroupDataDh;
+	public static WalkerVersionTable WALKER_VERSIONS_DATA => SD.WalkerVersions;
+	public static SkillTreeTable SKILL_TREE_DATA => SD.SkillTree;
+	public static PortalLocData PORTAL_LOC_DATA => SD.PortalLocDataDh;
+	public static PetFeedDataTable PET_FEED_DATA => SD.PetFeedData;
+	public static NpcSkillData NPC_SKILL_DATA => SD.NpcSkillDataDh;
+	public static CosmeticItemTable COSMETIC_ITEMS_DATA => SD.CosmeticItems;
+	public static ChallengeTaskTable CHALLENGE_DATA => SD.ChallengeTasks;
+	public static WindstreamTable WINDSTREAM_DATA => SD.WindstreamLocations;
+	public static StorageExpansionTemplateTable WAREHOUSEEXPANDER_DATA => SD.WarehouseExpansionTemplates;
+	public static StorageExpansionTemplateTable CUBEEXPANDER_DATA => SD.CubeExpansionTemplates;
+	public static TemperingTable TEMPERING_DATA => SD.TemperingTemplates;
+	public static StaticDoorTable STATICDOOR_DATA => SD.StaticDoors;
+	public static RideData RIDE_DATA => SD.RideDataDh;
+	public static PetDopingData PET_DOPING_DATA => SD.PetDopingDataDh;
+	public static LegionDominionTable LEGION_DOMINION_DATA => SD.LegionDominions;
+	public static ItemSetData ITEM_SET_DATA => SD.ItemSetDataDh;
+	public static InstanceExitTable INSTANCE_EXIT_DATA => SD.InstanceExits;
+	public static GlobalNpcExclusionTable GLOBAL_EXCLUSION_DATA => SD.GlobalNpcExclusions;
+	public static GlobalDropTable GLOBAL_DROP_DATA => SD.GlobalDrops;
+	public static CustomNpcDropTable CUSTOM_NPC_DROP => SD.CustomNpcDrops;
+	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
+	public static HousingObjectTemplateTable HOUSING_OBJECT_DATA => SD.HousingObjectTemplates;
+	public static EnchantTable ENCHANT_DATA => SD.EnchantTemplates;
+	public static HousingTemplateTable HOUSE_DATA => SD.HousingTemplates;
+	public static QuestsData QUEST_DATA => SD.Quests;
+	public static TribeRelationsData TRIBE_RELATIONS_DATA => SD.TribeRelations;
+	public static WorldMapsData WORLD_MAPS_DATA => SD.WorldMaps2;
+	public static NpcShoutData NPC_SHOUT_DATA => SD.NpcShouts;
+	public static UpgradeArcadeData UPGRADE_ARCADE_DATA => SD.UpgradeArcade;
+	public static SiegeLocationData SIEGE_LOCATION_DATA => SD.SiegeLocations;
+	public static ItemGroupsData ITEM_GROUPS_DATA => SD.ItemGroups;
+	public static Aion.GameServer.Model.Templates.Mail.Mails SYSTEM_MAIL_TEMPLATES => SD.SystemMailTemplates;
+	public static HouseBuildingData HOUSE_BUILDING_DATA => SD.HouseBuildings;
+	public static GuideHtmlData GUIDE_HTML_DATA => SD.GuideHtml;
+	public static MaterialData MATERIAL_DATA => SD.Materials;
+	public static ZoneData ZONE_DATA => SD.ZoneInfo;
+	public static XMLQuests XML_QUESTS => SD.XmlQuests;
+	public static TownSpawnsData TOWN_SPAWNS_DATA => SD.TownSpawns;
+	public static SkillChargeData SKILL_CHARGE_DATA => SD.SkillCharges;
+	public static MotionData MOTION_DATA => SD.Motions;
+	public static MapWeatherData MAP_WEATHER_DATA => SD.MapWeathers;
+	public static EventData EVENT_DATA => SD.Events;
+	public static PanelSkillsData PANEL_SKILL_DATA => SD.PanelSkillsDataDh;
+	public static ItemRestrictionCleanupData ITEM_CLEAN_UP => SD.ItemRestrictionCleanupDataDh;
+	public static ConquerorAndProtectorData CONQUEROR_AND_PROTECTOR_DATA => SD.ConquerorAndProtectorDataDh;
+	public static AbsoluteStatsData ABSOLUTE_STATS_DATA => SD.AbsoluteStatsDataDh;
+	public static WorldRaidData WORLD_RAID_DATA => SD.WorldRaidDataDh;
+	public static TeleporterData TELEPORTER_DATA => SD.TeleporterDataDh;
+	public static TeleLocationData TELELOCATION_DATA => SD.TeleLocationDataDh;
+	public static SkillAliasLocationData SKILL_ALIAS_LOCATION_DATA => SD.SkillAliasLocationDataDh;
+	public static SignetDataTemplates SIGNET_DATA_TEMPLATES => SD.SignetDataTemplatesDh;
+	public static ShieldData SHIELD_DATA => SD.ShieldDataDh;
+	public static RoadData ROAD_DATA => SD.RoadDataDh;
+	public static MultiReturnItemData MULTIRETURN_DATA => SD.MultiReturnItemDataDh;
+	public static KillBountyData KILL_BOUNTY_DATA => SD.KillBountyDataDh;
+	public static InstanceBuffData INSTANCE_BUFF_DATA => SD.InstanceBuffDataDh;
+	public static HousePartsData HOUSE_PARTS_DATA => SD.HousePartsDataDh;
+	public static HouseNpcsData HOUSE_NPCS_DATA => SD.HouseNpcsDataDh;
+	public static HotspotData HOTSPOT_DATA => SD.HotspotDataDh;
+	public static GatherableData GATHERABLE_DATA => SD.GatherableDataDh;
+	public static FlyRingData FLY_RING_DATA => SD.FlyRingDataDh;
+	public static FlyPathData FLY_PATH => SD.FlyPathDataDh;
+	public static CuringObjectsData CURING_OBJECTS_DATA => SD.CuringObjectsDataDh;
+	public static BaseData BASE_DATA => SD.BaseDataDh;
+	public static AssembledNpcsData ASSEMBLED_NPC_DATA => SD.AssembledNpcsDataDh;
 
 	public static Task<DataManager> LoadAsync(
 		string repoRoot,

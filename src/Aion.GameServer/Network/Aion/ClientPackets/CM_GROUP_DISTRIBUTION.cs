@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Team.Group;
 using Aion.GameServer.Model.Team.League;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Restrictions;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

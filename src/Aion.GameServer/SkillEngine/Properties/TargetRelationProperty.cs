@@ -3,6 +3,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Siege;
 using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.Model.Templates.Npc;
 
 namespace Aion.GameServer.SkillEngine.Properties;
 

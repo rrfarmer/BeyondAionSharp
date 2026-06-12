@@ -4,6 +4,7 @@ using Aion.GameServer.Model.House;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

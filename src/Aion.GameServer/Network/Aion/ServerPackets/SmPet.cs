@@ -181,7 +181,7 @@ public sealed class SmPet : GameServerPacket
 	private SmPet(SmPetSpecialFunctionSnapshot specialFunction)
 		: base(PacketOpCode)
 	{
-		if (specialFunction.Function == PetSpecialFunction.Doping)
+		if (specialFunction.Function == PetSpecialFunction.DOPING)
 		{
 			throw new NotSupportedException("SM_PET doping special-function packets require the dedicated dopeAction constructor shape and are not ported yet.");
 		}
@@ -340,7 +340,7 @@ public sealed class SmPet : GameServerPacket
 
 	private static void WriteDopingSpecialFunction(PacketBuffer buffer, SmPetDopingSpecialFunctionSnapshot dopingSpecialFunction)
 	{
-		buffer.WriteC((int)PetSpecialFunction.Doping);
+		buffer.WriteC((int)PetSpecialFunction.DOPING);
 		buffer.WriteC(dopingSpecialFunction.DopeAction);
 		switch (dopingSpecialFunction.DopeAction)
 		{
@@ -368,15 +368,15 @@ public sealed class SmPet : GameServerPacket
 		buffer.WriteC((int)specialFunction.Function);
 		switch (specialFunction.Function)
 		{
-			case PetSpecialFunction.AutoLoot when specialFunction.LootNpcObjectId > 0:
+			case PetSpecialFunction.AUTOLOOT when specialFunction.LootNpcObjectId > 0:
 				buffer.WriteC(specialFunction.Active ? 1 : 2);
 				buffer.WriteD(specialFunction.LootNpcObjectId);
 				break;
-			case PetSpecialFunction.AutoLoot:
+			case PetSpecialFunction.AUTOLOOT:
 				buffer.WriteC(0);
 				buffer.WriteC(specialFunction.Active ? 1 : 0);
 				break;
-			case PetSpecialFunction.AutoSell:
+			case PetSpecialFunction.AUTOSELL:
 				buffer.WriteC(0);
 				buffer.WriteC(specialFunction.Active ? 1 : 0);
 				break;

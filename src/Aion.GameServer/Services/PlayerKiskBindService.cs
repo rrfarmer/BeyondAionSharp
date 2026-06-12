@@ -7,7 +7,7 @@ public static class PlayerKiskBindService
 	public static PlayerKiskBindResult Bind(Player player, PlayerKiskRuntimeState kisk, PlayerKiskRuntimeState? previousKisk = null)
 	{
 		// Java parity: services/KiskService.onBind owner/member mutation subset.
-		if (player.BoundKiskObjectId == kisk.ObjectId || kisk.CurrentMemberIds.Contains(player.ObjectId))
+		if ((player.GetKisk()?.GetObjectId() ?? 0) == kisk.ObjectId || kisk.CurrentMemberIds.Contains(player.ObjectId))
 			return PlayerKiskBindResult.AlreadyRegistered();
 
 		if (kisk.CurrentMemberCount >= kisk.MaxMembers)

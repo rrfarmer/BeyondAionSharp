@@ -96,7 +96,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
             if (gatheringTask != null)
             {
                 // sends STR_EXTRACT_GATHER_OCCUPIED_BY_OTHER and makes the client deselect the targeted gatherable
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, curMaterial, 0, 0, 8, 0, 0));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, curMaterial, 0, 0, 8, 0, 0));
                 return;
             }
             int skillLvlDiff = player.GetSkillList().GetSkillLevel(template.GetHarvestSkill()) - template.GetSkillLevel();
@@ -179,7 +179,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
 
             int skillId = GetOwner().GetObjectTemplate().GetHarvestSkill();
             int gainedGatherXp = Aion.GameServer.Model.GameObjects.Players.Rates.SKILL_XP_GATHERING.CalcResult(player, xpReward);
-            StatEnum? boostStat = StatEnum.GetModifier(skillId);
+            StatEnum? boostStat = StatEnumExtensions.GetModifier(skillId);
             if (boostStat != null)
                 gainedGatherXp = (int)(gainedGatherXp * (player.GetGameStats().GetStat(boostStat.Value, 100).GetCurrent() / 100f));
             gainedGatherXp = Math.Max(1, gainedGatherXp);

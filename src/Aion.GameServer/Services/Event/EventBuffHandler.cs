@@ -226,7 +226,7 @@ public class EventBuffHandler
             {
                 if (player.GetEffectController().HasAbnormalEffect(skillId))
                     continue;
-                Effect effect = SkillEngine.GetInstance().ApplyEffectDirectly(skillId, player, player, buff.IsPermanent() ? 0 : (int?)null, effectForceType);
+                Effect effect = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(skillId, player, player, buff.IsPermanent() ? 0 : (int?)null, effectForceType);
                 if (effect != null)
                 {
                     int msgId = 1400697; // You received %0: %1.

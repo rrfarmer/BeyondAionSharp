@@ -899,7 +899,7 @@ public sealed class StaticDataLoadingTests
 		Assert.Equal(3, staticData.NpcVortexSpawns.Count);
 		var vortexSpawns = staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0);
 		Assert.Equal(3, vortexSpawns.Count);
-		var peaceSpawns = staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0, VortexStateType.Peace);
+		var peaceSpawns = staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0, VortexStateType.PEACE);
 		Assert.Equal(2, peaceSpawns.Count);
 		var peaceSpawn = Assert.Single(peaceSpawns, spawn => spawn.Anchor == "peace-a");
 		Assert.Equal(210010000, peaceSpawn.MapId);
@@ -927,7 +927,7 @@ public sealed class StaticDataLoadingTests
 		Assert.NotNull(peaceSpawn.SpotTemporarySchedule);
 		Assert.True(peaceSpawn.SpotTemporarySchedule.IsInSpawnTime(7 * 60, DayOfWeek.Friday));
 		Assert.False(peaceSpawn.SpotTemporarySchedule.IsInSpawnTime(18 * 60, DayOfWeek.Friday));
-		var invasionSpawn = Assert.Single(staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0, VortexStateType.Invasion));
+		var invasionSpawn = Assert.Single(staticData.NpcVortexSpawns.GetSpawnsForVortexLocation(0, VortexStateType.INVASION));
 		Assert.True(invasionSpawn.IsInvasion);
 		Assert.False(invasionSpawn.IsPeace);
 		Assert.Equal(831600, invasionSpawn.NpcId);

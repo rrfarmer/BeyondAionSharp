@@ -11,7 +11,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -46,21 +46,21 @@ public class CM_WINDSTREAM : AionClientPacket
                 if (player.IsUsingFlightTransporterOrWindstream() || !player.IsFlying())
                     return;
                 player.SetFlightPath(new FlightPath(FlightPath.Type.WINDSTREAM, teleportId, distance));
-                player.UnsetState(CreatureState.Active);
-                player.UnsetState(CreatureState.Gliding);
-                player.SetState(CreatureState.Flying);
+                player.UnsetState(CreatureState.ACTIVE);
+                player.UnsetState(CreatureState.GLIDING);
+                player.SetState(CreatureState.FLYING);
                 player.UnsetFlyState(FlyState.GLIDING);
                 player.SetFlyState(FlyState.FLYING);
-                PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, EmotionType.Windstream, teleportId, distance), true);
+                PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, EmotionType.WINDSTREAM, teleportId, distance), true);
                 player.GetLifeStats().TriggerFpRestore();
-                QuestEngine.GetInstance().OnEnterWindStream(new QuestEnv(null, player, 0), teleportId);
+                global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnEnterWindStream(new QuestEnv(null, player, 0), teleportId);
                 return; // don't send SM_WINDSTREAM
             case 2: // leaving windstream (gliding)
             case 3: // leaving windstream
                 if (!player.IsUsingFlightPath(FlightPath.Type.WINDSTREAM))
                     return;
-                player.UnsetState(CreatureState.Flying);
-                player.SetState(CreatureState.Active);
+                player.UnsetState(CreatureState.FLYING);
+                player.SetState(CreatureState.ACTIVE);
                 player.UnsetFlyState(FlyState.FLYING);
                 player.UnsetFlyState(FlyState.GLIDING);
                 if (state == 2)
@@ -68,7 +68,7 @@ public class CM_WINDSTREAM : AionClientPacket
                 else
                     player.GetGameStats().UpdateStatsAndSpeedVisually();
                 player.SetFlightPath(null);
-                PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, state == 2 ? EmotionType.WindstreamEnd : EmotionType.WindstreamExit),
+                PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, state == 2 ? EmotionType.WINDSTREAM_END : EmotionType.WINDSTREAM_EXIT),
                     true);
                 if (player.IsTransformed()) // send sm_transform if player is transformed
                     PacketSendUtility.BroadcastPacketAndReceive(player, new SM_TRANSFORM(player));
@@ -78,7 +78,7 @@ public class CM_WINDSTREAM : AionClientPacket
             case 7: // start boost
             case 8: // end boost
                 PacketSendUtility.BroadcastPacket(player,
-                    new SM_EMOTION(player, state == 7 ? EmotionType.WindstreamStartBoost : EmotionType.WindstreamEndBoost), true);
+                    new SM_EMOTION(player, state == 7 ? EmotionType.WINDSTREAM_START_BOOST : EmotionType.WINDSTREAM_END_BOOST), true);
                 break;
             default:
                 NullLoggerFactory.Instance.CreateLogger(nameof(CM_WINDSTREAM)).LogWarning("Unknown Windstream state #" + state + " was sent from " + player.GetPosition());

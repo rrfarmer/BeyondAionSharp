@@ -10,7 +10,7 @@ public static class WorldVisibility
 	public static bool IsVisibleTo(Player player, WorldPosition sourcePosition)
 	{
 		// Java parity: world/knownlist/KnownList.isInRange using VisibleObject.getVisibleDistance default 95m.
-		var playerPosition = player.Position;
+		var playerPosition = player.GetPosition();
 		if (playerPosition.WorldId != sourcePosition.WorldId)
 			return false;
 

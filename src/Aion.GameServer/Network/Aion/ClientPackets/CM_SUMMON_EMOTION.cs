@@ -8,7 +8,7 @@ using Aion.GameServer.Model.GameObjects.State;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -41,25 +41,25 @@ public class CM_SUMMON_EMOTION : AionClientPacket
         EmotionType emotionType = EmotionTypes.FromId(emotionTypeId);
         switch (emotionType)
         {
-            case EmotionType.Fly:
-            case EmotionType.Land:
-                PacketSendUtility.BroadcastPacket(summonOrMercenary, new SM_EMOTION(summonOrMercenary, EmotionType.ChangeSpeed));
+            case EmotionType.FLY:
+            case EmotionType.LAND:
+                PacketSendUtility.BroadcastPacket(summonOrMercenary, new SM_EMOTION(summonOrMercenary, EmotionType.CHANGE_SPEED));
                 PacketSendUtility.BroadcastPacket(summonOrMercenary, new SM_EMOTION(summonOrMercenary, emotionType));
                 break;
-            case EmotionType.Jump:
-            case EmotionType.SummonStopJump:
+            case EmotionType.JUMP:
+            case EmotionType.SUMMON_STOP_JUMP:
                 PacketSendUtility.BroadcastPacket(summonOrMercenary, new SM_EMOTION(summonOrMercenary, emotionType));
                 break;
-            case EmotionType.AttackModeInMove: // start attacking
-                summonOrMercenary.SetState(CreatureState.WeaponEquipped);
+            case EmotionType.ATTACKMODE_IN_MOVE: // start attacking
+                summonOrMercenary.SetState(CreatureState.WEAPON_EQUIPPED);
                 PacketSendUtility.BroadcastPacket(summonOrMercenary, new SM_EMOTION(summonOrMercenary, emotionType));
                 break;
-            case EmotionType.NeutralModeInMove: // stop attacking
-                summonOrMercenary.UnsetState(CreatureState.WeaponEquipped);
+            case EmotionType.NEUTRALMODE_IN_MOVE: // stop attacking
+                summonOrMercenary.UnsetState(CreatureState.WEAPON_EQUIPPED);
                 PacketSendUtility.BroadcastPacket(summonOrMercenary, new SM_EMOTION(summonOrMercenary, emotionType));
                 break;
-            case EmotionType.None:
-                if (emotionTypeId != (int)EmotionType.None)
+            case EmotionType.NONE:
+                if (emotionTypeId != (int)EmotionType.NONE)
                     log.LogWarning("Unknown emotion type " + emotionTypeId + " from " + player);
                 break;
         }

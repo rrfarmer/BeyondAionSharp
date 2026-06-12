@@ -105,7 +105,7 @@ public class PanesterraTeam
     {
         foreach (int playerId in teamMembers)
         {
-            Player player = World.GetInstance().GetPlayer(playerId);
+            Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
             if (player != null)
                 consumer(player);
         }

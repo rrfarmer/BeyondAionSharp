@@ -29,7 +29,7 @@ public sealed class SmMove : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_MOVE(Creature).
 		_objectId = player.ObjectId;
-		_position = player.Position;
+		_position = player.GetPosition();
 		_movementMask = player.Movement.Mask;
 		_hasPlayableMoveController = true;
 		_targetX = player.Movement.TargetX;
@@ -44,10 +44,6 @@ public sealed class SmMove : GameServerPacket
 		_vehicleUnk2 = player.Movement.VehicleUnk2;
 	}
 
-	public SmMove(WorldNpc npc, WorldNpcWalkerMovementState movementState, byte movementMask = MovementMask.NpcStartMove)
-		: this(npc, movementMask, movementState.Target.X, movementState.Target.Y, movementState.Target.Z)
-	{
-	}
 
 	public SmMove(WorldNpc npc, byte movementMask, float targetX, float targetY, float targetZ)
 		: base(PacketOpCode)
@@ -74,7 +70,7 @@ public sealed class SmMove : GameServerPacket
 
 		if (MovementMask.HasManualPosition(_movementMask))
 		{
-			if (_hasPlayableMoveController && !MovementMask.Has(_movementMask, MovementMask.Absolute))
+			if (_hasPlayableMoveController && !MovementMask.Has(_movementMask, MovementMask.ABSOLUTE))
 			{
 				buffer.WriteF(_vectorX);
 				buffer.WriteF(_vectorY);
@@ -88,14 +84,14 @@ public sealed class SmMove : GameServerPacket
 			}
 		}
 
-		if (MovementMask.Has(_movementMask, MovementMask.Glide))
+		if (MovementMask.Has(_movementMask, MovementMask.GLIDE))
 		{
 			buffer.WriteC(_hasPlayableMoveController ? _glideFlag : 0);
 			if (_hasPlayableMoveController && _glideFlag == GlideFlag.Geyser)
 				buffer.WriteC(_geyserLocationId);
 		}
 
-		if (_hasPlayableMoveController && MovementMask.Has(_movementMask, MovementMask.Vehicle))
+		if (_hasPlayableMoveController && MovementMask.Has(_movementMask, MovementMask.VEHICLE))
 		{
 			buffer.WriteD(_vehicleUnk1);
 			buffer.WriteD(_vehicleUnk2);

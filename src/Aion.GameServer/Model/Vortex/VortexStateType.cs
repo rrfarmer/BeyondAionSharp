@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Vortex;
 public enum VortexStateType
 {
     // Java parity: INVASION
-    Invasion,
+    INVASION,
     // Java parity: PEACE
-    Peace,
+    PEACE,
 }

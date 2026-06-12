@@ -61,7 +61,7 @@ public abstract class Assault<SiegeType, SL> where SiegeType : Siege<SL> where S
         float x1 = (float)(target.GetX() + Math.Cos(radian) * a.GetDistanceOffset());
         float y1 = (float)(target.GetY() + Math.Sin(radian) * a.GetDistanceOffset());
 
-        Npc spawned = (Npc)SpawnEngine.SpawnObject(SpawnEngine.NewSiegeSpawn(GetWorldId(), a.GetNpcId(), locationId, SiegeRace.BALAUR,
+        Npc spawned = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(Aion.GameServer.SpawnEngine.SpawnEngine.NewSiegeSpawn(GetWorldId(), a.GetNpcId(), locationId, SiegeRace.BALAUR,
             SiegeModType.ASSAULT, x1, y1, target.GetZ() + 0.5f, (byte)0), 1);
         spawned.GetAggroList().AddHate(target, 100000);
     }

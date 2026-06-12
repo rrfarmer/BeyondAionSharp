@@ -179,7 +179,7 @@ public class NpcMoveController : CreatureMoveController<Npc>
 
     private bool IsOnGround(Creature creature)
     {
-        return !creature.IsFlying() && !creature.GetMoveController().IsJumping() && (creature.GetMoveController().GetMovementMask() & MovementMask.Fall) == 0;
+        return !creature.IsFlying() && !creature.GetMoveController().IsJumping() && (creature.GetMoveController().GetMovementMask() & MovementMask.FALL) == 0;
     }
 
     /// <summary>
@@ -315,7 +315,7 @@ public class NpcMoveController : CreatureMoveController<Npc>
             AILogger.Moveinfo(Owner, "newX=" + newX + " newY=" + newY + " newZ=" + newZ + " mask=" + MovementMaskField);
         }
 
-        World.GetInstance().UpdatePosition(Owner, newX, newY, newZ, Heading, false);
+        Aion.GameServer.World.World.GetInstance().UpdatePosition(Owner, newX, newY, newZ, Heading, false);
 
         byte newMask = GetMoveMask(destinationChanged);
         if (MovementMaskField != newMask || destinationChanged)
@@ -335,24 +335,24 @@ public class NpcMoveController : CreatureMoveController<Npc>
     private byte GetMoveMask(bool directionChanged)
     {
         if (directionChanged)
-            return MovementMask.NpcStartMove;
+            return MovementMask.NPC_STARTMOVE;
         else if (Owner.GetAi().GetState() == AIState.RETURNING)
-            return MovementMask.NpcRunFast;
+            return MovementMask.NPC_RUN_FAST;
         else if (Owner.GetAi().GetState() == AIState.FOLLOWING)
-            return MovementMask.NpcWalkSlow;
+            return MovementMask.NPC_WALK_SLOW;
 
-        byte mask = MovementMask.Immediate;
+        byte mask = MovementMask.IMMEDIATE;
         Stat2 stat = Owner.GetGameStats().GetMovementSpeed();
         if (Owner.IsInState(CreatureState.WEAPON_EQUIPPED))
         {
-            mask = stat.GetBonus() < 0 ? MovementMask.NpcRunFast : MovementMask.NpcRunSlow;
+            mask = stat.GetBonus() < 0 ? MovementMask.NPC_RUN_FAST : MovementMask.NPC_RUN_SLOW;
         }
         else if (Owner.IsInState(CreatureState.WALK_MODE) || Owner.IsInState(CreatureState.ACTIVE))
         {
-            mask = stat.GetBonus() < 0 ? MovementMask.NpcWalkFast : MovementMask.NpcWalkSlow;
+            mask = stat.GetBonus() < 0 ? MovementMask.NPC_WALK_FAST : MovementMask.NPC_WALK_SLOW;
         }
         if (Owner.IsFlying())
-            mask |= MovementMask.Glide;
+            mask |= MovementMask.GLIDE;
         return mask;
     }
 
@@ -536,7 +536,7 @@ public class NpcMoveController : CreatureMoveController<Npc>
         lock (this)
         {
             lastSteps = null;
-            MovementMaskField = MovementMask.Immediate;
+            MovementMaskField = MovementMask.IMMEDIATE;
         }
     }
 }

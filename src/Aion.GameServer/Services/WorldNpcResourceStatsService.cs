@@ -210,7 +210,7 @@ public sealed class WorldNpcResourceStatsService
 			player.LifeStats = player.LifeStats with { CurrentHp = currentHp };
 		var shouldSend = ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType);
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
-			player.Position,
+			player.GetPosition(),
 			player.ObjectId,
 			packetType,
 			packetLog,
@@ -253,7 +253,7 @@ public sealed class WorldNpcResourceStatsService
 		// Java parity: model/gameobjects/player/PlayerCommonData.addDp/setDp.
 		if (player == null)
 			return WorldNpcResourceChangeResult.MissingTarget(WorldNpcEffectResourceType.Dp, WorldNpcResourceChangeKind.Increase, value);
-		if (IsStartingClass(player.PlayerClass))
+		if (IsStartingClass(player.PlayerClass.ToString()))
 		{
 			return WorldNpcResourceChangeResult.FromResourceMutation(
 				WorldNpcResourceChangeStatus.StartingClass,
@@ -586,7 +586,7 @@ public sealed class WorldNpcResourceStatsService
 			CurrentMp = currentHp == 0 ? 0 : player.LifeStats.CurrentMp,
 		};
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
-			player.Position,
+			player.GetPosition(),
 			player.ObjectId,
 			packetType,
 			packetLog,
@@ -706,7 +706,7 @@ public sealed class WorldNpcResourceStatsService
 		var status = GetStatus(kind, previousMp, currentMp);
 		var mpPercentage = normalizedMaxMp <= 0 ? 0 : (int)(100f * currentMp / normalizedMaxMp);
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
-			player.Position,
+			player.GetPosition(),
 			player.ObjectId,
 			packetType,
 			packetLog,
@@ -793,7 +793,7 @@ public sealed class WorldNpcResourceStatsService
 		var shouldSendFlyTimeUpdate = kind == WorldNpcResourceChangeKind.Reduce || valueToSend > 0;
 		var hpPercentage = GetHpPercentage(player.LifeStats.GetCurrentHp(Math.Max(0, maxHp)), Math.Max(0, maxHp));
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
-			player.Position,
+			player.GetPosition(),
 			player.ObjectId,
 			packetType,
 			packetLog,
@@ -926,7 +926,7 @@ public sealed class WorldNpcResourceStatsService
 			return (packet, 0);
 
 		var count = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			player.Position,
+			player.GetPosition(),
 			player.ObjectId,
 			packet,
 			includeSourcePlayer: true);

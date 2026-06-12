@@ -28,8 +28,8 @@ public class GatheringTask : AbstractCraftTask
 
     protected override void OnInteractionAbort()
     {
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherAnimation(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 4));
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, 0, 0, 5, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_ANIMATION(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 4));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, 0, 0, 5, 0, 0));
     }
 
     protected override void OnInteractionFinish()
@@ -41,29 +41,29 @@ public class GatheringTask : AbstractCraftTask
     protected override void OnInteractionStart()
     {
         requester.GetObserveController().Attach(gathererObserver);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, fullBarValue, fullBarValue, 0, 0, 0));
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, 0, 0, 1, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, fullBarValue, fullBarValue, 0, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, 0, 0, 1, 0, 0));
         // TODO: missing packet for initial failure/success
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherAnimation(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 0), true);
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherAnimation(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 1), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_ANIMATION(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 0), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_ANIMATION(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 1), true);
     }
 
     protected override void SendInteractionUpdate()
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, currentSuccessValue, currentFailureValue, craftType.GetProgressId(), executionSpeed, showBarDelay));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, currentSuccessValue, currentFailureValue, craftType.GetProgressId(), executionSpeed, showBarDelay));
     }
 
     protected override void OnFailureFinish()
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, currentSuccessValue, currentFailureValue, 1, 0, 0));
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, currentSuccessValue, currentFailureValue, 7, 0, 0));
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherAnimation(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 3), true);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, currentSuccessValue, currentFailureValue, 1, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, currentSuccessValue, currentFailureValue, 7, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_ANIMATION(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 3), true);
     }
 
     protected override bool OnSuccessFinish()
     {
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherAnimation(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 2), true);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SmGatherUpdate(template, material, currentSuccessValue, currentFailureValue, 6, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_ANIMATION(requester.GetObjectId(), responder.GetObjectId(), template.GetHarvestSkill(), 2), true);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(requester, new Aion.GameServer.Network.Aion.ServerPackets.SM_GATHER_UPDATE(template, material, currentSuccessValue, currentFailureValue, 6, 0, 0));
         if (template.GetEraseValue() > 0)
             requester.GetInventory().DecreaseByItemId(template.GetRequiredItemId(), template.GetEraseValue());
         Aion.GameServer.Services.Items.ItemService.AddItem(requester, material.GetItemId(), Aion.GameServer.Model.GameObjects.Players.Rates.GATHERING_COUNT.CalcResult(requester, 1));

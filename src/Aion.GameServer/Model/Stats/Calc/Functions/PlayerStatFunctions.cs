@@ -10,6 +10,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Utils.Stats;
+using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Model.Stats.Calc.Functions;
 

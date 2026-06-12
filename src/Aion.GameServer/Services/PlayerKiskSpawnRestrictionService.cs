@@ -44,11 +44,11 @@ public static class PlayerKiskSpawnRestrictionService
 		IReadOnlyList<WorldMapSummary> worldMaps,
 		WorldMapRuntimeStateTable? worldMapStates)
 	{
-		var runtimeState = worldMapStates?.GetMap(player.Position.WorldId);
+		var runtimeState = worldMapStates?.GetMap(player.GetPosition().WorldId);
 		if (runtimeState != null)
 			return new PlayerKiskWorldMapLookup(runtimeState.Summary.IsInstance, true, true, runtimeState, null);
 
-		var staticMap = worldMaps.FirstOrDefault(map => map.MapId == player.Position.WorldId);
+		var staticMap = worldMaps.FirstOrDefault(map => map.MapId == player.GetPosition().WorldId);
 		if (staticMap.MapId == 0)
 			return new PlayerKiskWorldMapLookup(false, false, false, null, null);
 

@@ -11,7 +11,7 @@ using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Collections;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

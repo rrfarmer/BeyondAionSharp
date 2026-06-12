@@ -10,6 +10,7 @@ using Aion.GameServer.Model.Templates.Recipe;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Craft;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.SkillEngine.Task;
 

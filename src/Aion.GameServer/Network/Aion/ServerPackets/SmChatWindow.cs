@@ -28,7 +28,7 @@ public sealed class SmChatWindow : GameServerPacket
 			buffer.WriteC(4);
 			buffer.WriteS(_target.Name);
 			buffer.WriteD(0);
-			buffer.WriteC(ToClassId(_target.PlayerClass));
+			buffer.WriteC(ToClassId(_target.PlayerClass.ToString()));
 			buffer.WriteC(GetLevel());
 			buffer.WriteC(0);
 			return;
@@ -38,7 +38,7 @@ public sealed class SmChatWindow : GameServerPacket
 		buffer.WriteS(_target.Name);
 		buffer.WriteS(_target.LegionName);
 		buffer.WriteC(GetLevel());
-		buffer.WriteH(ToClassId(_target.PlayerClass));
+		buffer.WriteH(ToClassId(_target.PlayerClass.ToString()));
 		buffer.WriteS(_target.Note);
 		buffer.WriteD(1);
 		buffer.WriteC(_target.AccountMembership);

@@ -58,6 +58,85 @@ public static class ChatUtil
 		return $"[charname:{name};1 1 1]";
 	}
 
+	// Java parity: utils/ChatUtil.item(int).
+	public static string Item(int itemId)
+	{
+		return $"[item:{itemId}]";
+	}
+
+	// Java parity: utils/ChatUtil.itemName(int).
+	public static string ItemName(int itemId)
+	{
+		return $"[item_ex:{itemId}]";
+	}
+
+	// Java parity: utils/ChatUtil.recipe(int).
+	public static string Recipe(int recipeId)
+	{
+		return $"[recipe:{recipeId}]";
+	}
+
+	// Java parity: utils/ChatUtil.quest(int).
+	public static string Quest(int questId)
+	{
+		return $"[quest:{questId}]";
+	}
+
+	private const char AsmoNamePrefix = '';
+	private const char ElyosNamePrefix = '';
+
+	/// <summary>Java parity: utils/ChatUtil.getRealCharName(String) — character name without custom tags.</summary>
+	public static string GetRealCharName(string name)
+	{
+		return GetRealCharName(name, false);
+	}
+
+	// Java parity: utils/ChatUtil.getRealCharName(String, boolean).
+	public static string GetRealCharName(string name, bool nameIsFromGMCommand)
+	{
+		// don't perform expensive checks if name is already qualified
+		if (System.Text.RegularExpressions.Regex.IsMatch(name, "^[A-Za-z]+$"))
+			return Util.ConvertName(name);
+
+		bool replaceUnsupportedCommandChars = nameIsFromGMCommand
+			&& name.Contains(Aion.GameServer.Network.Aion.ClientPackets.AbstractGmCommandPacket.UNSUPPORTED_COMMAND_CHAR_PLACEHOLDER);
+		char firstChar = name[0];
+		if (firstChar == AsmoNamePrefix || firstChar == ElyosNamePrefix)
+			name = name.Substring(1);
+
+		const string nameFlag = "%s";
+		foreach (string nameFormat in Aion.GameServer.Configs.Administration.AdminConfig.NAME_TAGS)
+		{
+			int nameStartIndex = nameFormat.IndexOf(nameFlag, StringComparison.Ordinal);
+			if (nameStartIndex == -1)
+				continue;
+			string namePrefix = nameFormat.Substring(0, nameStartIndex > 0 ? nameStartIndex : 0);
+			string nameSuffix = nameFormat.Substring(nameStartIndex + nameFlag.Length);
+			if (replaceUnsupportedCommandChars)
+			{
+				namePrefix = Aion.GameServer.Network.Aion.ClientPackets.AbstractGmCommandPacket.ReplaceUnsupportedCommandChars(namePrefix);
+				nameSuffix = Aion.GameServer.Network.Aion.ClientPackets.AbstractGmCommandPacket.ReplaceUnsupportedCommandChars(nameSuffix);
+			}
+			if ((namePrefix + nameSuffix).Length > 0 && name.StartsWith(namePrefix, StringComparison.Ordinal) && name.EndsWith(nameSuffix, StringComparison.Ordinal))
+			{
+				int endIndex = name.IndexOf(nameSuffix, StringComparison.Ordinal) - 1;
+				name = name.Substring(namePrefix.Length, (endIndex > 0 ? endIndex : name.Length) - namePrefix.Length);
+				break;
+			}
+		}
+
+		return Util.ConvertName(name);
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.toFactionPrefixedName(Player, Player) — player name prefixed with faction icon for staff readers.</summary>
+	public static string ToFactionPrefixedName(Aion.GameServer.Model.GameObjects.Players.Player reader, Aion.GameServer.Model.GameObjects.Players.Player player)
+	{
+		string name = player.GetName(true);
+		if (reader.IsStaff())
+			name = (player.GetRace() == Aion.GameServer.Model.Race.ELYOS ? ElyosNamePrefix : AsmoNamePrefix) + name;
+		return name;
+	}
+
 	private static string FormatColorComponent(float value)
 	{
 		// Java DecimalFormat(".##"): up to 2 decimal places, no leading zero for values < 1.

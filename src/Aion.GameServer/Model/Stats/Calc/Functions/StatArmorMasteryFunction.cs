@@ -29,7 +29,7 @@ public class StatArmorMasteryFunction : StatRateFunction
         {
             if (item.GetItemTemplate().GetItemSubType() == armorType)
             {
-                equipmentFactor += GetEquipmentFactor(ItemSlot.GetSlotFor(item.GetEquipmentSlot()));
+                equipmentFactor += GetEquipmentFactor(ItemSlotExtensions.GetSlotFor(item.GetEquipmentSlot()));
             }
         }
     }

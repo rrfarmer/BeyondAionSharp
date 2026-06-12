@@ -845,7 +845,7 @@ public sealed class WorldNpcSkillResultCalculationService
 			return WorldNpcSkillShieldObserverResult.NotRequested(attack);
 
 		// Java parity: controllers/ObserveController.checkShieldStatus and observer/AttackShieldObserver.checkShield.
-		var baseStatus = attack.AttackStatus.GetBaseStatus();
+		var baseStatus = attack.AttackStatusExtensions.GetBaseStatus();
 		if (baseStatus is WorldNpcSkillAttackStatus.Dodge or WorldNpcSkillAttackStatus.Resist)
 			return WorldNpcSkillShieldObserverResult.FromCounterStatus(attack);
 

@@ -25,7 +25,7 @@ public sealed class StorageExpansionNpcService
 		if (!CanExpandCube(player, cubeExpansionLimit))
 			return StorageExpansionRequestPlan.Failed(StorageExpansionRequestStatus.CannotExpand, SmSystemMessage.InventoryCantExtendMore());
 
-		var targetNpcExpands = player.NpcExpands + 1;
+		var targetNpcExpands = (player.GetCommonData().GetNpcExpands()) + 1;
 		if (targetNpcExpands < template.MinExpansionLevel)
 		{
 			return StorageExpansionRequestPlan.Failed(
@@ -58,7 +58,7 @@ public sealed class StorageExpansionNpcService
 		if (!CanExpandWarehouse(player))
 			return StorageExpansionRequestPlan.Failed(StorageExpansionRequestStatus.CannotExpand, SmSystemMessage.WarehouseCantExtendMore());
 
-		var targetNpcExpands = player.WarehouseNpcExpands + 1;
+		var targetNpcExpands = (player.GetCommonData().GetWhNpcExpands()) + 1;
 		if (targetNpcExpands < template.MinExpansionLevel)
 		{
 			return StorageExpansionRequestPlan.Failed(
@@ -118,7 +118,7 @@ public sealed class StorageExpansionNpcService
 		ReplaceInventoryItem(inventory, updatedKinah);
 		player.InventoryItems = inventory.ToArray();
 
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		if (itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 		{
 			packets.Add(new SmInventoryUpdateItem(
@@ -132,12 +132,12 @@ public sealed class StorageExpansionNpcService
 		switch (request.Storage)
 		{
 			case InventoryExpansionStorage.Cube:
-				player.NpcExpands = request.TargetNpcExpands;
+				player.GetCommonData().SetNpcExpands(request.TargetNpcExpands);
 				packets.Add(SmSystemMessage.InventorySizeExtended(InventoryExpansionService.CubeSlotsPerExpansion));
 				packets.Add(SmCubeUpdate.CubeSize(player));
 				break;
 			case InventoryExpansionStorage.Warehouse:
-				player.WarehouseNpcExpands = request.TargetNpcExpands;
+				player.GetCommonData().SetWhNpcExpands(request.TargetNpcExpands);
 				packets.Add(SmSystemMessage.WarehouseSizeExtended(InventoryExpansionService.WarehouseSlotsPerExpansion));
 				packets.AddRange(SmWarehouseInfo.CreateRegularWarehouseUpdatePackets(player, itemTemplates));
 				break;
@@ -176,13 +176,13 @@ public sealed class StorageExpansionNpcService
 
 	private static bool CanExpandCube(Player player, int cubeExpansionLimit)
 	{
-		var newExpansions = player.NpcExpands + player.QuestExpands + player.ItemExpands + 1;
+		var newExpansions = (player.GetCommonData().GetNpcExpands()) + (player.GetCommonData().GetQuestExpands()) + (player.GetCommonData().GetItemExpands()) + 1;
 		return newExpansions >= 0 && newExpansions <= cubeExpansionLimit;
 	}
 
 	private static bool CanExpandWarehouse(Player player)
 	{
-		var newExpansions = player.WarehouseNpcExpands + player.WarehouseBonusExpands + 1;
+		var newExpansions = (player.GetCommonData().GetWhNpcExpands()) + (player.GetCommonData().GetWhBonusExpands()) + 1;
 		return newExpansions >= 0 && newExpansions <= WarehouseExpansionLimit;
 	}
 
@@ -245,21 +245,21 @@ public sealed record StorageExpansionRequestPlan(
 	StorageExpansionRequestStatus Status,
 	PendingStorageExpansionRequest? Request,
 	SmQuestionWindow? QuestionWindow,
-	IReadOnlyList<GameServerPacket> Packets)
+	IReadOnlyList<AionServerPacket> Packets)
 {
 	public static StorageExpansionRequestPlan Requested(PendingStorageExpansionRequest request, SmQuestionWindow questionWindow)
 	{
-		return new StorageExpansionRequestPlan(true, StorageExpansionRequestStatus.Requested, request, questionWindow, Array.Empty<GameServerPacket>());
+		return new StorageExpansionRequestPlan(true, StorageExpansionRequestStatus.Requested, request, questionWindow, Array.Empty<AionServerPacket>());
 	}
 
-	public static StorageExpansionRequestPlan Failed(StorageExpansionRequestStatus status, GameServerPacket packet)
+	public static StorageExpansionRequestPlan Failed(StorageExpansionRequestStatus status, AionServerPacket packet)
 	{
 		return new StorageExpansionRequestPlan(true, status, null, null, [packet]);
 	}
 
 	public static StorageExpansionRequestPlan NotHandled(StorageExpansionRequestStatus status)
 	{
-		return new StorageExpansionRequestPlan(false, status, null, null, Array.Empty<GameServerPacket>());
+		return new StorageExpansionRequestPlan(false, status, null, null, Array.Empty<AionServerPacket>());
 	}
 }
 
@@ -278,24 +278,24 @@ public sealed record StorageExpansionResponsePlan(
 	StorageExpansionResponseStatus Status,
 	PendingStorageExpansionRequest? Request,
 	InventoryItem? KinahItemUpdate,
-	IReadOnlyList<GameServerPacket> Packets)
+	IReadOnlyList<AionServerPacket> Packets)
 {
 	public static StorageExpansionResponsePlan Accepted(
 		PendingStorageExpansionRequest request,
 		InventoryItem kinahItemUpdate,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<AionServerPacket> packets)
 	{
 		return new StorageExpansionResponsePlan(true, StorageExpansionResponseStatus.Accepted, request, kinahItemUpdate, packets);
 	}
 
-	public static StorageExpansionResponsePlan CreateHandled(StorageExpansionResponseStatus status, params GameServerPacket[] packets)
+	public static StorageExpansionResponsePlan CreateHandled(StorageExpansionResponseStatus status, params AionServerPacket[] packets)
 	{
 		return new StorageExpansionResponsePlan(true, status, null, null, packets);
 	}
 
 	public static StorageExpansionResponsePlan NotHandled(StorageExpansionResponseStatus status)
 	{
-		return new StorageExpansionResponsePlan(false, status, null, null, Array.Empty<GameServerPacket>());
+		return new StorageExpansionResponsePlan(false, status, null, null, Array.Empty<AionServerPacket>());
 	}
 }
 

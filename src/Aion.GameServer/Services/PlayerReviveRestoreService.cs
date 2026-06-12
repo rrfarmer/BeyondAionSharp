@@ -57,7 +57,7 @@ public static class PlayerReviveRestoreService
 		var previousState = player.CreatureState;
 		var previousDp = player.Dp;
 		var previousPlayerResurrectionActive = player.IsPlayerResurrectionActive;
-		var previousResurrectionSkillId = player.ResurrectionSkillId;
+		var previousResurrectionSkillId = (player.GetResurrectionSkill());
 		var normalizedMaxHp = Math.Max(0, maxHp);
 		var normalizedMaxMp = Math.Max(0, maxMp);
 		var effectiveHpPercent = hasNoResurrectPenalty ? 100 : hpPercent;
@@ -71,7 +71,7 @@ public static class PlayerReviveRestoreService
 		player.IsPlayerResurrectionActive = false;
 		if (!hasNoResurrectPenalty && player.Dp > 0)
 			player.Dp = 0;
-		player.ResurrectionSkillId = 0;
+		player.SetResurrectionSkill(0);
 		player.LifeStats = nextLifeStats;
 		if (player.IsFlyingBeforeDeath)
 			player.SetCreatureState(PlayerCreatureState.FloatingCorpse, enabled: false);
@@ -94,7 +94,7 @@ public static class PlayerReviveRestoreService
 			previousPlayerResurrectionActive,
 			player.IsPlayerResurrectionActive,
 			previousResurrectionSkillId,
-			player.ResurrectionSkillId);
+			(player.GetResurrectionSkill()));
 	}
 
 	private static int CalculatePercentValue(int maxValue, int percent)

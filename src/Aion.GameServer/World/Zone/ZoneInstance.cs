@@ -89,7 +89,7 @@ public class ZoneInstance
     // Java parity: addHandler(IZoneHandler)
     public void AddHandler(IZoneHandler handler) => Handlers.Add(handler);
 
-    private WorldMap Map => World.GetInstance().GetWorldMap(_mapId);
+    private WorldMap Map => Aion.GameServer.World.World.GetInstance().GetWorldMap(_mapId);
     private int Flags => _template.GetZoneTemplate().GetFlags();
 
     // Java parity: canFly()
@@ -146,7 +146,7 @@ public class ZoneInstance
     // Java parity: isPvpAllowed()
     public bool IsPvpAllowed()
     {
-        if (GetZoneTemplate().GetZoneType() != ZoneClassName.Pvp)
+        if (GetZoneTemplate().GetZoneType() != ZoneClassName.PVP)
             return Map.IsPvpAllowed();
         return (Flags & (int)ZoneAttributes.PvpEnabled) != 0;
     }
@@ -154,7 +154,7 @@ public class ZoneInstance
     // Java parity: isSameRaceDuelsAllowed()
     public bool IsSameRaceDuelsAllowed()
     {
-        if (GetZoneTemplate().GetZoneType() != ZoneClassName.Duel || Flags == 0 || Map.HasOverridenOption(ZoneAttributes.DuelSameRaceEnabled))
+        if (GetZoneTemplate().GetZoneType() != ZoneClassName.DUEL || Flags == 0 || Map.HasOverridenOption(ZoneAttributes.DuelSameRaceEnabled))
             return Map.IsSameRaceDuelsAllowed();
         return (Flags & (int)ZoneAttributes.DuelSameRaceEnabled) != 0;
     }
@@ -162,7 +162,7 @@ public class ZoneInstance
     // Java parity: isOtherRaceDuelsAllowed()
     public bool IsOtherRaceDuelsAllowed()
     {
-        if (GetZoneTemplate().GetZoneType() != ZoneClassName.Duel || Flags == 0 || Map.HasOverridenOption(ZoneAttributes.DuelOtherRaceEnabled))
+        if (GetZoneTemplate().GetZoneType() != ZoneClassName.DUEL || Flags == 0 || Map.HasOverridenOption(ZoneAttributes.DuelOtherRaceEnabled))
             return Map.IsOtherRaceDuelsAllowed();
         return (Flags & (int)ZoneAttributes.DuelOtherRaceEnabled) != 0;
     }
@@ -174,5 +174,5 @@ public class ZoneInstance
     public void ForEach(Action<Creature> action) => CollectionUtil.ForEach(Creatures.Values, action);
 
     // Java parity: isDominionZone()
-    public bool IsDominionZone() => GetZoneTemplate().GetZoneType() == ZoneClassName.Dominion;
+    public bool IsDominionZone() => GetZoneTemplate().GetZoneType() == ZoneClassName.DOMINION;
 }

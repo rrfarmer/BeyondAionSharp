@@ -4,6 +4,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.World.Zone;
 
@@ -20,7 +21,7 @@ public class ZoneLevelService
     /// <summary>Check water level (start drowning) and map death level (die)</summary>
     public static void CheckZoneLevels(Player player)
     {
-        World world = World.GetInstance();
+        World world = Aion.GameServer.World.World.GetInstance();
         float z = player.GetZ();
 
         if (player.IsDead())
@@ -41,18 +42,18 @@ public class ZoneLevelService
 
     private static void StopDrowning(Player player)
     {
-        if (player.GetController().HasTask(TaskId.Drown))
-            player.GetController().CancelTask(TaskId.Drown);
+        if (player.GetController().HasTask(TaskId.DROWN))
+            player.GetController().CancelTask(TaskId.DROWN);
     }
 
     private static void StartDrowning(Player player)
     {
-        if (player.GetController().HasTask(TaskId.Drown))
+        if (player.GetController().HasTask(TaskId.DROWN))
             return;
-        player.GetController().AddTask(TaskId.Drown, ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(ct =>
+        player.GetController().AddTask(TaskId.DROWN, ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(ct =>
         {
             int value = (int)Math.Floor(player.GetLifeStats().GetMaxHp() / 10f + 0.5f);
-            if (player.GetLifeStats().ReduceHp(SM_ATTACK_STATUS.TYPE.DROWNING, value, 0, SM_ATTACK_STATUS.LOG.REGULAR, player) == 0)
+            if (player.GetLifeStats().ReduceHp(SmAttackStatus.TYPE.DROWNING, value, 0, SmAttackStatus.LOG.REGULAR, player) == 0)
                 StopDrowning(player);
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(0), TimeSpan.FromMilliseconds(DROWN_PERIOD)));

@@ -1134,7 +1134,7 @@ public class QuestEngine : GameEngine
     {
         messageTask = CronService.GetInstance().Schedule(() =>
         {
-            World.GetInstance().ForEachPlayer(player =>
+            Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
             {
                 bool daily = false, weekly = false;
                 foreach (QuestState qs in player.GetQuestStateList().GetCompletedQuests())

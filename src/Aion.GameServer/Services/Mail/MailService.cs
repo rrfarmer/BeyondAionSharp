@@ -174,7 +174,7 @@ public class MailService
             return MailMessage.MAIL_IS_ONE_RACE_ONLY;
         if (recipientCommonData.GetMailboxLetters() >= 100)
             return MailMessage.RECIPIENT_MAILBOX_FULL;
-        Player p = World.GetInstance().GetPlayer(recipientCommonData.GetPlayerObjId());
+        Player p = Aion.GameServer.World.World.GetInstance().GetPlayer(recipientCommonData.GetPlayerObjId());
         BlockList blockList = p != null ? p.GetBlockList() : BlockListDAO.Load(recipientCommonData.GetPlayerObjId());
         if (blockList.Contains(sender.GetObjectId()))
             return MailMessage.YOU_ARE_IN_RECIPIENT_IGNORE_LIST;

@@ -37,7 +37,7 @@ public class FlyRingObserver : ActionObserver
                 speedUp.AddAllEffectToSucess();
                 speedUp.ApplyEffect();
             }
-            QuestEngine.GetInstance().OnPassFlyingRing(new QuestEnv(null, player, 0), ring.Name);
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnPassFlyingRing(new QuestEnv(null, player, 0), ring.Name);
         }
         oldPosition = newPosition;
     }

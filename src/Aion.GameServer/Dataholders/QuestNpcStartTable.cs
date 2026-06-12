@@ -9,7 +9,7 @@ public sealed class QuestNpcStartTable
 
 	public QuestNpcStartRegistration RegisterQuestNpc(int npcId, int questRange = QuestNpcStartRegistration.DefaultQuestRange)
 	{
-		// Java parity: questEngine/QuestEngine.registerQuestNpc creates or reuses a QuestNpc.
+		// Java parity: questEngine/Aion.GameServer.QuestEngine.QuestEngine.registerQuestNpc creates or reuses a QuestNpc.
 		if (!_registrations.TryGetValue(npcId, out var registration))
 		{
 			registration = new QuestNpcStartRegistration(npcId, questRange);
@@ -35,7 +35,7 @@ public sealed class QuestNpcStartTable
 
 	public QuestNpcStartRegistration GetQuestNpc(int npcId)
 	{
-		// Java parity: questEngine/QuestEngine.getQuestNpc returns an unregistered empty QuestNpc.
+		// Java parity: questEngine/Aion.GameServer.QuestEngine.QuestEngine.getQuestNpc returns an unregistered empty QuestNpc.
 		return _registrations.TryGetValue(npcId, out var registration)
 			? registration
 			: new QuestNpcStartRegistration(npcId, QuestNpcStartRegistration.DefaultQuestRange);

@@ -11,7 +11,7 @@ public static class PlayerKiskAuthorizationService
 		Func<Player, int, bool>? hasCurrentTeamMember = null)
 	{
 		// Java parity: model/gameobjects/Kisk.canBind checks duplicate/full state before use-mask permissions.
-		if (player.BoundKiskObjectId == kisk.ObjectId || kisk.CurrentMemberIds.Contains(player.ObjectId))
+		if ((player.GetKisk()?.GetObjectId() ?? 0) == kisk.ObjectId || kisk.CurrentMemberIds.Contains(player.ObjectId))
 			return PlayerKiskBindAuthorization.AlreadyRegistered();
 
 		if (kisk.CurrentMemberCount >= kisk.MaxMembers)
@@ -32,8 +32,8 @@ public static class PlayerKiskAuthorizationService
 		return kisk.UseMask switch
 		{
 			0 => true,
-			1 => SameRace(player.Race, kisk.OwnerRace),
-			2 => player.ObjectId == kisk.OwnerObjectId || (kisk.OwnerLegionId != 0 && player.LegionId == kisk.OwnerLegionId),
+			1 => SameRace(player.Race.ToString(), kisk.OwnerRace),
+			2 => player.ObjectId == kisk.OwnerObjectId || (kisk.OwnerLegionId != 0 && (player.GetLegion()?.GetLegionId() ?? 0) == kisk.OwnerLegionId),
 			3 => player.ObjectId == kisk.OwnerObjectId,
 			4 => player.ObjectId == kisk.OwnerObjectId
 				|| (player.IsInTeam && hasCurrentGroupMember?.Invoke(player, kisk.OwnerObjectId) == true),

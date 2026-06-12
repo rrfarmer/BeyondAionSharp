@@ -5,11 +5,12 @@ using Aion.GameServer.Controllers.Attack;
 using Aion.GameServer.Model;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
-using static Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS;
+using static Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/DelayedSpellAttackInstantEffect (ATracer) : DamageEffect. @XmlAttribute delay; applyEffect: base value, element!=NONE→*knowledge/100 (int division per Java); calculateSkillResult ignoreShields=true; finalPosition=this.position; anonymous Runnable→async delegate at delay ms: onAttack(DELAYDAMAGE, reserveds(finalPosition), true, LOG.DELAYEDSPELLATKINSTANT, hopType) + notifyAttackObservers; calculateDamage empty. AttackUtil/Effect red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/DelayedSpellAttackInstantEffect (ATracer) : DamageEffect. @XmlAttribute delay; applyEffect: base value, Element!=NONE→*knowledge/100 (int division per Java); calculateSkillResult ignoreShields=true; finalPosition=this.Position; anonymous Runnable→async delegate at delay ms: onAttack(DELAYDAMAGE, reserveds(finalPosition), true, LOG.DELAYEDSPELLATKINSTANT, Hoptype) + notifyAttackObservers; calculateDamage empty. AttackUtil/Effect red-tolerated.</summary>
 [XmlType("DelayedSpellAttackInstantEffect")]
 public class DelayedSpellAttackInstantEffect : DamageEffect
 {
@@ -19,15 +20,15 @@ public class DelayedSpellAttackInstantEffect : DamageEffect
     public override void ApplyEffect(Effect effect)
     {
         int valueWithDelta = CalculateBaseValue(effect);
-        if (element != SkillElement.NONE)
+        if (Element != SkillElement.NONE)
             valueWithDelta *= effect.GetEffector().GetGameStats().GetKnowledge().GetCurrent() / 100;
 
         AttackUtil.CalculateSkillResult(effect, valueWithDelta, this, true); // ignores shields on retail
-        int finalPosition = this.position;
+        int finalPosition = this.Position;
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             effect.GetEffected().GetController().OnAttack(effect, TYPE.DELAYDAMAGE, effect.GetReserveds(finalPosition).GetValue(), true,
-                LOG.DELAYEDSPELLATKINSTANT, hopType);
+                LOG.DELAYEDSPELLATKINSTANT, Hoptype);
             effect.GetEffector().GetObserveController().NotifyAttackObservers(effect.GetEffected(), effect.GetSkillId());
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(delay));

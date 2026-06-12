@@ -31,7 +31,7 @@ public static class AbyssSkillService
 		var removedSkills = new List<PlayerSkill>();
 		var addedSkills = new List<PlayerSkill>();
 
-		foreach (var skillId in GetAllAbyssSkillIds(player.Race))
+		foreach (var skillId in GetAllAbyssSkillIds(player.Race.ToString()))
 		{
 			var removed = RemoveSkill(skills, skillId);
 			if (removed != null)
@@ -40,7 +40,7 @@ public static class AbyssSkillService
 
 		if (player.AbyssRank.Rank >= transformMinRank)
 		{
-			foreach (var skillId in GetSkills(player.Race, player.AbyssRank.Rank))
+			foreach (var skillId in GetSkills(player.Race.ToString(), player.AbyssRank.Rank))
 			{
 				var added = AddTemporarySkill(skills, skillId, skillLevel: 1);
 				if (added != null)

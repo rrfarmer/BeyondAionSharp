@@ -7,7 +7,7 @@ using Aion.GameServer.Network.ChatServer;
 using Aion.GameServer.Network.LoginServer;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Time;
-using GameServer = Aion.GameServer.GameServer;
+using GameServer = global::Aion.GameServer.GameServer;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

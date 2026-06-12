@@ -10,6 +10,7 @@ using Aion.GameServer.Model.Templates.Spawns.Siegespawns;
 using Aion.GameServer.Model.Templates.Spawns.Vortexspawns;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Utils.Xml;
 
 namespace Aion.GameServer.Dataholders;
 

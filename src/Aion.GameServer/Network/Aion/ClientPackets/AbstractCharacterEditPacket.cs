@@ -3,7 +3,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -26,7 +26,7 @@ public abstract class AbstractCharacterEditPacket : AionClientPacket
         characterName = Util.ConvertName(ReadS(25)); // client leaks random data here when entering char creation screen for the first time
         gender = ReadD() == 0 ? Gender.MALE : Gender.FEMALE;
         race = ReadD() == 0 ? Race.ELYOS : Race.ASMODIANS;
-        playerClass = PlayerClass.GetPlayerClassById((byte)ReadD(), ignoreInvalidPlayerClass);
+        playerClass = PlayerClassExtensions.GetPlayerClassById((byte)ReadD(), ignoreInvalidPlayerClass);
     }
 
     protected void ReadAppearance()

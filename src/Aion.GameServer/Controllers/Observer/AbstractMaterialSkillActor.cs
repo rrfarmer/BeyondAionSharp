@@ -115,7 +115,7 @@ public abstract class AbstractMaterialSkillActor : AbstractCollisionObserver
                 return;
             if (GeoDataConfig.GEO_MATERIALS_SHOWDETAILS && outer.creature is Player player2 && player2.IsStaff())
                 PacketSendUtility.SendMessage(player2, outer.GetType().Name + " use skill=" + skill.GetId());
-            SkillEngine.GetInstance().ApplyEffectDirectly(skill.GetId(), skill.GetSkillLevel(), outer.creature, outer.creature, null, Effect.ForceType.MATERIAL_SKILL);
+            Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(skill.GetId(), skill.GetSkillLevel(), outer.creature, outer.creature, null, Effect.ForceType.MATERIAL_SKILL);
         }
     }
 }

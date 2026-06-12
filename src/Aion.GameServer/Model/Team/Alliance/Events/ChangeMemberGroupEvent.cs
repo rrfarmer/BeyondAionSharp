@@ -51,8 +51,8 @@ public class ChangeMemberGroupEvent : AlwaysTrueTeamEvent
         secondAllianceGroup.RemoveMember(secondMember);
         firstAllianceGroup.AddMember(secondMember);
         secondAllianceGroup.AddMember(firstMember);
-        alliance.SendPackets(new SM_ALLIANCE_MEMBER_INFO(firstMember, PlayerAllianceEvent.MemberGroupChange),
-            new SM_ALLIANCE_MEMBER_INFO(secondMember, PlayerAllianceEvent.MemberGroupChange));
+        alliance.SendPackets(new SM_ALLIANCE_MEMBER_INFO(firstMember, PlayerAllianceEvent.MEMBER_GROUP_CHANGE),
+            new SM_ALLIANCE_MEMBER_INFO(secondMember, PlayerAllianceEvent.MEMBER_GROUP_CHANGE));
     }
 
     private void MoveMemberToGroup(PlayerAllianceMember firstMember, int allianceGroupId)
@@ -61,6 +61,6 @@ public class ChangeMemberGroupEvent : AlwaysTrueTeamEvent
         firstAllianceGroup.RemoveMember(firstMember);
         PlayerAllianceGroup newAllianceGroup = alliance.GetAllianceGroup(allianceGroupId);
         newAllianceGroup.AddMember(firstMember);
-        alliance.SendPackets(new SM_ALLIANCE_MEMBER_INFO(firstMember, PlayerAllianceEvent.MemberGroupChange));
+        alliance.SendPackets(new SM_ALLIANCE_MEMBER_INFO(firstMember, PlayerAllianceEvent.MEMBER_GROUP_CHANGE));
     }
 }

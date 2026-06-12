@@ -1,6 +1,6 @@
 using Aion.Commons.Nio;
 using Aion.GameServer.Model.Items;
-using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
+using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
 namespace Aion.GameServer.Network.Aion.Iteminfo;
 
@@ -16,7 +16,7 @@ public class ShieldInfoBlobEntry : ItemBlobEntry
 
     public override void WriteThisBlob(ByteBuffer buf)
     {
-        WriteQ(buf, ItemSlot.GetSlotFor(ownerItem.GetItemTemplate().GetItemSlot()).GetSlotIdMask());
+        WriteQ(buf, ItemSlotExtensions.GetSlotFor(ownerItem.GetItemTemplate().GetItemSlot()).GetSlotIdMask());
         WriteQ(buf, 0); // TODO! secondary slot?
         WriteDyeInfo(buf, ownerItem.GetItemColor()); // 4 bytes
     }

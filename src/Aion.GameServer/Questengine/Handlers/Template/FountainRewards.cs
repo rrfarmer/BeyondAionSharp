@@ -4,6 +4,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

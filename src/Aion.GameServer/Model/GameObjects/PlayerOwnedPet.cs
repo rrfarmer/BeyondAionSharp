@@ -16,7 +16,7 @@ public sealed record PlayerOwnedPet(
 	bool CancelFeed = false,
 	bool IsLooting = false,
 	bool IsSelling = false,
-	PetHungryLevel HungryLevel = PetHungryLevel.Hungry,
+	PetHungryLevel HungryLevel = PetHungryLevel.HUNGRY,
 	DateTimeOffset? DespawnTime = null,
 	long MoodStartedMillis = 0,
 	int ShuggleCounter = 0,

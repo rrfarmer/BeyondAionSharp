@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE;
 using LOG = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG;
+using Aion.GameServer.Utils.Audit;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Controllers;
 
@@ -45,7 +47,7 @@ public class PlayerController : CreatureController<Player>
                 {
                     Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnAtDistance(new Aion.GameServer.QuestEngine.Model.QuestEnv(npc, GetOwner(), 0));
                 }
-                Aion.GameServer.Services.DropService.GetInstance().See(GetOwner(), npc);
+                Aion.GameServer.Services.Drop.DropService.GetInstance().See(GetOwner(), npc);
             }
             else if (creature is Player player)
             {
@@ -66,15 +68,15 @@ public class PlayerController : CreatureController<Player>
         {
             PacketSendUtility.SendPacket(GetOwner(), new SM_PET(pet));
             if (pet.GetMaster().IsInFlyingState())
-                PacketSendUtility.SendPacket(GetOwner(), new SM_PET_EMOTE(pet, Aion.GameServer.Model.PetEmote.FLY_START));
+                PacketSendUtility.SendPacket(GetOwner(), new SM_PET_EMOTE(pet, Aion.GameServer.Model.GameObjects.PetEmote.FLY_START));
         }
         else if (obj is Aion.GameServer.Model.House.House)
         {
             PacketSendUtility.SendPacket(GetOwner(), new SM_HOUSE_RENDER((Aion.GameServer.Model.House.House)obj));
         }
-        else if (obj is Aion.GameServer.Model.House.HouseObject)
+        else if (obj is Aion.GameServer.Model.GameObjects.HouseObject)
         {
-            PacketSendUtility.SendPacket(GetOwner(), new SM_HOUSE_OBJECT((Aion.GameServer.Model.House.HouseObject)obj));
+            PacketSendUtility.SendPacket(GetOwner(), new SM_HOUSE_OBJECT((Aion.GameServer.Model.GameObjects.HouseObject)obj));
         }
     }
 
@@ -83,7 +85,7 @@ public class PlayerController : CreatureController<Player>
         PacketSendUtility.SendPacket(GetOwner(), new SM_PLAYER_INFO(player, !player.Equals(GetOwner()) && GetOwner().IsAggroIconTo(player)));
         PacketSendUtility.SendPacket(GetOwner(), new SM_MOTION(player.GetObjectId(), player.GetMotions().GetActiveMotions()));
         if (player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
-            PacketSendUtility.SendPacket(GetOwner(), new SM_EMOTION(player, EmotionType.Ride, 0, player.ride.GetNpcId()));
+            PacketSendUtility.SendPacket(GetOwner(), new SM_EMOTION(player, EmotionType.RIDE, 0, player.ride.GetNpcId()));
         if (player.GetController().IsUnderStance())
             PacketSendUtility.SendPacket(GetOwner(), new SM_PLAYER_STANCE(player, 1));
     }
@@ -101,7 +103,7 @@ public class PlayerController : CreatureController<Player>
         {
             PacketSendUtility.SendPacket(GetOwner(), new SM_DELETE_HOUSE(((Aion.GameServer.Model.House.House)obj).GetAddress().GetId()));
         }
-        else if (obj is Aion.GameServer.Model.House.HouseObject)
+        else if (obj is Aion.GameServer.Model.GameObjects.HouseObject)
         {
             PacketSendUtility.SendPacket(GetOwner(), new SM_DELETE_HOUSE_OBJECT(obj.GetObjectId()));
         }
@@ -152,7 +154,7 @@ public class PlayerController : CreatureController<Player>
         List<int> reapeatQuestList = new List<int>();
         foreach (int questId in GetOwner().GetPosition().GetMapRegion().GetParent().GetQuestIds())
         {
-            Aion.GameServer.Model.Templates.Quest.QuestTemplate template = DataManager.QUEST_DATA.GetQuestById(questId);
+            Aion.GameServer.Model.Templates.QuestTemplate template = DataManager.QUEST_DATA.GetQuestById(questId);
             if (!template.IsTimeBased())
                 continue;
             if (Aion.GameServer.Services.QuestService.CheckStartConditions(GetOwner(), questId, false))
@@ -167,8 +169,8 @@ public class PlayerController : CreatureController<Player>
         Player player = GetOwner();
         if (!zone.CanRide() && player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
             player.UnsetPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE);
-        Aion.GameServer.Services.ConquerorAndProtectorService.GetInstance().OnEnterZone(player, zone);
-        Aion.GameServer.Services.InstanceService.OnEnterZone(player, zone);
+        Aion.GameServer.Services.ConquerorAndProtectorSystem.ConquerorAndProtectorService.GetInstance().OnEnterZone(player, zone);
+        Aion.GameServer.Services.Instance.InstanceService.OnEnterZone(player, zone);
         Aion.GameServer.World.Zone.ZoneName zoneName = zone.GetAreaTemplate().GetZoneName();
         if (zoneName == null)
             log.LogWarning("No name found for a zone in map " + zone.GetAreaTemplate().GetWorldId() + " with xml name " + zone.GetZoneTemplate().GetXmlName());
@@ -179,8 +181,8 @@ public class PlayerController : CreatureController<Player>
     public override void OnLeaveZone(Aion.GameServer.World.Zone.ZoneInstance zone)
     {
         Player player = GetOwner();
-        Aion.GameServer.Services.ConquerorAndProtectorService.GetInstance().OnLeaveZone(player, zone);
-        Aion.GameServer.Services.InstanceService.OnLeaveZone(player, zone);
+        Aion.GameServer.Services.ConquerorAndProtectorSystem.ConquerorAndProtectorService.GetInstance().OnLeaveZone(player, zone);
+        Aion.GameServer.Services.Instance.InstanceService.OnLeaveZone(player, zone);
         Aion.GameServer.World.Zone.ZoneName zoneName = zone.GetAreaTemplate().GetZoneName();
         if (zoneName == null)
             log.LogWarning("No name found for a zone in map " + zone.GetAreaTemplate().GetWorldId() + " with xml name " + zone.GetZoneTemplate().GetXmlName());
@@ -199,10 +201,10 @@ public class PlayerController : CreatureController<Player>
                 if (player.IsInGlidingState())
                 {
                     player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
-                    player.UnsetState(CreatureState.Flying);
+                    player.UnsetState(CreatureState.FLYING);
                     player.GetLifeStats().TriggerFpReduce();
                     player.GetGameStats().UpdateStatsAndSpeedVisually();
-                    PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, EmotionType.StopFly), true);
+                    PacketSendUtility.BroadcastPacket(player, new SM_EMOTION(player, EmotionType.STOP_FLY), true);
                 }
                 else
                 {
@@ -228,7 +230,7 @@ public class PlayerController : CreatureController<Player>
     {
         if (GetOwner().GetPosition().GetWorldMapInstance().GetParent().IsExceptBuff())
         {
-            if (!Aion.GameServer.Services.PvpMapService.GetInstance().IsOnPvPMap(GetOwner()))
+            if (!Aion.GameServer.Custom.Pvpmap.PvpMapService.GetInstance().IsOnPvPMap(GetOwner()))
                 GetOwner().GetEffectController().RemoveAllEffects();
         }
 
@@ -273,17 +275,17 @@ public class PlayerController : CreatureController<Player>
         // Release summon
         Summon summon = player.GetSummon();
         if (summon != null)
-            Aion.GameServer.Services.SummonsService.DoMode(Aion.GameServer.Model.Summons.SummonMode.RELEASE, summon, Aion.GameServer.Model.Summons.UnsummonType.UNSPECIFIED);
+            Aion.GameServer.Services.Summons.SummonsService.DoMode(Aion.GameServer.Model.Summons.SummonMode.RELEASE, summon, Aion.GameServer.Model.Summons.UnsummonType.UNSPECIFIED);
 
-        if (player.IsInState(CreatureState.Flying))
+        if (player.IsInState(CreatureState.FLYING))
             player.SetIsFlyingBeforeDeath(true);
 
         player.SetPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE, null);
-        player.UnsetState(CreatureState.Resting);
-        player.UnsetState(CreatureState.FloatingCorpse);
+        player.UnsetState(CreatureState.RESTING);
+        player.UnsetState(CreatureState.FLOATING_CORPSE);
 
-        player.UnsetState(CreatureState.Flying);
-        player.UnsetState(CreatureState.Gliding);
+        player.UnsetState(CreatureState.FLYING);
+        player.UnsetState(CreatureState.GLIDING);
         player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
         player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.GLIDING);
 
@@ -331,7 +333,7 @@ public class PlayerController : CreatureController<Player>
     public override void OnDespawn()
     {
         if (GetOwner().IsLooting())
-            Aion.GameServer.Services.DropService.GetInstance().CloseDropList(GetOwner(), GetOwner().GetLootingNpcOid());
+            Aion.GameServer.Services.Drop.DropService.GetInstance().CloseDropList(GetOwner(), GetOwner().GetLootingNpcOid());
         base.OnDespawn();
     }
 
@@ -373,19 +375,19 @@ public class PlayerController : CreatureController<Player>
         if (!GetOwner().IsDead())
         {
             if (GetOwner().GetIsFlyingBeforeDeath())
-                GetOwner().UnsetState(CreatureState.FloatingCorpse);
-            else if (GetOwner().IsInState(CreatureState.Dead))
-                GetOwner().UnsetState(CreatureState.Dead);
-            GetOwner().SetState(CreatureState.Active);
+                GetOwner().UnsetState(CreatureState.FLOATING_CORPSE);
+            else if (GetOwner().IsInState(CreatureState.DEAD))
+                GetOwner().UnsetState(CreatureState.DEAD);
+            GetOwner().SetState(CreatureState.ACTIVE);
         }
         GetOwner().SetHitTimeBoost(0, 0);
-        if (GetOwner().GetPanesterraFaction() != null && !Aion.GameServer.World.WorldMapType.IsPanesterraMap(GetOwner().GetWorldId()))
+        if (GetOwner().GetPanesterraFaction() != null && !Aion.GameServer.World.WorldMapTypeExtensions.IsPanesterraMap(GetOwner().GetWorldId()))
             GetOwner().SetPanesterraFaction(null);
     }
 
     public override void AttackTarget(Creature target, int time, bool skipChecks)
     {
-        if (!Aion.GameServer.Model.GameObjects.Players.PlayerRestrictions.CanAttack(GetOwner(), target))
+        if (!Aion.GameServer.Restrictions.PlayerRestrictions.CanAttack(GetOwner(), target))
             return;
 
         PlayerGameStats gameStats = GetOwner().GetGameStats();
@@ -452,7 +454,7 @@ public class PlayerController : CreatureController<Player>
         Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkillFor(player, template, player.GetTarget());
         if (skill == null && player.IsTransformed())
         {
-            Aion.GameServer.SkillEngine.SkillPanel panel = DataManager.PANEL_SKILL_DATA.GetSkillPanel(player.GetTransformModel().GetPanelId());
+            Aion.GameServer.Model.Templates.Panels.SkillPanel panel = DataManager.PANEL_SKILL_DATA.GetSkillPanel(player.GetTransformModel().GetPanelId());
             if (panel != null && panel.CanUseSkill(template.GetSkillId(), skillLevel))
             {
                 skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkillFor(player, template, player.GetTarget(), skillLevel);
@@ -461,7 +463,7 @@ public class PlayerController : CreatureController<Player>
 
         if (skill != null)
         {
-            if (!Aion.GameServer.Model.GameObjects.Players.PlayerRestrictions.CanUseSkill(player, skill))
+            if (!Aion.GameServer.Restrictions.PlayerRestrictions.CanUseSkill(player, skill))
                 return;
 
             skill.SetTargetType(targetType, x, y, z);
@@ -603,7 +605,7 @@ public class PlayerController : CreatureController<Player>
         Aion.GameServer.Services.BonusPackService.GetInstance().AddPlayerCustomReward(player);
         Aion.GameServer.Services.FactionPackService.GetInstance().AddPlayerCustomReward(player);
         if (Aion.GameServer.Configs.Main.CustomConfig.ENABLE_STARTER_KIT)
-            Aion.GameServer.Services.StarterKitService.GetInstance().OnLevelUp(player, minNewLevel, newLevel);
+            Aion.GameServer.Services.Reward.StarterKitService.GetInstance().OnLevelUp(player, minNewLevel, newLevel);
     }
 
     public void UpgradePlayer()
@@ -634,7 +636,7 @@ public class PlayerController : CreatureController<Player>
     {
         if (!GetOwner().IsProtectionActive())
         {
-            GetOwner().SetVisualState(CreatureVisualState.Blinking);
+            GetOwner().SetVisualState(CreatureVisualState.BLINKING);
             AttackUtil.CancelCastOn(GetOwner());
             AttackUtil.RemoveTargetFrom(GetOwner());
             PacketSendUtility.BroadcastToSightedPlayers(GetOwner(), new SM_PLAYER_STATE(GetOwner()), true);
@@ -649,7 +651,7 @@ public class PlayerController : CreatureController<Player>
         Player player = GetOwner();
         if (player.IsSpawned())
         {
-            player.UnsetVisualState(CreatureVisualState.Blinking);
+            player.UnsetVisualState(CreatureVisualState.BLINKING);
             PacketSendUtility.BroadcastToSightedPlayers(player, new SM_PLAYER_STATE(player), true);
             NotifyAIOnMove();
         }
@@ -661,17 +663,17 @@ public class PlayerController : CreatureController<Player>
         Player player = GetOwner();
         if (player.IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type.WINDSTREAM))
         {
-            player.UnsetState(CreatureState.Flying);
+            player.UnsetState(CreatureState.FLYING);
             player.UnsetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.FLYING);
             player.SetFlyState(Aion.GameServer.Model.GameObjects.State.FlyState.GLIDING);
-            player.SetState(CreatureState.Active);
-            player.SetState(CreatureState.Gliding);
+            player.SetState(CreatureState.ACTIVE);
+            player.SetState(CreatureState.GLIDING);
             player.GetLifeStats().TriggerFpReduce();
             player.GetGameStats().UpdateStatsAndSpeedVisually();
         }
         else
         {
-            player.UnsetState(CreatureState.Flying);
+            player.UnsetState(CreatureState.FLYING);
             if (Aion.GameServer.Configs.Main.SecurityConfig.ENABLE_FLYPATH_VALIDATOR)
             {
                 long diff = (CurrentTimeMillis() - player.GetFlyStartTime());
@@ -690,7 +692,7 @@ public class PlayerController : CreatureController<Player>
 
                 player.SetCurrentFlypath(null);
             }
-            player.SetState(CreatureState.Active);
+            player.SetState(CreatureState.ACTIVE);
             UpdateZone();
         }
         player.SetFlightPath(null);
@@ -732,9 +734,9 @@ public class PlayerController : CreatureController<Player>
         if (house != null)
             switch (house.GetHouseType())
             {
-                case Aion.GameServer.Model.House.HouseType.MANSION:
-                case Aion.GameServer.Model.House.HouseType.ESTATE:
-                case Aion.GameServer.Model.House.HouseType.PALACE:
+                case Aion.GameServer.Model.Templates.Housing.HouseType.MANSION:
+                case Aion.GameServer.Model.Templates.Housing.HouseType.ESTATE:
+                case Aion.GameServer.Model.Templates.Housing.HouseType.PALACE:
                     return;
             }
 

@@ -318,26 +318,26 @@ public static class EquipmentService
 		PlayerExperienceTable? experienceTable)
 	{
 		// Java parity: model/gameobjects/player/Equipment.equipItem validation before inventory slot mutation.
-		if (!template.IsClassSpecific(player.PlayerClass))
+		if (!template.IsClassSpecific(player.PlayerClass.ToString()))
 			return EquipmentChangeResult.InvalidClassFailure();
 
 		var playerLevel = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? 1);
-		var requiredLevel = template.GetRequiredLevel(player.PlayerClass);
+		var requiredLevel = template.GetRequiredLevel(player.PlayerClass.ToString());
 		if (requiredLevel == -1 || requiredLevel > playerLevel)
 			return EquipmentChangeResult.TooLowLevelFailure(GetItemName(template), requiredLevel);
 
-		var maxLevel = template.GetMaxLevelRestrict(player.PlayerClass);
+		var maxLevel = template.GetMaxLevelRestrict(player.PlayerClass.ToString());
 		if (maxLevel != 0 && playerLevel > maxLevel)
 			return EquipmentChangeResult.TooHighLevelFailure(GetItemName(template), maxLevel);
 
-		if (!template.IsRacePermitted(player.Race))
+		if (!template.IsRacePermitted(player.Race.ToString()))
 			return EquipmentChangeResult.InvalidRaceFailure();
 
 		if (!template.IsGenderPermitted(player.Gender))
 			return EquipmentChangeResult.InvalidGenderFailure();
 
 		if (!template.VerifyRank(player.AbyssRank.Rank))
-			return EquipmentChangeResult.InvalidRankFailure(PlayerAbyssRank.GetRankL10n(player.Race, template.MinRank));
+			return EquipmentChangeResult.InvalidRankFailure(PlayerAbyssRank.GetRankL10n(player.Race.ToString(), template.MinRank));
 
 		return null;
 	}

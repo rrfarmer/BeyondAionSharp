@@ -9,49 +9,49 @@ namespace Aion.GameServer.Services.Panesterra.Ahserion;
 public enum PanesterraFaction
 {
     // Java parity: BALAUR(TribeClass.GAB1_MONSTER)
-    Balaur,
+    BALAUR,
     // Java parity: BELUS(TribeClass.GAB1_01_POINT_01)
-    Belus,
+    BELUS,
     // Java parity: IVY_TEMPLE(TribeClass.GAB1_01_POINT_02)
-    IvyTemple,
+    IVY_TEMPLE,
     // Java parity: HIGHLAND_TEMPLE(TribeClass.GAB1_01_POINT_03)
-    HighlandTemple,
+    HIGHLAND_TEMPLE,
     // Java parity: ALPINE_TEMPLE(TribeClass.GAB1_01_POINT_04)
-    AlpineTemple,
+    ALPINE_TEMPLE,
     // Java parity: GRANDWEIR_TEMPLE(TribeClass.GAB1_01_POINT_05)
-    GrandweirTemple,
+    GRANDWEIR_TEMPLE,
     // Java parity: ASPIDA(TribeClass.GAB1_02_POINT_01)
-    Aspida,
+    ASPIDA,
     // Java parity: NOERREN_TEMPLE(TribeClass.GAB1_02_POINT_02)
-    NoerrenTemple,
+    NOERREN_TEMPLE,
     // Java parity: BOREALIS_TEMPLE(TribeClass.GAB1_02_POINT_03)
-    BorealisTemple,
+    BOREALIS_TEMPLE,
     // Java parity: MYRKREN_TEMPLE(TribeClass.GAB1_02_POINT_04)
-    MyrkrenTemple,
+    MYRKREN_TEMPLE,
     // Java parity: GLUMVEILEN_TEMPLE(TribeClass.GAB1_02_POINT_05)
-    GlumveilenTemple,
+    GLUMVEILEN_TEMPLE,
     // Java parity: ATANATOS(TribeClass.GAB1_03_POINT_01)
-    Atanatos,
+    ATANATOS,
     // Java parity: MEMORIA_TEMPLE(TribeClass.GAB1_03_POINT_02)
-    MemoriaTemple,
+    MEMORIA_TEMPLE,
     // Java parity: SYBILLINE_TEMPLE(TribeClass.GAB1_03_POINT_03)
-    SybillineTemple,
+    SYBILLINE_TEMPLE,
     // Java parity: AUSTERITY_TEMPLE(TribeClass.GAB1_03_POINT_04)
-    AusterityTemple,
+    AUSTERITY_TEMPLE,
     // Java parity: SERENITY_TEMPLE(TribeClass.GAB1_03_POINT_05)
-    SerenityTemple,
+    SERENITY_TEMPLE,
     // Java parity: DISILLON(TribeClass.GAB1_04_POINT_01)
-    Disillon,
+    DISILLON,
     // Java parity: NECROLUCE_TEMPLE(TribeClass.GAB1_04_POINT_02)
-    NecrolluceTemple,
+    NECROLUCE_TEMPLE,
     // Java parity: ESMERAUDUS_TEMPLE(TribeClass.GAB1_04_POINT_03)
-    EsmeraudusTemple,
+    ESMERAUDUS_TEMPLE,
     // Java parity: VOLTAIC_TEMPLE(TribeClass.GAB1_04_POINT_04)
-    VoltaicTemple,
+    VOLTAIC_TEMPLE,
     // Java parity: ILLUMINATUS_TEMPLE(TribeClass.GAB1_04_POINT_05)
-    IlluminatusTemple,
+    ILLUMINATUS_TEMPLE,
     // Java parity: PEACE(TribeClass.GAB1_PEACE)
-    Peace,
+    PEACE,
 }
 
 /// <summary>
@@ -63,38 +63,38 @@ public static class PanesterraFactionExtensions
     // Java parity: PanesterraFaction::getTribe()
     public static TribeClass GetTribe(this PanesterraFaction faction) => faction switch
     {
-        PanesterraFaction.Balaur => TribeClass.GAB1_MONSTER,
-        PanesterraFaction.Belus => TribeClass.GAB1_01_POINT_01,
-        PanesterraFaction.IvyTemple => TribeClass.GAB1_01_POINT_02,
-        PanesterraFaction.HighlandTemple => TribeClass.GAB1_01_POINT_03,
-        PanesterraFaction.AlpineTemple => TribeClass.GAB1_01_POINT_04,
-        PanesterraFaction.GrandweirTemple => TribeClass.GAB1_01_POINT_05,
-        PanesterraFaction.Aspida => TribeClass.GAB1_02_POINT_01,
-        PanesterraFaction.NoerrenTemple => TribeClass.GAB1_02_POINT_02,
-        PanesterraFaction.BorealisTemple => TribeClass.GAB1_02_POINT_03,
-        PanesterraFaction.MyrkrenTemple => TribeClass.GAB1_02_POINT_04,
-        PanesterraFaction.GlumveilenTemple => TribeClass.GAB1_02_POINT_05,
-        PanesterraFaction.Atanatos => TribeClass.GAB1_03_POINT_01,
-        PanesterraFaction.MemoriaTemple => TribeClass.GAB1_03_POINT_02,
-        PanesterraFaction.SybillineTemple => TribeClass.GAB1_03_POINT_03,
-        PanesterraFaction.AusterityTemple => TribeClass.GAB1_03_POINT_04,
-        PanesterraFaction.SerenityTemple => TribeClass.GAB1_03_POINT_05,
-        PanesterraFaction.Disillon => TribeClass.GAB1_04_POINT_01,
-        PanesterraFaction.NecrolluceTemple => TribeClass.GAB1_04_POINT_02,
-        PanesterraFaction.EsmeraudusTemple => TribeClass.GAB1_04_POINT_03,
-        PanesterraFaction.VoltaicTemple => TribeClass.GAB1_04_POINT_04,
-        PanesterraFaction.IlluminatusTemple => TribeClass.GAB1_04_POINT_05,
-        PanesterraFaction.Peace => TribeClass.GAB1_PEACE,
+        PanesterraFaction.BALAUR => TribeClass.GAB1_MONSTER,
+        PanesterraFaction.BELUS => TribeClass.GAB1_01_POINT_01,
+        PanesterraFaction.IVY_TEMPLE => TribeClass.GAB1_01_POINT_02,
+        PanesterraFaction.HIGHLAND_TEMPLE => TribeClass.GAB1_01_POINT_03,
+        PanesterraFaction.ALPINE_TEMPLE => TribeClass.GAB1_01_POINT_04,
+        PanesterraFaction.GRANDWEIR_TEMPLE => TribeClass.GAB1_01_POINT_05,
+        PanesterraFaction.ASPIDA => TribeClass.GAB1_02_POINT_01,
+        PanesterraFaction.NOERREN_TEMPLE => TribeClass.GAB1_02_POINT_02,
+        PanesterraFaction.BOREALIS_TEMPLE => TribeClass.GAB1_02_POINT_03,
+        PanesterraFaction.MYRKREN_TEMPLE => TribeClass.GAB1_02_POINT_04,
+        PanesterraFaction.GLUMVEILEN_TEMPLE => TribeClass.GAB1_02_POINT_05,
+        PanesterraFaction.ATANATOS => TribeClass.GAB1_03_POINT_01,
+        PanesterraFaction.MEMORIA_TEMPLE => TribeClass.GAB1_03_POINT_02,
+        PanesterraFaction.SYBILLINE_TEMPLE => TribeClass.GAB1_03_POINT_03,
+        PanesterraFaction.AUSTERITY_TEMPLE => TribeClass.GAB1_03_POINT_04,
+        PanesterraFaction.SERENITY_TEMPLE => TribeClass.GAB1_03_POINT_05,
+        PanesterraFaction.DISILLON => TribeClass.GAB1_04_POINT_01,
+        PanesterraFaction.NECROLUCE_TEMPLE => TribeClass.GAB1_04_POINT_02,
+        PanesterraFaction.ESMERAUDUS_TEMPLE => TribeClass.GAB1_04_POINT_03,
+        PanesterraFaction.VOLTAIC_TEMPLE => TribeClass.GAB1_04_POINT_04,
+        PanesterraFaction.ILLUMINATUS_TEMPLE => TribeClass.GAB1_04_POINT_05,
+        PanesterraFaction.PEACE => TribeClass.GAB1_PEACE,
         _ => TribeClass.GAB1_PEACE,
     };
 
     // Java parity: PanesterraFaction::getByFortressId(int fortressId)
     public static PanesterraFaction GetByFortressId(int fortressId) => fortressId switch
     {
-        10111 => PanesterraFaction.Belus,
-        10211 => PanesterraFaction.Aspida,
-        10311 => PanesterraFaction.Atanatos,
-        10411 => PanesterraFaction.Disillon,
-        _ => PanesterraFaction.Peace,
+        10111 => PanesterraFaction.BELUS,
+        10211 => PanesterraFaction.ASPIDA,
+        10311 => PanesterraFaction.ATANATOS,
+        10411 => PanesterraFaction.DISILLON,
+        _ => PanesterraFaction.PEACE,
     };
 }

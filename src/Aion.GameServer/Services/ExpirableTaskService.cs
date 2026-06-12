@@ -50,8 +50,8 @@ public sealed class ExpirableTaskService
 
 	public void RegisterPlayerExpirables(
 		Player player,
-		Func<GameServerPacket, Task> sendPacketAsync,
-		Func<GameServerPacket, Task>? broadcastVisibleAsync = null,
+		Func<AionServerPacket, Task> sendPacketAsync,
+		Func<AionServerPacket, Task>? broadcastVisibleAsync = null,
 		TitleTemplateTable? titleTemplates = null,
 		ItemTemplateTable? itemTemplates = null,
 		HousingObjectTemplateTable? housingObjectTemplates = null,
@@ -454,8 +454,8 @@ public sealed class ExpirableTaskService
 	{
 		public PlayerExpirableRegistration(
 			Player player,
-			Func<GameServerPacket, Task> sendPacketAsync,
-			Func<GameServerPacket, Task>? broadcastVisibleAsync,
+			Func<AionServerPacket, Task> sendPacketAsync,
+			Func<AionServerPacket, Task>? broadcastVisibleAsync,
 			TitleTemplateTable? titleTemplates,
 			ItemTemplateTable? itemTemplates,
 			HousingObjectTemplateTable? housingObjectTemplates,
@@ -474,9 +474,9 @@ public sealed class ExpirableTaskService
 
 		public Player Player { get; }
 
-		public Func<GameServerPacket, Task> SendPacketAsync { get; }
+		public Func<AionServerPacket, Task> SendPacketAsync { get; }
 
-		public Func<GameServerPacket, Task>? BroadcastVisibleAsync { get; }
+		public Func<AionServerPacket, Task>? BroadcastVisibleAsync { get; }
 
 		public TitleTemplateTable? TitleTemplates { get; }
 

@@ -87,7 +87,7 @@ public class PlayerService
         PlayerCommonData pcd = playerAccountData.GetPlayerCommonData();
         Player player = new Player(playerAccountData, account);
         int oldOwnerId = pcd.GetWorldOwnerId();
-        player.SetPosition(World.GetInstance().CreatePosition(pcd.GetMapId(), pcd.GetX(), pcd.GetY(), pcd.GetZ(), pcd.GetHeading(), 0));
+        player.SetPosition(Aion.GameServer.World.World.GetInstance().CreatePosition(pcd.GetMapId(), pcd.GetX(), pcd.GetY(), pcd.GetZ(), pcd.GetHeading(), 0));
         pcd.SetWorldOwnerId(oldOwnerId);
         LegionMember legionMember = LegionService.GetInstance().GetLegionMember(pcd);
         if (legionMember != null)
@@ -205,7 +205,7 @@ public class PlayerService
                 if ((itemTemplate.IsArmor() || itemTemplate.IsWeapon()) && !newPlayer.GetEquipment().IsSlotEquipped(itemTemplate.GetItemSlot()))
                 {
                     item.SetEquipped(true);
-                    ItemSlot itemSlot = ItemSlot.GetSlotFor(itemTemplate.GetItemSlot());
+                    ItemSlot itemSlot = ItemSlotExtensions.GetSlotFor(itemTemplate.GetItemSlot());
                     item.SetEquipmentSlot(itemSlot.GetSlotIdMask());
                 }
                 newPlayer.GetInventory().OnLoadHandler(item);
@@ -221,7 +221,7 @@ public class PlayerService
 
     public static PlayerCommonData GetOrLoadPlayerCommonData(int playerObjId)
     {
-        Player player = World.GetInstance().GetPlayer(playerObjId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerObjId);
         if (player == null)
             return PlayerDAO.LoadPlayerCommonData(playerObjId);
         return player.GetCommonData();
@@ -229,7 +229,7 @@ public class PlayerService
 
     public static PlayerCommonData GetOrLoadPlayerCommonData(string name)
     {
-        Player player = World.GetInstance().GetPlayer(name);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(name);
         if (player == null)
             return PlayerDAO.LoadPlayerCommonDataByName(name);
         return player.GetCommonData();
@@ -328,7 +328,7 @@ public class PlayerService
 
     public static string GetPlayerName(int objectId)
     {
-        Player player = World.GetInstance().GetPlayer(objectId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(objectId);
         if (player != null)
             return player.GetName();
         return PlayerDAO.GetPlayerNameByObjId(objectId);

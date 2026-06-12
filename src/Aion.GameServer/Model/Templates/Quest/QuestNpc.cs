@@ -63,7 +63,7 @@ public class QuestNpc
         if (!onKillEvent.Contains(questId))
         {
             onKillEvent.Add(questId);
-            QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
         }
     }
 
@@ -77,7 +77,7 @@ public class QuestNpc
         if (!onTalkEvent.Contains(questId))
         {
             onTalkEvent.Add(questId);
-            QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
         }
     }
 
@@ -91,7 +91,7 @@ public class QuestNpc
         if (!onAddAggroListEvent.Contains(questId))
         {
             onAddAggroListEvent.Add(questId);
-            QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
         }
     }
 
@@ -105,7 +105,7 @@ public class QuestNpc
         if (!onAtDistanceEvent.Contains(questId))
         {
             onAtDistanceEvent.Add(questId);
-            QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
+            Aion.GameServer.QuestEngine.QuestEngine.GetInstance().RegisterCanAct(questId, npcId);
         }
     }
 

@@ -9,6 +9,7 @@ using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -145,7 +146,7 @@ public abstract class AbstractPlayerInfoPacket : AionServerPacket
         {
             mask |= item.GetEquipmentSlot();
             // remove sub hand mask bits (sub hand is present on TwoHandeds by default and would produce display bugs)
-            if (ItemSlot.IsTwoHandedWeapon(item.GetEquipmentSlot()))
+            if (ItemSlotExtensions.IsTwoHandedWeapon(item.GetEquipmentSlot()))
                 mask &= ~ItemSlot.SUB_HAND.GetSlotIdMask();
         }
 

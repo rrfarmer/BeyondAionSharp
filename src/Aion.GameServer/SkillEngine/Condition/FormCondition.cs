@@ -2,6 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.SkillEngine.Condition;
 

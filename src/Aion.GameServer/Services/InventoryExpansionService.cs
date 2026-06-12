@@ -30,27 +30,27 @@ public static class InventoryExpansionService
 
 	private static InventoryExpansionPlan CreateCubePlan(Player player, int ticketLevel, int cubeExpansionLimit)
 	{
-		if (!CanExpandCube(player, cubeExpansionLimit) || player.ItemExpands >= ticketLevel)
+		if (!CanExpandCube(player, cubeExpansionLimit) || (player.GetCommonData().GetItemExpands()) >= ticketLevel)
 			return InventoryExpansionPlan.Failed(InventoryExpansionFailure.CubeCannotExpand);
 
 		return new InventoryExpansionPlan(
 			InventoryExpansionFailure.None,
 			InventoryExpansionStorage.Cube,
-			player.ItemExpands + 1,
-			player.WarehouseBonusExpands);
+			(player.GetCommonData().GetItemExpands()) + 1,
+			(player.GetCommonData().GetWhBonusExpands()));
 	}
 
 	private static bool CanExpandCube(Player player, int cubeExpansionLimit)
 	{
 		// Java parity: services/CubeExpandService.canExpand.
-		var newExpansions = player.NpcExpands + player.QuestExpands + player.ItemExpands + 1;
+		var newExpansions = (player.GetCommonData().GetNpcExpands()) + (player.GetCommonData().GetQuestExpands()) + (player.GetCommonData().GetItemExpands()) + 1;
 		return newExpansions >= 0 && newExpansions <= cubeExpansionLimit;
 	}
 
 	private static InventoryExpansionPlan CreateWarehousePlan(Player player, int ticketLevel)
 	{
 		if (!CanExpandWarehouse(player)
-			|| player.WarehouseBonusExpands - GetCompletedWarehouseQuestCount(player) >= ticketLevel)
+			|| (player.GetCommonData().GetWhBonusExpands()) - GetCompletedWarehouseQuestCount(player) >= ticketLevel)
 		{
 			return InventoryExpansionPlan.Failed(InventoryExpansionFailure.WarehouseCannotExpand);
 		}
@@ -58,14 +58,14 @@ public static class InventoryExpansionService
 		return new InventoryExpansionPlan(
 			InventoryExpansionFailure.None,
 			InventoryExpansionStorage.Warehouse,
-			player.ItemExpands,
-			player.WarehouseBonusExpands + 1);
+			(player.GetCommonData().GetItemExpands()),
+			(player.GetCommonData().GetWhBonusExpands()) + 1);
 	}
 
 	private static bool CanExpandWarehouse(Player player)
 	{
 		// Java parity: services/WarehouseService.canExpand.
-		var newExpansions = player.WarehouseNpcExpands + player.WarehouseBonusExpands + 1;
+		var newExpansions = (player.GetCommonData().GetWhNpcExpands()) + (player.GetCommonData().GetWhBonusExpands()) + 1;
 		return newExpansions >= 0 && newExpansions <= WarehouseExpansionLimit;
 	}
 

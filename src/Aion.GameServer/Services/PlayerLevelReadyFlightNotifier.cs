@@ -21,11 +21,11 @@ public static class PlayerLevelReadyFlightNotifier
 		var visualStatsUpdate = playerVisualStats == null
 			? null
 			: await playerVisualStats.UpdateStatsAndSpeedVisuallyAsync(player, speedSnapshot: null);
-		var packet = new SmEmotion(player, EmotionType.Fly);
+		var packet = new SmEmotion(player, EmotionType.FLY);
 		var broadcastCount = connectionRegistry == null
 			? 0
 			: await connectionRegistry.BroadcastToVisiblePlayersAsync(
-				player.Position,
+				player.GetPosition(),
 				player.ObjectId,
 				packet,
 				includeSourcePlayer: true);

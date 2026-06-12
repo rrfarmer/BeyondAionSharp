@@ -55,7 +55,7 @@ public class AhserionRaid
 
     private void CleanUp()
     {
-        foreach (VisibleObject obj in World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance())
+        foreach (VisibleObject obj in Aion.GameServer.World.World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance())
         {
             if (obj is Player player)
             {
@@ -114,23 +114,23 @@ public class AhserionRaid
         // spawn white flags for not existing teams
         if (PanesterraService.GetInstance().GetTeam(BELUS) == null)
         {
-            SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(400030000, 804106, 282.73f, 289.1f, 687.38f, (byte)1);
-            SpawnEngine.SpawnObject(template, 1);
+            SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804106, 282.73f, 289.1f, 687.38f, (byte)1);
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
         }
         if (PanesterraService.GetInstance().GetTeam(ASPIDA) == null)
         {
-            SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(400030000, 804108, 282.49f, 739.62f, 689.66f, (byte)1);
-            SpawnEngine.SpawnObject(template, 1);
+            SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804108, 282.49f, 739.62f, 689.66f, (byte)1);
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
         }
         if (PanesterraService.GetInstance().GetTeam(ATANATOS) == null)
         {
-            SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(400030000, 804110, 734.06f, 740.75f, 681.16f, (byte)1);
-            SpawnEngine.SpawnObject(template, 1);
+            SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804110, 734.06f, 740.75f, 681.16f, (byte)1);
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
         }
         if (PanesterraService.GetInstance().GetTeam(DISILLON) == null)
         {
-            SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(400030000, 804112, 738.58f, 286.02f, 680.71f, (byte)1);
-            SpawnEngine.SpawnObject(template, 1);
+            SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804112, 738.58f, 286.02f, 680.71f, (byte)1);
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
         }
     }
 
@@ -151,7 +151,7 @@ public class AhserionRaid
                 AhserionsFlightSpawnTemplate ahserionTemplate = (AhserionsFlightSpawnTemplate)template;
                 if (ahserionTemplate.GetStage() == stage)
                 {
-                    Npc npc = (Npc)SpawnEngine.SpawnObject(ahserionTemplate, 1);
+                    Npc npc = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(ahserionTemplate, 1);
                     WalkManager.StartWalking((NpcAI)npc.GetAi());
                 }
             }
@@ -170,19 +170,19 @@ public class AhserionRaid
         {
             case 297306:
                 eliminatedFaction = BELUS;
-                template = SpawnEngine.NewSingleTimeSpawn(400030000, 804106, 282.73f, 289.1f, 687.38f, (byte)1);
+                template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804106, 282.73f, 289.1f, 687.38f, (byte)1);
                 break;
             case 297307:
                 eliminatedFaction = ASPIDA;
-                template = SpawnEngine.NewSingleTimeSpawn(400030000, 804108, 282.49f, 739.62f, 689.66f, (byte)1);
+                template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804108, 282.49f, 739.62f, 689.66f, (byte)1);
                 break;
             case 297308:
                 eliminatedFaction = ATANATOS;
-                template = SpawnEngine.NewSingleTimeSpawn(400030000, 804110, 734.06f, 740.75f, 681.16f, (byte)1);
+                template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804110, 734.06f, 740.75f, 681.16f, (byte)1);
                 break;
             case 297309:
                 eliminatedFaction = DISILLON;
-                template = SpawnEngine.NewSingleTimeSpawn(400030000, 804112, 738.58f, 286.02f, 680.71f, (byte)1);
+                template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400030000, 804112, 738.58f, 286.02f, 680.71f, (byte)1);
                 break;
         }
 
@@ -190,7 +190,7 @@ public class AhserionRaid
         if (eliminatedTeam != null)
             SendConsolationReward(eliminatedTeam);
         DeleteNpcs(eliminatedFaction.Value, npcId + 1);
-        SpawnEngine.SpawnObject(template, 1);
+        Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
     }
 
     private void SendConsolationReward(PanesterraTeam eliminatedTeam)
@@ -225,12 +225,12 @@ public class AhserionRaid
 
     private void SendMsg(SM_SYSTEM_MESSAGE msg)
     {
-        PacketSendUtility.BroadcastToMap(World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance(), msg);
+        PacketSendUtility.BroadcastToMap(Aion.GameServer.World.World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance(), msg);
     }
 
     private void DeleteNpcs(PanesterraFaction eliminatedFaction, int flagToDelete)
     {
-        World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance().ForEachNpc(npc =>
+        Aion.GameServer.World.World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance().ForEachNpc(npc =>
         {
             if (npc.GetNpcId() == flagToDelete || (!npc.IsFlag() && (npc.GetSpawn().GetStaticId() < 180 || npc.GetSpawn().GetStaticId() > 183)))
             {
@@ -303,7 +303,7 @@ public class AhserionRaid
                     break;
                 case 20:
                     outer.CheckForIllegalMovement();
-                    World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance().ForEachDoor(door => door.SetOpen(true));
+                    Aion.GameServer.World.World.GetInstance().GetWorldMap(400030000).GetMainWorldMapInstance().ForEachDoor(door => door.SetOpen(true));
                     outer.SendMsg(SM_SYSTEM_MESSAGE.STR_MSG_GAB1_SUB_ALARM_08());
                     break;
                 case 30:

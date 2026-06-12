@@ -347,7 +347,7 @@ public class GeoMap : Node
 
     private ISet<int> GetIgnorableDoorIds()
     {
-        return WorldMapType.GetWorld(mapId) switch
+        return WorldMapTypeExtensions.GetWorld(mapId) switch
         {
             // TODO mesh is excluded on purpose in geobuilder due to incorrect collision data: objects/npc/level_object/idyun_bridge/idyun_bridge_01a.cga
             WorldMapType.RENTUS_BASE or WorldMapType.OCCUPIED_RENTUS_BASE => new HashSet<int> { 145 },

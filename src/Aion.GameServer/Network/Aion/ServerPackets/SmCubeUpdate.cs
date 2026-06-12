@@ -37,7 +37,7 @@ public sealed class SmCubeUpdate : GameServerPacket
 	{
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.CUBE, Player).
 		var itemsCount = player.InventoryItems.Count(item => item.Location == CubeStorageId && item.ItemId != KinahItemId);
-		return new SmCubeUpdate(0, CubeStorageOrdinal, itemsCount, player.NpcExpands, player.QuestExpands, player.ItemExpands);
+		return new SmCubeUpdate(0, CubeStorageOrdinal, itemsCount, (player.GetCommonData().GetNpcExpands()), (player.GetCommonData().GetQuestExpands()), (player.GetCommonData().GetItemExpands()));
 	}
 
 	public static SmCubeUpdate CubeSizeSnapshot(int itemsCount, int npcExpands, int questExpands, int itemExpands)
@@ -51,7 +51,7 @@ public sealed class SmCubeUpdate : GameServerPacket
 	{
 		// Java parity: SM_CUBE_UPDATE.cubeSize(StorageType.REGULAR_WAREHOUSE, Player).
 		var itemsCount = player.WarehouseItems.Count(item => item.Location == RegularWarehouseStorageId && item.ItemId != KinahItemId);
-		return new SmCubeUpdate(0, RegularWarehouseStorageOrdinal, itemsCount, player.WarehouseNpcExpands, player.WarehouseBonusExpands, 0);
+		return new SmCubeUpdate(0, RegularWarehouseStorageOrdinal, itemsCount, (player.GetCommonData().GetWhNpcExpands()), (player.GetCommonData().GetWhBonusExpands()), 0);
 	}
 
 	public static SmCubeUpdate RegularWarehouseSizeSnapshot(int itemsCount, int npcExpands, int bonusExpands)

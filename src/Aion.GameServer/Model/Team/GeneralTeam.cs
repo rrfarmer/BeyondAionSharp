@@ -13,7 +13,7 @@ namespace Aion.GameServer.Model.Team;
 
 /// <summary>
 /// Java parity: model/team/GeneralTeam (ATracer).
-/// Java AionServerPacket → GameServerPacket; java.util.function.Predicate/Consumer/Function → System.Predicate/Action/Func.
+/// Java AionServerPacket → AionServerPacket; java.util.function.Predicate/Consumer/Function → System.Predicate/Action/Func.
 /// </summary>
 public abstract class GeneralTeam<M, TM> : AionObject
     where M : AionObject
@@ -234,7 +234,7 @@ public abstract class GeneralTeam<M, TM> : AionObject
 
     public abstract LootGroupRules GetLootGroupRules();
 
-    public abstract void SendPackets(params Aion.GameServer.Network.Aion.GameServerPacket[] packets);
+    public abstract void SendPackets(params Aion.GameServer.Network.Aion.AionServerPacket[] packets);
 
-    public abstract void SendPacket(Predicate<M> predicate, params Aion.GameServer.Network.Aion.GameServerPacket[] packets);
+    public abstract void SendPacket(Predicate<M> predicate, params Aion.GameServer.Network.Aion.AionServerPacket[] packets);
 }

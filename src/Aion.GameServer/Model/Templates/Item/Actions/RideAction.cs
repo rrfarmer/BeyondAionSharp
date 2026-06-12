@@ -35,7 +35,7 @@ public class RideAction : AbstractItemAction
                     }
                 }
             }
-            if (player.IsInState(CreatureState.Resting))
+            if (player.IsInState(CreatureState.RESTING))
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANT_RIDE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
                 return false;
@@ -65,15 +65,15 @@ public class RideAction : AbstractItemAction
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            player.UnsetState(CreatureState.Active);
-            player.SetState(CreatureState.Resting);
+            player.UnsetState(CreatureState.ACTIVE);
+            player.SetState(CreatureState.RESTING);
             if (player.IsInFlyingState())
-                player.SetState(CreatureState.FloatingCorpse);
+                player.SetState(CreatureState.FLOATING_CORPSE);
             player.GetObserveController().RemoveObserver(observer);
             Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
             player.SetPlayerMode(PlayerMode.RIDE, GetRideInfo());
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.ChangeSpeed, 0, 0), true);
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.Ride, 0, GetRideInfo().GetNpcId()), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.CHANGE_SPEED, 0, 0), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.RIDE, 0, GetRideInfo().GetNpcId()), true);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 1), true);
             player.GetController().CancelTask(TaskId.ITEM_USE);

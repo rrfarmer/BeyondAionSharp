@@ -6,7 +6,7 @@ using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils.Audit;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -43,7 +43,7 @@ public class CM_HOUSE_SETTINGS : AionClientPacket
         HouseDoorState? doorState = HouseDoorStates.Get((sbyte)this.doorState);
         House house = player.GetActiveHouse();
         if (doorState == null)
-            NullLoggerFactory.Instance.CreateLogger(GetType_().Name).LogWarning("{Player} sent unknown door state {DoorState} for {House}", player, this.doorState, house);
+            NullLoggerFactory.Instance.CreateLogger(GetType().Name).LogWarning("{Player} sent unknown door state {DoorState} for {House}", player, this.doorState, house);
         else
             house.SetDoorState(doorState.Value);
         house.SetShowOwnerName(showOwnerName);

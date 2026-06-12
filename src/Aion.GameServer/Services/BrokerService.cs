@@ -96,7 +96,7 @@ public class BrokerService
     {
         BrokerItem[] searchItems = null;
         int playerBrokerMaskCache = GetPlayerMask(player);
-        BrokerItemMask brokerMaskById = BrokerItemMask.GetBrokerMaskById(clientMask);
+        BrokerItemMask brokerMaskById = BrokerItemMaskExtensions.GetBrokerMaskById(clientMask);
         bool isChidrenMask = brokerMaskById.IsChildrenMask(playerBrokerMaskCache);
         if (itemList != null && clientMask == 0)
         {
@@ -181,7 +181,7 @@ public class BrokerService
     {
         List<BrokerItem> searchItems = new List<BrokerItem>();
 
-        BrokerItemMask brokerMask = BrokerItemMask.GetBrokerMaskById(clientMask);
+        BrokerItemMask brokerMask = BrokerItemMaskExtensions.GetBrokerMaskById(clientMask);
 
         if (cached)
         {

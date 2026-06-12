@@ -83,7 +83,7 @@ public class FortressSiege : Siege<FortressLocation>
             return;
 
         int worldId = GetSiegeLocation().GetWorldId();
-        foreach (SiegeNpc sn in World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId()))
+        foreach (SiegeNpc sn in Aion.GameServer.World.World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId()))
         {
             if (sn.GetAbyssNpcType() == AbyssNpcType.ARTIFACT || sn.GetRating() == NpcRating.LEGENDARY
                 || sn.GetSpawn().GetSiegeModType() == SiegeModType.ASSAULT || Rnd.Chance() < 35)
@@ -94,9 +94,9 @@ public class FortressSiege : Siege<FortressLocation>
                 double angleRadians = Rnd.NextFloat(180f) * Math.PI / 180;
                 float x1 = (float)(sn.GetX() + Math.Cos(angleRadians) * Rnd.Get(1, 2));
                 float y1 = (float)(sn.GetY() + Math.Sin(angleRadians) * Rnd.Get(1, 2));
-                SpawnTemplate temp = SpawnEngine.NewSiegeSpawn(worldId, race == SiegeRace.ELYOS ? Rnd.Get(252408, 252412) : Rnd.Get(252413, 252417),
+                SpawnTemplate temp = Aion.GameServer.SpawnEngine.SpawnEngine.NewSiegeSpawn(worldId, race == SiegeRace.ELYOS ? Rnd.Get(252408, 252412) : Rnd.Get(252413, 252417),
                     GetSiegeLocationId(), race, SiegeModType.ASSAULT, x1, y1, sn.GetZ(), (byte)0);
-                SpawnEngine.SpawnObject(temp, 1);
+                Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(temp, 1);
             }
         }
     }
@@ -180,8 +180,8 @@ public class FortressSiege : Siege<FortressLocation>
         {
             GetSiegeLocation().ForEachPlayer(p =>
             {
-                if (SiegeRace.GetByRace(p.GetRace()) == GetSiegeLocation().GetRace())
-                    QuestEngine.GetInstance().OnKill(new QuestEnv(GetBoss(), p, 0));
+                if (SiegeRaceExtensions.GetByRace(p.GetRace()) == GetSiegeLocation().GetRace())
+                    Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnKill(new QuestEnv(GetBoss(), p, 0));
             });
         }
     }
@@ -220,7 +220,7 @@ public class FortressSiege : Siege<FortressLocation>
         Legion winnerLegion = GetSiegeLocation().GetLegionId() == 0 ? null : LegionService.GetInstance().GetLegion(GetSiegeLocation().GetLegionId());
         SM_SYSTEM_MESSAGE loserMsg = GetLoserMsg(oldRace, oldLegion, locL10n);
         SM_SYSTEM_MESSAGE winnerMsg = GetWinnerMsg(winnerRace, winnerLegion, locL10n);
-        World.GetInstance().ForEachPlayer(player =>
+        Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
         {
             if (player.GetRace().GetRaceId() == oldRace.GetRaceId())
                 PacketSendUtility.SendPacket(player, loserMsg);
@@ -323,11 +323,11 @@ public class FortressSiege : Siege<FortressLocation>
         SM_SYSTEM_MESSAGE notification = isDefense
             ? SM_SYSTEM_MESSAGE.STR_CASTLE_DEFENCE_WIN_BUFF_ON(winner.GetL10n(), GetSiegeLocation().GetTemplate().GetL10n(), skillL10n)
             : SM_SYSTEM_MESSAGE.STR_CASTLE_WIN_BUFF_ON(winner.GetL10n(), GetSiegeLocation().GetTemplate().GetL10n(), skillL10n);
-        World.GetInstance().ForEachPlayer(player =>
+        Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
         {
             if (player.GetRace().GetRaceId() == winner.GetRaceId())
             {
-                SkillEngine.GetInstance().ApplyEffectDirectly(skillId, player, player);
+                Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(skillId, player, player);
                 PacketSendUtility.SendPacket(player, notification);
             }
         });

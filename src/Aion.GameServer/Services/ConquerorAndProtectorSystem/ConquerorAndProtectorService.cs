@@ -197,7 +197,7 @@ public class ConquerorAndProtectorService
             if (info.GetRank() == 0 && info.GetLDRank() == 0)
                 (info.GetType_() == CPType.CONQUEROR ? conquerors : protectors).TryRemove(info.GetPlayerId(), out _);
             if (player == null)
-                player = World.GetInstance().GetPlayer(info.GetPlayerId());
+                player = Aion.GameServer.World.World.GetInstance().GetPlayer(info.GetPlayerId());
             if (player != null)
                 UpdateBuffAndNotifyNearbyPlayers(player, info);
         }
@@ -253,7 +253,7 @@ public class ConquerorAndProtectorService
             {
                 if (CanSee(protector, conqueror))
                 {
-                    Player intruder = World.GetInstance().GetPlayer(conqueror.GetPlayerId());
+                    Player intruder = Aion.GameServer.World.World.GetInstance().GetPlayer(conqueror.GetPlayerId());
                     if (intruder != null && intruder.GetRace() != player.GetRace() && PositionUtil.IsInRange(intruder, player, 500))
                         intruders.Add(intruder);
                 }

@@ -10,8 +10,8 @@ public static class QuestLevelChangedCallbackPlanService
 		IEnumerable<PlayerQuestState>? questStates
 	)
 	{
-		// Java parity: QuestEngine.registerOnLevelChanged stores race-scoped registrations and
-		// QuestEngine.onLevelChanged dispatches only non-complete quests with registered handlers.
+		// Java parity: Aion.GameServer.QuestEngine.QuestEngine.registerOnLevelChanged stores race-scoped registrations and
+		// Aion.GameServer.QuestEngine.QuestEngine.onLevelChanged dispatches only non-complete quests with registered handlers.
 		// This planner turns that callback eligibility into ordered descriptors.
 		if (registrations == null)
 			return QuestLevelChangedCallbackPlan.MissingRegistrations(playerRace);
@@ -31,7 +31,7 @@ public static class QuestLevelChangedCallbackPlanService
 						registration.RacePermitted,
 						registration.HasHandler,
 						QuestState: null,
-						"QuestEngine.registerOnLevelChanged",
+						"Aion.GameServer.QuestEngine.QuestEngine.registerOnLevelChanged",
 						Notes: "Java stores registered quest ids in race-specific on-level-up lists; this registration is not in the player's race list."
 					)
 				);
@@ -51,7 +51,7 @@ public static class QuestLevelChangedCallbackPlanService
 						registration.RacePermitted,
 						registration.HasHandler,
 						questState,
-						"QuestEngine.onLevelChanged -> QuestState.COMPLETE guard",
+						"Aion.GameServer.QuestEngine.QuestEngine.onLevelChanged -> QuestState.COMPLETE guard",
 						Notes: "Java skips level-change handlers when the quest state already exists with QuestStatus.COMPLETE."
 					)
 				);
@@ -67,7 +67,7 @@ public static class QuestLevelChangedCallbackPlanService
 						registration.RacePermitted,
 						registration.HasHandler,
 						questState,
-						"QuestEngine.onLevelChanged -> getQuestHandlerByQuestId",
+						"Aion.GameServer.QuestEngine.QuestEngine.onLevelChanged -> getQuestHandlerByQuestId",
 						Notes: "Java does not dispatch when no quest handler is registered for the quest id."
 					)
 				);
@@ -81,7 +81,7 @@ public static class QuestLevelChangedCallbackPlanService
 					registration.RacePermitted,
 					registration.HasHandler,
 					questState,
-					"QuestEngine.onLevelChanged -> AbstractQuestHandler.onLevelChangedEvent",
+					"Aion.GameServer.QuestEngine.QuestEngine.onLevelChanged -> AbstractQuestHandler.onLevelChangedEvent",
 					Notes: questState == null
 						? "Java dispatches when the player has no quest state for the registered quest."
 						: "Java dispatches when the quest state exists but is not COMPLETE."

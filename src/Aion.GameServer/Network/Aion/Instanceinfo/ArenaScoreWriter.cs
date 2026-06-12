@@ -2,6 +2,7 @@ using Aion.Commons.Nio;
 using Aion.GameServer.Model.Instance.Instancescore;
 using Aion.GameServer.Model.Instance.Playerreward;
 using Aion.GameServer.Model.Templates.Rewards;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.Instanceinfo;
 

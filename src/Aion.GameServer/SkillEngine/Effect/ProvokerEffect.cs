@@ -90,7 +90,7 @@ public class ProvokerEffect : ShieldEffect
                     PacketSendUtility.SendPacket(player,
                         SM_SYSTEM_MESSAGE.STR_SKILL_PROC_EFFECT_OCCURRED(DataManager.SKILL_DATA.GetSkillTemplate(outer.skillId).GetL10n()));
                 }
-                SkillEngine.GetInstance().ApplyEffectDirectly(outer.skillId, effector, outer.GetProvokeTarget(effector, target));
+                Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(outer.skillId, effector, outer.GetProvokeTarget(effector, target));
             }
         }
     }

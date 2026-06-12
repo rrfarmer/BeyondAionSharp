@@ -140,7 +140,7 @@ public class CustomInstanceService
     {
         if (!playerModelEntriesCache.TryRemove(playerId, out List<PlayerModelEntry> pmes))
             return;
-        ICollection<PlayerModelEntry> filteredEntries = pmes.Where(e => IPersistable.New(e)).ToList();
+        ICollection<PlayerModelEntry> filteredEntries = pmes.Where(e => IPersistable.NEW(e)).ToList();
         CustomInstancePlayerModelEntryDAO.InsertNewRecords(filteredEntries);
     }
 

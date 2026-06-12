@@ -1,4 +1,4 @@
-﻿using Aion.Commons.Network;
+using Aion.Commons.Network;
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 public sealed class CmLegionSendEmblemInfo : GameClientPacket {
     public CmLegionSendEmblemInfo(int opCode, IReadOnlySet<GameConnectionState> validStates) : base(opCode, validStates) {}

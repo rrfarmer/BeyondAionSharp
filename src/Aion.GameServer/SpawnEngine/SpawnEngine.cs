@@ -106,7 +106,7 @@ public class SpawnEngine
 
     public static void BringIntoWorld(VisibleObject visibleObject, int worldId, int instanceIndex, float x, float y, float z, byte h)
     {
-        World world = World.GetInstance();
+        World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(visibleObject);
         world.SetPosition(visibleObject, worldId, instanceIndex, x, y, z, h);
         world.Spawn(visibleObject);
@@ -116,7 +116,7 @@ public class SpawnEngine
     {
         if (visibleObject.GetPosition() == null)
             throw new ArgumentException("Position is null");
-        World world = World.GetInstance();
+        World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(visibleObject);
         world.Spawn(visibleObject);
     }
@@ -126,7 +126,7 @@ public class SpawnEngine
     {
         DataManager.WORLD_MAPS_DATA.ForEachParalllel(worldMapTemplate =>
         {
-            WorldMap worldMap = World.GetInstance().GetWorldMap(worldMapTemplate.GetMapId());
+            WorldMap worldMap = Aion.GameServer.World.World.GetInstance().GetWorldMap(worldMapTemplate.GetMapId());
             if (!worldMap.IsInstanceType())
                 worldMap.ForEach(instance => SpawnInstance(instance, (byte)0, instance.GetOwnerId()));
         });
@@ -228,7 +228,7 @@ public class SpawnEngine
     public static void PrintWorldSpawnStats()
     {
         StatsCollector function = new StatsCollector();
-        World.GetInstance().ForEachObject(function.Accept);
+        Aion.GameServer.World.World.GetInstance().ForEachObject(function.Accept);
         Log.LogInformation("Loaded " + function.GetNpcCount() + " npc spawns");
         Log.LogInformation("Loaded " + function.GetGatherableCount() + " gatherable spawns");
     }

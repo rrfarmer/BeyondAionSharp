@@ -5,6 +5,7 @@ using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.QuestEngine.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

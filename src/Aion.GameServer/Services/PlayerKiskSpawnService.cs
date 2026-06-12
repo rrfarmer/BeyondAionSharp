@@ -13,7 +13,7 @@ public static class PlayerKiskSpawnService
 		int kiskObjectId)
 	{
 		// Java parity: model/templates/item/actions/ToyPetSpawnAction.act + spawnengine/VisibleObjectSpawner.spawnKisk.
-		var spawnPosition = CreateSpawnPosition(player.Position);
+		var spawnPosition = CreateSpawnPosition(player.GetPosition());
 		var kisk = new WorldNpc(
 			kiskObjectId,
 			kiskTemplate.TemplateId,
@@ -27,7 +27,7 @@ public static class PlayerKiskSpawnService
 
 		return new PlayerKiskSpawnPlan(
 			kisk,
-			PlayerKiskRuntimeState.FromTemplate(kiskObjectId, player.ObjectId, kiskTemplate, player.Race, player.LegionId),
+			PlayerKiskRuntimeState.FromTemplate(kiskObjectId, player.ObjectId, kiskTemplate, player.Race.ToString(), (player.GetLegion()?.GetLegionId() ?? 0)),
 			sourceItemUpdate,
 			deletedSourceItemObjectId);
 	}

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.QuestEngine.Handlers.Models;
 using Aion.GameServer.QuestEngine.Model;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

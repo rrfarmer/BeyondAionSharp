@@ -104,7 +104,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
         if (obj is Npc)
         {
             worldMapNpcs[obj.GetObjectId()] = (Npc)obj;
-            QuestNpc qNpc = QuestEngine.GetInstance().GetQuestNpc(obj.GetObjectTemplate().GetTemplateId());
+            QuestNpc qNpc = Aion.GameServer.QuestEngine.QuestEngine.GetInstance().GetQuestNpc(obj.GetObjectTemplate().GetTemplateId());
             if (qNpc != null)
             {
                 bool updateNearbyQuests = false;
@@ -307,7 +307,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
         {
             if (zoneInstance.GetAreaTemplate().IntersectsRectangle(regionZone))
                 return true;
-            if (zoneInstance.GetZoneTemplate().GetZoneType() == ZoneClassName.Dummy)
+            if (zoneInstance.GetZoneTemplate().GetZoneType() == ZoneClassName.DUMMY)
                 log.LogError("Region " + regionId + " should intersect with whole map zone!!! (map=" + mapId + ")");
             return false;
         }).ToArray();

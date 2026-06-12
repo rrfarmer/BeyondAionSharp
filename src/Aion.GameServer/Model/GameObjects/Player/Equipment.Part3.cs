@@ -25,7 +25,7 @@ public partial class Equipment
             else
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_WEAPON_BOOST_MODE_BURN_OUT());
-                owner.UnsetState(CreatureState.Powershard);
+                owner.UnsetState(CreatureState.POWERSHARD);
             }
         }
     }

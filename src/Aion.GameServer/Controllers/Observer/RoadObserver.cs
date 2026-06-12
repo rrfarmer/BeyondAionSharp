@@ -32,23 +32,23 @@ public class RoadObserver : ActionObserver
             RoadExit exit = road.GetTemplate().GetRoadExit();
 
             WorldType type = road.GetWorldType();
-            if (type == WorldType.Elysea)
+            if (type == WorldType.ELYSEA)
             {
                 if (player.GetRace() == Race.ELYOS)
                 {
-                    TeleportService.TeleportTo(player, exit.GetMap(), exit.GetX(), exit.GetY(), exit.GetZ(), (byte) 0, TeleportAnimation.FadeOutBeam);
+                    TeleportService.TeleportTo(player, exit.GetMap(), exit.GetX(), exit.GetY(), exit.GetZ(), (byte) 0, TeleportAnimation.FADE_OUT_BEAM);
                 }
             }
-            else if (type == WorldType.Asmodae)
+            else if (type == WorldType.ASMODAE)
             {
                 if (player.GetRace() == Race.ASMODIANS)
                 {
-                    TeleportService.TeleportTo(player, exit.GetMap(), exit.GetX(), exit.GetY(), exit.GetZ(), (byte) 0, TeleportAnimation.FadeOutBeam);
+                    TeleportService.TeleportTo(player, exit.GetMap(), exit.GetX(), exit.GetY(), exit.GetZ(), (byte) 0, TeleportAnimation.FADE_OUT_BEAM);
                 }
             }
             else
             {
-                TeleportService.TeleportTo(player, exit.GetMap(), exit.GetX(), exit.GetY(), exit.GetZ(), (byte) 0, TeleportAnimation.FadeOutBeam);
+                TeleportService.TeleportTo(player, exit.GetMap(), exit.GetX(), exit.GetY(), exit.GetZ(), (byte) 0, TeleportAnimation.FADE_OUT_BEAM);
             }
         }
         oldPosition = newPosition;

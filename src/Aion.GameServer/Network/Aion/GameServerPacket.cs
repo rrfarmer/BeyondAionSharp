@@ -3,18 +3,18 @@ using Aion.Commons.Network;
 
 namespace Aion.GameServer.Network.Aion;
 
-public abstract class GameServerPacket
+public abstract class GameServerPacket : AionServerPacket
 {
 	public const int MaxClientSupportedPacketSize = 8192;
 	public const int MaxUsablePacketBodySize = MaxClientSupportedPacketSize - 7;
 	private const byte StaticServerPacketCode = 0x44;
 
-	protected GameServerPacket(int opCode)
+	protected GameServerPacket(int opCode) : base(opCode)
 	{
 		OpCode = opCode;
 	}
 
-	public int OpCode { get; }
+	public new int OpCode { get; }
 
 	public byte[] SerializeFrame(GameCrypt crypt)
 	{

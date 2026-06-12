@@ -45,7 +45,7 @@ public class AttackUtil
         float offMultiplier = 1;
         int reduceMax = int.MaxValue;
         float reduceRatio = 0;
-        switch (AttackStatus.GetBaseStatus(status))
+        switch (AttackStatusExtensions.GetBaseStatus(status))
         {
             case AttackStatus.DODGE:
             case AttackStatus.RESIST:
@@ -386,7 +386,7 @@ public class AttackUtil
             damage -= def / 10;
         }
 
-        switch (AttackStatus.GetBaseStatus(status))
+        switch (AttackStatusExtensions.GetBaseStatus(status))
         {
             case AttackStatus.BLOCK:
                 damage = CalculateBlockedDamage(effected, damage);

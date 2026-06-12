@@ -1,6 +1,6 @@
 using Aion.GameServer.Model.Templates.Gather;
 using Aion.GameServer.Network.Aion;
-using static Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE;
+using static global::Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

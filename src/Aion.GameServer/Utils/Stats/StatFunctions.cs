@@ -41,7 +41,7 @@ public class StatFunctions
             mapMulti *= instance.GetMaxPlayers(); // on retail you get mob EP * max instance member count (only for group instances)
             mapMulti /= RatesConfig.XP_SOLO_RATES[0]; // custom: divide by regular xp rates, so they will not affect the rewarded XP
         }
-        int xpPercentage = XPRewardEnum.XpRewardFrom(target.GetLevel() - maxLevelInRange);
+        int xpPercentage = XPRewardEnumExtensions.XpRewardFrom(target.GetLevel() - maxLevelInRange);
         long rewardXP = JRound(baseXP * mapMulti * (xpPercentage / 100f));
         return rewardXP;
     }
@@ -88,7 +88,7 @@ public class StatFunctions
 
         // TODO: fix to see monster Rating level, NORMAL lvl 1, 2 | ELITE lvl 1, 2 etc..
         int baseDP = targetLevel * CalculateRatingMultiplier(npcRating);
-        int xpPercentage = XPRewardEnum.XpRewardFrom(targetLevel - playerLevel);
+        int xpPercentage = XPRewardEnumExtensions.XpRewardFrom(targetLevel - playerLevel);
         return Rates.DP_PVE.CalcResult(player, (int)Math.Floor((double)(baseDP * xpPercentage / 100f)));
     }
 

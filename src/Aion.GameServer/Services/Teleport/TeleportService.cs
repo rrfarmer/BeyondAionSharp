@@ -365,7 +365,7 @@ public class TeleportService
         }
         else
         {
-            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
+            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
             worldId = locationData.GetMapId();
             x = locationData.GetX();
             y = locationData.GetY();
@@ -397,7 +397,7 @@ public class TeleportService
         }
         else
         {
-            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
+            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
             worldId = locationData.GetMapId();
             x = locationData.GetX();
             y = locationData.GetY();
@@ -419,7 +419,7 @@ public class TeleportService
 
     public static void MoveToInstanceExit(Player player, int worldId, Race race)
     {
-        InstanceExit instanceExit = DataManager.INSTANCE_EXIT_DATA.GetInstanceExit(worldId, race);
+        InstanceExit instanceExit = DataManager.INSTANCE_EXIT_DATA.GetInstanceExit(worldId, race.ToString());
         if (instanceExit != null && InstanceService.InstanceExists(instanceExit.GetExitWorld(), 1))
         {
             TeleportTo(player, instanceExit.GetExitWorld(), instanceExit.GetX(), instanceExit.GetY(), instanceExit.GetZ(), instanceExit.GetH());
@@ -582,7 +582,7 @@ public class TeleportService
                 // teleport with full map reloading, player will spawn via CM_LEVEL_READY
                 PacketSendUtility.SendPacket(player, new SM_CHANNEL_INFO(player.GetPosition()));
                 PacketSendUtility.SendPacket(player, new SM_PLAYER_SPAWN(player));
-                if (DataManager.WORLD_MAPS_DATA.GetTemplate(worldId).IsInstance() && !WorldMapType.GetWorld(worldId).IsPersonal())
+                if (DataManager.WORLD_MAPS_DATA.GetTemplate(worldId).IsInstance() && !WorldMapTypeExtensions.GetWorld(worldId).IsPersonal())
                     PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_DUNGEON_OPENED_FOR_SELF(worldId));
             }
             if (player.IsLegionMember() && player.GetLegionMember().GetWorldId() != worldId)

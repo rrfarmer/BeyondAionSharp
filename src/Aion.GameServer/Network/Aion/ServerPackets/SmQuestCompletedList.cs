@@ -22,7 +22,7 @@ public sealed class SmQuestCompletedList : GameServerPacket
 
 	public static IReadOnlyList<SmQuestCompletedList> CreateLoginPackets(IReadOnlyList<PlayerQuestState> questStates)
 	{
-		// Java parity: questEngine/QuestEngine.sendCompletedQuests DynamicServerPacketBodySplitList usage.
+		// Java parity: questEngine/global::Aion.GameServer.QuestEngine.QuestEngine.sendCompletedQuests DynamicServerPacketBodySplitList usage.
 		var completedQuests = questStates.Where(quest => quest.IsCompletedAtLeastOnce).ToArray();
 		if (completedQuests.Length == 0)
 			return [new SmQuestCompletedList(updateMode: 0, Array.Empty<PlayerQuestState>())];

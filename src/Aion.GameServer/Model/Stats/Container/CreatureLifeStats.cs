@@ -33,6 +33,11 @@ public abstract class CreatureLifeStats
         return owner;
     }
 
+    // Property-form bridges over the getCurrentX() accessors (reworked call sites use lifeStats.CurrentHp, ...).
+    public int CurrentHp => GetCurrentHp();
+    public int CurrentMp => GetCurrentMp();
+    public int CurrentFp => GetCurrentFp();
+
     public int GetCurrentHp()
     {
         return currentHp;

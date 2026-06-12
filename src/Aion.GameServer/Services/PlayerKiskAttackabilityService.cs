@@ -11,7 +11,7 @@ public static class PlayerKiskAttackabilityService
 		bool playerInsidePvpZone)
 	{
 		// Java parity: model/gameobjects/Kisk.isEnemyFrom(Player).
-		return !SameRace(player.Race, kisk.OwnerRace)
+		return !SameRace(player.Race.ToString(), kisk.OwnerRace)
 			&& kiskInsidePvpZone
 			&& playerInsidePvpZone;
 	}

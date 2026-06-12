@@ -105,7 +105,7 @@ public class PunishmentService
         {
             if (captchaCount < 3)
             {
-                PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmCaptcha(captchaCount + 1, player.GetCaptchaImage()));
+                PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_CAPTCHA(captchaCount + 1, player.GetCaptchaImage()));
             }
             else
             {

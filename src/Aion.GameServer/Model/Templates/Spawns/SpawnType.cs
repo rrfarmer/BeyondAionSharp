@@ -6,9 +6,9 @@ namespace Aion.GameServer.Model.Templates.Spawns;
 [XmlType("SpawnType")]
 public enum SpawnType
 {
-    Manager,
-    Teleport,
-    Sign,
+    MANAGER,
+    TELEPORT,
+    SIGN,
 }
 
 public static class SpawnTypeExtensions

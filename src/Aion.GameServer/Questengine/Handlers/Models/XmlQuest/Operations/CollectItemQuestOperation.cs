@@ -1,3 +1,4 @@
+using Aion.GameServer.Services;
 using System.Xml.Serialization;
 using Aion.GameServer.QuestEngine.Model;
 

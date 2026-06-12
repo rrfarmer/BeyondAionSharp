@@ -52,7 +52,7 @@ public class PlayerAllianceLeavedEvent : PlayerLeavedEvent<PlayerAllianceMember,
             PacketSendUtility.SendPacket(player, leaveMsg);
             if (reason != LeaveReson.DISBAND)
             {
-                PacketSendUtility.SendPacket(player, new SM_ALLIANCE_MEMBER_INFO(leavedTeamMember, PlayerAllianceEvent.Leave));
+                PacketSendUtility.SendPacket(player, new SM_ALLIANCE_MEMBER_INFO(leavedTeamMember, PlayerAllianceEvent.LEAVE));
                 PacketSendUtility.SendPacket(player, new SM_ALLIANCE_INFO(team));
             }
         });

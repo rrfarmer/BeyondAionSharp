@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
-using RankingListPlayer = Aion.GameServer.Dao.AbyssRankDAO.RankingListPlayer;
+using RankingListPlayer = global::Aion.GameServer.Dao.AbyssRankDAO.RankingListPlayer;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

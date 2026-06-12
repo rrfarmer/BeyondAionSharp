@@ -80,7 +80,7 @@ public class House : VisibleObject, IPersistable
 
     public override WorldType GetWorldType()
     {
-        return World.GetInstance().GetWorldMap(GetAddress().GetMapId()).GetWorldType();
+        return Aion.GameServer.World.World.GetInstance().GetWorldMap(GetAddress().GetMapId()).GetWorldType();
     }
 
     public Building GetBuilding()

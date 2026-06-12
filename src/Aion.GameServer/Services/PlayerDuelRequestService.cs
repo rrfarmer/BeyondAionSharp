@@ -213,7 +213,7 @@ public sealed class PlayerDuelRequestService
 	}
 }
 
-public sealed record DuelPacketIntent(int RecipientObjectId, GameServerPacket Packet);
+public sealed record DuelPacketIntent(int RecipientObjectId, AionServerPacket Packet);
 
 public sealed record DuelRequestPlan(
 	DuelRequestStatus Status,

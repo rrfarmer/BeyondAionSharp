@@ -5,7 +5,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.QuestEngine;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Utils.Audit;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -46,7 +46,7 @@ public class CM_PLAY_MOVIE_END : AionClientPacket
         }
         player.UnsetCustomState(CustomPlayerState.WATCHING_CUTSCENE);
         VisibleObject target = player.IsTargeting(targetObjectId) ? player.GetTarget() : null;
-        QuestEngine.GetInstance().OnMovieEnd(new QuestEnv(target, player, questId), movieId);
+        global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnMovieEnd(new QuestEnv(target, player, questId), movieId);
         player.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnPlayMovieEnd(player, movieId);
     }
 }

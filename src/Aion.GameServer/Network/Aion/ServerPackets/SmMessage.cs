@@ -37,9 +37,9 @@ public sealed class SmMessage : GameServerPacket
 			message,
 			chatType,
 			GetSenderRaceFilter(sender),
-			sender.Position.X,
-			sender.Position.Y,
-			sender.Position.Z,
+			sender.GetPosition().X,
+			sender.GetPosition().Y,
+			sender.GetPosition().Z,
 			chatType == ShoutChatType)
 	{
 		// Java parity: network/aion/serverpackets/SM_MESSAGE(Player, message, chatType).
@@ -90,9 +90,9 @@ public sealed class SmMessage : GameServerPacket
 		// Java parity: player race filter is Race.raceId + 1 when cross-faction speech is disabled.
 		if (sender.AccessLevel > 0)
 			return 0;
-		if (string.Equals(sender.Race, "ELYOS", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(sender.Race.ToString(), "ELYOS", StringComparison.OrdinalIgnoreCase))
 			return 1;
-		if (string.Equals(sender.Race, "ASMODIANS", StringComparison.OrdinalIgnoreCase))
+		if (string.Equals(sender.Race.ToString(), "ASMODIANS", StringComparison.OrdinalIgnoreCase))
 			return 2;
 		return 0;
 	}

@@ -8,13 +8,14 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
-using LOG = Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS.LOG;
-using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SM_ATTACK_STATUS.TYPE;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
+using LOG = global::Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG;
+using TYPE = global::Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE;
+using SM_ATTACK_STATUS = global::Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
-/// <summary>Java parity: network/aion/clientpackets/CM_CAPTCHA (Cura). Client captcha answer / extract-status query. Client packet idiom: ReadImpl reads, RunImpl handles; readUC/readS->ReadUC/ReadS; equalsIgnoreCase->StringComparison.OrdinalIgnoreCase; SM_ATTACK_STATUS.TYPE/LOG aliased; AionConnection.State aliased; LoggerFactory->NullLogger. AionClientPacket base/SM_SYSTEM_MESSAGE red-tolerated.</summary>
+/// <summary>Java parity: network/aion/clientpackets/CM_CAPTCHA (Cura). Client captcha answer / extract-status query. Client packet idiom: ReadImpl reads, RunImpl handles; readUC/readS->ReadUC/ReadS; equalsIgnoreCase->StringComparison.OrdinalIgnoreCase; SmAttackStatus.TYPE/LOG aliased; AionConnection.State aliased; LoggerFactory->NullLogger. AionClientPacket base/SM_SYSTEM_MESSAGE red-tolerated.</summary>
 public class CM_CAPTCHA : AionClientPacket
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(CM_CAPTCHA));

@@ -14,7 +14,7 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// Java parity: model/team/common/events/PlayerLeavedEvent (ATracer). Base for "player left a team" events. Java is already two-param
 /// (&lt;TM extends TeamMember&lt;Player&gt;, T extends TemporaryPlayerTeam&lt;TM&gt;&gt;) -> direct C# map (no wildcard divergence), so
 /// team.HasMember resolves. TeamEvent -> ITeamEvent; nested enum LeaveReson SCREAMING (kept). schedule(Runnable, 30000) -> async
-/// ThreadPoolManager idiom (ct => {...; return ValueTask.CompletedTask;}, TimeSpan). TaskId.INSTANCE_KICK -> TaskId.InstanceKick.
+/// ThreadPoolManager idiom (ct => {...; return ValueTask.CompletedTask;}, TimeSpan). TaskId.INSTANCE_KICK -> TaskId.INSTANCE_KICK.
 /// SM_*/InstanceService/EventService red-tolerated.
 /// </summary>
 public abstract class PlayerLeavedEvent<TM, T> : ITeamEvent
@@ -66,7 +66,7 @@ public abstract class PlayerLeavedEvent<TM, T> : ITeamEvent
             if (team.Equals(leavedPlayer.GetPosition().GetWorldMapInstance().GetRegisteredTeam()))
             {
                 PacketSendUtility.SendPacket(leavedPlayer, SM_SYSTEM_MESSAGE.STR_MSG_LEAVE_INSTANCE_NOT_PARTY());
-                leavedPlayer.GetController().AddTask(TaskId.InstanceKick, ThreadPoolManager.GetInstance().Schedule(ct =>
+                leavedPlayer.GetController().AddTask(TaskId.INSTANCE_KICK, ThreadPoolManager.GetInstance().Schedule(ct =>
                 {
                     if (leavedPlayer.GetCurrentTeamId() != team.GetObjectId())
                     {

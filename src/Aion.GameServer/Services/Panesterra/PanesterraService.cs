@@ -117,29 +117,29 @@ public class PanesterraService
     private void SpawnAdvanceCorridors()
     {
         // Elyos
-        PacketSendUtility.BroadcastToMap(World.GetInstance().GetWorldMap(110070000).GetMainWorldMapInstance(),
+        PacketSendUtility.BroadcastToMap(Aion.GameServer.World.World.GetInstance().GetWorldMap(110070000).GetMainWorldMapInstance(),
             SM_SYSTEM_MESSAGE.STR_MSG_SVS_INVADE_DIRECT_PORTAL_OPEN());
         // Governor exclusive
-        SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(110070000, 730940, 503.624f, 460.202f, 132.081f, (byte)90), 257);
+        SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(110070000, 730940, 503.624f, 460.202f, 132.081f, (byte)90), 257);
         // Advance Corridor for Contributors | Officer 5-Star to Commander
-        SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(110070000, 730942, 490.262f, 409.850f, 126.79f, (byte)90), 256);
+        SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(110070000, 730942, 490.262f, 409.850f, 126.79f, (byte)90), 256);
         // Walk of Honor | Officer 1-Star to 4-Star
-        SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(110070000, 731193, 518.142f, 409.967f, 126.79f, (byte)90), 252);
+        SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(110070000, 731193, 518.142f, 409.967f, 126.79f, (byte)90), 252);
         // Asmodians
-        PacketSendUtility.BroadcastToMap(World.GetInstance().GetWorldMap(120080000).GetMainWorldMapInstance(),
+        PacketSendUtility.BroadcastToMap(Aion.GameServer.World.World.GetInstance().GetWorldMap(120080000).GetMainWorldMapInstance(),
             SM_SYSTEM_MESSAGE.STR_MSG_SVS_INVADE_DIRECT_PORTAL_OPEN());
         // Governor exclusive
-        SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(120080000, 730941, 342.298f, 251.135f, 98.553f, (byte)0), 338);
+        SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(120080000, 730941, 342.298f, 251.135f, 98.553f, (byte)0), 338);
         // Advance Corridor for Contributors | Officer 5-Star to Commander
-        SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(120080000, 730943, 393.321f, 236.963f, 93.113f, (byte)0), 337);
+        SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(120080000, 730943, 393.321f, 236.963f, 93.113f, (byte)0), 337);
         // Walk of Glory | Officer 1-Star to 4-Star
-        SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(120080000, 731194, 393.476f, 263.704f, 93.113f, (byte)0), 336);
+        SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(120080000, 731194, 393.476f, 263.704f, 93.113f, (byte)0), 336);
     }
 
     private void SpawnCorridor(SpawnTemplate template, int staticId)
     {
         template.SetStaticId(staticId);
-        SpawnEngine.SpawnObject(template, 1);
+        Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
     }
 
     public void StartAhserionRaid()
@@ -150,8 +150,8 @@ public class PanesterraService
             return;
         }
         CreateTeams(-1);
-        SpawnEngine.SpawnObject(SpawnEngine.NewSingleTimeSpawn(110070000, 802223, 485.692f, 401.079f, 127.789f, (byte)0), 1);
-        SpawnEngine.SpawnObject(SpawnEngine.NewSingleTimeSpawn(120080000, 802225, 400.772f, 231.517f, 93.113f, (byte)30), 1);
+        Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(110070000, 802223, 485.692f, 401.079f, 127.789f, (byte)0), 1);
+        Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(120080000, 802225, 400.772f, 231.517f, 93.113f, (byte)30), 1);
         AhserionRaid.GetInstance().Start();
     }
 
@@ -235,16 +235,16 @@ public class PanesterraService
         switch (fortressId)
         {
             case 10111:
-                SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(400020000, 802219, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
+                SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400020000, 802219, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
                 break;
             case 10211:
-                SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(400040000, 802221, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
+                SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400040000, 802221, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
                 break;
             case 10311:
-                SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(400050000, 802223, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
+                SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400050000, 802223, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
                 break;
             case 10411:
-                SpawnCorridor(SpawnEngine.NewSingleTimeSpawn(400060000, 802225, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
+                SpawnCorridor(Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400060000, 802225, 1024.159f, 1076.24f, 1530.2688f, (byte)90), 0);
                 break;
         }
     }
@@ -269,7 +269,7 @@ public class PanesterraService
         {
             // Check if the player's faction owns any related fortress
             PanesterraFaction faction = new[] { 10111, 10211, 10311, 10411 }
-                .Where(id => SiegeService.GetInstance().GetFortress(id).GetRace() == SiegeRace.GetByRace(player.GetRace()))
+                .Where(id => SiegeService.GetInstance().GetFortress(id).GetRace() == SiegeRaceExtensions.GetByRace(player.GetRace()))
                 .Select(id => PanesterraFactionExtensions.GetByFortressId(id)).DefaultIfEmpty(PEACE).First();
 
             if (faction == PEACE)
@@ -281,7 +281,7 @@ public class PanesterraService
 
     private int GetSiegeId(int worldId)
     {
-        switch (WorldMapType.GetWorld(worldId))
+        switch (WorldMapTypeExtensions.GetWorld(worldId))
         {
             case WorldMapType.BELUS:
                 return 10111; // Belus
@@ -326,7 +326,7 @@ public class PanesterraService
 
     public bool TeleportToStartPosition(Player player)
     {
-        if (!WorldMapType.IsPanesterraMap(player.GetWorldId()))
+        if (!WorldMapTypeExtensions.IsPanesterraMap(player.GetWorldId()))
             return false;
 
         PanesterraTeam team = GetTeam(player);
@@ -341,7 +341,7 @@ public class PanesterraService
     // TODO: Event START
     public bool ReviveInEventLocation(Player player)
     {
-        if (!WorldMapType.IsPanesterraMap(player.GetWorldId()))
+        if (!WorldMapTypeExtensions.IsPanesterraMap(player.GetWorldId()))
             return false;
 
         TeleportToEventLocation(player);

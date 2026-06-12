@@ -4,14 +4,14 @@ namespace Aion.GameServer.Ai;
 /// Fine-grained AI sub-activity within a state.
 /// Java parity: ai/AISubState.
 /// </summary>
-public enum AiSubState
+public enum AISubState
 {
-    None,
-    Talk,
-    Cast,
-    WalkPath,
-    WalkRandom,
-    WalkWaitGroup,
-    Freeze,
-    TargetLost,
+    NONE,
+    TALK,
+    CAST,
+    WALK_PATH,
+    WALK_RANDOM,
+    WALK_WAIT_GROUP,
+    FREEZE,
+    TARGET_LOST,
 }

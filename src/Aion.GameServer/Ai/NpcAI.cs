@@ -162,12 +162,12 @@ public abstract class NpcAI : AITemplate<Npc>
     {
         return GetState() switch
         {
-            AiState.Confuse or AiState.Fear => Aion.GameServer.Utils.PositionUtil.IsInRange(GetOwner(), GetOwner().GetMoveController().GetTargetX2(),
+            AIState.CONFUSE or AIState.FEAR => Aion.GameServer.Utils.PositionUtil.IsInRange(GetOwner(), GetOwner().GetMoveController().GetTargetX2(),
                 GetOwner().GetMoveController().GetTargetY2(), GetOwner().GetMoveController().GetTargetZ2(), 1),
-            AiState.Fight => Aion.GameServer.Ai.Manager.SimpleAttackManager.IsTargetInAttackRange(GetOwner()),
-            AiState.Returning => ReturningReached(),
-            AiState.Following => Aion.GameServer.Ai.Handler.FollowEventHandler.IsInRange(this, GetOwner().GetTarget()),
-            AiState.Walking or AiState.ForcedWalking => GetSubState() == AiSubState.Talk || Aion.GameServer.Ai.Manager.WalkManager.IsArrivedAtPoint(this),
+            AIState.FIGHT => Aion.GameServer.Ai.Manager.SimpleAttackManager.IsTargetInAttackRange(GetOwner()),
+            AIState.RETURNING => ReturningReached(),
+            AIState.FOLLOWING => Aion.GameServer.Ai.Handler.FollowEventHandler.IsInRange(this, GetOwner().GetTarget()),
+            AIState.WALKING or AIState.FORCED_WALKING => GetSubState() == AISubState.TALK || Aion.GameServer.Ai.Manager.WalkManager.IsArrivedAtPoint(this),
             _ => true
         };
     }
@@ -190,7 +190,7 @@ public abstract class NpcAI : AITemplate<Npc>
 
     public bool IsMoveSupported()
     {
-        return GetOwner().GetGameStats().GetMovementSpeed().GetCurrent() > 0 && !IsInSubState(AiSubState.Freeze);
+        return GetOwner().GetGameStats().GetMovementSpeed().GetCurrent() > 0 && !IsInSubState(AISubState.FREEZE);
     }
 
     /// <summary>NCsoft uses different non-visible npcs as a sensor to trigger different events.</summary>

@@ -165,7 +165,7 @@ public sealed class CraftSkillUpdateService
 		player.InventoryItems = inventory.ToArray();
 		player.Skills = updatedSkills.ToArray();
 
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		if (itemTemplates.GetItemTemplate(KinahItemId) is { } kinahTemplate)
 			packets.Add(new SmInventoryUpdateItem(updatedKinah, kinahTemplate, SmInventoryUpdateItem.DecreaseKinahLearn));
 		packets.Add(new SmSkillList([updatedSkill], SkillLearnServiceMessages.GetMessageId(updatedSkill, isNew)));
@@ -368,7 +368,7 @@ public static class CraftProfessionExtensions
 	}
 }
 
-public sealed record CraftPacketIntent(int RecipientObjectId, GameServerPacket Packet);
+public sealed record CraftPacketIntent(int RecipientObjectId, AionServerPacket Packet);
 
 public sealed record CraftSkillLimitResult(
 	bool Allowed,
@@ -425,25 +425,25 @@ public sealed record CraftSkillLearnResponsePlan(
 	PendingCraftSkillLearnRequest? Request,
 	InventoryItem? KinahItemUpdate,
 	PlayerSkill? Skill,
-	IReadOnlyList<GameServerPacket> Packets)
+	IReadOnlyList<AionServerPacket> Packets)
 {
 	public static CraftSkillLearnResponsePlan Accepted(
 		PendingCraftSkillLearnRequest request,
 		InventoryItem kinahItemUpdate,
 		PlayerSkill skill,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<AionServerPacket> packets)
 	{
 		return new CraftSkillLearnResponsePlan(true, CraftSkillLearnResponseStatus.Accepted, request, kinahItemUpdate, skill, packets);
 	}
 
-	public static CraftSkillLearnResponsePlan CreateHandled(CraftSkillLearnResponseStatus status, params GameServerPacket[] packets)
+	public static CraftSkillLearnResponsePlan CreateHandled(CraftSkillLearnResponseStatus status, params AionServerPacket[] packets)
 	{
 		return new CraftSkillLearnResponsePlan(true, status, null, null, null, packets);
 	}
 
 	public static CraftSkillLearnResponsePlan NotHandled(CraftSkillLearnResponseStatus status)
 	{
-		return new CraftSkillLearnResponsePlan(false, status, null, null, null, Array.Empty<GameServerPacket>());
+		return new CraftSkillLearnResponsePlan(false, status, null, null, null, Array.Empty<AionServerPacket>());
 	}
 }
 

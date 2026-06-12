@@ -13,19 +13,19 @@ public sealed class PlayerPetOrderSkillService
 		SkillTemplateTable skillTemplates)
 	{
 		// Java parity: skillengine/effect/PetOrderUseUltraSkillEffect.applyEffect.
-		if (!effector.HasPetSummon || effector.PetSummonObjectId == 0 || effector.PetSummonNpcId == 0)
+		if (!(effector.GetSummon() != null) || (effector.GetSummon()?.GetObjectId() ?? 0) == 0 || (effector.GetSummon()?.GetNpcId() ?? 0) == 0)
 			return PlayerPetOrderSkillResult.MissingSummon(request.OrderSkillId);
 
 		if (request.EffectedObjectId == 0)
-			return PlayerPetOrderSkillResult.MissingEffected(request.OrderSkillId, effector.PetSummonNpcId);
+			return PlayerPetOrderSkillResult.MissingEffected(request.OrderSkillId, (effector.GetSummon()?.GetNpcId() ?? 0));
 
-		var petUseSkillId = petSkills.GetPetOrderSkill(request.OrderSkillId, effector.PetSummonNpcId);
+		var petUseSkillId = petSkills.GetPetOrderSkill(request.OrderSkillId, (effector.GetSummon()?.GetNpcId() ?? 0));
 		if (petUseSkillId is null)
-			return PlayerPetOrderSkillResult.MissingPetSkillMapping(request.OrderSkillId, effector.PetSummonNpcId);
+			return PlayerPetOrderSkillResult.MissingPetSkillMapping(request.OrderSkillId, (effector.GetSummon()?.GetNpcId() ?? 0));
 
 		var skillTemplate = skillTemplates.GetSkillTemplate(petUseSkillId.Value);
 		if (skillTemplate is null)
-			return PlayerPetOrderSkillResult.MissingSkillTemplate(request.OrderSkillId, effector.PetSummonNpcId, petUseSkillId.Value);
+			return PlayerPetOrderSkillResult.MissingSkillTemplate(request.OrderSkillId, (effector.GetSummon()?.GetNpcId() ?? 0), petUseSkillId.Value);
 
 		var hate = request.EffectHate > 1 ? request.EffectHate : 0;
 		var order = new PlayerPetSkillOrder(
@@ -38,14 +38,14 @@ public sealed class PlayerPetOrderSkillService
 
 		return PlayerPetOrderSkillResult.Applied(
 			request.OrderSkillId,
-			effector.PetSummonObjectId,
-			effector.PetSummonNpcId,
+			(effector.GetSummon()?.GetObjectId() ?? 0),
+			(effector.GetSummon()?.GetNpcId() ?? 0),
 			petUseSkillId.Value,
 			skillTemplate.Level,
 			request.EffectedObjectId,
 			hate,
 			request.Release,
-			new SmSummonUseSkill(effector.PetSummonObjectId, petUseSkillId.Value, skillTemplate.Level, request.EffectedObjectId));
+			new SmSummonUseSkill((effector.GetSummon()?.GetObjectId() ?? 0), petUseSkillId.Value, skillTemplate.Level, request.EffectedObjectId));
 	}
 }
 

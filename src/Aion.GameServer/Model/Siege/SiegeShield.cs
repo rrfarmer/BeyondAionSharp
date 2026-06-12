@@ -38,7 +38,7 @@ public class SiegeShield : IZoneHandler
         if (creature is Player player)
         {
             FortressLocation loc = SiegeService.GetInstance().GetFortress(siegeLocationId);
-            if (loc.GetRace() != SiegeRace.GetByRace(player.GetRace()))
+            if (loc.GetRace() != SiegeRaceExtensions.GetByRace(player.GetRace()))
             {
                 CollisionDieActor shieldObserver = new CollisionDieActor(creature, geometry, loc);
                 creature.GetObserveController().AddObserver(shieldObserver);

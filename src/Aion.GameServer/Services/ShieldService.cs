@@ -99,10 +99,10 @@ public class ShieldService
             {
                 case "PR_A_AIRBUNKER_EFFECT_01A_CHILD1_324011":
                 case "PR_A_AIRBUNKER_EFFECT_01A_CHILD2_324011":
-                    min.z -= 6;
+                    min.Z -= 6;
                     break;
             }
-            RectangleArea rectangleArea = new RectangleArea(null, 0, min.x, min.y, max.x, max.y, min.z, max.z);
+            RectangleArea rectangleArea = new RectangleArea(null, 0, min.X, min.Y, max.X, max.Y, min.Z, max.Z);
             if (location.GetZone().Any(z => z.GetAreaTemplate().IntersectsRectangle(rectangleArea)))
             {
                 return true;

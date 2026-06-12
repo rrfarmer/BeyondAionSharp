@@ -74,7 +74,7 @@ public sealed class SmAttackStatus : GameServerPacket
         buffer.WriteH(logId);
     }
 
-    /// <summary>Java parity: SM_ATTACK_STATUS.TYPE (class-enum; constants may share ids).</summary>
+    /// <summary>Java parity: SmAttackStatus.TYPE (class-enum; constants may share ids).</summary>
     public sealed class TYPE
     {
         public static readonly TYPE TYPE1 = new TYPE(1);
@@ -122,7 +122,7 @@ public sealed class SmAttackStatus : GameServerPacket
         }
     }
 
-    /// <summary>Java parity: SM_ATTACK_STATUS.LOG.</summary>
+    /// <summary>Java parity: SmAttackStatus.LOG.</summary>
     public enum LOG
     {
         SPELLATK = 1,

@@ -37,14 +37,14 @@ public static class PlayerLevelChangeUpgradePlanService
 				_ => "Java skips TeamStatUpdater when player.isInTeam() is false.",
 			}));
 
-		var legionStatus = player.LegionId != 0
+		var legionStatus = (player.GetLegion()?.GetLegionId() ?? 0) != 0
 			? PlayerLevelChangeUpgradeDescriptorStatus.Planned
 			: PlayerLevelChangeUpgradeDescriptorStatus.SkippedNoLegion;
 		descriptors.Add(new PlayerLevelChangeUpgradeDescriptor(
 			PlayerLevelChangeUpgradeAction.LegionMemberUpdate,
 			legionStatus,
 			"PlayerController.upgradePlayer -> LegionService.updateMemberInfo",
-			Notes: player.LegionId != 0
+			Notes: (player.GetLegion()?.GetLegionId() ?? 0) != 0
 				? "Java refreshes LegionMember player data and broadcasts SM_LEGION_UPDATE_MEMBER to the legion."
 				: "Java skips LegionService.updateMemberInfo when player.isLegionMember() is false."));
 
@@ -55,7 +55,7 @@ public static class PlayerLevelChangeUpgradePlanService
 			plannedLifeStats,
 			maxStats,
 			player.TeamMembership,
-			player.LegionId,
+			(player.GetLegion()?.GetLegionId() ?? 0),
 			descriptors);
 	}
 

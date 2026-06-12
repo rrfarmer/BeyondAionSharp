@@ -34,8 +34,8 @@ public sealed class RiftInformerService
 	public async Task<int> SendRiftsInfoAsync(Player player)
 	{
 		// Java parity: services/rift/RiftInformer.sendRiftsInfo(Player) sends current-world packets to the player, then broadcasts twin-world packets.
-		var sent = await SyncRiftsStateAsync(player, GetPackets(player.Position.WorldId));
-		var twinId = GetTwinId(player.Position.WorldId);
+		var sent = await SyncRiftsStateAsync(player, GetPackets(player.GetPosition().WorldId));
+		var twinId = GetTwinId(player.GetPosition().WorldId);
 		if (twinId > 0)
 			sent += await SyncRiftsStateAsync(twinId, GetPackets(twinId));
 		return sent;
@@ -149,7 +149,7 @@ public sealed class RiftInformerService
 		{
 			sent += await _connectionRegistry.BroadcastToWorldAsync(
 				packet,
-				player => player.Position.WorldId == worldId);
+				player => player.GetPosition().WorldId == worldId);
 		}
 
 		return sent;

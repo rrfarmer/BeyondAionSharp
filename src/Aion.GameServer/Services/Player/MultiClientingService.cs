@@ -25,7 +25,7 @@ public class MultiClientingService
             string mac = con.GetMacAddress();
             string hdd = con.GetHddSerial();
             string ip = con.GetIP();
-            foreach (Player onlinePlayer in World.GetInstance().GetAllPlayers())
+            foreach (Player onlinePlayer in Aion.GameServer.World.World.GetInstance().GetAllPlayers())
             {
                 bool sameIp = ip.Equals(onlinePlayer.GetClientConnection().GetIP());
                 bool sameMac = mac.Length != 0 && mac.Equals(onlinePlayer.GetClientConnection().GetMacAddress());

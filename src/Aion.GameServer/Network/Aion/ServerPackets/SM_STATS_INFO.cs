@@ -3,6 +3,7 @@ using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
 using Aion.GameServer.Utils.Stats;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

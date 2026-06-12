@@ -87,7 +87,7 @@ public sealed class QuestNpcStartJavaHandlerExtractor
 
 			foreach (var npcId in npcIds)
 			{
-				// Java parity: handler register() methods add direct QuestNpc.onQuestStart registrations through QuestEngine.
+				// Java parity: handler register() methods add direct QuestNpc.onQuestStart registrations through Aion.GameServer.QuestEngine.QuestEngine.
 				sources.Add(new QuestNpcStartRegistrationSource(
 					NpcId: npcId,
 					QuestId: questId,

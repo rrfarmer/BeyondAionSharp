@@ -73,7 +73,7 @@ public class PlayerEffectController : EffectController
         if (effect == null || !effect.IsPassive())
         {
             UpdatePlayerEffectIcons(effect);
-            int slot = effect == null ? SkillTargetSlot.FULLSLOTS : effect.GetTargetSlot().GetId();
+            int slot = effect == null ? SkillTargetSlotExtensions.FULLSLOTS : effect.GetTargetSlot().GetId();
             if (GetOwner().IsInGroup())
             {
                 PlayerGroupService.UpdateGroup(GetOwner(), GroupEvent.MOVEMENT);
@@ -89,7 +89,7 @@ public class PlayerEffectController : EffectController
 
     public void UpdatePlayerEffectIcons(Effect effect)
     {
-        int slot = effect != null ? effect.GetTargetSlot().GetId() : SkillTargetSlot.FULLSLOTS;
+        int slot = effect != null ? effect.GetTargetSlot().GetId() : SkillTargetSlotExtensions.FULLSLOTS;
         ICollection<Effect> effects = GetAbnormalEffectsToShow();
         PacketSendUtility.SendPacket(GetOwner(), new SM_ABNORMAL_STATE(effects, GetAbnormals(), slot));
     }
@@ -124,7 +124,7 @@ public class PlayerEffectController : EffectController
         effect.StartEffect();
 
         if (effect.GetSkillTemplate().GetTargetSlot() != SkillTargetSlot.NOSHOW)
-            PacketSendUtility.SendPacket(GetOwner(), new SM_ABNORMAL_STATE(new List<Effect> { effect }, GetAbnormals(), SkillTargetSlot.FULLSLOTS));
+            PacketSendUtility.SendPacket(GetOwner(), new SM_ABNORMAL_STATE(new List<Effect> { effect }, GetAbnormals(), SkillTargetSlotExtensions.FULLSLOTS));
     }
 
     public override void RemoveAllEffects()

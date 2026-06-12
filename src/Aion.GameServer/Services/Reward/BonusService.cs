@@ -28,7 +28,7 @@ public class BonusService
         if (itemsOfRandomGroup == null)
             return null;
 
-        ItemRaceEntry item = Chance.SelectElement(itemsOfRandomGroup);
+        ItemRaceEntry item = IChance.SelectElement(itemsOfRandomGroup);
         return item == null ? null : new QuestItems(item.GetId(), item.GetCount());
     }
 
@@ -39,7 +39,7 @@ public class BonusService
 
         while (remainingGroups.Count != 0)
         {
-            BonusItemGroup group = Chance.SelectElement(remainingGroups, true);
+            BonusItemGroup group = IChance.SelectElement(remainingGroups, true);
             if (group == null)
                 break;
             allRewards = group.GetItems().Where(i => i.Matches(player.GetRace(), questTemplate)).Cast<ItemRaceEntry>().ToList();

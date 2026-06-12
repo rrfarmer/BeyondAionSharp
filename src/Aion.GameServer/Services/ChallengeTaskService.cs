@@ -156,14 +156,14 @@ public sealed class ChallengeTaskService : IChallengeTaskService
 		if (!string.Equals(taskTemplate.Type, "LEGION", StringComparison.Ordinal))
 			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.UnsupportedTaskType, taskTemplate.TaskId, questId);
 
-		if (player.LegionId <= 0)
+		if ((player.GetLegion()?.GetLegionId() ?? 0) <= 0)
 			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.NoLegion, taskTemplate.TaskId, questId);
 
 		var questTemplate = taskTemplate.Quests.FirstOrDefault(quest => quest.QuestId == questId);
 		if (questTemplate == null)
 			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.MissingTaskTemplate, taskTemplate.TaskId, questId);
 
-		var loadedProgress = await repository.LoadLegionChallengeTasksAsync(player.LegionId, cancellationToken);
+		var loadedProgress = await repository.LoadLegionChallengeTasksAsync((player.GetLegion()?.GetLegionId() ?? 0), cancellationToken);
 		var progress = loadedProgress.FirstOrDefault(row => row.TaskId == taskTemplate.TaskId && row.QuestId == questId);
 		if (progress == null)
 			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.NoLoadedProgress, taskTemplate.TaskId, questId);
@@ -179,7 +179,7 @@ public sealed class ChallengeTaskService : IChallengeTaskService
 		var completeCount = progress.CompleteCount + 1;
 		var completeTime = Math.Max(0, currentEpochSeconds);
 		var saved = await repository.SaveLegionChallengeTaskProgressAsync(
-			player.LegionId,
+			(player.GetLegion()?.GetLegionId() ?? 0),
 			taskTemplate.TaskId,
 			questId,
 			completeCount,

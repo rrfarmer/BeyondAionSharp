@@ -2,6 +2,7 @@ using System.Xml.Serialization;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -53,9 +54,9 @@ public class CaseHealEffect : AbstractHealEffect
         if (currentValue <= (maxCurValue * condValue / 100f))
         {
             if (type == HealType.HP)
-                effect.GetEffected().GetLifeStats().IncreaseHp(SM_ATTACK_STATUS.TYPE.HP, CalculateHealValue(effect, type), effect, SM_ATTACK_STATUS.LOG.CASEHEAL);
+                effect.GetEffected().GetLifeStats().IncreaseHp(SmAttackStatus.TYPE.HP, CalculateHealValue(effect, type), effect, SmAttackStatus.LOG.CASEHEAL);
             else if (type == HealType.MP)
-                effect.GetEffected().GetLifeStats().IncreaseMp(SM_ATTACK_STATUS.TYPE.MP, CalculateHealValue(effect, type), effect.GetSkillId(), SM_ATTACK_STATUS.LOG.CASEHEAL);
+                effect.GetEffected().GetLifeStats().IncreaseMp(SmAttackStatus.TYPE.MP, CalculateHealValue(effect, type), effect.GetSkillId(), SmAttackStatus.LOG.CASEHEAL);
             effect.EndEffect();
             return true;
         }

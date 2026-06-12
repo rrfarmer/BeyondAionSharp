@@ -27,7 +27,7 @@ public class WorldZoneTemplate : ZoneTemplate
         point.X = size + 1;
         point.Y = -1;
         Points.GetPoint().Add(point);
-        ZoneType = ZoneClassName.Dummy;
+        ZoneType = ZoneClassName.DUMMY;
         Mapid = mapId;
         Flags = DataManager.WORLD_MAPS_DATA.GetTemplate(mapId).GetFlags();
         XmlName = mapId.ToString();

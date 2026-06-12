@@ -22,6 +22,20 @@ namespace Aion.GameServer.Model.GameObjects.Players;
 /// </remarks>
 public partial class Player : Creature
 {
+    // Java parity: property-form bridges over the getX() accessors (reworked call sites use player.Race, player.Dp, ...).
+    public Aion.GameServer.Model.Race Race => GetRace();
+    public int Level => GetCommonData().GetLevel();
+    public int Dp => GetCommonData().GetDp();
+    public long Exp => GetCommonData().GetExp();
+    public Aion.GameServer.Model.PlayerClass PlayerClass => GetPlayerClass();
+    public Aion.GameServer.Model.GameObjects.Players.AbyssRank AbyssRank => GetAbyssRank();
+    public Aion.GameServer.Model.GameObjects.Players.Mailbox Mailbox => GetMailbox();
+    public Aion.GameServer.Model.Skill.PlayerSkillList Skills => GetSkillList();
+    public Aion.GameServer.Model.Stats.Container.PlayerLifeStats LifeStats => GetLifeStats();
+    public int TitleId => GetCommonData().GetTitleId();
+    public int BonusTitleId => GetCommonData().GetBonusTitleId();
+    public bool IsFlyingBeforeDeath { get => GetIsFlyingBeforeDeath(); set => SetIsFlyingBeforeDeath(value); }
+
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
     public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
     public Aion.GameServer.Model.Ingameshop.InGameShop inGameShop;
@@ -151,7 +165,7 @@ public partial class Player : Creature
         moveController = new Aion.GameServer.Controllers.Movement.PlayerMoveController(this);
 
         SetGameStats(new PlayerGameStats(this));
-        SetLifeStats(new PlayerLifeStats(this));
+        SetLifeStats(new Aion.GameServer.Model.Stats.Container.PlayerLifeStats(this));
         inGameShop = new Aion.GameServer.Model.Ingameshop.InGameShop();
         absStatsHolder = new Aion.GameServer.Model.GameObjects.Players.AbsoluteStatOwner(this, 0);
     }
@@ -266,7 +280,7 @@ public partial class Player : Creature
 
     public bool IsInAttackMode()
     {
-        return IsInState(CreatureState.WeaponEquipped);
+        return IsInState(CreatureState.WEAPON_EQUIPPED);
     }
 
     public bool IsGatherRestricted()
@@ -331,9 +345,9 @@ public partial class Player : Creature
 
     // Java covariant-return getLifeStats():PlayerLifeStats -> C# 'new' (method hiding); the body just
     // downcasts the base result, so behaviour is identical and C#'s covariant-return rejection is avoided.
-    public new PlayerLifeStats GetLifeStats()
+    public new Aion.GameServer.Model.Stats.Container.PlayerLifeStats GetLifeStats()
     {
-        return (PlayerLifeStats)base.GetLifeStats();
+        return (Aion.GameServer.Model.Stats.Container.PlayerLifeStats)base.GetLifeStats();
     }
 
     public override PlayerGameStats GetGameStats()

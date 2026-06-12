@@ -16,7 +16,7 @@ public sealed record PostmanNpc(
 	public static PostmanNpc Create(Player owner, int objectId, NpcTemplateSummary template)
 	{
 		// Java parity: spawnengine/VisibleObjectSpawner.spawnPostman.
-		var ownerPosition = owner.Position;
+		var ownerPosition = owner.GetPosition();
 		var angle = ownerPosition.Heading * 3 * Math.PI / 180d;
 		var x = ownerPosition.X + (float)(Math.Cos(angle) * 7);
 		var y = ownerPosition.Y + (float)(Math.Sin(angle) * 7);

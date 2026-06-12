@@ -91,7 +91,7 @@ public class SM_PET : AionServerPacket
     {
         this.action = PetAction.SpecialFunction;
         this.dopeAction = dopeAction;
-        this.subType = (int)PetSpecialFunction.Doping;
+        this.subType = (int)PetSpecialFunction.DOPING;
         itemObjectId = itemId; // it's template ID, not objectId though. also it's misused as slot2 for slot switch action (dopeAction 2)
         dopeSlot = slot;
     }

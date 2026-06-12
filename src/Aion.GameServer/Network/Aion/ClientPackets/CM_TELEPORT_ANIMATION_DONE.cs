@@ -8,7 +8,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -43,7 +43,7 @@ public class CM_TELEPORT_ANIMATION_DONE : AionClientPacket
                 if (!player.IsSpawned())
                 {
                     PacketSendUtility.SendPacket(player, new SM_PLAYER_INFO(player));
-                    World.GetInstance().Spawn(player);
+                    global::Aion.GameServer.World.World.GetInstance().Spawn(player);
                 }
             }
     }

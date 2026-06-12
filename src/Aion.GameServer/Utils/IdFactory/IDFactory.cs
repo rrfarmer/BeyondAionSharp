@@ -1,3 +1,5 @@
+using Aion.GameServer.Model.GameObjects;
+
 namespace Aion.GameServer.Utils.IdFactory;
 
 public sealed class IDFactory
@@ -8,6 +10,15 @@ public sealed class IDFactory
 	private readonly HashSet<int> _usedIds = [];
 	private readonly object _lock = new();
 	private int _nextMinId = 1;
+
+	// Java parity: IDFactory is a singleton (IDFactory.getInstance()). The DI lifecycle constructs the instance
+	// (with DB-preloaded used IDs) and binds it here, mirroring the World/DataManager singleton bridge.
+	private static IDFactory? _instance;
+
+	public static void RegisterInstance(IDFactory instance) => _instance = instance;
+
+	public static IDFactory GetInstance() => _instance ?? throw new InvalidOperationException(
+		"IDFactory singleton bridge not initialized; call IDFactory.RegisterInstance(...) at startup.");
 
 	public IDFactory(IEnumerable<int>? usedIds = null)
 	{
@@ -40,6 +51,18 @@ public sealed class IDFactory
 				_nextMinId = id;
 
 			return true;
+		}
+	}
+
+	public void ReleaseObjectIds(IEnumerable<AionObject>? unusedObjects)
+	{
+		// Java parity: utils/idfactory/IDFactory.releaseObjectIds(Collection<? extends AionObject>).
+		if (unusedObjects == null)
+			return;
+		lock (_lock)
+		{
+			foreach (var obj in unusedObjects)
+				ReleaseId(obj.GetObjectId()); // re-entrant lock; Java logs a warning when the ID wasn't taken
 		}
 	}
 

@@ -153,7 +153,7 @@ public abstract class Siege<SL> where SL : SiegeLocation
     {
         SiegeNpc boss = null;
 
-        ICollection<SiegeNpc> npcs = World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId());
+        ICollection<SiegeNpc> npcs = Aion.GameServer.World.World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId());
         foreach (SiegeNpc npc in npcs)
         {
             if (npc.GetObjectTemplate().GetAbyssNpcType().Equals(AbyssNpcType.BOSS))

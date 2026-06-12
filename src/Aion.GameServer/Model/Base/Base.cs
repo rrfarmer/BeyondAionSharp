@@ -219,7 +219,7 @@ public abstract class Base
 
     public virtual BaseOccupier GetOccupier(Creature bossKiller)
     {
-        return bossKiller == null ? GetLocation().GetTemplate().GetDefaultOccupier() : BaseOccupier.FindBy(bossKiller.GetRace());
+        return bossKiller == null ? GetLocation().GetTemplate().GetDefaultOccupier() : BaseOccupierExtensions.FindBy(bossKiller.GetRace());
     }
 
     private SmSystemMessage GetBossSpawnMsg()

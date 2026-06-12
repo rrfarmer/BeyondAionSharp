@@ -31,9 +31,9 @@ public sealed class SmLegionAddMember : GameServerPacket
 		buffer.WriteS(_player.Name);
 		buffer.WriteC(Math.Max(0, LegionRanks.GetRankId(_player.LegionRank)));
 		buffer.WriteC(_isMember ? 0x01 : 0x00);
-		buffer.WriteC(ToClassId(_player.PlayerClass));
+		buffer.WriteC(ToClassId(_player.PlayerClass.ToString()));
 		buffer.WriteC(Math.Clamp(_player.Level, 0, byte.MaxValue));
-		buffer.WriteD(_player.Position.WorldId);
+		buffer.WriteD(_player.GetPosition().WorldId);
 		buffer.WriteD(_gameServerId);
 		buffer.WriteD(_messageId);
 		buffer.WriteS(_text);

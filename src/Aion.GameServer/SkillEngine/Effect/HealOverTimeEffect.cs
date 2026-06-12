@@ -5,6 +5,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -27,7 +28,7 @@ public abstract class HealOverTimeEffect : AbstractOverTimeEffect, HealEffectTem
 
     public void StartEffect(Effect effect, HealType healType)
     {
-        effect.SetReserveds(new EffectReserved(position, CalculateHealValue(effect, healType), EffectReserved.ResourceType.Of(healType), false, false), true);
+        effect.SetReserveds(new EffectReserved(Position, CalculateHealValue(effect, healType), EffectReserved.ResourceType.Of(healType), false, false), true);
         base.StartEffect(effect, null);
     }
 
@@ -37,7 +38,7 @@ public abstract class HealOverTimeEffect : AbstractOverTimeEffect, HealEffectTem
 
         int currentValue = GetCurrentStatValue(effect);
         int maxCurValue = GetMaxStatValue(effect);
-        int possibleHealValue = effect.GetReserveds(position).GetValue();
+        int possibleHealValue = effect.GetReserveds(Position).GetValue();
 
         if (healType == HealType.HP && effect.GetItemTemplate() == null)
             possibleHealValue = effected.GetGameStats().GetStat(StatEnum.HEAL_SKILL_DEBOOST, possibleHealValue).GetCurrent();
@@ -50,13 +51,13 @@ public abstract class HealOverTimeEffect : AbstractOverTimeEffect, HealEffectTem
         switch (healType)
         {
             case HealType.HP:
-                effected.GetLifeStats().IncreaseHp(SM_ATTACK_STATUS.TYPE.HP, healValue, effect, SM_ATTACK_STATUS.LOG.HEAL);
+                effected.GetLifeStats().IncreaseHp(SmAttackStatus.TYPE.HP, healValue, effect, SmAttackStatus.LOG.HEAL);
                 break;
             case HealType.MP:
-                effected.GetLifeStats().IncreaseMp(SM_ATTACK_STATUS.TYPE.MP, healValue, effect.GetSkillId(), SM_ATTACK_STATUS.LOG.MPHEAL);
+                effected.GetLifeStats().IncreaseMp(SmAttackStatus.TYPE.MP, healValue, effect.GetSkillId(), SmAttackStatus.LOG.MPHEAL);
                 break;
             case HealType.FP:
-                ((Player)effected).GetLifeStats().IncreaseFp(SM_ATTACK_STATUS.TYPE.FP, healValue, effect.GetSkillId(), SM_ATTACK_STATUS.LOG.FPHEAL);
+                ((Player)effected).GetLifeStats().IncreaseFp(SmAttackStatus.TYPE.FP, healValue, effect.GetSkillId(), SmAttackStatus.LOG.FPHEAL);
                 break;
             case HealType.DP:
                 ((Player)effected).GetCommonData().AddDp(healValue);

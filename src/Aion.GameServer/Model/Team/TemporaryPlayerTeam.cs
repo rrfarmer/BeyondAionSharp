@@ -42,18 +42,18 @@ public abstract class TemporaryPlayerTeam<TM> : GeneralTeam<Aion.GameServer.Mode
         return GetLeader().GetObject().GetRace();
     }
 
-    public override void SendPackets(params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
+    public override void SendPackets(params Aion.GameServer.Network.Aion.AionServerPacket[] packets)
     {
         SendPacket(Predicates.AlwaysTrue<Aion.GameServer.Model.GameObjects.Players.Player>(), packets);
     }
 
-    public override void SendPacket(Predicate<Aion.GameServer.Model.GameObjects.Players.Player> predicate, params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
+    public override void SendPacket(Predicate<Aion.GameServer.Model.GameObjects.Players.Player> predicate, params Aion.GameServer.Network.Aion.AionServerPacket[] packets)
     {
         ForEach(player =>
         {
             if (predicate(player))
             {
-                foreach (Aion.GameServer.Network.Aion.GameServerPacket packet in packets)
+                foreach (Aion.GameServer.Network.Aion.AionServerPacket packet in packets)
                     PacketSendUtility.SendPacket(player, packet);
             }
         });

@@ -11,7 +11,7 @@ public sealed class SmTargetUpdate : GameServerPacket
 	private readonly int _targetObjectId;
 
 	public SmTargetUpdate(Player player)
-		: this(player.ObjectId, player.TargetObjectId)
+		: this(player.ObjectId, (player.GetTarget()?.GetObjectId() ?? 0))
 	{
 		// Java parity: network/aion/serverpackets/SM_TARGET_UPDATE(Player).
 	}

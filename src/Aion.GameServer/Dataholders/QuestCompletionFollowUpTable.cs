@@ -90,7 +90,7 @@ public sealed class QuestCompletionFollowUpJavaHandlerExtractor
 			if (!TryReadPreQuestIds(args, arrayConstants, out var preQuestIds))
 				continue;
 
-			// Java parity: QuestEngine.onQuestCompleted invokes registered handlers;
+			// Java parity: Aion.GameServer.QuestEngine.QuestEngine.onQuestCompleted invokes registered handlers;
 			// AbstractQuestHandler.defaultOnQuestCompletedEvent starts or locks this handler's quest.
 			registrations.Add(new QuestCompletionFollowUpRegistration(questId, preQuestIds, sourcePath));
 		}

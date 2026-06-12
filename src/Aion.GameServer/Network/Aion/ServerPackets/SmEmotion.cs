@@ -104,73 +104,73 @@ public sealed class SmEmotion : GameServerPacket
 
 		switch (_emotionType)
 		{
-			case EmotionType.LandFlyTeleport:
-			case EmotionType.Fly:
-			case EmotionType.Land:
-			case EmotionType.SelectTarget:
-			case EmotionType.Jump:
-			case EmotionType.Sit:
-			case EmotionType.Stand:
-			case EmotionType.AttackModeInMove:
-			case EmotionType.NeutralModeInMove:
-			case EmotionType.Walk:
-			case EmotionType.Run:
-			case EmotionType.OpenPrivateShop:
-			case EmotionType.ClosePrivateShop:
-			case EmotionType.PowershardOn:
-			case EmotionType.PowershardOff:
-			case EmotionType.AttackModeInStanding:
-			case EmotionType.NeutralModeInStanding:
-			case EmotionType.StartFeeding:
-			case EmotionType.EndFeeding:
-			case EmotionType.WindstreamStartBoost:
-			case EmotionType.WindstreamEndBoost:
-			case EmotionType.WindstreamEnd:
-			case EmotionType.WindstreamExit:
-			case EmotionType.OpenDoor:
-			case EmotionType.CloseDoor:
-			case EmotionType.WindstreamStrafe:
-			case EmotionType.StopGlide:
-			case EmotionType.StopFly:
+			case EmotionType.LAND_FLYTELEPORT:
+			case EmotionType.FLY:
+			case EmotionType.LAND:
+			case EmotionType.SELECT_TARGET:
+			case EmotionType.JUMP:
+			case EmotionType.SIT:
+			case EmotionType.STAND:
+			case EmotionType.ATTACKMODE_IN_MOVE:
+			case EmotionType.NEUTRALMODE_IN_MOVE:
+			case EmotionType.WALK:
+			case EmotionType.RUN:
+			case EmotionType.OPEN_PRIVATESHOP:
+			case EmotionType.CLOSE_PRIVATESHOP:
+			case EmotionType.POWERSHARD_ON:
+			case EmotionType.POWERSHARD_OFF:
+			case EmotionType.ATTACKMODE_IN_STANDING:
+			case EmotionType.NEUTRALMODE_IN_STANDING:
+			case EmotionType.START_FEEDING:
+			case EmotionType.END_FEEDING:
+			case EmotionType.WINDSTREAM_START_BOOST:
+			case EmotionType.WINDSTREAM_END_BOOST:
+			case EmotionType.WINDSTREAM_END:
+			case EmotionType.WINDSTREAM_EXIT:
+			case EmotionType.OPEN_DOOR:
+			case EmotionType.CLOSE_DOOR:
+			case EmotionType.WINDSTREAM_STRAFE:
+			case EmotionType.STOP_GLIDE:
+			case EmotionType.STOP_FLY:
 				break;
-			case EmotionType.Die:
-			case EmotionType.StartLoot:
-			case EmotionType.EndLoot:
-			case EmotionType.StartQuestLoot:
-			case EmotionType.EndQuestLoot:
+			case EmotionType.DIE:
+			case EmotionType.START_LOOT:
+			case EmotionType.END_LOOT:
+			case EmotionType.START_QUESTLOOT:
+			case EmotionType.END_QUESTLOOT:
 				buffer.WriteD(_targetObjectId);
 				break;
-			case EmotionType.ChairSit:
-			case EmotionType.ChairUp:
+			case EmotionType.CHAIR_SIT:
+			case EmotionType.CHAIR_UP:
 				buffer.WriteF(_x);
 				buffer.WriteF(_y);
 				buffer.WriteF(_z);
 				buffer.WriteC(_heading);
 				break;
-			case EmotionType.StartFlyTeleport:
+			case EmotionType.START_FLYTELEPORT:
 				buffer.WriteD(_emotion);
 				break;
-			case EmotionType.Windstream:
+			case EmotionType.WINDSTREAM:
 				buffer.WriteD(_emotion);
 				buffer.WriteD(_targetObjectId);
 				break;
-			case EmotionType.Ride:
-			case EmotionType.RideEnd:
+			case EmotionType.RIDE:
+			case EmotionType.RIDE_END:
 				if (_targetObjectId != 0)
 					buffer.WriteD(_targetObjectId);
 				buffer.WriteF(0x3F);
 				buffer.WriteF(0x3F);
 				buffer.WriteF(0x40);
 				break;
-			case EmotionType.Resurrect:
+			case EmotionType.RESURRECT:
 				buffer.WriteD(0);
 				break;
-			case EmotionType.Emote:
+			case EmotionType.EMOTE:
 				buffer.WriteD(_targetObjectId);
 				buffer.WriteH(_emotion);
 				buffer.WriteC(1);
 				break;
-			case EmotionType.ChangeSpeed:
+			case EmotionType.CHANGE_SPEED:
 				buffer.WriteH(_baseAttackSpeed);
 				buffer.WriteH(_currentAttackSpeed);
 				buffer.WriteC(0);

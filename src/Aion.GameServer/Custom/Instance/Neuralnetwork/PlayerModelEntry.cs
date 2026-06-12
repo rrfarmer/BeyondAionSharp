@@ -6,6 +6,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Custom.Instance.Neuralnetwork;
 

@@ -80,7 +80,7 @@ public class SM_ITEM_USAGE_ANIMATION : AionServerPacket
     {
         if (time > 0)
         {
-            Player player = World.GetInstance().GetPlayer(playerObjId);
+            Player player = global::Aion.GameServer.World.World.GetInstance().GetPlayer(playerObjId);
             Item item = player.GetInventory().GetItemByObjId(itemObjId);
             player.SetUsingItem(item);
         }

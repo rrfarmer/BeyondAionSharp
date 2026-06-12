@@ -127,7 +127,7 @@ public class PlayerReviveService
         {
             TeleportService.TeleportToEvent(player);
         }
-        else if (WorldMapType.GetWorld(player.GetWorldId()) == WorldMapType.BELUS)
+        else if (WorldMapTypeExtensions.GetWorld(player.GetWorldId()) == WorldMapType.BELUS)
         {
             PanesterraService.GetInstance().ReviveInEventLocation(player);
         }
@@ -193,7 +193,7 @@ public class PlayerReviveService
         }
         if (player.GetPosition().GetWorldMapInstance().GetInstanceHandler().OnReviveEvent(player))
             return;
-        WorldMap map = World.GetInstance().GetWorldMap(player.GetWorldId());
+        WorldMap map = Aion.GameServer.World.World.GetInstance().GetWorldMap(player.GetWorldId());
         if (map == null)
         {
             BindRevive(player);

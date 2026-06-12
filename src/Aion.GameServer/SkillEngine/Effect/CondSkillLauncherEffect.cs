@@ -47,7 +47,7 @@ public class CondSkillLauncherEffect : EffectTemplate
                 {
                     bool permanent = effect.GetSkillTemplate().GetActivationAttribute() == ActivationAttribute.PASSIVE;
                     int? duration = permanent ? 0 : (int?)null; // passive skills like Determination have no time limit
-                    conditionalEffect = SkillEngine.GetInstance().ApplyEffectDirectly(outer.skillId, effect.GetEffected(), effect.GetEffected(), duration, null);
+                    conditionalEffect = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(outer.skillId, effect.GetEffected(), effect.GetEffected(), duration, null);
                 }
                 else if (!hpAtOrBelowThreshold && conditionalEffect != null)
                 {

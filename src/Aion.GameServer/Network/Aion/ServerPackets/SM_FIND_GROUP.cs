@@ -4,6 +4,7 @@ using Aion.GameServer.Configs.Network;
 using Aion.GameServer.Model.GameObjects.FindGroup;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

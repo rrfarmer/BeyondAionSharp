@@ -79,7 +79,7 @@ public partial class Equipment : IPersistable
 
         if (!VerifyRankLimits(item))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_RANK(Aion.GameServer.Utils.Stats.AbyssRankEnum.GetRankL10n(owner.GetRace(), limits.GetMinRank())));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_RANK(Aion.GameServer.Utils.Stats.AbyssRankEnumExtensions.GetRankL10n(owner.GetRace(), limits.GetMinRank())));
             return null;
         }
 
@@ -253,8 +253,8 @@ public partial class Equipment : IPersistable
             // if unequip power shard
             if (itemToUnequip.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.POWER_SHARDS)
             {
-                owner.UnsetState(CreatureState.Powershard);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(owner, Aion.GameServer.Model.EmotionType.PowershardOff, 0, 0));
+                owner.UnsetState(CreatureState.POWERSHARD);
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(owner, Aion.GameServer.Model.EmotionType.POWERSHARD_OFF, 0, 0));
             }
 
             if (itemToUnequip.GetItemTemplate().IsStigma())

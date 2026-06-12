@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -63,7 +63,7 @@ public class CM_PET_EMOTE : AionClientPacket
             return;
         if (emote == PetEmote.Unknown)
         {
-            NullLoggerFactory.Instance.CreateLogger(GetType_().Name).LogWarning(player + " / " + pet + " sent pet emote " + emoteId + " (emotionId: " + emotionId + ", unk2: " + unk2 + ")");
+            NullLoggerFactory.Instance.CreateLogger(GetType().Name).LogWarning(player + " / " + pet + " sent pet emote " + emoteId + " (emotionId: " + emotionId + ", unk2: " + unk2 + ")");
             return;
         }
 
@@ -72,7 +72,7 @@ public class CM_PET_EMOTE : AionClientPacket
         // reproducible by flying randomly and falling from long height with fly resume
         if (x1 < 0 || y1 < 0 || z1 < 0)
         {
-            NullLoggerFactory.Instance.CreateLogger(GetType_().Name).LogWarning(pet + " of " + player + " sent " + emote + " at x:" + x1 + ", y:" + y1 + ", z:" + z1 + ", h:" + h);
+            NullLoggerFactory.Instance.CreateLogger(GetType().Name).LogWarning(pet + " of " + player + " sent " + emote + " at x:" + x1 + ", y:" + y1 + ", z:" + z1 + ", h:" + h);
             return;
         }
 
@@ -82,13 +82,13 @@ public class CM_PET_EMOTE : AionClientPacket
             case PetEmote.MovePositionUpdate:
                 if (emote == PetEmote.MovePositionUpdate)
                 { // TODO remove once we're sure "MOVE_POSITION_UPDATE" is correct and h is actually h
-                    NullLoggerFactory.Instance.CreateLogger(GetType_().Name).LogWarning(pet + " of " + player + " sent " + emote + " at x:" + x1 + ", y:" + y1 + ", z:" + z1 + ", h:" + h);
+                    NullLoggerFactory.Instance.CreateLogger(GetType().Name).LogWarning(pet + " of " + player + " sent " + emote + " at x:" + x1 + ", y:" + y1 + ", z:" + z1 + ", h:" + h);
                 }
-                World.GetInstance().UpdatePosition(pet, x1, y1, z1, h);
+                global::Aion.GameServer.World.World.GetInstance().UpdatePosition(pet, x1, y1, z1, h);
                 BroadcastToSightedPlayers(pet, new SM_PET_EMOTE(pet, emote), false);
                 break;
             case PetEmote.MoveTo:
-                World.GetInstance().UpdatePosition(pet, x1, y1, z1, h);
+                global::Aion.GameServer.World.World.GetInstance().UpdatePosition(pet, x1, y1, z1, h);
                 pet.GetMoveController().SetNewDirection(x2, y2, z2, h);
                 BroadcastToSightedPlayers(pet, new SM_PET_EMOTE(pet, emote), false);
                 break;

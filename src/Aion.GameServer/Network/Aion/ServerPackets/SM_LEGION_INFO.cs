@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Abyss;
-using Announcement = Aion.GameServer.Model.Team.Legion.Legion.Announcement;
+using Announcement = global::Aion.GameServer.Model.Team.Legion.Legion.Announcement;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

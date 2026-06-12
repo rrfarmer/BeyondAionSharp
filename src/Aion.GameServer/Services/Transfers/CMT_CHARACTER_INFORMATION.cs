@@ -54,7 +54,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         PlayerCommonData playerCommonData = new PlayerCommonData(IDFactory.GetInstance().NextId());
         playerCommonData.SetName(name);
         // read common data
-        playerCommonData.SetPlayerClass(PlayerClass.GetPlayerClassById((sbyte)ReadD()));
+        playerCommonData.SetPlayerClass(PlayerClassExtensions.GetPlayerClassById((sbyte)ReadD()));
         playerCommonData.SetExp(ReadQ());
         playerCommonData.SetRace(ReadD() == 0 ? Race.ELYOS : Race.ASMODIANS);
         playerCommonData.SetGender(ReadD() == 0 ? Gender.MALE : Gender.FEMALE);
@@ -129,7 +129,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         float z = ReadF();
         sbyte h = ReadC();
         int worldId = ReadD();
-        WorldPosition pos = World.GetInstance().CreatePosition(worldId, x, y, z, h, 1);
+        WorldPosition pos = Aion.GameServer.World.World.GetInstance().CreatePosition(worldId, x, y, z, h, 1);
         player.SetPosition(pos);
 
         if (!PlayerService.StoreNewPlayer(player, accountName, targetAccount))
@@ -213,11 +213,11 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
                 fusionedItemBonusStatsId, tempering, packCount, itemAmplified, buffSkill, 0);
             if (manastones.Count > 0)
                 foreach (int[] stone in manastones)
-                    ItemSocketService.AddManaStone(item, stone[0], stone[1], false);
+                    Aion.GameServer.Services.Items.ItemSocketService.AddManaStone(item, stone[0], stone[1], false);
 
             if (fusions.Count > 0)
                 foreach (int[] stone in fusions)
-                    ItemSocketService.AddManaStone(item, stone[0], stone[1], true);
+                    Aion.GameServer.Services.Items.ItemSocketService.AddManaStone(item, stone[0], stone[1], true);
 
             if (godstone != 0)
                 item.AddGodStone(godstone);

@@ -35,7 +35,7 @@ public class CarveSignetEffect : DamageEffect
             activeSignet.EndEffect();
             nextSignetLevel = Math.Min(activeSignet.GetCarvedSignet() + signetIncrement, Math.Max(signetCap, activeSignet.GetCarvedSignet()));
         }
-        Effect signetEffect = SkillEngine.GetInstance().ApplyEffect(signetId + nextSignetLevel - 1, effect.GetEffector(), effect.GetEffected());
+        Effect signetEffect = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffect(signetId + nextSignetLevel - 1, effect.GetEffector(), effect.GetEffected());
         signetEffect.SetCarvedSignet(nextSignetLevel);
     }
 }

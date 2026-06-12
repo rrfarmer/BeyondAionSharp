@@ -141,7 +141,7 @@ public class UpgradeArcadeService
             int playerId = player.GetObjectId();
             ThreadPoolManager.GetInstance().Schedule(ct =>
             {
-                Player p = World.GetInstance().GetPlayer(playerId);
+                Player p = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
                 if (p != null)
                     SendRemainingFrenzyModeTime(p, progress);
                 return ValueTask.CompletedTask;

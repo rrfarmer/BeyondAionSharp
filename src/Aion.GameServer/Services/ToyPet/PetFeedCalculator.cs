@@ -90,16 +90,16 @@ public static class PetFeedCalculator
 				return;
 			}
 
-			progress.HungryLevel = PetHungryLevel.Full;
+			progress.HungryLevel = PetHungryLevel.FULL;
 			progress.IncrementCount(lovedFood: true);
 			return;
 		}
 
 		var oldPoints = progress.TotalPoints;
 		var needSwitch = false;
-		if ((currentHungryLevel == PetHungryLevel.Hungry && progress.RegularCount > maxFeedCount * 0.5f)
-			|| (currentHungryLevel == PetHungryLevel.Content && progress.RegularCount > maxFeedCount * 0.8f)
-			|| (currentHungryLevel == PetHungryLevel.Semifull && progress.RegularCount > maxFeedCount * 1.05))
+		if ((currentHungryLevel == PetHungryLevel.HUNGRY && progress.RegularCount > maxFeedCount * 0.5f)
+			|| (currentHungryLevel == PetHungryLevel.CONTENT && progress.RegularCount > maxFeedCount * 0.8f)
+			|| (currentHungryLevel == PetHungryLevel.SEMIFULL && progress.RegularCount > maxFeedCount * 1.05))
 		{
 			needSwitch = true;
 		}
@@ -111,8 +111,8 @@ public static class PetFeedCalculator
 		if (needSwitch)
 		{
 			var nextLevel = progress.HungryLevel.GetNextValue();
-			if ((nextLevel == PetHungryLevel.Content && progress.RegularCount <= 0.487f * maxFeedCount)
-				|| (nextLevel == PetHungryLevel.Semifull && progress.RegularCount <= 0.78f * maxFeedCount))
+			if ((nextLevel == PetHungryLevel.CONTENT && progress.RegularCount <= 0.487f * maxFeedCount)
+				|| (nextLevel == PetHungryLevel.SEMIFULL && progress.RegularCount <= 0.78f * maxFeedCount))
 			{
 				progress.TotalPoints = oldPoints;
 			}
@@ -154,7 +154,7 @@ public static class PetFeedCalculator
 		ArgumentNullException.ThrowIfNull(lovedRewardSelector);
 
 		// Java parity: services/toypet/PetFeedCalculator.getReward, with DataManager item levels and Rnd.get supplied by caller.
-		if (progress.HungryLevel != PetHungryLevel.Full || rewards.Count == 0)
+		if (progress.HungryLevel != PetHungryLevel.FULL || rewards.Count == 0)
 		{
 			return null;
 		}

@@ -39,7 +39,7 @@ public class SummonServantEffect : SummonEffect
         if (effect.GetEffected() == null && effect.GetSkillTemplate().GetProperties().GetFirstTarget() != FirstTargetAttribute.POINT)
             throw new ArgumentException("Servant " + npcId + "cannot be spawned by " + effector + " (target: null)");
 
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(effector.GetWorldId(), npcId, x, y, z, effector.GetHeading());
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(effector.GetWorldId(), npcId, x, y, z, effector.GetHeading());
         Servant servant = VisibleObjectSpawner.SpawnServant(spawn, effector.GetInstanceId(), effector, effect.GetSkillLevel(), npcObjectType);
 
         ScheduledTask task = ThreadPoolManager.GetInstance().Schedule(ct => { servant.GetController().Delete(); return ValueTask.CompletedTask; }, TimeSpan.FromMilliseconds(spawnDuration * 1000L + INITIAL_SPAWN_DELAY));

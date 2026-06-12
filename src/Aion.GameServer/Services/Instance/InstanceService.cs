@@ -39,13 +39,13 @@ public class InstanceService
         if (instanceHandlerSupplier == null)
         {
             instance = WorldMapInstanceFactory.CreateWorldMapInstance(map, ownerId, InstanceEngine.GetInstance().GetNewInstanceHandler, maxPlayers);
-            SpawnEngine.SpawnInstance(instance, difficultyId, ownerId);
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnInstance(instance, difficultyId, ownerId);
         }
         else
         {
             instance = WorldMapInstanceFactory.CreateWorldMapInstance(map, ownerId, instanceHandlerSupplier, maxPlayers);
             EventService.GetInstance().GetActiveEvents().Select(e => e.GetEventTemplate()).Where(t => t.GetSpawns() != null).ToList().ForEach(
-                t => SpawnEngine.SpawnEventSpawns(instance, difficultyId, ownerId, t));
+                t => Aion.GameServer.SpawnEngine.SpawnEngine.SpawnEventSpawns(instance, difficultyId, ownerId, t));
         }
         instance.GetInstanceHandler().OnInstanceCreate();
 
@@ -144,7 +144,7 @@ public class InstanceService
 
     private static WorldMapInstance GetOrCreatePersonalInstance(int worldId, int ownerId)
     {
-        if (ownerId == 0 || !WorldMapType.GetWorld(worldId).IsPersonal())
+        if (ownerId == 0 || !WorldMapTypeExtensions.GetWorld(worldId).IsPersonal())
             return null;
 
         foreach (WorldMapInstance instance in World.World.GetInstance().GetWorldMap(worldId))

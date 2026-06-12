@@ -17,7 +17,7 @@ public static class ItemChargeBurnApplicationService
 			return ItemChargeBurnApplicationResult.NoChange();
 
 		var inventoryItems = player.InventoryItems.ToList();
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		foreach (var burn in plan.Burns)
 		{
 			ReplaceInventoryItem(inventoryItems, burn.ItemUpdate);
@@ -46,10 +46,10 @@ public static class ItemChargeBurnApplicationService
 public sealed record ItemChargeBurnApplicationResult(
 	bool Changed,
 	IReadOnlyList<InventoryItem> InventoryItems,
-	IReadOnlyList<GameServerPacket> Packets)
+	IReadOnlyList<AionServerPacket> Packets)
 {
 	public static ItemChargeBurnApplicationResult NoChange()
 	{
-		return new ItemChargeBurnApplicationResult(false, Array.Empty<InventoryItem>(), Array.Empty<GameServerPacket>());
+		return new ItemChargeBurnApplicationResult(false, Array.Empty<InventoryItem>(), Array.Empty<AionServerPacket>());
 	}
 }

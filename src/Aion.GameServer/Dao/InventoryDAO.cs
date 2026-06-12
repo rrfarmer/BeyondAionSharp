@@ -12,6 +12,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Items;
 using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Utils.IdFactory;
+using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Dao;
 
@@ -115,7 +116,7 @@ public class InventoryDAO
             using MySqlDataReader rs = stmt.ExecuteReader();
             while (rs.Read())
             {
-                byte slotType = ItemSlot.GetEquipmentSlotType(rs.GetInt64(rs.GetOrdinal("slot")));
+                byte slotType = ItemSlotExtensions.GetEquipmentSlotType(rs.GetInt64(rs.GetOrdinal("slot")));
                 if (slotType == 0)
                     continue; // skip equipment like rings and secondary weapons, as they are not visible and AbstractPlayerInfoPacket supports only 16 items
                 int itemSkinId = rs.GetInt32(rs.GetOrdinal("item_skin"));

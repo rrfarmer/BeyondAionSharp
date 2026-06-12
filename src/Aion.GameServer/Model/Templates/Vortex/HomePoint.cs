@@ -21,7 +21,7 @@ public class HomePoint
     public WorldPosition GetHomePoint()
     {
         WorldPosition home = new WorldPosition(map);
-        home.SetXyzh(x, y, z, h);
+        home.SetXYZH(x, y, z, h);
         return home;
     }
 }

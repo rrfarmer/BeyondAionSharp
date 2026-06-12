@@ -9,6 +9,7 @@ using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 
@@ -188,7 +189,7 @@ public class ReportToMany : AbstractTemplateQuestHandler
             QuestState qs = player.GetQuestStateList().GetQuestState(questId);
             if (qs == null || qs.IsStartable())
             {
-                return HandlerResult.FromBoolean(SendQuestDialog(env, 4));
+                return HandlerResultExtensions.FromBoolean(SendQuestDialog(env, 4));
             }
         }
         return HandlerResult.UNKNOWN;

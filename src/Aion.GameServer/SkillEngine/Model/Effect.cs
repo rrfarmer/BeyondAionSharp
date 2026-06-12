@@ -1,3 +1,4 @@
+using Aion.GameServer.Network.Aion.ServerPackets;
 using System;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -15,6 +16,7 @@ using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.PeriodicAction;
 using Aion.GameServer.Utils;
 using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
+using Aion.GameServer.Utils.Stats;
 
 namespace Aion.GameServer.SkillEngine.Model;
 
@@ -778,7 +780,7 @@ public class Effect : IStatOwner
         // TODO better way to finish
         if (GetSkillTemplate().GetTargetSlot() == SkillTargetSlot.SPEC2)
         {
-            effected.GetLifeStats().IncreaseHp(SM_ATTACK_STATUS.TYPE.REGULAR, (int)(effected.GetLifeStats().GetMaxHp() * 0.2f), GetEffector());
+            effected.GetLifeStats().IncreaseHp(SmAttackStatus.TYPE.REGULAR, (int)(effected.GetLifeStats().GetMaxHp() * 0.2f), GetEffector());
             effected.GetLifeStats().IncreaseMp((int)(effected.GetLifeStats().GetMaxMp() * 0.2f));
         }
 

@@ -10,7 +10,7 @@ using System.Xml.Serialization;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/SummonGroupGateEffect (LokiReborn, Neon) : SummonEffect. SpawnEngine.newSingleTimeSpawn; VisibleObjectSpawner.spawnGroupGate; anonymous Runnable→async delegate; Future&lt;?&gt;→ScheduledTask; schedule(...,time*1000)→Schedule(async,TimeSpan.FromMilliseconds); addTask(TaskId.DESPAWN,task). GroupGate/SpawnTemplate red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/SummonGroupGateEffect (LokiReborn, Neon) : SummonEffect. Aion.GameServer.SpawnEngine.SpawnEngine.newSingleTimeSpawn; VisibleObjectSpawner.spawnGroupGate; anonymous Runnable→async delegate; Future&lt;?&gt;→ScheduledTask; schedule(...,time*1000)→Schedule(async,TimeSpan.FromMilliseconds); addTask(TaskId.DESPAWN,task). GroupGate/SpawnTemplate red-tolerated.</summary>
 [XmlType("SummonGroupGateEffect")]
 public class SummonGroupGateEffect : SummonEffect
 {
@@ -24,7 +24,7 @@ public class SummonGroupGateEffect : SummonEffect
         int worldId = effector.GetWorldId();
         int instanceId = effector.GetInstanceId();
 
-        SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(worldId, npcId, x, y, z, heading);
+        SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldId, npcId, x, y, z, heading);
         GroupGate groupgate = VisibleObjectSpawner.SpawnGroupGate(spawn, instanceId, effector);
 
         ScheduledTask task = ThreadPoolManager.GetInstance().Schedule(ct =>

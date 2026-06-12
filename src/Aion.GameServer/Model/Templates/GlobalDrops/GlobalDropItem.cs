@@ -18,7 +18,7 @@ namespace Aion.GameServer.Model.Templates.GlobalDrops;
 /// itemId exists and normalises maxCount.
 /// </remarks>
 [XmlType("GlobalDropItem")]
-public class GlobalDropItem
+public class GlobalDropItem : Aion.GameServer.Model.IChance
 {
     // Java parity: @XmlAttribute(name="id") int itemId
     [XmlAttribute("id")] public int ItemId { get; set; }

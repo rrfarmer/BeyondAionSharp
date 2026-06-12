@@ -16,6 +16,6 @@ public class VortexSpawnTemplate : SpawnTemplate
     public void            SetId(int id)  => _id = id;
     public void            SetStateType(VortexStateType t) => _stateType = t;
 
-    public bool IsInvasion() => _stateType == VortexStateType.Invasion;
-    public bool IsPeace()    => _stateType == VortexStateType.Peace;
+    public bool IsInvasion() => _stateType == VortexStateType.INVASION;
+    public bool IsPeace()    => _stateType == VortexStateType.PEACE;
 }

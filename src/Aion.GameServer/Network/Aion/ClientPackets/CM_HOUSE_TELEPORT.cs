@@ -16,7 +16,7 @@ using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -81,7 +81,7 @@ public class CM_HOUSE_TELEPORT : AionClientPacket
                 }
                 break;
             default:
-                NullLoggerFactory.Instance.CreateLogger(GetType_().Name).LogWarning("Unhandled house teleport actionId " + actionId);
+                NullLoggerFactory.Instance.CreateLogger(GetType().Name).LogWarning("Unhandled house teleport actionId " + actionId);
                 return;
         }
 

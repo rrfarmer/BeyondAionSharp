@@ -2,7 +2,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
-using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
+using Status = global::Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

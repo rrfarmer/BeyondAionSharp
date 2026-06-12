@@ -40,7 +40,7 @@ public static class NearbyQuestStartConditionService
 
 		if (!string.IsNullOrWhiteSpace(template.RacePermitted)
 			&& !string.Equals(template.RacePermitted, "PC_ALL", StringComparison.Ordinal)
-			&& !string.Equals(template.RacePermitted, player.Race, StringComparison.Ordinal))
+			&& !string.Equals(template.RacePermitted, player.Race.ToString(), StringComparison.Ordinal))
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.Race);
 
 		var levelDiff = template.MinLevelPermitted - allowedDiffToMinLevel - player.Level;
@@ -50,7 +50,7 @@ public static class NearbyQuestStartConditionService
 		if (template.MaxLevelPermitted != 0 && player.Level > template.MaxLevelPermitted)
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.MaxLevel);
 
-		if (template.ClassPermitted.Count != 0 && !template.ClassPermitted.Contains(player.PlayerClass))
+		if (template.ClassPermitted.Count != 0 && !template.ClassPermitted.Contains(player.PlayerClass.ToString()))
 			return NearbyQuestStartConditionResult.Fail(NearbyQuestStartConditionFailure.Class);
 
 		if (!string.IsNullOrWhiteSpace(template.GenderPermitted)

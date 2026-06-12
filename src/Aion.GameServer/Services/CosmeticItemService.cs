@@ -12,7 +12,7 @@ public static class CosmeticItemService
 		if (template == null)
 			return CosmeticItemPlan.Fail(CosmeticItemFailure.MissingTemplate);
 
-		if (!string.Equals(template.Race, player.Race, StringComparison.Ordinal))
+		if (!string.Equals(template.Race.ToString(), player.Race.ToString(), StringComparison.Ordinal))
 			return CosmeticItemPlan.Fail(CosmeticItemFailure.InvalidRace);
 
 		if (!string.Equals(template.GenderPermitted, "ALL", StringComparison.Ordinal)

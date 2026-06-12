@@ -26,6 +26,31 @@ public enum PetEmote
 	LootStart = 149,
 	LootStop = 150,
 	Unknown = int.MaxValue,
+
+	// Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values, additive).
+	MOVE_STOP = MoveStop,
+	MOVE_POSITION_UPDATE = MovePositionUpdate,
+	MOVE_TO = MoveTo,
+	NO_INTERACTION = NoInteraction,
+	FLY_START = FlyStart,
+	FLY_STOP = FlyStop,
+	FLY = Fly,
+	EMOTION = Emotion,
+	EAT_START = EatStart,
+	EAT_STOP = EatStop,
+	EAT_STOP_HEART = EatStopHeart,
+	NOT_HUNGRY = NotHungry,
+	ATTACK_MODE_FEARLESS = AttackModeFearless,
+	ATTACK_MODE_FEARFUL = AttackModeFearful,
+	ALARM = Alarm,
+	ALARM_STOP_SHOUTING = AlarmStopShouting,
+	INIT_INTERACTION = InitInteraction,
+	PERFORM_INTERACTION = PerformInteraction,
+	GET_MOOD_GIFT = GetMoodGift,
+	BUFF = Buff,
+	LOOT_START = LootStart,
+	LOOT_STOP = LootStop,
+	UNKNOWN = Unknown,
 }
 
 public static class PetEmoteResolver

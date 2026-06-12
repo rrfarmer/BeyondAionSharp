@@ -76,14 +76,14 @@ public class AgentSiege : Siege<AgentLocation>
 
     private void BroadcastAgentSpawn()
     {
-        WorldMapInstance levinshorWorldInstance = World.GetInstance().GetWorldMap(600100000).GetMainWorldMapInstance();
+        WorldMapInstance levinshorWorldInstance = Aion.GameServer.World.World.GetInstance().GetWorldMap(600100000).GetMainWorldMapInstance();
         if (levinshorWorldInstance != null)
             PacketSendUtility.BroadcastToMap(levinshorWorldInstance, SM_SYSTEM_MESSAGE.STR_MSG_LDF4_Advance_GodElite());
     }
 
     private void DistributeQuest()
     {
-        foreach (Player player in World.GetInstance().GetWorldMap(600100000).GetMainWorldMapInstance().GetPlayersInside())
+        foreach (Player player in Aion.GameServer.World.World.GetInstance().GetWorldMap(600100000).GetMainWorldMapInstance().GetPlayersInside())
         {
             if (player.IsInsideZone(ZoneName.Get("DRAGON_LORDS_SHRINE_600100000")) || player.IsInsideZone(ZoneName.Get("FLAMEBERTH_DOWNS_600100000")))
             {
@@ -107,7 +107,7 @@ public class AgentSiege : Siege<AgentLocation>
                 SiegeSpawnTemplate siegetemplate = (SiegeSpawnTemplate)template;
                 if (siegetemplate.GetSiegeRace() == SiegeRace.BALAUR && siegetemplate.GetSiegeModType() == SiegeModType.SIEGE)
                 {
-                    SiegeNpc npc = (SiegeNpc)SpawnEngine.SpawnObject(siegetemplate, 1);
+                    SiegeNpc npc = (SiegeNpc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(siegetemplate, 1);
                     if (npc.GetSpawn().GetHandlerType() == SpawnHandlerType.BOSS)
                         InitNpc(npc);
                 }
@@ -117,7 +117,7 @@ public class AgentSiege : Siege<AgentLocation>
 
     public void DespawnSiegeNpcs()
     {
-        ICollection<SiegeNpc> npcs = World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId());
+        ICollection<SiegeNpc> npcs = Aion.GameServer.World.World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId());
         foreach (SiegeNpc npc in npcs)
         {
             if (npc != null)

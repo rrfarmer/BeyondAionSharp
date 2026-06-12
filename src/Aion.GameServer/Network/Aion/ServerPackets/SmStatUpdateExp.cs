@@ -22,7 +22,7 @@ public sealed class SmStatUpdateExp : GameServerPacket
 		var startExp = experienceTable.GetStartExpForLevel(level);
 		var expNeed = GetExpNeed(experienceTable, level);
 		_currentExp = Math.Max(0, player.Exp - startExp);
-		_recoverableExp = player.RecoverableExp;
+		_recoverableExp = (player.GetCommonData().GetExpRecoverable());
 		_maxExp = expNeed;
 		_currentRepose = player.ReposeEnergy;
 		_maxRepose = level >= 10 ? (long)(expNeed * 0.25f) : 0;

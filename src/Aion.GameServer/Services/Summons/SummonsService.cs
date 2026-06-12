@@ -26,7 +26,7 @@ public class SummonsService
         Summon summon = Aion.GameServer.SpawnEngine.VisibleObjectSpawner.SpawnSummon(master, npcId, skillId, time);
         master.SetSummon(summon);
         PacketSendUtility.SendPacket(master, new SmSummonPanel(summon));
-        PacketSendUtility.BroadcastPacket(summon, new SmEmotion(summon, EmotionType.ChangeSpeed));
+        PacketSendUtility.BroadcastPacket(summon, new SmEmotion(summon, EmotionType.CHANGE_SPEED));
         PacketSendUtility.BroadcastPacket(summon, new SmSummonUpdate(summon));
         return summon;
     }

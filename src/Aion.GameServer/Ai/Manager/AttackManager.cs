@@ -36,8 +36,8 @@ public class AttackManager
             AILogger.Info(npcAI, "AttackManager: scheduleNextAttack");
         }
         // don't start attack while in casting substate
-        AiSubState subState = npcAI.GetSubState();
-        if (subState == AiSubState.None)
+        AISubState subState = npcAI.GetSubState();
+        if (subState == AISubState.NONE)
         {
             ChooseAttack(npcAI, npcAI.GetOwner().GetGameStats().GetNextAttackInterval());
         }
@@ -99,11 +99,11 @@ public class AttackManager
         }
         if (!npc.CanSee(npc.GetTarget()))
         {
-            if (npcAI.SetSubStateIfNot(AiSubState.TargetLost))
+            if (npcAI.SetSubStateIfNot(AISubState.TARGET_LOST))
             {
                 ThreadPoolManager.GetInstance().Schedule(ct =>
                 {
-                    if (npcAI.IsInSubState(AiSubState.TargetLost) && npc.IsSpawned() && !npc.IsDead())
+                    if (npcAI.IsInSubState(AISubState.TARGET_LOST) && npc.IsSpawned() && !npc.IsDead())
                         npcAI.OnGeneralEvent(AiEventType.TargetGiveup);
                     return ValueTask.CompletedTask;
                 }, TimeSpan.FromMilliseconds(2000));

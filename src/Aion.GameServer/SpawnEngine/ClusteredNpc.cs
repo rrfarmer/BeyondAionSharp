@@ -34,7 +34,7 @@ public class ClusteredNpc : WalkerGroupShift
 
     public void Spawn(float z)
     {
-        SpawnEngine.BringIntoWorld(npc, npc.GetSpawn().GetWorldId(), instance, x, y, z, npc.GetSpawn().GetHeading());
+        Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, npc.GetSpawn().GetWorldId(), instance, x, y, z, npc.GetSpawn().GetHeading());
     }
 
     public void Despawn()

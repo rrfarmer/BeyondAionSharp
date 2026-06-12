@@ -94,7 +94,7 @@ public sealed record EquipmentObserverBurnWorkflowResult(
 	ItemChargeBurnPlan ChargePlan,
 	IdianPolishBurnApplicationResult IdianApplication,
 	ItemChargeBurnApplicationResult ChargeApplication,
-	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<AionServerPacket> Packets,
 	bool IdianPersisted,
 	bool ChargePersisted)
 {

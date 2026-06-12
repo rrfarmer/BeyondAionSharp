@@ -140,7 +140,7 @@ public class DuelService
         int? opponentId = DuelService.GetInstance().GetOpponentId(hiddenDuelist);
         if (opponentId != null)
         {
-            Player opponent = World.GetInstance().GetPlayer(opponentId.Value);
+            Player opponent = Aion.GameServer.World.World.GetInstance().GetPlayer(opponentId.Value);
             if (opponent != null && opponent.GetKnownList().Knows(hiddenDuelist) && !opponent.GetKnownList().Sees(hiddenDuelist)
                 && hiddenDuelist.IsInSameTeam(opponent))
                 PacketSendUtility.SendPacket(opponent, new SM_DELETE(hiddenDuelist));
@@ -154,7 +154,7 @@ public class DuelService
         if (opponentId == null) // not dueling
             return;
         OnDuelEnd(DuelResult.DUEL_LOST, loser, opponentId.Value); // Chain of Suffering must be ended before calling removeDuel
-        Player winner = World.GetInstance().GetPlayer(opponentId.Value);
+        Player winner = Aion.GameServer.World.World.GetInstance().GetPlayer(opponentId.Value);
         if (winner != null)
             OnDuelEnd(DuelResult.DUEL_WON, winner, loser.GetObjectId()); // Chain of Suffering must be ended before calling removeDuel
         RemoveDuel(loser);

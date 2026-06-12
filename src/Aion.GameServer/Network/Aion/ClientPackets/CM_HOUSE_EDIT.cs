@@ -13,9 +13,10 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Services.Items;
 using Aion.GameServer.Utils.Audit;
 using Aion.GameServer.Utils.IdFactory;
-using ItemDeleteType = Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
-using PersistentState = Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using ItemDeleteType = global::Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType;
+using PersistentState = global::Aion.GameServer.Model.GameObjects.IPersistable.PersistentState;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -129,7 +130,7 @@ public class CM_HOUSE_EDIT : AionClientPacket
             obj.Spawn();
             house.GetRegistry().SetPersistentState(PersistentState.UPDATE_REQUIRED);
             SendPacket(new SM_HOUSE_EDIT(4, 1, itemObjectId));
-            QuestEngine.GetInstance().OnHouseItemUseEvent(new QuestEnv(null, player, 0));
+            global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnHouseItemUseEvent(new QuestEnv(null, player, 0));
         }
         else if (action == 6)
         { // move object

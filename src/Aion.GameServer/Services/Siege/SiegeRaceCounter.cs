@@ -6,6 +6,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Siege;
 using Aion.GameServer.Utils;
+using Aion.GameServer.Model.Team.Legion;
 
 namespace Aion.GameServer.Services.Siege;
 

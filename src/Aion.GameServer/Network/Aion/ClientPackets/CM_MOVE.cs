@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Antihack;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -79,8 +79,8 @@ public class CM_MOVE : AionClientPacket
 
         PlayerMoveController m = player.GetMoveController();
         bool jumping = false;
-        byte oldMask = m.movementMask;
-        m.movementMask = type;
+        byte oldMask = m.MovementMaskField;
+        m.MovementMaskField = type;
 
         if (type == MovementMask.IMMEDIATE)
         { // stopping or turning
@@ -106,7 +106,7 @@ public class CM_MOVE : AionClientPacket
                     if (player.IsInCustomState(CustomPlayerState.TELEPORTATION_MODE))
                     {
                         player.GetMoveController().SetIsJumping(false);
-                        World.GetInstance().UpdatePosition(player, x2, y2, z2, heading);
+                        global::Aion.GameServer.World.World.GetInstance().UpdatePosition(player, x2, y2, z2, heading);
                         m.OnMoveFromClient();
                         PacketSendUtility.BroadcastToSightedPlayers(player, new SM_MOVE(player), true);
                         return;
@@ -151,7 +151,7 @@ public class CM_MOVE : AionClientPacket
         if (player.IsProtectionActive() && (player.GetX() != x || player.GetY() != y || player.GetZ() > z + 0.5f))
             player.GetController().StopProtectionActiveTask();
         player.GetMoveController().SetIsJumping(jumping);
-        World.GetInstance().UpdatePosition(player, x, y, z, heading);
+        global::Aion.GameServer.World.World.GetInstance().UpdatePosition(player, x, y, z, heading);
         m.OnMoveFromClient();
         NotifyControllers(player, oldMask);
 

@@ -65,7 +65,7 @@ public class PetService
         Pet pet = player.GetPet();
         pet.GetCommonData().SetCancelFeed(false);
         PacketSendUtility.SendPacket(player, new SM_PET(1, item.GetObjectId(), count, pet));
-        PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.StartFeeding, 0, player.GetObjectId()));
+        PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.START_FEEDING, 0, player.GetObjectId()));
 
         Schedule(pet, player, item, count);
     }
@@ -98,7 +98,7 @@ public class PetService
                 // non eatable item
                 ItemPacketService.SendItemUnlockPacket(player, item);
                 PacketSendUtility.SendPacket(player, new SM_PET(5, 0, 0, pet));
-                PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.EndFeeding, 0, player.GetObjectId()));
+                PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.END_FEEDING, 0, player.GetObjectId()));
                 PacketSendUtility.SendPacket(player,
                     SM_SYSTEM_MESSAGE.STR_MSG_TOYPET_FEED_FOOD_NOT_LOVEFLAVOR(pet.GetName(), item.GetItemTemplate().GetL10n()));
                 return;
@@ -106,12 +106,12 @@ public class PetService
             player.GetInventory().DecreaseItemCount(item, 1, ItemUpdateType.DEC_PET_FOOD);
             PetFeedResult reward = flavour.ProcessFeedResult(progress, foodType, item.GetItemTemplate().GetLevel(), player.GetCommonData().GetLevel());
 
-            if (progress.GetHungryLevel() == PetHungryLevel.Full && reward != null)
+            if (progress.GetHungryLevel() == PetHungryLevel.FULL && reward != null)
             {
                 PacketSendUtility.SendPacket(player, new SM_PET(2, item.GetObjectId(), 0, pet));
                 PacketSendUtility.SendPacket(player, new SM_PET(6, reward.GetItem(), 0, pet));
                 PacketSendUtility.SendPacket(player, new SM_PET(5, 0, 0, pet));
-                PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.EndFeeding, 0, player.GetObjectId()));
+                PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.END_FEEDING, 0, player.GetObjectId()));
                 PacketSendUtility.SendPacket(player, new SM_PET(7, 0, 0, pet)); // 2151591961
 
                 ItemService.AddItem(player, reward.GetItem(), 1);
@@ -130,7 +130,7 @@ public class PetService
                 else
                 {
                     PacketSendUtility.SendPacket(player, new SM_PET(5, 0, 0, pet));
-                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.EndFeeding, 0, player.GetObjectId()));
+                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.END_FEEDING, 0, player.GetObjectId()));
                 }
             }
         }
@@ -185,7 +185,7 @@ public class PetService
                     PacketSendUtility.BroadcastPacket(player,
                         new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), player.GetObjectId(), useItem.GetObjectId(), useItem.GetItemId(), 0, 1, 1, 1, 0, 15360),
                         true);
-                    SkillEngine.GetInstance().ApplyEffectDirectly(((SkillUseAction)itemAction).GetSkillId(), ((SkillUseAction)itemAction).GetLevel(), player,
+                    Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(((SkillUseAction)itemAction).GetSkillId(), ((SkillUseAction)itemAction).GetLevel(), player,
                         player, null, ForceType.DEFAULT);
                     int useDelay = useItem.GetItemTemplate().GetUseLimits().GetDelayTime();
                     player.AddItemCoolDown(useItem.GetItemTemplate().GetUseLimits().GetDelayId(), now + useDelay, useDelay / 1000);
@@ -257,7 +257,7 @@ public class PetService
             PacketSendUtility.SendPacket(pet.GetMaster(), SM_SYSTEM_MESSAGE.STR_MSG_LOOTING_PET_MESSAGE01());
         }
         pet.GetCommonData().SetIsLooting(activate);
-        PacketSendUtility.SendPacket(pet.GetMaster(), new SM_PET(PetSpecialFunction.AutoLoot, activate));
+        PacketSendUtility.SendPacket(pet.GetMaster(), new SM_PET(PetSpecialFunction.AUTOLOOT, activate));
     }
 
     public void ActivateAutoSell(Pet pet, bool activate)
@@ -268,7 +268,7 @@ public class PetService
             return;
         }
         pet.GetCommonData().SetIsSelling(activate);
-        PacketSendUtility.SendPacket(pet.GetMaster(), new SM_PET(PetSpecialFunction.AutoSell, activate));
+        PacketSendUtility.SendPacket(pet.GetMaster(), new SM_PET(PetSpecialFunction.AUTOSELL, activate));
     }
 
     public void Sell(Pet pet, List<Item> items)

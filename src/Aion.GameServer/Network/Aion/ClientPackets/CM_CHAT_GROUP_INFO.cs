@@ -4,7 +4,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -27,7 +27,7 @@ public class CM_CHAT_GROUP_INFO : AionClientPacket
 
     protected override void RunImpl()
     {
-        Player target = World.GetInstance().GetPlayer(ChatUtil.GetRealCharName(playerName));
+        Player target = global::Aion.GameServer.World.World.GetInstance().GetPlayer(ChatUtil.GetRealCharName(playerName));
         if (target == null)
         {
             SendPacket(SM_SYSTEM_MESSAGE.STR_NO_SUCH_USER(playerName));

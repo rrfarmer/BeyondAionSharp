@@ -4,6 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Action;
 
@@ -43,7 +44,7 @@ public class MpUseAction : Action
             }
         }
 
-        effector.GetLifeStats().ReduceMp(SM_ATTACK_STATUS.TYPE.USED_MP, valueWithDelta, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+        effector.GetLifeStats().ReduceMp(SmAttackStatus.TYPE.USED_MP, valueWithDelta, 0, SmAttackStatus.LOG.REGULAR);
         return true;
     }
 }

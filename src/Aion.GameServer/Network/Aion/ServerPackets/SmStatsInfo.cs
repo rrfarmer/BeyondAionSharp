@@ -97,7 +97,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		buffer.WriteH(0);
 
 		buffer.WriteQ(context.ExpNeed);
-		buffer.WriteQ(_player.RecoverableExp);
+		buffer.WriteQ((_player.GetCommonData().GetExpRecoverable()));
 		buffer.WriteQ(context.ExpShown);
 		buffer.WriteD(0);
 
@@ -239,7 +239,7 @@ public sealed class SmStatsInfo : GameServerPacket
 	private static int GetInventoryLimit(Player player)
 	{
 		// Java parity: model/gameobjects/player/Player.setCubeLimit with StorageType.CUBE base row length.
-		return 27 + (player.NpcExpands + player.QuestExpands + player.ItemExpands) * 9;
+		return 27 + ((player.GetCommonData().GetNpcExpands()) + (player.GetCommonData().GetQuestExpands()) + (player.GetCommonData().GetItemExpands())) * 9;
 	}
 
 	private static int GetInventorySize(Player player)
@@ -273,7 +273,7 @@ public sealed class SmStatsInfo : GameServerPacket
 			TitleTemplateTable? titleTemplates)
 		{
 			// Java parity: PlayerCommonData.setExp/updateMaxRepose plus PlayerClass.createStatsTemplate.
-			var classStats = PlayerClassStats.Get(player.PlayerClass);
+			var classStats = PlayerClassStats.Get(player.PlayerClass.ToString());
 			var level = Math.Max(1, experienceTable?.GetLevelForExp(player.Exp) ?? player.Level);
 			var expStart = GetStartExp(experienceTable, level);
 			var expNeed = GetExpNeed(experienceTable, level);

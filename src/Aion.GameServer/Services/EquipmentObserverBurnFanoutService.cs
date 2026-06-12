@@ -50,5 +50,5 @@ public sealed class EquipmentObserverBurnFanoutService
 
 public sealed record EquipmentObserverBurnFanoutResult(
 	EquipmentObserverBurnWorkflowResult Workflow,
-	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<AionServerPacket> Packets,
 	int SentCount);

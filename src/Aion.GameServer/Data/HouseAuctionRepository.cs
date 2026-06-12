@@ -156,7 +156,7 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 				.FirstOrDefault();
 			var registeredHouse = FindRegisteredHouseBid(groups, player.Houses);
 			var visibleBids = groups
-				.Where(group => MatchesLandRace(group, player.Race, housingTemplates, npcTemplates))
+				.Where(group => MatchesLandRace(group, player.Race.ToString(), housingTemplates, npcTemplates))
 				.Select(group => group.ToSummary(housingTemplates, _auctionTiming.GetRemainingAuctionSeconds(group.HouseObjectId)))
 				.ToArray();
 

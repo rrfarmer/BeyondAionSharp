@@ -138,7 +138,7 @@ public class PlayerPetsDAO
                 petCommonData.SetDecoration(rs.GetInt32(rs.GetOrdinal("decoration")));
                 if (petCommonData.GetFeedProgress() != null)
                 {
-                    petCommonData.GetFeedProgress().SetHungryLevel(Aion.GameServer.Services.ToyPet.PetHungryLevel.FromId(rs.GetInt32(rs.GetOrdinal("hungry_level"))));
+                    petCommonData.GetFeedProgress().SetHungryLevel(Aion.GameServer.Services.ToyPet.PetHungryLevelExtensions.FromId(rs.GetInt32(rs.GetOrdinal("hungry_level"))));
                     petCommonData.GetFeedProgress().SetData(rs.GetInt32(rs.GetOrdinal("feed_progress")));
                     petCommonData.SetRefeedTime(rs.GetInt64(rs.GetOrdinal("reuse_time")));
                 }

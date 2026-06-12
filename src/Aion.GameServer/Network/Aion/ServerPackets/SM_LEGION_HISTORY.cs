@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
-using Type = Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
+using Type = global::Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

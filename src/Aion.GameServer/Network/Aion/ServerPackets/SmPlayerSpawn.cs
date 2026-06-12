@@ -18,7 +18,7 @@ public sealed class SmPlayerSpawn : GameServerPacket
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
 	{
-		var position = _player.Position;
+		var position = _player.GetPosition();
 		buffer.WriteD(position.WorldId);
 		buffer.WriteD(position.WorldId);
 		buffer.WriteD(0);

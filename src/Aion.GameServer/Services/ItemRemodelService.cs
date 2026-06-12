@@ -30,7 +30,7 @@ public static class ItemRemodelService
 
 		var remodelCost = PricesService.GetPriceForService(
 			RemodelCost,
-			player.Race,
+			player.Race.ToString(),
 			priceOptions ?? new GameServerPriceOptions(),
 			influenceRates ?? new PriceInfluenceRates());
 		if (kinahItem == null || kinahItem.Count < remodelCost)

@@ -8,7 +8,7 @@ using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
-/// <summary>Java parity: skillengine/effect/SignetBurstEffect (ATracer, kecimis) : DamageEffect. @XmlAttribute signetlvl/signet; @XmlAttribute(name="add_effect_prob_multi"); calculateDamage: base value, element!=NONE→*knowledge/100f (lossy int*=float preserved); SIGNET_DATA_TEMPLATES.getSignetData(SignetEnum.valueOf(signet)→Enum.Parse, lvl); *damageMultiplier, effectProb*=multi; AttackUtil.calculateSkillResult; setLaunchSubEffect(Rnd.chance<effectProb); endEffect. calculate: base.Calculate(effect,null,null) false→endEffect. SignetData/SignetEnum red-tolerated.</summary>
+/// <summary>Java parity: skillengine/effect/SignetBurstEffect (ATracer, kecimis) : DamageEffect. @XmlAttribute signetlvl/signet; @XmlAttribute(name="add_effect_prob_multi"); calculateDamage: base value, Element!=NONE→*knowledge/100f (lossy int*=float preserved); SIGNET_DATA_TEMPLATES.getSignetData(SignetEnum.valueOf(signet)→Enum.Parse, lvl); *damageMultiplier, effectProb*=multi; AttackUtil.calculateSkillResult; setLaunchSubEffect(Rnd.chance<effectProb); endEffect. calculate: base.Calculate(effect,null,null) false→endEffect. SignetData/SignetEnum red-tolerated.</summary>
 [XmlType("SignetBurstEffect")]
 public class SignetBurstEffect : DamageEffect
 {
@@ -23,7 +23,7 @@ public class SignetBurstEffect : DamageEffect
     {
         Effect signetEffect = effect.GetEffected().GetEffectController().GetAbnormalEffect(signet);
         int valueWithDelta = CalculateBaseValue(effect);
-        if (element != SkillElement.NONE)
+        if (Element != SkillElement.NONE)
             valueWithDelta = (int)(valueWithDelta * (effect.GetEffector().GetGameStats().GetKnowledge().GetCurrent() / 100f));
 
         int effectProb = 0;

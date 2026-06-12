@@ -123,7 +123,7 @@ public class PlayerTeamDistributionService
         {
             if (member.IsOnline() && PositionUtil.IsInRange(member, owner, disableRangeChecks ? 9999 : GroupConfig.GROUP_MAX_DISTANCE))
             {
-                QuestEngine.GetInstance().OnKill(new QuestEnv(owner, member, 0));
+                Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnKill(new QuestEnv(owner, member, 0));
 
                 if (member.IsMentor())
                 {

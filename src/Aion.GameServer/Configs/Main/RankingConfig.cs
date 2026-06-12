@@ -4,7 +4,7 @@ using Quartz;
 
 namespace Aion.GameServer.Configs.Main;
 
-/// <summary>Java parity: configs/main/RankingConfig (Sarynth). CronExpression (Quartz) + @Properties keyPattern maps→Dictionary&lt;AbyssRankEnum,int&gt; (populated by config loader). XFORM_MIN_RANK default STAR5_OFFICER. Referenced by AbyssRankEnum.GetGpLossPerDay/GetQuota.</summary>
+/// <summary>Java parity: configs/main/RankingConfig (Sarynth). CronExpression (Quartz) + @Properties keyPattern maps→Dictionary&lt;AbyssRankEnum,int&gt; (populated by config loader). XFORM_MIN_RANK default STAR5_OFFICER. Referenced by AbyssRankEnumExtensions.GetGpLossPerDay/GetQuota.</summary>
 public static class RankingConfig
 {
     /// <summary>Key: gameserver.topranking.updaterule (default "0 0 0 ? * *")</summary>

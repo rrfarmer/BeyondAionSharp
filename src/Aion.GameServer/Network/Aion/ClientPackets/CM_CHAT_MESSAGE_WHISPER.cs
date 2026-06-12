@@ -10,7 +10,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -38,7 +38,7 @@ public class CM_CHAT_MESSAGE_WHISPER : AionClientPacket
     {
         string realName = ChatUtil.GetRealCharName(name);
         Player sender = GetConnection().GetActivePlayer();
-        Player receiver = World.GetInstance().GetPlayer(realName);
+        Player receiver = global::Aion.GameServer.World.World.GetInstance().GetPlayer(realName);
 
         if (receiver == null)
         {

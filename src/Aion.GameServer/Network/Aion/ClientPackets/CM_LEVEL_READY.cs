@@ -17,7 +17,7 @@ using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Rift;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -56,7 +56,7 @@ public class CM_LEVEL_READY : AionClientPacket
             }
 
         // Spawn player into the world.
-        World.GetInstance().Spawn(activePlayer);
+        global::Aion.GameServer.World.World.GetInstance().Spawn(activePlayer);
 
         if (activePlayer.IsInFlyState(FlyState.FLYING)) // notify client if we are still flying (client always ends flying after teleport)
             activePlayer.GetFlyController().StartFly(true, true);
@@ -86,7 +86,7 @@ public class CM_LEVEL_READY : AionClientPacket
         // Loading weather for the player's region
         WeatherService.GetInstance().LoadWeather(activePlayer);
 
-        QuestEngine.GetInstance().OnEnterWorld(activePlayer);
+        global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnEnterWorld(activePlayer);
 
         activePlayer.GetController().OnEnterWorld();
         InstanceService.OnEnterInstance(activePlayer);
@@ -95,7 +95,7 @@ public class CM_LEVEL_READY : AionClientPacket
 
         Pet pet = activePlayer.GetPet();
         if (pet != null && !pet.IsSpawned())
-            World.GetInstance().Spawn(pet);
+            global::Aion.GameServer.World.World.GetInstance().Spawn(pet);
         activePlayer.SetPortAnimation(ArrivalAnimation.NONE);
 
         TownService.GetInstance().OnEnterWorld(activePlayer);

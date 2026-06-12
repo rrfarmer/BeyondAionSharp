@@ -93,7 +93,7 @@ public class VortexService
                 VortexSpawnTemplate vortextemplate = (VortexSpawnTemplate)st;
                 if (vortextemplate.GetStateType() == state)
                 {
-                    loc.GetSpawned().Add(SpawnEngine.SpawnObject(vortextemplate, 1));
+                    loc.GetSpawned().Add(Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(vortextemplate, 1));
                 }
             }
         }

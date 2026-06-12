@@ -12,7 +12,7 @@ public static class NpcDialogTargetingService
 		GameWorld? world)
 	{
 		// Java parity: model/gameobjects/player/Player.isTargetingNpcWithFunction.
-		if (objectId <= 0 || player.TargetObjectId != objectId)
+		if (objectId <= 0 || (player.GetTarget()?.GetObjectId() ?? 0) != objectId)
 			return NpcDialogTargetingResult.NotTargeted;
 
 		if (world == null || !world.TryGetObject(objectId, out var gameObject) || gameObject is not IWorldNpcObject npc)

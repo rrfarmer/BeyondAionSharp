@@ -38,9 +38,9 @@ public class PlayerAllianceUpdateEvent : AlwaysTrueTeamEvent
     {
         switch (allianceEvent)
         {
-            case PlayerAllianceEvent.Movement:
-            case PlayerAllianceEvent.Update:
-            case PlayerAllianceEvent.UpdateEffects:
+            case PlayerAllianceEvent.MOVEMENT:
+            case PlayerAllianceEvent.UPDATE:
+            case PlayerAllianceEvent.UPDATE_EFFECTS:
                 alliance.SendPacket(Predicates.Players.AllExcept(player), new SM_ALLIANCE_MEMBER_INFO(updateMember, allianceEvent, slot));
                 break;
             default:

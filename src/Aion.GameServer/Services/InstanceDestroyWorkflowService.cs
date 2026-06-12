@@ -8,18 +8,15 @@ public sealed class InstanceDestroyWorkflowService
 	private readonly GameServerRuntimeContext _runtimeContext;
 	private readonly GameWorld _world;
 	private readonly WorldNpcSpawnService _spawnService;
-	private readonly WorldNpcWalkerRouteWalkingService _walkerRouteWalking;
 
 	public InstanceDestroyWorkflowService(
 		GameServerRuntimeContext runtimeContext,
 		GameWorld world,
-		WorldNpcSpawnService spawnService,
-		WorldNpcWalkerRouteWalkingService walkerRouteWalking)
+		WorldNpcSpawnService spawnService)
 	{
 		_runtimeContext = runtimeContext;
 		_world = world;
 		_spawnService = spawnService;
-		_walkerRouteWalking = walkerRouteWalking;
 	}
 
 	public InstanceDestroyWorkflowResult DestroyInstance(int worldId, int instanceId)
@@ -35,7 +32,6 @@ public sealed class InstanceDestroyWorkflowService
 		PlayerInitialDataTable? playerInitialData)
 	{
 		var unregisteredTemporarySpawnCount = 0;
-		WorldNpcWalkerInstanceDestroyCleanupResult? walkerCleanup = null;
 		var destroyPlan = InstanceRuntimeService.DestroyInstance(
 			_runtimeContext.WorldMapStates,
 			worldId,
@@ -45,17 +41,13 @@ public sealed class InstanceDestroyWorkflowService
 				unregisteredTemporarySpawnCount = _spawnService.UnregisterTemporarySpawnsForInstance(mapId, destroyedInstanceId);
 			},
 			nonPlayerObjectCleanup: _spawnService.DeleteNonPlayerObjectsForInstance,
-			walkerFormationCleanup: (mapId, destroyedInstanceId) =>
-			{
-				walkerCleanup = _walkerRouteWalking.OnInstanceDestroy(mapId, destroyedInstanceId);
-			},
 			playerForcedExitPlanning: (mapId, destroyedInstanceId) =>
 			{
 				if (instanceExits == null || playerInitialData == null)
 					return Array.Empty<InstancePlayerForcedExitTeleportPlan>();
 
 				var players = _world.GetPlayers(mapId)
-					.Where(player => player.Position.InstanceId == destroyedInstanceId)
+					.Where(player => player.GetPosition().InstanceId == destroyedInstanceId)
 					.ToArray();
 				return InstanceRuntimeService.CreatePlayerForcedExitTeleportPlans(
 					players,
@@ -69,7 +61,6 @@ public sealed class InstanceDestroyWorkflowService
 		return new InstanceDestroyWorkflowResult(
 			destroyPlan,
 			unregisteredTemporarySpawnCount,
-			walkerCleanup,
 			"InstanceService.destroyInstance -> TemporarySpawnEngine.onInstanceDestroy -> player forced exit -> VisibleObjectController.delete -> IInstanceHandler.onInstanceDestroy -> WalkerFormator.onInstanceDestroy");
 	}
 }
@@ -77,5 +68,4 @@ public sealed class InstanceDestroyWorkflowService
 public sealed record InstanceDestroyWorkflowResult(
 	InstanceDestroyRuntimePlan DestroyPlan,
 	int UnregisteredTemporarySpawnCount,
-	WorldNpcWalkerInstanceDestroyCleanupResult? WalkerCleanup,
 	string JavaSource);

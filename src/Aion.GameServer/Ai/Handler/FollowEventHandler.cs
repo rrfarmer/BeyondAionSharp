@@ -16,7 +16,7 @@ public class FollowEventHandler
 {
     public static void Follow(NpcAI npcAI, Creature creature)
     {
-        if (npcAI.SetStateIfNot(AiState.Following))
+        if (npcAI.SetStateIfNot(AIState.FOLLOWING))
         {
             npcAI.GetOwner().SetTarget(creature);
             EmoteManager.EmoteStartFollowing(npcAI.GetOwner());
@@ -25,7 +25,7 @@ public class FollowEventHandler
 
     public static void CreatureMoved(NpcAI npcAI, Creature creature)
     {
-        if (npcAI.IsInState(AiState.Following))
+        if (npcAI.IsInState(AIState.FOLLOWING))
         {
             if (npcAI.GetOwner().IsTargeting(creature.GetObjectId()) && !creature.IsDead())
             {
@@ -53,7 +53,7 @@ public class FollowEventHandler
 
     public static void StopFollow(NpcAI npcAI, Creature creature)
     {
-        if (npcAI.SetStateIfNot(AiState.Idle))
+        if (npcAI.SetStateIfNot(AIState.IDLE))
         {
             npcAI.GetOwner().SetTarget(null);
             npcAI.GetOwner().GetMoveController().AbortMove();

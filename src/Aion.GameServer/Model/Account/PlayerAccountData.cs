@@ -108,7 +108,7 @@ public class PlayerAccountData
         List<VisibleItem> items = new();
         foreach (Item item in equipment)
         {
-            sbyte slotType = ItemSlot.GetEquipmentSlotType(item.GetEquipmentSlot());
+            sbyte slotType = ItemSlotExtensions.GetEquipmentSlotType(item.GetEquipmentSlot());
             if (slotType != 0)
                 items.Add(new VisibleItem(slotType, item.GetItemSkinTemplate().GetTemplateId(), item.GetGodStoneId(), item.GetItemColor()));
         }

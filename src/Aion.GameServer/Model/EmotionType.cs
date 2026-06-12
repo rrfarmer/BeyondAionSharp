@@ -1,65 +1,72 @@
 namespace Aion.GameServer.Model;
 
+/// <summary>Java parity: model/EmotionType (lyahim). UPPER_CASE names + integer ids match Java exactly (wire-critical).</summary>
 public enum EmotionType
 {
-	None = -1,
-	SelectTarget = 0,
-	Jump = 1,
-	Sit = 2,
-	Stand = 3,
-	ChairSit = 4,
-	ChairUp = 5,
-	StartFlyTeleport = 6,
-	LandFlyTeleport = 7,
-	Windstream = 8,
-	WindstreamEnd = 9,
-	WindstreamExit = 10,
-	WindstreamStartBoost = 11,
-	WindstreamEndBoost = 12,
-	Fly = 13,
-	Land = 14,
-	Ride = 15,
-	RideEnd = 16,
-	Attack = 17,
-	Die = 18,
-	Resurrect = 19,
-	Emote = 21,
-	EmoteEnd = 22,
-	AttackModeInMove = 24,
-	NeutralModeInMove = 25,
-	Walk = 26,
-	Run = 27,
-	OpenDoor = 31,
-	CloseDoor = 32,
-	OpenPrivateShop = 33,
-	ClosePrivateShop = 34,
-	ChangeSpeed = 35,
-	PowershardOn = 36,
-	PowershardOff = 37,
-	AttackModeInStanding = 38,
-	NeutralModeInStanding = 39,
-	StartLoot = 40,
-	EndLoot = 41,
-	StartQuestLoot = 42,
-	EndQuestLoot = 43,
-	TurnRight = 44,
-	TurnLeft = 45,
-	StartGlide = 46,
-	StopGlide = 47,
-	StopFly = 48,
-	SummonStopJump = 49,
-	StartFeeding = 50,
-	EndFeeding = 51,
-	WindstreamStrafe = 52,
-	StartSprint = 53,
-	EndSprint = 54,
+	NONE = -1,
+	SELECT_TARGET = 0,
+	JUMP = 1,
+	SIT = 2,
+	STAND = 3,
+	CHAIR_SIT = 4,
+	CHAIR_UP = 5,
+	START_FLYTELEPORT = 6,
+	LAND_FLYTELEPORT = 7,
+	WINDSTREAM = 8,
+	WINDSTREAM_END = 9,
+	WINDSTREAM_EXIT = 10,
+	WINDSTREAM_START_BOOST = 11,
+	WINDSTREAM_END_BOOST = 12,
+	FLY = 13,
+	LAND = 14,
+	RIDE = 15,
+	RIDE_END = 16,
+	ATTACK = 17,
+	DIE = 18,
+	RESURRECT = 19,
+	EMOTE = 21,
+	EMOTE_END = 22,
+	ATTACKMODE_IN_MOVE = 24,
+	NEUTRALMODE_IN_MOVE = 25,
+	WALK = 26,
+	RUN = 27,
+	OPEN_DOOR = 31,
+	CLOSE_DOOR = 32,
+	OPEN_PRIVATESHOP = 33,
+	CLOSE_PRIVATESHOP = 34,
+	CHANGE_SPEED = 35,
+	POWERSHARD_ON = 36,
+	POWERSHARD_OFF = 37,
+	ATTACKMODE_IN_STANDING = 38,
+	NEUTRALMODE_IN_STANDING = 39,
+	START_LOOT = 40,
+	END_LOOT = 41,
+	START_QUESTLOOT = 42,
+	END_QUESTLOOT = 43,
+	TURN_RIGHT = 44,
+	TURN_LEFT = 45,
+	START_GLIDE = 46,
+	STOP_GLIDE = 47,
+	STOP_FLY = 48,
+	SUMMON_STOP_JUMP = 49,
+	START_FEEDING = 50,
+	END_FEEDING = 51,
+	WINDSTREAM_STRAFE = 52,
+	START_SPRINT = 53,
+	END_SPRINT = 54,
 }
 
 public static class EmotionTypes
 {
-	public static EmotionType FromId(int id)
+	// Java parity: EmotionType.getTypeId().
+	public static int GetTypeId(this EmotionType type) => (int)type;
+
+	// Java parity: EmotionType.getEmotionTypeById(int).
+	public static EmotionType GetEmotionTypeById(int id)
 	{
-		// Java parity: model/EmotionType.getEmotionTypeById.
-		return Enum.IsDefined(typeof(EmotionType), id) ? (EmotionType)id : EmotionType.None;
+		return Enum.IsDefined(typeof(EmotionType), id) ? (EmotionType)id : EmotionType.NONE;
 	}
+
+	// Retained alias for existing callers.
+	public static EmotionType FromId(int id) => GetEmotionTypeById(id);
 }

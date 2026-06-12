@@ -62,7 +62,7 @@ public abstract class CreatureMoveController
     protected void SetAndSendStartMove(Creature owner)
     {
         SetInMove(true);
-        MovementMaskField = MovementMask.NpcStartMove;
+        MovementMaskField = MovementMask.NPC_STARTMOVE;
         PacketSendUtility.BroadcastToSightedPlayers(owner, new SmMove(owner));
     }
 
@@ -70,7 +70,7 @@ public abstract class CreatureMoveController
     protected void SetAndSendStopMove(Creature owner)
     {
         SetInMove(false);
-        MovementMaskField = MovementMask.Immediate;
+        MovementMaskField = MovementMask.IMMEDIATE;
         PacketSendUtility.BroadcastToSightedPlayers(owner, new SmMove(owner));
     }
 

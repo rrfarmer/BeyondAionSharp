@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using TYPE = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.TYPE;
 using LOG = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus.LOG;
+using Aion.GameServer.Utils.Stats;
 
 namespace Aion.GameServer.Controllers;
 
@@ -76,7 +77,7 @@ public class NpcController : CreatureController<Npc>
         if (owner.GetObjectTemplate().GetState() > 0)
             owner.SetState(owner.GetObjectTemplate().GetState());
         else
-            owner.SetState(CreatureState.WalkMode);
+            owner.SetState(CreatureState.WALK_MODE);
 
         owner.GetLifeStats().SetCurrentHpPercent(100);
         owner.GetAi().OnGeneralEvent(AiEventType.BeforeSpawned);

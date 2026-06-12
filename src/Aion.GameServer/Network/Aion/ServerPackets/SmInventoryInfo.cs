@@ -48,9 +48,9 @@ public sealed class SmInventoryInfo : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_INVENTORY_INFO.writeImpl.
 		buffer.WriteC(_isFirstPacket ? 1 : 0);
-		buffer.WriteC(_player.NpcExpands);
-		buffer.WriteC(_player.QuestExpands);
-		buffer.WriteC(_player.ItemExpands);
+		buffer.WriteC((_player.GetCommonData().GetNpcExpands()));
+		buffer.WriteC((_player.GetCommonData().GetQuestExpands()));
+		buffer.WriteC((_player.GetCommonData().GetItemExpands()));
 		buffer.WriteH(_items.Count);
 		foreach (var item in _items)
 			WriteItemInfo(buffer, item);

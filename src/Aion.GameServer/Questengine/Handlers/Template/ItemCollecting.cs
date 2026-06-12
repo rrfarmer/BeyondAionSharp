@@ -8,6 +8,7 @@ using Aion.GameServer.Services;
 using Aion.GameServer.World.Zone;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

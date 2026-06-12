@@ -4,6 +4,7 @@ using Aion.GameServer.Data;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
+using Aion.GameServer.Services.Players;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.IdFactory;
 using Microsoft.Extensions.Configuration;
@@ -34,14 +35,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameServerRuntimeContext>();
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
-			services.AddFindGroupSingletonGraphWithOfflineTimeoutSchedulers();
 			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
 			services.AddSingleton<IStaticPlaceableStateService, StaticPlaceableStateService>();
-			services.AddSingleton<IWorldNpcWalkerSpawnPlanCacheService, WorldNpcWalkerSpawnPlanCacheService>();
-			services.AddSingleton<WorldNpcWalkerPlacementApplicationService>();
-			services.AddSingleton<WorldNpcWalkerRouteService>();
-			services.AddSingleton<WorldNpcWalkerMovementStateService>();
-			services.AddSingleton<WorldNpcWalkerMovementBroadcastService>();
 			services.AddSingleton<WorldNpcAiStateService>();
 			services.AddSingleton<WorldNpcDropRegistrationService>();
 			services.AddSingleton<IWorldNpcDropRegistrationLookup>(
@@ -115,7 +110,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcLootService>();
 			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
-			services.AddSingleton<WorldNpcWalkerRouteWalkingService>();
 			services.AddSingleton<Func<int, bool>>(
 				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcSpawnService>().CancelRespawn(objectId));
 			services.AddSingleton<Func<int, WorldNpc, bool>>(

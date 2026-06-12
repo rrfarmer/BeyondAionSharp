@@ -116,7 +116,7 @@ public sealed class SmWarehouseInfo : GameServerPacket
 			.OrderBy(item => item.Slot)
 			.ThenBy(item => item.ObjectId);
 		var items = BuildWarehouseItems(regularItems, itemTemplates, itemRestrictionCleanups);
-		var expandLevel = player.WarehouseNpcExpands + player.WarehouseBonusExpands;
+		var expandLevel = (player.GetCommonData().GetWhNpcExpands()) + (player.GetCommonData().GetWhBonusExpands());
 		for (var offset = 0; offset < items.Length; offset += ItemsPerPacket)
 		{
 			packets.Add(

@@ -2,15 +2,15 @@ namespace Aion.GameServer.Model;
 
 public enum EventTheme
 {
-	None = 0,
-	Christmas = 1 << 0,
-	Halloween = 1 << 1,
-	Valentine = 1 << 2,
-	Braxcafe = 1 << 3,
-	TestBasic1 = 1 << 4,
-	TestBasic2 = 1 << 5,
-	TestBasic3 = 1 << 6,
-	TestBasic4 = 1 << 7
+	NONE = 0,
+	CHRISTMAS = 1 << 0,
+	HALLOWEEN = 1 << 1,
+	VALENTINE = 1 << 2,
+	BRAXCAFE = 1 << 3,
+	TEST_BASIC_1 = 1 << 4,
+	TEST_BASIC_2 = 1 << 5,
+	TEST_BASIC_3 = 1 << 6,
+	TEST_BASIC_4 = 1 << 7
 }
 
 public static class EventThemeExtensions

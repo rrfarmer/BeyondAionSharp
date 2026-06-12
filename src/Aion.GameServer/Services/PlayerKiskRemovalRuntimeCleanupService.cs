@@ -95,9 +95,9 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 		if (player.BindPoint != null)
 			return new SmBindPointInfo(player.BindPoint.MapId, player.BindPoint.X, player.BindPoint.Y, player.BindPoint.Z);
 
-		var spawn = staticData?.PlayerInitialData.GetSpawnLocation(player.Race);
+		var spawn = staticData?.PlayerInitialData.GetSpawnLocation(player.Race.ToString());
 		return spawn == null
-			? new SmBindPointInfo(player.Position.WorldId, player.Position.X, player.Position.Y, player.Position.Z)
+			? new SmBindPointInfo(player.GetPosition().WorldId, player.GetPosition().X, player.GetPosition().Y, player.GetPosition().Z)
 			: new SmBindPointInfo(spawn.MapId, spawn.X, spawn.Y, spawn.Z);
 	}
 }

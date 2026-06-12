@@ -18,4 +18,11 @@ public enum ObjectDeleteAnimation : byte
     JumpIn = 11,
     // Java parity: DELAYED(19) — also deletes flags from map
     Delayed = 19,
+
+    // Java-name aliases (call sites use the Java SCREAMING_SNAKE names; same values).
+    NONE = 0,
+    FADE_OUT = 1,
+    FADE_OUT_BEAM = 2,
+    JUMP_IN = 11,
+    DELAYED = 19,
 }

@@ -3,6 +3,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services.Craft;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

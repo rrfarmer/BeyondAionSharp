@@ -147,7 +147,7 @@ public sealed class QuestRewardService
 		player.Level = plan.CurrentLevel;
 		player.ReposeEnergy = plan.CurrentReposeEnergy;
 
-		var packets = new List<GameServerPacket>();
+		var packets = new List<AionServerPacket>();
 		if (shouldSendStatUpdate)
 			packets.Add(new SmStatUpdateExp(player, experienceTable));
 		packets.AddRange(CreateXpSystemMessagePackets(plan));
@@ -178,7 +178,7 @@ public sealed class QuestRewardService
 			return QuestXpRewardPlan.NoReward(player.ObjectId, player.Exp, player.Level, player.ReposeEnergy, npcName);
 		if (noExp)
 			return QuestXpRewardPlan.NoExp(player.ObjectId, rewardXp, player.Exp, player.Level, player.ReposeEnergy, npcName);
-		if (player.Position.WorldId == 301200000)
+		if (player.GetPosition().WorldId == 301200000)
 			return QuestXpRewardPlan.NightmareCircus(player.ObjectId, rewardXp, player.Exp, player.Level, player.ReposeEnergy, npcName);
 
 		var appliedBaseXp = ApplyQuestXpRate(
@@ -486,7 +486,7 @@ public sealed class QuestRewardService
 
 	private bool HasActiveLegionBonus(Player? player)
 	{
-		return player?.LegionId > 0 && (_legionBonuses?.IsActive(player.LegionId) ?? false);
+		return player?.LegionId > 0 && (_legionBonuses?.IsActive((player.GetLegion()?.GetLegionId() ?? 0)) ?? false);
 	}
 
 	private static IReadOnlyList<QuestXpRewardPacketIntent> CreateXpPacketIntents(int previousLevel, int currentLevel)
@@ -680,7 +680,7 @@ public enum QuestGpRewardStatus
 public sealed record QuestXpRewardApplicationResult(
 	QuestXpRewardPlan Plan,
 	bool DidMutatePlayer,
-	IReadOnlyList<GameServerPacket> Packets,
+	IReadOnlyList<AionServerPacket> Packets,
 	string JavaSource)
 {
 	public QuestXpRewardStatus Status => Plan.Status;
@@ -701,7 +701,7 @@ public sealed record QuestXpRewardApplicationResult(
 
 	public static QuestXpRewardApplicationResult Applied(
 		QuestXpRewardPlan plan,
-		IReadOnlyList<GameServerPacket> packets)
+		IReadOnlyList<AionServerPacket> packets)
 	{
 		return new QuestXpRewardApplicationResult(
 			plan,
@@ -715,7 +715,7 @@ public sealed record QuestXpRewardApplicationResult(
 		return new QuestXpRewardApplicationResult(
 			plan,
 			DidMutatePlayer: false,
-			Array.Empty<GameServerPacket>(),
+			Array.Empty<AionServerPacket>(),
 			plan.JavaSource);
 	}
 }

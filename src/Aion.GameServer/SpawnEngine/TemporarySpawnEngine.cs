@@ -63,7 +63,7 @@ public class TemporarySpawnEngine
                     for (int pool = 0; pool < spawn.GetPool(); pool++)
                     {
                         SpawnTemplate template = spawn.ReserveRandomFreePoolSpot(instanceId);
-                        SpawnEngine.SpawnObject(template, instanceId);
+                        Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instanceId);
                     }
                 }
             }
@@ -77,7 +77,7 @@ public class TemporarySpawnEngine
                     foreach (VisibleObject o in spawned.Where(o => o.GetSpawn().Equals(template)))
                         spawnableInstanceIds.Remove(o.GetInstanceId());
                     foreach (int instanceId in spawnableInstanceIds)
-                        SpawnEngine.SpawnObject(template, instanceId);
+                        Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instanceId);
                 }
             }
         }

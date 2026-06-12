@@ -20,11 +20,11 @@ public class FlyController
         if (player.IsInGlidingState())
         {
             player.UnsetFlyState(FlyState.GLIDING);
-            player.UnsetState(CreatureState.Gliding);
+            player.UnsetState(CreatureState.GLIDING);
             if (!player.IsInFlyState(FlyState.FLYING))
             {
                 player.GetLifeStats().TriggerFpRestore();
-                Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.StopGlide), true);
+                Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.STOP_GLIDE), true);
             }
             else
             {
@@ -41,13 +41,13 @@ public class FlyController
     {
         player.UnsetFlyState(FlyState.FLYING);
         player.UnsetFlyState(FlyState.GLIDING);
-        player.UnsetState(CreatureState.Flying);
-        player.UnsetState(CreatureState.Gliding);
-        player.UnsetState(CreatureState.FloatingCorpse);
+        player.UnsetState(CreatureState.FLYING);
+        player.UnsetState(CreatureState.GLIDING);
+        player.UnsetState(CreatureState.FLOATING_CORPSE);
         player.GetGameStats().UpdateStatsAndSpeedVisually();
 
         if (broadcastPacket && player.IsSpawned())
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.Land), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.LAND), true);
         player.GetLifeStats().TriggerFpRestore();
     }
 
@@ -68,16 +68,16 @@ public class FlyController
             player.SetFlyReuseTime(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + FLY_REUSE_TIME - 100);
         }
         player.SetFlyState(FlyState.FLYING);
-        player.SetState(CreatureState.Flying);
+        player.SetState(CreatureState.FLYING);
         if (player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
         {
-            player.SetState(CreatureState.FloatingCorpse);
+            player.SetState(CreatureState.FLOATING_CORPSE);
         }
         player.GetLifeStats().TriggerFpReduce();
         player.GetGameStats().UpdateStatsAndSpeedVisually();
 
         if (broadcastPacket)
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.Fly), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.FLY), true);
         return true;
     }
 
@@ -88,7 +88,7 @@ public class FlyController
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GLIDE_ONLY_DEVA_CAN());
             return false;
         }
-        if (!player.HasAccess(Aion.GameServer.Configs.Administration.AdminConfig.FREE_FLIGHT) && (player.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.NoFly) || !player.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.Fly)))
+        if (!player.HasAccess(Aion.GameServer.Configs.Administration.AdminConfig.FREE_FLIGHT) && (player.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.NO_FLY) || !player.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.FLY)))
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FLYING_FORBIDDEN_HERE());
             return false;
@@ -124,7 +124,7 @@ public class FlyController
             player.SetFlyReuseTime(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + FLY_REUSE_TIME);
         }
         player.SetFlyState(FlyState.GLIDING);
-        player.SetState(CreatureState.Gliding);
+        player.SetState(CreatureState.GLIDING);
         player.GetLifeStats().TriggerFpReduce();
         player.GetGameStats().UpdateStatsAndSpeedVisually();
         return true;

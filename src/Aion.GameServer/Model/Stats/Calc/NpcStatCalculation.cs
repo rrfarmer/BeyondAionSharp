@@ -39,13 +39,13 @@ public static class NpcStatCalculation
 
     private static float GetRatingModifier(StatEnum stat, NpcRating rating) => rating switch
     {
-        NpcRating.Junk or NpcRating.Normal => stat switch
+        NpcRating.JUNK or NpcRating.NORMAL => stat switch
         {
             StatEnum.MAGICAL_ATTACK => 0.4f,
             StatEnum.STUNLIKE_RESISTANCE => 0f,
             _ => 1f,
         },
-        NpcRating.Elite => stat switch
+        NpcRating.ELITE => stat switch
         {
             StatEnum.PHYSICAL_ATTACK => 1.7f,
             StatEnum.MAGICAL_ATTACK => 0.5f,
@@ -58,7 +58,7 @@ public static class NpcStatCalculation
             StatEnum.STUNLIKE_RESISTANCE => 5f,
             _ => 1f,
         },
-        NpcRating.Hero => stat switch
+        NpcRating.HERO => stat switch
         {
             StatEnum.PHYSICAL_ATTACK => 2.4f,
             StatEnum.MAGICAL_ATTACK => 0.6f,
@@ -70,7 +70,7 @@ public static class NpcStatCalculation
             StatEnum.STUNLIKE_RESISTANCE => 20f,
             _ => 1f,
         },
-        NpcRating.Legendary => stat switch
+        NpcRating.LEGENDARY => stat switch
         {
             StatEnum.PHYSICAL_ATTACK => 2.6f,
             StatEnum.PHYSICAL_DEFENSE or StatEnum.MAGICAL_DEFEND => 1.75f,

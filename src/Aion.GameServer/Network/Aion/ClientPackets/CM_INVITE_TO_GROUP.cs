@@ -9,7 +9,7 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -40,7 +40,7 @@ public class CM_INVITE_TO_GROUP : AionClientPacket
             return;
         }
 
-        Player invited = World.GetInstance().GetPlayer(ChatUtil.GetRealCharName(playerName));
+        Player invited = global::Aion.GameServer.World.World.GetInstance().GetPlayer(ChatUtil.GetRealCharName(playerName));
         if (invited == null)
         {
             SendPacket(SM_SYSTEM_MESSAGE.STR_NO_SUCH_USER(playerName));

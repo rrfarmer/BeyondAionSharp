@@ -31,7 +31,7 @@ public class LegionDominionIntruderUpdateTask : AbstractPeriodicTaskManager
 
         foreach (KeyValuePair<int, List<LegionDominionLocation>> entry in locationsPerWorldMap)
         {
-            List<Player> players = World.GetInstance().GetWorldMap(entry.Key).GetMainWorldMapInstance().GetPlayersInside();
+            List<Player> players = Aion.GameServer.World.World.GetInstance().GetWorldMap(entry.Key).GetMainWorldMapInstance().GetPlayersInside();
             foreach (LegionDominionLocation location in entry.Value)
             {
                 if (location.GetZoneNameAsString().Length == 0)

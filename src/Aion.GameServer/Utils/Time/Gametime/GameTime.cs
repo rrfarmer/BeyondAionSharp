@@ -144,12 +144,12 @@ public class GameTime : ICloneable
     {
         int hour = GetHour();
         if (hour > 21 || hour < 4)
-            return DayTime.Night;
+            return DayTime.NIGHT;
         if (hour > 16)
-            return DayTime.Evening;
+            return DayTime.EVENING;
         if (hour > 8)
-            return DayTime.Afternoon;
-        return DayTime.Morning;
+            return DayTime.AFTERNOON;
+        return DayTime.MORNING;
     }
 
     // Java parity: minus(GameTime gt)

@@ -4,7 +4,7 @@ namespace Aion.GameServer.Model.GameObjects;
 
 public sealed class PlayerMovementState
 {
-	public byte Mask { get; set; } = MovementMask.Immediate;
+	public byte Mask { get; set; } = MovementMask.IMMEDIATE;
 
 	public float TargetX { get; set; }
 

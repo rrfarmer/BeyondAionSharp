@@ -23,7 +23,7 @@ public class TalkEventHandler
 
         if (creature is Player player)
         {
-            if (QuestEngine.GetInstance().OnDialog(new QuestEnv(npcAI.GetOwner(), player, 0, DialogAction.USE_OBJECT)))
+            if (Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnDialog(new QuestEnv(npcAI.GetOwner(), player, 0, DialogAction.USE_OBJECT)))
                 return;
             // only player villagers can use villager npcs in oriel/pernon
             switch (npcAI.GetOwner().GetObjectTemplate().GetTitleId())
@@ -41,7 +41,7 @@ public class TalkEventHandler
                     }
                     return;
                 default:
-                    int dialogPageId = DialogPage.GetStartPageId(npcAI.GetOwner(), player);
+                    int dialogPageId = DialogPageExtensions.GetStartPageId(npcAI.GetOwner(), player);
                     PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(npcAI.GetOwner().GetObjectId(), dialogPageId));
                     break;
             }
@@ -52,7 +52,7 @@ public class TalkEventHandler
     {
         if (npcAI.GetOwner().GetObjectTemplate().IsDialogNpc())
         {
-            npcAI.SetSubStateIfNot(AiSubState.Talk);
+            npcAI.SetSubStateIfNot(AISubState.TALK);
             npcAI.GetOwner().SetTarget(creature);
         }
     }
@@ -62,7 +62,7 @@ public class TalkEventHandler
         Npc owner = npcAI.GetOwner();
         if (owner.IsTargeting(creature.GetObjectId()))
         {
-            if (npcAI.GetState() == AiState.Following)
+            if (npcAI.GetState() == AIState.FOLLOWING)
             {
                 npcAI.Think();
             }

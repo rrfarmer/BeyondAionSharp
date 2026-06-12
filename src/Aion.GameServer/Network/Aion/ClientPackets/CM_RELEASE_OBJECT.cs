@@ -5,7 +5,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

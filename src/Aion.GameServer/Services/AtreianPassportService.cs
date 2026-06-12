@@ -46,7 +46,7 @@ public class AtreianPassportService
                 {
                     AccountPassportsDAO.ResetAllStamps();
                 }
-                World.GetInstance().ForEachPlayer(player =>
+                Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
                 {
                     var acc = player.GetAccount();
                     acc.SetLastStamp(null);

@@ -123,6 +123,9 @@ public class Mailbox
         return mails.Count + reserveMail.Count;
     }
 
+    // Property-form bridge over Size() (reworked call sites use mailbox.Count).
+    public int Count => Size();
+
     public void UploadReserveLetters()
     {
         if (reserveMail.Count > 0 && HaveFreeSlots())

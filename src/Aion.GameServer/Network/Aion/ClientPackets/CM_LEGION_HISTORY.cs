@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
-using Type = Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using Type = global::Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

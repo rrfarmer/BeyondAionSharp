@@ -51,7 +51,7 @@ public class QuestsData
         List<QuestTemplate> quests = new();
         foreach (QuestTemplate questTemplate in factionQuests)
         {
-            if (!QuestEngine.GetInstance().IsHaveHandler(questTemplate.GetId()))
+            if (!Aion.GameServer.QuestEngine.QuestEngine.GetInstance().IsHaveHandler(questTemplate.GetId()))
                 continue;
             if (QuestService.CheckStartConditions(player, questTemplate.GetId(), false))
                 quests.Add(questTemplate);

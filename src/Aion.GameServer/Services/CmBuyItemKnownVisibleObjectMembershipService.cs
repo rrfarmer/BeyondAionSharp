@@ -167,7 +167,7 @@ public sealed class CmBuyItemKnownVisibleObjectPopulationAdapterService
 		var npcCandidates = (npcs ?? Array.Empty<IWorldNpcObject>()).ToArray();
 		var visibleCandidates = playerCandidates
 			.Where(player => player.ObjectId != owner.ObjectId)
-			.Where(player => WorldVisibility.IsVisibleTo(player, owner.Position))
+			.Where(player => WorldVisibility.IsVisibleTo(player, owner.GetPosition()))
 			.Select(player => new CmBuyItemKnownVisibleObjectMembershipCandidate(
 				player.ObjectId,
 				CmBuyItemKnownVisibleObjectKind.Player,
@@ -256,8 +256,8 @@ public sealed class CmBuyItemWorldKnownVisibleObjectSnapshotCollectorService
 		// Java parity breadcrumb: KnownList.findVisibleObjects scans the owner's
 		// current map-region neighbours. This disabled collector only snapshots
 		// same-world objects already stored in the C# World container.
-		var playerCandidates = world.GetPlayers(owner.Position.WorldId);
-		var npcCandidates = world.GetNpcs(owner.Position.WorldId);
+		var playerCandidates = world.GetPlayers(owner.GetPosition().WorldId);
+		var npcCandidates = world.GetNpcs(owner.GetPosition().WorldId);
 
 		return new CmBuyItemWorldKnownVisibleObjectSnapshot(
 			owner.ObjectId,

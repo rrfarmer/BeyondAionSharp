@@ -3,6 +3,7 @@ using System.Linq;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Siege;
+using Aion.GameServer.Model.GameObjects.Siege;
 
 namespace Aion.GameServer.Services.Siege;
 

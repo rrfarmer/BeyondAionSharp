@@ -7,7 +7,7 @@ using Aion.GameServer.Model.Templates.Goods;
 using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
-using TradeTab = Aion.GameServer.Model.Templates.Tradelist.TradeListTemplate.TradeTab;
+using TradeTab = global::Aion.GameServer.Model.Templates.Tradelist.TradeListTemplate.TradeTab;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

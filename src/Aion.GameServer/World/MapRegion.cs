@@ -152,7 +152,7 @@ public class MapRegion
 
     private void TryDeactivate()
     {
-        if (parent.GetParent().IsInstanceType() || parent.GetMapId() == WorldMapType.TransidiumAnnex.GetId())
+        if (parent.GetParent().IsInstanceType() || parent.GetMapId() == WorldMapType.TRANSIDIUM_ANNEX.GetId())
             return;
         if (!IsActive() || AnyNeighbourHasPlayers())
             return;
@@ -269,7 +269,7 @@ public class MapRegion
         {
             if (checkFortresses)
             {
-                if (zone.GetZoneTemplate().GetZoneType() != ZoneClassName.Fort)
+                if (zone.GetZoneTemplate().GetZoneType() != ZoneClassName.FORT)
                     continue;
             }
             else if (!zone.GetZoneTemplate().XmlName.StartsWith(zoneName.ToString()))

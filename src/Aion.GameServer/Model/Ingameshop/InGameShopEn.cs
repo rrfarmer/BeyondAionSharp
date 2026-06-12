@@ -259,7 +259,7 @@ public class InGameShopEn
         IGRequest request = this.activeRequests[requestId];
         if (request.requestId == requestId)
         {
-            Player player = World.GetInstance().GetPlayer(request.playerId);
+            Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(request.playerId);
             if (player != null)
             {
                 if (result == 1)

@@ -31,18 +31,18 @@ public sealed class CmEmotion : GameClientPacket
 
 		switch (EmotionType)
 		{
-			case EmotionType.WindstreamStrafe:
+			case EmotionType.WINDSTREAM_STRAFE:
 				buffer.ReadC();
 				break;
-			case EmotionType.StartSprint:
+			case EmotionType.START_SPRINT:
 				buffer.ReadD();
 				break;
-			case EmotionType.Emote:
+			case EmotionType.EMOTE:
 				Emotion = buffer.ReadH();
 				TargetObjectId = buffer.ReadD();
 				break;
-			case EmotionType.ChairSit:
-			case EmotionType.ChairUp:
+			case EmotionType.CHAIR_SIT:
+			case EmotionType.CHAIR_UP:
 				X = buffer.ReadF();
 				Y = buffer.ReadF();
 				Z = buffer.ReadF();

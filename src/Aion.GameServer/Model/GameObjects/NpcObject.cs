@@ -30,7 +30,7 @@ public class NpcObject : HouseObject<HousingNpc>
                 HousingNpc template = GetObjectTemplate();
                 SpawnTemplate spawn = SpawnEngine
                     .NewSingleTimeSpawn(GetOwnerHouse().GetWorldId(), template.GetNpcId(), GetX(), GetY(), GetZ(), GetHeading());
-                npc = (Npc)SpawnEngine.SpawnObject(spawn, GetOwnerHouse().GetInstanceId());
+                npc = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(spawn, GetOwnerHouse().GetInstanceId());
             }
         }
     }

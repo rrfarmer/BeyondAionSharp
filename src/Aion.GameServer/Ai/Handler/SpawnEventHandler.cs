@@ -11,20 +11,20 @@ public class SpawnEventHandler
 {
     public static void OnSpawn(NpcAI npcAI)
     {
-        if (npcAI.SetStateIfNot(AiState.Idle))
+        if (npcAI.SetStateIfNot(AIState.IDLE))
         {
             npcAI.Think();
             Npc npc = npcAI.GetOwner();
             List<NpcSkillEntry> skills = npc.GetSkillList().GetPostSpawnSkills();
             if (skills.Count != 0)
                 foreach (NpcSkillEntry s in skills)
-                    SkillEngine.GetInstance().GetSkill(npc, s.GetSkillId(), s.GetSkillLevel(), npc).UseWithoutPropSkill();
+                    Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(npc, s.GetSkillId(), s.GetSkillLevel(), npc).UseWithoutPropSkill();
         }
     }
 
     public static void OnDespawn(NpcAI npcAI)
     {
-        npcAI.SetStateIfNot(AiState.Despawned);
+        npcAI.SetStateIfNot(AIState.DESPAWNED);
     }
 
     public static void OnBeforeSpawn(NpcAI npcAI)

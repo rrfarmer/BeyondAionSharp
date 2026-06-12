@@ -1,3 +1,4 @@
+using Aion.GameServer.World.Geo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace Aion.GameServer.QuestEngine.Handlers;
 /// </summary>
 public abstract class AbstractQuestHandler
 {
-    protected static readonly QuestEngine qe = QuestEngine.GetInstance();
+    protected static readonly QuestEngine qe = Aion.GameServer.QuestEngine.QuestEngine.GetInstance();
     protected readonly int questId;
     protected List<QuestItems> workItems;
     protected HashSet<int> actionItems;
@@ -458,7 +459,7 @@ public abstract class AbstractQuestHandler
             if (QuestService.FinishQuest(env))
             {
                 Npc npc = (Npc)env.GetVisibleObject();
-                QuestNpc questNpc = QuestEngine.GetInstance().GetQuestNpc(npc.GetNpcId());
+                QuestNpc questNpc = Aion.GameServer.QuestEngine.QuestEngine.GetInstance().GetQuestNpc(npc.GetNpcId());
                 bool npcHasActiveQuest = false;
                 foreach (int questId in questNpc.GetOnTalkEvent()) // all quest IDs that have registered talk events for this npc
                 {
@@ -467,7 +468,7 @@ public abstract class AbstractQuestHandler
                     {
                         env.SetQuestId(questId);
                         env.SetDialogActionId(DialogAction.USE_OBJECT); // show default dialog (reward selection for next quest)
-                        return QuestEngine.GetInstance().OnDialog(new QuestEnv(npc, player, questId, DialogAction.USE_OBJECT));
+                        return Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnDialog(new QuestEnv(npc, player, questId, DialogAction.USE_OBJECT));
                     }
                     else if (!npcHasActiveQuest && qs2 != null && qs2.GetStatus() == QuestStatus.START)
                     {
@@ -495,7 +496,7 @@ public abstract class AbstractQuestHandler
                                         env.SetQuestId(questId);
                                         env.SetDialogActionId(DialogAction.QUEST_SELECT);
                                         env.SetDialogContinuationFromPreQuest(true);
-                                        return QuestEngine.GetInstance().OnDialog(env); // show start dialog of follow-up quest
+                                        return Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnDialog(env); // show start dialog of follow-up quest
                                     }
                                 }
                             }
@@ -518,7 +519,7 @@ public abstract class AbstractQuestHandler
                 case DialogAction.CHECK_USER_HAS_QUEST_ITEM_SIMPLE: // report to end npc with collect item checks
                     QuestService.ValidateAndFixRewardGroup(qs, questId); // fixes the reward group if necessary
                     // show reward selection page
-                    return SendQuestDialog(env, DialogPage.GetRewardPageByIndex(qs.GetRewardGroup().Value).Id());
+                    return SendQuestDialog(env, DialogPageExtensions.GetRewardPageByIndex(qs.GetRewardGroup().Value).Id());
             }
         }
         return false;
@@ -1441,8 +1442,8 @@ public abstract class AbstractQuestHandler
 
     public static VisibleObject Spawn(int templateId, WorldMapInstance worldMapInstance, float x, float y, float z, byte heading)
     {
-        SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(worldMapInstance.GetMapId(), templateId, x, y, z, heading);
-        return SpawnEngine.SpawnObject(template, worldMapInstance.GetInstanceId());
+        SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(worldMapInstance.GetMapId(), templateId, x, y, z, heading);
+        return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, worldMapInstance.GetInstanceId());
     }
 
     public static VisibleObject SpawnInFrontOf(int templateId, VisibleObject referencePositionObject)

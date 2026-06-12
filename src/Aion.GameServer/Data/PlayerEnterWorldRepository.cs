@@ -3090,17 +3090,17 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new[]
 				{
 					new MySqlParameter { Value = player.Exp },
-					new MySqlParameter { Value = player.RecoverableExp },
-					new MySqlParameter { Value = player.Position.X },
-					new MySqlParameter { Value = player.Position.Y },
-					new MySqlParameter { Value = player.Position.Z },
-					new MySqlParameter { Value = player.Position.Heading },
-					new MySqlParameter { Value = player.Position.WorldId },
-					new MySqlParameter { Value = player.QuestExpands },
-					new MySqlParameter { Value = player.NpcExpands },
-					new MySqlParameter { Value = player.ItemExpands },
-					new MySqlParameter { Value = player.WarehouseNpcExpands },
-					new MySqlParameter { Value = player.WarehouseBonusExpands },
+					new MySqlParameter { Value = (player.GetCommonData().GetExpRecoverable()) },
+					new MySqlParameter { Value = player.GetPosition().X },
+					new MySqlParameter { Value = player.GetPosition().Y },
+					new MySqlParameter { Value = player.GetPosition().Z },
+					new MySqlParameter { Value = player.GetPosition().Heading },
+					new MySqlParameter { Value = player.GetPosition().WorldId },
+					new MySqlParameter { Value = (player.GetCommonData().GetQuestExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetNpcExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetItemExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetWhNpcExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetWhBonusExpands()) },
 					new MySqlParameter { Value = player.Note },
 					new MySqlParameter { Value = player.TitleId },
 					new MySqlParameter { Value = player.BonusTitleId },
@@ -3155,17 +3155,17 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new[]
 				{
 					new MySqlParameter { Value = player.Exp },
-					new MySqlParameter { Value = player.RecoverableExp },
-					new MySqlParameter { Value = player.Position.X },
-					new MySqlParameter { Value = player.Position.Y },
-					new MySqlParameter { Value = player.Position.Z },
-					new MySqlParameter { Value = player.Position.Heading },
-					new MySqlParameter { Value = player.Position.WorldId },
-					new MySqlParameter { Value = player.QuestExpands },
-					new MySqlParameter { Value = player.NpcExpands },
-					new MySqlParameter { Value = player.ItemExpands },
-					new MySqlParameter { Value = player.WarehouseNpcExpands },
-					new MySqlParameter { Value = player.WarehouseBonusExpands },
+					new MySqlParameter { Value = (player.GetCommonData().GetExpRecoverable()) },
+					new MySqlParameter { Value = player.GetPosition().X },
+					new MySqlParameter { Value = player.GetPosition().Y },
+					new MySqlParameter { Value = player.GetPosition().Z },
+					new MySqlParameter { Value = player.GetPosition().Heading },
+					new MySqlParameter { Value = player.GetPosition().WorldId },
+					new MySqlParameter { Value = (player.GetCommonData().GetQuestExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetNpcExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetItemExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetWhNpcExpands()) },
+					new MySqlParameter { Value = (player.GetCommonData().GetWhBonusExpands()) },
 					new MySqlParameter { Value = player.Note },
 					new MySqlParameter { Value = player.TitleId },
 					new MySqlParameter { Value = player.BonusTitleId },
@@ -3293,7 +3293,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	internal static int ResolveInventoryStoreOwnerId(Player player, InventoryItem item)
 	{
 		// Java parity: dao/InventoryDAO.getItemOwnerId invoked by InventoryDAO.store(player).
-		return GetStorageOwnerId(player.ObjectId, player.AccountId, player.LegionId, item.Location);
+		return GetStorageOwnerId(player.ObjectId, player.AccountId, (player.GetLegion()?.GetLegionId() ?? 0), item.Location);
 	}
 
 	public async Task<bool> SaveItemChargeMutationAsync(
@@ -7995,7 +7995,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 					projection.FeedProgress?.GetDataForPacket() ?? 0,
 					projection.Timing.RefeedTimeMillis,
 					projection.DopingBag?.GetItems() ?? [],
-					HungryLevel: projection.FeedProgress?.HungryLevel ?? PetHungryLevel.Hungry,
+					HungryLevel: projection.FeedProgress?.HungryLevel ?? PetHungryLevel.HUNGRY,
 					DespawnTime: projection.DespawnTime,
 					MoodStartedMillis: projection.Timing.StartMoodTimeMillis,
 					ShuggleCounter: projection.Timing.ShuggleCounter,

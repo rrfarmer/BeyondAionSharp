@@ -17,7 +17,7 @@ public sealed class PlayerSummonSkillExecutionService
 		if (invocationPlan == null)
 			return PlayerSummonSkillInvocationExecutionResult.MissingPlan();
 
-		// Java parity: SkillEngine.getSkill returns null when DataManager.SKILL_DATA has no template.
+		// Java parity: Aion.GameServer.SkillEngine.SkillEngine.getSkill returns null when DataManager.SKILL_DATA has no template.
 		var skillTemplate = skillTemplates.GetSkillTemplate(invocationPlan.SkillId);
 		if (skillTemplate == null)
 			return PlayerSummonSkillInvocationExecutionResult.MissingSkillTemplate(invocationPlan);
@@ -1773,7 +1773,7 @@ public sealed class PlayerSummonSkillExecutionService
 			return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.MissingOrigin(postSpawnPreview);
 
 		// Java parity: NpcSkillTemplateEntry.spawnNpc uses the owner's world/instance/position/heading
-		// to create SpawnEngine.newSingleTimeSpawn before SpawnEngine.spawnObject.
+		// to create Aion.GameServer.SpawnEngine.SpawnEngine.newSingleTimeSpawn before Aion.GameServer.SpawnEngine.SpawnEngine.spawnObject.
 		return PlayerSummonKnownObjectNpcSkillSpawnExecutionPreview.Spawnable(postSpawnPreview, origin);
 	}
 
@@ -1854,7 +1854,7 @@ public sealed class PlayerSummonSkillExecutionService
 			return PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview.NotReady(locationPreview);
 		}
 
-		// Java parity: SpawnEngine.newSingleTimeSpawn(..., creator, null) copies creator id,
+		// Java parity: Aion.GameServer.SpawnEngine.SpawnEngine.newSingleTimeSpawn(..., creator, null) copies creator id,
 		// carries creator.getSpawn().getEventTemplate() when present, and builds a no-respawn SpawnTemplate.
 		return PlayerSummonKnownObjectNpcSkillSpawnTemplatePreview.Created(
 			locationPreview,
@@ -1883,7 +1883,7 @@ public sealed class PlayerSummonSkillExecutionService
 			return PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchPreview.NotReady(spawnTemplatePreview, templateKind);
 		}
 
-		// Java parity: SpawnEngine.getSpawnedObject checks gatherable NPC ids before template subtype dispatch.
+		// Java parity: Aion.GameServer.SpawnEngine.SpawnEngine.getSpawnedObject checks gatherable NPC ids before template subtype dispatch.
 		var branch = spawnTemplatePreview.NpcId is > 400000 and < 499999
 			? PlayerSummonKnownObjectNpcSkillSpawnObjectDispatchBranch.Gatherable
 			: templateKind switch
@@ -1981,7 +1981,7 @@ public sealed class PlayerSummonSkillExecutionService
 		if (objectAlreadySpawned)
 			return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.AlreadySpawned(npcCreationPreview);
 
-		// Java parity: SpawnEngine.bringIntoWorld calls World.storeObject, World.setPosition, then World.spawn.
+		// Java parity: Aion.GameServer.SpawnEngine.SpawnEngine.bringIntoWorld calls World.storeObject, World.setPosition, then World.spawn.
 		return PlayerSummonKnownObjectNpcSkillWorldInsertionPreview.WouldInsert(
 			npcCreationPreview,
 			spawnTemplate.WorldId.Value,
@@ -2008,7 +2008,7 @@ public sealed class PlayerSummonSkillExecutionService
 		if (!spawnedObjectReturned)
 			return PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview.NoSpawnedObject(worldInsertionPreview);
 
-		// Java parity: SpawnEngine.spawnObject post-processing only runs for non-null visObj.
+		// Java parity: Aion.GameServer.SpawnEngine.SpawnEngine.spawnObject post-processing only runs for non-null visObj.
 		return PlayerSummonKnownObjectNpcSkillPostSpawnCallbackPreview.Callbacks(
 			worldInsertionPreview,
 			shouldRegisterTemporarySpawn: spawnedObjectHasSpawn && spawnIsTemporary,
@@ -2309,15 +2309,15 @@ public sealed class PlayerSummonSkillExecutionService
 		PlayerSummonCastSpellTarget? resolvedTarget = null)
 	{
 		// Java parity: controllers/SummonController.useSkill(SkillOrder) petHasSkill guard before SkillEngine invocation.
-		if (!player.HasPetSummon || player.PetSummonNpcId == 0)
+		if (!(player.GetSummon() != null) || (player.GetSummon()?.GetNpcId() ?? 0) == 0)
 			return PlayerSummonSkillExecutionResult.MissingSummon(order, resolvedTarget);
 
-		if (!petSkills.PetHasSkill(player.PetSummonNpcId, order.SkillId))
-			return PlayerSummonSkillExecutionResult.InvalidPetSkill(player.PetSummonNpcId, order, resolvedTarget);
+		if (!petSkills.PetHasSkill((player.GetSummon()?.GetNpcId() ?? 0), order.SkillId))
+			return PlayerSummonSkillExecutionResult.InvalidPetSkill((player.GetSummon()?.GetNpcId() ?? 0), order, resolvedTarget);
 
 		return PlayerSummonSkillExecutionResult.WouldInvokeSkillEngine(
-			player.PetSummonObjectId,
-			player.PetSummonNpcId,
+			(player.GetSummon()?.GetObjectId() ?? 0),
+			(player.GetSummon()?.GetNpcId() ?? 0),
 			order,
 			resolvedTarget,
 			order.Release
@@ -2407,7 +2407,7 @@ public sealed record PlayerSummonSkillExecutionResult(
 		PlayerSummonCastSpellTarget? resolvedTarget,
 		IReadOnlyList<PlayerSummonSkillExecutionAction> plannedActions)
 	{
-		// Java parity: SummonController.useSkill(SkillOrder) passes level 1 into SkillEngine.getSkill.
+		// Java parity: SummonController.useSkill(SkillOrder) passes level 1 into Aion.GameServer.SkillEngine.SkillEngine.getSkill.
 		var invocationPlan = new PlayerSummonSkillInvocationPlan(
 			PlayerSummonSkillInvocationActorKind.Summon,
 			petSummonObjectId,

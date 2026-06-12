@@ -28,6 +28,6 @@ public class MegaphoneAction : AbstractItemAction
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), item.GetObjectId(), itemTemplate.GetTemplateId()), true);
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_USE_ITEM(item.GetL10n()));
         player.GetInventory().DecreaseByObjectId(item.GetObjectId(), 1);
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastToWorld(new Aion.GameServer.Network.Aion.ServerPackets.SmMegaphone(player, message, item.GetItemId()));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastToWorld(new Aion.GameServer.Network.Aion.ServerPackets.SM_MEGAPHONE(player, message, item.GetItemId()));
     }
 }

@@ -76,8 +76,8 @@ public class PvpMapHandler : GeneralInstanceHandler
             if (float.IsNaN(z))
                 z = player.GetZ() + 0.5f;
             byte heading = PositionUtil.GetHeadingTowards(x, y, player.GetX(), player.GetY());
-            SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(mapId, 833543, x, y, z, heading, null, "customcdreset");
-            SpawnEngine.SpawnObject(template, instance.GetInstanceId());
+            SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(mapId, 833543, x, y, z, heading, null, "customcdreset");
+            Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instance.GetInstanceId());
         }
     }
 
@@ -155,21 +155,21 @@ public class PvpMapHandler : GeneralInstanceHandler
         {
             if (!CustomConfig.PVP_MAP_ENABLED)
                 return;
-            int bonus = World.GetInstance().GetAllPlayers().Count * 2;
+            int bonus = Aion.GameServer.World.World.GetInstance().GetAllPlayers().Count * 2;
             bonus = Math.Min(bonus, 30);
             if (Rnd.Chance() < (CustomConfig.PVP_MAP_RANDOM_BOSS_BASE_RATE + bonus))
             {
                 int npcId = Rnd.Get(RANDOM_BOSS_NPC_IDS);
                 NpcTemplate template = DataManager.NPC_DATA.GetNpcTemplate(npcId);
-                SpawnTemplate spawn = SpawnEngine.NewSingleTimeSpawn(mapId, npcId, 744.337f, 292.986f, 233.697f, (byte)43, null,
+                SpawnTemplate spawn = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(mapId, npcId, 744.337f, 292.986f, 233.697f, (byte)43, null,
                     "modified_iron_wall_aggressive");
                 Npc npc = new Npc(new NpcController(), spawn, template);
                 npc.SetKnownlist(new NpcKnownList(npc));
                 npc.SetEffectController(new EffectController(npc));
-                SpawnEngine.BringIntoWorld(npc, mapId, instance.GetInstanceId(), spawn.GetX(), spawn.GetY(), spawn.GetZ(), spawn.GetHeading());
+                Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(npc, mapId, instance.GetInstanceId(), spawn.GetX(), spawn.GetY(), spawn.GetZ(), spawn.GetHeading());
                 currentRandomBossObjId = npc.GetObjectId();
                 ScheduleRandomBossDespawn();
-                World.GetInstance().ForEachPlayer(p => PvpMapService.GetInstance().NotifyBossSpawn(p));
+                Aion.GameServer.World.World.GetInstance().ForEachPlayer(p => PvpMapService.GetInstance().NotifyBossSpawn(p));
             }
         }, CustomConfig.PVP_MAP_RANDOM_BOSS_SCHEDULE);
     }

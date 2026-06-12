@@ -93,9 +93,9 @@ public class WorldRaid
     private void SpawnAndInitRandomBoss()
     {
         randomBossTemplate = Rnd.Get(raidLocation.GetNpcPool());
-        SpawnTemplate bossTemplate = SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), randomBossTemplate.GetNpcId(), raidLocation.GetX(),
+        SpawnTemplate bossTemplate = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), randomBossTemplate.GetNpcId(), raidLocation.GetX(),
             raidLocation.GetY(), raidLocation.GetZ(), raidLocation.GetH(), null, "world_raid_aggressive");
-        Npc bossNpc = (Npc)SpawnEngine.SpawnObject(bossTemplate, 1);
+        Npc bossNpc = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(bossTemplate, 1);
         if (bossNpc == null)
         {
             log.LogWarning("Cannot initialize world raid boss with ID " + randomBossTemplate.GetNpcId() + ". No boss was spawned.");
@@ -120,25 +120,25 @@ public class WorldRaid
 
     private void SpawnAndInitMapFlag()
     {
-        SpawnTemplate flagTemplate = SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), 832819, raidLocation.GetX(), raidLocation.GetY(),
+        SpawnTemplate flagTemplate = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), 832819, raidLocation.GetX(), raidLocation.GetY(),
             raidLocation.GetZ(), (byte)0);
-        flag = (Npc)SpawnEngine.SpawnObject(flagTemplate, 1);
+        flag = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(flagTemplate, 1);
     }
 
     private void SpawnAndInitVortex()
     {
-        SpawnTemplate vortexTemplate = SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), 702550, raidLocation.GetX(), raidLocation.GetY(),
+        SpawnTemplate vortexTemplate = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), 702550, raidLocation.GetX(), raidLocation.GetY(),
             raidLocation.GetZ() + 40f, (byte)0);
-        vortex = (Npc)SpawnEngine.SpawnObject(vortexTemplate, 1);
+        vortex = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(vortexTemplate, 1);
     }
 
     private void SpawnAndInitMarkerSpots()
     {
         foreach (MarkerSpot locationMarker in raidLocation.GetLocationMarkers())
         {
-            SpawnTemplate markerTemplate = SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), 702548, locationMarker.GetX(), locationMarker.GetY(),
+            SpawnTemplate markerTemplate = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(raidLocation.GetMapId(), 702548, locationMarker.GetX(), locationMarker.GetY(),
                 locationMarker.GetZ(), locationMarker.GetH());
-            locationMarkers.Add((Npc)SpawnEngine.SpawnObject(markerTemplate, 1));
+            locationMarkers.Add((Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(markerTemplate, 1));
         }
     }
 
@@ -150,7 +150,7 @@ public class WorldRaid
     private void BroadcastMessage(SM_SYSTEM_MESSAGE msg, bool forceMsg)
     {
         if (msg != null && (sendMessages || forceMsg))
-            World.GetInstance().GetWorldMap(raidLocation.GetMapId()).GetMainWorldMapInstance().ForEachPlayer(p => PacketSendUtility.SendPacket(p, msg));
+            Aion.GameServer.World.World.GetInstance().GetWorldMap(raidLocation.GetMapId()).GetMainWorldMapInstance().ForEachPlayer(p => PacketSendUtility.SendPacket(p, msg));
     }
 
     public int GetLocationId()

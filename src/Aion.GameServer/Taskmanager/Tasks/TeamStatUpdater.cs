@@ -1,3 +1,4 @@
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Common.Legacy;

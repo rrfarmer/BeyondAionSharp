@@ -3,7 +3,8 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -28,7 +29,7 @@ public class CM_USE_HOUSE_OBJECT : AionClientPacket
         if (player == null)
             return;
 
-        VisibleObject visObject = World.GetInstance().FindVisibleObject(itemObjectId);
+        VisibleObject visObject = global::Aion.GameServer.World.World.GetInstance().FindVisibleObject(itemObjectId);
         if (visObject == null)
             return;
         if (visObject is HouseObject<PlaceableHouseObject>)

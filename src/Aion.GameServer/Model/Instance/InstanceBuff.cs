@@ -1,3 +1,5 @@
+using Aion.GameServer.Network.Aion.Instanceinfo;
+using Aion.GameServer.Model.Instance.Playerreward;
 using System;
 using System.Collections.Generic;
 using System.Threading;

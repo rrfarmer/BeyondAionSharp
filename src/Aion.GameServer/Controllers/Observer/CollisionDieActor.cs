@@ -29,7 +29,7 @@ public class CollisionDieActor : AbstractCollisionObserver
                 CollisionResult result = collisionResults.GetClosestCollision();
                 PacketSendUtility.SendMessage(player, "Entered " + result.GetGeometry().GetName());
             }
-            if (fortressLocation.IsUnderShield() && fortressLocation.GetRace() != SiegeRace.GetByRace(creature.GetRace()))
+            if (fortressLocation.IsUnderShield() && fortressLocation.GetRace() != SiegeRaceExtensions.GetByRace(creature.GetRace()))
                 Kill(creature);
         }
     }

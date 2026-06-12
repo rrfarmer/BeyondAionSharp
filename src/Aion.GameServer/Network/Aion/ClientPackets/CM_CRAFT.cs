@@ -4,8 +4,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Craft;
 using Aion.GameServer.Utils;
-using GameServerMain = Aion.GameServer.GameServer;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using GameServerMain = global::Aion.GameServer.GameServer;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

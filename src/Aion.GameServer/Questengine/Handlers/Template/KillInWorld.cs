@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.Stats;
 using System.Collections.Generic;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
@@ -8,6 +9,7 @@ using Aion.GameServer.QuestEngine.Model;
 using Aion.GameServer.Services;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.QuestEngine.Handlers.Template;
 

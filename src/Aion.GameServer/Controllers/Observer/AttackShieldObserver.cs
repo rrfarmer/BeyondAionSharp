@@ -9,10 +9,11 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.Controllers.Observer;
 
-/// <summary>Java parity: controllers/observer/AttackShieldObserver (ATracer, Sippolo, kecimis, Luzien, Neon) : AttackCalcObserver. Shield/reflector/protect/convert damage mechanics. ctor chaining→`: this(...)`; nested SM_ATTACK_STATUS.TYPE/LOG + Effect.ForceType qualified; HealType→HealType? (Java passes null); enum switch (HitType/ShieldType/HealType); instanceof Npc/Summon→is; Rnd.chance→Rnd.Chance; Math.min/max→Math.Min/Max; shieldType.getId()→GetId(). Effect/AttackResult/enums/SkillTemplate red-tolerated.</summary>
+/// <summary>Java parity: controllers/observer/AttackShieldObserver (ATracer, Sippolo, kecimis, Luzien, Neon) : AttackCalcObserver. Shield/reflector/protect/convert damage mechanics. ctor chaining→`: this(...)`; nested SmAttackStatus.TYPE/LOG + Effect.ForceType qualified; HealType→HealType? (Java passes null); enum switch (HitType/ShieldType/HealType); instanceof Npc/Summon→is; Rnd.chance→Rnd.Chance; Math.min/max→Math.Min/Max; shieldType.getId()→GetId(). Effect/AttackResult/enums/SkillTemplate red-tolerated.</summary>
 public class AttackShieldObserver : AttackCalcObserver
 {
     private readonly Effect effect;
@@ -62,7 +63,7 @@ public class AttackShieldObserver : AttackCalcObserver
     {
         foreach (AttackResult attackResult in attackList)
         {
-            AttackStatus baseStatus = AttackStatus.GetBaseStatus(attackResult.GetAttackStatus());
+            AttackStatus baseStatus = AttackStatusExtensions.GetBaseStatus(attackResult.GetAttackStatus());
             if (baseStatus == AttackStatus.DODGE || baseStatus == AttackStatus.RESIST)
                 continue;
 
@@ -110,7 +111,7 @@ public class AttackShieldObserver : AttackCalcObserver
                 {
                     int mp = (int)(absorbedDamage * 0.01f * mpValue);
                     // TODO recheck sm_attack_status
-                    effect.GetEffected().GetLifeStats().ReduceMp(SM_ATTACK_STATUS.TYPE.USED_MP, mp, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+                    effect.GetEffected().GetLifeStats().ReduceMp(SmAttackStatus.TYPE.USED_MP, mp, 0, SmAttackStatus.LOG.REGULAR);
                     attackResult.SetMpAbsorbed(mp);
                     attackResult.SetMpShieldSkillId(effect.GetSkillId());
                 }
@@ -152,7 +153,7 @@ public class AttackShieldObserver : AttackCalcObserver
                     }
                     else // apply reflect damage
                     {
-                        attacker.GetController().OnAttack(effect.GetEffected(), effect, SM_ATTACK_STATUS.TYPE.REGULAR, reflectedHit, false, SM_ATTACK_STATUS.LOG.REGULAR, null, null);
+                        attacker.GetController().OnAttack(effect.GetEffected(), effect, SmAttackStatus.TYPE.REGULAR, reflectedHit, false, SmAttackStatus.LOG.REGULAR, null, null);
                     }
                 }
                 break;
@@ -192,7 +193,7 @@ public class AttackShieldObserver : AttackCalcObserver
                     attackResult.SetProtectedSkillId(effect.GetSkillId());
                     attackResult.SetProtectedDamage(effectorDamage);
                     attackResult.SetProtectorId(effect.GetEffectorId());
-                    effect.GetEffector().GetController().OnAttack(attacker, attackerEffect, SM_ATTACK_STATUS.TYPE.PROTECTDMG, effectorDamage, false, SM_ATTACK_STATUS.LOG.REGULAR,
+                    effect.GetEffector().GetController().OnAttack(attacker, attackerEffect, SmAttackStatus.TYPE.PROTECTDMG, effectorDamage, false, SmAttackStatus.LOG.REGULAR,
                         attackResult.GetAttackStatus(), null);
                     // dont launch subeffect if damage is fully absorbed
                     if (!IsPunchShield(attackerEffect))
@@ -226,10 +227,10 @@ public class AttackShieldObserver : AttackCalcObserver
                 switch (healType)
                 {
                     case HealType.HP:
-                        effect.GetEffected().GetLifeStats().IncreaseHp(SM_ATTACK_STATUS.TYPE.HP, healValue, effect, SM_ATTACK_STATUS.LOG.REGULAR);
+                        effect.GetEffected().GetLifeStats().IncreaseHp(SmAttackStatus.TYPE.HP, healValue, effect, SmAttackStatus.LOG.REGULAR);
                         break;
                     case HealType.MP:
-                        effect.GetEffected().GetLifeStats().IncreaseMp(SM_ATTACK_STATUS.TYPE.HEAL_MP, healValue, effect.GetSkillId(), SM_ATTACK_STATUS.LOG.REGULAR);
+                        effect.GetEffected().GetLifeStats().IncreaseMp(SmAttackStatus.TYPE.HEAL_MP, healValue, effect.GetSkillId(), SmAttackStatus.LOG.REGULAR);
                         break;
                 }
 

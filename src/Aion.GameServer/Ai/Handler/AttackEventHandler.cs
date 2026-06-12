@@ -24,10 +24,10 @@ public class AttackEventHandler
             return;
         }
         // TODO lock or better switch
-        if (npcAI.IsInState(AiState.Returning))
+        if (npcAI.IsInState(AIState.RETURNING))
         {
             npcAI.GetOwner().GetMoveController().AbortMove();
-            npcAI.SetStateIfNot(AiState.Idle);
+            npcAI.SetStateIfNot(AIState.IDLE);
             npcAI.OnGeneralEvent(AiEventType.NotAtHome);
             return;
         }
@@ -35,18 +35,18 @@ public class AttackEventHandler
         {
             return;
         }
-        if (npcAI.IsInState(AiState.Walking))
+        if (npcAI.IsInState(AIState.WALKING))
         {
             WalkManager.StopWalking(npcAI);
         }
         npcAI.GetOwner().GetGameStats().RenewLastAttackedTime();
-        bool allowFight = npcAI.GetState() != AiState.Fear && !npcAI.GetOwner().GetEffectController().IsAbnormalSet(AbnormalState.FEAR)
-                && npcAI.GetState() != AiState.Confuse && !npcAI.GetOwner().GetEffectController().IsAbnormalSet(AbnormalState.CONFUSE);
-        if (allowFight && npcAI.SetStateIfNot(AiState.Fight))
+        bool allowFight = npcAI.GetState() != AIState.FEAR && !npcAI.GetOwner().GetEffectController().IsAbnormalSet(AbnormalState.FEAR)
+                && npcAI.GetState() != AIState.CONFUSE && !npcAI.GetOwner().GetEffectController().IsAbnormalSet(AbnormalState.CONFUSE);
+        if (allowFight && npcAI.SetStateIfNot(AIState.FIGHT))
         {
             if (npcAI.IsLogging())
                 AILogger.Info(npcAI, "onAttack() -> startAttacking");
-            npcAI.SetSubStateIfNot(AiSubState.None);
+            npcAI.SetSubStateIfNot(AISubState.NONE);
             if (npcAI.GetOwner().CanSee(creature))
                 npcAI.GetOwner().SetTarget(creature);
             AttackManager.StartAttacking(npcAI);

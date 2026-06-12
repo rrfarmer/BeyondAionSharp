@@ -368,7 +368,7 @@ public sealed class QuestService
             {
                 if (warn)
                     PacketSendUtility.SendPacket(player,
-                        SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MIN_RANK(AbyssRankEnum.GetRankL10n(player.GetRace(), template.GetRequiredRank())));
+                        SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_MIN_RANK(AbyssRankEnumExtensions.GetRankL10n(player.GetRace(), template.GetRequiredRank())));
                 return false;
             }
 

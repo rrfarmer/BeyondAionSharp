@@ -17,10 +17,10 @@ public static class PlayerKiskReviveService
 		if (!IsDead(player))
 			return PlayerKiskReviveResult.Rejected(PlayerKiskReviveStatus.PlayerNotDead);
 
-		if (player.BoundKiskObjectId == 0 || registry == null)
+		if ((player.GetKisk()?.GetObjectId() ?? 0) == 0 || registry == null)
 			return PlayerKiskReviveResult.Rejected(PlayerKiskReviveStatus.NoBoundKisk);
 
-		var kisk = registry.GetKiskState(player.BoundKiskObjectId);
+		var kisk = registry.GetKiskState((player.GetKisk()?.GetObjectId() ?? 0));
 		if (kisk == null)
 			return PlayerKiskReviveResult.Rejected(PlayerKiskReviveStatus.NoBoundKisk);
 

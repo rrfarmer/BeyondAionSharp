@@ -326,8 +326,8 @@ public sealed record NpcVortexSpawnSummary(
 	TemporarySpawnSchedule? GroupTemporarySchedule,
 	TemporarySpawnSchedule? SpotTemporarySchedule)
 {
-	public bool IsInvasion => StateType == VortexStateType.Invasion;
-	public bool IsPeace => StateType == VortexStateType.Peace;
+	public bool IsInvasion => StateType == VortexStateType.INVASION;
+	public bool IsPeace => StateType == VortexStateType.PEACE;
 	public bool HasTemporarySchedule => GroupTemporarySchedule != null || SpotTemporarySchedule != null;
 }
 

@@ -70,17 +70,17 @@ public class OutpostSiege : Siege<OutpostLocation>
                 : SM_SYSTEM_MESSAGE.STR_FIELDABYSS_DARKBOSS_KILLED(playerName, playerRace));
             Race winnerRace = winnerCounter.GetSiegeRace() == SiegeRace.ELYOS ? Race.ELYOS : Race.ASMODIANS;
 
-            World.GetInstance().ForEachPlayer(p =>
+            Aion.GameServer.World.World.GetInstance().ForEachPlayer(p =>
             {
                 if (p.GetRace().Equals(winnerRace))
-                    SkillEngine.GetInstance().ApplyEffectDirectly(winnerRace == Race.ELYOS ? 12120 : 12119, p, p);
+                    Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(winnerRace == Race.ELYOS ? 12120 : 12119, p, p);
             });
         }
     }
 
     public void DespawnSiegeNpcs()
     {
-        ICollection<SiegeNpc> npcs = World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId());
+        ICollection<SiegeNpc> npcs = Aion.GameServer.World.World.GetInstance().GetLocalSiegeNpcs(GetSiegeLocationId());
         foreach (SiegeNpc npc in npcs)
         {
             if (npc != null)

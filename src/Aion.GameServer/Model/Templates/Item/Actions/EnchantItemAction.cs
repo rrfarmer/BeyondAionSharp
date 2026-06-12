@@ -48,7 +48,7 @@ public class EnchantItemAction : AbstractItemAction
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
                 return false;
             }
-            else if (targetItem.IsAmplified() && Aion.GameServer.Model.Enchants.EnchantmentStone.GetByItemId(parentItem.GetItemId()) != Aion.GameServer.Model.Enchants.EnchantmentStone.OMEGA)
+            else if (targetItem.IsAmplified() && Aion.GameServer.Model.Enchants.EnchantmentStoneExtensions.GetByItemId(parentItem.GetItemId()) != Aion.GameServer.Model.Enchants.EnchantmentStone.OMEGA)
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_EXCEED_CANNOT_02(parentItem.GetItemTemplate().GetL10n()));
                 return false;

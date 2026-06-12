@@ -62,13 +62,13 @@ public class HouseController : VisibleObjectController<House>
             Npc npc;
             if (spawn.GetType_() == SpawnType.MANAGER)
             {
-                SpawnTemplate t = SpawnEngine.NewSingleTimeSpawn(address.GetMapId(), address.GetLand().GetManagerNpcId(), spawn.GetX(), spawn.GetY(),
+                SpawnTemplate t = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(address.GetMapId(), address.GetLand().GetManagerNpcId(), spawn.GetX(), spawn.GetY(),
                     spawn.GetZ(), spawn.GetH());
                 npc = VisibleObjectSpawner.SpawnHouseNpc(t, GetOwner().GetInstanceId(), GetOwner());
             }
             else if (spawn.GetType_() == SpawnType.TELEPORT)
             {
-                SpawnTemplate t = SpawnEngine.NewSingleTimeSpawn(address.GetMapId(), address.GetLand().GetTeleportNpcId(), spawn.GetX(), spawn.GetY(),
+                SpawnTemplate t = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(address.GetMapId(), address.GetLand().GetTeleportNpcId(), spawn.GetX(), spawn.GetY(),
                     spawn.GetZ(), spawn.GetH());
                 npc = VisibleObjectSpawner.SpawnHouseNpc(t, GetOwner().GetInstanceId(), GetOwner());
             }
@@ -76,9 +76,9 @@ public class HouseController : VisibleObjectController<House>
             {
                 // Signs do not have master name displayed, but have creatorId
                 int creatorId = address.GetId();
-                SpawnTemplate t = SpawnEngine.NewSingleTimeSpawn(address.GetMapId(), GetCurrentSignNpcId(), spawn.GetX(), spawn.GetY(), spawn.GetZ(),
+                SpawnTemplate t = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(address.GetMapId(), GetCurrentSignNpcId(), spawn.GetX(), spawn.GetY(), spawn.GetZ(),
                     spawn.GetH(), creatorId);
-                npc = (Npc)SpawnEngine.SpawnObject(t, GetOwner().GetInstanceId());
+                npc = (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(t, GetOwner().GetInstanceId());
             }
             else
             {
@@ -179,8 +179,8 @@ public class HouseController : VisibleObjectController<House>
         if (newNpcId != GetOwner().GetCurrentSign().GetNpcId())
         {
             SpawnTemplate t = GetOwner().GetCurrentSign().GetSpawn();
-            t = SpawnEngine.NewSingleTimeSpawn(t.GetWorldId(), newNpcId, t.GetX(), t.GetY(), t.GetZ(), t.GetHeading(), t.GetCreatorId());
-            GetOwner().UpdateSpawn(SpawnType.SIGN, (Npc)SpawnEngine.SpawnObject(t, GetOwner().GetInstanceId()));
+            t = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(t.GetWorldId(), newNpcId, t.GetX(), t.GetY(), t.GetZ(), t.GetHeading(), t.GetCreatorId());
+            GetOwner().UpdateSpawn(SpawnType.SIGN, (Npc)Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(t, GetOwner().GetInstanceId()));
         }
     }
 

@@ -22,7 +22,7 @@ namespace Aion.GameServer.Ai.Manager;
 /// Java parity: ai/manager/SkillAttackManager (ATracer, Yeats). Performs/chooses NPC skill attacks. switch-expression on
 /// NpcSkillTargetAttribute -> C# switch expr (+ _ discard); Collections.shuffle -> in-place Fisher-Yates via Rnd; Comparator.reversed
 /// -> descending Sort; stream.anyMatch -> LINQ Any; Integer.MAX_VALUE -> int.MaxValue; currentTimeMillis -> UtcNow.ToUnixTimeMilliseconds;
-/// instanceof+pattern -> is. AiSubState.Cast/None; AiState.Fight; SkillType/AbnormalState/AggroTarget/FirstTargetAttribute SCREAMING.
+/// instanceof+pattern -> is. AISubState.CAST/None; AIState.FIGHT; SkillType/AbnormalState/AggroTarget/FirstTargetAttribute SCREAMING.
 /// DataManager/SkillTemplate/Properties red-tolerated.
 /// </summary>
 public class SkillAttackManager
@@ -39,7 +39,7 @@ public class SkillAttackManager
                 return;
             }
         }
-        if (npcAI.SetSubStateIfNot(AiSubState.Cast))
+        if (npcAI.SetSubStateIfNot(AISubState.CAST))
         {
             if (delay > 0)
             {
@@ -54,9 +54,9 @@ public class SkillAttackManager
 
     protected static void SkillAction(NpcAI npcAI)
     {
-        if (npcAI.GetSubState() != AiSubState.Cast)
+        if (npcAI.GetSubState() != AISubState.CAST)
         {
-            if (npcAI.GetSubState() == AiSubState.None && npcAI.GetState() == AiState.Fight) // cast was interrupted, so resume attacking
+            if (npcAI.GetSubState() == AISubState.NONE && npcAI.GetState() == AIState.FIGHT) // cast was interrupted, so resume attacking
                 npcAI.Think();
             return;
         }
@@ -65,7 +65,7 @@ public class SkillAttackManager
         NpcSkillEntry skill = owner.GetGameStats().GetLastSkill();
         if (!(target is Creature creature) || creature.IsDead() || skill == null)
         {
-            npcAI.SetSubStateIfNot(AiSubState.None);
+            npcAI.SetSubStateIfNot(AISubState.NONE);
             npcAI.OnGeneralEvent(AiEventType.TargetGiveup);
             return;
         }
@@ -123,13 +123,13 @@ public class SkillAttackManager
 
     public static void AfterUseSkill(NpcAI npcAI)
     {
-        npcAI.SetSubStateIfNot(AiSubState.None);
+        npcAI.SetSubStateIfNot(AISubState.NONE);
         npcAI.OnGeneralEvent(AiEventType.AttackComplete);
     }
 
     public static NpcSkillEntry ChooseNextSkill(NpcAI npcAI)
     {
-        if (npcAI.IsInSubState(AiSubState.Cast))
+        if (npcAI.IsInSubState(AISubState.CAST))
         {
             return null;
         }

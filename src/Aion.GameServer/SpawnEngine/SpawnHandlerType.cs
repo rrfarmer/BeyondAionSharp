@@ -6,24 +6,14 @@ namespace Aion.GameServer.SpawnEngine;
 /// </summary>
 public enum SpawnHandlerType
 {
-    // Java parity: ATTACKER
-    Attacker,
-    // Java parity: BOSS
-    Boss,
-    // Java parity: FLAG
-    Flag,
-    // Java parity: GUARDIAN
-    Guardian,
-    // Java parity: MERCHANT
-    Merchant,
-    // Java parity: OUTRIDER
-    Outrider,
-    // Java parity: OUTRIDER_ENHANCED
-    OutriderEnhanced,
-    // Java parity: RIFT
-    Rift,
-    // Java parity: SENTINEL
-    Sentinel,
-    // Java parity: STATIC
-    Static,
+    ATTACKER,
+    BOSS,
+    FLAG,
+    GUARDIAN,
+    MERCHANT,
+    OUTRIDER,
+    OUTRIDER_ENHANCED,
+    RIFT,
+    SENTINEL,
+    STATIC,
 }

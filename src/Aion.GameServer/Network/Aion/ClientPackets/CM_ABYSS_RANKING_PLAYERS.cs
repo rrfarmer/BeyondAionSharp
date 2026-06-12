@@ -6,8 +6,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Abyss;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
-using AbyssRankUpdateType = Aion.GameServer.Model.GameObjects.Players.AbyssRank.AbyssRankUpdateType;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
+using AbyssRankUpdateType = global::Aion.GameServer.Model.GameObjects.Players.AbyssRank.AbyssRankUpdateType;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

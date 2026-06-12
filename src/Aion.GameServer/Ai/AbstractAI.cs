@@ -22,8 +22,8 @@ public abstract class AbstractAI : AI
     private static readonly ThreadLocal<int> DEPTH = new ThreadLocal<int>(() => 0);
 
     private readonly Creature owner;
-    private AiState currentState;
-    private AiSubState currentSubState;
+    private AIState currentState;
+    private AISubState currentSubState;
     private bool thinking;
 
     private bool logging = false;
@@ -33,8 +33,8 @@ public abstract class AbstractAI : AI
     protected AbstractAI(Creature owner)
     {
         this.owner = owner;
-        this.currentState = AiState.Created;
-        this.currentSubState = AiSubState.None;
+        this.currentState = AIState.CREATED;
+        this.currentSubState = AISubState.NONE;
     }
 
     public AIEventLog GetEventLog()
@@ -42,22 +42,22 @@ public abstract class AbstractAI : AI
         return eventLog;
     }
 
-    public virtual AiState GetState()
+    public virtual AIState GetState()
     {
         return currentState;
     }
 
-    public bool IsInState(AiState state)
+    public bool IsInState(AIState state)
     {
         return currentState == state;
     }
 
-    public virtual AiSubState GetSubState()
+    public virtual AISubState GetSubState()
     {
         return currentSubState;
     }
 
-    public bool IsInSubState(AiSubState subState)
+    public bool IsInSubState(AISubState subState)
     {
         return currentSubState == subState;
     }
@@ -75,12 +75,12 @@ public abstract class AbstractAI : AI
             case AiEventType.CreatureMoved:
             case AiEventType.DialogStart:
             case AiEventType.DialogFinish:
-                return currentState == AiState.Idle || currentState == AiState.Walking;
+                return currentState == AIState.IDLE || currentState == AIState.WALKING;
         }
         return true;
     }
 
-    public bool SetStateIfNot(AiState newState)
+    public bool SetStateIfNot(AIState newState)
     {
         lock (this)
         {
@@ -90,7 +90,7 @@ public abstract class AbstractAI : AI
             if (IsLogging())
             {
                 AILogger.Info(this, "Setting AI state to " + newState);
-                if (this.currentState == AiState.Died && newState == AiState.Fight)
+                if (this.currentState == AIState.DIED && newState == AIState.FIGHT)
                 {
                     System.Diagnostics.StackTrace stack = new System.Diagnostics.StackTrace();
                     foreach (System.Diagnostics.StackFrame elem in stack.GetFrames())
@@ -102,7 +102,7 @@ public abstract class AbstractAI : AI
         }
     }
 
-    public bool SetSubStateIfNot(AiSubState newSubState)
+    public bool SetSubStateIfNot(AISubState newSubState)
     {
         lock (this)
         {

@@ -19,7 +19,7 @@ public static class PlayerRideRestrictionService
 		if (!enableRideRestriction)
 			return PlayerRideRestrictionResult.Allowed(foundWorldMap: false, usedRuntimeWorldMap: false);
 
-		var worldMapState = worldMapStates?.GetMap(player.Position.WorldId);
+		var worldMapState = worldMapStates?.GetMap(player.GetPosition().WorldId);
 		if (worldMapState != null)
 		{
 			return worldMapState.CanRide
@@ -27,7 +27,7 @@ public static class PlayerRideRestrictionService
 				: PlayerRideRestrictionResult.InvalidLocation(foundWorldMap: true, usedRuntimeWorldMap: true);
 		}
 
-		var worldMap = worldMaps.FirstOrDefault(map => map.MapId == player.Position.WorldId);
+		var worldMap = worldMaps.FirstOrDefault(map => map.MapId == player.GetPosition().WorldId);
 		if (worldMap.MapId == 0)
 			return PlayerRideRestrictionResult.Allowed(foundWorldMap: false, usedRuntimeWorldMap: false);
 

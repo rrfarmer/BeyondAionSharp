@@ -48,13 +48,13 @@ public class PetSpawnService
             petCommonData.ScheduleRefeed(petCommonData.GetRefeedDelay());
         }
         else if (petCommonData.GetFeedProgress() != null)
-            petCommonData.GetFeedProgress().SetHungryLevel(PetHungryLevel.Hungry);
+            petCommonData.GetFeedProgress().SetHungryLevel(PetHungryLevel.HUNGRY);
         if (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - petCommonData.GetDespawnTime().ToUnixTimeMilliseconds() > 10 * 60 * 1000) // reset mood if pet was despawned for > 10 minutes
             petCommonData.ClearMoodStatistics();
         player.GetPetList().SetLastUsedPetTemplateId(templateId);
         if (petCommonData.IsLooting())
-            PacketSendUtility.SendPacket(player, new SM_PET(PetSpecialFunction.AutoLoot, true));
+            PacketSendUtility.SendPacket(player, new SM_PET(PetSpecialFunction.AUTOLOOT, true));
         if (petCommonData.IsSelling())
-            PacketSendUtility.SendPacket(player, new SM_PET(PetSpecialFunction.AutoSell, true));
+            PacketSendUtility.SendPacket(player, new SM_PET(PetSpecialFunction.AUTOSELL, true));
     }
 }

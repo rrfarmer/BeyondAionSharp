@@ -21,9 +21,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IStaticPlaceableStateService? _staticPlaceables;
-	private readonly IWorldNpcWalkerSpawnPlanCacheService? _walkerSpawnPlans;
-	private readonly WorldNpcWalkerPlacementApplicationService? _walkerPlacementApplication;
-	private readonly WorldNpcWalkerRouteWalkingService? _walkerRouteWalking;
 	private readonly WorldNpcRandomWalkService? _randomWalking;
 	private readonly IWorldNpcDropRegistrationLookup? _dropRegistrationLookup;
 	private readonly Func<int, WorldNpc, bool>? _respawnedNpcCallback;
@@ -34,7 +31,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly ILogger<WorldNpcSpawnService> _logger;
 	private readonly ConcurrentDictionary<TemporarySpawnKey, int> _temporarySpawnObjectIds = new();
 	private readonly ConcurrentDictionary<int, SpawnedWorldNpcRegistration> _spawnedWorldNpcs = new();
-	private readonly ConcurrentDictionary<int, WorldNpc> _inactiveWalkerVariants = new();
 	private readonly ConcurrentDictionary<int, PendingWorldNpcRespawn> _pendingRespawns = new();
 	private readonly ConcurrentDictionary<int, PendingWorldNpcDecay> _pendingDecays = new();
 	private int _loadedCount;
@@ -48,10 +44,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ThreadPoolManager? threadPoolManager,
 		IGameClientConnectionRegistry? connectionRegistry,
 		IStaticPlaceableStateService? staticPlaceables,
-		IWorldNpcWalkerSpawnPlanCacheService? walkerSpawnPlans,
-		WorldNpcWalkerPlacementApplicationService? walkerPlacementApplication,
 		ILogger<WorldNpcSpawnService> logger,
-		WorldNpcWalkerRouteWalkingService? walkerRouteWalking = null,
 		WorldNpcRandomWalkService? randomWalking = null,
 		IWorldNpcDropRegistrationLookup? dropRegistrationLookup = null,
 		Func<int, WorldNpc, bool>? respawnedNpcCallback = null,
@@ -67,9 +60,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_threadPoolManager = threadPoolManager;
 		_connectionRegistry = connectionRegistry;
 		_staticPlaceables = staticPlaceables;
-		_walkerSpawnPlans = walkerSpawnPlans;
-		_walkerPlacementApplication = walkerPlacementApplication;
-		_walkerRouteWalking = walkerRouteWalking;
 		_randomWalking = randomWalking;
 		_dropRegistrationLookup = dropRegistrationLookup;
 		_respawnedNpcCallback = respawnedNpcCallback;
@@ -99,8 +89,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 			threadPoolManager,
 			null,
 			staticPlaceables,
-			null,
-			null,
 			logger,
 			npcAiStates: npcAiStates,
 			npcLifeStatsInitialize: npcLifeStatsInitialize,
@@ -114,7 +102,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, logger)
 	{
 	}
 
@@ -123,7 +111,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, null, null, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, null, null, null, null, logger)
 	{
 	}
 
@@ -137,143 +125,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	public int PendingDecayCount => _pendingDecays.Count;
 
-	public int InactiveWalkerVariantCount => _inactiveWalkerVariants.Count;
-
-	public bool TryGetInactiveWalkerVariant(int objectId, out WorldNpc? npc)
-	{
-		return _inactiveWalkerVariants.TryGetValue(objectId, out npc);
-	}
-
-	public bool TrySwapInactiveWalkerVariant(int activeObjectId, int inactiveObjectId)
-	{
-		// Java parity: spawnengine/InstanceWalkerFormations.changeWalker spawns one not-spawned version variant, then despawns the current one.
-		if (!_inactiveWalkerVariants.TryGetValue(inactiveObjectId, out var inactiveNpc)
-			|| !_world.TryGetObject(activeObjectId, out var activeObject)
-			|| activeObject is not WorldNpc activeNpc)
-		{
-			return false;
-		}
-
-		var spawnedInactiveNpc = inactiveNpc with { Position = inactiveNpc.SpawnLocation };
-		if (!_world.TryAddObject(inactiveObjectId, spawnedInactiveNpc))
-			return false;
-
-		if (!_inactiveWalkerVariants.TryRemove(inactiveObjectId, out _))
-		{
-			_world.TryRemoveObject(inactiveObjectId, out _);
-			return false;
-		}
-
-		if (!_world.TryRemoveObject(activeObjectId, out _))
-		{
-			_inactiveWalkerVariants[inactiveObjectId] = inactiveNpc;
-			_world.TryRemoveObject(inactiveObjectId, out _);
-			return false;
-		}
-
-		_inactiveWalkerVariants[activeObjectId] = activeNpc;
-		ClearNpcCreaturePvpZones(activeObjectId);
-		RevalidateNpcCreaturePvpZones(spawnedInactiveNpc);
-		_staticPlaceables?.SpawnPlaceableObject(spawnedInactiveNpc.Position.WorldId, spawnedInactiveNpc.StaticId);
-		_staticPlaceables?.DespawnPlaceableObject(activeNpc.Position.WorldId, activeNpc.StaticId);
-		return true;
-	}
-
-	public bool TrySwapInactiveWalkerFormationVariant(
-		IReadOnlyCollection<int> activeObjectIds,
-		IReadOnlyCollection<int> inactiveObjectIds)
-	{
-		// Java parity: spawnengine/InstanceWalkerFormations.changeCluster spawns one not-spawned WalkerGroup, then despawns the current group.
-		var activeIds = activeObjectIds.Distinct().ToArray();
-		var inactiveIds = inactiveObjectIds.Distinct().ToArray();
-		if (activeIds.Length == 0
-			|| inactiveIds.Length == 0
-			|| activeIds.Length != activeObjectIds.Count
-			|| inactiveIds.Length != inactiveObjectIds.Count
-			|| activeIds.Intersect(inactiveIds).Any())
-		{
-			return false;
-		}
-
-		if (!TryGetLiveWalkerNpcs(activeIds, out var activeNpcs)
-			|| !TryGetInactiveWalkerNpcs(inactiveIds, out var inactiveNpcs))
-		{
-			return false;
-		}
-
-		var worldId = inactiveNpcs[0].SpawnLocation.WorldId;
-		if (inactiveNpcs.Any(npc => npc.SpawnLocation.WorldId != worldId)
-			|| activeNpcs.Any(npc => npc.Position.WorldId != worldId))
-		{
-			return false;
-		}
-
-		if (!TryGetInactiveFormationVariantPlacements(worldId, inactiveIds, inactiveNpcs, out var inactivePlacements))
-			return false;
-
-		var spawnedInactiveNpcs = new List<(int ObjectId, WorldNpc Npc)>(inactivePlacements.Count);
-		foreach (var placement in inactivePlacements)
-		{
-			var inactiveNpc = inactiveNpcs.Single(npc => npc.ObjectId == placement.ObjectId);
-			var spawnedInactiveNpc = inactiveNpc with
-			{
-				Position = new global::Aion.GameServer.World.WorldPosition(
-					inactiveNpc.SpawnLocation.WorldId,
-					placement.X,
-					placement.Y,
-					placement.Z,
-					placement.Heading),
-			};
-			if (!_world.TryAddObject(placement.ObjectId, spawnedInactiveNpc))
-			{
-				RollBackSpawnedInactiveVariants(spawnedInactiveNpcs);
-				return false;
-			}
-
-			spawnedInactiveNpcs.Add((placement.ObjectId, spawnedInactiveNpc));
-		}
-
-		var removedInactiveNpcs = new List<WorldNpc>(inactiveIds.Length);
-		foreach (var inactiveId in inactiveIds)
-		{
-			if (!_inactiveWalkerVariants.TryRemove(inactiveId, out var removedInactiveNpc))
-			{
-				RollBackInactiveVariantSpawn(spawnedInactiveNpcs, removedInactiveNpcs);
-				return false;
-			}
-
-			removedInactiveNpcs.Add(removedInactiveNpc);
-		}
-
-		var removedActiveNpcs = new List<(int ObjectId, WorldNpc Npc)>(activeNpcs.Count);
-		foreach (var activeNpc in activeNpcs)
-		{
-			if (!_world.TryRemoveObject(activeNpc.ObjectId, out var removedActiveObject)
-				|| removedActiveObject is not WorldNpc removedActiveNpc)
-			{
-				RollBackFormationSwap(spawnedInactiveNpcs, removedInactiveNpcs, removedActiveNpcs);
-				return false;
-			}
-
-			removedActiveNpcs.Add((activeNpc.ObjectId, removedActiveNpc));
-		}
-
-		foreach (var (objectId, activeNpc) in removedActiveNpcs)
-			_inactiveWalkerVariants[objectId] = activeNpc;
-		foreach (var (objectId, _) in removedActiveNpcs)
-			ClearNpcCreaturePvpZones(objectId);
-		foreach (var (_, inactiveNpc) in spawnedInactiveNpcs)
-			RevalidateNpcCreaturePvpZones(inactiveNpc);
-		foreach (var (_, inactiveNpc) in spawnedInactiveNpcs)
-			_staticPlaceables?.SpawnPlaceableObject(inactiveNpc.Position.WorldId, inactiveNpc.StaticId);
-		foreach (var (_, activeNpc) in removedActiveNpcs)
-			_staticPlaceables?.DespawnPlaceableObject(activeNpc.Position.WorldId, activeNpc.StaticId);
-		return true;
-	}
-
 	public async ValueTask InitAsync(CancellationToken cancellationToken = default)
 	{
-		// Java parity: GameServer.main calls SpawnEngine.spawnAll after DataManager and HousingService startup.
+		// Java parity: GameServer.main calls Aion.GameServer.SpawnEngine.SpawnEngine.spawnAll after DataManager and HousingService startup.
 		var staticData = _runtimeContext.DataManager?.StaticData;
 		if (staticData == null)
 		{
@@ -315,8 +169,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 		CancelPendingRespawns();
 		_temporarySpawnObjectIds.Clear();
 		_spawnedWorldNpcs.Clear();
-		_inactiveWalkerVariants.Clear();
-		_walkerSpawnPlans?.Clear();
 		Volatile.Write(ref _loadedCount, 0);
 		Volatile.Write(ref _skippedCount, 0);
 		return ValueTask.CompletedTask;
@@ -378,7 +230,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ItemTemplateTable? itemTemplates = null,
 		CancellationToken cancellationToken = default)
 	{
-		// Java parity: SpawnEngine.spawnInstance(instance, difficultId, ownerId) filters by difficulty and spawns into instance.getInstanceId().
+		// Java parity: Aion.GameServer.SpawnEngine.SpawnEngine.spawnInstance(instance, difficultId, ownerId) filters by difficulty and spawns into instance.getInstanceId().
 		ArgumentNullException.ThrowIfNull(instance);
 
 		SpawnStaticDoorsForInstance(instance, mapId, staticDoors);
@@ -616,7 +468,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 				continue;
 			}
 
-			// Java parity: SpawnEngine.spawnInstance checks spot-level TemporarySpawn.isInSpawnTime in the non-pool branch.
+			// Java parity: Aion.GameServer.SpawnEngine.SpawnEngine.spawnInstance checks spot-level TemporarySpawn.isInSpawnTime in the non-pool branch.
 			var activeSpawns = groupKey.PoolSize > 0
 				? groupSpawns
 				: groupSpawns
@@ -648,47 +500,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			}
 		}
 
-		RefreshWalkerSpawnPlansFromStaticData(allowedMaps);
 		return new WorldNpcSpawnResult(spawned, skipped);
-	}
-
-	public IReadOnlyList<WorldNpcWalkerWorldSpawnPlan> RefreshWalkerSpawnPlans(
-		WalkerTemplateTable walkerTemplates,
-		WalkerVersionTable walkerVersions,
-		IEnumerable<int>? worldIds = null)
-	{
-		if (_walkerSpawnPlans == null)
-			return Array.Empty<WorldNpcWalkerWorldSpawnPlan>();
-
-		var plans = _walkerSpawnPlans.RefreshWorldPlans(
-			_world.GetNpcs()
-				.OfType<WorldNpc>()
-				.Concat(_inactiveWalkerVariants.Values)
-				.ToArray(),
-			walkerTemplates,
-			walkerVersions,
-			worldIds);
-		if (_walkerPlacementApplication != null)
-		{
-			foreach (var plan in plans)
-			{
-				var result = _walkerPlacementApplication.ApplyActivePlacements(_world, plan.PlacementPlan);
-				foreach (var objectId in result.UpdatedObjectIds)
-				{
-					_inactiveWalkerVariants.TryRemove(objectId, out _);
-					RevalidateNpcCreaturePvpZones(objectId);
-				}
-
-				foreach (var inactiveNpc in result.RemovedInactiveNpcs)
-				{
-					_inactiveWalkerVariants[inactiveNpc.ObjectId] = inactiveNpc;
-					ClearNpcCreaturePvpZones(inactiveNpc.ObjectId);
-					_staticPlaceables?.DespawnPlaceableObject(inactiveNpc.Position.WorldId, inactiveNpc.StaticId);
-				}
-			}
-		}
-
-		return plans;
 	}
 
 	public WorldNpcSpawnResult SpawnWorldNpcsForMap(
@@ -951,11 +763,9 @@ public sealed class WorldNpcSpawnService : GameEngine
 		ClearNpcCreaturePvpZones(objectId);
 		if (_pendingDecays.TryRemove(objectId, out var pendingDecay))
 			pendingDecay.ScheduledTask?.Cancel();
-		_inactiveWalkerVariants.TryRemove(objectId, out _);
 		_staticPlaceables?.DespawnPlaceableObject(worldNpc.Position.WorldId, worldNpc.StaticId);
 		if (releaseObjectId)
 			_idFactory.ReleaseId(objectId);
-		RefreshWalkerSpawnPlansFromStaticData([worldNpc.Position.WorldId]);
 		return true;
 	}
 
@@ -1001,7 +811,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	private ValueTask RunRespawnAsync(int oldObjectId, PendingWorldNpcRespawn pendingRespawn, CancellationToken cancellationToken)
 	{
-		// Java parity: services/RespawnService.RespawnTask.run unregisters, then SpawnEngine.spawnObject.
+		// Java parity: services/RespawnService.RespawnTask.run unregisters, then Aion.GameServer.SpawnEngine.SpawnEngine.spawnObject.
 		if (!_pendingRespawns.TryGetValue(oldObjectId, out var currentRespawn)
 			|| !ReferenceEquals(currentRespawn, pendingRespawn)
 			|| !_pendingRespawns.TryRemove(oldObjectId, out _))
@@ -1022,7 +832,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 				newObjectId.Value);
 		if (newObjectId.HasValue)
 		{
-			RefreshWalkerSpawnPlansFromStaticData([pendingRespawn.Registration.Spawn.MapId]);
 			NotifyNpcRespawned(oldObjectId, newObjectId.Value);
 		}
 		return ValueTask.CompletedTask;
@@ -1030,7 +839,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 
 	private void NotifyNpcRespawned(int oldObjectId, int newObjectId)
 	{
-		// Java parity: services/RespawnService.RespawnTask.respawn notifies RiftService.updateSpawned after SpawnEngine.spawnObject.
+		// Java parity: services/RespawnService.RespawnTask.respawn notifies RiftService.updateSpawned after Aion.GameServer.SpawnEngine.SpawnEngine.spawnObject.
 		if (_respawnedNpcCallback == null)
 			return;
 		if (!_world.TryGetObject(newObjectId, out var gameObject) || gameObject is not WorldNpc respawn)
@@ -1118,20 +927,11 @@ public sealed class WorldNpcSpawnService : GameEngine
 		}
 	}
 
-	private void RefreshWalkerSpawnPlansFromStaticData(IEnumerable<int>? worldIds)
-	{
-		var staticData = _runtimeContext.DataManager?.StaticData;
-		if (staticData == null || _walkerSpawnPlans == null)
-			return;
-
-		RefreshWalkerSpawnPlans(staticData.WalkerTemplates, staticData.WalkerVersions, worldIds);
-	}
-
 	private async Task StartNpcWalkingForWorldsAsync(
 		IEnumerable<int> worldIds,
 		CancellationToken cancellationToken)
 	{
-		if (_randomWalking == null && _walkerRouteWalking == null)
+		if (_randomWalking == null)
 			return;
 
 		foreach (var worldId in worldIds.Distinct())
@@ -1139,109 +939,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 			cancellationToken.ThrowIfCancellationRequested();
 			if (_randomWalking != null)
 				await _randomWalking.StartWorldRandomWalkingAsync(worldId, cancellationToken);
-			if (_walkerRouteWalking != null)
-				await _walkerRouteWalking.StartWorldRouteWalkingAsync(worldId, cancellationToken);
 		}
-	}
-
-	private bool TryGetLiveWalkerNpcs(IReadOnlyList<int> objectIds, out IReadOnlyList<WorldNpc> npcs)
-	{
-		var result = new List<WorldNpc>(objectIds.Count);
-		foreach (var objectId in objectIds)
-		{
-			if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
-			{
-				npcs = Array.Empty<WorldNpc>();
-				return false;
-			}
-
-			result.Add(npc);
-		}
-
-		npcs = result;
-		return true;
-	}
-
-	private bool TryGetInactiveWalkerNpcs(IReadOnlyList<int> objectIds, out IReadOnlyList<WorldNpc> npcs)
-	{
-		var result = new List<WorldNpc>(objectIds.Count);
-		foreach (var objectId in objectIds)
-		{
-			if (!_inactiveWalkerVariants.TryGetValue(objectId, out var npc))
-			{
-				npcs = Array.Empty<WorldNpc>();
-				return false;
-			}
-
-			result.Add(npc);
-		}
-
-		npcs = result;
-		return true;
-	}
-
-	private bool TryGetInactiveFormationVariantPlacements(
-		int worldId,
-		IReadOnlyList<int> inactiveObjectIds,
-		IReadOnlyList<WorldNpc> inactiveNpcs,
-		out IReadOnlyList<WorldNpcWalkerPlacement> placements)
-	{
-		placements = Array.Empty<WorldNpcWalkerPlacement>();
-		var worldPlan = _walkerSpawnPlans?.GetWorldPlan(worldId);
-		if (worldPlan == null)
-			return false;
-
-		var inactiveIdSet = inactiveObjectIds.ToHashSet();
-		foreach (var formation in worldPlan.Organization.FormationVariants.Values.SelectMany(variants => variants))
-		{
-			if (!inactiveIdSet.SetEquals(formation.Members.Select(member => member.ObjectId)))
-				continue;
-
-			placements = formation.Members
-				.Select(member =>
-				{
-					var sourceNpc = inactiveNpcs.Single(npc => npc.ObjectId == member.ObjectId);
-					var spawnLocation = sourceNpc.SpawnLocation;
-					return new WorldNpcWalkerPlacement(
-						member.ObjectId,
-						member.TemplateId,
-						formation.RouteId,
-						IsFormationMember: true,
-						member.X,
-						member.Y,
-						spawnLocation.Z,
-						spawnLocation.Heading);
-				})
-				.ToArray();
-			return placements.Count == inactiveObjectIds.Count;
-		}
-
-		return false;
-	}
-
-	private void RollBackSpawnedInactiveVariants(IReadOnlyList<(int ObjectId, WorldNpc Npc)> spawnedInactiveNpcs)
-	{
-		foreach (var (objectId, _) in spawnedInactiveNpcs)
-			_world.TryRemoveObject(objectId, out _);
-	}
-
-	private void RollBackInactiveVariantSpawn(
-		IReadOnlyList<(int ObjectId, WorldNpc Npc)> spawnedInactiveNpcs,
-		IReadOnlyList<WorldNpc> removedInactiveNpcs)
-	{
-		RollBackSpawnedInactiveVariants(spawnedInactiveNpcs);
-		foreach (var inactiveNpc in removedInactiveNpcs)
-			_inactiveWalkerVariants[inactiveNpc.ObjectId] = inactiveNpc;
-	}
-
-	private void RollBackFormationSwap(
-		IReadOnlyList<(int ObjectId, WorldNpc Npc)> spawnedInactiveNpcs,
-		IReadOnlyList<WorldNpc> removedInactiveNpcs,
-		IReadOnlyList<(int ObjectId, WorldNpc Npc)> removedActiveNpcs)
-	{
-		RollBackInactiveVariantSpawn(spawnedInactiveNpcs, removedInactiveNpcs);
-		foreach (var (objectId, activeNpc) in removedActiveNpcs)
-			_world.TryAddObject(objectId, activeNpc);
 	}
 
 	private async ValueTask OnGameHourChangedAsync(int gameMinutes, CancellationToken cancellationToken)

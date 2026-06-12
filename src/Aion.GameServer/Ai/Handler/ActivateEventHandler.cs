@@ -9,7 +9,7 @@ public class ActivateEventHandler
 {
     public static void OnActivate(NpcAI npcAI)
     {
-        if (npcAI.IsInState(AiState.Idle))
+        if (npcAI.IsInState(AIState.IDLE))
         {
             npcAI.GetOwner().UpdateKnownlist();
             npcAI.Think();

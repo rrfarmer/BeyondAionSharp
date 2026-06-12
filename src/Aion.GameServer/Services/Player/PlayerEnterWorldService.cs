@@ -104,7 +104,7 @@ public sealed class PlayerEnterWorldService
             account.SetAccountWarehouse(AccountService.LoadAccountWarehouse(account));
         }
 
-        if (World.GetInstance().IsInWorld(objectId))
+        if (Aion.GameServer.World.World.GetInstance().IsInWorld(objectId))
         {
             log.LogWarning("Player enterWorld fail: Duplicate character obj ID {ObjectId} found in world.", objectId);
             client.SendPacket(new SM_ENTER_WORLD_CHECK(Msg.CONNECTION_ERROR));
@@ -192,7 +192,7 @@ public sealed class PlayerEnterWorldService
         log.LogInformation("Player " + player.GetName() + " (" + account + ") logged on");
         pcd.SetInEditMode(false);
 
-        World.GetInstance().StoreObject(player);
+        Aion.GameServer.World.World.GetInstance().StoreObject(player);
 
         // change player position if he isn't allowed to spawn in the current zone
         if (ValidateFortressZone(player)) // only check vortex zone if fortress check was ok (otherwise, the player is already set to bind point)
@@ -233,7 +233,7 @@ public sealed class PlayerEnterWorldService
         if (player.GetItemCoolDowns().Count != 0)
             client.SendPacket(new SM_ITEM_COOLDOWN(player.GetItemCoolDowns()));
 
-        QuestEngine.GetInstance().SendCompletedQuests(player);
+        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().SendCompletedQuests(player);
         client.SendPacket(new SM_QUEST_LIST(player.GetQuestStateList().GetUncompletedQuests()));
         client.SendPacket(new SM_TITLE_INFO(pcd.GetTitleId()));
         if (pcd.GetBonusTitleId() != 0)
@@ -416,7 +416,7 @@ public sealed class PlayerEnterWorldService
         {
             SkillTemplate skillTemplate = DataManager.SKILL_DATA.GetSkillTemplate(skillEntry.GetSkillId());
             if (skillTemplate.IsPassive())
-                SkillEngine.GetInstance().ApplyEffectDirectly(skillTemplate, skillEntry.GetSkillLevel(), player, player);
+                Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(skillTemplate, skillEntry.GetSkillLevel(), player, player);
         }
     }
 
@@ -432,12 +432,12 @@ public sealed class PlayerEnterWorldService
                 BindPointPosition bind = player.GetBindPoint();
                 if (bind != null)
                 {
-                    World.GetInstance().SetPosition(player, bind.GetMapId(), bind.GetX(), bind.GetY(), bind.GetZ(), bind.GetHeading());
+                    Aion.GameServer.World.World.GetInstance().SetPosition(player, bind.GetMapId(), bind.GetX(), bind.GetY(), bind.GetZ(), bind.GetHeading());
                 }
                 else
                 {
-                    PlayerInitialData.LocationData start = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
-                    World.GetInstance().SetPosition(player, start.GetMapId(), start.GetX(), start.GetY(), start.GetZ(), start.GetHeading());
+                    PlayerInitialData.LocationData start = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
+                    Aion.GameServer.World.World.GetInstance().SetPosition(player, start.GetMapId(), start.GetX(), start.GetY(), start.GetZ(), start.GetHeading());
                 }
                 return false;
             }
@@ -461,7 +461,7 @@ public sealed class PlayerEnterWorldService
             float y = loc.GetHomePoint().GetY();
             float z = loc.GetHomePoint().GetZ();
             byte h = loc.GetHomePoint().GetHeading();
-            World.GetInstance().SetPosition(player, mapId, x, y, z, h);
+            Aion.GameServer.World.World.GetInstance().SetPosition(player, mapId, x, y, z, h);
         }
     }
 
@@ -528,7 +528,7 @@ internal class GeneralUpdateTask : Runnable
 
     public void Run()
     {
-        Player player = World.GetInstance().GetPlayer(playerId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
         if (player != null)
         {
             try
@@ -561,7 +561,7 @@ internal class ItemUpdateTask : Runnable
 
     public void Run()
     {
-        Player player = World.GetInstance().GetPlayer(playerId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
         if (player != null)
         {
             try

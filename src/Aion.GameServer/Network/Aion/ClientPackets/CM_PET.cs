@@ -7,7 +7,7 @@ using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.ToyPet;
 using Aion.GameServer.Utils;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 
@@ -163,7 +163,7 @@ public class CM_PET : AionClientPacket
                 {
                     pet.GetCommonData().SetCancelFeed(true);
                     PacketSendUtility.SendPacket(player, new SM_PET(4, 0, 0, player.GetPet()));
-                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.EndFeeding, 0, player.GetObjectId()));
+                    PacketSendUtility.SendPacket(player, new SM_EMOTION(player, EmotionType.END_FEEDING, 0, player.GetObjectId()));
                 }
                 else if (pet.GetCommonData().GetRefeedDelay() > 0)
                 { // not hungry yet

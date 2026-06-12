@@ -14,8 +14,8 @@ public class DiedEventHandler
 
         ShoutEventHandler.OnDied(npcAI);
 
-        npcAI.SetStateIfNot(AiState.Died);
-        npcAI.SetSubStateIfNot(AiSubState.None);
+        npcAI.SetStateIfNot(AIState.DIED);
+        npcAI.SetSubStateIfNot(AISubState.NONE);
         npcAI.GetOwner().SetTarget(null);
     }
 }

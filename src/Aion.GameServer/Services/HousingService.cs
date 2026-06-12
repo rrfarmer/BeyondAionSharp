@@ -136,7 +136,7 @@ public class HousingService
     {
         if (ownerId == 0)
             return;
-        Player player = World.GetInstance().GetPlayer(ownerId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(ownerId);
         if (player != null)
         {
             player.ResetHouses();
@@ -169,10 +169,10 @@ public class HousingService
                 customHouse.SetPersistentState(IPersistable.PersistentState.NEW);
                 customHouses[address.GetId()] = customHouse;
             }
-            WorldPosition position = World.GetInstance().CreatePosition(address.GetMapId(), address.GetX(), address.GetY(), address.GetZ(), (byte)0,
+            WorldPosition position = Aion.GameServer.World.World.GetInstance().CreatePosition(address.GetMapId(), address.GetX(), address.GetY(), address.GetZ(), (byte)0,
                 instance.GetInstanceId());
             customHouse.SetPosition(position);
-            SpawnEngine.BringIntoWorld(customHouse);
+            Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(customHouse);
             spawnedCounter++;
         }
         if (spawnedCounter > 0)
@@ -189,8 +189,8 @@ public class HousingService
         if (studio.GetPosition() == null || studio.GetInstanceId() != instanceId)
         {
             HouseAddress addr = studio.GetAddress();
-            studio.SetPosition(World.GetInstance().CreatePosition(addr.GetMapId(), addr.GetX(), addr.GetY(), addr.GetZ(), (byte)0, instanceId));
-            SpawnEngine.BringIntoWorld(studio);
+            studio.SetPosition(Aion.GameServer.World.World.GetInstance().CreatePosition(addr.GetMapId(), addr.GetX(), addr.GetY(), addr.GetZ(), (byte)0, instanceId));
+            Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(studio);
         }
     }
 

@@ -1,6 +1,6 @@
 using Aion.Commons.Nio;
 using Aion.GameServer.Model.Items;
-using ItemBlobType = Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
+using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 
 namespace Aion.GameServer.Network.Aion.Iteminfo;
 
@@ -16,7 +16,7 @@ public class WeaponInfoBlobEntry : ItemBlobEntry
 
     public override void WriteThisBlob(ByteBuffer buf)
     {
-        ItemSlot[] slots = ItemSlot.GetSlotsFor(ownerItem.GetItemTemplate().GetItemSlot());
+        ItemSlot[] slots = ItemSlotExtensions.GetSlotsFor(ownerItem.GetItemTemplate().GetItemSlot());
         if (slots.Length == 1)
         {
             WriteQ(buf, slots[0].GetSlotIdMask());

@@ -192,8 +192,8 @@ public static class DecomposeService
 	{
 		// Java parity: model/templates/rewards/ResultedItem.isObtainableFor.
 		var raceMatches = string.Equals(item.Race, "PC_ALL", StringComparison.Ordinal)
-			|| string.Equals(item.Race, player.Race, StringComparison.Ordinal);
-		var classMatches = item.PlayerClasses.Count == 0 || item.PlayerClasses.Contains(player.PlayerClass);
+			|| string.Equals(item.Race, player.Race.ToString(), StringComparison.Ordinal);
+		var classMatches = item.PlayerClasses.Count == 0 || item.PlayerClasses.Contains(player.PlayerClass.ToString());
 		return raceMatches && classMatches;
 	}
 
@@ -245,9 +245,9 @@ public static class DecomposeService
 				itemTemplates,
 				GetSpecialManastoneQuality(type),
 				rollInclusive),
-			"CHUNK_EARTH" => ResolveRaceTableReward(ChunkEarthByRace, player.Race, rollInclusive),
-			"CHUNK_SAND" => ResolveRaceTableReward(ChunkSandByRace, player.Race, rollInclusive),
-			"PREMIUM_OPHIDAN_RECIPE" => ResolveRaceTableReward(PremiumOphidanRecipeByRace, player.Race, rollInclusive),
+			"CHUNK_EARTH" => ResolveRaceTableReward(ChunkEarthByRace, player.Race.ToString(), rollInclusive),
+			"CHUNK_SAND" => ResolveRaceTableReward(ChunkSandByRace, player.Race.ToString(), rollInclusive),
+			"PREMIUM_OPHIDAN_RECIPE" => ResolveRaceTableReward(PremiumOphidanRecipeByRace, player.Race.ToString(), rollInclusive),
 			"CHUNK_ROCK" => RollFrom(ChunkRock, rollInclusive),
 			"CHUNK_GEMSTONE" => RollFrom(ChunkGemstone, rollInclusive),
 			"SCROLLS" => RollFrom(Scrolls, rollInclusive),

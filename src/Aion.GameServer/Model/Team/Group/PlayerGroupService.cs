@@ -13,6 +13,7 @@ using Aion.GameServer.Services.Findgroup;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Model.Team.Alliance.Events;
 
 namespace Aion.GameServer.Model.Team.Group;
 

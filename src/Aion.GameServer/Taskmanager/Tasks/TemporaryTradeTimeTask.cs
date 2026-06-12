@@ -46,7 +46,7 @@ public class TemporaryTradeTimeTask : AbstractPeriodicTaskManager
             {
                 foreach (int playerId in entry.Value)
                 {
-                    Player player = World.GetInstance().GetPlayer(playerId);
+                    Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
                     if (player != null)
                         PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_EXCHANGE_TIME_OVER(item.GetL10n()));
                 }

@@ -134,7 +134,7 @@ public static class CustomLevelRewardPlanService
 			);
 		if (kind == CustomLevelRewardPackKind.Faction && accountCreationLocalTime is { } creationTime)
 		{
-			var window = GetFactionCreationWindow(player.Race);
+			var window = GetFactionCreationWindow(player.Race.ToString());
 			if (creationTime < window.MinCreationTime)
 				return CustomLevelRewardPlan.Skipped(
 					kind,
@@ -186,7 +186,7 @@ public static class CustomLevelRewardPlanService
 			player.ObjectId,
 			player.AccountId,
 			player.Name,
-			player.Race,
+			player.Race.ToString(),
 			player.Level,
 			player.Mailbox.Count,
 			accountCreationLocalTime,
@@ -215,7 +215,7 @@ public static class CustomLevelRewardPlanService
 		ItemTemplateTable? itemTemplates
 	)
 	{
-		var oppositeRace = GetOppositeRace(player.Race);
+		var oppositeRace = GetOppositeRace(player.Race.ToString());
 		return rewards
 			.Select(reward =>
 			{
@@ -320,7 +320,7 @@ public sealed record CustomLevelRewardPlan(
 			player.ObjectId,
 			player.AccountId,
 			player.Name,
-			player.Race,
+			player.Race.ToString(),
 			player.Level,
 			player.Mailbox.Count,
 			accountCreationLocalTime,

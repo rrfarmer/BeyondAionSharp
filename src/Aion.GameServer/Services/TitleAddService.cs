@@ -31,7 +31,7 @@ public static class TitleAddService
 			return TitleAddValidation.Fail(TitleAddFailure.InvalidTitle);
 
 		if (!string.Equals(titleTemplate.Race, "PC_ALL", StringComparison.Ordinal)
-			&& !string.Equals(titleTemplate.Race, player.Race, StringComparison.Ordinal))
+			&& !string.Equals(titleTemplate.Race.ToString(), player.Race.ToString(), StringComparison.Ordinal))
 		{
 			return TitleAddValidation.Fail(TitleAddFailure.InvalidRace, titleTemplate);
 		}

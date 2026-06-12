@@ -61,7 +61,7 @@ public class RiftManager
         }
 
         int spawned = 0;
-        int instanceCount = World.GetInstance().GetWorldMap(masterTemplate.GetWorldId()).GetInstanceCount();
+        int instanceCount = Aion.GameServer.World.World.GetInstance().GetWorldMap(masterTemplate.GetWorldId()).GetInstanceCount();
 
         for (int i = 1; i <= instanceCount; i++)
         {
@@ -98,7 +98,7 @@ public class RiftManager
         npc.SetKnownlist(new NpcKnownList(npc));
         npc.SetEffectController(new EffectController(npc));
 
-        World world = World.GetInstance();
+        World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(npc);
         world.SetPosition(npc, template.GetWorldId(), instance, template.GetX(), template.GetY(), template.GetZ(), template.GetHeading());
         world.Spawn(npc);

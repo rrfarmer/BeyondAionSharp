@@ -56,7 +56,7 @@ public sealed class HousingVisibilityService
 
 	public bool IsVisibleTo(Player player, WorldHouse house)
 	{
-		var playerPosition = player.Position;
+		var playerPosition = player.GetPosition();
 		var housePosition = house.Position;
 		if (playerPosition.WorldId != housePosition.WorldId)
 			return false;

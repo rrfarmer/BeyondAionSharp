@@ -63,7 +63,7 @@ public static class PetFeedPlanner
 		}
 
 		PetFeedCalculator.UpdatePetFeedProgress(progress, itemLevel, maxFeedCount);
-		if (progress.HungryLevel != PetHungryLevel.Full)
+		if (progress.HungryLevel != PetHungryLevel.FULL)
 		{
 			return null;
 		}

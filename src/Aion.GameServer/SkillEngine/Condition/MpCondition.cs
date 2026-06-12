@@ -1,6 +1,7 @@
 using System.Xml.Serialization;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Condition;
 
@@ -29,7 +30,7 @@ public class MpCondition : Condition
             valueWithDelta = valueWithDelta - ((valueWithDelta / ((100 / changeMpPercent))));
         }
         if (skill.GetEffector().GetLifeStats().GetCurrentMp() > valueWithDelta)
-            skill.GetEffector().GetLifeStats().ReduceMp(SM_ATTACK_STATUS.TYPE.USED_MP, valueWithDelta, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+            skill.GetEffector().GetLifeStats().ReduceMp(SmAttackStatus.TYPE.USED_MP, valueWithDelta, 0, SmAttackStatus.LOG.REGULAR);
         return skill.GetEffector().GetLifeStats().GetCurrentMp() > valueWithDelta;
     }
 }

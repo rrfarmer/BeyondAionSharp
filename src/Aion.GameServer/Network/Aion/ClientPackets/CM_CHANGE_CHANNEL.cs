@@ -5,7 +5,7 @@ using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.World;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

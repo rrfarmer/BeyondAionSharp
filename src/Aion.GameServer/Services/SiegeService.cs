@@ -555,7 +555,7 @@ public class SiegeService
                 SiegeSpawnTemplate siegetemplate = (SiegeSpawnTemplate)template;
                 if (siegetemplate.GetSiegeRace() == race && siegetemplate.GetSiegeModType() == type)
                 {
-                    SpawnEngine.SpawnObject(siegetemplate, 1);
+                    Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(siegetemplate, 1);
                 }
             }
         }

@@ -150,10 +150,120 @@ public static class PositionUtil
     public static bool IsInRange(VisibleObject obj, float x, float y, float z, float range) =>
         IsInRange(obj.GetX(), obj.GetY(), obj.GetZ(), x, y, z, range);
 
-    // TODO-backlog F2: isInRangeLimited(VisibleObject, VisibleObject, float, float) — needs VisibleObject
-    // TODO-backlog F2: isInsideAttackCylinder(VisibleObject, VisibleObject, ...) — needs AreaDirections
-    // TODO-backlog F3: isInAttackRange(Creature, Creature, float) — needs Creature + CreatureMoveController
-    // TODO-backlog F3: calculateMaxCoveredDistance(Creature, long) — needs Creature.getGameStats()
-    // TODO-backlog F3: isInTalkRange(Creature, Npc) — needs Creature, Npc
-    // TODO-backlog F3: isInTalkRange(Creature, HouseObject) — needs Creature, HouseObject
+    // Java parity: isInTalkRange(Creature, Npc)
+    public static bool IsInTalkRange(Creature creature, Npc npc)
+    {
+        float range = npc.GetObjectTemplate().GetTalkDistance() + 1;
+        return IsInRange(npc, creature, range, false);
+    }
+
+    // Java parity: isInTalkRange(Creature, HouseObject<?>)
+    public static bool IsInTalkRange<T>(Creature creature, HouseObject<T> houseObject)
+        where T : Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject
+    {
+        float range = houseObject.GetObjectTemplate().GetTalkingDistance() + 1;
+        return IsInRange(houseObject, creature, range, false);
+    }
+
+    // Java parity: calculateAngleFrom(VisibleObject, VisibleObject)
+    public static float CalculateAngleFrom(VisibleObject obj1, VisibleObject obj2) =>
+        CalculateAngleFrom(obj1.GetX(), obj1.GetY(), obj2.GetX(), obj2.GetY());
+
+    // Java parity: checkAngleDiff(float, float, float)
+    private static bool CheckAngleDiff(float angle1, float angle2, float maxAngleDiff)
+    {
+        float angleDiff = Math.Abs(angle1 - angle2);
+        if (angleDiff > 180)
+            angleDiff -= 360;
+        return Math.Abs(angleDiff) <= maxAngleDiff;
+    }
+
+    // Java parity: isBehind(VisibleObject, VisibleObject[, float])
+    public static bool IsBehind(VisibleObject obj, VisibleObject target) => IsBehind(obj, target, MaxAngleDiff);
+
+    public static bool IsBehind(VisibleObject obj, VisibleObject target, float maxAngleDiff)
+    {
+        float angle1 = CalculateAngleFrom(obj, target);
+        float angle2 = ConvertHeadingToAngle(target.GetHeading());
+        return CheckAngleDiff(angle1, angle2, maxAngleDiff);
+    }
+
+    // Java parity: isInFrontOf(VisibleObject, VisibleObject[, float])
+    public static bool IsInFrontOf(VisibleObject obj, VisibleObject target) => IsInFrontOf(obj, target, MaxAngleDiff);
+
+    public static bool IsInFrontOf(VisibleObject obj, VisibleObject target, float maxAngleDiff)
+    {
+        if (maxAngleDiff >= 180)
+            return true;
+        float angle1 = CalculateAngleFrom(target, obj);
+        float angle2 = ConvertHeadingToAngle(target.GetHeading());
+        return CheckAngleDiff(angle1, angle2, maxAngleDiff);
+    }
+
+    // Java parity: calculateMaxCoveredDistance(Creature, long)
+    public static float CalculateMaxCoveredDistance(Creature creature, long movementDurationMillis)
+    {
+        if (movementDurationMillis <= 0)
+            return 0;
+        int metersPerSecondInThousands = creature.GetGameStats().GetMovementSpeed().GetCurrent();
+        return metersPerSecondInThousands * movementDurationMillis / 1_000_000f;
+    }
+
+    // Java parity: calculateMaxDistanceOffset(Creature)
+    private static float CalculateMaxDistanceOffset(Creature creature)
+    {
+        float offset = Aion.GameServer.Controllers.Movement.CreatureMoveController.MOVE_CHECK_OFFSET;
+        long lastMove = creature.GetMoveController().GetLastMoveUpdate();
+        if (lastMove > 0)
+        {
+            long msSinceLastMove = Math.Min(1000, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - lastMove);
+            offset += CalculateMaxCoveredDistance(creature, msSinceLastMove);
+        }
+        return offset;
+    }
+
+    // Java parity: isInsideAttackCylinder(VisibleObject, VisibleObject, float length, float radius, AreaDirections direction)
+    // Tests if obj2 is within a cylinder originating from obj1 with the given length.
+    public static bool IsInsideAttackCylinder(VisibleObject obj1, VisibleObject obj2, float length, float radius,
+        Aion.GameServer.SkillEngine.Properties.AreaDirections direction)
+    {
+        double radian = Math.PI / 180.0 * ConvertHeadingToAngle(obj1.GetHeading());
+        if (direction == Aion.GameServer.SkillEngine.Properties.AreaDirections.BACK)
+            radian += Math.PI;
+
+        length += obj1.GetObjectTemplate().GetBoundRadius().GetFront() + obj2.GetObjectTemplate().GetBoundRadius().GetFront();
+        radius += obj2.GetObjectTemplate().GetBoundRadius().GetFront();
+
+        float dx = (float)(Math.Cos(radian) * length);
+        float dy = (float)(Math.Sin(radian) * length);
+
+        float tdx = obj2.GetX() - obj1.GetX();
+        float tdy = obj2.GetY() - obj1.GetY();
+        float tdz = obj2.GetZ() - obj1.GetZ();
+        float lengthSqr = length * length;
+
+        float dot = tdx * dx + tdy * dy;
+        if (dot < 0.0f || dot > lengthSqr)
+            return false;
+
+        // distance squared to the cylinder axis
+        return (tdx * tdx + tdy * tdy + tdz * tdz) - (dot * dot / lengthSqr) <= (radius * radius);
+    }
+
+    // Java parity: isInAttackRange(Creature, Creature, float)
+    public static bool IsInAttackRange(Creature attacker, Creature target, float range)
+    {
+        if (attacker == null || target == null)
+            return false;
+        if (attacker.GetMoveController().IsInMove())
+        {
+            float offset = CalculateMaxDistanceOffset(attacker);
+            if (attacker is Player)
+                offset *= 1.33f; // client sends inaccurate coordinates during movement
+            range += offset;
+        }
+        if (target.GetMoveController().IsInMove() && attacker is not Npc)
+            range += CalculateMaxDistanceOffset(target);
+        return IsInRange(attacker, target, range, false);
+    }
 }

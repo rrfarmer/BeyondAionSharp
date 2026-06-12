@@ -30,7 +30,7 @@ public sealed class GameTimeService : GameEngine
 	private int _gameMinutes;
 	private Task? _clockTask;
 	private Task? _saveTask;
-	private Func<GameServerPacket, CancellationToken, Task<int>>? _broadcastToWorld;
+	private Func<AionServerPacket, CancellationToken, Task<int>>? _broadcastToWorld;
 
 	public event Func<int, CancellationToken, ValueTask>? HourChanged;
 
@@ -86,7 +86,7 @@ public sealed class GameTimeService : GameEngine
 
 	public int GameMinutes => Volatile.Read(ref _gameMinutes);
 
-	public void SetWorldBroadcaster(Func<GameServerPacket, CancellationToken, Task<int>> broadcastToWorld)
+	public void SetWorldBroadcaster(Func<AionServerPacket, CancellationToken, Task<int>> broadcastToWorld)
 	{
 		// Java parity: PacketSendUtility.broadcastToWorld hook used by GameTimeService periodic update.
 		_broadcastToWorld = broadcastToWorld;

@@ -175,7 +175,7 @@ public sealed class VortexLocationServiceTests
 				Template: new NpcTemplateSummary(831500, "Existing vortex peace", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
 				Position: location.HomePoint);
 			var invasionSpawn = VortexStartInvasionSpawnSnapshot.FromVortexSpawn(
-				CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"));
+				CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"));
 
 			var plan = planner.CreatePlan(
 				start,
@@ -201,7 +201,7 @@ public sealed class VortexLocationServiceTests
 				plan.OrderedSteps.Select(step => step.Kind).ToArray());
 			Assert.Equal(831500, plan.OrderedSteps[2].NpcId);
 			var spawnStep = plan.OrderedSteps.Single(step => step.Kind == VortexStartInvasionSideEffectStepKind.SpawnInvasionNpc);
-			Assert.Equal(VortexStateType.Invasion, spawnStep.VortexState);
+			Assert.Equal(VortexStateType.INVASION, spawnStep.VortexState);
 			Assert.Equal(831600, Assert.IsType<NpcSpawnSummary>(spawnStep.Spawn).NpcId);
 		}
 		finally
@@ -232,7 +232,7 @@ public sealed class VortexLocationServiceTests
 					Template: new NpcTemplateSummary(831500, "Ignored", 0, 1, "NORMAL", "NORMAL", "NONE", "NONE", "NPC"),
 					Position: location.HomePoint))],
 				[VortexStartInvasionSpawnSnapshot.FromVortexSpawn(
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "ignored"))]);
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "ignored"))]);
 
 			Assert.Equal(VortexStartInvasionSideEffectPlanStatus.AlreadyStarted, plan.Status);
 			Assert.False(plan.ShouldExecuteLiveSideEffects);
@@ -254,17 +254,17 @@ public sealed class VortexLocationServiceTests
 		var selector = new VortexInvasionSpawnSnapshotSelectionService();
 		var table = new NpcVortexSpawnTable(
 			[
-				CreateVortexSpawn(0, 0, 0, VortexStateType.Peace, 831500, "peace-a"),
-				CreateVortexSpawn(0, 0, 1, VortexStateType.Invasion, 831600, "invasion-a"),
-				CreateVortexSpawn(0, 1, 0, VortexStateType.Invasion, 831601, "invasion-b"),
-				CreateVortexSpawn(1, 0, 0, VortexStateType.Invasion, 831700, "other-location"),
+				CreateVortexSpawn(0, 0, 0, VortexStateType.PEACE, 831500, "peace-a"),
+				CreateVortexSpawn(0, 0, 1, VortexStateType.INVASION, 831600, "invasion-a"),
+				CreateVortexSpawn(0, 1, 0, VortexStateType.INVASION, 831601, "invasion-b"),
+				CreateVortexSpawn(1, 0, 0, VortexStateType.INVASION, 831700, "other-location"),
 			]);
-		var peaceSpawn = CreateVortexSpawn(0, 0, 0, VortexStateType.Peace, 831500, "peace-a");
+		var peaceSpawn = CreateVortexSpawn(0, 0, 0, VortexStateType.PEACE, 831500, "peace-a");
 
 		var selected = selector.SelectInvasionSpawns(0, table);
 
 		Assert.Equal([831600, 831601], selected.Select(spawn => spawn.Spawn.NpcId).ToArray());
-		Assert.All(selected, spawn => Assert.Equal(VortexStateType.Invasion, spawn.State));
+		Assert.All(selected, spawn => Assert.Equal(VortexStateType.INVASION, spawn.State));
 		Assert.Throws<ArgumentException>(() => VortexStartInvasionSpawnSnapshot.FromVortexSpawn(peaceSpawn));
 	}
 
@@ -292,8 +292,8 @@ public sealed class VortexLocationServiceTests
 				new QuestionResponseRequest(9001, QuestionResponseRequestKind.Unknown)));
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Invasion, 831600, "static-invasion"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.PEACE, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.INVASION, 831600, "static-invasion"),
 				]);
 
 			var request = collector.PrepareWithStaticInvasionSpawns(
@@ -348,9 +348,9 @@ public sealed class VortexLocationServiceTests
 				selector);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Invasion, 831600, "static-invasion"),
-					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.Invasion, 831700, "other-location"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.PEACE, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.INVASION, 831600, "static-invasion"),
+					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.INVASION, 831700, "other-location"),
 				]);
 
 			var report = coordinator.StartInvasion(
@@ -412,7 +412,7 @@ public sealed class VortexLocationServiceTests
 			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId, location.InvadersRace);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "static-invasion"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "static-invasion"),
 				]);
 			var request = collector.PrepareWithStaticInvasionSpawns(
 				location,
@@ -594,7 +594,7 @@ public sealed class VortexLocationServiceTests
 				selector);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "ignored"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "ignored"),
 				]);
 
 			var report = coordinator.StartInvasion(
@@ -3970,7 +3970,7 @@ public sealed class VortexLocationServiceTests
 			Assert.False(outsideKickRemoval.ShouldSyncLivePassedPlayers);
 			Assert.DoesNotContain(plan.OrderedSteps, step => step.PlayerObjectId == offlineInvader.ObjectId);
 			Assert.DoesNotContain(plan.OrderedKickRemovalPlans, kick => kick.PlayerObjectId == offlineInvader.ObjectId);
-			Assert.Equal(VortexStateType.Peace, plan.OrderedSteps.Last().VortexState);
+			Assert.Equal(VortexStateType.PEACE, plan.OrderedSteps.Last().VortexState);
 			Assert.Same(peaceSpawn, plan.OrderedSteps.Last().Spawn);
 		}
 		finally
@@ -4014,7 +4014,7 @@ public sealed class VortexLocationServiceTests
 	[Fact]
 	public void VortexStateType_MetadataCarriesJavaStatesInOrder()
 	{
-		Assert.Equal([VortexStateType.Invasion, VortexStateType.Peace], Enum.GetValues<VortexStateType>());
+		Assert.Equal([VortexStateType.INVASION, VortexStateType.PEACE], Enum.GetValues<VortexStateType>());
 		Assert.Equal(["Invasion", "Peace"], Enum.GetNames<VortexStateType>());
 	}
 
@@ -4024,16 +4024,16 @@ public sealed class VortexLocationServiceTests
 		var selector = new VortexPeaceSpawnSnapshotSelectionService();
 		var table = new NpcVortexSpawnTable(
 			[
-				CreateVortexSpawn(0, 0, 0, VortexStateType.Peace, 831500, "peace-a"),
-				CreateVortexSpawn(0, 0, 1, VortexStateType.Invasion, 831600, "invasion-a"),
-				CreateVortexSpawn(0, 1, 0, VortexStateType.Peace, 831501, "peace-b"),
-				CreateVortexSpawn(1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+				CreateVortexSpawn(0, 0, 0, VortexStateType.PEACE, 831500, "peace-a"),
+				CreateVortexSpawn(0, 0, 1, VortexStateType.INVASION, 831600, "invasion-a"),
+				CreateVortexSpawn(0, 1, 0, VortexStateType.PEACE, 831501, "peace-b"),
+				CreateVortexSpawn(1, 0, 0, VortexStateType.PEACE, 831700, "other-location"),
 			]);
 
 		var selected = selector.SelectPeaceSpawns(0, table);
 
 		Assert.Equal(2, selected.Count);
-		Assert.All(selected, snapshot => Assert.Equal(VortexStateType.Peace, snapshot.State));
+		Assert.All(selected, snapshot => Assert.Equal(VortexStateType.PEACE, snapshot.State));
 		Assert.Equal([831500, 831501], selected.Select(snapshot => snapshot.Spawn.NpcId).ToArray());
 		Assert.Equal(["peace-a", "peace-b"], selected.Select(snapshot => snapshot.Spawn.Anchor).ToArray());
 		Assert.Equal([210060000, 210060000], selected.Select(snapshot => snapshot.Spawn.MapId).ToArray());
@@ -4055,8 +4055,8 @@ public sealed class VortexLocationServiceTests
 			var selector = new VortexPeaceSpawnSnapshotSelectionService();
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "peace-a"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.PEACE, 831500, "peace-a"),
 				]);
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 
@@ -4075,7 +4075,7 @@ public sealed class VortexLocationServiceTests
 				plan.OrderedSteps.Select(step => step.Kind).ToArray());
 			var spawnStep = Assert.Single(plan.OrderedSteps, step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc);
 			Assert.Equal(831500, spawnStep.NpcId);
-			Assert.Equal(VortexStateType.Peace, spawnStep.VortexState);
+			Assert.Equal(VortexStateType.PEACE, spawnStep.VortexState);
 			Assert.Equal("peace-a", spawnStep.Spawn?.Anchor);
 		}
 		finally
@@ -4087,7 +4087,7 @@ public sealed class VortexLocationServiceTests
 	[Fact]
 	public void PeaceSpawnSnapshot_RejectsInvasionVortexRows()
 	{
-		var invasionSpawn = CreateVortexSpawn(0, 0, 0, VortexStateType.Invasion, 831600, "invasion-a");
+		var invasionSpawn = CreateVortexSpawn(0, 0, 0, VortexStateType.INVASION, 831600, "invasion-a");
 
 		Assert.Throws<ArgumentException>(() => VortexStopPeaceSpawnSnapshot.FromVortexSpawn(invasionSpawn));
 	}
@@ -4112,7 +4112,7 @@ public sealed class VortexLocationServiceTests
 	{
 		var selector = new VortexPeaceSpawnSnapshotSelectionService();
 		var suppliedPeaceSpawn = VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
-			CreateVortexSpawn(0, 9, 0, VortexStateType.Peace, 831499, "supplied-peace"));
+			CreateVortexSpawn(0, 9, 0, VortexStateType.PEACE, 831499, "supplied-peace"));
 		var request = new VortexStopInvasionSnapshotRequest(
 			PeaceSpawns: [suppliedPeaceSpawn],
 			InvaderAlliances: new Dictionary<int, VortexKickPlayerAllianceSnapshot>
@@ -4122,9 +4122,9 @@ public sealed class VortexLocationServiceTests
 			PassedPlayerObjectIds: new HashSet<int> { 1002 });
 		var table = new NpcVortexSpawnTable(
 			[
-				CreateVortexSpawn(0, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
-				CreateVortexSpawn(0, 1, 0, VortexStateType.Peace, 831500, "static-peace"),
-				CreateVortexSpawn(1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+				CreateVortexSpawn(0, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"),
+				CreateVortexSpawn(0, 1, 0, VortexStateType.PEACE, 831500, "static-peace"),
+				CreateVortexSpawn(1, 0, 0, VortexStateType.PEACE, 831700, "other-location"),
 			]);
 
 		var enriched = request.WithPeaceSpawns(selector.SelectPeaceSpawns(0, table));
@@ -4239,9 +4239,9 @@ public sealed class VortexLocationServiceTests
 				Position: location.StartPoint);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "peace-a"),
-					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.PEACE, 831500, "peace-a"),
+					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.PEACE, 831700, "other-location"),
 				]);
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 			Assert.True(runtime.AddInvader(location.Id, invader));
@@ -4279,7 +4279,7 @@ public sealed class VortexLocationServiceTests
 				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
 			var spawnStep = Assert.Single(report.SideEffectPlan.OrderedSteps, step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc);
 			Assert.Equal(831500, spawnStep.NpcId);
-			Assert.Equal(VortexStateType.Peace, spawnStep.VortexState);
+			Assert.Equal(VortexStateType.PEACE, spawnStep.VortexState);
 			var kickRemoval = Assert.Single(report.OrderedKickRemovalPlans);
 			Assert.Equal(VortexKickPlayerRemovalPlanStatus.InvaderRemovedWithTeleport, kickRemoval.Status);
 			AssertPassedSyncPlan(kickRemoval.PassedPlayerSyncPlan, location.Id, passedPlayerCount: 0);
@@ -4303,7 +4303,7 @@ public sealed class VortexLocationServiceTests
 		var collector = new VortexStopInvasionRuntimeSnapshotCollectorService(peaceSpawnSelector);
 		var table = new NpcVortexSpawnTable(
 			[
-				CreateVortexSpawn(0, 0, 0, VortexStateType.Peace, 831500, "peace-a"),
+				CreateVortexSpawn(0, 0, 0, VortexStateType.PEACE, 831500, "peace-a"),
 			]);
 
 		var request = collector.PrepareWithStaticPeaceSpawns(0, null, table);
@@ -4474,7 +4474,7 @@ public sealed class VortexLocationServiceTests
 					VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc,
 				],
 				report.SideEffectPlan.OrderedSteps.Select(step => step.Kind).ToArray());
-			Assert.Equal(VortexStateType.Peace, report.SideEffectPlan.OrderedSteps.Last().VortexState);
+			Assert.Equal(VortexStateType.PEACE, report.SideEffectPlan.OrderedSteps.Last().VortexState);
 			Assert.Null(runtime.GetSnapshot(location.Id));
 		}
 		finally
@@ -4497,7 +4497,7 @@ public sealed class VortexLocationServiceTests
 				runtime,
 				new VortexStopInvasionSideEffectPlanService());
 			var suppliedPeaceSpawn = VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
-				CreateVortexSpawn(location.Id, 9, 0, VortexStateType.Peace, 831499, "supplied-peace"));
+				CreateVortexSpawn(location.Id, 9, 0, VortexStateType.PEACE, 831499, "supplied-peace"));
 			var invader = CreatePlayer(1002, isOnline: true, location.InvasionWorldId);
 			var request = new VortexStopInvasionSnapshotRequest(
 				Invaders: [VortexStopInvaderSnapshot.FromPlayer(invader)],
@@ -4509,9 +4509,9 @@ public sealed class VortexLocationServiceTests
 				PassedPlayerObjectIds: new HashSet<int> { invader.ObjectId });
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "static-peace"),
-					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.Peace, 831700, "other-location"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.PEACE, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id + 1, 0, 0, VortexStateType.PEACE, 831700, "other-location"),
 				]);
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 
@@ -4540,7 +4540,7 @@ public sealed class VortexLocationServiceTests
 				.ToArray();
 			Assert.Equal([831499, 831500], spawnSteps.Select(step => step.NpcId).ToArray());
 			Assert.Equal(["supplied-peace", "static-peace"], spawnSteps.Select(step => step.Spawn!.Anchor).ToArray());
-			Assert.All(spawnSteps, step => Assert.Equal(VortexStateType.Peace, step.VortexState));
+			Assert.All(spawnSteps, step => Assert.Equal(VortexStateType.PEACE, step.VortexState));
 			Assert.Null(runtime.GetSnapshot(location.Id));
 		}
 		finally
@@ -4574,8 +4574,8 @@ public sealed class VortexLocationServiceTests
 				Position: location.StartPoint);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "peace-a"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.PEACE, 831500, "peace-a"),
 				]);
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 			Assert.True(runtime.AddInvader(location.Id, invader));
@@ -4648,7 +4648,7 @@ public sealed class VortexLocationServiceTests
 				PeaceSpawns:
 				[
 					VortexStopPeaceSpawnSnapshot.FromVortexSpawn(
-						CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "peace-a")),
+						CreateVortexSpawn(location.Id, 0, 0, VortexStateType.PEACE, 831500, "peace-a")),
 				]);
 
 			var missing = coordinator.StopInvasionWithPreparedRequest(location.Id, preparedRequest);
@@ -4697,8 +4697,8 @@ public sealed class VortexLocationServiceTests
 				peaceSpawnSelector);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Invasion, 831600, "invasion-a"),
-					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.Peace, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.INVASION, 831600, "invasion-a"),
+					CreateVortexSpawn(location.Id, 1, 0, VortexStateType.PEACE, 831500, "static-peace"),
 				]);
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 
@@ -4718,7 +4718,7 @@ public sealed class VortexLocationServiceTests
 			var spawnStep = Assert.Single(report.SideEffectPlan.OrderedSteps, step => step.Kind == VortexStopInvasionSideEffectStepKind.SpawnPeaceNpc);
 			Assert.Equal(831500, spawnStep.NpcId);
 			Assert.Equal("static-peace", spawnStep.Spawn!.Anchor);
-			Assert.Equal(VortexStateType.Peace, spawnStep.VortexState);
+			Assert.Equal(VortexStateType.PEACE, spawnStep.VortexState);
 			Assert.Null(runtime.GetSnapshot(location.Id));
 			Assert.Equal(1, peaceSpawnSelector.CallCount);
 			Assert.Equal([location.Id], peaceSpawnSelector.LocationIds);
@@ -4746,7 +4746,7 @@ public sealed class VortexLocationServiceTests
 				peaceSpawnSelector);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.PEACE, 831500, "static-peace"),
 				]);
 
 			var missing = coordinator.StopInvasion(location.Id, table);
@@ -4800,7 +4800,7 @@ public sealed class VortexLocationServiceTests
 				peaceSpawnSelector);
 			var table = new NpcVortexSpawnTable(
 				[
-					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.Peace, 831500, "static-peace"),
+					CreateVortexSpawn(location.Id, 0, 0, VortexStateType.PEACE, 831500, "static-peace"),
 				]);
 			runtime.StartInvasion(location, CreateVortexPortal(location));
 			Assert.True(runtime.MarkInvasionFinished(location.Id));

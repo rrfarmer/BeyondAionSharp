@@ -29,7 +29,7 @@ public static class GuideHtmlLevelChangePlanService
 		var descriptors = new List<GuideHtmlLevelChangeDescriptor>();
 		for (var level = fromLevel; level <= toLevel; level++)
 		{
-			foreach (var template in GetTemplatesFor(templateList, player.PlayerClass, player.Race, level))
+			foreach (var template in GetTemplatesFor(templateList, player.PlayerClass.ToString(), player.Race.ToString(), level))
 			{
 				var descriptorStatus = template.IsActivated
 					? GuideHtmlLevelChangeDescriptorStatus.PlannedSendAndPersist
@@ -55,8 +55,8 @@ public static class GuideHtmlLevelChangePlanService
 		return new GuideHtmlLevelChangePlan(
 			planStatus,
 			player.ObjectId,
-			player.PlayerClass,
-			player.Race,
+			player.PlayerClass.ToString(),
+			player.Race.ToString(),
 			guidesEnabled,
 			isSpawned,
 			fromLevel,
@@ -148,8 +148,8 @@ public sealed record GuideHtmlLevelChangePlan(
 		return new GuideHtmlLevelChangePlan(
 			status,
 			player.ObjectId,
-			player.PlayerClass,
-			player.Race,
+			player.PlayerClass.ToString(),
+			player.Race.ToString(),
 			guidesEnabled,
 			isSpawned,
 			fromLevel,

@@ -49,11 +49,11 @@ public class CronJobService
 
             SpawnTemplate template = Rnd.Get(1, 3) switch
             {
-                1 => SpawnEngine.NewSingleTimeSpawn(400010000, 251045, 2464.9199f, 1689f, 2882.221f, (byte) 0),
-                2 => SpawnEngine.NewSingleTimeSpawn(400010000, 251045, 2263.4812f, 2587.1633f, 2879.5447f, (byte) 0),
-                _ => SpawnEngine.NewSingleTimeSpawn(400010000, 251045, 1692.96f, 1809.04f, 2886.027f, (byte) 0),
+                1 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400010000, 251045, 2464.9199f, 1689f, 2882.221f, (byte) 0),
+                2 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400010000, 251045, 2263.4812f, 2587.1633f, 2879.5447f, (byte) 0),
+                _ => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(400010000, 251045, 1692.96f, 1809.04f, 2886.027f, (byte) 0),
             };
-            moltenus = (Npc) SpawnEngine.SpawnObject(template, 1);
+            moltenus = (Npc) Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, 1);
             // Despawn task
             ThreadPoolManager.GetInstance().Schedule(ct =>
             {
@@ -91,24 +91,24 @@ public class CronJobService
         {
             SpawnTemplate elyosSpawn = Rnd.Get(1, 4) switch
             {
-                1 => SpawnEngine.NewSingleTimeSpawn(600100000, 731631, 721.39f, 268.67f, 291.636f, (byte) 60), // Levinshor
-                2 => SpawnEngine.NewSingleTimeSpawn(600100000, 731631, 332.40f, 1903.37f, 232.000f, (byte) 110), // Levinshor
-                3 => SpawnEngine.NewSingleTimeSpawn(600090000, 731631, 1179.58f, 687.52f, 190.625f, (byte) 0), // Kaldor
-                _ => SpawnEngine.NewSingleTimeSpawn(210070000, 731631, 777.01f, 1479.86f, 457.375f, (byte) 30), // Cygnea
+                1 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(600100000, 731631, 721.39f, 268.67f, 291.636f, (byte) 60), // Levinshor
+                2 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(600100000, 731631, 332.40f, 1903.37f, 232.000f, (byte) 110), // Levinshor
+                3 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(600090000, 731631, 1179.58f, 687.52f, 190.625f, (byte) 0), // Kaldor
+                _ => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(210070000, 731631, 777.01f, 1479.86f, 457.375f, (byte) 30), // Cygnea
             };
             SpawnTemplate asmodianSpawn = Rnd.Get(1, 4) switch
             {
-                1 => SpawnEngine.NewSingleTimeSpawn(600100000, 731632, 1478.78f, 1844.20f, 225.987f, (byte) 45), // Levinshor
-                2 => SpawnEngine.NewSingleTimeSpawn(600100000, 731632, 1870.49f, 41.64f, 244.711f, (byte) 15), // Levinshor
-                3 => SpawnEngine.NewSingleTimeSpawn(600090000, 731632, 415.01f, 564.42f, 142.0f, (byte) 100), // Kaldor
-                _ => SpawnEngine.NewSingleTimeSpawn(220080000, 731632, 233.39f, 1137.03f, 225.875f, (byte) 105), // Enshar
+                1 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(600100000, 731632, 1478.78f, 1844.20f, 225.987f, (byte) 45), // Levinshor
+                2 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(600100000, 731632, 1870.49f, 41.64f, 244.711f, (byte) 15), // Levinshor
+                3 => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(600090000, 731632, 415.01f, 564.42f, 142.0f, (byte) 100), // Kaldor
+                _ => Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(220080000, 731632, 233.39f, 1137.03f, 225.875f, (byte) 105), // Enshar
             };
             if (asmodianUndergroundEntrance != null)
                 asmodianUndergroundEntrance.GetController().Delete();
             if (elyosUndergroundEntrance != null)
                 elyosUndergroundEntrance.GetController().Delete();
-            elyosUndergroundEntrance = (Npc) SpawnEngine.SpawnObject(elyosSpawn, 1);
-            asmodianUndergroundEntrance = (Npc) SpawnEngine.SpawnObject(asmodianSpawn, 1);
+            elyosUndergroundEntrance = (Npc) Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(elyosSpawn, 1);
+            asmodianUndergroundEntrance = (Npc) Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(asmodianSpawn, 1);
             ThreadPoolManager.GetInstance().Schedule(ct =>
             {
                 Run();

@@ -41,7 +41,7 @@ public sealed class QuestHandlerAvailabilityTable
 
 	public bool IsHaveHandler(int questId)
 	{
-		// Java parity: questEngine/QuestEngine.isHaveHandler checks the loaded handler map by quest id.
+		// Java parity: questEngine/Aion.GameServer.QuestEngine.QuestEngine.isHaveHandler checks the loaded handler map by quest id.
 		return QuestIds.Contains(questId);
 	}
 
@@ -96,7 +96,7 @@ public sealed class QuestHandlerAvailabilityTable
 
 	private static IReadOnlySet<int> LoadXmlQuestIds(string cacheFilePath)
 	{
-		// Java parity: QuestEngine.init registers every DataManager.XML_QUESTS.getAllQuests() entry.
+		// Java parity: Aion.GameServer.QuestEngine.QuestEngine.init registers every DataManager.XML_QUESTS.getAllQuests() entry.
 		var ids = new HashSet<int>();
 		if (!File.Exists(cacheFilePath))
 			return ids;

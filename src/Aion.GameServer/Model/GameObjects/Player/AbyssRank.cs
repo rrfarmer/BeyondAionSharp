@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.Stats;
 using System;
 using Aion.GameServer.Model.GameObjects;
 
@@ -29,7 +30,7 @@ public class AbyssRank : IPersistable
         this.dailyAP = dailyAP;
         this.weeklyAP = weeklyAP;
         this.currentAp = ap;
-        this.rank = Aion.GameServer.Utils.Stats.AbyssRankEnum.GetRankById(rank);
+        this.rank = Aion.GameServer.Utils.Stats.AbyssRankEnumExtensions.GetRankById(rank);
         this.dailyKill = dailyKill;
         this.weeklyKill = weeklyKill;
         this.allKill = allKill;
@@ -77,7 +78,7 @@ public class AbyssRank : IPersistable
         if (currentAp < 0)
             currentAp = 0;
 
-        Aion.GameServer.Utils.Stats.AbyssRankEnum newRank = Aion.GameServer.Utils.Stats.AbyssRankEnum.GetRankForPoints(currentAp, currentGp);
+        Aion.GameServer.Utils.Stats.AbyssRankEnum newRank = Aion.GameServer.Utils.Stats.AbyssRankEnumExtensions.GetRankForPoints(currentAp, currentGp);
         if (newRank.GetRequiredGP() == 0)
             SetRank(newRank);
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
@@ -112,6 +113,10 @@ public class AbyssRank : IPersistable
     {
         return weeklyAP;
     }
+
+    // Property-form bridges over getAp()/getRank() (reworked call sites use abyssRank.Ap, abyssRank.Rank as ints).
+    public int Ap => GetAp();
+    public int Rank => Aion.GameServer.Utils.Stats.AbyssRankEnumExtensions.GetId(GetRank());
 
     /// <summary>The all time Abyss Point count</summary>
     public int GetAp()

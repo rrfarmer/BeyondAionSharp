@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Services.Players;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

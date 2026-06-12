@@ -40,7 +40,7 @@ public static class NpcDialogRequestService
 	{
 		// Java parity: utils/PositionUtil.isInTalkRange(Creature, Npc).
 		return PositionUtilService.IsInNpcTalkRange(
-			player.Position,
+			player.GetPosition(),
 			npc.Position,
 			npc.Template.TalkDistance,
 			npc.Template.BoundRadius,
@@ -51,14 +51,14 @@ public static class NpcDialogRequestService
 public sealed record NpcDialogRequestResult(
 	bool Handled,
 	NpcDialogRequestStatus Status,
-	GameServerPacket? ResponsePacket)
+	AionServerPacket? ResponsePacket)
 {
 	public static NpcDialogRequestResult CreateHandled(NpcDialogRequestStatus status)
 	{
 		return new NpcDialogRequestResult(true, status, null);
 	}
 
-	public static NpcDialogRequestResult WithPacket(NpcDialogRequestStatus status, GameServerPacket packet)
+	public static NpcDialogRequestResult WithPacket(NpcDialogRequestStatus status, AionServerPacket packet)
 	{
 		return new NpcDialogRequestResult(true, status, packet);
 	}

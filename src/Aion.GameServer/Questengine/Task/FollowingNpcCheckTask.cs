@@ -43,14 +43,14 @@ public class FollowingNpcCheckTask
     private void OnSuccess(QuestEnv env)
     {
         StopFollowing(env);
-        QuestEngine.GetInstance().OnNpcReachTarget(env);
+        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnNpcReachTarget(env);
     }
 
     /// <summary>Following task failed, abort further progress</summary>
     protected void OnFail(QuestEnv env)
     {
         StopFollowing(env);
-        QuestEngine.GetInstance().OnNpcLostTarget(env);
+        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnNpcLostTarget(env);
     }
 
     private void StopFollowing(QuestEnv env)

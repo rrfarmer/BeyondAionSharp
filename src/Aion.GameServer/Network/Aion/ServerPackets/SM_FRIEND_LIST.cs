@@ -2,7 +2,8 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.House;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Services;
-using Status = Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
+using Status = global::Aion.GameServer.Model.GameObjects.Players.FriendList.Status;
+using Aion.GameServer.Model;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

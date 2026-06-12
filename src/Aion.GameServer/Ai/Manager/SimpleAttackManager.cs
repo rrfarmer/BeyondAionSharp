@@ -12,7 +12,7 @@ namespace Aion.GameServer.Ai.Manager;
 /// <summary>
 /// Java parity: ai/manager/SimpleAttackManager (ATracer). Performs/schedules a basic NPC melee attack tick with target validation.
 /// Nested Runnable SimpleCheckedAttackAction -> nested class with Run() via async ThreadPool idiom; currentTimeMillis ->
-/// UtcNow.ToUnixTimeMilliseconds; instanceof+pattern -> is Creature; AiEventType PascalCase; AiState.Fight; AggroTarget.MOST_HATED.
+/// UtcNow.ToUnixTimeMilliseconds; instanceof+pattern -> is Creature; AiEventType PascalCase; AIState.FIGHT; AggroTarget.MOST_HATED.
 /// GeoService red-tolerated.
 /// </summary>
 public class SimpleAttackManager
@@ -67,7 +67,7 @@ public class SimpleAttackManager
 
     protected static void AttackAction(NpcAI npcAI)
     {
-        if (!npcAI.IsInState(AiState.Fight))
+        if (!npcAI.IsInState(AIState.FIGHT))
         {
             return;
         }

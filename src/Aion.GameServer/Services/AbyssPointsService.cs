@@ -36,7 +36,7 @@ public static class AbyssPointsService
 		var added = updatedRank.Ap - oldAp;
 		var rankChanged = oldRank != updatedRank.Rank;
 
-		var packets = new List<GameServerPacket>
+		var packets = new List<AionServerPacket>
 		{
 			amount >= 0
 				? SmSystemMessage.CombatMyAbyssPointGain(added)
@@ -89,12 +89,12 @@ public static class AbyssPointsService
 
 	private static AbyssPointsLegionContribution? CreateLegionContribution(Player player, int added, AbyssPointsAddOptions? options)
 	{
-		if (player.LegionId == 0 || added <= 0)
+		if ((player.GetLegion()?.GetLegionId() ?? 0) == 0 || added <= 0)
 			return null;
 
 		var newContribution = (options?.CurrentLegionContributionPoints ?? 0) + added;
 		return new AbyssPointsLegionContribution(
-			player.LegionId,
+			(player.GetLegion()?.GetLegionId() ?? 0),
 			added,
 			newContribution,
 			SmLegionEdit.Contribution(newContribution));
@@ -112,7 +112,7 @@ public sealed record AbyssPointsAddPlan(
 	int Added,
 	int OldRank,
 	PlayerAbyssRank? UpdatedRank,
-	IReadOnlyList<GameServerPacket> PlayerPackets,
+	IReadOnlyList<AionServerPacket> PlayerPackets,
 	SmAbyssRankUpdate? RankUpdatePacket,
 	bool ShouldCheckRankLimitItems,
 	bool ShouldUpdateAbyssSkills,
@@ -129,7 +129,7 @@ public sealed record AbyssPointsAddPlan(
 			Added: 0,
 			OldRank: 0,
 			UpdatedRank: null,
-			PlayerPackets: Array.Empty<GameServerPacket>(),
+			PlayerPackets: Array.Empty<AionServerPacket>(),
 			RankUpdatePacket: null,
 			ShouldCheckRankLimitItems: false,
 			ShouldUpdateAbyssSkills: false,

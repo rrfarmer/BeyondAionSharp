@@ -7,8 +7,8 @@ using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Network.LoginServer;
 using Aion.GameServer.Services.Players;
-using ConnectType = Aion.GameServer.Model.Account.CharacterPasskey.ConnectType;
-using State = Aion.GameServer.Network.Aion.AionConnection.State;
+using ConnectType = global::Aion.GameServer.Model.Account.CharacterPasskey.ConnectType;
+using State = global::Aion.GameServer.Network.Aion.AionConnection.State;
 
 namespace Aion.GameServer.Network.Aion.ClientPackets;
 

@@ -86,7 +86,7 @@ public sealed class WorldPosition
     internal void SetMapRegion(MapRegion r) => _mapRegion = r;
 
     // Java parity: setXYZH(Float, Float, Float, Byte) — null args leave the value unchanged.
-    public void SetXyzh(float? newX, float? newY, float? newZ, byte? newHeading)
+    public void SetXYZH(float? newX, float? newY, float? newZ, byte? newHeading)
     {
         if (newX != null) _x = newX.Value;
         if (newY != null) _y = newY.Value;

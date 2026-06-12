@@ -41,7 +41,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         return 8;
     }
 
-    public override void SendPackets(params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
+    public override void SendPackets(params Aion.GameServer.Network.Aion.AionServerPacket[] packets)
     {
         foreach (PlayerAlliance alliance in GetMembers())
         {
@@ -49,7 +49,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         }
     }
 
-    public override void SendPacket(Predicate<PlayerAlliance> predicate, params Aion.GameServer.Network.Aion.GameServerPacket[] packets)
+    public override void SendPacket(Predicate<PlayerAlliance> predicate, params Aion.GameServer.Network.Aion.AionServerPacket[] packets)
     {
         foreach (PlayerAlliance alliance in GetMembers())
         {

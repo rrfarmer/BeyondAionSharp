@@ -9,7 +9,7 @@ namespace Aion.GameServer.Model.Animations;
 public enum AttackTypeAnimation : byte
 {
     // Java parity: MELEE(0)
-    Melee = 0,
+    MELEE = 0,
     // Java parity: RANGED(1)
-    Ranged = 1,
+    RANGED = 1,
 }

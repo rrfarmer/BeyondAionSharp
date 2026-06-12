@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.Stats;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -237,7 +238,7 @@ public class DialogService
                     PacketSendUtility.SendPacket(player, new SM_PET(PetAction.TALK_WITH_MINDER));
                     break;
                 case CHARGE_ITEM_MULTI: // condition all equiped items
-                    ItemChargeService.StartChargingEquippedItems(player, targetObjectId, 1);
+                    Aion.GameServer.Services.Items.ItemChargeService.StartChargingEquippedItems(player, targetObjectId, 1);
                     break;
                 case TRADE_IN:
                 {
@@ -265,7 +266,7 @@ public class DialogService
                     PacketSendUtility.SendPacket(player, new SM_PET(PetAction.H_ABANDON));
                     break;
                 case CHARGE_ITEM_MULTI2: // augmenting all equipped items
-                    ItemChargeService.StartChargingEquippedItems(player, targetObjectId, 2);
+                    Aion.GameServer.Services.Items.ItemChargeService.StartChargingEquippedItems(player, targetObjectId, 2);
                     break;
                 case HOUSING_RECREATE_PERSONAL_INS: // recreate personal house instance (studio)
                     HousingService.GetInstance().RecreatePlayerStudio(player);
@@ -287,7 +288,7 @@ public class DialogService
         {
             QuestEnv env = new QuestEnv(npc, player, questId, dialogActionId);
             env.SetExtendedRewardIndex(extendedRewardIndex);
-            if (QuestEngine.GetInstance().OnDialog(env))
+            if (Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnDialog(env))
                 return;
         }
         // action id = next page id

@@ -117,7 +117,7 @@ public sealed class PlayerVisualStatsUpdateService
 
 		var speedPacket = new SmEmotion(
 			player,
-			EmotionType.ChangeSpeed,
+			EmotionType.CHANGE_SPEED,
 			emotion: 0,
 			targetObjectId: 0,
 			resolvedSpeedSnapshot.MovementSpeed,
@@ -125,7 +125,7 @@ public sealed class PlayerVisualStatsUpdateService
 			resolvedSpeedSnapshot.CurrentAttackSpeed);
 		cancellationToken.ThrowIfCancellationRequested();
 		var broadcastCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			player.Position,
+			player.GetPosition(),
 			player.ObjectId,
 			speedPacket,
 			includeSourcePlayer: true);

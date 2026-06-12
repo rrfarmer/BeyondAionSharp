@@ -7,11 +7,11 @@ namespace Aion.GameServer.Model.Siege;
 public enum SiegeModType
 {
     // Java parity: PEACE
-    Peace,
+    PEACE,
     // Java parity: SIEGE
-    Siege,
+    SIEGE,
     // Java parity: LANDING
-    Landing,
+    LANDING,
     // Java parity: ASSAULT
-    Assault,
+    ASSAULT,
 }

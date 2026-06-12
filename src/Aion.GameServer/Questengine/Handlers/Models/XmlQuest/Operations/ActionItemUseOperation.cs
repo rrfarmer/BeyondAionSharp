@@ -1,3 +1,4 @@
+using Aion.GameServer.Model;
 using System;
 using System.Threading.Tasks;
 using System.Xml.Serialization;

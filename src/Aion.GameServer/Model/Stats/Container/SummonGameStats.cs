@@ -6,6 +6,7 @@ using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.SkillEngine.Model;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
+using Aion.GameServer.Model.Summons;
 
 namespace Aion.GameServer.Model.Stats.Container;
 

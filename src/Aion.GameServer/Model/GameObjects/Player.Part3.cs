@@ -21,8 +21,8 @@ public partial class Player
     {
         switch (enemy.GetTypeValue(this))
         {
-            case Aion.GameServer.Ai.AIQuestion.AGGRESSIVE:
-            case Aion.GameServer.Ai.AIQuestion.ATTACKABLE:
+            case Aion.GameServer.Ai.Poll.AIQuestion.AGGRESSIVE:
+            case Aion.GameServer.Ai.Poll.AIQuestion.ATTACKABLE:
                 return true;
             default:
                 return false;
@@ -67,7 +67,7 @@ public partial class Player
 
     private bool IsHostileInPanesterra(Player enemy)
     {
-        if (panesterraFaction != null && Aion.GameServer.World.WorldMapType.IsPanesterraMap(GetWorldId()))
+        if (panesterraFaction != null && Aion.GameServer.World.WorldMapTypeExtensions.IsPanesterraMap(GetWorldId()))
         {
             return panesterraFaction != enemy.GetPanesterraFaction();
         }
@@ -83,7 +83,7 @@ public partial class Player
         }
         else if (worldId == 110010000 || worldId == 120010000 || IsInInstance())
         {
-            return IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.Pvp) && enemy.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.Pvp) && !IsInSameTeam(enemy);
+            return IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.PVP) && enemy.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.PVP) && !IsInSameTeam(enemy);
         }
         return false;
     }

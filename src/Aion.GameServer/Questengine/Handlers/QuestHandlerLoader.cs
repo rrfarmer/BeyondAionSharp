@@ -5,7 +5,7 @@ using Aion.Commons.Scripting.ClassListener;
 
 namespace Aion.GameServer.QuestEngine.Handlers;
 
-/// <summary>Java parity: questEngine/handlers/QuestHandlerLoader (MrPoke) implements ClassListener. On postLoad, instantiates and registers every valid (public, concrete) AbstractQuestHandler subclass; on preUnload clears the QuestEngine. Reflection: Class[]->Type[], getName->FullName, isAssignableFrom->IsAssignableFrom, getDeclaredConstructor().newInstance()->Activator.CreateInstance, Modifier.isX->Type.IsX; RuntimeException->Exception; isDebugEnabled->IsEnabled(LogLevel.Debug). ClassListener/AbstractQuestHandler red-tolerated.</summary>
+/// <summary>Java parity: questEngine/handlers/QuestHandlerLoader (MrPoke) implements ClassListener. On postLoad, instantiates and registers every valid (public, concrete) AbstractQuestHandler subclass; on preUnload clears the Aion.GameServer.QuestEngine.QuestEngine. Reflection: Class[]->Type[], getName->FullName, isAssignableFrom->IsAssignableFrom, getDeclaredConstructor().newInstance()->Activator.CreateInstance, Modifier.isX->Type.IsX; RuntimeException->Exception; isDebugEnabled->IsEnabled(LogLevel.Debug). ClassListener/AbstractQuestHandler red-tolerated.</summary>
 public class QuestHandlerLoader : ClassListener
 {
     private static readonly ILogger logger = NullLoggerFactory.Instance.CreateLogger(nameof(QuestHandlerLoader));
@@ -31,7 +31,7 @@ public class QuestHandlerLoader : ClassListener
                 try
                 {
                     Type tmp = c;
-                    QuestEngine.GetInstance().AddQuestHandler((AbstractQuestHandler)Activator.CreateInstance(tmp));
+                    Aion.GameServer.QuestEngine.QuestEngine.GetInstance().AddQuestHandler((AbstractQuestHandler)Activator.CreateInstance(tmp));
                 }
                 catch (Exception e)
                 {
@@ -48,7 +48,7 @@ public class QuestHandlerLoader : ClassListener
                 // debug messages
                 logger.LogDebug("Unload class " + c.FullName);
 
-        QuestEngine.GetInstance().Clear();
+        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().Clear();
     }
 
     public bool IsValidClass(Type clazz)

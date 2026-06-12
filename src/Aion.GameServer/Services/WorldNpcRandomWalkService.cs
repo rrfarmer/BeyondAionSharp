@@ -215,7 +215,7 @@ public sealed class WorldNpcRandomWalkService
 		var nextState = state with { Target = target };
 		_activeStates[objectId] = nextState;
 
-		var packet = new SmMove(npc, MovementMask.NpcStartMove, target.X, target.Y, target.Z);
+		var packet = new SmMove(npc, MovementMask.NPC_STARTMOVE, target.X, target.Y, target.Z);
 		var sentCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(npc.Position, npc.ObjectId, packet);
 		var broadcastState = nextState with { BroadcastCount = sentCount };
 		_activeStates[objectId] = broadcastState;

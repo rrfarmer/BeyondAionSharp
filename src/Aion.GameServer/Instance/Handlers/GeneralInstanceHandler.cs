@@ -85,21 +85,21 @@ public class GeneralInstanceHandler : IInstanceHandler
 
     protected virtual VisibleObject Spawn(int npcId, float x, float y, float z, byte heading)
     {
-        SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(mapId, npcId, x, y, z, heading);
-        return SpawnEngine.SpawnObject(template, instance.GetInstanceId());
+        SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(mapId, npcId, x, y, z, heading);
+        return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instance.GetInstanceId());
     }
 
     protected virtual VisibleObject Spawn(int npcId, float x, float y, float z, byte heading, int staticId)
     {
-        SpawnTemplate template = SpawnEngine.NewSingleTimeSpawn(mapId, npcId, x, y, z, heading);
+        SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(mapId, npcId, x, y, z, heading);
         template.SetStaticId(staticId);
-        return SpawnEngine.SpawnObject(template, instance.GetInstanceId());
+        return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instance.GetInstanceId());
     }
 
     protected virtual VisibleObject SpawnAndSetRespawn(int npcId, float x, float y, float z, byte heading, int respawnTime)
     {
-        SpawnTemplate template = SpawnEngine.NewSpawn(mapId, npcId, x, y, z, heading, respawnTime);
-        return SpawnEngine.SpawnObject(template, instance.GetInstanceId());
+        SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSpawn(mapId, npcId, x, y, z, heading, respawnTime);
+        return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, instance.GetInstanceId());
     }
 
     protected virtual Npc GetNpc(int npcId)

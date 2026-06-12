@@ -1,3 +1,4 @@
+using Aion.GameServer.Utils.Stats;
 using Aion.Commons.Network;
 using Aion.GameServer.Utils;
 using System.Globalization;
@@ -61,13 +62,13 @@ public sealed class SmSystemMessage : GameServerPacket
 
 	public static SmSystemMessage UnbreakableItem(string? itemName)
 	{
-		// Java parity: SM_SYSTEM_MESSAGE.STR_UNBREAKABLE_ITEM(item.getL10n()).
+		// Java parity: SM_SYSTEM_MESSAGE.STR_UNBREAKABLE_ITEM(item.GetL10n()).
 		return new SmSystemMessage(1400340, itemName ?? string.Empty);
 	}
 
 	public static SmSystemMessage RejectedWatch(string playerName)
 	{
-		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_WATCH(target.getName()).
+		// Java parity: SM_SYSTEM_MESSAGE.STR_MSG_REJECTED_WATCH(target.GetName()).
 		return new SmSystemMessage(1390114, playerName);
 	}
 
@@ -3455,4 +3456,176 @@ public sealed class SmSystemMessage : GameServerPacket
 		foreach (var parameter in _specialParameters)
 			buffer.WriteS(parameter);
 	}
+
+	// Java parity: SM_SYSTEM_MESSAGE STR_* static factories (ported from Java by message id).
+	public static SmSystemMessage STR_ABYSS_ORDER_RANKER_DIE(Player victim, string zoneName) => new SmSystemMessage(1400023, victim.GetRace().GetL10n(), AbyssRankEnum.getRankL10n(victim), victim.GetName(), zoneName);
+	public static SmSystemMessage STR_ASSEMBLY_ITEM_SUCCEEDED() => new SmSystemMessage(1401122);
+	public static SmSystemMessage STR_KICK_CHARACTER() => new SmSystemMessage(1310017);
+	public static SmSystemMessage STR_BINDSTONE_ALREADY_INSTALLED() => new SmSystemMessage(1390160);
+	public static SmSystemMessage STR_BINDSTONE_REGISTER() => new SmSystemMessage(1390159);
+	public static SmSystemMessage STR_CANNOT_REGISTER_BINDSTONE_FAR_FROM_NPC() => new SmSystemMessage(1300800);
+	public static SmSystemMessage STR_CANNOT_USE_BINDSTONE_ITEM_WHILE_FLYING() => new SmSystemMessage(1300806);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_INVALID_CLASS() => new SmSystemMessage(1300371);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_INVALID_GENDER() => new SmSystemMessage(1300375);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_INVALID_LOCATION() => new SmSystemMessage(1300426);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_INVALID_RACE() => new SmSystemMessage(1300373);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_INVALID_RANK(string value0) => new SmSystemMessage(1300370, value0);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_TOO_HIGH_LEVEL(int value0, string value1) => new SmSystemMessage(1400267, value0.ToString(System.Globalization.CultureInfo.InvariantCulture), value1);
+	public static SmSystemMessage STR_CANNOT_USE_ITEM_TOO_LOW_LEVEL_MUST_BE_THIS_LEVEL(string value1, int value0) => new SmSystemMessage(1300372, value0.ToString(System.Globalization.CultureInfo.InvariantCulture), value1);
+	public static SmSystemMessage STR_CANT_FLY_NOW_DUE_TO_NOFLY() => new SmSystemMessage(1301032);
+	public static SmSystemMessage STR_CAN_CHAT_NOW() => new SmSystemMessage(1300644);
+	public static SmSystemMessage STR_CRAFT_INFO_MAXPOINT_UP() => new SmSystemMessage(1300898);
+	public static SmSystemMessage STR_DECOMPOSE_EQUIP_ITEM_CAN_NOT_BE_DECOMPOSED() => new SmSystemMessage(1400279);
+	public static SmSystemMessage STR_DECOMPOSE_ITEM_CANCELED(string value0) => new SmSystemMessage(1300450, value0);
+	public static SmSystemMessage STR_DECOMPOSE_ITEM_FAILED(string value0) => new SmSystemMessage(1300448, value0);
+	public static SmSystemMessage STR_DECOMPOSE_ITEM_INVENTORY_IS_FULL() => new SmSystemMessage(1300447);
+	public static SmSystemMessage STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED(string num0) => new SmSystemMessage(1300446, num0);
+	public static SmSystemMessage STR_DECOMPOSE_ITEM_NO_TARGET_ITEM() => new SmSystemMessage(1300445);
+	public static SmSystemMessage STR_DECOMPOSE_ITEM_SUCCEED(string value0) => new SmSystemMessage(1300449, value0);
+	public static SmSystemMessage STR_DIALOG_TOO_FAR_TO_TALK() => new SmSystemMessage(1300346);
+	public static SmSystemMessage STR_ENCHANT_ITEM_CANCELED(string value0) => new SmSystemMessage(1300457, value0);
+	public static SmSystemMessage STR_ENCHANT_ITEM_FAILED(string value0) => new SmSystemMessage(1300456, value0);
+	public static SmSystemMessage STR_ENCHANT_ITEM_NO_TARGET_ITEM() => new SmSystemMessage(1300452);
+	public static SmSystemMessage STR_EXTRACT_GATHERING_SUCCESS_GETEXP() => new SmSystemMessage(1330082);
+	public static SmSystemMessage STR_FACTION_CAN_NOT_JOIN() => new SmSystemMessage(1300525);
+	public static SmSystemMessage STR_FACTION_JOIN(string value0) => new SmSystemMessage(1300524, value0);
+	public static SmSystemMessage STR_FACTION_LEAVE(string value0) => new SmSystemMessage(1300526, value0);
+	public static SmSystemMessage STR_FACTION_LEAVE_BY_LEVEL_LIMIT(string value0) => new SmSystemMessage(1400770, value0);
+	public static SmSystemMessage STR_FLYING_FORBIDDEN_HERE() => new SmSystemMessage(1300960);
+	public static SmSystemMessage STR_FLY_CANNOT_FLY_POLYMORPH_STATUS() => new SmSystemMessage(1400873);
+	public static SmSystemMessage STR_GATHER_INCORRECT_SKILL() => new SmSystemMessage(1330066);
+	public static SmSystemMessage STR_GATHER_INVENTORY_IS_FULL() => new SmSystemMessage(1330036);
+	public static SmSystemMessage STR_GATHER_LEARN_SKILL(string value0) => new SmSystemMessage(1330054, value0);
+	public static SmSystemMessage STR_GATHER_OBSTACLE_EXIST() => new SmSystemMessage(1330003);
+	public static SmSystemMessage STR_GATHER_OUT_OF_SKILL_POINT(string value0) => new SmSystemMessage(1330001, value0);
+	public static SmSystemMessage STR_GATHER_TOO_FAR_FROM_GATHER_SOURCE() => new SmSystemMessage(1330002);
+	public static SmSystemMessage STR_GET_EXP(string value0, long num1) => new SmSystemMessage(1370000, value0, num1.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP2(long num0) => new SmSystemMessage(1370002, num0.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP2_MAKEUP_BONUS(long num0, long num1) => new SmSystemMessage(1400349, num0.ToString(System.Globalization.CultureInfo.InvariantCulture), num1.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP2_VITAL_BONUS(long num0, long num1) => new SmSystemMessage(1400348, num0.ToString(System.Globalization.CultureInfo.InvariantCulture), num1.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP2_VITAL_MAKEUP_BONUS(long num0, long num1, long num2) => new SmSystemMessage(1400350, num0.ToString(System.Globalization.CultureInfo.InvariantCulture), num1.ToString(System.Globalization.CultureInfo.InvariantCulture), num2.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP_MAKEUP_BONUS(string value0, long num1, long num2) => new SmSystemMessage(1400343, value0, num1.ToString(System.Globalization.CultureInfo.InvariantCulture), num2.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP_VITAL_BONUS(string value0, long num1, long num2) => new SmSystemMessage(1400342, value0, num1.ToString(System.Globalization.CultureInfo.InvariantCulture), num2.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GET_EXP_VITAL_MAKEUP_BONUS(string value0, long num1, long num2, long num3) => new SmSystemMessage(1400344, value0, num1.ToString(System.Globalization.CultureInfo.InvariantCulture), num2.ToString(System.Globalization.CultureInfo.InvariantCulture), num3.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_GIVE_ITEM_OPTION_CANCELED(string value0) => new SmSystemMessage(1300464, value0);
+	public static SmSystemMessage STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION(string value0, string value1) => new SmSystemMessage(1300460, value0, value1);
+	public static SmSystemMessage STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME(string value0, string value1) => new SmSystemMessage(1300461, value0, value1);
+	public static SmSystemMessage STR_GIVE_ITEM_OPTION_NO_TARGET_ITEM() => new SmSystemMessage(1300459);
+	public static SmSystemMessage STR_GLIDE_CANNOT_GLIDE_POLYMORPH_STATUS() => new SmSystemMessage(1400872);
+	public static SmSystemMessage STR_GLIDE_ONLY_DEVA_CAN() => new SmSystemMessage(1301059);
+	public static SmSystemMessage STR_HOUSING_WAREHOUSE_TOO_MANY_ITEMS_WAREHOUSE() => new SmSystemMessage(1401239);
+	public static SmSystemMessage STR_INVALID_TARGET() => new SmSystemMessage(1300823);
+	public static SmSystemMessage STR_ITEM_CANCELED() => new SmSystemMessage(1300427);
+	public static SmSystemMessage STR_ITEM_COLOR_CHANGE_SUCCEED(string value0, string value1) => new SmSystemMessage(1300511, value0, value1);
+	public static SmSystemMessage STR_ITEM_COLOR_ERROR() => new SmSystemMessage(1300514);
+	public static SmSystemMessage STR_ITEM_COLOR_REMOVE_SUCCEED(string value0) => new SmSystemMessage(1300510, value0);
+	public static SmSystemMessage STR_ITEM_ENCHANT_ASSISTANT_NO_RIGHT_ITEM() => new SmSystemMessage(1400961);
+	public static SmSystemMessage STR_LEVEL_LIMIT_QUEST_NOT_FINISHED1() => new SmSystemMessage(1400545);
+	public static SmSystemMessage STR_MAIL_SEND_FULL_BASKET() => new SmSystemMessage(1300499);
+	public static SmSystemMessage STR_MSG_CANNOT_RIDE_ABNORMAL_STATE() => new SmSystemMessage(1401255);
+	public static SmSystemMessage STR_MSG_CANNOT_RIDE_INVALID_LOCATION() => new SmSystemMessage(1401099);
+	public static SmSystemMessage STR_MSG_CANT_GATHERING_B_ITEM_CHECK(string value0) => new SmSystemMessage(1400376, value0);
+	public static SmSystemMessage STR_MSG_CANT_GATHERING_B_LEVEL_CHECK(int level) => new SmSystemMessage(1400737, level.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_MSG_CANT_INSTANCE_COOL_TIME_INIT() => new SmSystemMessage(1390272);
+	public static SmSystemMessage STR_MSG_CANT_RIDE(string l10n) => new SmSystemMessage(1401211, l10n);
+	public static SmSystemMessage STR_MSG_CAPTCHA_RECOVERED() => new SmSystemMessage(1400269);
+	public static SmSystemMessage STR_MSG_CAPTCHA_REMAIN_RESTRICT_TIME(int duration) => new SmSystemMessage(1400273, duration.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_MSG_CASH_ITEM_TIME_LEFT(string value0, int minutes) => new SmSystemMessage(1400481, value0, minutes + "min");
+	public static SmSystemMessage STR_MSG_DECOMPRESS_INVENTORY_IS_FULL() => new SmSystemMessage(1400363);
+	public static SmSystemMessage STR_MSG_DELETE_CASH_CUSTOMANIMATION_BY_TIMEOUT() => new SmSystemMessage(1400917);
+	public static SmSystemMessage STR_MSG_DELETE_CASH_ITEM_BY_TIMEOUT(string value0) => new SmSystemMessage(1400034, value0);
+	public static SmSystemMessage STR_MSG_DELETE_CASH_ITEM_BY_TIMEOUT_IN_WAREHOUSE(string value0) => new SmSystemMessage(1400406, value0);
+	public static SmSystemMessage STR_MSG_DELETE_CASH_SOCIALACTION_BY_TIMEOUT() => new SmSystemMessage(1390245);
+	public static SmSystemMessage STR_MSG_DELETE_CASH_TITLE_BY_TIMEOUT(string value0) => new SmSystemMessage(1390244, value0);
+	public static SmSystemMessage STR_MSG_DICE_INVEN_ERROR() => new SmSystemMessage(1390182);
+	public static SmSystemMessage STR_MSG_DONT_GET_PRODUCTION_EXP(string value0) => new SmSystemMessage(1390221, value0);
+	public static SmSystemMessage STR_MSG_ENCHANT_ITEM_SUCCEEDED_15(string playerName, string value1) => new SmSystemMessage(1400435, playerName, value1);
+	public static SmSystemMessage STR_MSG_ENCHANT_ITEM_SUCCEEDED_20(string playerName, string value1) => new SmSystemMessage(1402285, playerName, value1);
+	public static SmSystemMessage STR_MSG_EXCEED_CANNOT_02(string value0) => new SmSystemMessage(1402661, value0);
+	public static SmSystemMessage STR_MSG_EXP_EXTRACTION_USE(string extractionItem, long exp, string rewardItem) => new SmSystemMessage(1401705, extractionItem, exp.ToString(System.Globalization.CultureInfo.InvariantCulture), rewardItem);
+	public static SmSystemMessage STR_MSG_EXP_EXTRACTION_USE_NOT_ENOUGH_EXP() => new SmSystemMessage(1401706);
+	public static SmSystemMessage STR_MSG_GATHER_RESTRICTION_RIDE() => new SmSystemMessage(1401096);
+	public static SmSystemMessage STR_MSG_GET_CASH_TITLE(string value0) => new SmSystemMessage(1390242, value0);
+	public static SmSystemMessage STR_MSG_HOUSING_OBJECT_DELETE_EXPIRE_TIME(string value0) => new SmSystemMessage(1401261, value0);
+	public static SmSystemMessage STR_MSG_HOUSING_OBJECT_DELETE_USE_COUNT_FINAL(string value0) => new SmSystemMessage(1401470, value0);
+	public static SmSystemMessage STR_MSG_HOUSING_OBJECT_IS_ONLY_FOR_OWNER_VALID() => new SmSystemMessage(1401298);
+	public static SmSystemMessage STR_MSG_HOUSING_OBJECT_OCCUPIED_BY_OTHER() => new SmSystemMessage(1401256);
+	public static SmSystemMessage STR_MSG_HOUSING_OBJECT_USE(string value0) => new SmSystemMessage(1401257, value0);
+	public static SmSystemMessage STR_MSG_ITEM_AUTHORIZE_CANCEL(string itemL10n) => new SmSystemMessage(1402147, itemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_AUTHORIZE_FAILED(string itemL10n) => new SmSystemMessage(1402149, itemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_AUTHORIZE_FAILED_TSHIRT(string plumeL10n) => new SmSystemMessage(1402447, plumeL10n);
+	public static SmSystemMessage STR_MSG_ITEM_AUTHORIZE_SUCCEEDED(string itemL10n, int temperingLevel) => new SmSystemMessage(1402148, itemL10n, temperingLevel.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_MSG_ITEM_AUTHORIZE_SUCCEEDED_MAX(string playerName, string value1, int num2) => new SmSystemMessage(1402154, playerName, value1, num2.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_MSG_ITEM_CHARGE2_CANCELED() => new SmSystemMessage(1401339);
+	public static SmSystemMessage STR_MSG_ITEM_CHARGE_CANCELED() => new SmSystemMessage(1400891);
+	public static SmSystemMessage STR_MSG_ITEM_PAINT_ERROR_CANNOTPAINT() => new SmSystemMessage(1401439);
+	public static SmSystemMessage STR_MSG_ITEM_PAINT_ERROR_CANNOTREMOVE() => new SmSystemMessage(1401440);
+	public static SmSystemMessage STR_MSG_ITEM_PAINT_REMOVE_SUCCEED(string value0) => new SmSystemMessage(1401435, value0);
+	public static SmSystemMessage STR_MSG_ITEM_PAINT_SUCCEED(string value0, string value1) => new SmSystemMessage(1401436, value0, value1);
+	public static SmSystemMessage STR_MSG_ITEM_REIDENTIFY_CANCELED(string itemL10n) => new SmSystemMessage(1401638, itemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_REIDENTIFY_CANNOT_REIDENTIFY(string itemL10n) => new SmSystemMessage(1401636, itemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_REIDENTIFY_DIDNT_IDENTIFY(string itemL10n) => new SmSystemMessage(1401637, itemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_REIDENTIFY_SUCCEED(string itemL10n) => new SmSystemMessage(1401639, itemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_REIDENTIFY_WRONG_LEVEL(string tuningScrollL10n, string targetItemL10n) => new SmSystemMessage(1401635, tuningScrollL10n, targetItemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_REIDENTIFY_WRONG_SELECT(string tuningScrollL10n, string targetItemL10n) => new SmSystemMessage(1401633, tuningScrollL10n, targetItemL10n);
+	public static SmSystemMessage STR_MSG_ITEM_RESTRICTION_RIDE() => new SmSystemMessage(1401094);
+	public static SmSystemMessage STR_MSG_LOOTING_PET_MESSAGE03() => new SmSystemMessage(1400878);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_CANNOT(string value0) => new SmSystemMessage(1402015, value0);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_NEED_IDENTIFY() => new SmSystemMessage(1402030);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_NO_TARGET_ITEM() => new SmSystemMessage(1402029);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_SUCCEED(string value0) => new SmSystemMessage(1402031, value0);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_COMPOSITION() => new SmSystemMessage(1402019);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_EQUIPED() => new SmSystemMessage(1402020);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_EXCHANGE() => new SmSystemMessage(1402022);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_LEVEL(string value0, int levelRequired) => new SmSystemMessage(1402016, value0, levelRequired.ToString(System.Globalization.CultureInfo.InvariantCulture));
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_QUALITY(string value0, string value1) => new SmSystemMessage(1402017, value0, value1);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_SEAL() => new SmSystemMessage(1402021);
+	public static SmSystemMessage STR_MSG_PACK_ITEM_WRONG_TARGET_ITEM_CATEGORY(string value0, string value1) => new SmSystemMessage(1402018, value0, value1);
+	public static SmSystemMessage STR_MSG_PET_ABANDON_EXPIRE_TIME_COMPLETE(string value0) => new SmSystemMessage(1401194, value0);
+	public static SmSystemMessage STR_MSG_POLISH_NEED_IDENTIFY() => new SmSystemMessage(1401750);
+	public static SmSystemMessage STR_MSG_POLISH_SUCCEED(string weaponL10n) => new SmSystemMessage(1401650, weaponL10n);
+	public static SmSystemMessage STR_MSG_POLISH_WRONG_LEVEL() => new SmSystemMessage(1401649);
+	public static SmSystemMessage STR_MSG_UNEQUIP_RANKITEM(string value0) => new SmSystemMessage(1401329, value0);
+	public static SmSystemMessage STR_MSG_UNRIDE_ABNORMAL_STATE() => new SmSystemMessage(1401254);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_DARK_GAIN() => new SmSystemMessage(1402592);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_DARK_GET_OUT_AREA() => new SmSystemMessage(1402593);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_DARK_MIST_OFF() => new SmSystemMessage(1402594);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_DARK_WARNING() => new SmSystemMessage(1402595);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_LIGHT_GAIN() => new SmSystemMessage(1402588);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_LIGHT_GET_OUT_AREA() => new SmSystemMessage(1402589);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_LIGHT_MIST_OFF() => new SmSystemMessage(1402590);
+	public static SmSystemMessage STR_MSG_WEAK_RACE_BUFF_LIGHT_WARNING() => new SmSystemMessage(1402591);
+	public static SmSystemMessage STR_MSG_WEAPON_BOOST_MODE_BURN_OUT() => new SmSystemMessage(1400075);
+	public static SmSystemMessage STR_NOTHING_HAPPEN() => new SmSystemMessage(1300630);
+	public static SmSystemMessage STR_NOTIFY_LOGIN_BUDDY(string value0) => new SmSystemMessage(1300915, value0);
+	public static SmSystemMessage STR_NOTIFY_LOGOFF_BUDDY(string value0) => new SmSystemMessage(1300916, value0);
+	public static SmSystemMessage STR_QUEST_ACQUIRE_ERROR_NONE_REPEATABLE(string value0) => new SmSystemMessage(1300599, value0);
+	public static SmSystemMessage STR_QUEST_ACQUIRE_ERROR_WORKING_QUEST() => new SmSystemMessage(1300597);
+	public static SmSystemMessage STR_QUEST_GET_REWARD_TITLE(string value0) => new SmSystemMessage(1300035, value0);
+	public static SmSystemMessage STR_SKILL_ABYSS_SKILL_IS_FIRED(Player player, string skill) => new SmSystemMessage(1390155, player.GetRace().GetL10n(), player.GetName(), "%SubZone:" + player.GetPosition().GetMapId() + " "
+			+ player.GetPosition().GetX() + " " + player.GetPosition().GetY() + " " + player.GetPosition().GetZ(), skill);
+	public static SmSystemMessage STR_SKILL_CAN_NOT_CAST_IN_SHAPECHANGE() => new SmSystemMessage(1300149);
+	public static SmSystemMessage STR_SKILL_CAN_NOT_GATHER_WHILE_IN_CURRENT_STANCE() => new SmSystemMessage(1300119);
+	public static SmSystemMessage STR_SKILL_CAN_NOT_USE_ITEM_IN_CURRENT_POSITION() => new SmSystemMessage(1300143);
+	public static SmSystemMessage STR_SKILL_NOT_READY() => new SmSystemMessage(1300021);
+	public static SmSystemMessage STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER() => new SmSystemMessage(1300072);
+	public static SmSystemMessage STR_SKILL_SUMMON_ATTACK_MODE(string value0) => new SmSystemMessage(1200008, value0);
+	public static SmSystemMessage STR_SKILL_SUMMON_GUARD_MODE(string value0) => new SmSystemMessage(1200009, value0);
+	public static SmSystemMessage STR_SKILL_SUMMON_REST_MODE(string value0) => new SmSystemMessage(1200010, value0);
+	public static SmSystemMessage STR_SKILL_SUMMON_UNSUMMONED(string value0) => new SmSystemMessage(1200006, value0);
+	public static SmSystemMessage STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE() => new SmSystemMessage(1300073);
+	public static SmSystemMessage STR_SKILL_SUMMON_UNSUMMON_FOLLOWER(string value0) => new SmSystemMessage(1200011, value0);
+	public static SmSystemMessage STR_SOUL_BOUND_CLOSE_OTHER_MSG_BOX_AND_RETRY() => new SmSystemMessage(1300488);
+	public static SmSystemMessage STR_SOUL_BOUND_INVALID_STANCE(string value0) => new SmSystemMessage(1300489, value0);
+	public static SmSystemMessage STR_SOUL_BOUND_ITEM_CANCELED(string value0) => new SmSystemMessage(1300487, value0);
+	public static SmSystemMessage STR_SOUL_BOUND_ITEM_SUCCEED(string value0) => new SmSystemMessage(1300485, value0);
+	public static SmSystemMessage STR_TOOLTIP_LEARNED_EMOTION() => new SmSystemMessage(901713);
+	public static SmSystemMessage STR_TOOLTIP_LEARNED_TITLE() => new SmSystemMessage(901714);
+	public static SmSystemMessage STR_UI_INVENTORY_FULL() => new SmSystemMessage(1300042);
+	public static SmSystemMessage STR_USE_ITEM(string value0) => new SmSystemMessage(1300423, value0);
+	public static SmSystemMessage STR_VENDOR_FULL_ITEM() => new SmSystemMessage(1300649);
+	public static SmSystemMessage STR_WAREHOUSE_DEPOSIT_FULL_BASKET() => new SmSystemMessage(1300421);
+	public static SmSystemMessage STR_WAREHOUSE_FULL_INVENTORY() => new SmSystemMessage(1390149);
+	public static SmSystemMessage STR_WAREHOUSE_TOO_FAR_FROM_NPC() => new SmSystemMessage(1300419);
+	public static SmSystemMessage STR_WAREHOUSE_TOO_MANY_ITEMS_TOYPET_WAREHOUSE() => new SmSystemMessage(1400638);
 }

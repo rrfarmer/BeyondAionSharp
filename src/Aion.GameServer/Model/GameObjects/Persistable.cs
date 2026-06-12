@@ -6,9 +6,9 @@ namespace Aion.GameServer.Model.GameObjects;
 /// </summary>
 public interface IPersistable
 {
-    static readonly Func<IPersistable?, bool> New = NewPredicate(PersistentState.NEW);
-    static readonly Func<IPersistable?, bool> Changed = NewPredicate(PersistentState.UPDATE_REQUIRED);
-    static readonly Func<IPersistable?, bool> Deleted = NewPredicate(PersistentState.DELETED);
+    static readonly Func<IPersistable?, bool> NEW = NewPredicate(PersistentState.NEW);
+    static readonly Func<IPersistable?, bool> CHANGED = NewPredicate(PersistentState.UPDATE_REQUIRED);
+    static readonly Func<IPersistable?, bool> DELETED = NewPredicate(PersistentState.DELETED);
 
     // Java parity: getPersistentState()
     PersistentState GetPersistentState();

@@ -56,11 +56,11 @@ public class PlayerLeaveWorldService
             log.LogWarning(player + " had invalid position: " + pos + " so he was reset to bind point");
             BindPointPosition bp = player.GetBindPoint();
             if (bp != null)
-                pos = World.GetInstance().CreatePosition(bp.GetMapId(), bp.GetX(), bp.GetY(), bp.GetZ(), bp.GetHeading(), 1);
+                pos = Aion.GameServer.World.World.GetInstance().CreatePosition(bp.GetMapId(), bp.GetX(), bp.GetY(), bp.GetZ(), bp.GetHeading(), 1);
             else
             {
-                LocationData ld = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
-                pos = World.GetInstance().CreatePosition(ld.GetMapId(), ld.GetX(), ld.GetY(), ld.GetZ(), ld.GetHeading(), 1);
+                LocationData ld = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
+                pos = Aion.GameServer.World.World.GetInstance().CreatePosition(ld.GetMapId(), ld.GetX(), ld.GetY(), ld.GetZ(), ld.GetHeading(), 1);
             }
             player.SetPosition(pos);
         }
@@ -115,7 +115,7 @@ public class PlayerLeaveWorldService
         if (player.GetCraftingTask() != null)
             player.GetCraftingTask().Stop();
 
-        QuestEngine.GetInstance().OnLogOut(new QuestEnv(null, player, 0));
+        Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnLogOut(new QuestEnv(null, player, 0));
         DateTimeOffset lastOnline = DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
         player.GetController().Delete();
         player.GetCommonData().SetOnline(false);

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Aion.GameServer.Model;
 using Aion.GameServer.Network.Aion;
-using RankingListLegion = Aion.GameServer.Dao.AbyssRankDAO.RankingListLegion;
+using RankingListLegion = global::Aion.GameServer.Dao.AbyssRankDAO.RankingListLegion;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 

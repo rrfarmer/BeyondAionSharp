@@ -34,7 +34,7 @@ public abstract class PlayableMoveController<T> : CreatureMoveController<T> wher
         {
             if (IsControlled() && Started.CompareAndSet(false, true))
             {
-                this.MovementMaskField = MovementMask.NpcStartMove;
+                this.MovementMaskField = MovementMask.NPC_STARTMOVE;
                 SendForcedMovePacket();
                 Aion.GameServer.Taskmanager.Tasks.PlayerMoveTaskManager.GetInstance().AddPlayer(Owner);
             }

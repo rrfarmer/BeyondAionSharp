@@ -4,6 +4,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.SkillEngine.Effects;
 
@@ -18,31 +19,31 @@ public abstract class AbstractHealEffect : EffectTemplate, HealEffectTemplate
     {
         if (!base.Calculate(effect, null, null))
             return;
-        effect.SetReserveds(new EffectReserved(position, CalculateHealValue(effect, healType), EffectReserved.ResourceType.Of(healType), false), false);
+        effect.SetReserveds(new EffectReserved(Position, CalculateHealValue(effect, healType), EffectReserved.ResourceType.Of(healType), false), false);
     }
 
     public void ApplyEffect(Effect effect, HealType healType)
     {
         Creature effected = effect.GetEffected();
-        int healValue = effect.GetReserveds(position).GetValue();
+        int healValue = effect.GetReserveds(Position).GetValue();
         switch (healType)
         {
             case HealType.HP:
                 if (this is ProcHealInstantEffect) // item heal, eg potions
-                    effected.GetLifeStats().IncreaseHp(SM_ATTACK_STATUS.TYPE.HP, healValue, effect.GetEffector());
+                    effected.GetLifeStats().IncreaseHp(SmAttackStatus.TYPE.HP, healValue, effect.GetEffector());
                 else
-                    effected.GetLifeStats().IncreaseHp(SM_ATTACK_STATUS.TYPE.REGULAR, healValue, effect.GetEffector());
+                    effected.GetLifeStats().IncreaseHp(SmAttackStatus.TYPE.REGULAR, healValue, effect.GetEffector());
                 break;
             case HealType.MP:
                 if (this is ProcMPHealInstantEffect) // item heal, eg potions
-                    effected.GetLifeStats().IncreaseMp(SM_ATTACK_STATUS.TYPE.MP, healValue, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+                    effected.GetLifeStats().IncreaseMp(SmAttackStatus.TYPE.MP, healValue, 0, SmAttackStatus.LOG.REGULAR);
                 else
-                    effected.GetLifeStats().IncreaseMp(SM_ATTACK_STATUS.TYPE.HEAL_MP, healValue, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+                    effected.GetLifeStats().IncreaseMp(SmAttackStatus.TYPE.HEAL_MP, healValue, 0, SmAttackStatus.LOG.REGULAR);
                 break;
             case HealType.FP:
                 if (!(effected is Player))
                     return;
-                ((Player)effected).GetLifeStats().IncreaseFp(SM_ATTACK_STATUS.TYPE.FP_RINGS, healValue, 0, SM_ATTACK_STATUS.LOG.REGULAR);
+                ((Player)effected).GetLifeStats().IncreaseFp(SmAttackStatus.TYPE.FP_RINGS, healValue, 0, SmAttackStatus.LOG.REGULAR);
                 break;
             case HealType.DP:
                 ((Player)effected).GetCommonData().AddDp(healValue);

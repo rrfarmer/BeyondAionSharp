@@ -93,7 +93,7 @@ public class AutoGroupUtility
     {
         foreach (int objectId in lfp.GetMembers().Keys)
         {
-            Player player = World.GetInstance().GetPlayer(objectId);
+            Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(objectId);
             if (player != null)
             {
                 if (agt.IsPeriodicInstance())
@@ -106,7 +106,7 @@ public class AutoGroupUtility
 
     public static void SendWindowToPlayerIfOnline(int objectId, int maskId, int windowId)
     {
-        Player player = World.GetInstance().GetPlayer(objectId);
+        Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(objectId);
         if (player != null)
             SendWindowToPlayer(player, maskId, windowId);
     }

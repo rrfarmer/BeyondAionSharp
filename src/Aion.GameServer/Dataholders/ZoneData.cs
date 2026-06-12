@@ -41,18 +41,18 @@ public class ZoneData
                     area = new PolyArea(zone.GetName(), zone.GetMapid(), zone.GetPoints().GetPoint(), zone.GetPoints().GetBottom(), zone.GetPoints().GetTop());
                     break;
                 case AreaType.Cylinder:
-                    area = new CylinderArea(zone.GetName(), zone.GetMapid(), zone.GetCylinder().GetX(), zone.GetCylinder().GetY(), zone.GetCylinder().GetR(),
-                        zone.GetCylinder().GetBottom(), zone.GetCylinder().GetTop());
+                    area = new CylinderArea(zone.GetName(), zone.GetMapid(), zone.GetCylinder().GetX().Value, zone.GetCylinder().GetY().Value, zone.GetCylinder().GetR().Value,
+                        zone.GetCylinder().GetBottom().Value, zone.GetCylinder().GetTop().Value);
                     break;
                 case AreaType.Sphere:
                     if (zone.GetSphere().GetR() <= 0)
                         break;
-                    area = new SphereArea(zone.GetName(), zone.GetMapid(), zone.GetSphere().GetX(), zone.GetSphere().GetY(), zone.GetSphere().GetZ(), zone
-                        .GetSphere().GetR());
+                    area = new SphereArea(zone.GetName(), zone.GetMapid(), zone.GetSphere().GetX().Value, zone.GetSphere().GetY().Value, zone.GetSphere().GetZ().Value, zone
+                        .GetSphere().GetR().Value);
                     break;
                 case AreaType.Semisphere:
-                    area = new SemisphereArea(zone.GetName(), zone.GetMapid(), zone.GetSemisphere().GetX(), zone.GetSemisphere().GetY(), zone.GetSemisphere()
-                        .GetZ(), zone.GetSemisphere().GetR());
+                    area = new SemisphereArea(zone.GetName(), zone.GetMapid(), zone.GetSemisphere().GetX().Value, zone.GetSemisphere().GetY().Value, zone.GetSemisphere()
+                        .GetZ().Value, zone.GetSemisphere().GetR().Value);
                     break;
             }
             if (area != null)
@@ -62,7 +62,7 @@ public class ZoneData
                     zones = new List<ZoneInfo>();
                     zoneNameMap[zone.GetMapid()] = zones;
                 }
-                if (zone.GetZoneType() == ZoneClassName.Weather)
+                if (zone.GetZoneType() == ZoneClassName.WEATHER)
                 {
                     if (lastMapId != zone.GetMapid())
                     {
@@ -96,19 +96,17 @@ public class ZoneData
 
     public void SaveData()
     {
-        FileInfo xml = new FileInfo("./data/static_data/zones/generated_zones.xml");
+        // Java parity: dataholders/ZoneData.saveData — JAXB marshal → idiomatic C# XmlSerializer (infra).
+        const string xmlPath = "./data/static_data/zones/generated_zones.xml";
         try
         {
-            JAXBContext jc = JAXBContext.NewInstance(typeof(ZoneData));
-            Marshaller marshaller = jc.CreateMarshaller();
-            marshaller.SetSchema(XmlUtil.GetSchema("./data/static_data/zones/zones.xsd"));
-            marshaller.SetProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.Marshal(this, xml);
+            var serializer = new XmlSerializer(typeof(ZoneData));
+            using var writer = new StreamWriter(xmlPath);
+            serializer.Serialize(writer, this);
         }
-        catch (JAXBException e)
+        catch (Exception e)
         {
-            log.LogError(e.GetCause(), "Error while saving data: " + e.GetMessage());
-            return;
+            log.LogError(e, "Error while saving data: " + e.Message);
         }
     }
 }

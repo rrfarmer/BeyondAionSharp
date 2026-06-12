@@ -133,13 +133,13 @@ public class PacketSendUtility
     /// <summary>Broadcasts a packet to all logged in players.</summary>
     public static void BroadcastToWorld(AionServerPacket packet)
     {
-        World.GetInstance().ForEachPlayer(player => SendPacket(player, packet));
+        Aion.GameServer.World.World.GetInstance().ForEachPlayer(player => SendPacket(player, packet));
     }
 
     /// <summary>Broadcasts a packet to all logged in players matching a filter.</summary>
     public static void BroadcastToWorld(AionServerPacket packet, Predicate<Player> filter)
     {
-        World.GetInstance().ForEachPlayer(player =>
+        Aion.GameServer.World.World.GetInstance().ForEachPlayer(player =>
         {
             if (filter(player))
                 SendPacket(player, packet);

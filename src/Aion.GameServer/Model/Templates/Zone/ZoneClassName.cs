@@ -10,29 +10,29 @@ namespace Aion.GameServer.Model.Templates.Zone;
 public enum ZoneClassName
 {
     // Java parity: DUMMY
-    Dummy,
+    DUMMY,
     // Java parity: SUB
-    Sub,
+    SUB,
     // Java parity: FLY
-    Fly,
+    FLY,
     // Java parity: NO_FLY
-    NoFly,
+    NO_FLY,
     // Java parity: ARTIFACT
-    Artifact,
+    ARTIFACT,
     // Java parity: FORT
-    Fort,
+    FORT,
     // Java parity: LIMIT
-    Limit,
+    LIMIT,
     // Java parity: ITEM_USE
-    ItemUse,
+    ITEM_USE,
     // Java parity: PVP
-    Pvp,
+    PVP,
     // Java parity: DUEL
-    Duel,
+    DUEL,
     // Java parity: HOUSE
-    House,
+    HOUSE,
     // Java parity: WEATHER
-    Weather,
+    WEATHER,
     // Java parity: DOMINION
-    Dominion,
+    DOMINION,
 }

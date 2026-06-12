@@ -5,7 +5,7 @@ namespace Aion.GameServer.SkillEngine.Effects.Modifier;
 
 /// <summary>
 /// Java parity: skillengine/effect/modifier/ActionModifier (ATracer). Base of the action-modifier cone.
-/// <c>Effect</c> is fully qualified to avoid the SkillEngine.Effect namespace/type ambiguity;
+/// <c>Effect</c> is fully qualified to avoid the Aion.GameServer.SkillEngine.SkillEngine.Effect namespace/type ambiguity;
 /// <c>Func</c> is the skill-engine change enum (not System.Func).
 /// </summary>
 public abstract class ActionModifier

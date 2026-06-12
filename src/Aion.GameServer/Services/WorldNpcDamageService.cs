@@ -2,6 +2,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using GameWorld = Aion.GameServer.World.World;
+using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
 namespace Aion.GameServer.Services;
 
