@@ -49,7 +49,7 @@ public sealed class DataManager
 	public static PortalLocData PORTAL_LOC_DATA => SD.PortalLocDataDh;
 	public static PetFeedData PET_FEED_DATA => SD.PetFeedDataDh;
 	public static NpcSkillData NPC_SKILL_DATA => SD.NpcSkillDataDh;
-	public static CosmeticItemTable COSMETIC_ITEMS_DATA => SD.CosmeticItems;
+	public static CosmeticItemsData COSMETIC_ITEMS_DATA => SD.CosmeticItemsDataDh;
 	public static ChallengeTaskTable CHALLENGE_DATA => SD.ChallengeTasks;
 	public static WindstreamTable WINDSTREAM_DATA => SD.WindstreamLocations;
 	public static StorageExpansionTemplateTable WAREHOUSEEXPANDER_DATA => SD.WarehouseExpansionTemplates;

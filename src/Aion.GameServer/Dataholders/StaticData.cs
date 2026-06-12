@@ -170,6 +170,9 @@ public sealed class StaticData
 
 	public CosmeticItemTable CosmeticItems { get; }
 
+	// Faithful CosmeticItemsData holder (empty-default; runtime XML load deferred) - summary->template re-point.
+	public CosmeticItemsData CosmeticItemsDataDh { get; } = new();
+
 	public DecomposableItemTable DecomposableItems { get; }
 
 	public AssemblyItemTable AssemblyItems { get; }
