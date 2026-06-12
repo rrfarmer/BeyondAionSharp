@@ -90,7 +90,7 @@ public class CraftingTask : AbstractCraftTask
             return false;
 
         critCount++;
-        itemTemplate = DataManager.ITEM_DATA.GetItemTemplate(recipeTemplate.GetComboProduct(critCount));
+        itemTemplate = DataManager.ITEM_DATA.GetItemTemplate(recipeTemplate.GetComboProduct(critCount).Value);
         return true;
     }
 
