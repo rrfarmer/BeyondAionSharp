@@ -240,7 +240,7 @@ public abstract class AbstractQuestHandler
             {
                 if (drop.GetNpcId() == env.GetTargetId())
                 {
-                    droppedItem = drop.GetItemId();
+                    droppedItem = drop.GetItemId().Value;
                     break;
                 }
             }
@@ -251,7 +251,7 @@ public abstract class AbstractQuestHandler
                 {
                     if (item.GetItemId() == droppedItem)
                     {
-                        dropCount = item.GetCount();
+                        dropCount = item.GetCount().Value;
                         break;
                     }
                 }

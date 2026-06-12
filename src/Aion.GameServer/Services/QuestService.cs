@@ -621,7 +621,7 @@ public sealed class QuestService
 
         foreach (CollectItem collectItem in collectItems.GetCollectItem())
         {
-            int itemId = collectItem.GetItemId();
+            int itemId = collectItem.GetItemId().Value;
             long count = itemId == ItemId.KINAH ? player.GetInventory().GetKinah() : player.GetInventory().GetItemCountByItemId(itemId);
             if (collectItem.GetCount() > count)
                 return false;
@@ -842,7 +842,7 @@ public sealed class QuestService
 
     private static bool IsQuestDrop(Player player, QuestDrop drop)
     {
-        int questId = drop.GetQuestId();
+        int questId = drop.GetQuestId().Value;
         QuestState qs = player.GetQuestStateList().GetQuestState(questId);
         if (qs == null || qs.GetStatus() != QuestStatus.START)
         {
@@ -887,7 +887,7 @@ public sealed class QuestService
 
         foreach (CollectItem collectItem in collectItems.GetCollectItem())
         {
-            int collectItemId = collectItem.GetItemId();
+            int collectItemId = collectItem.GetItemId().Value;
             long count = player.GetInventory().GetItemCountByItemId(collectItemId);
             if (collectItem.GetCount() > count && drop.GetItemId() == collectItemId)
                 return true;

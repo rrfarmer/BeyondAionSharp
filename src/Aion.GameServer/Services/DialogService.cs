@@ -212,7 +212,7 @@ public class DialogService
                 {
                     if (AutoGroupConfig.AUTO_GROUP_ENABLE)
                     {
-                        AutoGroupType agt = AutoGroupTypeExtensions.GetAutoGroup(npc.GetNpcId());
+                        AutoGroupType agt = AutoGroupTypeExtensions.GetAutoGroup(npc.GetNpcId()).Value;
                         if (agt != null && PeriodicInstanceManager.GetInstance().IsRegistrationOpen(agt.GetTemplate().GetMaskId()))
                             PacketSendUtility.SendPacket(player, new SM_AUTO_GROUP(agt.GetTemplate().GetMaskId()));
                     }

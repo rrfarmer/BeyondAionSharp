@@ -19,7 +19,7 @@ public class SM_AUTO_GROUP : AionServerPacket
 
     public SM_AUTO_GROUP(int maskId)
     {
-        AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+        AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
         if (agt == null)
         {
             throw new ArgumentException("AutoGroupType not found for maskId: " + maskId);
