@@ -1,4 +1,5 @@
 using Aion.Commons.Nio;
+using Aion.GameServer.Model.Instance;
 using Aion.GameServer.Model.Instance.Instancescore;
 using Aion.GameServer.Model.Instance.Playerreward;
 

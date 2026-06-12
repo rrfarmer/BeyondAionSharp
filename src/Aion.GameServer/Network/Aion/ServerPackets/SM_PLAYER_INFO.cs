@@ -1,4 +1,5 @@
 using Aion.GameServer.Utils.Stats;
+using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.GeoEngine.Math;
 using Aion.GameServer.Model.GameObjects.Players;

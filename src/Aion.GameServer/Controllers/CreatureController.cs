@@ -1,4 +1,5 @@
 using System;
+using Aion.GameServer.Model.Templates.Items;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using Aion.GameServer.Commons.Utils;
