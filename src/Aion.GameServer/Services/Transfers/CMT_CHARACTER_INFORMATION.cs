@@ -388,8 +388,8 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
             int questId = ReadD();
             string status = ReadS();
             int qvars = ReadD(), completeCount = ReadD(), reward = ReadD();
-            DateTimeOffset completeTime = DateTimeOffset.FromUnixTimeMilliseconds(ReadQ());
-            DateTimeOffset nextRepeatTime = DateTimeOffset.FromUnixTimeMilliseconds(ReadQ());
+            DateTime completeTime = DateTimeOffset.FromUnixTimeMilliseconds(ReadQ()).UtcDateTime;
+            DateTime nextRepeatTime = DateTimeOffset.FromUnixTimeMilliseconds(ReadQ()).UtcDateTime;
             int flags = ReadD();
 
             if (PlayerTransferConfig.ALLOW_QUESTS)

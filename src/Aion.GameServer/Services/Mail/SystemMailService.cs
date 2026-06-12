@@ -94,7 +94,7 @@ public class SystemMailService
             finalAttachedKinahCount = attachedKinahCount;
 
         Letter newLetter = new Letter(IDFactory.GetInstance().NextId(), recipientCommonData.GetPlayerObjId(), attachedItem, finalAttachedKinahCount,
-            title, message, sender, DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), true, letterType);
+            title, message, sender, DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime, true, letterType);
 
         if (!MailDAO.StoreLetter(newLetter))
             return false;

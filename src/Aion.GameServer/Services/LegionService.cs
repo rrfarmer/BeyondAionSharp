@@ -652,7 +652,7 @@ public class LegionService
                 log.LogWarning("Truncated legion announcement sent by " + activePlayer + " (old length: " + message.Length + ")");
                 message = message.Substring(0, 256);
             }
-            announcement = new Legion.Announcement(message, DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            announcement = new Legion.Announcement(message, DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime);
         }
         legion.SetAnnouncement(announcement);
         LegionDAO.SaveAnnouncement(legion.GetLegionId(), announcement);

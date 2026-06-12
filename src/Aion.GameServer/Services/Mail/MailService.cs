@@ -144,7 +144,7 @@ public class MailService
 
         senderInventory.DecreaseKinah(finalMailKinah);
         Letter newLetter = new Letter(IDFactory.GetInstance().NextId(), recipientCommonData.GetPlayerObjId(), attachedItem, attachedKinah, title, message,
-            sender.GetName(), DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()), true, letterType);
+            sender.GetName(), DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime, true, letterType);
 
         // first save attached item for FK consistency
         if (attachedItem != null)

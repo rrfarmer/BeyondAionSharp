@@ -306,7 +306,7 @@ public class InGameShopEn
                         if (LoggingConfig.LOG_INGAMESHOP)
                             log.LogInformation("[INGAMESHOP] > " + player + " (" + player.GetAccount() + ") BUY ITEM: " + item.GetItemId() + " COUNT: " + item.GetItemCount() + " FOR PlayerName: " + request.receiver);
                         if (LoggingConfig.LOG_INGAMESHOP_SQL)
-                            InGameShopLogDAO.Log("GIFT", DateTimeOffset.UtcNow, player.GetName(),
+                            InGameShopLogDAO.Log("GIFT", DateTimeOffset.UtcNow.UtcDateTime, player.GetName(),
                                 player.GetAccountName(), request.receiver, item.GetItemId(), item.GetItemCount(), item.GetItemPrice());
                     }
                     else
@@ -315,7 +315,7 @@ public class InGameShopEn
                         if (LoggingConfig.LOG_INGAMESHOP)
                             log.LogInformation("[INGAMESHOP] > " + player + " (" + player.GetAccount() + ") BUY ITEM: " + item.GetItemId() + " COUNT: " + item.GetItemCount());
                         if (LoggingConfig.LOG_INGAMESHOP_SQL)
-                            InGameShopLogDAO.Log("BUY", DateTimeOffset.UtcNow, player.GetName(),
+                            InGameShopLogDAO.Log("BUY", DateTimeOffset.UtcNow.UtcDateTime, player.GetName(),
                                 player.GetAccountName(), player.GetName(), item.GetItemId(), item.GetItemCount(), item.GetItemPrice());
                         InventoryDAO.Store(player);
                     }

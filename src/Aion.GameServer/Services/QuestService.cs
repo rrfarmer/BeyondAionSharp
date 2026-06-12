@@ -86,7 +86,7 @@ public sealed class QuestService
         qs.SetStatus(QuestStatus.COMPLETE);
         qs.SetQuestVar(0);
         if (template.IsTimeBased())
-            qs.SetNextRepeatTime(CalculateRepeatDate(player, template));
+            qs.SetNextRepeatTime(CalculateRepeatDate(player, template).UtcDateTime);
         PacketSendUtility.SendPacket(player, new SM_QUEST_ACTION(ActionType.UPDATE, qs));
         QuestEngine.QuestEngine.GetInstance().OnQuestCompleted(player, id);
         if (template.GetNpcFactionId() != 0)
