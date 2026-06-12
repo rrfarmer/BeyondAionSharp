@@ -28,7 +28,7 @@ public abstract class HealOverTimeEffect : AbstractOverTimeEffect, HealEffectTem
 
     public void StartEffect(Effect effect, HealType healType)
     {
-        effect.SetReserveds(new EffectReserved(Position, CalculateHealValue(effect, healType), EffectReservedResourceTypeExtensions.Of(healType), false, false), true);
+        effect.SetReserveds(new EffectReserved(Position, ((HealEffectTemplate)this).CalculateHealValue(effect, healType), EffectReservedResourceTypeExtensions.Of(healType), false, false), true);
         base.StartEffect(effect, null);
     }
 
