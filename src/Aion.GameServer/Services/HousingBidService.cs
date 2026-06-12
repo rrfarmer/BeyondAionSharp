@@ -432,7 +432,7 @@ public class HousingBidService
         {
             string[] titleParts = letter.GetTitle().Split(',');
             string[] bodyParts = letter.GetMessage().Split(',');
-            AuctionResult result = AuctionResult.GetResultFromId(int.Parse(titleParts[0]));
+            AuctionResult result = AuctionResultExtensions.GetResultFromId(int.Parse(titleParts[0])).Value;
             if (result == AuctionResult.FAILED_BID)
             {
                 needsRefresh = true;

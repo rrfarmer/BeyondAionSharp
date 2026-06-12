@@ -29,7 +29,7 @@ public class CM_CHAT_MESSAGE_PUBLIC : AionClientPacket
 
     protected override void ReadImpl()
     {
-        type = ChatType.GetChatType(ReadC());
+        type = ChatTypeExtensions.GetChatType(ReadC());
         message = ReadS();
     }
 
