@@ -37,7 +37,7 @@ public abstract class AbstractQuestZoneObserver : ActionObserver
                 try
                 {
                     Vector3f currentPos = new Vector3f(player.GetX(), player.GetY(), player.GetZ());
-                    Vector3f center = new Vector3f(observedZone.GetSphere().GetX(), observedZone.GetSphere().GetY(), observedZone.GetSphere().GetZ());
+                    Vector3f center = new Vector3f(observedZone.GetSphere().GetX().Value, observedZone.GetSphere().GetY().Value, observedZone.GetSphere().GetZ().Value);
                     float distance = startPos.Distance(currentPos);
                     float distanceFromCenter = center.Distance(currentPos);
                     if (oldPos.Distance(currentPos) > 1)
