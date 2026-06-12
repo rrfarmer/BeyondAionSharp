@@ -30,7 +30,7 @@ public class PetOrderUseUltraSkillEffect : EffectTemplate
         int npcId = effector.GetSummon().GetNpcId();
         int orderSkillId = effect.GetSkillId();
 
-        int petUseSkillId = DataManager.PET_SKILL_DATA.GetPetOrderSkill(orderSkillId, npcId);
+        int petUseSkillId = DataManager.PET_SKILL_DATA.GetPetOrderSkill(orderSkillId, npcId).Value;
         SkillTemplate skillTemplate = DataManager.SKILL_DATA.GetSkillTemplate(petUseSkillId);
         if (skillTemplate == null)
         {

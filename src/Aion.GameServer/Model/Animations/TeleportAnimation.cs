@@ -32,6 +32,9 @@ public enum TeleportAnimation : byte
 /// </summary>
 public static class TeleportAnimationExtensions
 {
+    // Java parity: TeleportAnimation::getId (returns the byte animation id)
+    public static byte GetId(this TeleportAnimation teleport) => (byte)teleport;
+
     // Java parity: TeleportAnimation::getDefaultArrivalAnimation
     public static ArrivalAnimation GetDefaultArrivalAnimation(this TeleportAnimation teleport)
     {

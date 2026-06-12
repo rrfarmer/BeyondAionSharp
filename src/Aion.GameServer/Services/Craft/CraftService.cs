@@ -74,7 +74,7 @@ public class CraftService
 
         if (recipetemplate.GetCraftDelayId() != null)
         {
-            long reuseTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + recipetemplate.GetCraftDelayTime() * 1000;
+            long reuseTimeMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + recipetemplate.GetCraftDelayTime().Value * 1000;
             player.GetCraftCooldowns()[recipetemplate.GetCraftDelayId().Value] = reuseTimeMillis;
         }
     }

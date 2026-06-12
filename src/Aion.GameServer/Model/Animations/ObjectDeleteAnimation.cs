@@ -26,3 +26,9 @@ public enum ObjectDeleteAnimation : byte
     JUMP_IN = 11,
     DELAYED = 19,
 }
+
+/// <summary>Java parity: model/animations/ObjectDeleteAnimation::getId (returns the byte animation id).</summary>
+public static class ObjectDeleteAnimationExtensions
+{
+    public static byte GetId(this ObjectDeleteAnimation animation) => (byte)animation;
+}
