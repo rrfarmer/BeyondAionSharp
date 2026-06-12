@@ -631,10 +631,10 @@ public sealed class QuestService
             foreach (CollectItem collectItem in collectItems.GetCollectItem())
             {
                 if (collectItem.GetItemId() == ItemId.KINAH)
-                    player.GetInventory().DecreaseKinah(collectItem.GetCount());
+                    player.GetInventory().DecreaseKinah(collectItem.GetCount().Value);
                 else
                 {
-                    player.GetInventory().DecreaseByItemId(collectItem.GetItemId().Value, collectItem.GetCount());
+                    player.GetInventory().DecreaseByItemId(collectItem.GetItemId().Value, collectItem.GetCount().Value);
                 }
             }
         }
@@ -707,7 +707,7 @@ public sealed class QuestService
         {
             CollectItem selectedOption = collectItems.GetCollectItem()[rewardIndex.Value];
             if (player.GetInventory().GetItemCountByItemId(selectedOption.GetItemId().Value) < selectedOption.GetCount()
-                || !player.GetInventory().DecreaseByItemId(selectedOption.GetItemId().Value, selectedOption.GetCount()))
+                || !player.GetInventory().DecreaseByItemId(selectedOption.GetItemId().Value, selectedOption.GetCount().Value))
             {
                 string requiredItemL10n = DataManager.ITEM_DATA.GetItemTemplate(selectedOption.GetItemId().Value).GetL10n();
                 PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_QUEST_COMPLETE_ERROR_QUEST_ITEM_RETRY(requiredItemL10n));
