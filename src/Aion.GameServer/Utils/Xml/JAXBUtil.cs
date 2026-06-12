@@ -17,6 +17,10 @@ public static class JAXBUtil
         return serializer.Deserialize(stream)!;
     }
 
+    // Java parity: deserialize(File, Class, String schema). This shim uses XmlSerializer which does not XSD-validate;
+    // schemaPath is retained for call-site parity and ignored.
+    public static object Deserialize(FileInfo file, Type type, string schemaPath) => Deserialize(file, type);
+
     public static T Deserialize<T>(FileInfo file) => (T)Deserialize(file, typeof(T));
 
     // camelCase aliases for call sites transcribed literally from Java.
