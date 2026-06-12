@@ -1,4 +1,5 @@
 using System;
+using Aion.GameServer.Model;
 using System.Collections.Generic;
 using Aion.GameServer.GeoEngine.Collision;
 using Aion.GameServer.Model.Siege;

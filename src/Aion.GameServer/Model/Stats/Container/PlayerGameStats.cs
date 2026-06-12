@@ -1,4 +1,5 @@
 using Aion.GameServer.Model.Actions;
+using Aion.GameServer.Model.Templates.Items;
 using System;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Configs.Main;
