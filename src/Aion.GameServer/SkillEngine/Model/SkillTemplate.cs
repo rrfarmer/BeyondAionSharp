@@ -316,7 +316,7 @@ public class SkillTemplate : L10n
     {
         if (startconditions != null)
         {
-            foreach (Condition cond in startconditions.GetConditions())
+            foreach (Aion.GameServer.SkillEngine.Condition.Condition cond in startconditions.GetConditions())
             {
                 if (cond is ChainCondition chain)
                     return chain;
@@ -329,7 +329,7 @@ public class SkillTemplate : L10n
     {
         if (useconditions != null)
         {
-            foreach (Condition cond in useconditions.GetConditions())
+            foreach (Aion.GameServer.SkillEngine.Condition.Condition cond in useconditions.GetConditions())
             {
                 if (cond is RideRobotCondition ride)
                     return ride;
@@ -342,7 +342,7 @@ public class SkillTemplate : L10n
     {
         if (startconditions != null)
         {
-            foreach (Condition cond in startconditions.GetConditions())
+            foreach (Aion.GameServer.SkillEngine.Condition.Condition cond in startconditions.GetConditions())
             {
                 if (cond is SkillChargeCondition charge)
                     return charge;
@@ -353,7 +353,7 @@ public class SkillTemplate : L10n
 
     public HpCondition? GetHpCondition()
     {
-        foreach (Condition c in startconditions!.GetConditions())
+        foreach (Aion.GameServer.SkillEngine.Condition.Condition c in startconditions!.GetConditions())
             if (c is HpCondition hp)
             {
                 return hp;
@@ -363,7 +363,7 @@ public class SkillTemplate : L10n
 
     public PlayerMovedCondition? GetMovedCondition()
     {
-        foreach (Condition c in startconditions!.GetConditions())
+        foreach (Aion.GameServer.SkillEngine.Condition.Condition c in startconditions!.GetConditions())
             if (c is PlayerMovedCondition moved)
             {
                 return moved;
