@@ -1,4 +1,5 @@
 using Aion.GameServer.Configs.Network;
+using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Model;

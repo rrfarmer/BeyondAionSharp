@@ -1,4 +1,5 @@
 using System;
+using Aion.GameServer.Model;
 using System.Threading.Tasks;
 using Aion.GameServer.Ai;
 using Aion.GameServer.Ai.Event;
