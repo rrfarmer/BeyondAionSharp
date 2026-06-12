@@ -222,7 +222,7 @@ public class PlayerGroupService
         return null;
     }
 
-    public class OfflinePlayerChecker
+    public class OfflinePlayerChecker : Runnable
     {
         public void Run()
         {

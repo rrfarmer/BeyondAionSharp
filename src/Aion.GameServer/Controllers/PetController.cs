@@ -27,7 +27,7 @@ public class PetController : VisibleObjectController<Pet>
         GetOwner().GetMaster().SetPet(null);
     }
 
-    public class PetUpdateTask
+    public class PetUpdateTask : Runnable
     {
         private readonly Aion.GameServer.Model.GameObjects.Players.Player player;
         private long startTime = 0;

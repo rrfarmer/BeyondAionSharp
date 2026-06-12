@@ -287,7 +287,7 @@ public class PlayerAllianceService
         }
     }
 
-    public class OfflinePlayerAllianceChecker
+    public class OfflinePlayerAllianceChecker : Runnable
     {
         public void Run()
         {
