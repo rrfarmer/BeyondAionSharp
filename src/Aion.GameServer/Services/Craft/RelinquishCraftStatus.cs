@@ -82,13 +82,13 @@ public class RelinquishCraftStatus
 
     public static void DeleteCraftStatusQuests(int skillId, Player player, bool isExpert)
     {
-        foreach (int questId in MasterQuestsList.GetQuestIds(skillId, player.GetRace()))
+        foreach (int questId in MasterQuestsListExtensions.GetQuestIds(skillId, player.GetRace()))
         {
             player.GetQuestStateList().DeleteQuest(questId);
         }
         if (isExpert)
         {
-            foreach (int questId in ExpertQuestsList.GetQuestIds(skillId, player.GetRace()))
+            foreach (int questId in ExpertQuestsListExtensions.GetQuestIds(skillId, player.GetRace()))
             {
                 player.GetQuestStateList().DeleteQuest(questId);
             }
