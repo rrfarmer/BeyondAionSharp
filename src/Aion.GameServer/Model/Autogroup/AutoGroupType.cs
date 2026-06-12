@@ -107,6 +107,9 @@ public static class AutoGroupTypeExtensions
         return self.GetTemplate().GetL10nId();
     }
 
+    // Java parity: L10n::getL10n() - C# enum can't implement IL10n, so provide GetL10n directly.
+    public static string? GetL10n(this AutoGroupType self) => Utils.ChatUtil.L10n(self.GetL10nId());
+
     public static int GetMaximumJoinTime(this AutoGroupType self)
     {
         return data[self].MaximumJoinTime;

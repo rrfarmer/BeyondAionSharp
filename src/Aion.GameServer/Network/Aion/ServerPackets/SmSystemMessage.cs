@@ -1,4 +1,5 @@
 using Aion.GameServer.Utils.Stats;
+using Aion.GameServer.Model;
 using Aion.Commons.Network;
 using Aion.GameServer.Utils;
 using System.Globalization;
