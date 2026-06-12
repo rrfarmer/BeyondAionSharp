@@ -634,7 +634,7 @@ public sealed class QuestService
                     player.GetInventory().DecreaseKinah(collectItem.GetCount());
                 else
                 {
-                    player.GetInventory().DecreaseByItemId(collectItem.GetItemId(), collectItem.GetCount());
+                    player.GetInventory().DecreaseByItemId(collectItem.GetItemId().Value, collectItem.GetCount());
                 }
             }
         }
@@ -685,7 +685,7 @@ public sealed class QuestService
         { // Verify if player has atleast one item with sufficient count and starts quest
             foreach (CollectItem cItem in collectItems.GetCollectItem())
             {
-                if (player.GetInventory().GetItemCountByItemId(cItem.GetItemId()) >= cItem.GetCount())
+                if (player.GetInventory().GetItemCountByItemId(cItem.GetItemId().Value) >= cItem.GetCount())
                 {
                     QuestState qs = player.GetQuestStateList().GetQuestState(env.GetQuestId());
                     if (qs == null || qs.IsStartable())
@@ -706,10 +706,10 @@ public sealed class QuestService
         else
         {
             CollectItem selectedOption = collectItems.GetCollectItem()[rewardIndex.Value];
-            if (player.GetInventory().GetItemCountByItemId(selectedOption.GetItemId()) < selectedOption.GetCount()
-                || !player.GetInventory().DecreaseByItemId(selectedOption.GetItemId(), selectedOption.GetCount()))
+            if (player.GetInventory().GetItemCountByItemId(selectedOption.GetItemId().Value) < selectedOption.GetCount()
+                || !player.GetInventory().DecreaseByItemId(selectedOption.GetItemId().Value, selectedOption.GetCount()))
             {
-                string requiredItemL10n = DataManager.ITEM_DATA.GetItemTemplate(selectedOption.GetItemId()).GetL10n();
+                string requiredItemL10n = DataManager.ITEM_DATA.GetItemTemplate(selectedOption.GetItemId().Value).GetL10n();
                 PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_QUEST_COMPLETE_ERROR_QUEST_ITEM_RETRY(requiredItemL10n));
                 return -1;
             }
@@ -878,7 +878,7 @@ public sealed class QuestService
         }
         if (drop is HandlerSideDrop handlerSideDrop)
         {
-            return handlerSideDrop.GetNeededAmount() > player.GetInventory().GetItemCountByItemId(drop.GetItemId());
+            return handlerSideDrop.GetNeededAmount() > player.GetInventory().GetItemCountByItemId(drop.GetItemId().Value);
         }
 
         CollectItems collectItems = DataManager.QUEST_DATA.GetQuestById(questId).GetCollectItems();
