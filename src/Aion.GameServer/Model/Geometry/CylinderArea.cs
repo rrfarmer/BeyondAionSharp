@@ -14,12 +14,13 @@ public class CylinderArea : AbstractArea
     public CylinderArea(ZoneName zoneName, int worldId, Point2D center, float radius, float minZ, float maxZ)
         : this(zoneName, worldId, center.GetX(), center.GetY(), radius, minZ, maxZ) { }
 
-    public CylinderArea(ZoneName zoneName, int worldId, float x, float y, float radius, float minZ, float maxZ)
-        : base(zoneName, worldId, minZ, maxZ)
+    // Java parity: Cylinder.getX()/getR()/getTop()/getBottom() return boxed Float (auto-unboxed); accept float?.
+    public CylinderArea(ZoneName zoneName, int worldId, float? x, float? y, float? radius, float? minZ, float? maxZ)
+        : base(zoneName, worldId, minZ ?? 0, maxZ ?? 0)
     {
-        _centerX = x;
-        _centerY = y;
-        _radius  = radius;
+        _centerX = x ?? 0;
+        _centerY = y ?? 0;
+        _radius  = radius ?? 0;
     }
 
     public override bool IsInside2D(float x, float y) =>

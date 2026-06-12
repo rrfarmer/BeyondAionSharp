@@ -14,9 +14,10 @@ public class SphereArea : Area
     protected int WorldId;
     protected ZoneName ZoneName;
 
-    public SphereArea(ZoneName zoneName, int worldId, float x, float y, float z, float r)
+    // Java parity: Sphere.getX()/getR() return boxed Float (auto-unboxed at the call); accept float? and coalesce.
+    public SphereArea(ZoneName zoneName, int worldId, float? x, float? y, float? z, float? r)
     {
-        X = x; Y = y; Z = z; R = r;
+        X = x ?? 0; Y = y ?? 0; Z = z ?? 0; R = r ?? 0;
         WorldId  = worldId;
         ZoneName = zoneName;
     }
