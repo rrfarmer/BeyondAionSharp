@@ -41,7 +41,7 @@ public class StaticObjectSpawnManager
 
     private static void BringIntoWorld(VisibleObject visibleObject, SpawnTemplate spawn, int instanceIndex)
     {
-        World world = Aion.GameServer.World.World.GetInstance();
+        Aion.GameServer.World.World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(visibleObject);
         world.SetPosition(visibleObject, spawn.GetWorldId(), instanceIndex, spawn.GetX(), spawn.GetY(), spawn.GetZ(), spawn.GetHeading());
         world.Spawn(visibleObject);

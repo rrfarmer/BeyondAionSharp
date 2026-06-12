@@ -98,7 +98,7 @@ public class RiftManager
         npc.SetKnownlist(new NpcKnownList(npc));
         npc.SetEffectController(new EffectController(npc));
 
-        World world = Aion.GameServer.World.World.GetInstance();
+        Aion.GameServer.World.World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(npc);
         world.SetPosition(npc, template.GetWorldId(), instance, template.GetX(), template.GetY(), template.GetZ(), template.GetHeading());
         world.Spawn(npc);

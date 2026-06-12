@@ -106,7 +106,7 @@ public class SpawnEngine
 
     public static void BringIntoWorld(VisibleObject visibleObject, int worldId, int instanceIndex, float x, float y, float z, byte h)
     {
-        World world = Aion.GameServer.World.World.GetInstance();
+        Aion.GameServer.World.World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(visibleObject);
         world.SetPosition(visibleObject, worldId, instanceIndex, x, y, z, h);
         world.Spawn(visibleObject);
@@ -116,7 +116,7 @@ public class SpawnEngine
     {
         if (visibleObject.GetPosition() == null)
             throw new ArgumentException("Position is null");
-        World world = Aion.GameServer.World.World.GetInstance();
+        Aion.GameServer.World.World world = Aion.GameServer.World.World.GetInstance();
         world.StoreObject(visibleObject);
         world.Spawn(visibleObject);
     }
