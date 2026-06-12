@@ -109,10 +109,10 @@ public abstract class AbstractPlayerInfoPacket : AionServerPacket
         for (int i = 0; i < 16; i++)
         { // 16 items is always expected by the client...
             PlayerAccountData.VisibleItem item = i < accPlData.GetVisibleItems().Count ? accPlData.GetVisibleItems()[i] : null;
-            WriteC(item == null ? 0 : item.SlotType()); // 0 = not visible, 1 = default (right-hand) slot, 2 = secondary (left-hand) slot
-            WriteD(item == null ? 0 : item.ItemId());
-            WriteD(item == null ? 0 : item.GodStoneId());
-            WriteDyeInfo(item == null ? null : item.Color());
+            WriteC(item == null ? 0 : item.SlotType); // 0 = not visible, 1 = default (right-hand) slot, 2 = secondary (left-hand) slot
+            WriteD(item == null ? 0 : item.ItemId);
+            WriteD(item == null ? 0 : item.GodStoneId);
+            WriteDyeInfo(item == null ? null : item.Color);
         }
         WriteD(0);
         WriteD(0);

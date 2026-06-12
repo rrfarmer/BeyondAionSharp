@@ -36,11 +36,11 @@ public class SM_LEGION_HISTORY : AionServerPacket
         WriteD(pageEntries.Count);
         foreach (LegionHistoryEntry entry in pageEntries)
         {
-            WriteD(entry.EpochSeconds());
-            WriteC(entry.Action().GetId());
+            WriteD(entry.EpochSeconds);
+            WriteC(entry.Action.GetId());
             WriteC(0); // unk
-            WriteS(entry.Name(), 32);
-            WriteS(entry.Description(), 32);
+            WriteS(entry.Name, 32);
+            WriteS(entry.Description, 32);
             WriteH(0);
         }
         WriteH((int)type);

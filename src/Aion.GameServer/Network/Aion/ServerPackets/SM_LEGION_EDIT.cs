@@ -32,8 +32,8 @@ public class SM_LEGION_EDIT : AionServerPacket
     public SM_LEGION_EDIT(Legion.Announcement announcement)
     {
         this.type = 0x05;
-        this.announcement = announcement.Message();
-        this.unixTime = (int)(announcement.Time().ToUnixTimeMilliseconds() / 1000);
+        this.announcement = announcement.Message;
+        this.unixTime = (int)(announcement.Time.ToUnixTimeMilliseconds() / 1000);
     }
 
     protected override void WriteImpl(AionConnection con)

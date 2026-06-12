@@ -45,10 +45,10 @@ public class SM_LEGION_INFO : AionServerPacket
         for (int i = 0; i < 7; i++)
         {
             Announcement announcement = i < announcements.Count ? announcements[i] : null;
-            WriteS(announcement == null ? "" : announcement.Message());
-            if (announcement == null || announcement.Message().Length == 0) // empty string is a stop marker
+            WriteS(announcement == null ? "" : announcement.Message);
+            if (announcement == null || announcement.Message.Length == 0) // empty string is a stop marker
                 break;
-            WriteD((int)(announcement.Time().ToUnixTimeMilliseconds() / 1000));
+            WriteD((int)(announcement.Time.ToUnixTimeMilliseconds() / 1000));
         }
     }
 }

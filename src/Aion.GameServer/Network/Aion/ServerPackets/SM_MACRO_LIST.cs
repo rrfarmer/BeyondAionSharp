@@ -9,7 +9,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 public class SM_MACRO_LIST : AionServerPacket
 {
     public const int STATIC_BODY_SIZE = 7;
-    public static readonly Func<Macros.Macro, int> DYNAMIC_BODY_PART_SIZE_CALCULATOR = macro => 1 + macro.Xml().Length * 2 + 2;
+    public static readonly Func<Macros.Macro, int> DYNAMIC_BODY_PART_SIZE_CALCULATOR = macro => 1 + macro.Xml.Length * 2 + 2;
 
     private readonly int playerObjectId;
     private readonly List<Macros.Macro> macros;
@@ -29,8 +29,8 @@ public class SM_MACRO_LIST : AionServerPacket
         WriteH(-macros.Count);
         foreach (Macros.Macro macro in macros)
         {
-            WriteC(macro.Id());
-            WriteS(macro.Xml());
+            WriteC(macro.Id);
+            WriteS(macro.Xml);
         }
     }
 }
