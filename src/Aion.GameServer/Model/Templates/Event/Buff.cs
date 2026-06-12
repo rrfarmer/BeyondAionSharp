@@ -54,23 +54,23 @@ public class Buff
     public enum BuffMapType
     {
         // Java parity: WORLD_MAP(instance -> !instance.getTemplate().isInstance())
-        WorldMap,
+        WORLD_MAP,
         // Java parity: SOLO_INSTANCE(instance -> instance.getMaxPlayers() == 1)
-        SoloInstance,
+        SOLO_INSTANCE,
         // Java parity: GROUP_INSTANCE(instance -> instance.getMaxPlayers() > 1 && <= 6)
-        GroupInstance,
+        GROUP_INSTANCE,
         // Java parity: ALLIANCE_INSTANCE(instance -> instance.getMaxPlayers() > 6 && <= 24)
-        AllianceInstance,
+        ALLIANCE_INSTANCE,
     }
 
     // Java parity: inner enum TriggerCondition
     [XmlType("TriggerCondition")]
     public enum TriggerCondition
     {
-        EnterMap,
-        EnterTeam,
-        PveKill,
-        PvpKill,
+        ENTER_MAP,
+        ENTER_TEAM,
+        PVE_KILL,
+        PVP_KILL,
     }
 
     // Java parity: inner static class Trigger
