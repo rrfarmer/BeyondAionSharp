@@ -187,7 +187,7 @@ public abstract class CreatureGameStats
             foreach (IStatFunction func in functions)
             {
                 if (func.IsBonus() && func.Validate(stat) && (func.GetOwner() is Item || func.GetOwner() is Aion.GameServer.Model.Items.ManaStone
-                    || func.GetOwner() is Aion.GameServer.Model.Templates.ItemSet.ItemSetTemplate || func.GetOwner() is Aion.GameServer.Model.Items.RandomBonusEffect))
+                    || func.GetOwner() is Aion.GameServer.Model.Templates.Itemset.ItemSetTemplate || func.GetOwner() is Aion.GameServer.Model.Items.RandomBonusEffect))
                 {
                     func.Apply(stat);
                 }
