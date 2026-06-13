@@ -11,6 +11,9 @@ public sealed class PlayerExperienceTable
 
 	public int MaxLevel => Experience.Count;
 
+	// Java parity: dataholders/PlayerExperienceTable.getMaxLevel().
+	public int GetMaxLevel() => MaxLevel;
+
 	public long GetStartExpForLevel(int level)
 	{
 		if (level < 0 || level > MaxLevel)
