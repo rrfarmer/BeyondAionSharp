@@ -195,7 +195,7 @@ public class NpcController : CreatureController<Npc>
         {
             AionObject attacker = info.GetAttacker();
             float percentage = info.GetDamage() / (float)finalList.GetTotalDamage();
-            if (attacker is Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.TeamMember<Aion.GameServer.Model.GameObjects.Players.Player>> tmpPlayerTeam)
+            if (attacker is Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>> tmpPlayerTeam)
             {
                 Aion.GameServer.Model.Team.Common.Service.PlayerTeamDistributionService.DoReward(tmpPlayerTeam, percentage, GetOwner(), winner, finalList);
             }
