@@ -25,7 +25,7 @@ public class DashEffect : DamageEffect
             float x1 = (float)Math.Cos(Math.PI + radian) * distance;
             float y1 = (float)Math.Sin(Math.PI + radian) * distance;
             Vector3f closestCollision = GeoService.GetInstance().GetClosestCollision(effect.GetEffected(), effected.GetX() + x1, effected.GetY() + y1, effected.GetZ());
-            effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
+            effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), (sbyte)h);
             Aion.GameServer.World.World.GetInstance().UpdatePosition(effect.GetEffector(), closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
         }
         base.Calculate(effect);

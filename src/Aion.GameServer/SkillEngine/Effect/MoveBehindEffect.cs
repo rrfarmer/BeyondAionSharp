@@ -26,7 +26,7 @@ public class MoveBehindEffect : DamageEffect
         byte h = PositionUtil.GetHeadingTowards(effector, effected);
         Aion.GameServer.World.World.GetInstance().UpdatePosition(effector, closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
         // set target position for SM_CASTSPELL_RESULT
-        effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
+        effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), (sbyte)h);
         base.Calculate(effect);
     }
 }

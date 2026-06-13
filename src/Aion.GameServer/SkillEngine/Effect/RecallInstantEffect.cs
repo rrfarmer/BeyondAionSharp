@@ -38,7 +38,7 @@ public class RecallInstantEffect : EffectTemplate
 
         if (effector.GetWorldId() == effected.GetWorldId() && !effector.IsInInstance() && !(effector.IsEnemy(effected)))
         {
-            effect.GetSkill().SetTargetPosition(effector.GetX(), effector.GetY(), effector.GetZ(), effector.GetHeading());
+            effect.GetSkill().SetTargetPosition(effector.GetX(), effector.GetY(), effector.GetZ(), (sbyte)effector.GetHeading());
             effect.AddSuccessEffect(this);
         }
     }

@@ -38,6 +38,6 @@ public class RandomMoveLocEffect : EffectTemplate
         // Move Effector backwards direction=1 or frontwards direction=0
         float dir = PositionUtil.ConvertHeadingToAngle(effector.GetHeading());
         Vector3f closestCollision = GeoService.GetInstance().FindMovementCollision(effector, direction == 1 ? dir + 180 : dir, distance);
-        effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), effector.GetHeading());
+        effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), (sbyte)effector.GetHeading());
     }
 }

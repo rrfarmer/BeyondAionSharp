@@ -22,7 +22,7 @@ public class BackDashEffect : DamageEffect
         byte h = PositionUtil.GetHeadingTowards(effector, effect.GetEffected());
         float inverseAngle = PositionUtil.ConvertHeadingToAngle(h) + 180; // flip by 180 degrees for opposite direction
         Vector3f closestCollision = GeoService.GetInstance().FindMovementCollision(effector, inverseAngle, distance);
-        effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
+        effect.GetSkill().SetTargetPosition(closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), (sbyte)h);
         Aion.GameServer.World.World.GetInstance().UpdatePosition(effector, closestCollision.GetX(), closestCollision.GetY(), closestCollision.GetZ(), h);
         base.Calculate(effect);
     }
