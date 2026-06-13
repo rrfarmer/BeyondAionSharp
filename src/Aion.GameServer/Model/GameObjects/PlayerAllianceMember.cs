@@ -54,4 +54,26 @@ public class PlayerAllianceMember : PlayerTeamMember
 		// Java parity: model/team/PlayerTeamMember.updateLastOnlineTime uses System.currentTimeMillis().
 		LastOnlineTimeMillis = now.ToUnixTimeMilliseconds();
 	}
+
+	// Java parity: model/team/alliance/PlayerAllianceMember.getAllianceId/setAllianceId.
+	public int GetAllianceId()
+	{
+		return AllianceId;
+	}
+
+	public void SetAllianceId(int allianceId)
+	{
+		AllianceId = allianceId;
+	}
+
+	// Java parity: model/team/alliance/PlayerAllianceMember.getPlayerAllianceGroup/setPlayerAllianceGroup delegate to getObject() (the Player).
+	public PlayerAllianceGroup GetPlayerAllianceGroup()
+	{
+		return Player.GetPlayerAllianceGroup();
+	}
+
+	public void SetPlayerAllianceGroup(PlayerAllianceGroup playerAllianceGroup)
+	{
+		Player.SetPlayerAllianceGroup(playerAllianceGroup);
+	}
 }
