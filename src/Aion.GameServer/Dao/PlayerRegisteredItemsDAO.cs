@@ -115,7 +115,7 @@ public class PlayerRegisteredItemsDAO
         obj.SetX(rset.GetFloat(rset.GetOrdinal("x")));
         obj.SetY(rset.GetFloat(rset.GetOrdinal("y")));
         obj.SetZ(rset.GetFloat(rset.GetOrdinal("z")));
-        obj.SetHeading((byte)rset.GetInt32(rset.GetOrdinal("h")));
+        obj.SetHeading((sbyte)rset.GetInt32(rset.GetOrdinal("h")));
         int colorOrd = rset.GetOrdinal("color");
         obj.SetColor(rset.IsDBNull(colorOrd) ? (int?)null : rset.GetInt32(colorOrd));
         obj.SetColorExpireEnd(rset.GetInt32(rset.GetOrdinal("color_expires")));

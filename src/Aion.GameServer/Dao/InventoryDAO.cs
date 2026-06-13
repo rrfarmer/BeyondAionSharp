@@ -123,7 +123,7 @@ public class InventoryDAO
                 int godStoneItemId = rs.GetInt32(rs.GetOrdinal("godstone_item_id"));
                 int icOrd = rs.GetOrdinal("item_color");
                 int? itemColor = rs.IsDBNull(icOrd) ? (int?)null : rs.GetInt32(icOrd);
-                items.Add(new PlayerAccountData.VisibleItem(slotType, itemSkinId, godStoneItemId, itemColor));
+                items.Add(new PlayerAccountData.VisibleItem((sbyte)slotType, itemSkinId, godStoneItemId, itemColor));
             }
         }
         catch (Exception e)
