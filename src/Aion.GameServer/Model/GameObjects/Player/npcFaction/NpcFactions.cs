@@ -264,7 +264,7 @@ public class NpcFactions
                 faction.SetTime(GetNextTime());
                 faction.SetState(ENpcFactionQuestState.NOTING);
             }
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmQuestAction(questId));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_QUEST_ACTION(questId));
         }
     }
 
