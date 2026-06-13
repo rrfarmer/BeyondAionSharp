@@ -72,7 +72,7 @@ public class InstanceBuff : IStatOwner
     private void Notify(Player player)
     {
         WorldMapInstance wmi = player.GetWorldMapInstance();
-        InstanceScore<InstancePlayerReward> score = wmi.GetInstanceHandler().GetInstanceScore();
+        InstanceScore score = wmi.GetInstanceHandler().GetInstanceScore();
         if (score is HarmonyArenaScore harmonyScore)
         {
             wmi.ForEachPlayer(p => PacketSendUtility.SendPacket(p, new SM_INSTANCE_SCORE(wmi.GetMapId(),
