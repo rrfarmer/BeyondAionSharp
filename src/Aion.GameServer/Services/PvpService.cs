@@ -64,7 +64,7 @@ public class PvpService
 
             foreach (BountyTemplate bounty in bounties)
                 ItemService.AddItem(player, bounty.GetItemId(), bounty.GetCount(), true,
-                    new ItemPacketService.ItemUpdatePredicate(ItemPacketService.ItemAddType.ITEM_COLLECT, ItemPacketService.ItemUpdateType.INC_CASH_ITEM));
+                    new ItemService.ItemUpdatePredicate(ItemPacketService.ItemAddType.ITEM_COLLECT, ItemPacketService.ItemUpdateType.INC_CASH_ITEM));
         }
     }
 
