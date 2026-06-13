@@ -39,7 +39,7 @@ public class SM_NPC_INFO : AionServerPacket
     protected override void WriteImpl(AionConnection con)
     {
         NpcTemplate npcTemplate = (NpcTemplate)npc.GetObjectTemplate();
-        CreatureMoveController<Creature> mc = npc.GetMoveController();
+        CreatureMoveController mc = npc.GetMoveController();
 
         WriteF(npc.GetX());
         WriteF(npc.GetY());

@@ -24,7 +24,7 @@ public class SM_MOVE : AionServerPacket
 
     protected override void WriteImpl(AionConnection client)
     {
-        CreatureMoveController<Creature> mc = creature.GetMoveController();
+        CreatureMoveController mc = creature.GetMoveController();
         PlayableMoveController<Creature> pmc = mc is PlayableMoveController<Creature> ? (PlayableMoveController<Creature>)mc : null;
         WriteD(creature.GetObjectId());
         WriteF(creature.GetX());
