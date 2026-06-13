@@ -180,7 +180,7 @@ public partial class Player
 
         if (reuseTime <= System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())
         {
-            itemCoolDowns.Remove(limits.GetDelayId());
+            itemCoolDowns.Remove(limits.GetDelayId(), out _);
             return false;
         }
         return true;
@@ -204,7 +204,7 @@ public partial class Player
 
     public void RemoveItemCoolDown(int delayId)
     {
-        itemCoolDowns.Remove(delayId);
+        itemCoolDowns.Remove(delayId, out _);
     }
 
     public void SetPlayerResActivate(bool isActivated)
@@ -323,7 +323,7 @@ public partial class Player
 
     public System.DateTime GetCreationDate()
     {
-        return playerAccountData.GetCreationDate();
+        return playerAccountData.GetCreationDate().GetValueOrDefault().UtcDateTime;
     }
 
     /// <summary>Quest completion</summary>
