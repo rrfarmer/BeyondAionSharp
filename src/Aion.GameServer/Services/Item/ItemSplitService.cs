@@ -127,31 +127,25 @@ public class ItemSplitService
     {
         if (source.GetKinah() < splitAmount)
             return;
-        switch (source.GetStorageType())
+        if (source.GetStorageType() == StorageType.CUBE)
         {
-            case StorageType.CUBE:
-                {
-                    IStorage destination = player.GetStorage(StorageType.ACCOUNT_WAREHOUSE.GetId());
-                    long chksum = (source.GetKinah() - splitAmount) + (destination.GetKinah() + splitAmount);
+            IStorage destination = player.GetStorage(StorageType.ACCOUNT_WAREHOUSE.GetId());
+            long chksum = (source.GetKinah() - splitAmount) + (destination.GetKinah() + splitAmount);
 
-                    if (chksum != source.GetKinah() + destination.GetKinah())
-                        return;
+            if (chksum != source.GetKinah() + destination.GetKinah())
+                return;
 
-                    UpdateKinahCount(source, splitAmount, destination);
-                    break;
-                }
+            UpdateKinahCount(source, splitAmount, destination);
+        }
+        else if (source.GetStorageType() == StorageType.ACCOUNT_WAREHOUSE)
+        {
+            IStorage destination = player.GetStorage(StorageType.CUBE.GetId());
+            long chksum = (source.GetKinah() - splitAmount) + (destination.GetKinah() + splitAmount);
 
-            case StorageType.ACCOUNT_WAREHOUSE:
-                {
-                    IStorage destination = player.GetStorage(StorageType.CUBE.GetId());
-                    long chksum = (source.GetKinah() - splitAmount) + (destination.GetKinah() + splitAmount);
+            if (chksum != source.GetKinah() + destination.GetKinah())
+                return;
 
-                    if (chksum != source.GetKinah() + destination.GetKinah())
-                        return;
-
-                    UpdateKinahCount(source, splitAmount, destination);
-                    break;
-                }
+            UpdateKinahCount(source, splitAmount, destination);
         }
     }
 
