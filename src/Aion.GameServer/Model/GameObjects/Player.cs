@@ -40,6 +40,9 @@ public partial class Player : Creature
     public Aion.GameServer.Model.GameObjects.Players.BindPointPosition BindPoint { get => GetBindPoint(); set => SetBindPoint(value); }
     public int AccountId => playerAccount.GetId();
     public string LegionName => GetLegion() != null ? GetLegion().GetName() : "";
+    public Aion.GameServer.Model.GameObjects.Players.PlayerSettings Settings { get => GetPlayerSettings(); set => SetPlayerSettings(value); }
+    public Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFactions NpcFactions { get => GetNpcFactions(); set => SetNpcFactions(value); }
+    public byte AccountMembership => (byte)playerAccount.GetMembership();
 
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
     public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
