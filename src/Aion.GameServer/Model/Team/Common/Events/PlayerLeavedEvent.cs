@@ -17,18 +17,18 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// ThreadPoolManager idiom (ct => {...; return ValueTask.CompletedTask;}, TimeSpan). TaskId.INSTANCE_KICK -> TaskId.INSTANCE_KICK.
 /// SM_*/InstanceService/EventService red-tolerated.
 /// </summary>
+public enum LeaveReson
+{
+    BAN,
+    LEAVE,
+    LEAVE_TIMEOUT,
+    DISBAND
+}
+
 public abstract class PlayerLeavedEvent<TM, T> : ITeamEvent
     where TM : class, ITeamMember<Player>
     where T : TemporaryPlayerTeam<TM>
 {
-    public enum LeaveReson
-    {
-        BAN,
-        LEAVE,
-        LEAVE_TIMEOUT,
-        DISBAND
-    }
-
     protected readonly T team;
     protected readonly Player leavedPlayer;
     protected readonly LeaveReson reason;
