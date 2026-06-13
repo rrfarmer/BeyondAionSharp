@@ -3,6 +3,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
+using Aion.GameServer.Services.Items;
 using ItemBlobType = global::Aion.GameServer.Network.Aion.Iteminfo.ItemInfoBlob.ItemBlobType;
 using ItemUpdateType = global::Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 
