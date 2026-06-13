@@ -88,7 +88,7 @@ public sealed class SmHouseOwnerInfo : GameServerPacket
 	private static bool CanBidForHouse(Player player)
 	{
 		// Java parity: services/HousingService.canOwnHouse quest gate.
-		var questId = player.Race == "ELYOS" ? 18802 : 28802;
+		var questId = player.Race == global::Aion.GameServer.Model.Race.ELYOS ? 18802 : 28802;
 		return player.Quests.Any(quest => quest.QuestId == questId && quest.IsComplete);
 	}
 
