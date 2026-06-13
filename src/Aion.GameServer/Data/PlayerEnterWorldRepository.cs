@@ -2127,60 +2127,11 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				if (!await reader.ReadAsync(cancellationToken))
 					return null;
 
-				player = new Player
-				{
-					ObjectId = reader.GetInt32(reader.GetOrdinal("id")),
-					AccountId = reader.GetInt32(reader.GetOrdinal("account_id")),
-					Name = ReadString(reader, "name"),
-					PlayerClass = ReadString(reader, "player_class"),
-					Race = ReadString(reader, "race"),
-					Gender = ReadString(reader, "gender"),
-					Note = ReadString(reader, "note"),
-					CreationDate = ReadDateTime(reader, "creation_date") ?? DateTime.UnixEpoch,
-					LegionId = ReadInt(reader, "legion_id"),
-					LegionRank = ReadString(reader, "legion_rank"), // Java parity: LegionMember rank (enum name); empty when no legion.
-					LegionNickname = ReadString(reader, "legion_nickname"),
-					LegionSelfIntro = ReadString(reader, "legion_self_intro"),
-					LegionLevel = ReadInt(reader, "legion_level"),
-					LegionName = ReadString(reader, "legion_name"),
-					LegionDisbandTime = ReadInt(reader, "legion_disband_time"),
-					LegionContributionPoints = ReadLong(reader, "legion_contribution_points"),
-					LegionOccupiedLegionDominion = ReadInt(reader, "legion_occupied_legion_dominion"),
-					LegionLastLegionDominion = ReadInt(reader, "legion_last_legion_dominion"),
-					LegionCurrentLegionDominion = ReadInt(reader, "legion_current_legion_dominion"),
-					LegionDeputyPermission = ReadInt(reader, "deputy_permission"),
-					LegionCenturionPermission = ReadInt(reader, "centurion_permission"),
-					LegionLegionaryPermission = ReadInt(reader, "legionary_permission"),
-					LegionVolunteerPermission = ReadInt(reader, "volunteer_permission"),
-					LegionAnnouncement = ReadString(reader, "legion_announcement"),
-					LegionAnnouncementEpochSeconds = ToUnixSeconds(ReadDateTimeOffset(reader, "legion_announcement_date")),
-					LegionEmblemId = (byte)ReadInt(reader, "legion_emblem_id"),
-					LegionEmblemType = ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
-					LegionEmblemColorA = (byte)ReadInt(reader, "legion_emblem_color_a"),
-					LegionEmblemColorR = (byte)ReadInt(reader, "legion_emblem_color_r"),
-					LegionEmblemColorG = (byte)ReadInt(reader, "legion_emblem_color_g"),
-					LegionEmblemColorB = (byte)ReadInt(reader, "legion_emblem_color_b"),
-					Appearance = ReadAppearance(reader),
-					Exp = reader.GetInt64(reader.GetOrdinal("exp")),
-					RecoverableExp = ReadLong(reader, "recoverexp"),
-					Dp = ReadInt(reader, "dp"),
-					ReposeEnergy = ReadLong(reader, "reposte_energy"),
-					IsOnline = ReadBoolean(reader, "online"),
-					LastOnline = ReadDateTime(reader, "last_online"),
-					NpcExpands = ReadInt(reader, "npc_expands"),
-					QuestExpands = ReadInt(reader, "quest_expands"),
-					ItemExpands = ReadInt(reader, "item_expands"),
-					WarehouseNpcExpands = ReadInt(reader, "wh_npc_expands"),
-					WarehouseBonusExpands = ReadInt(reader, "wh_bonus_expands"),
-					TitleId = ReadInt(reader, "title_id"),
-					BonusTitleId = ReadInt(reader, "bonus_title_id"),
-					Position = new WorldPosition(
-						ReadInt(reader, "world_id"),
-						reader.GetFloat(reader.GetOrdinal("x")),
-						reader.GetFloat(reader.GetOrdinal("y")),
-						reader.GetFloat(reader.GetOrdinal("z")),
-						(byte)ReadInt(reader, "heading")),
-				};
+				// Java parity: faithful enter-world load via AccountService.loadAccount + PlayerService.getPlayer
+				// (full faithful construction: ctor + component setters), replacing the reworked flat-Player initializer.
+				player = Aion.GameServer.Services.Players.PlayerService.GetPlayer(
+					playerObjectId,
+					Aion.GameServer.Services.AccountService.LoadAccount(accountId));
 			}
 
 			RestoreAccountPassportState(
