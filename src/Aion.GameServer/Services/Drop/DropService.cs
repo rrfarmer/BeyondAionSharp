@@ -582,7 +582,7 @@ public class DropService
     {
         if (DropConfig.MIN_ANNOUNCE_QUALITY == null || player.IsInInstance())
             return;
-        if (template.GetItemQuality().GetQualityId() < DropConfig.MIN_ANNOUNCE_QUALITY.GetQualityId())
+        if (template.GetItemQuality().GetQualityId() < DropConfig.MIN_ANNOUNCE_QUALITY.Value.GetQualityId())
             return;
         PacketSendUtility.BroadcastToMap(player, SM_SYSTEM_MESSAGE.STR_FORCE_ITEM_WIN(player.GetName(), ChatUtil.Item(template.GetTemplateId())), 0,
             p => !p.Equals(player) && p.GetRace() == player.GetRace());

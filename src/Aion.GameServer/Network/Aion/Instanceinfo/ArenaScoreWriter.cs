@@ -45,7 +45,7 @@ public class ArenaScoreWriter : InstanceScoreWriter<PvPArenaScore>
             WriteD(buf, instanceScore.IsRewarded() ? apr.GetScorePoints() : apr.GetPoints());
             WriteD(buf, 0); // unk
             WriteC(buf, 0); // unk
-            WriteC(buf, apr.GetPlayerClass().GetClassId());
+            WriteC(buf, apr.GetPlayerClass().Value.GetClassId());
             WriteC(buf, 1); // unk
             WriteC(buf, instanceScore.GetRank(apr)); // top position
             WriteD(buf, apr.GetRemainingTime()); // instance buff time, also controls shield effect
