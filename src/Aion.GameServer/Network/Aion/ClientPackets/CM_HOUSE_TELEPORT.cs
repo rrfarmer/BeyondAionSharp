@@ -89,7 +89,7 @@ public class CM_HOUSE_TELEPORT : AionClientPacket
             return;
 
         WorldMapInstance instance = InstanceService.GetOrCreateHouseInstance(house);
-        TeleportService.TeleportTo(player, instance, house.GetX(), house.GetY(), house.GetZ(), house.GetTeleportHeading(),
+        TeleportService.TeleportTo(player, instance, house.GetX(), house.GetY(), house.GetZ(), (byte)house.GetTeleportHeading(),
             TeleportAnimation.FADE_OUT_BEAM);
     }
 
