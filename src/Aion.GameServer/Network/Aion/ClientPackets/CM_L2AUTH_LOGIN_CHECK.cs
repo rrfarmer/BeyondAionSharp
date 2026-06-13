@@ -38,6 +38,6 @@ public class CM_L2AUTH_LOGIN_CHECK : AionClientPacket
 
     protected override void RunImpl()
     {
-        LoginServer.GetInstance().RegisterLoginRequest(accountId, GetConnection(), loginOk, playOk1, playOk2);
+        global::Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().RegisterLoginRequest(accountId, GetConnection(), loginOk, playOk1, playOk2);
     }
 }

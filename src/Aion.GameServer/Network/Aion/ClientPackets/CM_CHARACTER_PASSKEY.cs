@@ -96,7 +96,7 @@ public class CM_CHARACTER_PASSKEY : AionClientPacket
         if (wrongCount >= SecurityConfig.PASSKEY_WRONG_MAXCOUNT)
         {
             // TODO : Change the account to be blocked
-            LoginServer.GetInstance().SendBanPacket((byte)2, accountId, "", 60 * 8, 0);
+            global::Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().SendBanPacket((byte)2, accountId, "", 60 * 8, 0);
         }
     }
 }

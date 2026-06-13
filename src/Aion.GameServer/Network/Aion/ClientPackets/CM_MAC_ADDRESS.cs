@@ -34,7 +34,7 @@ public class CM_MAC_ADDRESS : AionClientPacket
         AionConnection con = GetConnection();
         con.SetMacAddress(macAddress);
         con.SetHddSerial(hddSerial);
-        LoginServer.GetInstance().AuthenticateClient(con);
+        global::Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().AuthenticateClient(con);
     }
 
     private static string FixHddSerial(string hddSerial)

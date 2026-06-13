@@ -20,6 +20,6 @@ public class CM_RECONNECT_AUTH : AionClientPacket
     protected override void RunImpl()
     {
         AionConnection client = GetConnection();
-        LoginServer.GetInstance().RequestAuthReconnection(client.GetAccount().GetId(), client);
+        global::Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().RequestAuthReconnection(client.GetAccount().GetId(), client);
     }
 }

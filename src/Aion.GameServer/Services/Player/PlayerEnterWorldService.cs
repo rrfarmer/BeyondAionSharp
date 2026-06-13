@@ -214,7 +214,7 @@ public sealed class PlayerEnterWorldService
                 pcd.SetDp(0);
         }
 
-        client.SendPacket(new SM_HOUSE_SCRIPTS(0, PlayerScript.LUA_SANDBOX_FIX)); // client executes this immediately (scary, right?!)
+        client.SendPacket(new SM_HOUSE_SCRIPTS(0, global::Aion.GameServer.Model.House.PlayerScript.LUA_SANDBOX_FIX)); // client executes this immediately (scary, right?!)
         client.SendPacket(new SM_UNK_3_5_1());
         StigmaService.OnPlayerLogin(player);
         client.SendPacket(new SM_ENTER_WORLD_CHECK());

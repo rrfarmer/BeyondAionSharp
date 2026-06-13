@@ -67,7 +67,7 @@ public class SM_VERSION_CHECK : AionServerPacket
         WriteC(0x00); // 0
         WriteC(GSConfig.SERVER_COUNTRY_CODE); // country code
         WriteC(0x00); // 0
-        WriteC((characterLimitCount * LoginServer.GetInstance().GetGameServerCount() * 0x10) | (limitFactionMode * 4) | GSConfig.CHARACTER_CREATION_MODE); // ServerFlag
+        WriteC((characterLimitCount * global::Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().GetGameServerCount() * 0x10) | (limitFactionMode * 4) | GSConfig.CHARACTER_CREATION_MODE); // ServerFlag
         WriteD((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000)); // PacketGenTimeOnServ (current UTC time in seconds)
         WriteH(GSConfig.MIN_SKILL_CAST_INTERVAL_MILLIS); // skillPacketDelay
         WriteC(1); // enableClientPet (always 1)

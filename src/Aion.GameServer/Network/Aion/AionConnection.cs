@@ -200,7 +200,7 @@ public class AionConnection : AConnection<AionServerPacket>
     {
         connectionAliveChecker.Stop();
 
-        LoginServer.GetInstance().OnDisconnect(this);
+        global::Aion.GameServer.Network.LoginServer.LoginServer.GetInstance().OnDisconnect(this);
 
         string msg = GetAccount() == null ? "" : " " + GetAccount();
         Player player = GetActivePlayer();
