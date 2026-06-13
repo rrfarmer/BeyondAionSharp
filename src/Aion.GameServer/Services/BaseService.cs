@@ -129,7 +129,7 @@ public class BaseService
         BaseLocation loc = allBaseLocations[id];
 
         if (loc.GetType_() == BaseType.PANESTERRA_FACTION_CAMP)
-            PanesterraService.GetInstance().HandleTeamElimination(loc.GetOccupier().GetPanesterraFaction());
+            PanesterraService.GetInstance().HandleTeamElimination(loc.GetOccupier().GetPanesterraFaction().Value);
 
         if (newOccupier != null)
             loc.SetOccupier(newOccupier.Value);
