@@ -60,10 +60,10 @@ public sealed class DataManager
 	public static PetDopingData PET_DOPING_DATA => SD.PetDopingDataDh;
 	public static LegionDominionData LEGION_DOMINION_DATA => SD.LegionDominionDataDh;
 	public static ItemSetData ITEM_SET_DATA => SD.ItemSetDataDh;
-	public static InstanceExitTable INSTANCE_EXIT_DATA => SD.InstanceExits;
+	public static InstanceExitData INSTANCE_EXIT_DATA { get; } = new();
 	public static GlobalNpcExclusionData GLOBAL_EXCLUSION_DATA { get; } = new();
 	public static GlobalDropTable GLOBAL_DROP_DATA => SD.GlobalDrops;
-	public static CustomNpcDropTable CUSTOM_NPC_DROP => SD.CustomNpcDrops;
+	public static CustomDrop CUSTOM_NPC_DROP { get; } = new();
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
 	public static HousingObjectTemplateTable HOUSING_OBJECT_DATA => SD.HousingObjectTemplates;
 	public static EnchantTable ENCHANT_DATA => SD.EnchantTemplates;

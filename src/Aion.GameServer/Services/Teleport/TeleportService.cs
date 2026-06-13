@@ -425,7 +425,7 @@ public class TeleportService
 
     public static void MoveToInstanceExit(Player player, int worldId, Race race)
     {
-        InstanceExit instanceExit = DataManager.INSTANCE_EXIT_DATA.GetInstanceExit(worldId, race.ToString());
+        InstanceExit instanceExit = DataManager.INSTANCE_EXIT_DATA.GetInstanceExit(worldId, race);
         if (instanceExit != null && InstanceService.InstanceExists(instanceExit.GetExitWorld(), 1))
         {
             TeleportTo(player, instanceExit.GetExitWorld(), instanceExit.GetX(), instanceExit.GetY(), instanceExit.GetZ(), instanceExit.GetH());
