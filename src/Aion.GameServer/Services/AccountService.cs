@@ -21,7 +21,7 @@ public class AccountService
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(AccountService));
 
     /// <summary>Returns Account object that has given id.</summary>
-    public static Account GetAccount(int accountId, string accountName, long creationDate, AccountTime accountTime, byte accessLevel, byte membership,
+    public static Account GetAccount(int accountId, string accountName, long creationDate, AccountTime accountTime, sbyte accessLevel, sbyte membership,
         long toll, string allowedHddSerial)
     {
         log.LogDebug("[AS] request for account: " + accountId);
