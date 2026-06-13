@@ -42,7 +42,7 @@ public sealed class DataManager
 	public static ItemPurificationData ITEM_PURIFICATION_DATA => SD.ItemPurificationDataDh;
 	public static GoodsListData GOODSLIST_DATA => SD.GoodsListDataDh;
 	public static PlayerInitialData PLAYER_INITIAL_DATA { get; } = new();
-	public static ItemRandomBonusTable ITEM_RANDOM_BONUSES => SD.ItemRandomBonuses;
+	public static ItemRandomBonusData ITEM_RANDOM_BONUSES { get; } = new();
 	public static AutoGroupData AUTO_GROUP => SD.AutoGroupDataDh;
 	public static WalkerVersionTable WALKER_VERSIONS_DATA => SD.WalkerVersions;
 	public static SkillTreeTable SKILL_TREE_DATA => SD.SkillTree;
