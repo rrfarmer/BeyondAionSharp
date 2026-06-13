@@ -29,7 +29,7 @@ public abstract class Creature : VisibleObject
     private CreatureLifeStats lifeStats;
     private EffectController effectController;
     protected Aion.GameServer.Controllers.Movement.CreatureMoveController moveController;
-    private int state = CreatureState.ACTIVE.GetId();
+    private int state = Aion.GameServer.Model.GameObjects.State.CreatureState.ACTIVE.GetId();
     private int visualState = CreatureVisualState.VISIBLE.GetId();
     private int seeState = CreatureSeeState.Normal.GetId();
     private Aion.GameServer.SkillEngine.Model.Skill castingSkill;
@@ -197,6 +197,24 @@ public abstract class Creature : VisibleObject
     public int GetState()
     {
         return state;
+    }
+
+    // Reworked call sites use the PascalCase PlayerCreatureState enum (value-identical to the faithful CreatureState);
+    // bridge by int-value cast onto the faithful GetState/SetState/UnsetState/IsInState API.
+    public Aion.GameServer.Model.GameObjects.PlayerCreatureState CreatureState => (Aion.GameServer.Model.GameObjects.PlayerCreatureState)GetState();
+
+    public bool IsInState(Aion.GameServer.Model.GameObjects.PlayerCreatureState state)
+        => IsInState((Aion.GameServer.Model.GameObjects.State.CreatureState)(int)state);
+
+    public void SetCreatureState(Aion.GameServer.Model.GameObjects.PlayerCreatureState state)
+        => SetState((Aion.GameServer.Model.GameObjects.State.CreatureState)(int)state);
+
+    public void SetCreatureState(Aion.GameServer.Model.GameObjects.PlayerCreatureState state, bool enabled)
+    {
+        if (enabled)
+            SetState((Aion.GameServer.Model.GameObjects.State.CreatureState)(int)state);
+        else
+            UnsetState((Aion.GameServer.Model.GameObjects.State.CreatureState)(int)state);
     }
 
     /// <summary>Sets the given state while keeping all present ones.</summary>
