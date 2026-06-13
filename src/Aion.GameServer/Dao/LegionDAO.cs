@@ -417,7 +417,7 @@ public class LegionDAO
             {
                 int id = resultSet.GetInt32(resultSet.GetOrdinal("id"));
                 int epochSeconds = (int)(new DateTimeOffset(resultSet.GetDateTime(resultSet.GetOrdinal("date"))).ToUnixTimeMilliseconds() / 1000);
-                LegionHistoryAction action = Enum.Parse<LegionHistoryAction>(resultSet.GetString(resultSet.GetOrdinal("history_type")));
+                LegionHistoryAction action = LegionHistoryAction.ValueOf(resultSet.GetString(resultSet.GetOrdinal("history_type")));
                 string name = resultSet.GetString(resultSet.GetOrdinal("name"));
                 string description = resultSet.GetString(resultSet.GetOrdinal("description"));
                 history[action.GetType_()].Add(new LegionHistoryEntry(id, epochSeconds, action, name, description));

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Aion.GameServer.Model.Team.Legion;
@@ -62,4 +63,25 @@ public sealed class LegionHistoryAction
     {
         return VALUES;
     }
+
+    // Java parity: enum valueOf(String name) — maps the declared constant name to its instance.
+    public static LegionHistoryAction ValueOf(string name) => name switch
+    {
+        "CREATE" => CREATE,
+        "JOIN" => JOIN,
+        "KICK" => KICK,
+        "LEVEL_UP" => LEVEL_UP,
+        "APPOINTED" => APPOINTED,
+        "EMBLEM_REGISTER" => EMBLEM_REGISTER,
+        "EMBLEM_MODIFIED" => EMBLEM_MODIFIED,
+        "DEFENSE" => DEFENSE,
+        "OCCUPATION" => OCCUPATION,
+        "LEGION_RENAME" => LEGION_RENAME,
+        "CHARACTER_RENAME" => CHARACTER_RENAME,
+        "ITEM_DEPOSIT" => ITEM_DEPOSIT,
+        "ITEM_WITHDRAW" => ITEM_WITHDRAW,
+        "KINAH_DEPOSIT" => KINAH_DEPOSIT,
+        "KINAH_WITHDRAW" => KINAH_WITHDRAW,
+        _ => throw new ArgumentException("No LegionHistoryAction with name " + name),
+    };
 }
