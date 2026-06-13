@@ -181,7 +181,7 @@ public class PlayerRestrictions
         }
         if (team != null)
         {
-            if (!team.IsLeader(player) && (!(team is PlayerAlliance alliance) || !alliance.IsViceCaptain(player)))
+            if (!team.IsLeader(player) && (!((object)team is PlayerAlliance alliance) || !alliance.IsViceCaptain(player)))
             {
                 PacketSendUtility.SendPacket(player, isAlliance ? SM_SYSTEM_MESSAGE.STR_FORCE_ONLY_LEADER_CAN_INVITE() : SM_SYSTEM_MESSAGE.STR_PARTY_ONLY_LEADER_CAN_INVITE());
                 return false;
@@ -215,7 +215,7 @@ public class PlayerRestrictions
                 PacketSendUtility.SendPacket(player, isAlliance ? SM_SYSTEM_MESSAGE.STR_FORCE_HE_IS_ALREADY_MEMBER_OF_OUR_FORCE(target.GetName()) : SM_SYSTEM_MESSAGE.STR_PARTY_HE_IS_ALREADY_MEMBER_OF_OUR_PARTY(target.GetName()));
                 return false;
             }
-            if (isAlliance && targetTeam is PlayerGroup targetGroup)
+            if (isAlliance && (object)targetTeam is PlayerGroup targetGroup)
             {
                 if (team != null && targetGroup.Size() + team.Size() > team.GetMaxMemberCount())
                 {
@@ -229,7 +229,7 @@ public class PlayerRestrictions
                 return false;
             }
         }
-        if (team is PlayerAlliance alliance2 && alliance2.GetTeamType().IsDefence())
+        if ((object)team is PlayerAlliance alliance2 && alliance2.GetTeamType().IsDefence())
         {
             if (targetTeam != null)
             {

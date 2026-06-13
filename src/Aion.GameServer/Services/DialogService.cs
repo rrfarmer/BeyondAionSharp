@@ -315,7 +315,7 @@ public class DialogService
         {
             SummonOwner.PRIVATE => playerIsCreator,
             SummonOwner.GROUP => playerIsCreator || player.GetCurrentGroup() != null && player.GetCurrentGroup().HasMember(npc.GetCreatorId()),
-            SummonOwner.ALLIANCE => playerIsCreator || player.GetCurrentTeam() is PlayerAlliance alliance && alliance.HasMember(npc.GetCreatorId()),
+            SummonOwner.ALLIANCE => playerIsCreator || (object)player.GetCurrentTeam() is PlayerAlliance alliance && alliance.HasMember(npc.GetCreatorId()),
             SummonOwner.LEGION => playerIsCreator || player.IsLegionMember() && player.GetLegion().IsMember(npc.GetCreatorId()),
             _ => false,
         };

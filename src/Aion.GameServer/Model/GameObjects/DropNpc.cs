@@ -113,7 +113,7 @@ public class DropNpc
     {
         lootingTeam = new System.WeakReference<Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>>>(team);
         lootingTeamId = team.GetTeamId();
-        maxRoll = team is Aion.GameServer.Model.Team.Alliance.PlayerAlliance alli ? (alli.IsInLeague() ? 10000 : 1000) : 100;
+        maxRoll = (object)team is Aion.GameServer.Model.Team.Alliance.PlayerAlliance alli ? (alli.IsInLeague() ? 10000 : 1000) : 100;
         lastLootGroupRules = team.GetLootGroupRules();
     }
 

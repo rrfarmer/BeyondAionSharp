@@ -36,7 +36,7 @@ public class CM_SHOW_BRAND : AionClientPacket
         {
             PacketSendUtility.SendPacket(player, new SM_SHOW_BRAND(brandId, targetObjectId));
         }
-        else if (team.IsLeader(player) || team is PlayerAlliance alliance && alliance.IsSomeCaptain(player))
+        else if (team.IsLeader(player) || (object)team is PlayerAlliance alliance && alliance.IsSomeCaptain(player))
         {
             team.UpdateBrand(brandId, targetObjectId);
         }

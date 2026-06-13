@@ -25,7 +25,7 @@ public class PlayerTeamDistributionService
         // Find team's members and determine highest level
         bool disableRangeChecks = DropConfig.DISABLE_RANGE_CHECK_MAPS.Contains(owner.GetPosition().GetMapId());
         PlayerTeamRewardStats filteredStats = new(owner, disableRangeChecks);
-        if (team is PlayerAlliance alli && alli.IsInLeague())
+        if ((object)team is PlayerAlliance alli && alli.IsInLeague())
         {
             alli.GetLeague().GetMembers().ForEach(a => a.ForEach(filteredStats.Accept));
         }
