@@ -34,7 +34,7 @@ public class WeaponCondition : Condition
         if (creature is Player)
         {
             Player player = (Player)creature;
-            return itemGroups!.Contains(player.GetEquipment().GetMainHandWeaponType());
+            return player.GetEquipment().GetMainHandWeaponType() is ItemGroup wt && itemGroups!.Contains(wt);
         }
         // for npcs we don't validate weapon, though in templates they are present
         return true;

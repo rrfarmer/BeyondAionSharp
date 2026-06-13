@@ -133,7 +133,7 @@ public class Skill
 
             if (skillTemplate.GetCounterSkill() != null)
             {
-                long time = player.GetLastCounterSkill(skillTemplate.GetCounterSkill());
+                long time = player.GetLastCounterSkill(skillTemplate.GetCounterSkill().Value);
                 if ((time + 5000) < CurrentTimeMillis())
                 {
                     log.LogDebug("chain skill failed, too late");
