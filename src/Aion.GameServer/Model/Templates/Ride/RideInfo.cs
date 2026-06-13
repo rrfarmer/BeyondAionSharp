@@ -37,6 +37,11 @@ public class RideInfo
         return startFp;
     }
 
+    /// <summary>reworked call sites use rideInfo.SprintSpeed/FlySpeed/MoveSpeed property-form over the faithful getters</summary>
+    public float SprintSpeed => GetSprintSpeed();
+    public float FlySpeed => GetFlySpeed();
+    public float MoveSpeed => GetMoveSpeed();
+
     public float GetSprintSpeed()
     {
         return sprintSpeed;
