@@ -251,7 +251,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
             bool active = ReadC() == 1;
 
             if (PlayerTransferConfig.ALLOW_MOTIONS)
-                player.GetMotions().Add(new Motion(id, expiryTime, active), true);
+                player.GetMotions().Add(new global::Aion.GameServer.Model.GameObjects.Players.Motion.Motion(id, expiryTime, active), true);
         }
 
         cnt = ReadD();
@@ -335,7 +335,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         int uilen = ReadD(), shortlen = ReadD();
         byte[] ui = ReadB(uilen), sc = ReadB(shortlen);
         int deny = ReadD(), penalty = ReadD();
-        player.SetPlayerSettings(new PlayerSettings(uilen > 0 ? ui : null, shortlen > 0 ? sc : null, null, deny, penalty));
+        player.SetPlayerSettings(new global::Aion.GameServer.Model.GameObjects.Players.PlayerSettings(uilen > 0 ? ui : null, shortlen > 0 ? sc : null, null, deny, penalty));
         player.SetAbyssRank(new AbyssRank(0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0));
 
         // read skill data
