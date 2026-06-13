@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Aion.GameServer.Commons.Utils;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Controllers.Attack;
+using Aion.GameServer.Controllers.Movement;
 using Aion.GameServer.Controllers.Observer;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
@@ -653,7 +654,7 @@ public class StatFunctions
         // https://web.archive.org/web/20170429204823/gameguide.na.aiononline.com/aion/Combat
         switch (player.GetMoveController().GetMovementDirection())
         {
-            case MovementDirection.FORWARD:
+            case MovementModifierDirection.FORWARD:
                 switch (stat)
                 {
                     case StatEnum.PHYSICAL_ATTACK:
@@ -671,7 +672,7 @@ public class StatFunctions
                         return value * 0.8f; // verified on 4.6 PTS
                 }
                 break;
-            case MovementDirection.SIDEWAYS:
+            case MovementModifierDirection.SIDEWAYS:
                 switch (stat)
                 {
                     case StatEnum.PHYSICAL_ATTACK:
@@ -682,7 +683,7 @@ public class StatFunctions
                         return value + 300;
                 }
                 break;
-            case MovementDirection.BACKWARD:
+            case MovementModifierDirection.BACKWARD:
                 switch (stat)
                 {
                     case StatEnum.PHYSICAL_ATTACK:

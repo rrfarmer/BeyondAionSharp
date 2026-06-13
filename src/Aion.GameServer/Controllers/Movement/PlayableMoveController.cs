@@ -130,11 +130,12 @@ public abstract class PlayableMoveController<T> : CreatureMoveController<T> wher
         return movementModifierDirection;
     }
 
-    public enum MovementModifierDirection
-    {
-        NONE,
-        FORWARD,
-        SIDEWAYS,
-        BACKWARD
-    }
+}
+
+public enum MovementModifierDirection
+{
+    NONE,
+    FORWARD,
+    SIDEWAYS,
+    BACKWARD
 }
