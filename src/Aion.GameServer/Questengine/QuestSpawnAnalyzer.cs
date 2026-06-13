@@ -107,9 +107,9 @@ public class QuestSpawnAnalyzer
     {
         HashSet<int> npcIds = new();
         Regex pattern = new(@"\bsp(?:awn)?\([^,\d]*(\d{6})(?: : (\d{6}))?");
-        ParseSpawnNpcIds(InstanceConfig.HANDLER_DIRECTORY, pattern, npcIds);
-        ParseSpawnNpcIds(GSConfig.QUEST_HANDLER_DIRECTORY, pattern, npcIds);
-        ParseSpawnNpcIds(AIConfig.HANDLER_DIRECTORY, pattern, npcIds);
+        ParseSpawnNpcIds(new FileInfo(InstanceConfig.HANDLER_DIRECTORY), pattern, npcIds);
+        ParseSpawnNpcIds(new FileInfo(GSConfig.QUEST_HANDLER_DIRECTORY), pattern, npcIds);
+        ParseSpawnNpcIds(new FileInfo(AIConfig.HANDLER_DIRECTORY), pattern, npcIds);
         return npcIds;
     }
 
