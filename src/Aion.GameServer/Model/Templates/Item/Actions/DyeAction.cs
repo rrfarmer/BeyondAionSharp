@@ -78,7 +78,7 @@ public class DyeAction : AbstractItemAction
         if (player.GetEquipment().GetEquippedItemByObjId(targetItem.GetObjectId()) != null)
         {
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmUpdatePlayerAppearance(player.GetObjectId(), player.GetEquipment().GetEquippedForAppearance()), true);
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_UPDATE_PLAYER_APPEARANCE(player.GetObjectId(), player.GetEquipment().GetEquippedForAppearance()), true);
             player.GetEquipment().SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
         }
         else // item is not equipped

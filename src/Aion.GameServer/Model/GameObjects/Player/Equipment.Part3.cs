@@ -62,7 +62,7 @@ public partial class Equipment
         {
             Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(owner, equippedItem, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.STATS_CHANGE);
         }
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmUpdatePlayerAppearance(owner.GetObjectId(), owner.GetEquipment().GetEquippedForAppearance()), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_UPDATE_PLAYER_APPEARANCE(owner.GetObjectId(), owner.GetEquipment().GetEquippedForAppearance()), true);
         SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
     }
 

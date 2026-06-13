@@ -108,7 +108,7 @@ public partial class Equipment
                 Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(eq.owner, item);
 
                 eq.Equip(slot, item);
-                Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder, new Aion.GameServer.Network.Aion.ServerPackets.SmUpdatePlayerAppearance(responder.GetObjectId(), eq.GetEquippedForAppearance()), true);
+                Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder, new Aion.GameServer.Network.Aion.ServerPackets.SM_UPDATE_PLAYER_APPEARANCE(responder.GetObjectId(), eq.GetEquippedForAppearance()), true);
                 return ValueTask.CompletedTask;
             }, TimeSpan.FromMilliseconds(5000)));
         }
