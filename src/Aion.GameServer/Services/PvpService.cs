@@ -35,7 +35,7 @@ public class PvpService
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger("KILL_LOG");
     private readonly List<KillBountyTemplate> killBounties;
-    private readonly Dictionary<int, Headhunter> headhunters;
+    private readonly IDictionary<int, Headhunter> headhunters;
 
     private PvpService()
     {
@@ -292,14 +292,14 @@ public class PvpService
         }
     }
 
-    public Dictionary<int, Headhunter> GetAllHeadhunters()
+    public IDictionary<int, Headhunter> GetAllHeadhunters()
     {
         return headhunters;
     }
 
     public Headhunter GetHeadhunter(int hunterId)
     {
-        return headhunters.GetValueOrDefault(hunterId);
+        return headhunters.TryGetValue(hunterId, out var v) ? v : null;
     }
 
     private static class SingletonHolder
