@@ -61,7 +61,7 @@ public sealed class DataManager
 	public static LegionDominionData LEGION_DOMINION_DATA => SD.LegionDominionDataDh;
 	public static ItemSetData ITEM_SET_DATA => SD.ItemSetDataDh;
 	public static InstanceExitTable INSTANCE_EXIT_DATA => SD.InstanceExits;
-	public static GlobalNpcExclusionTable GLOBAL_EXCLUSION_DATA => SD.GlobalNpcExclusions;
+	public static GlobalNpcExclusionData GLOBAL_EXCLUSION_DATA { get; } = new();
 	public static GlobalDropTable GLOBAL_DROP_DATA => SD.GlobalDrops;
 	public static CustomNpcDropTable CUSTOM_NPC_DROP => SD.CustomNpcDrops;
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
