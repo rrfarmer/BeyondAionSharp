@@ -16,7 +16,7 @@ namespace Aion.GameServer.Taskmanager;
 /// getClass().getSimpleName()→GetType().Name; currentTimeMillis→UtcNow.ToUnixTimeMilliseconds. ServerVariablesDAO/
 /// CronService/ThreadPoolManager red-tolerated.
 /// </summary>
-public abstract class AbstractCronTask
+public abstract class AbstractCronTask : Aion.Commons.Lang.Runnable
 {
     protected static readonly long? SERVER_STOP_MILLIS = ServerVariablesDAO.LoadLong("serverLastRun");
     private static readonly SemaphoreSlim semaphore = new(1, 1);

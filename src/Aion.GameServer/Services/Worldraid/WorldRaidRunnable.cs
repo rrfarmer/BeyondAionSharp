@@ -8,7 +8,7 @@ using Aion.GameServer.Configs.Schedule;
 namespace Aion.GameServer.Services.Worldraid;
 
 /// <summary>Java parity: services/worldraid/WorldRaidRunnable. Java Runnable→plain class+Run(); stream filter/collect→Where/ToList.</summary>
-public class WorldRaidRunnable
+public class WorldRaidRunnable : Aion.Commons.Lang.Runnable
 {
     private static readonly ILogger log = NullLogger.Instance;
 

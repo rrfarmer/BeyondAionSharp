@@ -147,7 +147,7 @@ public class RespawnService
         }
     }
 
-    public class RespawnTask
+    public class RespawnTask : Aion.Commons.Lang.Runnable
     {
         internal readonly SpawnTemplate spawnTemplate;
         private readonly int instanceId;
