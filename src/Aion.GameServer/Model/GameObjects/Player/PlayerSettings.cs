@@ -77,6 +77,10 @@ public class PlayerSettings : IPersistable
         persistentState = IPersistable.PersistentState.UPDATE_REQUIRED;
     }
 
+    /// <summary>reworked call sites use settings.Display/settings.Deny property-form over the faithful getDisplay()/getDeny() accessors</summary>
+    public int Display { get => GetDisplay(); set => SetDisplay(value); }
+    public int Deny { get => GetDeny(); set => SetDeny(value); }
+
     /// <summary>the display</summary>
     public int GetDisplay()
     {
