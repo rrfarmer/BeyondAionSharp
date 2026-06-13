@@ -32,7 +32,7 @@ public class AggroList
     /// <summary>
     /// Only add damage from enemies. (Verify this includes summons, traps, pets, and excludes fall damage.)
     /// </summary>
-    public void AddDamage(Creature attacker, int damage, bool notifyAttack, HopType hopType)
+    public void AddDamage(Creature attacker, int damage, bool notifyAttack, HopType? hopType)
     {
         if (!IsAware(attacker))
             return;

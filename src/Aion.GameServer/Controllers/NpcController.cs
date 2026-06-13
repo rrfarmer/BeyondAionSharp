@@ -281,7 +281,7 @@ public class NpcController : CreatureController<Npc>
     }
 
     public override void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus attackStatus,
-        HopType hopType)
+        HopType? hopType)
     {
         if (GetOwner().IsDead())
             return;
