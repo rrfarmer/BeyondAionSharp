@@ -274,7 +274,7 @@ public sealed class WorldNpcResourceStatsService
 			? cap
 			: requestedDp;
 		player.Dp = currentDp;
-		var shouldSendDpPackets = player.IsOnline;
+		var shouldSendDpPackets = player.IsOnline();
 		var (dpInfoPacket, dpInfoBroadcastCount) = await BroadcastDpInfoAsync(player, currentDp, shouldSendDpPackets);
 		// Java order: PlayerCommonData.setDp broadcasts DP info, updates stats visually, then sends SM_STATUPDATE_DP.
 		var visualStatsUpdate = await UpdatePlayerStatsAndSpeedVisuallyAsync(player, shouldSendDpPackets);
