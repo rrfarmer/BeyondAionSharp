@@ -13,6 +13,7 @@ using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.GameObjects.Players.Npcfaction;
 using Aion.GameServer.Model.Items;
+using InventoryItem = Aion.GameServer.Model.Templates.Quest.InventoryItem;
 using Aion.GameServer.Model.Skill;
 using Aion.GameServer.Model.Team.Alliance;
 using Aion.GameServer.Model.Team.Common.Legacy;
@@ -604,7 +605,7 @@ public sealed class QuestService
 
             foreach (InventoryItem inventoryItem in inventoryItems.GetInventoryItems())
             {
-                int itemId = inventoryItem.GetItemId();
+                int itemId = inventoryItem.GetItemId().Value;
                 if (player.GetInventory().GetItemCountByItemId(itemId) < inventoryItem.GetCount())
                     return false;
             }
@@ -613,7 +614,7 @@ public sealed class QuestService
             {
                 foreach (InventoryItem inventoryItem in inventoryItems.GetInventoryItems())
                 {
-                    player.GetInventory().DecreaseByItemId(inventoryItem.GetItemId(), inventoryItem.GetCount());
+                    player.GetInventory().DecreaseByItemId(inventoryItem.GetItemId().Value, inventoryItem.GetCount().Value);
                 }
             }
             return true;
@@ -652,11 +653,11 @@ public sealed class QuestService
             // Other quests having no collect item checks and counts greater than 1 are unused (old coin exchange quests)
             foreach (InventoryItem inventoryItem in inventoryItems.GetInventoryItems())
             {
-                if (player.GetInventory().GetFirstItemByItemId(inventoryItem.GetItemId()) == null)
+                if (player.GetInventory().GetFirstItemByItemId(inventoryItem.GetItemId().Value) == null)
                 {
                     if (showWarning)
                     {
-                        string requiredItemL10n = DataManager.ITEM_DATA.GetItemTemplate(inventoryItem.GetItemId()).GetL10n();
+                        string requiredItemL10n = DataManager.ITEM_DATA.GetItemTemplate(inventoryItem.GetItemId().Value).GetL10n();
                         PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_INVENTORY_ITEM(requiredItemL10n));
                     }
                     return false;

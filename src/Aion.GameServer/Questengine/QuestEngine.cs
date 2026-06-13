@@ -13,6 +13,7 @@ using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Rewards;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using InventoryItem = Aion.GameServer.Model.Templates.Quest.InventoryItem;
 using Aion.GameServer.QuestEngine.Handlers;
 using Aion.GameServer.QuestEngine.Handlers.Models;
 using Aion.GameServer.QuestEngine.Model;
@@ -87,8 +88,8 @@ public class QuestEngine : GameEngine
             {
                 foreach (InventoryItem inventoryItem in data.GetInventoryItems().GetInventoryItems())
                 {
-                    if (!questUpdateItems.Contains(inventoryItem.GetItemId()))
-                        questUpdateItems.Add(inventoryItem.GetItemId());
+                    if (!questUpdateItems.Contains(inventoryItem.GetItemId().Value))
+                        questUpdateItems.Add(inventoryItem.GetItemId().Value);
                 }
             }
         }
