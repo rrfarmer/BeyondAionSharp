@@ -4,6 +4,7 @@ using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Items;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.Iteminfo;
+using Aion.GameServer.Services.Items;
 using ItemAddType = global::Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
