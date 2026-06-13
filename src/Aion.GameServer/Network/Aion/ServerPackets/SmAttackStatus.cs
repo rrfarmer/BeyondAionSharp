@@ -43,6 +43,8 @@ public sealed class SmAttackStatus : GameServerPacket
     {
     }
 
+    public int SkillId => skillId;
+
     protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
     {
         int hpOrMp;
