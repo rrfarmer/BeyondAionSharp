@@ -14,6 +14,11 @@ public sealed class PetDopingBag
 
 	public int DrinkItem => _itemBag is { Length: >= 2 } ? _itemBag[1] : 0;
 
+	// Java parity: services/toypet/PetDopingBag.getFoodItem()/getDrinkItem().
+	public int GetFoodItem() => FoodItem;
+
+	public int GetDrinkItem() => DrinkItem;
+
 	public void SetFoodItem(int itemId)
 	{
 		SetItem(itemId, slot: 0);
