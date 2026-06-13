@@ -245,7 +245,7 @@ public sealed class SmStatsInfo : GameServerPacket
 	private static int GetInventorySize(Player player)
 	{
 		// Java parity: player.getInventory().size excludes equipped items and kinah, which are stored separately in Java.
-		return player.InventoryItems.Count(item => item.Location == 0 && !item.IsEquipped && item.ItemId != KinahItemId);
+		return player.GetInventory().GetItems().Count(item => item.GetItemId() != KinahItemId);
 	}
 
 	private sealed record PlayerStatsContext(
