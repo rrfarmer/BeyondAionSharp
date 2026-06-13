@@ -34,8 +34,8 @@ public class ItemRemodelService
 
         if (keepItem.GetItemTemplate().GetUseLimits() != null && extractItem.GetItemTemplate().GetUseLimits() != null)
         {
-            Gender keepItemGender = keepItem.GetItemTemplate().GetUseLimits().GetGenderPermitted();
-            Gender extractItemGender = extractItem.GetItemTemplate().GetUseLimits().GetGenderPermitted();
+            Gender? keepItemGender = keepItem.GetItemTemplate().GetUseLimits().GetGenderPermitted();
+            Gender? extractItemGender = extractItem.GetItemTemplate().GetUseLimits().GetGenderPermitted();
             if (keepItemGender != null && extractItemGender != null)
             {
                 if (keepItemGender != extractItemGender)
