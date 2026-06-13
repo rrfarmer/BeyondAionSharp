@@ -70,7 +70,7 @@ public class HTMLService
             {
                 int from = Math.Max(0, partNo * (SHORT_MAX_VALUE - 8));
                 int to = Math.Min(html.Length, (partNo + 1) * (SHORT_MAX_VALUE - 8));
-                PacketSendUtility.SendPacket(player, new SmQuestionnaire(messageId, (byte) partNo, (byte) packetCount, html.Substring(from, to - from)));
+                PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTIONNAIRE(messageId, (byte) partNo, (byte) packetCount, html.Substring(from, to - from)));
             }
             catch (Exception e)
             {

@@ -73,7 +73,7 @@ public class TransformModel
     }
 
     // Java parity: updateVisually()
-    public void UpdateVisually() => PacketSendUtility.BroadcastPacketAndReceive(_owner, new SmTransform(_owner));
+    public void UpdateVisually() => PacketSendUtility.BroadcastPacketAndReceive(_owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TRANSFORM(_owner));
 
     // Java parity: private updateTribeVisually()
     private void UpdateTribeVisually()
