@@ -96,7 +96,7 @@ public class PeriodicInstanceManager
 
     private void BroadcastRegistrationUpdate(SM_SYSTEM_MESSAGE msg, int maskId, bool isClosed)
     {
-        AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+        AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
         if (type != null)
         {
             World.World.GetInstance().ForEachPlayer(player =>
@@ -122,7 +122,7 @@ public class PeriodicInstanceManager
     {
         foreach (int maskId in openedRegistrations)
         {
-            AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+            AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
             if (agt != null)
             {
                 AutoGroup data = agt.GetTemplate();
@@ -147,7 +147,7 @@ public class PeriodicInstanceManager
     {
         if (openedRegistrations.Contains(maskId))
         {
-            AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+            AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
             if (type != null)
             {
                 AutoGroup template = type.GetTemplate();
