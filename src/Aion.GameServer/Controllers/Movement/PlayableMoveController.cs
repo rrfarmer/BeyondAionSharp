@@ -48,7 +48,7 @@ public abstract class PlayableMoveController<T> : CreatureMoveController<T> wher
 
     private void SendForcedMovePacket()
     {
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(Owner, new Aion.GameServer.Network.Aion.ServerPackets.SmMove(Owner));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(Owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_MOVE(Owner));
         sendMovePacket = false;
     }
 

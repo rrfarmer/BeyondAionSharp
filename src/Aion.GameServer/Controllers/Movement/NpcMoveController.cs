@@ -328,7 +328,7 @@ public class NpcMoveController : CreatureMoveController<Npc>
                 }
                 MovementMaskField = newMask;
             }
-            PacketSendUtility.BroadcastPacket(Owner, new SmMove(Owner));
+            PacketSendUtility.BroadcastPacket(Owner, new SM_MOVE(Owner));
         }
     }
 

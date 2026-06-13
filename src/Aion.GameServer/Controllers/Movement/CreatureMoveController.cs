@@ -63,7 +63,7 @@ public abstract class CreatureMoveController
     {
         SetInMove(true);
         MovementMaskField = MovementMask.NPC_STARTMOVE;
-        PacketSendUtility.BroadcastToSightedPlayers(owner, new SmMove(owner));
+        PacketSendUtility.BroadcastToSightedPlayers(owner, new SM_MOVE(owner));
     }
 
     // Java parity: protected setAndSendStopMove(Creature)
@@ -71,7 +71,7 @@ public abstract class CreatureMoveController
     {
         SetInMove(false);
         MovementMaskField = MovementMask.IMMEDIATE;
-        PacketSendUtility.BroadcastToSightedPlayers(owner, new SmMove(owner));
+        PacketSendUtility.BroadcastToSightedPlayers(owner, new SM_MOVE(owner));
     }
 
     // Java parity: final updateLastMove()
