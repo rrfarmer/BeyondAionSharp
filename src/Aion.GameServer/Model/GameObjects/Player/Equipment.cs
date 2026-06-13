@@ -101,7 +101,7 @@ public partial class Equipment : IPersistable
 
         if (targetSlots.Length == 2 && !itemTemplate.IsTwoHandWeapon() || targetSlots.Length > 2)
         {
-            Aion.GameServer.Utils.Audit.AuditLogger.Log(owner, "tried to equip " + item + " in slots: " + "[" + string.Join(", ", (object[])targetSlots) + "]");
+            Aion.GameServer.Utils.Audit.AuditLogger.Log(owner, "tried to equip " + item + " in slots: " + "[" + string.Join(", ", targetSlots) + "]");
             return null;
         }
 
@@ -116,7 +116,7 @@ public partial class Equipment : IPersistable
             return null;
         if ((validSlotMask & slot) != slot) // invalid slot provided for the item
         {
-            Aion.GameServer.Utils.Audit.AuditLogger.Log(owner, "tried to equip " + item + " in invalid slot(s): " + "[" + string.Join(", ", (object[])targetSlots) + "]");
+            Aion.GameServer.Utils.Audit.AuditLogger.Log(owner, "tried to equip " + item + " in invalid slot(s): " + "[" + string.Join(", ", targetSlots) + "]");
             return null;
         }
 
