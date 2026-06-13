@@ -22,6 +22,12 @@ public class BindPointPosition : IPersistable
         this.persistentState = IPersistable.PersistentState.NEW;
     }
 
+    /// <summary>reworked call sites use bindPoint.MapId/X/Y/Z property-form over the faithful getters</summary>
+    public int MapId => GetMapId();
+    public float X => GetX();
+    public float Y => GetY();
+    public float Z => GetZ();
+
     /// <summary>Returns the mapId.</summary>
     public int GetMapId()
     {
