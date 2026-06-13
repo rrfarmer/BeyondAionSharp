@@ -233,7 +233,7 @@ public class VisibleObjectSpawner
 
     public static Servant SpawnEnemyServant(SpawnTemplate spawn, int instanceIndex, Creature creator, byte servantLvl)
     {
-        Servant servant = new Servant(new NpcController(), spawn, servantLvl, creator);
+        Servant servant = new Servant(new NpcController(), spawn, (sbyte)servantLvl, creator);
         servant.SetNpcObjectType(NpcObjectType.SERVANT);
         Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(servant, spawn, instanceIndex);
         return servant;
