@@ -156,7 +156,7 @@ public sealed class WorldNpcQuestDropService
 
 	private static long GetInventoryCount(Player player, int itemId)
 	{
-		return player.InventoryItems.Where(item => item.ItemId == itemId).Sum(item => item.Count);
+		return player.GetInventory().GetItems().Where(item => item.GetItemId() == itemId).Sum(item => item.GetItemCount());
 	}
 }
 

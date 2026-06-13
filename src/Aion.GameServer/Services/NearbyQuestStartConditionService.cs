@@ -181,7 +181,7 @@ public static class NearbyQuestStartConditionService
 		// Java parity: QuestService.inventoryItemCheck checks getFirstItemByItemId only.
 		// The XML count is intentionally not enforced for this start-condition gate.
 		return template.InventoryItems.All(requiredItem =>
-			player.InventoryItems.Any(item => item.ItemId == requiredItem.ItemId))
+			player.GetInventory().GetItems().Any(item => item.GetItemId() == requiredItem.ItemId))
 			? NearbyQuestStartConditionFailure.None
 			: NearbyQuestStartConditionFailure.InventoryItems;
 	}
