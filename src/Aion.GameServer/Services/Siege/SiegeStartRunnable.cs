@@ -1,7 +1,7 @@
 namespace Aion.GameServer.Services.Siege;
 
-/// <summary>Java parity: services/siege/SiegeStartRunnable. Java Runnable → plain class with Run() (passed as method-group to ThreadPoolManager).</summary>
-public class SiegeStartRunnable
+/// <summary>Java parity: services/siege/SiegeStartRunnable implements Runnable; passed to ThreadPoolManager/CronService which require the Runnable interface.</summary>
+public class SiegeStartRunnable : Aion.Commons.Lang.Runnable
 {
     private readonly int locationId;
 
