@@ -45,14 +45,14 @@ public class CM_IN_GAME_SHOP_INFO : AionClientPacket
                     break;
                 case 0x02: // change category
                     PacketSendUtility.SendPacket(player, new SM_IN_GAME_SHOP_CATEGORY_LIST(2, categoryId));
-                    player.inGameShop.SetCategory((byte)categoryId);
+                    player.inGameShop.SetCategory((sbyte)categoryId);
                     break;
                 case 0x04: // category list
                     PacketSendUtility.SendPacket(player, new SM_IN_GAME_SHOP_CATEGORY_LIST(0, categoryId));
                     break;
                 case 0x08: // showcat
                     if (categoryId > 1)
-                        player.inGameShop.SetSubCategory((byte)categoryId);
+                        player.inGameShop.SetSubCategory((sbyte)categoryId);
 
                     PacketSendUtility.SendPacket(player, new SM_IN_GAME_SHOP_LIST(player, listInCategory, 1));
                     PacketSendUtility.SendPacket(player, new SM_IN_GAME_SHOP_LIST(player, listInCategory, 0));
