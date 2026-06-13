@@ -84,3 +84,16 @@ public class Buff
         public float GetChance()               => Chance;
     }
 }
+
+/// <summary>Java parity: Buff.BuffMapType.matches(WorldMapInstance) — the per-constant Predicate&lt;WorldMapInstance&gt;.</summary>
+public static class BuffMapTypeExtensions
+{
+    public static bool Matches(this Buff.BuffMapType type, global::Aion.GameServer.World.WorldMapInstance instance) => type switch
+    {
+        Buff.BuffMapType.WORLD_MAP => !instance.GetTemplate().IsInstance(),
+        Buff.BuffMapType.SOLO_INSTANCE => instance.GetMaxPlayers() == 1,
+        Buff.BuffMapType.GROUP_INSTANCE => instance.GetMaxPlayers() > 1 && instance.GetMaxPlayers() <= 6,
+        Buff.BuffMapType.ALLIANCE_INSTANCE => instance.GetMaxPlayers() > 6 && instance.GetMaxPlayers() <= 24,
+        _ => false,
+    };
+}
