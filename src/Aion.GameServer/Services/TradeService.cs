@@ -182,7 +182,7 @@ public class TradeService
 
     public static bool PerformSellToShop(Player player, TradeList tradeList, TradeListTemplate purchaseTemplate)
     {
-        return PerformSellToShop(player, tradeList, purchaseTemplate, PricesService.GetVendorSellModifier());
+        return PerformSellToShop(player, tradeList, purchaseTemplate, Aion.GameServer.Services.Trade.PricesService.GetVendorSellModifier());
     }
 
     public static bool PerformSellToShop(Player player, TradeList tradeList, TradeListTemplate purchaseTemplate, int sellModifier)
@@ -393,7 +393,7 @@ public class TradeService
         Acquisition aquisition = itemTemplate.GetAcquisition();
         if (aquisition != null && (aquisition.GetType_() == AcquisitionType.ABYSS || aquisition.GetType_() == AcquisitionType.AP))
         {
-            int requiredAp = (int)((aquisition.GetRequiredAp() * count * tradeInList.GetSellPriceRate() / 100.0D) * PricesService.GetVendorBuyModifier())
+            int requiredAp = (int)((aquisition.GetRequiredAp() * count * tradeInList.GetSellPriceRate() / 100.0D) * Aion.GameServer.Services.Trade.PricesService.GetVendorBuyModifier())
                 / 100;
             int diferenceAp = 0;
             foreach (TradeinItem treadInList in requiredTradeInItems)
@@ -402,7 +402,7 @@ public class TradeService
                 if (itemReq != null)
                 {
                     diferenceAp += (int)((itemReq.GetAcquisition().GetRequiredAp() * count * tradeInList.GetSellPriceRate() / 100.0D)
-                        * PricesService.GetVendorBuyModifier()) / 100;
+                        * Aion.GameServer.Services.Trade.PricesService.GetVendorBuyModifier()) / 100;
                 }
             }
             if ((requiredAp - diferenceAp) > 0)
