@@ -88,7 +88,7 @@ public class PetService
         {
             PetFunction func = pet.GetObjectTemplate().GetPetFunction(PetFunctionType.FOOD);
             PetFlavour flavour = DataManager.PET_FEED_DATA.GetFlavourById(func.GetId());
-            FoodType foodType = flavour.GetFoodType(item.GetItemId());
+            FoodType foodType = flavour.GetFoodType(item.GetItemId()).Value;
 
             if (flavour.IsLovedFood(foodType, item.GetItemId()) && progress.GetLovedFoodRemaining() == 0)
                 foodType = null;
