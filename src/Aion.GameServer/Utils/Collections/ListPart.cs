@@ -30,6 +30,12 @@ public abstract class ListPart<TType> : List<TType>
         return Count;
     }
 
+    // Java parity: java.util.List.subList(fromIndex, toIndex) — returns elements in [fromIndex, toIndex).
+    public List<TType> SubList(int fromIndex, int toIndex)
+    {
+        return GetRange(fromIndex, toIndex - fromIndex);
+    }
+
     public bool IsFirst()
     {
         return partNo == 1;
