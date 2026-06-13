@@ -408,7 +408,7 @@ public class TeleportService
             x = locationData.GetX();
             y = locationData.GetY();
             z = locationData.GetZ();
-            h = locationData.GetHeading();
+            h = (byte)locationData.GetHeading();
         }
         TeleportTo(player, worldId, x, y, z, h);
     }

@@ -425,7 +425,7 @@ public class House : VisibleObject, IPersistable
     /// <returns>Calculated heading for a player inside looking towards the wall where butler, relationship crystal and the door are located.</returns>
     public sbyte GetTeleportHeading()
     {
-        return PositionUtil.GetHeadingTowards(GetX(), GetY(), GetRelationshipCrystal().GetSpawn().GetX(), GetRelationshipCrystal().GetSpawn().GetY());
+        return (sbyte)PositionUtil.GetHeadingTowards(GetX(), GetY(), GetRelationshipCrystal().GetSpawn().GetX(), GetRelationshipCrystal().GetSpawn().GetY());
     }
 
     public int GetTownLevel()

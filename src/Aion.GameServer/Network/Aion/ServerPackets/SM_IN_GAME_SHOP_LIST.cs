@@ -24,8 +24,8 @@ public class SM_IN_GAME_SHOP_LIST : AionServerPacket
         Dictionary<int, List<IGItem>> allItems = new Dictionary<int, List<IGItem>>();
         List<IGItem> inAllItems;
         ICollection<IGItem> items;
-        byte category = player.inGameShop.GetCategory();
-        byte subCategory = player.inGameShop.GetSubCategory();
+        byte category = (byte)player.inGameShop.GetCategory();
+        byte subCategory = (byte)player.inGameShop.GetSubCategory();
         if (salesRanking == 1)
         {
             items = InGameShopEn.GetInstance().GetItems(category);

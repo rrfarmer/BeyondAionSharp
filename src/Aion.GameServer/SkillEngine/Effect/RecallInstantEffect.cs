@@ -60,7 +60,7 @@ public class RecallInstantEffect : EffectTemplate
             locationX = effect.GetSkill().GetX();
             locationY = effect.GetSkill().GetY();
             locationZ = effect.GetSkill().GetZ();
-            locationH = effect.GetSkill().GetH();
+            locationH = (byte)effect.GetSkill().GetH();
         }
 
         public override void DenyRequest(Creature effector, Player effected)

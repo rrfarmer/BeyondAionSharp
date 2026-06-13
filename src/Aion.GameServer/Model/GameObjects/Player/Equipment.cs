@@ -57,7 +57,7 @@ public partial class Equipment : IPersistable
             return null;
         }
 
-        sbyte levelRestrict = itemTemplate.GetMaxLevelRestrict(owner.GetPlayerClass());
+        sbyte levelRestrict = (sbyte)itemTemplate.GetMaxLevelRestrict(owner.GetPlayerClass());
         if (levelRestrict != 0 && owner.GetLevel() > levelRestrict)
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_TOO_HIGH_LEVEL(levelRestrict, itemTemplate.GetL10n()));
