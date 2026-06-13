@@ -71,7 +71,7 @@ public class PlayerTeamCommandService
 
     private static LeagueMember FindLeagueAlliance(TemporaryPlayerTeam<ITeamMember<Player>> team, Player player, int leagueAllianceId)
     {
-        League league = (object)team is PlayerAlliance pa ? pa.GetLeague() : null;
+        global::Aion.GameServer.Model.Team.League.League league = (object)team is PlayerAlliance pa ? pa.GetLeague() : null;
         if (league == null)
             throw new ArgumentNullException(null, player + " tried to execute league command without an active league alliance");
         LeagueMember member = league.GetMember(leagueAllianceId);
