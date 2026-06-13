@@ -29,23 +29,23 @@ public class SM_CUBE_UPDATE : AionServerPacket
         int npcExpands = 0;
         int questExpands = 0;
         int itemExpands = 0;
-        switch (type)
+        if (type == StorageType.CUBE)
         {
-            case StorageType.CUBE:
-                itemsCount = player.GetInventory().Size();
-                npcExpands = player.GetNpcExpands();
-                questExpands = player.GetQuestExpands();
-                itemExpands = player.GetItemExpands();
-                break;
-            case StorageType.REGULAR_WAREHOUSE:
-                itemsCount = player.GetWarehouse().Size();
-                npcExpands = player.GetWhNpcExpands();
-                questExpands = player.GetWhBonusExpands();
-                break;
-            case StorageType.LEGION_WAREHOUSE:
-                itemsCount = player.GetLegion().GetLegionWarehouse().Size();
-                npcExpands = player.GetLegion().GetWarehouseExpansions();
-                break;
+            itemsCount = player.GetInventory().Size();
+            npcExpands = player.GetNpcExpands();
+            questExpands = player.GetQuestExpands();
+            itemExpands = player.GetItemExpands();
+        }
+        else if (type == StorageType.REGULAR_WAREHOUSE)
+        {
+            itemsCount = player.GetWarehouse().Size();
+            npcExpands = player.GetWhNpcExpands();
+            questExpands = player.GetWhBonusExpands();
+        }
+        else if (type == StorageType.LEGION_WAREHOUSE)
+        {
+            itemsCount = player.GetLegion().GetLegionWarehouse().Size();
+            npcExpands = player.GetLegion().GetWarehouseExpansions();
         }
 
         return new SM_CUBE_UPDATE(0, type.GetId(), itemsCount, npcExpands, questExpands, itemExpands);
