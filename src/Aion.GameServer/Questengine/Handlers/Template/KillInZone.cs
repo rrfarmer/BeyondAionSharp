@@ -40,7 +40,7 @@ public class KillInZone : AbstractTemplateQuestHandler
         }
         else
         {
-            foreach (ZoneTemplate template in DataManager.ZONE_DATA.ZoneList)
+            foreach (ZoneTemplate template in DataManager.ZONE_DATA.zoneList)
                 this.zones.Add(template.GetXmlName());
         }
         if (killAmount == 0)
