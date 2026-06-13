@@ -346,7 +346,7 @@ public sealed class PlayerEnterWorldService
 
         player.GetEquipment().CheckRankLimitItems(); // Remove items after offline changed rank
 
-        List<Expirable> expirables = new List<Expirable>();
+        List<Aion.GameServer.Model.IExpirable> expirables = new List<Aion.GameServer.Model.IExpirable>();
         foreach (StorageType st in StorageType.Values())
         {
             if (st == StorageType.LEGION_WAREHOUSE)

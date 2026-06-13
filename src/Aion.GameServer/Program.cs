@@ -139,7 +139,6 @@ var builder = Host.CreateDefaultBuilder(args)
 				serviceProvider => serviceProvider.GetRequiredService<WorldNpcSpawnService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<RiftScheduleService>());
-			services.AddSingleton<ExpirableTaskService>();
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<NpcVisibilityService>();
 			services.AddSingleton<CreaturePvpZoneCounterService>();
