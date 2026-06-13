@@ -30,6 +30,9 @@ public sealed class PetFeedProgress
 
 	public int LovedFoodRemaining => _lovedFoodMax - _lovedConsumed;
 
+	// Java parity: services/toypet/PetFeedProgress.getLovedFoodRemaining().
+	public int GetLovedFoodRemaining() => LovedFoodRemaining;
+
 	public bool IsLovedFeeded => _lovedFeeded;
 
 	public void SetRegularCount(short count)
