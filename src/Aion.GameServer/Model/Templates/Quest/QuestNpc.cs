@@ -123,4 +123,23 @@ public class QuestNpc
     {
         return questRange;
     }
+
+    // Java parity: model/templates/quest/QuestNpc.findAllRegisteredQuestIds(Predicate) — union of all event quest-id sets filtered by predicate.
+    public HashSet<int> FindAllRegisteredQuestIds(System.Predicate<int> questIdFilter)
+    {
+        HashSet<int> result = new HashSet<int>();
+        foreach (int questId in onQuestStart)
+            if (questIdFilter(questId)) result.Add(questId);
+        foreach (int questId in onTalkEvent)
+            if (questIdFilter(questId)) result.Add(questId);
+        foreach (int questId in onAtDistanceEvent)
+            if (questIdFilter(questId)) result.Add(questId);
+        foreach (int questId in onAddAggroListEvent)
+            if (questIdFilter(questId)) result.Add(questId);
+        foreach (int questId in onAttackEvent)
+            if (questIdFilter(questId)) result.Add(questId);
+        foreach (int questId in onKillEvent)
+            if (questIdFilter(questId)) result.Add(questId);
+        return result;
+    }
 }
