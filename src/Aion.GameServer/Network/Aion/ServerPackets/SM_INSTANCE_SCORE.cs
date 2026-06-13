@@ -10,19 +10,19 @@ public class SM_INSTANCE_SCORE : AionServerPacket
 {
     private readonly int mapId;
     private readonly int instanceTime;
-    private readonly InstanceScoreWriter<InstanceScore<InstancePlayerReward>> instanceScoreWriter;
+    private readonly InstanceScoreWriter instanceScoreWriter;
 
     public SM_INSTANCE_SCORE(int mapId, ArenaScoreWriter arenaScoreInfo)
         : this(mapId, arenaScoreInfo, arenaScoreInfo.GetInstanceScore().GetTime())
     {
     }
 
-    public SM_INSTANCE_SCORE(int mapId, InstanceScoreWriter<InstanceScore<InstancePlayerReward>> instanceScoreWriter)
+    public SM_INSTANCE_SCORE(int mapId, InstanceScoreWriter instanceScoreWriter)
         : this(mapId, instanceScoreWriter, 0)
     {
     }
 
-    public SM_INSTANCE_SCORE(int mapId, InstanceScoreWriter<InstanceScore<InstancePlayerReward>> instanceScoreWriter, int instanceTime)
+    public SM_INSTANCE_SCORE(int mapId, InstanceScoreWriter instanceScoreWriter, int instanceTime)
     {
         this.mapId = mapId;
         this.instanceTime = instanceTime;
