@@ -147,7 +147,7 @@ public partial class ItemTemplate
         return GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.ENCHANTMENT;
     }
 
-    public ItemActivationTarget GetActivationTarget()
+    public ItemActivationTarget? GetActivationTarget()
     {
         if (GetActivationRace() == null)
             return activationTarget;
