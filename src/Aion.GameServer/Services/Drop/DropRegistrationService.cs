@@ -315,7 +315,7 @@ public class DropRegistrationService
         return false;
     }
 
-    private bool CheckRuleRestrictions(GlobalRule rule, Race race, Npc npc)
+    private bool CheckRuleRestrictions(GlobalRule rule, Race? race, Npc npc)
     {
         if (!CheckRestrictionRace(rule, race))
             return false;
@@ -340,7 +340,7 @@ public class DropRegistrationService
         return true;
     }
 
-    private bool CheckRestrictionRace(GlobalRule rule, Race race)
+    private bool CheckRestrictionRace(GlobalRule rule, Race? race)
     {
         if (rule.GetRestrictionRace() != null)
         {
