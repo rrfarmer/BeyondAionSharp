@@ -14,6 +14,17 @@ public sealed class SmStatUpdateExp : GameServerPacket
 	private readonly long _currentRepose;
 	private readonly long _maxRepose;
 
+	// Java parity: network/aion/serverpackets/SM_STATUPDATE_EXP(long expShown, long expRecoverable, long expNeed, long currentReposeEnergy, long maxReposeEnergy).
+	public SmStatUpdateExp(long currentExp, long recoverableExp, long maxExp, long currentRepose, long maxRepose)
+		: base(PacketOpCode)
+	{
+		_currentExp = currentExp;
+		_recoverableExp = recoverableExp;
+		_maxExp = maxExp;
+		_currentRepose = currentRepose;
+		_maxRepose = maxRepose;
+	}
+
 	public SmStatUpdateExp(Player player, PlayerExperienceTable experienceTable)
 		: base(PacketOpCode)
 	{
