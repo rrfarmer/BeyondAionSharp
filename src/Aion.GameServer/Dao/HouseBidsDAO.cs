@@ -27,7 +27,7 @@ public class HouseBidsDAO
     public const string DELETE_SINGLE_BID_QUERY = "DELETE FROM `house_bids` WHERE `player_id` = ? AND `house_id` = ? AND `bid` = ?";
     public const string DISABLE_QUERY = "UPDATE `house_bids` SET `player_id` = 0 WHERE `player_id` = ?";
 
-    public static HashSet<int> LoadBids(Dictionary<int, HouseBids> bidsById)
+    public static HashSet<int> LoadBids(IDictionary<int, HouseBids> bidsById)
     {
         HashSet<int> deletedPlayerIds = new HashSet<int>();
         try
@@ -43,7 +43,7 @@ public class HouseBidsDAO
                 int houseId = rset.GetInt32(rset.GetOrdinal("house_id"));
                 long bidOffer = rset.GetInt64(rset.GetOrdinal("bid"));
                 long time = new DateTimeOffset(rset.GetDateTime(rset.GetOrdinal("bid_time"))).ToUnixTimeMilliseconds();
-                HouseBids houseBids = bidsById.GetValueOrDefault(houseId);
+                HouseBids houseBids = bidsById.TryGetValue(houseId, out var existingBids) ? existingBids : null;
                 if (houseBids == null)
                     bidsById[houseId] = new HouseBids(houseId, bidOffer, time);
                 else
