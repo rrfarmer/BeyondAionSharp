@@ -66,7 +66,7 @@ public class SM_ALLIANCE_MEMBER_INFO : AionServerPacket
         WriteD(objectId);
         if (player.IsOnline())
         {
-            PlayerLifeStats pls = player.GetLifeStats();
+            global::Aion.GameServer.Model.Stats.Container.PlayerLifeStats pls = player.GetLifeStats();
             WriteD(pls.GetMaxHp());
             WriteD(pls.GetCurrentHp());
             WriteD(pls.GetMaxMp());
