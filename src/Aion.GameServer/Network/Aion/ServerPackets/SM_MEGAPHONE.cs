@@ -35,7 +35,7 @@ public class SM_MEGAPHONE : AionServerPacket
 
     public sealed class FactionLabel
     {
-        public static readonly FactionLabel NONE = new FactionLabel((byte)-1);
+        public static readonly FactionLabel NONE = new FactionLabel(unchecked((byte)-1));
         public static readonly FactionLabel ELYOS = new FactionLabel((byte)Race.ELYOS.GetRaceId());
         public static readonly FactionLabel ASMODIANS = new FactionLabel((byte)Race.ASMODIANS.GetRaceId());
 
