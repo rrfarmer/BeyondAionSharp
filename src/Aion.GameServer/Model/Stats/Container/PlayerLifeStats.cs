@@ -243,7 +243,7 @@ public class PlayerLifeStats : CreatureLifeStats<Player>
         {
             if (owner.IsInSprintMode())
             {
-                flightReduceValue = owner.ride.GetCostFp();
+                flightReduceValue = owner.ride.GetCostFp().Value;
                 flightReducePeriod = 1;
             }
             else if (owner.IsFlying())
