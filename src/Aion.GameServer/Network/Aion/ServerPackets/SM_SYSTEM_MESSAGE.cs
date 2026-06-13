@@ -24647,6 +24647,12 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
         }
     }
 
+    // Java parity: SM_SYSTEM_MESSAGE.STR_MSG_MERCHANT_PET_GET_SELL_ITEM(String name).
+    public static SM_SYSTEM_MESSAGE STR_MSG_MERCHANT_PET_GET_SELL_ITEM(string name)
+    {
+        return new SM_SYSTEM_MESSAGE(1402570, name);
+    }
+
     public int GetId()
     {
         return msgId;
