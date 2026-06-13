@@ -63,7 +63,7 @@ public sealed class DataManager
 	public static InstanceExitData INSTANCE_EXIT_DATA { get; } = new();
 	public static Portal2Data PORTAL2_DATA { get; } = new();
 	public static GlobalNpcExclusionData GLOBAL_EXCLUSION_DATA { get; } = new();
-	public static GlobalDropTable GLOBAL_DROP_DATA => SD.GlobalDrops;
+	public static GlobalDropData GLOBAL_DROP_DATA { get; } = new();
 	public static CustomDrop CUSTOM_NPC_DROP { get; } = new();
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
 	public static HousingObjectTemplateTable HOUSING_OBJECT_DATA => SD.HousingObjectTemplates;
