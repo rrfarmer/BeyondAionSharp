@@ -3460,6 +3460,8 @@ public sealed class SmSystemMessage : GameServerPacket
 
 	// Java parity: SM_SYSTEM_MESSAGE STR_* static factories (ported from Java by message id).
 	public static SmSystemMessage STR_ABYSS_ORDER_RANKER_DIE(Player victim, string zoneName) => new SmSystemMessage(1400023, victim.GetRace().GetL10n(), AbyssRankEnumExtensions.GetRankL10n(victim), victim.GetName(), zoneName);
+	// Java parity: SM_SYSTEM_MESSAGE.STR_ABYSS_ORDER_RANKER_DIE(Player) convenience overload builds zoneName from victim position.
+	public static SmSystemMessage STR_ABYSS_ORDER_RANKER_DIE(Player victim) => STR_ABYSS_ORDER_RANKER_DIE(victim, "%SubZone:" + victim.GetPosition().GetMapId() + " " + victim.GetPosition().GetX() + " " + victim.GetPosition().GetY() + " " + victim.GetPosition().GetZ());
 	public static SmSystemMessage STR_ASSEMBLY_ITEM_SUCCEEDED() => new SmSystemMessage(1401122);
 	public static SmSystemMessage STR_KICK_CHARACTER() => new SmSystemMessage(1310017);
 	public static SmSystemMessage STR_BINDSTONE_ALREADY_INSTALLED() => new SmSystemMessage(1390160);
