@@ -32,7 +32,7 @@ public class KiskService
         // remove the "2h place cooldown" for the kisk creator
         Aion.GameServer.Model.GameObjects.Players.Player creator = Aion.GameServer.World.World.GetInstance().GetPlayer(kisk.GetCreatorId());
         if (creator != null)
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(creator, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(kisk));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(creator, new Aion.GameServer.Network.Aion.ServerPackets.SM_KISK_UPDATE(kisk));
 
         foreach (Aion.GameServer.Model.GameObjects.Players.Player member in kisk.GetCurrentMemberList())
         {
@@ -52,7 +52,7 @@ public class KiskService
         Aion.GameServer.Services.Teleport.TeleportService.SendKiskBindPoint(player);
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_BINDSTONE_REGISTER());
         // Send Animated Bind Flash
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmActionAnimation(player.GetObjectId(), ActionAnimation.BindKisk), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ACTION_ANIMATION(player.GetObjectId(), ActionAnimation.BindKisk), true);
     }
 
     public void OnLogin(Aion.GameServer.Model.GameObjects.Players.Player player)

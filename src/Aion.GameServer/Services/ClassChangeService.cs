@@ -32,7 +32,7 @@ public class ClassChangeService
         {
             qs = new QuestState(questId, QuestStatus.COMPLETE);
             player.GetQuestStateList().AddQuest(questId, qs);
-            PacketSendUtility.SendPacket(player, SmQuestAction.Add(qs));
+            PacketSendUtility.SendPacket(player, new SM_QUEST_ACTION(SM_QUEST_ACTION.ActionType.ADD, qs));
         }
         else
         {
@@ -40,7 +40,7 @@ public class ClassChangeService
         }
         qs.SetQuestVar(0);
         qs.SetRewardGroup(0);
-        PacketSendUtility.SendPacket(player, SmQuestAction.Update(qs));
+        PacketSendUtility.SendPacket(player, new SM_QUEST_ACTION(SM_QUEST_ACTION.ActionType.UPDATE, qs));
     }
 
     public static bool SetClass(Player player, PlayerClass newClass)
