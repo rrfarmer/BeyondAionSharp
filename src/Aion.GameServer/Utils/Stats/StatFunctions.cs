@@ -353,7 +353,7 @@ public class StatFunctions
         float elementalDenominator = GetElementalDefenseDenominator(effector, attacked);
         int rawDefense = attacked.GetGameStats().GetElementalDefenseFor(element);
         int adjustedDefense = (int)AdjustStatByMovementModifier(attacked, element.GetStatForElement(), rawDefense);
-        adjustedDefense = StatCapUtil.ClampStatValue(element.GetStatForElement(), attacked, adjustedDefense);
+        adjustedDefense = StatCapUtil.ClampStatValue(element.GetStatForElement().Value, attacked, adjustedDefense);
         return damage * (1f - adjustedDefense / elementalDenominator);
     }
 
