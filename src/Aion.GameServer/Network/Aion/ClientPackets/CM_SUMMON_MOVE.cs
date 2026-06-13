@@ -72,7 +72,7 @@ public class CM_SUMMON_MOVE : AionClientPacket
         EffectController effectController = summonOrMercenary.GetEffectController();
         if (effectController.IsInAnyAbnormalState(AbnormalState.CANT_MOVE_STATE) || effectController.IsUnderFear() || effectController.IsConfused())
             return;
-        CreatureMoveController<Creature> m = summonOrMercenary.GetMoveController();
+        CreatureMoveController m = summonOrMercenary.GetMoveController();
         m.MovementMaskField = type;
 
         if (m is SummonMoveController smc && (type & MovementMask.GLIDE) == MovementMask.GLIDE)
