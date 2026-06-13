@@ -157,7 +157,7 @@ public abstract class Base
     {
         List<BaseOccupier> coll = new List<BaseOccupier> { BaseOccupier.ASMODIANS, BaseOccupier.ELYOS, BaseOccupier.BALAUR };
         coll.Remove(GetOccupier());
-        return Rnd.Get(coll).Value;
+        return Rnd.Get(coll);
     }
 
     private void ScheduleAssaultDespawn()
