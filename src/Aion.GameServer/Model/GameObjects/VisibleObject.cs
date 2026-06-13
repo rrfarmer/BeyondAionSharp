@@ -73,10 +73,10 @@ public abstract class VisibleObject : AionObject
     public bool IsInInstance() => GetPosition().IsInstanceMap();
 
     // Java parity: clearKnownlist()
-    public void ClearKnownlist() => ClearKnownlist(ObjectDeleteAnimation.FadeOut);
+    public void ClearKnownlist() => ClearKnownlist(Aion.GameServer.Model.Animations.ObjectDeleteAnimation.FadeOut);
 
     // Java parity: clearKnownlist(ObjectDeleteAnimation)
-    public void ClearKnownlist(ObjectDeleteAnimation animation) => GetKnownList().Clear(animation);
+    public void ClearKnownlist(Aion.GameServer.Model.Animations.ObjectDeleteAnimation animation) => GetKnownList().Clear(animation);
 
     // Java parity: updateKnownlist()
     public void UpdateKnownlist() => GetKnownList().Update();
