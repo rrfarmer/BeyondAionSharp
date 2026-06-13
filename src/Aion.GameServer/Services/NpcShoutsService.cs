@@ -82,7 +82,7 @@ public class NpcShoutsService
         if (shoutCooldown > 0 && target != null && "quest".Equals(shout.GetPattern()))
             shoutCooldown = 0;
 
-        Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage message = new Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage(ChatType.NPC, sender, shout.GetStringId(), param);
+        Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE message = new Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE(ChatType.NPC, sender, shout.GetStringId(), param);
 
         if (target != null)
         {
