@@ -418,7 +418,7 @@ public class PlayerRestrictions
             return false;
         }
 
-        sbyte levelRestrict = item.GetItemTemplate().GetMaxLevelRestrict(player.GetPlayerClass());
+        sbyte levelRestrict = (sbyte)item.GetItemTemplate().GetMaxLevelRestrict(player.GetPlayerClass());
         if (levelRestrict != 0 && player.GetLevel() > levelRestrict)
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_TOO_HIGH_LEVEL(levelRestrict, item.GetL10n()));

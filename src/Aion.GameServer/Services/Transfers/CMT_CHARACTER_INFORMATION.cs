@@ -127,7 +127,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         float x = ReadF();
         float y = ReadF();
         float z = ReadF();
-        sbyte h = ReadC();
+        sbyte h = (sbyte)ReadC();
         int worldId = ReadD();
         WorldPosition pos = Aion.GameServer.World.World.GetInstance().CreatePosition(worldId, x, y, z, h, 1);
         player.SetPosition(pos);
@@ -168,12 +168,12 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
 
             int charge = ReadD();
             List<int[]> manastones = new List<int[]>(), fusions = new List<int[]>();
-            sbyte len = ReadC();
+            sbyte len = (sbyte)ReadC();
             for (sbyte b = 0; b < len; b++)
             {
                 manastones.Add(new int[] { ReadD(), ReadD() });
             }
-            len = ReadC();
+            len = (sbyte)ReadC();
             for (sbyte b = 0; b < len; b++)
             {
                 fusions.Add(new int[] { ReadD(), ReadD() });
