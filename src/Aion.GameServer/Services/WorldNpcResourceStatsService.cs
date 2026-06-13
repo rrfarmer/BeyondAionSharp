@@ -175,7 +175,7 @@ public sealed class WorldNpcResourceStatsService
 			return await ApplyPlayerNegativeHealAsDamageAsync(player, maxHp, -value, skillId, packetType, packetLog, cancellationToken);
 		if (player.IsAbnormalSet(PlayerAbnormalState.Disease))
 		{
-			var blockedHp = player.LifeStats.GetCurrentHp(Math.Max(0, maxHp));
+			var blockedHp = player.LifeStats.GetCurrentHp();
 			return WorldNpcResourceChangeResult.FromResourceMutation(
 				WorldNpcResourceChangeStatus.BlockedByDisease,
 				player.ObjectId,
@@ -202,12 +202,12 @@ public sealed class WorldNpcResourceStatsService
 		}
 
 		var normalizedMaxHp = Math.Max(0, maxHp);
-		var previousHp = player.LifeStats.GetCurrentHp(normalizedMaxHp);
+		var previousHp = player.LifeStats.GetCurrentHp();
 		var currentHp = Math.Min(previousHp + value, normalizedMaxHp);
 		var appliedValue = Math.Max(0, currentHp - previousHp);
 		var killingBlowReset = killingBlow is > 0 && currentHp > killingBlow.Value;
 		if (appliedValue != 0)
-			player.LifeStats = player.LifeStats with { CurrentHp = currentHp };
+			player.LifeStats.SetCurrentHp(currentHp);
 		var shouldSend = ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType);
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
 			player.GetPosition(),
@@ -273,7 +273,7 @@ public sealed class WorldNpcResourceStatsService
 		var currentDp = resolvedMaxDp is { } cap && requestedDp > cap
 			? cap
 			: requestedDp;
-		player.Dp = currentDp;
+		player.GetCommonData().SetDp(currentDp);
 		var shouldSendDpPackets = player.IsOnline();
 		var (dpInfoPacket, dpInfoBroadcastCount) = await BroadcastDpInfoAsync(player, currentDp, shouldSendDpPackets);
 		// Java order: PlayerCommonData.setDp broadcasts DP info, updates stats visually, then sends SM_STATUPDATE_DP.
@@ -577,14 +577,12 @@ public sealed class WorldNpcResourceStatsService
 				RoutedNegativeHealToDamage: true);
 		}
 
-		var previousHp = player.LifeStats.GetCurrentHp(normalizedMaxHp);
+		var previousHp = player.LifeStats.GetCurrentHp();
 		var currentHp = Math.Min(previousHp, Math.Max(previousHp - damage, 0));
 		var appliedValue = previousHp - currentHp;
-		player.LifeStats = player.LifeStats with
-		{
-			CurrentHp = currentHp,
-			CurrentMp = currentHp == 0 ? 0 : player.LifeStats.CurrentMp,
-		};
+		player.LifeStats.SetCurrentHp(currentHp);
+		if (currentHp == 0)
+			player.LifeStats.SetCurrentMp(0);
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
 			player.GetPosition(),
 			player.ObjectId,
@@ -693,7 +691,7 @@ public sealed class WorldNpcResourceStatsService
 		}
 
 		var normalizedMaxMp = Math.Max(0, maxMp);
-		var previousMp = player.LifeStats.GetCurrentMp(normalizedMaxMp);
+		var previousMp = player.LifeStats.GetCurrentMp();
 		var currentMp = kind switch
 		{
 			WorldNpcResourceChangeKind.Reduce => Math.Min(previousMp, Math.Max(previousMp - value, 0)),
@@ -702,7 +700,7 @@ public sealed class WorldNpcResourceStatsService
 		};
 		var appliedValue = Math.Abs(currentMp - previousMp);
 		if (appliedValue != 0)
-			player.LifeStats = player.LifeStats with { CurrentMp = currentMp };
+			player.LifeStats.SetCurrentMp(currentMp);
 		var status = GetStatus(kind, previousMp, currentMp);
 		var mpPercentage = normalizedMaxMp <= 0 ? 0 : (int)(100f * currentMp / normalizedMaxMp);
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
@@ -788,10 +786,10 @@ public sealed class WorldNpcResourceStatsService
 			valueToSend = normalizedMaxFp - previousFp;
 		}
 
-		player.LifeStats = player.LifeStats with { CurrentFp = currentFp };
+		player.LifeStats.SetCurrentFp(currentFp);
 		var shouldSendPacket = packetType != null && (kind == WorldNpcResourceChangeKind.Reduce || valueToSend > 0);
 		var shouldSendFlyTimeUpdate = kind == WorldNpcResourceChangeKind.Reduce || valueToSend > 0;
-		var hpPercentage = GetHpPercentage(player.LifeStats.GetCurrentHp(Math.Max(0, maxHp)), Math.Max(0, maxHp));
+		var hpPercentage = GetHpPercentage(player.LifeStats.GetCurrentHp(), Math.Max(0, maxHp));
 		var (packet, broadcastCount) = await BroadcastAttackStatusAsync(
 			player.GetPosition(),
 			player.ObjectId,
