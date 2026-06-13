@@ -129,12 +129,12 @@ public class AgentSiege : Siege<AgentLocation>
     {
         switch (target.GetRace())
         {
-            case SiegeRace.GHENCHMAN_LIGHT:
+            case Race.GHENCHMAN_LIGHT:
                 if (veille != null)
                     throw new SiegeException("Tried to init Veille twice!");
                 veille = target;
                 break;
-            case SiegeRace.GHENCHMAN_DARK:
+            case Race.GHENCHMAN_DARK:
                 if (masta != null)
                     throw new SiegeException("Tried to init Mastarius twice!");
                 masta = target;
