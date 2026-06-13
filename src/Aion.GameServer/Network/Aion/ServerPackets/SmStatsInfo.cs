@@ -637,9 +637,9 @@ public sealed class SmStatsInfo : GameServerPacket
 			if (skillTemplates == null)
 				yield break;
 
-			foreach (var skill in player.Skills)
+			foreach (var skill in player.Skills.GetAllSkills())
 			{
-				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.GetSkillId());
 				if (skillTemplate == null)
 					continue;
 
@@ -649,10 +649,10 @@ public sealed class SmStatsInfo : GameServerPacket
 					if (equipmentFactor == 0)
 						continue;
 
-					var fixedBonus = (armorMastery.Value + armorMastery.Delta * skill.SkillLevel) * equipmentFactor / 100;
+					var fixedBonus = (armorMastery.Value + armorMastery.Delta * skill.GetSkillLevel()) * equipmentFactor / 100;
 					foreach (var change in armorMastery.Changes)
 					{
-						var value = (change.Value + change.Delta * skill.SkillLevel) * equipmentFactor / 100;
+						var value = (change.Value + change.Delta * skill.GetSkillLevel()) * equipmentFactor / 100;
 						if (value != 0)
 							yield return new ItemStatModifier("rate", change.Stat, value, Bonus: true);
 						if (fixedBonus != 0)
@@ -690,16 +690,16 @@ public sealed class SmStatsInfo : GameServerPacket
 					&& !IsTwoHandedSlot(item.Item.Slot))
 				?.Template.ItemGroup;
 
-			foreach (var skill in player.Skills)
+			foreach (var skill in player.Skills.GetAllSkills())
 			{
-				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.GetSkillId());
 				if (skillTemplate == null)
 					continue;
 
 				foreach (var weaponMastery in skillTemplate.WeaponMastery)
 				foreach (var change in weaponMastery.Changes)
 				{
-					var value = change.Value + change.Delta * skill.SkillLevel;
+					var value = change.Value + change.Delta * skill.GetSkillLevel();
 					if (value == 0)
 						continue;
 
@@ -730,16 +730,16 @@ public sealed class SmStatsInfo : GameServerPacket
 			if (skillTemplates == null || !equippedItems.Any(item => item.Template.IsShield && IsLeftHandSlot(item.Item.Slot)))
 				yield break;
 
-			foreach (var skill in player.Skills)
+			foreach (var skill in player.Skills.GetAllSkills())
 			{
-				var skillTemplate = skillTemplates.GetSkillTemplate(skill.SkillId);
+				var skillTemplate = skillTemplates.GetSkillTemplate(skill.GetSkillId());
 				if (skillTemplate == null)
 					continue;
 
 				foreach (var shieldMastery in skillTemplate.ShieldMastery)
 				foreach (var change in shieldMastery.Changes)
 				{
-					var value = change.Value + change.Delta * skill.SkillLevel;
+					var value = change.Value + change.Delta * skill.GetSkillLevel();
 					if (value != 0)
 						yield return new ItemStatModifier("rate", change.Stat, value, Bonus: true);
 				}
