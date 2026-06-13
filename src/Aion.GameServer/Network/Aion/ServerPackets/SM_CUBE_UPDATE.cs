@@ -48,7 +48,7 @@ public class SM_CUBE_UPDATE : AionServerPacket
                 break;
         }
 
-        return new SM_CUBE_UPDATE(0, (int)type, itemsCount, npcExpands, questExpands, itemExpands);
+        return new SM_CUBE_UPDATE(0, type.GetId(), itemsCount, npcExpands, questExpands, itemExpands);
     }
 
     private SM_CUBE_UPDATE(int action, int actionValue, int itemsCount, int npcExpands, int questExpands, int itemExpands)
