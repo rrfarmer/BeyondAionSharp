@@ -28,7 +28,7 @@ public class SM_IN_GAME_SHOP_LIST : AionServerPacket
         byte subCategory = (byte)player.inGameShop.GetSubCategory();
         if (salesRanking == 1)
         {
-            items = InGameShopEn.GetInstance().GetItems(category);
+            items = InGameShopEn.GetInstance().GetItems((sbyte)category);
             int size = 0;
             int tabSize = 9;
             int f = 0;
@@ -63,10 +63,10 @@ public class SM_IN_GAME_SHOP_LIST : AionServerPacket
         }
         else
         {
-            List<int> salesRankingItems = InGameShopEn.GetInstance().GetTopSales(subCategory, category);
+            List<int> salesRankingItems = InGameShopEn.GetInstance().GetTopSales((sbyte)subCategory, (sbyte)category);
             WriteD(salesRanking);
             WriteD(nrList);
-            WriteD((InGameShopEn.GetInstance().GetMaxList(subCategory, category) + 1) * 9);
+            WriteD((InGameShopEn.GetInstance().GetMaxList((sbyte)subCategory, (sbyte)category) + 1) * 9);
             WriteH(salesRankingItems.Count);
             foreach (int id in salesRankingItems)
                 WriteD(id);
