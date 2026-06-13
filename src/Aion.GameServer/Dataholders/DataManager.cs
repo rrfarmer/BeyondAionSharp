@@ -54,8 +54,8 @@ public sealed class DataManager
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;
 	public static WarehouseExpandData WAREHOUSEEXPANDER_DATA => SD.WarehouseExpandDataDh;
 	public static CubeExpandData CUBEEXPANDER_DATA => SD.CubeExpandDataDh;
-	public static TemperingTable TEMPERING_DATA => SD.TemperingTemplates;
-	public static StaticDoorTable STATICDOOR_DATA => SD.StaticDoors;
+	public static TemperingData TEMPERING_DATA { get; } = new();
+	public static StaticDoorData STATICDOOR_DATA { get; } = new();
 	public static RideData RIDE_DATA => SD.RideDataDh;
 	public static PetDopingData PET_DOPING_DATA => SD.PetDopingDataDh;
 	public static LegionDominionData LEGION_DOMINION_DATA => SD.LegionDominionDataDh;
