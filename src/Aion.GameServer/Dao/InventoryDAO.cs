@@ -268,9 +268,9 @@ public class InventoryDAO
 
     public static bool Store(List<Item> items, int? playerId, int? accountId, int? legionId)
     {
-        ICollection<Item> itemsToUpdate = items.Where(IPersistable.CHANGED).ToList();
-        ICollection<Item> itemsToInsert = items.Where(IPersistable.NEW).ToList();
-        ICollection<Item> itemsToDelete = items.Where(IPersistable.DELETED).ToList();
+        ICollection<Item> itemsToUpdate = items.Where(x => IPersistable.CHANGED(x)).ToList();
+        ICollection<Item> itemsToInsert = items.Where(x => IPersistable.NEW(x)).ToList();
+        ICollection<Item> itemsToDelete = items.Where(x => IPersistable.DELETED(x)).ToList();
 
         bool deleteResult = false;
         bool insertResult = false;

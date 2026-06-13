@@ -145,12 +145,12 @@ public class PlayerRegisteredItemsDAO
     {
         List<HouseObject<PlaceableHouseObject>> objects = registry.GetObjects();
         List<HouseDecoration> decors = registry.GetDecors();
-        List<HouseObject<PlaceableHouseObject>> objectsToAdd = objects.Where(IPersistable.NEW).ToList();
-        List<HouseObject<PlaceableHouseObject>> objectsToUpdate = objects.Where(IPersistable.CHANGED).ToList();
-        List<HouseObject<PlaceableHouseObject>> objectsToDelete = objects.Where(IPersistable.DELETED).ToList();
-        List<HouseDecoration> decorsToAdd = decors.Where(IPersistable.NEW).ToList();
-        List<HouseDecoration> decorsToUpdate = decors.Where(IPersistable.CHANGED).ToList();
-        List<HouseDecoration> decorsToDelete = decors.Where(IPersistable.DELETED).ToList();
+        List<HouseObject<PlaceableHouseObject>> objectsToAdd = objects.Where(x => IPersistable.NEW(x)).ToList();
+        List<HouseObject<PlaceableHouseObject>> objectsToUpdate = objects.Where(x => IPersistable.CHANGED(x)).ToList();
+        List<HouseObject<PlaceableHouseObject>> objectsToDelete = objects.Where(x => IPersistable.DELETED(x)).ToList();
+        List<HouseDecoration> decorsToAdd = decors.Where(x => IPersistable.NEW(x)).ToList();
+        List<HouseDecoration> decorsToUpdate = decors.Where(x => IPersistable.CHANGED(x)).ToList();
+        List<HouseDecoration> decorsToDelete = decors.Where(x => IPersistable.DELETED(x)).ToList();
 
         bool objectDeleteResult = false;
         bool decorsDeleteResult = false;

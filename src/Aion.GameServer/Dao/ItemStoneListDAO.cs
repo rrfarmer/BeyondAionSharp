@@ -178,9 +178,9 @@ public class ItemStoneListDAO
             return;
         }
 
-        HashSet<ItemStone> stonesToAdd = stones.Where(IPersistable.NEW).ToHashSet();
-        HashSet<ItemStone> stonesToDelete = stones.Where(IPersistable.DELETED).ToHashSet();
-        HashSet<ItemStone> stonesToUpdate = stones.Where(IPersistable.CHANGED).ToHashSet();
+        HashSet<ItemStone> stonesToAdd = stones.Where(x => IPersistable.NEW(x)).ToHashSet();
+        HashSet<ItemStone> stonesToDelete = stones.Where(x => IPersistable.DELETED(x)).ToHashSet();
+        HashSet<ItemStone> stonesToUpdate = stones.Where(x => IPersistable.CHANGED(x)).ToHashSet();
 
         try
         {

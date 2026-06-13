@@ -97,7 +97,7 @@ public class PlayerQuestListDAO
 
     private static void AddQuests(MySqlConnection con, int playerId, ICollection<QuestState> states)
     {
-        states = states.Where(IPersistable.NEW).ToList();
+        states = states.Where(x => IPersistable.NEW(x)).ToList();
 
         if (GenericValidator.IsBlankOrNull(states))
             return;
@@ -132,7 +132,7 @@ public class PlayerQuestListDAO
 
     private static void UpdateQuests(MySqlConnection con, int playerId, ICollection<QuestState> states)
     {
-        states = states.Where(IPersistable.CHANGED).ToList();
+        states = states.Where(x => IPersistable.CHANGED(x)).ToList();
 
         if (GenericValidator.IsBlankOrNull(states))
             return;
@@ -167,7 +167,7 @@ public class PlayerQuestListDAO
 
     private static void DeleteQuest(MySqlConnection con, int playerId, ICollection<QuestState> states, ISet<int> questIds)
     {
-        states = states.Where(IPersistable.DELETED).ToList();
+        states = states.Where(x => IPersistable.DELETED(x)).ToList();
 
         if (GenericValidator.IsBlankOrNull(states) && questIds.Count == 0)
             return;

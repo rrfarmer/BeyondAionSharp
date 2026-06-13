@@ -87,7 +87,7 @@ public class PlayerSkillListDAO
 
     private static void AddSkills(MySqlConnection con, Player player, List<PlayerSkillEntry> skills)
     {
-        skills = skills.Where(IPersistable.NEW).ToList();
+        skills = skills.Where(x => IPersistable.NEW(x)).ToList();
         if (skills.Count == 0)
             return;
 
@@ -115,7 +115,7 @@ public class PlayerSkillListDAO
 
     private static void UpdateSkills(MySqlConnection con, Player player, List<PlayerSkillEntry> skills)
     {
-        skills = skills.Where(IPersistable.CHANGED).ToList();
+        skills = skills.Where(x => IPersistable.CHANGED(x)).ToList();
         if (skills.Count == 0)
             return;
 
@@ -143,7 +143,7 @@ public class PlayerSkillListDAO
 
     private static void DeleteSkills(MySqlConnection con, Player player, List<PlayerSkillEntry> skills)
     {
-        skills = skills.Where(IPersistable.DELETED).ToList();
+        skills = skills.Where(x => IPersistable.DELETED(x)).ToList();
         if (skills.Count == 0)
             return;
 
