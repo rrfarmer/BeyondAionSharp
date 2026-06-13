@@ -12,7 +12,7 @@ public class ItemChargeCondition : ChargeCondition
 {
     public override bool Validate(Stat2 env, IStatFunction statFunction)
     {
-        StatOwner owner = statFunction.GetOwner();
+        IStatOwner owner = statFunction.GetOwner();
         if (owner is Item)
         {
             Item item = (Item)owner;
