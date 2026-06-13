@@ -52,10 +52,10 @@ public class HealCastorOnAttackedEffect : EffectTemplate
             }
             else
             {
-                foreach (Player p in group.GetOnlineMembers())
+                foreach (Player member in group.GetOnlineMembers())
                 {
-                    if (PositionUtil.IsInRange(effect.GetEffected(), p, outer.range, false))
-                        p.GetLifeStats().IncreaseHp(TYPE.HP, healValue, effect, LOG.REGULAR);
+                    if (PositionUtil.IsInRange(effect.GetEffected(), member, outer.range, false))
+                        member.GetLifeStats().IncreaseHp(TYPE.HP, healValue, effect, LOG.REGULAR);
                 }
             }
         }

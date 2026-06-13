@@ -39,9 +39,9 @@ public class HealCastorOnTargetDeadEffect : EffectTemplate
             }
             else
             {
-                foreach (Player p in group.GetOnlineMembers())
+                foreach (Player member in group.GetOnlineMembers())
                 {
-                    if (PositionUtil.IsInRange(effected, p, range, false))
+                    if (PositionUtil.IsInRange(effected, member, range, false))
                         effector.GetLifeStats().IncreaseHp(TYPE.HP, healValue, effect, LOG.REGULAR);
                 }
             }
