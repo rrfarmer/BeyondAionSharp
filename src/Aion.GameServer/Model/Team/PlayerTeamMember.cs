@@ -25,6 +25,9 @@ public class PlayerTeamMember : ITeamMember<Player>
     // Java parity: getObject()
     public Player GetObject() => Player;
 
+    // Java parity: isOnline() -> getObject().isOnline()
+    public bool IsOnline() => Player.IsOnline();
+
     // Java parity: getLastOnlineTime()
     public long GetLastOnlineTime() => _lastOnlineTime;
 
