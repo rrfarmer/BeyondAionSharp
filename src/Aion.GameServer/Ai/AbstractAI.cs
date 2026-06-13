@@ -421,7 +421,7 @@ public abstract class AbstractAI : AI
 
     protected VisibleObject Spawn(int npcId, float x, float y, float z, sbyte heading, int staticId, string aiName)
     {
-        Aion.GameServer.Model.Templates.Spawns.SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(owner.GetWorldId(), npcId, x, y, z, heading, owner, aiName);
+        Aion.GameServer.Model.Templates.Spawns.SpawnTemplate template = Aion.GameServer.SpawnEngine.SpawnEngine.NewSingleTimeSpawn(owner.GetWorldId(), npcId, x, y, z, (byte)heading, owner, aiName);
         template.SetStaticId(staticId);
         return Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, owner.GetInstanceId());
     }
@@ -433,7 +433,7 @@ public abstract class AbstractAI : AI
         float x = p.GetX() + (float)(System.Math.Cos(angleRadians) * distance);
         float y = p.GetY() + (float)(System.Math.Sin(angleRadians) * distance);
         Vector3f pos = GeoService.GetInstance().GetClosestCollision(owner, x, y, p.GetZ());
-        return Spawn(npcId, pos.GetX(), pos.GetY(), pos.GetZ(), p.GetHeading());
+        return Spawn(npcId, pos.GetX(), pos.GetY(), pos.GetZ(), (sbyte)p.GetHeading());
     }
 
     protected VisibleObject RndSpawnInRange(int npcId, float minDistance, float maxDistance)
