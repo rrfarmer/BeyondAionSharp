@@ -98,7 +98,7 @@ public class PacketSendUtility
         BroadcastPacket(visibleObject, packet);
     }
 
-    public static void BroadcastPacketAndReceive(Creature creature, AionServerPacket packet, AiEventType et)
+    public static void BroadcastPacketAndReceive(Creature creature, AionServerPacket packet, AiEventType? et)
     {
         if (creature is Player player)
             SendPacket(player, packet);
@@ -106,14 +106,14 @@ public class PacketSendUtility
         BroadcastPacketAndAIEvent(creature, packet, et);
     }
 
-    public static void BroadcastPacketAndAIEvent(Creature creature, AionServerPacket packet, AiEventType et)
+    public static void BroadcastPacketAndAIEvent(Creature creature, AionServerPacket packet, AiEventType? et)
     {
         creature.GetKnownList().ForEachObject(obj =>
         {
             if (obj is Player player)
                 SendPacket(player, packet);
             else if (et != null && obj is Npc npc)
-                npc.GetAi().OnCreatureEvent(et, creature);
+                npc.GetAi().OnCreatureEvent(et.Value, creature);
         });
     }
 
