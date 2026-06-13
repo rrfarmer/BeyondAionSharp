@@ -56,7 +56,7 @@ public class AnnouncementService
             sender += "Announcement";
             string msg = announce.GetChatType() == ChatType.SHOUT || announce.GetChatType() == ChatType.GROUP_LEADER ? "" : sender + ": ";
             msg += announce.GetAnnounce();
-            SmMessage message = new SmMessage(1, sender, msg, announce.GetChatType());
+            SM_MESSAGE message = new SM_MESSAGE(1, sender, msg, announce.GetChatType());
             PacketSendUtility.BroadcastToWorld(message, player => player.GetOppositeRace() != announce.GetFaction());
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(announce.GetDelay() * 1000), TimeSpan.FromMilliseconds(announce.GetDelay() * 1000));
