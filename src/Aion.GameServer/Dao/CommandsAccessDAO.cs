@@ -22,9 +22,9 @@ public class CommandsAccessDAO
     private const string DELETE_QUERY = "DELETE FROM commands_access WHERE player_id = ? AND command = ?";
     private const string DELETE_ALL_QUERY = "DELETE FROM commands_access WHERE player_id = ?";
 
-    public static Dictionary<int, HashSet<string>> LoadAccesses()
+    public static Dictionary<int, ISet<string>> LoadAccesses()
     {
-        Dictionary<int, HashSet<string>> accesses = new Dictionary<int, HashSet<string>>();
+        Dictionary<int, ISet<string>> accesses = new Dictionary<int, ISet<string>>();
         try
         {
             using MySqlConnection conn = DatabaseFactory.GetConnection();
@@ -36,7 +36,7 @@ public class CommandsAccessDAO
             {
                 int playerId = rset.GetInt32(rset.GetOrdinal("player_id"));
                 string command = rset.GetString(rset.GetOrdinal("command"));
-                if (!accesses.TryGetValue(playerId, out HashSet<string> commands) || commands == null)
+                if (!accesses.TryGetValue(playerId, out ISet<string> commands) || commands == null)
                     commands = new HashSet<string>();
                 commands.Add(command);
                 accesses[playerId] = commands;
