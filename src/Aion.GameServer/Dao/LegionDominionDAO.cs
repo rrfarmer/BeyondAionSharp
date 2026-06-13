@@ -27,7 +27,7 @@ public class LegionDominionDAO
     private const string UPDATE_PARTICIPANT = "UPDATE legion_dominion_participants SET points=?, survived_time=?, participated_date=? WHERE legion_id=?";
     private const string DELETE_INFO = "DELETE FROM legion_dominion_participants WHERE legion_id=?";
 
-    public static bool LoadOrCreateLegionDominionLocations(Dictionary<int, LegionDominionLocation> locations)
+    public static bool LoadOrCreateLegionDominionLocations(IDictionary<int, LegionDominionLocation> locations)
     {
         try
         {
