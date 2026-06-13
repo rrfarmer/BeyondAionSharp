@@ -256,6 +256,10 @@ public abstract class Creature : VisibleObject
         return visualState;
     }
 
+    // Reworked call sites read player.VisualState/SeeState property-form over the faithful GetVisualState()/GetSeeState().
+    public int VisualState => GetVisualState();
+    public int SeeState => GetSeeState();
+
     public void SetVisualState(CreatureVisualState visualState)
     {
         this.visualState |= visualState.GetId();
