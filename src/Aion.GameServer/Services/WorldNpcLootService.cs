@@ -31,7 +31,7 @@ public sealed class WorldNpcLootService
 
 		var packets = new List<AionServerPacket>();
 		var visiblePackets = new List<AionServerPacket>();
-		if (player.IsLooting)
+		if (player.IsLooting())
 		{
 			var closeResult = CloseDropList(player, player.LootingNpcObjectId);
 			packets.AddRange(closeResult.PlayerPackets);
@@ -109,7 +109,7 @@ public sealed class WorldNpcLootService
 		if (!registration.IsAllowedToLoot(player.ObjectId))
 			return WorldNpcLootResult.None(WorldNpcLootStatus.NoRight);
 
-		if (player.IsInTeam)
+		if (player.IsInTeam())
 			return WorldNpcLootResult.None(WorldNpcLootStatus.TeamDistributionPending);
 
 		var template = itemTemplates.GetItemTemplate(requestedItem.ItemId);
