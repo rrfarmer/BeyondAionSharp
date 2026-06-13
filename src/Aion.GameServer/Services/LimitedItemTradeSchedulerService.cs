@@ -33,28 +33,13 @@ public sealed class LimitedItemTradeSchedulerService : GameEngine
 	{
 		// Java parity: GameServer startup calls LimitedItemTradeService.start after
 		// DataManager is loaded and CronService is initialized.
-		var result = _runtimeContext.LimitedItems.StartScheduledResets(
-			_threadPoolManager,
-			_options.Core.GetTimeZone(),
-			_clock,
-			cancellationToken);
-		foreach (var skipped in result.SkippedItems)
-		{
-			_logger.LogWarning(
-				"Skipping limited-item reset schedule {SalesTime} for NPC {NpcId}, item {ItemId}: {Reason}",
-				skipped.SalesTime,
-				skipped.NpcId,
-				skipped.ItemId,
-				skipped.Reason);
-		}
-
-		_logger.LogInformation("Scheduled {Count} limited-item reset jobs", result.ScheduledCount);
+		_runtimeContext.LimitedItems.Start();
 		return ValueTask.CompletedTask;
 	}
 
 	public ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
 	{
-		_runtimeContext.LimitedItems.ShutdownScheduledResets();
+		// Java parity: limited-item resets are owned by CronService; nothing to shut down here.
 		return ValueTask.CompletedTask;
 	}
 }

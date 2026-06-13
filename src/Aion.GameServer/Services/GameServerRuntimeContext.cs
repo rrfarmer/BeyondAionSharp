@@ -13,13 +13,14 @@ public sealed class GameServerRuntimeContext
 
 	public WorldMapRuntimeStateTable WorldMapStates { get; private set; } = WorldMapRuntimeStateTable.Empty;
 
-	public LimitedItemTradeService LimitedItems { get; private set; } = LimitedItemTradeService.Empty;
+	// Java parity: LimitedItemTradeService is a singleton populated from DataManager in its Start().
+	public LimitedItemTradeService LimitedItems { get; private set; } = LimitedItemTradeService.GetInstance();
 
 	public void SetDataManager(DataManager dataManager)
 	{
 		DataManager = dataManager;
 		WorldMapStates = new WorldMapRuntimeStateTable(dataManager.StaticData.WorldMaps);
-		LimitedItems = LimitedItemTradeService.Create(dataManager.StaticData.TradeLists, dataManager.StaticData.GoodsLists);
+		LimitedItems = LimitedItemTradeService.GetInstance();
 	}
 
 	public void SetWorldMapStates(WorldMapRuntimeStateTable worldMapStates)
