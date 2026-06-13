@@ -12,4 +12,7 @@ public static class DateTimeUnixExtensions
 	// Java parity: calling getTime() on a null Timestamp throws (NPE); Value access mirrors that.
 	public static long ToUnixTimeMilliseconds(this DateTime? dateTime) =>
 		dateTime!.Value.ToUnixTimeMilliseconds();
+
+	// Java parity: java.util.Date/java.sql.Timestamp.getTime() -> epoch milliseconds.
+	public static long GetTime(this DateTime dateTime) => dateTime.ToUnixTimeMilliseconds();
 }
