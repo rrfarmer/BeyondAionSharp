@@ -1,5 +1,6 @@
 using Aion.GameServer.Configuration;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Services;
@@ -685,8 +686,8 @@ public static class StigmaService
 	private static bool IsCompleteStigmaQuest(Player player)
 	{
 		// Java parity: services/StigmaService.isCompleteQuest.
-		var questId = player.Race == "ELYOS" ? 1929 : 2900;
-		var transitionalQuestVar = player.Race == "ELYOS" ? 98 : 99;
+		var questId = player.Race == Race.ELYOS ? 1929 : 2900;
+		var transitionalQuestVar = player.Race == Race.ELYOS ? 98 : 99;
 		var quest = player.Quests.FirstOrDefault(state => state.QuestId == questId);
 		if (quest == null)
 			return false;
@@ -711,8 +712,8 @@ public static class StigmaService
 		// Java parity: services/StigmaService.notifyEquipAction selects the base kinah fee,
 		// then services/trade/PricesService.getPriceForService applies global price, modifier, and tax.
 		long kinahCount = 25000;
-		if ((player.Race == "ASMODIANS" && player.GetPosition().WorldId == 320070000)
-			|| (player.Race == "ELYOS" && player.GetPosition().WorldId == 310070000))
+		if ((player.Race == Race.ASMODIANS && player.GetPosition().WorldId == 320070000)
+			|| (player.Race == Race.ELYOS && player.GetPosition().WorldId == 310070000))
 		{
 			kinahCount = 1000;
 		}

@@ -15,7 +15,7 @@ public static class CraftLearnService
 		if (recipeTemplate == null)
 			return CraftLearnValidation.Fail(CraftLearnFailure.MissingRecipe);
 
-		if (recipeTemplate.Race != "PC_ALL" && recipeTemplate.Race != player.Race)
+		if (recipeTemplate.Race != "PC_ALL" && recipeTemplate.Race != player.Race.ToString())
 			return CraftLearnValidation.Fail(CraftLearnFailure.InvalidRace);
 
 		if (player.Recipes.Contains(recipeId))
