@@ -19,19 +19,26 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services.Siege;
 
-/// <summary>Java parity: services/siege/Siege&lt;SL extends SiegeLocation&gt; (SoulKeeper, Source) abstract base. C# generic where SL : SiegeLocation; AtomicBoolean finished; synchronized start->lock double-start guard; CompareAndSet stop (+balaur auto-assault); siege counter/boss/timing; abstract onSiegeStart/Finish/isEndless/onAbyssPointsAdded; initSiegeBoss (find BOSS npc), spawn/despawn/broadcast helpers, sendRewardsToParticipants (top-grade GP/kinah/item mail distribution). currentTimeMillis->UtcNow; log.error(msg,ex)->LogError(ex,msg); Math.round(float)->(long)Floor(x+0.5f); getClass().getSimpleName()->GetType().Name. SiegeLocation/SiegeNpc/SiegeResult/templates red-tolerated.</summary>
-public abstract class Siege<SL> where SL : SiegeLocation
+/// <summary>
+/// Java parity: services/siege/Siege&lt;SL extends SiegeLocation&gt; (SoulKeeper, Source) abstract base. Java's
+/// Siege&lt;? extends SiegeLocation&gt; wildcard usage (SiegeService.activeSieges, BalaurAssaultService) is rendered as a
+/// NON-GENERIC Siege base holding the shared implementation, with the generic Siege&lt;SL&gt; adding only a covariant
+/// GetSiegeLocation()-&gt;SL and the typed ctor. AtomicBoolean finished; synchronized start-&gt;lock double-start guard;
+/// CompareAndSet stop (+balaur auto-assault); abstract onSiegeStart/Finish/isEndless/onAbyssPointsAdded;
+/// currentTimeMillis-&gt;UtcNow; log.error(msg,ex)-&gt;LogError(ex,msg); Math.round(float)-&gt;(long)Floor(x+0.5f).
+/// </summary>
+public abstract class Siege
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger("SIEGE_LOG");
     private readonly AtomicBoolean finished = new AtomicBoolean();
     private readonly SiegeCounter siegeCounter = new SiegeCounter();
-    private readonly SL siegeLocation;
+    private readonly SiegeLocation siegeLocation;
     private bool bossKilled;
     private SiegeNpc boss;
     private long startTime;
     private bool started;
 
-    public Siege(SL siegeLocation)
+    protected Siege(SiegeLocation siegeLocation)
     {
         this.siegeLocation = siegeLocation;
     }
@@ -86,7 +93,7 @@ public abstract class Siege<SL> where SL : SiegeLocation
         }
     }
 
-    public SL GetSiegeLocation()
+    public virtual SiegeLocation GetSiegeLocation()
     {
         return siegeLocation;
     }
@@ -247,5 +254,18 @@ public abstract class Siege<SL> where SL : SiegeLocation
     public override string ToString()
     {
         return GetType().Name + " [locationId=" + GetSiegeLocationId() + "]";
+    }
+}
+
+public abstract class Siege<SL> : Siege where SL : SiegeLocation
+{
+    protected Siege(SL siegeLocation)
+        : base(siegeLocation)
+    {
+    }
+
+    public override SL GetSiegeLocation()
+    {
+        return (SL)base.GetSiegeLocation();
     }
 }

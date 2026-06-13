@@ -17,7 +17,7 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services.Siege;
 
-/// <summary>Java parity: services/siege/BalaurAssaultService (synchro2, Luzien, Estrayl). Schedules/tracks Balaur assaults on fortresses (1-15 min) and artifacts (3-48 h): onSiegeStart/Finish, calculateFortressAssault (vulnerability/per-map limits/influence chance), startAssault, newAssault (build FortressAssault/ArtifactAssault), spawnDredgion (assembled-npc carrier broadcast). ConcurrentHashMap->ConcurrentDictionary; map.remove(k).call->TryRemove(out)+call; Siege<?>/Siege<? extends SiegeLocation>->Siege<SiegeLocation>; instanceof X x->is X x; getClass().getSimpleName()->GetType().Name; forEach->foreach; IllegalArgument->Argument. FortressAssault/FortressSiege/Influence/AssembledNpc red-tolerated.</summary>
+/// <summary>Java parity: services/siege/BalaurAssaultService (synchro2, Luzien, Estrayl). Schedules/tracks Balaur assaults on fortresses (1-15 min) and artifacts (3-48 h): onSiegeStart/Finish, calculateFortressAssault (vulnerability/per-map limits/influence chance), startAssault, newAssault (build FortressAssault/ArtifactAssault), spawnDredgion (assembled-npc carrier broadcast). ConcurrentHashMap->ConcurrentDictionary; map.remove(k).call->TryRemove(out)+call; Siege<?>/Siege<? extends SiegeLocation>->Siege; instanceof X x->is X x; getClass().getSimpleName()->GetType().Name; forEach->foreach; IllegalArgument->Argument. FortressAssault/FortressSiege/Influence/AssembledNpc red-tolerated.</summary>
 public class BalaurAssaultService
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger("SIEGE_LOG");
@@ -29,7 +29,7 @@ public class BalaurAssaultService
         return SingletonHolder.INSTANCE;
     }
 
-    public void OnSiegeStart(Siege<SiegeLocation> siege)
+    public void OnSiegeStart(Siege siege)
     {
         if (siege is FortressSiege)
         {
@@ -45,7 +45,7 @@ public class BalaurAssaultService
         }
     }
 
-    public void OnSiegeFinish(Siege<SiegeLocation> siege)
+    public void OnSiegeFinish(Siege siege)
     {
         int locId = siege.GetSiegeLocationId();
         bool isBossKilled = siege.IsBossKilled();
@@ -96,7 +96,7 @@ public class BalaurAssaultService
 
     public bool StartAssault(int location, int delay)
     {
-        Siege<SiegeLocation> siege = SiegeService.GetInstance().GetSiege(location);
+        Siege siege = SiegeService.GetInstance().GetSiege(location);
         if (siege == null || fortressAssaults.ContainsKey(location) || artifactAssaults.ContainsKey(location))
         {
             return false;
@@ -105,7 +105,7 @@ public class BalaurAssaultService
         return true;
     }
 
-    private void NewAssault(Siege<SiegeLocation> siege, int delay)
+    private void NewAssault(Siege siege, int delay)
     {
         if (siege is FortressSiege fortressSiege)
         {

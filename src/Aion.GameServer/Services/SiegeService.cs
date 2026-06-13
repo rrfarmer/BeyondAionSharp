@@ -38,7 +38,7 @@ public class SiegeService
     /// <summary>Singleton that is loaded on the class initialization.</summary>
     private static readonly SiegeService instance = new SiegeService();
     /// <summary>Map that holds fortressId to Siege. We can easily know what fortresses are under siege ATM.</summary>
-    private readonly Dictionary<int, Siege<SiegeLocation>> activeSieges = new Dictionary<int, Siege<SiegeLocation>>();
+    private readonly Dictionary<int, global::Aion.GameServer.Services.Siege.Siege> activeSieges = new Dictionary<int, global::Aion.GameServer.Services.Siege.Siege>();
 
     // Player list on RVR Event.
     private readonly AtomicBoolean isInitialized = new AtomicBoolean();
@@ -214,7 +214,7 @@ public class SiegeService
                 log.LogError(new Exception(), "Attempt to start siege twice for siege location: " + siegeLocationId);
                 return;
             }
-            Siege<SiegeLocation> siege = NewSiege(siegeLocationId);
+            global::Aion.GameServer.Services.Siege.Siege siege = NewSiege(siegeLocationId);
             activeSieges[siegeLocationId] = siege;
 
             siege.StartSiege();
@@ -235,7 +235,7 @@ public class SiegeService
         {
             log.LogDebug("Stopping siege of siege location: {LocationId}", siegeLocationId);
 
-            if (!activeSieges.TryGetValue(siegeLocationId, out Siege<SiegeLocation> siege))
+            if (!activeSieges.TryGetValue(siegeLocationId, out global::Aion.GameServer.Services.Siege.Siege siege))
             {
                 log.LogDebug("Siege of siege location {LocationId} is not in progress, it was captured earlier?", siegeLocationId);
                 return;
@@ -253,7 +253,7 @@ public class SiegeService
         lock (this)
         {
             SiegeLocation loc = GetSiegeLocation(locId);
-            Siege<SiegeLocation> s = GetSiege(locId);
+            global::Aion.GameServer.Services.Siege.Siege s = GetSiege(locId);
             if (s != null)
             {
                 s.GetSiegeCounter().AddRaceDamage(sr, s.GetBoss().GetLifeStats().GetMaxHp() + 1);
@@ -371,7 +371,7 @@ public class SiegeService
 
     public int GetRemainingSiegeTimeInSeconds(int siegeLocationId)
     {
-        Siege<SiegeLocation> siege = GetSiege(siegeLocationId);
+        global::Aion.GameServer.Services.Siege.Siege siege = GetSiege(siegeLocationId);
         if (siege == null || siege.IsFinished() || !siege.IsStarted())
             return 0;
 
@@ -381,12 +381,12 @@ public class SiegeService
         return Math.Max(secondsLeft, 0);
     }
 
-    public Siege<SiegeLocation> GetSiege(SiegeLocation loc)
+    public global::Aion.GameServer.Services.Siege.Siege GetSiege(SiegeLocation loc)
     {
         return GetSiege(loc.GetLocationId());
     }
 
-    public Siege<SiegeLocation> GetSiege(int siegeLocationId)
+    public global::Aion.GameServer.Services.Siege.Siege GetSiege(int siegeLocationId)
     {
         return activeSieges.GetValueOrDefault(siegeLocationId);
     }
@@ -478,7 +478,7 @@ public class SiegeService
         return agent;
     }
 
-    private Siege<SiegeLocation> NewSiege(int siegeLocationId)
+    private global::Aion.GameServer.Services.Siege.Siege NewSiege(int siegeLocationId)
     {
         if (fortresses.ContainsKey(siegeLocationId))
             return new FortressSiege(fortresses[siegeLocationId]);
@@ -666,7 +666,7 @@ public class SiegeService
     public void OnAbyssPointsAdded(Player player, VisibleObject obj, int abyssPoints)
     {
         if (obj is Player || obj is SiegeNpc siegeNpc && siegeNpc.GetSpawn().GetSiegeModType() != SiegeModType.PEACE)
-            foreach (Siege<SiegeLocation> a in activeSieges.Values)
+            foreach (global::Aion.GameServer.Services.Siege.Siege a in activeSieges.Values)
                 a.OnAbyssPointsAdded(player, abyssPoints);
     }
 
