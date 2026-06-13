@@ -25,7 +25,7 @@ public static class PlayerMovementSpeedResolver
 		if (player.IsInState(PlayerCreatureState.Flying))
 			return player.RideInfo.FlySpeed;
 
-		return player.IsInSprintMode && player.RideInfo.CanSprint()
+		return player.IsInSprintMode() && player.RideInfo.CanSprint()
 			? player.RideInfo.SprintSpeed
 			: player.RideInfo.MoveSpeed;
 	}
