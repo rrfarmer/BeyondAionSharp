@@ -164,7 +164,7 @@ public class ItemPacketService
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmDeleteWarehouseItem(storageType.GetId(), item.GetObjectId(), deleteType));
         }
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmCubeUpdate.CubeSize(storageType, player));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_CUBE_UPDATE.CubeSize(storageType, player));
     }
 
     /// <summary>Item will be updated in UI slot (stacked items). Java fallthrough: LEGION_WAREHOUSE (non-kinah) → default.</summary>
@@ -205,7 +205,7 @@ public class ItemPacketService
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmWarehouseAddItem(item, storageType.GetId(), player, addType));
         }
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmCubeUpdate.CubeSize(storageType, player));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_CUBE_UPDATE.CubeSize(storageType, player));
     }
 
     public static void SendItemUnlockPacket(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
