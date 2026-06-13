@@ -61,7 +61,7 @@ public class PetController : VisibleObjectController<Pet>
                         currentPoints = pet.GetCommonData().GetMoodPoints(false);
                         if (currentPoints == 9000)
                         {
-                            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmPet(pet, 4, 0));
+                            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_PET(pet, 4, 0));
                         }
 
                         Aion.GameServer.Dao.PlayerPetsDAO.SavePetMoodData(pet.GetCommonData());
@@ -72,11 +72,11 @@ public class PetController : VisibleObjectController<Pet>
 
                 if (currentPoints < 9000)
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmPet(pet, 4, 0));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_PET(pet, 4, 0));
                 }
                 else
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmPet(pet, 3, 0));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_PET(pet, 3, 0));
                     // Save if it reaches 100% after player snuggles the pet, not by the scheduler itself
                     if (!saved)
                         Aion.GameServer.Dao.PlayerPetsDAO.SavePetMoodData(pet.GetCommonData());

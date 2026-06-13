@@ -158,10 +158,10 @@ public class NpcController : CreatureController<Npc>
             ISet<Aion.GameServer.Model.Drop.DropItem> drops = Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetCurrentDropMap()[npcObjId];
             if (drops != null && drops.Count != 0)
             {
-                PacketSendUtility.SendPacket(lootingPet.GetMaster(), new Aion.GameServer.Network.Aion.ServerPackets.SmPet(PetSpecialFunction.AUTOLOOT, true, npcObjId));
+                PacketSendUtility.SendPacket(lootingPet.GetMaster(), new Aion.GameServer.Network.Aion.ServerPackets.SM_PET(PetSpecialFunction.AUTOLOOT, true, npcObjId));
                 foreach (Aion.GameServer.Model.Drop.DropItem dropItem in new List<Aion.GameServer.Model.Drop.DropItem>(drops)) // array copy since the drops get removed on retrieval
                     Aion.GameServer.Services.Drop.DropService.GetInstance().RequestDropItem(lootingPet.GetMaster(), npcObjId, dropItem.GetIndex(), true);
-                PacketSendUtility.SendPacket(lootingPet.GetMaster(), new Aion.GameServer.Network.Aion.ServerPackets.SmPet(PetSpecialFunction.AUTOLOOT, false, npcObjId));
+                PacketSendUtility.SendPacket(lootingPet.GetMaster(), new Aion.GameServer.Network.Aion.ServerPackets.SM_PET(PetSpecialFunction.AUTOLOOT, false, npcObjId));
             }
         }
     }
