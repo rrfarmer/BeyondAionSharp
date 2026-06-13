@@ -50,13 +50,14 @@ public sealed class LoginServer : IAsyncDisposable
 		return GameServerCount;
 	}
 
-	// Java parity: LoginServer.sendPacket(LsServerPacket) - fires only when the bridge is up; returns boolean there,
-	// used as a statement by callers. The idiomatic async transport is bridged fire-and-forget.
-	public void SendPacket(LoginServerPacket packet)
+	// Java parity: LoginServer.sendPacket(LsServerPacket) - fires only when the bridge is up; returns true when sent,
+	// false when down (callers use it as a boolean). The idiomatic async transport is bridged fire-and-forget.
+	public bool SendPacket(LoginServerPacket packet)
 	{
 		if (_state == LoginServerState.Disconnected)
-			return;
+			return false;
 		_ = SendPacketAsync(packet);
+		return true;
 	}
 
 	public LoginServerState State => _state;
