@@ -123,7 +123,7 @@ public class PortalService
             }
             if (mapId == player.GetWorldId())
             { // teleport within this instance
-                TeleportService.TeleportTo(player, mapId, player.GetInstanceId(), loc.GetX(), loc.GetY(), loc.GetZ(), loc.GetH());
+                TeleportService.TeleportTo(player, mapId, player.GetInstanceId(), loc.GetX(), loc.GetY(), loc.GetZ(), (byte)loc.GetH());
                 return;
             }
         }
@@ -416,16 +416,16 @@ public class PortalService
         }
         else
         {
-            TeleportService.TeleportTo(requester, loc.GetWorldId(), loc.GetX(), loc.GetY(), loc.GetZ(), loc.GetH(), TeleportAnimation.FADE_OUT_BEAM);
+            TeleportService.TeleportTo(requester, loc.GetWorldId(), loc.GetX(), loc.GetY(), loc.GetZ(), (byte)loc.GetH(), TeleportAnimation.FADE_OUT_BEAM);
         }
     }
 
     private static void Transfer(Player player, PortalLoc loc, WorldMapInstance instance, bool reenter)
     {
         if (instance.GetStartPos() == null)
-            instance.SetStartPos(new WorldPosition(loc.GetWorldId(), loc.GetX(), loc.GetY(), loc.GetZ(), loc.GetH()));
+            instance.SetStartPos(new WorldPosition(loc.GetWorldId(), loc.GetX(), loc.GetY(), loc.GetZ(), (byte)loc.GetH()));
         instance.Register(player.GetObjectId());
-        TeleportService.TeleportTo(player, loc.GetWorldId(), instance.GetInstanceId(), loc.GetX(), loc.GetY(), loc.GetZ(), loc.GetH(),
+        TeleportService.TeleportTo(player, loc.GetWorldId(), instance.GetInstanceId(), loc.GetX(), loc.GetY(), loc.GetZ(), (byte)loc.GetH(),
             TeleportAnimation.FADE_OUT_BEAM);
         long useDelay = DataManager.INSTANCE_COOLTIME_DATA.CalculateInstanceEntranceCooltime(player, instance.GetMapId());
         if (useDelay > 0 && !reenter)
