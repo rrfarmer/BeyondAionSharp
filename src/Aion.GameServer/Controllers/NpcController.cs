@@ -63,7 +63,7 @@ public class NpcController : CreatureController<Npc>
             {
                 if (newTarget != null && !GetOwner().Equals(newTarget))
                     GetOwner().GetPosition().SetH(PositionUtil.GetHeadingTowards(GetOwner(), newTarget));
-                PacketSendUtility.BroadcastPacket(GetOwner(), new Aion.GameServer.Network.Aion.ServerPackets.SmLookatObject(GetOwner()));
+                PacketSendUtility.BroadcastPacket(GetOwner(), new Aion.GameServer.Network.Aion.ServerPackets.SM_LOOKATOBJECT(GetOwner()));
             }
         }
     }
