@@ -36,7 +36,7 @@ public sealed class ZoneService : GameEngine
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(ZoneService));
     private readonly Dictionary<ZoneName, Type> zoneHandlers = new Dictionary<ZoneName, Type>();
     private readonly Dictionary<ZoneName, IZoneHandler> collidableHandlers = new Dictionary<ZoneName, IZoneHandler>();
-    private readonly IDictionary<int, List<ZoneInfo>> zoneByMapIdMap = DataManager.ZONE_DATA.GetZones();
+    private readonly Dictionary<int, List<ZoneInfo>> zoneByMapIdMap = DataManager.ZONE_DATA.GetZones();
     private readonly object sync = new object();
 
     private ZoneService()
