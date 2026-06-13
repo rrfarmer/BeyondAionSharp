@@ -53,7 +53,7 @@ public class NpcData
             {
                 NpcRating rating = npc.GetRating();
                 NpcRank rank = npc.GetRank();
-                sbyte level = npc.GetLevel();
+                sbyte level = (sbyte)npc.GetLevel();
                 StatsTemplate template = npc.GetStatsTemplate();
                 if (template.GetAttack() == 0)
                     template.SetAttack(NpcStatCalculation.CalculateStat(StatEnum.PHYSICAL_ATTACK, rating, rank, level));

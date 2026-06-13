@@ -58,7 +58,7 @@ public class Npc : Creature
 
     public override sbyte GetLevel()
     {
-        return GetObjectTemplate().GetLevel();
+        return (sbyte)GetObjectTemplate().GetLevel();
     }
 
     public Aion.GameServer.Model.Templates.Npc.AbyssNpcType GetAbyssNpcType()

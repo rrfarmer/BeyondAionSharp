@@ -69,7 +69,7 @@ public class Summon : Creature
 
     public override sbyte GetLevel()
     {
-        return GetObjectTemplate().GetLevel();
+        return (sbyte)GetObjectTemplate().GetLevel();
     }
 
     public override Aion.GameServer.Model.Templates.Npc.NpcTemplate GetObjectTemplate()
