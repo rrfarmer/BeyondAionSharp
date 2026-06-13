@@ -220,7 +220,7 @@ public sealed class WorldNpcResourceStatsService
 			shouldSend,
 			cancellationToken,
 			usesNegativeValue: false);
-		var sendHpStatUpdate = player.IsOnline && appliedValue != 0;
+		var sendHpStatUpdate = player.IsOnline() && appliedValue != 0;
 		var (hpStatUpdatePacket, hpStatUpdateSent) = await SendHpStatUpdateAsync(player, currentHp, normalizedMaxHp, sendHpStatUpdate);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Increased,
@@ -239,7 +239,7 @@ public sealed class WorldNpcResourceStatsService
 			SendHpStatUpdate: sendHpStatUpdate,
 			HpStatUpdatePacket: hpStatUpdatePacket,
 			HpStatUpdateSent: hpStatUpdateSent,
-			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
+			SendGroupStatUpdate: player.IsOnline() && player.IsInTeam() && appliedValue != 0,
 			NotifyHpObservers: appliedValue != 0,
 			ClearAggroOnFullHp: appliedValue != 0 && currentHp == normalizedMaxHp,
 			KillingBlowReset: killingBlowReset);
@@ -313,7 +313,7 @@ public sealed class WorldNpcResourceStatsService
 		var currentDp = player.Dp;
 		if (currentDp <= 0 || currentDp < value)
 		{
-			var (packet, sent) = await SendSkillNotEnoughDpMessageAsync(player, player.IsOnline);
+			var (packet, sent) = await SendSkillNotEnoughDpMessageAsync(player, player.IsOnline());
 			return WorldNpcDpUseActionResult.NotEnoughDp(player.ObjectId, value, currentDp, packet, sent);
 		}
 
@@ -596,7 +596,7 @@ public sealed class WorldNpcResourceStatsService
 			ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType),
 			cancellationToken,
 			usesNegativeValue: true);
-		var sendHpStatUpdate = player.IsOnline && appliedValue != 0;
+		var sendHpStatUpdate = player.IsOnline() && appliedValue != 0;
 		var (hpStatUpdatePacket, hpStatUpdateSent) = await SendHpStatUpdateAsync(player, currentHp, normalizedMaxHp, sendHpStatUpdate);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			currentHp == 0 ? WorldNpcResourceChangeStatus.Died : appliedValue == 0 ? WorldNpcResourceChangeStatus.NoChange : WorldNpcResourceChangeStatus.Reduced,
@@ -615,8 +615,8 @@ public sealed class WorldNpcResourceStatsService
 			SendHpStatUpdate: sendHpStatUpdate,
 			HpStatUpdatePacket: hpStatUpdatePacket,
 			HpStatUpdateSent: hpStatUpdateSent,
-			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
-			TriggerRestoreTask: player.IsOnline && appliedValue != 0,
+			SendGroupStatUpdate: player.IsOnline() && player.IsInTeam() && appliedValue != 0,
+			TriggerRestoreTask: player.IsOnline() && appliedValue != 0,
 			NotifyHpObservers: appliedValue != 0,
 			RoutedNegativeHealToDamage: true);
 	}
@@ -716,7 +716,7 @@ public sealed class WorldNpcResourceStatsService
 			ShouldSendCreatureLifeStatsPacket(appliedValue, skillId, packetType),
 			cancellationToken,
 			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
-		var sendMpStatUpdate = player.IsOnline && appliedValue != 0;
+		var sendMpStatUpdate = player.IsOnline() && appliedValue != 0;
 		var (mpStatUpdatePacket, mpStatUpdateSent) = await SendMpStatUpdateAsync(player, currentMp, normalizedMaxMp, sendMpStatUpdate);
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			status,
@@ -735,8 +735,8 @@ public sealed class WorldNpcResourceStatsService
 			SendMpStatUpdate: sendMpStatUpdate,
 			MpStatUpdatePacket: mpStatUpdatePacket,
 			MpStatUpdateSent: mpStatUpdateSent,
-			SendGroupStatUpdate: player.IsOnline && player.IsInTeam && appliedValue != 0,
-			TriggerRestoreTask: player.IsOnline && currentMp < previousMp);
+			SendGroupStatUpdate: player.IsOnline() && player.IsInTeam() && appliedValue != 0,
+			TriggerRestoreTask: player.IsOnline() && currentMp < previousMp);
 	}
 
 	private async ValueTask<WorldNpcResourceChangeResult> ApplyPlayerFpChangeAsync(
@@ -803,7 +803,7 @@ public sealed class WorldNpcResourceStatsService
 			shouldSendPacket,
 			cancellationToken,
 			usesNegativeValue: kind == WorldNpcResourceChangeKind.Reduce);
-		var (flyTimePacket, flyTimeSent) = await SendFlyTimeUpdateAsync(player, currentFp, normalizedMaxFp, shouldSendFlyTimeUpdate && player.IsOnline);
+		var (flyTimePacket, flyTimeSent) = await SendFlyTimeUpdateAsync(player, currentFp, normalizedMaxFp, shouldSendFlyTimeUpdate && player.IsOnline());
 		return WorldNpcResourceChangeResult.FromResourceMutation(
 			GetStatus(kind, previousFp, currentFp),
 			player.ObjectId,
@@ -961,7 +961,7 @@ public sealed class WorldNpcResourceStatsService
 	private static int? ResolveOnlineMaxDp(Player player)
 	{
 		// Java parity: PlayerCommonData.setDp asks PlayerGameStats.getMaxDp().getCurrent() for online players.
-		if (!player.IsOnline)
+		if (!player.IsOnline())
 			return null;
 
 		// Java parity: PlayerGameStats.getMaxDp() -> getStat(StatEnum.MAXDP, 4000). Full MAXDP modifiers remain deferred.

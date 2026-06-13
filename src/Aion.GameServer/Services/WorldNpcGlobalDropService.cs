@@ -339,7 +339,7 @@ public sealed class WorldNpcGlobalDropService
 		if (drops.Count == 0)
 			return index;
 
-		if (rule.MemberLimit > 1 && looter.IsInTeam && groupMembers is { Count: > 0 })
+		if (rule.MemberLimit > 1 && looter.IsInTeam() && groupMembers is { Count: > 0 })
 		{
 			var distributedItems = 0;
 			foreach (var member in groupMembers)
