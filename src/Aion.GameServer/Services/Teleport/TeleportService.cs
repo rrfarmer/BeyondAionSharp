@@ -371,7 +371,7 @@ public class TeleportService
         }
         else
         {
-            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
+            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
             worldId = locationData.GetMapId();
             x = locationData.GetX();
             y = locationData.GetY();
@@ -403,7 +403,7 @@ public class TeleportService
         }
         else
         {
-            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
+            PlayerInitialData.LocationData locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
             worldId = locationData.GetMapId();
             x = locationData.GetX();
             y = locationData.GetY();

@@ -59,7 +59,7 @@ public class PlayerLeaveWorldService
                 pos = Aion.GameServer.World.World.GetInstance().CreatePosition(bp.GetMapId(), bp.GetX(), bp.GetY(), bp.GetZ(), bp.GetHeading(), 1);
             else
             {
-                LocationData ld = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace().ToString());
+                LocationData ld = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
                 pos = Aion.GameServer.World.World.GetInstance().CreatePosition(ld.GetMapId(), ld.GetX(), ld.GetY(), ld.GetZ(), ld.GetHeading(), 1);
             }
             player.SetPosition(pos);

@@ -298,11 +298,11 @@ public sealed class World
 				}
 				else
 				{
-					var locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetCommonData().GetRace().ToString());
-					worldId = locationData!.MapId;
-					x = locationData.X;
-					y = locationData.Y;
-					z = locationData.Z;
+					var locationData = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetCommonData().GetRace());
+					worldId = locationData!.GetMapId();
+					x = locationData.GetX();
+					y = locationData.GetY();
+					z = locationData.GetZ();
 				}
 				SetPosition(obj, worldId, x, y, z, h);
 			}
