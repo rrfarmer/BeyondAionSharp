@@ -18,15 +18,13 @@ public class ItemRestrictionService
     /// </summary>
     public static bool IsItemRestrictedFrom(Player player, Item item, StorageType storageType)
     {
-        switch (storageType)
+        if (storageType == StorageType.LEGION_WAREHOUSE)
         {
-            case StorageType.LEGION_WAREHOUSE:
-                if (!LegionConfig.LEGION_WAREHOUSE || !player.IsLegionMember() || !player.GetLegionMember().HasRights(LegionPermissionsMask.WH_WITHDRAWAL))
-                {
-                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT());
-                    return true;
-                }
-                break;
+            if (!LegionConfig.LEGION_WAREHOUSE || !player.IsLegionMember() || !player.GetLegionMember().HasRights(LegionPermissionsMask.WH_WITHDRAWAL))
+            {
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT());
+                return true;
+            }
         }
         return false;
     }
@@ -36,39 +34,39 @@ public class ItemRestrictionService
     /// </summary>
     public static bool IsItemRestrictedTo(Player player, Item item, StorageType storageType)
     {
-        switch (storageType)
+        if (storageType == StorageType.REGULAR_WAREHOUSE)
         {
-            case StorageType.REGULAR_WAREHOUSE:
-                if (!item.IsStorableInWarehouse())
-                {
-                    // You cannot store this in the warehouse.
-                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM());
-                    return true;
-                }
-                break;
-            case StorageType.ACCOUNT_WAREHOUSE:
-                if (!item.IsStorableInAccWarehouse())
-                {
-                    // You cannot store this item in the account warehouse.
-                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_WAREHOUSE_CANT_ACCOUNT_DEPOSIT());
-                    return true;
-                }
-                break;
-            case StorageType.LEGION_WAREHOUSE:
-                if (!item.IsStorableInLegWarehouse() || !LegionConfig.LEGION_WAREHOUSE)
-                {
-                    // You cannot store this item in the Legion warehouse.
-                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_WAREHOUSE_CANT_LEGION_DEPOSIT());
-                    return true;
-                }
-                else if (!player.IsLegionMember() || (!player.GetLegionMember().HasRights(LegionPermissionsMask.WH_DEPOSIT)
-                    && !player.GetLegionMember().HasRights(LegionPermissionsMask.WH_WITHDRAWAL)))
-                {
-                    // You do not have the authority to use the Legion warehouse.
-                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT());
-                    return true;
-                }
-                break;
+            if (!item.IsStorableInWarehouse())
+            {
+                // You cannot store this in the warehouse.
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_WAREHOUSE_CANT_DEPOSIT_ITEM());
+                return true;
+            }
+        }
+        else if (storageType == StorageType.ACCOUNT_WAREHOUSE)
+        {
+            if (!item.IsStorableInAccWarehouse())
+            {
+                // You cannot store this item in the account warehouse.
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_WAREHOUSE_CANT_ACCOUNT_DEPOSIT());
+                return true;
+            }
+        }
+        else if (storageType == StorageType.LEGION_WAREHOUSE)
+        {
+            if (!item.IsStorableInLegWarehouse() || !LegionConfig.LEGION_WAREHOUSE)
+            {
+                // You cannot store this item in the Legion warehouse.
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_WAREHOUSE_CANT_LEGION_DEPOSIT());
+                return true;
+            }
+            else if (!player.IsLegionMember() || (!player.GetLegionMember().HasRights(LegionPermissionsMask.WH_DEPOSIT)
+                && !player.GetLegionMember().HasRights(LegionPermissionsMask.WH_WITHDRAWAL)))
+            {
+                // You do not have the authority to use the Legion warehouse.
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_GUILD_WAREHOUSE_NO_RIGHT());
+                return true;
+            }
         }
 
         return false;
