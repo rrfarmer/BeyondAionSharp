@@ -88,9 +88,9 @@ public class PetService
         {
             PetFunction func = pet.GetObjectTemplate().GetPetFunction(PetFunctionType.FOOD);
             PetFlavour flavour = DataManager.PET_FEED_DATA.GetFlavourById(func.GetId());
-            FoodType foodType = flavour.GetFoodType(item.GetItemId()).Value;
+            FoodType? foodType = flavour.GetFoodType(item.GetItemId());
 
-            if (flavour.IsLovedFood(foodType, item.GetItemId()) && progress.GetLovedFoodRemaining() == 0)
+            if (flavour.IsLovedFood(foodType.Value, item.GetItemId()) && progress.GetLovedFoodRemaining() == 0)
                 foodType = null;
 
             if (foodType == null)
@@ -104,7 +104,7 @@ public class PetService
                 return;
             }
             player.GetInventory().DecreaseItemCount(item, 1, ItemUpdateType.DEC_PET_FOOD);
-            PetFeedResult reward = flavour.ProcessFeedResult(progress, foodType, item.GetItemTemplate().GetLevel(), player.GetCommonData().GetLevel());
+            PetFeedResult reward = flavour.ProcessFeedResult(progress, foodType.Value, item.GetItemTemplate().GetLevel(), player.GetCommonData().GetLevel());
 
             if (progress.GetHungryLevel() == PetHungryLevel.FULL && reward != null)
             {
