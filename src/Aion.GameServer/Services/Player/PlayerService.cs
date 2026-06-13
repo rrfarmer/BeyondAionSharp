@@ -176,7 +176,7 @@ public class PlayerService
         playerCommonData.SetX(ld.GetX());
         playerCommonData.SetY(ld.GetY());
         playerCommonData.SetZ(ld.GetZ());
-        playerCommonData.SetHeading(ld.GetHeading());
+        playerCommonData.SetHeading((byte)ld.GetHeading());
 
         Player newPlayer = new Player(playerAccountData, account);
 

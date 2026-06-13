@@ -437,7 +437,7 @@ public sealed class PlayerEnterWorldService
                 else
                 {
                     PlayerInitialData.LocationData start = DataManager.PLAYER_INITIAL_DATA.GetSpawnLocation(player.GetRace());
-                    Aion.GameServer.World.World.GetInstance().SetPosition(player, start.GetMapId(), start.GetX(), start.GetY(), start.GetZ(), start.GetHeading());
+                    Aion.GameServer.World.World.GetInstance().SetPosition(player, start.GetMapId(), start.GetX(), start.GetY(), start.GetZ(), (byte)start.GetHeading());
                 }
                 return false;
             }
