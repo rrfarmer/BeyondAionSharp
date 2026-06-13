@@ -176,7 +176,7 @@ public class ItemPacketService
         }
         else if (storageType == StorageType.LEGION_WAREHOUSE && item.GetItemTemplate().IsKinah())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmLegionEdit(0x04, player.GetLegion()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_LEGION_EDIT(0x04, player.GetLegion()));
         }
         else
         {
@@ -199,7 +199,7 @@ public class ItemPacketService
         }
         else if (storageType == StorageType.LEGION_WAREHOUSE && item.GetItemTemplate().IsKinah())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmLegionEdit(0x04, player.GetLegion()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_LEGION_EDIT(0x04, player.GetLegion()));
         }
         else
         {
