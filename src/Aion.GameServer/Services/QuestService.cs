@@ -834,7 +834,7 @@ public sealed class QuestService
     private static DropItem RegQuestDropItem(QuestDrop drop, int index, int? winner)
     {
         DropItem item = new DropItem(new Aion.GameServer.Model.Drop.Drop(drop.GetItemId().Value, 1, 1, drop.GetChance()));
-        item.SetPlayerObjId(winner);
+        item.SetPlayerObjId(winner.Value);
         item.SetIndex(index);
         item.SetCount(1);
         return item;
