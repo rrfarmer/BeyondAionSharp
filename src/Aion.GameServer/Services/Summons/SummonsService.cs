@@ -25,9 +25,9 @@ public class SummonsService
         }
         Summon summon = Aion.GameServer.SpawnEngine.VisibleObjectSpawner.SpawnSummon(master, npcId, skillId, time);
         master.SetSummon(summon);
-        PacketSendUtility.SendPacket(master, new SmSummonPanel(summon));
+        PacketSendUtility.SendPacket(master, new SM_SUMMON_PANEL(summon));
         PacketSendUtility.BroadcastPacket(summon, new SmEmotion(summon, EmotionType.CHANGE_SPEED));
-        PacketSendUtility.BroadcastPacket(summon, new SmSummonUpdate(summon));
+        PacketSendUtility.BroadcastPacket(summon, new SM_SUMMON_UPDATE(summon));
         return summon;
     }
 
@@ -109,7 +109,7 @@ public class SummonsService
                     if (unsummonType == UnsummonType.COMMAND) // make it cancelable if released by master, master hate will be added delayed
                     {
                         PacketSendUtility.SendPacket(summon.GetMaster(), SmSystemMessage.STR_SKILL_SUMMON_UNSUMMON_FOLLOWER(summon.GetL10n()));
-                        PacketSendUtility.SendPacket(summon.GetMaster(), new SmSummonUpdate(summon));
+                        PacketSendUtility.SendPacket(summon.GetMaster(), new SM_SUMMON_UPDATE(summon));
                         summon.SetReleaseTask(releaseTask);
                     }
                     else
@@ -157,7 +157,7 @@ public class SummonsService
         summon.SetMode(SummonMode.REST);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_REST_MODE(summon.GetL10n()));
-        PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
+        PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
         summon.GetLifeStats().TriggerRestoreTask();
     }
 
@@ -165,7 +165,7 @@ public class SummonsService
     {
         summon.SetMode(SummonMode.UNK);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
-        PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
+        PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
     }
 
     /// <summary>Change to guard mode</summary>
@@ -175,7 +175,7 @@ public class SummonsService
         summon.SetMode(SummonMode.GUARD);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_GUARD_MODE(summon.GetL10n()));
-        PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
+        PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
         summon.GetLifeStats().TriggerRestoreTask();
     }
 
@@ -185,7 +185,7 @@ public class SummonsService
         summon.SetMode(SummonMode.ATTACK);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_ATTACK_MODE(summon.GetL10n()));
-        PacketSendUtility.SendPacket(master, new SmSummonUpdate(summon));
+        PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
         summon.GetLifeStats().CancelRestoreTask();
     }
 

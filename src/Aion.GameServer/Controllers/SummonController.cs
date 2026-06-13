@@ -86,7 +86,7 @@ public class SummonController : CreatureController<Summon>
             return;
 
         base.OnAttack(creature, effect, type, damage, notifyAttack, log, attackStatus, hopType);
-        PacketSendUtility.SendPacket(GetOwner().GetMaster(), new SmSummonUpdate(GetOwner()));
+        PacketSendUtility.SendPacket(GetOwner().GetMaster(), new SM_SUMMON_UPDATE(GetOwner()));
     }
 
     public override void OnTargetChanged(VisibleObject oldTarget, VisibleObject newTarget)
