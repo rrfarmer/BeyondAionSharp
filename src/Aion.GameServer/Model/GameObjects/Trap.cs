@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.GameObjects;
 public class Trap : SummonedObject<Creature>
 {
     public Trap(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Creature creator)
-        : base(controller, spawnTemplate, DataManager.NPC_DATA.GetNpcTemplate(spawnTemplate.GetNpcId()).GetLevel(), creator)
+        : base(controller, spawnTemplate, (sbyte)DataManager.NPC_DATA.GetNpcTemplate(spawnTemplate.GetNpcId()).GetLevel(), creator)
     {
         SetMasterName("");
         SetKnownlist(new Aion.GameServer.World.Knownlist.NpcKnownList(this));

@@ -12,7 +12,7 @@ namespace Aion.GameServer.Model.GameObjects;
 public class SummonedHouseNpc : SummonedObject<House.House>
 {
     public SummonedHouseNpc(NpcController controller, SpawnTemplate spawnTemplate, House.House house)
-        : base(controller, spawnTemplate, DataManager.NPC_DATA.GetNpcTemplate(spawnTemplate.GetNpcId()).GetLevel(), house)
+        : base(controller, spawnTemplate, (sbyte)DataManager.NPC_DATA.GetNpcTemplate(spawnTemplate.GetNpcId()).GetLevel(), house)
     {
         string masterName = house.GetOwnerName();
         SetMasterName(masterName == null ? "" : masterName);
