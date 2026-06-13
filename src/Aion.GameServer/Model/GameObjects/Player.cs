@@ -35,6 +35,7 @@ public partial class Player : Creature
     public int TitleId => GetCommonData().GetTitleId();
     public int BonusTitleId => GetCommonData().GetBonusTitleId();
     public bool IsFlyingBeforeDeath { get => GetIsFlyingBeforeDeath(); set => SetIsFlyingBeforeDeath(value); }
+    public long ReposeEnergy { get => GetCommonData().GetCurrentReposeEnergy(); set => GetCommonData().SetCurrentReposeEnergy(value); }
 
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
     public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
