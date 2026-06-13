@@ -62,13 +62,13 @@ public abstract class BufEffect : EffectTemplate
             switch (changeItem.GetFunc())
             {
                 case Func.ADD:
-                    modifiers.Add(new StatAddFunction(changeItem.GetStat(), valueWithDelta, true).WithConditions(conditions));
+                    modifiers.Add(new StatAddFunction(changeItem.GetStat().Value, valueWithDelta, true).WithConditions(conditions));
                     break;
                 case Func.PERCENT:
-                    modifiers.Add(new StatRateFunction(changeItem.GetStat(), valueWithDelta, true).WithConditions(conditions));
+                    modifiers.Add(new StatRateFunction(changeItem.GetStat().Value, valueWithDelta, true).WithConditions(conditions));
                     break;
                 case Func.REPLACE:
-                    modifiers.Add(new StatSetFunction(changeItem.GetStat(), valueWithDelta).WithConditions(conditions));
+                    modifiers.Add(new StatSetFunction(changeItem.GetStat().Value, valueWithDelta).WithConditions(conditions));
                     break;
             }
         }
