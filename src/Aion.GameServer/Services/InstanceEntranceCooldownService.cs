@@ -33,7 +33,7 @@ public static class InstanceEntranceCooldownService
 		var preview = PreviewEntranceCooldown(player, worldId, reenter, instanceCooltimes, options, now);
 		if (preview.Added)
 		{
-			PlayerPortalCooldownService.AddPortalCooldown(player, worldId, preview.ReuseTimeMillis);
+			player.GetPortalCooldownList().AddPortalCooldown(worldId, preview.ReuseTimeMillis);
 			return preview;
 		}
 

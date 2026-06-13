@@ -199,7 +199,7 @@ public sealed class PeriodicInstanceRegistrationService
 				continue;
 			if (player.Level < autoGroup.MinLevel || player.Level > autoGroup.MaxLevel)
 				continue;
-			if (PlayerPortalCooldownService.IsPortalUseDisabled(player, autoGroup.InstanceMapId, instanceCooltimes, now))
+			if (player.GetPortalCooldownList().IsPortalUseDisabled(autoGroup.InstanceMapId))
 				continue;
 
 			packets.Add(new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: false));
