@@ -187,7 +187,7 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
 
     public void SetRotation(int rotation)
     {
-        SetHeading(PositionUtil.ConvertAngleToHeading(rotation));
+        SetHeading((sbyte)PositionUtil.ConvertAngleToHeading(rotation));
     }
 
     public PlaceLocation GetPlaceLocation()
@@ -299,7 +299,7 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
             return;
         if (Position == null || !IsSpawned())
         {
-            Position = Aion.GameServer.World.World.GetInstance().CreatePosition(registry.GetOwner().GetWorldId(), x, y, z, heading, registry.GetOwner().GetInstanceId());
+            Position = Aion.GameServer.World.World.GetInstance().CreatePosition(registry.GetOwner().GetWorldId(), x, y, z, (byte)heading, registry.GetOwner().GetInstanceId());
             Aion.GameServer.SpawnEngine.SpawnEngine.BringIntoWorld(this);
         }
         else
