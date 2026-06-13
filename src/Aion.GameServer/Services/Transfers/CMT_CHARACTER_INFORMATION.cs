@@ -54,7 +54,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         PlayerCommonData playerCommonData = new PlayerCommonData(IDFactory.GetInstance().NextId());
         playerCommonData.SetName(name);
         // read common data
-        playerCommonData.SetPlayerClass(PlayerClassExtensions.GetPlayerClassById((sbyte)ReadD()));
+        playerCommonData.SetPlayerClass(PlayerClassExtensions.GetPlayerClassById((byte)ReadD()));
         playerCommonData.SetExp(ReadQ());
         playerCommonData.SetRace(ReadD() == 0 ? Race.ELYOS : Race.ASMODIANS);
         playerCommonData.SetGender(ReadD() == 0 ? Gender.MALE : Gender.FEMALE);
@@ -129,7 +129,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         float z = ReadF();
         sbyte h = (sbyte)ReadC();
         int worldId = ReadD();
-        WorldPosition pos = Aion.GameServer.World.World.GetInstance().CreatePosition(worldId, x, y, z, h, 1);
+        WorldPosition pos = Aion.GameServer.World.World.GetInstance().CreatePosition(worldId, x, y, z, (byte)h, 1);
         player.SetPosition(pos);
 
         if (!PlayerService.StoreNewPlayer(player, accountName, targetAccount))
@@ -329,7 +329,7 @@ public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
         }
 
         player.SetBindPoint(new BindPointPosition(int.Parse(posBind[0]), float.Parse(posBind[1]), float.Parse(posBind[2]),
-            float.Parse(posBind[3]), sbyte.Parse(posBind[4])));
+            float.Parse(posBind[3]), byte.Parse(posBind[4])));
         PlayerBindPointDAO.Store(player);
 
         int uilen = ReadD(), shortlen = ReadD();
