@@ -134,7 +134,7 @@ public sealed class StorageExpansionNpcService
 			case InventoryExpansionStorage.Cube:
 				player.GetCommonData().SetNpcExpands(request.TargetNpcExpands);
 				packets.Add(SmSystemMessage.InventorySizeExtended(InventoryExpansionService.CubeSlotsPerExpansion));
-				packets.Add(SmCubeUpdate.CubeSize(player));
+				packets.Add(SM_CUBE_UPDATE.CubeSize(Aion.GameServer.Model.Items.Storage.StorageType.CUBE, player));
 				break;
 			case InventoryExpansionStorage.Warehouse:
 				player.GetCommonData().SetWhNpcExpands(request.TargetNpcExpands);

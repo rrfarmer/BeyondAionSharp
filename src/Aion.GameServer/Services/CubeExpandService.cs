@@ -94,7 +94,7 @@ public class CubeExpandService
                 break;
         }
         player.SetCubeLimit();
-        PacketSendUtility.SendPacket(player, SmCubeUpdate.CubeSize(player));
+        PacketSendUtility.SendPacket(player, SM_CUBE_UPDATE.CubeSize(Aion.GameServer.Model.Items.Storage.StorageType.CUBE, player));
     }
 
     public static void QuestExpand(Player player)
