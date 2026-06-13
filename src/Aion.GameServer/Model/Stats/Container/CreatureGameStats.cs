@@ -7,6 +7,7 @@ using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Stats.Calc.Functions;
 using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
 using Aion.GameServer.Utils.Stats;
 
