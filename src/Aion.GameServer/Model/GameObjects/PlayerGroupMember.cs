@@ -16,7 +16,7 @@ public sealed class PlayerGroupMember
 
 	public long LastOnlineTimeMillis { get; private set; }
 
-	public bool IsOnline => Player.IsOnline;
+	public bool IsOnline => Player.IsOnline();
 
 	public float X => Player.GetPosition().X;
 

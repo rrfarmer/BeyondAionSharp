@@ -28,7 +28,7 @@ public class PlayerAllianceMember : PlayerTeamMember
 
 	public long LastOnlineTimeMillis { get; private set; }
 
-	public bool IsOnline => Player.IsOnline;
+	public bool IsOnline => Player.IsOnline();
 
 	public void MoveToAllianceGroup(int allianceGroupId)
 	{
