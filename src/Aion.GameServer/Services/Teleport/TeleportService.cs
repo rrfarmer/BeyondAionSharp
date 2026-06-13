@@ -428,7 +428,7 @@ public class TeleportService
         InstanceExit instanceExit = DataManager.INSTANCE_EXIT_DATA.GetInstanceExit(worldId, race);
         if (instanceExit != null && InstanceService.InstanceExists(instanceExit.GetExitWorld(), 1))
         {
-            TeleportTo(player, instanceExit.GetExitWorld(), instanceExit.GetX(), instanceExit.GetY(), instanceExit.GetZ(), instanceExit.GetH());
+            TeleportTo(player, instanceExit.GetExitWorld(), instanceExit.GetX(), instanceExit.GetY(), instanceExit.GetZ(), (byte)instanceExit.GetH());
         }
         else
         {
