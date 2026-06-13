@@ -23,7 +23,7 @@ public class Npc : Creature
     private int creatorId = 0;
     private CreatureType? type = null;
     private Aion.GameServer.Model.Items.NpcEquippedGear overridenEquipment;
-    private SummonOwner summonOwner = null;
+    private SummonOwner? summonOwner = null;
 
     public Npc(Aion.GameServer.Controllers.NpcController controller, Aion.GameServer.Model.Templates.Spawns.SpawnTemplate spawnTemplate, Aion.GameServer.Model.Templates.Npc.NpcTemplate objectTemplate)
         : base(Aion.GameServer.Utils.IdFactory.IDFactory.GetInstance().NextId(), controller, spawnTemplate, objectTemplate, new WorldPosition(spawnTemplate.GetWorldId()), true)
@@ -396,7 +396,7 @@ public class Npc : Creature
         this.summonOwner = summonOwner;
     }
 
-    public SummonOwner GetSummonOwner()
+    public SummonOwner? GetSummonOwner()
     {
         return summonOwner;
     }
