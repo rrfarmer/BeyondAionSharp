@@ -318,12 +318,12 @@ public partial class Player
 
     public bool IsUsingFlightPath(Aion.GameServer.Model.Templates.Flypath.FlightPath.Type type)
     {
-        return flightPath != null && flightPath.GetType_() == type && IsInState(CreatureState.FLYING);
+        return flightPath != null && flightPath.GetType_() == type && IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.FLYING);
     }
 
     public bool IsUsingFlightTransporterOrWindstream()
     {
-        return flightPath != null && IsInState(CreatureState.FLYING);
+        return flightPath != null && IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.FLYING);
     }
 
     public Aion.GameServer.Model.Templates.Flypath.FlightPath GetFlightPath()

@@ -190,8 +190,8 @@ public abstract class Creature : VisibleObject
     /// <summary>All abnormal effects are checked that disable attack.</summary>
     public bool CanAttack()
     {
-        return (!GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE) && !IsCasting() && !IsInState(CreatureState.RESTING)
-            && !IsInState(CreatureState.PRIVATE_SHOP));
+        return (!GetEffectController().IsInAnyAbnormalState(AbnormalState.CANT_ATTACK_STATE) && !IsCasting() && !IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.RESTING)
+            && !IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.PRIVATE_SHOP));
     }
 
     public int GetState()
@@ -464,12 +464,12 @@ public abstract class Creature : VisibleObject
     /// <summary>Creature is flying (FLY or GLIDE states).</summary>
     public virtual bool IsFlying()
     {
-        return (IsInState(CreatureState.FLYING) && !IsInState(CreatureState.RESTING)) || IsInState(CreatureState.GLIDING);
+        return (IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.FLYING) && !IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.RESTING)) || IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.GLIDING);
     }
 
     public virtual bool IsInFlyingState()
     {
-        return IsInState(CreatureState.FLYING) && !IsInState(CreatureState.RESTING);
+        return IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.FLYING) && !IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.RESTING);
     }
 
     public virtual bool IsPvpTarget(Creature creature)

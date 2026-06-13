@@ -292,7 +292,7 @@ public partial class Player : Creature
 
     public bool IsInAttackMode()
     {
-        return IsInState(CreatureState.WEAPON_EQUIPPED);
+        return IsInState(Aion.GameServer.Model.GameObjects.State.CreatureState.WEAPON_EQUIPPED);
     }
 
     public bool IsGatherRestricted()
