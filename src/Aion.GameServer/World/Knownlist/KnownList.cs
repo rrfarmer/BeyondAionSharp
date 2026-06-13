@@ -51,8 +51,8 @@ public class KnownList
     public bool Sees(VisibleObject obj) =>
         KnownObjects.TryGetValue(obj.ObjectId, out var ko) && ko.IsVisible();
 
-    // Java parity: add(VisibleObject)
-    protected bool Add(VisibleObject obj)
+    // Java parity: add(VisibleObject) — protected in Java (package+subclass access); C# protected internal to allow same-assembly subclass cross-instance call.
+    protected internal bool Add(VisibleObject obj)
     {
         if (!IsAwareOf(obj))
             return false;
