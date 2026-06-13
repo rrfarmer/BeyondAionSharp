@@ -57,23 +57,28 @@ public sealed class SmLegionInfo : GameServerPacket
 
 	public static SmLegionInfo FromPlayer(Player player)
 	{
-		// Java parity: network/aion/serverpackets/SM_LEGION_INFO.writeImpl.
+		// Java parity: network/aion/serverpackets/SM_LEGION_INFO.writeImpl — read legion data from the faithful Legion.
 		// Ranking remains defaulted until the AbyssRankingCache legion path is ported.
+		var legion = player.GetLegion();
+		var announcement = legion?.GetAnnouncement();
+		int announcementTime = announcement != null
+			? (int)(System.DateTime.SpecifyKind(announcement.Time, System.DateTimeKind.Utc) - System.DateTime.UnixEpoch).TotalSeconds
+			: 0;
 		return new SmLegionInfo(
 			player.LegionName,
-			(player.GetLegion()?.GetLegionLevel() ?? 0),
+			(legion?.GetLegionLevel() ?? 0),
 			rankingPosition: 0,
-			player.LegionDeputyPermission,
-			player.LegionCenturionPermission,
-			player.LegionLegionaryPermission,
-			player.LegionVolunteerPermission,
-			player.LegionContributionPoints,
-			player.LegionDisbandTime,
-			player.LegionOccupiedLegionDominion,
-			player.LegionLastLegionDominion,
-			player.LegionCurrentLegionDominion,
-			player.LegionAnnouncement,
-			player.LegionAnnouncementEpochSeconds);
+			legion?.GetDeputyPermission() ?? 0,
+			legion?.GetCenturionPermission() ?? 0,
+			legion?.GetLegionaryPermission() ?? 0,
+			legion?.GetVolunteerPermission() ?? 0,
+			legion?.GetContributionPoints() ?? 0,
+			legion?.GetDisbandTime() ?? 0,
+			legion?.GetOccupiedLegionDominion() ?? 0,
+			legion?.GetLastLegionDominion() ?? 0,
+			legion?.GetCurrentLegionDominion() ?? 0,
+			announcement?.Message,
+			announcementTime);
 	}
 
 	protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
