@@ -20,7 +20,7 @@ public class ItemRemodelService
         Item keepItem = inventory.GetItemByObjId(keepItemObjId);
         Item extractItem = inventory.GetItemByObjId(extractItemObjId);
 
-        long remodelCost = PricesService.GetPriceForService(1000, player.GetRace());
+        long remodelCost = Aion.GameServer.Services.Trade.PricesService.GetPriceForService(1000, player.GetRace());
 
         if (keepItem == null || extractItem == null) // NPE check.
             return;

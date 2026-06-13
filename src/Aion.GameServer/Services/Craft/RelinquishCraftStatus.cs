@@ -60,7 +60,7 @@ public class RelinquishCraftStatus
 
     private static bool DecreaseKinah(Player player, int basePrice)
     {
-        if (basePrice > 0 && !player.GetInventory().TryDecreaseKinah(PricesService.GetPriceForService(basePrice, player.GetRace())))
+        if (basePrice > 0 && !player.GetInventory().TryDecreaseKinah(Aion.GameServer.Services.Trade.PricesService.GetPriceForService(basePrice, player.GetRace())))
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_NOT_ENOUGH_MONEY());
             return false;

@@ -465,7 +465,7 @@ public class LegionService
         {
             Legion legion = activePlayer.GetLegion();
             AddHistory(legion, "", LegionHistoryAction.EMBLEM_MODIFIED);
-            activePlayer.GetInventory().DecreaseKinah(PricesService.GetPriceForService(LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH, activePlayer.GetRace()));
+            activePlayer.GetInventory().DecreaseKinah(Aion.GameServer.Services.Trade.PricesService.GetPriceForService(LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH, activePlayer.GetRace()));
             legion.GetLegionEmblem().SetEmblem(emblemId, color_a, color_r, color_g, color_b, emblemType, null);
             UpdateMembersEmblem(legion);
             PacketSendUtility.SendPacket(activePlayer, SM_SYSTEM_MESSAGE.STR_GUILD_CHANGE_EMBLEM());
@@ -574,7 +574,7 @@ public class LegionService
                     return;
                 }
                 activePlayer.GetInventory()
-                    .DecreaseKinah(PricesService.GetPriceForService(LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH, activePlayer.GetRace()));
+                    .DecreaseKinah(Aion.GameServer.Services.Trade.PricesService.GetPriceForService(LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH, activePlayer.GetRace()));
                 // Finished
                 legionEmblem.SetCustomEmblemData(legionEmblem.GetUploadData());
                 LegionDAO.StoreLegionEmblem(activePlayer.GetLegion().GetLegionId(), legionEmblem);
@@ -1186,7 +1186,7 @@ public class LegionService
                 // legion level not high enough
                 return false;
             }
-            else if (activePlayer.GetInventory().GetKinah() < PricesService.GetPriceForService(LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH,
+            else if (activePlayer.GetInventory().GetKinah() < Aion.GameServer.Services.Trade.PricesService.GetPriceForService(LegionConfig.LEGION_EMBLEM_REQUIRED_KINAH,
                 activePlayer.GetRace()))
             {
                 PacketSendUtility.SendPacket(activePlayer, SM_SYSTEM_MESSAGE.STR_MSG_NOT_ENOUGH_MONEY());

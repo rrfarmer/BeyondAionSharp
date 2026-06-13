@@ -454,7 +454,7 @@ public class BrokerService
         if (registrationCommition < 10)
             registrationCommition = 10;
         else
-            registrationCommition = PricesService.GetPriceForService(registrationCommition, player.GetRace());
+            registrationCommition = Aion.GameServer.Services.Trade.PricesService.GetPriceForService(registrationCommition, player.GetRace());
 
         if (player.GetInventory().GetKinah() < registrationCommition)
         {

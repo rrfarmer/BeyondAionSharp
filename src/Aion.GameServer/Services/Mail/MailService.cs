@@ -93,7 +93,7 @@ public class MailService
         if (attachedKinah > 0)
             kinahMailCommission = (long)(attachedKinah * 0.01f * costFactor);
 
-        long finalMailKinah = PricesService.GetPriceForService(baseCost + kinahMailCommission + itemMailCommission, sender.GetRace()) + attachedKinah;
+        long finalMailKinah = Aion.GameServer.Services.Trade.PricesService.GetPriceForService(baseCost + kinahMailCommission + itemMailCommission, sender.GetRace()) + attachedKinah;
 
         if (senderInventory.GetKinah() < finalMailKinah)
         {

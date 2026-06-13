@@ -47,7 +47,7 @@ public class ArmsfusionService
 
         long basePricePerLevelSquared = GetBasePricePerLevelSquared(mainWeapon.GetItemTemplate().GetItemQuality());
         int level = mainWeapon.GetItemTemplate().GetLevel();
-        long price = PricesService.GetPriceForService(basePricePerLevelSquared * level * level, player.GetRace());
+        long price = Aion.GameServer.Services.Trade.PricesService.GetPriceForService(basePricePerLevelSquared * level * level, player.GetRace());
 
         if (player.GetInventory().GetKinah() < price)
         {

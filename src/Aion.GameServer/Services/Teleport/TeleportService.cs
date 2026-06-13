@@ -161,7 +161,7 @@ public class TeleportService
         {
             int basePrice = location.GetPrice();
             // TODO check for location.getPricePvp()
-            transportationPrice = PricesService.GetPriceForService(basePrice, player.GetRace());
+            transportationPrice = Aion.GameServer.Services.Trade.PricesService.GetPriceForService(basePrice, player.GetRace());
         }
 
         if (!inventory.TryDecreaseKinah(transportationPrice, ItemUpdateType.DEC_KINAH_FLY))

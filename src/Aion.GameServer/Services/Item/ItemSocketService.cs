@@ -129,7 +129,7 @@ public class ItemSocketService
             return;
         }
 
-        long price = PricesService.GetPriceForService(650, player.GetRace());
+        long price = Aion.GameServer.Services.Trade.PricesService.GetPriceForService(650, player.GetRace());
         if (player.GetInventory().TryDecreaseKinah(price))
         {
             manaStoneToRemove.SetPersistentState(PersistentState.DELETED);
