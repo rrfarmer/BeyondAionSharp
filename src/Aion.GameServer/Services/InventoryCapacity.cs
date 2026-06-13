@@ -25,16 +25,6 @@ public static class InventoryCapacity
 		return BaseCubeSlots + ((player.GetCommonData().GetNpcExpands()) + (player.GetCommonData().GetQuestExpands()) + (player.GetCommonData().GetItemExpands())) * CubeSlotsPerExpansion;
 	}
 
-	public static int GetUsedCubeSlots(Player player)
-	{
-		return GetUsedCubeSlots(player.InventoryItems);
-	}
-
-	public static int GetUsedCubeSlots(Player player, ItemTemplateTable itemTemplates)
-	{
-		return GetUsedCubeSlots(player.InventoryItems, itemTemplates);
-	}
-
 	public static int GetUsedCubeSlots(IReadOnlyList<InventoryItem> inventoryItems)
 	{
 		// Java parity: model/items/storage/ItemStorage.getCubeItems, excluding kinah and equipped rows in the C# flattened inventory model.
@@ -46,39 +36,14 @@ public static class InventoryCapacity
 		return inventoryItems.Count(item => IsNormalCubeItem(item, itemTemplates));
 	}
 
-	public static int GetFreeCubeSlots(Player player)
-	{
-		return GetFreeCubeSlots(player, player.InventoryItems);
-	}
-
 	public static int GetFreeCubeSlots(Player player, IReadOnlyList<InventoryItem> inventoryItems)
 	{
 		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(inventoryItems));
 	}
 
-	public static int GetFreeCubeSlots(Player player, ItemTemplateTable itemTemplates)
-	{
-		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(player, itemTemplates));
-	}
-
 	public static int GetFreeCubeSlots(Player player, IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
 	{
 		return Math.Max(0, GetCubeLimit(player) - GetUsedCubeSlots(inventoryItems, itemTemplates));
-	}
-
-	public static bool HasFreeCubeSlot(Player player)
-	{
-		return GetFreeCubeSlots(player) > 0;
-	}
-
-	public static bool HasFreeCubeSlot(Player player, ItemTemplateTable itemTemplates)
-	{
-		return GetFreeCubeSlots(player, itemTemplates) > 0;
-	}
-
-	public static int GetUsedSpecialCubeSlots(Player player, ItemTemplateTable itemTemplates)
-	{
-		return GetUsedSpecialCubeSlots(player.InventoryItems, itemTemplates);
 	}
 
 	public static int GetUsedSpecialCubeSlots(IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
@@ -87,67 +52,9 @@ public static class InventoryCapacity
 		return inventoryItems.Count(item => IsSpecialCubeItem(item, itemTemplates));
 	}
 
-	public static int GetFreeSpecialCubeSlots(Player player, ItemTemplateTable itemTemplates)
-	{
-		return Math.Max(0, SpecialCubeSlots - GetUsedSpecialCubeSlots(player, itemTemplates));
-	}
-
 	public static int GetFreeSpecialCubeSlots(IReadOnlyList<InventoryItem> inventoryItems, ItemTemplateTable itemTemplates)
 	{
 		return Math.Max(0, SpecialCubeSlots - GetUsedSpecialCubeSlots(inventoryItems, itemTemplates));
-	}
-
-	public static bool HasFreeSpecialCubeSlot(Player player, ItemTemplateTable itemTemplates)
-	{
-		return GetFreeSpecialCubeSlots(player, itemTemplates) > 0;
-	}
-
-	public static int GetWarehouseLimit(Player player)
-	{
-		// Java parity: model/items/storage/StorageType.REGULAR_WAREHOUSE plus Player.setWarehouseLimit.
-		return BaseWarehouseSlots + ((player.GetCommonData().GetWhNpcExpands()) + (player.GetCommonData().GetWhBonusExpands())) * WarehouseSlotsPerExpansion;
-	}
-
-	public static int GetUsedWarehouseSlots(Player player)
-	{
-		return player.WarehouseItems.Count(item => item.Location == WarehouseStorageId && item.ItemId != KinahItemId);
-	}
-
-	public static int GetFreeWarehouseSlots(Player player)
-	{
-		return Math.Max(0, GetWarehouseLimit(player) - GetUsedWarehouseSlots(player));
-	}
-
-	public static int GetAccountWarehouseLimit()
-	{
-		// Java parity: model/items/storage/StorageType.ACCOUNT_WAREHOUSE.
-		return BaseAccountWarehouseSlots;
-	}
-
-	public static int GetUsedAccountWarehouseSlots(Player player)
-	{
-		return player.AccountWarehouseItems.Count(item => item.Location == AccountWarehouseStorageId && item.ItemId != KinahItemId);
-	}
-
-	public static int GetFreeAccountWarehouseSlots(Player player)
-	{
-		return Math.Max(0, GetAccountWarehouseLimit() - GetUsedAccountWarehouseSlots(player));
-	}
-
-	public static int GetLegionWarehouseLimit(Player player)
-	{
-		// Java parity: model/team/legion/LegionWarehouse.updateLimit uses (3 + expansions) rows * 8 slots.
-		return BaseLegionWarehouseSlots + player.LegionWarehouseExpansions * LegionWarehouseSlotsPerExpansion;
-	}
-
-	public static int GetUsedLegionWarehouseSlots(Player player)
-	{
-		return player.InventoryItems.Count(item => item.Location == LegionWarehouseStorageId && item.ItemId != KinahItemId);
-	}
-
-	public static int GetFreeLegionWarehouseSlots(Player player)
-	{
-		return Math.Max(0, GetLegionWarehouseLimit(player) - GetUsedLegionWarehouseSlots(player));
 	}
 
 	private static bool IsNormalCubeItem(InventoryItem item, ItemTemplateTable itemTemplates)
