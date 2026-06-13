@@ -292,7 +292,7 @@ public class PlayerService
     /// </summary>
     private static void StoreDeletionTime(PlayerAccountData accData)
     {
-        PlayerDAO.UpdateDeletionTime(accData.GetPlayerCommonData().GetPlayerObjId(), accData.GetDeletionDate());
+        PlayerDAO.UpdateDeletionTime(accData.GetPlayerCommonData().GetPlayerObjId(), accData.GetDeletionDate()?.UtcDateTime);
     }
 
     public static void StoreCreationTime(int objectId, DateTimeOffset creationDate)
