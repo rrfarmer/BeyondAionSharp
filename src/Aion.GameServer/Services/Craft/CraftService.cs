@@ -92,8 +92,8 @@ public class CraftService
             return;
         }
 
-        if (recipeTemplate.GetDp() != null)
-            player.GetCommonData().AddDp(-recipeTemplate.GetDp().Value);
+        if (recipeTemplate.GetDp() != 0)
+            player.GetCommonData().AddDp(-recipeTemplate.GetDp());
 
         int intervalCap = 1200;
         switch (itemTemplate.GetItemQuality())
