@@ -44,6 +44,7 @@ public partial class Player : Creature
     public Aion.GameServer.Model.GameObjects.Players.Npcfaction.NpcFactions NpcFactions { get => GetNpcFactions(); set => SetNpcFactions(value); }
     public byte AccountMembership => (byte)playerAccount.GetMembership();
     public Aion.GameServer.Model.Templates.Ride.RideInfo RideInfo { get => ride; set => ride = value; }
+    public byte AccessLevel => (byte)playerAccount.GetAccessLevel();
 
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
     public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
