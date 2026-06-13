@@ -61,8 +61,8 @@ public class SM_CONQUEROR_PROTECTOR : AionServerPacket
                 WriteH(intruders.Count);
                 foreach (Player player in intruders)
                 {
-                    CPInfo info = ConquerorAndProtectorService.GetInstance().GetCPInfoForCurrentMap(player);
-                    WriteD(info == null ? 0 : info.GetRank());
+                    CPInfo cpInfo = ConquerorAndProtectorService.GetInstance().GetCPInfoForCurrentMap(player);
+                    WriteD(cpInfo == null ? 0 : cpInfo.GetRank());
                     WriteD(player.GetObjectId());
                     WriteD(0x01); // unk
                     WriteD(player.GetAbyssRank().GetRank().GetId());

@@ -165,8 +165,8 @@ public class Skill
         { // target selected but no target will be hit
             if (GetTargetRangeAttribute() != TargetRangeAttribute.AREA)
             { // don't restrict AoE activation
-                if (effector is Player player)
-                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_IS_NOT_VALID());
+                if (effector is Player caster)
+                    PacketSendUtility.SendPacket(caster, SM_SYSTEM_MESSAGE.STR_SKILL_TARGET_IS_NOT_VALID());
                 return false;
             }
         }
