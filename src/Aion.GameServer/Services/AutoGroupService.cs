@@ -106,7 +106,7 @@ public class AutoGroupService
 
     private void CreateNewInstance(AutoInstance autoInstance, AutoGroupType agt, List<LookingForParty> filteredParties, int maskId)
     {
-        WorldMapInstance instance = InstanceService.GetNextAvailableInstance(agt.GetTemplate().GetInstanceMapId(), 0, agt.GetDifficultId(), null,
+        WorldMapInstance instance = InstanceService.GetNextAvailableInstance(agt.GetTemplate().GetInstanceMapId(), 0, (byte)agt.GetDifficultId(), null,
             autoInstance.GetMaxPlayers(), false);
         autoInstance.OnInstanceCreate(instance);
         autoInstances[instance] = autoInstance;

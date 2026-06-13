@@ -40,12 +40,12 @@ public class CM_AUTO_GROUP : AionClientPacket
         switch (windowId)
         {
             case 100:
-                EntryRequestType ert = EntryRequestTypeExtensions.GetTypeById(entryRequestId);
+                EntryRequestType? ert = EntryRequestTypeExtensions.GetTypeById((sbyte)entryRequestId);
                 if (ert == null)
                 {
                     return;
                 }
-                AutoGroupService.GetInstance().StartLooking(player, instanceMaskId, ert);
+                AutoGroupService.GetInstance().StartLooking(player, instanceMaskId, ert.Value);
                 break;
             case 101:
                 AutoGroupService.GetInstance().CancelRegistration(player, instanceMaskId);
