@@ -152,14 +152,14 @@ public class DropDistributionService
         {
             requestedItem.IsFreeForAll(true);
             if (lgr != null && lgr.GetItemsToBeDistributed().Count != 0)
-                DropService.GetInstance().CanDistribute(player, lgr.GetItemsToBeDistributed()[0]);
+                DropService.GetInstance().CanDistribute(player, lgr.GetItemsToBeDistributed().First());
             return;
         }
 
         requestedItem.IsDistributeItem(true);
         DropService.GetInstance().RequestDropItem(player, dropNpc.GetObjectId(), dropNpc.GetCurrentIndex());
         if (lgr != null && lgr.GetItemsToBeDistributed().Count != 0)
-            DropService.GetInstance().CanDistribute(player, lgr.GetItemsToBeDistributed()[0]);
+            DropService.GetInstance().CanDistribute(player, lgr.GetItemsToBeDistributed().First());
     }
 
     private static class SingletonHolder
