@@ -119,7 +119,7 @@ public class BrokerService
         if (searchItems == null)
             return;
 
-        GetPlayerCache(player).SetBrokerSortTypeCache(sortType);
+        GetPlayerCache(player).SetBrokerSortTypeCache((sbyte)sortType);
         GetPlayerCache(player).SetBrokerStartPageCache(startPage);
 
         if (itemList != null)
@@ -226,7 +226,7 @@ public class BrokerService
 
     private void SortBrokerItems(BrokerItem[] brokerItems, byte sortType)
     {
-        Array.Sort(brokerItems, BrokerItem.GetComparatoryByType(sortType));
+        Array.Sort(brokerItems, BrokerItem.GetComparatoryByType((sbyte)sortType));
     }
 
     private BrokerItem[] GetRequestedPage(BrokerItem[] brokerItems, int startPage)
@@ -357,7 +357,7 @@ public class BrokerService
             BrokerOpSaveTask bost3 = new BrokerOpSaveTask(buyingItem, boughtItem, player.GetInventory().GetKinahItem(), player.GetObjectId());
             saveManager.Add(bost3);
         }
-        ShowRequestedItems(player, GetPlayerCache(player).GetBrokerMaskCache(), GetPlayerCache(player).GetBrokerSortTypeCache(),
+        ShowRequestedItems(player, GetPlayerCache(player).GetBrokerMaskCache(), (byte)GetPlayerCache(player).GetBrokerSortTypeCache(),
             GetPlayerCache(player).GetBrokerStartPageCache(), GetPlayerCache(player).GetSearchItemList());
     }
 
