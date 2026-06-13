@@ -90,7 +90,7 @@ public class CM_MANASTONE : AionClientPacket
             case 3: // remove manastone
                 VisibleObject visibleObject = player.GetTarget();
                 if (visibleObject.GetObjectId() == npcObjId && visibleObject is Npc npc && PositionUtil.IsInTalkRange(player, npc))
-                    ItemSocketService.RemoveManastone(player, targetItemUniqueId, slotNum, targetFusedSlot != 1);
+                    global::Aion.GameServer.Services.Items.ItemSocketService.RemoveManastone(player, targetItemUniqueId, slotNum, targetFusedSlot != 1);
                 break;
             case 4: // add godstone
                 Item weaponItem = player.GetInventory().GetItemByObjId(targetItemUniqueId);
@@ -100,7 +100,7 @@ public class CM_MANASTONE : AionClientPacket
                     SendPacket(isEquipped ? SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_CANNOT_GIVE_PROC_TO_EQUIPPED_ITEM() : SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_PROC_NO_TARGET_ITEM());
                     return;
                 }
-                ItemSocketService.SocketGodstone(player, weaponItem, stoneUniqueId);
+                global::Aion.GameServer.Services.Items.ItemSocketService.SocketGodstone(player, weaponItem, stoneUniqueId);
                 break;
             case 8: // amplification
                 EnchantService.AmplifyItem(player, targetItemUniqueId, supplementUniqueId, stoneUniqueId);
