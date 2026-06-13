@@ -1,9 +1,9 @@
 namespace Aion.GameServer.Services.Players;
 
-/// <summary>Java parity: services/player/PlayerMailboxState. Java byte → sbyte.</summary>
+/// <summary>Java parity: services/player/PlayerMailboxState. Java byte constants; mirrored as C# byte to match Mailbox.mailBoxState (byte).</summary>
 public class PlayerMailboxState
 {
-    public const sbyte CLOSED = 0x00;
-    public const sbyte REGULAR = 0x01;
-    public const sbyte EXPRESS = 0x02;
+    public const byte CLOSED = 0x00;
+    public const byte REGULAR = 0x01;
+    public const byte EXPRESS = 0x02;
 }

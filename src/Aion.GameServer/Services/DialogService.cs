@@ -85,7 +85,7 @@ public class DialogService
                     }
                     if (hasAnythingToSell)
                         PacketSendUtility.SendPacket(player,
-                            new SM_TRADELIST(player, npc, tradeListTemplate, PricesService.GetVendorBuyModifier() * tradeModifier / 100));
+                            new SM_TRADELIST(player, npc, tradeListTemplate, Aion.GameServer.Services.Trade.PricesService.GetVendorBuyModifier() * tradeModifier / 100));
                     else
                         PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_BUY_SELL_HE_DOES_NOT_SELL_ITEM(npc.GetObjectTemplate().GetL10n()));
                     break;
@@ -254,10 +254,10 @@ public class DialogService
                     PacketSendUtility.SendPacket(player, new SM_SELL_ITEM(npc));
                     break;
                 case GIVEUP_CRAFT_EXPERT: // relinquish Expert Status
-                    RelinquishCraftStatus.RelinquishExpertStatus(player, CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc));
+                    RelinquishCraftStatus.RelinquishExpertStatus(player, CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc).Value);
                     break;
                 case GIVEUP_CRAFT_MASTER: // relinquish Master Status
-                    RelinquishCraftStatus.RelinquishMasterStatus(player, CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc));
+                    RelinquishCraftStatus.RelinquishMasterStatus(player, CraftSkillUpdateService.GetInstance().GetProfessionByNpc(npc).Value);
                     break;
                 case FUNC_PET_H_ADOPT:
                     PacketSendUtility.SendPacket(player, new SM_PET(PetAction.H_ADOPT));
