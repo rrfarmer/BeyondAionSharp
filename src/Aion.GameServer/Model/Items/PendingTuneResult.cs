@@ -5,4 +5,9 @@ public sealed record PendingTuneResult(
 	int OptionalSockets,
 	int EnchantBonus,
 	int StatBonusId,
-	bool IsAttributeOnly);
+	bool IsAttributeOnly)
+{
+	public int GetOptionalSockets() => OptionalSockets;
+	public int GetEnchantBonus() => EnchantBonus;
+	public int GetStatBonusId() => StatBonusId;
+}
