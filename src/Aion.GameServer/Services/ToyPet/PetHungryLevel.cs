@@ -11,6 +11,9 @@ public enum PetHungryLevel : byte
 
 public static class PetHungryLevelExtensions
 {
+	// Java parity: services/toypet/PetHungryLevel.getValue() returns the explicit byte id.
+	public static byte GetValue(this PetHungryLevel level) => (byte)level;
+
 	public static PetHungryLevel GetNextValue(this PetHungryLevel level) => level switch
 	{
 		PetHungryLevel.HUNGRY => PetHungryLevel.CONTENT,

@@ -1,6 +1,7 @@
 using System;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Services.ToyPet;
 
 namespace Aion.GameServer.Controllers;
 
