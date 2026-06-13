@@ -36,6 +36,8 @@ public partial class Player : Creature
     public int BonusTitleId => GetCommonData().GetBonusTitleId();
     public bool IsFlyingBeforeDeath { get => GetIsFlyingBeforeDeath(); set => SetIsFlyingBeforeDeath(value); }
     public long ReposeEnergy { get => GetCommonData().GetCurrentReposeEnergy(); set => GetCommonData().SetCurrentReposeEnergy(value); }
+    public string Note { get => GetCommonData().GetNote(); set => GetCommonData().SetNote(value); }
+    public Aion.GameServer.Model.GameObjects.Players.BindPointPosition BindPoint { get => GetBindPoint(); set => SetBindPoint(value); }
 
     public volatile Aion.GameServer.Model.Templates.Ride.RideInfo ride;
     public volatile Aion.GameServer.Model.GameObjects.Players.InRoll inRoll;
