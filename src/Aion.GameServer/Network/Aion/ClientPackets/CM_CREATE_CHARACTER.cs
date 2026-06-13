@@ -68,7 +68,7 @@ public class CM_CREATE_CHARACTER : AbstractCharacterEditPacket
         {
             accPlData.SetVisibleItems(player.GetEquipment().GetEquippedForAppearance());
             accPlData.SetCreationDate(DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
-            PlayerService.StoreCreationTime(player.GetObjectId(), accPlData.GetCreationDate());
+            PlayerService.StoreCreationTime(player.GetObjectId(), accPlData.GetCreationDate().Value);
 
             account.AddPlayerAccountData(accPlData);
             SendPacket(new SM_CREATE_CHARACTER(accPlData, SM_CREATE_CHARACTER.RESPONSE_OK));

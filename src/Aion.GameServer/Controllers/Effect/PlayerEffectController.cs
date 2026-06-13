@@ -161,11 +161,13 @@ public class PlayerEffectController : EffectController
         }
     }
 
-    public int GetCumulativeResistance(CumulativeResistType type)
+    public int GetCumulativeResistance(CumulativeResistType? type)
     {
+        if (type == null)
+            return 0;
         lock (cumulativeResistInfo)
         {
-            CumulativeResist cumulativeResist = cumulativeResistInfo.GetValueOrDefault(type);
+            CumulativeResist cumulativeResist = cumulativeResistInfo.GetValueOrDefault(type.Value);
             return cumulativeResist == null ? 0 : cumulativeResist.GetResistance();
         }
     }
