@@ -1,5 +1,6 @@
 using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
+using FaithfulMotion = Aion.GameServer.Model.GameObjects.Players.Motion.Motion;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -8,6 +9,7 @@ public sealed class SmMotion : GameServerPacket
 	public const int PacketOpCode = 148;
 
 	private readonly IReadOnlyList<PlayerMotion> _motions;
+	private readonly IReadOnlyDictionary<int, FaithfulMotion>? _activeMotions;
 	private readonly Func<DateTimeOffset> _clock;
 	private readonly byte _action;
 	private readonly int _playerObjectId;
@@ -63,6 +65,26 @@ public sealed class SmMotion : GameServerPacket
 		_remainingTime = 0;
 	}
 
+	public SmMotion(short motionId)
+		: this(motionId, action: 6, _: true)
+	{
+		// Java parity: network/aion/serverpackets/SM_MOTION(short motionId) -> action 6 remove.
+	}
+
+	public SmMotion(int playerId, IDictionary<int, FaithfulMotion> activeMotions)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_MOTION(int playerId, Map<Integer,Motion> activeMotions).
+		_playerObjectId = playerId;
+		_activeMotions = new Dictionary<int, FaithfulMotion>(activeMotions);
+		_motions = Array.Empty<PlayerMotion>();
+		_clock = () => DateTimeOffset.Now;
+		_action = 7;
+		_motionId = 0;
+		_motionType = 0;
+		_remainingTime = 0;
+	}
+
 	public SmMotion(int playerObjectId, IReadOnlyList<PlayerMotion> motions, Func<DateTimeOffset>? clock = null)
 		: base(PacketOpCode)
 	{
@@ -88,6 +110,13 @@ public sealed class SmMotion : GameServerPacket
 		if (_action == 7)
 		{
 			buffer.WriteD(_playerObjectId);
+			if (_activeMotions != null)
+			{
+				// Java parity: for (int i = 1; i < 6; i++) activeMotions.get(i).
+				for (var i = 1; i < 6; i++)
+					buffer.WriteH(_activeMotions.TryGetValue(i, out var motion) ? motion.GetId() : 0);
+				return;
+			}
 			var activeMotions = _motions.Where(motion => motion.IsActive).ToArray();
 			for (var motionType = 1; motionType <= 5; motionType++)
 				buffer.WriteH(activeMotions.FirstOrDefault(motion => PlayerMotion.GetMotionType(motion.Id) == motionType)?.Id ?? 0);
