@@ -74,7 +74,6 @@ public sealed partial class StaticData
 		ChallengeTaskTable challengeTasks,
 		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
-		WindstreamTable windstreamLocations,
 		Task? validationTask)
 	{
 		CacheFilePath = cacheFilePath;
@@ -140,7 +139,6 @@ public sealed partial class StaticData
 		ChallengeTasks = challengeTasks;
 		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
-		WindstreamLocations = windstreamLocations;
 		ValidationTask = validationTask;
 	}
 
@@ -286,8 +284,6 @@ public sealed partial class StaticData
 	public LegionDominionData LegionDominionDataDh { get; } = new();
 
 	public AtreianPassportTable AtreianPassports { get; }
-
-	public WindstreamTable WindstreamLocations { get; }
 
 	public WindstreamData WindstreamDataDh { get; } = new();
 
@@ -453,8 +449,6 @@ public sealed partial class StaticData
 		var challengeTasks = new List<ChallengeTaskSummary>();
 		var legionDominions = new List<LegionDominionLocationSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
-		var windstreamLocations = new List<WindstreamLocationSummary>();
-		int currentWindstreamMapId = 0;
 		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
@@ -808,9 +802,6 @@ public sealed partial class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
 					currentStaticDoorWorldId = 0;
-
-				if (reader.Depth == 2 && reader.LocalName == "windstream" && elementPath.GetValueOrDefault(1) == "windstreams")
-					currentWindstreamMapId = 0;
 
 				if (reader.Depth == 2 && reader.LocalName == "skill_template" && currentSkillTemplate != null)
 				{
@@ -1186,35 +1177,6 @@ public sealed partial class StaticData
 					ReadFloatAttribute(reader, "y"),
 					ReadFloatAttribute(reader, "z"),
 					ReadIntAttribute(reader, "state")));
-				continue;
-			}
-
-			if (reader.Depth == 2 && reader.LocalName == "windstream" && elementPath.GetValueOrDefault(1) == "windstreams")
-			{
-				// Java parity: dataholders/WindstreamData indexes WindstreamTemplate entries by mapid attribute.
-				currentWindstreamMapId = ReadRequiredIntAttribute(reader, "mapid");
-				continue;
-			}
-
-			if (currentWindstreamMapId != 0
-				&& reader.Depth == 4
-				&& reader.LocalName == "location"
-				&& elementPath.GetValueOrDefault(3) == "locations")
-			{
-				// Java parity: model/templates/windstreams/Location2D with fly_path mapped to FlyPathType.getId(): GEYSER=0, ONE_WAY=1, TWO_WAY=2.
-				var flyPath = reader.GetAttribute("fly_path") ?? string.Empty;
-				var flyPathId = flyPath switch
-				{
-					"GEYSER" => 0,
-					"ONE_WAY" => 1,
-					"TWO_WAY" => 2,
-					_ => 0,
-				};
-				windstreamLocations.Add(new WindstreamLocationSummary(
-					flyPathId,
-					currentWindstreamMapId,
-					ReadRequiredIntAttribute(reader, "id"),
-					ReadOptionalIntAttribute(reader, "state", 0)));
 				continue;
 			}
 
@@ -3237,7 +3199,6 @@ public sealed partial class StaticData
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
 			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
-			new WindstreamTable(windstreamLocations.AsReadOnly()),
 			validationTask);
 	}
 
