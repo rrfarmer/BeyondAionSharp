@@ -68,6 +68,20 @@ public abstract class ByteBuffer : Buffer
         return offset;
     }
 
+    /// <summary>
+    /// Java parity: asReadOnlyBuffer() — a view sharing this buffer's backing content but with an independent
+    /// position/limit/mark. The C# port does not enforce immutability, but the only consumers (packet-capture
+    /// observers) read-only; the independent cursor preserves the faithful behaviour that reads through the view
+    /// do not disturb the original buffer's position.
+    /// </summary>
+    public ByteBuffer AsReadOnlyBuffer()
+    {
+        ByteBuffer view = Wrap(hb!, offset, Capacity());
+        view.SetLimit(Limit());
+        view.SetPosition(Position());
+        return view;
+    }
+
     /// <summary>Java parity: get(byte[] dst, int offset, int length).</summary>
     public ByteBuffer Get(byte[] dst, int offset, int length)
     {
