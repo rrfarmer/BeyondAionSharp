@@ -64,7 +64,6 @@ public sealed partial class StaticData
 		PortalLocTable portalLocs,
 		AutoGroupTable autoGroups,
 		PlayerInitialDataTable playerInitialData,
-		SkillTreeTable skillTree,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		NearbyQuestTemplateTable nearbyQuestTemplates,
@@ -129,7 +128,6 @@ public sealed partial class StaticData
 		PortalLocs = portalLocs;
 		AutoGroups = autoGroups;
 		PlayerInitialData = playerInitialData;
-		SkillTree = skillTree;
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		NearbyQuestTemplates = nearbyQuestTemplates;
@@ -258,8 +256,6 @@ public sealed partial class StaticData
 	public AutoGroupTable AutoGroups { get; }
 
 	public PlayerInitialDataTable PlayerInitialData { get; }
-
-	public SkillTreeTable SkillTree { get; }
 
 	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
 
@@ -443,7 +439,6 @@ public sealed partial class StaticData
 		var petSkills = new List<PetSkillSummary>();
 		var petTemplates = new List<PetTemplateSummary>();
 		var petDopings = new List<PetDopingEntrySummary>();
-		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var challengeTasks = new List<ChallengeTaskSummary>();
@@ -3024,20 +3019,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "skill")
-			{
-				skillTree.Add(new SkillLearnSummary(
-					reader.GetAttribute("classId") ?? string.Empty,
-					ReadRequiredIntAttribute(reader, "skillId"),
-					ReadNullableIntAttribute(reader, "skillLearn"),
-					reader.GetAttribute("race") ?? "PC_ALL",
-					ReadRequiredIntAttribute(reader, "minLevel"),
-					ReadBoolAttribute(reader, "autolearn"),
-					ReadIntAttribute(reader, "stigma"),
-					SkillLevel: 0));
-				continue;
-			}
-
 			if (reader.NodeType == XmlNodeType.Element && reader.LocalName == "pet_skill")
 			{
 				// Java parity: dataholders/PetSkillData afterUnmarshal indexes each PetSkillTemplate by order skill and pet id.
@@ -3189,7 +3170,6 @@ public sealed partial class StaticData
 					pair => new PlayerCreationData(pair.Key, pair.Value.AsReadOnly()),
 					StringComparer.OrdinalIgnoreCase),
 				spawnLocationsByRace),
-			new SkillTreeTable(skillTree.AsReadOnly(), new SkillTemplateTable(skillTemplates.AsReadOnly())),
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			nearbyQuestTemplates,
