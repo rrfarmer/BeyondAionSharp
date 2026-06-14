@@ -126,7 +126,7 @@ public sealed class WorldNpcLootService
 
 		var addPlan = InventoryAddService.CreateAddItemPlan(
 			player,
-			player.InventoryItems,
+			player.InventoryItems.ToList(),
 			template,
 			requestedItem.Count,
 			nextObjectId,
