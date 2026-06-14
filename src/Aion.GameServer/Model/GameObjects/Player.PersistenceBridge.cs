@@ -59,4 +59,37 @@ public partial class Player
     public int PassportStamps { get; set; }
 
     public DateTime? LastPassportStamp { get; set; }
+
+    // Java parity: PlayerQuestListDAO.store(player) iterates player.getQuestStateList().getAllQuestState().
+    public IReadOnlyList<Aion.GameServer.Model.GameObjects.PlayerQuestState> Quests =>
+        GetQuestStateList().GetAllQuestState()
+            .Select(qs => new Aion.GameServer.Model.GameObjects.PlayerQuestState(
+                qs.GetQuestId(),
+                qs.GetStatus().ToString(),
+                qs.GetQuestVars().GetQuestVars(),
+                qs.GetFlags(),
+                qs.GetCompleteCount(),
+                qs.GetRewardGroup(),
+                qs.GetNextRepeatTime().HasValue ? new DateTimeOffset(qs.GetNextRepeatTime()!.Value) : null,
+                qs.GetLastCompleteTime().HasValue ? new DateTimeOffset(qs.GetLastCompleteTime()!.Value) : null))
+            .ToList();
+
+    // Java parity: PlayerEnterWorldService.GeneralUpdateTask saves player.getHouses().
+    public IReadOnlyList<Aion.GameServer.Model.GameObjects.PlayerHouse> Houses =>
+        GetHouses()
+            .Select(BridgeHouse)
+            .ToList();
+
+    private static Aion.GameServer.Model.GameObjects.PlayerHouse BridgeHouse(Aion.GameServer.Model.House.House house) =>
+        new Aion.GameServer.Model.GameObjects.PlayerHouse(
+            ObjectId: house.GetObjectId(),
+            AddressId: house.GetAddress().GetId(),
+            BuildingId: house.GetBuilding().GetId(),
+            AcquiredTime: house.GetAcquiredTime()?.UtcDateTime,
+            NextPay: house.GetNextPay()?.UtcDateTime,
+            IsInactive: house.IsInactive(),
+            DoorState: (byte)(int)house.GetDoorState(),
+            ShowOwnerName: house.IsShowOwnerName(),
+            SignNotice: house.GetSignNotice(),
+            TownLevel: house.GetTownLevel());
 }
