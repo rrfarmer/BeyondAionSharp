@@ -66,7 +66,7 @@ public sealed class DataManager
 	public static GlobalDropData GLOBAL_DROP_DATA { get; } = new();
 	public static CustomDrop CUSTOM_NPC_DROP { get; } = new();
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
-	public static HousingObjectTemplateTable HOUSING_OBJECT_DATA => SD.HousingObjectTemplates;
+	public static HousingObjectData HOUSING_OBJECT_DATA { get; } = new();
 	public static EnchantTable ENCHANT_DATA => SD.EnchantTemplates;
 	public static HouseData HOUSE_DATA { get; } = new();
 	public static QuestsData QUEST_DATA => SD.Quests;
