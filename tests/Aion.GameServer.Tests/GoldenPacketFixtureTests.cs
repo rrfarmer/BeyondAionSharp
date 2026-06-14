@@ -127,6 +127,7 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_TARGET_SELECTED.json")]
 	[InlineData("SM_RIFT_ANNOUNCE.json")]
 	[InlineData("SM_RECIPE_LIST.json")]
+	[InlineData("SM_PET.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -163,8 +164,32 @@ public sealed class GoldenPacketFixtureTests
 		"SM_TARGET_SELECTED" => new SM_TARGET_SELECTED(null!),
 		"SM_RIFT_ANNOUNCE" => ReconstructRiftAnnounce(inputs),
 		"SM_RECIPE_LIST" => new SM_RECIPE_LIST(new HashSet<int>(inputs.GetProperty("recipeIds").EnumerateArray().Select(e => e.GetInt32()))),
+		"SM_PET" => ReconstructPet(inputs),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
+
+	// SM_PET: the deterministic scalar branches (RENAME / DISMISS / SPECIAL_FUNCTION).
+	// Mirror the exact ctor the Java generator used so the action + payload selection matches bilaterally.
+	private static SM_PET ReconstructPet(JsonElement inputs)
+	{
+		var action = inputs.GetProperty("action").GetString()!;
+		switch (action)
+		{
+			case "RENAME":
+				return new SM_PET(inputs.GetProperty("petObjectId").GetInt32(), inputs.GetProperty("petName").GetString()!);
+			case "DISMISS":
+				var anim = Enum.Parse<Aion.GameServer.Model.Animations.ObjectDeleteAnimation>(inputs.GetProperty("animation").GetString()!);
+				return new SM_PET(inputs.GetProperty("petObjectId").GetInt32(), anim);
+			case "SPECIAL_FUNCTION":
+				// DOPING uses the (dopeAction,itemId,slot) ctor; AUTOLOOT/AUTOSELL use the (PetSpecialFunction,active,npcObjId) ctor.
+				if (inputs.TryGetProperty("dopeAction", out var dope))
+					return new SM_PET(dope.GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("slot").GetInt32());
+				var sf = Enum.Parse<PetSpecialFunction>(inputs.GetProperty("specialFunction").GetString()!);
+				return new SM_PET(sf, inputs.GetProperty("active").GetBoolean(), inputs.GetProperty("npcObjId").GetInt32());
+			default:
+				throw new NotSupportedException($"No SM_PET reconstruction for action {action}");
+		}
+	}
 
 	private static SM_RIFT_ANNOUNCE ReconstructRiftAnnounce(JsonElement inputs)
 	{
