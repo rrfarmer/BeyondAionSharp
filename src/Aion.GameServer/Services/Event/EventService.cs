@@ -145,7 +145,7 @@ public class EventService
             ev.OnPvpKill(killer, victim);
     }
 
-    private bool IsAllEvents(HashSet<string> list)
+    private bool IsAllEvents(ISet<string> list)
     {
         return list.Count == 1 && "*".Equals(list.First());
     }
