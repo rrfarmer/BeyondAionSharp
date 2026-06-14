@@ -249,7 +249,7 @@ public sealed class QuestService
         if (rewards.GetDp() != 0)
             player.GetCommonData().AddDp(rewards.GetDp());
         if (rewards.GetGp() != 0)
-            GloryPointsService.AddGp(player.GetObjectId(), Rates.GP.CalcResult(player, rewards.GetGp()));
+            Aion.GameServer.Services.Abyss.GloryPointsService.AddGp(player.GetObjectId(), Rates.GP.CalcResult(player, rewards.GetGp()));
         if (rewards.GetExtendInventory() == 1)
             CubeExpandService.QuestExpand(player);
         else if (rewards.GetExtendInventory() == 2)
