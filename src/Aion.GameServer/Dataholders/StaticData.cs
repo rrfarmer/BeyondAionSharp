@@ -72,7 +72,6 @@ public sealed partial class StaticData
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestNpcStartTable questNpcStarts,
 		QuestCompletionFollowUpTable questCompletionFollowUps,
-		QuestBonusItemGroupTable questBonusItemGroups,
 		ChallengeTaskTable challengeTasks,
 		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
@@ -140,7 +139,6 @@ public sealed partial class StaticData
 		QuestHandlers = questHandlers;
 		QuestNpcStarts = questNpcStarts;
 		QuestCompletionFollowUps = questCompletionFollowUps;
-		QuestBonusItemGroups = questBonusItemGroups;
 		ChallengeTasks = challengeTasks;
 		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
@@ -284,8 +282,6 @@ public sealed partial class StaticData
 	public QuestNpcStartTable QuestNpcStarts { get; }
 
 	public QuestCompletionFollowUpTable QuestCompletionFollowUps { get; }
-
-	public QuestBonusItemGroupTable QuestBonusItemGroups { get; }
 
 	public ChallengeTaskTable ChallengeTasks { get; }
 
@@ -460,7 +456,6 @@ public sealed partial class StaticData
 		var skillTree = new List<SkillLearnSummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
-		var questBonusItemGroups = new List<QuestBonusItemGroupProjection>();
 		var challengeTasks = new List<ChallengeTaskSummary>();
 		var legionDominions = new List<LegionDominionLocationSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
@@ -542,11 +537,6 @@ public sealed partial class StaticData
 		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
-		string currentQuestBonusGroupElementName = string.Empty;
-		string currentQuestBonusGroupBonusType = string.Empty;
-		float currentQuestBonusGroupChance = 100f;
-		QuestBonusItemShape currentQuestBonusGroupShape = default;
-		List<QuestBonusItemProjection>? currentQuestBonusItems = null;
 		ChallengeTaskBuilder? currentChallengeTask = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
@@ -902,20 +892,6 @@ public sealed partial class StaticData
 					currentHousingLandId = 0;
 					currentHousingManagerNpcId = 0;
 				}
-				if (reader.Depth == 2 && currentQuestBonusItems != null)
-				{
-					questBonusItemGroups.Add(new QuestBonusItemGroupProjection(
-						currentQuestBonusGroupElementName,
-						currentQuestBonusGroupBonusType,
-						currentQuestBonusGroupChance,
-						currentQuestBonusGroupShape,
-						currentQuestBonusItems.AsReadOnly()));
-					currentQuestBonusGroupElementName = string.Empty;
-					currentQuestBonusGroupBonusType = string.Empty;
-					currentQuestBonusGroupChance = 100f;
-					currentQuestBonusGroupShape = default;
-					currentQuestBonusItems = null;
-				}
 				if (reader.Depth == 2 && reader.LocalName == "task" && currentChallengeTask != null)
 				{
 					challengeTasks.Add(currentChallengeTask.ToSummary());
@@ -935,50 +911,6 @@ public sealed partial class StaticData
 			counts[reader.LocalName] = counts.GetValueOrDefault(reader.LocalName) + 1;
 			if (reader.Depth == 1)
 				topLevelElements.Add(reader.LocalName);
-			if (reader.Depth == 2
-				&& elementPath.GetValueOrDefault(1) == "item_groups"
-				&& QuestBonusItemGroupXmlProjectionExtractor.TryGetSupportedGroup(reader.LocalName, out var defaultBonusType, out var itemShape))
-			{
-				currentQuestBonusGroupElementName = reader.LocalName;
-				currentQuestBonusGroupBonusType = reader.GetAttribute("bonusType") ?? defaultBonusType;
-				currentQuestBonusGroupChance = ReadOptionalFloatAttribute(reader, "chance", 100f);
-				currentQuestBonusGroupShape = itemShape;
-				currentQuestBonusItems = [];
-				if (reader.IsEmptyElement)
-				{
-					questBonusItemGroups.Add(new QuestBonusItemGroupProjection(
-						currentQuestBonusGroupElementName,
-						currentQuestBonusGroupBonusType,
-						currentQuestBonusGroupChance,
-						currentQuestBonusGroupShape,
-						currentQuestBonusItems.AsReadOnly()));
-					currentQuestBonusGroupElementName = string.Empty;
-					currentQuestBonusGroupBonusType = string.Empty;
-					currentQuestBonusGroupChance = 100f;
-					currentQuestBonusGroupShape = default;
-					currentQuestBonusItems = null;
-				}
-
-				continue;
-			}
-
-			if (reader.Depth == 3
-				&& reader.LocalName == "item"
-				&& currentQuestBonusItems != null
-				&& elementPath.GetValueOrDefault(1) == "item_groups")
-			{
-				currentQuestBonusItems.Add(new QuestBonusItemProjection(
-					ReadRequiredIntAttribute(reader, "id"),
-					Race: reader.GetAttribute("race"),
-					Level: ReadNullableIntAttribute(reader, "level"),
-					Count: ReadNullableLongAttribute(reader, "count"),
-					Chance: ReadNullableFloatAttribute(reader, "chance"),
-					Skill: ReadNullableIntAttribute(reader, "skill"),
-					MinLevel: ReadNullableIntAttribute(reader, "minLevel"),
-					MaxLevel: ReadNullableIntAttribute(reader, "maxLevel")));
-				continue;
-			}
-
 			if (reader.LocalName == "exp"
 				&& elementPath.TryGetValue(reader.Depth - 1, out var parentElement)
 				&& parentElement == "player_experience_table")
@@ -3416,7 +3348,6 @@ public sealed partial class StaticData
 			questHandlers,
 			questNpcStarts,
 			questCompletionFollowUps,
-			new QuestBonusItemGroupTable(questBonusItemGroups.AsReadOnly()),
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
 			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
