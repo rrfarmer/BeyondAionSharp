@@ -142,7 +142,7 @@ public partial class Player
     public void AddSalvationPoints(long points)
     {
         GetCommonData().AddSalvationPoints(points);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SmStatsInfo(this));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SM_STATS_INFO(this));
     }
 
     public override bool IsPvpTarget(Creature creature)
