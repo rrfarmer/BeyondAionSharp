@@ -3,7 +3,7 @@ using Aion.Commons.Network;
 
 namespace Aion.GameServer.Network;
 
-public static class BridgePacketFrameCodec
+public static class ServerPacketFrameCodec
 {
 	public static byte[] CreateFrame(ReadOnlySpan<byte> payload)
 	{

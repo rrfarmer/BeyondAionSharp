@@ -181,7 +181,7 @@ public sealed class GameServerBridgeConnectorTests
 
 	private static byte[] CreateLoginAuthResponseFrame(byte gameServerCount)
 	{
-		return BridgePacketFrameCodec.CreateFrame(new byte[] { 0x00, 0x00, gameServerCount });
+		return ServerPacketFrameCodec.CreateFrame(new byte[] { 0x00, 0x00, gameServerCount });
 	}
 
 	private static byte[] CreateChatAuthResponseFrame(IPAddress publicAddress, int port)
@@ -193,7 +193,7 @@ public sealed class GameServerBridgeConnectorTests
 		payload[2] = (byte)addressBytes.Length;
 		addressBytes.CopyTo(payload.AsSpan(3));
 		BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(3 + addressBytes.Length, 2), (ushort)port);
-		return BridgePacketFrameCodec.CreateFrame(payload);
+		return ServerPacketFrameCodec.CreateFrame(payload);
 	}
 
 	private static byte[] CreateAccountAuthResponseFrame()
@@ -210,7 +210,7 @@ public sealed class GameServerBridgeConnectorTests
 		payload.WriteC(2);
 		payload.WriteQ(5000L);
 		payload.WriteS("disk-1");
-		return BridgePacketFrameCodec.CreateFrame(payload.ToArray());
+		return ServerPacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
 	private static byte[] CreateCharacterCountRequestFrame(int accountId)
@@ -218,7 +218,7 @@ public sealed class GameServerBridgeConnectorTests
 		using var payload = new PacketBuffer();
 		payload.WriteC(0x08);
 		payload.WriteD(accountId);
-		return BridgePacketFrameCodec.CreateFrame(payload.ToArray());
+		return ServerPacketFrameCodec.CreateFrame(payload.ToArray());
 	}
 
 	private static async Task WaitUntilAsync(Func<bool> condition)

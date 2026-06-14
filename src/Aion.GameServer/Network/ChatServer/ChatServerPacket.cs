@@ -14,7 +14,7 @@ public abstract class ChatServerPacket
 
 	public byte[] SerializeFrame()
 	{
-		return BridgePacketFrameCodec.CreateFrame(SerializePayload());
+		return ServerPacketFrameCodec.CreateFrame(SerializePayload());
 	}
 
 	protected abstract void WritePayload(PacketBuffer buffer);

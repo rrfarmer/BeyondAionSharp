@@ -4,20 +4,20 @@ using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Services;
 
-public sealed class GameBridgeHostedService : IHostedService
+public sealed class OutboundLinkHostedService : IHostedService
 {
 	private readonly Aion.GameServer.Network.LoginServer.LoginServer _loginServer;
 	private readonly Aion.GameServer.Network.ChatServer.ChatServer _chatServer;
 	private readonly GameServerOptions _options;
-	private readonly ILogger<GameBridgeHostedService> _logger;
+	private readonly ILogger<OutboundLinkHostedService> _logger;
 	private Task? _loginConnectTask;
 	private Task? _chatConnectTask;
 
-	public GameBridgeHostedService(
+	public OutboundLinkHostedService(
 		Aion.GameServer.Network.LoginServer.LoginServer loginServer,
 		Aion.GameServer.Network.ChatServer.ChatServer chatServer,
 		GameServerOptions options,
-		ILogger<GameBridgeHostedService> logger)
+		ILogger<OutboundLinkHostedService> logger)
 	{
 		_loginServer = loginServer;
 		_chatServer = chatServer;

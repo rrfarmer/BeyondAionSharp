@@ -159,7 +159,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			// GameClientSocketServer (reworked async god-class stack) removed; GameServerHostedService now
 			// boots the faithful NioServer + GameConnectionFactoryImpl directly.
 			services.AddHostedService<GameServerHostedService>();
-			services.AddHostedService<GameBridgeHostedService>();
+			services.AddHostedService<OutboundLinkHostedService>();
 		}
 	)
 	.ConfigureLogging(
