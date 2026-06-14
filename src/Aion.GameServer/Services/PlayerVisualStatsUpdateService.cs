@@ -9,10 +9,6 @@ namespace Aion.GameServer.Services;
 
 public sealed class PlayerVisualStatsUpdateService
 {
-	private const long MainHand = 1L;
-	private const long SubHand = 1L << 1;
-	private const long MainOffHand = 1L << 17;
-	private const long SubOffHand = 1L << 18;
 	private const int DefaultBaseAttackSpeed = 1500;
 
 	private readonly IGameClientConnectionRegistry? _connectionRegistry;
@@ -139,21 +135,10 @@ public sealed class PlayerVisualStatsUpdateService
 			resolvedSpeedSnapshot);
 	}
 
-	private SmStatsInfo CreateStatsInfoPacket(Player player)
+	private SM_STATS_INFO CreateStatsInfoPacket(Player player)
 	{
 		// Java parity: PlayerGameStats.updateStatInfo sends network/aion/serverpackets/SM_STATS_INFO(owner).
-		var staticData = _runtimeContext?.DataManager?.StaticData;
-		return new SmStatsInfo(
-			player,
-			staticData?.PlayerExperienceTable,
-			_gameTimeService?.GameMinutes ?? 0,
-			staticData?.ItemTemplates,
-			staticData?.ItemRandomBonuses,
-			staticData?.ItemSets,
-			staticData?.EnchantTemplates,
-			staticData?.TemperingTemplates,
-			staticData?.SkillTemplates,
-			staticData?.TitleTemplates);
+		return new SM_STATS_INFO(player);
 	}
 
 	private PlayerVisualSpeedSnapshot? CreateSpeedSnapshot(Player player)
@@ -166,41 +151,18 @@ public sealed class PlayerVisualStatsUpdateService
 
 	private static int ResolveAttackSpeed(Player player, ItemTemplateTable? itemTemplates)
 	{
-		if (itemTemplates == null)
+		// Java parity: model/stats/calc/functions/PlayerStatFunctions weapon attack-speed read from the faithful Equipment spine.
+		var mainHandItem = player.GetEquipment()?.GetMainHandWeapon();
+		var mainHandTemplate = mainHandItem?.GetItemTemplate();
+		if (mainHandTemplate == null || !mainHandTemplate.IsWeapon())
 			return DefaultBaseAttackSpeed;
 
-		var equippedWeapons = player.InventoryItems
-			.Where(item => item.IsEquipped && item.Location == 0)
-			.Select(item => (Item: item, Template: itemTemplates.GetItemTemplate(item.ItemId)))
-			.Where(item => item.Template?.IsWeapon == true)
-			.Select(item => new EquippedWeapon(item.Item, item.Template!))
-			.ToArray();
-		var mainHand = equippedWeapons.FirstOrDefault(item => IsRightHandSlot(item.Item.Slot));
-		if (mainHand == null)
-			return DefaultBaseAttackSpeed;
-
-		var offHand = equippedWeapons.FirstOrDefault(item =>
-			item != mainHand
-			&& IsLeftHandSlot(item.Item.Slot)
-			&& !IsTwoHandedSlot(item.Item.Slot));
-		return mainHand.Template.WeaponStats?.AttackSpeed + (offHand?.Template.WeaponStats?.AttackSpeed / 4 ?? 0)
-			?? DefaultBaseAttackSpeed;
-	}
-
-	private static bool IsRightHandSlot(long slot)
-	{
-		return (slot & (MainHand | MainOffHand)) != 0;
-	}
-
-	private static bool IsLeftHandSlot(long slot)
-	{
-		return (slot & (SubHand | SubOffHand)) != 0;
-	}
-
-	private static bool IsTwoHandedSlot(long slot)
-	{
-		return (slot & (MainHand | SubHand)) == (MainHand | SubHand)
-			|| (slot & (MainOffHand | SubOffHand)) == (MainOffHand | SubOffHand);
+		var mainHandSpeed = mainHandTemplate.GetWeaponStats()?.AttackSpeed ?? DefaultBaseAttackSpeed;
+		var offHandTemplate = player.GetEquipment()?.GetOffHandWeapon()?.GetItemTemplate();
+		var offHandBonus = offHandTemplate != null && offHandTemplate.IsWeapon() && !offHandTemplate.IsTwoHandWeapon()
+			? (offHandTemplate.GetWeaponStats()?.AttackSpeed ?? 0) / 4
+			: 0;
+		return mainHandSpeed + offHandBonus;
 	}
 
 	private bool ShouldBroadcastSpeedUpdate(int playerObjectId, PlayerVisualSpeedSnapshot snapshot)
@@ -224,8 +186,6 @@ public sealed class PlayerVisualStatsUpdateService
 		return (int)MathF.Round(snapshot.MovementSpeed * 1000f);
 	}
 
-	private sealed record EquippedWeapon(InventoryItem Item, ItemTemplateSummary Template);
-
 	private sealed record PlayerVisualSpeedCache(int MovementSpeedUnits, int CurrentAttackSpeed);
 }
 
@@ -236,7 +196,7 @@ public sealed record PlayerVisualSpeedSnapshot(
 
 public sealed record PlayerVisualStatsUpdateResult(
 	PlayerVisualStatsUpdateStatus Status,
-	SmStatsInfo? StatsPacket,
+	SM_STATS_INFO? StatsPacket,
 	bool StatsPacketSent,
 	SmEmotion? SpeedPacket,
 	int SpeedBroadcastCount,

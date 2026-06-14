@@ -398,7 +398,7 @@ public sealed class WorldNpcGlobalDropService
 	{
 		// Java parity: services/drop/DropRegistrationService.getItemCount.
 		long count = _countRoll(item.MinCount, item.MaxCount);
-		if (item.ItemId == InventoryItemFactory.KinahItemId)
+		if (item.ItemId == Aion.GameServer.Model.Items.ItemId.KINAH)
 		{
 			var rankRating = GetRankModifier(npc.Template.Rank) * GetRatingModifier(npc.Template.Rating);
 			count = (long)(count * npc.Template.Level * Math.Pow(rankRating, 6));
