@@ -157,7 +157,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IUsedIdRepository, MySqlUsedIdRepository>();
 			services.AddSingleton<IServerVariablesRepository, MySqlServerVariablesRepository>();
 			services.AddSingleton<ICharacterSelectionRepository, MySqlCharacterSelectionRepository>();
-			services.AddSingleton<ICharacterCreationRepository, MySqlCharacterCreationRepository>();
 			services.AddSingleton<IPlayerEnterWorldRepository, MySqlPlayerEnterWorldRepository>();
 			services.AddSingleton<IMailRepository, MySqlMailRepository>();
 			services.AddSingleton<ICustomLevelRewardRepository, MySqlCustomLevelRewardRepository>();
@@ -166,7 +165,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IHouseAuctionRepository, MySqlHouseAuctionRepository>();
 			services.AddSingleton<IHousingRepository, MySqlHousingRepository>();
 			services.AddSingleton<IMotionRepository, MySqlMotionRepository>();
-			services.AddSingleton<CharacterCreationService>();
 			services.AddSingleton<PlayerEnterWorldService>();
 			services.AddHostedService<GameServerBootstrapService>();
 			// GameClientSocketServer (reworked async god-class stack) removed; GameServerHostedService now
