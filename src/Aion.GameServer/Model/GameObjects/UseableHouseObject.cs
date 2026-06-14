@@ -5,13 +5,17 @@ using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Model.GameObjects;
 
-/// <summary>Java parity: model/gameobjects/UseableHouseObject.</summary>
-public abstract class UseableHouseObject<T> : HouseObject<T> where T : PlaceableHouseObject
+/// <summary>
+/// Java parity: model/gameobjects/UseableHouseObject.
+/// C# generic-invariance break: NON-GENERIC base for the Java wildcard <c>UseableHouseObject&lt;?&gt;</c>;
+/// all members are T-independent. The typed template accessor lives on <see cref="UseableHouseObject{T}"/>.
+/// </summary>
+public abstract class UseableHouseObject : HouseObject
 {
     private readonly AtomicInteger usingPlayer = new AtomicInteger();
 
-    public UseableHouseObject(HouseRegistry registry, int objId, int templateId)
-        : base(registry, objId, templateId)
+    protected UseableHouseObject(HouseRegistry registry, int objId, int templateId, Aion.GameServer.Controllers.PlaceableObjectController controller, bool autoReleaseObjectId)
+        : base(registry, objId, templateId, controller, autoReleaseObjectId)
     {
     }
 
@@ -43,5 +47,22 @@ public abstract class UseableHouseObject<T> : HouseObject<T> where T : Placeable
     public virtual bool HasUseCooldown()
     {
         return false;
+    }
+}
+
+/// <summary>
+/// Java parity: <c>UseableHouseObject&lt;T extends PlaceableHouseObject&gt;</c>. Adds only the strongly-typed
+/// template accessor over the non-generic <see cref="UseableHouseObject"/> base.
+/// </summary>
+public abstract class UseableHouseObject<T> : UseableHouseObject where T : PlaceableHouseObject
+{
+    protected UseableHouseObject(HouseRegistry registry, int objId, int templateId)
+        : base(registry, objId, templateId, new Aion.GameServer.Controllers.PlaceableObjectController(), false)
+    {
+    }
+
+    public new T GetObjectTemplate()
+    {
+        return (T) base.GetObjectTemplate();
     }
 }

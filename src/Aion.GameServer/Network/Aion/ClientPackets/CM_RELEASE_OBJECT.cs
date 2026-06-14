@@ -29,7 +29,7 @@ public class CM_RELEASE_OBJECT : AionClientPacket
     {
         Player player = GetConnection().GetActivePlayer();
         VisibleObject object_ = player.GetKnownList().GetObject(targetObjectId);
-        if (object_ is UseableHouseObject<PlaceableHouseObject> useableHouseObject && useableHouseObject.ReleaseOccupant(player))
+        if (object_ is UseableHouseObject useableHouseObject && useableHouseObject.ReleaseOccupant(player))
         { // release object
             if (player.GetController().HasScheduledTask(TaskId.HOUSE_OBJECT_USE) || object_ is PostboxObject)
             { // post box always sends the message

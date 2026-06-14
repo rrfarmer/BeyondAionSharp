@@ -165,9 +165,8 @@ public static class PositionUtil
         return IsInRange(npc, creature, range, false);
     }
 
-    // Java parity: isInTalkRange(Creature, HouseObject<?>)
-    public static bool IsInTalkRange<T>(Creature creature, HouseObject<T> houseObject)
-        where T : Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject
+    // Java parity: isInTalkRange(Creature, HouseObject<?>) -> non-generic HouseObject (wildcard)
+    public static bool IsInTalkRange(Creature creature, HouseObject houseObject)
     {
         float range = houseObject.GetObjectTemplate().GetTalkingDistance() + 1;
         return IsInRange(houseObject, creature, range, false);

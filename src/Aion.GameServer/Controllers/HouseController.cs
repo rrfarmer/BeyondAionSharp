@@ -34,7 +34,7 @@ public class HouseController : VisibleObjectController<House>
     {
         if (GetOwner().GetPosition() != null && GetOwner().IsSpawned() && !GetOwner().IsInactive())
         {
-            foreach (HouseObject<PlaceableHouseObject> obj in GetOwner().GetRegistry().GetSpawnedObjects())
+            foreach (HouseObject obj in GetOwner().GetRegistry().GetSpawnedObjects())
                 obj.Spawn();
         }
     }

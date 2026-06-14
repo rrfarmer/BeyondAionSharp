@@ -22,7 +22,7 @@ public class DyeAction : AbstractItemAction
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> targetHouseObject = (HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject>)@params[0];
+        HouseObject targetHouseObject = (HouseObject)@params[0];
         if (targetHouseObject == null && targetItem == null) // nothing to dye
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_COLOR_ERROR());
@@ -46,7 +46,7 @@ public class DyeAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> targetHouseObject = (HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject>)@params[0];
+        HouseObject targetHouseObject = (HouseObject)@params[0];
         if (targetHouseObject == null)
             DyeItem(player, parentItem, targetItem);
         else
@@ -94,7 +94,7 @@ public class DyeAction : AbstractItemAction
         return color.Equals("no") ? (int?)null : Convert.ToInt32(color, 16);
     }
 
-    private void DyeHouseObject(Aion.GameServer.Model.GameObjects.Players.Player player, Item dyeItem, HouseObject<Aion.GameServer.Model.Templates.Housing.PlaceableHouseObject> houseObject)
+    private void DyeHouseObject(Aion.GameServer.Model.GameObjects.Players.Player player, Item dyeItem, HouseObject houseObject)
     {
         if (!player.GetInventory().DecreaseByObjectId(dyeItem.GetObjectId(), 1))
             return;

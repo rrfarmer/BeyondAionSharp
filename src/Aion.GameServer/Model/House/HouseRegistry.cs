@@ -19,7 +19,7 @@ namespace Aion.GameServer.Model.House;
 public class HouseRegistry : IPersistable
 {
     private readonly House owner;
-    private readonly Dictionary<int, HouseObject<PlaceableHouseObject>> objects = new();
+    private readonly Dictionary<int, HouseObject> objects = new();
     private readonly Dictionary<int, HouseDecoration> decors = new();
     private IPersistable.PersistentState persistentState = IPersistable.PersistentState.UPDATED;
 
@@ -34,15 +34,15 @@ public class HouseRegistry : IPersistable
     }
 
     /// <returns>All objects including deleted</returns>
-    public List<HouseObject<PlaceableHouseObject>> GetObjects()
+    public List<HouseObject> GetObjects()
     {
-        return new List<HouseObject<PlaceableHouseObject>>(objects.Values);
+        return new List<HouseObject>(objects.Values);
     }
 
-    public List<HouseObject<PlaceableHouseObject>> GetSpawnedObjects()
+    public List<HouseObject> GetSpawnedObjects()
     {
-        List<HouseObject<PlaceableHouseObject>> temp = new();
-        foreach (HouseObject<PlaceableHouseObject> obj in objects.Values)
+        List<HouseObject> temp = new();
+        foreach (HouseObject obj in objects.Values)
         {
             if (obj.IsSpawnedByPlayer() && obj.GetPersistentState() != IPersistable.PersistentState.DELETED)
                 temp.Add(obj);
@@ -50,10 +50,10 @@ public class HouseRegistry : IPersistable
         return temp;
     }
 
-    public List<HouseObject<PlaceableHouseObject>> GetNotSpawnedObjects()
+    public List<HouseObject> GetNotSpawnedObjects()
     {
-        List<HouseObject<PlaceableHouseObject>> temp = new();
-        foreach (HouseObject<PlaceableHouseObject> obj in objects.Values)
+        List<HouseObject> temp = new();
+        foreach (HouseObject obj in objects.Values)
         {
             if (!obj.IsSpawnedByPlayer() && obj.GetPersistentState() != IPersistable.PersistentState.DELETED)
                 temp.Add(obj);
@@ -61,12 +61,12 @@ public class HouseRegistry : IPersistable
         return temp;
     }
 
-    public HouseObject<PlaceableHouseObject> GetObjectByObjId(int itemObjId)
+    public HouseObject GetObjectByObjId(int itemObjId)
     {
         return objects.GetValueOrDefault(itemObjId);
     }
 
-    public bool PutObject(HouseObject<PlaceableHouseObject> houseObject, bool saveRegistry)
+    public bool PutObject(HouseObject houseObject, bool saveRegistry)
     {
         if (!objects.TryAdd(houseObject.GetObjectId(), houseObject))
             return false;
@@ -77,7 +77,7 @@ public class HouseRegistry : IPersistable
         return true;
     }
 
-    public void DiscardObject(HouseObject<PlaceableHouseObject> obj, bool direct)
+    public void DiscardObject(HouseObject obj, bool direct)
     {
         Discard(objects, obj, direct);
     }
@@ -172,14 +172,14 @@ public class HouseRegistry : IPersistable
             SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
         }
         // remove house object use cooldowns for this object
-        if (obj is UseableHouseObject<PlaceableHouseObject> useableHouseObject && useableHouseObject.HasUseCooldown())
+        if (obj is UseableHouseObject useableHouseObject && useableHouseObject.HasUseCooldown())
             Aion.GameServer.World.World.GetInstance().ForEachPlayer(player => player.GetHouseObjectCooldowns().Remove(obj.GetObjectId()));
     }
 
     /// <summary>Despawns all objects and updates DB.</summary>
     public void Reset()
     {
-        List<HouseObject<PlaceableHouseObject>> spawnedObjects = GetSpawnedObjects();
+        List<HouseObject> spawnedObjects = GetSpawnedObjects();
         if (spawnedObjects.Count == 0)
         {
             if (GetOwner().GetOwnerId() != 0)
@@ -187,7 +187,7 @@ public class HouseRegistry : IPersistable
         }
         else
         {
-            foreach (HouseObject<PlaceableHouseObject> obj in spawnedObjects)
+            foreach (HouseObject obj in spawnedObjects)
                 obj.RemoveFromHouse();
         }
         foreach (HouseDecoration decor in decors.Values)

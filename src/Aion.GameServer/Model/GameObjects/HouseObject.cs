@@ -10,8 +10,15 @@ using Aion.GameServer.World.Knownlist;
 
 namespace Aion.GameServer.Model.GameObjects;
 
-/// <summary>Java parity: model/gameobjects/HouseObject (Rolandas).</summary>
-public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable where T : PlaceableHouseObject
+/// <summary>
+/// Java parity: model/gameobjects/HouseObject (Rolandas).
+/// C# generic-invariance break: Java's wildcard <c>HouseObject&lt;?&gt;</c> is represented here by this
+/// NON-GENERIC abstract base. All T-independent state/behavior lives here so concrete subtypes
+/// (ChairObject : HouseObject&lt;HousingChair&gt;, ...) are all assignable to <c>HouseObject</c> the way
+/// every Java subtype IS-A <c>HouseObject&lt;?&gt;</c>. The strongly-typed template accessor lives on the
+/// generic subclass <see cref="HouseObject{T}"/>.
+/// </summary>
+public abstract class HouseObject : VisibleObject, IExpirable, IPersistable
 {
     private int expireEnd;
     private float x;
@@ -27,13 +34,8 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
     // don't set it directly, ever!!! Use setPersistentState() method instead
     private IPersistable.PersistentState persistentState = IPersistable.PersistentState.NEW;
 
-    public HouseObject(HouseRegistry registry, int objId, int templateId)
-        : this(registry, objId, templateId, false)
-    {
-    }
-
-    public HouseObject(HouseRegistry registry, int objId, int templateId, bool autoReleaseObjectId)
-        : base(objId, new PlaceableObjectController<T>(), null, DataManager.HOUSING_OBJECT_DATA.GetTemplateById(templateId), null, autoReleaseObjectId)
+    protected HouseObject(HouseRegistry registry, int objId, int templateId, PlaceableObjectController controller, bool autoReleaseObjectId)
+        : base(objId, controller, null, DataManager.HOUSING_OBJECT_DATA.GetTemplateById(templateId), null, autoReleaseObjectId)
     {
         this.registry = registry;
         GetController().SetOwner(this);
@@ -110,9 +112,9 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
             registry.Save();
     }
 
-    public new T GetObjectTemplate()
+    public new PlaceableHouseObject GetObjectTemplate()
     {
-        return (T) base.GetObjectTemplate();
+        return (PlaceableHouseObject) base.GetObjectTemplate();
     }
 
     public new float GetX()
@@ -288,9 +290,9 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
         return x != 0 || y != 0 || z != 0;
     }
 
-    public new PlaceableObjectController<T> GetController()
+    public new PlaceableObjectController GetController()
     {
-        return (PlaceableObjectController<T>) base.GetController();
+        return (PlaceableObjectController) base.GetController();
     }
 
     public virtual void Spawn()
@@ -356,5 +358,27 @@ public abstract class HouseObject<T> : VisibleObject, IExpirable, IPersistable w
     public void SetColorExpireEnd(int colorExpireEnd)
     {
         this.colorExpireEnd = colorExpireEnd;
+    }
+}
+
+/// <summary>
+/// Java parity: <c>HouseObject&lt;T extends PlaceableHouseObject&gt;</c>. Adds only the strongly-typed
+/// template accessor over the non-generic <see cref="HouseObject"/> base.
+/// </summary>
+public abstract class HouseObject<T> : HouseObject where T : PlaceableHouseObject
+{
+    protected HouseObject(HouseRegistry registry, int objId, int templateId)
+        : this(registry, objId, templateId, false)
+    {
+    }
+
+    protected HouseObject(HouseRegistry registry, int objId, int templateId, bool autoReleaseObjectId)
+        : base(registry, objId, templateId, new PlaceableObjectController(), autoReleaseObjectId)
+    {
+    }
+
+    public new T GetObjectTemplate()
+    {
+        return (T) base.GetObjectTemplate();
     }
 }

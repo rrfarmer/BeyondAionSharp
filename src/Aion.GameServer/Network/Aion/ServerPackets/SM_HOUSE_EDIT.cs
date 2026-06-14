@@ -45,7 +45,7 @@ public class SM_HOUSE_EDIT : AionServerPacket
         if (player == null)
             return;
         House house = player.GetActiveHouse();
-        HouseObject<PlaceableHouseObject> obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
+        HouseObject obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
 
         if (action == 3)
         { // Add item

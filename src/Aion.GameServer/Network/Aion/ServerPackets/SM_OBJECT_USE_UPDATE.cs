@@ -11,9 +11,9 @@ public class SM_OBJECT_USE_UPDATE : AionServerPacket
     private int ownerPlayerId;
     private int useCount;
     private UseItemAction action = null;
-    private HouseObject<PlaceableHouseObject> obj;
+    private HouseObject obj;
 
-    public SM_OBJECT_USE_UPDATE(int usingPlayerId, int ownerPlayerId, int useCount, HouseObject<PlaceableHouseObject> obj)
+    public SM_OBJECT_USE_UPDATE(int usingPlayerId, int ownerPlayerId, int useCount, HouseObject obj)
     {
         this.usingPlayerId = usingPlayerId;
         this.ownerPlayerId = ownerPlayerId;

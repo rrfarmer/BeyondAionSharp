@@ -56,7 +56,7 @@ public class CM_USE_ITEM : AionClientPacket
             return;
 
         Item targetItem = null;
-        HouseObject<PlaceableHouseObject> targetHouseObject = null;
+        HouseObject targetHouseObject = null;
         if (targetItemId != 0)
         {
             targetItem = player.GetInventory().GetItemByObjId(targetItemId);

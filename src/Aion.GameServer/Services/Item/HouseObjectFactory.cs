@@ -15,7 +15,7 @@ public sealed class HouseObjectFactory
     /// <summary>
     /// For loading data from DB
     /// </summary>
-    public static HouseObject<PlaceableHouseObject> CreateNew(HouseRegistry registry, int objectId, int objectTemplateId)
+    public static HouseObject CreateNew(HouseRegistry registry, int objectId, int objectTemplateId)
     {
         PlaceableHouseObject template = DataManager.HOUSING_OBJECT_DATA.GetTemplateById(objectTemplateId);
         if (template is HousingChair)
@@ -42,7 +42,7 @@ public sealed class HouseObjectFactory
     /// <summary>
     /// For transferring item from inventory to house registry
     /// </summary>
-    public static HouseObject<PlaceableHouseObject> CreateNew(House house, ItemTemplate itemTemplate)
+    public static HouseObject CreateNew(House house, ItemTemplate itemTemplate)
     {
         if (itemTemplate.GetActions() == null)
             throw new NullReferenceException("template actions null");
@@ -52,7 +52,7 @@ public sealed class HouseObjectFactory
             throw new NullReferenceException("template actions miss SummonHouseObjectAction");
 
         int objectTemplateId = action.GetTemplateId();
-        HouseObject<PlaceableHouseObject> obj = CreateNew(house.GetRegistry(), IDFactory.GetInstance().NextId(), objectTemplateId);
+        HouseObject obj = CreateNew(house.GetRegistry(), IDFactory.GetInstance().NextId(), objectTemplateId);
         int useDays = obj.GetObjectTemplate().GetUseDays();
         if (useDays > 0)
         {

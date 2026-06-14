@@ -33,7 +33,7 @@ public class SM_HOUSE_REGISTRY : AionServerPacket
                 return;
             }
             WriteH(houseRegistry.GetNotSpawnedObjects().Count);
-            foreach (HouseObject<PlaceableHouseObject> obj in houseRegistry.GetNotSpawnedObjects())
+            foreach (HouseObject obj in houseRegistry.GetNotSpawnedObjects())
             {
                 if (obj == null)
                     continue;

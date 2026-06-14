@@ -106,7 +106,7 @@ public class CM_HOUSE_EDIT : AionClientPacket
             }
             else
             {
-                HouseObject<PlaceableHouseObject> obj = HouseObjectFactory.CreateNew(house, template);
+                HouseObject obj = HouseObjectFactory.CreateNew(house, template);
                 house.GetRegistry().PutObject(obj, true);
                 SendPacket(new SM_HOUSE_EDIT(action, 1, obj.GetObjectId()));
             }
@@ -119,7 +119,7 @@ public class CM_HOUSE_EDIT : AionClientPacket
         }
         else if (action == 5)
         { // spawn object
-            HouseObject<PlaceableHouseObject> obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
+            HouseObject obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
             if (obj == null)
                 return;
             obj.SetX(x);
@@ -134,7 +134,7 @@ public class CM_HOUSE_EDIT : AionClientPacket
         }
         else if (action == 6)
         { // move object
-            HouseObject<PlaceableHouseObject> obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
+            HouseObject obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
             if (obj == null)
                 return;
             SendPacket(new SM_HOUSE_EDIT(action + 1, 0, itemObjectId));
@@ -150,7 +150,7 @@ public class CM_HOUSE_EDIT : AionClientPacket
         }
         else if (action == 7)
         { // despawn object
-            HouseObject<PlaceableHouseObject> obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
+            HouseObject obj = house.GetRegistry().GetObjectByObjId(itemObjectId);
             if (obj == null)
                 return;
             SendPacket(new SM_HOUSE_EDIT(action, 0, itemObjectId));

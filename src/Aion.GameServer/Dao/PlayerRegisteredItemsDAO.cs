@@ -90,14 +90,14 @@ public class PlayerRegisteredItemsDAO
         }
     }
 
-    private static HouseObject<PlaceableHouseObject> ConstructObject(HouseRegistry registry, MySqlDataReader rset)
+    private static HouseObject ConstructObject(HouseRegistry registry, MySqlDataReader rset)
     {
         int itemUniqueId = rset.GetInt32(rset.GetOrdinal("item_unique_id"));
         VisibleObject visObj = Aion.GameServer.World.World.GetInstance().FindVisibleObject(itemUniqueId);
-        HouseObject<PlaceableHouseObject> obj;
+        HouseObject obj;
         if (visObj != null)
         {
-            if (visObj is HouseObject<PlaceableHouseObject> ho)
+            if (visObj is HouseObject ho)
                 obj = ho;
             else
             {
@@ -143,11 +143,11 @@ public class PlayerRegisteredItemsDAO
 
     public static bool Store(HouseRegistry registry, int playerId)
     {
-        List<HouseObject<PlaceableHouseObject>> objects = registry.GetObjects();
+        List<HouseObject> objects = registry.GetObjects();
         List<HouseDecoration> decors = registry.GetDecors();
-        List<HouseObject<PlaceableHouseObject>> objectsToAdd = objects.Where(x => IPersistable.NEW(x)).ToList();
-        List<HouseObject<PlaceableHouseObject>> objectsToUpdate = objects.Where(x => IPersistable.CHANGED(x)).ToList();
-        List<HouseObject<PlaceableHouseObject>> objectsToDelete = objects.Where(x => IPersistable.DELETED(x)).ToList();
+        List<HouseObject> objectsToAdd = objects.Where(x => IPersistable.NEW(x)).ToList();
+        List<HouseObject> objectsToUpdate = objects.Where(x => IPersistable.CHANGED(x)).ToList();
+        List<HouseObject> objectsToDelete = objects.Where(x => IPersistable.DELETED(x)).ToList();
         List<HouseDecoration> decorsToAdd = decors.Where(x => IPersistable.NEW(x)).ToList();
         List<HouseDecoration> decorsToUpdate = decors.Where(x => IPersistable.CHANGED(x)).ToList();
         List<HouseDecoration> decorsToDelete = decors.Where(x => IPersistable.DELETED(x)).ToList();
@@ -172,7 +172,7 @@ public class PlayerRegisteredItemsDAO
             log.LogError(e, "Can't save registered items for player: " + playerId);
         }
 
-        foreach (HouseObject<PlaceableHouseObject> obj in objects)
+        foreach (HouseObject obj in objects)
         {
             if (obj.GetPersistentState() == IPersistable.PersistentState.DELETED)
                 registry.DiscardObject(obj, true);
@@ -197,7 +197,7 @@ public class PlayerRegisteredItemsDAO
         return true;
     }
 
-    private static bool StoreObjects(MySqlConnection con, ICollection<HouseObject<PlaceableHouseObject>> objects, int playerId, bool isNew)
+    private static bool StoreObjects(MySqlConnection con, ICollection<HouseObject> objects, int playerId, bool isNew)
     {
         if (objects.Count == 0)
             return true;
@@ -206,7 +206,7 @@ public class PlayerRegisteredItemsDAO
         {
             using MySqlTransaction tx = con.BeginTransaction();
             using MySqlBatch batch = new MySqlBatch(con, tx);
-            foreach (HouseObject<PlaceableHouseObject> obj in objects)
+            foreach (HouseObject obj in objects)
             {
                 MySqlBatchCommand stmt = new MySqlBatchCommand(isNew ? INSERT_QUERY : UPDATE_QUERY);
                 stmt.Parameters.Add(new MySqlParameter { Value = (object)(obj.GetExpireTime() > 0 ? (int?)obj.GetExpireTime() : null) ?? DBNull.Value });
@@ -280,7 +280,7 @@ public class PlayerRegisteredItemsDAO
         return true;
     }
 
-    private static bool DeleteObjects(MySqlConnection con, ICollection<HouseObject<PlaceableHouseObject>> objects)
+    private static bool DeleteObjects(MySqlConnection con, ICollection<HouseObject> objects)
     {
         if (objects.Count == 0)
             return true;
@@ -289,7 +289,7 @@ public class PlayerRegisteredItemsDAO
         {
             using MySqlTransaction tx = con.BeginTransaction();
             using MySqlBatch batch = new MySqlBatch(con, tx);
-            foreach (HouseObject<PlaceableHouseObject> obj in objects)
+            foreach (HouseObject obj in objects)
             {
                 MySqlBatchCommand stmt = new MySqlBatchCommand(DELETE_QUERY);
                 stmt.Parameters.Add(new MySqlParameter { Value = obj.GetObjectId() });

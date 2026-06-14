@@ -32,9 +32,9 @@ public class CM_USE_HOUSE_OBJECT : AionClientPacket
         VisibleObject visObject = global::Aion.GameServer.World.World.GetInstance().FindVisibleObject(itemObjectId);
         if (visObject == null)
             return;
-        if (visObject is HouseObject<PlaceableHouseObject>)
+        if (visObject is HouseObject)
         {
-            ((HouseObject<PlaceableHouseObject>)visObject).GetController().OnDialogRequest(player);
+            ((HouseObject)visObject).GetController().OnDialogRequest(player);
         }
     }
 }

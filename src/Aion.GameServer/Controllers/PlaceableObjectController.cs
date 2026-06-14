@@ -6,8 +6,13 @@ using Aion.GameServer.Utils;
 
 namespace Aion.GameServer.Controllers;
 
-/// <summary>Java parity: controllers/PlaceableObjectController (Rolandas) : VisibleObjectController&lt;HouseObject&lt;T&gt;&gt;. **Java `instanceof UseableHouseObject&lt;?&gt;` wildcard→`is UseableHouseObject&lt;T&gt;`** (class type param T:PlaceableHouseObject matches — sidesteps the HouseObject wildcard issue). PositionUtil/SM_SYSTEM_MESSAGE red-tolerated.</summary>
-public class PlaceableObjectController<T> : VisibleObjectController<HouseObject<T>> where T : PlaceableHouseObject
+/// <summary>
+/// Java parity: controllers/PlaceableObjectController (Rolandas) : VisibleObjectController&lt;HouseObject&lt;T&gt;&gt;.
+/// C# generic-invariance break: the owner is the NON-GENERIC <see cref="HouseObject"/> (Java wildcard
+/// <c>HouseObject&lt;?&gt;</c>), and Java's <c>instanceof UseableHouseObject&lt;?&gt;</c> wildcard becomes
+/// <c>is UseableHouseObject</c> (non-generic base). PositionUtil/SM_SYSTEM_MESSAGE red-tolerated.
+/// </summary>
+public class PlaceableObjectController : VisibleObjectController<HouseObject>
 {
     public override void OnDespawn()
     {
@@ -28,7 +33,7 @@ public class PlaceableObjectController<T> : VisibleObjectController<HouseObject<
     public override void NotKnow(VisibleObject obj)
     {
         base.NotKnow(obj);
-        if (GetOwner() is UseableHouseObject<T> useableHouseObject && obj is Player player)
+        if (GetOwner() is UseableHouseObject useableHouseObject && obj is Player player)
             useableHouseObject.ReleaseOccupant(player);
     }
 }
