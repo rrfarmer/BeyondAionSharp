@@ -103,8 +103,8 @@ public class DyeAction : AbstractItemAction
         float y = houseObject.GetY();
         float z = houseObject.GetZ();
         int rotation = houseObject.GetRotation();
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmHouseEdit(7, 0, houseObject.GetObjectId()));
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmHouseEdit(5, houseObject.GetObjectId(), x, y, z, rotation));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_HOUSE_EDIT(7, 0, houseObject.GetObjectId()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_HOUSE_EDIT(5, houseObject.GetObjectId(), x, y, z, rotation));
         houseObject.Spawn();
         string objectName = houseObject.GetObjectTemplate().GetL10n();
         if (houseObject.GetColor() == null)
