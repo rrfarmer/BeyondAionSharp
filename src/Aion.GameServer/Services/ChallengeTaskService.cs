@@ -1,257 +1,302 @@
-using Aion.GameServer.Data;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Configs.Main;
+using Aion.GameServer.Dao;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.Challenge;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Templates.Challenge;
+using Aion.GameServer.Model.Team.Legion;
+using Aion.GameServer.Model.Town;
+using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Services.Mail;
+using Aion.GameServer.Services.Players;
+using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.Extensions;
 
 namespace Aion.GameServer.Services;
 
-public interface IChallengeTaskService
+/// <summary>
+/// Java parity: services/ChallengeTaskService (@author ViAl). Singleton getInstance(); ConcurrentHashMap -> ConcurrentDictionary;
+/// computeIfAbsent -> GetOrAdd; HashMap inner maps -> Dictionary. SM_SYSTEM_MESSAGE/PlayerService(Players ns)/TownService faithful.
+/// town.getL10n()/template.getL10n() via IL10n extension. TreeMap descendingMap -> SortedDictionary OrderByDescending. LetterType.NORMAL.
+/// </summary>
+public class ChallengeTaskService
 {
-	bool CanRaiseLegionLevel(
-		ChallengeTaskTable challengeTasks,
-		IReadOnlyList<ChallengeTaskProgressRow> progressRows,
-		int legionLevel);
+    private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(ChallengeTaskService));
 
-	Task<IReadOnlyList<ChallengeTaskState>> BuildLegionTaskListAsync(
-		ChallengeTaskTable challengeTasks,
-		IPlayerEnterWorldRepository repository,
-		int legionId,
-		int legionLevel,
-		string playerRace,
-		CancellationToken cancellationToken = default);
+    private readonly ConcurrentDictionary<int, Dictionary<int, int>> taskAcceptTownIds;
+    private readonly ConcurrentDictionary<int, Dictionary<int, ChallengeTask>> cityTasks;
+    private readonly ConcurrentDictionary<int, Dictionary<int, ChallengeTask>> legionTasks;
 
-	Task<ChallengeTaskFinishResult> OnChallengeQuestFinishAsync(
-		ChallengeTaskTable challengeTasks,
-		IPlayerEnterWorldRepository repository,
-		Player player,
-		int questId,
-		int currentEpochSeconds,
-		CancellationToken cancellationToken = default);
-}
+    private static class SingletonHolder
+    {
+        internal static readonly ChallengeTaskService instance = new ChallengeTaskService();
+    }
 
-public sealed record ChallengeQuestState(int QuestId, int MaxRepeats, int ScorePerQuest, int CompleteCount);
+    public static ChallengeTaskService GetInstance()
+    {
+        return SingletonHolder.instance;
+    }
 
-public sealed record ChallengeTaskState(
-	int TaskId,
-	int CompleteTimeEpochSeconds,
-	bool IsRepeatable,
-	IReadOnlyList<ChallengeQuestState> Quests)
-{
-	public bool IsCompleted => Quests.All(quest => quest.CompleteCount >= quest.MaxRepeats);
-}
+    private ChallengeTaskService()
+    {
+        taskAcceptTownIds = new ConcurrentDictionary<int, Dictionary<int, int>>();
+        cityTasks = new ConcurrentDictionary<int, Dictionary<int, ChallengeTask>>();
+        legionTasks = new ConcurrentDictionary<int, Dictionary<int, ChallengeTask>>();
+        log.LogInformation("ChallengeTaskService initialized.");
+    }
 
-public sealed record ChallengeTaskFinishResult(
-	ChallengeTaskFinishStatus Status,
-	int TaskId = 0,
-	int QuestId = 0,
-	int CompleteCount = 0,
-	int CompleteTimeEpochSeconds = 0,
-	IReadOnlyList<ChallengeTaskState>? AvailableTasks = null)
-{
-	public bool Updated => Status == ChallengeTaskFinishStatus.Updated;
-}
+    public void ShowTaskList(Player player, ChallengeType challengeType, int ownerId)
+    {
+        if (CustomConfig.CHALLENGE_TASKS_ENABLED)
+        {
+            int ownerLevel = 0;
+            switch (challengeType)
+            {
+                case ChallengeType.TOWN:
+                    ownerLevel = TownService.GetInstance().GetTownById(ownerId).GetLevel();
+                    break;
+                case ChallengeType.LEGION:
+                    ownerLevel = player.GetLegion().GetLegionLevel();
+                    break;
+            }
+            List<ChallengeTask> availableTasks = BuildTaskList(player, challengeType, ownerId, ownerLevel);
+            PacketSendUtility.SendPacket(player, new SM_CHALLENGE_LIST(2, ownerId, challengeType, availableTasks));
+            foreach (ChallengeTask task in availableTasks)
+            {
+                PacketSendUtility.SendPacket(player, new SM_CHALLENGE_LIST(7, ownerId, challengeType, task));
+            }
+        }
+    }
 
-public enum ChallengeTaskFinishStatus
-{
-	Updated,
-	MissingTaskTemplate,
-	TownTaskDeferred,
-	UnsupportedTaskType,
-	NoLegion,
-	NoLoadedProgress,
-	AlreadyComplete,
-	PersistenceFailed,
-}
+    private List<ChallengeTask> BuildTaskList(Player player, ChallengeType challengeType, int ownerId, int ownerLevel)
+    {
+        ConcurrentDictionary<int, Dictionary<int, ChallengeTask>> taskMap;
+        if (challengeType == ChallengeType.LEGION)
+            taskMap = legionTasks;
+        else
+            taskMap = cityTasks;
+        List<ChallengeTask> availableTasks = new List<ChallengeTask>();
+        if (!taskMap.ContainsKey(ownerId))
+        {
+            Dictionary<int, ChallengeTask> tasks = ChallengeTasksDAO.Load(ownerId, challengeType);
+            taskMap[ownerId] = tasks;
+        }
+        foreach (ChallengeTask ct in taskMap[ownerId].Values)
+        {
+            if (ct.GetTemplate().IsRepeatable() || !ct.IsCompleted())
+                availableTasks.Add(ct);
+        }
+        foreach (ChallengeTaskTemplate template in DataManager.CHALLENGE_DATA.GetTasks().Values)
+        {
+            if (template.GetType_() == challengeType && template.GetRace() == player.GetRace())
+            {
+                if (!taskMap[ownerId].ContainsKey(template.GetId()))
+                {
+                    if (ownerLevel >= template.GetMinLevel() && ownerLevel <= template.GetMaxLevel())
+                    {
+                        if (template.GetPrevTask() == null)
+                        {
+                            ChallengeTask task = new ChallengeTask(ownerId, template);
+                            taskMap[ownerId][task.GetTaskId()] = task;
+                            ChallengeTasksDAO.StoreTask(task);
+                            availableTasks.Add(task);
+                        }
+                        else
+                        {
+                            int prevTaskId = template.GetPrevTask().Value;
+                            if (taskMap[ownerId].ContainsKey(prevTaskId))
+                            {
+                                ChallengeTask prevTask = taskMap[ownerId][prevTaskId];
+                                if (prevTask.IsCompleted())
+                                {
+                                    ChallengeTask task = new ChallengeTask(ownerId, template);
+                                    taskMap[ownerId][task.GetTaskId()] = task;
+                                    ChallengeTasksDAO.StoreTask(task);
+                                    availableTasks.Add(task);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return availableTasks;
+    }
 
-public sealed class ChallengeTaskService : IChallengeTaskService
-{
-	public bool CanRaiseLegionLevel(
-		ChallengeTaskTable challengeTasks,
-		IReadOnlyList<ChallengeTaskProgressRow> progressRows,
-		int legionLevel)
-	{
-		// Java parity: ChallengeTaskService.canRaiseLegionLevel filters loaded LEGION tasks by
-		// ChallengeTaskTemplate.isLegionLevelTask && template.minLevel == legion.getLegionLevel().
-		var loadedRequiredTasks = progressRows
-			.GroupBy(row => row.TaskId)
-			.Select(group => new
-			{
-				Template = challengeTasks.GetTaskById(group.Key),
-				ProgressByQuestId = group.ToDictionary(row => row.QuestId, row => row.CompleteCount),
-			})
-			.Where(task =>
-				task.Template != null
-				&& task.Template.IsLegionLevelTask
-				&& task.Template.MinLevel == legionLevel
-				&& string.Equals(task.Template.Type, "LEGION", StringComparison.Ordinal))
-			.ToArray();
+    public void OnChallengeQuestFinish(Player player, int questId)
+    {
+        ChallengeTaskTemplate taskTemplate = DataManager.CHALLENGE_DATA.GetTaskByQuestId(questId);
+        switch (taskTemplate.GetType_())
+        {
+            case ChallengeType.TOWN:
+                OnCityTaskFinish(player, taskTemplate, questId);
+                break;
+            case ChallengeType.LEGION:
+                OnLegionTaskFinish(player, taskTemplate, questId);
+                break;
+        }
+    }
 
-		if (loadedRequiredTasks.Length == 0)
-			return false;
+    public void OnAcceptTask(Player player, int questId)
+    {
+        int townId = TownService.GetInstance().GetTownIdByPosition(player);
+        if (townId != 0)
+            taskAcceptTownIds.GetOrAdd(player.GetObjectId(), _ => new Dictionary<int, int>())[questId] = townId;
+    }
 
-		foreach (var task in loadedRequiredTasks)
-		{
-			foreach (var quest in task.Template!.Quests)
-			{
-				if (!task.ProgressByQuestId.TryGetValue(quest.QuestId, out var completeCount) || completeCount < quest.RepeatCount)
-					return false;
-			}
-		}
+    private void OnCityTaskFinish(Player player, ChallengeTaskTemplate taskTemplate, int questId)
+    {
+        Dictionary<int, int> townsByQuestId = taskAcceptTownIds.TryGetValue(player.GetObjectId(), out var m) ? m : null;
+        int? townId = null;
+        if (townsByQuestId != null && townsByQuestId.TryGetValue(questId, out var tid))
+        {
+            townId = tid;
+            townsByQuestId.Remove(questId);
+        }
+        if (townId == null) // server got restarted after player accepted the quest or quest got started outside town (by chat command)
+            return;
+        ChallengeTask task = GetChallengeTask(player, taskTemplate, townId.Value);
+        if (task == null) // task may be not available anymore due to town levelup
+            return;
+        ChallengeQuest quest = task.GetQuest(questId);
+        if (quest == null)
+        {
+            log.LogWarning(player + " finished city task " + task.GetTaskId() + " of town " + townId + " but info for quest " + questId + " is missing.");
+            return;
+        }
+        if (quest.GetCompleteCount() < quest.GetMaxRepeats() && !task.IsCompleted())
+        {
+            task.UpdateCompleteTime();
+            quest.IncreaseCompleteCount();
+            ChallengeTasksDAO.StoreTask(task);
+            Town town = TownService.GetInstance().GetTownById(townId.Value);
+            if (town != null)
+            {
+                int oldLevel = town.GetLevel();
+                town.IncreasePoints(quest.GetScorePerQuest());
+                if (task.IsCompleted())
+                {
+                    switch (taskTemplate.GetReward().GetType_())
+                    {
+                        case RewardType.POINT:
+                            town.IncreasePoints(taskTemplate.GetReward().GetValue().Value);
+                            break;
+                        case RewardType.SPAWN:
+                            // TODO
+                            break;
+                    }
+                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_TOWN_MISSION_COMPLETE(town.GetL10n(), task.GetTemplate().GetL10n()));
+                }
+                if (town.GetLevel() != oldLevel)
+                    PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_TOWN_LEVEL_LEVEL_UP(town.GetL10n(), town.GetLevel()));
+                TownDAO.Store(town);
+            }
+        }
+    }
 
-		return true;
-	}
+    private ChallengeTask GetChallengeTask(Player player, ChallengeTaskTemplate taskTemplate, int townId)
+    {
+        Dictionary<int, ChallengeTask> taskMap = cityTasks.TryGetValue(townId, out var tm) ? tm : null;
+        if (taskMap == null)
+        {
+            BuildTaskList(player, ChallengeType.TOWN, townId, TownService.GetInstance().GetTownById(townId).GetLevel());
+            taskMap = cityTasks.TryGetValue(townId, out var tm2) ? tm2 : null;
+            if (taskMap == null)
+            {
+                log.LogWarning("Town " + townId + " has no CityTasks! " + player + ", town residence:" + TownService.GetInstance().GetTownResidence(player));
+                return null;
+            }
+        }
+        return taskMap.TryGetValue(taskTemplate.GetId(), out var t) ? t : null;
+    }
 
-	public async Task<IReadOnlyList<ChallengeTaskState>> BuildLegionTaskListAsync(
-		ChallengeTaskTable challengeTasks,
-		IPlayerEnterWorldRepository repository,
-		int legionId,
-		int legionLevel,
-		string playerRace,
-		CancellationToken cancellationToken = default)
-	{
-		// Java parity: ChallengeTaskService.buildTaskList loads stored owner tasks, sends repeatable or incomplete
-		// tasks, then creates/stores newly available templates for the player's race and owner level.
-		var loadedTasks = BuildStates(challengeTasks, await repository.LoadLegionChallengeTasksAsync(legionId, cancellationToken));
-		var loadedByTaskId = loadedTasks.ToDictionary(task => task.TaskId);
-		var availableTasks = loadedTasks
-			.Where(task => task.IsRepeatable || !task.IsCompleted)
-			.ToList();
+    private void OnLegionTaskFinish(Player player, ChallengeTaskTemplate taskTemplate, int questId)
+    {
+        // Player could take challenge task and after that leave legion.
+        if (player.GetLegion() == null)
+            return;
+        int legionId = player.GetLegion().GetLegionId();
+        // If player took challenge task in one legion, then leave that legion and enter another.
+        if (!legionTasks.ContainsKey(legionId))
+            return;
+        // If player took challenge task in one legion, then leave that legion and enter another, and after that completed this task in new legion.
+        if (!legionTasks[legionId].TryGetValue(taskTemplate.GetId(), out var existing) || existing == null)
+            return;
+        ChallengeTask task = legionTasks[player.GetLegion().GetLegionId()][taskTemplate.GetId()];
+        ChallengeQuest quest = task.GetQuests()[questId];
+        if (quest.GetCompleteCount() >= quest.GetMaxRepeats())
+            return;
+        player.GetLegionMember().IncreaseChallengeScore(quest.GetScorePerQuest());
+        if (!task.IsCompleted())
+        {
+            task.UpdateCompleteTime();
+            quest.IncreaseCompleteCount();
+            foreach (Player p in player.GetLegion().GetOnlinePlayers())
+                ShowTaskList(p, ChallengeType.LEGION, legionId);
+            ChallengeTasksDAO.StoreTask(task);
+            if (task.IsCompleted())
+            {
+                SortedDictionary<int, List<int>> winnersByPoints = new SortedDictionary<int, List<int>>();
+                foreach (LegionMember legionMember in player.GetLegion().GetMembers())
+                {
+                    if (!winnersByPoints.TryGetValue(legionMember.GetChallengeScore(), out var bucket))
+                    {
+                        bucket = new List<int>();
+                        winnersByPoints[legionMember.GetChallengeScore()] = bucket;
+                    }
+                    bucket.Add(legionMember.GetObjectId());
+                    legionMember.SetChallengeScore(0);
+                    if (!legionMember.IsOnline()) // save legionMember to DB since owning player is not online (no autosave schedule)
+                        LegionService.GetInstance().StoreLegionMember(legionMember);
+                }
+                int rewardsAdded = 0, itemId, itemCount;
+                foreach (var e in winnersByPoints.OrderByDescending(kv => kv.Key))
+                {
+                    foreach (int objectId in e.Value)
+                    {
+                        foreach (ContributionReward reward in taskTemplate.GetContrib())
+                        {
+                            if (rewardsAdded <= reward.GetNumber())
+                            {
+                                rewardsAdded++;
+                                itemId = reward.GetRewardId();
+                                itemCount = reward.GetItemCount();
+                                string recipientName = PlayerService.GetPlayerName(objectId);
+                                SystemMailService.SendMail("Legion reward", recipientName, "", "", itemId, itemCount, 0, LetterType.NORMAL);
+                                break;
+                            }
+                        }
+                    }
+                    e.Value.Clear();
+                }
+            }
+        }
+    }
 
-		foreach (var template in challengeTasks.GetLegionTaskTemplatesForRaceAndLevel(playerRace, legionLevel))
-		{
-			if (loadedByTaskId.ContainsKey(template.TaskId))
-				continue;
-
-			if (template.PreviousTaskId.HasValue
-				&& (!loadedByTaskId.TryGetValue(template.PreviousTaskId.Value, out var previousTask) || !previousTask.IsCompleted))
-				continue;
-
-			var task = CreateNewState(template);
-			if (await repository.SaveNewLegionChallengeTaskAsync(legionId, template, cancellationToken))
-			{
-				loadedByTaskId[task.TaskId] = task;
-				availableTasks.Add(task);
-			}
-		}
-
-		return availableTasks;
-	}
-
-	public async Task<ChallengeTaskFinishResult> OnChallengeQuestFinishAsync(
-		ChallengeTaskTable challengeTasks,
-		IPlayerEnterWorldRepository repository,
-		Player player,
-		int questId,
-		int currentEpochSeconds,
-		CancellationToken cancellationToken = default)
-	{
-		// Java parity: QuestService.finishQuest invokes ChallengeTaskService.onChallengeQuestFinish
-		// for CHALLENGE_TASK templates, then the service dispatches by ChallengeTaskTemplate.type.
-		var taskTemplate = challengeTasks.GetTaskByQuestId(questId);
-		if (taskTemplate == null)
-			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.MissingTaskTemplate);
-
-		if (string.Equals(taskTemplate.Type, "TOWN", StringComparison.Ordinal))
-			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.TownTaskDeferred, taskTemplate.TaskId, questId);
-
-		if (!string.Equals(taskTemplate.Type, "LEGION", StringComparison.Ordinal))
-			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.UnsupportedTaskType, taskTemplate.TaskId, questId);
-
-		if ((player.GetLegion()?.GetLegionId() ?? 0) <= 0)
-			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.NoLegion, taskTemplate.TaskId, questId);
-
-		var questTemplate = taskTemplate.Quests.FirstOrDefault(quest => quest.QuestId == questId);
-		if (questTemplate == null)
-			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.MissingTaskTemplate, taskTemplate.TaskId, questId);
-
-		var loadedProgress = await repository.LoadLegionChallengeTasksAsync((player.GetLegion()?.GetLegionId() ?? 0), cancellationToken);
-		var progress = loadedProgress.FirstOrDefault(row => row.TaskId == taskTemplate.TaskId && row.QuestId == questId);
-		if (progress == null)
-			return new ChallengeTaskFinishResult(ChallengeTaskFinishStatus.NoLoadedProgress, taskTemplate.TaskId, questId);
-
-		if (progress.CompleteCount >= questTemplate.RepeatCount)
-			return new ChallengeTaskFinishResult(
-				ChallengeTaskFinishStatus.AlreadyComplete,
-				taskTemplate.TaskId,
-				questId,
-				progress.CompleteCount,
-				progress.CompleteTimeEpochSeconds);
-
-		var completeCount = progress.CompleteCount + 1;
-		var completeTime = Math.Max(0, currentEpochSeconds);
-		var saved = await repository.SaveLegionChallengeTaskProgressAsync(
-			(player.GetLegion()?.GetLegionId() ?? 0),
-			taskTemplate.TaskId,
-			questId,
-			completeCount,
-			completeTime,
-			cancellationToken);
-
-		if (!saved)
-		{
-			return new ChallengeTaskFinishResult(
-				ChallengeTaskFinishStatus.PersistenceFailed,
-				taskTemplate.TaskId,
-				questId,
-				progress.CompleteCount,
-				progress.CompleteTimeEpochSeconds);
-		}
-
-		var updatedRows = loadedProgress
-			.Select(row => row.TaskId == taskTemplate.TaskId && row.QuestId == questId
-				? row with { CompleteCount = completeCount, CompleteTimeEpochSeconds = completeTime }
-				: row)
-			.ToArray();
-		var availableTasks = BuildStates(challengeTasks, updatedRows)
-			.Where(task => task.IsRepeatable || !task.IsCompleted)
-			.ToArray();
-		return new ChallengeTaskFinishResult(
-			ChallengeTaskFinishStatus.Updated,
-			taskTemplate.TaskId,
-			questId,
-			completeCount,
-			completeTime,
-			availableTasks);
-	}
-
-	private static IReadOnlyList<ChallengeTaskState> BuildStates(
-		ChallengeTaskTable challengeTasks,
-		IReadOnlyList<ChallengeTaskProgressRow> progressRows)
-	{
-		return progressRows
-			.GroupBy(row => row.TaskId)
-			.Select(group =>
-			{
-				var template = challengeTasks.GetTaskById(group.Key);
-				if (template == null)
-					return null;
-
-				var progressByQuestId = group.ToDictionary(row => row.QuestId);
-				var completeTime = group.Max(row => row.CompleteTimeEpochSeconds);
-				return new ChallengeTaskState(
-					template.TaskId,
-					completeTime,
-					template.IsRepeatable,
-					template.Quests
-						.Select(quest => new ChallengeQuestState(
-							quest.QuestId,
-							quest.RepeatCount,
-							quest.Score,
-							progressByQuestId.TryGetValue(quest.QuestId, out var progress) ? progress.CompleteCount : 0))
-						.ToArray());
-			})
-			.Where(task => task != null)
-			.Cast<ChallengeTaskState>()
-			.ToArray();
-	}
-
-	private static ChallengeTaskState CreateNewState(ChallengeTaskSummary template)
-	{
-		return new ChallengeTaskState(
-			template.TaskId,
-			0,
-			template.IsRepeatable,
-			template.Quests
-				.Select(quest => new ChallengeQuestState(quest.QuestId, quest.RepeatCount, quest.Score, 0))
-				.ToArray());
-	}
+    public bool CanRaiseLegionLevel(Legion legion, Player actingPlayer)
+    {
+        Dictionary<int, ChallengeTask> tasks = legionTasks.GetOrAdd(legion.GetLegionId(),
+            id => ChallengeTasksDAO.Load(id, ChallengeType.LEGION));
+        List<ChallengeTask> requiredTasksForLevel = new List<ChallengeTask>();
+        foreach (ChallengeTask task in tasks.Values)
+        {
+            ChallengeTaskTemplate taskTemplate = task.GetTemplate();
+            if (taskTemplate.IsLegionLevelTask() && taskTemplate.GetMinLevel() == legion.GetLegionLevel())
+                requiredTasksForLevel.Add(task);
+        }
+        if (requiredTasksForLevel.Count == 0)
+        {
+            log.LogWarning("{ActingPlayer} tried to increase level of {Legion} but no challenge tasks were found", actingPlayer, legion);
+            return false;
+        }
+        foreach (ChallengeTask task in requiredTasksForLevel)
+            if (!task.IsCompleted())
+                return false;
+        return true;
+    }
 }
