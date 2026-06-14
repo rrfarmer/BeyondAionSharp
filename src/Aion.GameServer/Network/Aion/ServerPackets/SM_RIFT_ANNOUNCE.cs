@@ -9,11 +9,11 @@ public class SM_RIFT_ANNOUNCE : AionServerPacket
 {
     private int actionId;
     private RVController rift;
-    private Dictionary<int, int> rifts;
+    private IDictionary<int, int> rifts;
     private int objectId;
     private int gelkmaros, inggison;
 
-    public SM_RIFT_ANNOUNCE(Dictionary<int, int> rifts)
+    public SM_RIFT_ANNOUNCE(IDictionary<int, int> rifts)
     {
         this.actionId = 0;
         this.rifts = rifts;
