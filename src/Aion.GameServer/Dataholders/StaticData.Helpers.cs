@@ -8,26 +8,6 @@ namespace Aion.GameServer.Dataholders;
 
 public sealed partial class StaticData
 {
-	private static QuestNpcStartTable LoadQuestNpcStarts(
-		string cacheFilePath,
-		string? questHandlerDirectory,
-		CancellationToken cancellationToken)
-	{
-		var table = new QuestNpcStartTable();
-		var questScriptDirectory = Path.GetDirectoryName(cacheFilePath);
-		var result = new QuestNpcStartRegistrationSourceLoader()
-			.Load(questScriptDirectory, questHandlerDirectory, cancellationToken);
-		foreach (var source in result.Sources)
-		{
-			if (source.EventKind == QuestNpcRegistrationEventKind.OnTalkEvent)
-				table.RegisterOnTalkEvent(source);
-			else
-				table.RegisterOnQuestStart(source);
-		}
-
-		return table;
-	}
-
 	private static IReadOnlyList<GlobalDropRuleSummary> ProcessGlobalDropRules(
 		IReadOnlyList<GlobalDropRuleSummary> rules,
 		IReadOnlyList<NpcTemplateSummary> npcTemplates)

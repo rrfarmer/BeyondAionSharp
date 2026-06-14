@@ -64,8 +64,6 @@ public sealed partial class StaticData
 		PlayerInitialDataTable playerInitialData,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
-		QuestHandlerAvailabilityTable questHandlers,
-		QuestNpcStartTable questNpcStarts,
 		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
 		Task? validationTask)
@@ -123,8 +121,6 @@ public sealed partial class StaticData
 		PlayerInitialData = playerInitialData;
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
-		QuestHandlers = questHandlers;
-		QuestNpcStarts = questNpcStarts;
 		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
 		ValidationTask = validationTask;
@@ -251,11 +247,6 @@ public sealed partial class StaticData
 	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
 
 	public WarehouseExpandData WarehouseExpandDataDh { get; } = new();
-
-
-	public QuestHandlerAvailabilityTable QuestHandlers { get; }
-
-	public QuestNpcStartTable QuestNpcStarts { get; }
 
 	public LegionDominionTable LegionDominions { get; }
 
@@ -2890,8 +2881,6 @@ public sealed partial class StaticData
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
 		var workOrderRecipes = WorkOrderRecipeTable.LoadFromImportedFiles(importedFiles);
-		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
-		var questNpcStarts = LoadQuestNpcStarts(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
 
 		return new StaticData(
@@ -2985,8 +2974,6 @@ public sealed partial class StaticData
 				spawnLocationsByRace),
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
-			questHandlers,
-			questNpcStarts,
 			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			validationTask);
