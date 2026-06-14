@@ -109,7 +109,7 @@ public class DecomposeAction : AbstractItemAction
             // Java parity: selectable.removeIf(item -> !item.isObtainableFor(player));
             foreach (ResultedItem item in selectable.Where(item => !item.IsObtainableFor(player)).ToList())
                 selectable.Remove(item);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmFirstShowDecomposable(parentItem.GetObjectId(), selectable));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_FIRST_SHOW_DECOMPOSABLE(parentItem.GetObjectId(), selectable));
             return;
         }
         List<ExtractedItemsCollection> itemsCollections = DataManager.DECOMPOSABLE_ITEMS_DATA.GetInfoByItemId(parentItem.GetItemId());
