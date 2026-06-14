@@ -151,7 +151,7 @@ public partial class Player : Creature
     private int robotId;
     private bool isInFfaTeamMode;
     private int customStates;
-    private Aion.GameServer.Services.Panesterra.Ahserion.PanesterraFaction panesterraFaction;
+    private Aion.GameServer.Services.Panesterra.Ahserion.PanesterraFaction? panesterraFaction;
 
     public Player(Aion.GameServer.Model.Account.PlayerAccountData playerAccountData, Aion.GameServer.Model.Account.Account account)
         : base(playerAccountData.GetPlayerCommonData().GetPlayerObjId(), new PlayerController(), null, playerAccountData.GetPlayerCommonData(), null, false)

@@ -40,7 +40,7 @@ public class PanesterraBase : Base<PanesterraBaseLocation>
     public override BaseOccupier GetOccupier(Creature bossKiller)
     {
         if (bossKiller is Player player && player.GetPanesterraFaction() != null)
-            return BaseOccupierExtensions.FindBy(player.GetPanesterraFaction()).Value;
+            return BaseOccupierExtensions.FindBy(player.GetPanesterraFaction().Value).Value;
         return GetLocation().GetTemplate().GetDefaultOccupier();
     }
 }

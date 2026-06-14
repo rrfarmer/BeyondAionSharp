@@ -61,9 +61,9 @@ public class TribeRelationService
         }
         if (creature2 is Player p && p.GetPanesterraFaction() != null && creature1.GetTribe().ToString().StartsWith("GAB1_"))
         {
-            if (creature1.GetTribe() == p.GetPanesterraFaction().GetTribe())
+            if (creature1.GetTribe() == p.GetPanesterraFaction().Value.GetTribe())
                 return false;
-            return DataManager.TRIBE_RELATIONS_DATA.IsAggressiveRelation(creature1.GetTribe(), p.GetPanesterraFaction().GetTribe());
+            return DataManager.TRIBE_RELATIONS_DATA.IsAggressiveRelation(creature1.GetTribe(), p.GetPanesterraFaction().Value.GetTribe());
         }
 
         return DataManager.TRIBE_RELATIONS_DATA.IsAggressiveRelation(creature1.GetTribe(), creature2.GetTribe());
@@ -113,9 +113,9 @@ public class TribeRelationService
         }
         if (creature2 is Player p && p.GetPanesterraFaction() != null && creature1.GetTribe().ToString().StartsWith("GAB1_"))
         {
-            if (creature1.GetTribe() == p.GetPanesterraFaction().GetTribe())
+            if (creature1.GetTribe() == p.GetPanesterraFaction().Value.GetTribe())
                 return true;
-            return DataManager.TRIBE_RELATIONS_DATA.IsFriendlyRelation(creature1.GetTribe(), p.GetPanesterraFaction().GetTribe());
+            return DataManager.TRIBE_RELATIONS_DATA.IsFriendlyRelation(creature1.GetTribe(), p.GetPanesterraFaction().Value.GetTribe());
         }
 
         return DataManager.TRIBE_RELATIONS_DATA.IsFriendlyRelation(creature1.GetTribe(), creature2.GetTribe());
@@ -141,9 +141,9 @@ public class TribeRelationService
         }
         if (creature2 is Player p && p.GetPanesterraFaction() != null && creature1.GetTribe().ToString().StartsWith("GAB1_"))
         {
-            if (creature1.GetTribe() == p.GetPanesterraFaction().GetTribe())
+            if (creature1.GetTribe() == p.GetPanesterraFaction().Value.GetTribe())
                 return true;
-            return DataManager.TRIBE_RELATIONS_DATA.IsSupportRelation(creature1.GetTribe(), p.GetPanesterraFaction().GetTribe());
+            return DataManager.TRIBE_RELATIONS_DATA.IsSupportRelation(creature1.GetTribe(), p.GetPanesterraFaction().Value.GetTribe());
         }
 
         return DataManager.TRIBE_RELATIONS_DATA.IsSupportRelation(creature1.GetTribe(), creature2.GetTribe());
@@ -201,9 +201,9 @@ public class TribeRelationService
 
         if (creature2 is Player p && p.GetPanesterraFaction() != null && creature1.GetTribe().ToString().StartsWith("GAB1_"))
         {
-            if (creature1.GetTribe() == p.GetPanesterraFaction().GetTribe())
+            if (creature1.GetTribe() == p.GetPanesterraFaction().Value.GetTribe())
                 return false;
-            return DataManager.TRIBE_RELATIONS_DATA.IsHostileRelation(creature1.GetTribe(), p.GetPanesterraFaction().GetTribe());
+            return DataManager.TRIBE_RELATIONS_DATA.IsHostileRelation(creature1.GetTribe(), p.GetPanesterraFaction().Value.GetTribe());
         }
 
         return DataManager.TRIBE_RELATIONS_DATA.IsHostileRelation(creature1.GetTribe(), creature2.GetTribe());
