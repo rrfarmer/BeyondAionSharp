@@ -32,7 +32,7 @@ namespace Aion.GameServer.Services.Transfers;
 public class CMT_CHARACTER_INFORMATION : BaseClientPacket<AionConnection>
 {
     public CMT_CHARACTER_INFORMATION(byte[] byteBuffer)
-        : base(byteBuffer, 0)
+        : base(Aion.Commons.Nio.ByteBuffer.Wrap(byteBuffer), 0)
     {
     }
 

@@ -206,7 +206,7 @@ public sealed record HouseRegistrySummary(
 				continue;
 			}
 
-			var template = housingObjectTemplates.GetTemplate(row.ItemId);
+			var template = housingObjectTemplates.GetTemplateById(row.ItemId);
 			var expirationSeconds = template?.UseDays > 0 && row.ExpireTimeSeconds.HasValue
 				? row.ExpireTimeSeconds.Value - (int)now
 				: 0;

@@ -17,8 +17,9 @@ public sealed class HousingObjectTemplateTable
 
 	public int Count => Templates.Count;
 
-	public HousingObjectTemplateSummary? GetTemplate(int templateId)
+	public HousingObjectTemplateSummary? GetTemplateById(int templateId)
 	{
+		// Java parity: dataholders/HousingObjectData.getTemplateById(int).
 		return _templatesById.GetValueOrDefault(templateId);
 	}
 }

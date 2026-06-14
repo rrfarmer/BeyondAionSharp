@@ -51,7 +51,7 @@ public class CM_GROUP_DATA_EXCHANGE : AionClientPacket
         {
             NullLoggerFactory.Instance.CreateLogger(nameof(CM_GROUP_DATA_EXCHANGE)).LogError(
                 "Player {Player} exceeded maximum exchange data size (action: {Action}, groupType: {GroupType}, unk2: {Unk2}, bytes send: {Bytes}): \n{Hex}", player, action, groupType, unk2,
-                data.Length, NetworkUtils.ToHex(data));
+                data.Length, NetworkUtils.ToHex(global::Aion.Commons.Nio.ByteBuffer.Wrap(data)));
             return;
         }
 
