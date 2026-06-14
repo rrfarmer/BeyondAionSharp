@@ -144,14 +144,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<HouseMaintenanceTimingService>();
 			services.AddSingleton<ShutdownHook>();
 			services.AddSingleton<IStaticDataLoader, StaticDataService>();
-			services.AddSingleton(
-				serviceProvider => new GamePacketProcessor<string>(
-					(packet, cancellationToken) =>
-					{
-						var logger = serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Aion.GameServer.Network.Aion.GamePacketProcessor");
-						logger.LogDebug("Parsed game client packet 0x{Opcode:X3}", packet.OpCode);
-						return Task.CompletedTask;
-					}));
 			services.AddSingleton<Aion.GameServer.Network.LoginServer.LoginServer>();
 			services.AddSingleton<Aion.GameServer.Network.ChatServer.ChatServer>();
 			services.AddSingleton<IUsedIdRepository, MySqlUsedIdRepository>();
