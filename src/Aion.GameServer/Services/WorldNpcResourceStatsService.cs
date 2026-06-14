@@ -358,47 +358,6 @@ public sealed class WorldNpcResourceStatsService
 		return WorldNpcReviveDpResetResult.FromDpChange(change, previousDp, hasNoResurrectPenalty);
 	}
 
-	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyResourceOverTimePeriodicResultAsync(
-		WorldNpcSkillResourceOverTimePeriodicActionResult effectResult,
-		WorldNpcResourceMutationTarget target,
-		CancellationToken cancellationToken = default)
-	{
-		// Java parity: skillengine/effect resource periodic actions eventually call CreatureLifeStats/PlayerLifeStats resource mutators.
-		if (!effectResult.Applied)
-			return ValueTask.FromResult(WorldNpcResourceEffectApplicationResult.EffectSkipped(effectResult.ResourceType, effectResult.SkillId));
-
-		var kind = effectResult.IsDamage ? WorldNpcResourceChangeKind.Reduce : WorldNpcResourceChangeKind.Increase;
-		return ApplyStagedResourceMutationAsync(
-			effectResult.ResourceType,
-			kind,
-			effectResult.FinalValue,
-			effectResult.SkillId,
-			effectResult.PacketType,
-			effectResult.PacketLog,
-			target,
-			cancellationToken);
-	}
-
-	public ValueTask<WorldNpcResourceEffectApplicationResult> ApplyInstantResourceResultAsync(
-		WorldNpcSkillInstantResourceEffectResult effectResult,
-		WorldNpcResourceMutationTarget target,
-		CancellationToken cancellationToken = default)
-	{
-		// Java parity: skillengine/effect/{MpAttackInstant,FpAttackInstant,DelayedFpAtkInstant}Effect live callbacks reduce MP/FP.
-		if (!effectResult.Applied)
-			return ValueTask.FromResult(WorldNpcResourceEffectApplicationResult.EffectSkipped(effectResult.ResourceType, effectResult.SkillId));
-
-		return ApplyStagedResourceMutationAsync(
-			effectResult.ResourceType,
-			WorldNpcResourceChangeKind.Reduce,
-			effectResult.FinalValue,
-			effectResult.SkillId,
-			effectResult.PacketType,
-			effectResult.PacketLog,
-			target,
-			cancellationToken);
-	}
-
 	private async ValueTask<WorldNpcResourceEffectApplicationResult> ApplyStagedResourceMutationAsync(
 		WorldNpcEffectResourceType resourceType,
 		WorldNpcResourceChangeKind kind,
