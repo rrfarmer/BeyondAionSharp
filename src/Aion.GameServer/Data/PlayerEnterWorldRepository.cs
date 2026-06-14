@@ -4509,19 +4509,22 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	private static async Task SavePlayerSettingsAsync(
 		MySqlConnection connection,
 		int playerObjectId,
-		PlayerSettings settings,
+		Aion.GameServer.Model.GameObjects.Players.PlayerSettings settings,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/PlayerSettingsDAO.saveSettings.
-		if (settings.UiSettings != null)
-			await ReplacePlayerSettingAsync(connection, playerObjectId, 0, settings.UiSettings, cancellationToken);
-		if (settings.Shortcuts != null)
-			await ReplacePlayerSettingAsync(connection, playerObjectId, 1, settings.Shortcuts, cancellationToken);
-		if (settings.HouseBuddies != null)
-			await ReplacePlayerSettingAsync(connection, playerObjectId, 2, settings.HouseBuddies, cancellationToken);
+		byte[]? uiSettings = settings.GetUiSettings();
+		byte[]? shortcuts = settings.GetShortcuts();
+		byte[]? houseBuddies = settings.GetHouseBuddies();
+		if (uiSettings != null)
+			await ReplacePlayerSettingAsync(connection, playerObjectId, 0, uiSettings, cancellationToken);
+		if (shortcuts != null)
+			await ReplacePlayerSettingAsync(connection, playerObjectId, 1, shortcuts, cancellationToken);
+		if (houseBuddies != null)
+			await ReplacePlayerSettingAsync(connection, playerObjectId, 2, houseBuddies, cancellationToken);
 
-		await ReplacePlayerSettingAsync(connection, playerObjectId, -1, settings.Display, cancellationToken);
-		await ReplacePlayerSettingAsync(connection, playerObjectId, -2, settings.Deny, cancellationToken);
+		await ReplacePlayerSettingAsync(connection, playerObjectId, -1, settings.GetDisplay(), cancellationToken);
+		await ReplacePlayerSettingAsync(connection, playerObjectId, -2, settings.GetDeny(), cancellationToken);
 	}
 
 	private static async Task SavePlayerAppearanceAsync(
@@ -5191,7 +5194,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	private static async Task SavePeriodicAbyssRankAsync(
 		MySqlConnection connection,
 		int playerObjectId,
-		PlayerAbyssRank rank,
+		Aion.GameServer.Model.GameObjects.Players.AbyssRank rank,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/AbyssRankDAO.storeAbyssRank insert/update columns; ranking list positions
@@ -5223,21 +5226,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			new[]
 			{
 				new MySqlParameter { Value = playerObjectId },
-				new MySqlParameter { Value = rank.DailyAp },
-				new MySqlParameter { Value = rank.WeeklyAp },
-				new MySqlParameter { Value = rank.Ap },
+				new MySqlParameter { Value = rank.GetDailyAP() },
+				new MySqlParameter { Value = rank.GetWeeklyAP() },
+				new MySqlParameter { Value = rank.GetAp() },
 				new MySqlParameter { Value = rank.Rank },
-				new MySqlParameter { Value = rank.DailyKill },
-				new MySqlParameter { Value = rank.WeeklyKill },
-				new MySqlParameter { Value = rank.AllKill },
-				new MySqlParameter { Value = rank.MaxRank },
-				new MySqlParameter { Value = rank.LastKill },
-				new MySqlParameter { Value = rank.LastAp },
+				new MySqlParameter { Value = rank.GetDailyKill() },
+				new MySqlParameter { Value = rank.GetWeeklyKill() },
+				new MySqlParameter { Value = rank.GetAllKill() },
+				new MySqlParameter { Value = rank.GetMaxRank() },
+				new MySqlParameter { Value = rank.GetLastKill() },
+				new MySqlParameter { Value = rank.GetLastAP() },
 				new MySqlParameter { Value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() },
-				new MySqlParameter { Value = rank.DailyGp },
-				new MySqlParameter { Value = rank.WeeklyGp },
-				new MySqlParameter { Value = rank.Gp },
-				new MySqlParameter { Value = rank.LastGp },
+				new MySqlParameter { Value = rank.GetDailyGP() },
+				new MySqlParameter { Value = rank.GetWeeklyGP() },
+				new MySqlParameter { Value = rank.GetCurrentGP() },
+				new MySqlParameter { Value = rank.GetLastGP() },
 			});
 		await command.ExecuteNonQueryAsync(cancellationToken);
 	}
@@ -5245,7 +5248,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	private static async Task SavePeriodicPlayerSkillsAsync(
 		MySqlConnection connection,
 		int playerObjectId,
-		IReadOnlyList<PlayerSkill> skills,
+		Aion.GameServer.Model.Skill.PlayerSkillList skills,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/PlayerSkillListDAO.storeSkills persists deleted/current skills during
@@ -5257,20 +5260,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 		}
 
-		if (skills.Count == 0)
+		var allSkills = skills.GetAllSkills();
+		if (allSkills.Count == 0)
 			return;
 
 		await using var command = connection.CreateCommand();
 		command.CommandText = "REPLACE INTO player_skills (player_id, skill_id, skill_level) VALUES (?, ?, ?)";
-		foreach (var skill in skills)
+		foreach (var skill in allSkills)
 		{
 			command.Parameters.Clear();
 			command.Parameters.AddRange(
 				new[]
 				{
 					new MySqlParameter { Value = playerObjectId },
-					new MySqlParameter { Value = skill.SkillId },
-					new MySqlParameter { Value = skill.SkillLevel },
+					new MySqlParameter { Value = skill.GetSkillId() },
+					new MySqlParameter { Value = skill.GetSkillLevel() },
 				});
 			await command.ExecuteNonQueryAsync(cancellationToken);
 		}
@@ -5427,17 +5431,20 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		};
 	}
 
-	private static async Task SavePlayerLifeStatsAsync(MySqlConnection connection, int playerObjectId, PlayerLifeStats lifeStats, CancellationToken cancellationToken)
+	private static async Task SavePlayerLifeStatsAsync(MySqlConnection connection, int playerObjectId, Aion.GameServer.Model.Stats.Container.PlayerLifeStats lifeStats, CancellationToken cancellationToken)
 	{
 		// Java parity: dao/PlayerLifeStatsDAO.updatePlayerLifeStat, with insert fallback matching loadPlayerLifeStat.
+		int currentHp = lifeStats.GetCurrentHp();
+		int currentMp = lifeStats.GetCurrentMp();
+		int currentFp = lifeStats.GetCurrentFp();
 		await using var updateCommand = connection.CreateCommand();
 		updateCommand.CommandText = "UPDATE player_life_stats SET hp = ?, mp = ?, fp = ? WHERE player_id = ?";
 		updateCommand.Parameters.AddRange(
 			new[]
 			{
-				new MySqlParameter { Value = lifeStats.CurrentHp },
-				new MySqlParameter { Value = lifeStats.CurrentMp },
-				new MySqlParameter { Value = lifeStats.CurrentFp },
+				new MySqlParameter { Value = currentHp },
+				new MySqlParameter { Value = currentMp },
+				new MySqlParameter { Value = currentFp },
 				new MySqlParameter { Value = playerObjectId },
 			});
 		if (await updateCommand.ExecuteNonQueryAsync(cancellationToken) > 0)
@@ -5449,9 +5456,9 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			new[]
 			{
 				new MySqlParameter { Value = playerObjectId },
-				new MySqlParameter { Value = lifeStats.CurrentHp },
-				new MySqlParameter { Value = lifeStats.CurrentMp },
-				new MySqlParameter { Value = lifeStats.CurrentFp },
+				new MySqlParameter { Value = currentHp },
+				new MySqlParameter { Value = currentMp },
+				new MySqlParameter { Value = currentFp },
 			});
 		await insertCommand.ExecuteNonQueryAsync(cancellationToken);
 	}
