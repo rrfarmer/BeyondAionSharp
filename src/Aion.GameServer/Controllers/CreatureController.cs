@@ -409,7 +409,7 @@ public abstract class CreatureController : VisibleObjectController
         return Die(null, null, lastAttacker);
     }
 
-    public bool Die(TYPE type, LOG log, Creature lastAttacker)
+    public bool Die(TYPE type, LOG? log, Creature lastAttacker)
     {
         return GetOwner().GetLifeStats().ReduceHp(type, int.MaxValue, 0, log, lastAttacker) == 0;
     }

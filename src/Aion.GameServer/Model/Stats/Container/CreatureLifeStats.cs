@@ -82,7 +82,7 @@ public abstract class CreatureLifeStats
     /// Called whenever caller wants to absorb the creature's HP. If <paramref name="type"/> is null, no SM_ATTACK_STATUS packet is sent.
     /// Returns the HP that this creature has left. If 0, the creature died.
     /// </summary>
-    public int ReduceHp(TYPE type, int value, int skillId, LOG log, Creature attacker)
+    public int ReduceHp(TYPE type, int value, int skillId, LOG? log, Creature attacker)
     {
         if (attacker == null)
             throw new ArgumentNullException(nameof(attacker));
