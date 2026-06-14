@@ -1,43 +1,16 @@
 using System.IO.Compression;
 using System.Text;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Model.House;
+using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.Collections;
 
 namespace Aion.GameServer.Model.GameObjects;
 
-public sealed record PlayerScript(int Id, byte[] CompressedBytes, int UncompressedSize)
-{
-	public static PlayerScript LuaSandboxFix { get; } = CreateLuaSandboxFix();
-
-	public bool HasData => CompressedBytes.Length > 0;
-
-	private static PlayerScript CreateLuaSandboxFix()
-	{
-		// Java parity: model/house/PlayerScript.LUA_SANDBOX_FIX.
-		var script = """
-			<?xml version="1.0" encoding="UTF-16" ?>
-			<lboxes>
-				<lbox>
-					<id>101</id>
-					<name><![CDATA[Lua Fix]]></name>
-					<desc><![CDATA[Secures the Lua environment against malicious actors]]></desc>
-					<script><![CDATA[
-			_G.debug = nil
-			_G.dofile = nil
-			_G.io = nil
-			_G.load = nil
-			_G.loadfile = nil
-			_G.loadstring = nil
-			_G.package = nil
-			_G.require = nil
-			]]></script>
-					<icon>1</icon>
-				</lbox>
-			</lboxes>
-			""";
-		var bytes = Encoding.Unicode.GetBytes(script);
-		return new PlayerScript(0, PlayerScripts.Compress(bytes), bytes.Length);
-	}
-}
-
+// Java parity: model/gameobjects/player/PlayerScripts (@author Rolandas, Neon, Sykra). Uses the faithful
+// model/house/PlayerScript record (the previously-duplicated GameObjects.PlayerScript record was removed to
+// unify on Model.House.PlayerScript, which SM_HOUSE_SCRIPTS consumes). DB persistence stays DAO-owned in this port.
 public sealed class PlayerScripts
 {
 	public const byte ScriptLimit = 8;
@@ -103,6 +76,19 @@ public sealed class PlayerScripts
 	public static bool TryDecodeXml(byte[] compressedXml, int uncompressedSize, out string scriptXml)
 	{
 		return TryDecompressAndValidate(compressedXml, uncompressedSize, out scriptXml);
+	}
+
+	// Java parity: PlayerScripts.sendToPlayer(Player, int) — split the script array into packet-body-sized parts
+	// and send one SM_HOUSE_SCRIPTS per part.
+	public void SendToPlayer(Player player, int houseAddress)
+	{
+		if (player == null)
+			return;
+		SplitList<PlayerScript> scriptSplitList = new DynamicServerPacketBodySplitList<PlayerScript>(
+			new List<PlayerScript>(_scripts), false, SM_HOUSE_SCRIPTS.STATIC_BODY_SIZE,
+			SM_HOUSE_SCRIPTS.DYNAMIC_BODY_PART_SIZE_CALCULATOR);
+		foreach (var part in scriptSplitList)
+			PacketSendUtility.SendPacket(player, new SM_HOUSE_SCRIPTS(houseAddress, part));
 	}
 
 	private void FillEmptyScripts()
