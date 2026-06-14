@@ -27,6 +27,53 @@ public sealed class ChatServer : IAsyncDisposable
 	{
 		_logger = logger;
 		_options = options;
+		_instance = this;
+	}
+
+	// Java parity: network/chatserver/ChatServer is a singleton (SingletonHolder.instance). The C# transport is
+	// DI-constructed, so the most-recently-constructed instance is exposed as the singleton bridge for faithful callers.
+	private static ChatServer? _instance;
+
+	// Java parity: ChatServer.getInstance().
+	public static ChatServer GetInstance()
+	{
+		return _instance ?? throw new InvalidOperationException("ChatServer has not been initialized.");
+	}
+
+	// Java parity: ChatServer.getPublicIP() — raw bytes of the public chat endpoint address (empty when down).
+	public byte[] GetPublicIP()
+	{
+		return PublicEndPoint?.Address.GetAddressBytes() ?? Array.Empty<byte>();
+	}
+
+	// Java parity: ChatServer.getPublicPort().
+	public int GetPublicPort()
+	{
+		return PublicEndPoint?.Port ?? 0;
+	}
+
+	// Java parity: ChatServer.sendPlayerLoginRequest(Player) — sends SM_CS_PLAYER_AUTH when the bridge is up.
+	public void SendPlayerLoginRequest(Player player)
+	{
+		if (!IsAuthed)
+			return;
+		var accountName = player.GetClientConnection()?.GetAccount()?.GetName() ?? string.Empty;
+		_ = SendPacketAsync(
+			new SmPlayerAuth(player.ObjectId, accountName, player.Name, ToRaceId(player.Race.ToString()), player.AccessLevel));
+	}
+
+	// Java parity: ChatServer.sendPlayerLogout(Player).
+	public void SendPlayerLogout(Player player)
+	{
+		_ = SendPlayerLogoutAsync(player.ObjectId);
+	}
+
+	// Java parity: ChatServer.sendPlayerGagPacket(int playerObjId, long gagTime).
+	public void SendPlayerGagPacket(int playerObjId, long gagTime)
+	{
+		if (!IsAuthed)
+			return;
+		_ = SendPacketAsync(new ServerPackets.SmPlayerGag(playerObjId, gagTime));
 	}
 
 	public ChatServerState State => _state;

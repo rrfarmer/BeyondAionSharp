@@ -21,6 +21,6 @@ public class CM_CHAT_AUTH : AionClientPacket
 
     protected override void RunImpl()
     {
-        ChatServer.GetInstance().SendPlayerLoginRequest(GetConnection().GetActivePlayer());
+        global::Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().SendPlayerLoginRequest(GetConnection().GetActivePlayer());
     }
 }

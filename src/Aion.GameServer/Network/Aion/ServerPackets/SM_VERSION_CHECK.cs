@@ -118,12 +118,12 @@ public class SM_VERSION_CHECK : AionServerPacket
         WriteD(1000); // incItemUpgradeQina (rate modifier, divide by 1000) (4.8)
         WriteC(0); // Augment disable or limit? 0/1 (4.8)
         WriteF(3.0f); // exp rate modifier? (4.8)
-        WriteH(ChatServer.GetInstance().GetPublicIP().Length > 0 ? 1 : 0); // ChatServersCount
-        if (ChatServer.GetInstance().GetPublicIP().Length > 0)
+        WriteH(global::Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().GetPublicIP().Length > 0 ? 1 : 0); // ChatServersCount
+        if (global::Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().GetPublicIP().Length > 0)
         {
             WriteC(0); // spacer or maybe id
-            WriteB(ChatServer.GetInstance().GetPublicIP());
-            WriteH(ChatServer.GetInstance().GetPublicPort());
+            WriteB(global::Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().GetPublicIP());
+            WriteH(global::Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().GetPublicPort());
         }
     }
 }
