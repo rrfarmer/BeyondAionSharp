@@ -11,6 +11,29 @@ public class SM_MOVE : AionServerPacket
     private Creature creature;
     private byte movementMask;
 
+    // Reworked WorldNpc random-walk spawn pillar has no faithful Creature/MoveController; this overload
+    // serializes the NPC_STARTMOVE wire form (POSITION|MANUAL|ABSOLUTE) directly from the object's
+    // position + absolute walk target, byte-identical to the Creature path's else-branch for that mask.
+    private readonly bool _rawNpcMove;
+    private readonly int _rawObjectId;
+    private readonly float _rawX, _rawY, _rawZ;
+    private readonly byte _rawHeading;
+    private readonly float _rawTargetX, _rawTargetY, _rawTargetZ;
+
+    public SM_MOVE(int objectId, float x, float y, float z, byte heading, byte movementMask, float targetX, float targetY, float targetZ)
+    {
+        _rawNpcMove = true;
+        _rawObjectId = objectId;
+        _rawX = x;
+        _rawY = y;
+        _rawZ = z;
+        _rawHeading = heading;
+        this.movementMask = movementMask;
+        _rawTargetX = targetX;
+        _rawTargetY = targetY;
+        _rawTargetZ = targetZ;
+    }
+
     public SM_MOVE(Creature creature)
         : this(creature, creature.GetMoveController().GetMovementMask())
     {
@@ -24,6 +47,23 @@ public class SM_MOVE : AionServerPacket
 
     protected override void WriteImpl(AionConnection client)
     {
+        if (_rawNpcMove)
+        {
+            WriteD(_rawObjectId);
+            WriteF(_rawX);
+            WriteF(_rawY);
+            WriteF(_rawZ);
+            WriteC(_rawHeading);
+            WriteC(movementMask);
+            if ((movementMask & MovementMask.POSITION) == MovementMask.POSITION && (movementMask & MovementMask.MANUAL) == MovementMask.MANUAL)
+            {
+                WriteF(_rawTargetX);
+                WriteF(_rawTargetY);
+                WriteF(_rawTargetZ);
+            }
+            return;
+        }
+
         CreatureMoveController mc = creature.GetMoveController();
         PlayableMoveController<Creature> pmc = mc is PlayableMoveController<Creature> ? (PlayableMoveController<Creature>)mc : null;
         WriteD(creature.GetObjectId());
