@@ -3010,7 +3010,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await SavePlayerCraftCooldownsAsync(player.ObjectId, player.CraftCooldowns, nowMillis, cancellationToken);
 			await SavePlayerHouseObjectCooldownsAsync(connection, player.ObjectId, player.HouseObjectCooldowns, nowMillis, cancellationToken);
 			await SavePlayerSettingsAsync(connection, player.ObjectId, player.Settings, cancellationToken);
-			var dirtyItems = player.GetDirtyItemsToUpdate();
+			var dirtyItems = player.DirtyInventoryItems;
 			ApplyInventoryStoreOwnerIds(player, dirtyItems);
 			if (!await DeleteInventoryItemSnapshotAsync(
 				connection,
@@ -3148,7 +3148,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 		{
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
-			var dirtyItems = player.GetDirtyItemsToUpdate();
+			var dirtyItems = player.DirtyInventoryItems;
 			ApplyInventoryStoreOwnerIds(player, dirtyItems);
 			if (!await DeleteInventoryItemSnapshotAsync(
 				connection,
