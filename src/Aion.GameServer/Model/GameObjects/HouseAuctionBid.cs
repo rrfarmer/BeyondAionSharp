@@ -40,18 +40,3 @@ public sealed record HouseAuctionBidContext(
 	long InitialOfferKinah,
 	bool IsCurrentBidInitialOffer,
 	bool PlayerIsHighestBidderElsewhere);
-
-public sealed record HouseAuctionPlaceBidResult(
-	HouseAuctionPlaceBidStatus Status,
-	int AddressId = 0,
-	InventoryItem? KinahItem = null,
-	PlayerMail? PreviousBidRefundMail = null,
-	int PreviousBidderObjectId = 0);
-
-public enum HouseAuctionPlaceBidStatus
-{
-	Success,
-	Missing,
-	PriceChanged,
-	Failed,
-}

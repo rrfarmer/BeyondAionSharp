@@ -151,9 +151,7 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<ICharacterSelectionRepository, MySqlCharacterSelectionRepository>();
 			services.AddSingleton<IMailRepository, MySqlMailRepository>();
 			services.AddSingleton<ICustomLevelRewardRepository, MySqlCustomLevelRewardRepository>();
-			services.AddSingleton<IBrokerRepository, MySqlBrokerRepository>();
 			services.AddSingleton<ISocialRepository, MySqlSocialRepository>();
-			services.AddSingleton<IHouseAuctionRepository, MySqlHouseAuctionRepository>();
 			services.AddSingleton<IHousingRepository, MySqlHousingRepository>();
 			services.AddSingleton<IMotionRepository, MySqlMotionRepository>();
 			services.AddSingleton<PlayerEnterWorldService>();
