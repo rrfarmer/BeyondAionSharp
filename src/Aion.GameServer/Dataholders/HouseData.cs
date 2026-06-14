@@ -11,7 +11,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("house_lands")]
 public class HouseData
 {
-    [XmlElement("land")] private List<HousingLand> lands;
+    [XmlElement("land")] private List<HousingLand> lands = new();
 
     [XmlIgnore] private Dictionary<int, HouseAddress> addressesById = new();
 

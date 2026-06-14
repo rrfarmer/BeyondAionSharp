@@ -83,6 +83,13 @@ public sealed class PlayerScripts
 		return true;
 	}
 
+	// Java parity: PlayerScripts.removeAll() — clears every script slot. (DAO persistence is owned by the
+	// calling HousingService/HouseScriptsDAO in this port, matching the inverted Remove/Set ownership above.)
+	public void RemoveAll()
+	{
+		FillEmptyScripts();
+	}
+
 	public bool RestoreFromXml(int scriptId, string? scriptXml)
 	{
 		// Java parity: dao/HouseScriptsDAO.addScript(..., storeInDb=false).
