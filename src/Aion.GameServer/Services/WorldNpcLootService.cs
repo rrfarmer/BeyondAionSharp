@@ -298,8 +298,8 @@ public sealed class WorldNpcLootService
 	{
 		// Java parity: DropService.requestDropItem checks ItemTemplate.hasLimitOne against inventory and regular warehouse.
 		return template.IsLimitOne
-			&& (player.InventoryItems.Any(item => item.ItemId == template.TemplateId)
-				|| player.WarehouseItems.Any(item => item.ItemId == template.TemplateId));
+			&& (player.GetInventory().GetItems().Any(item => item.GetItemTemplate().GetTemplateId() == template.TemplateId)
+				|| player.GetWarehouse().GetItems().Any(item => item.GetItemTemplate().GetTemplateId() == template.TemplateId));
 	}
 }
 
