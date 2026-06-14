@@ -35,13 +35,13 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 
 		foreach (var player in onlinePlayers)
 		{
+			// Java parity: services/KiskService.removeKisk -> member.setKisk(null) clears the bound kisk.
 			if (clearBoundObjectIds.Contains(player.ObjectId))
-				player.BoundKiskObjectId = 0;
+				player.SetKisk(null);
+			// Java parity: the in-flight STR_ASK_REGISTER_BINDSTONE request lives inside the player's
+			// ResponseRequester (the SM_QUESTION_WINDOW registry); cancel it there.
 			if (clearPendingRequestObjectIds.Contains(player.ObjectId))
-			{
-				player.ResponseRequester.Remove(SmQuestionWindow.STR_ASK_REGISTER_BINDSTONE);
-				player.PendingKiskBindRequest = null;
-			}
+				player.GetResponseRequester().Remove(SmQuestionWindow.STR_ASK_REGISTER_BINDSTONE);
 		}
 
 		var creatorUpdatesSent = 0;

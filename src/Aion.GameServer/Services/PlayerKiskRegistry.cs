@@ -100,7 +100,8 @@ public sealed class PlayerKiskRegistry
 			return PlayerKiskOfflineBindingRestoreResult.Expired(kiskObjectId);
 
 		var addedMember = kisk.AddMember(player.ObjectId);
-		player.BoundKiskObjectId = kisk.ObjectId;
+		// Java parity: the authoritative binding is Player.setKisk(Kisk) (faithful spine);
+		// the reworked registry restores membership via _offlineBoundKiskIdsByPlayerId + AddMember.
 		return addedMember
 			? PlayerKiskOfflineBindingRestoreResult.RestoredAdded(kisk)
 			: PlayerKiskOfflineBindingRestoreResult.RestoredExisting(kisk);

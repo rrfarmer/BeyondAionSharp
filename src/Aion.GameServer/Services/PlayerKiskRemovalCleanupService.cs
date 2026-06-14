@@ -38,8 +38,10 @@ public static class PlayerKiskRemovalCleanupService
 
 			bindPointReset.Add(player.ObjectId);
 			clearBound.Add(player.ObjectId);
-			if (player.PendingKiskBindRequest != null)
-				clearPending.Add(player.ObjectId);
+			// Java parity: the in-flight STR_ASK_REGISTER_BINDSTONE request lives inside the member's
+			// ResponseRequester; cancel it for every cleared member (ResponseRequester.Remove is a no-op
+			// when no such request is pending).
+			clearPending.Add(player.ObjectId);
 			if (player.IsDead())
 				resurrectionRefresh.Add(player.ObjectId);
 		}
