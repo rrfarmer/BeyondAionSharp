@@ -23,6 +23,16 @@ public sealed class GoldenPacketFixtureTests
 	// golden harness uses. Re-enabling it requires unifying the dual serialization paths
 	// in src (out of test-only scope).
 	[InlineData("SM_GF_WEBSHOP_TOKEN_RESPONSE.json")]
+	[InlineData("SM_QUIT_RESPONSE.json")]
+	[InlineData("SM_DELETE_ITEM.json")]
+	[InlineData("SM_DELETE_WAREHOUSE_ITEM.json")]
+	[InlineData("SM_DELETE_HOUSE_OBJECT.json")]
+	[InlineData("SM_DELETE_HOUSE.json")]
+	[InlineData("SM_RECIPE_DELETE.json")]
+	[InlineData("SM_CRAFT_ANIMATION.json")]
+	[InlineData("SM_BLOCK_RESPONSE.json")]
+	[InlineData("SM_FRIEND_RESPONSE.json")]
+	[InlineData("SM_CLOSE_QUESTION_WINDOW.json")]
 	public void CsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -47,8 +57,31 @@ public sealed class GoldenPacketFixtureTests
 	private static GameServerPacket Reconstruct(string packetName, JsonElement inputs) => packetName switch
 	{
 		"SM_GF_WEBSHOP_TOKEN_RESPONSE" => new SmGfWebshopTokenResponse(inputs.GetProperty("token").GetString()!),
+		"SM_QUIT_RESPONSE" => new SmQuitResponse(inputs.GetProperty("editMode").GetBoolean()),
+		"SM_DELETE_ITEM" => new SmDeleteItem(inputs.GetProperty("itemObjectId").GetInt32(), inputs.GetProperty("deleteType").GetInt32()),
+		"SM_DELETE_WAREHOUSE_ITEM" => new SmDeleteWarehouseItem(inputs.GetProperty("warehouseType").GetInt32(), inputs.GetProperty("itemObjectId").GetInt32(), inputs.GetProperty("deleteType").GetInt32()),
+		"SM_DELETE_HOUSE_OBJECT" => new SmDeleteHouseObject(inputs.GetProperty("itemObjectId").GetInt32()),
+		"SM_DELETE_HOUSE" => new SmDeleteHouse(inputs.GetProperty("addressId").GetInt32()),
+		"SM_RECIPE_DELETE" => new SmRecipeDelete(inputs.GetProperty("recipeId").GetInt32()),
+		"SM_CRAFT_ANIMATION" => new SmCraftAnimation(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("targetObjectId").GetInt32(), inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("action").GetInt32()),
+		"SM_BLOCK_RESPONSE" => new SmBlockResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
+		"SM_FRIEND_RESPONSE" => new SmFriendResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
+		"SM_CLOSE_QUESTION_WINDOW" => ReconstructCloseQuestionWindow(inputs),
 		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
 	};
+
+	private static SmCloseQuestionWindow ReconstructCloseQuestionWindow(JsonElement inputs)
+	{
+		var messageId = inputs.GetProperty("messageId").GetInt32();
+		var parameters = inputs.GetProperty("params").EnumerateArray().Select(p => p.GetString()!).ToArray();
+		return messageId switch
+		{
+			0 => SmCloseQuestionWindow.CloseQuestionWindow(),
+			1300134 => SmCloseQuestionWindow.DuelRequesterWithdrawRequest(parameters[0]),
+			1300097 => SmCloseQuestionWindow.DuelHeRejectDuel(parameters[0]),
+			_ => throw new NotSupportedException($"No SM_CLOSE_QUESTION_WINDOW factory for messageId {messageId}"),
+		};
+	}
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
