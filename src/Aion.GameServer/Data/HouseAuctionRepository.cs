@@ -154,7 +154,7 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 				.Where(bid => bid != null)
 				.OrderByDescending(bid => bid!.Time)
 				.FirstOrDefault();
-			var registeredHouse = FindRegisteredHouseBid(groups, player.Houses);
+			var registeredHouse = FindRegisteredHouseBid(groups, player.GetHouses());
 			var visibleBids = groups
 				.Where(group => MatchesLandRace(group, player.Race.ToString(), housingTemplates, npcTemplates))
 				.Select(group => group.ToSummary(housingTemplates, _auctionTiming.GetRemainingAuctionSeconds(group.HouseObjectId)))
@@ -657,13 +657,13 @@ public sealed class MySqlHouseAuctionRepository : IHouseAuctionRepository
 
 	private static HouseAuctionBidGroup? FindRegisteredHouseBid(
 		IReadOnlyList<HouseAuctionBidGroup> groups,
-		IReadOnlyList<PlayerHouse> playerHouses)
+		IReadOnlyList<Aion.GameServer.Model.House.House> playerHouses)
 	{
 		// Java parity: services/HousingBidService.findBidsForRegisteredHouse loops player.getHouses().
 		var groupsByHouseId = groups.ToDictionary(group => group.HouseObjectId);
 		foreach (var house in playerHouses)
 		{
-			if (groupsByHouseId.TryGetValue(house.ObjectId, out var group))
+			if (groupsByHouseId.TryGetValue(house.GetObjectId(), out var group))
 				return group;
 		}
 

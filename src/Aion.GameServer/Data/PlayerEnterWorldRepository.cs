@@ -3093,7 +3093,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await connection.OpenAsync(cancellationToken);
 			await SavePeriodicAbyssRankAsync(connection, player.ObjectId, player.AbyssRank, cancellationToken);
 			await SavePeriodicPlayerSkillsAsync(connection, player.ObjectId, player.Skills, cancellationToken);
-			await SavePeriodicPlayerQuestsAsync(connection, player.ObjectId, player.Quests, cancellationToken);
+			await SavePeriodicPlayerQuestsAsync(connection, player.ObjectId, player.GetQuestStateList().GetAllQuestState(), cancellationToken);
 			if (player.LifeStats != null)
 				await SavePlayerLifeStatsAsync(connection, player.ObjectId, player.LifeStats, cancellationToken);
 			var nowMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
@@ -3139,7 +3139,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			if (await command.ExecuteNonQueryAsync(cancellationToken) <= 0)
 				return false;
 
-			await SavePeriodicPlayerHousesAsync(connection, player.ObjectId, player.Houses, cancellationToken);
+			await SavePeriodicPlayerHousesAsync(connection, player.ObjectId, player.GetHouses(), cancellationToken);
 			return true;
 		}
 		catch (Exception ex)
@@ -5293,7 +5293,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	private static async Task SavePeriodicPlayerQuestsAsync(
 		MySqlConnection connection,
 		int playerObjectId,
-		IReadOnlyList<PlayerQuestState> quests,
+		IReadOnlyList<Aion.GameServer.QuestEngine.Model.QuestState> quests,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: dao/PlayerQuestListDAO.store(player) persists deleted/current quest state
@@ -5322,14 +5322,14 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 				new[]
 				{
 					new MySqlParameter { Value = playerObjectId },
-					new MySqlParameter { Value = quest.QuestId },
-					new MySqlParameter { Value = quest.Status },
-					new MySqlParameter { Value = quest.QuestVars },
-					new MySqlParameter { Value = quest.Flags },
-					new MySqlParameter { Value = quest.CompleteCount },
-					new MySqlParameter { Value = quest.NextRepeatTime?.DateTime ?? (object)DBNull.Value },
-					new MySqlParameter { Value = quest.RewardGroup.HasValue ? quest.RewardGroup.Value : DBNull.Value },
-					new MySqlParameter { Value = quest.CompleteTime?.DateTime ?? (object)DBNull.Value },
+					new MySqlParameter { Value = quest.GetQuestId() },
+					new MySqlParameter { Value = quest.GetStatus().ToString() },
+					new MySqlParameter { Value = quest.GetQuestVars().GetQuestVars() },
+					new MySqlParameter { Value = quest.GetFlags() },
+					new MySqlParameter { Value = quest.GetCompleteCount() },
+					new MySqlParameter { Value = quest.GetNextRepeatTime().HasValue ? quest.GetNextRepeatTime()!.Value : (object)DBNull.Value },
+					new MySqlParameter { Value = quest.GetRewardGroup().HasValue ? quest.GetRewardGroup()!.Value : DBNull.Value },
+					new MySqlParameter { Value = quest.GetLastCompleteTime().HasValue ? quest.GetLastCompleteTime()!.Value : (object)DBNull.Value },
 				});
 			await command.ExecuteNonQueryAsync(cancellationToken);
 		}
@@ -5338,7 +5338,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 	private static async Task SavePeriodicPlayerHousesAsync(
 		MySqlConnection connection,
 		int playerObjectId,
-		IReadOnlyList<PlayerHouse> houses,
+		IReadOnlyList<Aion.GameServer.Model.House.House> houses,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: PlayerEnterWorldService.GeneralUpdateTask.run calls House.save,
@@ -5363,18 +5363,21 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			""";
 		foreach (var house in houses)
 		{
+			var acquiredTime = house.GetAcquiredTime();
+			var nextPay = house.GetNextPay();
+			var signNotice = house.GetSignNotice();
 			command.Parameters.Clear();
 			command.Parameters.AddRange(
 				new[]
 				{
-					new MySqlParameter { Value = house.ObjectId },
-					new MySqlParameter { Value = house.AddressId },
-					new MySqlParameter { Value = house.BuildingId },
+					new MySqlParameter { Value = house.GetObjectId() },
+					new MySqlParameter { Value = house.GetAddress().GetId() },
+					new MySqlParameter { Value = house.GetBuilding().GetId() },
 					new MySqlParameter { Value = playerObjectId },
-					new MySqlParameter { Value = house.AcquiredTime.HasValue ? house.AcquiredTime.Value : DBNull.Value },
-					new MySqlParameter { Value = PlayerHouse.CreateSettings(house.DoorState, house.ShowOwnerName) },
-					new MySqlParameter { Value = house.NextPay.HasValue ? house.NextPay.Value : DBNull.Value },
-					new MySqlParameter { Value = string.IsNullOrEmpty(house.SignNotice) ? DBNull.Value : house.SignNotice },
+					new MySqlParameter { Value = acquiredTime.HasValue ? acquiredTime.Value.UtcDateTime : DBNull.Value },
+					new MySqlParameter { Value = PlayerHouse.CreateSettings((byte)(int)house.GetDoorState(), house.IsShowOwnerName()) },
+					new MySqlParameter { Value = nextPay.HasValue ? nextPay.Value.UtcDateTime : DBNull.Value },
+					new MySqlParameter { Value = string.IsNullOrEmpty(signNotice) ? DBNull.Value : signNotice },
 				});
 			await command.ExecuteNonQueryAsync(cancellationToken);
 		}

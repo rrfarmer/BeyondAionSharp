@@ -210,11 +210,11 @@ public static class WorldNpcDropBoostRateContextPlanService
 
 public static class PlayerActiveHouseResolverService
 {
-	public static PlayerHouse? FindActiveHouse(Player? player)
+	public static Aion.GameServer.Model.House.House? FindActiveHouse(Player? player)
 	{
 		// Java parity: HousingService.findActiveHouse returns the loaded studio first;
 		// C# login loading already keeps the studio/oldest active house as the first non-inactive entry.
-		return player?.Houses.FirstOrDefault(house => !house.IsInactive);
+		return player?.GetHouses().FirstOrDefault(house => !house.IsInactive());
 	}
 
 	public static bool? HasActivePalace(Player? player, HousingTemplateTable? housingTemplates)
@@ -223,7 +223,7 @@ public static class PlayerActiveHouseResolverService
 			return null;
 
 		var activeHouse = FindActiveHouse(player);
-		return activeHouse != null && housingTemplates.IsPalaceBuilding(activeHouse.BuildingId);
+		return activeHouse != null && housingTemplates.IsPalaceBuilding(activeHouse.GetBuilding().GetId());
 	}
 }
 
