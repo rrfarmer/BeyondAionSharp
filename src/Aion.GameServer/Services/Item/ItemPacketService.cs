@@ -128,17 +128,17 @@ public class ItemPacketService
 
     public static void UpdateItemAfterInfoChange(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, item));
     }
 
     public static void UpdateItemAfterInfoChange(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, ItemUpdateType updateType)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, updateType));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, item, updateType));
     }
 
     public static void UpdateItemAfterEquip(Aion.GameServer.Model.GameObjects.Players.Player player, Item item)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, ItemUpdateType.EQUIP_UNEQUIP));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, item, ItemUpdateType.EQUIP_UNEQUIP));
     }
 
     public static void SendItemPacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemUpdateType updateType)
@@ -158,11 +158,11 @@ public class ItemPacketService
     {
         if (storageType == StorageType.CUBE)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmDeleteItem(item.GetObjectId(), deleteType));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_DELETE_ITEM(item.GetObjectId(), deleteType));
         }
         else
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmDeleteWarehouseItem(storageType.GetId(), item.GetObjectId(), deleteType));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_DELETE_WAREHOUSE_ITEM(storageType.GetId(), item.GetObjectId(), deleteType));
         }
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_CUBE_UPDATE.CubeSize(storageType, player));
     }
@@ -172,7 +172,7 @@ public class ItemPacketService
     {
         if (storageType == StorageType.CUBE)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, updateType));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, item, updateType));
         }
         else if (storageType == StorageType.LEGION_WAREHOUSE && item.GetItemTemplate().IsKinah())
         {
@@ -180,7 +180,7 @@ public class ItemPacketService
         }
         else
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmWarehouseUpdateItem(player, item, storageType.GetId(), updateType));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_WAREHOUSE_UPDATE_ITEM(player, item, storageType.GetId(), updateType));
         }
     }
 
@@ -192,10 +192,9 @@ public class ItemPacketService
     /// <summary>New item will be displayed in storage. Java fallthrough: LEGION_WAREHOUSE (non-kinah) → default.</summary>
     public static void SendStorageUpdatePacket(Aion.GameServer.Model.GameObjects.Players.Player player, StorageType storageType, Item item, ItemAddType addType)
     {
-        Aion.GameServer.Services.ToyPet.PetFeedUnusualStorageArtifactCapture.RegisterStorageUpdate(player, storageType, item, addType);
         if (storageType == StorageType.CUBE)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryAddItem(new List<Item> { item }, player, addType));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_ADD_ITEM(new List<Item> { item }, player, addType));
         }
         else if (storageType == StorageType.LEGION_WAREHOUSE && item.GetItemTemplate().IsKinah())
         {
@@ -203,7 +202,7 @@ public class ItemPacketService
         }
         else
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmWarehouseAddItem(item, storageType.GetId(), player, addType));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_WAREHOUSE_ADD_ITEM(item, storageType.GetId(), player, addType));
         }
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_CUBE_UPDATE.CubeSize(storageType, player));
     }
