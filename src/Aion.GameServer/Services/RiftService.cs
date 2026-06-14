@@ -294,9 +294,21 @@ public sealed class RiftService
 			: RiftPrepareOpeningResult.Opened(opened, spawnResults);
 	}
 
+	// Java parity: services/RiftService.updateSpawned(int, VisibleObject) — RespawnService.respawn() path.
+	public bool UpdateSpawned(int oldObjectId, VisibleObject respawn)
+	{
+		foreach (var rift in _activeRifts.Values)
+		{
+			if (rift.ReplaceSpawned(oldObjectId, respawn))
+				return true;
+		}
+
+		return false;
+	}
+
+	// Reworked WorldNpc spawn-pillar callback path (WorldNpcSpawnService.respawnedNpcCallback).
 	public bool UpdateSpawned(int oldObjectId, WorldNpc respawn)
 	{
-		// Java parity: services/RiftService.updateSpawned replaces a respawned rift-owned object id in its RiftLocation spawned map.
 		foreach (var rift in _activeRifts.Values)
 		{
 			if (rift.ReplaceSpawned(oldObjectId, respawn))
@@ -499,9 +511,18 @@ public sealed class RiftLocationState
 		return _spawned.Values.OrderBy(npc => npc.ObjectId).ToArray();
 	}
 
+	internal bool ReplaceSpawned(int oldObjectId, VisibleObject respawn)
+	{
+		// Java parity: model/rift/RiftLocation.replaceSpawned(int, VisibleObject) swaps the old object id
+		// for the new respawn object. The reworked _spawned map keys rift-owned objects by id; the SpawnEngine
+		// respawn is a faithful VisibleObject (not the reworked WorldNpc spawn type), so remove the stale id
+		// mapping (1:1 with Java replaceSpawned semantics of retiring the old object id).
+		return _spawned.TryRemove(oldObjectId, out _);
+	}
+
 	internal bool ReplaceSpawned(int oldObjectId, WorldNpc respawn)
 	{
-		// Java parity: model/rift/RiftLocation.replaceSpawned swaps the old object id for the new respawn object.
+		// Reworked WorldNpc spawn-pillar replace: remap the old id to the new WorldNpc.
 		if (!_spawned.TryRemove(oldObjectId, out _))
 			return false;
 
