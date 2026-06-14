@@ -4,6 +4,7 @@ using System.IO;
 using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using MySqlConnector;
 using Aion.Commons.Database;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Dao;
@@ -128,8 +129,11 @@ public class DatabaseCleaningService
         try
         {
             using var con = DatabaseFactory.GetConnection();
-            using var stmt = con.PrepareStatement("OPTIMIZE TABLE " + string.Join(",", tables));
-            stmt.Execute();
+            con.Open();
+            // Java parity: con.prepareStatement("OPTIMIZE TABLE ...").execute() -> ADO.NET CreateCommand/ExecuteNonQuery.
+            using var stmt = con.CreateCommand();
+            stmt.CommandText = "OPTIMIZE TABLE " + string.Join(",", tables);
+            stmt.ExecuteNonQuery();
             log.LogInformation("Optimized database tables in {Seconds} seconds", (DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - startMillis) / 1000);
         }
         catch (Exception e)
@@ -150,10 +154,20 @@ public class DatabaseCleaningService
             try
             {
                 using var con = DatabaseFactory.GetConnection();
-                var importedKeys = con.GetMetaData().GetExportedKeys(con.GetCatalog(), null, table);
-                while (importedKeys.Next())
+                con.Open();
+                // Java parity: con.getMetaData().getExportedKeys(con.getCatalog(), null, table) — every FK table
+                // referencing the given table. JDBC DatabaseMetaData -> INFORMATION_SCHEMA.KEY_COLUMN_USAGE;
+                // con.getCatalog() -> MySqlConnection.Database; FKTABLE_NAME -> TABLE_NAME of the referencing rows.
+                using var stmt = con.CreateCommand();
+                stmt.CommandText =
+                    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE "
+                    + "WHERE TABLE_SCHEMA = @schema AND REFERENCED_TABLE_NAME = @table";
+                stmt.Parameters.Add(new MySqlParameter("@schema", con.Database));
+                stmt.Parameters.Add(new MySqlParameter("@table", table));
+                using var importedKeys = stmt.ExecuteReader();
+                while (importedKeys.Read())
                 {
-                    string fk = importedKeys.GetString("FKTABLE_NAME");
+                    string fk = importedKeys.GetString("TABLE_NAME");
                     if (!tables.Contains(fk))
                         tables.Add(fk);
                 }
