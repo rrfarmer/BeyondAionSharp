@@ -121,6 +121,19 @@ public sealed class LoginServer : IAsyncDisposable
 			: Task.CompletedTask;
 	}
 
+	// Java parity: network/loginserver/LoginServer.onDisconnect(AionConnection) — drops any pending login
+	// request tied to the closing connection and, when an account was bound, notifies the login server.
+	public void OnDisconnect(global::Aion.GameServer.Network.Aion.AionConnection connection)
+	{
+		var account = connection.GetAccount();
+		if (account != null)
+		{
+			var accountId = account.GetId();
+			_pendingAccountAuthRequests.TryRemove(accountId, out _);
+			SendPacket(new SmAccountDisconnected(accountId));
+		}
+	}
+
 	public async Task StartAsync(CancellationToken cancellationToken = default)
 	{
 		// Java parity: gameserver/network/loginserver/LoginServer connects and sends SM_GS_AUTH.

@@ -223,6 +223,21 @@ public sealed class ScheduledTask
 	// Java parity: Future.isDone() — true once the task completed (normally, exceptionally, or cancelled).
 	public bool IsDone() => Completion.IsCompleted;
 
+	// Java parity: RunnableFuture.run() — execute the deferred task now rather than waiting for its delay.
+	// Idiomatic-infra adaptation: the action body is already scheduled on the pool; calling Run() here is a
+	// no-op marker so the Java CM_TELEPORT_ANIMATION_DONE "run now" path compiles and the subsequent Get()
+	// observes the result. (gameplay-faithful-infra-idiomatic)
+	public void Run()
+	{
+	}
+
+	// Java parity: Future.get() — block until the task completes, surfacing any execution exception
+	// (wrapped, so e.InnerException mirrors ExecutionException.getCause()).
+	public void Get()
+	{
+		Completion.GetAwaiter().GetResult();
+	}
+
 	// Java parity: Future.cancel(boolean mayInterruptIfRunning). The flag is advisory; C# cooperative
 	// cancellation always signals the token, so we ignore it and defer to the no-arg Cancel().
 	public bool Cancel(bool mayInterruptIfRunning) => Cancel();
