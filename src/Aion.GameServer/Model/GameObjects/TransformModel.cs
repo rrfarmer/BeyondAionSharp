@@ -17,7 +17,8 @@ public class TransformModel
     private readonly TransformType _originalType;
     private TransformType _transformType;
     private int _panelId;
-    private TribeClass _transformTribe;
+    // Java parity: TribeClass transformTribe — nullable (Java enum reference set to null by PolymorphEffect.endEffect).
+    private TribeClass? _transformTribe;
 
     // restrictions
     protected int BanUseSkills;
@@ -125,10 +126,10 @@ public class TransformModel
     public bool IsActive() => _modelId > 0 && _modelId != _owner.GetObjectTemplate().GetTemplateId();
 
     // Java parity: getTribe()
-    public TribeClass GetTribe() => _transformTribe;
+    public TribeClass? GetTribe() => _transformTribe;
 
     // Java parity: setTribe(TribeClass)
-    public void SetTribe(TribeClass transformTribe)
+    public void SetTribe(TribeClass? transformTribe)
     {
         _transformTribe = transformTribe;
         UpdateTribeVisually();

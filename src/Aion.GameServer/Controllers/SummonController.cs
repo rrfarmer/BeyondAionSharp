@@ -75,7 +75,7 @@ public class SummonController : CreatureController<Summon>
         base.AttackTarget(target, time, false);
     }
 
-    public override void OnAttack(Creature creature, Effect effect, TYPE type, int damage, bool notifyAttack, LOG log, AttackStatus attackStatus,
+    public override void OnAttack(Creature creature, Effect effect, TYPE type, int damage, bool notifyAttack, LOG log, AttackStatus? attackStatus,
         HopType? hopType)
     {
         if (GetOwner().IsDead())

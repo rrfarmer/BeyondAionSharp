@@ -154,13 +154,13 @@ public abstract class CreatureController : VisibleObjectController
         OnAttack(effect.GetEffector(), effect, type, damage, notifyAttack, logId, effect.GetAttackStatus(), hopType, null);
     }
 
-    public virtual void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus status, HopType? hopType)
+    public virtual void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? status, HopType? hopType)
     {
         OnAttack(attacker, effect, type, damage, notifyAttack, logId, status, hopType, null);
     }
 
     /// <summary>Perform tasks when Creature was attacked.</summary>
-    private void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus status, HopType? hopType, Effect criticalEffect)
+    private void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? status, HopType? hopType, Effect criticalEffect)
     {
         if (!GetOwner().IsSpawned())
             return;

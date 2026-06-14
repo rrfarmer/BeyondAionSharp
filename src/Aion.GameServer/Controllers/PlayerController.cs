@@ -424,7 +424,7 @@ public class PlayerController : CreatureController<Player>
         base.AttackTarget(target, time, true);
     }
 
-    public override void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus attackStatus, HopType? hopType)
+    public override void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? attackStatus, HopType? hopType)
     {
         if (GetOwner().IsDead())
             return;

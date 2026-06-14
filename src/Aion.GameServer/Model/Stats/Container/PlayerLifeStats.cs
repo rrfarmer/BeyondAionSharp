@@ -141,7 +141,7 @@ public class PlayerLifeStats : CreatureLifeStats<Player>
     }
 
     /// <summary>Called whenever caller wants to reduce the creature's FP. Returns current flight points.</summary>
-    public int ReduceFp(TYPE type, int value, int skillId, LOG log)
+    public int ReduceFp(TYPE type, int value, int skillId, LOG? log)
     {
         lock (fpLock)
         {

@@ -280,7 +280,7 @@ public class NpcController : CreatureController<Npc>
         base.OnAddHate(attacker, isNewInAggroList);
     }
 
-    public override void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus attackStatus,
+    public override void OnAttack(Creature attacker, Effect effect, TYPE type, int damage, bool notifyAttack, LOG logId, AttackStatus? attackStatus,
         HopType? hopType)
     {
         if (GetOwner().IsDead())
