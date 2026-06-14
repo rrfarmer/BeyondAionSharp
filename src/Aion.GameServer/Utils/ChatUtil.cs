@@ -82,6 +82,34 @@ public static class ChatUtil
 		return $"[quest:{questId}]";
 	}
 
+	/// <summary>Java parity: utils/ChatUtil.getItemId(String). itemStr can be an ID string or Aion link like "[item: 110900785]". Returns 0 if no valid ID.</summary>
+	public static int GetItemId(string itemStr)
+	{
+		return GetIdFromString(itemStr, "item", "1[0-9]{8}");
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.getQuestId(String). questStr can be an ID string or Aion link like "[quest: 1006]". Returns 0 if no valid ID.</summary>
+	public static int GetQuestId(string questStr)
+	{
+		return GetIdFromString(questStr, "quest", "[1-9][0-9]{3,4}");
+	}
+
+	private static int GetIdFromString(string input, string linkAccessor, string validationPattern)
+	{
+		// Java parity: utils/ChatUtil.getIdFromString(String, String, String).
+		if (input == null)
+			return 0;
+
+		if (input.StartsWith("[" + linkAccessor + ":"))
+			input = input.Substring(linkAccessor.Length + 2).Trim();
+
+		System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(input, "^(" + validationPattern + ")(?:[^\\d][^\\[]*\\]?$|$)");
+		if (m.Success)
+			return int.TryParse(m.Groups[1].Value, out int result) ? result : 0;
+
+		return 0;
+	}
+
 	private const char AsmoNamePrefix = '';
 	private const char ElyosNamePrefix = '';
 
