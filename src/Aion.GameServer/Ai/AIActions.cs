@@ -58,12 +58,12 @@ public class AIActions
 
     public static void HandleUseItemFinish<T>(AbstractAI<T> ai, Player player) where T : Creature
     {
-        ai.GetPosition().GetWorldMapInstance().GetInstanceHandler().HandleUseItemFinish(player, (Npc)ai.GetOwner());
+        ai.GetPosition().GetWorldMapInstance().GetInstanceHandler().HandleUseItemFinish(player, (Npc)(Creature)ai.GetOwner());
     }
 
     public static void RegisterDrop<T>(AbstractAI<T> ai, Player player, ICollection<Player> registeredPlayers) where T : Creature
     {
-        DropRegistrationService.GetInstance().RegisterDrop((Npc)ai.GetOwner(), player, registeredPlayers);
+        DropRegistrationService.GetInstance().RegisterDrop((Npc)(Creature)ai.GetOwner(), player, registeredPlayers);
     }
 
     public static void ScheduleRespawn<T>(AbstractAI<T> ai) where T : Creature

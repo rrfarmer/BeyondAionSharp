@@ -68,6 +68,8 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 
 	public void ExecuteLongRunning(Action action) => Schedule(_ => { action(); return ValueTask.CompletedTask; }, TimeSpan.Zero);
 
+	public void ExecuteLongRunning(Runnable runnable) => Schedule(_ => { runnable.Run(); return ValueTask.CompletedTask; }, TimeSpan.Zero);
+
 	public ScheduledTask ScheduleAtFixedRateTask(
 		Func<CancellationToken, ValueTask> action,
 		TimeSpan initialDelay,
