@@ -98,7 +98,7 @@ public class IdianStone : ItemStone
             }
             if (polishCharge <= 300000 && polishCharge + result > 300000) // we just dropped to or below 300k
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.POLISH_CHARGE));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.POLISH_CHARGE));
             }
             else if (polishCharge < 0)
             {
@@ -107,7 +107,7 @@ public class IdianStone : ItemStone
             if (polishCharge == 0)
             {
                 OnUnEquip(player);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, item));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, item));
                 item.SetIdianStone(null);
                 SetPersistentState(Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.DELETED);
                 Aion.GameServer.Dao.ItemStoneListDAO.StoreIdianStones(this);

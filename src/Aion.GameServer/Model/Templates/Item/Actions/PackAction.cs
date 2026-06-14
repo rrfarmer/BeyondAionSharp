@@ -110,7 +110,7 @@ public class PackAction : AbstractItemAction
         }
         targetItem.SetPackCount(++packCount);
         targetItem.SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, targetItem));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, targetItem));
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_SUCCEED(targetItem.GetL10n()));
     }
 

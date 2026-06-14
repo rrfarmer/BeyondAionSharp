@@ -88,7 +88,7 @@ public partial class Equipment
         foreach (Item item in equippedWeapon)
         {
             Unequip(item);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(owner, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.EQUIP_UNEQUIP));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(owner, item, Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType.EQUIP_UNEQUIP));
             if (owner.GetGameStats() != null)
             {
                 if ((item.GetEquipmentSlot() & ItemSlot.MAIN_HAND.GetSlotIdMask()) != 0

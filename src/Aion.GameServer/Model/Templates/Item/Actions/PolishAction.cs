@@ -65,7 +65,7 @@ public class PolishAction : AbstractItemAction
             {
                 idianStone.OnEquip(player, targetItem.GetEquipmentSlot());
             }
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmInventoryUpdateItem(player, targetItem));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, targetItem));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(5000)));
     }
