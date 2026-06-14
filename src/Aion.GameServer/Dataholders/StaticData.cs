@@ -44,7 +44,6 @@ public sealed partial class StaticData
 		GoodsListTable goodsLists,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
-		QuestUpdateItemTable questUpdateItems,
 		GlobalDropTable globalDrops,
 		EventDropTable eventDrops,
 		GlobalNpcExclusionTable globalNpcExclusions,
@@ -69,7 +68,6 @@ public sealed partial class StaticData
 		NearbyQuestTemplateTable nearbyQuestTemplates,
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestNpcStartTable questNpcStarts,
-		QuestCompletionFollowUpTable questCompletionFollowUps,
 		ChallengeTaskTable challengeTasks,
 		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
@@ -108,7 +106,6 @@ public sealed partial class StaticData
 		GoodsLists = goodsLists;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
-		QuestUpdateItems = questUpdateItems;
 		GlobalDrops = globalDrops;
 		EventDrops = eventDrops;
 		GlobalNpcExclusions = globalNpcExclusions;
@@ -133,7 +130,6 @@ public sealed partial class StaticData
 		NearbyQuestTemplates = nearbyQuestTemplates;
 		QuestHandlers = questHandlers;
 		QuestNpcStarts = questNpcStarts;
-		QuestCompletionFollowUps = questCompletionFollowUps;
 		ChallengeTasks = challengeTasks;
 		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
@@ -214,7 +210,6 @@ public sealed partial class StaticData
 
 	public QuestDropTable QuestDrops { get; }
 
-	public QuestUpdateItemTable QuestUpdateItems { get; }
 
 	public GlobalDropTable GlobalDrops { get; }
 
@@ -270,8 +265,6 @@ public sealed partial class StaticData
 	public QuestHandlerAvailabilityTable QuestHandlers { get; }
 
 	public QuestNpcStartTable QuestNpcStarts { get; }
-
-	public QuestCompletionFollowUpTable QuestCompletionFollowUps { get; }
 
 	public ChallengeTaskTable ChallengeTasks { get; }
 
@@ -407,8 +400,6 @@ public sealed partial class StaticData
 		var goodsInLists = new List<GoodsListSummary>();
 		var goodsPurchaseLists = new List<GoodsListSummary>();
 		var questDrops = new List<QuestDropSummary>();
-		var questUpdateItemIds = new List<int>();
-		var questUpdateItemIdSet = new HashSet<int>();
 		var globalDropRules = new List<GlobalDropRuleSummary>();
 		var eventTemplates = new List<EventTemplateSummary>();
 		var globalNpcExclusionNpcIds = new HashSet<int>();
@@ -1268,18 +1259,6 @@ public sealed partial class StaticData
 				currentQuestDropBuilder.AddCollectItem(
 					ReadRequiredIntAttribute(reader, "item_id"),
 					ReadOptionalIntAttribute(reader, "count", 1));
-				continue;
-			}
-
-			if (reader.Depth == 4
-				&& reader.LocalName == "inventory_item"
-				&& currentQuestDropBuilder != null
-				&& elementPath.GetValueOrDefault(3) == "inventory_items")
-			{
-				// Java parity: questEngine/Aion.GameServer.QuestEngine.QuestEngine.init builds questUpdateItems from InventoryItem.item_id and ignores count.
-				var itemId = ReadRequiredIntAttribute(reader, "item_id");
-				if (questUpdateItemIdSet.Add(itemId))
-					questUpdateItemIds.Add(itemId);
 				continue;
 			}
 
@@ -3072,7 +3051,6 @@ public sealed partial class StaticData
 				.ToArray());
 		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var questNpcStarts = LoadQuestNpcStarts(cacheFilePath, questHandlerDirectory, cancellationToken);
-		var questCompletionFollowUps = QuestCompletionFollowUpTable.Load(questHandlerDirectory, cancellationToken);
 		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
 
 		return new StaticData(
@@ -3115,7 +3093,6 @@ public sealed partial class StaticData
 				goodsPurchaseLists.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
-			new QuestUpdateItemTable(questUpdateItemIds.AsReadOnly()),
 			new GlobalDropTable(processedGlobalDropRules),
 			new EventDropTable(eventTemplates.AsReadOnly()),
 			new GlobalNpcExclusionTable(
@@ -3175,7 +3152,6 @@ public sealed partial class StaticData
 			nearbyQuestTemplates,
 			questHandlers,
 			questNpcStarts,
-			questCompletionFollowUps,
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
 			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
