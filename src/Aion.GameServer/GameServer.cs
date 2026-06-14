@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aion.GameServer.Commons.Utils.Info;
 using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Model;
 using Aion.GameServer.Services;
@@ -20,6 +21,9 @@ namespace Aion.GameServer;
 public static class GameServer
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(GameServer));
+
+    // Java parity: public static final VersionInfo versionInfo = new VersionInfo(GameServer.class)
+    public static readonly VersionInfo versionInfo = new VersionInfo(typeof(GameServer));
 
     public static readonly int START_TIME_SECONDS =
         (int)new DateTimeOffset(Process.GetCurrentProcess().StartTime.ToUniversalTime(), TimeSpan.Zero).ToUnixTimeSeconds();
