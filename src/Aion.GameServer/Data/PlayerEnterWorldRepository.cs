@@ -5626,7 +5626,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
-			command.CommandText = CraftCooldownPersistencePlanService.JavaCraftCooldownDeleteSql;
+			command.CommandText = Aion.GameServer.Dao.CraftCooldownsDAO.DELETE_QUERY;
 			command.Parameters.Add(new MySqlParameter { Value = playerObjectId });
 			await command.ExecuteNonQueryAsync(cancellationToken);
 		}
@@ -5647,7 +5647,7 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 			await using var connection = DatabaseFactory.GetConnection();
 			await connection.OpenAsync(cancellationToken);
 			await using var command = connection.CreateCommand();
-			command.CommandText = CraftCooldownPersistencePlanService.JavaCraftCooldownInsertSql;
+			command.CommandText = Aion.GameServer.Dao.CraftCooldownsDAO.INSERT_QUERY;
 			command.Parameters.AddRange(
 				new[]
 				{
