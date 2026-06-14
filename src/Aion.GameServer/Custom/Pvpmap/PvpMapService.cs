@@ -22,7 +22,7 @@ public class PvpMapService
 
     public void Init()
     {
-        WorldMapInstance instance = InstanceService.GetNextAvailableInstance(301220000, 0, (byte)0, () => new PvpMapHandler(), 0, false);
+        WorldMapInstance instance = InstanceService.GetNextAvailableInstance(301220000, 0, (byte)0, instance => new PvpMapHandler(instance), 0, false);
         handler = (PvpMapHandler)instance.GetInstanceHandler();
     }
 

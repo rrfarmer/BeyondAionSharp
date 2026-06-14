@@ -60,7 +60,7 @@ public class CustomInstanceService
             return;
         }
         playerModelEntriesCache[player.GetObjectId()] = LoadPlayerModelEntries(player.GetObjectId());
-        WorldMapInstance wmi = InstanceService.GetNextAvailableInstance(CUSTOM_INSTANCE_WORLD_ID, 0, (byte)1, () => new RoahCustomInstanceHandler(), 1, true);
+        WorldMapInstance wmi = InstanceService.GetNextAvailableInstance(CUSTOM_INSTANCE_WORLD_ID, 0, (byte)1, instance => new RoahCustomInstanceHandler(instance), 1, true);
         wmi.Register(player.GetObjectId());
         TeleportService.TeleportTo(player, wmi.GetMapId(), wmi.GetInstanceId(), 504.0f, 396.0f, 94.0f, (byte)30, TeleportAnimation.FADE_OUT_BEAM);
     }
