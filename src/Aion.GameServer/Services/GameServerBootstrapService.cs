@@ -62,6 +62,9 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		var dataManager = await _staticDataLoader.LoadAsync(cancellationToken);
 		_runtimeContext.SetDataManager(dataManager);
+		// Java parity: DataManager static accessors (DataManager.ITEM_DATA, ...) read through the
+		// instance singleton; bind it before any engine InitAsync touches a DataManager.* accessor.
+		Aion.GameServer.Dataholders.DataManager.RegisterInstance(dataManager);
 		_logger.LogInformation(
 			"Static data cache loaded from {CacheFile}; {Count} XML files imported",
 			dataManager.StaticData.CacheFilePath,
