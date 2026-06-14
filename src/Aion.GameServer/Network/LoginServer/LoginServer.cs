@@ -17,6 +17,8 @@ public sealed class LoginServer : IAsyncDisposable
 	private readonly SemaphoreSlim _sendLock = new(1, 1);
 	private readonly CancellationTokenSource _shutdownTokenSource = new();
 	private readonly ConcurrentDictionary<int, TaskCompletionSource<AccountAuthResult>> _pendingAccountAuthRequests = new();
+	// Java parity: network/loginserver/LoginServer.loginRequests (Map<Integer, LoginRequest>).
+	private readonly ConcurrentDictionary<int, LoginRequest> _loginRequests = new();
 	private TcpClient? _client;
 	private NetworkStream? _stream;
 	private Task? _readerTask;
@@ -72,6 +74,44 @@ public sealed class LoginServer : IAsyncDisposable
 
 	public int GameServerCount { get; private set; }
 
+	// Java parity: network/loginserver/LoginServer.registerLoginRequest(int, AionConnection, int, int, int).
+	// putIfAbsent a LoginRequest holding the connection and the SM_ACCOUNT_AUTH to forward once the client triggers auth.
+	public void RegisterLoginRequest(int accountId, global::Aion.GameServer.Network.Aion.AionConnection client, int loginOk, int playOk1, int playOk2)
+	{
+		_loginRequests.TryAdd(accountId, new LoginRequest(client, new SmAccountAuth(accountId, loginOk, playOk1, playOk2)));
+	}
+
+	// Java parity: network/loginserver/LoginServer.authenticateClient(AionConnection).
+	// When the bridge is up, forward the stored SM_ACCOUNT_AUTH for this connection; otherwise disconnect the client.
+	public void AuthenticateClient(global::Aion.GameServer.Network.Aion.AionConnection client)
+	{
+		if (IsAuthed)
+		{
+			foreach (var request in _loginRequests.Values)
+			{
+				if (ReferenceEquals(request.Connection, client))
+				{
+					SendPacket(request.AuthResponse);
+					break;
+				}
+			}
+		}
+		else
+		{
+			client.Close(); // disconnect this client since authentication will not happen
+		}
+	}
+
+	// Java parity: network/loginserver/LoginServer.requestAuthReconnection(int, AionConnection).
+	// When up and the requesting connection owns the account, ask the LoginServer for a reconnect key; otherwise close.
+	public void RequestAuthReconnection(int accountId, global::Aion.GameServer.Network.Aion.AionConnection client)
+	{
+		if (IsAuthed && client.GetAccount() != null && client.GetAccount().GetId() == accountId)
+			SendPacket(new SmAccountReconnectKey(client.GetAccount().GetId()));
+		else
+			client.Close();
+	}
+
 	public async Task<AccountAuthResult> RequestAccountAuthAsync(
 		int accountId,
 		int loginOk,
@@ -125,6 +165,13 @@ public sealed class LoginServer : IAsyncDisposable
 	// request tied to the closing connection and, when an account was bound, notifies the login server.
 	public void OnDisconnect(global::Aion.GameServer.Network.Aion.AionConnection connection)
 	{
+		// Java parity: loginRequests.values().removeIf(r -> r.connection == connection).
+		foreach (var entry in _loginRequests)
+		{
+			if (ReferenceEquals(entry.Value.Connection, connection))
+				_loginRequests.TryRemove(entry.Key, out _);
+		}
+
 		var account = connection.GetAccount();
 		if (account != null)
 		{
@@ -325,5 +372,19 @@ public sealed class LoginServer : IAsyncDisposable
 		_sendLock.Dispose();
 		_stream?.Dispose();
 		_client?.Dispose();
+	}
+
+	// Java parity: network/loginserver/LoginServer.LoginRequest (connection + pending SM_ACCOUNT_AUTH response).
+	private sealed class LoginRequest
+	{
+		public LoginRequest(global::Aion.GameServer.Network.Aion.AionConnection connection, SmAccountAuth authResponse)
+		{
+			Connection = connection;
+			AuthResponse = authResponse;
+		}
+
+		public global::Aion.GameServer.Network.Aion.AionConnection Connection { get; }
+
+		public SmAccountAuth AuthResponse { get; }
 	}
 }
