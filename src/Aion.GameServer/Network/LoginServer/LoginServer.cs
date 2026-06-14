@@ -60,6 +60,12 @@ public sealed class LoginServer : IAsyncDisposable
 		return true;
 	}
 
+	// Java parity: LoginServer.sendBanPacket(byte, int, String, int, int).
+	public void SendBanPacket(byte type, int accountId, string ip, int time, int adminObjId)
+	{
+		SendPacket(new ServerPackets.SM_BAN(type, accountId, ip, time, adminObjId));
+	}
+
 	public LoginServerState State => _state;
 
 	public bool IsAuthed => _state == LoginServerState.Authed;

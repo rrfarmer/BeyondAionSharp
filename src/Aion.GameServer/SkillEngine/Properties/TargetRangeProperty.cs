@@ -36,7 +36,7 @@ public class TargetRangeProperty
                     return false;
 
                 // Create a sorted map of the objects in knownlist and filter them properly
-                foreach (Creature creature in firstTarget.GetKnownList()
+                foreach (Creature creature in firstTarget.GetKnownList().Stream()
                     .Where(knownObject => knownObject.Get() is Creature)
                     .Select(knownObject => (Creature)knownObject.Get())
                     .Where(creature => CheckCommonRequirements(creature, skillTemplate))
@@ -88,7 +88,7 @@ public class TargetRangeProperty
                 }
                 break;
             case TargetRangeAttribute.POINT:
-                foreach (Creature creature in skillEffector.GetKnownList()
+                foreach (Creature creature in skillEffector.GetKnownList().Stream()
                     .Where(knownObject => knownObject.Get() is Creature)
                     .Select(knownObject => (Creature)knownObject.Get())
                     .Where(creature => CheckCommonRequirements(creature, skillTemplate))
