@@ -2882,9 +2882,19 @@ public sealed class MySqlPlayerEnterWorldRepository : IPlayerEnterWorldRepositor
 
 	internal static void RestoreAccountPassportState(Player player, AccountPassportRestoreSnapshot snapshot)
 	{
-		player.Passports = snapshot.Passports;
-		player.PassportStamps = snapshot.Stamps;
-		player.LastPassportStamp = snapshot.LastStamp;
+		// Java parity: dao/AccountPassportsDAO.loadPassport(Account) populates Account.getPassportsList(),
+		// Account.setPassportStamps and Account.setLastStamp.
+		var account = player.GetAccount();
+		if (account == null)
+			return;
+		var passportsList = new Aion.GameServer.Model.Account.PassportsList();
+		foreach (var passport in snapshot.Passports)
+			passportsList.AddPassport(passport);
+		account.SetPassportsList(passportsList);
+		account.SetPassportStamps(snapshot.Stamps);
+		account.SetLastStamp(snapshot.LastStamp.HasValue
+			? new DateTimeOffset(DateTime.SpecifyKind(snapshot.LastStamp.Value, DateTimeKind.Utc))
+			: (DateTimeOffset?)null);
 	}
 
 	private static async Task<AccountPassportRestoreSnapshot> LoadAccountPassportStateAsync(

@@ -19,19 +19,6 @@ public partial class Player
     {
     }
 
-    // Java parity: account passport state restored by AccountPassportsDAO.loadPassport(account).
-    private IReadOnlyList<Aion.GameServer.Model.Account.Passport> _passports = Array.Empty<Aion.GameServer.Model.Account.Passport>();
-
-    public IReadOnlyList<Aion.GameServer.Model.Account.Passport> Passports
-    {
-        get => _passports;
-        set => _passports = value ?? Array.Empty<Aion.GameServer.Model.Account.Passport>();
-    }
-
-    public int PassportStamps { get; set; }
-
-    public DateTime? LastPassportStamp { get; set; }
-
     // Java parity: PlayerQuestListDAO.store(player) iterates player.getQuestStateList().getAllQuestState().
     public IReadOnlyList<Aion.GameServer.Model.GameObjects.PlayerQuestState> Quests =>
         GetQuestStateList().GetAllQuestState()
