@@ -66,7 +66,6 @@ public sealed partial class StaticData
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestNpcStartTable questNpcStarts,
-		ChallengeTaskTable challengeTasks,
 		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
 		Task? validationTask)
@@ -126,7 +125,6 @@ public sealed partial class StaticData
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		QuestHandlers = questHandlers;
 		QuestNpcStarts = questNpcStarts;
-		ChallengeTasks = challengeTasks;
 		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
 		ValidationTask = validationTask;
@@ -258,8 +256,6 @@ public sealed partial class StaticData
 	public QuestHandlerAvailabilityTable QuestHandlers { get; }
 
 	public QuestNpcStartTable QuestNpcStarts { get; }
-
-	public ChallengeTaskTable ChallengeTasks { get; }
 
 	public LegionDominionTable LegionDominions { get; }
 
@@ -421,7 +417,6 @@ public sealed partial class StaticData
 		var petDopings = new List<PetDopingEntrySummary>();
 		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
-		var challengeTasks = new List<ChallengeTaskSummary>();
 		var legionDominions = new List<LegionDominionLocationSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
 		var learnableEmotionIds = new HashSet<int>();
@@ -492,7 +487,6 @@ public sealed partial class StaticData
 		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
 		int currentHousingLandId = 0;
 		int currentHousingManagerNpcId = 0;
-		ChallengeTaskBuilder? currentChallengeTask = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -808,11 +802,6 @@ public sealed partial class StaticData
 				{
 					currentHousingLandId = 0;
 					currentHousingManagerNpcId = 0;
-				}
-				if (reader.Depth == 2 && reader.LocalName == "task" && currentChallengeTask != null)
-				{
-					challengeTasks.Add(currentChallengeTask.ToSummary());
-					currentChallengeTask = null;
 				}
 				elementPath.Remove(reader.Depth);
 				continue;
@@ -2297,41 +2286,6 @@ public sealed partial class StaticData
 			}
 
 			if (reader.Depth == 2
-				&& reader.LocalName == "task"
-				&& elementPath.GetValueOrDefault(1) == "challenge_tasks")
-			{
-				// Java parity: model/templates/challenge/ChallengeTaskTemplate fields used by ChallengeTaskService.canRaiseLegionLevel.
-				currentChallengeTask = new ChallengeTaskBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					reader.GetAttribute("type") ?? string.Empty,
-					reader.GetAttribute("race") ?? string.Empty,
-					ReadRequiredIntAttribute(reader, "min_level"),
-					ReadRequiredIntAttribute(reader, "max_level"),
-					ReadOptionalBoolAttribute(reader, "legion_level_task", false),
-					ReadOptionalBoolAttribute(reader, "repeat", false),
-					int.TryParse(reader.GetAttribute("prev_task"), out var previousTaskId) ? previousTaskId : (int?)null);
-				if (reader.IsEmptyElement)
-				{
-					challengeTasks.Add(currentChallengeTask.ToSummary());
-					currentChallengeTask = null;
-				}
-
-				continue;
-			}
-
-			if (reader.Depth == 3
-				&& reader.LocalName == "quest"
-				&& currentChallengeTask != null
-				&& elementPath.GetValueOrDefault(2) == "task")
-			{
-				currentChallengeTask.AddQuest(new ChallengeQuestSummary(
-					ReadRequiredIntAttribute(reader, "id"),
-					ReadRequiredIntAttribute(reader, "repeat_count"),
-					ReadRequiredIntAttribute(reader, "score")));
-				continue;
-			}
-
-			if (reader.Depth == 2
 				&& reader.LocalName == "legion_dominion_location"
 				&& elementPath.GetValueOrDefault(1) == "legion_dominion_template")
 			{
@@ -3033,7 +2987,6 @@ public sealed partial class StaticData
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			questHandlers,
 			questNpcStarts,
-			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
 			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			validationTask);

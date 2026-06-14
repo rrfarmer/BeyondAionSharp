@@ -46,66 +46,6 @@ public sealed partial class StaticData
 		}
 	}
 
-	private sealed class ChallengeTaskBuilder
-	{
-		private readonly List<ChallengeQuestSummary> _quests = [];
-
-		public ChallengeTaskBuilder(
-			int taskId,
-			string type,
-			string race,
-			int minLevel,
-			int maxLevel,
-			bool isLegionLevelTask,
-			bool isRepeatable,
-			int? previousTaskId)
-		{
-			TaskId = taskId;
-			Type = type;
-			Race = race;
-			MinLevel = minLevel;
-			MaxLevel = maxLevel;
-			IsLegionLevelTask = isLegionLevelTask;
-			IsRepeatable = isRepeatable;
-			PreviousTaskId = previousTaskId;
-		}
-
-		private int TaskId { get; }
-
-		private string Type { get; }
-
-		private string Race { get; }
-
-		private int MinLevel { get; }
-
-		private int MaxLevel { get; }
-
-		private bool IsLegionLevelTask { get; }
-
-		private bool IsRepeatable { get; }
-
-		private int? PreviousTaskId { get; }
-
-		public void AddQuest(ChallengeQuestSummary quest)
-		{
-			_quests.Add(quest);
-		}
-
-		public ChallengeTaskSummary ToSummary()
-		{
-			return new ChallengeTaskSummary(
-				TaskId,
-				Type,
-				Race,
-				MinLevel,
-				MaxLevel,
-				IsLegionLevelTask,
-				IsRepeatable,
-				PreviousTaskId,
-				_quests.AsReadOnly());
-		}
-	}
-
 	private sealed class TradeListTemplateBuilder
 	{
 		private readonly List<int> _goodsListIds = [];
