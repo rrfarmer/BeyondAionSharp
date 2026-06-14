@@ -21,7 +21,7 @@ public static class SystemMailRewardPlanService
 		int mailObjectId,
 		int attachedItemObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates
+		Aion.GameServer.Dataholders.ItemData? itemData
 	)
 	{
 		// Java parity: BonusPackService.addPlayerCustomReward / FactionPackService.sendRewards both
@@ -41,7 +41,7 @@ public static class SystemMailRewardPlanService
 			mailObjectId,
 			attachedItemObjectId,
 			receivedTime,
-			itemTemplates
+			itemData
 		);
 	}
 
@@ -51,7 +51,7 @@ public static class SystemMailRewardPlanService
 		int mailObjectId,
 		int attachedItemObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates
+		Aion.GameServer.Dataholders.ItemData? itemData
 	)
 	{
 		// Java parity: StarterKitService.onLevelUp also funnels reward delivery through
@@ -71,7 +71,7 @@ public static class SystemMailRewardPlanService
 			mailObjectId,
 			attachedItemObjectId,
 			receivedTime,
-			itemTemplates
+			itemData
 		);
 	}
 
@@ -81,7 +81,7 @@ public static class SystemMailRewardPlanService
 		int mailObjectId,
 		int attachedItemObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates
+		Aion.GameServer.Dataholders.ItemData? itemData
 	)
 	{
 		// Java parity: services/mail/SystemMailService.sendMail guard and Letter construction order.
@@ -89,7 +89,7 @@ public static class SystemMailRewardPlanService
 			return SystemMailRewardPlan.Skipped(SystemMailRewardPlanStatus.MissingRecipient, request);
 		if (request.AttachedItemId != 0 && request.AttachedItemCount <= 0)
 			return SystemMailRewardPlan.Skipped(SystemMailRewardPlanStatus.InvalidAttachedItemCount, request, recipient);
-		if (request.AttachedItemId != 0 && itemTemplates?.GetItemTemplate(request.AttachedItemId) == null)
+		if (request.AttachedItemId != 0 && itemData?.GetItemTemplate(request.AttachedItemId) == null)
 			return SystemMailRewardPlan.Skipped(SystemMailRewardPlanStatus.MissingItemTemplate, request, recipient);
 		if (request.RecipientName(recipient).Length > MaxRecipientNameLength)
 			return SystemMailRewardPlan.Skipped(SystemMailRewardPlanStatus.RecipientNameTooLong, request, recipient);

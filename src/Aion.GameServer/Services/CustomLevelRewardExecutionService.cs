@@ -17,7 +17,7 @@ public sealed class CustomLevelRewardExecutionService
 		Player? player,
 		Func<int> nextObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates,
+		Aion.GameServer.Dataholders.ItemData? itemData,
 		CancellationToken cancellationToken = default)
 	{
 		return await CreateExecutionPlanAsync(
@@ -26,7 +26,7 @@ public sealed class CustomLevelRewardExecutionService
 			accountCreationLocalTime: null,
 			nextObjectId,
 			receivedTime,
-			itemTemplates,
+			itemData,
 			cancellationToken);
 	}
 
@@ -35,7 +35,7 @@ public sealed class CustomLevelRewardExecutionService
 		DateTime accountCreationLocalTime,
 		Func<int> nextObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates,
+		Aion.GameServer.Dataholders.ItemData? itemData,
 		CancellationToken cancellationToken = default)
 	{
 		return await CreateExecutionPlanAsync(
@@ -44,7 +44,7 @@ public sealed class CustomLevelRewardExecutionService
 			accountCreationLocalTime,
 			nextObjectId,
 			receivedTime,
-			itemTemplates,
+			itemData,
 			cancellationToken);
 	}
 
@@ -54,12 +54,12 @@ public sealed class CustomLevelRewardExecutionService
 		DateTime? accountCreationLocalTime,
 		Func<int> nextObjectId,
 		DateTime receivedTime,
-		ItemTemplateTable? itemTemplates,
+		Aion.GameServer.Dataholders.ItemData? itemData,
 		CancellationToken cancellationToken)
 	{
 		// Java parity: BonusPackService.addPlayerCustomReward / FactionPackService.sendRewards
 		// run static guards before DAO load/store, store the receiving player, then send one system mail per reward.
-		var preReceiptPlan = CreateRewardPlan(kind, player, accountCreationLocalTime, receivedPlayerId: 0, storeReceivingPlayerSucceeded: true, itemTemplates);
+		var preReceiptPlan = CreateRewardPlan(kind, player, accountCreationLocalTime, receivedPlayerId: 0, storeReceivingPlayerSucceeded: true, itemData);
 		if (IsPreReceiptSkip(preReceiptPlan.Status))
 			return CustomLevelRewardExecutionResult.FromPlan(kind, CustomLevelRewardExecutionStatus.SkippedBeforeReceipt, preReceiptPlan);
 		if (player == null)
@@ -69,7 +69,7 @@ public sealed class CustomLevelRewardExecutionService
 		var receivedPlayerId = await _repository.LoadReceivingPlayerAsync(receiptKind, player.AccountId, cancellationToken);
 		if (receivedPlayerId > 0)
 		{
-			var alreadyReceivedPlan = CreateRewardPlan(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded: true, itemTemplates);
+			var alreadyReceivedPlan = CreateRewardPlan(kind, player, accountCreationLocalTime, receivedPlayerId, storeReceivingPlayerSucceeded: true, itemData);
 			return CustomLevelRewardExecutionResult.FromPlan(
 				kind,
 				CustomLevelRewardExecutionStatus.SkippedAlreadyReceived,
@@ -79,7 +79,7 @@ public sealed class CustomLevelRewardExecutionService
 		}
 
 		var storeSucceeded = await _repository.StoreReceivingPlayerAsync(receiptKind, player.AccountId, player.ObjectId, cancellationToken);
-		var rewardPlan = CreateRewardPlan(kind, player, accountCreationLocalTime, receivedPlayerId, storeSucceeded, itemTemplates);
+		var rewardPlan = CreateRewardPlan(kind, player, accountCreationLocalTime, receivedPlayerId, storeSucceeded, itemData);
 		if (!storeSucceeded)
 		{
 			return CustomLevelRewardExecutionResult.FromPlan(
@@ -99,7 +99,7 @@ public sealed class CustomLevelRewardExecutionService
 				mailObjectId: 0,
 				attachedItemObjectId: 0,
 				receivedTime,
-				itemTemplates);
+				itemData);
 			if (!preflight.Applied)
 			{
 				mailPlans.Add(preflight);
@@ -114,7 +114,7 @@ public sealed class CustomLevelRewardExecutionService
 				mailObjectId,
 				attachedItemObjectId,
 				receivedTime,
-				itemTemplates));
+				itemData));
 		}
 
 		var status = rewardPlan.Status == CustomLevelRewardPlanStatus.NoDeliverableRewards
@@ -129,7 +129,7 @@ public sealed class CustomLevelRewardExecutionService
 		DateTime? accountCreationLocalTime,
 		int receivedPlayerId,
 		bool storeReceivingPlayerSucceeded,
-		ItemTemplateTable? itemTemplates)
+		Aion.GameServer.Dataholders.ItemData? itemData)
 	{
 		return kind == CustomLevelRewardPackKind.Bonus
 			? CustomLevelRewardPlanService.CreateBonusPackPlan(player, receivedPlayerId, storeReceivingPlayerSucceeded)
@@ -138,7 +138,7 @@ public sealed class CustomLevelRewardExecutionService
 				accountCreationLocalTime ?? CustomLevelRewardPlanService.ElyosMinCreationTime,
 				receivedPlayerId,
 				storeReceivingPlayerSucceeded,
-				itemTemplates);
+				itemData);
 	}
 
 	private static bool IsPreReceiptSkip(CustomLevelRewardPlanStatus status)

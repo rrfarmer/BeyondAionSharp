@@ -65,7 +65,7 @@ public static class CustomLevelRewardPlanService
 			accountCreationLocalTime: null,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			itemTemplates: null
+			itemData: null
 		);
 	}
 
@@ -74,7 +74,7 @@ public static class CustomLevelRewardPlanService
 		DateTime accountCreationLocalTime,
 		int receivedPlayerId,
 		bool storeReceivingPlayerSucceeded,
-		ItemTemplateTable? itemTemplates = null
+		Aion.GameServer.Dataholders.ItemData? itemData = null
 	)
 	{
 		// Java parity: FactionPackService.sendRewards uses the same descriptor pipeline, but adds
@@ -85,7 +85,7 @@ public static class CustomLevelRewardPlanService
 			accountCreationLocalTime,
 			receivedPlayerId,
 			storeReceivingPlayerSucceeded,
-			itemTemplates
+			itemData
 		);
 	}
 
@@ -95,7 +95,7 @@ public static class CustomLevelRewardPlanService
 		DateTime? accountCreationLocalTime,
 		int receivedPlayerId,
 		bool storeReceivingPlayerSucceeded,
-		ItemTemplateTable? itemTemplates
+		Aion.GameServer.Dataholders.ItemData? itemData
 	)
 	{
 		// Java parity: BonusPackService.addPlayerCustomReward / FactionPackService.sendRewards guard
@@ -174,7 +174,7 @@ public static class CustomLevelRewardPlanService
 			);
 
 		var descriptors =
-			kind == CustomLevelRewardPackKind.Bonus ? CreateBonusDescriptors(rewards) : CreateFactionDescriptors(player, rewards, itemTemplates);
+			kind == CustomLevelRewardPackKind.Bonus ? CreateBonusDescriptors(rewards) : CreateFactionDescriptors(player, rewards, itemData);
 
 		var status = descriptors.Any(descriptor => descriptor.Status == CustomLevelRewardDescriptorStatus.PlannedSystemMail)
 			? CustomLevelRewardPlanStatus.Planned
@@ -212,14 +212,14 @@ public static class CustomLevelRewardPlanService
 	private static IReadOnlyList<CustomLevelRewardDescriptor> CreateFactionDescriptors(
 		Player player,
 		IReadOnlyList<CustomLevelRewardItem> rewards,
-		ItemTemplateTable? itemTemplates
+		Aion.GameServer.Dataholders.ItemData? itemData
 	)
 	{
 		var oppositeRace = GetOppositeRace(player.Race.ToString());
 		return rewards
 			.Select(reward =>
 			{
-				var templateRace = itemTemplates?.GetItemTemplate(reward.ItemId)?.Race;
+				var templateRace = itemData?.GetItemTemplate(reward.ItemId)?.GetRace().ToString();
 				var skippedOppositeRace =
 					templateRace != null && oppositeRace != null && string.Equals(NormalizeRace(templateRace), oppositeRace, StringComparison.Ordinal);
 				var notes = skippedOppositeRace

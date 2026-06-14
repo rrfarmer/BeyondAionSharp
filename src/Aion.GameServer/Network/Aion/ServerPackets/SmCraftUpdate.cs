@@ -21,7 +21,7 @@ public sealed class SmCraftUpdate : GameServerPacket
 
 	public SmCraftUpdate(
 		int skillId,
-		ItemTemplateSummary itemTemplate,
+		global::Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate,
 		int success,
 		int failure,
 		int action,
@@ -31,11 +31,11 @@ public sealed class SmCraftUpdate : GameServerPacket
 	{
 		// Java parity: network/aion/serverpackets/SM_CRAFT_UPDATE.
 		_skillId = skillId;
-		_itemId = itemTemplate.TemplateId;
+		_itemId = itemTemplate.GetTemplateId();
 		_action = action;
 		_success = success;
 		_failure = failure;
-		_itemNameL10n = itemTemplate.GetClientName();
+		_itemNameL10n = itemTemplate.GetL10n();
 		_executionSpeed = executionSpeed;
 		_delay = skillId == MorphSkillId ? MorphDelayMilliseconds : delay;
 	}

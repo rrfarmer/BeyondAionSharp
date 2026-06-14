@@ -135,7 +135,7 @@ public static class BrokerItemMaskMatcher
 			[7070] = new([1850, 1860, 1870, 1880, 1881, 1887]),
 		};
 
-	public static bool Matches(int brokerMask, ItemTemplateSummary template, RecipeTemplateTable? recipes = null)
+	public static bool Matches(int brokerMask, Aion.GameServer.Model.Templates.Items.ItemTemplate template, RecipeTemplateTable? recipes = null)
 	{
 		// Java parity: model/broker/BrokerItemMask with BrokerPlayerClassExtraFilter and BrokerRecipeFilter specializations.
 		if (ClassFilters.TryGetValue(brokerMask, out var classFilter))
@@ -144,26 +144,27 @@ public static class BrokerItemMaskMatcher
 		if (RecipeFilters.TryGetValue(brokerMask, out var recipeFilter))
 			return recipeFilter.Matches(template, recipes);
 
-		return Filters.TryGetValue(brokerMask, out var filter) && filter.Matches(template.TemplateId);
+		return Filters.TryGetValue(brokerMask, out var filter) && filter.Matches(template.GetTemplateId());
 	}
 
 	private sealed record BrokerPlayerClassFilter(int TemplateMask, string PlayerClass)
 	{
-		public bool Matches(ItemTemplateSummary template)
+		public bool Matches(Aion.GameServer.Model.Templates.Items.ItemTemplate template)
 		{
-			return TemplateMask == template.TemplateId / 100000
-				&& template.IsClassSpecific(PlayerClass);
+			return TemplateMask == template.GetTemplateId() / 100000
+				&& template.IsClassSpecific(Enum.Parse<Aion.GameServer.Model.PlayerClass>(PlayerClass));
 		}
 	}
 
 	private sealed record BrokerRecipeFilter(int CraftSkillId, int TemplateMask)
 	{
-		public bool Matches(ItemTemplateSummary template, RecipeTemplateTable? recipes)
+		public bool Matches(Aion.GameServer.Model.Templates.Items.ItemTemplate template, RecipeTemplateTable? recipes)
 		{
-			if (recipes == null || TemplateMask != template.TemplateId / 100000 || template.CraftLearnRecipeId == 0)
+			var craftLearnRecipeId = template.GetActions()?.GetCraftLearnAction()?.GetRecipeId() ?? 0;
+			if (recipes == null || TemplateMask != template.GetTemplateId() / 100000 || craftLearnRecipeId == 0)
 				return false;
 
-			var recipe = recipes.GetRecipeTemplateById(template.CraftLearnRecipeId);
+			var recipe = recipes.GetRecipeTemplateById(craftLearnRecipeId);
 			return recipe?.SkillId == CraftSkillId;
 		}
 	}
