@@ -273,7 +273,7 @@ public class PvpService
                 }
 
             }
-            AbyssPointsService.AddAp(member, victim, memberApGain);
+            Aion.GameServer.Services.Abyss.AbyssPointsService.AddAp(member, victim, memberApGain);
             member.GetCommonData().AddExp(memberXpGain, Rates.XP_PVP, victim.GetName());
             member.GetCommonData().AddDp(memberDpGain);
         }
