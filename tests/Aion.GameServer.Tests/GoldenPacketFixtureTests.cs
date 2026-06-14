@@ -33,6 +33,22 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_BLOCK_RESPONSE.json")]
 	[InlineData("SM_FRIEND_RESPONSE.json")]
 	[InlineData("SM_CLOSE_QUESTION_WINDOW.json")]
+	[InlineData("SM_DELETE_CHARACTER.json")]
+	[InlineData("SM_RESTORE_CHARACTER.json")]
+	[InlineData("SM_NICKNAME_CHECK_RESPONSE.json")]
+	[InlineData("SM_LEARN_RECIPE.json")]
+	[InlineData("SM_SUMMON_OWNER_REMOVE.json")]
+	[InlineData("SM_SUMMON_PANEL_REMOVE.json")]
+	[InlineData("SM_DP_INFO.json")]
+	[InlineData("SM_FLY_TIME.json")]
+	[InlineData("SM_STATUPDATE_DP.json")]
+	[InlineData("SM_STATUPDATE_HP.json")]
+	[InlineData("SM_STATUPDATE_MP.json")]
+	[InlineData("SM_STATUPDATE_EXP.json")]
+	[InlineData("SM_UNWRAP_ITEM.json")]
+	[InlineData("SM_WINDSTREAM.json")]
+	[InlineData("SM_FRIEND_NOTIFY.json")]
+	[InlineData("SM_BIND_POINT_TELEPORT.json")]
 	public void CsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -67,6 +83,22 @@ public sealed class GoldenPacketFixtureTests
 		"SM_BLOCK_RESPONSE" => new SmBlockResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
 		"SM_FRIEND_RESPONSE" => new SmFriendResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
 		"SM_CLOSE_QUESTION_WINDOW" => ReconstructCloseQuestionWindow(inputs),
+		"SM_DELETE_CHARACTER" => new SmDeleteCharacter(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("deletionTime").GetInt32()),
+		"SM_RESTORE_CHARACTER" => new SmRestoreCharacter(inputs.GetProperty("chaOid").GetInt32(), inputs.GetProperty("success").GetBoolean()),
+		"SM_NICKNAME_CHECK_RESPONSE" => new SmNicknameCheckResponse(inputs.GetProperty("value").GetInt32()),
+		"SM_LEARN_RECIPE" => new SmLearnRecipe(inputs.GetProperty("recipeId").GetInt32()),
+		"SM_SUMMON_OWNER_REMOVE" => new SmSummonOwnerRemove(inputs.GetProperty("summonObjId").GetInt32()),
+		"SM_SUMMON_PANEL_REMOVE" => new SmSummonPanelRemove(inputs.GetProperty("skillId").GetInt32()),
+		"SM_DP_INFO" => new SmDpInfo(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("currentDp").GetInt32()),
+		"SM_FLY_TIME" => new SmFlyTime(inputs.GetProperty("currentFp").GetInt32(), inputs.GetProperty("maxFp").GetInt32()),
+		"SM_STATUPDATE_DP" => new SmStatUpdateDp(inputs.GetProperty("currentDp").GetInt32()),
+		"SM_STATUPDATE_HP" => new SmStatUpdateHp(inputs.GetProperty("currentHp").GetInt32(), inputs.GetProperty("maxHp").GetInt32()),
+		"SM_STATUPDATE_MP" => new SmStatUpdateMp(inputs.GetProperty("currentMp").GetInt32(), inputs.GetProperty("maxMp").GetInt32()),
+		"SM_STATUPDATE_EXP" => new SmStatUpdateExp(inputs.GetProperty("currentExp").GetInt64(), inputs.GetProperty("recoverableExp").GetInt64(), inputs.GetProperty("maxExp").GetInt64(), inputs.GetProperty("rep1").GetInt64(), inputs.GetProperty("rep2").GetInt64()),
+		"SM_UNWRAP_ITEM" => new SmUnwrapItem(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("count").GetInt32()),
+		"SM_WINDSTREAM" => new SmWindstream(inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32()),
+		"SM_FRIEND_NOTIFY" => new SmFriendNotify((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("name").GetString()!),
+		"SM_BIND_POINT_TELEPORT" => new SmBindPointTeleport((byte)inputs.GetProperty("action").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("locId").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
 		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
 	};
 
