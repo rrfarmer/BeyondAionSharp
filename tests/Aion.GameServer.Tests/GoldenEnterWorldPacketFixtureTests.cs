@@ -43,6 +43,7 @@ public sealed class GoldenEnterWorldPacketFixtureTests
     [InlineData("SM_MOTION.json")]
     [InlineData("SM_QUEST_LIST.json")]
     [InlineData("SM_CHANNEL_INFO.json")]
+    [InlineData("SM_UI_SETTINGS.json")]
     [InlineData("SM_UNK_3_5_1.json")]
     [InlineData("SM_FRIEND_LIST.json")]
     [InlineData("SM_BLOCK_LIST.json")]
@@ -90,6 +91,11 @@ public sealed class GoldenEnterWorldPacketFixtureTests
                 return (new SM_QUEST_LIST(new List<Aion.GameServer.QuestEngine.Model.QuestState>()), null);
             case "SM_CHANNEL_INFO":
                 return (new SM_CHANNEL_INFO(null!), null);
+            case "SM_UI_SETTINGS":
+            {
+                var data = inputs.GetProperty("data").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray();
+                return (new SM_UI_SETTINGS(data, inputs.GetProperty("type").GetInt32()), null);
+            }
             case "SM_UNK_3_5_1":
             {
                 var active = NewPlayer(inputs.GetProperty("objectId").GetInt32(), Race.ELYOS);
