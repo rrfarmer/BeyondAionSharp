@@ -123,26 +123,6 @@ public sealed partial class StaticData
 		}
 	}
 
-	private static void AddPortalPathSummary(
-		PortalPathSummary path,
-		ICollection<PortalPathSummary> portalUsePaths,
-		ICollection<PortalPathSummary> portalDialogPaths,
-		ICollection<PortalPathSummary> portalScrollPaths)
-	{
-		switch (path.Source)
-		{
-			case PortalPathSource.Use:
-				portalUsePaths.Add(path);
-				break;
-			case PortalPathSource.Dialog:
-				portalDialogPaths.Add(path);
-				break;
-			case PortalPathSource.Scroll:
-				portalScrollPaths.Add(path);
-				break;
-		}
-	}
-
 	private static bool MatchesGlobalDropNpcName(GlobalDropNpcNameSummary ruleName, string npcName)
 	{
 		var value = ruleName.Value.ToLowerInvariant();

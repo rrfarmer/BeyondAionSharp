@@ -59,7 +59,6 @@ public sealed partial class StaticData
 		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
 		InstanceExitTable instanceExits,
-		PortalPathTable portalPaths,
 		PortalLocTable portalLocs,
 		AutoGroupTable autoGroups,
 		PlayerInitialDataTable playerInitialData,
@@ -120,7 +119,6 @@ public sealed partial class StaticData
 		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
 		InstanceExits = instanceExits;
-		PortalPaths = portalPaths;
 		PortalLocs = portalLocs;
 		AutoGroups = autoGroups;
 		PlayerInitialData = playerInitialData;
@@ -241,8 +239,6 @@ public sealed partial class StaticData
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
 	public InstanceExitTable InstanceExits { get; }
-
-	public PortalPathTable PortalPaths { get; }
 
 	public PortalLocTable PortalLocs { get; }
 
@@ -418,10 +414,6 @@ public sealed partial class StaticData
 		var housingObjectTemplates = new List<HousingObjectTemplateSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var instanceExits = new List<InstanceExitSummary>();
-		var portalUsePaths = new List<PortalPathSummary>();
-		var portalDialogPaths = new List<PortalPathSummary>();
-		var portalScrollPaths = new List<PortalPathSummary>();
-		var portalDialogTeleportIds = new Dictionary<int, int>();
 		var portalLocs = new List<PortalLocSummary>();
 		var autoGroups = new List<AutoGroupSummary>();
 		var petSkills = new List<PetSkillSummary>();
@@ -437,8 +429,6 @@ public sealed partial class StaticData
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
-		PortalPathParent? currentPortalPathParent = null;
-		PortalPathBuilder? currentPortalPath = null;
 		ItemTemplateBuilder? currentItemTemplate = null;
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
@@ -522,19 +512,6 @@ public sealed partial class StaticData
 				{
 					instanceCooltimes.Add(currentInstanceCooltime.ToSummary());
 					currentInstanceCooltime = null;
-				}
-
-				if (reader.Depth == 2 && reader.LocalName is "portal_use" or "portal_dialog" or "portal_scroll")
-					currentPortalPathParent = null;
-
-				if (reader.Depth == 3 && reader.LocalName == "portal_path" && currentPortalPath != null)
-				{
-					AddPortalPathSummary(
-						currentPortalPath.ToSummary(),
-						portalUsePaths,
-						portalDialogPaths,
-						portalScrollPaths);
-					currentPortalPath = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "item_template" && currentItemTemplate != null)
@@ -983,16 +960,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "portal_use")
-			{
-				// Java parity: model/templates/portal/PortalUse grouped by npc_id in dataholders/Portal2Data.
-				currentPortalPathParent = PortalPathParent.ForUse(ReadRequiredIntAttribute(reader, "npc_id"));
-				if (reader.IsEmptyElement)
-					currentPortalPathParent = null;
-
-				continue;
-			}
-
 			if (reader.Depth == 2 && reader.LocalName == "instance_exit")
 			{
 				// Java parity: model/templates/portal/InstanceExit scalar JAXB attributes, race defaults to PC_ALL.
@@ -1005,75 +972,6 @@ public sealed partial class StaticData
 						ReadFloatAttribute(reader, "y"),
 						ReadFloatAttribute(reader, "z"),
 						(byte)ReadIntAttribute(reader, "h")));
-				continue;
-			}
-
-			if (reader.Depth == 2 && reader.LocalName == "portal_dialog")
-			{
-				// Java parity: model/templates/portal/PortalDialog teleport_dialog_id defaults to 1011.
-				var npcId = ReadRequiredIntAttribute(reader, "npc_id");
-				portalDialogTeleportIds[npcId] = ReadOptionalIntAttribute(reader, "teleport_dialog_id", 1011);
-				currentPortalPathParent = PortalPathParent.ForDialog(npcId);
-				if (reader.IsEmptyElement)
-					currentPortalPathParent = null;
-
-				continue;
-			}
-
-			if (reader.Depth == 2 && reader.LocalName == "portal_scroll")
-			{
-				// Java parity: model/templates/portal/PortalScroll is keyed by scroll template name.
-				currentPortalPathParent = PortalPathParent.ForScroll(reader.GetAttribute("name") ?? string.Empty);
-				if (reader.IsEmptyElement)
-					currentPortalPathParent = null;
-
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "portal_path" && currentPortalPathParent != null)
-			{
-				// Java parity: model/templates/portal/PortalPath scalar JAXB attributes plus child requirements.
-				currentPortalPath = currentPortalPathParent.CreateBuilder(
-					ReadIntAttribute(reader, "dialog"),
-					ReadIntAttribute(reader, "loc_id"),
-					ReadIntAttribute(reader, "siege_id"),
-					reader.GetAttribute("race") ?? "PC_ALL",
-					ReadIntAttribute(reader, "min_level"),
-					ReadIntAttribute(reader, "min_rank"),
-					ReadIntAttribute(reader, "kinah"),
-					ReadIntAttribute(reader, "title_id"),
-					ReadIntAttribute(reader, "err_group"),
-					ReadIntAttribute(reader, "err_level"));
-				if (reader.IsEmptyElement)
-				{
-					AddPortalPathSummary(
-						currentPortalPath.ToSummary(),
-						portalUsePaths,
-						portalDialogPaths,
-						portalScrollPaths);
-					currentPortalPath = null;
-				}
-
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "quest_req" && currentPortalPath != null)
-			{
-				// Java parity: model/templates/portal/QuestReq child entries are carried structurally for future checkQuests parity.
-				currentPortalPath.AddQuestRequirement(
-					new PortalQuestRequirementSummary(
-						ReadIntAttribute(reader, "quest_id"),
-						ReadIntAttribute(reader, "quest_step")));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "item_req" && currentPortalPath != null)
-			{
-				// Java parity: model/templates/portal/ItemReq child entries are carried structurally for future item removal parity.
-				currentPortalPath.AddItemRequirement(
-					new PortalItemRequirementSummary(
-						ReadIntAttribute(reader, "item_id"),
-						ReadIntAttribute(reader, "item_count")));
 				continue;
 			}
 
@@ -3123,11 +3021,6 @@ public sealed partial class StaticData
 			new HousingObjectTemplateTable(housingObjectTemplates.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new InstanceExitTable(instanceExits.AsReadOnly()),
-			new PortalPathTable(
-				portalDialogPaths.AsReadOnly(),
-				portalDialogTeleportIds,
-				portalUsePaths.AsReadOnly(),
-				portalScrollPaths.AsReadOnly()),
 			new PortalLocTable(portalLocs.AsReadOnly()),
 			new AutoGroupTable(autoGroups.AsReadOnly()),
 			new PlayerInitialDataTable(
