@@ -38,6 +38,28 @@ public sealed record PlayerAbyssRank(
 			RankingListPosition: 0);
 	}
 
+	// Snapshot of the faithful in-memory AbyssRank (Model.GameObjects.Players.AbyssRank) into the
+	// reworked immutable record consumed by SmAbyssRank / reward plans.
+	public static PlayerAbyssRank FromAbyssRank(Aion.GameServer.Model.GameObjects.Players.AbyssRank rank, int rankingListPosition = 0)
+	{
+		return new PlayerAbyssRank(
+			DailyAp: rank.GetDailyAP(),
+			WeeklyAp: rank.GetWeeklyAP(),
+			Ap: rank.GetAp(),
+			DailyGp: rank.GetDailyGP(),
+			WeeklyGp: rank.GetWeeklyGP(),
+			Gp: rank.GetCurrentGP(),
+			Rank: rank.Rank,
+			DailyKill: rank.GetDailyKill(),
+			WeeklyKill: rank.GetWeeklyKill(),
+			AllKill: rank.GetAllKill(),
+			MaxRank: rank.GetMaxRank(),
+			LastKill: rank.GetLastKill(),
+			LastAp: rank.GetLastAP(),
+			LastGp: rank.GetLastGP(),
+			RankingListPosition: rankingListPosition);
+	}
+
 	public PlayerAbyssRank AddAp(int additionalAp, bool enableApCap = false, long apCapValue = 1_000_000)
 	{
 		// Java parity: model/gameobjects/player/AbyssRank.addAp plus utils/stats/AbyssRankEnum.getRankForPoints.

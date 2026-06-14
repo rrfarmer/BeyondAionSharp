@@ -10,10 +10,9 @@ public static class GloryPointsService
 	public static GloryPointsAddPlan AddGp(Player? player, int playerObjectId, int amount)
 	{
 		// Java parity: services/abyss/GloryPointsService.addGp(int, int).
-		var plan = CreateAddGpPlan(player, playerObjectId, amount);
-		if (player != null && plan.UpdatedRank != null)
-			player.AbyssRank = plan.UpdatedRank;
-		return plan;
+		// CreateAddGpPlan mutates the faithful in-memory AbyssRank in place (Java parity:
+		// player.getAbyssRank().addGp(amount, addToStats)); no assignment back to the player is needed.
+		return CreateAddGpPlan(player, playerObjectId, amount);
 	}
 
 	public static GloryPointsAddPlan CreateAddGpPlan(Player? player, int playerObjectId, int amount)
@@ -31,8 +30,11 @@ public static class GloryPointsService
 				addToStats);
 		}
 
-		var oldGp = player.AbyssRank.Gp;
-		var updatedRank = player.AbyssRank.AddGp(amount, addToStats);
+		var rank = player.GetAbyssRank();
+		var oldGp = rank.Gp;
+		// Java parity: services/abyss/GloryPointsService.addGp -> player.getAbyssRank().addGp(amount, addToStats).
+		rank.AddGp(amount, addToStats);
+		var updatedRank = PlayerAbyssRank.FromAbyssRank(rank);
 		var added = updatedRank.Gp - oldGp;
 		var packets = new List<AionServerPacket>
 		{

@@ -12,10 +12,9 @@ public static class AbyssPointsService
 		AbyssPointsAddOptions? options = null)
 	{
 		// Java parity: services/abyss/AbyssPointsService.addAp(Player, int).
-		var plan = CreateAddApPlan(player, amount, options);
-		if (player != null && plan.UpdatedRank != null)
-			player.AbyssRank = plan.UpdatedRank;
-		return plan;
+		// CreateAddApPlan mutates the faithful in-memory AbyssRank in place (Java parity:
+		// player.getAbyssRank().addAp(amount)); no separate assignment back to the player is needed.
+		return CreateAddApPlan(player, amount, options);
 	}
 
 	public static AbyssPointsAddPlan CreateAddApPlan(
@@ -27,12 +26,18 @@ public static class AbyssPointsService
 		if (player == null)
 			return AbyssPointsAddPlan.NoPlayer();
 
-		var oldAp = player.AbyssRank.Ap;
-		var oldRank = player.AbyssRank.Rank;
-		var updatedRank = player.AbyssRank.AddAp(
-			amount,
-			options?.EnableApCap ?? false,
-			options?.ApCapValue ?? 1_000_000);
+		var rank = player.GetAbyssRank();
+		var oldAp = rank.Ap;
+		var oldRank = rank.Rank;
+		// Java parity: services/abyss/AbyssPointsService.addAp -> player.getAbyssRank().addAp(amount).
+		// The reworked AP-cap option is applied here before delegating to the faithful AddAp(int).
+		var enableApCap = options?.EnableApCap ?? false;
+		var apCapValue = options?.ApCapValue ?? 1_000_000;
+		var appliedAmount = enableApCap && rank.Ap + amount > apCapValue
+			? (int)(apCapValue - rank.Ap)
+			: amount;
+		rank.AddAp(appliedAmount);
+		var updatedRank = PlayerAbyssRank.FromAbyssRank(rank);
 		var added = updatedRank.Ap - oldAp;
 		var rankChanged = oldRank != updatedRank.Rank;
 
@@ -46,7 +51,7 @@ public static class AbyssPointsService
 			packets.Add(new SmAbyssRank(updatedRank));
 
 		var rankUpdate = rankChanged
-			? SmAbyssRankUpdate.RankChange(new Player { ObjectId = player.ObjectId, AbyssRank = updatedRank })
+			? SmAbyssRankUpdate.RankChange(player)
 			: null;
 		var legionContribution = CreateLegionContribution(player, added, options);
 		return new AbyssPointsAddPlan(
