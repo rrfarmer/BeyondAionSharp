@@ -155,7 +155,7 @@ public sealed class RiftManagerService
 		out WorldNpc npc)
 	{
 		var objectId = _idFactory.NextId();
-		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading, instanceId);
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
 		npc = new WorldNpc(
 			objectId,
 			template.TemplateId,
