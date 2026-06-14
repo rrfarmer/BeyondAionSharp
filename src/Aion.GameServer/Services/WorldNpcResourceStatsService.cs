@@ -173,7 +173,7 @@ public sealed class WorldNpcResourceStatsService
 			return WorldNpcResourceChangeResult.MissingStats(player.ObjectId, WorldNpcEffectResourceType.Hp, WorldNpcResourceChangeKind.Increase, value);
 		if (value < 0)
 			return await ApplyPlayerNegativeHealAsDamageAsync(player, maxHp, -value, skillId, packetType, packetLog, cancellationToken);
-		if (player.IsAbnormalSet(PlayerAbnormalState.Disease))
+		if (player.GetEffectController().IsInAnyAbnormalState(Aion.GameServer.SkillEngine.Effects.AbnormalState.DISEASE))
 		{
 			var blockedHp = player.LifeStats.GetCurrentHp();
 			return WorldNpcResourceChangeResult.FromResourceMutation(

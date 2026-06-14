@@ -528,7 +528,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private int? SpawnNpc(NpcSpawnSummary spawn, NpcTemplateSummary template, int instanceId = 1)
 	{
 		var objectId = _idFactory.NextId();
-		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading, instanceId);
+		// Java parity: faithful WorldPosition derives instanceId from its MapRegion (set on spawn into the world); instanceId is tracked in SpawnedWorldNpcRegistration.
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
 		var worldNpc = new WorldNpc(
 			objectId,
 			template.TemplateId,
@@ -563,7 +564,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private int? SpawnStaticObject(NpcSpawnSummary spawn, ItemTemplateSummary template, int instanceId)
 	{
 		var objectId = _idFactory.NextId();
-		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading, instanceId);
+		// Java parity: faithful WorldPosition derives instanceId from its MapRegion (set on spawn into the world); instanceId is tracked in SpawnedWorldNpcRegistration.
+		var position = new global::Aion.GameServer.World.WorldPosition(spawn.MapId, spawn.X, spawn.Y, spawn.Z, spawn.Heading);
 		var staticObject = new WorldStaticObject(
 			objectId,
 			template.TemplateId,
