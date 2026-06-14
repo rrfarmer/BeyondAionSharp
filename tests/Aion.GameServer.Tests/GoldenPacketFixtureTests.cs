@@ -1,8 +1,16 @@
 using System.Reflection;
 using System.Text.Json;
 using Aion.Commons.Nio;
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.State;
+using Aion.GameServer.Model.Stats.Calc;
+using Aion.GameServer.Model.Stats.Container;
+using Aion.GameServer.Model.Templates.Npc;
+using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils.Stats;
 
 namespace Aion.GameServer.Tests;
 
@@ -19,11 +27,8 @@ namespace Aion.GameServer.Tests;
 public sealed class GoldenPacketFixtureTests
 {
 	[Theory]
-	// NOTE: SM_GROUP_DATA_EXCHANGE is intentionally omitted: the faithful src packet
-	// (SM_GROUP_DATA_EXCHANGE : AionServerPacket) serializes via AionServerPacket.Write
-	// (connection-bound), not the GameServerPacket.SerializeFrame(GameCrypt) path this
-	// golden harness uses. Re-enabling it requires unifying the dual serialization paths
-	// in src (out of test-only scope).
+	// NOTE: SM_GROUP_DATA_EXCHANGE is NOT here — it is an AionServerPacket (no SerializeFrame),
+	// so it is captured via the raw WriteImpl path in FaithfulCsharpPayloadMatchesJavaGoldenFixture below.
 	[InlineData("SM_GF_WEBSHOP_TOKEN_RESPONSE.json")]
 	[InlineData("SM_QUIT_RESPONSE.json")]
 	[InlineData("SM_DELETE_ITEM.json")]
@@ -109,7 +114,11 @@ public sealed class GoldenPacketFixtureTests
 	// We capture the raw writeImpl payload exactly like the Java harness does: a LITTLE_ENDIAN
 	// ByteBuffer, invoke WriteImpl reflectively, read Position() bytes. No opcode, no crypt.
 	[Theory]
+	[InlineData("SM_GROUP_DATA_EXCHANGE.json")]
 	[InlineData("SM_RECONNECT_KEY.json")]
+	[InlineData("SM_PLAYER_STATE.json")]
+	[InlineData("SM_TARGET_SELECTED_LIVE.json")]
+	[InlineData("SM_EMOTION.json")]
 	[InlineData("SM_GATHER_ANIMATION.json")]
 	[InlineData("SM_SHOW_BRAND.json")]
 	[InlineData("SM_CUBE_UPDATE.json")]
@@ -141,6 +150,10 @@ public sealed class GoldenPacketFixtureTests
 
 	private static AionServerPacket ReconstructFaithful(string packetName, JsonElement inputs) => packetName switch
 	{
+		"SM_GROUP_DATA_EXCHANGE" => ReconstructGroupDataExchange(inputs),
+		"SM_PLAYER_STATE" => new SM_PLAYER_STATE(BuildHarnessCreatureForState(inputs)),
+		"SM_TARGET_SELECTED_LIVE" => new SM_TARGET_SELECTED(BuildHarnessCreatureForTarget(inputs)),
+		"SM_EMOTION" => ReconstructEmotion(inputs),
 		"SM_RECONNECT_KEY" => new SM_RECONNECT_KEY(inputs.GetProperty("key").GetInt32()),
 		"SM_GATHER_ANIMATION" => new SM_GATHER_ANIMATION(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("gatherableObjId").GetInt32(), inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("action").GetInt32()),
 		"SM_SHOW_BRAND" => new SM_SHOW_BRAND(inputs.GetProperty("iconId").GetInt32(), inputs.GetProperty("targetObjectId").GetInt32()),
@@ -180,6 +193,53 @@ public sealed class GoldenPacketFixtureTests
 		buffer.Flip();
 		buffer.Get(payload);
 		return payload;
+	}
+
+	private static SM_GROUP_DATA_EXCHANGE ReconstructGroupDataExchange(JsonElement inputs)
+	{
+		var byteData = inputs.GetProperty("byteData").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray();
+		return inputs.GetProperty("ctor").GetString() switch
+		{
+			"byteData" => new SM_GROUP_DATA_EXCHANGE(byteData),
+			"byteData_action_unk2" => new SM_GROUP_DATA_EXCHANGE(byteData, inputs.GetProperty("action").GetInt32(), inputs.GetProperty("unk2").GetInt32()),
+			_ => throw new NotSupportedException("Unknown SM_GROUP_DATA_EXCHANGE ctor"),
+		};
+	}
+
+	// ----- Live-object packet reconstruction (deterministic HarnessCreature mirrors the Java harness) -----
+
+	private static PacketHarnessCreature BuildHarnessCreatureForState(JsonElement inputs)
+	{
+		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>());
+		var visualState = inputs.GetProperty("visualState").GetInt32();
+		var seeState = inputs.GetProperty("seeState").GetInt32();
+		if (visualState != 0)
+			c.SetVisualState((CreatureVisualState)visualState); // OR onto VISIBLE(0) default == the raw id
+		if (seeState != 0)
+			c.SetSeeState((CreatureSeeState)seeState);
+		return c;
+	}
+
+	private static PacketHarnessCreature BuildHarnessCreatureForTarget(JsonElement inputs)
+	{
+		var stats = new Dictionary<StatEnum, int>
+		{
+			[StatEnum.MAXHP] = inputs.GetProperty("maxHp").GetInt32(),
+			[StatEnum.MAXMP] = inputs.GetProperty("maxMp").GetInt32(),
+		};
+		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(),
+			(sbyte)inputs.GetProperty("level").GetInt32(), stats);
+		c.SetLifeStats(new PacketHarnessLifeStats(c, inputs.GetProperty("currentHp").GetInt32(), inputs.GetProperty("currentMp").GetInt32()));
+		return c;
+	}
+
+	private static SM_EMOTION ReconstructEmotion(JsonElement inputs)
+	{
+		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>());
+		var type = Enum.Parse<EmotionType>(inputs.GetProperty("type").GetString()!);
+		if (inputs.TryGetProperty("emotion", out var emotion) && inputs.TryGetProperty("targetObjectId", out var target))
+			return new SM_EMOTION(c, type, emotion.GetInt32(), target.GetInt32());
+		return new SM_EMOTION(c, type);
 	}
 
 	private static SmCloseQuestionWindow ReconstructCloseQuestionWindow(JsonElement inputs)
@@ -224,5 +284,61 @@ public sealed class GoldenPacketFixtureTests
 		}
 		throw new DirectoryNotFoundException(
 			"Could not locate parity-artifacts/golden/packets above " + AppContext.BaseDirectory);
+	}
+
+	// ----- Deterministic harness for live-object packets (mirrors the Java GoldenLivePacketFixtureGeneratorTest) -----
+
+	/// <summary>
+	/// Minimal deterministic Creature: fixed objectId/level, harness game-stats + life-stats, no spawn/world.
+	/// The only state packet writeImpls read here is set via the base ctor / setters.
+	/// </summary>
+	internal sealed class PacketHarnessCreature : Creature
+	{
+		private readonly sbyte _level;
+		private readonly CreatureGameStats _gs;
+
+		public PacketHarnessCreature(int objectId, sbyte level, Dictionary<StatEnum, int> statMap)
+			: base(objectId, null!, null!, new NpcTemplate(), null!, false)
+		{
+			_level = level;
+			_gs = new PacketHarnessStats(this, statMap);
+		}
+
+		public override sbyte GetLevel() => _level;
+
+		public override Race GetRace() => Race.NPC;
+
+		public override CreatureGameStats GetGameStats() => _gs;
+	}
+
+	internal sealed class PacketHarnessStats : CreatureGameStats<Creature>
+	{
+		private readonly Dictionary<StatEnum, int> _statMap;
+
+		public PacketHarnessStats(Creature owner, Dictionary<StatEnum, int> statMap) : base(owner)
+		{
+			_statMap = statMap;
+		}
+
+		public override Stat2 GetStat(StatEnum statEnum, float baseValue, params CalculationType[] calculationTypes)
+		{
+			float resolved = _statMap.TryGetValue(statEnum, out int v) ? v : baseValue;
+			return new AdditionStat(statEnum, resolved, owner);
+		}
+
+		public override StatsTemplate GetStatsTemplate() => new StatsTemplate();
+		public override Stat2 GetAttackSpeed() => new AdditionStat(StatEnum.ATTACK_SPEED, 1000, owner);
+		public override Stat2 GetMovementSpeed() => new AdditionStat(StatEnum.SPEED, 6000, owner);
+		public override Stat2 GetAttackRange() => new AdditionStat(StatEnum.ATTACK_RANGE, 1500, owner);
+		public override Stat2 GetHpRegenRate() => new AdditionStat(StatEnum.REGEN_HP, 1, owner);
+		public override Stat2 GetMpRegenRate() => new AdditionStat(StatEnum.REGEN_MP, 1, owner);
+	}
+
+	// Fixed currentHp/currentMp; maxHp/maxMp resolve through the harness game-stats (StatEnum.MAXHP/MAXMP).
+	internal sealed class PacketHarnessLifeStats : CreatureLifeStats<Creature>
+	{
+		public PacketHarnessLifeStats(Creature owner, int currentHp, int currentMp) : base(owner, currentHp, currentMp)
+		{
+		}
 	}
 }
