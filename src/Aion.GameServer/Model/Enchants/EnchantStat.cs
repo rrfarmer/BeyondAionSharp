@@ -10,6 +10,16 @@ public class EnchantStat
     [XmlAttribute("stat")] protected StatEnum stat;
     [XmlAttribute("value")] protected int value;
 
+    public EnchantStat()
+    {
+    }
+
+    public EnchantStat(StatEnum stat, int value)
+    {
+        this.stat = stat;
+        this.value = value;
+    }
+
     public StatEnum GetStat()
     {
         return stat;

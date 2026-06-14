@@ -1,4 +1,7 @@
 using System.Collections.ObjectModel;
+using Aion.GameServer.Model.Enchants;
+using Aion.GameServer.Model.Stats.Container;
+using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -21,6 +24,30 @@ public sealed class EnchantTable
 	}
 
 	public int Count => _templates.Count;
+
+	/// <summary>Java parity: dataholders/EnchantData.getTemplates(ItemTemplate).</summary>
+	public Dictionary<int, List<EnchantStat>>? GetTemplates(ItemTemplate itemTemplate)
+	{
+		var enchantName = itemTemplate.GetEnchantName();
+		var key = enchantName ?? itemTemplate.GetItemGroup().ToString();
+		if (!_templates.TryGetValue(key, out var levels))
+			return null;
+
+		var result = new Dictionary<int, List<EnchantStat>>(levels.Count);
+		foreach (var (level, stats) in levels)
+		{
+			var converted = new List<EnchantStat>(stats.Count);
+			foreach (var stat in stats)
+			{
+				if (Enum.TryParse<StatEnum>(stat.Name, out var statEnum))
+					converted.Add(new EnchantStat(statEnum, stat.Value));
+			}
+
+			result[level] = converted;
+		}
+
+		return result;
+	}
 
 	public IReadOnlyList<ItemStatModifier> GetModifiers(ItemTemplateSummary itemTemplate, int enchantLevel, long equipmentSlot)
 	{
