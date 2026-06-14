@@ -74,7 +74,7 @@ public class TuningAction : AbstractItemAction
             newStatBonusId = GetRandomStatBonusIdFor(targetItem);
             Aion.GameServer.Model.Items.PendingTuneResult result = new Aion.GameServer.Model.Items.PendingTuneResult(newOptionalSockets, newEnchantBonus, newStatBonusId, shouldNotReduceTuneCount);
             targetItem.SetPendingTuneResult(result);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmTuneResult(targetItem, tuningScrollItemId, result));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_TUNE_RESULT(targetItem, tuningScrollItemId, result));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_SUCCEED(targetItem.GetL10n()));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(5000)));
