@@ -72,7 +72,7 @@ public class TitleList
             else
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_GET_CASH_TITLE(tt.GetL10n()));
 
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(owner));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(owner));
             return true;
         }
         return false;
@@ -112,7 +112,7 @@ public class TitleList
         if (owner.GetCommonData().GetBonusTitleId() == titleId)
             SetBonusTitle(-1);
         titles.Remove(titleId);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(owner));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(owner));
         Aion.GameServer.Dao.PlayerTitleListDAO.RemoveTitle(owner.GetObjectId(), titleId);
     }
 
