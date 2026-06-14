@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Utils.Stats;
 
@@ -30,6 +31,7 @@ public sealed class GoldenFormulaFixtureTests
 	[InlineData("XPLossEnum.getExpLoss.json")]
 	[InlineData("AbyssRankEnum.getRankForPoints.json")]
 	[InlineData("AbyssRankEnum.getRankById.json")]
+	[InlineData("StatFunctions.limit.json")]
 	public void CsharpFormulaMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		using var fixture = LoadFixture(fixtureFile);
@@ -40,7 +42,17 @@ public sealed class GoldenFormulaFixtureTests
 			var inputs = caseElement.GetProperty("inputs");
 			var result = caseElement.GetProperty("result");
 
-			if (result.ValueKind == JsonValueKind.String)
+			if (result.ValueKind == JsonValueKind.Object)
+			{
+				// float-typed result: compared BIT-EXACT via raw IEEE-754 bits (no decimal rounding).
+				var expectedBits = result.GetProperty("floatBits").GetInt32();
+				var actualBits = BitConverter.SingleToInt32Bits(EvaluateFloat(formula, inputs));
+				Assert.True(expectedBits == actualBits,
+					$"{formula}({DescribeInputs(inputs)}): C# diverged from Java golden (float bits). " +
+					$"Java={expectedBits} ({BitConverter.Int32BitsToSingle(expectedBits)}), " +
+					$"C#={actualBits} ({BitConverter.Int32BitsToSingle(actualBits)})");
+			}
+			else if (result.ValueKind == JsonValueKind.String)
 			{
 				// enum-typed result: compare by NAME (avoids ordinal-vs-value traps).
 				var expected = result.GetString()!;
@@ -79,6 +91,16 @@ public sealed class GoldenFormulaFixtureTests
 			inputs.GetProperty("level").GetInt32(),
 			inputs.GetProperty("expNeed").GetInt64()),
 		_ => throw new NotSupportedException($"No C# numeric dispatch registered for formula {formula}"),
+	};
+
+	private static float EvaluateFloat(string formula, JsonElement inputs) => formula switch
+	{
+		// Faithful target: Utils/Stats/StatFunctions.Limit -> Math.Min(StatCapUtil.GetDifferenceLimit, value).
+		// The float input is carried as raw IEEE-754 bits to stay bit-exact across languages.
+		"StatFunctions.limit" => StatFunctions.Limit(
+			Enum.Parse<StatEnum>(inputs.GetProperty("statEnum").GetString()!),
+			BitConverter.Int32BitsToSingle(inputs.GetProperty("value").GetInt32())),
+		_ => throw new NotSupportedException($"No C# float dispatch registered for formula {formula}"),
 	};
 
 	private static string EvaluateName(string formula, JsonElement inputs) => formula switch
