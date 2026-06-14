@@ -31,7 +31,8 @@ public sealed class RiftPortalUseService(
 		if (destination == null)
 			return RiftPortalUseResult.Rejected(RiftPortalUseStatus.MissingVortexDestination);
 
-		player.GetPosition() = destination.Value;
+		// Java parity: controllers/RVController.onAccept -> TeleportService.teleportTo(player, startPoint).
+		Aion.GameServer.Services.Teleport.TeleportService.TeleportTo(player, destination);
 		if (portal.IsVortex)
 		{
 			// Java parity: RVController vortex branch records passedPlayers, then syncPassed(true).

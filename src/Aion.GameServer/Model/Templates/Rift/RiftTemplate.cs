@@ -11,6 +11,18 @@ public class RiftTemplate
     [XmlAttribute("has_spawns")] private bool hasSpawns;
     [XmlAttribute("auto_closeable")] private bool autoCloseable = true;
 
+    public RiftTemplate()
+    {
+    }
+
+    public RiftTemplate(int id, int world, bool hasSpawns, bool autoCloseable)
+    {
+        this.id = id;
+        this.world = world;
+        this.hasSpawns = hasSpawns;
+        this.autoCloseable = autoCloseable;
+    }
+
     public int GetId()
     {
         return id;

@@ -90,6 +90,44 @@ public sealed class RiftService
 		return _activeRifts.Values.OrderBy(rift => rift.Location.Id).ToArray();
 	}
 
+	// Java parity: services/RiftService.locations — faithful RiftLocation map built from the rift-location data,
+	// with each location's opened flag synced from the active-rift registry.
+	private readonly ConcurrentDictionary<int, global::Aion.GameServer.Model.Rift.RiftLocation> _faithfulLocations = new();
+
+	private IReadOnlyDictionary<int, global::Aion.GameServer.Model.Rift.RiftLocation> BuildFaithfulLocations()
+	{
+		var summaries = _runtimeContext.DataManager?.StaticData?.RiftLocations;
+		if (summaries != null)
+		{
+			foreach (var summary in summaries.Locations)
+			{
+				if (!_faithfulLocations.ContainsKey(summary.Id))
+				{
+					_faithfulLocations[summary.Id] = new global::Aion.GameServer.Model.Rift.RiftLocation(
+						new global::Aion.GameServer.Model.Templates.Rift.RiftTemplate(
+							summary.Id, summary.WorldId, summary.HasSpawns, summary.AutoCloseable));
+				}
+			}
+		}
+
+		foreach (var entry in _faithfulLocations)
+			entry.Value.SetOpened(_activeRifts.TryGetValue(entry.Key, out var state) && state.Opened);
+
+		return _faithfulLocations;
+	}
+
+	// Java parity: services/RiftService.getRiftLocation(int).
+	public global::Aion.GameServer.Model.Rift.RiftLocation GetRiftLocation(int id)
+	{
+		return BuildFaithfulLocations().TryGetValue(id, out var location) ? location : null!;
+	}
+
+	// Java parity: services/RiftService.getRiftLocations() => Map<Integer, RiftLocation>.
+	public IReadOnlyDictionary<int, global::Aion.GameServer.Model.Rift.RiftLocation> GetRiftLocations()
+	{
+		return BuildFaithfulLocations();
+	}
+
 	public bool TryGetPortalByMasterObjectId(int objectId, out RiftPortalState? portal)
 	{
 		// Java parity: CM_SHOW_DIALOG reaches RVController through the targeted master rift NPC owner.
