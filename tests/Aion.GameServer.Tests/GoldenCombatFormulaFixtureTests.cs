@@ -6,6 +6,7 @@ using Aion.GameServer.Model.Stats.Calc;
 using Aion.GameServer.Model.Stats.Container;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Stats;
+using Aion.GameServer.SkillEngine.Effects;
 using Aion.GameServer.Utils.Stats;
 
 namespace Aion.GameServer.Tests;
@@ -31,6 +32,7 @@ public sealed class GoldenCombatFormulaFixtureTests
     [InlineData("StatFunctions.calculateMagicalResistRate.json")]
     [InlineData("StatFunctions.adjustDamageByPvpOrPveModifiers.json")]
     [InlineData("StatFunctions.adjustStatByMovementModifier.json")]
+    [InlineData("StatFunctions.calculateMagicalSkillDamage.json")]
     public void CsharpCombatFormulaMatchesJavaGoldenFixture(string fixtureFile)
     {
         using var fixture = LoadFixture(fixtureFile);
@@ -85,6 +87,14 @@ public sealed class GoldenCombatFormulaFixtureTests
             BuildCreature(inputs.GetProperty("creature")),
             Enum.Parse<StatEnum>(inputs.GetProperty("stat").GetString()!),
             ParseFloat(inputs.GetProperty("value").GetRawText())),
+        "StatFunctions.calculateMagicalSkillDamage" => StatFunctions.CalculateMagicalSkillDamage(
+            BuildCreature(inputs.GetProperty("effector")),
+            BuildCreature(inputs.GetProperty("target")),
+            ParseFloat(inputs.GetProperty("baseDamage").GetRawText()),
+            inputs.GetProperty("bonus").GetInt32(),
+            new HarnessEffect(ParseElement(inputs.GetProperty("element").GetString()!)),
+            inputs.GetProperty("useMagicBoost").GetBoolean(),
+            inputs.GetProperty("useKnowledge").GetBoolean()),
         _ => throw new NotSupportedException($"No C# float dispatch registered for combat formula {formula}"),
     };
 
@@ -185,5 +195,23 @@ public sealed class GoldenCombatFormulaFixtureTests
         public override Stat2 GetAttackRange() => new AdditionStat(StatEnum.ATTACK_RANGE, 1500, owner);
         public override Stat2 GetHpRegenRate() => new AdditionStat(StatEnum.REGEN_HP, 1, owner);
         public override Stat2 GetMpRegenRate() => new AdditionStat(StatEnum.REGEN_MP, 1, owner);
+    }
+
+    /// <summary>
+    /// Minimal concrete <see cref="EffectTemplate"/> mirroring the Java HarnessEffect: NOT a
+    /// NoReduceSpellATKInstantEffect, so the full magic-boost + elemental-defense path runs.
+    /// Only <see cref="EffectTemplate.Element"/> matters to the formula.
+    /// </summary>
+    internal sealed class HarnessEffect : EffectTemplate
+    {
+        public HarnessEffect(SkillElement element)
+        {
+            Element = element;
+        }
+
+        public override void ApplyEffect(Aion.GameServer.SkillEngine.Model.Effect effect)
+        {
+            // no-op: not exercised by the formula
+        }
     }
 }
