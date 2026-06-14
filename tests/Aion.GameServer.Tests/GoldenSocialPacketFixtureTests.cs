@@ -35,6 +35,15 @@ public sealed class GoldenSocialPacketFixtureTests
     [InlineData("SM_LEGION_LEAVE_MEMBER.json")]
     [InlineData("SM_ATREIAN_PASSPORT.json")]
     [InlineData("SM_MESSAGE.json")]
+    [InlineData("SM_EXCHANGE_REQUEST.json")]
+    [InlineData("SM_HOUSE_ACQUIRE.json")]
+    [InlineData("SM_HOUSE_TELEPORT.json")]
+    [InlineData("SM_HOUSE_PAY_RENT.json")]
+    [InlineData("SM_LEGION_UPDATE_NICKNAME.json")]
+    [InlineData("SM_LEGION_UPDATE_SELF_INTRO.json")]
+    [InlineData("SM_LEGION_UPDATE_TITLE.json")]
+    [InlineData("SM_FRIEND_STATUS.json")]
+    [InlineData("SM_MARK_FRIENDLIST.json")]
     public void CsharpSocialPacketMatchesJavaGoldenFixture(string fixtureFile)
     {
         using var fixture = LoadFixture(fixtureFile);
@@ -93,6 +102,30 @@ public sealed class GoldenSocialPacketFixtureTests
                     inputs.GetProperty("message").GetString()!,
                     chatType);
                 return (packet, con);
+            }
+            case "SM_EXCHANGE_REQUEST":
+                return (new SM_EXCHANGE_REQUEST(inputs.GetProperty("receiver").GetString()!), null);
+            case "SM_HOUSE_ACQUIRE":
+                return (new SM_HOUSE_ACQUIRE(inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("address").GetInt32(), inputs.GetProperty("acquire").GetBoolean()), null);
+            case "SM_HOUSE_TELEPORT":
+                return (new SM_HOUSE_TELEPORT(inputs.GetProperty("houseAddress").GetInt32(), inputs.GetProperty("playerId").GetInt32()), null);
+            case "SM_HOUSE_PAY_RENT":
+                return (new SM_HOUSE_PAY_RENT(inputs.GetProperty("weeksPaid").GetInt32()), null);
+            case "SM_LEGION_UPDATE_NICKNAME":
+                return (new SM_LEGION_UPDATE_NICKNAME(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("newNickname").GetString()!), null);
+            case "SM_LEGION_UPDATE_SELF_INTRO":
+                return (new SM_LEGION_UPDATE_SELF_INTRO(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("selfintro").GetString()!), null);
+            case "SM_LEGION_UPDATE_TITLE":
+            {
+                var rank = Enum.Parse<Aion.GameServer.Model.Team.Legion.LegionRank>(inputs.GetProperty("rank").GetString()!);
+                return (new SM_LEGION_UPDATE_TITLE(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("legionId").GetInt32(), inputs.GetProperty("legionName").GetString()!, rank), null);
+            }
+            case "SM_FRIEND_STATUS":
+                return (new SM_FRIEND_STATUS(inputs.GetProperty("status").GetInt32()), null);
+            case "SM_MARK_FRIENDLIST":
+            {
+                var active = NewPlayer(inputs.GetProperty("objectId").GetInt32(), Race.ELYOS);
+                return (new SM_MARK_FRIENDLIST(), NewConnectionWithActivePlayer(active));
             }
             default:
                 throw new NotSupportedException($"No C# reconstruction registered for {packetName}");
