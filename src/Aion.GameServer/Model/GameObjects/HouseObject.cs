@@ -177,7 +177,7 @@ public abstract class HouseObject : VisibleObject, IExpirable, IPersistable
             this.heading = heading;
             SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
             if (Position != null)
-                Position.SetXYZH(null, null, null, heading);
+                Position.SetXYZH(null, null, null, (byte)heading);
         }
     }
 

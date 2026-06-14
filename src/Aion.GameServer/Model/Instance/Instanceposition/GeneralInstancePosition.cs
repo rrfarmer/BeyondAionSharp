@@ -18,7 +18,7 @@ public abstract class GeneralInstancePosition : InstancePositionHandler
 
     protected void Teleport(Player player, float x, float y, float z, sbyte h)
     {
-        TeleportService.TeleportTo(player, mapId, instanceId, x, y, z, h);
+        TeleportService.TeleportTo(player, mapId, instanceId, x, y, z, (byte)h);
     }
 
     public abstract void Port(Player player, int zone, int position);

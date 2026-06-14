@@ -125,9 +125,9 @@ public abstract class ChatCommand
 
     public byte GetLevel()
     {
-        if (!CommandsConfig.ACCESS_LEVELS.TryGetValue(alias, out byte level))
+        if (!CommandsConfig.ACCESS_LEVELS.TryGetValue(alias, out sbyte level))
             throw new NullReferenceException("Missing access level for " + GetAliasWithPrefix());
-        return level;
+        return (byte)level;
     }
 
     /// <summary>True if player is allowed to use this command.</summary>

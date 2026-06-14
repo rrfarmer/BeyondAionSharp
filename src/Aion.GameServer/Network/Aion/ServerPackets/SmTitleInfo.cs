@@ -35,6 +35,28 @@ public sealed class SmTitleInfo : GameServerPacket
 		_clock = () => DateTimeOffset.Now;
 	}
 
+	public SmTitleInfo(bool flag)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_TITLE_INFO(boolean flag).
+		_action = 4;
+		_titleId = flag ? 1 : 0;
+		_playerObjectId = 0;
+		_titles = Array.Empty<PlayerTitle>();
+		_clock = () => DateTimeOffset.Now;
+	}
+
+	public SmTitleInfo(Player player, bool flag)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_TITLE_INFO(Player, boolean flag).
+		_action = 5;
+		_titleId = flag ? 1 : 0;
+		_playerObjectId = player.ObjectId;
+		_titles = Array.Empty<PlayerTitle>();
+		_clock = () => DateTimeOffset.Now;
+	}
+
 	public SmTitleInfo(IReadOnlyList<PlayerTitle> titles, Func<DateTimeOffset>? clock = null)
 		: base(PacketOpCode)
 	{
@@ -78,6 +100,15 @@ public sealed class SmTitleInfo : GameServerPacket
 				buffer.WriteH(_titleId);
 				break;
 			case 3:
+				buffer.WriteD(_playerObjectId);
+				buffer.WriteH(_titleId);
+				break;
+			case 4:
+				// Java parity: SM_TITLE_INFO.writeImpl case 4 (Mentor flag self).
+				buffer.WriteH(_titleId);
+				break;
+			case 5:
+				// Java parity: SM_TITLE_INFO.writeImpl case 5 (broad set mentor flag).
 				buffer.WriteD(_playerObjectId);
 				buffer.WriteH(_titleId);
 				break;
