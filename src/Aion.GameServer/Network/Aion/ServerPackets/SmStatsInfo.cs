@@ -110,7 +110,7 @@ public sealed class SmStatsInfo : GameServerPacket
 		buffer.WriteD(context.Current.FlyTime);
 		buffer.WriteD(context.CurrentFp);
 		buffer.WriteC((byte)_player.FlyState);
-		buffer.WriteC(_player.Movement.Mask);
+		buffer.WriteC(_player.GetMoveController().GetMovementMask());// [movementMask]
 
 		WriteCombatStats(buffer, context.Current);
 		buffer.WriteD(GetInventoryLimit(_player));

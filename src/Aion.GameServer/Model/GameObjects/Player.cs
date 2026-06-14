@@ -187,6 +187,9 @@ public partial class Player : Creature
         return Aion.GameServer.Model.Actions.PlayerActions.IsInPlayerMode(this, mode);
     }
 
+    // Java parity: ride mode is PlayerMode.RIDE, which PlayerActions.isInPlayerMode resolves as (ride != null).
+    public bool IsInRideMode => IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE);
+
     public void SetPlayerMode(Aion.GameServer.Model.Actions.PlayerMode mode, object obj)
     {
         Aion.GameServer.Model.Actions.PlayerActions.SetPlayerMode(this, mode, obj);
