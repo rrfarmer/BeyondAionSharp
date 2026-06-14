@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Text.Json;
+using Aion.Commons.Nio;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -101,6 +103,84 @@ public sealed class GoldenPacketFixtureTests
 		"SM_BIND_POINT_TELEPORT" => new SmBindPointTeleport((byte)inputs.GetProperty("action").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("locId").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
 		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
 	};
+
+	// ----- New batch: faithful SM_* packets (AionServerPacket-derived). -----
+	// These extend AionServerPacket, not GameServerPacket, so they have no SerializeFrame.
+	// We capture the raw writeImpl payload exactly like the Java harness does: a LITTLE_ENDIAN
+	// ByteBuffer, invoke WriteImpl reflectively, read Position() bytes. No opcode, no crypt.
+	[Theory]
+	[InlineData("SM_RECONNECT_KEY.json")]
+	[InlineData("SM_GATHER_ANIMATION.json")]
+	[InlineData("SM_SHOW_BRAND.json")]
+	[InlineData("SM_CUBE_UPDATE.json")]
+	[InlineData("SM_TELEPORT_MAP.json")]
+	[InlineData("SM_LOOT_STATUS.json")]
+	[InlineData("SM_TARGET_SELECTED.json")]
+	[InlineData("SM_RIFT_ANNOUNCE.json")]
+	[InlineData("SM_RECIPE_LIST.json")]
+	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
+	{
+		var fixture = LoadFixture(fixtureFile);
+		var packetName = fixture.RootElement.GetProperty("packet").GetString()!;
+
+		foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+		{
+			var caseName = caseElement.GetProperty("name").GetString()!;
+			var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+			var inputs = caseElement.GetProperty("inputs");
+
+			var packet = ReconstructFaithful(packetName, inputs);
+			var actual = CaptureWriteImplPayload(packet);
+			var actualHex = Convert.ToHexString(actual);
+
+			Assert.True(expectedHex == actualHex,
+				$"{packetName}/{caseName}: C# payload diverged from Java golden.\n" +
+				$"  Java : {expectedHex}\n  C#   : {actualHex}");
+		}
+	}
+
+	private static AionServerPacket ReconstructFaithful(string packetName, JsonElement inputs) => packetName switch
+	{
+		"SM_RECONNECT_KEY" => new SM_RECONNECT_KEY(inputs.GetProperty("key").GetInt32()),
+		"SM_GATHER_ANIMATION" => new SM_GATHER_ANIMATION(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("gatherableObjId").GetInt32(), inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("action").GetInt32()),
+		"SM_SHOW_BRAND" => new SM_SHOW_BRAND(inputs.GetProperty("iconId").GetInt32(), inputs.GetProperty("targetObjectId").GetInt32()),
+		"SM_CUBE_UPDATE" => SM_CUBE_UPDATE.StigmaSlots(inputs.GetProperty("actionValue").GetInt32()),
+		"SM_TELEPORT_MAP" => new SM_TELEPORT_MAP(inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("teleportId").GetInt32()),
+		"SM_LOOT_STATUS" => new SM_LOOT_STATUS(inputs.GetProperty("targetObjectId").GetInt32(), (SM_LOOT_STATUS.Status)inputs.GetProperty("status").GetInt32()),
+		"SM_TARGET_SELECTED" => new SM_TARGET_SELECTED(null!),
+		"SM_RIFT_ANNOUNCE" => ReconstructRiftAnnounce(inputs),
+		"SM_RECIPE_LIST" => new SM_RECIPE_LIST(new HashSet<int>(inputs.GetProperty("recipeIds").EnumerateArray().Select(e => e.GetInt32()))),
+		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
+	};
+
+	private static SM_RIFT_ANNOUNCE ReconstructRiftAnnounce(JsonElement inputs)
+	{
+		var actionId = inputs.GetProperty("actionId").GetInt32();
+		return actionId switch
+		{
+			1 => new SM_RIFT_ANNOUNCE(inputs.GetProperty("gelkmaros").GetBoolean(), inputs.GetProperty("inggison").GetBoolean()),
+			4 => new SM_RIFT_ANNOUNCE(inputs.GetProperty("objectId").GetInt32()),
+			_ => throw new NotSupportedException($"No SM_RIFT_ANNOUNCE faithful ctor for actionId {actionId}"),
+		};
+	}
+
+	/// <summary>
+	/// Capture an AionServerPacket's raw writeImpl payload — the same bytes the Java harness
+	/// captures (LITTLE_ENDIAN buffer, writeImpl only, no opcode/crypt frame).
+	/// </summary>
+	private static byte[] CaptureWriteImplPayload(AionServerPacket packet)
+	{
+		var buffer = ByteBuffer.Allocate(8192).Order(ByteOrder.LITTLE_ENDIAN);
+		packet.SetBuf(buffer);
+		var writeImpl = typeof(AionServerPacket).GetMethod("WriteImpl",
+			BindingFlags.Instance | BindingFlags.NonPublic, new[] { typeof(AionConnection) })!;
+		writeImpl.Invoke(packet, new object?[] { null });
+		var length = buffer.Position();
+		var payload = new byte[length];
+		buffer.Flip();
+		buffer.Get(payload);
+		return payload;
+	}
 
 	private static SmCloseQuestionWindow ReconstructCloseQuestionWindow(JsonElement inputs)
 	{
