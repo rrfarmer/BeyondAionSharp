@@ -27,7 +27,7 @@ public class EmotionList
         {
             Aion.GameServer.Taskmanager.Tasks.ExpireTimerTask.GetInstance().RegisterExpirable(emotion, owner);
             Aion.GameServer.Dao.PlayerEmotionListDAO.InsertEmotion(owner, emotion);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotionList((byte)1, new List<Emotion> { emotion }));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION_LIST((byte)1, new List<Emotion> { emotion }));
         }
     }
 
@@ -35,7 +35,7 @@ public class EmotionList
     {
         emotions.Remove(emotionId);
         Aion.GameServer.Dao.PlayerEmotionListDAO.DeleteEmotion(owner.GetObjectId(), emotionId);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotionList((byte)0, GetEmotions()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION_LIST((byte)0, GetEmotions()));
     }
 
     public bool Contains(int emotionId)
