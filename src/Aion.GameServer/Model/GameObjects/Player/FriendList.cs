@@ -78,7 +78,7 @@ public class FriendList : IEnumerable<Friend>
                 continue;
 
             friendPlayer.GetFriendList().GetFriend(pcd.GetPlayerObjId()).SetPCD(pcd);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(friendPlayer, new Aion.GameServer.Network.Aion.ServerPackets.SmFriendUpdate(player.GetObjectId()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(friendPlayer, new Aion.GameServer.Network.Aion.ServerPackets.SM_FRIEND_UPDATE(player.GetObjectId()));
 
             if (previousStatus == Status.OFFLINE)
             {

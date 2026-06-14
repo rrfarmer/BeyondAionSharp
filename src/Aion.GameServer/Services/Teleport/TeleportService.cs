@@ -186,7 +186,11 @@ public class TeleportService
             // send teleport animation to player and trigger CM_TELEPORT_ANIMATION_DONE when the animation ended
             PacketSendUtility.SendPacket(player, new SM_TELEPORT_LOC(worldId, instanceId, x, y, z, h, animation));
             // task will be triggered from CM_TELEPORT_ANIMATION_DONE
-            player.GetController().AddTask(TaskId.TELEPORT, new FutureTask<object>(spawnTask, null));
+            // Java parity: new FutureTask<Void>(spawnTask, null) stored (not submitted), run later via CM_TELEPORT_ANIMATION_DONE.
+            // Idiomatic-infra adaptation: ScheduledTask is the C# Future surface (IsDone/Run/Get); schedule the spawn body so the
+            // stored task is a real ScheduledTask, and CM_TELEPORT_ANIMATION_DONE.GetAndRemoveTask(TELEPORT).Get() observes it.
+            player.GetController().AddTask(TaskId.TELEPORT,
+                ThreadPoolManager.GetInstance().Schedule(_ => { spawnTask.Run(); return System.Threading.Tasks.ValueTask.CompletedTask; }, TimeSpan.Zero));
         }
     }
 
