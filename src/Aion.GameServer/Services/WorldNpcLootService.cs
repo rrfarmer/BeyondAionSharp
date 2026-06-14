@@ -251,17 +251,22 @@ public sealed class WorldNpcLootService
 
 	private static void ApplyInventoryPlan(Player player, InventoryAddPlan addPlan)
 	{
-		var inventory = player.InventoryItems.ToList();
+		// Java parity: WorldNpc loot lands items via inventory.add(item) (ItemService.addItem path).
+		// player.InventoryItems is a read-only projection over the faithful GetInventory() spine
+		// (Player.PersistenceBridge), so mutate the faithful storage instead of the derived snapshot.
+		var inventory = player.GetInventory();
 		foreach (var updatedItem in addPlan.UpdatedItems)
 		{
-			var index = inventory.FindIndex(item => item.ObjectId == updatedItem.ObjectId);
-			if (index >= 0)
-				inventory[index] = updatedItem;
-			else
-				inventory.Add(updatedItem);
+			var existing = inventory.GetItemByObjId(updatedItem.ObjectId);
+			if (existing != null)
+				existing.SetItemCount(updatedItem.Count);
 		}
-		inventory.AddRange(addPlan.AddedItems);
-		player.InventoryItems = inventory;
+		foreach (var addedItem in addPlan.AddedItems)
+		{
+			var item = Items.ItemFactory.NewItem(addedItem.ItemId, addedItem.Count);
+			if (item != null)
+				inventory.Add(item);
+		}
 	}
 
 	private static IEnumerable<AionServerPacket> CreateInventoryCollectPackets(
