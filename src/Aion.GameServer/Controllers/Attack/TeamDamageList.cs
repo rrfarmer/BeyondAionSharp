@@ -15,14 +15,14 @@ namespace Aion.GameServer.Controllers.Attack;
 public class TeamDamageList
 {
     private readonly Dictionary<AionObject, DamageInfo<AionObject>> damageByCreatureOrTeam = new();
-    private readonly Dictionary<TemporaryPlayerTeam<ITeamMember<Player>>, DamageInfo<Player>> mostDamageByTeam = new();
+    private readonly Dictionary<TemporaryPlayerTeam, DamageInfo<Player>> mostDamageByTeam = new();
 
     internal TeamDamageList(DamageList damageList)
     {
         foreach (DamageInfo<Creature> damageInfo in damageList.GetCreatureDamages())
         {
             AionObject creatureOrTeam = damageInfo.GetAttacker();
-            TemporaryPlayerTeam<ITeamMember<Player>> team = creatureOrTeam is Player player ? player.GetCurrentTeam() : null;
+            TemporaryPlayerTeam team = creatureOrTeam is Player player ? player.GetCurrentTeam() : null;
             if (team != null)
             {
                 creatureOrTeam = team;
@@ -49,7 +49,7 @@ public class TeamDamageList
         return damageByCreatureOrTeam.Values.MaxBy(d => d.GetDamage());
     }
 
-    public DamageInfo<Player> GetMostDamageByTeam(TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public DamageInfo<Player> GetMostDamageByTeam(TemporaryPlayerTeam team)
     {
         return mostDamageByTeam.GetValueOrDefault(team);
     }

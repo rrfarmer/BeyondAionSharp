@@ -45,7 +45,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
     private readonly int maxPlayers;
     private WorldPosition startPos;
     private long lastPlayerLeaveTime;
-    private GeneralTeam<AionObject, ITeamMember<AionObject>> registeredTeam;
+    private GeneralTeam registeredTeam;
     private ScheduledTask emptyInstanceTask, updateNearbyQuestsTask;
 
     public WorldMapInstance(WorldMap parent, int instanceId, int maxPlayers, Func<WorldMapInstance, IInstanceHandler> instanceHandlerSupplier)
@@ -234,7 +234,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
         return GetInstanceId() > twinCount;
     }
 
-    public void RegisterTeam(GeneralTeam<AionObject, ITeamMember<AionObject>> team)
+    public void RegisterTeam(GeneralTeam team)
     {
         if (registeredTeam != null)
             throw new InvalidOperationException("A team for instance " + instanceId + " of map " + GetMapId() + " is already registered");
@@ -275,7 +275,7 @@ public abstract class WorldMapInstance : IEnumerable<VisibleObject>
         this.emptyInstanceTask = emptyInstanceTask;
     }
 
-    public GeneralTeam<AionObject, ITeamMember<AionObject>> GetRegisteredTeam()
+    public GeneralTeam GetRegisteredTeam()
     {
         return registeredTeam;
     }

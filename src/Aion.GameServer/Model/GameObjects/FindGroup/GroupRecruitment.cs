@@ -57,7 +57,7 @@ public sealed class GroupRecruitment : FindGroupEntry
             return classId;
         if (obj is Player player)
             return player.GetPlayerClass().GetClassId();
-        if (obj is TemporaryPlayerTeam<ITeamMember<Player>> team)
+        if (obj is TemporaryPlayerTeam team)
             return team.GetLeaderObject().GetPlayerClass().GetClassId();
         return 0;
     }
@@ -73,7 +73,7 @@ public sealed class GroupRecruitment : FindGroupEntry
             return level;
         if (obj is Player player)
             return player.GetLevel();
-        if (obj is TemporaryPlayerTeam<ITeamMember<Player>> team)
+        if (obj is TemporaryPlayerTeam team)
             return team.GetMinExpPlayerLevel();
         return 1;
     }
@@ -87,19 +87,19 @@ public sealed class GroupRecruitment : FindGroupEntry
     {
         if (obj is Player player)
             return player.GetLevel();
-        else if (obj is TemporaryPlayerTeam<ITeamMember<Player>> team)
+        else if (obj is TemporaryPlayerTeam team)
             return team.GetMaxExpPlayerLevel();
         return 1;
     }
 
     public string GetName()
     {
-        return obj is TemporaryPlayerTeam<ITeamMember<Player>> team ? team.GetLeaderObject().GetName(true) : ((Player)obj).GetName(true);
+        return obj is TemporaryPlayerTeam team ? team.GetLeaderObject().GetName(true) : ((Player)obj).GetName(true);
     }
 
     public int GetSize()
     {
-        return obj is TemporaryPlayerTeam<ITeamMember<Player>> team ? team.Size() : 1;
+        return obj is TemporaryPlayerTeam team ? team.Size() : 1;
     }
 
     public int GetLastUpdate()
@@ -114,6 +114,6 @@ public sealed class GroupRecruitment : FindGroupEntry
 
     public Race? GetRace()
     {
-        return obj is Player player ? player.GetRace() : obj is TemporaryPlayerTeam<ITeamMember<Player>> team ? team.GetRace() : (Race?)null;
+        return obj is Player player ? player.GetRace() : obj is TemporaryPlayerTeam team ? team.GetRace() : (Race?)null;
     }
 }

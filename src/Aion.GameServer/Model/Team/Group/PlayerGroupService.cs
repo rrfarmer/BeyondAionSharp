@@ -76,7 +76,7 @@ public class PlayerGroupService
             PlayerGroupMember member = group.GetMember(player.GetObjectId());
             if (member != null)
             {
-                group.OnEvent(new PlayerConnectedEvent(group, player));
+                group.OnEvent(new Aion.GameServer.Model.Team.Group.Events.PlayerConnectedEvent(group, player));
             }
         }
     }
@@ -89,7 +89,7 @@ public class PlayerGroupService
         {
             PlayerGroupMember member = group.GetMember(player.GetObjectId());
             member.UpdateLastOnlineTime();
-            group.OnEvent(new PlayerDisconnectedEvent(group, player));
+            group.OnEvent(new Aion.GameServer.Model.Team.Group.Events.PlayerDisconnectedEvent(group, player));
         }
     }
 

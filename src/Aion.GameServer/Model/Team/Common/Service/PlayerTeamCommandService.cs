@@ -14,7 +14,7 @@ public class PlayerTeamCommandService
 {
     public static void ExecuteCommand(Player player, TeamCommand command, int memberObjId)
     {
-        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam team = player.GetCurrentTeam();
         if (team == null) // team might have been disbanded or player can have been kicked out of his team by the time the packet arrived
             return;
         switch (command)
@@ -69,7 +69,7 @@ public class PlayerTeamCommandService
         }
     }
 
-    private static LeagueMember FindLeagueAlliance(TemporaryPlayerTeam<ITeamMember<Player>> team, Player player, int leagueAllianceId)
+    private static LeagueMember FindLeagueAlliance(TemporaryPlayerTeam team, Player player, int leagueAllianceId)
     {
         global::Aion.GameServer.Model.Team.League.League league = (object)team is PlayerAlliance pa ? pa.GetLeague() : null;
         if (league == null)
@@ -80,7 +80,7 @@ public class PlayerTeamCommandService
         return member;
     }
 
-    private static Player FindMember(TemporaryPlayerTeam<ITeamMember<Player>> team, Player player, int memberObjId)
+    private static Player FindMember(TemporaryPlayerTeam team, Player player, int memberObjId)
     {
         if (memberObjId == 0)
             return player;

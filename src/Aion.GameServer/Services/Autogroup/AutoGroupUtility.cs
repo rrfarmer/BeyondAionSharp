@@ -44,7 +44,7 @@ public class AutoGroupUtility
 
     public static bool CheckGroupRequirements(Player player, AutoGroupType agt, int mapId, int maskId)
     {
-        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam team = player.GetCurrentTeam();
         if (team == null || !team.IsLeader(player))
         {
             PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_NOT_LEADER());

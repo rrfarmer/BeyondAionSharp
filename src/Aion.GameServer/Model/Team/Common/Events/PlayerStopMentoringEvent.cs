@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// SM_SYSTEM_MESSAGE.STR_* catalog deferred/red-tolerated. abstract SendGroupPacketOnMentorEnd resolved by group/alliance subclasses.
 /// </summary>
 public abstract class PlayerStopMentoringEvent<T> : AlwaysTrueTeamEvent
-    where T : class
+    where T : TemporaryPlayerTeam
 {
     protected readonly T team;
     protected readonly Player player;

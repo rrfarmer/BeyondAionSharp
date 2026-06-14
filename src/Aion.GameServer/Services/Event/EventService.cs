@@ -115,13 +115,13 @@ public class EventService
             ev.OnPlayerLogin(player);
     }
 
-    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public void OnEnteredTeam(Player player, TemporaryPlayerTeam team)
     {
         foreach (Event ev in activeEvents)
             ev.OnEnteredTeam(player, team);
     }
 
-    public void OnLeftTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public void OnLeftTeam(Player player, TemporaryPlayerTeam team)
     {
         foreach (Event ev in activeEvents)
             ev.OnLeftTeam(player, team);

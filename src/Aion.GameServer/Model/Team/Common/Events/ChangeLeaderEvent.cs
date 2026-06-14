@@ -9,7 +9,7 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// team.GetLeader are GeneralTeam methods, red-tolerated under the relaxed bound. Predicate lambda returns bool to continue iteration.
 /// </summary>
 public abstract class ChangeLeaderEvent<T> : AbstractTeamPlayerEvent<T>
-    where T : class
+    where T : TemporaryPlayerTeam
 {
     public ChangeLeaderEvent(T team, Player eventPlayer)
         : base(team, eventPlayer)
@@ -26,7 +26,7 @@ public abstract class ChangeLeaderEvent<T> : AbstractTeamPlayerEvent<T>
     {
         team.ApplyOnMembers(member =>
         {
-            if (member.IsOnline() && !member.Equals(team.GetLeader().GetObject()))
+            if (member.IsOnline() && !member.Equals(team.GetLeaderObject()))
             {
                 ChangeLeaderTo(member);
                 return false;

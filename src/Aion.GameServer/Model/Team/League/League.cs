@@ -81,7 +81,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
     /// <returns>sorted alliances by position</returns>
     public ICollection<LeagueMember> GetSortedMembers()
     {
-        return members.Values.OrderBy(m => m.GetLeaguePosition()).ToList();
+        return MemberValues.OrderBy(m => m.GetLeaguePosition()).ToList();
     }
 
     /// <summary>Reorganize alliances positions in league from 0 to size.</summary>
@@ -141,7 +141,7 @@ public class League : GeneralTeam<PlayerAlliance, LeagueMember>
         Lock();
         try
         {
-            foreach (LeagueMember memberAlliance in members.Values)
+            foreach (LeagueMember memberAlliance in MemberValues)
             {
                 PlayerAlliance targetAlliance = memberAlliance.GetObject();
                 if (!targetAlliance.Equals(skippedAlliance))

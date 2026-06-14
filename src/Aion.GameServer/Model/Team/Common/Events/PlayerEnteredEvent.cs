@@ -12,7 +12,7 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// checkCondition/handleEvent are virtual so subclasses override and call base.HandleEvent().
 /// </summary>
 public abstract class PlayerEnteredEvent<T> : ITeamEvent
-    where T : class
+    where T : TemporaryPlayerTeam
 {
     protected readonly T team;
     protected readonly Player player;

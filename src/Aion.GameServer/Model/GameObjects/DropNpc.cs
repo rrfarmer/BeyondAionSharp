@@ -13,7 +13,7 @@ public class DropNpc
     private int distributionId = 0;
     private bool distributionType;
     private int currentIndex = 0;
-    private System.WeakReference<Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>>> lootingTeam;
+    private System.WeakReference<Aion.GameServer.Model.Team.TemporaryPlayerTeam> lootingTeam;
     private int lootingTeamId;
     private int maxRoll;
     private Aion.GameServer.Model.Team.Common.Legacy.LootGroupRules lastLootGroupRules;
@@ -102,16 +102,16 @@ public class DropNpc
 
     public Aion.GameServer.Model.Team.Common.Legacy.LootGroupRules GetLootGroupRules()
     {
-        Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>> team =
+        Aion.GameServer.Model.Team.TemporaryPlayerTeam team =
             lootingTeam == null ? null : (lootingTeam.TryGetTarget(out var t) ? t : null);
         if (team != null)
             lastLootGroupRules = team.GetLootGroupRules();
         return lastLootGroupRules;
     }
 
-    public void SetLootingTeam(Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>> team)
+    public void SetLootingTeam(Aion.GameServer.Model.Team.TemporaryPlayerTeam team)
     {
-        lootingTeam = new System.WeakReference<Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Aion.GameServer.Model.GameObjects.Players.Player>>>(team);
+        lootingTeam = new System.WeakReference<Aion.GameServer.Model.Team.TemporaryPlayerTeam>(team);
         lootingTeamId = team.GetTeamId();
         maxRoll = (object)team is Aion.GameServer.Model.Team.Alliance.PlayerAlliance alli ? (alli.IsInLeague() ? 10000 : 1000) : 100;
         lastLootGroupRules = team.GetLootGroupRules();

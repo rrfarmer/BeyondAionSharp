@@ -139,13 +139,13 @@ public class EventBuffHandler
         TryBuff(player, Buff.TriggerCondition.ENTER_MAP);
     }
 
-    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public void OnEnteredTeam(Player player, TemporaryPlayerTeam team)
     {
         team.ForEach(EndRestrictedEventBuffs);
         TryBuff(player, Buff.TriggerCondition.ENTER_TEAM);
     }
 
-    public void OnLeftTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public void OnLeftTeam(Player player, TemporaryPlayerTeam team)
     {
         EndRestrictedEventBuffs(player); // player isn't in team anymore
         team.ForEach(member =>
@@ -200,7 +200,7 @@ public class EventBuffHandler
 
     private bool ApplyOnTeam(Player player, Action<Player> memberAction)
     {
-        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam team = player.GetCurrentTeam();
         if (team != null)
         {
             team.ForEach(memberAction);
@@ -298,7 +298,7 @@ public class EventBuffHandler
     {
         if (buff.GetRestriction() == null || buff.GetRestriction().GetTeamSizeMaxPercent() == 0)
             return true;
-        TemporaryPlayerTeam<ITeamMember<Player>> team = player.GetCurrentTeam();
+        TemporaryPlayerTeam team = player.GetCurrentTeam();
         if (team != null)
         {
             int maxAllowedTeamSize = DataManager.INSTANCE_COOLTIME_DATA.GetMaxMemberCount(player.GetWorldId(), player.GetRace());

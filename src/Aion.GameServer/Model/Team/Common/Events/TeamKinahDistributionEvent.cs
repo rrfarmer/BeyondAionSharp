@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// convention). team.HasMember/GetOnlineMembers + SM_SYSTEM_MESSAGE.STR_* red-tolerated.
 /// </summary>
 public class TeamKinahDistributionEvent<T> : AbstractTeamPlayerEvent<T>
-    where T : class
+    where T : TemporaryPlayerTeam
 {
     private readonly long amount;
 

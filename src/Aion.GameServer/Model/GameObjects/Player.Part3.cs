@@ -268,13 +268,13 @@ public partial class Player
     }
 
     /// <summary>current PlayerGroup, PlayerAlliance or null</summary>
-    public Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Player>> GetCurrentTeam()
+    public Aion.GameServer.Model.Team.TemporaryPlayerTeam GetCurrentTeam()
     {
         return IsInGroup() ? GetPlayerGroup() : GetPlayerAlliance();
     }
 
     /// <summary>current PlayerGroup, PlayerAllianceGroup or null</summary>
-    public Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Player>> GetCurrentGroup()
+    public Aion.GameServer.Model.Team.TemporaryPlayerTeam GetCurrentGroup()
     {
         return IsInGroup() ? GetPlayerGroup() : GetPlayerAllianceGroup();
     }
@@ -282,7 +282,7 @@ public partial class Player
     /// <summary>current team id, 0 if not in a team</summary>
     public int GetCurrentTeamId()
     {
-        Aion.GameServer.Model.Team.TemporaryPlayerTeam<Aion.GameServer.Model.Team.ITeamMember<Player>> team = GetCurrentTeam();
+        Aion.GameServer.Model.Team.TemporaryPlayerTeam team = GetCurrentTeam();
         return team == null ? 0 : team.GetTeamId();
     }
 

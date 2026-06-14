@@ -98,7 +98,7 @@ public class PvpService
         if (mostDamage == null || !(mostDamage.GetAttacker() is Player winner))
         {
             PacketSendUtility.SendPacket(victim, SM_SYSTEM_MESSAGE.STR_MSG_COMBAT_MY_DEATH());
-            TemporaryPlayerTeam<ITeamMember<Player>> team = victim.GetCurrentTeam();
+            TemporaryPlayerTeam team = victim.GetCurrentTeam();
             if (team != null)
                 team.SendPacket(Predicates.Players.AllExcept(victim), SM_SYSTEM_MESSAGE.STR_MSG_COMBAT_FRIENDLY_DEATH(victim.GetName()));
             AbyssService.AnnounceHighRankedDeath(victim);
@@ -151,7 +151,7 @@ public class PvpService
             AionObject attacker = damageInfo.GetAttacker();
             if (attacker is Player player && player.GetRace() != victim.GetRace())
                 teamMembers.Add(player);
-            else if (attacker is TemporaryPlayerTeam<ITeamMember<Player>> team && team.GetLeaderObject().GetRace() != victim.GetRace())
+            else if (attacker is TemporaryPlayerTeam team && team.GetLeaderObject().GetRace() != victim.GetRace())
                 teamMembers = team.GetMembers();
 
             // Add damage last, so we don't include damage from same race. (Duels, Arena)
@@ -186,7 +186,7 @@ public class PvpService
 
     private List<Player> FindMembersToCountKillFor(Player winner, Player victim)
     {
-        TemporaryPlayerTeam<ITeamMember<Player>> group = winner.GetCurrentGroup();
+        TemporaryPlayerTeam group = winner.GetCurrentGroup();
         List<Player> killers;
         if (group == null)
             killers = new List<Player> { winner };

@@ -14,6 +14,6 @@ public class GroupDisbandEvent : AlwaysTrueTeamEvent
 
     public override void HandleEvent()
     {
-        group.ForEach(member => group.OnEvent(new PlayerGroupLeavedEvent(group, member, PlayerLeavedEvent.LeaveReson.DISBAND)));
+        group.ForEach(member => group.OnEvent(new PlayerGroupLeavedEvent(group, member, LeaveReson.DISBAND)));
     }
 }

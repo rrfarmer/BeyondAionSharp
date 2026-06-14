@@ -10,7 +10,7 @@ namespace Aion.GameServer.Model.Team.Common.Events;
 /// handleEvent/checkCondition are implicitly abstract in Java; C# requires explicit abstract re-declaration of the interface members.
 /// </summary>
 public abstract class AbstractTeamPlayerEvent<T> : ITeamEvent
-    where T : class
+    where T : TemporaryPlayerTeam
 {
     protected readonly T team;
     protected readonly Player eventPlayer;

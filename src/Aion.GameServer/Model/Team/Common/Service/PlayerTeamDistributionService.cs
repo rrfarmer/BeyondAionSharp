@@ -20,7 +20,7 @@ namespace Aion.GameServer.Model.Team.Common.Service;
 public class PlayerTeamDistributionService
 {
     /// <summary>This method will send a reward if a player is in a team</summary>
-    public static void DoReward(TemporaryPlayerTeam<ITeamMember<Player>> team, float damagePercent, Npc owner, AionObject winner, TeamDamageList teamDamageList)
+    public static void DoReward(TemporaryPlayerTeam team, float damagePercent, Npc owner, AionObject winner, TeamDamageList teamDamageList)
     {
         // Find team's members and determine highest level
         bool disableRangeChecks = DropConfig.DISABLE_RANGE_CHECK_MAPS.Contains(owner.GetPosition().GetMapId());

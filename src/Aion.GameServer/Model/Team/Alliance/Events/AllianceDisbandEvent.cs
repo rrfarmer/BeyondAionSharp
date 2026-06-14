@@ -14,6 +14,6 @@ public class AllianceDisbandEvent : AlwaysTrueTeamEvent
 
     public override void HandleEvent()
     {
-        alliance.ForEach(player => alliance.OnEvent(new PlayerAllianceLeavedEvent(alliance, player, PlayerLeavedEvent.LeaveReson.DISBAND)));
+        alliance.ForEach(player => alliance.OnEvent(new PlayerAllianceLeavedEvent(alliance, player, LeaveReson.DISBAND)));
     }
 }

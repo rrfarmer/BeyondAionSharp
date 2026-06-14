@@ -217,13 +217,13 @@ public class Event
             PacketSendUtility.SendMessage(player, eventTemplate.GetLoginMessage());
     }
 
-    public void OnEnteredTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public void OnEnteredTeam(Player player, TemporaryPlayerTeam team)
     {
         if (eventBuffHandler != null)
             eventBuffHandler.OnEnteredTeam(player, team);
     }
 
-    public void OnLeftTeam(Player player, TemporaryPlayerTeam<ITeamMember<Player>> team)
+    public void OnLeftTeam(Player player, TemporaryPlayerTeam team)
     {
         if (eventBuffHandler != null)
             eventBuffHandler.OnLeftTeam(player, team);
