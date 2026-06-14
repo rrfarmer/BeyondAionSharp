@@ -56,6 +56,9 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_WINDSTREAM.json")]
 	[InlineData("SM_FRIEND_NOTIFY.json")]
 	[InlineData("SM_BIND_POINT_TELEPORT.json")]
+	[InlineData("SM_SKILL_CANCEL.json")]
+	[InlineData("SM_ITEM_USAGE_ANIMATION.json")]
+	[InlineData("SM_ATTACK_STATUS.json")]
 	public void CsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -106,6 +109,9 @@ public sealed class GoldenPacketFixtureTests
 		"SM_WINDSTREAM" => new SmWindstream(inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32()),
 		"SM_FRIEND_NOTIFY" => new SmFriendNotify((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("name").GetString()!),
 		"SM_BIND_POINT_TELEPORT" => new SmBindPointTeleport((byte)inputs.GetProperty("action").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("locId").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
+		"SM_SKILL_CANCEL" => new SmSkillCancel(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("skillId").GetInt32()),
+		"SM_ITEM_USAGE_ANIMATION" => ReconstructItemUsageAnimation(inputs),
+		"SM_ATTACK_STATUS" => ReconstructAttackStatus(inputs),
 		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
 	};
 
@@ -128,6 +134,10 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_RIFT_ANNOUNCE.json")]
 	[InlineData("SM_RECIPE_LIST.json")]
 	[InlineData("SM_PET.json")]
+	[InlineData("SM_SKILL_ACTIVATION.json")]
+	[InlineData("SM_CASTSPELL.json")]
+	[InlineData("SM_ATTACK_RESPONSE.json")]
+	[InlineData("SM_ABNORMAL_STATE.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -165,6 +175,10 @@ public sealed class GoldenPacketFixtureTests
 		"SM_RIFT_ANNOUNCE" => ReconstructRiftAnnounce(inputs),
 		"SM_RECIPE_LIST" => new SM_RECIPE_LIST(new HashSet<int>(inputs.GetProperty("recipeIds").EnumerateArray().Select(e => e.GetInt32()))),
 		"SM_PET" => ReconstructPet(inputs),
+		"SM_SKILL_ACTIVATION" => ReconstructSkillActivation(inputs),
+		"SM_CASTSPELL" => ReconstructCastSpell(inputs),
+		"SM_ATTACK_RESPONSE" => ReconstructAttackResponse(inputs),
+		"SM_ABNORMAL_STATE" => new SM_ABNORMAL_STATE(new List<Aion.GameServer.SkillEngine.Model.Effect>(), inputs.GetProperty("abnormals").GetInt32(), inputs.GetProperty("slot").GetInt32()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -189,6 +203,46 @@ public sealed class GoldenPacketFixtureTests
 			default:
 				throw new NotSupportedException($"No SM_PET reconstruction for action {action}");
 		}
+	}
+
+	private static SM_ATTACK_RESPONSE ReconstructAttackResponse(JsonElement inputs)
+	{
+		var count = inputs.GetProperty("attackCount").GetInt32();
+		return inputs.GetProperty("factory").GetString() switch
+		{
+			"TARGET_IN_DIFFERENT_AREA" => SM_ATTACK_RESPONSE.TARGET_IN_DIFFERENT_AREA(count),
+			"STOP_INVALID_TARGET" => SM_ATTACK_RESPONSE.STOP_INVALID_TARGET(count),
+			"TARGET_TOO_FAR_AWAY" => SM_ATTACK_RESPONSE.TARGET_TOO_FAR_AWAY(count),
+			"STOP_OBSTACLE_IN_THE_WAY" => SM_ATTACK_RESPONSE.STOP_OBSTACLE_IN_THE_WAY(count),
+			"STOP_TOO_CLOSE_TO_ATTACK" => SM_ATTACK_RESPONSE.STOP_TOO_CLOSE_TO_ATTACK(count),
+			"STOP_WITHOUT_MESSAGE" => SM_ATTACK_RESPONSE.STOP_WITHOUT_MESSAGE(count),
+			_ => throw new NotSupportedException("Unknown SM_ATTACK_RESPONSE factory"),
+		};
+	}
+
+	private static SM_SKILL_ACTIVATION ReconstructSkillActivation(JsonElement inputs)
+	{
+		return inputs.GetProperty("ctor").GetString() switch
+		{
+			"toggle" => new SM_SKILL_ACTIVATION(inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("isActive").GetBoolean()),
+			"stigma" => new SM_SKILL_ACTIVATION(inputs.GetProperty("skillId").GetInt32()),
+			_ => throw new NotSupportedException("Unknown SM_SKILL_ACTIVATION ctor"),
+		};
+	}
+
+	// SM_CASTSPELL: targetType 0/3/4 use the object-id ctor; 1/2 use the (x,y,z) ground-point ctor.
+	private static SM_CASTSPELL ReconstructCastSpell(JsonElement inputs)
+	{
+		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>());
+		var spellId = inputs.GetProperty("spellId").GetInt32();
+		var level = inputs.GetProperty("level").GetInt32();
+		var targetType = inputs.GetProperty("targetType").GetInt32();
+		var castDuration = inputs.GetProperty("castDuration").GetInt32();
+		var castSpeed = inputs.GetProperty("castSpeed").GetSingle();
+		var boost = inputs.GetProperty("boost").GetBoolean();
+		if (targetType == 1 || targetType == 2)
+			return new SM_CASTSPELL(c, spellId, level, targetType, inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle(), castDuration, castSpeed, boost);
+		return new SM_CASTSPELL(c, spellId, level, targetType, inputs.GetProperty("targetObjectId").GetInt32(), castDuration, castSpeed, boost);
 	}
 
 	private static SM_RIFT_ANNOUNCE ReconstructRiftAnnounce(JsonElement inputs)
@@ -279,6 +333,56 @@ public sealed class GoldenPacketFixtureTests
 			_ => throw new NotSupportedException($"No SM_CLOSE_QUESTION_WINDOW factory for messageId {messageId}"),
 		};
 	}
+
+	// SM_ITEM_USAGE_ANIMATION: select the ctor matching the Java generator (time==0 paths only).
+	private static SmItemUsageAnimation ReconstructItemUsageAnimation(JsonElement inputs)
+	{
+		var ctor = inputs.GetProperty("ctor").GetString()!;
+		switch (ctor)
+		{
+			case "player_itemObj_itemId":
+				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32());
+			case "player_itemObj_itemId_time_end_unk":
+				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk3").GetInt32());
+			case "player_target_itemObj_itemId_time_end_unk":
+				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk3").GetInt32());
+			case "full":
+				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk").GetInt32(), inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32(), inputs.GetProperty("unk3").GetInt32());
+			default:
+				throw new NotSupportedException($"No SM_ITEM_USAGE_ANIMATION ctor for {ctor}");
+		}
+	}
+
+	// SM_ATTACK_STATUS: the faithful (Creature, TYPE, skillId, value[, LOG]) ctor — exercises the same
+	// getHpPercentage()/getMpPercentage() harness path Java reads. The deterministic HarnessCreature/HarnessLifeStats
+	// supply MAXHP/MAXMP (game-stats) + currentHp/currentMp (life-stats).
+	private static SmAttackStatus ReconstructAttackStatus(JsonElement inputs)
+	{
+		var stats = new Dictionary<StatEnum, int>
+		{
+			[StatEnum.MAXHP] = inputs.GetProperty("maxHp").GetInt32(),
+			[StatEnum.MAXMP] = inputs.GetProperty("maxMp").GetInt32(),
+		};
+		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, stats);
+		c.SetLifeStats(new PacketHarnessLifeStats(c, inputs.GetProperty("currentHp").GetInt32(), inputs.GetProperty("currentMp").GetInt32()));
+		var type = ResolveAttackStatusType(inputs.GetProperty("type").GetString()!);
+		var log = Enum.Parse<SmAttackStatus.LOG>(inputs.GetProperty("log").GetString()!);
+		var skillId = inputs.GetProperty("skillId").GetInt32();
+		var value = inputs.GetProperty("value").GetInt32();
+		// The 2-arg convenience ctor (creature, value) is REGULAR/skill 0/LOG.REGULAR; route there to mirror Java.
+		if (inputs.GetProperty("type").GetString() == "REGULAR" && skillId == 0 && log == SmAttackStatus.LOG.REGULAR)
+			return new SmAttackStatus(c, value);
+		return new SmAttackStatus(c, type, skillId, value, log);
+	}
+
+	private static SmAttackStatus.TYPE ResolveAttackStatusType(string name) => name switch
+	{
+		"DAMAGE" => SmAttackStatus.TYPE.DAMAGE,
+		"MP" => SmAttackStatus.TYPE.MP,
+		"USED_MP" => SmAttackStatus.TYPE.USED_MP,
+		"REGULAR" => SmAttackStatus.TYPE.REGULAR,
+		_ => throw new NotSupportedException($"No SM_ATTACK_STATUS TYPE for {name}"),
+	};
 
 	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
 	{
