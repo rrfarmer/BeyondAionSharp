@@ -12,34 +12,6 @@ namespace Aion.GameServer.Model.GameObjects.Players;
 /// </summary>
 public partial class Player
 {
-    // Java parity: PlayerService.storePlayer -> PlayerCooldownsDAO.storePlayerCooldowns(player.getSkillCoolDowns()).
-    public IReadOnlyDictionary<int, long> SkillCooldowns => GetSkillCoolDowns();
-
-    // Java parity: ItemCooldownsDAO.storeItemCooldowns(player.getItemCoolDowns()).
-    public IReadOnlyDictionary<int, Aion.GameServer.Model.GameObjects.PlayerItemCooldown> ItemCooldowns =>
-        GetItemCoolDowns().ToDictionary(
-            entry => entry.Key,
-            entry => new Aion.GameServer.Model.GameObjects.PlayerItemCooldown(
-                entry.Value.GetReuseTime(),
-                entry.Value.GetUseDelay()));
-
-    // Java parity: PortalCooldownsDAO.storePortalCooldowns(player.getPortalCooldownList()).
-    public IReadOnlyDictionary<int, Aion.GameServer.Model.GameObjects.PlayerPortalCooldown> PortalCooldowns =>
-        GetPortalCooldownList().GetPortalCoolDowns().ToDictionary(
-            entry => entry.Key,
-            entry => new Aion.GameServer.Model.GameObjects.PlayerPortalCooldown(
-                entry.Value.GetWorldId(),
-                entry.Value.GetReuseTime(),
-                entry.Value.GetEnterCount()));
-
-    // Java parity: CraftCooldownsDAO.storeCraftCooldowns(player.getCraftCooldowns()).
-    public IReadOnlyDictionary<int, long> CraftCooldowns =>
-        GetCraftCooldowns().ToDictionary(entry => entry.Key, entry => entry.Value);
-
-    // Java parity: HouseObjectCooldownsDAO.storeHouseObjectCooldowns(player.getHouseObjectCooldowns()).
-    public IReadOnlyDictionary<int, long> HouseObjectCooldowns =>
-        GetHouseObjectCooldowns().ToDictionary(entry => entry.Key, entry => entry.Value);
-
     // Java parity: InventoryDAO.store(player) clears UPDATE_REQUIRED storage state after a flush.
     // The faithful storages already flip their persistent state inside GetDirtyItemsToUpdate(), so
     // this bridge is a no-op acknowledgement consumed by the repository's snapshot writers.
