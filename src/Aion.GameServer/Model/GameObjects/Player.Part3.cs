@@ -21,8 +21,8 @@ public partial class Player
     {
         switch (enemy.GetTypeValue(this))
         {
-            case Aion.GameServer.Ai.Poll.AIQuestion.AGGRESSIVE:
-            case Aion.GameServer.Ai.Poll.AIQuestion.ATTACKABLE:
+            case Aion.GameServer.Model.CreatureType.AGGRESSIVE:
+            case Aion.GameServer.Model.CreatureType.ATTACKABLE:
                 return true;
             default:
                 return false;
