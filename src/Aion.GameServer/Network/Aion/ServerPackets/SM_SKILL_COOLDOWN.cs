@@ -20,7 +20,7 @@ public class SM_SKILL_COOLDOWN : AionServerPacket
         notify = true;
     }
 
-    public SM_SKILL_COOLDOWN(Player player, Dictionary<int, long> cooldownExpirationMillisByCooldownId, bool notify)
+    public SM_SKILL_COOLDOWN(Player player, IDictionary<int, long> cooldownExpirationMillisByCooldownId, bool notify)
     {
         foreach (PlayerSkillEntry skill in player.GetSkillList().GetAllSkills())
         {
