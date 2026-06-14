@@ -106,67 +106,6 @@ public sealed partial class StaticData
 		}
 	}
 
-	private sealed class PetFeedFlavourBuilder
-	{
-		private readonly List<PetFeedRewardGroup> _rewardGroups = [];
-
-		public PetFeedFlavourBuilder(int id, int fullCount, int lovedFoodLimit, int cooldownSeconds)
-		{
-			Id = id;
-			FullCount = fullCount;
-			LovedFoodLimit = lovedFoodLimit;
-			CooldownSeconds = cooldownSeconds;
-		}
-
-		private int Id { get; }
-
-		private int FullCount { get; }
-
-		private int LovedFoodLimit { get; }
-
-		private int CooldownSeconds { get; }
-
-		public void AddRewardGroup(PetFeedRewardGroup rewardGroup)
-		{
-			_rewardGroups.Add(rewardGroup);
-		}
-
-		public PetFeedFlavourProjection ToSummary()
-		{
-			return new PetFeedFlavourProjection(
-				Id,
-				FullCount,
-				LovedFoodLimit,
-				CooldownSeconds,
-				_rewardGroups.AsReadOnly());
-		}
-	}
-
-	private sealed class PetFeedRewardGroupBuilder
-	{
-		private readonly List<PetFeedReward> _rewards = [];
-
-		public PetFeedRewardGroupBuilder(PetFoodType type, bool isLoved)
-		{
-			Type = type;
-			IsLoved = isLoved;
-		}
-
-		private PetFoodType Type { get; }
-
-		private bool IsLoved { get; }
-
-		public void AddReward(int itemId)
-		{
-			_rewards.Add(new PetFeedReward(itemId, ItemLevel: 0));
-		}
-
-		public PetFeedRewardGroup ToSummary()
-		{
-			return new PetFeedRewardGroup(Type, IsLoved, _rewards.AsReadOnly());
-		}
-	}
-
 	private sealed class TradeListTemplateBuilder
 	{
 		private readonly List<int> _goodsListIds = [];

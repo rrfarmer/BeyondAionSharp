@@ -1,7 +1,5 @@
 namespace Aion.GameServer.Services.ToyPet;
 
-public sealed record PetFeedReward(int ItemId, int ItemLevel);
-
 public static class PetFeedCalculator
 {
 	private const int ItemMaxLevel = 60;
@@ -223,84 +221,6 @@ public static class PetFeedCalculator
 			rewardIndex = results.Count - 1;
 
 		return results[rewardIndex];
-	}
-
-	public static PetFeedReward? GetReward(
-		int fullCount,
-		IReadOnlyList<int> fullCounts,
-		IReadOnlyList<IReadOnlyList<int>> pointValues,
-		IReadOnlyList<PetFeedReward> rewards,
-		PetFeedProgress progress,
-		int playerLevel,
-		Func<IReadOnlyList<PetFeedReward>, PetFeedReward?> lovedRewardSelector)
-	{
-		ArgumentNullException.ThrowIfNull(fullCounts);
-		ArgumentNullException.ThrowIfNull(pointValues);
-		ArgumentNullException.ThrowIfNull(rewards);
-		ArgumentNullException.ThrowIfNull(progress);
-		ArgumentNullException.ThrowIfNull(lovedRewardSelector);
-
-		// Java parity: services/toypet/PetFeedCalculator.getReward, with DataManager item levels and Rnd.get supplied by caller.
-		if (progress.HungryLevel != PetHungryLevel.FULL || rewards.Count == 0)
-		{
-			return null;
-		}
-
-		var pointsIndex = IndexOfFullCount(fullCounts, fullCount);
-		if (pointsIndex < 0)
-		{
-			return null;
-		}
-
-		if (progress.IsLovedFeeded)
-		{
-			if (rewards.Count == 1)
-			{
-				return rewards[0];
-			}
-
-			var validRewards = new List<PetFeedReward>();
-			var maxLevel = 0;
-			foreach (var reward in rewards)
-			{
-				if (reward.ItemLevel > playerLevel)
-				{
-					continue;
-				}
-
-				if (reward.ItemLevel > maxLevel)
-				{
-					maxLevel = reward.ItemLevel;
-					validRewards.Clear();
-				}
-
-				validRewards.Add(reward);
-			}
-
-			return validRewards.Count == 0 ? null : lovedRewardSelector(validRewards);
-		}
-
-		var rewardIndex = 0;
-		var totalRewards = rewards.Count;
-		for (var row = 1; row < pointValues.Count; row++)
-		{
-			var points = pointValues[row];
-			if (points[pointsIndex] <= progress.TotalPoints)
-			{
-				rewardIndex = JavaRound((float)totalRewards / (pointValues.Count - 1) * row) - 1;
-			}
-		}
-
-		if (rewardIndex < 0)
-		{
-			rewardIndex = 0;
-		}
-		else if (rewardIndex > rewards.Count - 1)
-		{
-			rewardIndex = rewards.Count - 1;
-		}
-
-		return rewards[rewardIndex];
 	}
 
 	private static byte[] CreateItemLevels()
