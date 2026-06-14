@@ -302,8 +302,8 @@ public sealed class SmStatsInfo : GameServerPacket
 				Math.Max(0, player.Exp - expStart),
 				currentRepose,
 				maxRepose,
-				lifeStats?.GetCurrentHp(currentStats.MaxHp) ?? currentStats.MaxHp,
-				lifeStats?.GetCurrentMp(currentStats.MaxMp) ?? currentStats.MaxMp,
+				lifeStats?.GetCurrentHp() ?? currentStats.MaxHp,
+				lifeStats?.GetCurrentMp() ?? currentStats.MaxMp,
 				lifeStats?.GetCurrentFp() ?? currentStats.FlyTime);
 		}
 
