@@ -368,7 +368,7 @@ public class FortressSiege : Siege<FortressLocation>
             {
                 int gp = Math.Min((int)Math.Floor(legionGp / (float)participatedLegionMembers.Count + 0.5f), SiegeConfig.LEGION_GP_CAP_PER_MEMBER);
                 foreach (int participant in participatedLegionMembers)
-                    GloryPointsService.AddGp(participant, gp);
+                    Aion.GameServer.Services.Abyss.GloryPointsService.AddGp(participant, gp);
                 if (LoggingConfig.LOG_SIEGE)
                     log.LogInformation(this + ": Distributed " + gp + " GP each, to the following members of " + legion + ": " + participatedLegionMembers);
             }

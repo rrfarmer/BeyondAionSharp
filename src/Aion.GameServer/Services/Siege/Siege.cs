@@ -235,7 +235,7 @@ public abstract class Siege
                     if (gp > 0)
                     {
                         rewardedGpPlayers.Add(playerId);
-                        GloryPointsService.AddGp(playerId, gp); // Rates.GP.calcResult() cannot be fairly applied here, because some players could be offline
+                        Aion.GameServer.Services.Abyss.GloryPointsService.AddGp(playerId, gp); // Rates.GP.calcResult() cannot be fairly applied here, because some players could be offline
                     }
                 }
                 if (LoggingConfig.LOG_SIEGE && rewardedGpPlayers.Count != 0)
