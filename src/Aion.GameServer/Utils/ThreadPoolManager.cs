@@ -44,7 +44,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		var task = Task.Run(() => RunOnceAsync(action, delay, linkedTokenSource.Token), CancellationToken.None);
 		_scheduledTasks.Add(task);
 		_scheduleObserver?.Invoke(new ThreadPoolScheduleObservation(ThreadPoolScheduleKind.Once, delay, Period: null));
-		return new ScheduledTask(task, linkedTokenSource);
+		return new ScheduledTask(task, linkedTokenSource, DateTimeOffset.UtcNow + delay);
 	}
 
 	public Task ScheduleAtFixedRate(
@@ -82,7 +82,7 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		var task = Task.Run(() => RunFixedRateAsync(action, initialDelay, period, linkedTokenSource), CancellationToken.None);
 		_scheduledTasks.Add(task);
 		_scheduleObserver?.Invoke(new ThreadPoolScheduleObservation(ThreadPoolScheduleKind.FixedRate, initialDelay, period));
-		return new ScheduledTask(task, linkedTokenSource);
+		return new ScheduledTask(task, linkedTokenSource, DateTimeOffset.UtcNow + initialDelay);
 	}
 
 	// Java parity: schedule/scheduleAtFixedRate take long millisecond delays (Runnable or async delegate).
@@ -197,10 +197,13 @@ public sealed class ScheduledTask
 	private readonly CancellationTokenSource _cancellationTokenSource;
 	private int _isComplete;
 
-	internal ScheduledTask(Task completion, CancellationTokenSource cancellationTokenSource)
+	private readonly DateTimeOffset _dueTimeUtc;
+
+	internal ScheduledTask(Task completion, CancellationTokenSource cancellationTokenSource, DateTimeOffset dueTimeUtc)
 	{
 		Completion = completion;
 		_cancellationTokenSource = cancellationTokenSource;
+		_dueTimeUtc = dueTimeUtc;
 		_ = completion.ContinueWith(
 			_ =>
 			{
@@ -224,6 +227,13 @@ public sealed class ScheduledTask
 	// cancellation always signals the token, so we ignore it and defer to the no-arg Cancel().
 	public bool Cancel(bool mayInterruptIfRunning) => Cancel();
 
+	// Java parity: java.util.concurrent.Delayed.getDelay(TimeUnit) — remaining time until the task is due (may be <=0 once past due).
+	public long GetDelay(TimeUnit unit)
+	{
+		TimeSpan remaining = _dueTimeUtc - DateTimeOffset.UtcNow;
+		return unit.Convert(remaining);
+	}
+
 	public bool Cancel()
 	{
 		if (Volatile.Read(ref _isComplete) != 0)
@@ -239,4 +249,32 @@ public sealed class ScheduledTask
 			return false;
 		}
 	}
+}
+
+/// <summary>Java parity: java.util.concurrent.TimeUnit — the subset used by the port for ScheduledTask.GetDelay conversions.</summary>
+public enum TimeUnit
+{
+	NANOSECONDS,
+	MICROSECONDS,
+	MILLISECONDS,
+	SECONDS,
+	MINUTES,
+	HOURS,
+	DAYS,
+}
+
+internal static class TimeUnitExtensions
+{
+	// Java parity: TimeUnit.convert(Duration) — express a TimeSpan in this unit, truncating toward zero.
+	public static long Convert(this TimeUnit unit, TimeSpan duration) => unit switch
+	{
+		TimeUnit.NANOSECONDS => (long)(duration.Ticks * 100L),
+		TimeUnit.MICROSECONDS => duration.Ticks / 10L,
+		TimeUnit.MILLISECONDS => (long)duration.TotalMilliseconds,
+		TimeUnit.SECONDS => (long)duration.TotalSeconds,
+		TimeUnit.MINUTES => (long)duration.TotalMinutes,
+		TimeUnit.HOURS => (long)duration.TotalHours,
+		TimeUnit.DAYS => (long)duration.TotalDays,
+		_ => (long)duration.TotalMilliseconds,
+	};
 }
