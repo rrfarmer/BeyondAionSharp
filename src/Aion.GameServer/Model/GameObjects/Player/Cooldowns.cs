@@ -59,6 +59,23 @@ public class Cooldowns : IEnumerable<KeyValuePair<int, long>>
 
     public int Count => map.Count;
 
+    /// <summary>Java parity: ConcurrentHashMap.isEmpty().</summary>
+    public bool IsEmpty() => map.IsEmpty;
+
+    /// <summary>Java parity: ConcurrentHashMap.forEach(BiConsumer&lt;Integer, Long&gt;).</summary>
+    public void ForEach(Action<int, long> action)
+    {
+        foreach (var entry in map)
+            action(entry.Key, entry.Value);
+    }
+
+    /// <summary>Java parity: ConcurrentHashMap put/get via the map index operator.</summary>
+    public long this[int cooldownId]
+    {
+        get => Get(cooldownId) ?? 0L;
+        set => Put(cooldownId, value);
+    }
+
     public IEnumerator<KeyValuePair<int, long>> GetEnumerator() => map.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => map.GetEnumerator();

@@ -25,6 +25,27 @@ public sealed class SmEmotion : GameServerPacket
 	{
 	}
 
+	public SmEmotion(Creature creature, EmotionType emotionType)
+		: this(creature, emotionType, 0, 0)
+	{
+		// Java parity: network/aion/serverpackets/SM_EMOTION(Creature, EmotionType).
+	}
+
+	public SmEmotion(Creature creature, EmotionType emotionType, int emotion, int targetObjectId)
+		: base(PacketOpCode)
+	{
+		// Java parity: network/aion/serverpackets/SM_EMOTION(Creature, EmotionType, int, int).
+		_senderObjectId = creature.GetObjectId();
+		_emotionType = emotionType;
+		_emotion = emotion;
+		_targetObjectId = targetObjectId;
+		_state = creature.GetState();
+		var aSpeed = creature.GetGameStats().GetAttackSpeed();
+		_baseAttackSpeed = aSpeed.GetBase();
+		_currentAttackSpeed = aSpeed.GetCurrent();
+		_speed = creature.GetGameStats().GetMovementSpeedFloat();
+	}
+
 	public SmEmotion(
 		int senderObjectId,
 		EmotionType emotionType,

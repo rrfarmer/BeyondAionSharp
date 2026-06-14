@@ -207,6 +207,7 @@ public class DuelService
         EndDebuffsByOpponent(player, opponentId);
         CancelSummonedObjectAttacks(player, opponentId);
         foreach (var attacker in player.GetAggroList()
+            .Stream()
             .Select(ai => ai.GetAttacker())
             .Where(attacker => attacker.GetMaster().GetObjectId() == opponentId)
             .ToList())

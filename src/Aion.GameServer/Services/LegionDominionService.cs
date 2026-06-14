@@ -189,7 +189,7 @@ public class LegionDominionService
             return false;
         if (RiftService.GetInstance().IsRiftOpened(invasionRift.GetRiftId()))
             return false;
-        bool openedSuccessfully = RiftService.GetInstance().OpenRifts(invasionRift.GetRiftId(), false);
+        bool openedSuccessfully = RiftService.GetInstance().OpenRifts(invasionRift.GetRiftId(), false).Succeeded;
         if (openedSuccessfully)
         {
             if (location.GetRace() == Race.ELYOS)

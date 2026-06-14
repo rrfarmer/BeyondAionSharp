@@ -58,6 +58,7 @@ public class CM_GATHER : AionClientPacket
         if (gatherable == null)
         {
             gatherable = player.GetKnownList()
+                .Stream()
                 .Where(o => o.Get() is Gatherable gg && gg.GetController().GetGatheringPlayerId() == player.GetObjectId())
                 .Select(o => (Gatherable)o.Get())
                 .FirstOrDefault();
