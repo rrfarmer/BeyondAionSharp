@@ -11,7 +11,7 @@ namespace Aion.GameServer.Network.Aion.ClientPackets;
 /// <summary>Java parity: network/aion/clientpackets/CM_ATREIAN_PASSPORT (ViAl). Reads passport-id/timestamp pairs (count -1 = read until exhausted) and claims rewards. AtreianPassportService red-tolerated.</summary>
 public class CM_ATREIAN_PASSPORT : AionClientPacket
 {
-    private Dictionary<int, HashSet<int>> passports = new Dictionary<int, HashSet<int>>();
+    private Dictionary<int, ISet<int>> passports = new Dictionary<int, ISet<int>>();
 
     public CM_ATREIAN_PASSPORT(int opcode, ISet<State> validStates)
         : base(opcode, validStates)
@@ -32,7 +32,7 @@ public class CM_ATREIAN_PASSPORT : AionClientPacket
             }
             int passportId = ReadD();
             int timestamp = ReadD();
-            if (!passports.TryGetValue(passportId, out HashSet<int> timestamps))
+            if (!passports.TryGetValue(passportId, out ISet<int> timestamps))
             {
                 timestamps = new HashSet<int>();
                 passports[passportId] = timestamps;
