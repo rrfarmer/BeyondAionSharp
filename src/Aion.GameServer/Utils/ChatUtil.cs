@@ -1,3 +1,5 @@
+using Aion.GameServer.Utils.Extensions;
+
 namespace Aion.GameServer.Utils;
 
 public static class ChatUtil
@@ -108,6 +110,53 @@ public static class ChatUtil
 			return int.TryParse(m.Groups[1].Value, out int result) ? result : 0;
 
 		return 0;
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.path(VisibleObject, boolean) — spawn-point link for an object.</summary>
+	public static string Path(Aion.GameServer.Model.GameObjects.VisibleObject obj, bool withIdInName)
+	{
+		return Path(obj.GetObjectTemplate(), withIdInName);
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.path(int npcId, boolean).</summary>
+	public static string Path(int npcId, bool withIdInName)
+	{
+		Aion.GameServer.Model.Templates.VisibleObjectTemplate template = Aion.GameServer.Dataholders.DataManager.NPC_DATA.GetNpcTemplate(npcId);
+		if (template != null)
+			return Path(template, withIdInName);
+		else
+			return Path(withIdInName ? "Unknown ID " + npcId : "Unknown ID", npcId);
+	}
+
+	// Java parity: utils/ChatUtil.path(VisibleObjectTemplate, boolean).
+	private static string Path(Aion.GameServer.Model.Templates.VisibleObjectTemplate template, bool withIdInName)
+	{
+		string name = template.GetL10n();
+		if (name == null)
+			name = Capitalize(template.GetName());
+		if (withIdInName)
+			name = name + " | " + template.GetTemplateId();
+		return Path(name, template.GetTemplateId());
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.path(String npcName) — spawn-point link by localized name.</summary>
+	public static string Path(string npcName)
+	{
+		return string.Format("[where:{0}]", npcName);
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.path(String linkName, int npcId) — spawn-point link by ID.</summary>
+	public static string Path(string linkName, int npcId)
+	{
+		return string.Format("[where:{0};{1}]", linkName, npcId);
+	}
+
+	// Java parity: org.apache.commons.lang3.StringUtils.capitalize — capitalizes the first character.
+	private static string Capitalize(string str)
+	{
+		if (string.IsNullOrEmpty(str))
+			return str;
+		return char.ToUpper(str[0]) + str.Substring(1);
 	}
 
 	private const char AsmoNamePrefix = '';
