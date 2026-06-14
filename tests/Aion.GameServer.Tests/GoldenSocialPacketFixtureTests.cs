@@ -44,6 +44,9 @@ public sealed class GoldenSocialPacketFixtureTests
     [InlineData("SM_LEGION_UPDATE_TITLE.json")]
     [InlineData("SM_FRIEND_STATUS.json")]
     [InlineData("SM_MARK_FRIENDLIST.json")]
+    [InlineData("SM_LEGION_SEND_EMBLEM_DATA.json")]
+    [InlineData("SM_LEGION_UPDATE_EMBLEM.json")]
+    [InlineData("SM_LEGION_SEND_EMBLEM.json")]
     public void CsharpSocialPacketMatchesJavaGoldenFixture(string fixtureFile)
     {
         using var fixture = LoadFixture(fixtureFile);
@@ -127,9 +130,35 @@ public sealed class GoldenSocialPacketFixtureTests
                 var active = NewPlayer(inputs.GetProperty("objectId").GetInt32(), Race.ELYOS);
                 return (new SM_MARK_FRIENDLIST(), NewConnectionWithActivePlayer(active));
             }
+            case "SM_LEGION_SEND_EMBLEM_DATA":
+            {
+                var data = inputs.GetProperty("data").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray();
+                return (new SM_LEGION_SEND_EMBLEM_DATA(inputs.GetProperty("size").GetInt32(), data), null);
+            }
+            case "SM_LEGION_UPDATE_EMBLEM":
+                return (new SM_LEGION_UPDATE_EMBLEM(inputs.GetProperty("legionId").GetInt32(), BuildEmblem(inputs)), null);
+            case "SM_LEGION_SEND_EMBLEM":
+                return (new SM_LEGION_SEND_EMBLEM(inputs.GetProperty("legionId").GetInt32(), BuildEmblem(inputs),
+                    inputs.GetProperty("emblemDataSize").GetInt32(), inputs.GetProperty("legionName").GetString()!), null);
             default:
                 throw new NotSupportedException($"No C# reconstruction registered for {packetName}");
         }
+    }
+
+    // Rebuild a LegionEmblem identical to the Java generator's (deterministic scalar fields via SetEmblem).
+    private static Aion.GameServer.Model.Team.Legion.LegionEmblem BuildEmblem(JsonElement inputs)
+    {
+        var emblem = new Aion.GameServer.Model.Team.Legion.LegionEmblem();
+        var type = (Aion.GameServer.Model.Team.Legion.LegionEmblemType)inputs.GetProperty("emblemType").GetInt32();
+        emblem.SetEmblem(
+            inputs.GetProperty("emblemId").GetInt32(),
+            inputs.GetProperty("color_a").GetInt32(),
+            inputs.GetProperty("color_r").GetInt32(),
+            inputs.GetProperty("color_g").GetInt32(),
+            inputs.GetProperty("color_b").GetInt32(),
+            type,
+            Array.Empty<byte>());
+        return emblem;
     }
 
     // ---- minimal player (faithful base ctor; accessLevel 0 => non-staff) ----
