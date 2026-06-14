@@ -151,7 +151,7 @@ public class ItemStoneListDAO
         Store(idianStones, ItemStoneType.IDIANSTONE);
     }
 
-    public static void StoreManaStones(HashSet<ManaStone> manaStones)
+    public static void StoreManaStones(ISet<ManaStone> manaStones)
     {
         Store(manaStones, ItemStoneType.MANASTONE);
     }
@@ -161,7 +161,7 @@ public class ItemStoneListDAO
         Store(new HashSet<GodStone> { godStones }, ItemStoneType.GODSTONE);
     }
 
-    public static void StoreFusionStone(HashSet<ManaStone> manaStones)
+    public static void StoreFusionStone(ISet<ManaStone> manaStones)
     {
         Store(manaStones, ItemStoneType.FUSIONSTONE);
     }
