@@ -45,6 +45,9 @@ public sealed class GameServerOptions
 
 	public int LoadedPropertyCount { get; init; }
 
+	/// <summary>Convenience passthrough to the client listener endpoint (Java parity: GameServer client NioServer bind).</summary>
+	public IPEndPoint ClientEndPoint => Network.ClientEndPoint;
+
 	public static GameServerOptions LoadFromJavaConfig(string startDirectory)
 	{
 		// Java parity: configs/main GSConfig, NetworkConfig, GeoDataConfig, AIConfig, CustomConfig, MembershipConfig.
