@@ -65,7 +65,6 @@ public sealed partial class StaticData
 		PlayerInitialDataTable playerInitialData,
 		StorageExpansionTemplateTable cubeExpansionTemplates,
 		StorageExpansionTemplateTable warehouseExpansionTemplates,
-		NearbyQuestTemplateTable nearbyQuestTemplates,
 		QuestHandlerAvailabilityTable questHandlers,
 		QuestNpcStartTable questNpcStarts,
 		ChallengeTaskTable challengeTasks,
@@ -127,7 +126,6 @@ public sealed partial class StaticData
 		PlayerInitialData = playerInitialData;
 		CubeExpansionTemplates = cubeExpansionTemplates;
 		WarehouseExpansionTemplates = warehouseExpansionTemplates;
-		NearbyQuestTemplates = nearbyQuestTemplates;
 		QuestHandlers = questHandlers;
 		QuestNpcStarts = questNpcStarts;
 		ChallengeTasks = challengeTasks;
@@ -260,7 +258,6 @@ public sealed partial class StaticData
 
 	public WarehouseExpandData WarehouseExpandDataDh { get; } = new();
 
-	public NearbyQuestTemplateTable NearbyQuestTemplates { get; }
 
 	public QuestHandlerAvailabilityTable QuestHandlers { get; }
 
@@ -3041,14 +3038,6 @@ public sealed partial class StaticData
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
 		var workOrderRecipes = WorkOrderRecipeTable.LoadFromImportedFiles(importedFiles);
-		using var nearbyQuestTemplateStream = File.OpenRead(cacheFilePath);
-		var nearbyQuestTemplates = new NearbyQuestTemplateTable(
-			new NearbyQuestTemplateXmlExtractor()
-				.Extract(nearbyQuestTemplateStream)
-				.Select(template => workOrderRecipes.TryGetRecipeId(template.QuestId, out var recipeId)
-					? template with { WorkOrderRecipeId = recipeId }
-					: template)
-				.ToArray());
 		var questHandlers = QuestHandlerAvailabilityTable.Load(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var questNpcStarts = LoadQuestNpcStarts(cacheFilePath, questHandlerDirectory, cancellationToken);
 		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
@@ -3149,7 +3138,6 @@ public sealed partial class StaticData
 				spawnLocationsByRace),
 			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
 			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
-			nearbyQuestTemplates,
 			questHandlers,
 			questNpcStarts,
 			new ChallengeTaskTable(challengeTasks.AsReadOnly()),
