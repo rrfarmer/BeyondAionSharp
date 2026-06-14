@@ -68,6 +68,13 @@ public sealed class DataManager
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
 	public static HousingObjectData HOUSING_OBJECT_DATA { get; } = new();
 	public static EnchantTable ENCHANT_DATA => SD.EnchantTemplates;
+	public static ItemTemplateTable ITEM_TEMPLATES => SD.ItemTemplates;
+	public static ItemRandomBonusTable ITEM_RANDOM_BONUS_TABLE => SD.ItemRandomBonuses;
+	public static ItemSetTable ITEM_SET_TABLE => SD.ItemSets;
+	public static EnchantTable ENCHANT_TABLE => SD.EnchantTemplates;
+	public static TemperingTable TEMPERING_TABLE => SD.TemperingTemplates;
+	public static SkillTemplateTable SKILL_TEMPLATE_TABLE => SD.SkillTemplates;
+	public static TitleTemplateTable TITLE_TEMPLATE_TABLE => SD.TitleTemplates;
 	public static HouseData HOUSE_DATA { get; } = new();
 	public static QuestsData QUEST_DATA => SD.Quests;
 	public static TribeRelationsData TRIBE_RELATIONS_DATA => SD.TribeRelations;

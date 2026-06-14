@@ -21,6 +21,23 @@ public sealed class SmStatsInfo : GameServerPacket
 	private readonly SkillTemplateTable? _skillTemplates;
 	private readonly TitleTemplateTable? _titleTemplates;
 
+	// Java parity: network/aion/serverpackets/SM_STATS_INFO(Player) — fetches its tables from DataManager and
+	// the game minutes from GameTimeService.getInstance().getGameTime().getTime() internally.
+	public SmStatsInfo(Player player)
+		: this(
+			player,
+			global::Aion.GameServer.Dataholders.DataManager.PLAYER_EXPERIENCE_TABLE,
+			global::Aion.GameServer.Services.GameTimeService.GetInstance().GetGameTime().GetTime(),
+			global::Aion.GameServer.Dataholders.DataManager.ITEM_TEMPLATES,
+			global::Aion.GameServer.Dataholders.DataManager.ITEM_RANDOM_BONUS_TABLE,
+			global::Aion.GameServer.Dataholders.DataManager.ITEM_SET_TABLE,
+			global::Aion.GameServer.Dataholders.DataManager.ENCHANT_TABLE,
+			global::Aion.GameServer.Dataholders.DataManager.TEMPERING_TABLE,
+			global::Aion.GameServer.Dataholders.DataManager.SKILL_TEMPLATE_TABLE,
+			global::Aion.GameServer.Dataholders.DataManager.TITLE_TEMPLATE_TABLE)
+	{
+	}
+
 	public SmStatsInfo(
 		Player player,
 		PlayerExperienceTable? experienceTable,
