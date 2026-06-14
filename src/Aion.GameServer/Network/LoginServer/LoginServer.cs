@@ -271,6 +271,13 @@ public sealed class LoginServer : IAsyncDisposable
 			return;
 		}
 
+		if (opcode == 0x0B && _state == LoginServerState.Authed)
+		{
+			// Java parity: loginserver clientpacket CM_LS_PING.runImpl -> sendPacket(new SM_LS_PONG()) keep-alive reply.
+			await SendPacketAsync(new SmLsPong(), cancellationToken);
+			return;
+		}
+
 		if (opcode != 0x00 || _state != LoginServerState.Connected)
 		{
 			_logger.LogWarning("Unknown login-server packet 0x{Opcode:X2} in state {State}", opcode, _state);
