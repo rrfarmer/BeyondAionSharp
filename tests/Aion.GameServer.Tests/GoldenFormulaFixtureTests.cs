@@ -1,5 +1,6 @@
 using System.Text.Json;
-using Aion.GameServer.Services;
+using Aion.GameServer.Model.Templates.Npc;
+using Aion.GameServer.Utils.Stats;
 
 namespace Aion.GameServer.Tests;
 
@@ -9,14 +10,26 @@ namespace Aion.GameServer.Tests;
 /// Reads the SHARED formula fixtures produced by the Java harness
 /// (game-server GoldenFormulaFixtureGeneratorTest -> parity-artifacts/golden/formulas/*.json)
 /// and asserts the C# formula methods return values identical to real Java. The Java result
-/// is the single source of truth, so exact Java semantics (e.g. int/double truncation) are pinned.
+/// is the single source of truth, so exact Java semantics (e.g. int/double truncation,
+/// Math.round, enum branch selection) are pinned.
 ///
-/// To add a formula: capture it in the Java generator, then add a dispatch case in Evaluate.
+/// Only pure primitive/enum-arg methods are covered here (the body reads ONLY its args).
+/// Enum args are passed by NAME; enum-typed results are compared by NAME.
+///
+/// To add a formula: capture it in the Java generator, then add a dispatch case in Evaluate
+/// (numeric result) or EvaluateName (enum result), and an [InlineData] entry below.
 /// </summary>
 public sealed class GoldenFormulaFixtureTests
 {
 	[Theory]
 	[InlineData("StatFunctions.adjustPvpDpGained.json")]
+	[InlineData("StatFunctions.calculateRatingMultiplier.json")]
+	[InlineData("StatFunctions.getApNpcRating.json")]
+	[InlineData("XPRewardEnum.xpRewardFrom.json")]
+	[InlineData("DropRewardEnum.dropRewardFrom.json")]
+	[InlineData("XPLossEnum.getExpLoss.json")]
+	[InlineData("AbyssRankEnum.getRankForPoints.json")]
+	[InlineData("AbyssRankEnum.getRankById.json")]
 	public void CsharpFormulaMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		using var fixture = LoadFixture(fixtureFile);
@@ -25,24 +38,60 @@ public sealed class GoldenFormulaFixtureTests
 		foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
 		{
 			var inputs = caseElement.GetProperty("inputs");
-			var expected = caseElement.GetProperty("result").GetInt64();
+			var result = caseElement.GetProperty("result");
 
-			var actual = Evaluate(formula, inputs);
-
-			Assert.True(expected == actual,
-				$"{formula}({DescribeInputs(inputs)}): C# diverged from Java golden. " +
-				$"Java={expected}, C#={actual}");
+			if (result.ValueKind == JsonValueKind.String)
+			{
+				// enum-typed result: compare by NAME (avoids ordinal-vs-value traps).
+				var expected = result.GetString()!;
+				var actual = EvaluateName(formula, inputs);
+				Assert.True(expected == actual,
+					$"{formula}({DescribeInputs(inputs)}): C# diverged from Java golden. " +
+					$"Java={expected}, C#={actual}");
+			}
+			else
+			{
+				var expected = result.GetInt64();
+				var actual = Evaluate(formula, inputs);
+				Assert.True(expected == actual,
+					$"{formula}({DescribeInputs(inputs)}): C# diverged from Java golden. " +
+					$"Java={expected}, C#={actual}");
+			}
 		}
 	}
 
 	private static long Evaluate(string formula, JsonElement inputs) => formula switch
 	{
-		"StatFunctions.adjustPvpDpGained" => PvpDpRewardService.AdjustPvpDpGained(
+		// Faithful target: Utils/Stats/StatFunctions (NOT the slop PvpDpRewardService).
+		"StatFunctions.adjustPvpDpGained" => StatFunctions.AdjustPvpDpGained(
 			inputs.GetProperty("points").GetInt32(),
 			inputs.GetProperty("defeatedLvl").GetInt32(),
 			inputs.GetProperty("killerLvl").GetInt32()),
-		_ => throw new NotSupportedException($"No C# dispatch registered for formula {formula}"),
+		"StatFunctions.calculateRatingMultiplier" => StatFunctions.CalculateRatingMultiplier(
+			ParseNpcRating(inputs.GetProperty("npcRating").GetString()!)),
+		"StatFunctions.getApNpcRating" => StatFunctions.GetApNpcRating(
+			ParseNpcRating(inputs.GetProperty("npcRating").GetString()!)),
+		"XPRewardEnum.xpRewardFrom" => XPRewardEnumExtensions.XpRewardFrom(
+			inputs.GetProperty("levelDifference").GetInt32()),
+		"DropRewardEnum.dropRewardFrom" => DropRewardEnumExtensions.DropRewardFrom(
+			inputs.GetProperty("levelDifference").GetInt32()),
+		"XPLossEnum.getExpLoss" => XPLossEnumExtensions.GetExpLoss(
+			inputs.GetProperty("level").GetInt32(),
+			inputs.GetProperty("expNeed").GetInt64()),
+		_ => throw new NotSupportedException($"No C# numeric dispatch registered for formula {formula}"),
 	};
+
+	private static string EvaluateName(string formula, JsonElement inputs) => formula switch
+	{
+		"AbyssRankEnum.getRankForPoints" => AbyssRankEnumExtensions.GetRankForPoints(
+			inputs.GetProperty("ap").GetInt32(),
+			inputs.GetProperty("gp").GetInt32()).ToString(),
+		"AbyssRankEnum.getRankById" => AbyssRankEnumExtensions.GetRankById(
+			inputs.GetProperty("id").GetInt32()).ToString(),
+		_ => throw new NotSupportedException($"No C# enum dispatch registered for formula {formula}"),
+	};
+
+	private static NpcRating ParseNpcRating(string name) => Enum.Parse<NpcRating>(name);
 
 	private static string DescribeInputs(JsonElement inputs) =>
 		string.Join(", ", inputs.EnumerateObject().Select(p => $"{p.Name}={p.Value.GetRawText()}"));
