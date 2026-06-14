@@ -70,7 +70,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcLifeStatsService>();
 			services.AddSingleton<WorldNpcResourceStatsService>();
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
-			services.AddSingleton<QuestRewardService>();
 			services.AddSingleton<CustomLevelRewardExecutionService>();
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
 			services.AddSingleton<WorldNpcTeamApRewardService>();
