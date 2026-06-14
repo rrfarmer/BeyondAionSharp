@@ -12,28 +12,10 @@ namespace Aion.GameServer.Model.GameObjects.Players;
 /// </summary>
 public partial class Player
 {
-    // Java parity: InventoryDAO.store(player) clears UPDATE_REQUIRED storage state after a flush.
-    // The faithful storages already flip their persistent state inside GetDirtyItemsToUpdate(), so
-    // this bridge is a no-op acknowledgement consumed by the repository's snapshot writers.
-    public void MarkDirtyItemsPersisted()
-    {
-    }
-
     // Java parity: dao/InventoryDAO.store(player) flushes the cube/equipment storage rows.
+    // Live consumers: SmInventoryInfo / SmStatsInfo / PlayerVisualStatsUpdateService / WorldNpcLootService.
     public IEnumerable<Aion.GameServer.Model.GameObjects.InventoryItem> InventoryItems =>
         GetInventory().GetItemsWithKinah().Select(MapItemToInventoryItem);
-
-    // Java parity: dao/InventoryDAO regular warehouse rows (StorageType.REGULAR_WAREHOUSE).
-    public IEnumerable<Aion.GameServer.Model.GameObjects.InventoryItem> WarehouseItems =>
-        GetWarehouse().GetItemsWithKinah().Select(MapItemToInventoryItem);
-
-    // Java parity: dao/InventoryDAO account warehouse rows (StorageType.ACCOUNT_WAREHOUSE).
-    public IEnumerable<Aion.GameServer.Model.GameObjects.InventoryItem> AccountWarehouseItems =>
-        GetAccount().GetAccountWarehouse().GetItemsWithKinah().Select(MapItemToInventoryItem);
-
-    // Java parity: dao/InventoryDAO.store(player) flushes Player.getDirtyItemsToUpdate().
-    public IReadOnlyList<Aion.GameServer.Model.GameObjects.InventoryItem> DirtyInventoryItems =>
-        GetDirtyItemsToUpdate().Select(MapItemToInventoryItem).ToList();
 
     // Java parity: mirrors the column mapping in dao/InventoryDAO.InsertItems/UpdateItems so the
     // reworked snapshot writers persist identical row values from the faithful Item spine.
