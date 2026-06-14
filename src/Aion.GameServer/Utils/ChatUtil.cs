@@ -152,7 +152,7 @@ public static class ChatUtil
 	}
 
 	// Java parity: org.apache.commons.lang3.StringUtils.capitalize — capitalizes the first character.
-	private static string Capitalize(string str)
+	public static string Capitalize(string str)
 	{
 		if (string.IsNullOrEmpty(str))
 			return str;
