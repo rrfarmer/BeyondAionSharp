@@ -11,6 +11,10 @@ using Aion.GameServer.Model.Templates.Spawns.Vortexspawns;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Utils.Xml;
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Utils;
+using Aion.GameServer.World;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -227,9 +231,120 @@ public class SpawnsData
                     npcIds.Add(sg.GetNpcId());
     }
 
+    // ── spawn search (Java parity: getNearestSpawnByNpcId / getFirstSpawnByNpcId) ──
+    public SpawnSearchResult? GetNearestSpawnByNpcId(Player? player, int npcId, int worldId)
+    {
+        List<SpawnGroup> spawns = GetSpawnsForNpc(worldId, npcId);
+        if (spawns.Count == 0)
+        {
+            // search all maps of player's race
+            foreach (var template in DataManager.WORLD_MAPS_DATA)
+            {
+                if (template.GetMapId() == worldId)
+                    continue;
+                if ((template.GetWorldType() == WorldType.ELYSEA && player?.GetRace() == Race.ELYOS)
+                    || (template.GetWorldType() == WorldType.ASMODAE && player?.GetRace() == Race.ASMODIANS))
+                {
+                    spawns = GetSpawnsForNpc(template.GetMapId(), npcId);
+                    if (spawns.Count != 0)
+                    {
+                        worldId = template.GetMapId();
+                        break;
+                    }
+                }
+            }
+
+            // search all other maps
+            if (spawns.Count == 0)
+            {
+                foreach (var template in DataManager.WORLD_MAPS_DATA)
+                {
+                    if ((template.GetMapId() == worldId)
+                        || (template.GetWorldType() == WorldType.ELYSEA && player?.GetRace() == Race.ELYOS)
+                        || (template.GetWorldType() == WorldType.ASMODAE && player?.GetRace() == Race.ASMODIANS))
+                        continue;
+                    spawns = GetSpawnsForNpc(template.GetMapId(), npcId);
+                    if (spawns.Count != 0)
+                    {
+                        worldId = template.GetMapId();
+                        break;
+                    }
+                }
+            }
+        }
+
+        return GetNearestSpawn(player?.GetPosition(), spawns, worldId);
+    }
+
+    private SpawnSearchResult? GetNearestSpawn(WorldPosition? position, List<SpawnGroup> spawnGroups, int worldId)
+    {
+        if (position == null || spawnGroups.Count == 0)
+            return null;
+
+        if (worldId != position.GetMapId())
+        {
+            var spawnGroup = spawnGroups[0];
+            return spawnGroup.GetSpawnTemplates().Count == 0 ? null : ToSpawnSearchResult(worldId, spawnGroup.GetSpawnTemplates()[0]);
+        }
+
+        SpawnTemplate? temp = null;
+        float distance = 0;
+        foreach (var spawnGroup in spawnGroups)
+        {
+            foreach (var spot in spawnGroup.GetSpawnTemplates())
+            {
+                if (temp == null)
+                {
+                    temp = spot;
+                    distance = (float)PositionUtil.GetDistance(position.GetX(), position.GetY(), position.GetZ(), spot.GetX(), spot.GetY(), spot.GetZ());
+                    if (distance <= 1f)
+                        return ToSpawnSearchResult(worldId, temp);
+                }
+                else
+                {
+                    float dist = (float)PositionUtil.GetDistance(position.GetX(), position.GetY(), position.GetZ(), spot.GetX(), spot.GetY(), spot.GetZ());
+                    if (dist < distance)
+                    {
+                        distance = dist;
+                        temp = spot;
+                        if (distance <= 1f)
+                            return ToSpawnSearchResult(worldId, temp);
+                    }
+                }
+            }
+        }
+
+        return temp == null ? null : ToSpawnSearchResult(worldId, temp);
+    }
+
+    private static SpawnSearchResult ToSpawnSearchResult(int worldId, SpawnTemplate spot)
+        => new(worldId, new SpawnSpotTemplate(spot.GetX(), spot.GetY(), spot.GetZ(), spot.GetHeading(),
+            spot.GetRandomWalkRange(), spot.GetWalkerId(), spot.GetWalkerIndex()));
+
+    public SpawnSearchResult? GetFirstSpawnByNpcId(int worldId, int npcId)
+    {
+        List<SpawnGroup> spawnGroups = GetSpawnsForNpc(worldId, npcId);
+        if (spawnGroups.Count == 0)
+        {
+            foreach (var template in DataManager.WORLD_MAPS_DATA)
+            {
+                if (template.GetMapId() == worldId)
+                    continue;
+                spawnGroups = GetSpawnsForNpc(template.GetMapId(), npcId);
+                if (spawnGroups.Count != 0)
+                {
+                    worldId = template.GetMapId();
+                    break;
+                }
+            }
+            if (spawnGroups.Count == 0)
+                return null;
+        }
+        List<SpawnTemplate> spawnSpots = spawnGroups[0].GetSpawnTemplates();
+        return spawnSpots.Count == 0 ? null : ToSpawnSearchResult(worldId, spawnSpots[0]);
+    }
+
     // TODO-backlog: saveSpawn(VisibleObject, bool) — needs VisibleObject, WorldMapInstance, JAXBUtil.
-    // TODO-backlog: getNearestSpawnByNpcId(Player, int, int) — needs Player, WorldPosition, DataManager.WORLD_MAPS_DATA, WorldType.
-    // TODO-backlog: getFirstSpawnByNpcId(int, int) — needs DataManager.WORLD_MAPS_DATA, WorldMapTemplate.
     // TODO-backlog: getRelativePath(VisibleObject) — needs VisibleObject, Gatherable, WorldMapInstance.
-    // TODO-backlog: loadSpawnsFromTemplateFiles / findSpawnTemplate / positionMatches / getNearestSpawn / toSpawnSearchResult — helpers for above.
+    // TODO-backlog: loadSpawnsFromTemplateFiles / findSpawnTemplate / positionMatches — helpers for above.
 }
