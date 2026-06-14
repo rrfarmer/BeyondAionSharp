@@ -345,7 +345,9 @@ public sealed class WorldNpcRandomWalkService
 			return null;
 
 		var speed = npc.Template.RunSpeed;
-		if (speed <= 0)
+		// Reject non-positive AND non-finite speed: NaN/inf slip past `<= 0` (NaN <= 0 is false) and would
+		// produce TimeSpan.FromMilliseconds(NaN). No schedulable arrival without a valid movement speed.
+		if (!(speed > 0))
 			return null;
 
 		var distance = CalculateDistance(npc.Position, target);
@@ -353,6 +355,9 @@ public sealed class WorldNpcRandomWalkService
 			return MoveTaskUpdatePeriod;
 
 		var travelSeconds = Math.Max(0d, distance - MoveOffset) / speed;
+		if (double.IsNaN(travelSeconds) || double.IsInfinity(travelSeconds))
+			return null;
+
 		var delay = TimeSpan.FromMilliseconds(Math.Ceiling(travelSeconds * 1000d));
 		return delay < MoveTaskUpdatePeriod ? MoveTaskUpdatePeriod : delay;
 	}
@@ -439,7 +444,7 @@ public sealed class WorldNpcRandomWalkService
 			return false;
 
 		var speed = npc.Template.RunSpeed;
-		if (speed <= 0)
+		if (!(speed > 0))
 			return false;
 
 		var distance = CalculateDistance(npc.Position, state.Target);
