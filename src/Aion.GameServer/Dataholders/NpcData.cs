@@ -33,7 +33,9 @@ public class NpcData
 
     public void AfterUnmarshal(object parent)
     {
-        StaticDataListener.RegisterForAsyncExecutionOrRun(parent, Init);
+        // Java parity: afterUnmarshal registers Init via StaticDataListener (Unmarshaller-keyed); no C# analog,
+        // so run synchronously (matches ResultedItem/ItemRaceEntry afterUnmarshal convention in this port).
+        Init();
     }
 
     private void Init()
