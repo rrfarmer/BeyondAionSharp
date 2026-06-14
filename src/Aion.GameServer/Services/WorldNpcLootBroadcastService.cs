@@ -1,20 +1,21 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Utils;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
 public sealed class WorldNpcLootBroadcastService
 {
 	private readonly WorldNpcLootService _lootService;
-	private readonly IGameClientConnectionRegistry _connectionRegistry;
+	private readonly GameWorld _world;
 
 	public WorldNpcLootBroadcastService(
 		WorldNpcLootService lootService,
-		IGameClientConnectionRegistry connectionRegistry)
+		GameWorld world)
 	{
 		_lootService = lootService;
-		_connectionRegistry = connectionRegistry;
+		_world = world;
 	}
 
 	public ScheduledTask? ScheduleFreeForAllBroadcast(IWorldNpcObject npc, TimeSpan? delay = null)
@@ -61,8 +62,13 @@ public sealed class WorldNpcLootBroadcastService
 		foreach (var looterObjectId in initialLoot.LooterObjectIds)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			if (await _connectionRegistry.SendPacketToPlayerAsync(looterObjectId, initialLoot.LootStatus))
+			// Java parity: services/drop/DropRegistrationService.registerDrop -> PacketSendUtility.sendPacket(looter, SM_LOOT_STATUS.LOOT_ENABLE).
+			var looter = _world.GetPlayer(looterObjectId);
+			if (looter != null && looter.IsOnline())
+			{
+				PacketSendUtility.SendPacket(looter, initialLoot.LootStatus);
 				sentCount++;
+			}
 		}
 
 		return new WorldNpcInitialLootBroadcastResult(
@@ -72,7 +78,7 @@ public sealed class WorldNpcLootBroadcastService
 			initialLoot.Status);
 	}
 
-	public async ValueTask<WorldNpcLootBroadcastResult> BroadcastFreeForAllAsync(
+	public ValueTask<WorldNpcLootBroadcastResult> BroadcastFreeForAllAsync(
 		WorldNpcFreeForAllResult result,
 		CancellationToken cancellationToken = default)
 	{
@@ -82,20 +88,41 @@ public sealed class WorldNpcLootBroadcastService
 			|| result.Npc == null
 			|| result.LootStatus == null)
 		{
-			return new WorldNpcLootBroadcastResult(Broadcasted: false, SentCount: 0);
+			return ValueTask.FromResult(new WorldNpcLootBroadcastResult(Broadcasted: false, SentCount: 0));
 		}
 
-		var sentCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			result.Npc.Position,
-			result.Npc.ObjectId,
-			result.LootStatus,
-			filter: result.CanBroadcastTo);
-		return new WorldNpcLootBroadcastResult(Broadcasted: true, sentCount);
+		var sentCount = BroadcastToKnownPlayers(result.Npc.ObjectId, result.LootStatus, includeSource: false, result.CanBroadcastTo);
+		return ValueTask.FromResult(new WorldNpcLootBroadcastResult(Broadcasted: true, sentCount));
 	}
 
 	private async ValueTask BroadcastScheduledFreeForAllAsync(WorldNpcFreeForAllResult result)
 	{
 		await BroadcastFreeForAllAsync(result);
+	}
+
+	// Java parity: PacketSendUtility.broadcastPacket(obj, packet, toSelf, filter) over the source object's KnownList.
+	private int BroadcastToKnownPlayers(int sourceObjectId, AionServerPacket packet, bool includeSource, Predicate<Player>? filter)
+	{
+		var obj = _world.FindVisibleObject(sourceObjectId);
+		if (obj == null)
+			return 0;
+
+		var sent = 0;
+		if (includeSource && obj is Player self && self.IsOnline())
+		{
+			PacketSendUtility.SendPacket(self, packet);
+			sent++;
+		}
+
+		obj.GetKnownList().ForEachPlayer(p =>
+		{
+			if ((filter == null || filter(p)) && p.IsOnline())
+			{
+				PacketSendUtility.SendPacket(p, packet);
+				sent++;
+			}
+		});
+		return sent;
 	}
 }
 

@@ -1,7 +1,9 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 using Aion.GameServer.World;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
@@ -10,16 +12,16 @@ public sealed class WorldNpcResourceStatsService
 	private const int DefaultMaxDp = 4000;
 
 	private readonly WorldNpcLifeStatsService _npcLifeStats;
-	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly GameWorld? _world;
 	private readonly PlayerVisualStatsUpdateService? _playerVisualStats;
 
 	public WorldNpcResourceStatsService(
 		WorldNpcLifeStatsService npcLifeStats,
-		IGameClientConnectionRegistry? connectionRegistry = null,
+		GameWorld? world = null,
 		PlayerVisualStatsUpdateService? playerVisualStats = null)
 	{
 		_npcLifeStats = npcLifeStats;
-		_connectionRegistry = connectionRegistry;
+		_world = world;
 		_playerVisualStats = playerVisualStats;
 	}
 
@@ -780,7 +782,7 @@ public sealed class WorldNpcResourceStatsService
 			FlyTimeSent: flyTimeSent);
 	}
 
-	private async ValueTask<(SmAttackStatus? Packet, int BroadcastCount)> BroadcastAttackStatusAsync(
+	private ValueTask<(SmAttackStatus? Packet, int BroadcastCount)> BroadcastAttackStatusAsync(
 		WorldPosition position,
 		int objectId,
 		SmAttackStatusType? packetType,
@@ -793,7 +795,7 @@ public sealed class WorldNpcResourceStatsService
 		bool? usesNegativeValue = null)
 	{
 		if (!shouldSend || packetType == null)
-			return (null, 0);
+			return ValueTask.FromResult<(SmAttackStatus?, int)>((null, 0));
 
 		var packet = new SmAttackStatus(
 			objectId,
@@ -803,19 +805,14 @@ public sealed class WorldNpcResourceStatsService
 			hpOrMpPercentage,
 			packetLog ?? SmAttackStatusLog.Regular,
 			usesNegativeValue);
-		if (_connectionRegistry == null)
-			return (packet, 0);
 
 		cancellationToken.ThrowIfCancellationRequested();
-		var count = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			position,
-			objectId,
-			packet,
-			includeSourcePlayer: true);
-		return (packet, count);
+		// Java parity: PacketSendUtility.broadcastPacket(creature, new SM_ATTACK_STATUS(...), true) over the creature's KnownList.
+		var count = BroadcastToKnownPlayers(objectId, packet, includeSource: true);
+		return ValueTask.FromResult<(SmAttackStatus?, int)>((packet, count));
 	}
 
-	private async ValueTask<(SmStatUpdateHp? Packet, bool Sent)> SendHpStatUpdateAsync(
+	private ValueTask<(SmStatUpdateHp? Packet, bool Sent)> SendHpStatUpdateAsync(
 		Player player,
 		int currentHp,
 		int maxHp,
@@ -823,17 +820,14 @@ public sealed class WorldNpcResourceStatsService
 	{
 		// Java parity: model/stats/container/PlayerLifeStats.sendHpPacketUpdate.
 		if (!shouldSend)
-			return (null, false);
+			return ValueTask.FromResult<(SmStatUpdateHp?, bool)>((null, false));
 
 		var packet = new SmStatUpdateHp(currentHp, maxHp);
-		if (_connectionRegistry == null)
-			return (packet, false);
-
-		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
-		return (packet, sent);
+		var sent = SendToPlayer(player, packet);
+		return ValueTask.FromResult<(SmStatUpdateHp?, bool)>((packet, sent));
 	}
 
-	private async ValueTask<(SmStatUpdateMp? Packet, bool Sent)> SendMpStatUpdateAsync(
+	private ValueTask<(SmStatUpdateMp? Packet, bool Sent)> SendMpStatUpdateAsync(
 		Player player,
 		int currentMp,
 		int maxMp,
@@ -841,17 +835,14 @@ public sealed class WorldNpcResourceStatsService
 	{
 		// Java parity: model/stats/container/PlayerLifeStats.sendMpPacketUpdate.
 		if (!shouldSend)
-			return (null, false);
+			return ValueTask.FromResult<(SmStatUpdateMp?, bool)>((null, false));
 
 		var packet = new SmStatUpdateMp(currentMp, maxMp);
-		if (_connectionRegistry == null)
-			return (packet, false);
-
-		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
-		return (packet, sent);
+		var sent = SendToPlayer(player, packet);
+		return ValueTask.FromResult<(SmStatUpdateMp?, bool)>((packet, sent));
 	}
 
-	private async ValueTask<(SmFlyTime? Packet, bool Sent)> SendFlyTimeUpdateAsync(
+	private ValueTask<(SmFlyTime? Packet, bool Sent)> SendFlyTimeUpdateAsync(
 		Player player,
 		int currentFp,
 		int maxFp,
@@ -859,52 +850,39 @@ public sealed class WorldNpcResourceStatsService
 	{
 		// Java parity: model/stats/container/PlayerLifeStats.sendFpPacketUpdate.
 		if (!shouldSend)
-			return (null, false);
+			return ValueTask.FromResult<(SmFlyTime?, bool)>((null, false));
 
 		var packet = new SmFlyTime(currentFp, maxFp);
-		if (_connectionRegistry == null)
-			return (packet, false);
-
-		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
-		return (packet, sent);
+		var sent = SendToPlayer(player, packet);
+		return ValueTask.FromResult<(SmFlyTime?, bool)>((packet, sent));
 	}
 
-	private async ValueTask<(SmDpInfo? Packet, int BroadcastCount)> BroadcastDpInfoAsync(
+	private ValueTask<(SmDpInfo? Packet, int BroadcastCount)> BroadcastDpInfoAsync(
 		Player player,
 		int currentDp,
 		bool shouldBroadcast)
 	{
 		// Java parity: model/gameobjects/player/PlayerCommonData.setDp -> PacketSendUtility.broadcastPacket(..., true).
 		if (!shouldBroadcast)
-			return (null, 0);
+			return ValueTask.FromResult<(SmDpInfo?, int)>((null, 0));
 
 		var packet = new SmDpInfo(player.ObjectId, currentDp);
-		if (_connectionRegistry == null)
-			return (packet, 0);
-
-		var count = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			player.GetPosition(),
-			player.ObjectId,
-			packet,
-			includeSourcePlayer: true);
-		return (packet, count);
+		var count = BroadcastToKnownPlayers(player.ObjectId, packet, includeSource: true);
+		return ValueTask.FromResult<(SmDpInfo?, int)>((packet, count));
 	}
 
-	private async ValueTask<(SmStatUpdateDp? Packet, bool Sent)> SendDpStatUpdateAsync(
+	private ValueTask<(SmStatUpdateDp? Packet, bool Sent)> SendDpStatUpdateAsync(
 		Player player,
 		int currentDp,
 		bool shouldSend)
 	{
 		// Java parity: model/gameobjects/player/PlayerCommonData.setDp -> PacketSendUtility.sendPacket.
 		if (!shouldSend)
-			return (null, false);
+			return ValueTask.FromResult<(SmStatUpdateDp?, bool)>((null, false));
 
 		var packet = new SmStatUpdateDp(currentDp);
-		if (_connectionRegistry == null)
-			return (packet, false);
-
-		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
-		return (packet, sent);
+		var sent = SendToPlayer(player, packet);
+		return ValueTask.FromResult<(SmStatUpdateDp?, bool)>((packet, sent));
 	}
 
 	private async ValueTask<PlayerVisualStatsUpdateResult?> UpdatePlayerStatsAndSpeedVisuallyAsync(Player player, bool shouldSend)
@@ -925,20 +903,52 @@ public sealed class WorldNpcResourceStatsService
 		return DefaultMaxDp;
 	}
 
-	private async ValueTask<(SmSystemMessage? Packet, bool Sent)> SendSkillNotEnoughDpMessageAsync(
+	private ValueTask<(SmSystemMessage? Packet, bool Sent)> SendSkillNotEnoughDpMessageAsync(
 		Player player,
 		bool shouldSend)
 	{
 		// Java parity: skillengine/action/DpUseAction.act sends SM_SYSTEM_MESSAGE.STR_SKILL_NOT_ENOUGH_DP.
 		if (!shouldSend)
-			return (null, false);
+			return ValueTask.FromResult<(SmSystemMessage?, bool)>((null, false));
 
 		var packet = SmSystemMessage.SkillNotEnoughDp();
-		if (_connectionRegistry == null)
-			return (packet, false);
+		var sent = SendToPlayer(player, packet);
+		return ValueTask.FromResult<(SmSystemMessage?, bool)>((packet, sent));
+	}
 
-		var sent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet);
-		return (packet, sent);
+	// Java parity: PacketSendUtility.sendPacket(player, packet) no-ops if the player is offline.
+	private bool SendToPlayer(Player player, AionServerPacket packet)
+	{
+		if (_world == null || !player.IsOnline())
+			return false;
+
+		PacketSendUtility.SendPacket(player, packet);
+		return true;
+	}
+
+	// Java parity: PacketSendUtility.broadcastPacket(obj, packet, toSelf, filter) over the source object's KnownList.
+	private int BroadcastToKnownPlayers(int sourceObjectId, AionServerPacket packet, bool includeSource)
+	{
+		var obj = _world?.FindVisibleObject(sourceObjectId);
+		if (obj == null)
+			return 0;
+
+		var sent = 0;
+		if (includeSource && obj is Player self && self.IsOnline())
+		{
+			PacketSendUtility.SendPacket(self, packet);
+			sent++;
+		}
+
+		obj.GetKnownList().ForEachPlayer(p =>
+		{
+			if (p.IsOnline())
+			{
+				PacketSendUtility.SendPacket(p, packet);
+				sent++;
+			}
+		});
+		return sent;
 	}
 
 	private static bool ShouldSendCreatureLifeStatsPacket(int appliedValue, int skillId, SmAttackStatusType? packetType)

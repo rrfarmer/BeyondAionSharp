@@ -19,7 +19,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private readonly IDFactory _idFactory;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ThreadPoolManager? _threadPoolManager;
-	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly IStaticPlaceableStateService? _staticPlaceables;
 	private readonly WorldNpcRandomWalkService? _randomWalking;
 	private readonly IWorldNpcDropRegistrationLookup? _dropRegistrationLookup;
@@ -42,7 +41,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
 		ThreadPoolManager? threadPoolManager,
-		IGameClientConnectionRegistry? connectionRegistry,
 		IStaticPlaceableStateService? staticPlaceables,
 		ILogger<WorldNpcSpawnService> logger,
 		WorldNpcRandomWalkService? randomWalking = null,
@@ -58,7 +56,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 		_idFactory = idFactory;
 		_gameTimeService = gameTimeService;
 		_threadPoolManager = threadPoolManager;
-		_connectionRegistry = connectionRegistry;
 		_staticPlaceables = staticPlaceables;
 		_randomWalking = randomWalking;
 		_dropRegistrationLookup = dropRegistrationLookup;
@@ -75,34 +72,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		GameTimeService? gameTimeService,
-		ThreadPoolManager? threadPoolManager,
-		IStaticPlaceableStateService? staticPlaceables,
-		ILogger<WorldNpcSpawnService> logger,
-		WorldNpcAiStateService? npcAiStates = null,
-		Action<WorldNpc>? npcLifeStatsInitialize = null,
-		Action<int>? npcLifeStatsClear = null)
-		: this(
-			runtimeContext,
-			world,
-			idFactory,
-			gameTimeService,
-			threadPoolManager,
-			null,
-			staticPlaceables,
-			logger,
-			npcAiStates: npcAiStates,
-			npcLifeStatsInitialize: npcLifeStatsInitialize,
-			npcLifeStatsClear: npcLifeStatsClear)
-	{
-	}
-
-	public WorldNpcSpawnService(
-		GameServerRuntimeContext runtimeContext,
-		GameWorld world,
-		IDFactory idFactory,
-		GameTimeService? gameTimeService,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, gameTimeService, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, gameTimeService, null, null, logger)
 	{
 	}
 
@@ -111,7 +82,7 @@ public sealed class WorldNpcSpawnService : GameEngine
 		GameWorld world,
 		IDFactory idFactory,
 		ILogger<WorldNpcSpawnService> logger)
-		: this(runtimeContext, world, idFactory, null, null, null, null, logger)
+		: this(runtimeContext, world, idFactory, null, null, null, logger)
 	{
 	}
 
@@ -345,7 +316,8 @@ public sealed class WorldNpcSpawnService : GameEngine
 			cancellationToken: cancellationToken);
 
 		await StartNpcWalkingForWorldsAsync(changedMapIds, cancellationToken);
-		await RefreshNpcVisibilityAsync(changedMapIds, cancellationToken);
+		// Java parity: SpawnEngine.spawnObject -> World.spawn drives NPC visibility on spawn via the KnownList/SM_NPC_INFO path;
+		// KiskService/temporary-spawn flows perform no separate post-spawn visibility refresh.
 		return new TemporarySpawnHourChangeResult(result.SpawnedCount, despawned, result.SkippedCount);
 	}
 
@@ -915,18 +887,6 @@ public sealed class WorldNpcSpawnService : GameEngine
 	private bool HasTemporarySpawnObject(NpcSpawnSummary spawn, int instanceId)
 	{
 		return _temporarySpawnObjectIds.ContainsKey(new TemporarySpawnKey(spawn, instanceId));
-	}
-
-	private async ValueTask RefreshNpcVisibilityAsync(IReadOnlySet<int> changedMapIds, CancellationToken cancellationToken)
-	{
-		if (_connectionRegistry == null)
-			return;
-
-		foreach (var mapId in changedMapIds)
-		{
-			cancellationToken.ThrowIfCancellationRequested();
-			await _connectionRegistry.RefreshNpcVisibilityAsync(_world.GetNpcs(mapId));
-		}
 	}
 
 	private async Task StartNpcWalkingForWorldsAsync(

@@ -15,7 +15,6 @@ public sealed class WorldNpcRandomWalkService
 	private static readonly TimeSpan MoveTaskUpdatePeriod = TimeSpan.FromMilliseconds(200);
 	private const double MoveOffset = 0.05d;
 	private readonly GameWorld _world;
-	private readonly IGameClientConnectionRegistry _connectionRegistry;
 	private readonly GameServerOptions _options;
 	private readonly ThreadPoolManager? _threadPoolManager;
 	private readonly WorldNpcAiStateService? _npcAiStates;
@@ -30,7 +29,6 @@ public sealed class WorldNpcRandomWalkService
 
 	public WorldNpcRandomWalkService(
 		GameWorld world,
-		IGameClientConnectionRegistry connectionRegistry,
 		GameServerOptions options,
 		ThreadPoolManager? threadPoolManager = null,
 		WorldNpcAiStateService? npcAiStates = null,
@@ -40,7 +38,6 @@ public sealed class WorldNpcRandomWalkService
 		CreaturePvpZoneCounterService? creaturePvpZoneCounterService = null)
 	{
 		_world = world;
-		_connectionRegistry = connectionRegistry;
 		_options = options;
 		_threadPoolManager = threadPoolManager;
 		_npcAiStates = npcAiStates;
@@ -186,7 +183,7 @@ public sealed class WorldNpcRandomWalkService
 			TaskScheduler.Default);
 	}
 
-	private async Task ChooseNextRandomPointAsync(
+	private Task ChooseNextRandomPointAsync(
 		int objectId,
 		CancellationToken cancellationToken,
 		CancellationToken scheduleCancellationToken)
@@ -194,17 +191,17 @@ public sealed class WorldNpcRandomWalkService
 		// Java parity: ai/manager/WalkManager.chooseNextRandomPoint chooses x/y inside spawn random_walk range and moveToPoint(..., owner.getZ()).
 		cancellationToken.ThrowIfCancellationRequested();
 		if (!_activeStates.TryGetValue(objectId, out var state))
-			return;
+			return Task.CompletedTask;
 		if (!IsStillWalking(objectId))
 		{
 			_activeStates.TryRemove(objectId, out _);
-			return;
+			return Task.CompletedTask;
 		}
 		if (!_world.TryGetObject(objectId, out var gameObject) || gameObject is not WorldNpc npc)
 		{
 			_activeStates.TryRemove(objectId, out _);
 			_npcAiStates?.Clear(objectId);
-			return;
+			return Task.CompletedTask;
 		}
 
 		var diameter = state.RandomWalkRange * 2;
@@ -225,10 +222,31 @@ public sealed class WorldNpcRandomWalkService
 			target.X,
 			target.Y,
 			target.Z);
-		var sentCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(npc.Position, npc.ObjectId, packet);
+		// Java parity: NpcMoveController.moveToLocation -> PacketSendUtility.broadcastPacket(npc, new SM_MOVE(...)) over the npc's KnownList.
+		var sentCount = BroadcastToKnownPlayers(npc.ObjectId, packet);
 		var broadcastState = nextState with { BroadcastCount = sentCount };
 		_activeStates[objectId] = broadcastState;
 		ScheduleTargetArrival(objectId, broadcastState, scheduleCancellationToken);
+		return Task.CompletedTask;
+	}
+
+	// Java parity: PacketSendUtility.broadcastPacket(obj, packet) over the source object's KnownList.
+	private int BroadcastToKnownPlayers(int sourceObjectId, AionServerPacket packet)
+	{
+		var obj = _world.FindVisibleObject(sourceObjectId);
+		if (obj == null)
+			return 0;
+
+		var sent = 0;
+		obj.GetKnownList().ForEachPlayer(p =>
+		{
+			if (p.IsOnline())
+			{
+				PacketSendUtility.SendPacket(p, packet);
+				sent++;
+			}
+		});
+		return sent;
 	}
 
 	private void ScheduleTargetArrival(

@@ -1,6 +1,8 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
@@ -8,16 +10,16 @@ public sealed class RiftInformerService
 {
 	private const int AnnounceSlotCount = 12;
 	private readonly RiftService _riftService;
-	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly GameWorld? _world;
 	private readonly Func<DateTimeOffset> _clock;
 
 	public RiftInformerService(
 		RiftService riftService,
-		IGameClientConnectionRegistry? connectionRegistry = null,
+		GameWorld? world = null,
 		Func<DateTimeOffset>? clock = null)
 	{
 		_riftService = riftService;
-		_connectionRegistry = connectionRegistry;
+		_world = world;
 		_clock = clock ?? (() => DateTimeOffset.UtcNow);
 	}
 
@@ -138,37 +140,44 @@ public sealed class RiftInformerService
 		return packets;
 	}
 
-	private async Task<int> SyncRiftsStateAsync(int worldId, IReadOnlyList<SmRiftAnnounce> packets)
+	private Task<int> SyncRiftsStateAsync(int worldId, IReadOnlyList<SmRiftAnnounce> packets)
 	{
 		// Java parity: RiftInformer.syncRiftsState(int, packets) iterates players in the world's main map instance.
-		if (_connectionRegistry == null)
-			return 0;
+		if (_world == null)
+			return Task.FromResult(0);
 
 		var sent = 0;
 		foreach (var packet in packets)
 		{
-			sent += await _connectionRegistry.BroadcastToWorldAsync(
-				packet,
-				player => player.GetPosition().WorldId == worldId);
+			// Java parity: PacketSendUtility.sendPacket to every online player on the requested world.
+			foreach (var player in _world.GetAllPlayers())
+			{
+				if (player.GetPosition().WorldId == worldId)
+				{
+					PacketSendUtility.SendPacket(player, packet);
+					sent++;
+				}
+			}
 		}
 
-		return sent;
+		return Task.FromResult(sent);
 	}
 
-	private async Task<int> SyncRiftsStateAsync(Player player, IReadOnlyList<SmRiftAnnounce> packets)
+	private Task<int> SyncRiftsStateAsync(Player player, IReadOnlyList<SmRiftAnnounce> packets)
 	{
 		// Java parity: RiftInformer.syncRiftsState(Player, packets) sends every generated rift packet directly to one player.
-		if (_connectionRegistry == null)
-			return 0;
-
 		var sent = 0;
 		foreach (var packet in packets)
 		{
-			if (await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, packet))
+			// Java parity: PacketSendUtility.sendPacket(player, packet) no-ops if the player is offline.
+			if (player.IsOnline())
+			{
+				PacketSendUtility.SendPacket(player, packet);
 				sent++;
+			}
 		}
 
-		return sent;
+		return Task.FromResult(sent);
 	}
 
 	private static int? GetAnnounceIndex(RiftDefinition definition, bool guardsRequested)

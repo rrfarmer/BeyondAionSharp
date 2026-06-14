@@ -2,6 +2,8 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
@@ -123,17 +125,17 @@ public sealed class PeriodicInstanceRegistrationService
 			CreateOpeningMessageForMaskId(scheduleEntry.MaskId));
 	}
 
-	public async Task<PeriodicInstanceRegistrationBroadcastDispatchResult> OpenRegistrationAndBroadcastAsync(
+	public Task<PeriodicInstanceRegistrationBroadcastDispatchResult> OpenRegistrationAndBroadcastAsync(
 		int maskId,
 		AutoGroupTable? autoGroups,
-		IGameClientConnectionRegistry connectionRegistry,
+		GameWorld world,
 		SmSystemMessage? openingMessage = null,
 		CancellationToken cancellationToken = default)
 	{
-		var players = GetOnlinePlayers(connectionRegistry);
+		var players = GetOnlinePlayers(world);
 		var plan = CreateOpenRegistrationBroadcastPlan(maskId, autoGroups, players, openingMessage);
-		var sentPackets = await SendBroadcastPlanAsync(plan, connectionRegistry, cancellationToken);
-		return new PeriodicInstanceRegistrationBroadcastDispatchResult(plan, sentPackets, StoppedRegistrationsByMaskId: false);
+		var sentPackets = SendBroadcastPlan(plan, world, cancellationToken);
+		return Task.FromResult(new PeriodicInstanceRegistrationBroadcastDispatchResult(plan, sentPackets, StoppedRegistrationsByMaskId: false));
 	}
 
 	public PeriodicInstanceRegistrationBroadcastPlan CreateCloseRegistrationBroadcastPlan(
@@ -161,13 +163,13 @@ public sealed class PeriodicInstanceRegistrationService
 	public async Task<PeriodicInstanceRegistrationBroadcastDispatchResult> CloseRegistrationAndBroadcastAsync(
 		int maskId,
 		AutoGroupTable? autoGroups,
-		IGameClientConnectionRegistry connectionRegistry,
+		GameWorld world,
 		Func<int, CancellationToken, ValueTask>? stopRegistrationsByMaskId = null,
 		CancellationToken cancellationToken = default)
 	{
-		var players = GetOnlinePlayers(connectionRegistry);
+		var players = GetOnlinePlayers(world);
 		var plan = CreateCloseRegistrationBroadcastPlan(maskId, autoGroups, players);
-		var sentPackets = await SendBroadcastPlanAsync(plan, connectionRegistry, cancellationToken);
+		var sentPackets = SendBroadcastPlan(plan, world, cancellationToken);
 		var stoppedRegistrations = false;
 		if (plan.WouldStopRegistrationsByMaskId && stopRegistrationsByMaskId != null)
 		{
@@ -273,10 +275,15 @@ public sealed class PeriodicInstanceRegistrationService
 			PlayerBroadcasts: broadcasts);
 	}
 
-	private static IReadOnlyList<Player> GetOnlinePlayers(IGameClientConnectionRegistry connectionRegistry)
+	private static IReadOnlyList<Player> GetOnlinePlayers(GameWorld world)
 	{
+		// Java parity: World.getInstance().forEachPlayer over the online players.
 		var players = new List<Player>();
-		connectionRegistry.ForEachOnlinePlayer(players.Add);
+		world.ForEachPlayer(player =>
+		{
+			if (player.IsOnline())
+				players.Add(player);
+		});
 		return players;
 	}
 
@@ -295,19 +302,24 @@ public sealed class PeriodicInstanceRegistrationService
 			openingMessage.MessageId);
 	}
 
-	private static async Task<int> SendBroadcastPlanAsync(
+	private static int SendBroadcastPlan(
 		PeriodicInstanceRegistrationBroadcastPlan plan,
-		IGameClientConnectionRegistry connectionRegistry,
+		GameWorld world,
 		CancellationToken cancellationToken)
 	{
 		var sentPackets = 0;
 		foreach (var broadcast in plan.PlayerBroadcasts)
 		{
+			// Java parity: PacketSendUtility.sendPacket(World.getPlayer(objectId), packet).
+			var player = world.GetPlayer(broadcast.PlayerObjectId);
+			if (player == null || !player.IsOnline())
+				continue;
+
 			foreach (var packet in broadcast.Packets)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				if (await connectionRegistry.SendPacketToPlayerAsync(broadcast.PlayerObjectId, packet))
-					sentPackets++;
+				PacketSendUtility.SendPacket(player, packet);
+				sentPackets++;
 			}
 		}
 

@@ -62,7 +62,6 @@ var builder = Host.CreateDefaultBuilder(args)
 					(despawn, cancellationToken) =>
 						PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
 							despawn,
-							serviceProvider.GetService<IGameClientConnectionRegistry>(),
 							serviceProvider.GetRequiredService<GameServerRuntimeContext>(),
 							serviceProvider.GetRequiredService<GameWorld>(),
 							cancellationToken,

@@ -1,6 +1,7 @@
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 using GameWorld = Aion.GameServer.World.World;
 using SM_ATTACK_STATUS = Aion.GameServer.Network.Aion.ServerPackets.SmAttackStatus;
 
@@ -10,7 +11,6 @@ public sealed class WorldNpcDamageService
 {
 	private readonly GameWorld _world;
 	private readonly WorldNpcLifeStatsService _lifeStats;
-	private readonly IGameClientConnectionRegistry? _connectionRegistry;
 	private readonly WorldNpcCombatStateService? _combatStates;
 	private readonly WorldNpcCombatEventService? _combatEvents;
 	private readonly WorldNpcCastingInterruptService? _castingInterrupts;
@@ -18,14 +18,12 @@ public sealed class WorldNpcDamageService
 	public WorldNpcDamageService(
 		GameWorld world,
 		WorldNpcLifeStatsService lifeStats,
-		IGameClientConnectionRegistry? connectionRegistry = null,
 		WorldNpcCombatStateService? combatStates = null,
 		WorldNpcCombatEventService? combatEvents = null,
 		WorldNpcCastingInterruptService? castingInterrupts = null)
 	{
 		_world = world;
 		_lifeStats = lifeStats;
-		_connectionRegistry = connectionRegistry;
 		_combatStates = combatStates;
 		_combatEvents = combatEvents;
 		_castingInterrupts = castingInterrupts;
@@ -147,7 +145,7 @@ public sealed class WorldNpcDamageService
 		};
 	}
 
-	private async ValueTask<(SmAttackStatus? Packet, int BroadcastCount)> CreateAndBroadcastAttackStatusAsync(
+	private ValueTask<(SmAttackStatus? Packet, int BroadcastCount)> CreateAndBroadcastAttackStatusAsync(
 		IWorldNpcObject npc,
 		WorldNpcLifeStats previous,
 		WorldNpcLifeStats current,
@@ -156,7 +154,7 @@ public sealed class WorldNpcDamageService
 		// Java parity: CreatureLifeStats.reduceHp sends SM_ATTACK_STATUS when HP changes or a skill id is present.
 		var hpDelta = previous.CurrentHp - current.CurrentHp;
 		if (hpDelta == 0 && options.SkillId == 0)
-			return (null, 0);
+			return ValueTask.FromResult<(SmAttackStatus?, int)>((null, 0));
 
 		var packet = new SmAttackStatus(
 			npc.ObjectId,
@@ -165,15 +163,35 @@ public sealed class WorldNpcDamageService
 			hpDelta,
 			current.GetHpPercentage(),
 			options.AttackStatusLog);
-		if (_connectionRegistry == null)
-			return (packet, 0);
 
-		var broadcastCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			npc.Position,
-			npc.ObjectId,
-			packet,
-			includeSourcePlayer: true);
-		return (packet, broadcastCount);
+		// Java parity: PacketSendUtility.broadcastPacket(npc, new SM_ATTACK_STATUS(...), true) over the npc's KnownList.
+		var broadcastCount = BroadcastToKnownPlayers(npc.ObjectId, packet, includeSource: true, filter: null);
+		return ValueTask.FromResult<(SmAttackStatus?, int)>((packet, broadcastCount));
+	}
+
+	// Java parity: PacketSendUtility.broadcastPacket(obj, packet, toSelf, filter) over the source object's KnownList.
+	private int BroadcastToKnownPlayers(int sourceObjectId, AionServerPacket packet, bool includeSource, Predicate<Player>? filter)
+	{
+		var obj = _world.FindVisibleObject(sourceObjectId);
+		if (obj == null)
+			return 0;
+
+		var sent = 0;
+		if (includeSource && obj is Player self && self.IsOnline())
+		{
+			PacketSendUtility.SendPacket(self, packet);
+			sent++;
+		}
+
+		obj.GetKnownList().ForEachPlayer(p =>
+		{
+			if ((filter == null || filter(p)) && p.IsOnline())
+			{
+				PacketSendUtility.SendPacket(p, packet);
+				sent++;
+			}
+		});
+		return sent;
 	}
 }
 

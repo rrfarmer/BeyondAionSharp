@@ -3,7 +3,9 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 using System.Collections.Concurrent;
+using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
@@ -11,17 +13,17 @@ public sealed class PlayerVisualStatsUpdateService
 {
 	private const int DefaultBaseAttackSpeed = 1500;
 
-	private readonly IGameClientConnectionRegistry? _connectionRegistry;
+	private readonly GameWorld? _world;
 	private readonly GameServerRuntimeContext? _runtimeContext;
 	private readonly GameTimeService? _gameTimeService;
 	private readonly ConcurrentDictionary<int, PlayerVisualSpeedCache> _speedCacheByPlayerObjectId = new();
 
 	public PlayerVisualStatsUpdateService(
-		IGameClientConnectionRegistry? connectionRegistry = null,
+		GameWorld? world = null,
 		GameServerRuntimeContext? runtimeContext = null,
 		GameTimeService? gameTimeService = null)
 	{
-		_connectionRegistry = connectionRegistry;
+		_world = world;
 		_runtimeContext = runtimeContext;
 		_gameTimeService = gameTimeService;
 	}
@@ -31,7 +33,7 @@ public sealed class PlayerVisualStatsUpdateService
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: model/stats/container/PlayerGameStats.updateStatsVisually -> updateStatInfo.
-		return UpdateAsync(player, broadcastSpeedUpdate: false, speedSnapshot: null, cancellationToken);
+		return Task.FromResult(Update(player, broadcastSpeedUpdate: false, speedSnapshot: null, cancellationToken));
 	}
 
 	public Task<PlayerVisualStatsUpdateResult> UpdateStatsAndSpeedVisuallyAsync(
@@ -40,10 +42,10 @@ public sealed class PlayerVisualStatsUpdateService
 		CancellationToken cancellationToken = default)
 	{
 		// Java parity: PlayerGameStats.updateStatsAndSpeedVisually -> onStatsChange(null), which sends stats before checking speed.
-		return UpdateAsync(player, broadcastSpeedUpdate: true, speedSnapshot, cancellationToken);
+		return Task.FromResult(Update(player, broadcastSpeedUpdate: true, speedSnapshot, cancellationToken));
 	}
 
-	private async Task<PlayerVisualStatsUpdateResult> UpdateAsync(
+	private PlayerVisualStatsUpdateResult Update(
 		Player? player,
 		bool broadcastSpeedUpdate,
 		PlayerVisualSpeedSnapshot? speedSnapshot,
@@ -53,19 +55,12 @@ public sealed class PlayerVisualStatsUpdateService
 			return PlayerVisualStatsUpdateResult.Skipped(PlayerVisualStatsUpdateStatus.MissingPlayer);
 
 		var statsPacket = CreateStatsInfoPacket(player);
-		if (_connectionRegistry == null)
-		{
-			return new PlayerVisualStatsUpdateResult(
-				PlayerVisualStatsUpdateStatus.MissingConnectionRegistry,
-				statsPacket,
-				StatsPacketSent: false,
-				SpeedPacket: null,
-				SpeedBroadcastCount: 0,
-				SpeedSnapshot: speedSnapshot);
-		}
 
 		cancellationToken.ThrowIfCancellationRequested();
-		var statsSent = await _connectionRegistry.SendPacketToPlayerAsync(player.ObjectId, statsPacket);
+		// Java parity: PacketSendUtility.sendPacket(owner, new SM_STATS_INFO(owner)) no-ops if the player is offline.
+		var statsSent = player.IsOnline();
+		if (statsSent)
+			PacketSendUtility.SendPacket(player, statsPacket);
 		if (!statsSent)
 		{
 			return new PlayerVisualStatsUpdateResult(
@@ -120,11 +115,8 @@ public sealed class PlayerVisualStatsUpdateService
 			resolvedSpeedSnapshot.BaseAttackSpeed,
 			resolvedSpeedSnapshot.CurrentAttackSpeed);
 		cancellationToken.ThrowIfCancellationRequested();
-		var broadcastCount = await _connectionRegistry.BroadcastToVisiblePlayersAsync(
-			player.GetPosition(),
-			player.ObjectId,
-			speedPacket,
-			includeSourcePlayer: true);
+		// Java parity: PacketSendUtility.broadcastPacket(owner, new SM_EMOTION(...), true) sends to the player and everyone who knows it.
+		var broadcastCount = BroadcastToKnownPlayers(player.ObjectId, speedPacket, includeSource: true, filter: null);
 		RememberSpeedSnapshot(player.ObjectId, resolvedSpeedSnapshot);
 		return new PlayerVisualStatsUpdateResult(
 			PlayerVisualStatsUpdateStatus.StatsAndSpeedSent,
@@ -133,6 +125,32 @@ public sealed class PlayerVisualStatsUpdateService
 			speedPacket,
 			broadcastCount,
 			resolvedSpeedSnapshot);
+	}
+
+	// Java parity: PacketSendUtility.broadcastPacket(obj, packet, toSelf, filter) over the source object's KnownList.
+	// Returns the number of players the packet was sent to (the reworked count plumbing kept by the result records).
+	private int BroadcastToKnownPlayers(int sourceObjectId, AionServerPacket packet, bool includeSource, Predicate<Player>? filter)
+	{
+		var obj = _world?.FindVisibleObject(sourceObjectId);
+		if (obj == null)
+			return 0;
+
+		var sent = 0;
+		if (includeSource && obj is Player self && self.IsOnline())
+		{
+			PacketSendUtility.SendPacket(self, packet);
+			sent++;
+		}
+
+		obj.GetKnownList().ForEachPlayer(p =>
+		{
+			if ((filter == null || filter(p)) && p.IsOnline())
+			{
+				PacketSendUtility.SendPacket(p, packet);
+				sent++;
+			}
+		});
+		return sent;
 	}
 
 	private SM_STATS_INFO CreateStatsInfoPacket(Player player)

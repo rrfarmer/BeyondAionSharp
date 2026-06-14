@@ -2,31 +2,35 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.Utils;
 using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Services;
 
 public static class PlayerKiskRemovalRuntimeCleanupService
 {
-	public static async ValueTask<PlayerKiskRemovalRuntimeCleanupResult> ApplyAsync(
+	public static ValueTask<PlayerKiskRemovalRuntimeCleanupResult> ApplyAsync(
 		PlayerKiskDespawnResult result,
-		IGameClientConnectionRegistry? connectionRegistry,
 		GameServerRuntimeContext? runtimeContext,
 		GameWorld? world = null,
 		CancellationToken cancellationToken = default,
 		CreaturePvpZoneCounterService? pvpZoneCounterService = null)
 	{
 		if (result.RemovedKisk == null || cancellationToken.IsCancellationRequested)
-			return PlayerKiskRemovalRuntimeCleanupResult.NotApplied;
+			return ValueTask.FromResult(PlayerKiskRemovalRuntimeCleanupResult.NotApplied);
 
 		var clearedZoneCounters = pvpZoneCounterService?.ClearCounters(result.RemovedKisk.ObjectId) == true ? 1 : 0;
-		if (connectionRegistry == null)
-			return PlayerKiskRemovalRuntimeCleanupResult.NotApplied with { ClearedZoneCounters = clearedZoneCounters };
+		if (world == null)
+			return ValueTask.FromResult(PlayerKiskRemovalRuntimeCleanupResult.NotApplied with { ClearedZoneCounters = clearedZoneCounters });
 
 		// Java parity: services/KiskService.removeKisk sends the creator a final SM_KISK_UPDATE,
 		// clears online member kisk references, restores their obelisk bind point, and refreshes revive options.
 		var onlinePlayers = new List<Player>();
-		connectionRegistry.ForEachOnlinePlayer(onlinePlayers.Add);
+		world.ForEachPlayer(player =>
+		{
+			if (player.IsOnline())
+				onlinePlayers.Add(player);
+		});
 		var plan = PlayerKiskRemovalCleanupService.CreatePlan(result, onlinePlayers);
 		var playersByObjectId = onlinePlayers.ToDictionary(player => player.ObjectId);
 		var clearBoundObjectIds = plan.ClearBoundObjectIds.ToHashSet();
@@ -45,12 +49,15 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 		}
 
 		var creatorUpdatesSent = 0;
-		if (plan.CreatorUpdateObjectId.HasValue
-			&& await connectionRegistry.SendPacketToPlayerAsync(
-				plan.CreatorUpdateObjectId.Value,
-				new SmKiskUpdate(result.RemovedKisk)))
+		if (plan.CreatorUpdateObjectId.HasValue)
 		{
-			creatorUpdatesSent++;
+			// Java parity: services/KiskService.removeKisk -> PacketSendUtility.sendPacket(creator, new SM_KISK_UPDATE(kisk)).
+			var creator = world.GetPlayer(plan.CreatorUpdateObjectId.Value);
+			if (creator != null && creator.IsOnline())
+			{
+				PacketSendUtility.SendPacket(creator, new SmKiskUpdate(result.RemovedKisk));
+				creatorUpdatesSent++;
+			}
 		}
 
 		var bindPointResetsSent = 0;
@@ -61,32 +68,31 @@ public static class PlayerKiskRemovalRuntimeCleanupService
 			if (cancellationToken.IsCancellationRequested)
 				break;
 
-			if (playersByObjectId.TryGetValue(playerObjectId, out var player)
-				&& await connectionRegistry.SendPacketToPlayerAsync(playerObjectId, CreateBindPointPacket(player, staticData)))
+			if (playersByObjectId.TryGetValue(playerObjectId, out var player) && player.IsOnline())
 			{
+				// Java parity: services/teleport/TeleportService.sendKiskBindPoint -> obelisk bind point packet.
+				PacketSendUtility.SendPacket(player, CreateBindPointPacket(player, staticData));
 				bindPointResetsSent++;
-			}
 
-			if (resurrectionOptionRefreshObjectIds.Contains(playerObjectId)
-				&& await connectionRegistry.SendPacketToPlayerAsync(playerObjectId, new SmDie()))
-			{
-				deathOptionRefreshesSent++;
+				if (resurrectionOptionRefreshObjectIds.Contains(playerObjectId))
+				{
+					// Java parity: PlayerController.showResurrectionOptions sends SM_DIE to dead members.
+					PacketSendUtility.SendPacket(player, new SmDie());
+					deathOptionRefreshesSent++;
+				}
 			}
 		}
 
-		var npcVisibilityRefreshes = 0;
-		if (world != null && result.WorldId.HasValue)
-			npcVisibilityRefreshes = await connectionRegistry.RefreshNpcVisibilityAsync(world.GetNpcs(result.WorldId.Value));
-
-		return new PlayerKiskRemovalRuntimeCleanupResult(
+		return ValueTask.FromResult(new PlayerKiskRemovalRuntimeCleanupResult(
 			Applied: true,
 			CreatorUpdatesSent: creatorUpdatesSent,
 			BindPointResetsSent: bindPointResetsSent,
 			DeathOptionRefreshesSent: deathOptionRefreshesSent,
 			ClearedBoundMembers: clearBoundObjectIds.Count,
 			ClearedPendingRequests: clearPendingRequestObjectIds.Count,
-			NpcVisibilityRefreshes: npcVisibilityRefreshes,
-			ClearedZoneCounters: clearedZoneCounters);
+			// Java parity: KiskService.removeKisk does no NPC-visibility refresh; the reworked composite had no Java basis.
+			NpcVisibilityRefreshes: 0,
+			ClearedZoneCounters: clearedZoneCounters));
 	}
 
 	private static SmBindPointInfo CreateBindPointPacket(Player player, StaticData? staticData)
