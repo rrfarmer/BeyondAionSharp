@@ -52,13 +52,13 @@ public sealed class WorldNpcQuestDropService
 			if (_chanceRoll() >= drop.Chance)
 				continue;
 
-			if (groupMembers != null && looter.TeamMembership == PlayerTeamMembership.Group)
+			if (groupMembers != null && looter.IsInGroup())
 			{
 				index = AddTeamQuestDrop(drops, allowedLooters, index, npc.ObjectId, drop, groupMembers, drop.IsDropEachMemberGroup);
 				continue;
 			}
 
-			if (groupMembers != null && looter.TeamMembership == PlayerTeamMembership.Alliance)
+			if (groupMembers != null && looter.IsInAlliance())
 			{
 				index = AddTeamQuestDrop(drops, allowedLooters, index, npc.ObjectId, drop, groupMembers, drop.IsDropEachMemberAlliance);
 				continue;
@@ -129,19 +129,19 @@ public sealed class WorldNpcQuestDropService
 
 	private static bool IsQuestDrop(Player player, QuestDropSummary drop)
 	{
-		var quest = player.Quests.FirstOrDefault(state => state.QuestId == drop.QuestId);
-		if (quest == null || !string.Equals(quest.Status, "START", StringComparison.Ordinal))
+		var quest = player.GetQuestStateList().GetQuestState(drop.QuestId);
+		if (quest == null || quest.GetStatus() != Aion.GameServer.QuestEngine.Model.QuestStatus.START)
 			return false;
 		if (drop.CollectingStep != 0 && drop.CollectingStep != quest.GetQuestVarById(0))
 			return false;
 		if (string.Equals(drop.Target, "ALLIANCE", StringComparison.OrdinalIgnoreCase)
-			&& player.TeamMembership != PlayerTeamMembership.Alliance)
+			&& !player.IsInAlliance())
 		{
 			return false;
 		}
 
 		if (string.Equals(drop.MentorType, "MENTE", StringComparison.OrdinalIgnoreCase)
-			&& player.TeamMembership != PlayerTeamMembership.Group)
+			&& !player.IsInGroup())
 		{
 			return false;
 		}

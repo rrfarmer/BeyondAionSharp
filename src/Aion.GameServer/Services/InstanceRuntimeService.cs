@@ -144,7 +144,14 @@ public static class InstanceRuntimeService
 			autoDestroy,
 			emptyInstanceScheduler);
 		instance.Register(player.ObjectId);
-		var startPosition = portalLocation with { InstanceId = instance.InstanceId };
+		// Java parity: faithful WorldPosition derives instanceId from its MapRegion (not settable); the instance itself carries instance.InstanceId. Copy coords from the portal location.
+		var startPosition = new WorldPosition(
+			portalLocation.WorldId,
+			portalLocation.X,
+			portalLocation.Y,
+			portalLocation.Z,
+			portalLocation.Heading,
+			portalLocation.GetMapRegion());
 		instance.SetStartPositionIfMissing(startPosition);
 		return new InstancePortalRuntimePlan(instance, startPosition);
 	}

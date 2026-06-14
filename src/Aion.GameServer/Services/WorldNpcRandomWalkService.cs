@@ -375,12 +375,13 @@ public sealed class WorldNpcRandomWalkService
 
 		var updatedNpc = npc with
 		{
-			Position = npc.Position with
-			{
-				X = target.X,
-				Y = target.Y,
-				Z = target.Z,
-			},
+			Position = new WorldPosition(
+				npc.Position.WorldId,
+				target.X,
+				target.Y,
+				target.Z,
+				npc.Position.Heading,
+				npc.Position.GetMapRegion()),
 		};
 		return _world.TryUpdateObject(objectId, updatedNpc);
 	}
@@ -426,12 +427,13 @@ public sealed class WorldNpcRandomWalkService
 		var fraction = travelDistance / distance;
 		var updatedNpc = npc with
 		{
-			Position = npc.Position with
-			{
-				X = (float)((state.Target.X - npc.Position.X) * fraction + npc.Position.X),
-				Y = (float)((state.Target.Y - npc.Position.Y) * fraction + npc.Position.Y),
-				Z = (float)((state.Target.Z - npc.Position.Z) * fraction + npc.Position.Z),
-			},
+			Position = new WorldPosition(
+				npc.Position.WorldId,
+				(float)((state.Target.X - npc.Position.X) * fraction + npc.Position.X),
+				(float)((state.Target.Y - npc.Position.Y) * fraction + npc.Position.Y),
+				(float)((state.Target.Z - npc.Position.Z) * fraction + npc.Position.Z),
+				npc.Position.Heading,
+				npc.Position.GetMapRegion()),
 		};
 		return _world.TryUpdateObject(objectId, updatedNpc);
 	}

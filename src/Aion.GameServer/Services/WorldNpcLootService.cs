@@ -33,7 +33,7 @@ public sealed class WorldNpcLootService
 		var visiblePackets = new List<AionServerPacket>();
 		if (player.IsLooting())
 		{
-			var closeResult = CloseDropList(player, player.LootingNpcObjectId);
+			var closeResult = CloseDropList(player, player.GetLootingNpcOid());
 			packets.AddRange(closeResult.PlayerPackets);
 			visiblePackets.AddRange(closeResult.VisiblePlayerPackets);
 		}
@@ -57,7 +57,7 @@ public sealed class WorldNpcLootService
 		var dropItems = _dropRegistrationService.GetCurrentDrops(npcObjectId);
 		packets.Add(new SmLootItemList(npcObjectId, dropItems, player));
 		packets.Add(new SmLootStatus(npcObjectId, SmLootStatusType.OpenDropList));
-		player.StartLooting(npcObjectId);
+		player.SetLootingNpcOid(npcObjectId);
 		visiblePackets.Add(new SmEmotion(player, EmotionType.START_LOOT, 0, npcObjectId));
 
 		return new WorldNpcLootResult(WorldNpcLootStatus.Opened, packets, visiblePackets);
@@ -69,8 +69,8 @@ public sealed class WorldNpcLootService
 		if (player == null)
 			return WorldNpcLootResult.None(WorldNpcLootStatus.NoPlayer);
 
-		var wasLootingThisNpc = player.IsLooting && player.LootingNpcObjectId == npcObjectId;
-		player.StopLooting();
+		var wasLootingThisNpc = player.IsLooting() && player.GetLootingNpcOid() == npcObjectId;
+		player.SetLootingNpcOid(0);
 		var visiblePackets = new List<AionServerPacket>
 		{
 			new SmEmotion(player, EmotionType.END_LOOT, 0, npcObjectId),
@@ -146,7 +146,7 @@ public sealed class WorldNpcLootService
 		if (remainingDrops.Count == 0)
 		{
 			playerPackets.Add(new SmLootStatus(npcObjectId, SmLootStatusType.CloseDropList));
-			player.StopLooting();
+			player.SetLootingNpcOid(0);
 			visiblePackets.Add(new SmEmotion(player, EmotionType.END_LOOT, 0, npcObjectId));
 			registration.ClearLootingPlayer(player.ObjectId);
 			DeleteEmptyDropCorpse(npcObjectId);
