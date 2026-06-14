@@ -42,6 +42,28 @@ public abstract class SplitList<TType> : IEnumerable<ListPart<TType>>
         return parts;
     }
 
+    /// <summary>Java parity: SplitList.iterator() -> partitionList().iterator() (java.util.Iterator with next()/hasNext()).</summary>
+    public JavaIterator Iterator()
+    {
+        return new JavaIterator(PartitionList());
+    }
+
+    /// <summary>Java parity: thin java.util.Iterator&lt;ListPart&gt; adapter exposing Next()/HasNext().</summary>
+    public sealed class JavaIterator
+    {
+        private readonly List<ListPart<TType>> parts;
+        private int index;
+
+        internal JavaIterator(List<ListPart<TType>> parts)
+        {
+            this.parts = parts;
+        }
+
+        public bool HasNext() => index < parts.Count;
+
+        public ListPart<TType> Next() => parts[index++];
+    }
+
     public IEnumerator<ListPart<TType>> GetEnumerator()
     {
         return PartitionList().GetEnumerator();
