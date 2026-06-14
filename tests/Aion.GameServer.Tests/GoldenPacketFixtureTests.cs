@@ -138,6 +138,7 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_CASTSPELL.json")]
 	[InlineData("SM_ATTACK_RESPONSE.json")]
 	[InlineData("SM_ABNORMAL_STATE.json")]
+	[InlineData("SM_ABNORMAL_EFFECT.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -179,6 +180,7 @@ public sealed class GoldenPacketFixtureTests
 		"SM_CASTSPELL" => ReconstructCastSpell(inputs),
 		"SM_ATTACK_RESPONSE" => ReconstructAttackResponse(inputs),
 		"SM_ABNORMAL_STATE" => new SM_ABNORMAL_STATE(new List<Aion.GameServer.SkillEngine.Model.Effect>(), inputs.GetProperty("abnormals").GetInt32(), inputs.GetProperty("slot").GetInt32()),
+		"SM_ABNORMAL_EFFECT" => new SM_ABNORMAL_EFFECT(new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>()), inputs.GetProperty("abnormals").GetInt32(), new List<Aion.GameServer.SkillEngine.Model.Effect>(), inputs.GetProperty("slots").GetInt32()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
