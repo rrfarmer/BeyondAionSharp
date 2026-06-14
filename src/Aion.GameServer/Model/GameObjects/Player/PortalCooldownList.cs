@@ -81,9 +81,9 @@ public class PortalCooldownList
     public void SendEntryInfo(int worldId)
     {
         if (owner.IsInTeam())
-            owner.GetCurrentTeam().SendPackets(new Aion.GameServer.Network.Aion.ServerPackets.SmInstanceInfo((byte)2, owner, worldId));
+            owner.GetCurrentTeam().SendPackets(new Aion.GameServer.Network.Aion.ServerPackets.SM_INSTANCE_INFO((byte)2, owner, worldId));
         else
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmInstanceInfo((byte)2, owner, worldId));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_INSTANCE_INFO((byte)2, owner, worldId));
     }
 
     public void RemovePortalCooldown(int worldId)
