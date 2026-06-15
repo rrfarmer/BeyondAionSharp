@@ -49,6 +49,19 @@ public static class PositionUtil
         return dx * dx + dy * dy + dz * dz < range * range;
     }
 
+    /// <summary>Java parity: isInRangeLimited(VisibleObject,VisibleObject,float,float) — true when distance is within [minRange, maxRange] and same world/instance.</summary>
+    public static bool IsInRangeLimited(VisibleObject object1, VisibleObject object2, float minRange, float maxRange)
+    {
+        if (object1.GetWorldId() != object2.GetWorldId() || object1.GetInstanceId() != object2.GetInstanceId())
+            return false;
+
+        float dx = object2.GetX() - object1.GetX();
+        float dy = object2.GetY() - object1.GetY();
+        float dz = object2.GetZ() - object1.GetZ();
+        float distSquared = dx * dx + dy * dy + dz * dz;
+        return !(distSquared < minRange * minRange || distSquared > maxRange * maxRange);
+    }
+
     /// <summary>Java parity: calculateAngleFrom(float,float,float,float) — angle between two points and horizontal axis.</summary>
     public static float CalculateAngleFrom(float obj1X, float obj1Y, float obj2X, float obj2Y)
     {
