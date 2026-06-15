@@ -170,6 +170,10 @@ public class SkillTemplate : L10n
 
     public int GetL10nId() => nameId;
 
+    // Java parity: L10n::getL10n() default method — instance-callable in Java; provide concretely
+    // (C# default-interface methods are not instance-visible) to mirror the original.
+    public string? GetL10n() => Aion.GameServer.Utils.ChatUtil.L10n(GetL10nId());
+
     public string? GetStack() => stack;
 
     public string? GetGroup() => group;

@@ -17,4 +17,9 @@ public abstract class VisibleObjectTemplate : IL10n
 
     // Java parity: L10n::getL10nId() — abstract; must be provided by each concrete template
     public abstract int GetL10nId();
+
+    // Java parity: L10n::getL10n() default method. Java default methods are callable on the
+    // implementing instance; C# default-interface methods are NOT, so provide it concretely here
+    // (mirrors the IL10n default body) to keep `template.GetL10n()` callable like the Java original.
+    public virtual string? GetL10n() => Aion.GameServer.Utils.ChatUtil.L10n(GetL10nId());
 }
