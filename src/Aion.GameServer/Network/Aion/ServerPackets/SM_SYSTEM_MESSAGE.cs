@@ -22089,6 +22089,18 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
         return new SM_SYSTEM_MESSAGE(1401531);
     }
 
+    /* The Empyrean Lord is getting low on HP. Don't let him die, or Tiamat will defeat you easily! */
+    public static SM_SYSTEM_MESSAGE IDTIAMAT_TIAMAT_GOD_HP_LOWER_THAN_50p()
+    {
+        return new SM_SYSTEM_MESSAGE(1401548);
+    }
+
+    /* The Empyrean Lord is getting low on HP. Don't let him die, or Tiamat will defeat you easily! */
+    public static SM_SYSTEM_MESSAGE IDTIAMAT_TIAMAT_GOD_HP_LOWER_THAN_15p()
+    {
+        return new SM_SYSTEM_MESSAGE(1401549);
+    }
+
     /* Enter the Internal Passage and destroy Tiamat's Incarnations while Marchutan is dealing with Tiamat. */
     public static SM_SYSTEM_MESSAGE STR_MSG_IDTIAMAT_TIAMAT_2PHASE_START_DARK()
     {
