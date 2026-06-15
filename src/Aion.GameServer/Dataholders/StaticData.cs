@@ -305,6 +305,7 @@ public sealed partial class StaticData
 	public AssembledNpcsData AssembledNpcsDataDh { get; } = new();
 	public TitleData TitleDataDh { get; } = new();
 	public NpcData NpcDataDh { get; } = new();
+	public AIData AiDataDh { get; } = new();
 	public ItemData ItemDataDh { get; } = new();
 	public SkillData SkillDataDh { get; } = new();
 	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();

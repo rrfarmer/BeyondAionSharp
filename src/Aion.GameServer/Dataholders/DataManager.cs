@@ -26,6 +26,7 @@ public sealed class DataManager
 	public static ItemData ITEM_DATA => SD.ItemDataDh;
 	public static SkillData SKILL_DATA => SD.SkillDataDh;
 	public static NpcData NPC_DATA => SD.NpcDataDh;
+	public static AIData AI_DATA => SD.AiDataDh;
 	public static SpawnsData SPAWNS_DATA { get; } = new();
 	public static InstanceCooltimeData INSTANCE_COOLTIME_DATA => SD.InstanceCooltimeDataDh;
 	public static PlayerExperienceTable PLAYER_EXPERIENCE_TABLE => SD.PlayerExperienceTable;
