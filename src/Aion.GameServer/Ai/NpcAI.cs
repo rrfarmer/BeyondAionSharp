@@ -189,7 +189,7 @@ public abstract class NpcAI : AITemplate<Npc>
         Aion.GameServer.Ai.Handler.CreatureEventHandler.OnCreatureMoved(this, creature);
     }
 
-    public bool IsMoveSupported()
+    public virtual bool IsMoveSupported()
     {
         return GetOwner().GetGameStats().GetMovementSpeed().GetCurrent() > 0 && !IsInSubState(AISubState.FREEZE);
     }
