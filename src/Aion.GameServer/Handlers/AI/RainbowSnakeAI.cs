@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Aion.GameServer.Ai;
 using Aion.GameServer.Model;
@@ -14,7 +14,8 @@ namespace Aion.GameServer.Handlers.AI;
 [AIName("rainbow_snake")]
 public class RainbowSnakeAI : GeneralNpcAI
 {
-    private readonly HashSet<int> messagedPlayers = new HashSet<int>(); // TODO remove + fix NpcShoutsService
+    // Java parity: ConcurrentHashMap.newKeySet() — thread-safe set (AI callbacks run on multiple threads).
+    private readonly ConcurrentDictionary<int, byte> messagedPlayers = new ConcurrentDictionary<int, byte>(); // TODO remove + fix NpcShoutsService
 
     public RainbowSnakeAI(Npc npc)
         : base(npc)
@@ -24,14 +25,14 @@ public class RainbowSnakeAI : GeneralNpcAI
     public override void HandleCreatureDetected(Creature creature)
     {
         base.HandleCreatureDetected(creature);
-        if (creature is Player player && messagedPlayers.Add(player.GetObjectId()))
+        if (creature is Player player && messagedPlayers.TryAdd(player.GetObjectId(), 0))
             PacketSendUtility.SendMessage(player, GetOwner(), 1501203); // Hey, you there... Yeah, you... Come here!
     }
 
     protected override void HandleCreatureNotSee(Creature creature)
     {
         base.HandleCreatureNotSee(creature);
-        messagedPlayers.Remove(creature.GetObjectId());
+        messagedPlayers.TryRemove(creature.GetObjectId(), out _);
     }
 
     public override bool OnDialogSelect(Player player, int dialogActionId, int questId, int extendedRewardIndex)
