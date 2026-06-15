@@ -185,7 +185,9 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Players.Pla
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(this), player => player.GetRace() == ownerRace);
     }
 
-    public void BroadcastPacket(Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage message)
+    // Java parity: Kisk.broadcastPacket(SM_SYSTEM_MESSAGE message) — uses the faithful SM_SYSTEM_MESSAGE
+    // (the STR_BINDSTONE_* factories return SM_SYSTEM_MESSAGE), not the reworked SmSystemMessage.
+    public void BroadcastPacket(Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE message)
     {
         foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetCurrentMemberList())
         {
