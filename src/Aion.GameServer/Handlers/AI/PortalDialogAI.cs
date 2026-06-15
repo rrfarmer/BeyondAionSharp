@@ -97,7 +97,7 @@ public class PortalDialogAI : PortalAI
         CheckDialog(player);
     }
 
-    protected void CheckDialog(Player player)
+    protected virtual void CheckDialog(Player player)
     {
         if (!DialogService.IsInteractionAllowed(player, GetOwner()))
         {
