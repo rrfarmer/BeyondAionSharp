@@ -47,6 +47,17 @@ public abstract class InstanceScore
     public virtual void Clear()
     {
     }
+
+    // Java raw-type access: instance.getPlayerReward(objectId) on a wildcard InstanceScore<?>.
+    public InstancePlayerReward GetPlayerReward(int objectId)
+    {
+        return GetPlayerRewardInternal(objectId);
+    }
+
+    protected virtual InstancePlayerReward GetPlayerRewardInternal(int objectId)
+    {
+        return null;
+    }
 }
 
 /// <summary>Java parity: InstanceScore&lt;T extends InstancePlayerReward&gt; — the player-reward-typed surface.</summary>
@@ -69,9 +80,14 @@ public class InstanceScore<T> : InstanceScore where T : InstancePlayerReward
         playerRewards.TryRemove(reward.GetOwnerId(), out _);
     }
 
-    public T GetPlayerReward(int objectId)
+    public new T GetPlayerReward(int objectId)
     {
         return playerRewards.TryGetValue(objectId, out var v) ? v : default;
+    }
+
+    protected override InstancePlayerReward GetPlayerRewardInternal(int objectId)
+    {
+        return GetPlayerReward(objectId);
     }
 
     public void AddPlayerReward(T reward)
