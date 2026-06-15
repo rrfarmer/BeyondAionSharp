@@ -28,7 +28,7 @@ public class DynatoumAI : SummonerAI
             RemoveBossEntries();
     }
 
-    protected void RemoveBossEntries()
+    protected virtual void RemoveBossEntries()
     {
         PacketSendUtility.BroadcastToMap(GetOwner(), SM_SYSTEM_MESSAGE.STR_MSG_IDF5_U3_BOSS_PORTAL_DESTROY());
         foreach (Npc p in GetPosition().GetWorldMapInstance().GetNpcs(702216))
@@ -36,7 +36,7 @@ public class DynatoumAI : SummonerAI
                 p.GetController().Delete();
     }
 
-    protected void ScheduleDespawn(int delayInSec)
+    protected virtual void ScheduleDespawn(int delayInSec)
     {
         despawnTask = ThreadPoolManager.GetInstance().Schedule(_ =>
         {
