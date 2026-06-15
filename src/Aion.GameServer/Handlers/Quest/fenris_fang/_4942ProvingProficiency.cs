@@ -1,0 +1,213 @@
+using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.QuestEngine.Handlers;
+using Aion.GameServer.QuestEngine.Model;
+
+namespace Aion.GameServer.Handlers.Quest;
+
+/// <summary>
+/// @author Nanou, bobobear
+/// </summary>
+public class _4942ProvingProficiency : AbstractQuestHandler
+{
+	public _4942ProvingProficiency() : base(4942)
+	{
+	}
+
+	public override void Register()
+	{
+		int[] npcs = { 204104, 204108, 204106, 204110, 204100, 204102, 798317, 204075, 204053 };
+		qe.RegisterQuestNpc(204053).AddOnQuestStart(questId); // Kvasir
+		foreach (int npc in npcs)
+			qe.RegisterQuestNpc(npc).AddOnTalkEvent(questId);
+	}
+
+	public override bool OnDialogEvent(QuestEnv env)
+	{
+		Player player = env.GetPlayer();
+		int targetId = env.GetTargetId();
+		QuestState qs = player.GetQuestStateList().GetQuestState(questId);
+		int dialogActionId = env.GetDialogActionId();
+
+		// 0 - Start to Kvasir
+		if (qs == null || qs.IsStartable())
+		{
+			if (targetId == 204053)
+			{
+				if (dialogActionId == DialogAction.QUEST_SELECT)
+					return SendQuestDialog(env, 4762);
+				else
+					return SendQuestStartDialog(env);
+			}
+		}
+
+		if (qs == null)
+			return false;
+
+		int var = qs.GetQuestVarById(0);
+
+		if (qs.GetStatus() == QuestStatus.START)
+		{
+			switch (targetId)
+			{
+				// 1 - Talk with Kvasir to choose the crafting skill
+				case 204053:
+					if (var == 0)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 1011);
+							case DialogAction.SETPRO1:
+								return DefaultCloseDialog(env, 0, 1);
+							case DialogAction.SETPRO2:
+								return DefaultCloseDialog(env, 0, 2);
+							case DialogAction.SETPRO3:
+								return DefaultCloseDialog(env, 0, 3);
+							case DialogAction.SETPRO4:
+								return DefaultCloseDialog(env, 0, 4);
+							case DialogAction.SETPRO5:
+								return DefaultCloseDialog(env, 0, 5);
+							case DialogAction.SETPRO6:
+								return DefaultCloseDialog(env, 0, 6);
+						}
+						break;
+					}
+					break;
+				// 2 - Talk with Weaponsmithing Master Logi.
+				case 204104:
+					if (var == 1)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 1352);
+							case DialogAction.SETPRO7:
+								return DefaultCloseDialog(env, 1, 7, 152206598, 1, 0, 0);
+						}
+					}
+					break;
+				// 3 - Talk with Handicrafting Master Lanse
+				case 204108:
+					if (var == 2)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 1693);
+							case DialogAction.SETPRO7:
+								return DefaultCloseDialog(env, 2, 7, 152206641, 1, 0, 0);
+						}
+					}
+					break;
+				// 4 - Talk with Armorsmithing Master Kinterun
+				case 204106:
+					if (var == 3)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 2034);
+							case DialogAction.SETPRO7:
+								return DefaultCloseDialog(env, 3, 7, 152206617, 1, 0, 0);
+						}
+					}
+					break;
+				// 5 - Talk with Tailoring Master Zyakia
+				case 204110:
+					if (var == 4)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 2375);
+							case DialogAction.SETPRO7:
+								return DefaultCloseDialog(env, 4, 7, 152206634, 1, 0, 0);
+						}
+					}
+					break;
+				// 6 - Talk with Cooking Master Lainita
+				case 204100:
+					if (var == 5)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 2716);
+							case DialogAction.SETPRO7:
+								return DefaultCloseDialog(env, 5, 7, 152206646, 1, 0, 0);
+						}
+					}
+					break;
+				// 7 - Talk with Alchemy Master Honir
+				case 204102:
+					if (var == 6)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 3057);
+							case DialogAction.SETPRO7:
+								return DefaultCloseDialog(env, 6, 7, 152206645, 1, 0, 0);
+						}
+					}
+					break;
+				// 8 - Take Crafted Heart to Usener
+				case 798317:
+					if (var == 7)
+					{
+						switch (dialogActionId)
+						{
+							case DialogAction.QUEST_SELECT:
+								return SendQuestDialog(env, 3398);
+							case DialogAction.CHECK_USER_HAS_QUEST_ITEM:
+								return CheckItemExistence(env, 7, 8, false, 186000077, 1, true, 10000, 10001, 0, 0);
+						}
+					}
+					break;
+				// 10 - Take Brightly Glowing Holy Water to visit High Priest Balder for a purification ritual.
+				case 204075:
+					switch (dialogActionId)
+					{
+						case DialogAction.QUEST_SELECT:
+							if (var == 8)
+							{
+								return SendQuestDialog(env, 3740);
+							}
+							return false;
+						case DialogAction.SET_SUCCEED:
+							if (player.GetInventory().GetItemCountByItemId(186000085) >= 1)
+							{
+								RemoveQuestItem(env, 186000085, 1);
+								return DefaultCloseDialog(env, 8, 8, true, false);
+							}
+							else
+							{
+								return SendQuestDialog(env, 3825);
+							}
+						case DialogAction.FINISH_DIALOG:
+							return SendQuestSelectionDialog(env);
+					}
+					break;
+				// No match
+				default:
+					return SendQuestStartDialog(env);
+			}
+		}
+		else if (qs.GetStatus() == QuestStatus.REWARD)
+		{
+			if (targetId == 204053) // Kvasir
+			{
+				if (dialogActionId == DialogAction.USE_OBJECT)
+				{
+					return SendQuestDialog(env, 10002);
+				}
+				else
+				{
+					return SendQuestEndDialog(env);
+				}
+			}
+		}
+		return false;
+	}
+}
