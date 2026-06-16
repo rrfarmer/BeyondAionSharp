@@ -11,7 +11,22 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("global_rules")]
 public class GlobalDropData
 {
-    [XmlElement("gd_rule")] private List<GlobalRule> globalDropRules;
+    // Public for XmlSerializer binding (JAXB read this private field via @XmlAccessorType(FIELD); XmlSerializer
+    // only binds public members). Java field name preserved; getters below keep the Java API surface.
+    [XmlElement("gd_rule")] public List<GlobalRule> globalDropRules;
+
+    /// <summary>
+    /// Java parity: the static_data import graph merges the global_drops/rules dir (singleRootTag) into a single
+    /// global_rules root before unmarshalling. The C# leaf-holder loader deserializes each rules file separately,
+    /// so this appends another file's gd_rule rows into this holder (mirrors TryLoadMergedHolder's MergePending).
+    /// </summary>
+    public void MergePending(GlobalDropData other)
+    {
+        if (other.globalDropRules == null)
+            return;
+        globalDropRules ??= new List<GlobalRule>();
+        globalDropRules.AddRange(other.globalDropRules);
+    }
 
     public void ProcessRules(ICollection<NpcTemplate> npcs)
     {

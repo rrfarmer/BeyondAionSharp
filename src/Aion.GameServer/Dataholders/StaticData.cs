@@ -322,6 +322,7 @@ public sealed partial class StaticData
 	public NpcFactionsData NpcFactionsDataDh { get; private set; } = new();
 	public PortalLocData PortalLocDataDh { get; private set; } = new();
 	public AssemblyItemsData AssemblyItemsDataDh { get; private set; } = new();
+	public GlobalDropData GlobalDropDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -472,6 +473,19 @@ public sealed partial class StaticData
 		// IEnumerable (collection-typed to XmlSerializer), so the file is read into WorldMapsDataDto and SetData builds
 		// the mapsById index. WorldMapTemplate flags="..." wire tokens map to ZoneAttributes via the FlagsRaw proxy.
 		WorldMaps2 = TryLoadWorldMaps(Path.Combine(staticDataDirectory, "world_maps.xml"), logger);
+		// Java imports the global_drops/rules/ dir with singleRootTag (every file is a <global_rules> root of <gd_rule>
+		// rows) and binds it to StaticData.globalDropData; merge every file then run AfterUnmarshal-free. Feeds
+		// DataManager.GLOBAL_DROP_DATA. After NPC data is loaded above, run the gd_npc_names -> gd_npc id expansion
+		// (Java parity: DataManager.init() calls GLOBAL_DROP_DATA.processRules(NPC_DATA.getNpcData()) after field assignment).
+		GlobalDropDataDh = TryLoadMergedHolder<GlobalDropData>(Path.Combine(staticDataDirectory, "global_drops", "rules"), (m, p) => m.MergePending(p), logger);
+		try
+		{
+			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to process global drop rules (gd_npc_names expansion).");
+		}
 	}
 
 	private static WorldMapsData TryLoadWorldMaps(string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger)

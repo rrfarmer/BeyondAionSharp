@@ -270,6 +270,17 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Contains(rules!, r => r.GetMemberLimit() == 12 && r.GetRestrictionRace() == null);
 		Assert.Contains(rules!, r => r.GetRestrictionRace() == Model.Templates.GlobalDrops.GlobalRule.RestrictionRace.ELYOS);
 
+		// GLOBAL_DROP_DATA boot-wiring: the faithful GlobalDropData holder is loaded from the merged
+		// global_drops/rules dir (singleRootTag) and GLOBAL_DROP_DATA.processRules(NPC_DATA) ran after NPC load,
+		// expanding gd_npc_names -> resolved gd_npc ids (Java parity: DataManager.init()). At least one rule that
+		// declared <gd_npc_names> must now have a resolved <gd_npcs> set with names cleared (proves ProcessRules ran).
+		Assert.True(sd.GlobalDropDataDh.Size() > 0, "GlobalDropDataDh empty after boot");
+		var allGlobalRules = sd.GlobalDropDataDh.GetAllRules();
+		Assert.Contains(allGlobalRules, r =>
+			r.GetGlobalRuleNpcs() != null
+			&& r.GetGlobalRuleNpcs()!.GetGlobalDropNpcs().Count > 0
+			&& (r.GetGlobalRuleNpcNames() == null || r.GetGlobalRuleNpcNames()!.GetGlobalDropNpcNames().Count == 0));
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));
