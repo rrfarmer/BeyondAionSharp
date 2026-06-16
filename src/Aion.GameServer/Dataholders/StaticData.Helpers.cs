@@ -224,26 +224,6 @@ public sealed partial class StaticData
 		return elementName is "add" or "sub" or "rate" or "set" or "abs";
 	}
 
-	private static bool IsDropBoostStatEffectElement(string elementName)
-	{
-		return elementName is "boostdroprate" or "drboost";
-	}
-
-	private static SkillStatChangeConditionSummary ReadSkillStatChangeCondition(XmlReader reader)
-	{
-		var attributes = new Dictionary<string, string>(StringComparer.Ordinal);
-		if (reader.HasAttributes)
-		{
-			while (reader.MoveToNextAttribute())
-				attributes[reader.Name] = reader.Value;
-			reader.MoveToElement();
-		}
-
-		return new SkillStatChangeConditionSummary(
-			reader.LocalName,
-			new ReadOnlyDictionary<string, string>(attributes));
-	}
-
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)
 	{
 		return long.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : 0;

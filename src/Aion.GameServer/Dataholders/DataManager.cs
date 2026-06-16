@@ -77,7 +77,6 @@ public sealed class DataManager
 	public static ItemSetTable ITEM_SET_TABLE => SD.ItemSets;
 	public static EnchantTable ENCHANT_TABLE => SD.EnchantTemplates;
 	public static TemperingTable TEMPERING_TABLE => SD.TemperingTemplates;
-	public static SkillTemplateTable SKILL_TEMPLATE_TABLE => SD.SkillTemplates;
 	public static TitleTemplateTable TITLE_TEMPLATE_TABLE => SD.TitleTemplates;
 	public static HouseData HOUSE_DATA { get; } = new();
 	public static QuestsData QUEST_DATA => SD.Quests;

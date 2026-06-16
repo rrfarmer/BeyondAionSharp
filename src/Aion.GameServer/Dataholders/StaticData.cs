@@ -43,7 +43,6 @@ public sealed partial class StaticData
 		GoodsListTable goodsLists,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
-		SkillTemplateTable skillTemplates,
 		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
 		PetTemplateTable petTemplates,
@@ -95,7 +94,6 @@ public sealed partial class StaticData
 		GoodsLists = goodsLists;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
-		SkillTemplates = skillTemplates;
 		NpcSkills = npcSkills;
 		PetSkills = petSkills;
 		PetTemplates = petTemplates;
@@ -189,8 +187,6 @@ public sealed partial class StaticData
 	public CustomNpcDropTable CustomNpcDrops { get; }
 
 	public QuestDropTable QuestDrops { get; }
-
-	public SkillTemplateTable SkillTemplates { get; }
 
 	public NpcSkillTable NpcSkills { get; }
 
@@ -637,7 +633,6 @@ public sealed partial class StaticData
 		var goodsInLists = new List<GoodsListSummary>();
 		var goodsPurchaseLists = new List<GoodsListSummary>();
 		var questDrops = new List<QuestDropSummary>();
-		var skillTemplates = new List<SkillTemplateSummary>();
 		var npcSkillLists = new List<NpcSkillListSummary>();
 		var titleTemplates = new List<TitleTemplateSummary>();
 		var recipeTemplates = new List<RecipeTemplateSummary>();
@@ -701,7 +696,6 @@ public sealed partial class StaticData
 		VortexStateType currentNpcVortexSpawnStateType = default;
 		int currentStaticDoorWorldId = 0;
 		string currentWalkerParentRouteId = string.Empty;
-		SkillTemplateBuilder? currentSkillTemplate = null;
 		NpcSkillListBuilder? currentNpcSkillList = null;
 		NpcSkillTemplateBuilder? currentNpcSkill = null;
 		PetTemplateBuilder? currentPetTemplate = null;
@@ -961,12 +955,6 @@ public sealed partial class StaticData
 				if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
 					currentStaticDoorWorldId = 0;
 
-				if (reader.Depth == 2 && reader.LocalName == "skill_template" && currentSkillTemplate != null)
-				{
-					skillTemplates.Add(currentSkillTemplate.ToSummary());
-					currentSkillTemplate = null;
-				}
-
 				if (reader.Depth == 2 && reader.LocalName == "title" && currentTitleTemplate != null)
 				{
 					titleTemplates.Add(currentTitleTemplate.ToSummary());
@@ -978,15 +966,6 @@ public sealed partial class StaticData
 					housingBuildings.Add(currentHousingBuilding.ToSummary());
 					currentHousingBuilding = null;
 				}
-
-				if (reader.Depth == 4 && reader.LocalName is "armormastery" or "wpnmastery" or "shieldmastery")
-					currentSkillTemplate?.EndMastery();
-
-				if (reader.Depth == 4 && IsDropBoostStatEffectElement(reader.LocalName))
-					currentSkillTemplate?.EndBuffStatEffect();
-
-				if (reader.Depth == 5 && reader.LocalName == "change")
-					currentSkillTemplate?.EndCurrentStatChangeConditions();
 
 				if (reader.LocalName == "npc_skill" && currentNpcSkillList != null && currentNpcSkill != null)
 				{
@@ -2552,110 +2531,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "skill_template")
-			{
-				currentSkillTemplate = new SkillTemplateBuilder(
-					ReadRequiredIntAttribute(reader, "skill_id"),
-					reader.GetAttribute("name") ?? string.Empty,
-					ReadIntAttribute(reader, "nameId"),
-					ReadIntAttribute(reader, "lvl"),
-					reader.GetAttribute("group") ?? string.Empty,
-					reader.GetAttribute("stack") ?? string.Empty,
-					reader.GetAttribute("skilltype") ?? string.Empty,
-					reader.GetAttribute("skillsubtype") ?? string.Empty,
-					ReadIntAttribute(reader, "cooldownId"),
-					ReadIntAttribute(reader, "cooldown"),
-					reader.GetAttribute("activation") ?? string.Empty)
-				{
-					StigmaType = reader.GetAttribute("stigma") ?? string.Empty,
-				};
-				if (reader.IsEmptyElement)
-				{
-					skillTemplates.Add(currentSkillTemplate.ToSummary());
-					currentSkillTemplate = null;
-				}
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "armormastery" && currentSkillTemplate != null)
-			{
-				currentSkillTemplate.StartArmorMastery(
-					reader.GetAttribute("armor") ?? string.Empty,
-					ReadIntAttribute(reader, "value"),
-					ReadIntAttribute(reader, "delta"));
-				if (reader.IsEmptyElement)
-					currentSkillTemplate.EndMastery();
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "wpnmastery" && currentSkillTemplate != null)
-			{
-				currentSkillTemplate.StartWeaponMastery(reader.GetAttribute("weapon") ?? string.Empty);
-				if (reader.IsEmptyElement)
-					currentSkillTemplate.EndMastery();
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "shieldmastery" && currentSkillTemplate != null)
-			{
-				currentSkillTemplate.StartShieldMastery();
-				if (reader.IsEmptyElement)
-					currentSkillTemplate.EndMastery();
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "wpndual" && currentSkillTemplate != null)
-			{
-				currentSkillTemplate.AddWeaponDual(
-					new SkillWeaponDualEffectSummary(
-						ReadIntAttribute(reader, "value"),
-						ReadIntAttribute(reader, "delta"),
-						ReadIntAttribute(reader, "skill_efficiency"),
-						ReadIntAttribute(reader, "max_damage_chance"),
-						ReadIntAttribute(reader, "max_damage_delta")));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "signetburst" && currentSkillTemplate != null)
-			{
-				// Java parity: skillengine/effect/SignetBurstEffect exposes signet and signetlvl attributes.
-				currentSkillTemplate.AddSignetBurst(
-					new SkillSignetBurstEffectSummary(
-						reader.GetAttribute("signet") ?? string.Empty,
-						ReadIntAttribute(reader, "signetlvl")));
-				continue;
-			}
-
-			if (reader.Depth == 4 && IsDropBoostStatEffectElement(reader.LocalName) && currentSkillTemplate != null)
-			{
-				currentSkillTemplate.StartBuffStatEffect(reader.LocalName);
-				if (reader.IsEmptyElement)
-					currentSkillTemplate.EndBuffStatEffect();
-				continue;
-			}
-
-			if (reader.Depth == 5 && reader.LocalName == "change" && currentSkillTemplate != null)
-			{
-				var change = new SkillStatChange(
-					reader.GetAttribute("stat") ?? string.Empty,
-					reader.GetAttribute("func") ?? string.Empty,
-					ReadIntAttribute(reader, "value"),
-					ReadIntAttribute(reader, "delta"));
-				currentSkillTemplate.AddCurrentMasteryChange(change);
-				currentSkillTemplate.AddCurrentBuffStatChange(change);
-				currentSkillTemplate.StartCurrentStatChangeConditions(change);
-				continue;
-			}
-
-			if (reader.LocalName != "conditions"
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "conditions"
-				&& elementPath.GetValueOrDefault(reader.Depth - 2) == "change"
-				&& currentSkillTemplate != null)
-			{
-				currentSkillTemplate.AddCurrentStatChangeCondition(ReadSkillStatChangeCondition(reader));
-				continue;
-			}
-
 			if (reader.LocalName == "npc_skills" && elementPath.GetValueOrDefault(reader.Depth - 1) == "npc_skill_templates")
 			{
 				// Java parity: model/templates/npcskill/NpcSkillTemplates uses JAXB @XmlList npc_ids.
@@ -2889,7 +2764,6 @@ public sealed partial class StaticData
 				goodsPurchaseLists.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
-			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),
 			new PetTemplateTable(petTemplates.AsReadOnly()),
