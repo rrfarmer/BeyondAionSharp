@@ -16,7 +16,7 @@ public static class SiegeConfig
     public static float BALAUR_ASSAULT_RATE = 1;
 
     /// <summary>Berserker Sunayaka spawn time. Key: gameserver.moltenus.time. Default cron: 0 0 22 ? * SUN</summary>
-    public static Quartz.CronExpression MOLTENUS_SPAWN_SCHEDULE;
+    public static Quartz.CronExpression MOLTENUS_SPAWN_SCHEDULE = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 22 ? * SUN");
 
     /// <summary>Key: gameserver.siege.health.multiplier.fortress</summary>
     public static float FORTRESS_PROTECTOR_HEALTH_MULTIPLIER = 1;
@@ -37,7 +37,7 @@ public static class SiegeConfig
     public static int AHSERION_MAX_PLAYERS_PER_TEAM = 100;
 
     /// <summary>Key: gameserver.siege.panesterra.ahserion.time. Default cron: 0 50 18 ? * SUN</summary>
-    public static Quartz.CronExpression AHSERION_START_SCHEDULE;
+    public static Quartz.CronExpression AHSERION_START_SCHEDULE = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 50 18 ? * SUN");
 
     /// <summary>Key: gameserver.siege.legion.gp.cap_per_member</summary>
     public static int LEGION_GP_CAP_PER_MEMBER = 200;

@@ -121,6 +121,12 @@ public sealed class GameServerBootstrapService : IHostedService
 		// single getInstance() touch is the faithful boot wire.
 		// DebugService: schedules the periodic world-player analysis task.
 		Aion.GameServer.Services.DebugService.GetInstance();
+		// CronJobService: Java parity GameServer.main starts it after AtreianPassportService.getInstance(),
+		// before CuringZoneService/RoadService. Its ctor schedules the Moltenus spawn + Ahserion flight cron
+		// jobs (SiegeConfig.MOLTENUS_SPAWN_SCHEDULE / AHSERION_START_SCHEDULE, now initialized from the Java
+		// @Property defaultValue cron strings via CronExpressions.GetOrCreate), the IdianDepthPortal spawner,
+		// and the weekly LegionDominion calculation. Must run after CronService.InitSingleton above.
+		_ = Aion.GameServer.Services.CronJobService.GetInstance();
 		// CuringZoneService: Java only starts it when geo materials are disabled (GeoDataConfig.GEO_MATERIALS_ENABLE).
 		if (!Aion.GameServer.Configs.Main.GeoDataConfig.GEO_MATERIALS_ENABLE)
 			Aion.GameServer.Services.CuringZoneService.GetInstance();
