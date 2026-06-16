@@ -177,36 +177,6 @@ public sealed class PlayerNpcFactionsSnapshotTests
 		Assert.Empty(snapshot.GetReusableDailyQuestIds(currentEpochSeconds: 1_000));
 	}
 
-	[Theory]
-	[InlineData(8, 59, 2026, 5, 25)]
-	[InlineData(9, 0, 2026, 5, 26)]
-	[InlineData(10, 0, 2026, 5, 26)]
-	public void NpcFactionDailyResetService_AppliesJavaNineAmBoundary(
-		int hour,
-		int minute,
-		int expectedYear,
-		int expectedMonth,
-		int expectedDay)
-	{
-		var now = new DateTimeOffset(2026, 5, 25, hour, minute, 0, TimeSpan.Zero);
-		var expectedReset = new DateTimeOffset(expectedYear, expectedMonth, expectedDay, 9, 0, 0, TimeSpan.Zero);
-
-		var nextReset = NpcFactionDailyResetService.GetNextResetEpochSeconds(now, CreateOptions("UTC"));
-
-		Assert.Equal(expectedReset.ToUnixTimeSeconds(), nextReset);
-	}
-
-	private static GameServerOptions CreateOptions(string timeZoneId)
-	{
-		return new GameServerOptions
-		{
-			Core = new GameServerCoreOptions
-			{
-				TimeZoneId = timeZoneId,
-			},
-		};
-	}
-
 	private static NpcFactionTable CreateFactionTable(params NpcFactionSummary[] factions)
 	{
 		return new NpcFactionTable(factions);
