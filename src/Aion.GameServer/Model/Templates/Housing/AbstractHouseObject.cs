@@ -9,17 +9,17 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlInclude(typeof(PlaceableHouseObject))]
 public abstract class AbstractHouseObject : VisibleObjectTemplate
 {
-    [XmlAttribute("talking_distance")] protected float talkingDistance;
+    [XmlAttribute("talking_distance")] public float talkingDistance;
 
-    [XmlAttribute("quality")] protected ItemQuality quality;
+    [XmlAttribute("quality")] public ItemQuality quality;
 
-    [XmlAttribute("category")] protected HousingCategory category;
+    [XmlAttribute("category")] public HousingCategory category;
 
-    [XmlAttribute("name_id")] protected int nameId;
+    [XmlAttribute("name_id")] public int nameId;
 
-    [XmlAttribute("id")] protected int id;
+    [XmlAttribute("id")] public int id;
 
-    [XmlAttribute("can_dye")] protected bool canDye;
+    [XmlAttribute("can_dye")] public bool canDye;
 
     public override int GetTemplateId()
     {

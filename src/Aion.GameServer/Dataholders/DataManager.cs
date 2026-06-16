@@ -70,7 +70,7 @@ public sealed class DataManager
 	public static GlobalDropData GLOBAL_DROP_DATA => SD.GlobalDropDataDh;
 	public static CustomDrop CUSTOM_NPC_DROP => SD.CustomNpcDropDh;
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
-	public static HousingObjectData HOUSING_OBJECT_DATA { get; } = new();
+	public static HousingObjectData HOUSING_OBJECT_DATA => SD.HousingObjectDataDh;
 	public static EnchantTable ENCHANT_DATA => SD.EnchantTemplates;
 	public static ItemTemplateTable ITEM_TEMPLATES => SD.ItemTemplates;
 	public static ItemRandomBonusTable ITEM_RANDOM_BONUS_TABLE => SD.ItemRandomBonuses;

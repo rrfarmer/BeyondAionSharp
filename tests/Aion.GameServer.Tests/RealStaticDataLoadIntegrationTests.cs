@@ -1,4 +1,5 @@
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model.Templates.Housing;
 
 namespace Aion.GameServer.Tests;
 
@@ -400,6 +401,28 @@ public sealed class RealStaticDataLoadIntegrationTests
 		var box210582Drop = box210582!.GetDropGroup()[0].GetDrop().First(d => d.GetItemId() == 123000508);
 		Assert.Equal(50f, box210582Drop.GetChance());
 		Assert.Equal(1, box210582Drop.GetMaxAmount()); // max_amount absent -> defaulted to min_amount (proves Drop.AfterUnmarshal cascade ran)
+
+		// housing/housing_objects.xml: faithful HousingObjectData (Java parity DataManager binds data.housingObjectData).
+		// Previously hollow new() -> always empty -> HouseObjectFactory/HouseObject could create no placeable decoration.
+		// Asserts the holder loads, a polymorphic subtype resolves to its typed class, and the string-proxied nullable
+		// [XmlAttribute]s round-trip (a single missed proxy aborts the whole load -> would be empty here).
+		Assert.True(sd.HousingObjectDataDh.Size() > 0, "HousingObjectDataDh empty after boot");
+		// storage 3000007: typed subtype + nullable enum proxies (limit/location/area) + non-nullable warehouse_id.
+		var storage3000007 = sd.HousingObjectDataDh.GetTemplateById(3000007);
+		Assert.NotNull(storage3000007);
+		var storage = Assert.IsType<HousingStorage>(storage3000007);
+		Assert.Equal(1, storage.GetWarehouseId());
+		Assert.Equal(LimitType.STORAGE, storage.GetPlacementLimit());
+		Assert.Equal(PlaceLocation.FLOOR, storage.GetLocation());
+		Assert.Equal(PlaceArea.INTERIOR, storage.GetArea());
+		Assert.Equal(0, storage.GetUseDays()); // use_days absent -> proxy null -> GetUseDays() returns 0
+		// use_item 3190001: HousingUseableItem nullable-int proxies (cd/required_item) + nested <action> bound.
+		var useItem3190001 = sd.HousingObjectDataDh.GetTemplateById(3190001);
+		var useItem = Assert.IsType<HousingUseableItem>(useItem3190001);
+		Assert.Equal(186000166, useItem.GetRequiredItem());
+		Assert.Equal(0, useItem.GetCd()); // cd="0" -> proxy parses to 0 (distinct from absent->null)
+		Assert.Equal(7, useItem.GetUseDays());
+		Assert.NotNull(useItem.GetAction());
 
 		// quest_script_data/ merged dir: faithful XMLQuests (16-subtype polymorphic DSL). XML_QUESTS non-empty at
 		// boot and a known scripted quest resolves to its correct subtype (poeta.xml xml_quest 1127 -> XmlQuestData).

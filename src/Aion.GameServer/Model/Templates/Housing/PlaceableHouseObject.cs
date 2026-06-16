@@ -1,3 +1,4 @@
+using System;
 using System.Xml.Serialization;
 
 namespace Aion.GameServer.Model.Templates.Housing;
@@ -16,13 +17,43 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlInclude(typeof(HousingEmblem))]
 public abstract class PlaceableHouseObject : AbstractHouseObject
 {
-    [XmlAttribute("use_days")] protected int? useDays;
+    // Nullable [XmlAttribute] trap: XmlSerializer cannot encode Nullable<int>/Nullable<enum> as an attribute
+    // (throws at the serializer ctor -> the whole load aborts -> hollow fallback). Bind via string proxies.
+    [XmlIgnore] public int? useDays;
 
-    [XmlAttribute("limit")] protected LimitType? limit;
+    [XmlAttribute("use_days")]
+    public string useDaysRaw
+    {
+        get => useDays?.ToString();
+        set => useDays = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
 
-    [XmlAttribute("location")] protected PlaceLocation? location;
+    [XmlIgnore] public LimitType? limit;
 
-    [XmlAttribute("area")] protected PlaceArea? area;
+    [XmlAttribute("limit")]
+    public string limitRaw
+    {
+        get => limit?.ToString();
+        set => limit = string.IsNullOrEmpty(value) ? null : (LimitType)Enum.Parse(typeof(LimitType), value);
+    }
+
+    [XmlIgnore] public PlaceLocation? location;
+
+    [XmlAttribute("location")]
+    public string locationRaw
+    {
+        get => location?.ToString();
+        set => location = string.IsNullOrEmpty(value) ? null : (PlaceLocation)Enum.Parse(typeof(PlaceLocation), value);
+    }
+
+    [XmlIgnore] public PlaceArea? area;
+
+    [XmlAttribute("area")]
+    public string areaRaw
+    {
+        get => area?.ToString();
+        set => area = string.IsNullOrEmpty(value) ? null : (PlaceArea)Enum.Parse(typeof(PlaceArea), value);
+    }
 
     /// <summary>Gets the value of the useDays property.</summary>
     /// <returns>0 if not restricted</returns>

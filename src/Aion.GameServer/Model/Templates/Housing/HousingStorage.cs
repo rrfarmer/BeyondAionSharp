@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlType("HousingStorage")]
 public class HousingStorage : PlaceableHouseObject
 {
-    [XmlAttribute("warehouse_id")] protected int warehouseId;
+    [XmlAttribute("warehouse_id")] public int warehouseId;
 
     public int GetWarehouseId()
     {

@@ -317,6 +317,7 @@ public sealed partial class StaticData
 	public ItemRandomBonusData ItemRandomBonusDataDh { get; private set; } = new();
 	public HouseData HouseDataDh { get; private set; } = new();
 	public CustomDrop CustomNpcDropDh { get; private set; } = new();
+	public HousingObjectData HousingObjectDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -549,6 +550,17 @@ public sealed partial class StaticData
 		// defaults maxAmount=minAmount, load-bearing) before indexing by npc id (XmlSerializer fires no nested callbacks).
 		// (The reworked CustomNpcDropTable/CustomNpcDropSummary projection has 0 live consumers = separate slop-delete candidate.)
 		CustomNpcDropDh = TryLoadHolder(CustomNpcDropDh, Path.Combine(staticDataDirectory, "custom_drop", "custom_drop.xml"), logger);
+		// Java imports the single file housing/housing_objects.xml (<housing_objects> root) and binds it to
+		// StaticData.housingObjectData; feeds DataManager.HOUSING_OBJECT_DATA, read by HouseObjectFactory +
+		// HouseObject (the placeable-house-decoration template lookup). Was a hollow new() -> always empty ->
+		// no house decoration objects could be created. The 11 polymorphic subtypes bind via the holder's stacked
+		// [XmlElement(typeof)] coverage (postbox/use_item/move_item/chair/picture/passive/npc/storage/jukebox/
+		// moviejukebox/emblem). AbstractHouseObject/PlaceableHouseObject + subtype [Xml*] members are now public;
+		// every Nullable<int>/Nullable<enum> [XmlAttribute] is string-proxied (PlaceableHouseObject.use_days/limit/
+		// location/area; HousingUseableItem.cd/use_count/required_item; UseItemAction.final_reward_id/reward_id/
+		// remove_count/check_type) — XmlSerializer can't bind Nullable attrs (a single missed one aborts the whole
+		// load). HousingObjectData.AfterUnmarshal indexes by template id (fires inside TryLoadHolder).
+		HousingObjectDataDh = TryLoadHolder(HousingObjectDataDh, Path.Combine(staticDataDirectory, "housing", "housing_objects.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());

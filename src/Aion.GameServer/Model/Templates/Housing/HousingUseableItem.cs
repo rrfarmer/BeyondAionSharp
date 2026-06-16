@@ -6,17 +6,39 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlType("HousingUseableItem")]
 public class HousingUseableItem : PlaceableHouseObject
 {
-    [XmlElement("action")] protected UseItemAction action;
+    [XmlElement("action")] public UseItemAction action;
 
-    [XmlAttribute("owner")] protected bool owner;
+    [XmlAttribute("owner")] public bool owner;
 
-    [XmlAttribute("cd")] protected int? cd;
+    [XmlAttribute("delay")] public int delay;
 
-    [XmlAttribute("delay")] protected int delay;
+    // Nullable [XmlAttribute] trap: proxy Nullable<int> through string attributes (see PlaceableHouseObject).
+    [XmlIgnore] public int? cd;
 
-    [XmlAttribute("use_count")] protected int? useCount;
+    [XmlAttribute("cd")]
+    public string cdRaw
+    {
+        get => cd?.ToString();
+        set => cd = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
 
-    [XmlAttribute("required_item")] protected int? requiredItem;
+    [XmlIgnore] public int? useCount;
+
+    [XmlAttribute("use_count")]
+    public string useCountRaw
+    {
+        get => useCount?.ToString();
+        set => useCount = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+
+    [XmlIgnore] public int? requiredItem;
+
+    [XmlAttribute("required_item")]
+    public string requiredItemRaw
+    {
+        get => requiredItem?.ToString();
+        set => requiredItem = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
 
     public UseItemAction GetAction()
     {

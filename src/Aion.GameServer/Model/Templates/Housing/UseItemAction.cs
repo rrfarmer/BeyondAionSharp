@@ -6,10 +6,42 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlType("UseItemAction")]
 public class UseItemAction
 {
-    [XmlAttribute("final_reward_id")] protected int? finalRewardId;
-    [XmlAttribute("reward_id")] protected int? rewardId;
-    [XmlAttribute("remove_count")] protected int? removeCount;
-    [XmlAttribute("check_type")] protected int? checkType;
+    // Nullable [XmlAttribute] trap: proxy Nullable<int> through string attributes (see PlaceableHouseObject).
+    [XmlIgnore] public int? finalRewardId;
+
+    [XmlAttribute("final_reward_id")]
+    public string finalRewardIdRaw
+    {
+        get => finalRewardId?.ToString();
+        set => finalRewardId = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+
+    [XmlIgnore] public int? rewardId;
+
+    [XmlAttribute("reward_id")]
+    public string rewardIdRaw
+    {
+        get => rewardId?.ToString();
+        set => rewardId = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+
+    [XmlIgnore] public int? removeCount;
+
+    [XmlAttribute("remove_count")]
+    public string removeCountRaw
+    {
+        get => removeCount?.ToString();
+        set => removeCount = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+
+    [XmlIgnore] public int? checkType;
+
+    [XmlAttribute("check_type")]
+    public string checkTypeRaw
+    {
+        get => checkType?.ToString();
+        set => checkType = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
 
     public int? GetFinalRewardId() { return finalRewardId; }
     public int? GetRewardId() { return rewardId; }

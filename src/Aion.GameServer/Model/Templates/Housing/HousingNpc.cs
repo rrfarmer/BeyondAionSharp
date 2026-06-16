@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlType("HousingNpc")]
 public class HousingNpc : PlaceableHouseObject
 {
-    [XmlAttribute("npc_id")] protected int npcId;
+    [XmlAttribute("npc_id")] public int npcId;
 
     public int GetNpcId()
     {

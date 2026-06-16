@@ -19,7 +19,7 @@ public class HousingObjectData
     [XmlElement("jukebox", typeof(HousingJukeBox))]
     [XmlElement("moviejukebox", typeof(HousingMovieJukeBox))]
     [XmlElement("emblem", typeof(HousingEmblem))]
-    protected List<PlaceableHouseObject> housingObjects;
+    public List<PlaceableHouseObject> housingObjects;
 
     [XmlIgnore] private readonly Dictionary<int, PlaceableHouseObject> objectTemplatesById = new();
 

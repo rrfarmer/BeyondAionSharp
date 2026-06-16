@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlType("HousingEmblem")]
 public class HousingEmblem : PlaceableHouseObject
 {
-    [XmlAttribute("level")] private int level;
+    [XmlAttribute("level")] public int level;
 
     public override byte GetTypeId()
     {
