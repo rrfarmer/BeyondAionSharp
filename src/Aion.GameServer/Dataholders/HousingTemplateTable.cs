@@ -99,31 +99,6 @@ public sealed class HousingTemplateTable
 		return line == null || line.PacketIndex >= decorIds.Count ? 0 : decorIds[line.PacketIndex];
 	}
 
-	public IReadOnlyList<int> GetDecorIds(int buildingId, HouseRegistrySummary? registry)
-	{
-		// Java parity: network/aion/serverpackets/AbstractHouseInfoPacket asks HouseRegistry.getUsedDecorId for each PartType room.
-		var decorIds = GetDefaultDecorIds(buildingId).Take(19).ToArray();
-		if (decorIds.Length < 19)
-			decorIds = decorIds.Concat(Enumerable.Repeat(0, 19 - decorIds.Length)).ToArray();
-
-		if (registry == null)
-			return decorIds;
-
-		foreach (var decoration in registry.Decorations)
-		{
-			if (decoration.IsDeleted || decoration.Room < 0)
-				continue;
-
-			var part = GetPart(decoration.TemplateId);
-			if (part == null || !TryGetDecorPacketIndex(part.Type, decoration.Room, out var packetIndex))
-				continue;
-
-			decorIds[packetIndex] = decoration.TemplateId;
-		}
-
-		return decorIds;
-	}
-
 	public static bool TryGetDecorLine(int lineNumber, out string partType, out int room)
 	{
 		// Java parity: model/templates/housing/PartType.getForLineNr plus room offset math in CM_HOUSE_DECORATE.

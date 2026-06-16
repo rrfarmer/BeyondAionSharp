@@ -45,7 +45,6 @@ public sealed partial class StaticData
 		RecipeTemplateTable recipeTemplates,
 		WorkOrderRecipeTable workOrderRecipes,
 		HousingTemplateTable housingTemplates,
-		HousingObjectTemplateTable housingObjectTemplates,
 		InstanceCooltimeTable instanceCooltimes,
 		InstanceExitTable instanceExits,
 		PortalLocTable portalLocs,
@@ -90,7 +89,6 @@ public sealed partial class StaticData
 		RecipeTemplates = recipeTemplates;
 		WorkOrderRecipes = workOrderRecipes;
 		HousingTemplates = housingTemplates;
-		HousingObjectTemplates = housingObjectTemplates;
 		InstanceCooltimes = instanceCooltimes;
 		InstanceExits = instanceExits;
 		PortalLocs = portalLocs;
@@ -182,8 +180,6 @@ public sealed partial class StaticData
 	public WorkOrderRecipeTable WorkOrderRecipes { get; }
 
 	public HousingTemplateTable HousingTemplates { get; }
-
-	public HousingObjectTemplateTable HousingObjectTemplates { get; }
 
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
@@ -786,7 +782,6 @@ public sealed partial class StaticData
 		var housingLandDefaultBuildingIds = new Dictionary<int, int>();
 		var housingBuildings = new List<HousingBuildingSummary>();
 		var housingParts = new List<HousingPartSummary>();
-		var housingObjectTemplates = new List<HousingObjectTemplateSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var instanceExits = new List<InstanceExitSummary>();
 		var portalLocs = new List<PortalLocSummary>();
@@ -1633,53 +1628,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2
-				&& elementPath.GetValueOrDefault(1) == "housing_objects"
-				&& IsHousingObjectTemplateElement(reader.LocalName))
-			{
-				// Java parity: dataholders/HousingObjectData indexes PlaceableHouseObject templates by id.
-				housingObjectTemplates.Add(
-					new HousingObjectTemplateSummary(
-						ReadRequiredIntAttribute(reader, "id"),
-						GetHousingObjectTypeId(reader.LocalName),
-						reader.LocalName,
-						reader.GetAttribute("area") ?? string.Empty,
-						reader.GetAttribute("location") ?? string.Empty,
-						reader.GetAttribute("limit") ?? "NONE",
-						reader.GetAttribute("category") ?? string.Empty,
-						ReadIntAttribute(reader, "use_days"),
-						ReadBoolAttribute(reader, "can_dye"),
-						NpcId: ReadIntAttribute(reader, "npc_id"),
-						WarehouseId: ReadIntAttribute(reader, "warehouse_id"),
-						OwnerOnly: ReadBoolAttribute(reader, "owner"),
-						CooldownSeconds: ReadIntAttribute(reader, "cd"),
-						DelayMilliseconds: ReadIntAttribute(reader, "delay"),
-						UseCount: ReadIntAttribute(reader, "use_count"),
-						RequiredItemId: ReadIntAttribute(reader, "required_item"),
-						EmblemLevel: ReadIntAttribute(reader, "level"),
-						NameId: ReadIntAttribute(reader, "name_id"),
-						TalkingDistance: ReadFloatAttribute(reader, "talking_distance")));
-				continue;
-			}
-
-			if (reader.Depth == 3
-				&& reader.LocalName == "action"
-				&& elementPath.GetValueOrDefault(1) == "housing_objects"
-				&& elementPath.GetValueOrDefault(2) == "use_item"
-				&& housingObjectTemplates.Count > 0)
-			{
-				// Java parity: model/templates/housing/UseItemAction.checkType serialized by UseableItemObject.writeUsageData.
-				var lastIndex = housingObjectTemplates.Count - 1;
-				housingObjectTemplates[lastIndex] = housingObjectTemplates[lastIndex] with
-				{
-					UseActionCheckType = ReadIntAttribute(reader, "check_type"),
-					UseActionRemoveCount = ReadIntAttribute(reader, "remove_count"),
-					UseActionRewardId = ReadIntAttribute(reader, "reward_id"),
-					UseActionFinalRewardId = ReadIntAttribute(reader, "final_reward_id"),
-				};
-				continue;
-			}
-
 			if (reader.Depth == 3 && reader.LocalName == "type" && currentInstanceCooltime != null)
 			{
 				currentInstanceCooltime.CoolTimeType = await ReadElementTextAsync(reader, cancellationToken);
@@ -2226,7 +2174,6 @@ public sealed partial class StaticData
 					.ToArray(),
 				housingBuildings.AsReadOnly(),
 				housingParts.AsReadOnly()),
-			new HousingObjectTemplateTable(housingObjectTemplates.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new InstanceExitTable(instanceExits.AsReadOnly()),
 			new PortalLocTable(portalLocs.AsReadOnly()),

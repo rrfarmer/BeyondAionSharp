@@ -397,37 +397,6 @@ public sealed partial class StaticData
 			.ToHashSet(StringComparer.OrdinalIgnoreCase);
 	}
 
-	private static bool IsHousingObjectTemplateElement(string elementName)
-	{
-		return elementName is "jukebox"
-			or "moviejukebox"
-			or "picture"
-			or "postbox"
-			or "chair"
-			or "storage"
-			or "npc"
-			or "move_item"
-			or "use_item"
-			or "passive"
-			or "emblem";
-	}
-
-	private static byte GetHousingObjectTypeId(string elementName)
-	{
-		// Java parity: concrete model/templates/housing PlaceableHouseObject.getTypeId implementations.
-		return elementName switch
-		{
-			"use_item" => 1,
-			"storage" => 2,
-			"postbox" => 3,
-			"chair" => 5,
-			"jukebox" => 6,
-			"npc" => 7,
-			"emblem" => 11,
-			_ => 0,
-		};
-	}
-
 	private sealed class InstanceCooltimeBuilder
 	{
 		public InstanceCooltimeBuilder(int id, int worldId, string race)
