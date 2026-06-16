@@ -302,6 +302,15 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(400010000, elyExit!.GetExitWorld());
 		Assert.Equal(Model.Race.ELYOS, elyExit.GetRace());
 
+		// staticdoors/staticdoor_templates.xml: faithful StaticDoorData (Java parity DataManager.init binds
+		// data.staticDoorData). Previously hollow new() -> always empty -> StaticDoorSpawnManager spawned no doors.
+		// A known world (300040000) and its door (staticId 33, state 2) resolve; proves the parent AfterUnmarshal
+		// cascaded each StaticDoorWorld.AfterUnmarshal children-first (the per-staticId index built).
+		Assert.True(sd.StaticDoorDataDh.Size() > 0, "StaticDoorDataDh empty after boot");
+		var door33 = sd.StaticDoorDataDh.GetStaticDoor(300040000, 33);
+		Assert.NotNull(door33);
+		Assert.Equal(2, door33!.GetState());
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));

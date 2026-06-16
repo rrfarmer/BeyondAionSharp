@@ -9,7 +9,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("staticdoor_templates")]
 public class StaticDoorData
 {
-    [XmlElement("world")] private List<StaticDoorWorld> staticDoorWorlds;
+    // XmlSerializer binds only public members (JAXB read this via @XmlAccessorType(FIELD)).
+    [XmlElement("world")] public List<StaticDoorWorld> staticDoorWorlds;
 
     [XmlIgnore] private Dictionary<int, StaticDoorWorld> doorWorlds;
 
@@ -18,6 +19,9 @@ public class StaticDoorData
         doorWorlds = new Dictionary<int, StaticDoorWorld>();
         foreach (StaticDoorWorld world in staticDoorWorlds)
         {
+            // JAXB invokes afterUnmarshal on every graph node automatically; XmlSerializer does not, so cascade
+            // children-first to build each world's per-staticId index before indexing the worlds themselves.
+            world.AfterUnmarshal(this);
             if (!doorWorlds.TryAdd(world.GetWorldId(), world))
                 throw new ArgumentException("Duplicate static door world " + world.GetWorldId());
         }

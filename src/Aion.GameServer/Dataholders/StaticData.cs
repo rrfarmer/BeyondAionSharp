@@ -308,6 +308,7 @@ public sealed partial class StaticData
 	public GlobalDropData GlobalDropDataDh { get; private set; } = new();
 	public GlobalNpcExclusionData GlobalNpcExclusionDataDh { get; private set; } = new();
 	public InstanceExitData InstanceExitDataDh { get; private set; } = new();
+	public StaticDoorData StaticDoorDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -474,6 +475,12 @@ public sealed partial class StaticData
 		// InstanceExit's primitive attrs (incl. race="PC_ALL"/"ELYOS"/"ASMODIANS" -> Race by member name) bind via
 		// the now-public fields; the holder's AfterUnmarshal (computeIfAbsent index) fires inside TryLoadHolder.
 		InstanceExitDataDh = TryLoadHolder(InstanceExitDataDh, Path.Combine(staticDataDirectory, "instance_exit", "instance_exit.xml"), logger);
+		// Java imports the single file staticdoors/staticdoor_templates.xml (<staticdoor_templates> root) and binds
+		// it to StaticData.staticDoorData; feeds DataManager.STATICDOOR_DATA, read by StaticDoorSpawnManager to spawn
+		// per-world static doors. Was a hollow new() -> always empty -> no static doors spawned. StaticDoorWorld/
+		// StaticDoorTemplate primitive attrs bind via the now-public fields; StaticDoorData.AfterUnmarshal cascades
+		// each StaticDoorWorld.AfterUnmarshal children-first (XmlSerializer doesn't auto-call nested callbacks).
+		StaticDoorDataDh = TryLoadHolder(StaticDoorDataDh, Path.Combine(staticDataDirectory, "staticdoors", "staticdoor_templates.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());

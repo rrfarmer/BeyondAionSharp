@@ -7,8 +7,9 @@ namespace Aion.GameServer.Model.Templates.Staticdoor;
 [XmlType("World")]
 public class StaticDoorWorld
 {
-    [XmlAttribute("world")] private int worldId;
-    [XmlElement("staticdoor")] private List<StaticDoorTemplate> templates;
+    // XmlSerializer binds only public members (JAXB read these via @XmlAccessorType(FIELD)).
+    [XmlAttribute("world")] public int worldId;
+    [XmlElement("staticdoor")] public List<StaticDoorTemplate> templates;
 
     [XmlIgnore] private Dictionary<int, StaticDoorTemplate> templatesByStaticId;
 

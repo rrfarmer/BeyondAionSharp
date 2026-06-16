@@ -7,12 +7,13 @@ namespace Aion.GameServer.Model.Templates.Staticdoor;
 [XmlType("StaticDoor")]
 public class StaticDoorTemplate : VisibleObjectTemplate
 {
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("keyid")] private int keyId;
-    [XmlAttribute("x")] private float x;
-    [XmlAttribute("y")] private float y;
-    [XmlAttribute("z")] private float z;
-    [XmlAttribute("state")] private int state;
+    // XmlSerializer binds only public members (JAXB read these via @XmlAccessorType(FIELD)).
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("keyid")] public int keyId;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("state")] public int state;
 
     public int GetId()
     {
