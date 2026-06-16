@@ -1532,6 +1532,77 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetAiTemplate(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesAutoGroupDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("auto_group", "auto_group.xml");
+
+        // Self-contained <auto_groups> root; AfterUnmarshal indexes every template by maskId (id) and builds
+        // the recruitable npc->maskId map, then nulls the source list. Feeds DataManager.AUTO_GROUP.
+        var data = JaxbHolderLoader.LoadFromFile<AutoGroupData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <auto_group id="1" instanceId="300110000" name_id="401193" title_id="401197"
+        //   min_lvl="46" max_lvl="50" register_new="true" register_quick="true" register_group="true"
+        //   npc_ids="279055 279054 279041 279057 279039 279056"/>
+        var ag1 = data.GetTemplateByInstanceMaskId(1);
+        Assert.NotNull(ag1);
+        Assert.Equal(1, ag1!.GetMaskId());
+        Assert.Equal(300110000, ag1.GetInstanceMapId());
+        Assert.Equal(401193, ag1.GetL10nId());
+        Assert.Equal(401197, ag1.GetTitleId());
+        Assert.Equal(46, ag1.GetMinLvl());
+        Assert.Equal(50, ag1.GetMaxLvl());
+        Assert.True(ag1.CanRegisterNewEntry());
+        Assert.True(ag1.CanRegisterQuickEntry());
+        Assert.True(ag1.HasRegisterGroup());
+        // npc_ids XmlAttribute string-list (space-separated) round-trips intact (not dropped).
+        Assert.Contains(279055, ag1.GetNpcIds());
+        Assert.Equal(6, ag1.GetNpcIds().Count);
+
+        Assert.Null(data.GetTemplateByInstanceMaskId(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesRecipeDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("recipe", "recipe_templates.xml");
+
+        // Self-contained <recipe_templates> root; AfterUnmarshal indexes by id + collects autolearn recipes,
+        // then nulls the source list. Feeds DataManager.RECIPE_DATA.
+        var data = JaxbHolderLoader.LoadFromFile<RecipeData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <recipe_template id="155000001" nameid="730278" skillid="40009" race="ELYOS"
+        //   skillpoint="1" dp="200" autolearn="1" productid="152000401" quantity="3">
+        //   <components_data><component quantity="1" itemid="152000901"/></components_data>
+        var r = data.GetRecipeTemplateById(155000001);
+        Assert.NotNull(r);
+        Assert.Equal(155000001, r!.GetId());
+        Assert.Equal(730278, r.GetL10nId());
+        Assert.Equal(40009, r.GetSkillId());
+        Assert.Equal(Model.Race.ELYOS, r.GetRace());
+        Assert.Equal(1, r.GetSkillpoint());
+        Assert.Equal(200, r.GetDp());
+        Assert.Equal(1, r.GetAutoLearn());
+        Assert.Equal(152000401, r.GetProductId());
+        Assert.Equal(3, r.GetQuantity());
+
+        // Nested <components_data>/<component> must NOT be dropped.
+        var comps = r.GetComponents();
+        Assert.Single(comps);
+        var component = Assert.Single(comps[0].GetComponent());
+        Assert.Equal(152000901, component.GetItemId());
+        Assert.Equal(1, component.GetQuantity());
+
+        // Nullable @XmlAttribute (max_production_count absent on this row) -> null via string proxy.
+        Assert.Null(r.GetMaxProductionCount());
+
+        Assert.Null(data.GetRecipeTemplateById(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

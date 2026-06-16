@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("auto_groups")]
 public class AutoGroupData
 {
-    [XmlElement("auto_group")] protected List<AutoGroup> autoGroup;
+    [XmlElement("auto_group")] public List<AutoGroup> autoGroup;
 
     [XmlIgnore] private readonly Dictionary<int, AutoGroup> autoGroupByInstanceId = new();
     [XmlIgnore] private readonly Dictionary<int, List<int>> recruitableInstanceMaskIdByPortalNpc = new();

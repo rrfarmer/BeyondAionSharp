@@ -167,6 +167,20 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(aiSummon);
 		Assert.Equal(280747, aiSummon!.GetSummons().GetPercentage()[0].GetSummons()[0].GetNpcId());
 
+		// AUTO_GROUP: faithful AutoGroupData loads auto_group/auto_group.xml at boot.
+		Assert.True(sd.AutoGroupDataDh.Size() > 0, "AutoGroupDataDh empty after boot");
+		var ag1 = sd.AutoGroupDataDh.GetTemplateByInstanceMaskId(1);
+		Assert.NotNull(ag1);
+		Assert.Equal(300110000, ag1!.GetInstanceMapId());
+		Assert.Contains(279055, ag1.GetNpcIds());
+
+		// RECIPE_DATA: faithful RecipeData loads recipe/recipe_templates.xml at boot.
+		Assert.True(sd.RecipeDataDh.Size() > 0, "RecipeDataDh empty after boot");
+		var recipe1 = sd.RecipeDataDh.GetRecipeTemplateById(155000001);
+		Assert.NotNull(recipe1);
+		Assert.Equal(152000401, recipe1!.GetProductId());
+		Assert.Equal(152000901, recipe1.GetComponents()[0].GetComponent()[0].GetItemId());
+
 		var absStats1 = sd.AbsoluteStatsDataDh.GetTemplate(1);
 		Assert.NotNull(absStats1);
 		Assert.True(absStats1!.GetModifiers().Count > 1, "AbsoluteStats modifiers dropped at boot");

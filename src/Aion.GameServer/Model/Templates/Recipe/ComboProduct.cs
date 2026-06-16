@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates.Recipe;
 [XmlType("ComboProduct")]
 public class ComboProduct
 {
-    [XmlAttribute("itemid")] protected int itemid;
+    [XmlAttribute("itemid")] public int itemid;
 
     /// <returns>the itemid</returns>
     public int GetItemId()

@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Recipe;
 [XmlType("ComponentsData")]
 public class ComponentsData
 {
-    [XmlElement("component")] protected List<Component> component;
+    [XmlElement("component")] public List<Component> component;
 
     public List<Component> GetComponent()
     {

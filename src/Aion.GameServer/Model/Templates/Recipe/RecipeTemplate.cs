@@ -9,21 +9,46 @@ namespace Aion.GameServer.Model.Templates.Recipe;
 [XmlType("RecipeTemplate")]
 public class RecipeTemplate : IL10n
 {
-    [XmlElement("components_data")] protected List<ComponentsData> componentsData;
-    [XmlElement("comboproduct")] protected List<ComboProduct> comboproduct;
-    [XmlAttribute("max_production_count")] protected int? maxProductionCount;
-    [XmlAttribute("craft_delay_time")] protected int? craftDelayTime;
-    [XmlAttribute("craft_delay_id")] protected int? craftDelayId;
-    [XmlAttribute("quantity")] protected int quantity;
-    [XmlAttribute("productid")] protected int productid;
-    [XmlAttribute("autolearn")] protected int autolearn;
-    [XmlAttribute("dp")] protected int dp;
-    [XmlAttribute("skillpoint")] protected int skillpoint;
-    [XmlAttribute("race")] protected Race race;
-    [XmlAttribute("skillid")] protected int skillid;
-    [XmlAttribute("itemid")] protected int itemid;
-    [XmlAttribute("nameid")] protected int nameid;
-    [XmlAttribute("id")] protected int id;
+    [XmlElement("components_data")] public List<ComponentsData> componentsData;
+    [XmlElement("comboproduct")] public List<ComboProduct> comboproduct;
+
+    // JAXB @XmlAttribute Integer (nullable) — XmlSerializer cannot bind int?; round-trip through a string proxy
+    // (absent attribute -> null, 1:1 with JAXB).
+    [XmlIgnore] protected int? maxProductionCount;
+    [XmlIgnore] protected int? craftDelayTime;
+    [XmlIgnore] protected int? craftDelayId;
+
+    [XmlAttribute("max_production_count")]
+    public string MaxProductionCountRaw
+    {
+        get => maxProductionCount?.ToString();
+        set => maxProductionCount = value == null ? null : int.Parse(value);
+    }
+
+    [XmlAttribute("craft_delay_time")]
+    public string CraftDelayTimeRaw
+    {
+        get => craftDelayTime?.ToString();
+        set => craftDelayTime = value == null ? null : int.Parse(value);
+    }
+
+    [XmlAttribute("craft_delay_id")]
+    public string CraftDelayIdRaw
+    {
+        get => craftDelayId?.ToString();
+        set => craftDelayId = value == null ? null : int.Parse(value);
+    }
+
+    [XmlAttribute("quantity")] public int quantity;
+    [XmlAttribute("productid")] public int productid;
+    [XmlAttribute("autolearn")] public int autolearn;
+    [XmlAttribute("dp")] public int dp;
+    [XmlAttribute("skillpoint")] public int skillpoint;
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("skillid")] public int skillid;
+    [XmlAttribute("itemid")] public int itemid;
+    [XmlAttribute("nameid")] public int nameid;
+    [XmlAttribute("id")] public int id;
 
     /// <summary>
     /// Gets the value of the component property. This accessor method returns a reference to the live list, not a snapshot.

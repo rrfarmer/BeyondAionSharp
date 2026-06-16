@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("recipe_templates")]
 public class RecipeData
 {
-    [XmlElement("recipe_template")] protected List<RecipeTemplate> list;
+    [XmlElement("recipe_template")] public List<RecipeTemplate> list;
 
     [XmlIgnore] private readonly Dictionary<int, RecipeTemplate> recipeData = new();
     [XmlIgnore] private readonly List<RecipeTemplate> autoLearnRecipes = new();

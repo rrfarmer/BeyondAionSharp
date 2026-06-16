@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Recipe;
 [XmlType("Component")]
 public class Component
 {
-    [XmlAttribute("itemid")] protected int itemid;
-    [XmlAttribute("quantity")] protected int quantity;
+    [XmlAttribute("itemid")] public int itemid;
+    [XmlAttribute("quantity")] public int quantity;
 
     public int GetItemId()
     {

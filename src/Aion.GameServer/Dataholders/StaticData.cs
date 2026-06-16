@@ -312,11 +312,11 @@ public sealed partial class StaticData
 	public ItemData ItemDataDh { get; private set; } = new();
 	public SkillData SkillDataDh { get; private set; } = new();
 	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();
-	public TradeListData TradeListDataDh { get; } = new();
-	public RecipeData RecipeDataDh { get; } = new();
-	public PetData PetDataDh { get; } = new();
-	public WalkerData WalkerDataDh { get; } = new();
-	public AutoGroupData AutoGroupDataDh { get; } = new();
+	public TradeListData TradeListDataDh { get; private set; } = new();
+	public RecipeData RecipeDataDh { get; private set; } = new();
+	public PetData PetDataDh { get; private set; } = new();
+	public WalkerData WalkerDataDh { get; private set; } = new();
+	public AutoGroupData AutoGroupDataDh { get; private set; } = new();
 	public ItemSetData ItemSetDataDh { get; private set; } = new();
 	public RideData RideDataDh { get; private set; } = new();
 	public GoodsListData GoodsListDataDh { get; private set; } = new();
@@ -405,6 +405,10 @@ public sealed partial class StaticData
 		// Standalone <quests> root (~82k lines, self-contained, no imports / no IDREF resolution): the faithful
 		// QuestsData holder feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
 		Quests = TryLoadHolder(Quests, Path.Combine(staticDataDirectory, "quest_data", "quest_data.xml"), logger);
+		// Standalone <auto_groups> root: faithful AutoGroupData feeds DataManager.AUTO_GROUP (instance auto-group templates).
+		AutoGroupDataDh = TryLoadHolder(AutoGroupDataDh, Path.Combine(staticDataDirectory, "auto_group", "auto_group.xml"), logger);
+		// Standalone <recipe_templates> root: faithful RecipeData feeds DataManager.RECIPE_DATA (crafting recipes).
+		RecipeDataDh = TryLoadHolder(RecipeDataDh, Path.Combine(staticDataDirectory, "recipe", "recipe_templates.xml"), logger);
 	}
 
 	private static AIData TryLoadAiData(string aiDirectory, Microsoft.Extensions.Logging.ILogger? logger)

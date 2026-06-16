@@ -10,15 +10,15 @@ namespace Aion.GameServer.Model.Autogroup;
 [XmlType("AutoGroup")]
 public class AutoGroup : L10n
 {
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("instanceId")] private int instanceId;
-    [XmlAttribute("name_id")] private int nameId;
-    [XmlAttribute("title_id")] private int titleId;
-    [XmlAttribute("min_lvl")] private int minLvl;
-    [XmlAttribute("max_lvl")] private int maxLvl;
-    [XmlAttribute("register_quick")] private bool registerQuick;
-    [XmlAttribute("register_group")] private bool registerGroup;
-    [XmlAttribute("register_new")] private bool registerNew;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("instanceId")] public int instanceId;
+    [XmlAttribute("name_id")] public int nameId;
+    [XmlAttribute("title_id")] public int titleId;
+    [XmlAttribute("min_lvl")] public int minLvl;
+    [XmlAttribute("max_lvl")] public int maxLvl;
+    [XmlAttribute("register_quick")] public bool registerQuick;
+    [XmlAttribute("register_group")] public bool registerGroup;
+    [XmlAttribute("register_new")] public bool registerNew;
 
     private List<int> npcIds;
 
