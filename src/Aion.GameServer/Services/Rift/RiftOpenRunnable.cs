@@ -5,7 +5,7 @@ using Aion.GameServer.Utils;
 namespace Aion.GameServer.Services.Rift;
 
 /// <summary>Java parity: services/rift/RiftOpenRunnable. Java Runnable → plain class with Run(); schedule(Runnable,ms)→Schedule(ct-lambda, TimeSpan).</summary>
-public class RiftOpenRunnable
+public class RiftOpenRunnable : Runnable
 {
     private readonly int worldId;
     private readonly bool guards;

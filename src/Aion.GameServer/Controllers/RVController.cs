@@ -42,7 +42,7 @@ public class RVController : NpcController
         this.minLevel = riftTemplate.GetMinLevel();
         this.maxLevel = riftTemplate.GetMaxLevel();
         this.deSpawnedTime = ((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000))
-            + (isVortex ? VortexService.GetInstance().GetDuration() * 3600 : RiftService.GetInstance().GetDuration() * 3600);
+            + (isVortex ? VortexService.GetInstance().GetDuration() * 3600 : global::Aion.GameServer.Services.RiftService.GetInstance().GetDuration() * 3600);
         this.isInvasion = riftTemplate.IsInvasionRift();
 
         if (slave != null) // master rift should be created
@@ -62,7 +62,7 @@ public class RVController : NpcController
         this.minLevel = riftTemplate.GetMinLevel();
         this.maxLevel = riftTemplate.GetMaxLevel();
         this.deSpawnedTime = ((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000))
-            + (isVortex ? VortexService.GetInstance().GetDuration() * 3600 : RiftService.GetInstance().GetDuration() * 3600);
+            + (isVortex ? VortexService.GetInstance().GetDuration() * 3600 : global::Aion.GameServer.Services.RiftService.GetInstance().GetDuration() * 3600);
         this.isInvasion = riftTemplate.IsInvasionRift();
 
         if (slave != null) // master rift should be created
