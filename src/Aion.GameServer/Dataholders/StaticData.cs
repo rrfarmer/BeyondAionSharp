@@ -20,7 +20,6 @@ public sealed partial class StaticData
 		FlightZoneTable flightZones,
 		CreaturePvpZoneTable creaturePvpZones,
 		PlayerExperienceTable playerExperienceTable,
-		ItemTemplateTable itemTemplates,
 		CosmeticItemTable cosmeticItems,
 		DecomposableItemTable decomposableItems,
 		AssemblyItemTable assemblyItems,
@@ -69,7 +68,6 @@ public sealed partial class StaticData
 		FlightZones = flightZones;
 		CreaturePvpZones = creaturePvpZones;
 		PlayerExperienceTable = playerExperienceTable;
-		ItemTemplates = itemTemplates;
 		CosmeticItems = cosmeticItems;
 		DecomposableItems = decomposableItems;
 		AssemblyItems = assemblyItems;
@@ -128,8 +126,6 @@ public sealed partial class StaticData
 	public CreaturePvpZoneTable CreaturePvpZones { get; }
 
 	public PlayerExperienceTable PlayerExperienceTable { get; }
-
-	public ItemTemplateTable ItemTemplates { get; }
 
 	public CosmeticItemTable CosmeticItems { get; }
 
@@ -762,7 +758,6 @@ public sealed partial class StaticData
 		var flightZones = new List<FlightZoneSummary>();
 		var creaturePvpZones = new List<CreaturePvpZoneSummary>();
 		var experience = new List<long>();
-		var itemTemplates = new List<ItemTemplateSummary>();
 		var cosmeticItems = new List<CosmeticItemSummary>();
 		var decomposableItems = new List<DecomposableItemSummary>();
 		var assemblyItems = new List<AssemblyItemSummary>();
@@ -809,12 +804,10 @@ public sealed partial class StaticData
 		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var legionDominions = new List<LegionDominionLocationSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
-		var learnableEmotionIds = new HashSet<int>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
 		var spawnLocationsByRace = new Dictionary<string, PlayerSpawnLocation>(StringComparer.OrdinalIgnoreCase);
 		string? currentPlayerCreationClass = null;
 		InstanceCooltimeBuilder? currentInstanceCooltime = null;
-		ItemTemplateBuilder? currentItemTemplate = null;
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
 		EnchantGroupBuilder? currentEnchantGroup = null;
@@ -889,12 +882,6 @@ public sealed partial class StaticData
 					currentInstanceCooltime = null;
 				}
 
-				if (reader.Depth == 2 && reader.LocalName == "item_template" && currentItemTemplate != null)
-				{
-					itemTemplates.Add(currentItemTemplate.ToSummary());
-					currentItemTemplate = null;
-				}
-
 				if (reader.Depth == 2 && reader.LocalName == "expansion_npc" && currentStorageExpansionNpcIds != null && currentStorageExpansionPrices != null)
 				{
 					var summary = new StorageExpansionTemplateSummary(
@@ -961,9 +948,6 @@ public sealed partial class StaticData
 
 				if (reader.Depth == 3 && currentItemSet != null && reader.LocalName is "partbonus" or "fullbonus")
 					currentItemSet.EndBonus();
-
-				if (reader.Depth == 4 && currentItemTemplate != null && IsStatModifierElement(reader.LocalName))
-					currentItemTemplate.EndModifier();
 
 				if (reader.Depth == 2 && reader.LocalName == "enchant_list" && currentEnchantGroup != null)
 				{
@@ -2057,51 +2041,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "item_template")
-			{
-				var requiredLevels = ReadLevelRestrictions(reader.GetAttribute("restrict"));
-				// Java parity: model/templates/item/ItemTemplate.weaponBoost feeds PlayerGameStats.getPowerShardDamage.
-				currentItemTemplate = new ItemTemplateBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					reader.GetAttribute("name") ?? string.Empty,
-					ReadIntAttribute(reader, "desc"),
-					ReadIntAttribute(reader, "mask"),
-					ReadIntAttribute(reader, "level"),
-					reader.GetAttribute("item_group") ?? string.Empty,
-					reader.GetAttribute("item_type") ?? string.Empty,
-					reader.GetAttribute("quality") ?? string.Empty,
-					reader.GetAttribute("race") ?? string.Empty,
-					reader.GetAttribute("attack_type") ?? string.Empty,
-					ReadOptionalIntAttribute(reader, "max_stack_count", 1),
-					ReadLongAttribute(reader, "price"),
-					GetItemGroupSlots(reader.GetAttribute("item_group")),
-					ReadIntAttribute(reader, "m_slots"),
-					ReadIntAttribute(reader, "s_slots"),
-					requiredLevels,
-					ReadLevelRestrictions(reader.GetAttribute("restrict_max")),
-					ReadIntAttribute(reader, "activate_count"),
-					ReadIntAttribute(reader, "expire_time"),
-					ReadIntAttribute(reader, "enchant_type"),
-					ReadIntAttribute(reader, "max_enchant"),
-					ReadIntAttribute(reader, "max_enchant_bonus"),
-					ReadBoolAttribute(reader, "can_exceed_enchant"),
-					reader.GetAttribute("exceed_enchant_skill") ?? string.Empty,
-					ReadIntAttribute(reader, "option_slot_bonus"),
-					ReadIntAttribute(reader, "rnd_bonus"),
-					ReadOptionalIntAttribute(reader, "rnd_count", -1),
-					reader.GetAttribute("enchant_name") ?? string.Empty,
-					reader.GetAttribute("tempering_name") ?? string.Empty,
-					ReadIntAttribute(reader, "max_tampering"),
-					ReadIntAttribute(reader, "weapon_boost"));
-				if (reader.IsEmptyElement)
-				{
-					itemTemplates.Add(currentItemTemplate.ToSummary());
-					currentItemTemplate = null;
-				}
-
-				continue;
-			}
-
 			if (reader.Depth == 2
 				&& reader.LocalName == "expansion_npc"
 				&& elementPath.GetValueOrDefault(1) is "cube_expander" or "warehouse_expander")
@@ -2188,23 +2127,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 3 && reader.LocalName == "weapon_stats" && currentItemTemplate != null)
-			{
-				currentItemTemplate.WeaponStats = new ItemWeaponStats(
-					ReadIntAttribute(reader, "min_damage"),
-					ReadIntAttribute(reader, "max_damage"),
-					ReadIntAttribute(reader, "attack_speed"),
-					ReadIntAttribute(reader, "critical"),
-					ReadIntAttribute(reader, "physical_accuracy"),
-					ReadIntAttribute(reader, "parry"),
-					ReadIntAttribute(reader, "magical_accuracy"),
-					ReadIntAttribute(reader, "boost_magical_skill"),
-					ReadIntAttribute(reader, "attack_range"),
-					ReadIntAttribute(reader, "hit_count"),
-					ReadIntAttribute(reader, "reduce_max"));
-				continue;
-			}
-
 			if (reader.LocalName == "ride_info")
 			{
 				rideInfos.Add(
@@ -2216,43 +2138,6 @@ public sealed partial class StaticData
 						ReadFloatAttribute(reader, "sprint_speed"),
 						ReadIntAttribute(reader, "start_fp"),
 						ReadIntAttribute(reader, "cost_fp")));
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "godstone" && currentItemTemplate != null)
-			{
-				currentItemTemplate.GodstoneInfo = new ItemGodstoneInfo(
-					ReadIntAttribute(reader, "skillid"),
-					ReadIntAttribute(reader, "skilllvl"),
-					ReadIntAttribute(reader, "probability"),
-					ReadIntAttribute(reader, "probabilityleft"),
-					ReadIntAttribute(reader, "breakprob"),
-					ReadIntAttribute(reader, "nonbreakcount"));
-				continue;
-			}
-
-			if (reader.Depth == 4
-				&& currentItemTemplate != null
-				&& IsStatModifierElement(reader.LocalName)
-				&& elementPath.TryGetValue(reader.Depth - 1, out var modifierParent)
-				&& modifierParent == "modifiers")
-			{
-				currentItemTemplate.AddModifier(
-					new ItemStatModifier(
-						reader.LocalName,
-						reader.GetAttribute("name") ?? string.Empty,
-						ReadIntAttribute(reader, "value"),
-						ReadBoolAttribute(reader, "bonus")));
-				continue;
-			}
-
-			if (reader.Depth == 6
-				&& currentItemTemplate != null
-				&& reader.LocalName == "charge"
-				&& elementPath.TryGetValue(reader.Depth - 1, out var conditionParent)
-				&& conditionParent == "conditions")
-			{
-				currentItemTemplate.SetCurrentModifierChargeCondition(ReadIntAttribute(reader, "value"));
 				continue;
 			}
 
@@ -2292,128 +2177,6 @@ public sealed partial class StaticData
 					new EnchantStatSummary(
 						reader.GetAttribute("stat") ?? string.Empty,
 						ReadIntAttribute(reader, "value")));
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "disposition" && currentItemTemplate != null)
-			{
-				currentItemTemplate.DispositionItemId = ReadIntAttribute(reader, "id");
-				currentItemTemplate.DispositionItemCount = ReadIntAttribute(reader, "count");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "inventory" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/ExtraInventory id used by Storage.isFullSpecialCube.
-				currentItemTemplate.ExtraInventoryId = ReadIntAttribute(reader, "id");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "acquisition" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/Acquisition is consumed by AP extraction and TradeList.calculateAbyssRewardBuyList.
-				currentItemTemplate.RequiredAbyssPoints = ReadIntAttribute(reader, "ap");
-				currentItemTemplate.AcquisitionType = reader.GetAttribute("type") ?? string.Empty;
-				currentItemTemplate.AcquisitionItemId = ReadIntAttribute(reader, "item");
-				currentItemTemplate.AcquisitionItemCount = ReadIntAttribute(reader, "count");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "ride" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/RideAction.npcId.
-				currentItemTemplate.RideNpcId = ReadIntAttribute(reader, "npc_id");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "toypetspawn" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/ToyPetSpawnAction.npcid/time.
-				currentItemTemplate.ToyPetSpawnNpcId = ReadIntAttribute(reader, "npcid");
-				currentItemTemplate.ToyPetSpawnTime = ReadIntAttribute(reader, "time");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "improve" && currentItemTemplate != null)
-			{
-				currentItemTemplate.Improvement = new ItemImprovement(
-					ReadIntAttribute(reader, "way"),
-					ReadIntAttribute(reader, "level"),
-					ReadIntAttribute(reader, "burn_attack"),
-					ReadIntAttribute(reader, "burn_defend"),
-					ReadIntAttribute(reader, "price1"),
-					ReadIntAttribute(reader, "price2"));
-				currentItemTemplate.ConditioningMaxLevel = currentItemTemplate.Improvement.Level;
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "idian" && currentItemTemplate != null)
-			{
-				currentItemTemplate.IdianInfo = new ItemIdianInfo(
-					ReadIntAttribute(reader, "burn_attack"),
-					ReadIntAttribute(reader, "burn_defend"));
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "stigma" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/Stigma.afterUnmarshal gain skill groups.
-				var gainSkillGroup1 = reader.GetAttribute("gain_skill_group1") ?? string.Empty;
-				var gainSkillGroup2 = reader.GetAttribute("gain_skill_group2") ?? string.Empty;
-				currentItemTemplate.StigmaInfo = new ItemStigmaInfo(
-					new[] { gainSkillGroup1, gainSkillGroup2 }
-						.Where(group => !string.IsNullOrWhiteSpace(group))
-						.ToArray(),
-					ReadBoolAttribute(reader, "chargeable"));
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "uselimits" && currentItemTemplate != null)
-			{
-				currentItemTemplate.GenderPermitted = reader.GetAttribute("gender") ?? string.Empty;
-				currentItemTemplate.MinRank = ReadOptionalIntAttribute(reader, "rank_min", 1);
-				currentItemTemplate.MaxRank = ReadOptionalIntAttribute(reader, "rank_max", 18);
-				currentItemTemplate.RecommendRank = ReadIntAttribute(reader, "recommend_rank");
-				currentItemTemplate.UseDelayId = ReadIntAttribute(reader, "usedelayid");
-				currentItemTemplate.UseDelayMillis = ReadIntAttribute(reader, "usedelay");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "polish" && currentItemTemplate != null)
-			{
-				currentItemTemplate.PolishSetId = ReadIntAttribute(reader, "set_id");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "charge" && currentItemTemplate != null)
-			{
-				currentItemTemplate.ChargeActionMaxLevel = ReadIntAttribute(reader, "capacity");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "enchant" && currentItemTemplate != null)
-			{
-				currentItemTemplate.EnchantAction = new ItemEnchantActionInfo(
-					ReadIntAttribute(reader, "count"),
-					ReadIntAttribute(reader, "min_level"),
-					ReadIntAttribute(reader, "max_level"),
-					ReadBoolAttribute(reader, "manastone_only"),
-					ReadFloatAttribute(reader, "chance"));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "craftlearn" && currentItemTemplate != null)
-			{
-				currentItemTemplate.CraftLearnRecipeId = ReadIntAttribute(reader, "recipeid");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "skilllearn" && currentItemTemplate != null)
-			{
-				currentItemTemplate.SkillLearnAction = new ItemSkillLearnActionInfo(
-					ReadIntAttribute(reader, "skillid"),
-					ReadIntAttribute(reader, "level"),
-					reader.GetAttribute("class") ?? string.Empty);
 				continue;
 			}
 
@@ -2491,166 +2254,6 @@ public sealed partial class StaticData
 					ReadPetFunctionTypeAttribute(reader.GetAttribute("type")),
 					ReadIntAttribute(reader, "slots"),
 					ReadIntAttribute(reader, "rate_price")));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "queststart" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/QuestStartAction.questid.
-				currentItemTemplate.QuestStartQuestId = ReadIntAttribute(reader, "questid");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "expandinventory" && currentItemTemplate != null)
-			{
-				currentItemTemplate.ExpandInventoryAction = new ItemExpandInventoryActionInfo(
-					ReadIntAttribute(reader, "level"),
-					reader.GetAttribute("storage") ?? string.Empty);
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "expextract" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/ExpExtractAction item_id/percent/cost metadata.
-				currentItemTemplate.ExpExtractAction = new ItemExpExtractActionInfo(
-					ReadIntAttribute(reader, "item_id"),
-					ReadBoolAttribute(reader, "percent"),
-					ReadLongAttribute(reader, "cost"));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "extract" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/ExtractAction marker.
-				currentItemTemplate.HasExtractAction = true;
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "apextract" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/ApExtractAction target/rate metadata.
-				currentItemTemplate.ApExtractAction = new ItemApExtractActionInfo(
-					ReadFloatAttribute(reader, "rate"),
-					reader.GetAttribute("target") ?? string.Empty);
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "dye" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/DyeAction color/minutes metadata.
-				var color = reader.GetAttribute("color");
-				currentItemTemplate.DyeAction = new ItemDyeActionInfo(
-					string.Equals(color, "no", StringComparison.Ordinal)
-						? null
-						: int.Parse(color ?? "0", NumberStyles.HexNumber, CultureInfo.InvariantCulture),
-					ReadIntAttribute(reader, "minutes"),
-					reader.GetAttribute("minutes") != null);
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "animation" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/AnimationAddAction motion-slot metadata.
-				currentItemTemplate.AnimationAction = new ItemAnimationActionInfo(
-					ReadNullableIntAttribute(reader, "idle"),
-					ReadNullableIntAttribute(reader, "run"),
-					ReadNullableIntAttribute(reader, "jump"),
-					ReadNullableIntAttribute(reader, "rest"),
-					ReadNullableIntAttribute(reader, "shop"),
-					ReadIntAttribute(reader, "minutes"));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "remodel" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/RemodelAction type/minutes metadata.
-				currentItemTemplate.RemodelAction = new ItemRemodelActionInfo(
-					ReadIntAttribute(reader, "type"),
-					ReadIntAttribute(reader, "minutes"));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "houseobject" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/SummonHouseObjectAction id consumed by CM_HOUSE_EDIT action 3.
-				currentItemTemplate.HasHouseObjectAction = true;
-				currentItemTemplate.HouseObjectTemplateId = ReadIntAttribute(reader, "id");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "housedeco" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/DecorateAction allows an absent id, yielding template 0.
-				currentItemTemplate.HasHouseDecorateAction = true;
-				currentItemTemplate.HouseDecorateTemplateId = ReadIntAttribute(reader, "id");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "decompose" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/DecomposeAction marker.
-				currentItemTemplate.HasDecomposeAction = true;
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "composition" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/CompositionAction marker used by CM_COMPOSITE_STONES.
-				currentItemTemplate.HasCompositionAction = true;
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "tuning" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/TuningAction target/no_reduce metadata.
-				currentItemTemplate.TuningAction = new ItemTuningActionInfo(
-					ParseItemActionUseTargetType(reader.GetAttribute("target") ?? throw new FormatException("Missing required attribute 'target'.")),
-					ReadBoolAttribute(reader, "no_reduce"));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "tampering" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/TamperingAction marker.
-				currentItemTemplate.HasTamperingAction = true;
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "assemble" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/AssemblyItemAction item attribute.
-				currentItemTemplate.AssemblyItemId = ReadIntAttribute(reader, "item");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "cosmetic" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/CosmeticItemAction cosmetic-name metadata.
-				currentItemTemplate.CosmeticActionName = reader.GetAttribute("name") ?? string.Empty;
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "titleadd" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/TitleAddAction titleid/minutes metadata.
-				currentItemTemplate.HasTitleAddAction = true;
-				currentItemTemplate.TitleAddTitleId = ReadIntAttribute(reader, "titleid");
-				if (reader.GetAttribute("minutes") != null)
-				{
-					currentItemTemplate.HasTitleAddMinutes = true;
-					currentItemTemplate.TitleAddMinutes = ReadIntAttribute(reader, "minutes");
-				}
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "learnemotion" && currentItemTemplate != null)
-			{
-				// Java parity: model/templates/item/actions/EmotionLearnAction.afterUnmarshal.
-				var emotionId = ReadRequiredIntAttribute(reader, "emotionid");
-				learnableEmotionIds.Add(emotionId);
-				currentItemTemplate.HasEmotionLearnAction = true;
-				currentItemTemplate.EmotionLearnId = emotionId;
-				currentItemTemplate.EmotionLearnMinutes = ReadIntAttribute(reader, "minutes");
 				continue;
 			}
 
@@ -2857,7 +2460,6 @@ public sealed partial class StaticData
 			new FlightZoneTable(flightZones.AsReadOnly()),
 			new CreaturePvpZoneTable(creaturePvpZones.AsReadOnly()),
 			new PlayerExperienceTable(experience.AsReadOnly()),
-			new ItemTemplateTable(itemTemplates.AsReadOnly(), learnableEmotionIds),
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
 			new DecomposableItemTable(decomposableItems.AsReadOnly()),
 			new AssemblyItemTable(assemblyItems.AsReadOnly()),

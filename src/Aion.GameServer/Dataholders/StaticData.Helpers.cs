@@ -186,22 +186,6 @@ public sealed partial class StaticData
 		};
 	}
 
-	private static ItemActionUseTargetType ParseItemActionUseTargetType(string value)
-	{
-		// Java parity: model/templates/item/actions/UseTarget.fromValue.
-		return value switch
-		{
-			"ACCESSORY" => ItemActionUseTargetType.Accessory,
-			"ARMOR" => ItemActionUseTargetType.Armor,
-			"EQUIPMENT" => ItemActionUseTargetType.Equipment,
-			"WEAPON" => ItemActionUseTargetType.Weapon,
-			"WING" => ItemActionUseTargetType.Wing,
-			"OTHER" => ItemActionUseTargetType.Other,
-			"ALL" => ItemActionUseTargetType.All,
-			_ => throw new FormatException($"Unexpected UseTarget value '{value}'."),
-		};
-	}
-
 	private static DateTime? ReadDateTimeAttribute(XmlReader reader, string attributeName)
 	{
 		return DateTime.TryParse(
@@ -250,23 +234,6 @@ public sealed partial class StaticData
 	{
 		// Java parity: model/templates/housing/HousingLand.getDefaultBuilding defaults to the first listed building.
 		return defaultBuildingIds.GetValueOrDefault(landId, firstBuildingIds.GetValueOrDefault(landId));
-	}
-
-	private static IReadOnlyDictionary<string, int> ReadLevelRestrictions(string? restrict)
-	{
-		// Java parity: model/templates/item/ItemTemplate.levelRestrictions ordinal order from PlayerClass.
-		if (string.IsNullOrWhiteSpace(restrict))
-			return new Dictionary<string, int>(StringComparer.Ordinal);
-
-		var restrictions = restrict.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		var levelRestrictions = new Dictionary<string, int>(StringComparer.Ordinal);
-		for (var i = 0; i < restrictions.Length && i < PlayerClasses.Length; i++)
-		{
-			if (int.TryParse(restrictions[i], out var requiredLevel) && requiredLevel > 0)
-				levelRestrictions[PlayerClasses[i]] = requiredLevel;
-		}
-
-		return levelRestrictions;
 	}
 
 	private static IReadOnlySet<string> ReadPlayerClasses(string? playerClasses)
@@ -329,76 +296,6 @@ public sealed partial class StaticData
 	{
 		return float.TryParse(reader.GetAttribute(attributeName), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) ? parsed : 0;
 	}
-
-	private static long GetItemGroupSlots(string? itemGroup)
-	{
-		// Java parity: model/templates/item/ItemTemplate.item_group -> model/items/ItemSlot mask.
-		return itemGroup?.ToUpperInvariant() switch
-		{
-			"NOWEAPON" or "SWORD" or "GREATSWORD" or "DAGGER" or "MACE" or "ORB" or "SPELLBOOK" or "POLEARM" or "STAFF" or "BOW"
-				or "HARP" or "GUN" or "CANNON" or "KEYBLADE" or "TOOLRODS" or "TOOLPICKS" => MainHand | SubHand,
-			"NPC_MACE" or "TOOLHOES" => MainHand,
-			"SHIELD" or "CL_SHIELD" => SubHand,
-			"TORSO" or "RB_TORSO" or "CL_TORSO" or "LT_TORSO" or "CH_TORSO" or "PL_TORSO" => Torso,
-			"GLOVE" or "RB_GLOVE" or "CL_GLOVE" or "LT_GLOVE" or "CH_GLOVE" or "PL_GLOVE" => Gloves,
-			"SHOULDER" or "RB_SHOULDER" or "CL_SHOULDER" or "LT_SHOULDER" or "CH_SHOULDER" or "PL_SHOULDER" => Shoulder,
-			"PANTS" or "RB_PANTS" or "CL_PANTS" or "LT_PANTS" or "CH_PANTS" or "PL_PANTS" => Pants,
-			"SHOES" or "RB_SHOES" or "CL_SHOES" or "LT_SHOES" or "CH_SHOES" or "PL_SHOES" => Boots,
-			"EARRING" => EarringsLeft | EarringsRight,
-			"RING" => RingLeft | RingRight,
-			"NECKLACE" => Necklace,
-			"BELT" => Waist,
-			"WING" => Wings,
-			"PLUME" => Plume,
-			"HEAD" or "LT_HEADS" or "CL_HEADS" => Helmet,
-			"CL_MULTISLOT" => Torso | Pants,
-			"POWER_SHARDS" => PowerShardLeft | PowerShardRight,
-			"STIGMA" => RegularStigmas | AdvancedStigmas,
-			_ => 0,
-		};
-	}
-
-	private const long MainHand = 1L;
-	private const long SubHand = 1L << 1;
-	private const long Helmet = 1L << 2;
-	private const long Torso = 1L << 3;
-	private const long Gloves = 1L << 4;
-	private const long Boots = 1L << 5;
-	private const long EarringsLeft = 1L << 6;
-	private const long EarringsRight = 1L << 7;
-	private const long RingLeft = 1L << 8;
-	private const long RingRight = 1L << 9;
-	private const long Necklace = 1L << 10;
-	private const long Shoulder = 1L << 11;
-	private const long Pants = 1L << 12;
-	private const long PowerShardRight = 1L << 13;
-	private const long PowerShardLeft = 1L << 14;
-	private const long Wings = 1L << 15;
-	private const long Waist = 1L << 16;
-	private const long Plume = 1L << 19;
-	private const long RegularStigmas = (1L << 30) | (1L << 31) | (1L << 32);
-	private const long AdvancedStigmas = (1L << 33) | (1L << 34) | (1L << 35);
-	private static readonly string[] PlayerClasses =
-	[
-		"WARRIOR",
-		"GLADIATOR",
-		"TEMPLAR",
-		"SCOUT",
-		"ASSASSIN",
-		"RANGER",
-		"MAGE",
-		"SORCERER",
-		"SPIRIT_MASTER",
-		"PRIEST",
-		"CLERIC",
-		"CHANTER",
-		"ENGINEER",
-		"RIDER",
-		"GUNNER",
-		"ARTIST",
-		"BARD",
-	];
-
 	private static async Task<IReadOnlyList<long>> LoadExperienceTableFromImportedFilesAsync(
 		IReadOnlyList<string> importedFiles,
 		CancellationToken cancellationToken)

@@ -110,28 +110,6 @@ public sealed class InventoryItem
 	public PlayerIdianStone? IdianStone { get; set; }
 }
 
-// Java parity: model/gameobjects/Item compound checks that combine template mask with instance soulbound state.
-// ItemTemplateSummary provides template-level mask properties (no instance soulbound guard).
-// These extensions compose template flags with InventoryItem.IsSoulBound for full Item.java parity.
-public static class InventoryItemExtensions
-{
-	// Java parity: Item.isTradeable() = (template.isTradeable()) && !item.isSoulBound()
-	public static bool IsTradeable(this InventoryItem item, Dataholders.ItemTemplateSummary template)
-		=> template.IsTradeable && !item.IsSoulBound;
-
-	// Java parity: Item.isStorableInAccWarehouse() = (template mask) && !item.isSoulBound()
-	public static bool IsStorableInAccountWarehouse(this InventoryItem item, Dataholders.ItemTemplateSummary template)
-		=> template.IsStorableInAccountWarehouse && !item.IsSoulBound;
-
-	// Java parity: Item.isStorableInLegWarehouse() = (template mask) && !item.isSoulBound()
-	public static bool IsStorableInLegionWarehouse(this InventoryItem item, Dataholders.ItemTemplateSummary template)
-		=> template.IsStorableInLegionWarehouse && !item.IsSoulBound;
-
-	// Java parity: Item.isLegionTradeable() = (template mask) && !item.isSoulBound()
-	public static bool IsLegionTradeable(this InventoryItem item, Dataholders.ItemTemplateSummary template)
-		=> template.IsLegionTradeable && !item.IsSoulBound;
-}
-
 // Java parity: model/items/ManaStone for item_stones category MANASTONE and FUSIONSTONE.
 public sealed record ItemStoneSocket(int ItemId, int Slot);
 
