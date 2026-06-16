@@ -38,34 +38,16 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
 			services.AddSingleton<IStaticPlaceableStateService, StaticPlaceableStateService>();
 			services.AddSingleton<WorldNpcAiStateService>();
-			services.AddSingleton<WorldNpcDropRegistrationService>();
-			services.AddSingleton<IWorldNpcDropRegistrationLookup>(
-				serviceProvider => serviceProvider.GetRequiredService<WorldNpcDropRegistrationService>());
-			services.AddSingleton<WorldNpcCustomDropService>();
-			services.AddSingleton<WorldNpcQuestDropService>();
-			services.AddSingleton<WorldNpcGlobalDropService>();
-			services.AddSingleton<WorldNpcEventDropRuleService>();
-			services.AddSingleton<WorldNpcDropModifierService>();
-			services.AddSingleton<WorldNpcDropRegistrationWorkflowService>();
-			services.AddSingleton<WorldNpcDeathDropWorkflowService>(
-				serviceProvider => new WorldNpcDeathDropWorkflowService(
-					serviceProvider.GetRequiredService<WorldNpcSpawnService>(),
-					serviceProvider.GetRequiredService<WorldNpcDropRegistrationWorkflowService>(),
-					serviceProvider.GetService<WorldNpcAiStateService>(),
-					(npc, _) =>
-						ValueTask.FromResult(
-							PlayerKiskDeathCleanupService.TryRemoveDiedKisk(
-								npc,
-								serviceProvider.GetRequiredService<GameWorld>(),
-								serviceProvider.GetRequiredService<GameServerRuntimeContext>().Kisks,
-								serviceProvider.GetService<IDFactory>())),
-					(despawn, cancellationToken) =>
-						PlayerKiskRemovalRuntimeCleanupService.ApplyAsync(
-							despawn,
-							serviceProvider.GetRequiredService<GameServerRuntimeContext>(),
-							serviceProvider.GetRequiredService<GameWorld>(),
-							cancellationToken,
-							serviceProvider.GetService<CreaturePvpZoneCounterService>())));
+			// Reworked WorldNpc drop/loot mini-web (WorldNpcDropRegistrationService[+IWorldNpcDropRegistrationLookup
+			// binding]/WorldNpcCustomDropService/WorldNpcQuestDropService/WorldNpcGlobalDropService/
+			// WorldNpcEventDropRuleService/WorldNpcDropModifierService/WorldNpcDropRegistrationWorkflowService/
+			// WorldNpcDeathDropWorkflowService/WorldNpcLootService/WorldNpcLootBroadcastService) retired: dead
+			// closed graph referenced only by Program.cs DI + each other. Faithful home is DropService. The 3
+			// reworked loot packets SmLootItemList/SmGroupLoot/SmLootStatus (faithful SM_LOOT_ITEMLIST/
+			// SM_GROUP_LOOT/SM_LOOT_STATUS exist) were consumed only by WorldNpcLootService -> deleted as orphans.
+			// WorldNpcSpawnService's optional IWorldNpcDropRegistrationLookup ctor param (default null, interface
+			// kept) now resolves null. The PlayerKisk*Cleanup death/despawn Funcs that the DeathDropWorkflow
+			// factory wired lose their only call site but survive as a separate kisk pillar.
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<PvpApRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
@@ -82,8 +64,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			// Reworked WorldNpcSkillDamageService/Fanout/burn-island (depended on the deleted PlayerEnterWorldService god's
 			// SaveIdianPolishBurn/SaveItemChargeBurn mutations; gameplay covered by faithful ItemChargeService/ChargeInfo
 			// equipment-observer) removed.
-			services.AddSingleton<WorldNpcLootService>();
-			services.AddSingleton<WorldNpcLootBroadcastService>();
 			services.AddSingleton<WorldNpcRandomWalkService>();
 			services.AddSingleton<Func<int, bool>>(
 				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcSpawnService>().CancelRespawn(objectId));
