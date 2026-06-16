@@ -11,7 +11,9 @@ namespace Aion.GameServer.Configs.Schedule;
 [XmlRoot("world_raid_schedules")]
 public class WorldRaidSchedules
 {
-    [XmlElement("world_raid_schedule")] private List<WorldRaidSchedule> worldRaidSchedules;
+    // Java parity: @XmlElement private field. Widened to public for XmlSerializer binding (private members are
+    // not serialized); the Java getter accessor is preserved.
+    [XmlElement("world_raid_schedule")] public List<WorldRaidSchedule> worldRaidSchedules;
 
     public List<WorldRaidSchedule> GetWorldRaidSchedules()
     {
@@ -21,13 +23,14 @@ public class WorldRaidSchedules
     [XmlRoot("world_raid_schedule")]
     public class WorldRaidSchedule
     {
-        [XmlAttribute("id")] private string id = "";
+        // Widened to public for XmlSerializer binding (private members are not serialized); getters preserved.
+        [XmlAttribute("id")] public string id = "";
 
-        [XmlAttribute("min_count")] private int minCount = 0;
+        [XmlAttribute("min_count")] public int minCount = 0;
 
-        [XmlAttribute("max_count")] private int maxCount = 0;
+        [XmlAttribute("max_count")] public int maxCount = 0;
 
-        [XmlAttribute("is_special_raid")] private bool isSpecialRaid;
+        [XmlAttribute("is_special_raid")] public bool isSpecialRaid;
 
         // Java parity: @XmlList @XmlAttribute(name="locations") List<Integer> — space-separated.
         private List<int> locations;
@@ -41,7 +44,7 @@ public class WorldRaidSchedules
                 : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
         }
 
-        [XmlElement("start_time")] private List<string> raidTimes;
+        [XmlElement("start_time")] public List<string> raidTimes;
 
         public string GetId()
         {

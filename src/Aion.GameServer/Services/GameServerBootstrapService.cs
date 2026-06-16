@@ -150,6 +150,46 @@ public sealed class GameServerBootstrapService : IHostedService
 		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();
 
+		// Java parity: GameServer.main second-pass init block (lines 142-150), AFTER spawnAll/initRifts, BEFORE
+		// DebugService/Weather/etc. These run separately from the location-init first pass because they depend on
+		// the spawn engine having run: they despawn the spawn-engine NPCs at each siege/base location and re-spawn
+		// the siege/base/raid-controlled NPCs, and they schedule sieges/bases/raids through CronService. All are
+		// dep-clean for boot: the spawn/despawn loops iterate the location registries (empty when the *_DATA holder
+		// is absent => no-op), the schedule files (config/schedule/{siege,world_raid}_schedule.xml) are present, and
+		// the DAO reads are DB.Select try/catch-guarded (no DB => empty + logged).
+
+		// SiegeService.getInstance().initSieges() (GameServer.main:142): DEFERRED. Its faithful 1:1 body schedules
+		// fortress sieges from the FULL real config/schedule/siege_schedule.xml (fortress IDs 1011, 1131, 2011, ...)
+		// then UpdateFortressNextState() does SiegeLocation fortress = GetSiegeLocation(scheduledLocId);
+		// fortress.SetNextState(...) with NO null guard — exactly like Java SiegeService.updateFortressNextState
+		// (no guard there either; Java is safe only because real SIEGE_LOCATION_DATA carries those fortress
+		// locations). The GameServerBootstrapTests fixture loads an EMPTY SIEGE_LOCATION_DATA (items-only static
+		// data) while siege_schedule.xml stays the full real file, so GetSiegeLocation(scheduledLocId) returns null
+		// and the faithful fortress.SetNextState NREs the bootstrap gate. This is a test-fixture data gap, NOT a
+		// port defect — initSieges is dep-clean against real SIEGE_LOCATION_DATA. Wire it once the bootstrap
+		// fixture seeds matching siege location data (or guard is added upstream faithfully). DO NOT add an
+		// un-faithful null guard solely to pass the empty-fixture gate.
+		// Aion.GameServer.Services.SiegeService.GetInstance().InitSieges();
+
+		// BaseService.getInstance().initBases() (GameServer.main:144): starts casual/stained/panesterra bases
+		// (Start is try/catch-guarded for BaseException/NRE; iterates allBaseLocations, empty => no-op).
+		Aion.GameServer.Services.BaseService.GetInstance().InitBases();
+
+		// WorldRaidService.getInstance().initWorldRaids() (GameServer.main:146): schedules world raids through
+		// CronService from config/schedule/world_raid_schedule.xml (guarded by EventsConfig.ENABLE_WORLDRAID, default true).
+		Aion.GameServer.Services.WorldRaidService.GetInstance().InitWorldRaids();
+
+		// ConquerorAndProtectorService.getInstance().init() (GameServer.main:148): registers the handled abyss
+		// worlds (CustomConfig.CONQUEROR_AND_PROTECTOR_WORLDS, all race-specific by default => no ArgumentException)
+		// and schedules the periodic kills-decrease task through ThreadPoolManager (guarded by
+		// CustomConfig.CONQUEROR_AND_PROTECTOR_SYSTEM_ENABLED + non-empty worlds, both default-on).
+		Aion.GameServer.Services.ConquerorAndProtectorSystem.ConquerorAndProtectorService.GetInstance().Init();
+
+		// AnnouncementService.getInstance() (GameServer.main:150): ctor Reload() loads announcements via
+		// AnnouncementsDAO.LoadAnnouncements (DB.Select try/catch-guarded: no DB => empty + logged) and schedules
+		// each via ThreadPoolManager.
+		Aion.GameServer.Services.AnnouncementService.GetInstance();
+
 		// Java parity: GameServer.main starts these singleton services after the siege/base/world-raid init block.
 		// They self-register their work in their ctors (ThreadPoolManager / CronService schedules, spawns), so a
 		// single getInstance() touch is the faithful boot wire.

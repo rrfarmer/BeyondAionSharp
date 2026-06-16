@@ -9,8 +9,10 @@ namespace Aion.GameServer.Configs.Schedule;
 [XmlRoot("siege_schedule")]
 public class SiegeSchedules
 {
-    [XmlElement("fortress")] private List<Fortress> fortressesList;
-    [XmlElement("agent_fight")] private List<AgentFight> agentFights;
+    // Java parity: @XmlElement private fields. XmlSerializer binds public members only, so these are widened
+    // to public (established [Xml*]-member public-ization convention); the Java getter accessors are preserved.
+    [XmlElement("fortress")] public List<Fortress> fortressesList;
+    [XmlElement("agent_fight")] public List<AgentFight> agentFights;
 
     public List<Fortress> GetFortresses()
     {
@@ -25,8 +27,9 @@ public class SiegeSchedules
     // Java parity: private static abstract; C# CS0060 forbids a private base of public derived → widened to public.
     public abstract class SiegeSchedule
     {
-        [XmlAttribute("id")] private int id;
-        [XmlElement("siegeTime")] private List<string> siegeTimes;
+        // Widened to public for XmlSerializer binding (private members are not serialized); getters preserved.
+        [XmlAttribute("id")] public int id;
+        [XmlElement("siegeTime")] public List<string> siegeTimes;
 
         public int GetId()
         {
