@@ -70,6 +70,12 @@ public sealed class GameServerBootstrapService : IHostedService
 			dataManager.StaticData.CacheFilePath,
 			dataManager.StaticData.ImportedFileCount);
 
+		// Java parity: World() ctor loads all world maps at construction (DataManager.WORLD_MAPS_DATA.forEachParalllel ->
+		// new WorldMap(template)). Mirror it here now that DataManager is registered, before any engine InitAsync (spawn,
+		// rift) resolves a WorldMapInstance. Bind the World singleton-bridge (Java's World.getInstance()) at the same point.
+		_world.LoadWorldMaps(Aion.GameServer.Dataholders.DataManager.WORLD_MAPS_DATA);
+		GameWorld.RegisterInstance(_world);
+
 		await _gameTimeService.InitAsync(cancellationToken);
 
 		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
