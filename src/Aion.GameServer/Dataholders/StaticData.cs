@@ -454,6 +454,11 @@ public sealed partial class StaticData
 		// Java imports the town_spawns/ dir file-by-file (each its own <town_spawns_data> root); merge every file's
 		// spawn_map rows then run AfterUnmarshal once. Spawn/SpawnSpotTemplate nullable attrs bind via string proxies.
 		TownSpawns = TryLoadMergedHolder<TownSpawnsData>(Path.Combine(staticDataDirectory, "town_spawns"), (m, p) => m.MergePending(p), logger);
+		// Java imports the events/timed_events/ dir (custom_events.xml + retail_events.xml), each its own
+		// <timed_events> root; merge every file's <event> rows then run AfterUnmarshal once (validates dates +
+		// fires each event's SpawnsData.Initialize children-first). EventTemplate's GlobalRule drop-rule cone
+		// binds nullable restriction_race via a string proxy. Feeds DataManager.EVENT_DATA.
+		Events = TryLoadMergedHolder<EventData>(Path.Combine(staticDataDirectory, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
 	}
 
 	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()

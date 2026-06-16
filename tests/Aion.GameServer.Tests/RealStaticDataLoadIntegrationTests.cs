@@ -257,6 +257,18 @@ public sealed class RealStaticDataLoadIntegrationTests
 		var townSpawns = sd.TownSpawns.GetSpawns(1001, 1);
 		Assert.NotNull(townSpawns);
 		Assert.Contains(townSpawns!, s => s.GetNpcId() == 831222 && s.GetRespawnTime() == 295);
+
+		// EVENT_DATA boot-wiring: the events/timed_events/ dir merge loads (custom + retail). The EventTemplate
+		// GlobalRule drop-rule cone binds nullable restriction_race via a string proxy; a known event + drop rule
+		// (present AND absent restriction_race) resolves intact.
+		Assert.True(sd.Events.Size() > 0, "Events empty after boot");
+		var solorius = sd.Events.GetEvents().First(e => e.GetName() == "Celebrate Solorius");
+		Assert.Equal(Model.EventTheme.CHRISTMAS, solorius.GetTheme());
+		var rules = solorius.GetEventDropRules();
+		Assert.NotNull(rules);
+		// Absent restriction_race -> null; present "ELYOS" -> typed enum (proves the string proxy both ways).
+		Assert.Contains(rules!, r => r.GetMemberLimit() == 12 && r.GetRestrictionRace() == null);
+		Assert.Contains(rules!, r => r.GetRestrictionRace() == Model.Templates.GlobalDrops.GlobalRule.RestrictionRace.ELYOS);
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

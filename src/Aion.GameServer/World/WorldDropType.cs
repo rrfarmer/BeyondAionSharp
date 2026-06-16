@@ -1,42 +1,50 @@
+using System.Xml.Serialization;
+
 namespace Aion.GameServer.World;
 
 /// <summary>
 /// Drop table type for a world region.
 /// Java parity: world/WorldDropType.
 /// </summary>
+/// <remarks>
+/// The XML wire values are the Java SCREAMING_SNAKE constant names (e.g. wd_type="BALAUREA",
+/// drop_type="NONE"); the [XmlEnum] mappings keep the C# PascalCase members while deserializing
+/// 1:1 with JAXB. Purely additive — the enum ordinals/values are unchanged, so no consumer behaviour changes.
+/// </remarks>
 public enum WorldDropType
 {
     // Java parity: ASMODAE
-    Asmodae,
+    [XmlEnum("ASMODAE")] Asmodae,
     // Java parity: ELYSEA
-    Elysea,
+    [XmlEnum("ELYSEA")] Elysea,
     // Java parity: ABYSS
-    Abyss,
+    [XmlEnum("ABYSS")] Abyss,
     // Java parity: ABYSS_INSTANCE
-    AbyssInstance,
+    [XmlEnum("ABYSS_INSTANCE")] AbyssInstance,
     // Java parity: PANESTERRA
-    Panesterra,
+    [XmlEnum("PANESTERRA")] Panesterra,
     // Java parity: ARENA_INSTANCE
-    ArenaInstance,
+    [XmlEnum("ARENA_INSTANCE")] ArenaInstance,
     // Java parity: BALAUREA
-    Balaurea,
+    [XmlEnum("BALAUREA")] Balaurea,
     // Java parity: BALAUREA_INSTANCE
-    BalaureInstance,
+    [XmlEnum("BALAUREA_INSTANCE")] BalaureInstance,
     // Java parity: BALAUREA_HIGH
-    BalaureHigh,
+    [XmlEnum("BALAUREA_HIGH")] BalaureHigh,
     // Java parity: BALAUREA_HIGH_INSTANCE
-    BalaureHighInstance,
+    [XmlEnum("BALAUREA_HIGH_INSTANCE")] BalaureHighInstance,
     // Java parity: DREDGION_INSTANCE
-    DredgionInstance,
+    [XmlEnum("DREDGION_INSTANCE")] DredgionInstance,
     // Java parity: BATTLEFIELD_INSTANCE
-    BattlefieldInstance,
+    [XmlEnum("BATTLEFIELD_INSTANCE")] BattlefieldInstance,
     // Java parity: STEEL_RAKE_INSTANCE
-    SteelRakeInstance,
+    [XmlEnum("STEEL_RAKE_INSTANCE")] SteelRakeInstance,
     // Java parity: OTHER_INSTANCES
-    OtherInstances,
-    // Java parity: NONE
-    None,
+    [XmlEnum("OTHER_INSTANCES")] OtherInstances,
+    // Java parity: NONE (wire value "NONE").
+    [XmlEnum("NONE")] None,
 
     // Java-name alias (call sites use the Java SCREAMING_SNAKE name; same value, additive).
-    NONE = None,
+    // Distinct [XmlEnum] string so it never collides with None on read (the XML only ever uses "NONE").
+    [XmlEnum("__NONE_ALIAS__")] NONE = None,
 }

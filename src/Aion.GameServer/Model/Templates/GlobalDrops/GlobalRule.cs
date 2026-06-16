@@ -29,7 +29,19 @@ public class GlobalRule
     [XmlAttribute("chance")]    public float  Chance   { get; set; }
     [XmlAttribute("min_diff")]  public int    MinDiff  { get; set; } = -99;
     [XmlAttribute("max_diff")]  public int    MaxDiff  { get; set; } = 99;
-    [XmlAttribute("restriction_race")] public RestrictionRace? RestrictionRaceValue { get; set; }
+    // Java parity: @XmlAttribute(name="restriction_race") RestrictionRace (nullable enum).
+    // XmlSerializer cannot bind a nullable-enum attribute, so keep the typed backing [XmlIgnore]
+    // and bind a string proxy: null/empty -> null, else Enum.Parse. 1:1 with JAXB (getter unchanged).
+    [XmlIgnore] public RestrictionRace? RestrictionRaceValue { get; set; }
+
+    [XmlAttribute("restriction_race")]
+    public string? RestrictionRaceRaw
+    {
+        get => RestrictionRaceValue?.ToString();
+        set => RestrictionRaceValue = string.IsNullOrEmpty(value)
+            ? null
+            : Enum.Parse<RestrictionRace>(value);
+    }
     [XmlAttribute("level_based_chance_reduction")] public bool UseLevelBasedChanceReduction { get; set; }
     [XmlAttribute("member_limit")] public int MemberLimit { get; set; } = 1;
     [XmlAttribute("max_drop_rule")] public int MaxDropRule { get; set; } = 1;

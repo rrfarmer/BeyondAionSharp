@@ -1,5 +1,6 @@
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Dataholders.LoadingUtils;
+using Aion.GameServer.Model.Templates.GlobalDrops;
 
 namespace Aion.GameServer.Tests;
 
@@ -2031,6 +2032,98 @@ public sealed class JaxbHolderLoaderTests
             Assert.False(s.IsCustomSpawn());
             Assert.Null(s.GetSpawnHandlerType());
             Assert.Null(s.GetSpawnSpotTemplates()[0].GetWalkerIndex());
+        }
+    }
+
+    [Fact]
+    public void LoadFromFiles_PopulatesEventDataFromRealXml_Merged()
+    {
+        // Java imports the events/timed_events/ dir (custom_events.xml + retail_events.xml), each its own
+        // <timed_events> root: merge every file's <event> rows then run AfterUnmarshal once (validates dates,
+        // fires each event's SpawnsData.Initialize children-first).
+        var dir = Path.GetDirectoryName(ResolveStaticDataFile("events", "timed_events", "retail_events.xml"))!;
+
+        EventData? data = null;
+        foreach (var file in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var part = JaxbHolderLoader.DeserializeFile<EventData>(file);
+            if (data == null) data = part; else data.MergePending(part);
+        }
+        Assert.NotNull(data);
+        JaxbHolderLoader.RunAfterUnmarshal(data!);
+
+        Assert.True(data!.Size() > 0);
+
+        // Known row (retail_events.xml):
+        // <event name="Celebrate Solorius" start="2024-12-16T00:00:00" end="2024-12-31T23:59:59" theme="CHRISTMAS">
+        var solorius = data.GetEvents().First(e => e.GetName() == "Celebrate Solorius");
+        Assert.Equal(Model.EventTheme.CHRISTMAS, solorius.GetTheme());
+        Assert.Equal(new System.DateTime(2024, 12, 16, 0, 0, 0), solorius.GetStartDate());
+        Assert.Equal(new System.DateTime(2024, 12, 31, 23, 59, 59), solorius.GetEndDate());
+        // <maintainable>50007 50008 50009 51007 51008 51009</maintainable> -> @XmlList space-separated proxy.
+        Assert.Contains(50007, solorius.GetMaintainableQuests());
+        Assert.Contains(51009, solorius.GetMaintainableQuests());
+
+        var rules = solorius.GetEventDropRules();
+        Assert.NotNull(rules);
+        Assert.True(rules!.Count >= 4, "event_drops gd_rule cone was dropped on unmarshal");
+
+        // ABSENT nullable-enum case: first gd_rule has rule_name="Celebrate Solorius Event Drop" chance="100"
+        // member_limit="12" with NO restriction_race attribute -> string proxy yields null (1:1 with JAXB).
+        var noRestriction = rules.First(r => r.GetMemberLimit() == 12 && r.GetRestrictionRace() == null);
+        Assert.Equal("Celebrate Solorius Event Drop", noRestriction.GetRuleName());
+        Assert.Equal(100f, noRestriction.GetChance(), 3);
+        Assert.Null(noRestriction.GetRestrictionRace());
+        // gd_items cone intact: <gd_item id="160010203"/>, <gd_item id="188051601" min_count="2"/>, ...
+        var items = noRestriction.GetDropItems();
+        Assert.NotNull(items);
+        Assert.Contains(items!, i => i.GetId() == 160010203);
+        Assert.Equal(2, items!.First(i => i.GetId() == 188051601).GetMinCount());
+
+        // PRESENT nullable-enum case: a later gd_rule carries restriction_race="ELYOS" -> proxy parses to the enum.
+        var elyosRule = rules.First(r => r.GetRestrictionRace() == GlobalRule.RestrictionRace.ELYOS);
+        Assert.Equal("Celebrate Solorius Event Drop", elyosRule.GetRuleName());
+        Assert.Contains(elyosRule.GetDropItems()!, i => i.GetId() == 170110012);
+
+        // And the ASMODIANS branch (proves both enum values round-trip via the proxy).
+        var asmoRule = rules.First(r => r.GetRestrictionRace() == GlobalRule.RestrictionRace.ASMODIANS);
+        Assert.Contains(asmoRule.GetDropItems()!, i => i.GetId() == 170115012);
+
+        // Event with spawns: SpawnsData.Initialize fired children-first -> spawn lookup map built and Templates kept.
+        // Celebrate Solorius has a <spawns> block (e.g. npc 831032 on map 110010000).
+        var spawns = solorius.GetSpawns();
+        Assert.NotNull(spawns);
+        Assert.NotEmpty(spawns!.GetSpawnsForNpc(110010000, 831032));
+
+        // A buff-only event from custom_events.xml proves the Buff/restriction cone + merge across files.
+        var buffEvent = data.GetEvents().First(e => e.GetName() == "Beyond Aion Server Buffs");
+        var buffs = buffEvent.GetBuffs();
+        Assert.NotNull(buffs);
+        Assert.Contains(buffs!, b => b.GetSkillIds() != null && b.GetSkillIds()!.Contains(10408));
+        var restrictedBuff = buffs!.First(b => b.GetRestriction() != null);
+        Assert.Contains(Model.Templates.Event.Buff.BuffMapType.GROUP_INSTANCE, restrictedBuff.GetRestriction()!.GetMaps()!);
+    }
+
+    [Fact]
+    public void GlobalRule_RestrictionRaceProxy_RoundTripsPresentAndAbsent()
+    {
+        // Directly prove the GlobalRule.restriction_race string proxy: present -> typed enum, absent -> null,
+        // matching JAXB's nullable-enum @XmlAttribute (the getter returns the SAME typed value as the backing).
+        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(GlobalRule));
+
+        using (var r = new System.IO.StringReader(
+            "<GlobalRule rule_name=\"present\" chance=\"100\" restriction_race=\"ASMODIANS\" />"))
+        {
+            var rule = (GlobalRule)serializer.Deserialize(r)!;
+            Assert.Equal(GlobalRule.RestrictionRace.ASMODIANS, rule.GetRestrictionRace());
+        }
+
+        using (var r = new System.IO.StringReader(
+            "<GlobalRule rule_name=\"absent\" chance=\"100\" />"))
+        {
+            var rule = (GlobalRule)serializer.Deserialize(r)!;
+            // restriction_race omitted -> proxy yields null (1:1 with JAXB; getter unchanged for consumers).
+            Assert.Null(rule.GetRestrictionRace());
         }
     }
 
