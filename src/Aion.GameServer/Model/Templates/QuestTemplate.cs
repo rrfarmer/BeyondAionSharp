@@ -12,14 +12,14 @@ namespace Aion.GameServer.Model.Templates;
 [XmlType("Quest")]
 public class QuestTemplate : L10n
 {
-    [XmlElement("collect_items")] private CollectItems collectItems;
-    [XmlElement("inventory_items")] private InventoryItems inventoryItems;
-    [XmlElement("rewards")] private List<Aion.GameServer.Model.Templates.Quest.Rewards> rewards;
-    [XmlElement("bonus")] private QuestBonuses bonus;
-    [XmlElement("extended_rewards")] private Aion.GameServer.Model.Templates.Quest.Rewards extendedRewards;
-    [XmlElement("quest_drop")] private List<QuestDrop> questDrop;
-    [XmlElement("quest_kill")] private List<QuestKill> questKill;
-    [XmlElement("start_conditions")] private List<XMLStartCondition> startConds;
+    [XmlElement("collect_items")] public CollectItems collectItems;
+    [XmlElement("inventory_items")] public InventoryItems inventoryItems;
+    [XmlElement("rewards")] public List<Aion.GameServer.Model.Templates.Quest.Rewards> rewards;
+    [XmlElement("bonus")] public QuestBonuses bonus;
+    [XmlElement("extended_rewards")] public Aion.GameServer.Model.Templates.Quest.Rewards extendedRewards;
+    [XmlElement("quest_drop")] public List<QuestDrop> questDrop;
+    [XmlElement("quest_kill")] public List<QuestKill> questKill;
+    [XmlElement("start_conditions")] public List<XMLStartCondition> startConds;
 
     private List<PlayerClass> classPermitted;
 
@@ -30,37 +30,58 @@ public class QuestTemplate : L10n
         set => classPermitted = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => (PlayerClass)Enum.Parse(typeof(PlayerClass), t)).ToList();
     }
 
-    [XmlElement("gender_permitted")] private Gender? genderPermitted;
-    [XmlElement("quest_work_items")] private QuestWorkItems questWorkItems;
-    [XmlElement("fighter_selectable_reward")] private List<QuestItems> fighterSelectableReward;
-    [XmlElement("knight_selectable_reward")] private List<QuestItems> knightSelectableReward;
-    [XmlElement("ranger_selectable_reward")] private List<QuestItems> rangerSelectableReward;
-    [XmlElement("assassin_selectable_reward")] private List<QuestItems> assassinSelectableReward;
-    [XmlElement("wizard_selectable_reward")] private List<QuestItems> wizardSelectableReward;
-    [XmlElement("elementalist_selectable_reward")] private List<QuestItems> elementalistSelectableReward;
-    [XmlElement("priest_selectable_reward")] private List<QuestItems> priestSelectableReward;
-    [XmlElement("chanter_selectable_reward")] private List<QuestItems> chanterSelectableReward;
-    [XmlElement("gunner_selectable_reward")] private List<QuestItems> gunnerSelectableReward;
-    [XmlElement("rider_selectable_reward")] private List<QuestItems> riderSelectableReward;
-    [XmlElement("bard_selectable_reward")] private List<QuestItems> bardSelectableReward;
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("name")] private string name;
-    [XmlAttribute("nameId")] private int nameId;
-    [XmlAttribute("minlevel_permitted")] private int minlevelPermitted;
-    [XmlAttribute("maxlevel_permitted")] private int maxlevelPermitted;
-    [XmlAttribute("rank")] private int rank;
-    [XmlAttribute("max_repeat_count")] private int maxRepeatCount = 1;
-    [XmlAttribute("reward_repeat_count")] private int rewardRepeatCount;
-    [XmlAttribute("cannot_share")] private bool cannotShare;
-    [XmlAttribute("cannot_giveup")] private bool cannotGiveup;
-    [XmlAttribute("can_report")] private bool canReport;
-    [XmlAttribute("use_class_reward")] private int useClassReward;
-    [XmlAttribute("race_permitted")] private Race? racePermitted;
-    [XmlAttribute("combineskill")] private int combineskill;
-    [XmlAttribute("combine_skillpoint")] private int combineSkillpoint;
-    [XmlAttribute("timer")] private bool timer;
-    [XmlAttribute("category")] private QuestCategory category = QuestCategory.QUEST;
-    [XmlAttribute("extra_category")] private QuestExtraCategory extraCategory = QuestExtraCategory.NONE;
+    // Java parity: nullable Gender object-enum (absent -> null). XmlSerializer cannot bind Nullable<enum> to an
+    // element, so round-trip through a string proxy (1:1 with JAXB).
+    private Gender? genderPermitted;
+
+    [XmlElement("gender_permitted")]
+    public string GenderPermittedRaw
+    {
+        get => genderPermitted?.ToString();
+        set => genderPermitted = value == null ? null : (Gender)Enum.Parse(typeof(Gender), value);
+    }
+
+    [XmlElement("quest_work_items")] public QuestWorkItems questWorkItems;
+    [XmlElement("fighter_selectable_reward")] public List<QuestItems> fighterSelectableReward;
+    [XmlElement("knight_selectable_reward")] public List<QuestItems> knightSelectableReward;
+    [XmlElement("ranger_selectable_reward")] public List<QuestItems> rangerSelectableReward;
+    [XmlElement("assassin_selectable_reward")] public List<QuestItems> assassinSelectableReward;
+    [XmlElement("wizard_selectable_reward")] public List<QuestItems> wizardSelectableReward;
+    [XmlElement("elementalist_selectable_reward")] public List<QuestItems> elementalistSelectableReward;
+    [XmlElement("priest_selectable_reward")] public List<QuestItems> priestSelectableReward;
+    [XmlElement("chanter_selectable_reward")] public List<QuestItems> chanterSelectableReward;
+    [XmlElement("gunner_selectable_reward")] public List<QuestItems> gunnerSelectableReward;
+    [XmlElement("rider_selectable_reward")] public List<QuestItems> riderSelectableReward;
+    [XmlElement("bard_selectable_reward")] public List<QuestItems> bardSelectableReward;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("nameId")] public int nameId;
+    [XmlAttribute("minlevel_permitted")] public int minlevelPermitted;
+    [XmlAttribute("maxlevel_permitted")] public int maxlevelPermitted;
+    [XmlAttribute("rank")] public int rank;
+    [XmlAttribute("max_repeat_count")] public int maxRepeatCount = 1;
+    [XmlAttribute("reward_repeat_count")] public int rewardRepeatCount;
+    [XmlAttribute("cannot_share")] public bool cannotShare;
+    [XmlAttribute("cannot_giveup")] public bool cannotGiveup;
+    [XmlAttribute("can_report")] public bool canReport;
+    [XmlAttribute("use_class_reward")] public int useClassReward;
+
+    // Java parity: nullable Race object-enum @XmlAttribute (absent -> null). XmlSerializer cannot bind
+    // Nullable<enum> to an attribute, so round-trip through a string proxy (1:1 with JAXB).
+    private Race? racePermitted;
+
+    [XmlAttribute("race_permitted")]
+    public string RacePermittedRaw
+    {
+        get => racePermitted?.ToString();
+        set => racePermitted = value == null ? null : (Race)Enum.Parse(typeof(Race), value);
+    }
+
+    [XmlAttribute("combineskill")] public int combineskill;
+    [XmlAttribute("combine_skillpoint")] public int combineSkillpoint;
+    [XmlAttribute("timer")] public bool timer;
+    [XmlAttribute("category")] public QuestCategory category = QuestCategory.QUEST;
+    [XmlAttribute("extra_category")] public QuestExtraCategory extraCategory = QuestExtraCategory.NONE;
 
     private List<QuestRepeatCycle> repeatCycle;
 
@@ -71,11 +92,11 @@ public class QuestTemplate : L10n
         set => repeatCycle = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => (QuestRepeatCycle)Enum.Parse(typeof(QuestRepeatCycle), t)).ToList();
     }
 
-    [XmlAttribute("npcfaction_id")] private int npcFactionId;
-    [XmlAttribute("mentor_type")] private QuestMentorType mentorType = QuestMentorType.NONE;
-    [XmlAttribute("target")] private QuestTarget target = QuestTarget.NONE;
-    [XmlAttribute("restricted")] private bool restricted = false;
-    [XmlAttribute("data_driven")] private bool dataDriven = false;
+    [XmlAttribute("npcfaction_id")] public int npcFactionId;
+    [XmlAttribute("mentor_type")] public QuestMentorType mentorType = QuestMentorType.NONE;
+    [XmlAttribute("target")] public QuestTarget target = QuestTarget.NONE;
+    [XmlAttribute("restricted")] public bool restricted = false;
+    [XmlAttribute("data_driven")] public bool dataDriven = false;
 
     public CollectItems GetCollectItems()
     {

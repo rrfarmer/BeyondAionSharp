@@ -1412,6 +1412,126 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(skills.GetSkillTemplate(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesQuestsDataFromRealXml_WithKnownQuestFieldsAndNestedIntact()
+    {
+        var path = ResolveStaticDataFile("quest_data", "quest_data.xml");
+
+        // ~82k-line self-contained <quests> root; AfterUnmarshal indexes every template by id (and by npc faction)
+        // and nulls the source list. Feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
+        var data = JaxbHolderLoader.LoadFromFile<Dataholders.QuestsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known quest (The Kerubim Threat), id=1001:
+        // <quest id="1001" name="The Kerubim Threat" nameId="1102001" quest_zone="Poeta" minlevel_permitted="2"
+        //   max_repeat_count="1" cannot_share="true" cannot_giveup="true" race_permitted="ELYOS" category="MISSION">
+        //   <collect_items><collect_item item_id="182200001" count="3"/></collect_items>
+        //   <rewards exp="2100">
+        //     <selectable_reward_item item_id="114100806" count="1"/> ...3 selectable items... </rewards>
+        //   <quest_drop npc_id="210671" item_id="182200001" drop_each_member="1" collecting_step="7"/>
+        var quest = data.GetQuestById(1001);
+        Assert.NotNull(quest);
+
+        // Scalar fields intact (NOT silently dropped).
+        Assert.Equal(1001, quest!.GetId());
+        Assert.Equal("The Kerubim Threat", quest.GetName());
+        Assert.Equal(1102001, quest.GetL10nId());
+        Assert.Equal(2, quest.GetMinlevelPermitted());
+        Assert.Equal(1, quest.GetMaxRepeatCount());
+        Assert.True(quest.IsCannotShare());
+        Assert.True(quest.IsCannotGiveup());
+        Assert.Equal(Model.Race.ELYOS, quest.GetRacePermitted());
+        Assert.Equal(Model.Templates.Quest.QuestCategory.MISSION, quest.GetCategory());
+        Assert.True(quest.IsMission());
+
+        // CRITICAL: nested <collect_items>/<collect_item> must NOT be silently dropped.
+        var collect = quest.GetCollectItems();
+        Assert.NotNull(collect);
+        var collectItems = collect!.GetCollectItem();
+        Assert.Single(collectItems);
+        Assert.Equal(182200001, collectItems[0].GetItemId());
+        Assert.Equal(3, collectItems[0].GetCount());
+
+        // CRITICAL: nested <rewards> + its <selectable_reward_item> children must NOT be dropped.
+        var rewards = quest.GetRewards();
+        Assert.NotNull(rewards);
+        var reward = Assert.Single(rewards);
+        Assert.Equal(2100, reward.GetExp());
+        var selectables = reward.GetSelectableRewardItem();
+        Assert.Equal(3, selectables.Count);
+        Assert.Equal(114100806, selectables[0].GetItemId());
+        Assert.Equal(1, selectables[0].GetCount());
+        Assert.Contains(selectables, s => s.GetItemId() == 114500778);
+
+        // CRITICAL: nested <quest_drop> must NOT be dropped.
+        var drops = quest.GetQuestDrop();
+        Assert.Single(drops);
+        Assert.Equal(210671, drops[0].GetNpcId());
+        Assert.Equal(182200001, drops[0].GetItemId());
+        Assert.True(drops[0].IsDropEachMemberGroup());
+        Assert.Equal(7, drops[0].GetCollectingStep());
+
+        // A simple reward-only quest (id=85): rewards gold="100" exp="100", restricted="true".
+        var q85 = data.GetQuestById(85);
+        Assert.NotNull(q85);
+        Assert.True(q85!.IsRestricted());
+        Assert.Equal(100L, Assert.Single(q85.GetRewards()).GetKinah());
+
+        Assert.Null(data.GetQuestById(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFiles_PopulatesAIDataFromRealXml_WithSummonsAndBombsIntact()
+    {
+        // Java parity: the static_data import graph merges every <ai_templates> source file (ai/bombs.xml +
+        // ai/spawn_helpers.xml) into one AIData before afterUnmarshal. Replicate the StaticData merge path here:
+        // deserialize each raw, merge pending <ai> rows, then run AfterUnmarshal once. Feeds DataManager.AI_DATA
+        // (the 462 ported AI handlers + SummonerAI).
+        var bombsPath = ResolveStaticDataFile("ai", "bombs.xml");
+        var summonsPath = ResolveStaticDataFile("ai", "spawn_helpers.xml");
+
+        var data = JaxbHolderLoader.DeserializeFile<AIData>(bombsPath);
+        data.MergePending(JaxbHolderLoader.DeserializeFile<AIData>(summonsPath));
+        JaxbHolderLoader.RunAfterUnmarshal(data);
+
+        Assert.True(data.Size() > 0);
+
+        // Known bombs row (bombs.xml): <ai npcId="281327"><bombs><bomb skillId="16559"/></bombs></ai>
+        var bombAi = data.GetAiTemplate(281327);
+        Assert.NotNull(bombAi);
+        Assert.Equal(281327, bombAi!.GetNpcId());
+        var bombs = bombAi.GetBombs();
+        Assert.NotNull(bombs);
+        Assert.Equal(16559, bombs!.GetBombTemplate().GetSkillId());
+
+        // <ai npcId="281545"><bombs><bomb skillId="18905" cd="4000"/></bombs></ai> -> cooldown intact.
+        var cdAi = data.GetAiTemplate(281545);
+        Assert.NotNull(cdAi);
+        Assert.Equal(4000, cdAi!.GetBombs().GetBombTemplate().GetCd());
+
+        // Known summons row (spawn_helpers.xml): Ragenon Souleater
+        // <ai npcId="212145"><summons><percentage percent="50">
+        //   <summonGroup npcId="280747" minCount="2" distance="3"/></percentage></summons></ai>
+        var summonAi = data.GetAiTemplate(212145);
+        Assert.NotNull(summonAi);
+        Assert.Equal(212145, summonAi!.GetNpcId());
+        var summons = summonAi.GetSummons();
+        Assert.NotNull(summons);
+        var percentages = summons!.GetPercentage();
+        Assert.Single(percentages);
+        Assert.Equal(50, percentages[0].GetPercent());
+        var groups = percentages[0].GetSummons();
+        Assert.Single(groups);
+        Assert.Equal(280747, groups[0].GetNpcId());
+        Assert.Equal(2, groups[0].GetMinCount());
+        // SummonGroup.AfterUnmarshal ran children-first: maxCount defaulted from minCount (2).
+        Assert.Equal(2, groups[0].GetMaxCount());
+        Assert.Equal(3f, groups[0].GetDistance(), 3);
+
+        Assert.Null(data.GetAiTemplate(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

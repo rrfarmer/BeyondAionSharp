@@ -9,16 +9,16 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("Rewards")]
 public class Rewards
 {
-    [XmlElement("selectable_reward_item")] private List<QuestItems> selectableRewardItem;
-    [XmlElement("reward_item")] private List<QuestItems> rewardItem;
-    [XmlAttribute("gold")] private long kinah;
-    [XmlAttribute("exp")] private int exp;
-    [XmlAttribute("ap")] private int abyssPoints;
-    [XmlAttribute("dp")] private int divinePoints;
-    [XmlAttribute("gp")] private int gloryPoints;
-    [XmlAttribute("title")] private int title;
-    [XmlAttribute("extend_inventory")] private int extendInventory;
-    [XmlAttribute("extend_stigma")] private int extendStigma;
+    [XmlElement("selectable_reward_item")] public List<QuestItems> selectableRewardItem;
+    [XmlElement("reward_item")] public List<QuestItems> rewardItem;
+    [XmlAttribute("gold")] public long kinah;
+    [XmlAttribute("exp")] public int exp;
+    [XmlAttribute("ap")] public int abyssPoints;
+    [XmlAttribute("dp")] public int divinePoints;
+    [XmlAttribute("gp")] public int gloryPoints;
+    [XmlAttribute("title")] public int title;
+    [XmlAttribute("extend_inventory")] public int extendInventory;
+    [XmlAttribute("extend_stigma")] public int extendStigma;
 
     // Java parity: @XmlAttribute(name="ccheck") List<Integer> — space-separated.
     private List<int> collectItemChecks;
@@ -32,7 +32,7 @@ public class Rewards
             : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("icheck")] private int inventoryItemCheck;
+    [XmlAttribute("icheck")] public int inventoryItemCheck;
 
     public List<QuestItems> GetSelectableRewardItem()
     {

@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Ai;
 [XmlType("Summons")]
 public class Summons
 {
-    [XmlElement("percentage")] private List<Percentage> percentage;
+    [XmlElement("percentage")] public List<Percentage> percentage;
 
     public List<Percentage> GetPercentage()
     {

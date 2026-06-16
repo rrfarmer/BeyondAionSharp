@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("FinishedQuest")]
 public class FinishedQuestCond
 {
-    [XmlAttribute("quest_id")] protected int questId;
-    [XmlAttribute("reward")] protected int reward = -1;
+    [XmlAttribute("quest_id")] public int questId;
+    [XmlAttribute("reward")] public int reward = -1;
 
     public int GetQuestId()
     {

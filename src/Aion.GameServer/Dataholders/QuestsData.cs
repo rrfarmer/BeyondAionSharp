@@ -11,7 +11,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("quests")]
 public class QuestsData
 {
-    [XmlElement("quest")] private List<QuestTemplate> questsData;
+    [XmlElement("quest")] public List<QuestTemplate> questsData;
 
     [XmlIgnore] private readonly Dictionary<int, QuestTemplate> questTemplates = new();
     [XmlIgnore] private readonly Dictionary<int, List<QuestTemplate>> sortedByFactionId = new();

@@ -9,7 +9,7 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("QuestKill")]
 public class QuestKill
 {
-    [XmlAttribute("seq")] private int seq;
+    [XmlAttribute("seq")] public int seq;
 
     // Java parity: @XmlAttribute(name="npc_ids") List<Integer> — space-separated.
     private List<int> npcIds;
@@ -23,9 +23,9 @@ public class QuestKill
             : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("count")] private int kill;
-    [XmlAttribute("var")] private int var;
-    [XmlAttribute("step")] private int step;
+    [XmlAttribute("count")] public int kill;
+    [XmlAttribute("var")] public int var;
+    [XmlAttribute("step")] public int step;
 
     [XmlIgnore] private List<int> npcIdSet;
 

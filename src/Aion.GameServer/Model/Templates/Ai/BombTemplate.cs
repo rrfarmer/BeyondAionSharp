@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Ai;
 [XmlType("BombTemplate")]
 public class BombTemplate
 {
-    [XmlAttribute("skillId")] private int skillId = 0;
-    [XmlAttribute("cd")] private int cd = 0;
+    [XmlAttribute("skillId")] public int skillId = 0;
+    [XmlAttribute("cd")] public int cd = 0;
 
     public int GetCd()
     {

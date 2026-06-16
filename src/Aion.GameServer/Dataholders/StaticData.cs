@@ -263,7 +263,7 @@ public sealed partial class StaticData
 	// These faithful dataholder classes are not yet populated by the bespoke XML loader; exposed here with empty
 	// defaults so the DataManager.*_DATA accessors compile. TODO(runtime): deserialize their source XML
 	// (e.g. game-server/data/static_data/quest_data/quest_data.xml is a self-contained <quests> root) and assign here.
-	public QuestsData Quests { get; } = new();
+	public QuestsData Quests { get; private set; } = new();
 	public TribeRelationsData TribeRelations { get; } = new();
 	public WorldMapsData WorldMaps2 { get; } = new();
 	public NpcShoutData NpcShouts { get; } = new();
@@ -306,7 +306,7 @@ public sealed partial class StaticData
 	public AssembledNpcsData AssembledNpcsDataDh { get; private set; } = new();
 	public TitleData TitleDataDh { get; private set; } = new();
 	public NpcData NpcDataDh { get; private set; } = new();
-	public AIData AiDataDh { get; } = new();
+	public AIData AiDataDh { get; private set; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; private set; } = new();
@@ -398,6 +398,46 @@ public sealed partial class StaticData
 		// [XmlElement(typeof(...))] subtype maps; SkillData.AfterUnmarshal fires each Effects.AfterUnmarshal
 		// (effectTypes set) children-first since XmlSerializer skips JAXB callbacks.
 		SkillDataDh = TryLoadHolder(SkillDataDh, Path.Combine(staticDataDirectory, "skills", "skill_templates.xml"), logger);
+		// AIData feeds DataManager.AI_DATA (the 462 ported AI handlers + SummonerAI). Java's static_data import
+		// graph merges every <ai_templates> source into one holder; here we deserialize each ai/*.xml raw, merge
+		// their pending <ai> rows, then run AfterUnmarshal once (fires SummonGroup min/maxCount validation).
+		AiDataDh = TryLoadAiData(Path.Combine(staticDataDirectory, "ai"), logger);
+		// Standalone <quests> root (~82k lines, self-contained, no imports / no IDREF resolution): the faithful
+		// QuestsData holder feeds DataManager.QUEST_DATA (the 1025 ported quest handlers).
+		Quests = TryLoadHolder(Quests, Path.Combine(staticDataDirectory, "quest_data", "quest_data.xml"), logger);
+	}
+
+	private static AIData TryLoadAiData(string aiDirectory, Microsoft.Extensions.Logging.ILogger? logger)
+	{
+		try
+		{
+			if (!Directory.Exists(aiDirectory))
+			{
+				logger?.LogWarning("AI data directory not found, leaving AIData empty: {Path}", aiDirectory);
+				return new AIData();
+			}
+
+			AIData? merged = null;
+			foreach (var file in Directory.EnumerateFiles(aiDirectory, "*.xml").OrderBy(f => f, StringComparer.Ordinal))
+			{
+				var part = LoadingUtils.JaxbHolderLoader.DeserializeFile<AIData>(file);
+				if (merged == null)
+					merged = part;
+				else
+					merged.MergePending(part);
+			}
+
+			if (merged == null)
+				return new AIData();
+
+			LoadingUtils.JaxbHolderLoader.RunAfterUnmarshal(merged);
+			return merged;
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to load AIData from {Path}; leaving it empty.", aiDirectory);
+			return new AIData();
+		}
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

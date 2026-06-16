@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml.Serialization;
 
 namespace Aion.GameServer.Model.Templates.Quest;
@@ -6,13 +7,36 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("QuestDrop")]
 public class QuestDrop
 {
-    // Java parity: npcId/itemId/dropEachMember are read cross-instance by sibling subclass HandlerSideDrop.
-    // Java `protected` includes same-package access; C# `protected internal` (derived OR same-assembly) is the closest analog.
-    [XmlAttribute("npc_id")] protected internal int? npcId;
-    [XmlAttribute("item_id")] protected internal int? itemId;
-    [XmlAttribute("chance")] protected int? chance;
-    [XmlAttribute("drop_each_member")] protected internal int dropEachMember = 0;
-    [XmlAttribute("collecting_step")] protected int collecting_step = 0;
+    // Java parity: npcId/itemId/chance are nullable Integer @XmlAttribute (absent -> null). XmlSerializer cannot
+    // bind Nullable<int> to an attribute, so round-trip through string proxies (1:1 with JAXB). The fields are
+    // read cross-instance by sibling subclass HandlerSideDrop, so keep them protected internal.
+    protected internal int? npcId;
+    protected internal int? itemId;
+    protected int? chance;
+
+    [XmlAttribute("npc_id")]
+    public string NpcIdRaw
+    {
+        get => npcId?.ToString(CultureInfo.InvariantCulture);
+        set => npcId = value == null ? null : int.Parse(value, CultureInfo.InvariantCulture);
+    }
+
+    [XmlAttribute("item_id")]
+    public string ItemIdRaw
+    {
+        get => itemId?.ToString(CultureInfo.InvariantCulture);
+        set => itemId = value == null ? null : int.Parse(value, CultureInfo.InvariantCulture);
+    }
+
+    [XmlAttribute("chance")]
+    public string ChanceRaw
+    {
+        get => chance?.ToString(CultureInfo.InvariantCulture);
+        set => chance = value == null ? null : int.Parse(value, CultureInfo.InvariantCulture);
+    }
+
+    [XmlAttribute("drop_each_member")] public int dropEachMember = 0;
+    [XmlAttribute("collecting_step")] public int collecting_step = 0;
 
     [XmlIgnore] protected int? questId;
 

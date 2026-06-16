@@ -34,6 +34,25 @@ public static class JaxbHolderLoader
         return holder;
     }
 
+    /// <summary>
+    /// Deserialize <typeparamref name="T"/> from <paramref name="xmlFilePath"/> WITHOUT invoking the
+    /// <c>AfterUnmarshal</c> callback. Used by holders whose JAXB graph is split across several source files
+    /// (e.g. AIData's ai/bombs.xml + ai/spawn_helpers.xml): each file is deserialized raw, the pending element
+    /// lists are merged, and AfterUnmarshal is invoked once on the merged holder by the caller.
+    /// </summary>
+    public static T DeserializeFile<T>(string xmlFilePath) where T : class
+    {
+        if (!File.Exists(xmlFilePath))
+            throw new FileNotFoundException($"Static data file not found: {xmlFilePath}", xmlFilePath);
+
+        var serializer = new XmlSerializer(typeof(T));
+        using var stream = File.OpenRead(xmlFilePath);
+        return (T)serializer.Deserialize(stream)!;
+    }
+
+    /// <summary>Invoke the holder's <c>AfterUnmarshal(object)</c> callback, mirroring JAXB's unmarshal listener.</summary>
+    public static void RunAfterUnmarshal(object holder) => InvokeAfterUnmarshal(holder);
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         // Java parity: javax.xml.bind Unmarshaller.Listener.afterUnmarshal(target, parent).

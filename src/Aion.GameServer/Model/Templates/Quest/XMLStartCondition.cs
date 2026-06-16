@@ -17,7 +17,7 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("QuestStartConditions")]
 public class XMLStartCondition
 {
-    [XmlElement("finished")] protected List<FinishedQuestCond> finished;
+    [XmlElement("finished")] public List<FinishedQuestCond> finished;
 
     protected List<int> unfinished;
     protected List<int> noacquired;
@@ -52,7 +52,7 @@ public class XMLStartCondition
         set => equipped = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlElement("required_title")] protected int requiredTitle;
+    [XmlElement("required_title")] public int requiredTitle;
 
     public bool IsOptional()
     {

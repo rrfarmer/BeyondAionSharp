@@ -6,15 +6,15 @@ namespace Aion.GameServer.Model.Templates.Ai;
 [XmlType("SummonGroup")]
 public class SummonGroup
 {
-    [XmlAttribute("npcId")] private int npcId;
-    [XmlAttribute("x")] private float x;
-    [XmlAttribute("y")] private float y;
-    [XmlAttribute("z")] private float z;
-    [XmlAttribute("h")] private byte h;
-    [XmlAttribute("minCount")] private int minCount = 1;
-    [XmlAttribute("maxCount")] private int maxCount;
-    [XmlAttribute("distance")] private float distance;
-    [XmlAttribute("schedule")] private int schedule;
+    [XmlAttribute("npcId")] public int npcId;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("h")] public byte h;
+    [XmlAttribute("minCount")] public int minCount = 1;
+    [XmlAttribute("maxCount")] public int maxCount;
+    [XmlAttribute("distance")] public float distance;
+    [XmlAttribute("schedule")] public int schedule;
 
     // Java parity: afterUnmarshal(Unmarshaller, Object parent) — invoked by the AI-template loader.
     public void AfterUnmarshal(object parent)

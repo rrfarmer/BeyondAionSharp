@@ -7,10 +7,18 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("CollectItems")]
 public class CollectItems
 {
-    [XmlElement("collect_item")] protected List<CollectItem> collectItem;
+    [XmlElement("collect_item")] public List<CollectItem> collectItem;
 
-    // Java parity: Boolean start_check (nullable; getStartCheck null->false).
-    [XmlAttribute("start_check")] protected bool? startCheck;
+    // Java parity: Boolean start_check (nullable; getStartCheck null->false). XmlSerializer cannot bind
+    // Nullable<bool> to an attribute, so round-trip through a string proxy (absent -> null).
+    private bool? startCheck;
+
+    [XmlAttribute("start_check")]
+    public string StartCheckRaw
+    {
+        get => startCheck?.ToString();
+        set => startCheck = value == null ? null : bool.Parse(value);
+    }
 
     /// <summary>Gets the value of the collectItem property.</summary>
     public List<CollectItem> GetCollectItem()

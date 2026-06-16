@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("QuestBonuses")]
 public class QuestBonuses
 {
-    [XmlAttribute("type")] private BonusType type;
-    [XmlAttribute("level")] private int level;
+    [XmlAttribute("type")] public BonusType type;
+    [XmlAttribute("level")] public int level;
 
     public BonusType GetType_()
     {

@@ -146,6 +146,27 @@ public sealed class RealStaticDataLoadIntegrationTests
 
 		// Prove the StatFunction polymorphic modifiers actually bound (not silently dropped) at boot:
 		// stats_set id=1 must carry a non-empty <modifiers> list with the known POWER/1 abs row.
+		// QUEST_DATA: the faithful QuestsData holder loads the real ~82k-line quest_data.xml at boot
+		// (feeds the 1025 ported quest handlers). Known quest 1001 (The Kerubim Threat) with nested data intact.
+		Assert.True(sd.Quests.Size() > 0, "Quests empty after boot");
+		var quest1001 = sd.Quests.GetQuestById(1001);
+		Assert.NotNull(quest1001);
+		Assert.Equal("The Kerubim Threat", quest1001!.GetName());
+		Assert.Equal(Model.Templates.Quest.QuestCategory.MISSION, quest1001.GetCategory());
+		Assert.Equal(Model.Race.ELYOS, quest1001.GetRacePermitted());
+		Assert.Equal(182200001, quest1001.GetCollectItems().GetCollectItem()[0].GetItemId());
+		Assert.Equal(2100, Assert.Single(quest1001.GetRewards()).GetExp());
+
+		// AI_DATA: the faithful AIData holder merges every ai/*.xml at boot (feeds the 462 ported AI handlers
+		// + SummonerAI). Known bombs row (npcId=281327) and summons row (npcId=212145) with nested data intact.
+		Assert.True(sd.AiDataDh.Size() > 0, "AiDataDh empty after boot");
+		var aiBomb = sd.AiDataDh.GetAiTemplate(281327);
+		Assert.NotNull(aiBomb);
+		Assert.Equal(16559, aiBomb!.GetBombs().GetBombTemplate().GetSkillId());
+		var aiSummon = sd.AiDataDh.GetAiTemplate(212145);
+		Assert.NotNull(aiSummon);
+		Assert.Equal(280747, aiSummon!.GetSummons().GetPercentage()[0].GetSummons()[0].GetNpcId());
+
 		var absStats1 = sd.AbsoluteStatsDataDh.GetTemplate(1);
 		Assert.NotNull(absStats1);
 		Assert.True(absStats1!.GetModifiers().Count > 1, "AbsoluteStats modifiers dropped at boot");

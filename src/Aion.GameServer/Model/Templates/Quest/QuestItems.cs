@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("QuestItems")]
 public class QuestItems
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("count")] private long count = 1L;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public long count = 1L;
 
     /// <summary>Constructor used by unmarshaller.</summary>
     public QuestItems()

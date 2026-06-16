@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("InventoryItems")]
 public class InventoryItems
 {
-    [XmlElement("inventory_item")] protected List<InventoryItem> inventoryItems;
+    [XmlElement("inventory_item")] public List<InventoryItem> inventoryItems;
 
     /// <summary>Gets the value of the inventoryItems property.</summary>
     public List<InventoryItem> GetInventoryItems()

@@ -6,9 +6,9 @@ namespace Aion.GameServer.Model.Templates.Ai;
 [XmlType("Ai")]
 public class AITemplate
 {
-    [XmlElement("summons")] private Summons summons;
-    [XmlElement("bombs")] private Bombs bombs;
-    [XmlAttribute("npcId")] private int npcId;
+    [XmlElement("summons")] public Summons summons;
+    [XmlElement("bombs")] public Bombs bombs;
+    [XmlAttribute("npcId")] public int npcId;
 
     public Summons GetSummons()
     {

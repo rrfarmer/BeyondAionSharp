@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates.Ai;
 [XmlType("Bombs")]
 public class Bombs
 {
-    [XmlElement("bomb")] private BombTemplate bombTemplate;
+    [XmlElement("bomb")] public BombTemplate bombTemplate;
 
     public BombTemplate GetBombTemplate()
     {

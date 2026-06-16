@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Quest;
 [XmlType("QuestWorkItems")]
 public class QuestWorkItems
 {
-    [XmlElement("quest_work_item")] protected List<QuestItems> questWorkItem;
+    [XmlElement("quest_work_item")] public List<QuestItems> questWorkItem;
 
     /// <summary>Gets the value of the questWorkItem property.</summary>
     public List<QuestItems> GetQuestWorkItem()

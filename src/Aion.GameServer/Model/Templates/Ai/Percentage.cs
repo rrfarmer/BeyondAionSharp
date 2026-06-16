@@ -7,10 +7,10 @@ namespace Aion.GameServer.Model.Templates.Ai;
 [XmlType("Percentage")]
 public class Percentage
 {
-    [XmlAttribute("percent")] protected int percent;
-    [XmlAttribute("skillId")] protected int skillId = 0;
-    [XmlAttribute("isIndividual")] protected bool isIndividual = false;
-    [XmlElement("summonGroup")] protected List<SummonGroup> summons;
+    [XmlAttribute("percent")] public int percent;
+    [XmlAttribute("skillId")] public int skillId = 0;
+    [XmlAttribute("isIndividual")] public bool isIndividual = false;
+    [XmlElement("summonGroup")] public List<SummonGroup> summons;
 
     public List<SummonGroup> GetSummons()
     {
