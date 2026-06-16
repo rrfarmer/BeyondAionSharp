@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("item_restriction_cleanups")]
 public class ItemRestrictionCleanupData
 {
-    [XmlElement("cleanup")] private List<ItemCleanupTemplate> bplist;
+    [XmlElement("cleanup")] public List<ItemCleanupTemplate> bplist;
 
     public int Size()
     {

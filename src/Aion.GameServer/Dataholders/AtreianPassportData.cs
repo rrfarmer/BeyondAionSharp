@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("login_events")]
 public class AtreianPassportData
 {
-    [XmlElement("login_event")] private List<AtreianPassport> list;
+    [XmlElement("login_event")] public List<AtreianPassport> list;
 
     [XmlIgnore] private Dictionary<int, AtreianPassport> passportData = new();
 

@@ -282,7 +282,7 @@ public sealed partial class StaticData
 	public MapWeatherData MapWeathers { get; private set; } = new();
 	public EventData Events { get; } = new();
 	public PanelSkillsData PanelSkillsDataDh { get; private set; } = new();
-	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; } = new();
+	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; private set; } = new();
 	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; } = new();
 	public AbsoluteStatsData AbsoluteStatsDataDh { get; } = new();
 	public WorldRaidData WorldRaidDataDh { get; private set; } = new();
@@ -321,12 +321,12 @@ public sealed partial class StaticData
 	public RideData RideDataDh { get; private set; } = new();
 	public GoodsListData GoodsListDataDh { get; private set; } = new();
 	public ItemPurificationData ItemPurificationDataDh { get; private set; } = new();
-	public AtreianPassportData AtreianPassportDataDh { get; } = new();
+	public AtreianPassportData AtreianPassportDataDh { get; private set; } = new();
 	public PetDopingData PetDopingDataDh { get; private set; } = new();
 	public NpcSkillData NpcSkillDataDh { get; } = new();
 	public NpcFactionsData NpcFactionsDataDh { get; private set; } = new();
 	public PortalLocData PortalLocDataDh { get; private set; } = new();
-	public AssemblyItemsData AssemblyItemsDataDh { get; } = new();
+	public AssemblyItemsData AssemblyItemsDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -378,6 +378,9 @@ public sealed partial class StaticData
 		NpcFactionsDataDh = TryLoadHolder(NpcFactionsDataDh, Path.Combine(staticDataDirectory, "npc_factions", "npc_factions.xml"), logger);
 		TeleporterDataDh = TryLoadHolder(TeleporterDataDh, Path.Combine(staticDataDirectory, "npc_teleporter.xml"), logger);
 		HousePartsDataDh = TryLoadHolder(HousePartsDataDh, Path.Combine(staticDataDirectory, "housing", "house_parts.xml"), logger);
+		ItemRestrictionCleanupDataDh = TryLoadHolder(ItemRestrictionCleanupDataDh, Path.Combine(staticDataDirectory, "items", "item_restriction_cleanups.xml"), logger);
+		AssemblyItemsDataDh = TryLoadHolder(AssemblyItemsDataDh, Path.Combine(staticDataDirectory, "items", "assembly_items.xml"), logger);
+		AtreianPassportDataDh = TryLoadHolder(AtreianPassportDataDh, Path.Combine(staticDataDirectory, "events", "login_events.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

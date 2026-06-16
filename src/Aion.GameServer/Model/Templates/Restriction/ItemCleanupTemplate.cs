@@ -6,13 +6,13 @@ namespace Aion.GameServer.Model.Templates.Restriction;
 [XmlRoot("item_restriction_cleanups")]
 public class ItemCleanupTemplate
 {
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("id")] public int id;
 
-    [XmlAttribute("trade")] private sbyte trade = -1;
-    [XmlAttribute("sell")] private sbyte sell = -1;
-    [XmlAttribute("wh")] private sbyte wh = -1;
-    [XmlAttribute("awh")] private sbyte awh = -1;
-    [XmlAttribute("lwh")] private sbyte lwh = -1;
+    [XmlAttribute("trade")] public sbyte trade = -1;
+    [XmlAttribute("sell")] public sbyte sell = -1;
+    [XmlAttribute("wh")] public sbyte wh = -1;
+    [XmlAttribute("awh")] public sbyte awh = -1;
+    [XmlAttribute("lwh")] public sbyte lwh = -1;
 
     public sbyte ResultTrade()
     {

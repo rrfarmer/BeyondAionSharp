@@ -11,8 +11,8 @@ public class AtreianPassport
 {
     private static readonly LocalDateTimeAdapter DateAdapter = new LocalDateTimeAdapter();
 
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("active")] private bool active;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("active")] public bool active;
 
     // Java parity: @XmlJavaTypeAdapter(LocalDateTimeAdapter) on LocalDateTime — string attribute via adapter.
     [XmlIgnore] private DateTime pStart;
@@ -24,12 +24,12 @@ public class AtreianPassport
     [XmlAttribute("period_end")]
     public string PEndRaw { get => DateAdapter.Marshal(pEnd); set => pEnd = DateAdapter.Unmarshal(value); }
 
-    [XmlAttribute("attend_type")] private AttendType attendType;
-    [XmlAttribute("attend_num")] private int attendNum;
-    [XmlAttribute("reward_item")] private int rewardItemId;
-    [XmlAttribute("reward_item_num")] private int rewardItemCount;
-    [XmlAttribute("reward_item_expire_time")] private int rewardExpireMinutes;
-    [XmlAttribute("reward_permit_level")] private int rewardPermitLevel;
+    [XmlAttribute("attend_type")] public AttendType attendType;
+    [XmlAttribute("attend_num")] public int attendNum;
+    [XmlAttribute("reward_item")] public int rewardItemId;
+    [XmlAttribute("reward_item_num")] public int rewardItemCount;
+    [XmlAttribute("reward_item_expire_time")] public int rewardExpireMinutes;
+    [XmlAttribute("reward_permit_level")] public int rewardPermitLevel;
 
     public int GetId()
     {

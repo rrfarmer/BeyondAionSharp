@@ -934,6 +934,84 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetPartById(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesItemRestrictionCleanupDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("items", "item_restriction_cleanups.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<ItemRestrictionCleanupData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <cleanup id="188053996" awh="0" lwh="0" /> -- Emperor Trillirunerk's Feather Box (only uncommented row).
+        var tpl = data.GetList().First(t => t.GetId() == 188053996);
+        Assert.Equal((sbyte)0, tpl.ResultAccountWH());
+        Assert.Equal((sbyte)0, tpl.ResultLegionWH());
+        // trade / sell / wh omitted -> keep the -1 field default.
+        Assert.Equal((sbyte)(-1), tpl.ResultTrade());
+        Assert.Equal((sbyte)(-1), tpl.ResultSell());
+        Assert.Equal((sbyte)(-1), tpl.ResultWH());
+
+        // awh=0/lwh=0 -> storability disabled.
+        Assert.True(data.HasAccountOrLegionWhStorabilityDisabled(188053996));
+        Assert.False(data.HasAccountOrLegionWhStorabilityDisabled(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesAssemblyItemsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("items", "assembly_items.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<AssemblyItemsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <item id="100201411" parts="188100135 188100136 188100137 188100138 188100139" />
+        var item = data.GetAssemblyItem(100201411);
+        Assert.NotNull(item);
+        Assert.Equal(100201411, item!.GetId());
+        // parts space-separated-list via PartsRaw string-proxy.
+        var parts = item.GetParts();
+        Assert.Equal(5, parts.Count);
+        Assert.Equal(188100135, parts[0]);
+        Assert.Contains(188100139, parts);
+
+        Assert.Null(data.GetAssemblyItem(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesAtreianPassportDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("events", "login_events.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<AtreianPassportData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <login_event id="1" active="1" period_start="2014-03-01T00:00:00" period_end="2014-05-01T00:00:00"
+        //   attend_type="DAILY" attend_num="1" reward_item="188052315" reward_item_num="1" reward_item_expire_time="1440"/>
+        var ev1 = data.GetAtreianPassportId(1);
+        Assert.NotNull(ev1);
+        Assert.Equal(1, ev1!.GetId());
+        // active="1" -> bool true.
+        Assert.True(ev1.IsActive());
+        Assert.Equal(Model.AttendType.DAILY, ev1.GetAttendType());
+        Assert.Equal(1, ev1.GetAttendNum());
+        Assert.Equal(188052315, ev1.GetRewardItemId());
+        Assert.Equal(1, ev1.GetRewardItemCount());
+        Assert.Equal(1440, ev1.GetRewardExpireMinutes());
+        // period_start via LocalDateTimeAdapter string-proxy.
+        Assert.Equal(new System.DateTime(2014, 3, 1, 0, 0, 0), ev1.GetPeriodStart());
+
+        // <login_event id="2" active="0" ... attend_type="CUMULATIVE" .../>
+        var ev2 = data.GetAtreianPassportId(2);
+        Assert.NotNull(ev2);
+        Assert.False(ev2!.IsActive());
+        Assert.Equal(Model.AttendType.CUMULATIVE, ev2.GetAttendType());
+
+        Assert.Null(data.GetAtreianPassportId(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

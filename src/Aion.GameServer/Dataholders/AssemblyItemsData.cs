@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("assembly_items")]
 public class AssemblyItemsData
 {
-    [XmlElement("item")] protected List<AssemblyItem> items;
+    [XmlElement("item")] public List<AssemblyItem> items;
 
     public int Size()
     {
