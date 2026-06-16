@@ -99,7 +99,6 @@ var builder = Host.CreateDefaultBuilder(args)
 					serviceProvider.GetRequiredService<WorldNpcCombatEventService>().Clear(objectId);
 					serviceProvider.GetRequiredService<WorldNpcCastingInterruptService>().Clear(objectId);
 				});
-			services.AddSingleton<WorldNpcDamageService>();
 			// Reworked WorldNpcSkillDamageService/Fanout/burn-island (depended on the deleted PlayerEnterWorldService god's
 			// SaveIdianPolishBurn/SaveItemChargeBurn mutations; gameplay covered by faithful ItemChargeService/ChargeInfo
 			// equipment-observer) removed.
