@@ -195,6 +195,35 @@ public sealed class GameServerBootstrapService : IHostedService
 		// single getInstance() touch is the faithful boot wire.
 		// DebugService: schedules the periodic world-player analysis task.
 		Aion.GameServer.Services.DebugService.GetInstance();
+
+		// WeatherService.getInstance() (GameServer.main:152): ctor iterates WORLD_MAPS_DATA (live), builds per-zone
+		// weather arrays from MAP_WEATHER_DATA (GetWeather returns null on absent map => guarded skip), seeds the
+		// next weather from the current GameTime. Dep-clean: GameTimeService is already initialized (InitAsync above).
+		Aion.GameServer.Services.WeatherService.GetInstance();
+
+		// BrokerService.getInstance() (GameServer.main:153): ctor InitBrokerService() loads broker items via
+		// BrokerDAO.LoadBroker (DB.Select try/catch-guarded => empty no-DB) into per-race maps, then schedules the
+		// periodic expiry check + save manager through ThreadPoolManager. Empty broker => no-op loops.
+		Aion.GameServer.Services.BrokerService.GetInstance();
+
+		// Influence.getInstance() (GameServer.main:154): ctor RecalculateInfluence() iterates
+		// SiegeService.GetSiegeLocations() (empty SIEGE_LOCATION_DATA => empty => zero influence rates). Dep-clean.
+		Aion.GameServer.Model.Siege.Influence.GetInstance();
+
+		// ExchangeService.getInstance() (GameServer.main:155): empty ctor (no boot work). Faithful no-op touch.
+		Aion.GameServer.Services.ExchangeService.GetInstance();
+
+		// PeriodicSaveService (GameServer.main:156): DEFERRED. The C# PeriodicSaveService is a reworked DI-constructed
+		// GameEngine (only schedules a "server last run" variable) — NOT a faithful 1:1 of Java's singleton
+		// PeriodicSaveService (which schedules player/legion/etc. periodic saves through ThreadPoolManager). Wiring it
+		// faithfully needs a DI-injected instance + a faithful re-port of the save tasks; out of scope for a bounded
+		// singleton getInstance() wire. Defer until the faithful re-port lands.
+
+		// AtreianPassportService.getInstance() (GameServer.main:157): ctor computes the passport expire date from
+		// ATREIAN_PASSPORT_DATA (empty => null expire => not disabled) and, when enabled, schedules the daily 09:00
+		// reset cron (DAILY_CRON_AT_09_00 = "0 0 9 ? * *", a non-null const string => no null-CronExpression NRE).
+		_ = Aion.GameServer.Services.AtreianPassportService.GetInstance();
+
 		// CronJobService: Java parity GameServer.main starts it after AtreianPassportService.getInstance(),
 		// before CuringZoneService/RoadService. Its ctor schedules the Moltenus spawn + Ahserion flight cron
 		// jobs (SiegeConfig.MOLTENUS_SPAWN_SCHEDULE / AHSERION_START_SCHEDULE, now initialized from the Java
