@@ -150,6 +150,14 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_SECURITY_TOKEN.json")]
 	[InlineData("SM_MOTION_SCALAR.json")]
 	[InlineData("SM_MACRO_RESULT.json")]
+	[InlineData("SM_DUEL.json")]
+	[InlineData("SM_SIEGE_LOCATION_STATE.json")]
+	[InlineData("SM_MAY_LOGIN_INTO_GAME.json")]
+	[InlineData("SM_QUESTION_WINDOW.json")]
+	[InlineData("SM_INSTANCE_STAGE_INFO.json")]
+	[InlineData("SM_FORTRESS_INFO.json")]
+	[InlineData("SM_LEAVE_GROUP_MEMBER.json")]
+	[InlineData("SM_SHIELD_EFFECT.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -203,6 +211,14 @@ public sealed class GoldenPacketFixtureTests
 		"SM_SECURITY_TOKEN" => new SM_SECURITY_TOKEN(inputs.GetProperty("token").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray()),
 		"SM_MOTION" => ReconstructMotionScalar(inputs),
 		"SM_MACRO_RESULT" => inputs.GetProperty("code").GetInt32() == 0 ? SM_MACRO_RESULT.SM_MACRO_CREATED : SM_MACRO_RESULT.SM_MACRO_DELETED,
+		"SM_DUEL" => ReconstructDuel(inputs),
+		"SM_SIEGE_LOCATION_STATE" => new SM_SIEGE_LOCATION_STATE(inputs.GetProperty("locationId").GetInt32(), inputs.GetProperty("state").GetInt32()),
+		"SM_MAY_LOGIN_INTO_GAME" => new SM_MAY_LOGIN_INTO_GAME(),
+		"SM_QUESTION_WINDOW" => new SM_QUESTION_WINDOW(inputs.GetProperty("code").GetInt32(), inputs.GetProperty("senderId").GetInt32(), inputs.GetProperty("rangeOrCooldownSeconds").GetInt32(), inputs.GetProperty("params").EnumerateArray().Select(e => (object)e.GetString()!).ToArray()),
+		"SM_INSTANCE_STAGE_INFO" => new SM_INSTANCE_STAGE_INFO(inputs.GetProperty("type").GetInt32(), inputs.GetProperty("event").GetInt32(), inputs.GetProperty("unk").GetInt32()),
+		"SM_FORTRESS_INFO" => new SM_FORTRESS_INFO(inputs.GetProperty("locationId").GetInt32(), inputs.GetProperty("teleportStatus").GetBoolean()),
+		"SM_LEAVE_GROUP_MEMBER" => new SM_LEAVE_GROUP_MEMBER(),
+		"SM_SHIELD_EFFECT" => new SM_SHIELD_EFFECT(new List<Aion.GameServer.Model.Siege.SiegeLocation>()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -290,6 +306,17 @@ public sealed class GoldenPacketFixtureTests
 			1 => new SM_RIFT_ANNOUNCE(inputs.GetProperty("gelkmaros").GetBoolean(), inputs.GetProperty("inggison").GetBoolean()),
 			4 => new SM_RIFT_ANNOUNCE(inputs.GetProperty("objectId").GetInt32()),
 			_ => throw new NotSupportedException($"No SM_RIFT_ANNOUNCE faithful ctor for actionId {actionId}"),
+		};
+	}
+
+	// SM_DUEL: started (type 0) via the requesterObjId factory; result (type 1) via the (DuelResult, name) factory.
+	private static SM_DUEL ReconstructDuel(JsonElement inputs)
+	{
+		return inputs.GetProperty("type").GetInt32() switch
+		{
+			0 => SM_DUEL.SM_DUEL_STARTED(inputs.GetProperty("requesterObjId").GetInt32()),
+			1 => SM_DUEL.SM_DUEL_RESULT(Enum.Parse<DuelResult>(inputs.GetProperty("result").GetString()!), inputs.GetProperty("playerName").GetString()!),
+			_ => throw new NotSupportedException("Unknown SM_DUEL type"),
 		};
 	}
 
