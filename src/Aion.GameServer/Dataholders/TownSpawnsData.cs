@@ -9,14 +9,30 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("town_spawns_data")]
 public class TownSpawnsData
 {
-    [XmlElement("spawn_map")] private List<TownSpawnMap> spawnMap;
+    [XmlElement("spawn_map")] public List<TownSpawnMap> spawnMap;
 
     [XmlIgnore] private readonly Dictionary<int, TownSpawnMap> spawnMapsData = new();
 
+    // Java imports the town_spawns/ dir file-by-file (each its own <town_spawns_data> root); the loader merges
+    // the per-file spawn_map lists, then runs AfterUnmarshal once on the merged holder.
+    public void MergePending(TownSpawnsData other)
+    {
+        if (other.spawnMap == null)
+            return;
+        spawnMap ??= new List<TownSpawnMap>();
+        spawnMap.AddRange(other.spawnMap);
+    }
+
     public void AfterUnmarshal(object parent)
     {
+        if (spawnMap == null)
+            return;
         foreach (TownSpawnMap map in spawnMap)
+        {
+            // XmlSerializer does not invoke child afterUnmarshal callbacks; cascade child-first.
+            map.AfterUnmarshal(this);
             spawnMapsData[map.GetMapId()] = map;
+        }
         spawnMap = null;
     }
 

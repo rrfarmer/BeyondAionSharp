@@ -1956,6 +1956,84 @@ public sealed class JaxbHolderLoaderTests
         method?.Invoke(holder, new object?[] { null });
     }
 
+    [Fact]
+    public void LoadFromFiles_PopulatesTownSpawnsDataFromRealXml_Merged()
+    {
+        // Java imports the town_spawns/ dir file-by-file (each its own <town_spawns_data> root): merge every file's
+        // spawn_map rows then run AfterUnmarshal once (builds map->town->level->spawn indices).
+        var dir = Path.GetDirectoryName(ResolveStaticDataFile("town_spawns", "700010000.xml"))!;
+
+        TownSpawnsData? data = null;
+        foreach (var file in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var part = JaxbHolderLoader.DeserializeFile<TownSpawnsData>(file);
+            if (data == null) data = part; else data.MergePending(part);
+        }
+        Assert.NotNull(data);
+        JaxbHolderLoader.RunAfterUnmarshal(data!);
+
+        Assert.True(data!.GetSpawnsCount() > 0);
+
+        // Known row (700010000.xml): <spawn_map map_id="700010000"><town_spawn town_id="1001"><town_level level="1">
+        //   <spawn npc_id="831222" respawn_time="295"><spot x="677.1665" y="2238.4854" z="159.74904" h="14"/>
+        Assert.Equal(700010000, data.GetWorldIdForTown(1001));
+        var spawns = data.GetSpawns(1001, 1);
+        Assert.NotNull(spawns);
+        var spawn = spawns!.FirstOrDefault(s => s.GetNpcId() == 831222);
+        Assert.NotNull(spawn);
+
+        // respawn_time present -> the int? string-proxy parsed it back to the typed value (proves present case).
+        Assert.Equal(295, spawn!.GetRespawnTime());
+        // pool/custom/handler/walker_index ALL absent in town_spawns -> proxies leave the faithful defaults
+        // (proves absent case: null attr -> default, no spurious value injected).
+        Assert.Equal(0, spawn.GetPool());
+        Assert.False(spawn.IsCustomSpawn());
+        Assert.Null(spawn.GetSpawnHandlerType());
+
+        // Spot coordinates intact; SpawnSpotTemplate.walker_index absent -> WalkerIdx proxy yields null.
+        var spot = spawn.GetSpawnSpotTemplates()[0];
+        Assert.Equal(677.1665f, spot.GetX(), 3);
+        Assert.Equal(2238.4854f, spot.GetY(), 3);
+        Assert.Equal(159.74904f, spot.GetZ(), 3);
+        Assert.Equal((byte)14, spot.GetHeading());
+        Assert.Null(spot.GetWalkerIndex());
+    }
+
+    [Fact]
+    public void Spawn_StringProxies_RoundTripPresentAndAbsentNullableAttributes()
+    {
+        // Directly prove the string-proxy on Spawn for the PRESENT case of every nullable attribute (town_spawns
+        // only carries respawn_time, so this inline XML exercises pool/custom/handler/walker_index present too).
+        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(Model.Templates.Spawns.Spawn));
+
+        const string present =
+            "<Spawn npc_id=\"100\" respawn_time=\"42\" pool=\"3\" custom=\"true\" handler=\"RIFT\">" +
+            "<spot x=\"1\" y=\"2\" z=\"3\" h=\"4\" walker_index=\"7\"/></Spawn>";
+        using (var r = new System.IO.StringReader(present))
+        {
+            var s = (Model.Templates.Spawns.Spawn)serializer.Deserialize(r)!;
+            Assert.Equal(100, s.GetNpcId());
+            Assert.Equal(42, s.GetRespawnTime());
+            Assert.Equal(3, s.GetPool());
+            Assert.True(s.IsCustomSpawn());
+            Assert.Equal(SpawnEngine.SpawnHandlerType.RIFT, s.GetSpawnHandlerType());
+            Assert.Equal(7, s.GetSpawnSpotTemplates()[0].GetWalkerIndex());
+        }
+
+        // ABSENT case: no nullable attributes present -> proxies parse to null/default, getters return faithful defaults.
+        const string absent = "<Spawn npc_id=\"101\"><spot x=\"1\" y=\"2\" z=\"3\" h=\"4\"/></Spawn>";
+        using (var r = new System.IO.StringReader(absent))
+        {
+            var s = (Model.Templates.Spawns.Spawn)serializer.Deserialize(r)!;
+            Assert.Equal(101, s.GetNpcId());
+            Assert.Equal(0, s.GetRespawnTime());
+            Assert.Equal(0, s.GetPool());
+            Assert.False(s.IsCustomSpawn());
+            Assert.Null(s.GetSpawnHandlerType());
+            Assert.Null(s.GetSpawnSpotTemplates()[0].GetWalkerIndex());
+        }
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -451,6 +451,9 @@ public sealed partial class StaticData
 		// <mails> root (single file): faithful Mails feeds DataManager.SYSTEM_MAIL_TEMPLATES; AfterUnmarshal cascades
 		// each MailTemplate/SysMail AfterUnmarshal children-first to build the part/case indices.
 		SystemMailTemplates = TryLoadHolder(SystemMailTemplates, Path.Combine(staticDataDirectory, "mail_templates.xml"), logger);
+		// Java imports the town_spawns/ dir file-by-file (each its own <town_spawns_data> root); merge every file's
+		// spawn_map rows then run AfterUnmarshal once. Spawn/SpawnSpotTemplate nullable attrs bind via string proxies.
+		TownSpawns = TryLoadMergedHolder<TownSpawnsData>(Path.Combine(staticDataDirectory, "town_spawns"), (m, p) => m.MergePending(p), logger);
 	}
 
 	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()

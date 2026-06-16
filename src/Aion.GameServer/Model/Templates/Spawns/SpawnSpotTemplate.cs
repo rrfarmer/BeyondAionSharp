@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml.Serialization;
 
 namespace Aion.GameServer.Model.Templates.Spawns;
@@ -38,9 +39,17 @@ public class SpawnSpotTemplate
     [XmlAttribute("walker_id")]
     public string? WalkerId { get; set; }
 
-    // Java parity: Integer walkerIdx — omitted when 0
-    [XmlAttribute("walker_index")]
+    // Java parity: Integer walkerIdx — omitted when 0. XmlSerializer cannot bind a Nullable<int> attribute, so the
+    // typed backing property stays faithful ([XmlIgnore]) and a public string proxy carries the wire value.
+    [XmlIgnore]
     public int? WalkerIdx { get; set; }
+
+    [XmlAttribute("walker_index")]
+    public string? WalkerIdxRaw
+    {
+        get => WalkerIdx?.ToString(CultureInfo.InvariantCulture);
+        set => WalkerIdx = string.IsNullOrEmpty(value) ? null : int.Parse(value, CultureInfo.InvariantCulture);
+    }
 
     // Java parity: String anchor
     [XmlAttribute("anchor")]
@@ -117,5 +126,5 @@ public class SpawnSpotTemplate
     public bool ShouldSerializeStaticId() => StaticId != 0;
     public bool ShouldSerializeRandomWalk() => RandomWalk != 0;
     public bool ShouldSerializeState() => State != 0;
-    public bool ShouldSerializeWalkerIdx() => WalkerIdx.HasValue && WalkerIdx.Value != 0;
+    public bool ShouldSerializeWalkerIdxRaw() => WalkerIdx.HasValue && WalkerIdx.Value != 0;
 }

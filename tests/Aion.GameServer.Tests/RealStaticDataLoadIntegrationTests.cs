@@ -249,6 +249,14 @@ public sealed class RealStaticDataLoadIntegrationTests
 
 		Assert.True(sd.SystemMailTemplates.Size() > 0, "SystemMailTemplates empty after boot");
 		Assert.NotNull(sd.SystemMailTemplates.GetMailTemplate("$$ABYSS_REWARD_MAIL", "", Model.Race.ELYOS));
+
+		// TOWN_SPAWNS_DATA boot-wiring: the town_spawns/ dir merge loads (Spawn/SpawnSpotTemplate nullable attrs bind
+		// via string proxies); a known town spawn (map 700010000 / town 1001 / level 1 / npc 831222) resolves.
+		Assert.True(sd.TownSpawns.GetSpawnsCount() > 0, "TownSpawns empty after boot");
+		Assert.Equal(700010000, sd.TownSpawns.GetWorldIdForTown(1001));
+		var townSpawns = sd.TownSpawns.GetSpawns(1001, 1);
+		Assert.NotNull(townSpawns);
+		Assert.Contains(townSpawns!, s => s.GetNpcId() == 831222 && s.GetRespawnTime() == 295);
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

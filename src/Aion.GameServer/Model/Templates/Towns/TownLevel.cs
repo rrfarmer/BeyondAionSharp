@@ -8,8 +8,8 @@ namespace Aion.GameServer.Model.Templates.Towns;
 [XmlType("town_level")]
 public class TownLevel
 {
-    [XmlAttribute("level")] protected int level;
-    [XmlElement("spawn")] protected List<Spawn> spawns;
+    [XmlAttribute("level")] public int level;
+    [XmlElement("spawn")] public List<Spawn> spawns;
 
     /// <returns>the level</returns>
     public int GetLevel()

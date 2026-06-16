@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Towns;
 [XmlType("town_spawn")]
 public class TownSpawn
 {
-    [XmlAttribute("town_id")] private int townId;
-    [XmlElement("town_level")] private List<TownLevel> townLevels;
+    [XmlAttribute("town_id")] public int townId;
+    [XmlElement("town_level")] public List<TownLevel> townLevels;
 
     [XmlIgnore] private readonly Dictionary<int, TownLevel> townLevelsData = new Dictionary<int, TownLevel>();
 
