@@ -151,6 +151,117 @@ public static class ChatUtil
 		return string.Format("[where:{0};{1}]", linkName, npcId);
 	}
 
+	// Java parity: utils/ChatUtil.position(String, WorldPosition).
+	public static string Position(string label, Aion.GameServer.World.WorldPosition pos)
+	{
+		return Position(label, pos.GetMapId(), pos.GetX(), pos.GetY(), pos.GetZ());
+	}
+
+	// Java parity: utils/ChatUtil.position(String, long, float, float, float).
+	public static string Position(string label, long worldId, float x, float y, float z)
+	{
+		byte subId = 0;
+		if (worldId == 400010000) // abyss map
+		{
+			if (z > 1800 && z < 2800 && x > 1600 && x < 2700 && y > 1400 && y < 2500)
+				subId = 2; // core
+			else if (z > 2250)
+				subId = 3; // upper
+			else
+				subId = 1; // lower
+		}
+		return string.Format("[pos:{0};{1} {2} {3} {4} {5}]", label, worldId, Fmt(x), Fmt(y), Fmt(z), subId);
+	}
+
+	// Java parity: DecimalFormat.getInstance(Locale.US) — grouping comma, max 3 fraction digits, min 1 integer digit.
+	private static string Fmt(float v)
+	{
+		return v.ToString("#,##0.###", System.Globalization.CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>Java parity: utils/ChatUtil.getPosition(String). Parses an Aion "[pos:...]" link. Returns null if input was invalid.</summary>
+	public static Aion.GameServer.World.WorldPosition GetPosition(string posLink)
+	{
+		if (posLink == null || !posLink.StartsWith("[pos:"))
+			return null;
+
+		int startIndex = posLink.IndexOf(";");
+		int endIndex = posLink.IndexOf("]");
+		if (startIndex < 0 || startIndex >= endIndex)
+			return null;
+		string[] posStr = System.Text.RegularExpressions.Regex.Split(posLink.Substring(startIndex, endIndex - startIndex).Trim(), "\\s+")
+			.Where(s => s.Length > 0).ToArray();
+		if (ToInt(posStr[0]) <= 1) // if present, strip ely/asmo language restriction flag (0 = ely only, 1 = asmo only)
+			posStr = posStr.Skip(1).ToArray();
+
+		if (posStr.Length < 3)
+			return null;
+
+		int mapAndInstanceId = ToInt(posStr[0]);
+		float x = ToFloat(posStr[1]);
+		float y = ToFloat(posStr[2]);
+		float z = posStr.Length > 3 ? ToFloat(posStr[3]) : 0; // client always creates position links with z = 0
+		int layer = posStr.Length > 4 ? ToInt(posStr[4]) : 0;
+		int? zSearchOffset = null;
+		if (layer > 0 && z == 0 && mapAndInstanceId == 400010000) // abyss
+		{
+			switch (layer)
+			{
+				case 1: // lower
+					z = 1700f;
+					break;
+				case 2: // core
+					z = 2350f;
+					break;
+				case 3: // upper
+					z = 2950f;
+					break;
+			}
+			zSearchOffset = -250;
+		}
+
+		return ParsedCoordsToWorldPosition(mapAndInstanceId, x, y, z == 0 ? (float?)null : z, zSearchOffset);
+	}
+
+	// Java parity: org.apache.commons.lang3.math.NumberUtils.toInt(String).
+	private static int ToInt(string s)
+	{
+		return int.TryParse(s, out var r) ? r : 0;
+	}
+
+	// Java parity: org.apache.commons.lang3.math.NumberUtils.toFloat(String).
+	private static float ToFloat(string s)
+	{
+		return float.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var r) ? r : 0f;
+	}
+
+	// Java parity: utils/ChatUtil.parsedCoordsToWorldPosition(int, float, float, Float, Integer).
+	public static Aion.GameServer.World.WorldPosition ParsedCoordsToWorldPosition(int mapAndInstanceId, float x, float y, float? z, int? zSearchOffset)
+	{
+		int instanceId = mapAndInstanceId % 10000;
+		int mapId = mapAndInstanceId;
+		if (instanceId > 0)
+			mapId -= instanceId;
+		Aion.GameServer.World.WorldMap map = Aion.GameServer.World.World.GetInstance().GetWorldMap(mapId);
+		if (map == null)
+			return null;
+		instanceId += 1; // client counts instanceIds starting at 0, but on server side it starts at 1 (TODO change server side)
+		if (instanceId > 1 && !map.GetAvailableInstanceIds().Contains(instanceId))
+			instanceId = 1;
+		float geoZ;
+		if (z == null)
+			geoZ = Aion.GameServer.World.Geo.GeoService.GetInstance().GetZ(mapId, x, y, 4000, 0, instanceId);
+		else if (zSearchOffset == null)
+			geoZ = Aion.GameServer.World.Geo.GeoService.GetInstance().GetZ(mapId, x, y, z.Value, instanceId); // search relative to input z (max diff = z ±2)
+		else
+			geoZ = Aion.GameServer.World.Geo.GeoService.GetInstance().GetZ(mapId, x, y, z.Value, z.Value + zSearchOffset.Value, instanceId);
+
+		if (!float.IsNaN(geoZ))
+			z = geoZ;
+
+		return z == null ? null : Aion.GameServer.World.World.GetInstance().CreatePosition(mapId, x, y, z.Value, (byte)0, instanceId);
+	}
+
 	// Java parity: org.apache.commons.lang3.StringUtils.capitalize — capitalizes the first character.
 	public static string Capitalize(string str)
 	{

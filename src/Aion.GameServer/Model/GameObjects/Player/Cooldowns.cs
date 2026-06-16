@@ -62,6 +62,9 @@ public class Cooldowns : IEnumerable<KeyValuePair<int, long>>
     /// <summary>Java parity: ConcurrentHashMap.isEmpty().</summary>
     public bool IsEmpty() => map.IsEmpty;
 
+    /// <summary>Java parity: ConcurrentHashMap.clear().</summary>
+    public void Clear() => map.Clear();
+
     /// <summary>Java parity: ConcurrentHashMap.forEach(BiConsumer&lt;Integer, Long&gt;).</summary>
     public void ForEach(Action<int, long> action)
     {
