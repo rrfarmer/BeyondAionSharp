@@ -76,18 +76,16 @@ var builder = Host.CreateDefaultBuilder(args)
 			// (backed by DataManager.VORTEX_DATA) already covers the logic; the DI leaf had zero non-registration consumers.
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
-			services.AddSingleton<HousingWorldService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<LimitedItemTradeSchedulerService>());
-			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
-				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
 			// Boot NPC spawn is the faithful SpawnEngine.SpawnAll() (Java parity: GameServer.main), invoked
 			// directly in GameServerBootstrapService after RiftService.initRiftLocations() and before
 			// initRifts(). The reworked WorldNpcSpawnService GameEngine registration was removed so EXACTLY
-			// ONE spawn path runs and _objects is no longer boot-populated.
-			services.AddSingleton<HousingVisibilityService>();
+			// ONE spawn path runs and _objects is no longer boot-populated. Houses enter the same _allObjects
+			// store via the faithful SpawnEngine -> HousingService.SpawnHouses path (the reworked
+			// HousingWorldService/HousingVisibilityService parallel object subsystem was retired).
 			services.AddSingleton<NpcVisibilityService>();
 			services.AddSingleton<CreaturePvpZoneCounterService>();
 			services.AddSingleton<HouseAuctionTimingService>();

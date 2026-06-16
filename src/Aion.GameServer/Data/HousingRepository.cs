@@ -9,10 +9,6 @@ namespace Aion.GameServer.Data;
 
 public interface IHousingRepository
 {
-	Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default);
-
-	Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default);
-
 	Task<HouseRegistrySummary> LoadHouseRegistryAsync(
 		int playerObjectId,
 		int buildingId,
@@ -63,16 +59,6 @@ public interface IHousingRepository
 
 public sealed class EmptyHousingRepository : IHousingRepository
 {
-	public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
-	{
-		return Task.FromResult<IReadOnlyList<WorldHouse>>(Array.Empty<WorldHouse>());
-	}
-
-	public Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
-	{
-		return Task.FromResult<IReadOnlyList<WorldHouse>>(Array.Empty<WorldHouse>());
-	}
-
 	public Task<HouseRegistrySummary> LoadHouseRegistryAsync(
 		int playerObjectId,
 		int buildingId,
@@ -152,93 +138,6 @@ public sealed class MySqlHousingRepository : IHousingRepository
 	public MySqlHousingRepository(ILogger<MySqlHousingRepository> logger)
 	{
 		_logger = logger;
-	}
-
-	public Task<IReadOnlyList<WorldHouse>> LoadWorldHousesAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
-	{
-		// Java parity: dao/HousesDAO.loadHouses(..., false) excludes studio addresses.
-		return LoadWorldHouseRowsAsync(housingTemplates, studios: false, cancellationToken);
-	}
-
-	public Task<IReadOnlyList<WorldHouse>> LoadWorldStudiosAsync(HousingTemplateTable housingTemplates, CancellationToken cancellationToken = default)
-	{
-		// Java parity: dao/HousesDAO.loadHouses(..., true) loads studio addresses into the owner-keyed studio map.
-		return LoadWorldHouseRowsAsync(housingTemplates, studios: true, cancellationToken);
-	}
-
-	private async Task<IReadOnlyList<WorldHouse>> LoadWorldHouseRowsAsync(
-		HousingTemplateTable housingTemplates,
-		bool studios,
-		CancellationToken cancellationToken)
-	{
-		// Java parity: dao/HousesDAO.loadHouses plus services/HousingService.updateInactiveStateForAllHouses for spawned custom houses.
-		try
-		{
-			await using var connection = DatabaseFactory.GetConnection();
-			await connection.OpenAsync(cancellationToken);
-			await using var command = connection.CreateCommand();
-			command.CommandText = """
-				SELECT
-					h.id, h.address, h.building_id, h.player_id, h.acquire_time, h.settings, h.sign_notice,
-					p.id AS owner_row_id,
-					p.name AS owner_name,
-					lm.legion_id, l.name AS legion_name,
-					le.emblem_id AS legion_emblem_id, le.emblem_type AS legion_emblem_type,
-					le.color_a AS legion_emblem_color_a, le.color_r AS legion_emblem_color_r,
-					le.color_g AS legion_emblem_color_g, le.color_b AS legion_emblem_color_b
-				FROM houses h
-					LEFT JOIN players p ON p.id = h.player_id
-					LEFT JOIN legion_members lm ON lm.player_id = p.id
-					LEFT JOIN legions l ON l.id = lm.legion_id
-					LEFT JOIN legion_emblems le ON le.legion_id = lm.legion_id
-				WHERE __HOUSE_ADDRESS_FILTER__
-				ORDER BY h.player_id, h.acquire_time, h.address
-				""".Replace(
-				"__HOUSE_ADDRESS_FILTER__",
-				studios ? "h.address = 2001 OR h.address = 3001" : "h.address <> 2001 AND h.address <> 3001",
-				StringComparison.Ordinal);
-
-			var rows = new List<HouseRow>();
-			await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-			while (await reader.ReadAsync(cancellationToken))
-			{
-				rows.Add(
-					new HouseRow(
-						ReadInt(reader, "id"),
-						ReadInt(reader, "address"),
-						ReadInt(reader, "building_id"),
-						ReadInt(reader, "player_id"),
-						ReadDateTime(reader, "acquire_time"),
-						ReadInt(reader, "settings"),
-						ReadString(reader, "sign_notice"),
-						ReadInt(reader, "owner_row_id") != 0,
-						ReadString(reader, "owner_name"),
-						ReadInt(reader, "legion_id"),
-						ReadString(reader, "legion_name"),
-						(byte)ReadInt(reader, "legion_emblem_id"),
-						ToLegionEmblemTypeValue(ReadString(reader, "legion_emblem_type")),
-						(byte)ReadInt(reader, "legion_emblem_color_a"),
-						(byte)ReadInt(reader, "legion_emblem_color_r"),
-						(byte)ReadInt(reader, "legion_emblem_color_g"),
-						(byte)ReadInt(reader, "legion_emblem_color_b")));
-			}
-
-			await RevokeDeletedOwnerHousesAsync(connection, rows, housingTemplates, _logger, cancellationToken);
-			var effectiveRows = rows.Select(row => row.WithDeletedOwnerRevoked(housingTemplates)).ToArray();
-
-			var visibleRows = studios
-				? effectiveRows.Where(row => row.OwnerObjectId > 0)
-				: effectiveRows;
-			return visibleRows
-				.GroupBy(row => row.OwnerObjectId)
-				.SelectMany(group => CreateWorldHouses(group, housingTemplates))
-				.ToArray();
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "Could not load world {HouseKind}", studios ? "studios" : "houses");
-			return Array.Empty<WorldHouse>();
-		}
 	}
 
 	public async Task<HouseRegistrySummary> LoadHouseRegistryAsync(
@@ -639,84 +538,6 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
 	}
 
-	private static async Task RevokeDeletedOwnerHousesAsync(
-		MySqlConnection connection,
-		IEnumerable<HouseRow> rows,
-		HousingTemplateTable housingTemplates,
-		ILogger logger,
-		CancellationToken cancellationToken)
-	{
-		// Java parity: services/HousingService.revokeOwnershipOfDeletedPlayers -> changeOwner(house, 0).
-		foreach (var row in rows.Where(row => row.HasDeletedOwner))
-		{
-			logger.LogWarning(
-				"Player with ID {PlayerObjectId} got deleted from DB, revoking house ownership for house {AddressId}",
-				row.OwnerObjectId,
-				row.AddressId);
-			var revoked = row.WithDeletedOwnerRevoked(housingTemplates);
-			await using var command = connection.CreateCommand();
-			command.CommandText = """
-				UPDATE houses
-				SET building_id = ?, player_id = 0, acquire_time = NULL, settings = ?, next_pay = NULL, sign_notice = NULL
-				WHERE id = ? AND player_id = ?
-				""";
-			command.Parameters.AddRange(
-				new[]
-				{
-					new MySqlParameter { Value = revoked.BuildingId },
-					new MySqlParameter { Value = revoked.Settings },
-					new MySqlParameter { Value = row.ObjectId },
-					new MySqlParameter { Value = row.OwnerObjectId },
-				});
-			await command.ExecuteNonQueryAsync(cancellationToken);
-		}
-	}
-
-	private static IEnumerable<WorldHouse> CreateWorldHouses(IEnumerable<HouseRow> rows, HousingTemplateTable housingTemplates)
-	{
-		var orderedRows = rows.OrderBy(row => row.AcquiredTime ?? DateTime.MinValue).ThenBy(row => row.AddressId).ToArray();
-		for (var i = 0; i < orderedRows.Length; i++)
-		{
-			var row = orderedRows[i];
-			var address = housingTemplates.GetAddress(row.AddressId);
-			if (address == null || address.MapId == 0)
-				continue;
-
-			var isInactive = row.OwnerObjectId > 0 && i != 0;
-			yield return new WorldHouse(
-				row.ObjectId,
-				row.AddressId,
-				row.BuildingId,
-				row.OwnerObjectId,
-				row.OwnerName,
-				row.LegionId,
-				row.LegionName,
-				row.LegionEmblemId,
-				row.LegionEmblemType,
-				row.LegionEmblemColorA,
-				row.LegionEmblemColorR,
-				row.LegionEmblemColorG,
-				row.LegionEmblemColorB,
-				isInactive,
-				GetDoorState(row.Settings, row.OwnerObjectId, isInactive),
-				PlayerHouse.GetShowOwnerNameFromSettings(row.Settings),
-				row.SignNotice,
-				new WorldPosition(address.MapId, address.X, address.Y, address.Z, 0));
-		}
-	}
-
-	private static byte GetDoorState(int settings, int ownerObjectId, bool isInactive)
-	{
-		// Java parity: model/house/House.setPermissionsFromDB falls back to House.resetDoorState.
-		var doorState = (byte)(settings >> 8);
-		if (PlayerHouse.IsKnownDoorState(doorState))
-			return doorState;
-
-		return isInactive || ownerObjectId == 0
-			? PlayerHouse.DoorClosed
-			: PlayerHouse.DoorOpen;
-	}
-
 	private static int ReadInt(MySqlDataReader reader, string column)
 	{
 		var ordinal = reader.GetOrdinal(column);
@@ -747,56 +568,4 @@ public sealed class MySqlHousingRepository : IHousingRepository
 		return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
 	}
 
-	private static byte ToLegionEmblemTypeValue(string emblemType)
-	{
-		// Java parity: model/team/legion/LegionEmblemType values.
-		return string.Equals(emblemType, "CUSTOM", StringComparison.OrdinalIgnoreCase) ? (byte)0x80 : (byte)0;
-	}
-
-	private sealed record HouseRow(
-		int ObjectId,
-		int AddressId,
-		int BuildingId,
-		int OwnerObjectId,
-		DateTime? AcquiredTime,
-		int Settings,
-		string? SignNotice,
-		bool OwnerExists,
-		string OwnerName,
-		int LegionId,
-		string LegionName,
-		byte LegionEmblemId,
-		byte LegionEmblemType,
-		byte LegionEmblemColorA,
-		byte LegionEmblemColorR,
-		byte LegionEmblemColorG,
-		byte LegionEmblemColorB)
-	{
-		public bool HasDeletedOwner => OwnerObjectId > 0 && !OwnerExists;
-
-		public HouseRow WithDeletedOwnerRevoked(HousingTemplateTable housingTemplates)
-		{
-			if (!HasDeletedOwner)
-				return this;
-
-			var defaultBuildingId = housingTemplates.GetAddress(AddressId)?.DefaultBuildingId ?? 0;
-			return this with
-			{
-				BuildingId = defaultBuildingId == 0 ? BuildingId : defaultBuildingId,
-				OwnerObjectId = 0,
-				AcquiredTime = null,
-				Settings = PlayerHouse.CreateSettings(PlayerHouse.DoorClosed, showOwnerName: true),
-				SignNotice = null,
-				OwnerName = string.Empty,
-				LegionId = 0,
-				LegionName = string.Empty,
-				LegionEmblemId = 0,
-				LegionEmblemType = 0,
-				LegionEmblemColorA = 0,
-				LegionEmblemColorR = 0,
-				LegionEmblemColorG = 0,
-				LegionEmblemColorB = 0,
-			};
-		}
-	}
 }

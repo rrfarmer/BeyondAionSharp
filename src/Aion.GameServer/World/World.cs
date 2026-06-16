@@ -15,12 +15,6 @@ namespace Aion.GameServer.World;
 public sealed class World
 {
 	private readonly ILogger<World>? _logger;
-	// Houses are the only content the reworked spine ever stored. Java `World` has a single
-	// `allObjects` store of `VisibleObject`; until the faithful `House` VisibleObject + HousingService
-	// spawn lifecycle is ported (§7c.2 follow-on), houses live in this dedicated typed index instead of
-	// the untyped object store that has now been deleted.
-	private readonly ConcurrentDictionary<int, WorldHouse> _housesByObjectId = new();
-	private readonly ConcurrentDictionary<int, WorldHouse> _housesByAddress = new();
 	private int _initialized;
 
 	// Java parity: world/World — faithful singleton backing stores (allPlayers, allObjects, localSiegeNpcs, worldMaps).
@@ -57,38 +51,15 @@ public sealed class World
 
 	public bool IsInitialized => Volatile.Read(ref _initialized) != 0;
 
-	public int ObjectCount => _housesByObjectId.Count;
-
-	public int HouseCount => _housesByAddress.Count;
+	// Java parity: world/World — `allObjects` is the single store of every VisibleObject (incl. faithful
+	// House : VisibleObject spawned via SpawnEngine -> HousingService.SpawnHouses).
+	public int ObjectCount => _allObjects.Count;
 
 	public void Initialize()
 	{
 		// Java parity: world/World singleton initialization shell.
 		if (Interlocked.Exchange(ref _initialized, 1) == 0)
 			_logger.LogInformation("Initialized world container");
-	}
-
-	public void AddOrUpdateHouse(WorldHouse house)
-	{
-		// Java parity: services/HousingService.spawnHouses keeps spawned House objects available to KnownList scans.
-		_housesByObjectId[house.ObjectId] = house;
-		_housesByAddress[house.AddressId] = house;
-	}
-
-	public IReadOnlyList<WorldHouse> GetHouses()
-	{
-		return _housesByAddress.Values.ToArray();
-	}
-
-	public bool TryGetObject(int objectId, out WorldHouse? house)
-	{
-		return _housesByObjectId.TryGetValue(objectId, out house);
-	}
-
-	public void Clear()
-	{
-		_housesByObjectId.Clear();
-		_housesByAddress.Clear();
 	}
 
 	// ---------------------------------------------------------------------------------------------

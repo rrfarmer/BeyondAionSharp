@@ -164,27 +164,6 @@ public sealed record HouseRegistrySummary(
 			.ToArray();
 	}
 
-	public IReadOnlyList<PlacedHouseObjectSummary> GetSpawnedObjects(WorldHouse house)
-	{
-		// Java parity: controllers/HouseController.spawnObjects exposes spawned registry objects from visible House state.
-		return Objects
-			.Where(obj => obj.IsSpawnedByPlayer)
-			.Select(obj => ToPlacedObject(obj, house.AddressId, house.OwnerObjectId))
-			.ToArray();
-	}
-
-	public IReadOnlyList<PlacedHouseObjectSummary> GetSpawnedObjects(
-		WorldHouse house,
-		IReadOnlyDictionary<int, long> cooldowns,
-		Func<long>? currentUnixTimeMilliseconds = null)
-	{
-		// Java parity: SM_HOUSE_OBJECT writes cooldowns for the receiving player, not for the house owner.
-		return Objects
-			.Where(obj => obj.IsSpawnedByPlayer)
-			.Select(obj => ToPlacedObject(obj.WithCooldown(cooldowns, currentUnixTimeMilliseconds), house.AddressId, house.OwnerObjectId))
-			.ToArray();
-	}
-
 	public static HouseRegistrySummary FromRows(
 		int buildingId,
 		HousingTemplateTable housingTemplates,

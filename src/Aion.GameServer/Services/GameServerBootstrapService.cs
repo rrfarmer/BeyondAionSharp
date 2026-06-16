@@ -122,7 +122,6 @@ public sealed class GameServerBootstrapService : IHostedService
 		foreach (var engine in _engines.Reverse())
 			await engine.ShutdownAsync(cancellationToken);
 
-		_world.Clear();
 		await _threadPoolManager.ShutdownAsync();
 		_started = false;
 		_logger.LogInformation("Game-server bootstrap stopped");
