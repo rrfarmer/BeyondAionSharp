@@ -15,7 +15,11 @@ namespace Aion.GameServer.World;
 public sealed class World
 {
 	private readonly ILogger<World>? _logger;
-	private readonly ConcurrentDictionary<int, object> _objects = new();
+	// Houses are the only content the reworked spine ever stored. Java `World` has a single
+	// `allObjects` store of `VisibleObject`; until the faithful `House` VisibleObject + HousingService
+	// spawn lifecycle is ported (§7c.2 follow-on), houses live in this dedicated typed index instead of
+	// the untyped object store that has now been deleted.
+	private readonly ConcurrentDictionary<int, WorldHouse> _housesByObjectId = new();
 	private readonly ConcurrentDictionary<int, WorldHouse> _housesByAddress = new();
 	private int _initialized;
 
@@ -53,7 +57,7 @@ public sealed class World
 
 	public bool IsInitialized => Volatile.Read(ref _initialized) != 0;
 
-	public int ObjectCount => _objects.Count;
+	public int ObjectCount => _housesByObjectId.Count;
 
 	public int HouseCount => _housesByAddress.Count;
 
@@ -64,19 +68,10 @@ public sealed class World
 			_logger.LogInformation("Initialized world container");
 	}
 
-	public bool TryAddObject(int objectId, object gameObject)
-	{
-		// Java parity: world/World.storeObject.
-		var added = _objects.TryAdd(objectId, gameObject);
-		if (added && gameObject is WorldHouse house)
-			_housesByAddress[house.AddressId] = house;
-		return added;
-	}
-
 	public void AddOrUpdateHouse(WorldHouse house)
 	{
 		// Java parity: services/HousingService.spawnHouses keeps spawned House objects available to KnownList scans.
-		_objects[house.ObjectId] = house;
+		_housesByObjectId[house.ObjectId] = house;
 		_housesByAddress[house.AddressId] = house;
 	}
 
@@ -85,39 +80,14 @@ public sealed class World
 		return _housesByAddress.Values.ToArray();
 	}
 
-	public bool TryRemoveObject(int objectId, out object? gameObject)
+	public bool TryGetObject(int objectId, out WorldHouse? house)
 	{
-		var removed = _objects.TryRemove(objectId, out gameObject);
-		if (removed && gameObject is WorldHouse house)
-			_housesByAddress.TryRemove(house.AddressId, out _);
-		return removed;
-	}
-
-	public bool TryUpdateObject(int objectId, object gameObject)
-	{
-		if (!_objects.TryGetValue(objectId, out var existing) || !_objects.TryUpdate(objectId, gameObject, existing))
-			return false;
-
-		if (existing is WorldHouse oldHouse && gameObject is not WorldHouse)
-			_housesByAddress.TryRemove(oldHouse.AddressId, out _);
-		if (gameObject is WorldHouse newHouse)
-		{
-			if (existing is WorldHouse previousHouse && previousHouse.AddressId != newHouse.AddressId)
-				_housesByAddress.TryRemove(previousHouse.AddressId, out _);
-			_housesByAddress[newHouse.AddressId] = newHouse;
-		}
-
-		return true;
-	}
-
-	public bool TryGetObject(int objectId, out object? gameObject)
-	{
-		return _objects.TryGetValue(objectId, out gameObject);
+		return _housesByObjectId.TryGetValue(objectId, out house);
 	}
 
 	public void Clear()
 	{
-		_objects.Clear();
+		_housesByObjectId.Clear();
 		_housesByAddress.Clear();
 	}
 
