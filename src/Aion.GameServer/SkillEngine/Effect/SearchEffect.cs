@@ -12,7 +12,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SearchEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected CreatureSeeState state;
+    public CreatureSeeState state;
 
     public override void ApplyEffect(Effect effect)
     {

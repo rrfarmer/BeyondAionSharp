@@ -310,7 +310,7 @@ public sealed partial class StaticData
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; private set; } = new();
-	public SkillData SkillDataDh { get; } = new();
+	public SkillData SkillDataDh { get; private set; } = new();
 	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();
 	public TradeListData TradeListDataDh { get; } = new();
 	public RecipeData RecipeDataDh { get; } = new();
@@ -393,6 +393,11 @@ public sealed partial class StaticData
 		// the faithful ItemData holder feeds DataManager.ITEM_DATA (~221 gameplay consumers) and lights up the
 		// already-wired NPC equipment id->ItemTemplate lazy resolution.
 		ItemDataDh = TryLoadHolder(ItemDataDh, Path.Combine(staticDataDirectory, "items", "item_templates.xml"), logger);
+		// Standalone <skill_data> root (~12MB): the faithful SkillData holder feeds DataManager.SKILL_DATA
+		// (~81 gameplay consumers). Deep polymorphic effect/condition/property cones bind via the existing
+		// [XmlElement(typeof(...))] subtype maps; SkillData.AfterUnmarshal fires each Effects.AfterUnmarshal
+		// (effectTypes set) children-first since XmlSerializer skips JAXB callbacks.
+		SkillDataDh = TryLoadHolder(SkillDataDh, Path.Combine(staticDataDirectory, "skills", "skill_templates.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

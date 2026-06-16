@@ -11,7 +11,7 @@ namespace Aion.GameServer.SkillEngine.Action;
 public class DpUseAction : Action
 {
     [XmlAttribute]
-    protected int value;
+    public int value;
 
     public override bool Act(Skill skill)
     {

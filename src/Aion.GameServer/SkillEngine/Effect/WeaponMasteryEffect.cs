@@ -12,7 +12,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class WeaponMasteryEffect : BufEffect
 {
     [XmlAttribute("weapon")]
-    private ItemGroup itemGroup;
+    public ItemGroup itemGroup;
 
     public override void StartEffect(Effect effect)
     {

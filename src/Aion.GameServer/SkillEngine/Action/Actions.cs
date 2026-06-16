@@ -11,7 +11,7 @@ public class Actions
     [XmlElement("mpuse", typeof(MpUseAction))]
     [XmlElement("hpuse", typeof(HpUseAction))]
     [XmlElement("dpuse", typeof(DpUseAction))]
-    protected List<Action> actions;
+    public List<Action> actions;
 
     public List<Action> GetActions()
     {

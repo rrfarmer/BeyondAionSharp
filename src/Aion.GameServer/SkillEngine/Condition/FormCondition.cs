@@ -11,7 +11,7 @@ namespace Aion.GameServer.SkillEngine.Condition;
 public class FormCondition : Condition
 {
     [XmlAttribute]
-    protected TransformType value;
+    public TransformType value;
 
     public override bool Validate(Skill env)
     {

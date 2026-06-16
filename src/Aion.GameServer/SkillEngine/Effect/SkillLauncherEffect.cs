@@ -9,7 +9,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SkillLauncherEffect : EffectTemplate
 {
     [XmlAttribute("skill_id")]
-    protected int skillId;
+    public int skillId;
 
     public override void ApplyEffect(Effect effect)
     {

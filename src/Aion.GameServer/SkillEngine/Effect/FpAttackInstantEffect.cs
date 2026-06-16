@@ -11,7 +11,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class FpAttackInstantEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
 
     public override void Calculate(Effect effect)
     {

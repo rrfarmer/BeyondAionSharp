@@ -9,15 +9,15 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ShieldEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int hitdelta;
+    public int hitdelta;
     [XmlAttribute]
-    protected int hitvalue;
+    public int hitvalue;
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
     [XmlAttribute]
-    protected int radius = 0;
+    public int radius = 0;
     [XmlAttribute]
-    protected int minradius = 0;
+    public int minradius = 0;
 
     public override void ApplyEffect(Effect effect)
     {

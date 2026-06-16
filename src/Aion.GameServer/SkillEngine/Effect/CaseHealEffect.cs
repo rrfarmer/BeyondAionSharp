@@ -10,9 +10,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class CaseHealEffect : AbstractHealEffect
 {
     [XmlAttribute("cond_value")]
-    protected int condValue;
+    public int condValue;
     [XmlAttribute]
-    protected HealType type;
+    public HealType type;
 
     public override int GetCurrentStatValue(Effect effect)
     {

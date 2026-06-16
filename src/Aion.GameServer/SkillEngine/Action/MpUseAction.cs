@@ -13,13 +13,13 @@ namespace Aion.GameServer.SkillEngine.Action;
 public class MpUseAction : Action
 {
     [XmlAttribute]
-    protected int value;
+    public int value;
 
     [XmlAttribute]
-    protected int delta;
+    public int delta;
 
     [XmlAttribute]
-    protected bool ratio;
+    public bool ratio;
 
     public override bool Act(Skill skill)
     {

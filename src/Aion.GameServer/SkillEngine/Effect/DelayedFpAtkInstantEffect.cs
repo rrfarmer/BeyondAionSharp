@@ -14,9 +14,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class DelayedFpAtkInstantEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int delay;
+    public int delay;
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
 
     public override void Calculate(Effect effect)
     {

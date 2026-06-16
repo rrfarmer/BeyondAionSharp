@@ -13,7 +13,7 @@ namespace Aion.GameServer.SkillEngine.Condition;
 public class TargetCondition : Condition
 {
     [XmlAttribute]
-    protected TargetAttribute value;
+    public TargetAttribute value;
 
     public TargetAttribute GetValue()
     {

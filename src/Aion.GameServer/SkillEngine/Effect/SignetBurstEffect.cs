@@ -13,11 +13,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SignetBurstEffect : DamageEffect
 {
     [XmlAttribute]
-    protected int signetlvl;
+    public int signetlvl;
     [XmlAttribute]
-    protected string signet;
+    public string signet;
     [XmlAttribute("add_effect_prob_multi")]
-    protected int addEffectProbMultiplier = 0;
+    public int addEffectProbMultiplier = 0;
 
     public override void CalculateDamage(Effect effect)
     {

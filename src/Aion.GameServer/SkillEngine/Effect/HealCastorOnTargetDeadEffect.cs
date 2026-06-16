@@ -13,11 +13,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class HealCastorOnTargetDeadEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected HealType type; // useless
+    public HealType type; // useless
     [XmlAttribute]
-    protected float range;
+    public float range;
     [XmlAttribute]
-    protected bool healparty;
+    public bool healparty;
 
     public override void ApplyEffect(Effect effect)
     {

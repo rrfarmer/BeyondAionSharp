@@ -14,10 +14,10 @@ namespace Aion.GameServer.SkillEngine.Action;
 public class ItemUseAction : Action
 {
     [XmlAttribute]
-    protected int itemid;
+    public int itemid;
 
     [XmlAttribute]
-    protected int count;
+    public int count;
 
     public override bool Act(Skill skill)
     {

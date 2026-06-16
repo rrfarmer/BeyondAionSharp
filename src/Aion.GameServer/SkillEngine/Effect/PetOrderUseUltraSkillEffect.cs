@@ -14,7 +14,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class PetOrderUseUltraSkillEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected bool release;
+    public bool release;
 
     public override void ApplyEffect(Effect effect)
     {

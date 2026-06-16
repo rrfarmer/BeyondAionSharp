@@ -12,10 +12,10 @@ public class PeriodicActions
 {
     [XmlElement("hpuse", typeof(HpUsePeriodicAction))]
     [XmlElement("mpuse", typeof(MpUsePeriodicAction))]
-    protected List<PeriodicAction> periodicActions;
+    public List<PeriodicAction> periodicActions;
 
     [XmlAttribute("checktime")]
-    protected int checktime;
+    public int checktime;
 
     public List<PeriodicAction> GetPeriodicActions()
     {

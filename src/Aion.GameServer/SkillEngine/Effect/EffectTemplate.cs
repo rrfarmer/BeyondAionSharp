@@ -73,8 +73,17 @@ public abstract class EffectTemplate
     [XmlElement("subconditions")]
     public Conditions? EffectSubConditions;
 
-    [XmlAttribute("hoptype")]
+    // Java parity: @XmlAttribute("hoptype") HopType (nullable). XmlSerializer cannot bind Nullable<T> as an
+    // attribute, so round-trip via a string proxy (null when absent / unparseable, mirroring JAXB).
+    [XmlIgnore]
     public HopType? Hoptype;
+
+    [XmlAttribute("hoptype")]
+    public string? HoptypeRaw
+    {
+        get => Hoptype?.ToString();
+        set => Hoptype = value == null ? (HopType?)null : (System.Enum.TryParse<HopType>(value, out var v) ? v : (HopType?)null);
+    }
 
     [XmlAttribute("hopa")]
     public int HopA; // effects the aggro-value (hate)

@@ -14,7 +14,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SummonFunctionalNpcEffect : SummonEffect
 {
     [XmlAttribute("owner")]
-    private SummonOwner owner;
+    public SummonOwner owner;
 
     public override void ApplyEffect(Effect effect)
     {

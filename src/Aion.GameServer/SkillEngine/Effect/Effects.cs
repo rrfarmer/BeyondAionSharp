@@ -179,7 +179,7 @@ public class Effects
     [XmlElement("alwayshit", typeof(AlwaysHitEffect))]
     [XmlElement("alwaysnoresist", typeof(AlwaysNoResistEffect))]
     [XmlElement("utility", typeof(UtilityEffect))]
-    private List<EffectTemplate> effects;
+    public List<EffectTemplate> effects;
 
     [XmlIgnore]
     private HashSet<EffectType> effectTypes;

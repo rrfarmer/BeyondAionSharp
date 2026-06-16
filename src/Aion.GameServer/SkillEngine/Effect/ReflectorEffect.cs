@@ -9,7 +9,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ReflectorEffect : ShieldEffect
 {
     [XmlAttribute]
-    protected int reflectType;
+    public int reflectType;
 
     public override void StartEffect(Effect effect)
     {

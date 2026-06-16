@@ -14,10 +14,10 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SkillCooltimeResetEffect : EffectTemplate
 {
     [XmlAttribute("first_cd")]
-    protected int firstCd;
+    public int firstCd;
 
     [XmlAttribute("last_cd")]
-    protected int lastCd;
+    public int lastCd;
 
     public override void ApplyEffect(Effect effect)
     {

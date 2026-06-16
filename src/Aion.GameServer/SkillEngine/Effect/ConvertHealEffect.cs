@@ -9,9 +9,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ConvertHealEffect : ShieldEffect
 {
     [XmlAttribute]
-    protected HealType type;
+    public HealType type;
     [XmlAttribute("hitpercent")]
-    protected bool hitPercent;
+    public bool hitPercent;
 
     public override void StartEffect(Effect effect)
     {

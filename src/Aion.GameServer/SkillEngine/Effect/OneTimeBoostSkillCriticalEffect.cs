@@ -10,9 +10,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class OneTimeBoostSkillCriticalEffect : EffectTemplate
 {
     [XmlAttribute]
-    private int count;
+    public int count;
     [XmlAttribute]
-    private bool percent;
+    public bool percent;
 
     public override void ApplyEffect(Effect effect)
     {

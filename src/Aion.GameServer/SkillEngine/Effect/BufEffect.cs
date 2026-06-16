@@ -16,7 +16,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public abstract class BufEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected bool maxstat;
+    public bool maxstat;
 
     public override void ApplyEffect(Effect effect)
     {

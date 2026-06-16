@@ -14,7 +14,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class MagicCounterAtkEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int maxdmg;
+    public int maxdmg;
 
     // TODO bosses are resistent to this?
     public override void ApplyEffect(Effect effect)

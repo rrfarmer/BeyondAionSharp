@@ -9,9 +9,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class NoReduceSpellATKInstantEffect : DamageEffect
 {
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
     [XmlAttribute("max_damage")]
-    protected int max_damage;
+    public int max_damage;
 
     public override void CalculateDamage(Effect effect)
     {

@@ -18,8 +18,17 @@ public class DispelEffect : EffectTemplate
     [XmlElement("slottype")]
     public List<DispelSlotType>? slottype;
 
-    [XmlAttribute("dispeltype")]
+    // Java parity: @XmlAttribute("dispeltype") DispelType (nullable). XmlSerializer cannot bind Nullable<T>
+    // as an attribute, so round-trip via a string proxy (null when absent / unparseable, mirroring JAXB).
+    [XmlIgnore]
     public DispelType? dispeltype;
+
+    [XmlAttribute("dispeltype")]
+    public string? DispeltypeRaw
+    {
+        get => dispeltype?.ToString();
+        set => dispeltype = value == null ? (DispelType?)null : (System.Enum.TryParse<DispelType>(value, out var v) ? v : (DispelType?)null);
+    }
 
     [XmlAttribute("count")]
     public int count;

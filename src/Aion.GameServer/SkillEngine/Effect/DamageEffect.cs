@@ -13,9 +13,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public abstract class DamageEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected Func mode = Func.ADD;
+    public Func mode = Func.ADD;
     [XmlAttribute]
-    protected bool shared;
+    public bool shared;
 
     public override void ApplyEffect(Effect effect)
     {

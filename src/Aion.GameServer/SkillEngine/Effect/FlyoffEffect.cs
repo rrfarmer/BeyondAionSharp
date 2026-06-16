@@ -8,7 +8,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class FlyoffEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int distance;
+    public int distance;
 
     public override void ApplyEffect(Effect effect)
     {

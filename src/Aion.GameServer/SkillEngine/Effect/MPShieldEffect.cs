@@ -9,7 +9,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class MPShieldEffect : ShieldEffect
 {
     [XmlAttribute("mp_value")]
-    protected int mpValue;
+    public int mpValue;
 
     public override void StartEffect(Effect effect)
     {

@@ -11,15 +11,15 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class CarveSignetEffect : DamageEffect
 {
     [XmlAttribute("signet_increment")]
-    protected int signetIncrement = 1;
+    public int signetIncrement = 1;
     [XmlAttribute("signet_cap")]
-    protected int signetCap;
+    public int signetCap;
     [XmlAttribute("signet_id")]
-    protected int signetId;
+    public int signetId;
     [XmlAttribute]
-    protected string signet;
+    public string signet;
     [XmlAttribute]
-    protected int prob = 100;
+    public int prob = 100;
 
     public override void ApplyEffect(Effect effect)
     {

@@ -11,11 +11,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public abstract class AbstractOverTimeEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int checktime;
+    public int checktime;
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
     [XmlAttribute]
-    protected bool shared;
+    public bool shared;
 
     public override int GetValue()
     {

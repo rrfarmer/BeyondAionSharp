@@ -10,9 +10,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ChangeHateOnAttackedEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int value1; // delta
+    public int value1; // delta
     [XmlAttribute]
-    protected int value2;
+    public int value2;
 
     public override void ApplyEffect(Effect effect)
     {

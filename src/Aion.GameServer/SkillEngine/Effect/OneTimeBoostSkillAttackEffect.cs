@@ -12,10 +12,10 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class OneTimeBoostSkillAttackEffect : BufEffect
 {
     [XmlAttribute]
-    private int count;
+    public int count;
 
     [XmlAttribute]
-    private SkillType type;
+    public SkillType type;
 
     public override void StartEffect(Effect effect)
     {

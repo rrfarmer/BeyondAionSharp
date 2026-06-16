@@ -13,7 +13,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class BackDashEffect : DamageEffect
 {
     [XmlAttribute("distance")]
-    private float distance;
+    public float distance;
 
     public override void Calculate(Effect effect)
     {

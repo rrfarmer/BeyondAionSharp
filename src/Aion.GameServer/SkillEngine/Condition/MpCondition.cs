@@ -10,13 +10,13 @@ namespace Aion.GameServer.SkillEngine.Condition;
 public class MpCondition : Condition
 {
     [XmlAttribute]
-    protected int value;
+    public int value;
 
     [XmlAttribute]
-    protected int delta;
+    public int delta;
 
     [XmlAttribute]
-    protected bool ratio;
+    public bool ratio;
 
     public override bool Validate(Skill skill)
     {

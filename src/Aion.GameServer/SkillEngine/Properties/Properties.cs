@@ -11,52 +11,73 @@ namespace Aion.GameServer.SkillEngine.Properties;
 public class Properties
 {
     [XmlAttribute("first_target")]
-    protected FirstTargetAttribute firstTarget;
+    public FirstTargetAttribute firstTarget;
 
     [XmlAttribute("first_target_range")]
-    protected int firstTargetRange;
+    public int firstTargetRange;
 
     [XmlAttribute("awr")]
-    protected bool addWeaponRange;
+    public bool addWeaponRange;
 
     [XmlAttribute("target_relation")]
-    protected TargetRelationAttribute targetRelation;
+    public TargetRelationAttribute targetRelation;
 
     [XmlAttribute("target_type")]
-    protected TargetRangeAttribute targetType;
+    public TargetRangeAttribute targetType;
 
     [XmlAttribute("target_distance")]
-    protected int targetDistance;
+    public int targetDistance;
 
     [XmlAttribute("target_maxcount")]
-    protected int targetMaxCount;
+    public int targetMaxCount;
 
-    [XmlAttribute("target_status")]
+    // Java parity: @XmlAttribute("target_status") @XmlList List<AbnormalState> (space-separated enum tokens).
+    // XmlSerializer cannot bind a List<T> as an attribute, so round-trip via a string proxy that splits on
+    // whitespace and parses each token (null when the attribute is absent).
+    [XmlIgnore]
     private List<AbnormalState> targetStatus;
 
+    [XmlAttribute("target_status")]
+    public string TargetStatusRaw
+    {
+        get => targetStatus == null ? null : string.Join(" ", targetStatus);
+        set
+        {
+            if (value == null)
+            {
+                targetStatus = null;
+                return;
+            }
+            targetStatus = new List<AbnormalState>();
+            foreach (var tok in value.Split(new[] { ' ', '\t', '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries))
+                if (System.Enum.TryParse<AbnormalState>(tok, out var v))
+                    targetStatus.Add(v);
+        }
+    }
+
     [XmlAttribute("revision_distance")]
-    protected int revisionDistance;
+    public int revisionDistance;
 
     [XmlAttribute("effective_range")]
-    private int effectiveRange;
+    public int effectiveRange;
 
     [XmlAttribute("effective_altitude")]
-    private int effectiveAltitude;
+    public int effectiveAltitude;
 
     [XmlAttribute("effective_angle")]
-    private int effectiveAngle;
+    public int effectiveAngle;
 
     [XmlAttribute("effective_dist")]
-    private int effectiveDist;
+    public int effectiveDist;
 
     [XmlAttribute("direction")]
-    protected AreaDirections direction = AreaDirections.NONE;
+    public AreaDirections direction = AreaDirections.NONE;
 
     [XmlAttribute("target_species")]
-    protected TargetSpeciesAttribute targetSpecies;
+    public TargetSpeciesAttribute targetSpecies;
 
     [XmlAttribute("ineffective_range")]
-    protected int ineffectiveRange;
+    public int ineffectiveRange;
 
     public bool Validate(Skill skill, CastState castState)
     {

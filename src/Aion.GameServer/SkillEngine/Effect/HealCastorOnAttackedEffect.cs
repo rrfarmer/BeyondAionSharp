@@ -14,9 +14,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class HealCastorOnAttackedEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected HealType type; // useless
+    public HealType type; // useless
     [XmlAttribute]
-    protected float range;
+    public float range;
 
     public override void ApplyEffect(Effect effect)
     {

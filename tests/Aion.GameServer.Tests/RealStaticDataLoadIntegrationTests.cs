@@ -113,6 +113,22 @@ public sealed class RealStaticDataLoadIntegrationTests
 		var firstEquipId = fasimedes.equipmentList!.ItemIds[0];
 		Assert.NotNull(sd.ItemDataDh.GetItemTemplate(firstEquipId));
 
+		// SKILL_DATA: the faithful SkillData holder loads the real ~12MB skill_templates.xml at boot.
+		Assert.True(sd.SkillDataDh.Size() > 0, "SkillDataDh empty after boot");
+		// Known skill (Transformation: White Tiger, skill_id=1) with its polymorphic effect/condition subtree intact.
+		var skill1 = sd.SkillDataDh.GetSkillTemplate(1);
+		Assert.NotNull(skill1);
+		Assert.Equal("Transformation: White Tiger", skill1!.GetName());
+		Assert.Equal(SkillEngine.Model.SkillType.MAGICAL, skill1.GetTypeValue());
+		// <effects> not dropped: first effect is the polymorphic <shapechange> -> ShapeChangeEffect, and the
+		// Effects.AfterUnmarshal effectTypes set was built (children-first) during the holder's AfterUnmarshal.
+		var skill1Effects = skill1.GetEffects();
+		Assert.NotNull(skill1Effects);
+		Assert.IsType<SkillEngine.Effects.ShapeChangeEffect>(skill1Effects!.GetEffects()[0]);
+		Assert.True(skill1Effects.HasAnyEffectType(SkillEngine.Effects.EffectType.SHAPECHANGE));
+		// <startconditions> polymorphic <dp> -> DpCondition not dropped.
+		Assert.IsType<SkillEngine.Condition.DpCondition>(skill1.GetStartconditions()!.GetConditions()[0]);
+
 		// Prove the stat-bearing leaf holders bound their modifiers at boot (not silently dropped):
 		// item set 1 fullbonus carries a SPEED rate; title 1 carries a MAXHP add; conqueror rank 1 a PVP_ATTACK_RATIO add.
 		var itemSet1 = sd.ItemSetDataDh.GetItemSetTemplate(1);

@@ -25,7 +25,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class FearEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int resistchance = 100;
+    public int resistchance = 100;
 
     public override void ApplyEffect(Effect effect)
     {

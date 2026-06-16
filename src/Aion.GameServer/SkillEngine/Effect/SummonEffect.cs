@@ -16,9 +16,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SummonEffect : EffectTemplate
 {
     [XmlAttribute("npc_id")]
-    protected int npcId;
+    public int npcId;
     [XmlAttribute("time")]
-    protected int time; // in seconds
+    public int time; // in seconds
 
     public override void ApplyEffect(Effect effect)
     {

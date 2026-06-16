@@ -13,7 +13,8 @@ public class SkillData
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    [XmlElement("skill_template")] private List<SkillTemplate> skillTemplates;
+    // Public so XmlSerializer can populate it (JAXB read the private field via @XmlAccessorType(FIELD)).
+    [XmlElement("skill_template")] public List<SkillTemplate> skillTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, SkillTemplate> skillTemplateById = new();
     [XmlIgnore] private readonly Dictionary<string, List<SkillTemplate>> skillTemplatesByGroup = new();
@@ -26,6 +27,10 @@ public class SkillData
         skillTemplatesByStack.Clear();
         foreach (SkillTemplate skillTemplate in skillTemplates)
         {
+            // Java parity: JAXB fires Effects.afterUnmarshal (building the effectTypes set) per <effects>
+            // element before the parent holder's afterUnmarshal; XmlSerializer does not invoke JAXB callbacks,
+            // so fire it here, children-first, before indexing the template.
+            skillTemplate.GetEffects()?.AfterUnmarshal(this);
             int skillId = skillTemplate.GetSkillId();
             skillTemplateById[skillId] = skillTemplate;
             if (skillTemplate.GetGroup() != null)

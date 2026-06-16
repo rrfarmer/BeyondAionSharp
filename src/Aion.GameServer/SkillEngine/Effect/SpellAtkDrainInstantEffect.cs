@@ -13,9 +13,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SpellAtkDrainInstantEffect : DamageEffect
 {
     [XmlAttribute("hp_percent")]
-    private int hpPercent;
+    public int hpPercent;
     [XmlAttribute("mp_percent")]
-    private int mpPercent;
+    public int mpPercent;
 
     public override void ApplyEffect(Effect effect)
     {

@@ -8,9 +8,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SkillAttackInstantEffect : DamageEffect
 {
     [XmlAttribute]
-    protected int rnddmg; // TODO should be enum and different types of random damage behaviour
+    public int rnddmg; // TODO should be enum and different types of random damage behaviour
     [XmlAttribute]
-    protected bool cannotmiss;
+    public bool cannotmiss;
 
     public int GetRnddmg()
     {

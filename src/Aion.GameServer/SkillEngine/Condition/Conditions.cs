@@ -37,7 +37,7 @@ public class Conditions
     [XmlElement("back", typeof(BackCondition))]
     [XmlElement("form", typeof(FormCondition))]
     [XmlElement("race", typeof(RaceCondition))]
-    protected List<Condition>? conditions;
+    public List<Condition>? conditions;
 
     /// <summary>
     /// Gets the conditions (live list; lazily created). Java parity: getConditions().

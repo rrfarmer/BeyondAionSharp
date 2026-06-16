@@ -14,11 +14,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class HostileUpEffect : EffectTemplate
 {
     [XmlAttribute("temp_duration")]
-    protected int tempDuration = 0;
+    public int tempDuration = 0;
     [XmlAttribute("temp_value")]
-    protected int tempValue = 0;
+    public int tempValue = 0;
     [XmlAttribute("temp_delta")]
-    protected int tempDelta = 0;
+    public int tempDelta = 0;
 
     private int tempHate = 0;
 

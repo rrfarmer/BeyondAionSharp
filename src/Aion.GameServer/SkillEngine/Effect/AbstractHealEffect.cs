@@ -13,7 +13,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public abstract class AbstractHealEffect : EffectTemplate, HealEffectTemplate
 {
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
 
     public void Calculate(Effect effect, HealType healType)
     {

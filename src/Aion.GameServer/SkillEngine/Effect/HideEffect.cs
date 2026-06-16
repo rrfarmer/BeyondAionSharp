@@ -19,11 +19,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class HideEffect : BufEffect
 {
     [XmlAttribute]
-    protected CreatureVisualState state;
+    public CreatureVisualState state;
     [XmlAttribute("bufcount")]
-    protected int buffCount;
+    public int buffCount;
     [XmlAttribute]
-    protected int type = 0;
+    public int type = 0;
 
     public override void ApplyEffect(Effect effect)
     {

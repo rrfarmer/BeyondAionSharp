@@ -9,28 +9,28 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public abstract class TransformEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int model;
+    public int model;
 
     [XmlAttribute]
-    protected TransformType type = TransformType.NONE;
+    public TransformType type = TransformType.NONE;
 
     [XmlAttribute]
-    protected int panelid;
+    public int panelid;
 
     [XmlAttribute]
-    protected int banUseSkills;
+    public int banUseSkills;
     [XmlAttribute]
-    protected int banMovement;
+    public int banMovement;
     [XmlAttribute]
-    protected int res1;
+    public int res1;
     [XmlAttribute]
-    protected int res2;
+    public int res2;
     [XmlAttribute]
-    protected int res3;
+    public int res3;
     [XmlAttribute]
-    protected int res5;
+    public int res5;
     [XmlAttribute]
-    protected int res6;
+    public int res6;
 
     public override void ApplyEffect(Effect effect)
     {

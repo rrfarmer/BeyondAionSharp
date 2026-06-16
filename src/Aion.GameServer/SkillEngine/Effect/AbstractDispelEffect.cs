@@ -8,11 +8,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public abstract class AbstractDispelEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int dpower;
+    public int dpower;
     [XmlAttribute]
-    protected int power;
+    public int power;
     [XmlAttribute("dispel_level")]
-    protected int dispelLevel;
+    public int dispelLevel;
 
     public void ApplyEffect(Effect effect, DispelCategoryType type, SkillTargetSlot slot)
     {

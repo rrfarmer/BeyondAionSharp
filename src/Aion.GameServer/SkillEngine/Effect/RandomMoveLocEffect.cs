@@ -14,11 +14,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class RandomMoveLocEffect : EffectTemplate
 {
     [XmlAttribute("distance")]
-    private float distance;
+    public float distance;
     [XmlAttribute("direction")]
-    private float direction;
+    public float direction;
     [XmlAttribute("reserved5")]
-    private int reserved5;
+    public int reserved5;
 
     public override void ApplyEffect(Effect effect)
     {

@@ -13,13 +13,13 @@ namespace Aion.GameServer.SkillEngine.PeriodicAction;
 public class HpUsePeriodicAction : PeriodicAction
 {
     [XmlAttribute("value")]
-    protected int value;
+    public int value;
 
     [XmlAttribute("delta")]
-    protected int delta;
+    public int delta;
 
     [XmlAttribute("ratio")]
-    protected bool ratio;
+    public bool ratio;
 
     public override void Act(Effect effect)
     {

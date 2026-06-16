@@ -15,7 +15,7 @@ public class ActionModifiers
     [XmlElement("abnormaldamage", typeof(AbnormalDamageModifier))]
     [XmlElement("targetrace", typeof(TargetRaceDamageModifier))]
     [XmlElement("targetclass", typeof(TargetClassDamageModifier))]
-    protected List<ActionModifier>? actionModifiers;
+    public List<ActionModifier>? actionModifiers;
 
     /// <summary>Gets the action modifiers (live list; lazily created). Java parity: getActionModifiers().</summary>
     public List<ActionModifier> GetActionModifiers()

@@ -16,9 +16,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ProvokerEffect : ShieldEffect
 {
     [XmlAttribute("provoke_target")]
-    protected ProvokeTarget provokeTarget;
+    public ProvokeTarget provokeTarget;
     [XmlAttribute("skill_id")]
-    protected int skillId;
+    public int skillId;
 
     public override void ApplyEffect(Effect effect)
     {

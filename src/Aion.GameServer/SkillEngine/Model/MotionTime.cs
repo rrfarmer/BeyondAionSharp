@@ -12,18 +12,18 @@ namespace Aion.GameServer.SkillEngine.Model;
 public class MotionTime
 {
     [XmlElement("asmodian_female")]
-    private List<Times> asmodianFemale;
+    public List<Times> asmodianFemale;
     [XmlElement("asmodian_male")]
-    private List<Times> asmodianMale;
+    public List<Times> asmodianMale;
     [XmlElement("elyos_female")]
-    private List<Times> elyosFemale;
+    public List<Times> elyosFemale;
     [XmlElement("elyos_male")]
-    private List<Times> elyosMale;
+    public List<Times> elyosMale;
     [XmlElement("robot")]
-    private List<Times> robot;
+    public List<Times> robot;
 
     [XmlAttribute]
-    private string name;
+    public string name;
 
     public string GetName()
     {

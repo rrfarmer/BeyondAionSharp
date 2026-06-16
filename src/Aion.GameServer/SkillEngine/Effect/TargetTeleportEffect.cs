@@ -17,10 +17,10 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class TargetTeleportEffect : EffectTemplate
 {
     [XmlAttribute("alias_location")]
-    protected string loc;
+    public string loc;
 
     [XmlAttribute]
-    protected int distance; // TODO: find out what this value does. Its not the distance.
+    public int distance; // TODO: find out what this value does. Its not the distance.
 
     public override void ApplyEffect(Effect effect)
     {

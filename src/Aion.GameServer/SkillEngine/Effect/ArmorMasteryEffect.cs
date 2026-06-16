@@ -13,7 +13,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ArmorMasteryEffect : BufEffect
 {
     [XmlAttribute("armor")]
-    private ItemSubType armorType;
+    public ItemSubType armorType;
 
     public override void StartEffect(Effect effect)
     {

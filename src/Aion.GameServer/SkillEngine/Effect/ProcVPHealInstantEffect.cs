@@ -11,9 +11,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class ProcVPHealInstantEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int value2; // cap
+    public int value2; // cap
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
 
     public override void ApplyEffect(Effect effect)
     {

@@ -15,7 +15,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class DelayedSpellAttackInstantEffect : DamageEffect
 {
     [XmlAttribute]
-    protected int delay;
+    public int delay;
 
     public override void ApplyEffect(Effect effect)
     {

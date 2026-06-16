@@ -9,7 +9,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class BoostSkillCostEffect : BufEffect
 {
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
 
     public override void StartEffect(Effect effect)
     {

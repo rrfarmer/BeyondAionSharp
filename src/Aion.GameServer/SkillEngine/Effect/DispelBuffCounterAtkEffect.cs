@@ -10,15 +10,15 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class DispelBuffCounterAtkEffect : DamageEffect
 {
     [XmlAttribute]
-    private int dpower;
+    public int dpower;
     [XmlAttribute]
-    private int power;
+    public int power;
     [XmlAttribute]
-    private int hitvalue;
+    public int hitvalue;
     [XmlAttribute]
-    private int hitdelta;
+    public int hitdelta;
     [XmlAttribute("dispel_level")]
-    private int dispelLevel;
+    public int dispelLevel;
 
     public override int GetCritProbMod2()
     {

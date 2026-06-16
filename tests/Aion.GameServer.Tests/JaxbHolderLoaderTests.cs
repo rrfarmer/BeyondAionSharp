@@ -1315,6 +1315,103 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetItemTemplate(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesSkillDataFromRealXml_WithEffectsConditionsPropertiesIntact()
+    {
+        var path = ResolveStaticDataFile("skills", "skill_templates.xml");
+
+        // ~12MB standalone <skill_data> root; AfterUnmarshal indexes every template by skill id (and group/stack),
+        // firing each Effects.AfterUnmarshal (effectTypes set) children-first, then nulls the source list.
+        var skills = JaxbHolderLoader.LoadFromFile<Dataholders.SkillData>(path);
+
+        Assert.True(skills.Size() > 0);
+
+        // Known skill (Transformation: White Tiger), skill_id="1":
+        // <skill_template skill_id="1" name="Transformation: White Tiger" nameId="2285933" cooldownId="792"
+        //   group="RA_WHITETIGER" stack="RA_LIGHT_WHITETIGER" lvl="1" skilltype="MAGICAL" skillsubtype="BUFF"
+        //   tslot="BUFF" dispel_category="BUFF" req_dispel_level="2" activation="ACTIVE" cooldown="100"
+        //   duration="0" cancel_rate="20" hostile_type="INDIRECT">
+        //   <properties first_target="ME" first_target_range="1" target_relation="FRIEND" target_type="ONLYONE" />
+        //   <startconditions><dp value="2000" /></startconditions>
+        //   <effects>
+        //     <shapechange model="202641" type="PC" duration2="120000" effectid="175" e="1" basiclvl="100" noresist="true" hoptype="SKILLLV" hopb="248" />
+        //     <statup ... preeffect="1"><change stat="PHYSICAL_ATTACK" func="PERCENT" value="10" /></statup>
+        //     ...
+        //   </effects>
+        //   <actions><dpuse value="2000" /></actions>
+        //   <motion name="phburst" />
+        var skill = skills.GetSkillTemplate(1);
+        Assert.NotNull(skill);
+
+        // Scalar fields intact (NOT silently dropped).
+        Assert.Equal(1, skill!.GetSkillId());
+        Assert.Equal("Transformation: White Tiger", skill.GetName());
+        Assert.Equal(2285933, skill.GetL10nId());
+        Assert.Equal("RA_WHITETIGER", skill.GetGroup());
+        Assert.Equal("RA_LIGHT_WHITETIGER", skill.GetStack());
+        Assert.Equal(1, skill.GetLvl());
+        Assert.Equal(SkillEngine.Model.SkillType.MAGICAL, skill.GetTypeValue());
+        Assert.Equal(SkillEngine.Model.SkillSubType.BUFF, skill.GetSubType());
+        Assert.Equal(SkillEngine.Model.ActivationAttribute.ACTIVE, skill.GetActivationAttribute());
+        Assert.Equal(100, skill.GetCooldown());
+        Assert.Equal(20, skill.GetCancelRate());
+
+        // Group/stack indexes built by AfterUnmarshal.
+        Assert.Contains(skill, skills.GetSkillTemplatesByGroup("RA_WHITETIGER"));
+        Assert.Contains(skill, skills.GetSkillTemplatesByStack("RA_LIGHT_WHITETIGER"));
+
+        // <properties> intact (enum attributes via name-binding).
+        var props = skill.GetProperties();
+        Assert.NotNull(props);
+        Assert.Equal(SkillEngine.Properties.FirstTargetAttribute.ME, props!.GetFirstTarget());
+        Assert.Equal(1, props.GetFirstTargetRange());
+        Assert.Equal(SkillEngine.Properties.TargetRelationAttribute.FRIEND, props.GetTargetRelation());
+        Assert.Equal(SkillEngine.Properties.TargetRangeAttribute.ONLYONE, props.GetTargetType());
+
+        // <startconditions> polymorphic <dp> -> DpCondition (NOT silently dropped).
+        var start = skill.GetStartconditions();
+        Assert.NotNull(start);
+        var dp = Assert.IsType<SkillEngine.Condition.DpCondition>(Assert.Single(start!.GetConditions()));
+        Assert.Equal(2000, dp.Value);
+
+        // CRITICAL: <effects> polymorphic subtree must NOT be silently dropped — correct subtypes + nested data.
+        var effects = skill.GetEffects();
+        Assert.NotNull(effects);
+        var effList = effects!.GetEffects();
+        Assert.True(effList.Count >= 4);
+
+        // First effect <shapechange> -> ShapeChangeEffect (a TransformEffect); model/type + nullable hoptype proxy intact.
+        var shape = Assert.IsType<SkillEngine.Effects.ShapeChangeEffect>(effList[0]);
+        Assert.Equal(202641, shape.GetTransformId());
+        Assert.Equal(SkillEngine.Model.TransformType.PC, shape.GetTransformType());
+        Assert.Equal(175, shape.GetEffectId());
+        Assert.Equal(1, shape.GetPosition());
+        Assert.Equal(SkillEngine.Model.HopType.SKILLLV, shape.Hoptype); // nullable-enum attribute via string proxy
+        Assert.Equal(248, shape.HopB);
+
+        // Effects.AfterUnmarshal built the effectTypes set (shapechange -> SHAPECHANGE) — prove it ran.
+        Assert.True(effects.HasAnyEffectType(SkillEngine.Effects.EffectType.SHAPECHANGE));
+
+        // Second effect <statup> -> StatupEffect carrying a nested <change> (PHYSICAL_ATTACK PERCENT +10).
+        var statup = Assert.IsType<SkillEngine.Effects.StatupEffect>(effList[1]);
+        var changes = statup.GetChange();
+        Assert.NotNull(changes);
+        var change = Assert.Single(changes!);
+        Assert.Equal(Model.Stats.Container.StatEnum.PHYSICAL_ATTACK, change.GetStat()); // nullable-enum attr proxy
+        Assert.Equal(SkillEngine.Change.Func.PERCENT, change.GetFunc());
+        Assert.Equal(10, change.GetValue());
+
+        // <actions> polymorphic <dpuse> -> DpUseAction (NOT silently dropped).
+        var actions = skill.GetActions();
+        Assert.NotNull(actions);
+        Assert.IsType<SkillEngine.Action.DpUseAction>(Assert.Single(actions!.GetActions()));
+
+        // <motion> intact.
+        Assert.Equal("phburst", skill.GetMotion()!.GetName());
+
+        Assert.Null(skills.GetSkillTemplate(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

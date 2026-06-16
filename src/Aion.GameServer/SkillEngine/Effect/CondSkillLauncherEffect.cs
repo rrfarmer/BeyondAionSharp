@@ -10,9 +10,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class CondSkillLauncherEffect : EffectTemplate
 {
     [XmlAttribute("skill_id")]
-    protected int skillId;
+    public int skillId;
     [XmlAttribute]
-    protected HealType type;
+    public HealType type;
 
     // TODO what if you fall? effect is not applied? what if you use skill that consume hp?
     public override void ApplyEffect(Effect effect)

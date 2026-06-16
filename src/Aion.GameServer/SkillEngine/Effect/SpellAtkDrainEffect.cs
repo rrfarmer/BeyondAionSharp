@@ -11,9 +11,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SpellAtkDrainEffect : AbstractOverTimeEffect
 {
     [XmlAttribute("hp_percent")]
-    private int hpPercent;
+    public int hpPercent;
     [XmlAttribute("mp_percent")]
-    private int mpPercent;
+    public int mpPercent;
 
     public override void OnPeriodicAction(Effect effect)
     {

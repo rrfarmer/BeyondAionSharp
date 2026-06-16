@@ -13,7 +13,7 @@ namespace Aion.GameServer.SkillEngine.Condition;
 public class LeftHandCondition : Condition
 {
     [XmlAttribute("type")]
-    private LeftHandSlot type;
+    public LeftHandSlot type;
 
     public override bool Validate(Skill env)
     {

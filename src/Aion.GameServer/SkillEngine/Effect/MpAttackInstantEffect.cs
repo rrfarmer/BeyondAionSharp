@@ -10,7 +10,7 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class MpAttackInstantEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected bool percent;
+    public bool percent;
 
     public override void Calculate(Effect effect)
     {

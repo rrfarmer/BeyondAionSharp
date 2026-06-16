@@ -132,8 +132,20 @@ public class SkillTemplate : L10n
     [XmlAttribute("conflict_id")]
     public int conflictId;
 
-    [XmlAttribute("counter_skill")]
+    // Java parity: @XmlAttribute("counter_skill") AttackStatus (nullable). XmlSerializer cannot bind
+    // Nullable<T> as an attribute, so round-trip via a string proxy. A handful of skills carry a
+    // comma-separated value (e.g. "BLOCK,RESIST") which no single AttackStatus matches; JAXB's lenient
+    // default unmarshal-event handler leaves the field null in that case, so we mirror that (null on any
+    // unparseable token).
+    [XmlIgnore]
     public AttackStatus? counterSkill = null;
+
+    [XmlAttribute("counter_skill")]
+    public string? CounterSkillRaw
+    {
+        get => counterSkill?.ToString();
+        set => counterSkill = value != null && System.Enum.TryParse<AttackStatus>(value, out var v) ? v : (AttackStatus?)null;
+    }
 
     [XmlAttribute("noremoveatdie")]
     public bool noRemoveOnDie = false;

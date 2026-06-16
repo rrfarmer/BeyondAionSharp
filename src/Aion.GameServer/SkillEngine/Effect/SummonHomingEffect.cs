@@ -17,9 +17,9 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class SummonHomingEffect : SummonEffect
 {
     [XmlAttribute("npc_count")]
-    protected int npcCount;
+    public int npcCount;
     [XmlAttribute("attack_count")]
-    protected int attackCount;
+    public int attackCount;
 
     public override void ApplyEffect(Effect effect)
     {

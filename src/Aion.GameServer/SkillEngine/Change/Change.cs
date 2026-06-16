@@ -10,8 +10,18 @@ namespace Aion.GameServer.SkillEngine.Change;
 /// </summary>
 public class Change
 {
-    [XmlAttribute("stat")]
+    // Java parity: @XmlAttribute("stat") StatEnum (nullable). XmlSerializer cannot bind Nullable<T> as an
+    // attribute, so round-trip via a string proxy (null when the attribute is absent / unparseable, mirroring
+    // JAXB's lenient default unmarshal-event handler).
+    [XmlIgnore]
     public StatEnum? Stat;
+
+    [XmlAttribute("stat")]
+    public string? StatRaw
+    {
+        get => Stat?.ToString();
+        set => Stat = value == null ? (StatEnum?)null : (System.Enum.TryParse<StatEnum>(value, out var v) ? v : (StatEnum?)null);
+    }
 
     [XmlAttribute("func")]
     public Func Func;

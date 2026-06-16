@@ -18,11 +18,11 @@ namespace Aion.GameServer.SkillEngine.Effects;
 public class AuraEffect : EffectTemplate
 {
     [XmlAttribute]
-    protected int distance;
+    public int distance;
     [XmlAttribute("distance_z")]
-    protected int distanceZ;
+    public int distanceZ;
     [XmlAttribute("skill_id")]
-    protected int skillId;
+    public int skillId;
 
     public override void ApplyEffect(Effect effect)
     {
