@@ -8,17 +8,33 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlRoot("building")]
 public class Building
 {
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("id")] public int id;
 
-    [XmlElement("parts")] private Parts parts;
+    [XmlElement("parts")] public Parts parts;
 
-    [XmlAttribute("default")] private bool isDefault;
+    [XmlAttribute("default")] public bool isDefault;
 
-    [XmlAttribute("parts_match")] private string partsMatch;
+    [XmlAttribute("parts_match")] public string partsMatch;
 
-    [XmlAttribute("size")] private HouseType? size;
+    // Java parity: nullable HouseType/BuildingType. XmlSerializer cannot bind a Nullable<enum> attribute, so
+    // public string proxies carry the wire value and the backing fields stay the faithful nullable enums.
+    [XmlIgnore] public HouseType? size;
 
-    [XmlAttribute("type")] private BuildingType? type;
+    [XmlIgnore] public BuildingType? type;
+
+    [XmlAttribute("size")]
+    public string SizeRaw
+    {
+        get => size?.ToString();
+        set => size = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<HouseType>(value);
+    }
+
+    [XmlAttribute("type")]
+    public string TypeRaw
+    {
+        get => type?.ToString();
+        set => type = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<BuildingType>(value);
+    }
 
     [XmlIgnore] private Dictionary<PartType, int> partsByType;
 

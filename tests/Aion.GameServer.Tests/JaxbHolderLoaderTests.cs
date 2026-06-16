@@ -1874,6 +1874,66 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(310090000, data.GetWorldId(1));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesHouseBuildingDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("housing", "house_buildings.xml");
+        var data = JaxbHolderLoader.LoadFromFile<HouseBuildingData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <building id="350000" type="PERSONAL_FIELD" size="PALACE" parts_match="CP_S">
+        //   <parts><roof>3550000</roof>...<door>3553000</door>...</parts>
+        var b = data.GetBuilding(350000);
+        Assert.NotNull(b);
+        Assert.Equal(Model.Templates.Housing.HouseType.PALACE, b!.GetSize());
+        Assert.Equal(Model.Templates.Housing.BuildingType.PERSONAL_FIELD, b.GetType_());
+        // Nested <parts> not dropped: door part id resolved via partsByType built in Building.AfterUnmarshal.
+        Assert.Equal(3553000, b.GetDefaultDecorId(Model.Templates.Housing.PartType.DOOR));
+
+        Assert.Null(data.GetBuilding(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesMotionDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("skills", "motion_times.xml");
+        var data = JaxbHolderLoader.LoadFromFile<MotionData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <motion_time name="20ebuff1"><asmodian_female weapon="dagger" id="1" .../>...
+        var m = data.GetMotionTime("20ebuff1");
+        Assert.NotNull(m);
+        Assert.Equal("20ebuff1", m!.GetName());
+
+        Assert.Null(data.GetMotionTime("__nope__"));
+    }
+
+    [Fact]
+    public void LoadFromFiles_PopulatesZoneDataFromRealXml_Merged()
+    {
+        // Java imports the zones/ dir with singleRootTag+recursiveImport: merge every <zones> source file's <zone>
+        // rows then run AfterUnmarshal once (builds Poly/Cylinder/Sphere/Semisphere areas + weather-zone numbering).
+        var dir = Path.GetDirectoryName(ResolveStaticDataFile("zones", "zones_110010000.xml"))!;
+
+        ZoneData? data = null;
+        foreach (var file in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var part = JaxbHolderLoader.DeserializeFile<ZoneData>(file);
+            if (data == null) data = part; else data.MergePending(part);
+        }
+        Assert.NotNull(data);
+        JaxbHolderLoader.RunAfterUnmarshal(data!);
+
+        Assert.True(data!.Size() > 0);
+
+        // Known map: 110010000 has <zone name="AIRSHIP_DOCK_1_110010000" area_type="POLYGON" .../> among others.
+        var zones = data.GetZones();
+        Assert.True(zones.ContainsKey(110010000));
+        Assert.NotEmpty(zones[110010000]);
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

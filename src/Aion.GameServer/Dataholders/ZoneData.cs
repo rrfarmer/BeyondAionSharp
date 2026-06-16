@@ -28,6 +28,18 @@ public class ZoneData
     [XmlIgnore]
     private int count;
 
+    /// <summary>
+    /// Merge another raw-deserialized ZoneData's pending &lt;zone&gt; rows into this one before AfterUnmarshal runs.
+    /// Java imports the zones/ dir with singleRootTag+recursiveImport, concatenating every file's &lt;zone&gt; list.
+    /// </summary>
+    public void MergePending(ZoneData other)
+    {
+        if (other.zoneList == null)
+            return;
+        zoneList ??= new List<ZoneTemplate>();
+        zoneList.AddRange(other.zoneList);
+    }
+
     public void AfterUnmarshal(object parent)
     {
         int lastMapId = 0;

@@ -9,14 +9,14 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlType("Parts")]
 public class Parts
 {
-    [XmlElement("fence")] protected int? fence;
-    [XmlElement("garden")] protected int? garden;
-    [XmlElement("frame")] protected int? frame;
-    [XmlElement("outwall")] protected int? outwall;
-    [XmlElement("roof")] protected int? roof;
-    [XmlElement("infloor")] protected int infloor;
-    [XmlElement("inwall")] protected int inwall;
-    [XmlElement("door")] protected int door;
+    [XmlElement("fence")] public int? fence;
+    [XmlElement("garden")] public int? garden;
+    [XmlElement("frame")] public int? frame;
+    [XmlElement("outwall")] public int? outwall;
+    [XmlElement("roof")] public int? roof;
+    [XmlElement("infloor")] public int infloor;
+    [XmlElement("inwall")] public int inwall;
+    [XmlElement("door")] public int door;
 
     public int? GetFence()
     {

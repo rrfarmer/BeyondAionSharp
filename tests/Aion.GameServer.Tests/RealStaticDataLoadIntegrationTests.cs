@@ -237,6 +237,15 @@ public sealed class RealStaticDataLoadIntegrationTests
 
 		Assert.True(sd.InstanceCooltimeDataDh.Size() > 0, "InstanceCooltimeData empty after boot");
 		Assert.Equal(5, sd.InstanceCooltimeDataDh.GetInstanceCooltimeByWorldId(310090000)!.GetMaxCount());
+
+		Assert.True(sd.HouseBuildings.Size() > 0, "HouseBuildings empty after boot");
+		Assert.Equal(Model.Templates.Housing.HouseType.PALACE, sd.HouseBuildings.GetBuilding(350000)!.GetSize());
+
+		Assert.True(sd.Motions.Size() > 0, "Motions empty after boot");
+		Assert.NotNull(sd.Motions.GetMotionTime("20ebuff1"));
+
+		Assert.True(sd.ZoneInfo.Size() > 0, "ZoneInfo empty after boot");
+		Assert.True(sd.ZoneInfo.GetZones().ContainsKey(110010000), "ZoneInfo missing map 110010000 after boot");
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

@@ -21,6 +21,9 @@ public class MotionData
     {
         foreach (MotionTime motion in motionTimes)
         {
+            // XmlSerializer does not fire JAXB child callbacks; run each MotionTime.AfterUnmarshal children-first
+            // so the per-weapon-type Times maps are parsed before the source lists are nulled.
+            motion.AfterUnmarshal(this);
             motionTimesMap[motion.GetName()] = motion;
         }
         motionTimes = null;

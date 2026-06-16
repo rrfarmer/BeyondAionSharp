@@ -439,6 +439,15 @@ public sealed partial class StaticData
 		GuideHtml = TryLoadHolder(GuideHtml, Path.Combine(staticDataDirectory, "guides", "guide.xml"), logger);
 		// <instance_cooltimes> root (single file): faithful InstanceCooltimeData feeds DataManager.INSTANCE_COOLTIME_DATA.
 		InstanceCooltimeDataDh = TryLoadHolder(InstanceCooltimeDataDh, Path.Combine(staticDataDirectory, "instance_cooltimes", "instance_cooltimes.xml"), logger);
+		// <buildings> root (single file): faithful HouseBuildingData feeds DataManager.HOUSE_BUILDING_DATA.
+		HouseBuildings = TryLoadHolder(HouseBuildings, Path.Combine(staticDataDirectory, "housing", "house_buildings.xml"), logger);
+		// <motion_times> root (single file): faithful MotionData feeds DataManager.MOTION_DATA; AfterUnmarshal fires
+		// each MotionTime.AfterUnmarshal children-first so the per-weapon-type Times maps are parsed.
+		Motions = TryLoadHolder(Motions, Path.Combine(staticDataDirectory, "skills", "motion_times.xml"), logger);
+		// <zones> folder (recursive: zones_*.xml + zone_abyss_shields/zones_quest/zones_weather, all <zones>/<zone>):
+		// Java imports the zones/ dir with singleRootTag+recursiveImport, so merge every file's <zone> rows then run
+		// AfterUnmarshal once (builds Poly/Cylinder/Sphere/Semisphere areas + weather-zone numbering). Feeds ZONE_DATA.
+		ZoneInfo = TryLoadMergedHolder<ZoneData>(Path.Combine(staticDataDirectory, "zones"), (m, p) => m.MergePending(p), logger);
 	}
 
 	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()
