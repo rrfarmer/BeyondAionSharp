@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using Aion.GameServer.Model.Vortex;
 using System.Globalization;
 using System.Xml;
 using Aion.GameServer.Model.Templates.Pet;
@@ -173,17 +172,6 @@ public sealed partial class StaticData
 	private static bool ReadOptionalBoolAttribute(XmlReader reader, string attributeName, bool defaultValue)
 	{
 		return bool.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
-	}
-
-	private static VortexStateType ReadVortexStateTypeAttribute(XmlReader reader, string attributeName)
-	{
-		var value = reader.GetAttribute(attributeName);
-		return value switch
-		{
-			"INVASION" => VortexStateType.INVASION,
-			"PEACE" => VortexStateType.PEACE,
-			_ => throw new FormatException($"Element <{reader.LocalName}> has unexpected VortexStateType '{value}'."),
-		};
 	}
 
 	private static DateTime? ReadDateTimeAttribute(XmlReader reader, string attributeName)

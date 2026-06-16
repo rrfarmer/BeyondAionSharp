@@ -32,10 +32,7 @@ public sealed partial class StaticData
 		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
 		RiftLocationTable riftLocations,
-		NpcSpawnTable npcSpawns,
 		StaticDoorTable staticDoors,
-		NpcRiftSpawnTable npcRiftSpawns,
-		NpcVortexSpawnTable npcVortexSpawns,
 		NpcFactionTable npcFactions,
 		TradeListTable tradeLists,
 		GoodsListTable goodsLists,
@@ -80,10 +77,7 @@ public sealed partial class StaticData
 		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
 		RiftLocations = riftLocations;
-		NpcSpawns = npcSpawns;
 		StaticDoors = staticDoors;
-		NpcRiftSpawns = npcRiftSpawns;
-		NpcVortexSpawns = npcVortexSpawns;
 		NpcFactions = npcFactions;
 		TradeLists = tradeLists;
 		GoodsLists = goodsLists;
@@ -160,13 +154,7 @@ public sealed partial class StaticData
 	// Faithful RiftData holder (dataholders/RiftData) feeds DataManager.RIFT_DATA; loaded from rift/rift_locations.xml.
 	public RiftData RiftDataDh { get; private set; } = new();
 
-	public NpcSpawnTable NpcSpawns { get; }
-
 	public StaticDoorTable StaticDoors { get; }
-
-	public NpcRiftSpawnTable NpcRiftSpawns { get; }
-
-	public NpcVortexSpawnTable NpcVortexSpawns { get; }
 
 	public NpcFactionTable NpcFactions { get; }
 
@@ -779,10 +767,7 @@ public sealed partial class StaticData
 		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var riftLocations = new List<RiftLocationSummary>();
-		var npcSpawns = new List<NpcSpawnSummary>();
 		var staticDoors = new List<StaticDoorSummary>();
-		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
-		var npcVortexSpawns = new List<NpcVortexSpawnSummary>();
 		var npcFactions = new List<NpcFactionSummary>();
 		var tradeLists = new List<TradeListTemplateSummary>();
 		var tradeInLists = new List<TradeListTemplateSummary>();
@@ -821,12 +806,6 @@ public sealed partial class StaticData
 		ItemSetBuilder? currentItemSet = null;
 		EnchantGroupBuilder? currentEnchantGroup = null;
 		WalkerTemplateBuilder? currentWalkerTemplate = null;
-		NpcSpawnBuilder? currentNpcSpawn = null;
-		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
-		NpcRiftSpawnBuilder? currentNpcRiftSpawn = null;
-		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
-		NpcVortexSpawnBuilder? currentNpcVortexSpawn = null;
-		NpcSpawnSpotBuilder? currentNpcVortexSpawnSpot = null;
 		TradeListTemplateBuilder? currentTradeListTemplate = null;
 		TradeListTemplateKind currentTradeListTemplateKind = TradeListTemplateKind.TradeList;
 		int currentTradeListTemplateDepth = -1;
@@ -834,21 +813,6 @@ public sealed partial class StaticData
 		GoodsListKind currentGoodsListKind = GoodsListKind.List;
 		int currentGoodsListDepth = -1;
 		QuestDropBuilder? currentQuestDropBuilder = null;
-		int currentNpcSpawnMapId = 0;
-		int currentNpcSpawnDepth = -1;
-		int currentNpcSpawnSpotDepth = -1;
-		int currentNpcRiftSpawnId = 0;
-		int currentNpcRiftSpawnDepth = -1;
-		int currentNpcRiftSpawnGroupIndex = 0;
-		int currentNpcRiftSpawnGroupDepth = -1;
-		int currentNpcRiftSpawnSpotDepth = -1;
-		int currentNpcVortexSpawnId = 0;
-		int currentNpcVortexSpawnDepth = -1;
-		int currentNpcVortexSpawnStateDepth = -1;
-		int currentNpcVortexSpawnGroupIndex = 0;
-		int currentNpcVortexSpawnGroupDepth = -1;
-		int currentNpcVortexSpawnSpotDepth = -1;
-		VortexStateType currentNpcVortexSpawnStateType = default;
 		int currentStaticDoorWorldId = 0;
 		string currentWalkerParentRouteId = string.Empty;
 		NpcSkillListBuilder? currentNpcSkillList = null;
@@ -1021,73 +985,11 @@ public sealed partial class StaticData
 					currentGoodsListDepth = -1;
 				}
 
-				if (reader.Depth == currentNpcSpawnDepth && reader.LocalName == "spawn")
-				{
-					currentNpcSpawn = null;
-					currentNpcSpawnDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcSpawnSpotDepth && reader.LocalName == "spot" && currentNpcSpawn != null && currentNpcSpawnSpot != null)
-				{
-					npcSpawns.Add(currentNpcSpawn.ToSummary(currentNpcSpawnSpot));
-					currentNpcSpawnSpot = null;
-					currentNpcSpawnSpotDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcRiftSpawnGroupDepth && reader.LocalName == "spawn")
-				{
-					currentNpcRiftSpawn = null;
-					currentNpcRiftSpawnGroupDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcRiftSpawnSpotDepth && reader.LocalName == "spot" && currentNpcRiftSpawn != null && currentNpcRiftSpawnSpot != null)
-				{
-					npcRiftSpawns.Add(currentNpcRiftSpawn.ToSummary(currentNpcRiftSpawnSpot));
-					currentNpcRiftSpawnSpot = null;
-					currentNpcRiftSpawnSpotDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcRiftSpawnDepth && reader.LocalName == "rift_spawn")
-				{
-					currentNpcRiftSpawnId = 0;
-					currentNpcRiftSpawnDepth = -1;
-					currentNpcRiftSpawnGroupIndex = 0;
-				}
-
-				if (reader.Depth == currentNpcVortexSpawnGroupDepth && reader.LocalName == "spawn")
-				{
-					currentNpcVortexSpawn = null;
-					currentNpcVortexSpawnGroupDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcVortexSpawnSpotDepth && reader.LocalName == "spot" && currentNpcVortexSpawn != null && currentNpcVortexSpawnSpot != null)
-				{
-					npcVortexSpawns.Add(currentNpcVortexSpawn.ToSummary(currentNpcVortexSpawnSpot));
-					currentNpcVortexSpawnSpot = null;
-					currentNpcVortexSpawnSpotDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcVortexSpawnStateDepth && reader.LocalName == "state_type")
-				{
-					currentNpcVortexSpawnStateType = default;
-					currentNpcVortexSpawnStateDepth = -1;
-				}
-
-				if (reader.Depth == currentNpcVortexSpawnDepth && reader.LocalName == "vortex_spawn")
-				{
-					currentNpcVortexSpawnId = 0;
-					currentNpcVortexSpawnDepth = -1;
-					currentNpcVortexSpawnGroupIndex = 0;
-				}
-
 				if (reader.Depth == 2 && reader.LocalName == "quest" && currentQuestDropBuilder != null)
 				{
 					questDrops.AddRange(currentQuestDropBuilder.ToQuestDrops());
 					currentQuestDropBuilder = null;
 				}
-
-				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
-					currentNpcSpawnMapId = 0;
 
 				if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
 					currentStaticDoorWorldId = 0;
@@ -1341,12 +1243,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
-			{
-				currentNpcSpawnMapId = ReadRequiredIntAttribute(reader, "map_id");
-				continue;
-			}
-
 			if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
 			{
 				currentStaticDoorWorldId = ReadRequiredIntAttribute(reader, "world");
@@ -1438,39 +1334,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (currentNpcSpawnMapId != 0
-				&& reader.LocalName == "rift_spawn"
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn_map")
-			{
-				// Java parity: dataholders/SpawnsData.addRiftSpawns groups rift_spawn entries by id before RiftManager indexes their anchors.
-				currentNpcRiftSpawnId = ReadRequiredIntAttribute(reader, "id");
-				currentNpcRiftSpawnDepth = reader.Depth;
-				currentNpcRiftSpawnGroupIndex = 0;
-				continue;
-			}
-
-			if (currentNpcSpawnMapId != 0
-				&& reader.LocalName == "vortex_spawn"
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn_map")
-			{
-				// Java parity: dataholders/SpawnsData.addVortexSpawns groups vortex_spawn entries by location id.
-				currentNpcVortexSpawnId = ReadRequiredIntAttribute(reader, "id");
-				currentNpcVortexSpawnDepth = reader.Depth;
-				currentNpcVortexSpawnGroupIndex = 0;
-				continue;
-			}
-
-			if (currentNpcVortexSpawnDepth != -1
-				&& reader.LocalName == "state_type"
-				&& reader.Depth == currentNpcVortexSpawnDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "vortex_spawn")
-			{
-				// Java parity: model/templates/spawns/vortexspawns/VortexSpawn.VortexStateTemplate state attribute.
-				currentNpcVortexSpawnStateType = ReadVortexStateTypeAttribute(reader, "state");
-				currentNpcVortexSpawnStateDepth = reader.Depth;
-				continue;
-			}
-
 			if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
 			{
 				// Java parity: dataholders/WalkerVersionsData groups route variants by parent route id.
@@ -1517,164 +1380,6 @@ public sealed partial class StaticData
 					ReadFloatAttribute(reader, "y"),
 					ReadFloatAttribute(reader, "z"),
 					ReadIntAttribute(reader, "rest_time"));
-				continue;
-			}
-
-			if (currentNpcSpawnMapId != 0
-				&& reader.LocalName == "spawn"
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn_map")
-			{
-				// Java parity: dataholders/SpawnsData loads direct Spawn groups from static_data/spawns/*.xml.
-				currentNpcSpawn = new NpcSpawnBuilder(
-					currentNpcSpawnMapId,
-					ReadRequiredIntAttribute(reader, "npc_id"),
-					ReadIntAttribute(reader, "respawn_time"),
-					ReadIntAttribute(reader, "pool"),
-					(byte)ReadIntAttribute(reader, "difficult_id"),
-					reader.GetAttribute("handler") ?? string.Empty,
-					ReadBoolAttribute(reader, "custom"));
-				currentNpcSpawnDepth = reader.Depth;
-				continue;
-			}
-
-			if (currentNpcRiftSpawnId != 0
-				&& reader.LocalName == "spawn"
-				&& reader.Depth == currentNpcRiftSpawnDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "rift_spawn")
-			{
-				// Java parity: model/templates/spawns/riftspawns/RiftSpawn nested Spawn groups keep ordinary spawn metadata plus the rift id.
-				currentNpcRiftSpawn = new NpcRiftSpawnBuilder(
-					currentNpcSpawnMapId,
-					currentNpcRiftSpawnId,
-					currentNpcRiftSpawnGroupIndex++,
-					ReadRequiredIntAttribute(reader, "npc_id"),
-					ReadIntAttribute(reader, "respawn_time"),
-					ReadIntAttribute(reader, "pool"));
-				currentNpcRiftSpawnGroupDepth = reader.Depth;
-				continue;
-			}
-
-			if (currentNpcVortexSpawnStateDepth != -1
-				&& reader.LocalName == "spawn"
-				&& reader.Depth == currentNpcVortexSpawnStateDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "state_type")
-			{
-				// Java parity: SpawnGroup(worldId, spawn, id, VortexStateType) keeps ordinary spawn metadata plus vortex location/state.
-				currentNpcVortexSpawn = new NpcVortexSpawnBuilder(
-					currentNpcSpawnMapId,
-					currentNpcVortexSpawnId,
-					currentNpcVortexSpawnGroupIndex++,
-					currentNpcVortexSpawnStateType,
-					ReadRequiredIntAttribute(reader, "npc_id"),
-					ReadIntAttribute(reader, "respawn_time"),
-					ReadIntAttribute(reader, "pool"),
-					(byte)ReadIntAttribute(reader, "difficult_id"),
-					reader.GetAttribute("handler") ?? string.Empty,
-					ReadBoolAttribute(reader, "custom"));
-				currentNpcVortexSpawnGroupDepth = reader.Depth;
-				continue;
-			}
-
-			if (currentNpcSpawn != null
-				&& reader.LocalName == "temporary_spawn"
-				&& reader.Depth == currentNpcSpawnDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
-			{
-				// Java parity: model/templates/spawns/Spawn.temporary_spawn registers a group with TemporarySpawnEngine.
-				currentNpcSpawn.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
-					reader.GetAttribute("weekdays"),
-					reader.GetAttribute("spawn_time"),
-					reader.GetAttribute("despawn_time"));
-				continue;
-			}
-
-			if (currentNpcVortexSpawn != null
-				&& reader.LocalName == "temporary_spawn"
-				&& reader.Depth == currentNpcVortexSpawnGroupDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
-			{
-				// Java parity: Vortex Spawn still uses ordinary Spawn.temporary_spawn metadata.
-				currentNpcVortexSpawn.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
-					reader.GetAttribute("weekdays"),
-					reader.GetAttribute("spawn_time"),
-					reader.GetAttribute("despawn_time"));
-				continue;
-			}
-
-			if (currentNpcSpawn != null
-				&& reader.LocalName == "spot"
-				&& reader.Depth == currentNpcSpawnDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
-			{
-				// Java parity: model/templates/spawns/SpawnSpotTemplate spot coordinates and movement metadata.
-				currentNpcSpawnSpot = NpcSpawnSpotBuilder.FromReader(reader);
-				currentNpcSpawnSpotDepth = reader.Depth;
-				if (reader.IsEmptyElement)
-				{
-					npcSpawns.Add(currentNpcSpawn.ToSummary(currentNpcSpawnSpot));
-					currentNpcSpawnSpot = null;
-					currentNpcSpawnSpotDepth = -1;
-				}
-				continue;
-			}
-
-			if (currentNpcVortexSpawn != null
-				&& reader.LocalName == "spot"
-				&& reader.Depth == currentNpcVortexSpawnGroupDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
-			{
-				// Java parity: VortexSpawnTemplate inherits SpawnSpotTemplate coordinate and movement metadata.
-				currentNpcVortexSpawnSpot = NpcSpawnSpotBuilder.FromReader(reader);
-				currentNpcVortexSpawnSpotDepth = reader.Depth;
-				if (reader.IsEmptyElement)
-				{
-					npcVortexSpawns.Add(currentNpcVortexSpawn.ToSummary(currentNpcVortexSpawnSpot));
-					currentNpcVortexSpawnSpot = null;
-					currentNpcVortexSpawnSpotDepth = -1;
-				}
-				continue;
-			}
-
-			if (currentNpcRiftSpawn != null
-				&& reader.LocalName == "spot"
-				&& reader.Depth == currentNpcRiftSpawnGroupDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spawn")
-			{
-				// Java parity: RiftSpawnTemplate extends SpawnTemplate, preserving spot anchor metadata for RiftManager.
-				currentNpcRiftSpawnSpot = NpcSpawnSpotBuilder.FromReader(reader);
-				currentNpcRiftSpawnSpotDepth = reader.Depth;
-				if (reader.IsEmptyElement)
-				{
-					npcRiftSpawns.Add(currentNpcRiftSpawn.ToSummary(currentNpcRiftSpawnSpot));
-					currentNpcRiftSpawnSpot = null;
-					currentNpcRiftSpawnSpotDepth = -1;
-				}
-				continue;
-			}
-
-			if (currentNpcSpawnSpot != null
-				&& reader.LocalName == "temporary_spawn"
-				&& reader.Depth == currentNpcSpawnSpotDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spot")
-			{
-				// Java parity: model/templates/spawns/SpawnSpotTemplate.temporary_spawn gates only this spot.
-				currentNpcSpawnSpot.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
-					reader.GetAttribute("weekdays"),
-					reader.GetAttribute("spawn_time"),
-					reader.GetAttribute("despawn_time"));
-				continue;
-			}
-
-			if (currentNpcVortexSpawnSpot != null
-				&& reader.LocalName == "temporary_spawn"
-				&& reader.Depth == currentNpcVortexSpawnSpotDepth + 1
-				&& elementPath.GetValueOrDefault(reader.Depth - 1) == "spot")
-			{
-				// Java parity: Vortex SpawnSpotTemplate can carry spot-local temporary spawn metadata.
-				currentNpcVortexSpawnSpot.TemporarySchedule = TemporarySpawnSchedule.FromAttributes(
-					reader.GetAttribute("weekdays"),
-					reader.GetAttribute("spawn_time"),
-					reader.GetAttribute("despawn_time"));
 				continue;
 			}
 
@@ -2481,10 +2186,7 @@ public sealed partial class StaticData
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new RiftLocationTable(riftLocations.AsReadOnly()),
-			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new StaticDoorTable(staticDoors.AsReadOnly()),
-			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),
-			new NpcVortexSpawnTable(npcVortexSpawns.AsReadOnly()),
 			new NpcFactionTable(npcFactions.AsReadOnly()),
 			new TradeListTable(
 				tradeLists.AsReadOnly(),
