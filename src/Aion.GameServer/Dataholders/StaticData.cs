@@ -43,9 +43,6 @@ public sealed partial class StaticData
 		GoodsListTable goodsLists,
 		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
-		GlobalDropTable globalDrops,
-		EventDropTable eventDrops,
-		GlobalNpcExclusionTable globalNpcExclusions,
 		SkillTemplateTable skillTemplates,
 		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
@@ -98,9 +95,6 @@ public sealed partial class StaticData
 		GoodsLists = goodsLists;
 		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
-		GlobalDrops = globalDrops;
-		EventDrops = eventDrops;
-		GlobalNpcExclusions = globalNpcExclusions;
 		SkillTemplates = skillTemplates;
 		NpcSkills = npcSkills;
 		PetSkills = petSkills;
@@ -195,13 +189,6 @@ public sealed partial class StaticData
 	public CustomNpcDropTable CustomNpcDrops { get; }
 
 	public QuestDropTable QuestDrops { get; }
-
-
-	public GlobalDropTable GlobalDrops { get; }
-
-	public EventDropTable EventDrops { get; }
-
-	public GlobalNpcExclusionTable GlobalNpcExclusions { get; }
 
 	public SkillTemplateTable SkillTemplates { get; }
 
@@ -632,7 +619,6 @@ public sealed partial class StaticData
 		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var riftLocations = new List<RiftLocationSummary>();
-		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var staticDoors = new List<StaticDoorSummary>();
 		var npcRiftSpawns = new List<NpcRiftSpawnSummary>();
@@ -645,13 +631,6 @@ public sealed partial class StaticData
 		var goodsInLists = new List<GoodsListSummary>();
 		var goodsPurchaseLists = new List<GoodsListSummary>();
 		var questDrops = new List<QuestDropSummary>();
-		var globalDropRules = new List<GlobalDropRuleSummary>();
-		var eventTemplates = new List<EventTemplateSummary>();
-		var globalNpcExclusionNpcIds = new HashSet<int>();
-		var globalNpcExclusionNpcNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		var globalNpcExclusionNpcTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		var globalNpcExclusionNpcTribes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		var globalNpcExclusionNpcAbyssTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var skillTemplates = new List<SkillTemplateSummary>();
 		var npcSkillLists = new List<NpcSkillListSummary>();
 		var titleTemplates = new List<TitleTemplateSummary>();
@@ -686,7 +665,6 @@ public sealed partial class StaticData
 		EnchantGroupBuilder? currentEnchantGroup = null;
 		TemperingGroupBuilder? currentTemperingGroup = null;
 		WalkerTemplateBuilder? currentWalkerTemplate = null;
-		NpcTemplateBuilder? currentNpcTemplate = null;
 		NpcSpawnBuilder? currentNpcSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
 		NpcRiftSpawnBuilder? currentNpcRiftSpawn = null;
@@ -700,11 +678,6 @@ public sealed partial class StaticData
 		GoodsListKind currentGoodsListKind = GoodsListKind.List;
 		int currentGoodsListDepth = -1;
 		QuestDropBuilder? currentQuestDropBuilder = null;
-		EventTemplateBuilder? currentEventTemplate = null;
-		int currentEventTemplateDepth = -1;
-		GlobalDropRuleBuilder? currentGlobalDropRule = null;
-		int currentGlobalDropRuleDepth = -1;
-		bool currentGlobalDropRuleIsEventDrop = false;
 		int currentNpcSpawnMapId = 0;
 		int currentNpcSpawnDepth = -1;
 		int currentNpcSpawnSpotDepth = -1;
@@ -880,12 +853,6 @@ public sealed partial class StaticData
 				if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
 					currentWalkerParentRouteId = string.Empty;
 
-				if (reader.Depth == 2 && reader.LocalName == "npc_template" && currentNpcTemplate != null)
-				{
-					npcTemplates.Add(currentNpcTemplate.ToSummary());
-					currentNpcTemplate = null;
-				}
-
 				if (reader.Depth == currentPetTemplateDepth && reader.LocalName == "pet" && currentPetTemplate != null)
 				{
 					petTemplates.Add(currentPetTemplate.ToSummary());
@@ -980,24 +947,6 @@ public sealed partial class StaticData
 				{
 					questDrops.AddRange(currentQuestDropBuilder.ToQuestDrops());
 					currentQuestDropBuilder = null;
-				}
-
-				if (reader.Depth == currentGlobalDropRuleDepth && reader.LocalName == "gd_rule" && currentGlobalDropRule != null)
-				{
-					if (currentGlobalDropRuleIsEventDrop && currentEventTemplate != null)
-						currentEventTemplate.AddDropRule(currentGlobalDropRule.ToSummary());
-					else
-						globalDropRules.Add(currentGlobalDropRule.ToSummary());
-					currentGlobalDropRule = null;
-					currentGlobalDropRuleDepth = -1;
-					currentGlobalDropRuleIsEventDrop = false;
-				}
-
-				if (reader.Depth == currentEventTemplateDepth && reader.LocalName == "event" && currentEventTemplate != null)
-				{
-					eventTemplates.Add(currentEventTemplate.ToSummary());
-					currentEventTemplate = null;
-					currentEventTemplateDepth = -1;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "spawn_map" && elementPath.GetValueOrDefault(1) == "spawns")
@@ -1343,24 +1292,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.LocalName == "event" && elementPath.GetValueOrDefault(reader.Depth - 1) == "timed_events")
-			{
-				// Java parity: dataholders/EventData loads timed EventTemplate rows and validates date windows.
-				currentEventTemplate = new EventTemplateBuilder(
-					reader.GetAttribute("name") ?? string.Empty,
-					ReadDateTimeAttribute(reader, "start"),
-					ReadDateTimeAttribute(reader, "end"),
-					reader.GetAttribute("theme") ?? string.Empty);
-				currentEventTemplateDepth = reader.Depth;
-				if (reader.IsEmptyElement)
-				{
-					eventTemplates.Add(currentEventTemplate.ToSummary());
-					currentEventTemplate = null;
-					currentEventTemplateDepth = -1;
-				}
-				continue;
-			}
-
 			if (reader.Depth == 3 && reader.LocalName == "quest_drop" && currentQuestDropBuilder != null)
 			{
 				// Java parity: model/templates/quest/QuestDrop defaults chance to 100 and collecting_step/drop_each_member to 0.
@@ -1383,133 +1314,6 @@ public sealed partial class StaticData
 					ReadRequiredIntAttribute(reader, "item_id"),
 					ReadOptionalIntAttribute(reader, "count", 1));
 				continue;
-			}
-
-			if (IsInsideElement(elementPath, reader.Depth, "global_npc_exclusions"))
-			{
-				// Java parity: dataholders/GlobalNpcExclusionData JAXB whitespace-list elements.
-				var localName = reader.LocalName;
-				var value = await ReadElementTextAsync(reader, cancellationToken);
-				switch (localName)
-				{
-					case "npc_ids":
-						globalNpcExclusionNpcIds.UnionWith(ParseIntSet(value));
-						break;
-					case "npc_names":
-						globalNpcExclusionNpcNames.UnionWith(ParseStringSet(value));
-						break;
-					case "npc_types":
-						globalNpcExclusionNpcTypes.UnionWith(ParseStringSet(value));
-						break;
-					case "npc_tribes":
-						globalNpcExclusionNpcTribes.UnionWith(ParseStringSet(value));
-						break;
-					case "npc_abyss_types":
-						globalNpcExclusionNpcAbyssTypes.UnionWith(ParseStringSet(value));
-						break;
-				}
-				continue;
-			}
-
-			if (reader.LocalName == "gd_rule" && IsInsideElement(elementPath, reader.Depth, "global_rules"))
-			{
-				// Java parity: dataholders/GlobalDropData loads every GlobalRule from global_drops/rules.
-				currentGlobalDropRule = new GlobalDropRuleBuilder(
-					reader.GetAttribute("rule_name") ?? string.Empty,
-					ReadFloatAttribute(reader, "chance"),
-					ReadBoolAttribute(reader, "dynamic_chance"),
-					ReadOptionalIntAttribute(reader, "min_diff", -99),
-					ReadOptionalIntAttribute(reader, "max_diff", 99),
-					reader.GetAttribute("restriction_race") ?? string.Empty,
-					ReadBoolAttribute(reader, "level_based_chance_reduction"),
-					ReadOptionalIntAttribute(reader, "member_limit", 1),
-					ReadOptionalIntAttribute(reader, "max_drop_rule", 1));
-				currentGlobalDropRuleDepth = reader.Depth;
-				currentGlobalDropRuleIsEventDrop = false;
-				if (reader.IsEmptyElement)
-				{
-					globalDropRules.Add(currentGlobalDropRule.ToSummary());
-					currentGlobalDropRule = null;
-					currentGlobalDropRuleDepth = -1;
-				}
-				continue;
-			}
-
-			if (reader.LocalName == "gd_rule" && currentEventTemplate != null && IsInsideElement(elementPath, reader.Depth, "event_drops"))
-			{
-				// Java parity: model/templates/event/EventTemplate.eventDropRules stores timed event gd_rule entries.
-				currentGlobalDropRule = new GlobalDropRuleBuilder(
-					reader.GetAttribute("rule_name") ?? string.Empty,
-					ReadFloatAttribute(reader, "chance"),
-					ReadBoolAttribute(reader, "dynamic_chance"),
-					ReadOptionalIntAttribute(reader, "min_diff", -99),
-					ReadOptionalIntAttribute(reader, "max_diff", 99),
-					reader.GetAttribute("restriction_race") ?? string.Empty,
-					ReadBoolAttribute(reader, "level_based_chance_reduction"),
-					ReadOptionalIntAttribute(reader, "member_limit", 1),
-					ReadOptionalIntAttribute(reader, "max_drop_rule", 1));
-				currentGlobalDropRuleDepth = reader.Depth;
-				currentGlobalDropRuleIsEventDrop = true;
-				if (reader.IsEmptyElement)
-				{
-					currentEventTemplate.AddDropRule(currentGlobalDropRule.ToSummary());
-					currentGlobalDropRule = null;
-					currentGlobalDropRuleDepth = -1;
-					currentGlobalDropRuleIsEventDrop = false;
-				}
-				continue;
-			}
-
-			if (currentGlobalDropRule != null && reader.Depth > currentGlobalDropRuleDepth)
-			{
-				switch (reader.LocalName)
-				{
-					case "gd_item":
-						var minCount = ReadOptionalIntAttribute(reader, "min_count", 1);
-						var maxCount = ReadOptionalIntAttribute(reader, "max_count", minCount);
-						if (maxCount == 0)
-							maxCount = minCount;
-						currentGlobalDropRule.AddItem(
-							new GlobalDropItemSummary(
-								ReadRequiredIntAttribute(reader, "id"),
-								minCount,
-								maxCount,
-								ReadOptionalFloatAttribute(reader, "chance", 100f)));
-						continue;
-					case "gd_world":
-						currentGlobalDropRule.WorldTypes.Add(reader.GetAttribute("wd_type") ?? string.Empty);
-						continue;
-					case "gd_race":
-						currentGlobalDropRule.Races.Add(reader.GetAttribute("race") ?? string.Empty);
-						continue;
-					case "gd_rating":
-						currentGlobalDropRule.Ratings.Add(reader.GetAttribute("rating") ?? string.Empty);
-						continue;
-					case "gd_map":
-						currentGlobalDropRule.MapIds.Add(ReadRequiredIntAttribute(reader, "map_id"));
-						continue;
-					case "gd_tribe":
-						currentGlobalDropRule.Tribes.Add(reader.GetAttribute("tribe") ?? string.Empty);
-						continue;
-					case "gd_npc":
-						currentGlobalDropRule.NpcIds.Add(ReadRequiredIntAttribute(reader, "npc_id"));
-						continue;
-					case "gd_npc_name":
-						currentGlobalDropRule.NpcNames.Add(
-							new GlobalDropNpcNameSummary(
-								reader.GetAttribute("function") ?? string.Empty,
-								reader.GetAttribute("value") ?? string.Empty));
-						continue;
-					case "gd_npc_group":
-						currentGlobalDropRule.NpcGroups.Add(reader.GetAttribute("group") ?? string.Empty);
-						continue;
-					case "gd_excluded_npcs":
-						currentGlobalDropRule.ExcludedNpcIds.UnionWith(ReadIntListAttribute(reader, "npc_ids"));
-						continue;
-					case "gd_zone":
-						currentGlobalDropRule.Zones.Add(reader.GetAttribute("zone") ?? string.Empty);
-						continue;
-				}
 			}
 
 			if (currentNpcSpawnMapId != 0
@@ -2742,76 +2546,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "npc_template")
-			{
-				currentNpcTemplate = new NpcTemplateBuilder(
-					ReadRequiredIntAttribute(reader, "npc_id"),
-					reader.GetAttribute("name") ?? string.Empty,
-					ReadIntAttribute(reader, "name_id"),
-					ReadIntAttribute(reader, "level"),
-					reader.GetAttribute("rank") ?? string.Empty,
-					reader.GetAttribute("rating") ?? string.Empty,
-					reader.GetAttribute("race") ?? string.Empty,
-					reader.GetAttribute("tribe") ?? string.Empty,
-					reader.GetAttribute("type") ?? string.Empty,
-					ReadIntAttribute(reader, "title_id"),
-					ReadFloatAttribute(reader, "height"),
-					ReadIntAttribute(reader, "attack_speed"),
-					ReadIntAttribute(reader, "state"),
-					reader.GetAttribute("ai") ?? string.Empty,
-					reader.GetAttribute("group_drop") ?? string.Empty,
-					reader.GetAttribute("abyss_type") ?? "NONE");
-				if (reader.IsEmptyElement)
-				{
-					npcTemplates.Add(currentNpcTemplate.ToSummary());
-					currentNpcTemplate = null;
-				}
-
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "stats" && currentNpcTemplate != null)
-			{
-				currentNpcTemplate.MaxHp = ReadIntAttribute(reader, "maxHp");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "kisk_stats" && currentNpcTemplate != null)
-			{
-				// Java parity: model/templates/stats/KiskStatsTemplate.
-				currentNpcTemplate.KiskStats = new KiskStatsSummary(
-					ReadOptionalIntAttribute(reader, "usemask", 4),
-					ReadOptionalIntAttribute(reader, "members", 6),
-					ReadOptionalIntAttribute(reader, "resurrects", 18));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "speeds" && currentNpcTemplate != null)
-			{
-				currentNpcTemplate.RunSpeed = ReadFloatAttribute(reader, "run");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "bound_radius" && currentNpcTemplate != null)
-			{
-				currentNpcTemplate.BoundRadiusFront = ReadFloatAttribute(reader, "front");
-				currentNpcTemplate.BoundRadiusSide = ReadFloatAttribute(reader, "side");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "talk_info" && currentNpcTemplate != null)
-			{
-				// Java parity: model/templates/npc/TalkInfo feeds NpcTemplate.getTalkDistance and supportsAction.
-				currentNpcTemplate.HasTalkInfo = true;
-				currentNpcTemplate.TalkDistance = ReadOptionalIntAttribute(reader, "distance", 2);
-				currentNpcTemplate.FunctionDialogIds.AddRange(ReadIntListAttribute(reader, "func_dialogs"));
-				currentNpcTemplate.SubDialogType = ReadNpcSubDialogType(reader.GetAttribute("subdialog_type"));
-				currentNpcTemplate.SubDialogValue = ReadOptionalIntAttribute(reader, "subdialog_value", 0);
-				currentNpcTemplate.CanTalkInvisible = ReadOptionalBoolAttribute(reader, "can_talk_invisible", true);
-				currentNpcTemplate.IsDialogNpc = ReadBoolAttribute(reader, "is_dialog");
-				continue;
-			}
-
 			if (reader.Depth == 2 && reader.LocalName == "skill_template")
 			{
 				currentSkillTemplate = new SkillTemplateBuilder(
@@ -3110,7 +2844,6 @@ public sealed partial class StaticData
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
 		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
 		var workOrderRecipes = WorkOrderRecipeTable.LoadFromImportedFiles(importedFiles);
-		var processedGlobalDropRules = ProcessGlobalDropRules(globalDropRules, npcTemplates);
 
 		return new StaticData(
 			cacheFilePath,
@@ -3150,14 +2883,6 @@ public sealed partial class StaticData
 				goodsPurchaseLists.AsReadOnly()),
 			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
-			new GlobalDropTable(processedGlobalDropRules),
-			new EventDropTable(eventTemplates.AsReadOnly()),
-			new GlobalNpcExclusionTable(
-				globalNpcExclusionNpcIds,
-				globalNpcExclusionNpcNames,
-				globalNpcExclusionNpcTypes,
-				globalNpcExclusionNpcTribes,
-				globalNpcExclusionNpcAbyssTypes),
 			new SkillTemplateTable(skillTemplates.AsReadOnly()),
 			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),

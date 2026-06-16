@@ -8,40 +8,6 @@ namespace Aion.GameServer.Dataholders;
 
 public sealed partial class StaticData
 {
-	private static IReadOnlyList<GlobalDropRuleSummary> ProcessGlobalDropRules(
-		IReadOnlyList<GlobalDropRuleSummary> rules,
-		IReadOnlyList<NpcTemplateSummary> npcTemplates)
-	{
-		// Java parity: dataholders/GlobalDropData.processRules expands gd_npc_names into gd_npc ids once NPC templates are loaded.
-		var processedRules = new List<GlobalDropRuleSummary>(rules.Count);
-		foreach (var rule in rules)
-		{
-			if (rule.NpcNames.Count == 0)
-			{
-				processedRules.Add(rule);
-				continue;
-			}
-
-			var allowedNpcIds = rule.NpcIds.ToHashSet();
-			foreach (var npcName in rule.NpcNames)
-			{
-				foreach (var npc in npcTemplates.Where(npc => MatchesGlobalDropNpcName(npcName, npc.Name)))
-					allowedNpcIds.Add(npc.TemplateId);
-			}
-
-			processedRules.Add(
-				allowedNpcIds.Count == 0
-					? rule
-					: rule with
-					{
-						NpcIds = allowedNpcIds,
-						NpcNames = Array.Empty<GlobalDropNpcNameSummary>(),
-					});
-		}
-
-		return processedRules.AsReadOnly();
-	}
-
 	private static bool TryGetTradeListTemplateKind(string localName, out TradeListTemplateKind kind)
 	{
 		switch (localName)
@@ -101,19 +67,6 @@ public sealed partial class StaticData
 				goodsPurchaseLists.Add(summary);
 				break;
 		}
-	}
-
-	private static bool MatchesGlobalDropNpcName(GlobalDropNpcNameSummary ruleName, string npcName)
-	{
-		var value = ruleName.Value.ToLowerInvariant();
-		return ruleName.Function.ToUpperInvariant() switch
-		{
-			"CONTAINS" => npcName.Contains(value, StringComparison.Ordinal),
-			"END_WITH" => npcName.EndsWith(value, StringComparison.Ordinal),
-			"START_WITH" => npcName.StartsWith(value, StringComparison.Ordinal),
-			"EQUALS" => string.Equals(npcName, ruleName.Value, StringComparison.OrdinalIgnoreCase),
-			_ => false,
-		};
 	}
 
 	private enum TradeListTemplateKind
@@ -246,32 +199,6 @@ public sealed partial class StaticData
 			"OTHER" => ItemActionUseTargetType.Other,
 			"ALL" => ItemActionUseTargetType.All,
 			_ => throw new FormatException($"Unexpected UseTarget value '{value}'."),
-		};
-	}
-
-	private static NpcSubDialogType? ReadNpcSubDialogType(string? value)
-	{
-		return value switch
-		{
-			null or "" => null,
-			"FORT_CAPTURE" => NpcSubDialogType.FortCapture,
-			"SKILL_ID" => NpcSubDialogType.SkillId,
-			"ITEM_ID" => NpcSubDialogType.ItemId,
-			"RETURN" => NpcSubDialogType.Return,
-			"PCBANG" => NpcSubDialogType.PcBang,
-			"PAID_USER" => NpcSubDialogType.PaidUser,
-			"NEWBIE" => NpcSubDialogType.Newbie,
-			"ABYSSRANK" => NpcSubDialogType.AbyssRank,
-			"ABYSSRANKING" => NpcSubDialogType.AbyssRanking,
-			"LEVEL" => NpcSubDialogType.Level,
-			"LEVEL_LOW" => NpcSubDialogType.LevelLow,
-			"LEVEL_HIGH" => NpcSubDialogType.LevelHigh,
-			"LEGION_DOMINION_NPC" => NpcSubDialogType.LegionDominionNpc,
-			"TARGET_LEGION_DOMINION" => NpcSubDialogType.TargetLegionDominion,
-			"PACK_3" => NpcSubDialogType.Pack3,
-			"PACK_4" => NpcSubDialogType.Pack4,
-			"CASH" => NpcSubDialogType.Cash,
-			_ => null,
 		};
 	}
 
