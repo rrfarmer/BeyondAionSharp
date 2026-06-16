@@ -281,6 +281,17 @@ public sealed class RealStaticDataLoadIntegrationTests
 			&& r.GetGlobalRuleNpcs()!.GetGlobalDropNpcs().Count > 0
 			&& (r.GetGlobalRuleNpcNames() == null || r.GetGlobalRuleNpcNames()!.GetGlobalDropNpcNames().Count == 0));
 
+		// GLOBAL_EXCLUSION_DATA boot-wiring: the faithful GlobalNpcExclusionData holder is loaded from the single
+		// global_drops/global_npc_exclusions.xml (Java parity: DataManager.init() binds data.globalExclusionData).
+		// Previously hollow new() -> always empty -> DropRegistrationService.HasGlobalNpcExclusions always false.
+		// Assert known exclusions from the XML resolved (npc id 219501, type GENERAL, tribe PET, abyss type DOOR)
+		// and the afterUnmarshal isEmpty flag is false (proves the @XmlList Set proxies bound + callback fired).
+		Assert.False(sd.GlobalNpcExclusionDataDh.IsEmpty(), "GlobalNpcExclusionDataDh empty after boot");
+		Assert.Contains(219501, sd.GlobalNpcExclusionDataDh.GetNpcIds());
+		Assert.Contains(Model.Templates.Npc.NpcTemplateType.GENERAL, sd.GlobalNpcExclusionDataDh.GetNpcTemplateTypes());
+		Assert.Contains(Model.TribeClass.PET, sd.GlobalNpcExclusionDataDh.GetNpcTribes());
+		Assert.Contains(Model.Templates.Npc.AbyssNpcType.DOOR, sd.GlobalNpcExclusionDataDh.GetNpcAbyssTypes());
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));

@@ -17,39 +17,44 @@ public class GlobalNpcExclusionData
     private HashSet<TribeClass> excludedTribes;
     private HashSet<AbyssNpcType> excludedAbyssTypes;
 
+    // JAXB @XmlList tokenizes the element text on ALL XML whitespace (space, tab, CR, LF) per the XSD list rule;
+    // the source XML spreads e.g. <npc_tribes> across several indented lines, so split on the full whitespace set
+    // (not just ' ') to faithfully mirror JAXB tokenization.
+    private static readonly char[] XmlListSeparators = { ' ', '\t', '\r', '\n' };
+
     [XmlElement("npc_ids")]
     public string ExcludedNpcIdsRaw
     {
         get => excludedNpcIds == null ? null : string.Join(" ", excludedNpcIds);
-        set => excludedNpcIds = value == null ? null : new HashSet<int>(value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse));
+        set => excludedNpcIds = value == null ? null : new HashSet<int>(value.Split(XmlListSeparators, StringSplitOptions.RemoveEmptyEntries).Select(int.Parse));
     }
 
     [XmlElement("npc_names")]
     public string ExcludedNpcNamesRaw
     {
         get => excludedNpcNames == null ? null : string.Join(" ", excludedNpcNames);
-        set => excludedNpcNames = value == null ? null : new HashSet<string>(value.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        set => excludedNpcNames = value == null ? null : new HashSet<string>(value.Split(XmlListSeparators, StringSplitOptions.RemoveEmptyEntries));
     }
 
     [XmlElement("npc_types")]
     public string ExcludedTypesRaw
     {
         get => excludedTypes == null ? null : string.Join(" ", excludedTypes);
-        set => excludedTypes = value == null ? null : new HashSet<NpcTemplateType>(value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => (NpcTemplateType)Enum.Parse(typeof(NpcTemplateType), t)));
+        set => excludedTypes = value == null ? null : new HashSet<NpcTemplateType>(value.Split(XmlListSeparators, StringSplitOptions.RemoveEmptyEntries).Select(t => (NpcTemplateType)Enum.Parse(typeof(NpcTemplateType), t)));
     }
 
     [XmlElement("npc_tribes")]
     public string ExcludedTribesRaw
     {
         get => excludedTribes == null ? null : string.Join(" ", excludedTribes);
-        set => excludedTribes = value == null ? null : new HashSet<TribeClass>(value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => (TribeClass)Enum.Parse(typeof(TribeClass), t)));
+        set => excludedTribes = value == null ? null : new HashSet<TribeClass>(value.Split(XmlListSeparators, StringSplitOptions.RemoveEmptyEntries).Select(t => (TribeClass)Enum.Parse(typeof(TribeClass), t)));
     }
 
     [XmlElement("npc_abyss_types")]
     public string ExcludedAbyssTypesRaw
     {
         get => excludedAbyssTypes == null ? null : string.Join(" ", excludedAbyssTypes);
-        set => excludedAbyssTypes = value == null ? null : new HashSet<AbyssNpcType>(value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(t => (AbyssNpcType)Enum.Parse(typeof(AbyssNpcType), t)));
+        set => excludedAbyssTypes = value == null ? null : new HashSet<AbyssNpcType>(value.Split(XmlListSeparators, StringSplitOptions.RemoveEmptyEntries).Select(t => (AbyssNpcType)Enum.Parse(typeof(AbyssNpcType), t)));
     }
 
     [XmlIgnore] private bool isEmpty;
