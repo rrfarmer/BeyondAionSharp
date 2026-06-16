@@ -6,11 +6,11 @@ namespace Aion.GameServer.Model.Templates.Shield;
 [XmlType("ShieldPoint")]
 public class ShieldPoint
 {
-    [XmlAttribute("x")] private float x;
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("z")] public float z;
 
     public float GetX()
     {

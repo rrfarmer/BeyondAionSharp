@@ -6,12 +6,12 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("PortalLoc")]
 public class PortalLoc
 {
-    [XmlAttribute("world_id")] protected int worldId;
-    [XmlAttribute("loc_id")] protected int locId;
-    [XmlAttribute("x")] protected float x;
-    [XmlAttribute("y")] protected float y;
-    [XmlAttribute("z")] protected float z;
-    [XmlAttribute("h")] protected sbyte h;
+    [XmlAttribute("world_id")] public int worldId;
+    [XmlAttribute("loc_id")] public int locId;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("h")] public sbyte h;
 
     public int GetWorldId()
     {

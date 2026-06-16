@@ -6,19 +6,19 @@ namespace Aion.GameServer.Model.Templates.Flypath;
 [XmlRoot("flypath_location")]
 public class FlyPathEntry
 {
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("id")] public int id;
 
-    [XmlAttribute("sx")] private float startX;
-    [XmlAttribute("sy")] private float startY;
-    [XmlAttribute("sz")] private float startZ;
-    [XmlAttribute("sworld")] private int sworld;
+    [XmlAttribute("sx")] public float startX;
+    [XmlAttribute("sy")] public float startY;
+    [XmlAttribute("sz")] public float startZ;
+    [XmlAttribute("sworld")] public int sworld;
 
-    [XmlAttribute("ex")] private float endX;
-    [XmlAttribute("ey")] private float endY;
-    [XmlAttribute("ez")] private float endZ;
-    [XmlAttribute("eworld")] private int eworld;
+    [XmlAttribute("ex")] public float endX;
+    [XmlAttribute("ey")] public float endY;
+    [XmlAttribute("ez")] public float endZ;
+    [XmlAttribute("eworld")] public int eworld;
 
-    [XmlAttribute("time")] private float time;
+    [XmlAttribute("time")] public float time;
 
     public int GetId()
     {

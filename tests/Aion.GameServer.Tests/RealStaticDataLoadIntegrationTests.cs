@@ -57,6 +57,12 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.MultiReturnItemDataDh.Size() > 0, "MultiReturnItemDataDh empty after boot");
 		Assert.True(sd.FlyRingDataDh.Size() > 0, "FlyRingDataDh empty after boot");
 		Assert.True(sd.WindstreamDataDh.Size() > 0, "WindstreamDataDh empty after boot");
+		Assert.True(sd.TeleLocationDataDh.Size() > 0, "TeleLocationDataDh empty after boot");
+		Assert.True(sd.PetDopingDataDh.Size() > 0, "PetDopingDataDh empty after boot");
+		Assert.True(sd.FlyPathDataDh.Size() > 0, "FlyPathDataDh empty after boot");
+		Assert.True(sd.ShieldDataDh.Size() > 0, "ShieldDataDh empty after boot");
+		Assert.True(sd.PortalLocDataDh.Size() > 0, "PortalLocDataDh empty after boot");
+		Assert.True(sd.SkillAliasLocationDataDh.Size() > 0, "SkillAliasLocationDataDh empty after boot");
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

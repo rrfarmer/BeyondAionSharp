@@ -6,10 +6,10 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlType("dope")]
 public class PetDopingEntry
 {
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("usedrink")] private bool usedrink;
-    [XmlAttribute("usefood")] private bool usefood;
-    [XmlAttribute("usescroll")] private int usescroll;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("usedrink")] public bool usedrink;
+    [XmlAttribute("usefood")] public bool usefood;
+    [XmlAttribute("usescroll")] public int usescroll;
 
     public int GetId()
     {

@@ -343,6 +343,161 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetStreamTemplate(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesTeleLocationDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("teleport_location.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<TeleLocationData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <teleloc_template loc_id="2" mapid="110010000" name="Sanctum" name_id="400489" posX="1313.25" posY="1512.011" posZ="568.107"/>
+        var sanctum = data.GetTelelocationTemplate(2);
+        Assert.NotNull(sanctum);
+        Assert.Equal(2, sanctum!.GetLocId());
+        Assert.Equal(110010000, sanctum.GetMapId());
+        Assert.Equal(400489, sanctum.GetL10nId());
+        Assert.Equal(1313.25f, sanctum.GetX(), 3);
+
+        // heading omitted on this row -> defaults to 0.
+        Assert.Equal(0, sanctum.GetHeading());
+
+        // <teleloc_template loc_id="3" ... heading="100"/>
+        var poeta = data.GetTelelocationTemplate(3);
+        Assert.NotNull(poeta);
+        Assert.Equal(100, poeta!.GetHeading());
+
+        Assert.Null(data.GetTelelocationTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesPetDopingDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("pets", "pet_doping.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<PetDopingData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <doping id="1" usedrink="true" usefood="true" usescroll="0"/>
+        var dope1 = data.GetDopingTemplate(1);
+        Assert.NotNull(dope1);
+        Assert.Equal(1, dope1!.GetId());
+        Assert.True(dope1.IsUseDrink());
+        Assert.True(dope1.IsUseFood());
+        Assert.Equal(0, dope1.GetScrollsUsed());
+
+        // <doping id="2" usedrink="false" usefood="true" usescroll="6"/>
+        var dope2 = data.GetDopingTemplate(2);
+        Assert.NotNull(dope2);
+        Assert.False(dope2!.IsUseDrink());
+        Assert.True(dope2.IsUseFood());
+        Assert.Equal(6, dope2.GetScrollsUsed());
+
+        Assert.Null(data.GetDopingTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesFlyPathDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("flypath_template.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<FlyPathData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <flypath_location id="1" sx="85.15" sy="189.13" sz="231.34" sworld="310020000"
+        //   ex="218.85" ey="250.49" ez="206.72" eworld="310020000" time="45"/>
+        var path1 = data.GetPathTemplate(1);
+        Assert.NotNull(path1);
+        Assert.Equal(1, path1!.GetId());
+        Assert.Equal(85.15f, path1.GetStartX(), 3);
+        Assert.Equal(310020000, path1.GetStartWorldId());
+        Assert.Equal(218.85f, path1.GetEndX(), 3);
+        Assert.Equal(310020000, path1.GetEndWorldId());
+        // time="45" seconds -> GetTimeInMs multiplies by 1000.
+        Assert.Equal(45000, path1.GetTimeInMs());
+
+        Assert.Null(data.GetPathTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesShieldDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("siege", "siege_shields.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<ShieldData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        var shields = data.GetShieldTemplates();
+        Assert.NotNull(shields);
+
+        // <shield id="1011" map="400010000" name="DIVINE_FORTRESS" radius="86.0">
+        //   <center x="2137.505" y="1930.4448" z="2334.0"/></shield>
+        var divine = shields.First(s => s.GetId() == 1011);
+        Assert.Equal("DIVINE_FORTRESS", divine.GetName());
+        Assert.Equal(400010000, divine.GetMap());
+        Assert.Equal(86.0f, divine.GetRadius(), 3);
+        Assert.NotNull(divine.GetCenter());
+        Assert.Equal(2137.505f, divine.GetCenter().GetX(), 3);
+        Assert.Equal(2334.0f, divine.GetCenter().GetZ(), 3);
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesPortalLocDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("portals", "portal_loc.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<PortalLocData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <portal_loc world_id="110010000" loc_id="1100100" x="1476.3" y="1595.5" z="572.9"/>
+        var loc = data.GetPortalLoc(1100100);
+        Assert.NotNull(loc);
+        Assert.Equal(110010000, loc!.GetWorldId());
+        Assert.Equal(1100100, loc.GetLocId());
+        Assert.Equal(1476.3f, loc.GetX(), 3);
+        Assert.Equal(572.9f, loc.GetZ(), 3);
+        // h omitted on this row -> defaults to 0.
+        Assert.Equal((sbyte)0, loc.GetH());
+
+        // <portal_loc world_id="110010000" loc_id="1100101" ... h="53"/>
+        var withH = data.GetPortalLoc(1100101);
+        Assert.NotNull(withH);
+        Assert.Equal((sbyte)53, withH!.GetH());
+
+        Assert.Null(data.GetPortalLoc(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesSkillAliasLocationDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("skills", "alias_locations.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<SkillAliasLocationData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <alias_location name="IDTemple_Low_Furnace_01" world_id="300160000">
+        //   <alias_pos x="529.252380" y="1297.261719" z="198"/> ...
+        var loc = data.GetSkillAliasLocation("IDTemple_Low_Furnace_01");
+        Assert.NotNull(loc);
+        Assert.Equal("IDTemple_Low_Furnace_01", loc!.GetAliasName());
+        Assert.Equal(300160000, loc.GetWorldId());
+
+        var positions = loc.GetSkillAliasPositionList();
+        Assert.NotNull(positions);
+        Assert.True(positions!.Count > 0);
+        Assert.Equal(529.252380f, positions[0].GetX(), 3);
+        Assert.Equal(1297.261719f, positions[0].GetY(), 3);
+        Assert.Equal(198f, positions[0].GetZ(), 3);
+
+        Assert.Null(data.GetSkillAliasLocation("__nope__"));
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

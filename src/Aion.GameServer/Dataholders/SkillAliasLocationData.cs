@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("alias_locations")]
 public class SkillAliasLocationData
 {
-    [XmlElement("alias_location")] private List<SkillAliasLocation> skillAliasLocationData;
+    [XmlElement("alias_location")] public List<SkillAliasLocation> skillAliasLocationData;
 
     [XmlIgnore] private Dictionary<string, SkillAliasLocation> skillAliasLocations = new();
 

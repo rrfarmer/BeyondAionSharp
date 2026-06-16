@@ -6,15 +6,15 @@ namespace Aion.GameServer.Model.Templates.Shield;
 [XmlType("Shield")]
 public class ShieldTemplate
 {
-    [XmlAttribute("name")] protected string name;
+    [XmlAttribute("name")] public string name;
 
-    [XmlAttribute("map")] protected int map;
+    [XmlAttribute("map")] public int map;
 
-    [XmlAttribute("id")] protected int id;
+    [XmlAttribute("id")] public int id;
 
-    [XmlAttribute("radius")] protected float radius;
+    [XmlAttribute("radius")] public float radius;
 
-    [XmlElement("center")] protected ShieldPoint center;
+    [XmlElement("center")] public ShieldPoint center;
 
     public string GetName()
     {

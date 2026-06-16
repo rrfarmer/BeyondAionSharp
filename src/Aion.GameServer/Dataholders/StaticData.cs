@@ -287,10 +287,10 @@ public sealed partial class StaticData
 	public AbsoluteStatsData AbsoluteStatsDataDh { get; } = new();
 	public WorldRaidData WorldRaidDataDh { get; } = new();
 	public TeleporterData TeleporterDataDh { get; } = new();
-	public TeleLocationData TeleLocationDataDh { get; } = new();
-	public SkillAliasLocationData SkillAliasLocationDataDh { get; } = new();
+	public TeleLocationData TeleLocationDataDh { get; private set; } = new();
+	public SkillAliasLocationData SkillAliasLocationDataDh { get; private set; } = new();
 	public SignetDataTemplates SignetDataTemplatesDh { get; } = new();
-	public ShieldData ShieldDataDh { get; } = new();
+	public ShieldData ShieldDataDh { get; private set; } = new();
 	public RoadData RoadDataDh { get; private set; } = new();
 	public MultiReturnItemData MultiReturnItemDataDh { get; private set; } = new();
 	public KillBountyData KillBountyDataDh { get; private set; } = new();
@@ -300,7 +300,7 @@ public sealed partial class StaticData
 	public HotspotData HotspotDataDh { get; private set; } = new();
 	public GatherableData GatherableDataDh { get; private set; } = new();
 	public FlyRingData FlyRingDataDh { get; private set; } = new();
-	public FlyPathData FlyPathDataDh { get; } = new();
+	public FlyPathData FlyPathDataDh { get; private set; } = new();
 	public CuringObjectsData CuringObjectsDataDh { get; private set; } = new();
 	public BaseData BaseDataDh { get; private set; } = new();
 	public AssembledNpcsData AssembledNpcsDataDh { get; } = new();
@@ -322,10 +322,10 @@ public sealed partial class StaticData
 	public GoodsListData GoodsListDataDh { get; } = new();
 	public ItemPurificationData ItemPurificationDataDh { get; } = new();
 	public AtreianPassportData AtreianPassportDataDh { get; } = new();
-	public PetDopingData PetDopingDataDh { get; } = new();
+	public PetDopingData PetDopingDataDh { get; private set; } = new();
 	public NpcSkillData NpcSkillDataDh { get; } = new();
 	public NpcFactionsData NpcFactionsDataDh { get; } = new();
-	public PortalLocData PortalLocDataDh { get; } = new();
+	public PortalLocData PortalLocDataDh { get; private set; } = new();
 	public AssemblyItemsData AssemblyItemsDataDh { get; } = new();
 
 	public int GetElementCount(string elementName)
@@ -359,6 +359,12 @@ public sealed partial class StaticData
 		MultiReturnItemDataDh = TryLoadHolder(MultiReturnItemDataDh, Path.Combine(staticDataDirectory, "items", "multi_return_item.xml"), logger);
 		FlyRingDataDh = TryLoadHolder(FlyRingDataDh, Path.Combine(staticDataDirectory, "fly_rings", "fly_rings.xml"), logger);
 		WindstreamDataDh = TryLoadHolder(WindstreamDataDh, Path.Combine(staticDataDirectory, "windstreams", "windstreams.xml"), logger);
+		TeleLocationDataDh = TryLoadHolder(TeleLocationDataDh, Path.Combine(staticDataDirectory, "teleport_location.xml"), logger);
+		PetDopingDataDh = TryLoadHolder(PetDopingDataDh, Path.Combine(staticDataDirectory, "pets", "pet_doping.xml"), logger);
+		FlyPathDataDh = TryLoadHolder(FlyPathDataDh, Path.Combine(staticDataDirectory, "flypath_template.xml"), logger);
+		ShieldDataDh = TryLoadHolder(ShieldDataDh, Path.Combine(staticDataDirectory, "siege", "siege_shields.xml"), logger);
+		PortalLocDataDh = TryLoadHolder(PortalLocDataDh, Path.Combine(staticDataDirectory, "portals", "portal_loc.xml"), logger);
+		SkillAliasLocationDataDh = TryLoadHolder(SkillAliasLocationDataDh, Path.Combine(staticDataDirectory, "skills", "alias_locations.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

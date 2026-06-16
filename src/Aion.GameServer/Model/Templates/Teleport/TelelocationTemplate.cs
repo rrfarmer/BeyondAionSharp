@@ -8,14 +8,14 @@ namespace Aion.GameServer.Model.Templates.Teleport;
 public class TelelocationTemplate : IL10n
 {
     /// <summary>Location Id.</summary>
-    [XmlAttribute("loc_id")] private int locId;
+    [XmlAttribute("loc_id")] public int locId;
 
-    [XmlAttribute("mapid")] private int mapid = 0;
-    [XmlAttribute("name_id")] private int nameId;
-    [XmlAttribute("posX")] private float x = 0;
-    [XmlAttribute("posY")] private float y = 0;
-    [XmlAttribute("posZ")] private float z = 0;
-    [XmlAttribute("heading")] private int heading = 0;
+    [XmlAttribute("mapid")] public int mapid = 0;
+    [XmlAttribute("name_id")] public int nameId;
+    [XmlAttribute("posX")] public float x = 0;
+    [XmlAttribute("posY")] public float y = 0;
+    [XmlAttribute("posZ")] public float z = 0;
+    [XmlAttribute("heading")] public int heading = 0;
 
     public int GetLocId()
     {

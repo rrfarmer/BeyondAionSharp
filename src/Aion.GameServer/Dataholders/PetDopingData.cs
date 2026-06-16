@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("dopings")]
 public class PetDopingData
 {
-    [XmlElement("doping")] private List<PetDopingEntry> list;
+    [XmlElement("doping")] public List<PetDopingEntry> list;
 
     [XmlIgnore] private readonly Dictionary<int, PetDopingEntry> dopingsById = new();
 

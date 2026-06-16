@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("flypath_template")]
 public class FlyPathData
 {
-    [XmlElement("flypath_location")] private List<FlyPathEntry> list;
+    [XmlElement("flypath_location")] public List<FlyPathEntry> list;
 
     [XmlIgnore] private readonly Dictionary<int, FlyPathEntry> loctlistData = new();
 

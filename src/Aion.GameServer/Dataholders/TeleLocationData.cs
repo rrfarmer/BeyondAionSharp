@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("teleport_location")]
 public class TeleLocationData
 {
-    [XmlElement("teleloc_template")] private List<TelelocationTemplate> tlist;
+    [XmlElement("teleloc_template")] public List<TelelocationTemplate> tlist;
 
     [XmlIgnore] private readonly Dictionary<int, TelelocationTemplate> loctlistData = new();
 

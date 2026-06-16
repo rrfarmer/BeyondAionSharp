@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("shields")]
 public class ShieldData
 {
-    [XmlElement("shield")] private List<ShieldTemplate> shieldTemplates;
+    [XmlElement("shield")] public List<ShieldTemplate> shieldTemplates;
 
     public int Size()
     {

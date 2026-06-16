@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("portal_locs")]
 public class PortalLocData
 {
-    [XmlElement("portal_loc")] protected List<PortalLoc> portalLoc;
+    [XmlElement("portal_loc")] public List<PortalLoc> portalLoc;
 
     [XmlIgnore] private readonly Dictionary<int, PortalLoc> portalLocs = new();
 
