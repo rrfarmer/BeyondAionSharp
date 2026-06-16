@@ -6,11 +6,11 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("SiegeMercenaryZone")]
 public class SiegeMercenaryZone
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("costs")] protected int costs;
-    [XmlAttribute("cooldown")] protected int cooldown;
-    [XmlAttribute("msg_id")] protected int msgId;
-    [XmlAttribute("announce_id")] protected int announceId;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("costs")] public int costs;
+    [XmlAttribute("cooldown")] public int cooldown;
+    [XmlAttribute("msg_id")] public int msgId;
+    [XmlAttribute("announce_id")] public int announceId;
 
     public int GetId()
     {

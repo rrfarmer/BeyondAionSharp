@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("FoodGroup")]
 public class FoodGroup : BonusItemGroup
 {
-    [XmlElement("item")] private List<FoodItem> items;
+    [XmlElement("item")] public List<FoodItem> items;
 
     public override IReadOnlyList<ItemRaceEntry> GetItems()
     {

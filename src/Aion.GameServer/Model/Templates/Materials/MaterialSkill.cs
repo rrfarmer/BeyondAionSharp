@@ -21,10 +21,10 @@ public class MaterialSkill
             : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(s => (MaterialActCondition) Enum.Parse(typeof(MaterialActCondition), s)).ToList();
     }
 
-    [XmlAttribute("frequency")] private int frequency;
-    [XmlAttribute("target")] private MaterialTarget target = MaterialTarget.ALL;
-    [XmlAttribute("level")] private int level;
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("frequency")] public int frequency;
+    [XmlAttribute("target")] public MaterialTarget target = MaterialTarget.ALL;
+    [XmlAttribute("level")] public int level;
+    [XmlAttribute("id")] public int id;
 
     public List<MaterialActCondition> GetConditions()
     {

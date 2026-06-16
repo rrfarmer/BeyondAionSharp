@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Rewards;
 [XmlType("IdLevelReward")]
 public class IdLevelReward : ItemRaceEntry
 {
-    [XmlAttribute("level")] private int level;
+    [XmlAttribute("level")] public int level;
 
     public int GetLevel()
     {

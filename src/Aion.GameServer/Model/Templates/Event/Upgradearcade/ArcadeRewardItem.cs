@@ -6,9 +6,9 @@ namespace Aion.GameServer.Model.Templates.Event.Upgradearcade;
 [XmlType("ArcadeRewardItem")]
 public class ArcadeRewardItem
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("normal_count")] private long normalCount;
-    [XmlAttribute("frenzy_count")] private long frenzyCount;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("normal_count")] public long normalCount;
+    [XmlAttribute("frenzy_count")] public long frenzyCount;
 
     public int GetItemId()
     {

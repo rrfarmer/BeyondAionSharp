@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Rewards;
 [XmlType("FullRewardItem")]
 public class FullRewardItem : IdLevelReward
 {
-    [XmlAttribute("count")] private long count;
-    [XmlAttribute("chance")] private float chance;
+    [XmlAttribute("count")] public long count;
+    [XmlAttribute("chance")] public float chance;
 
     public override long GetCount()
     {

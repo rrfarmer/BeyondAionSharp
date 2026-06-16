@@ -6,13 +6,13 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("SiegeReward")]
 public class SiegeReward
 {
-    [XmlAttribute("top")] protected int top;
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("item_count")] protected int itemCount;
-    [XmlAttribute("item_id_defeat")] protected int itemIdDefeat;
-    [XmlAttribute("item_count_defeat")] protected int itemCountDefeat;
-    [XmlAttribute("gp_win")] protected int gpWin;
-    [XmlAttribute("gp_defeat")] protected int gpDefeat;
+    [XmlAttribute("top")] public int top;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("item_count")] public int itemCount;
+    [XmlAttribute("item_id_defeat")] public int itemIdDefeat;
+    [XmlAttribute("item_count_defeat")] public int itemCountDefeat;
+    [XmlAttribute("gp_win")] public int gpWin;
+    [XmlAttribute("gp_defeat")] public int gpDefeat;
 
     public int GetTop()
     {

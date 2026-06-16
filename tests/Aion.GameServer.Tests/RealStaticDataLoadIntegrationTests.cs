@@ -210,6 +210,33 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(absStats1!.GetModifiers().Count > 1, "AbsoluteStats modifiers dropped at boot");
 		Assert.Contains(absStats1.GetModifiers(),
 			m => m.GetName() == Model.Stats.Container.StatEnum.POWER && m.GetValue() == 1 && !m.IsBonus());
+
+		Assert.True(sd.TribeRelations.Size() > 0, "TribeRelations empty after boot");
+		Assert.Equal(Model.TribeClass.MONSTER, sd.TribeRelations.GetBaseTribe(Model.TribeClass.BROWNIEGUARD));
+
+		Assert.True(sd.NpcShouts.Size() > 0, "NpcShouts empty after boot");
+		Assert.Contains(sd.NpcShouts.GetNpcShouts(0, 210308)!, s => s.GetStringId() == 340662);
+
+		Assert.Equal(6, sd.UpgradeArcade.GetMinResumableLevel());
+		Assert.True(sd.UpgradeArcade.Size() > 0, "UpgradeArcade rewards empty after boot");
+
+		Assert.True(sd.SiegeLocations.Size() > 0, "SiegeLocations empty after boot");
+		Assert.Equal(400010000, sd.SiegeLocations.GetSiegeLocations()[1011].GetWorldId());
+
+		Assert.True(sd.ItemGroups.BonusSize() > 0, "ItemGroups empty after boot");
+		Assert.True(sd.ItemGroups.PetFoodSize() > 0, "ItemGroups pet food empty after boot");
+
+		Assert.True(sd.Materials.Size() > 0, "Materials empty after boot");
+		Assert.True(sd.Materials.IsMaterialSkill(8269));
+
+		Assert.True(sd.SkillCharges.Size() > 0, "SkillCharges empty after boot");
+		Assert.Equal(400, sd.SkillCharges.GetChargedSkillEntry(1)!.GetMinTime());
+
+		Assert.True(sd.GuideHtml.Size() > 0, "GuideHtml empty after boot");
+		Assert.Equal(3, sd.GuideHtml.GetTemplateByTitle("adventurers_guide3_asmo")!.GetLevel());
+
+		Assert.True(sd.InstanceCooltimeDataDh.Size() > 0, "InstanceCooltimeData empty after boot");
+		Assert.Equal(5, sd.InstanceCooltimeDataDh.GetInstanceCooltimeByWorldId(310090000)!.GetMaxCount());
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

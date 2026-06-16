@@ -8,8 +8,8 @@ namespace Aion.GameServer.Model.Templates.Rewards;
 [XmlType("CraftItem")]
 public class CraftItem : CraftReward
 {
-    [XmlAttribute("minLevel")] private int minLevel;
-    [XmlAttribute("maxLevel")] private int maxLevel;
+    [XmlAttribute("minLevel")] public int minLevel;
+    [XmlAttribute("maxLevel")] public int maxLevel;
 
     public int GetMinLevel()
     {

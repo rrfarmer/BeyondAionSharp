@@ -7,18 +7,18 @@ namespace Aion.GameServer.Model.Templates.Npcshout;
 [XmlType("NpcShout")]
 public class NpcShout
 {
-    [XmlAttribute("string_id")] protected int stringId;
+    [XmlAttribute("string_id")] public int stringId;
 
-    [XmlAttribute("when")] protected ShoutEventType when;
+    [XmlAttribute("when")] public ShoutEventType when;
 
-    [XmlAttribute("pattern")] protected string pattern;
+    [XmlAttribute("pattern")] public string pattern;
 
-    [XmlAttribute("param")] protected string param;
+    [XmlAttribute("param")] public string param;
 
     // Java parity: nullable Integer; getters collapse null→0, so a plain int (default 0 when attribute absent) is behaviorally faithful.
-    [XmlAttribute("skill_no")] protected int skillNo;
+    [XmlAttribute("skill_no")] public int skillNo;
 
-    [XmlAttribute("poll_delay")] protected int pollDelay;
+    [XmlAttribute("poll_delay")] public int pollDelay;
 
     public int GetStringId()
     {

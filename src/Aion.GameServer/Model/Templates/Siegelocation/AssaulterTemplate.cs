@@ -10,9 +10,9 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("AssaulterTemplate")]
 public class AssaulterTemplate
 {
-    [XmlAttribute("type")] private AssaulterType assaulterType;
-    [XmlAttribute("heading_offset")] private int headingOffset = 60;
-    [XmlAttribute("distance_offset")] private int distanceOffset;
+    [XmlAttribute("type")] public AssaulterType assaulterType;
+    [XmlAttribute("heading_offset")] public int headingOffset = 60;
+    [XmlAttribute("distance_offset")] public int distanceOffset;
 
     // Java parity: @XmlList @XmlAttribute(name="npc_ids") List<Integer> — space-separated.
     private List<int> npcIds;

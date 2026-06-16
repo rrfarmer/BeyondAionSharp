@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("siege_locations")]
 public class SiegeLocationData
 {
-    [XmlElement("siege_location")] private List<SiegeLocationTemplate> siegeLocationTemplates;
+    [XmlElement("siege_location")] public List<SiegeLocationTemplate> siegeLocationTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, ArtifactLocation> artifactLocations = new();
     [XmlIgnore] private readonly Dictionary<int, FortressLocation> fortressLocations = new();

@@ -8,13 +8,13 @@ namespace Aion.GameServer.Model.Templates.Npcshout;
 [XmlType("ShoutList")]
 public class ShoutList
 {
-    [XmlElement("shout")] protected List<NpcShout> npcShouts;
+    [XmlElement("shout")] public List<NpcShout> npcShouts;
 
     // Java parity: @XmlAttribute List<Integer> npc_ids — space-separated.
     [XmlIgnore] protected List<int> npcIds;
 
     // Java parity: nullable Integer; getter collapses null→0, so plain int (attribute absent→0) is behaviorally faithful.
-    [XmlAttribute("restrict_world")] protected int restrictWorld;
+    [XmlAttribute("restrict_world")] public int restrictWorld;
 
     [XmlAttribute("npc_ids")]
     public string NpcIdsXml

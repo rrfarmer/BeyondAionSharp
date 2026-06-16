@@ -7,9 +7,9 @@ namespace Aion.GameServer.Model.Templates.Npcshout;
 [XmlType("ShoutGroup")]
 public class ShoutGroup
 {
-    [XmlElement("shout_npcs")] protected List<ShoutList> shoutNpcs;
+    [XmlElement("shout_npcs")] public List<ShoutList> shoutNpcs;
 
-    [XmlAttribute("client_ai")] protected string clientAi;
+    [XmlAttribute("client_ai")] public string clientAi;
 
     public List<ShoutList> GetShoutNpcs()
     {

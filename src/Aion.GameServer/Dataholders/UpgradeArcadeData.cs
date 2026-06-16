@@ -8,8 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("arcadelist")]
 public class UpgradeArcadeData
 {
-    [XmlElement("levels")] private ArcadeLevels levels;
-    [XmlElement("rewards")] private List<ArcadeRewards> rewards;
+    [XmlElement("levels")] public ArcadeLevels levels;
+    [XmlElement("rewards")] public List<ArcadeRewards> rewards;
 
     public int Size()
     {

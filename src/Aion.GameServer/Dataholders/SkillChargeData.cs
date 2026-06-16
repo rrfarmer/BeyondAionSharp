@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("skill_charge")]
 public class SkillChargeData
 {
-    [XmlElement("charge")] protected List<ChargeSkillEntry> chargeSkills;
+    [XmlElement("charge")] public List<ChargeSkillEntry> chargeSkills;
 
     [XmlIgnore] private readonly Dictionary<int, ChargeSkillEntry> skillChargeData = new();
     [XmlIgnore] private readonly HashSet<int> skillIds = new();

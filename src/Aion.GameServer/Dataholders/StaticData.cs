@@ -264,23 +264,23 @@ public sealed partial class StaticData
 	// defaults so the DataManager.*_DATA accessors compile. TODO(runtime): deserialize their source XML
 	// (e.g. game-server/data/static_data/quest_data/quest_data.xml is a self-contained <quests> root) and assign here.
 	public QuestsData Quests { get; private set; } = new();
-	public TribeRelationsData TribeRelations { get; } = new();
+	public TribeRelationsData TribeRelations { get; private set; } = new();
 	public WorldMapsData WorldMaps2 { get; } = new();
-	public NpcShoutData NpcShouts { get; } = new();
-	public UpgradeArcadeData UpgradeArcade { get; } = new();
-	public SiegeLocationData SiegeLocations { get; } = new();
-	public ItemGroupsData ItemGroups { get; } = new();
+	public NpcShoutData NpcShouts { get; private set; } = new();
+	public UpgradeArcadeData UpgradeArcade { get; private set; } = new();
+	public SiegeLocationData SiegeLocations { get; private set; } = new();
+	public ItemGroupsData ItemGroups { get; private set; } = new();
 	public Aion.GameServer.Model.Templates.Mail.Mails SystemMailTemplates { get; } = new();
-	public HouseBuildingData HouseBuildings { get; } = new();
-	public GuideHtmlData GuideHtml { get; } = new();
-	public MaterialData Materials { get; } = new();
-	public ZoneData ZoneInfo { get; } = new();
+	public HouseBuildingData HouseBuildings { get; private set; } = new();
+	public GuideHtmlData GuideHtml { get; private set; } = new();
+	public MaterialData Materials { get; private set; } = new();
+	public ZoneData ZoneInfo { get; private set; } = new();
 	public XMLQuests XmlQuests { get; } = new();
-	public TownSpawnsData TownSpawns { get; } = new();
-	public SkillChargeData SkillCharges { get; } = new();
-	public MotionData Motions { get; } = new();
+	public TownSpawnsData TownSpawns { get; private set; } = new();
+	public SkillChargeData SkillCharges { get; private set; } = new();
+	public MotionData Motions { get; private set; } = new();
 	public MapWeatherData MapWeathers { get; private set; } = new();
-	public EventData Events { get; } = new();
+	public EventData Events { get; private set; } = new();
 	public PanelSkillsData PanelSkillsDataDh { get; private set; } = new();
 	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; private set; } = new();
 	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; private set; } = new();
@@ -311,7 +311,7 @@ public sealed partial class StaticData
 	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; private set; } = new();
 	public SkillData SkillDataDh { get; private set; } = new();
-	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();
+	public InstanceCooltimeData InstanceCooltimeDataDh { get; private set; } = new();
 	public TradeListData TradeListDataDh { get; private set; } = new();
 	public RecipeData RecipeDataDh { get; private set; } = new();
 	public PetData PetDataDh { get; private set; } = new();
@@ -421,6 +421,24 @@ public sealed partial class StaticData
 		// singleRootTag+recursiveImport, so merge every file's <walker_template> rows then run AfterUnmarshal once.
 		// Feeds DataManager.WALKER_DATA.
 		WalkerDataDh = TryLoadMergedHolder<WalkerData>(Path.Combine(staticDataDirectory, "npc_walker"), (m, p) => m.MergePending(p), logger);
+		// <tribe_relations> root (single file): faithful TribeRelationsData feeds DataManager.TRIBE_RELATIONS_DATA.
+		TribeRelations = TryLoadHolder(TribeRelations, Path.Combine(staticDataDirectory, "tribe", "tribe_relations.xml"), logger);
+		// <npc_shouts> root (single file): faithful NpcShoutData feeds DataManager.NPC_SHOUT_DATA.
+		NpcShouts = TryLoadHolder(NpcShouts, Path.Combine(staticDataDirectory, "npc_shouts", "npc_shouts.xml"), logger);
+		// <arcadelist> root (single file): faithful UpgradeArcadeData feeds DataManager.UPGRADE_ARCADE_DATA.
+		UpgradeArcade = TryLoadHolder(UpgradeArcade, Path.Combine(staticDataDirectory, "events", "arcadelist.xml"), logger);
+		// <siege_locations> root (single file): faithful SiegeLocationData feeds DataManager.SIEGE_LOCATION_DATA.
+		SiegeLocations = TryLoadHolder(SiegeLocations, Path.Combine(staticDataDirectory, "siege", "siege_locations.xml"), logger);
+		// <item_groups> root (single file): faithful ItemGroupsData feeds DataManager.ITEM_GROUPS_DATA.
+		ItemGroups = TryLoadHolder(ItemGroups, Path.Combine(staticDataDirectory, "items", "item_groups.xml"), logger);
+		// <material_templates> root (single file): faithful MaterialData feeds DataManager.MATERIAL_DATA.
+		Materials = TryLoadHolder(Materials, Path.Combine(staticDataDirectory, "mesh_materials", "material_templates.xml"), logger);
+		// <skill_charge> root (single file): faithful SkillChargeData feeds DataManager.SKILL_CHARGE_DATA.
+		SkillCharges = TryLoadHolder(SkillCharges, Path.Combine(staticDataDirectory, "skills", "skill_charge.xml"), logger);
+		// <guides> root (single file): faithful GuideHtmlData feeds DataManager.GUIDE_HTML_DATA.
+		GuideHtml = TryLoadHolder(GuideHtml, Path.Combine(staticDataDirectory, "guides", "guide.xml"), logger);
+		// <instance_cooltimes> root (single file): faithful InstanceCooltimeData feeds DataManager.INSTANCE_COOLTIME_DATA.
+		InstanceCooltimeDataDh = TryLoadHolder(InstanceCooltimeDataDh, Path.Combine(staticDataDirectory, "instance_cooltimes", "instance_cooltimes.xml"), logger);
 	}
 
 	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()

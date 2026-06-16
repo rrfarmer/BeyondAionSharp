@@ -6,13 +6,13 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("ArtifactActivation")]
 public class ArtifactActivation
 {
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("count")] protected int count;
-    [XmlAttribute("skill")] protected int skill;
-    [XmlAttribute("cd")] protected int cd;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public int count;
+    [XmlAttribute("skill")] public int skill;
+    [XmlAttribute("cd")] public int cd;
 
-    [XmlAttribute("repeat_count")] protected int repeatCount = 1;
-    [XmlAttribute("repeat_interval")] protected int repeatInterval = 1;
+    [XmlAttribute("repeat_count")] public int repeatCount = 1;
+    [XmlAttribute("repeat_interval")] public int repeatInterval = 1;
 
     public int GetItemId()
     {

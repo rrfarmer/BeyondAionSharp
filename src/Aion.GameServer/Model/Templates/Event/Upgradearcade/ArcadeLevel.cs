@@ -5,9 +5,9 @@ namespace Aion.GameServer.Model.Templates.Event.Upgradearcade;
 /// <summary>Java parity: model/templates/event/upgradearcade/ArcadeLevel (Neon).</summary>
 public class ArcadeLevel
 {
-    [XmlAttribute("level")] private int level;
-    [XmlAttribute("icon")] private string icon;
-    [XmlAttribute("upgrade_chance")] private float upgradeChance;
+    [XmlAttribute("level")] public int level;
+    [XmlAttribute("icon")] public string icon;
+    [XmlAttribute("upgrade_chance")] public float upgradeChance;
 
     public int GetLevel()
     {

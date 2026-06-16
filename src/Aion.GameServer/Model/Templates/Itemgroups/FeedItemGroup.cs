@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("FeedItemGroup")]
 public abstract class FeedItemGroup
 {
-    [XmlAttribute("group")] protected ItemGroupIndex index = ItemGroupIndex.NONE;
-    [XmlElement("item")] private List<ItemRaceEntry> items;
+    [XmlAttribute("group")] public ItemGroupIndex index = ItemGroupIndex.NONE;
+    [XmlElement("item")] public List<ItemRaceEntry> items;
 
     public ItemGroupIndex GetIndex()
     {

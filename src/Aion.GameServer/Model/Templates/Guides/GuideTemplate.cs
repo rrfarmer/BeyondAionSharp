@@ -8,15 +8,32 @@ namespace Aion.GameServer.Model.Templates.Guides;
 [XmlType("GuideTemplate")]
 public class GuideTemplate
 {
-    [XmlAttribute("level")] private int level;
-    [XmlAttribute("classType")] private PlayerClass? classType;
-    [XmlAttribute("title")] private string title;
-    [XmlAttribute("race")] private Race? race;
-    [XmlElement("reward_info")] private string rewardInfo = "";
-    [XmlElement("message")] private string message = "";
-    [XmlElement("select")] private string select = "";
-    [XmlElement("survey")] private List<SurveyTemplate> surveys;
-    [XmlAttribute("rewardCount")] private int rewardCount;
+    [XmlAttribute("level")] public int level;
+    // Java parity: nullable PlayerClass/Race. XmlSerializer cannot bind a Nullable<enum> attribute, so public
+    // string proxies carry the wire value and the backing fields stay the faithful nullable enums.
+    [XmlIgnore] public PlayerClass? classType;
+    [XmlAttribute("title")] public string title;
+    [XmlIgnore] public Race? race;
+
+    [XmlAttribute("classType")]
+    public string ClassTypeRaw
+    {
+        get => classType?.ToString();
+        set => classType = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<PlayerClass>(value);
+    }
+
+    [XmlAttribute("race")]
+    public string RaceRaw
+    {
+        get => race?.ToString();
+        set => race = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<Race>(value);
+    }
+
+    [XmlElement("reward_info")] public string rewardInfo = "";
+    [XmlElement("message")] public string message = "";
+    [XmlElement("select")] public string select = "";
+    [XmlElement("survey")] public List<SurveyTemplate> surveys;
+    [XmlAttribute("rewardCount")] public int rewardCount;
     [XmlIgnore] private bool isActivated = true;
 
     /// <returns>the level</returns>

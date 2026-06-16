@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("EnchantGroup")]
 public class EnchantGroup : BonusItemGroup
 {
-    [XmlElement("item")] private List<IdLevelReward> items;
+    [XmlElement("item")] public List<IdLevelReward> items;
 
     public override IReadOnlyList<ItemRaceEntry> GetItems()
     {

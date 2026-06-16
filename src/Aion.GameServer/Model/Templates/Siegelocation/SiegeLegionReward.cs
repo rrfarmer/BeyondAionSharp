@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("SiegeLegionReward")]
 public class SiegeLegionReward
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("item_count")] private long itemCount;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("item_count")] public long itemCount;
 
     public int GetItemId()
     {

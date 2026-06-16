@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Guides;
 [XmlType("SurveyTemplate")]
 public class SurveyTemplate
 {
-    [XmlAttribute("itemId")] private int itemId;
-    [XmlAttribute("count")] private long count;
+    [XmlAttribute("itemId")] public int itemId;
+    [XmlAttribute("count")] public long count;
 
     /// <returns>the count</returns>
     public long GetCount()

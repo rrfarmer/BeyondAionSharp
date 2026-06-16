@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Event.Upgradearcade;
 [XmlType("ArcadeRewards")]
 public class ArcadeRewards
 {
-    [XmlAttribute("min_level")] private int minLevel;
-    [XmlElement("item")] private List<ArcadeRewardItem> arcadeRewardItems;
+    [XmlAttribute("min_level")] public int minLevel;
+    [XmlElement("item")] public List<ArcadeRewardItem> arcadeRewardItems;
 
     public int GetMinLevel()
     {

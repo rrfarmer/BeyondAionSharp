@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("npc_shouts")]
 public class NpcShoutData
 {
-    [XmlElement("shout_group")] protected List<ShoutGroup> shoutGroups;
+    [XmlElement("shout_group")] public List<ShoutGroup> shoutGroups;
 
     [XmlIgnore] private readonly Dictionary<int, Dictionary<int, List<NpcShout>>> shoutsByWorldNpcs = new();
 

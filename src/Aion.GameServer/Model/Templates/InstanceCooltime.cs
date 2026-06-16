@@ -8,21 +8,21 @@ namespace Aion.GameServer.Model.Templates;
 [XmlType("InstanceCooltime")]
 public class InstanceCooltime
 {
-    [XmlElement("type")] protected InstanceCoolTimeType coolTimeType;
-    [XmlElement("typevalue")] protected string typevalue;
-    [XmlElement("ent_cool_time")] protected int entCoolTime;
-    [XmlElement("maxcount")] protected int maxCount;
-    [XmlElement("max_member_light")] protected int maxMemberLight;
-    [XmlElement("max_member_dark")] protected int maxMemberDark;
-    [XmlElement("enter_min_level_light")] protected int enterMinLevelLight;
-    [XmlElement("enter_max_level_light")] protected int enterMaxLevelLight;
-    [XmlElement("enter_min_level_dark")] protected int enterMinLevelDark;
-    [XmlElement("enter_max_level_dark")] protected int enterMaxLevelDark;
-    [XmlElement("can_enter_mentor")] protected bool can_enter_mentor;
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("worldId")] protected int worldId;
-    [XmlAttribute("race")] protected Race race;
-    [XmlAttribute("sync_id")] private int syncId;
+    [XmlElement("type")] public InstanceCoolTimeType coolTimeType;
+    [XmlElement("typevalue")] public string typevalue;
+    [XmlElement("ent_cool_time")] public int entCoolTime;
+    [XmlElement("maxcount")] public int maxCount;
+    [XmlElement("max_member_light")] public int maxMemberLight;
+    [XmlElement("max_member_dark")] public int maxMemberDark;
+    [XmlElement("enter_min_level_light")] public int enterMinLevelLight;
+    [XmlElement("enter_max_level_light")] public int enterMaxLevelLight;
+    [XmlElement("enter_min_level_dark")] public int enterMinLevelDark;
+    [XmlElement("enter_max_level_dark")] public int enterMaxLevelDark;
+    [XmlElement("can_enter_mentor")] public bool can_enter_mentor;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("worldId")] public int worldId;
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("sync_id")] public int syncId;
 
     public InstanceCoolTimeType GetCoolTimeType()
     {

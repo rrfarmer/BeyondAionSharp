@@ -7,11 +7,11 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("DoorRepairData")]
 public class DoorRepairData
 {
-    [XmlElement("door_repair_stone")] private List<DoorRepairStone> doorRepairTemplates;
+    [XmlElement("door_repair_stone")] public List<DoorRepairStone> doorRepairTemplates;
 
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("count")] protected int count;
-    [XmlAttribute("cd")] protected int cd;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public int count;
+    [XmlAttribute("cd")] public int cd;
 
     [XmlIgnore] private Dictionary<int, DoorRepairStone> doorRepairStones = new Dictionary<int, DoorRepairStone>();
 

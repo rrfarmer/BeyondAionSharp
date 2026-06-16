@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("OreGroup")]
 public class OreGroup : BonusItemGroup
 {
-    [XmlElement("item")] private List<ItemRaceEntry> items;
+    [XmlElement("item")] public List<ItemRaceEntry> items;
 
     public override IReadOnlyList<ItemRaceEntry> GetItems()
     {

@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Event.Upgradearcade;
 /// <summary>Java parity: model/templates/event/upgradearcade/ArcadeLevels (Neon).</summary>
 public class ArcadeLevels
 {
-    [XmlAttribute("min_resumable_level")] private int minResumableLevel;
-    [XmlElement("level")] private List<ArcadeLevel> upgradeLevels;
+    [XmlAttribute("min_resumable_level")] public int minResumableLevel;
+    [XmlElement("level")] public List<ArcadeLevel> upgradeLevels;
 
     public int GetMinResumableLevel()
     {

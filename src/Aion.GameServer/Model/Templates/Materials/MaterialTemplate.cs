@@ -7,12 +7,20 @@ namespace Aion.GameServer.Model.Templates.Materials;
 [XmlType("MaterialTemplate")]
 public class MaterialTemplate
 {
-    [XmlElement("skill")] private List<MaterialSkill> skills;
+    [XmlElement("skill")] public List<MaterialSkill> skills;
 
-    // Java parity: nullable Integer skill_obstacle.
-    [XmlAttribute("skill_obstacle")] private int? skillObstacle;
+    // Java parity: nullable Integer skill_obstacle. XmlSerializer cannot bind Nullable<int> to an attribute,
+    // so a public string proxy carries the wire value and the backing field stays the faithful int?.
+    [XmlIgnore] public int? skillObstacle;
 
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("skill_obstacle")]
+    public string SkillObstacleRaw
+    {
+        get => skillObstacle?.ToString();
+        set => skillObstacle = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+
+    [XmlAttribute("id")] public int id;
 
     public List<MaterialSkill> GetSkills()
     {

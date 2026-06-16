@@ -1724,6 +1724,156 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetWalkerTemplate("__nope__"));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesTribeRelationsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("tribe", "tribe_relations.xml");
+        var data = JaxbHolderLoader.LoadFromFile<TribeRelationsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <tribe name="BROWNIEGUARD" base="MONSTER"><support>KRALL BROWNIE BROWNIECOWARD</support>
+        Assert.Equal(Model.TribeClass.MONSTER, data.GetBaseTribe(Model.TribeClass.BROWNIEGUARD));
+        Assert.True(data.IsSupportRelation(Model.TribeClass.BROWNIEGUARD, Model.TribeClass.KRALL));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesNpcShoutDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("npc_shouts", "npc_shouts.xml");
+        var data = JaxbHolderLoader.LoadFromFile<NpcShoutData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <shout_npcs npc_ids="... 210308 ..."><shout string_id="340662" when="SEE"/>...
+        var shouts = data.GetNpcShouts(0, 210308);
+        Assert.NotNull(shouts);
+        Assert.Contains(shouts!, s => s.GetStringId() == 340662);
+
+        // A bogus npc id yields no shouts for that npc (empty when global world-0 map exists, never the known row).
+        var none = data.GetNpcShouts(0, -99999);
+        Assert.DoesNotContain(none ?? new System.Collections.Generic.List<Model.Templates.Npcshout.NpcShout>(), s => s.GetStringId() == 340662);
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesUpgradeArcadeDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("events", "arcadelist.xml");
+        var data = JaxbHolderLoader.LoadFromFile<UpgradeArcadeData>(path);
+
+        // Known row: <levels min_resumable_level="6">...<level level="1" upgrade_chance="90"/>...
+        Assert.Equal(6, data.GetMinResumableLevel());
+        var levels = data.GetUpgradeLevels();
+        Assert.NotNull(levels);
+        Assert.True(levels.Count >= 8);
+        Assert.Equal(1, levels[0].GetLevel());
+        Assert.Equal(90f, levels[0].GetUpgradeChance(), 3);
+        // <rewards> not dropped.
+        Assert.True(data.Size() > 0);
+        Assert.NotEmpty(data.GetRewards());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesSiegeLocationDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("siege", "siege_locations.xml");
+        var data = JaxbHolderLoader.LoadFromFile<SiegeLocationData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known fortress row: <siege_location id="1011" type="FORTRESS" world="400010000"
+        //   occupy_count="2" siege_duration="3000" influence="10" ...>
+        Assert.Contains(1011, data.GetFortress().Keys);
+        var loc = data.GetSiegeLocations()[1011];
+        Assert.Equal(400010000, loc.GetWorldId());
+        Assert.Equal(3000, loc.GetSiegeDuration());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesItemGroupsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("items", "item_groups.xml");
+        var data = JaxbHolderLoader.LoadFromFile<ItemGroupsData>(path);
+
+        // All 38 group elements present; BonusSize sums every bonus group's items.
+        Assert.True(data.BonusSize() > 0);
+        Assert.True(data.PetFoodSize() > 0);
+        // Known craft group (craft_recipes) contains item id 169400078 (skill="40007").
+        Assert.NotEmpty(data.GetCraftGroups());
+        Assert.Equal(4, data.GetCraftGroups().Count);
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesMaterialDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("mesh_materials", "material_templates.xml");
+        var data = JaxbHolderLoader.LoadFromFile<MaterialData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <material id="12"><skill id="8269" level="1" target="PLAYER" frequency="3"/>
+        var t = data.GetTemplate(12);
+        Assert.NotNull(t);
+        Assert.Equal(12, t!.GetId());
+        Assert.NotNull(t.GetSkills());
+        Assert.Contains(t.GetSkills(), s => s.GetId() == 8269);
+        Assert.True(data.IsMaterialSkill(8269));
+
+        Assert.Null(data.GetTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesSkillChargeDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("skills", "skill_charge.xml");
+        var data = JaxbHolderLoader.LoadFromFile<SkillChargeData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <charge min_time="400" id="1"><skill time="1600" id="3751"/>...
+        var entry = data.GetChargedSkillEntry(1);
+        Assert.NotNull(entry);
+        Assert.Equal(400, entry!.GetMinTime());
+        Assert.NotNull(entry.GetSkills());
+        Assert.Contains(entry.GetSkills()!, s => s.GetId() == 3751 && s.GetTime() == 1600);
+
+        Assert.Null(data.GetChargedSkillEntry(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesGuideHtmlDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("guides", "guide.xml");
+        var data = JaxbHolderLoader.LoadFromFile<GuideHtmlData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <guide title="adventurers_guide3_asmo" level="3" race="ASMODIANS" rewardCount="1">
+        var t = data.GetTemplateByTitle("adventurers_guide3_asmo");
+        Assert.NotNull(t);
+        Assert.Equal(3, t!.GetLevel());
+        Assert.Equal(Model.Race.ASMODIANS, t.GetRace());
+        Assert.Equal(1, t.GetRewardCount());
+        // CDATA <message> not dropped.
+        Assert.False(string.IsNullOrEmpty(t.GetMessage()));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesInstanceCooltimeDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("instance_cooltimes", "instance_cooltimes.xml");
+        var data = JaxbHolderLoader.LoadFromFile<InstanceCooltimeData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <instance_cooltime race="PC_ALL" worldId="310090000" id="1" sync_id="1">
+        //   <type>DAILY</type><maxcount>5</maxcount><max_member_light>6</max_member_light>...
+        var clt = data.GetInstanceCooltimeByWorldId(310090000);
+        Assert.NotNull(clt);
+        Assert.Equal(5, clt!.GetMaxCount());
+        Assert.Equal(310090000, data.GetWorldId(1));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

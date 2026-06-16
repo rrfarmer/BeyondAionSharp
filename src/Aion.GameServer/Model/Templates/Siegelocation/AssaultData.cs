@@ -8,11 +8,11 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("AssaultData")]
 public class AssaultData
 {
-    [XmlElement("assaulter")] private List<AssaulterTemplate> assaulterTemplates;
+    [XmlElement("assaulter")] public List<AssaulterTemplate> assaulterTemplates;
 
-    [XmlAttribute("dredgion_id")] private int dredgionId;
-    [XmlAttribute("base_budget")] private int baseBudget;
-    [XmlAttribute("base_delay")] private int baseDelay;
+    [XmlAttribute("dredgion_id")] public int dredgionId;
+    [XmlAttribute("base_budget")] public int baseBudget;
+    [XmlAttribute("base_delay")] public int baseDelay;
 
     // Java parity: EnumMap<AssaulterType, List<Assaulter>> → Dictionary.
     [XmlIgnore] private Dictionary<AssaulterType, List<Assaulter>> processedAssaulters = new Dictionary<AssaulterType, List<Assaulter>>();

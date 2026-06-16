@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("MedicineGroup")]
 public class MedicineGroup : BonusItemGroup
 {
-    [XmlElement("item")] private List<MedicineItem> items;
+    [XmlElement("item")] public List<MedicineItem> items;
 
     public override IReadOnlyList<ItemRaceEntry> GetItems()
     {

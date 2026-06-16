@@ -36,8 +36,8 @@ public class Tribe
     [XmlElement("support")]
     public string SupportRaw { get => Join(support); set => support = Parse(value); }
 
-    [XmlAttribute("base")] protected TribeClass @base = TribeClass.NONE;
-    [XmlAttribute("name")] protected TribeClass name;
+    [XmlAttribute("base")] public TribeClass @base = TribeClass.NONE;
+    [XmlAttribute("name")] public TribeClass name;
 
     private static string Join(List<TribeClass> list) => list == null ? null : string.Join(" ", list);
 

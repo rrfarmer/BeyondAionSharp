@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Templates.Rewards;
 [XmlInclude(typeof(CraftItem))]
 public abstract class CraftReward : ItemRaceEntry
 {
-    [XmlAttribute("skill")] private int skill;
+    [XmlAttribute("skill")] public int skill;
 
     public int GetSkill()
     {

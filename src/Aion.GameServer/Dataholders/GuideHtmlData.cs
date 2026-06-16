@@ -11,7 +11,7 @@ namespace Aion.GameServer.Dataholders;
 public class GuideHtmlData
 {
     [XmlElement("guide", typeof(GuideTemplate))]
-    private List<GuideTemplate> guideTemplates;
+    public List<GuideTemplate> guideTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, List<GuideTemplate>> templates = new();
     private const int CLASS_ALL = 255;

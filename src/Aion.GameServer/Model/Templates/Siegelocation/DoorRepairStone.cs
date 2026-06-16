@@ -8,7 +8,7 @@ public class DoorRepairStone
 {
     // Java parity: package-private field accessed by sibling DoorRepairData → internal (closest C# analog).
     [XmlAttribute("static_id")] internal int staticId;
-    [XmlAttribute("door_id")] protected int doorId;
+    [XmlAttribute("door_id")] public int doorId;
 
     public int GetStaticId()
     {

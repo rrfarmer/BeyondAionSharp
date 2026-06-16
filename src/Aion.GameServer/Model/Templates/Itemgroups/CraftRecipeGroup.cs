@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("CraftRecipeGroup")]
 public class CraftRecipeGroup : BonusItemGroup
 {
-    [XmlElement("item")] private List<CraftRecipe> items;
+    [XmlElement("item")] public List<CraftRecipe> items;
 
     public override IReadOnlyList<ItemRaceEntry> GetItems()
     {

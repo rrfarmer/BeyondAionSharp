@@ -19,7 +19,7 @@ public class InstanceCooltimeData
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    [XmlElement("instance_cooltime")] protected List<InstanceCooltime> instanceCooltime;
+    [XmlElement("instance_cooltime")] public List<InstanceCooltime> instanceCooltime;
 
     private Dictionary<int, InstanceCooltime> instanceCooltimes = new();
     private Dictionary<int, int> syncIdToMapId = new();

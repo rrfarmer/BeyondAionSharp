@@ -13,8 +13,8 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlInclude(typeof(IdLevelReward))]
 public class ItemRaceEntry : IChance
 {
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("race")] private Race race = Race.PC_ALL;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("race")] public Race race = Race.PC_ALL;
 
     // Java parity: afterUnmarshal(Unmarshaller, Object parent). StaticDataListener (Unmarshaller-keyed) has no C# analog → DataManager.ITEM_DATA.
     public void AfterUnmarshal(object parent)

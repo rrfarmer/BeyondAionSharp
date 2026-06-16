@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("material_templates")]
 public class MaterialData
 {
-    [XmlElement("material")] private List<MaterialTemplate> materialTemplates;
+    [XmlElement("material")] public List<MaterialTemplate> materialTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, MaterialTemplate> materialsById = new();
     [XmlIgnore] private readonly HashSet<int> skillIds = new();

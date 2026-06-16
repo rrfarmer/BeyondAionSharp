@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlType("MedalGroup")]
 public class MedalGroup : BonusItemGroup
 {
-    [XmlElement("item")] private List<FullRewardItem> items;
+    [XmlElement("item")] public List<FullRewardItem> items;
 
     public override IReadOnlyList<ItemRaceEntry> GetItems()
     {

@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("tribe_relations")]
 public class TribeRelationsData
 {
-    [XmlElement("tribe")] private List<Tribe> tribeList;
+    [XmlElement("tribe")] public List<Tribe> tribeList;
 
     [XmlIgnore] private readonly Dictionary<TribeClass, Tribe> tribeNameMap = new();
 

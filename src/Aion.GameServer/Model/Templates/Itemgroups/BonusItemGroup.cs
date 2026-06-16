@@ -19,8 +19,8 @@ namespace Aion.GameServer.Model.Templates.Itemgroups;
 [XmlInclude(typeof(BossGroup))]
 public abstract class BonusItemGroup : IChance
 {
-    [XmlAttribute("bonusType")] protected BonusType bonusType;
-    [XmlAttribute("chance")] protected float chance = 100f;
+    [XmlAttribute("bonusType")] public BonusType bonusType;
+    [XmlAttribute("chance")] public float chance = 100f;
 
     public BonusType GetBonusType()
     {

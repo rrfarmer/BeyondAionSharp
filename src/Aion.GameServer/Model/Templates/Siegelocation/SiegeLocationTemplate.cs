@@ -11,22 +11,22 @@ namespace Aion.GameServer.Model.Templates.Siegelocation;
 [XmlType("siegelocation")]
 public class SiegeLocationTemplate : IL10n
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("type")] protected SiegeType type;
-    [XmlAttribute("world")] protected int world;
-    [XmlElement("artifact_activation")] protected ArtifactActivation artifactActivation;
-    [XmlElement("door_repair_data")] protected DoorRepairData doorRepairData;
-    [XmlElement("siege_reward")] protected List<SiegeReward> siegeRewards;
-    [XmlElement("legion_reward")] protected List<SiegeLegionReward> siegeLegionRewards;
-    [XmlElement("merc_zone")] protected List<SiegeMercenaryZone> siegeMercenaryZones;
-    [XmlElement("assault_data")] protected AssaultData assaultData;
-    [XmlElement("siege_related_bases")] protected SiegeRelatedBases siegeRelatedBases;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("type")] public SiegeType type;
+    [XmlAttribute("world")] public int world;
+    [XmlElement("artifact_activation")] public ArtifactActivation artifactActivation;
+    [XmlElement("door_repair_data")] public DoorRepairData doorRepairData;
+    [XmlElement("siege_reward")] public List<SiegeReward> siegeRewards;
+    [XmlElement("legion_reward")] public List<SiegeLegionReward> siegeLegionRewards;
+    [XmlElement("merc_zone")] public List<SiegeMercenaryZone> siegeMercenaryZones;
+    [XmlElement("assault_data")] public AssaultData assaultData;
+    [XmlElement("siege_related_bases")] public SiegeRelatedBases siegeRelatedBases;
 
-    [XmlAttribute("name_id")] protected int nameId = 0;
-    [XmlAttribute("siege_duration")] protected int siegeDuration;
-    [XmlAttribute("influence")] protected int influenceValue;
-    [XmlAttribute("occupy_count")] protected int maxOccupyCount;
-    [XmlAttribute("legion_gp")] protected int legionGp;
+    [XmlAttribute("name_id")] public int nameId = 0;
+    [XmlAttribute("siege_duration")] public int siegeDuration;
+    [XmlAttribute("influence")] public int influenceValue;
+    [XmlAttribute("occupy_count")] public int maxOccupyCount;
+    [XmlAttribute("legion_gp")] public int legionGp;
 
     // Java parity: @XmlAttribute(name="kinah_rewards") List<Integer> — space-separated.
     private List<int> kinahRewards;
