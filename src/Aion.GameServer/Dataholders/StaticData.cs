@@ -30,7 +30,6 @@ public sealed partial class StaticData
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
 		EnchantTable enchantTemplates,
-		TemperingTable temperingTemplates,
 		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
 		RiftLocationTable riftLocations,
@@ -41,7 +40,6 @@ public sealed partial class StaticData
 		NpcFactionTable npcFactions,
 		TradeListTable tradeLists,
 		GoodsListTable goodsLists,
-		CustomNpcDropTable customNpcDrops,
 		QuestDropTable questDrops,
 		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
@@ -81,7 +79,6 @@ public sealed partial class StaticData
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
 		EnchantTemplates = enchantTemplates;
-		TemperingTemplates = temperingTemplates;
 		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
 		RiftLocations = riftLocations;
@@ -92,7 +89,6 @@ public sealed partial class StaticData
 		NpcFactions = npcFactions;
 		TradeLists = tradeLists;
 		GoodsLists = goodsLists;
-		CustomNpcDrops = customNpcDrops;
 		QuestDrops = questDrops;
 		NpcSkills = npcSkills;
 		PetSkills = petSkills;
@@ -156,8 +152,6 @@ public sealed partial class StaticData
 
 	public EnchantTable EnchantTemplates { get; }
 
-	public TemperingTable TemperingTemplates { get; }
-
 	public WalkerTemplateTable WalkerTemplates { get; }
 
 	public WalkerVersionTable WalkerVersions { get; }
@@ -183,8 +177,6 @@ public sealed partial class StaticData
 	public TradeListTable TradeLists { get; }
 
 	public GoodsListTable GoodsLists { get; }
-
-	public CustomNpcDropTable CustomNpcDrops { get; }
 
 	public QuestDropTable QuestDrops { get; }
 
@@ -517,7 +509,6 @@ public sealed partial class StaticData
 		// stat bonus. Was a hollow new() -> always empty -> tempering granted no stats. TemperingList/
 		// TemperingTemplateData/TemperingStat primitive+enum (StatEnum by member name) attrs bind via the now-public
 		// fields; TemperingData.AfterUnmarshal (item_group -> level -> stats map) fires inside TryLoadHolder.
-		// (The reworked TEMPERING_TABLE projection has 0 live consumers and is a separate slop-delete candidate.)
 		TemperingDataDh = TryLoadHolder(TemperingDataDh, Path.Combine(staticDataDirectory, "enchants", "tempering_templates.xml"), logger);
 		// Java imports the single file portals/portal_template2.xml (<portal_templates2> root) and binds it to
 		// StaticData.portalTemplate2; feeds DataManager.PORTAL2_DATA, read by TeleportService + the PortalAI handlers
@@ -548,7 +539,6 @@ public sealed partial class StaticData
 		// via the now-public fields (Drop's deserialization ctor made public for XmlSerializer; Race by member name);
 		// CustomDrop.AfterUnmarshal cascades each Drop.AfterUnmarshal() children-first (validates chance/minAmount +
 		// defaults maxAmount=minAmount, load-bearing) before indexing by npc id (XmlSerializer fires no nested callbacks).
-		// (The reworked CustomNpcDropTable/CustomNpcDropSummary projection has 0 live consumers = separate slop-delete candidate.)
 		CustomNpcDropDh = TryLoadHolder(CustomNpcDropDh, Path.Combine(staticDataDirectory, "custom_drop", "custom_drop.xml"), logger);
 		// Java imports the single file housing/housing_objects.xml (<housing_objects> root) and binds it to
 		// StaticData.housingObjectData; feeds DataManager.HOUSING_OBJECT_DATA, read by HouseObjectFactory +
@@ -747,7 +737,6 @@ public sealed partial class StaticData
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
 		var enchantGroups = new List<EnchantGroupSummary>();
-		var temperingGroups = new List<TemperingGroupSummary>();
 		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var riftLocations = new List<RiftLocationSummary>();
@@ -794,7 +783,6 @@ public sealed partial class StaticData
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
 		EnchantGroupBuilder? currentEnchantGroup = null;
-		TemperingGroupBuilder? currentTemperingGroup = null;
 		WalkerTemplateBuilder? currentWalkerTemplate = null;
 		NpcSpawnBuilder? currentNpcSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcSpawnSpot = null;
@@ -950,15 +938,6 @@ public sealed partial class StaticData
 
 				if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
 					currentEnchantGroup.EndLevel();
-
-				if (reader.Depth == 2 && reader.LocalName == "tempering_list" && currentTemperingGroup != null)
-				{
-					temperingGroups.Add(currentTemperingGroup.ToSummary());
-					currentTemperingGroup = null;
-				}
-
-				if (reader.Depth == 3 && reader.LocalName == "tempering_data" && currentTemperingGroup != null)
-					currentTemperingGroup.EndLevel();
 
 				if (reader.Depth == 2 && reader.LocalName == "walker_template" && currentWalkerTemplate != null)
 				{
@@ -2144,12 +2123,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "tempering_list")
-			{
-				currentTemperingGroup = new TemperingGroupBuilder(reader.GetAttribute("item_group") ?? string.Empty);
-				continue;
-			}
-
 			if (reader.Depth == 3 && reader.LocalName == "itempart" && currentItemSet != null)
 			{
 				currentItemSet.AddItemPart(ReadRequiredIntAttribute(reader, "itemid"));
@@ -2171,12 +2144,6 @@ public sealed partial class StaticData
 			if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
 			{
 				currentEnchantGroup.StartLevel(ReadRequiredIntAttribute(reader, "level"));
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "tempering_data" && currentTemperingGroup != null)
-			{
-				currentTemperingGroup.StartLevel(ReadRequiredIntAttribute(reader, "level"));
 				continue;
 			}
 
@@ -2288,15 +2255,6 @@ public sealed partial class StaticData
 			{
 				currentEnchantGroup.AddStat(
 					new EnchantStatSummary(
-						reader.GetAttribute("stat") ?? string.Empty,
-						ReadIntAttribute(reader, "value")));
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "tempering_stat" && currentTemperingGroup != null)
-			{
-				currentTemperingGroup.AddStat(
-					new TemperingStatSummary(
 						reader.GetAttribute("stat") ?? string.Empty,
 						ReadIntAttribute(reader, "value")));
 				continue;
@@ -2853,7 +2811,6 @@ public sealed partial class StaticData
 
 		if (experience.Count == 0)
 			experience.AddRange(await LoadExperienceTableFromImportedFilesAsync(importedFiles, cancellationToken));
-		var customNpcDrops = await CustomNpcDropTable.LoadFromImportedFilesAsync(importedFiles, cancellationToken);
 		var workOrderRecipes = WorkOrderRecipeTable.LoadFromImportedFiles(importedFiles);
 
 		return new StaticData(
@@ -2875,7 +2832,6 @@ public sealed partial class StaticData
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
 			new EnchantTable(enchantGroups.AsReadOnly()),
-			new TemperingTable(temperingGroups.AsReadOnly()),
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new RiftLocationTable(riftLocations.AsReadOnly()),
@@ -2892,7 +2848,6 @@ public sealed partial class StaticData
 				goodsLists.AsReadOnly(),
 				goodsInLists.AsReadOnly(),
 				goodsPurchaseLists.AsReadOnly()),
-			customNpcDrops,
 			new QuestDropTable(questDrops.AsReadOnly()),
 			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),

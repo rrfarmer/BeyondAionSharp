@@ -881,47 +881,6 @@ public sealed partial class StaticData
 		}
 	}
 
-	private sealed class TemperingGroupBuilder
-	{
-		private readonly List<TemperingLevelSummary> _levels = [];
-		private List<TemperingStatSummary>? _currentStats;
-		private int _currentLevelIndex = -1;
-
-		public TemperingGroupBuilder(string itemGroup)
-		{
-			ItemGroup = itemGroup;
-		}
-
-		private string ItemGroup { get; }
-
-		public void StartLevel(int level)
-		{
-			_currentStats = [];
-			_currentLevelIndex = _levels.Count;
-			_levels.Add(new TemperingLevelSummary(level, _currentStats));
-		}
-
-		public void AddStat(TemperingStatSummary stat)
-		{
-			_currentStats ??= [];
-			_currentStats.Add(stat);
-			if (_currentLevelIndex >= 0)
-				_levels[_currentLevelIndex] = _levels[_currentLevelIndex] with { Stats = _currentStats };
-		}
-
-		public void EndLevel()
-		{
-			_currentStats = null;
-			_currentLevelIndex = -1;
-		}
-
-		public TemperingGroupSummary ToSummary()
-		{
-			// Java parity: model/enchants/TemperingList item_group mapped by dataholders/TemperingData.afterUnmarshal.
-			return new TemperingGroupSummary(ItemGroup, _levels.AsReadOnly());
-		}
-	}
-
 	private sealed class ItemTemplateBuilder
 	{
 		public ItemTemplateBuilder(
