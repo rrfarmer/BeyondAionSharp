@@ -85,51 +85,6 @@ public sealed class World
 		return _housesByAddress.Values.ToArray();
 	}
 
-	public IReadOnlyList<IWorldNpcObject> GetNpcs()
-	{
-		// Java parity: World.forEachObject over spawned Npc visible objects for KnownList scans.
-		return _objects.Values.OfType<IWorldNpcObject>().ToArray();
-	}
-
-	public IReadOnlyList<IWorldNpcObject> GetNpcs(int worldId)
-	{
-		// Java parity: WorldMapInstance visible-object scans are scoped to the player's world map.
-		return _objects.Values
-			.OfType<IWorldNpcObject>()
-			.Where(npc => npc.Position.WorldId == worldId)
-			.ToArray();
-	}
-
-	public IReadOnlyList<WorldStaticObject> GetStaticObjects()
-	{
-		// Java parity: World stores StaticObject visible objects separately from NPC object scans.
-		return _objects.Values.OfType<WorldStaticObject>().ToArray();
-	}
-
-	public IReadOnlyList<WorldStaticObject> GetStaticObjects(int worldId)
-	{
-		// Java parity: WorldMapInstance visible-object scans are scoped to the player's world map.
-		return _objects.Values
-			.OfType<WorldStaticObject>()
-			.Where(staticObject => staticObject.Position.WorldId == worldId)
-			.ToArray();
-	}
-
-	public IReadOnlyList<Player> GetPlayers()
-	{
-		// Java parity: WorldMapInstance stores visible Player objects for KnownList scans.
-		return _objects.Values.OfType<Player>().ToArray();
-	}
-
-	public IReadOnlyList<Player> GetPlayers(int worldId)
-	{
-		// Java parity: WorldMapInstance visible-object scans are scoped to the player's world map.
-		return _objects.Values
-			.OfType<Player>()
-			.Where(player => player.GetPosition().WorldId == worldId)
-			.ToArray();
-	}
-
 	public bool TryRemoveObject(int objectId, out object? gameObject)
 	{
 		var removed = _objects.TryRemove(objectId, out gameObject);
