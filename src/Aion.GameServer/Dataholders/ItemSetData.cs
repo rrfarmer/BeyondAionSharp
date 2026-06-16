@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("item_sets")]
 public class ItemSetData
 {
-    [XmlElement("itemset")] protected List<ItemSetTemplate> itemsetList;
+    [XmlElement("itemset")] public List<ItemSetTemplate> itemsetList;
 
     [XmlIgnore] private Dictionary<int, ItemSetTemplate> sets;
     [XmlIgnore] private Dictionary<int, ItemSetTemplate> setItems;
@@ -20,6 +20,9 @@ public class ItemSetData
 
         foreach (ItemSetTemplate set in itemsetList)
         {
+            // Java parity: JAXB invokes each ItemSetTemplate.afterUnmarshal (sets fullbonus item count).
+            set.AfterUnmarshal(this);
+
             sets[set.GetId()] = set;
 
             // Add reference to the ItemSetTemplate from

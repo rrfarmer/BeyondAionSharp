@@ -7,12 +7,12 @@ namespace Aion.GameServer.Model.Templates.Vortex;
 [XmlType("Vortex")]
 public class VortexTemplate
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("defends_race")] protected Race dRace;
-    [XmlAttribute("offence_race")] protected Race oRace;
-    [XmlElement("home_point")] protected HomePoint home;
-    [XmlElement("resurrection_point")] protected ResurrectionPoint resurrection;
-    [XmlElement("start_point")] protected StartPoint start;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("defends_race")] public Race dRace;
+    [XmlAttribute("offence_race")] public Race oRace;
+    [XmlElement("home_point")] public HomePoint home;
+    [XmlElement("resurrection_point")] public ResurrectionPoint resurrection;
+    [XmlElement("start_point")] public StartPoint start;
 
     /// <returns>the location id</returns>
     public int GetId()

@@ -7,14 +7,14 @@ namespace Aion.GameServer.Model.Templates.Itemset;
 [XmlRoot("itemset")]
 public class ItemSetTemplate : Aion.GameServer.Model.Stats.Calc.IStatOwner
 {
-    [XmlElement("itempart")] protected List<ItemPart> itempart;
-    [XmlElement("partbonus")] protected List<PartBonus> partbonus;
-    [XmlElement("fullbonus")] protected FullBonus fullbonus;
-    [XmlAttribute("name")] protected string name;
-    [XmlAttribute("id")] protected int id;
+    [XmlElement("itempart")] public List<ItemPart> itempart;
+    [XmlElement("partbonus")] public List<PartBonus> partbonus;
+    [XmlElement("fullbonus")] public FullBonus fullbonus;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("id")] public int id;
 
     // Java parity: afterUnmarshal(Unmarshaller, Object) — invoked by the loader after deserialization.
-    public void AfterUnmarshal()
+    public void AfterUnmarshal(object parent)
     {
         if (fullbonus != null)
         {

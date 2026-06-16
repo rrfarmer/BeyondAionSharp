@@ -10,11 +10,11 @@ namespace Aion.GameServer.Model.Templates;
 /// <summary>Java parity: model/templates/TitleTemplate (xavier).</summary>
 public class TitleTemplate : IStatOwner, IL10n
 {
-    [XmlAttribute("id")] private int titleId;
-    [XmlElement("modifiers")] protected ModifiersTemplate modifiers;
-    [XmlAttribute("race")] private Race race;
-    [XmlAttribute("nameId")] private int nameId;
-    [XmlAttribute("desc")] private string description;
+    [XmlAttribute("id")] public int titleId;
+    [XmlElement("modifiers")] public ModifiersTemplate modifiers;
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("nameId")] public int nameId;
+    [XmlAttribute("desc")] public string description;
 
     public int GetTitleId()
     {

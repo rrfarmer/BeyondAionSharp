@@ -179,7 +179,7 @@ public sealed partial class StaticData
 	public VortexLocationTable VortexLocations { get; }
 
 	// Faithful VortexData holder (empty-default; runtime XML load deferred) - summary->template re-point.
-	public VortexData VortexDataDh { get; } = new();
+	public VortexData VortexDataDh { get; private set; } = new();
 
 	public NpcTemplateTable NpcTemplates { get; }
 
@@ -283,7 +283,7 @@ public sealed partial class StaticData
 	public EventData Events { get; } = new();
 	public PanelSkillsData PanelSkillsDataDh { get; private set; } = new();
 	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; private set; } = new();
-	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; } = new();
+	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; private set; } = new();
 	public AbsoluteStatsData AbsoluteStatsDataDh { get; private set; } = new();
 	public WorldRaidData WorldRaidDataDh { get; private set; } = new();
 	public TeleporterData TeleporterDataDh { get; private set; } = new();
@@ -304,7 +304,7 @@ public sealed partial class StaticData
 	public CuringObjectsData CuringObjectsDataDh { get; private set; } = new();
 	public BaseData BaseDataDh { get; private set; } = new();
 	public AssembledNpcsData AssembledNpcsDataDh { get; private set; } = new();
-	public TitleData TitleDataDh { get; } = new();
+	public TitleData TitleDataDh { get; private set; } = new();
 	public NpcData NpcDataDh { get; } = new();
 	public AIData AiDataDh { get; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
@@ -317,7 +317,7 @@ public sealed partial class StaticData
 	public PetData PetDataDh { get; } = new();
 	public WalkerData WalkerDataDh { get; } = new();
 	public AutoGroupData AutoGroupDataDh { get; } = new();
-	public ItemSetData ItemSetDataDh { get; } = new();
+	public ItemSetData ItemSetDataDh { get; private set; } = new();
 	public RideData RideDataDh { get; private set; } = new();
 	public GoodsListData GoodsListDataDh { get; private set; } = new();
 	public ItemPurificationData ItemPurificationDataDh { get; private set; } = new();
@@ -382,6 +382,10 @@ public sealed partial class StaticData
 		AssemblyItemsDataDh = TryLoadHolder(AssemblyItemsDataDh, Path.Combine(staticDataDirectory, "items", "assembly_items.xml"), logger);
 		AtreianPassportDataDh = TryLoadHolder(AtreianPassportDataDh, Path.Combine(staticDataDirectory, "events", "login_events.xml"), logger);
 		AbsoluteStatsDataDh = TryLoadHolder(AbsoluteStatsDataDh, Path.Combine(staticDataDirectory, "stats", "absolute_stats.xml"), logger);
+		ItemSetDataDh = TryLoadHolder(ItemSetDataDh, Path.Combine(staticDataDirectory, "item_sets", "item_sets.xml"), logger);
+		TitleDataDh = TryLoadHolder(TitleDataDh, Path.Combine(staticDataDirectory, "player_titles.xml"), logger);
+		ConquerorAndProtectorDataDh = TryLoadHolder(ConquerorAndProtectorDataDh, Path.Combine(staticDataDirectory, "conqueror_protector_ranks", "conqueror_protector_ranks.xml"), logger);
+		VortexDataDh = TryLoadHolder(VortexDataDh, Path.Combine(staticDataDirectory, "vortex", "dimensional_vortex.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

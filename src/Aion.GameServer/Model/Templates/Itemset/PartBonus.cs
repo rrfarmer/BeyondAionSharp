@@ -9,8 +9,8 @@ namespace Aion.GameServer.Model.Templates.Itemset;
 [XmlRoot("PartBonus")]
 public class PartBonus
 {
-    [XmlAttribute("count")] protected int count;
-    [XmlElement("modifiers")] protected ModifiersTemplate modifiers;
+    [XmlAttribute("count")] public int count;
+    [XmlElement("modifiers")] public ModifiersTemplate modifiers;
 
     public List<StatFunction> GetModifiers()
     {

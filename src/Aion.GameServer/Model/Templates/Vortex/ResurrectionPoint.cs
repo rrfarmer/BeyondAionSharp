@@ -7,11 +7,11 @@ namespace Aion.GameServer.Model.Templates.Vortex;
 [XmlType("ResurrectionPoint")]
 public class ResurrectionPoint
 {
-    [XmlAttribute("map")] protected int map;
-    [XmlAttribute("x")] protected float x;
-    [XmlAttribute("y")] protected float y;
-    [XmlAttribute("z")] protected float z;
-    [XmlAttribute("h")] protected byte h;
+    [XmlAttribute("map")] public int map;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("h")] public byte h;
 
     public int GetWorldId()
     {

@@ -8,10 +8,10 @@ namespace Aion.GameServer.Model.Templates.Cp;
 /// <summary>Java parity: model/templates/cp/CPRank (Neon).</summary>
 public class CPRank
 {
-    [XmlAttribute("type")] private CPType type;
-    [XmlAttribute("rank_num")] private int rankNum;
-    [XmlAttribute("visible_intruder_min_rank")] private int visibleIntruderMinRank;
-    [XmlElement("modifiers")] private ModifiersTemplate statModifiers;
+    [XmlAttribute("type")] public CPType type;
+    [XmlAttribute("rank_num")] public int rankNum;
+    [XmlAttribute("visible_intruder_min_rank")] public int visibleIntruderMinRank;
+    [XmlElement("modifiers")] public ModifiersTemplate statModifiers;
 
     public CPType GetType_()
     {

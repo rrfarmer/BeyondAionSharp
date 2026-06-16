@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("conqueror_protector_ranks")]
 public class ConquerorAndProtectorData
 {
-    [XmlElement("rank")] private List<CPRank> ranks;
+    [XmlElement("rank")] public List<CPRank> ranks;
 
     public CPRank GetRank(CPType type, int rank)
     {

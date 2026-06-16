@@ -9,7 +9,7 @@ namespace Aion.GameServer.Model.Templates.Itemset;
 [XmlRoot("FullBonus")]
 public class FullBonus
 {
-    [XmlElement("modifiers")] protected ModifiersTemplate modifiers;
+    [XmlElement("modifiers")] public ModifiersTemplate modifiers;
 
     private int totalnumberofitems;
 

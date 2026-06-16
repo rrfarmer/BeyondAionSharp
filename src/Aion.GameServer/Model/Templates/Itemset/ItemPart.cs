@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates.Itemset;
 [XmlRoot("ItemPart")]
 public class ItemPart
 {
-    [XmlAttribute("itemid")] protected int itemid;
+    [XmlAttribute("itemid")] public int itemid;
 
     /// <returns>the itemid</returns>
     public int GetItemId()

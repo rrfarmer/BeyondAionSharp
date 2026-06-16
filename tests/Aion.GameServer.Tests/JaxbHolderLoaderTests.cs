@@ -1050,6 +1050,151 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetTemplate(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesItemSetDataFromRealXml_WithBonusModifiersIntact()
+    {
+        var path = ResolveStaticDataFile("item_sets", "item_sets.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<ItemSetData>(path);
+
+        // AfterUnmarshal indexed every itemset by id (and by part item id) and nulled the raw list.
+        Assert.True(data.Size() > 0);
+
+        // <itemset id="1" name="Cloth Armor Set (Test)"> with 5 itemparts, two partbonuses and a fullbonus.
+        var set = data.GetItemSetTemplate(1);
+        Assert.NotNull(set);
+        Assert.Equal(1, set!.GetId());
+        Assert.Equal("Cloth Armor Set (Test)", set.GetName());
+
+        // Reverse index by item id: <itempart itemid="110100919"/> -> resolves back to set 1.
+        Assert.Same(set, data.GetItemSetTemplateByItemId(110100919));
+
+        // CRITICAL: prove the partbonus modifier survives. <partbonus count="3"> carries
+        // <add name="BOOST_MAGICAL_SKILL" value="100" bonus="true"/>.
+        var parts = set.GetPartbonus();
+        Assert.NotNull(parts);
+        var part3 = parts!.First(p => p.GetCount() == 3);
+        var part3Mods = part3.GetModifiers();
+        Assert.NotNull(part3Mods);
+        Assert.Single(part3Mods!);
+        var boost = part3Mods![0];
+        Assert.IsType<Model.Stats.Calc.Functions.StatAddFunction>(boost);
+        Assert.Equal(Model.Stats.Container.StatEnum.BOOST_MAGICAL_SKILL, boost.GetName());
+        Assert.Equal(100, boost.GetValue());
+        Assert.True(boost.IsBonus());
+
+        // CRITICAL: prove the fullbonus modifiers survive AND AfterUnmarshal set the item count.
+        // <fullbonus> carries a <rate name="SPEED" value="10" bonus="true"/> among others.
+        var full = set.GetFullbonus();
+        Assert.NotNull(full);
+        Assert.Equal(5, full!.GetCount()); // ItemSetTemplate.AfterUnmarshal set this to itempart.Count (5).
+        var fullMods = full.GetModifiers();
+        Assert.NotNull(fullMods);
+        var speed = fullMods!.First(m => m.GetName() == Model.Stats.Container.StatEnum.SPEED);
+        Assert.IsType<Model.Stats.Calc.Functions.StatRateFunction>(speed);
+        Assert.Equal(10, speed.GetValue());
+        Assert.True(speed.IsBonus());
+
+        Assert.Null(data.GetItemSetTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesTitleDataFromRealXml_WithModifiersIntact()
+    {
+        var path = ResolveStaticDataFile("player_titles.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<TitleData>(path);
+
+        // AfterUnmarshal indexed every title by id and nulled the raw list.
+        Assert.True(data.Size() > 0);
+
+        // <title id="1" nameId="1100900" desc="Poeta's Protector" race="ELYOS"> with
+        // <add name="MAXHP" value="20" bonus="true"/> + <add name="PHYSICAL_DEFENSE" value="5" bonus="true"/>.
+        var title = data.GetTitleTemplate(1);
+        Assert.NotNull(title);
+        Assert.Equal(1, title!.GetTitleId());
+        Assert.Equal(1100900, title.GetL10nId());
+        Assert.Equal("Poeta's Protector", title.GetDesc());
+        Assert.Equal(Model.Race.ELYOS, title.GetRace());
+
+        // CRITICAL: prove the modifiers are not dropped.
+        var mods = title.GetModifiers();
+        Assert.NotNull(mods);
+        Assert.True(mods!.Count >= 2, "title modifiers dropped on unmarshal");
+        var maxHp = mods.First(m => m.GetName() == Model.Stats.Container.StatEnum.MAXHP);
+        Assert.IsType<Model.Stats.Calc.Functions.StatAddFunction>(maxHp);
+        Assert.Equal(20, maxHp.GetValue());
+        Assert.True(maxHp.IsBonus());
+
+        Assert.Null(data.GetTitleTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesConquerorAndProtectorDataFromRealXml_WithModifiersIntact()
+    {
+        var path = ResolveStaticDataFile("conqueror_protector_ranks", "conqueror_protector_ranks.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<ConquerorAndProtectorData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <rank type="CONQUEROR" rank_num="1"><add name="PVP_ATTACK_RATIO" value="10" bonus="true"/></rank>
+        var conq1 = data.GetRank(Model.Templates.Cp.CPType.CONQUEROR, 1);
+        Assert.NotNull(conq1);
+        Assert.Equal(Model.Templates.Cp.CPType.CONQUEROR, conq1!.GetType_());
+        Assert.Equal(1, conq1.GetRankNum());
+
+        // CRITICAL: prove the stat modifier is not dropped.
+        var conqMods = conq1.GetStatModifiers();
+        Assert.NotNull(conqMods);
+        Assert.Single(conqMods);
+        var atk = conqMods[0];
+        Assert.IsType<Model.Stats.Calc.Functions.StatAddFunction>(atk);
+        Assert.Equal(Model.Stats.Container.StatEnum.PVP_ATTACK_RATIO, atk.GetName());
+        Assert.Equal(10, atk.GetValue());
+        Assert.True(atk.IsBonus());
+
+        // <rank type="PROTECTOR" rank_num="1" visible_intruder_min_rank="3"> with PVP_DEFEND_RATIO 20.
+        var prot1 = data.GetRank(Model.Templates.Cp.CPType.PROTECTOR, 1);
+        Assert.NotNull(prot1);
+        Assert.Equal(3, prot1!.GetVisibleIntruderMinRank());
+        var def = prot1.GetStatModifiers()[0];
+        Assert.Equal(Model.Stats.Container.StatEnum.PVP_DEFEND_RATIO, def.GetName());
+        Assert.Equal(20, def.GetValue());
+
+        Assert.Null(data.GetRank(Model.Templates.Cp.CPType.CONQUEROR, 9999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesVortexDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("vortex", "dimensional_vortex.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<VortexData>(path);
+
+        // AfterUnmarshal built the id->VortexLocation map.
+        Assert.True(data.Size() > 0);
+
+        // <vortex_location id="0" defends_race="ELYOS" offence_race="ASMODIANS">
+        //   <home_point map="120080000" x="559.4" y="207.8" z="93.5" h="0"/>
+        //   <start_point map="210060000" .../>
+        var locations = data.GetVortexLocations();
+        Assert.NotNull(locations);
+        Assert.True(locations.ContainsKey(0));
+        var loc0 = locations[0];
+        Assert.Equal(0, loc0.GetId());
+        Assert.Equal(Model.Race.ELYOS, loc0.GetDefendersRace());
+        Assert.Equal(Model.Race.ASMODIANS, loc0.GetInvadersRace());
+        // home_point map=120080000; start_point map=210060000 -> drives the home/invasion world ids.
+        Assert.Equal(120080000, loc0.GetHomeWorldId());
+        Assert.Equal(210060000, loc0.GetInvasionWorldId());
+
+        // Lookup by invasion world id (start_point map) resolves the same location.
+        Assert.Same(loc0, data.GetVortexLocation(210060000));
+
+        Assert.Null(data.GetVortexLocation(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("player_titles")]
 public class TitleData
 {
-    [XmlElement("title")] private List<TitleTemplate> tts;
+    [XmlElement("title")] public List<TitleTemplate> tts;
 
     [XmlIgnore] private readonly Dictionary<int, TitleTemplate> titles = new();
 

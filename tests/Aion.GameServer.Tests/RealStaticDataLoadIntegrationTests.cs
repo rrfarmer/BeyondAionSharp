@@ -80,6 +80,25 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.AssemblyItemsDataDh.Size() > 0, "AssemblyItemsDataDh empty after boot");
 		Assert.True(sd.AtreianPassportDataDh.Size() > 0, "AtreianPassportDataDh empty after boot");
 		Assert.True(sd.AbsoluteStatsDataDh.Size() > 0, "AbsoluteStatsDataDh empty after boot");
+		Assert.True(sd.ItemSetDataDh.Size() > 0, "ItemSetDataDh empty after boot");
+		Assert.True(sd.TitleDataDh.Size() > 0, "TitleDataDh empty after boot");
+		Assert.True(sd.ConquerorAndProtectorDataDh.Size() > 0, "ConquerorAndProtectorDataDh empty after boot");
+		Assert.True(sd.VortexDataDh.Size() > 0, "VortexDataDh empty after boot");
+
+		// Prove the stat-bearing leaf holders bound their modifiers at boot (not silently dropped):
+		// item set 1 fullbonus carries a SPEED rate; title 1 carries a MAXHP add; conqueror rank 1 a PVP_ATTACK_RATIO add.
+		var itemSet1 = sd.ItemSetDataDh.GetItemSetTemplate(1);
+		Assert.NotNull(itemSet1);
+		Assert.Contains(itemSet1!.GetFullbonus().GetModifiers(),
+			m => m.GetName() == Model.Stats.Container.StatEnum.SPEED);
+		var title1 = sd.TitleDataDh.GetTitleTemplate(1);
+		Assert.NotNull(title1);
+		Assert.Contains(title1!.GetModifiers(),
+			m => m.GetName() == Model.Stats.Container.StatEnum.MAXHP);
+		var conq1 = sd.ConquerorAndProtectorDataDh.GetRank(Model.Templates.Cp.CPType.CONQUEROR, 1);
+		Assert.NotNull(conq1);
+		Assert.Contains(conq1!.GetStatModifiers(),
+			m => m.GetName() == Model.Stats.Container.StatEnum.PVP_ATTACK_RATIO);
 
 		// Prove the StatFunction polymorphic modifiers actually bound (not silently dropped) at boot:
 		// stats_set id=1 must carry a non-empty <modifiers> list with the known POWER/1 abs row.
