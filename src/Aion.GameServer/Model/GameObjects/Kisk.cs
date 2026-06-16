@@ -160,7 +160,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Players.Pla
         }
         else
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(this));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_KISK_UPDATE(this));
         }
         player.SetKisk(this);
     }
@@ -178,11 +178,11 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Players.Pla
         foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetCurrentMemberList())
         {
             if (!GetKnownList().Knows(member))
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(this));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SM_KISK_UPDATE(this));
         }
 
         // all players having the same race in knownlist
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SmKiskUpdate(this), player => player.GetRace() == ownerRace);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(this, new Aion.GameServer.Network.Aion.ServerPackets.SM_KISK_UPDATE(this), player => player.GetRace() == ownerRace);
     }
 
     // Java parity: Kisk.broadcastPacket(SM_SYSTEM_MESSAGE message) — uses the faithful SM_SYSTEM_MESSAGE
