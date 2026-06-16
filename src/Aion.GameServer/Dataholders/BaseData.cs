@@ -9,7 +9,9 @@ namespace Aion.GameServer.Dataholders;
 public class BaseData
 {
     // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
-    [XmlElement("base_location")] public List<BaseTemplate> baseTemplates;
+    // Initialized empty (matches XmlSerializer add-to-existing semantics, JAXB-faithful) so an unloaded holder
+    // (e.g. base_locations.xml absent) yields an empty list, not null — GetAllBaseTemplates()/Size() never NRE.
+    [XmlElement("base_location")] public List<BaseTemplate> baseTemplates = new();
 
     public int Size()
     {

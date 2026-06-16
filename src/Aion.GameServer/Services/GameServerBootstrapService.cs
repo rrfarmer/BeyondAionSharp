@@ -85,8 +85,46 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		await _gameTimeService.InitAsync(cancellationToken);
 
+		// Java parity: GameServer.main initializes the CronService singleton during early utility init
+		// (initUtilityServicesAndConfig: CronService.initSingleton(ThreadPoolManagerRunnableRunner.class,
+		// TimeZone.getTimeZone(GSConfig.TIME_ZONE_ID))), which runs BEFORE the main-body services that schedule
+		// through it. Moved here (after ThreadPoolManager is bound, before the location-init cluster) so
+		// VortexService.initVortexLocations()/WorldRaidService/RiftService.initRifts() all resolve a live
+		// CronService.getInstance(). Guard the once-only init so a re-entrant boot (test host running StartAsync
+		// repeatedly in one process) doesn't throw "already initialized".
+		if (Aion.GameServer.Services.Cron.CronService.GetInstance() == null)
+			Aion.GameServer.Services.Cron.CronService.InitSingleton(
+				typeof(Aion.GameServer.Utils.Cron.ThreadPoolManagerRunnableRunner),
+				Aion.GameServer.Configs.Main.GSConfig.TIME_ZONE_ID ?? System.TimeZoneInfo.Local);
+
+		// Java parity: GameServer.main location-init cluster (lines 111-117), after DropRegistration, before
+		// HousingService/spawns. Each loads only LOCATION data (no schedules/spawns yet — those are the second-pass
+		// init*() calls later). All are bounded singleton getInstance()/init touches whose ctors iterate the
+		// faithfully-loaded *_DATA holders (BASE_DATA/SIEGE_LOCATION_DATA/WORLD_RAID_DATA/VORTEX_DATA/
+		// LEGION_DOMINION_DATA, all live via StaticData.TryLoadHolder) and whose DAO reads are try/catch-guarded
+		// (no DB => empty + logged, never an NRE), so they are dep-clean to wire here.
+
+		// BaseService.getInstance() (GameServer.main:111): ctor builds BaseLocation per BASE_DATA template.
+		Aion.GameServer.Services.BaseService.GetInstance();
+		// SiegeService.getInstance() (GameServer.main:112): ctor loads SIEGE_LOCATION_DATA fortress/artifact/outpost
+		// locations (guarded by SiegeConfig.SIEGE_ENABLED, default true) and SiegeDAO.LoadSiegeLocations (try/catch).
+		Aion.GameServer.Services.SiegeService.GetInstance();
+		// WorldRaidService.getInstance().initWorldRaidLocations() (GameServer.main:113): loads WORLD_RAID_DATA
+		// locations (guarded by EventsConfig.ENABLE_WORLDRAID).
+		Aion.GameServer.Services.WorldRaidService.GetInstance().InitWorldRaidLocations();
+		// VortexService.getInstance().initVortexLocations() (GameServer.main:115): spawns peace-state vortex NPCs
+		// per VORTEX_DATA and schedules the Theobomos/Brusthonin invasions (guarded by CustomConfig.VORTEX_ENABLED,
+		// default true). The two invasion cron schedules are now populated from the Java @Property defaultValue cron
+		// strings via CronExpressions.GetOrCreate (CustomConfig.VORTEX_*_SCHEDULE field initializers), so the
+		// CronService.Schedule calls no longer NRE on a null CronExpression.
+		Aion.GameServer.Services.VortexService.GetInstance().InitVortexLocations();
+
 		// Java parity: GameServer.main loads rift location data before spawns (RiftService.getInstance().initRiftLocations()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRiftLocations();
+
+		// LegionDominionService.getInstance().initLocations() (GameServer.main:117): builds LegionDominionLocation per
+		// LEGION_DOMINION_DATA template + LegionDominionDAO.LoadOrCreate/LoadParticipants (try/catch-guarded DB reads).
+		Aion.GameServer.Services.LegionDominionService.GetInstance().InitLocations();
 
 		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
 		if (engineTasks.Length > 0)
@@ -99,19 +137,15 @@ public sealed class GameServerBootstrapService : IHostedService
 		// WorldNpcSpawnService GameEngine, which populated the reworked _objects store with struct WorldNpc.
 		Aion.GameServer.SpawnEngine.SpawnEngine.SpawnAll();
 
+		// Java parity: GameServer.main calls TownService.getInstance() right after SpawnEngine.spawnAll() (line 127),
+		// before FlyRingService. Its ctor loads per-race towns via TownDAO (try/catch-guarded: no DB => empty + logged)
+		// and, only when both are empty, seeds towns from HOUSE_DATA lands/addresses (live HOUSE_DATA/NPC_DATA holders).
+		Aion.GameServer.Services.TownService.GetInstance();
+
 		// Java parity: GameServer.main calls FlyRingService.getInstance() after SpawnEngine.spawnAll() (and
 		// TownService.getInstance()), before RiftService.initRifts(). Its ctor spawns every fly_rings/ template
 		// into the world; empty/unloaded FLY_RING_DATA yields a no-op.
 		Aion.GameServer.Services.FlyRingService.GetInstance();
-
-		// Java parity: GameServer.main initializes the CronService singleton during early utility init
-		// (CronService.initSingleton(ThreadPoolManagerRunnableRunner.class, TimeZone.getTimeZone(GSConfig.TIME_ZONE_ID)))
-		// before RiftService.initRifts() schedules rift openings through it. Guard the once-only init so a
-		// re-entrant boot (e.g. test host running StartAsync repeatedly in one process) doesn't throw "already initialized".
-		if (Aion.GameServer.Services.Cron.CronService.GetInstance() == null)
-			Aion.GameServer.Services.Cron.CronService.InitSingleton(
-				typeof(Aion.GameServer.Utils.Cron.ThreadPoolManagerRunnableRunner),
-				Aion.GameServer.Configs.Main.GSConfig.TIME_ZONE_ID ?? System.TimeZoneInfo.Local);
 
 		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();

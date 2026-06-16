@@ -108,11 +108,19 @@ public static class CustomConfig
     /// <summary>Key: gameserver.vortex.enable</summary>
     public static bool VORTEX_ENABLED = true;
 
-    /// <summary>Key: gameserver.vortex.brusthonin.schedule. Default cron: 0 0 16 ? * SAT</summary>
-    public static Quartz.CronExpression VORTEX_BRUSTHONIN_SCHEDULE;
+    /// <summary>Key: gameserver.vortex.brusthonin.schedule. Default cron: 0 0 16 ? * SAT.
+    /// Java @Property defaultValue "0 0 16 ? * SAT" (config/main/custom.properties identical) transformed by
+    /// CronExpressionTransformer (CronExpressions.getOrCreate). C# Config.Load is a deferred no-op, so this field
+    /// carries the @Property default directly (same fix shape as SiegeConfig.MOLTENUS/AHSERION). No invented value.</summary>
+    public static Quartz.CronExpression VORTEX_BRUSTHONIN_SCHEDULE =
+        Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 16 ? * SAT");
 
-    /// <summary>Key: gameserver.vortex.theobomos.schedule. Default cron: 0 0 16 ? * SUN</summary>
-    public static Quartz.CronExpression VORTEX_THEOBOMOS_SCHEDULE;
+    /// <summary>Key: gameserver.vortex.theobomos.schedule. Default cron: 0 0 16 ? * SUN.
+    /// Java @Property defaultValue "0 0 16 ? * SUN" (config/main/custom.properties identical) transformed by
+    /// CronExpressionTransformer (CronExpressions.getOrCreate). C# Config.Load is a deferred no-op, so this field
+    /// carries the @Property default directly. No invented value.</summary>
+    public static Quartz.CronExpression VORTEX_THEOBOMOS_SCHEDULE =
+        Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 16 ? * SUN");
 
     /// <summary>Key: gameserver.vortex.duration</summary>
     public static int VORTEX_DURATION = 1;

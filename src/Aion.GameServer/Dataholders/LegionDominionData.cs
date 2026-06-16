@@ -9,7 +9,9 @@ namespace Aion.GameServer.Dataholders;
 public class LegionDominionData
 {
     // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
-    [XmlElement("legion_dominion_location")] public List<LegionDominionLocationTemplate> ldl;
+    // Initialized empty (XmlSerializer add-to-existing / JAXB-faithful) so an unloaded holder yields an empty
+    // list, not null — GetLocationTemplates()/Size() never NRE when legion_dominion_template.xml is absent.
+    [XmlElement("legion_dominion_location")] public List<LegionDominionLocationTemplate> ldl = new();
 
     public int Size()
     {
