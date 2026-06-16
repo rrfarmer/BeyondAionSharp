@@ -37,17 +37,18 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameTimeService>();
 			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
 			services.AddSingleton<IStaticPlaceableStateService, StaticPlaceableStateService>();
-			services.AddSingleton<WorldNpcAiStateService>();
-			// Reworked WorldNpc drop/loot mini-web (WorldNpcDropRegistrationService[+IWorldNpcDropRegistrationLookup
-			// binding]/WorldNpcCustomDropService/WorldNpcQuestDropService/WorldNpcGlobalDropService/
+			// Reworked WorldNpc drop/loot mini-web (WorldNpcDropRegistrationService[+IWorldNpcDropRegistrationLookup]/
+			// WorldNpcCustomDropService/WorldNpcQuestDropService/WorldNpcGlobalDropService/
 			// WorldNpcEventDropRuleService/WorldNpcDropModifierService/WorldNpcDropRegistrationWorkflowService/
 			// WorldNpcDeathDropWorkflowService/WorldNpcLootService/WorldNpcLootBroadcastService) retired: dead
 			// closed graph referenced only by Program.cs DI + each other. Faithful home is DropService. The 3
 			// reworked loot packets SmLootItemList/SmGroupLoot/SmLootStatus (faithful SM_LOOT_ITEMLIST/
 			// SM_GROUP_LOOT/SM_LOOT_STATUS exist) were consumed only by WorldNpcLootService -> deleted as orphans.
-			// WorldNpcSpawnService's optional IWorldNpcDropRegistrationLookup ctor param (default null, interface
-			// kept) now resolves null. The PlayerKisk*Cleanup death/despawn Funcs that the DeathDropWorkflow
-			// factory wired lose their only call site but survive as a separate kisk pillar.
+			// The reworked WorldNpc spawn/walk web (WorldNpcSpawnService/WorldNpcRandomWalkService/
+			// WorldNpcAiStateService + InstanceDestroyWorkflowService/InstanceEmptyInstanceCheckerService +
+			// IWorldNpcDropRegistrationLookup) is likewise retired: boot NPC spawn is now the faithful
+			// SpawnEngine.SpawnAll() (see GameServerBootstrapService), and faithful WalkManager/NpcAI cover
+			// random/route walk + AI state. The PlayerKisk*Cleanup death/despawn Funcs survive as a separate kisk pillar.
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<PvpApRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
@@ -64,23 +65,17 @@ var builder = Host.CreateDefaultBuilder(args)
 			// Reworked WorldNpcSkillDamageService/Fanout/burn-island (depended on the deleted PlayerEnterWorldService god's
 			// SaveIdianPolishBurn/SaveItemChargeBurn mutations; gameplay covered by faithful ItemChargeService/ChargeInfo
 			// equipment-observer) removed.
-			services.AddSingleton<WorldNpcRandomWalkService>();
-			services.AddSingleton<Func<int, bool>>(
-				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcSpawnService>().CancelRespawn(objectId));
 			// Faithful Rift surface (services/RiftService.java, RiftManager/RiftInformer/RVController) is a static
 			// singleton (RiftService.getInstance()) wired at boot via GameServerBootstrapService (Java parity:
 			// GameServer.main initRiftLocations/initRifts); the reworked DI Rift*Service slop cluster + the
 			// Func<int,WorldNpc,bool> rift-respawn bridge (faithful RespawnService.respawn -> RiftService.updateSpawned
 			// covers it) are retired.
-			services.AddSingleton<InstanceDestroyWorkflowService>();
-			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
 			// Reworked AutoGroup runtime/registration services (depended on the deleted Player*Runtime + PlayerEnterWorldService god) removed.
 			services.AddSingleton<VortexLocationService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
 			services.AddSingleton<HousingWorldService>();
-			services.AddSingleton<WorldNpcSpawnService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
