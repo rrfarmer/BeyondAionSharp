@@ -6,8 +6,9 @@ namespace Aion.GameServer.Model.Templates.Rift;
 [XmlType("OpenRift")]
 public class OpenRift
 {
-    [XmlAttribute("schedule")] protected string schedule;
-    [XmlAttribute("spawn")] protected bool guards;
+    // XmlSerializer binds PUBLIC members only (Java JAXB used @XmlAccessorType(FIELD)); keep public for binding.
+    [XmlAttribute("schedule")] public string schedule;
+    [XmlAttribute("spawn")] public bool guards;
 
     public string GetSchedule()
     {

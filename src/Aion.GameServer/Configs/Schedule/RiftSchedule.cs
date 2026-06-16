@@ -10,7 +10,8 @@ namespace Aion.GameServer.Configs.Schedule;
 [XmlRoot("rift_schedule")]
 public class RiftSchedule
 {
-    [XmlElement("rift")] private List<Rift> riftsList;
+    // XmlSerializer binds PUBLIC members only (Java JAXB used @XmlAccessorType(FIELD)); keep public for binding.
+    [XmlElement("rift")] public List<Rift> riftsList;
 
     public List<Rift> GetRiftsList()
     {
@@ -25,8 +26,8 @@ public class RiftSchedule
     [XmlRoot("rift")]
     public class Rift
     {
-        [XmlAttribute("id")] private int id;
-        [XmlElement("open")] private List<OpenRift> openRift;
+        [XmlAttribute("id")] public int id;
+        [XmlElement("open")] public List<OpenRift> openRift;
 
         public int GetWorldId()
         {

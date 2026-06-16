@@ -92,6 +92,15 @@ public sealed class GameServerBootstrapService : IHostedService
 		// WorldNpcSpawnService GameEngine, which populated the reworked _objects store with struct WorldNpc.
 		Aion.GameServer.SpawnEngine.SpawnEngine.SpawnAll();
 
+		// Java parity: GameServer.main initializes the CronService singleton during early utility init
+		// (CronService.initSingleton(ThreadPoolManagerRunnableRunner.class, TimeZone.getTimeZone(GSConfig.TIME_ZONE_ID)))
+		// before RiftService.initRifts() schedules rift openings through it. Guard the once-only init so a
+		// re-entrant boot (e.g. test host running StartAsync repeatedly in one process) doesn't throw "already initialized".
+		if (Aion.GameServer.Services.Cron.CronService.GetInstance() == null)
+			Aion.GameServer.Services.Cron.CronService.InitSingleton(
+				typeof(Aion.GameServer.Utils.Cron.ThreadPoolManagerRunnableRunner),
+				Aion.GameServer.Configs.Main.GSConfig.TIME_ZONE_ID ?? System.TimeZoneInfo.Local);
+
 		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();
 
