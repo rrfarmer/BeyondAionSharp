@@ -163,6 +163,14 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_STATS_STATUS_UNK.json")]
 	[InlineData("SM_PACKAGE_INFO_NOTIFY.json")]
 	[InlineData("SM_ACTION_ANIMATION.json")]
+	[InlineData("SM_GAMEGUARD.json")]
+	[InlineData("SM_CAPTCHA.json")]
+	[InlineData("SM_MEGAPHONE.json")]
+	[InlineData("SM_QUESTIONNAIRE.json")]
+	[InlineData("SM_FORCED_MOVE.json")]
+	[InlineData("SM_WEATHER.json")]
+	[InlineData("SM_GROUP_LOOT.json")]
+	[InlineData("SM_WINDSTREAM_ANNOUNCE.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -229,7 +237,35 @@ public sealed class GoldenPacketFixtureTests
 		"SM_STATS_STATUS_UNK" => new SM_STATS_STATUS_UNK(inputs.GetProperty("lvl").GetInt32(), inputs.GetProperty("points").GetInt32()),
 		"SM_PACKAGE_INFO_NOTIFY" => new SM_PACKAGE_INFO_NOTIFY(),
 		"SM_ACTION_ANIMATION" => new SM_ACTION_ANIMATION(inputs.GetProperty("targetObjectId").GetInt32(), Enum.Parse<Aion.GameServer.Model.Animations.ActionAnimation>(inputs.GetProperty("actionAnimation").GetString()!), inputs.GetProperty("levelOrObjectId").GetInt32()),
+		"SM_GAMEGUARD" => new SM_GAMEGUARD(inputs.GetProperty("size").GetInt32()),
+		"SM_CAPTCHA" => ReconstructCaptcha(inputs),
+		"SM_MEGAPHONE" => new SM_MEGAPHONE(ResolveFactionLabel(inputs.GetProperty("faction").GetString()!), inputs.GetProperty("senderName").GetString()!, inputs.GetProperty("message").GetString()!, inputs.GetProperty("itemId").GetInt32()),
+		"SM_QUESTIONNAIRE" => new SM_QUESTIONNAIRE(inputs.GetProperty("messageId").GetInt32(), (byte)inputs.GetProperty("chunk").GetInt32(), (byte)inputs.GetProperty("count").GetInt32(), inputs.GetProperty("html").GetString()!),
+		"SM_FORCED_MOVE" => new SM_FORCED_MOVE(new PacketHarnessCreature(inputs.GetProperty("creatureObjectId").GetInt32(), 1, new Dictionary<StatEnum, int>()), inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle()),
+		"SM_WEATHER" => new SM_WEATHER(inputs.GetProperty("codes").EnumerateArray().Select(e => new Aion.GameServer.Model.Templates.World.WeatherEntry(0, e.GetInt32())).ToArray()),
+		"SM_GROUP_LOOT" => new SM_GROUP_LOOT(inputs.GetProperty("groupId").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("itemCount").GetInt32(), inputs.GetProperty("lootCorpseId").GetInt32(), inputs.GetProperty("distributionId").GetInt32(), inputs.GetProperty("luck").GetInt64(), inputs.GetProperty("index").GetInt32()),
+		"SM_WINDSTREAM_ANNOUNCE" => new SM_WINDSTREAM_ANNOUNCE(inputs.GetProperty("bidirectional").GetInt32(), inputs.GetProperty("mapId").GetInt32(), inputs.GetProperty("streamId").GetInt32(), inputs.GetProperty("state").GetInt32()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
+	};
+
+	// SM_CAPTCHA: type 1 (count,data) and type 3 (isCorrect,banTime) ctors.
+	private static SM_CAPTCHA ReconstructCaptcha(JsonElement inputs)
+	{
+		return inputs.GetProperty("ctor").GetString() switch
+		{
+			"count_data" => new SM_CAPTCHA(inputs.GetProperty("count").GetInt32(), inputs.GetProperty("data").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray()),
+			"isCorrect_banTime" => new SM_CAPTCHA(inputs.GetProperty("isCorrect").GetBoolean(), inputs.GetProperty("banTime").GetInt32()),
+			_ => throw new NotSupportedException("Unknown SM_CAPTCHA ctor"),
+		};
+	}
+
+	// SM_MEGAPHONE.FactionLabel: resolve the static instance by name (id derived from Race.getRaceId()).
+	private static SM_MEGAPHONE.FactionLabel ResolveFactionLabel(string name) => name switch
+	{
+		"NONE" => SM_MEGAPHONE.FactionLabel.NONE,
+		"ELYOS" => SM_MEGAPHONE.FactionLabel.ELYOS,
+		"ASMODIANS" => SM_MEGAPHONE.FactionLabel.ASMODIANS,
+		_ => throw new NotSupportedException($"No FactionLabel for {name}"),
 	};
 
 	// SM_PET: the deterministic scalar branches (RENAME / DISMISS / SPECIAL_FUNCTION).

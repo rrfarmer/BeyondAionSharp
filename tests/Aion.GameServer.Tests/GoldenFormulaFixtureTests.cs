@@ -37,6 +37,11 @@ public sealed class GoldenFormulaFixtureTests
 	[InlineData("AbyssRankEnum.getPointsGained.json")]
 	[InlineData("AbyssRankEnum.getRequiredAP.json")]
 	[InlineData("AbyssRankEnum.getRequiredGP.json")]
+	[InlineData("XPRewardEnum.rewardPercent.json")]
+	[InlineData("DropRewardEnum.rewardPercent.json")]
+	[InlineData("XPLossEnum.getLevel.json")]
+	[InlineData("XPLossEnum.getParam.json")]
+	[InlineData("StatCapUtil.getDifferenceLimit.json")]
 	public void CsharpFormulaMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		using var fixture = LoadFixture(fixtureFile);
@@ -47,7 +52,17 @@ public sealed class GoldenFormulaFixtureTests
 			var inputs = caseElement.GetProperty("inputs");
 			var result = caseElement.GetProperty("result");
 
-			if (result.ValueKind == JsonValueKind.Object)
+			if (result.ValueKind == JsonValueKind.Object && result.TryGetProperty("doubleBits", out var doubleBitsProp))
+			{
+				// double-typed result: compared BIT-EXACT via raw IEEE-754 bits (no decimal rounding).
+				var expectedBits = doubleBitsProp.GetInt64();
+				var actualBits = BitConverter.DoubleToInt64Bits(EvaluateDouble(formula, inputs));
+				Assert.True(expectedBits == actualBits,
+					$"{formula}({DescribeInputs(inputs)}): C# diverged from Java golden (double bits). " +
+					$"Java={expectedBits} ({BitConverter.Int64BitsToDouble(expectedBits)}), " +
+					$"C#={actualBits} ({BitConverter.Int64BitsToDouble(actualBits)})");
+			}
+			else if (result.ValueKind == JsonValueKind.Object)
 			{
 				// float-typed result: compared BIT-EXACT via raw IEEE-754 bits (no decimal rounding).
 				var expectedBits = result.GetProperty("floatBits").GetInt32();
@@ -100,7 +115,18 @@ public sealed class GoldenFormulaFixtureTests
 		"AbyssRankEnum.getPointsGained" => ParseAbyssRank(inputs).GetPointsGained(),
 		"AbyssRankEnum.getRequiredAP" => ParseAbyssRank(inputs).GetRequiredAP(),
 		"AbyssRankEnum.getRequiredGP" => ParseAbyssRank(inputs).GetRequiredGP(),
+		"XPRewardEnum.rewardPercent" => Enum.Parse<XPRewardEnum>(inputs.GetProperty("entry").GetString()!).RewardPercent(),
+		"DropRewardEnum.rewardPercent" => Enum.Parse<DropRewardEnum>(inputs.GetProperty("entry").GetString()!).RewardPercent(),
+		"XPLossEnum.getLevel" => Enum.Parse<XPLossEnum>(inputs.GetProperty("entry").GetString()!).GetLevel(),
+		"StatCapUtil.getDifferenceLimit" => Aion.GameServer.Model.Stats.Calc.StatCapUtil.GetDifferenceLimit(
+			Enum.Parse<StatEnum>(inputs.GetProperty("statEnum").GetString()!)),
 		_ => throw new NotSupportedException($"No C# numeric dispatch registered for formula {formula}"),
+	};
+
+	private static double EvaluateDouble(string formula, JsonElement inputs) => formula switch
+	{
+		"XPLossEnum.getParam" => Enum.Parse<XPLossEnum>(inputs.GetProperty("entry").GetString()!).GetParam(),
+		_ => throw new NotSupportedException($"No C# double dispatch registered for formula {formula}"),
 	};
 
 	private static float EvaluateFloat(string formula, JsonElement inputs) => formula switch
