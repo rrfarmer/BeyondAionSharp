@@ -9,13 +9,13 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlRoot("house_part")]
 public class HousePart
 {
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("id")] public int id;
 
-    [XmlAttribute("name")] private string name;
+    [XmlAttribute("name")] public string name;
 
-    [XmlAttribute("quality")] private ItemQuality quality;
+    [XmlAttribute("quality")] public ItemQuality quality;
 
-    [XmlAttribute("type")] private PartType type;
+    [XmlAttribute("type")] public PartType type;
 
     // Java parity: @XmlAttribute(name="building_tags") Set<String> — space-separated.
     private HashSet<string> buildingTags;

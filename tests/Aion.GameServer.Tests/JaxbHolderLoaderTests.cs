@@ -715,6 +715,225 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(5, ride.GetStartFp());
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesWorldRaidDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("world_raid", "world_raids.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<WorldRaidData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <world_raid_location location_id="1" map_id="210030000" x="1587.52" y="2078.81" z="155.85437" h="29">
+        //   <world_raid_npcs><world_raid_npc npc_id="234558" death_msg_id="1402389" /></world_raid_npcs>
+        //   <location_markers><spot x="1615.2394" .../>...</location_markers></world_raid_location>
+        var loc = data.GetLocationsById(1);
+        Assert.NotNull(loc);
+        Assert.Equal(1, loc!.GetLocationId());
+        Assert.Equal(210030000, loc.GetMapId());
+        Assert.Equal(1587.52f, loc.GetX(), 3);
+        Assert.Equal((byte)29, loc.GetH());
+
+        var npcs = loc.GetNpcPool();
+        Assert.NotNull(npcs);
+        Assert.Single(npcs!);
+        Assert.Equal(234558, npcs![0].GetNpcId());
+        // death_msg_id present -> parsed via string-proxy.
+        Assert.Equal(1402389, npcs[0].GetDeathMsgId());
+
+        var markers = loc.GetLocationMarkers();
+        Assert.NotNull(markers);
+        Assert.Equal(2, markers!.Count);
+        Assert.Equal(1615.2394f, markers[0].GetX(), 3);
+
+        Assert.Null(data.GetLocationsById(-99999));
+    }
+
+    [Fact]
+    public void WorldRaidNpc_StringProxy_AbsentDeathMsgId_KeepsZeroInitializer()
+    {
+        // Java parity: WorldRaidNpc.deathMsgId field initializer = 0; an absent attribute leaves it at 0.
+        const string xml =
+            "<world_raid_locations><world_raid_location location_id=\"7\" map_id=\"1\" x=\"0\" y=\"0\" z=\"0\" h=\"0\">" +
+            "<world_raid_npcs><world_raid_npc npc_id=\"42\" /></world_raid_npcs>" +
+            "<location_markers/></world_raid_location></world_raid_locations>";
+
+        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(WorldRaidData));
+        using var reader = new StringReader(xml);
+        var data = (WorldRaidData)serializer.Deserialize(reader)!;
+        InvokeAfterUnmarshal(data);
+
+        var npc = data.GetLocationsById(7)!.GetNpcPool()![0];
+        Assert.Equal(42, npc.GetNpcId());
+        // death_msg_id omitted -> keeps the 0 field initializer (1:1 with JAXB).
+        Assert.Equal(0, npc.GetDeathMsgId());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesGoodsListDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("goodslists", "goodslists.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<GoodsListData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <list id="1"><item id="169500001"/>...</list>
+        var list1 = data.GetGoodsListById(1);
+        Assert.NotNull(list1);
+        Assert.Equal(1, list1!.GetId());
+        var ids = list1.GetItemIdList();
+        Assert.NotNull(ids);
+        Assert.Contains(169500001, ids!);
+
+        // <list id="5001" ...><item buy_limit="0" sell_limit="100" id="152012001"/>...</list>
+        // sell_limit/buy_limit present -> parsed via string-proxy; surfaces as LimitedItem.
+        var list5001 = data.GetGoodsListById(5001);
+        Assert.NotNull(list5001);
+        var limited = list5001!.GetLimitedItems();
+        Assert.True(limited.Count > 0);
+        var li = limited.First(l => l.GetItemId() == 152012001);
+        Assert.Equal(100, li.GetSellLimit());
+        Assert.Equal(0, li.GetBuyLimit());
+
+        // in_list and purchase_list buckets populated too.
+        Assert.NotNull(data.GetGoodsInListById(1));
+        Assert.NotNull(data.GetGoodsPurchaseListById(1));
+
+        Assert.Null(data.GetGoodsListById(-99999));
+    }
+
+    [Fact]
+    public void GoodsListItem_StringProxy_AbsentLimits_YieldNull()
+    {
+        // Java parity: GoodsList.Item sell_limit/buy_limit are nullable Integer; absent -> null
+        // (and such an item is NOT surfaced as a LimitedItem).
+        const string xml =
+            "<goodslists><list id=\"1\"><item id=\"100\"/></list>" +
+            "<in_list id=\"1\"/><purchase_list id=\"1\"/></goodslists>";
+
+        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(GoodsListData));
+        using var reader = new StringReader(xml);
+        var data = (GoodsListData)serializer.Deserialize(reader)!;
+        InvokeAfterUnmarshal(data);
+
+        var list = data.GetGoodsListById(1);
+        Assert.NotNull(list);
+        Assert.Contains(100, list!.GetItemIdList());
+        // No sell_limit/buy_limit -> no LimitedItem produced.
+        Assert.Empty(list.GetLimitedItems());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesNpcFactionsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("npc_factions", "npc_factions.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<NpcFactionsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <npc_faction id="2" name="Alabaster Order" npc_ids="799803 805145" name_id="1129000"
+        //   category="DAILY" min_level="30" race="ELYOS"/>
+        var faction = data.GetNpcFactionById(2);
+        Assert.NotNull(faction);
+        Assert.Equal(2, faction!.GetId());
+        Assert.Equal("Alabaster Order", faction.GetName());
+        Assert.Equal(1129000, faction.GetL10nId());
+        Assert.Equal(Model.Templates.Factions.FactionCategory.DAILY, faction.GetCategory());
+        // min_level present -> parsed via string-proxy.
+        Assert.Equal(30, faction.GetMinLevel());
+        Assert.Equal(Model.Race.ELYOS, faction.GetRace());
+        // npc_ids space-separated -> proxy split.
+        Assert.Contains(799803, faction.GetNpcIds());
+        Assert.Contains(805145, faction.GetNpcIds());
+
+        // Reverse index by npc id.
+        Assert.Same(faction, data.GetNpcFactionByNpcId(799803));
+
+        // <npc_faction id="8" ... max_level="39" .../>
+        Assert.Equal(39, data.GetNpcFactionById(8)!.GetMaxLevel());
+
+        Assert.Null(data.GetNpcFactionById(-99999));
+    }
+
+    [Fact]
+    public void NpcFaction_StringProxy_AbsentMinLevel_YieldsNull()
+    {
+        // Java parity: NpcFactionTemplate.min_level is a nullable Integer; absent -> null (getMinLevel() would NPE).
+        const string xml =
+            "<npc_factions><npc_faction id=\"999\" name=\"x\" name_id=\"1\" category=\"DAILY\" race=\"ELYOS\"/></npc_factions>";
+
+        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(NpcFactionsData));
+        using var reader = new StringReader(xml);
+        var data = (NpcFactionsData)serializer.Deserialize(reader)!;
+        InvokeAfterUnmarshal(data);
+
+        var faction = data.GetNpcFactionById(999);
+        Assert.NotNull(faction);
+        // min_level omitted -> string-proxy parses to null (1:1 with JAXB). max_level keeps its 99 default.
+        Assert.Throws<System.InvalidOperationException>(() => faction!.GetMinLevel());
+        Assert.Equal(99, faction!.GetMaxLevel());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesTeleporterDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("npc_teleporter.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<TeleporterData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <teleporter_template npc_ids="203726" teleportId="1">
+        //   <locations><telelocation loc_id="3" price="100" pricePvp="100" required_quest="1006" type="REGULAR"/>...
+        var tpl = data.GetTeleporterTemplateByTeleportId(1);
+        Assert.NotNull(tpl);
+        Assert.Equal(1, tpl!.GetTeleportId());
+        // npc_ids space-separated-list -> proxy.
+        Assert.Contains(203726, tpl.GetNpcIds());
+        Assert.True(tpl.ContainNpc(203726));
+
+        var locData = tpl.GetTeleLocIdData();
+        Assert.NotNull(locData);
+        var loc3 = locData!.GetTeleportLocation(3);
+        Assert.NotNull(loc3);
+        Assert.Equal(3, loc3!.GetLocId());
+        Assert.Equal(100, loc3.GetPrice());
+        Assert.Equal(100, loc3.GetPricePvp());
+        Assert.Equal(1006, loc3.GetRequiredQuest());
+        Assert.Equal(Model.Templates.Teleport.TeleportType.REGULAR, loc3.GetType_());
+
+        // Reverse lookup by npc id.
+        Assert.Same(tpl, data.GetTeleporterTemplateByNpcId(203726));
+
+        Assert.Null(data.GetTeleporterTemplateByTeleportId(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesHousePartsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("housing", "house_parts.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<HousePartsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <house_part id="3500000" name="Hexagonal Board Roof" quality="UNIQUE" type="ROOF" building_tags="CP_A"/>
+        var part = data.GetPartById(3500000);
+        Assert.NotNull(part);
+        Assert.Equal(3500000, part!.GetId());
+        Assert.Equal("Hexagonal Board Roof", part.GetName());
+        Assert.Equal(Model.Templates.Items.ItemQuality.UNIQUE, part.GetQuality());
+        Assert.Equal(Model.Templates.Housing.PartType.ROOF, part.GetType_());
+        // building_tags space-separated Set<String> -> proxy.
+        var tags = part.GetTags();
+        Assert.NotNull(tags);
+        Assert.Contains("CP_A", tags!);
+
+        Assert.Null(data.GetPartById(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

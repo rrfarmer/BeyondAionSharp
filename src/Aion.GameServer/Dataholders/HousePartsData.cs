@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("house_parts")]
 public class HousePartsData
 {
-    [XmlElement("house_part")] private List<HousePart> houseParts;
+    [XmlElement("house_part")] public List<HousePart> houseParts;
 
     [XmlIgnore] private Dictionary<int, HousePart> partsById = new();
 

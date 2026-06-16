@@ -6,10 +6,10 @@ namespace Aion.GameServer.Model.Templates.Worldraid;
 [XmlType("MarkerSpot")]
 public class MarkerSpot
 {
-    [XmlAttribute("x")] private float x;
-    [XmlAttribute("y")] private float y;
-    [XmlAttribute("z")] private float z;
-    [XmlAttribute("h")] private byte h = 0;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("h")] public byte h = 0;
 
     public float GetX()
     {

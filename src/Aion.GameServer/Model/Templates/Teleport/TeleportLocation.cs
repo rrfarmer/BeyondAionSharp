@@ -6,13 +6,13 @@ namespace Aion.GameServer.Model.Templates.Teleport;
 [XmlRoot("telelocation")]
 public class TeleportLocation
 {
-    [XmlAttribute("loc_id")] private int locId;
-    [XmlAttribute("teleportid")] private int teleportid = 0;
-    [XmlAttribute("price")] private int price = 0;
-    [XmlAttribute("pricePvp")] private int pricePvp = 0;
-    [XmlAttribute("required_quest")] private int required_quest = 0;
+    [XmlAttribute("loc_id")] public int locId;
+    [XmlAttribute("teleportid")] public int teleportid = 0;
+    [XmlAttribute("price")] public int price = 0;
+    [XmlAttribute("pricePvp")] public int pricePvp = 0;
+    [XmlAttribute("required_quest")] public int required_quest = 0;
 
-    [XmlAttribute("type")] private TeleportType type;
+    [XmlAttribute("type")] public TeleportType type;
 
     public int GetLocId()
     {

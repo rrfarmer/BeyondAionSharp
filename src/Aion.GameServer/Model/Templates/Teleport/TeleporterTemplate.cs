@@ -21,8 +21,8 @@ public class TeleporterTemplate
             : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("teleportId")] private int teleportId = 0;
-    [XmlElement("locations")] private TeleLocIdData teleLocIdData;
+    [XmlAttribute("teleportId")] public int teleportId = 0;
+    [XmlElement("locations")] public TeleLocIdData teleLocIdData;
 
     public List<int> GetNpcIds()
     {

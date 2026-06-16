@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("world_raid_locations")]
 public class WorldRaidData
 {
-    [XmlElement("world_raid_location")] private List<WorldRaidLocation> worldRaidLocations;
+    [XmlElement("world_raid_location")] public List<WorldRaidLocation> worldRaidLocations;
 
     [XmlIgnore] private Dictionary<int, WorldRaidLocation> locationsById = new();
 

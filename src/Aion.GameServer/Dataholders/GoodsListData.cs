@@ -8,9 +8,9 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("goodslists")]
 public class GoodsListData
 {
-    [XmlElement("list")] protected List<GoodsList> list;
-    [XmlElement("in_list")] protected List<GoodsList> inList;
-    [XmlElement("purchase_list")] protected List<GoodsList> purchaseList;
+    [XmlElement("list")] public List<GoodsList> list;
+    [XmlElement("in_list")] public List<GoodsList> inList;
+    [XmlElement("purchase_list")] public List<GoodsList> purchaseList;
 
     [XmlIgnore] private readonly Dictionary<int, GoodsList> goodsListData = new();
     [XmlIgnore] private readonly Dictionary<int, GoodsList> goodsInListData = new();
@@ -18,16 +18,21 @@ public class GoodsListData
 
     public void AfterUnmarshal(object parent)
     {
+        // Java parity: JAXB invokes afterUnmarshal on every unmarshalled object; XmlSerializer does not call
+        // nested callbacks, so propagate to each GoodsList (it builds its own itemIdList) to stay 1:1.
         foreach (GoodsList it in list)
         {
+            it.AfterUnmarshal(this);
             goodsListData[it.GetId()] = it;
         }
         foreach (GoodsList it in inList)
         {
+            it.AfterUnmarshal(this);
             goodsInListData[it.GetId()] = it;
         }
         foreach (GoodsList it in purchaseList)
         {
+            it.AfterUnmarshal(this);
             goodsPurchaseListData[it.GetId()] = it;
         }
         list = inList = purchaseList = null;

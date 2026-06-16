@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("npc_factions")]
 public class NpcFactionsData
 {
-    [XmlElement("npc_faction")] protected List<NpcFactionTemplate> npcFactionsData;
+    [XmlElement("npc_faction")] public List<NpcFactionTemplate> npcFactionsData;
 
     [XmlIgnore] private readonly Dictionary<int, NpcFactionTemplate> factionsById = new();
     [XmlIgnore] private readonly Dictionary<int, NpcFactionTemplate> factionsByNpcId = new();

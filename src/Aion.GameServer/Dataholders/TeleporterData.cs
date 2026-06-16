@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("npc_teleporter")]
 public class TeleporterData
 {
-    [XmlElement("teleporter_template")] private List<TeleporterTemplate> templates;
+    [XmlElement("teleporter_template")] public List<TeleporterTemplate> templates;
 
     [XmlIgnore] private readonly Dictionary<int, TeleporterTemplate> teleporterTemplates = new();
 

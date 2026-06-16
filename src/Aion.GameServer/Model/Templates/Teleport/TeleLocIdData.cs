@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Teleport;
 [XmlRoot("locations")]
 public class TeleLocIdData
 {
-    [XmlElement("telelocation")] private List<TeleportLocation> locids;
+    [XmlElement("telelocation")] public List<TeleportLocation> locids;
 
     /// <returns>Teleport locations</returns>
     public List<TeleportLocation> GetTelelocations()

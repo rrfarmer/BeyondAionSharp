@@ -9,23 +9,23 @@ public class WorldRaidLocation
 {
     [XmlArray("world_raid_npcs")]
     [XmlArrayItem("world_raid_npc")]
-    private List<WorldRaidNpc> npcPool;
+    public List<WorldRaidNpc> npcPool;
 
     [XmlArray("location_markers")]
     [XmlArrayItem("spot")]
-    private List<MarkerSpot> locationMarkers;
+    public List<MarkerSpot> locationMarkers;
 
-    [XmlAttribute("location_id")] private int locationId;
+    [XmlAttribute("location_id")] public int locationId;
 
-    [XmlAttribute("map_id")] private int mapId;
+    [XmlAttribute("map_id")] public int mapId;
 
-    [XmlAttribute("x")] private float x;
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("z")] public float z;
 
-    [XmlAttribute("h")] private byte h = 0;
+    [XmlAttribute("h")] public byte h = 0;
 
     public int GetLocationId()
     {
