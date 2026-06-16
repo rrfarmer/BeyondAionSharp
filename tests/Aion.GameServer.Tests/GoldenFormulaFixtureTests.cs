@@ -42,6 +42,7 @@ public sealed class GoldenFormulaFixtureTests
 	[InlineData("XPLossEnum.getLevel.json")]
 	[InlineData("XPLossEnum.getParam.json")]
 	[InlineData("StatCapUtil.getDifferenceLimit.json")]
+	[InlineData("StatCapUtil.getElementalDefenseBaseValue.json")]
 	public void CsharpFormulaMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		using var fixture = LoadFixture(fixtureFile);
@@ -120,6 +121,7 @@ public sealed class GoldenFormulaFixtureTests
 		"XPLossEnum.getLevel" => Enum.Parse<XPLossEnum>(inputs.GetProperty("entry").GetString()!).GetLevel(),
 		"StatCapUtil.getDifferenceLimit" => Aion.GameServer.Model.Stats.Calc.StatCapUtil.GetDifferenceLimit(
 			Enum.Parse<StatEnum>(inputs.GetProperty("statEnum").GetString()!)),
+		"StatCapUtil.getElementalDefenseBaseValue" => Aion.GameServer.Model.Stats.Calc.StatCapUtil.GetElementalDefenseBaseValue(),
 		_ => throw new NotSupportedException($"No C# numeric dispatch registered for formula {formula}"),
 	};
 

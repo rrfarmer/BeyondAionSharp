@@ -171,6 +171,9 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_WEATHER.json")]
 	[InlineData("SM_GROUP_LOOT.json")]
 	[InlineData("SM_WINDSTREAM_ANNOUNCE.json")]
+	[InlineData("SM_MANTRA_EFFECT.json")]
+	[InlineData("SM_DELETE.json")]
+	[InlineData("SM_SKILL_REMOVE.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -245,6 +248,9 @@ public sealed class GoldenPacketFixtureTests
 		"SM_WEATHER" => new SM_WEATHER(inputs.GetProperty("codes").EnumerateArray().Select(e => new Aion.GameServer.Model.Templates.World.WeatherEntry(0, e.GetInt32())).ToArray()),
 		"SM_GROUP_LOOT" => new SM_GROUP_LOOT(inputs.GetProperty("groupId").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("itemCount").GetInt32(), inputs.GetProperty("lootCorpseId").GetInt32(), inputs.GetProperty("distributionId").GetInt32(), inputs.GetProperty("luck").GetInt64(), inputs.GetProperty("index").GetInt32()),
 		"SM_WINDSTREAM_ANNOUNCE" => new SM_WINDSTREAM_ANNOUNCE(inputs.GetProperty("bidirectional").GetInt32(), inputs.GetProperty("mapId").GetInt32(), inputs.GetProperty("streamId").GetInt32(), inputs.GetProperty("state").GetInt32()),
+		"SM_MANTRA_EFFECT" => new SM_MANTRA_EFFECT(new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>()), inputs.GetProperty("subEffectId").GetInt32()),
+		"SM_DELETE" => ReconstructDelete(inputs),
+		"SM_SKILL_REMOVE" => new SM_SKILL_REMOVE(new Aion.GameServer.Model.Skill.PlayerSkillEntry(inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("skillLvl").GetInt32(), inputs.GetProperty("skillType").GetInt32(), Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NOACTION)),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -363,6 +369,22 @@ public sealed class GoldenPacketFixtureTests
 			0 => SM_DUEL.SM_DUEL_STARTED(inputs.GetProperty("requesterObjId").GetInt32()),
 			1 => SM_DUEL.SM_DUEL_RESULT(Enum.Parse<DuelResult>(inputs.GetProperty("result").GetString()!), inputs.GetProperty("playerName").GetString()!),
 			_ => throw new NotSupportedException("Unknown SM_DUEL type"),
+		};
+	}
+
+	// SM_DELETE: exercise the matching public ctor keyed on the captured animationId.
+	// 1 = SM_DELETE(obj) default FADE_OUT (inRange true); 0 = SM_DELETE(obj, inRange=false) -> NONE;
+	// 11 = SM_DELETE(obj, JUMP_IN); 19 = SM_DELETE(obj, DELAYED).
+	private static SM_DELETE ReconstructDelete(JsonElement inputs)
+	{
+		var obj = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>());
+		return inputs.GetProperty("animationId").GetInt32() switch
+		{
+			1 => new SM_DELETE(obj),
+			0 => new SM_DELETE(obj, false),
+			11 => new SM_DELETE(obj, Aion.GameServer.Model.Animations.ObjectDeleteAnimation.JUMP_IN),
+			19 => new SM_DELETE(obj, Aion.GameServer.Model.Animations.ObjectDeleteAnimation.DELAYED),
+			var a => throw new NotSupportedException($"No SM_DELETE ctor mapping for animationId {a}"),
 		};
 	}
 
