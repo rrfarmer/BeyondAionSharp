@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("weather")]
 public class MapWeatherData
 {
-    [XmlElement("map")] private List<WeatherTable> weatherData;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("map")] public List<WeatherTable> weatherData;
 
     [XmlIgnore] private readonly Dictionary<int, WeatherTable> mapWeather = new();
 

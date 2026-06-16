@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("kill_bounties")]
 public class KillBountyData
 {
-    [XmlElement("kill_bounty")] private List<KillBountyTemplate> killBounties;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("kill_bounty")] public List<KillBountyTemplate> killBounties;
 
     public int Size()
     {

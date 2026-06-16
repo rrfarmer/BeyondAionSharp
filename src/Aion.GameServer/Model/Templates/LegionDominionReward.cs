@@ -6,9 +6,10 @@ namespace Aion.GameServer.Model.Templates;
 [XmlType("LegionDominionReward")]
 public class LegionDominionReward
 {
-    [XmlAttribute("rank")] protected int rank;
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("count")] protected int count;
+    // Public so XmlSerializer can populate them (JAXB used protected fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("rank")] public int rank;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public int count;
 
     public int GetRank()
     {

@@ -8,14 +8,16 @@ public class WeatherEntry
 {
     public static readonly WeatherEntry NONE = new WeatherEntry();
 
-    [XmlAttribute("zone_id")] private int zoneId;
-    [XmlAttribute("code")] private int weatherCode;
-    [XmlAttribute("rank")] private int rank;
-    [XmlAttribute("name")] private string weatherName;
-    [XmlAttribute("before")] private bool isBefore;
-    [XmlAttribute("after")] private bool isAfter;
+    // Public so XmlSerializer can populate them (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("zone_id")] public int zoneId;
+    [XmlAttribute("code")] public int weatherCode;
+    [XmlAttribute("rank")] public int rank;
+    [XmlAttribute("name")] public string weatherName;
+    [XmlAttribute("before")] public bool isBefore;
+    [XmlAttribute("after")] public bool isAfter;
 
-    private WeatherEntry()
+    // Public parameterless ctor required by XmlSerializer (JAXB used the implicit no-arg ctor).
+    public WeatherEntry()
     {
     }
 

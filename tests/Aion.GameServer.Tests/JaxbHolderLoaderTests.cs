@@ -121,6 +121,129 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(44L, hotspot.GetPrice());
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesMapWeatherDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("weather_table.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<MapWeatherData>(path);
+
+        // AfterUnmarshal built the mapId->table index and nulled the raw list.
+        Assert.True(data.Size() > 0);
+
+        // First map row: <map id="210010000" zone_count="2" weather_count="7">.
+        var table = data.GetWeather(210010000);
+        Assert.NotNull(table);
+        Assert.Equal(210010000, table!.GetMapId());
+        Assert.Equal(2, table.GetZoneCount());
+        Assert.Equal(7, table.GetWeatherCount());
+
+        // First table entry: <table zone_id="1" rank="2" code="1" name="RAIN"/>.
+        var entries = table.GetZoneData();
+        Assert.NotNull(entries);
+        var first = entries[0];
+        Assert.Equal(1, first.GetZoneId());
+        Assert.Equal(1, first.GetCode());
+        Assert.Equal("RAIN", first.GetWeatherName());
+        Assert.False(first.IsBefore());
+        Assert.False(first.IsAfter());
+
+        // <table zone_id="1" rank="1" code="2" name="RAIN" before="true"/>.
+        Assert.True(entries[1].IsBefore());
+
+        Assert.Null(data.GetWeather(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesKillBountyDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("bounties", "kill_bounties.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<KillBountyData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        var bounties = data.GetKillBounties();
+        Assert.NotNull(bounties);
+
+        // First row: <kill_bounty type="PER_X_KILLS" kill_count="1000" is_random_reward="true">
+        //   <bounty item_id="168310018" count="1" />
+        var first = bounties[0];
+        Assert.Equal(Model.Templates.Bounty.BountyType.PER_X_KILLS, first.GetBountyType());
+        Assert.Equal(1000, first.GetKillCount());
+        Assert.True(first.IsRandomReward());
+        // race omitted on this row -> defaults to PC_ALL.
+        Assert.Equal(Model.Race.PC_ALL, first.GetRaceCondition());
+
+        var firstBounties = first.GetBounties();
+        Assert.NotNull(firstBounties);
+        Assert.Single(firstBounties!);
+        Assert.Equal(168310018, firstBounties![0].GetItemId());
+        Assert.Equal(1, firstBounties[0].GetCount());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesBaseDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("base", "base_locations.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<BaseData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        var templates = data.GetAllBaseTemplates();
+        Assert.NotNull(templates);
+
+        // First row: <base_location id="2120" type="CASUAL" world="210020000" />
+        var first = templates[0];
+        Assert.Equal(2120, first.GetId());
+        Assert.Equal(210020000, first.GetWorldId());
+        Assert.Equal(Model.Base.BaseType.CASUAL, first.GetType_());
+        // default_occupier omitted -> defaults to BALAUR.
+        Assert.Equal(Model.Base.BaseOccupier.BALAUR, first.GetDefaultOccupier());
+
+        // A PANESTERRA_FACTION_CAMP row carries an explicit default_occupier enum.
+        var ivy = templates.First(t => t.GetId() == 4211);
+        Assert.Equal(Model.Base.BaseType.PANESTERRA_FACTION_CAMP, ivy.GetType_());
+        Assert.Equal(Model.Base.BaseOccupier.IVY_TEMPLE, ivy.GetDefaultOccupier());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesLegionDominionDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("legion_dominion_template.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<LegionDominionData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        var locations = data.GetLocationTemplates();
+        Assert.NotNull(locations);
+
+        // First row: <legion_dominion_location id="1" world_id="220080000"
+        //   zone="LegionDominionArea_01" race="ASMODIANS" name_id="404623">
+        var first = locations[0];
+        Assert.Equal(1, first.GetId());
+        Assert.Equal(220080000, first.GetWorldId());
+        Assert.Equal("LegionDominionArea_01", first.GetZone());
+        Assert.Equal(Model.Race.ASMODIANS, first.GetRace());
+        Assert.Equal(404623, first.GetL10nId());
+
+        var rewards = first.GetRewards();
+        Assert.NotNull(rewards);
+        Assert.True(rewards!.Count > 0);
+        // First reward: <reward rank="1" item_id="188053896" count="1" />
+        Assert.Equal(1, rewards[0].GetRank());
+        Assert.Equal(188053896, rewards[0].GetItemId());
+        Assert.Equal(1, rewards[0].GetCount());
+
+        // <invasion_rift key_item_id="185000233" rift_id="2289" />
+        var rift = first.GetInvasionRift();
+        Assert.NotNull(rift);
+        Assert.Equal(185000233, rift!.GetKeyItemId());
+        Assert.Equal(2289, rift.GetRiftId());
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

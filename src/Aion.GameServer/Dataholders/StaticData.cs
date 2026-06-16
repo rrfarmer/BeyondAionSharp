@@ -251,7 +251,7 @@ public sealed partial class StaticData
 
 	public LegionDominionTable LegionDominions { get; }
 
-	public LegionDominionData LegionDominionDataDh { get; } = new();
+	public LegionDominionData LegionDominionDataDh { get; private set; } = new();
 
 	public AtreianPassportTable AtreianPassports { get; }
 
@@ -279,7 +279,7 @@ public sealed partial class StaticData
 	public TownSpawnsData TownSpawns { get; } = new();
 	public SkillChargeData SkillCharges { get; } = new();
 	public MotionData Motions { get; } = new();
-	public MapWeatherData MapWeathers { get; } = new();
+	public MapWeatherData MapWeathers { get; private set; } = new();
 	public EventData Events { get; } = new();
 	public PanelSkillsData PanelSkillsDataDh { get; } = new();
 	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; } = new();
@@ -293,7 +293,7 @@ public sealed partial class StaticData
 	public ShieldData ShieldDataDh { get; } = new();
 	public RoadData RoadDataDh { get; private set; } = new();
 	public MultiReturnItemData MultiReturnItemDataDh { get; } = new();
-	public KillBountyData KillBountyDataDh { get; } = new();
+	public KillBountyData KillBountyDataDh { get; private set; } = new();
 	public InstanceBuffData InstanceBuffDataDh { get; } = new();
 	public HousePartsData HousePartsDataDh { get; } = new();
 	public HouseNpcsData HouseNpcsDataDh { get; } = new();
@@ -302,7 +302,7 @@ public sealed partial class StaticData
 	public FlyRingData FlyRingDataDh { get; } = new();
 	public FlyPathData FlyPathDataDh { get; } = new();
 	public CuringObjectsData CuringObjectsDataDh { get; private set; } = new();
-	public BaseData BaseDataDh { get; } = new();
+	public BaseData BaseDataDh { get; private set; } = new();
 	public AssembledNpcsData AssembledNpcsDataDh { get; } = new();
 	public TitleData TitleDataDh { get; } = new();
 	public NpcData NpcDataDh { get; } = new();
@@ -351,6 +351,10 @@ public sealed partial class StaticData
 		CuringObjectsDataDh = TryLoadHolder(CuringObjectsDataDh, Path.Combine(staticDataDirectory, "curing_objects", "curing_objects.xml"), logger);
 		RoadDataDh = TryLoadHolder(RoadDataDh, Path.Combine(staticDataDirectory, "roads", "roads.xml"), logger);
 		HotspotDataDh = TryLoadHolder(HotspotDataDh, Path.Combine(staticDataDirectory, "hotspot_template.xml"), logger);
+		MapWeathers = TryLoadHolder(MapWeathers, Path.Combine(staticDataDirectory, "weather_table.xml"), logger);
+		KillBountyDataDh = TryLoadHolder(KillBountyDataDh, Path.Combine(staticDataDirectory, "bounties", "kill_bounties.xml"), logger);
+		BaseDataDh = TryLoadHolder(BaseDataDh, Path.Combine(staticDataDirectory, "base", "base_locations.xml"), logger);
+		LegionDominionDataDh = TryLoadHolder(LegionDominionDataDh, Path.Combine(staticDataDirectory, "legion_dominion_template.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

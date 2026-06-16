@@ -6,8 +6,9 @@ namespace Aion.GameServer.Model.Templates;
 [XmlType("LegionDominionInvasionRift")]
 public class LegionDominionInvasionRift
 {
-    [XmlAttribute("key_item_id")] private int keyItemId;
-    [XmlAttribute("rift_id")] private int riftId;
+    // Public so XmlSerializer can populate them (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("key_item_id")] public int keyItemId;
+    [XmlAttribute("rift_id")] public int riftId;
 
     public int GetRiftId()
     {

@@ -7,10 +7,11 @@ namespace Aion.GameServer.Model.Templates.World;
 [XmlType("WeatherTable")]
 public class WeatherTable
 {
-    [XmlElement("table")] protected List<WeatherEntry> zoneData;
-    [XmlAttribute("weather_count")] protected int weatherCount;
-    [XmlAttribute("zone_count")] protected int zoneCount;
-    [XmlAttribute("id")] protected int mapId;
+    // Public so XmlSerializer can populate them (JAXB used private/protected fields via @XmlAccessorType(FIELD)).
+    [XmlElement("table")] public List<WeatherEntry> zoneData;
+    [XmlAttribute("weather_count")] public int weatherCount;
+    [XmlAttribute("zone_count")] public int zoneCount;
+    [XmlAttribute("id")] public int mapId;
 
     public List<WeatherEntry> GetZoneData()
     {

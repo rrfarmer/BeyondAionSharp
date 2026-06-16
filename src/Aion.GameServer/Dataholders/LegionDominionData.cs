@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("legion_dominion_template")]
 public class LegionDominionData
 {
-    [XmlElement("legion_dominion_location")] private List<LegionDominionLocationTemplate> ldl;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("legion_dominion_location")] public List<LegionDominionLocationTemplate> ldl;
 
     public int Size()
     {

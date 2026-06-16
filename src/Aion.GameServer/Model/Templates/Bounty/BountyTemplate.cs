@@ -6,8 +6,9 @@ namespace Aion.GameServer.Model.Templates.Bounty;
 [XmlType("Bounty")]
 public class BountyTemplate
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("count")] private int count;
+    // Public so XmlSerializer can populate them (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public int count;
 
     public int GetItemId()
     {

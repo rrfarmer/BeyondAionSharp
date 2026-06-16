@@ -8,13 +8,14 @@ namespace Aion.GameServer.Model.Templates;
 [XmlType("LegionDominionLocation")]
 public class LegionDominionLocationTemplate : IL10n
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("world_id")] protected int worldId;
-    [XmlAttribute("race")] protected Race race;
-    [XmlAttribute("zone")] protected string zone;
-    [XmlAttribute("name_id")] protected int nameId;
-    [XmlElement("reward")] protected List<LegionDominionReward> reward;
-    [XmlElement("invasion_rift")] protected LegionDominionInvasionRift invasionRift;
+    // Public so XmlSerializer can populate them (JAXB used protected fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("world_id")] public int worldId;
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("zone")] public string zone;
+    [XmlAttribute("name_id")] public int nameId;
+    [XmlElement("reward")] public List<LegionDominionReward> reward;
+    [XmlElement("invasion_rift")] public LegionDominionInvasionRift invasionRift;
 
     public int GetId()
     {

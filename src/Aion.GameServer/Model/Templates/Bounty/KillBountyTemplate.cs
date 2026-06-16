@@ -8,12 +8,13 @@ namespace Aion.GameServer.Model.Templates.Bounty;
 [XmlType("KillBounty")]
 public class KillBountyTemplate
 {
-    [XmlAttribute("type")] private BountyType type;
-    [XmlAttribute("kill_count")] private int killCount;
-    [XmlAttribute("is_random_reward")] private bool isRandomReward;
-    [XmlAttribute("race")] private Race race = Race.PC_ALL;
+    // Public so XmlSerializer can populate them (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("type")] public BountyType type;
+    [XmlAttribute("kill_count")] public int killCount;
+    [XmlAttribute("is_random_reward")] public bool isRandomReward;
+    [XmlAttribute("race")] public Race race = Race.PC_ALL;
 
-    [XmlElement("bounty")] private List<BountyTemplate> bounties;
+    [XmlElement("bounty")] public List<BountyTemplate> bounties;
 
     public BountyType GetBountyType()
     {

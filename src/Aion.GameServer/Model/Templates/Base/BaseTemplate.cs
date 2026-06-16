@@ -7,11 +7,12 @@ namespace Aion.GameServer.Model.Templates.Base;
 [XmlType("Base")]
 public class BaseTemplate
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("world")] protected int world;
-    [XmlAttribute("type")] protected BaseType type;
-    [XmlAttribute("color")] protected BaseColorType color;
-    [XmlAttribute("default_occupier")] protected BaseOccupier defaultOccupier = BaseOccupier.BALAUR;
+    // Public so XmlSerializer can populate them (JAXB used protected fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("world")] public int world;
+    [XmlAttribute("type")] public BaseType type;
+    [XmlAttribute("color")] public BaseColorType color;
+    [XmlAttribute("default_occupier")] public BaseOccupier defaultOccupier = BaseOccupier.BALAUR;
 
     public int GetId()
     {
