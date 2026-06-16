@@ -70,7 +70,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcResourceStatsService>();
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<WorldNpcSoloDpRewardService>();
-			services.AddSingleton<WorldNpcTeamApRewardService>();
 			services.AddSingleton<PvpApRewardService>();
 			services.AddSingleton<PvpDpRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
@@ -78,9 +77,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<AturamSkyFortressApRewardService>();
 			services.AddSingleton<EternalBastionApRewardService>();
 			services.AddSingleton<StonespearReachApRewardService>();
-			services.AddSingleton<WorldNpcCombatStateService>();
-			services.AddSingleton<WorldNpcCombatEventService>();
-			services.AddSingleton<WorldNpcCastingInterruptService>();
 			services.AddSingleton<WorldNpcSkillResultCalculationService>();
 			services.AddSingleton<Action<WorldNpc>>(
 				serviceProvider => npc =>
@@ -95,9 +91,6 @@ var builder = Host.CreateDefaultBuilder(args)
 				serviceProvider => objectId =>
 				{
 					serviceProvider.GetRequiredService<WorldNpcLifeStatsService>().Clear(objectId);
-					serviceProvider.GetRequiredService<WorldNpcCombatStateService>().Clear(objectId);
-					serviceProvider.GetRequiredService<WorldNpcCombatEventService>().Clear(objectId);
-					serviceProvider.GetRequiredService<WorldNpcCastingInterruptService>().Clear(objectId);
 				});
 			// Reworked WorldNpcSkillDamageService/Fanout/burn-island (depended on the deleted PlayerEnterWorldService god's
 			// SaveIdianPolishBurn/SaveItemChargeBurn mutations; gameplay covered by faithful ItemChargeService/ChargeInfo
