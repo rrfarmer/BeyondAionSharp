@@ -139,6 +139,17 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_ATTACK_RESPONSE.json")]
 	[InlineData("SM_ABNORMAL_STATE.json")]
 	[InlineData("SM_ABNORMAL_EFFECT.json")]
+	[InlineData("SM_USE_OBJECT.json")]
+	[InlineData("SM_PONG.json")]
+	[InlineData("SM_PING_RESPONSE.json")]
+	[InlineData("SM_POSITION_SELF.json")]
+	[InlineData("SM_SUMMON_USESKILL.json")]
+	[InlineData("SM_ICON_INFO.json")]
+	[InlineData("SM_ASCENSION_MORPH.json")]
+	[InlineData("SM_QUEST_REPEAT.json")]
+	[InlineData("SM_SECURITY_TOKEN.json")]
+	[InlineData("SM_MOTION_SCALAR.json")]
+	[InlineData("SM_MACRO_RESULT.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -181,6 +192,17 @@ public sealed class GoldenPacketFixtureTests
 		"SM_ATTACK_RESPONSE" => ReconstructAttackResponse(inputs),
 		"SM_ABNORMAL_STATE" => new SM_ABNORMAL_STATE(new List<Aion.GameServer.SkillEngine.Model.Effect>(), inputs.GetProperty("abnormals").GetInt32(), inputs.GetProperty("slot").GetInt32()),
 		"SM_ABNORMAL_EFFECT" => new SM_ABNORMAL_EFFECT(new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>()), inputs.GetProperty("abnormals").GetInt32(), new List<Aion.GameServer.SkillEngine.Model.Effect>(), inputs.GetProperty("slots").GetInt32()),
+		"SM_USE_OBJECT" => new SM_USE_OBJECT(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("actionType").GetInt32()),
+		"SM_PONG" => new SM_PONG(),
+		"SM_PING_RESPONSE" => new SM_PING_RESPONSE(),
+		"SM_POSITION_SELF" => new SM_POSITION_SELF(inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle(), (byte)inputs.GetProperty("heading").GetInt32()),
+		"SM_SUMMON_USESKILL" => new SM_SUMMON_USESKILL(inputs.GetProperty("summonId").GetInt32(), inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("skillLvl").GetInt32(), inputs.GetProperty("targetId").GetInt32()),
+		"SM_ICON_INFO" => new SM_ICON_INFO(inputs.GetProperty("buffId").GetInt32(), inputs.GetProperty("display").GetBoolean()),
+		"SM_ASCENSION_MORPH" => new SM_ASCENSION_MORPH(inputs.GetProperty("inascension").GetInt32()),
+		"SM_QUEST_REPEAT" => new SM_QUEST_REPEAT(inputs.GetProperty("repeatableQuests").EnumerateArray().Select(e => e.GetInt32()).ToList()),
+		"SM_SECURITY_TOKEN" => new SM_SECURITY_TOKEN(inputs.GetProperty("token").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray()),
+		"SM_MOTION" => ReconstructMotionScalar(inputs),
+		"SM_MACRO_RESULT" => inputs.GetProperty("code").GetInt32() == 0 ? SM_MACRO_RESULT.SM_MACRO_CREATED : SM_MACRO_RESULT.SM_MACRO_DELETED,
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -245,6 +267,19 @@ public sealed class GoldenPacketFixtureTests
 		if (targetType == 1 || targetType == 2)
 			return new SM_CASTSPELL(c, spellId, level, targetType, inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle(), castDuration, castSpeed, boost);
 		return new SM_CASTSPELL(c, spellId, level, targetType, inputs.GetProperty("targetObjectId").GetInt32(), castDuration, castSpeed, boost);
+	}
+
+	// SM_MOTION scalar branches: action 2 = (motionId, remainingTime); 5 = (motionId, type); 6 = (motionId).
+	private static SM_MOTION ReconstructMotionScalar(JsonElement inputs)
+	{
+		var motionId = (short)inputs.GetProperty("motionId").GetInt32();
+		return inputs.GetProperty("ctor").GetString() switch
+		{
+			"motionId_remainingTime" => new SM_MOTION(motionId, inputs.GetProperty("remainingTime").GetInt32()),
+			"motionId_type" => new SM_MOTION(motionId, (byte)inputs.GetProperty("type").GetInt32()),
+			"motionId" => new SM_MOTION(motionId),
+			_ => throw new NotSupportedException("Unknown SM_MOTION scalar ctor"),
+		};
 	}
 
 	private static SM_RIFT_ANNOUNCE ReconstructRiftAnnounce(JsonElement inputs)
