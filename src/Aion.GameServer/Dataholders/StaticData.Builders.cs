@@ -2166,17 +2166,6 @@ public sealed partial class StaticData
 			ReadIntAttribute(reader, "heading"));
 	}
 
-	private static global::Aion.GameServer.World.WorldPosition ReadVortexPoint(XmlReader reader)
-	{
-		// Java parity: model/templates/vortex/HomePoint|ResurrectionPoint|StartPoint world position attributes.
-		return new global::Aion.GameServer.World.WorldPosition(
-			ReadRequiredIntAttribute(reader, "map"),
-			ReadFloatAttribute(reader, "x"),
-			ReadFloatAttribute(reader, "y"),
-			ReadFloatAttribute(reader, "z"),
-			(byte)ReadOptionalIntAttribute(reader, "h", 0));
-	}
-
 	private sealed class QuestDropBuilder
 	{
 		private readonly List<PendingQuestDrop> _questDrops = [];
@@ -2355,36 +2344,4 @@ public sealed partial class StaticData
 		}
 	}
 
-	private sealed class VortexLocationBuilder
-	{
-		public VortexLocationBuilder(int id, string defendersRace, string invadersRace)
-		{
-			Id = id;
-			DefendersRace = defendersRace;
-			InvadersRace = invadersRace;
-		}
-
-		private int Id { get; }
-
-		private string DefendersRace { get; }
-
-		private string InvadersRace { get; }
-
-		public global::Aion.GameServer.World.WorldPosition? HomePoint { get; set; }
-
-		public global::Aion.GameServer.World.WorldPosition? ResurrectionPoint { get; set; }
-
-		public global::Aion.GameServer.World.WorldPosition? StartPoint { get; set; }
-
-		public VortexLocationSummary ToSummary()
-		{
-			return new VortexLocationSummary(
-				Id,
-				DefendersRace,
-				InvadersRace,
-				HomePoint ?? throw new FormatException($"Vortex location {Id} is missing home_point."),
-				ResurrectionPoint ?? throw new FormatException($"Vortex location {Id} is missing resurrection_point."),
-				StartPoint ?? throw new FormatException($"Vortex location {Id} is missing start_point."));
-		}
-	}
 }

@@ -34,7 +34,6 @@ public sealed partial class StaticData
 		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
 		RiftLocationTable riftLocations,
-		VortexLocationTable vortexLocations,
 		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		StaticDoorTable staticDoors,
@@ -91,7 +90,6 @@ public sealed partial class StaticData
 		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
 		RiftLocations = riftLocations;
-		VortexLocations = vortexLocations;
 		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		StaticDoors = staticDoors;
@@ -175,8 +173,6 @@ public sealed partial class StaticData
 	public WalkerVersionTable WalkerVersions { get; }
 
 	public RiftLocationTable RiftLocations { get; }
-
-	public VortexLocationTable VortexLocations { get; }
 
 	// Faithful VortexData holder (empty-default; runtime XML load deferred) - summary->template re-point.
 	public VortexData VortexDataDh { get; private set; } = new();
@@ -626,7 +622,6 @@ public sealed partial class StaticData
 		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var riftLocations = new List<RiftLocationSummary>();
-		var vortexLocations = new List<VortexLocationSummary>();
 		var npcTemplates = new List<NpcTemplateSummary>();
 		var npcSpawns = new List<NpcSpawnSummary>();
 		var staticDoors = new List<StaticDoorSummary>();
@@ -688,7 +683,6 @@ public sealed partial class StaticData
 		NpcSpawnSpotBuilder? currentNpcRiftSpawnSpot = null;
 		NpcVortexSpawnBuilder? currentNpcVortexSpawn = null;
 		NpcSpawnSpotBuilder? currentNpcVortexSpawnSpot = null;
-		VortexLocationBuilder? currentVortexLocation = null;
 		TradeListTemplateBuilder? currentTradeListTemplate = null;
 		TradeListTemplateKind currentTradeListTemplateKind = TradeListTemplateKind.TradeList;
 		int currentTradeListTemplateDepth = -1;
@@ -970,12 +964,6 @@ public sealed partial class StaticData
 					currentNpcVortexSpawnId = 0;
 					currentNpcVortexSpawnDepth = -1;
 					currentNpcVortexSpawnGroupIndex = 0;
-				}
-
-				if (reader.Depth == 2 && reader.LocalName == "vortex_location" && currentVortexLocation != null)
-				{
-					vortexLocations.Add(currentVortexLocation.ToSummary());
-					currentVortexLocation = null;
 				}
 
 				if (reader.Depth == 2 && reader.LocalName == "quest" && currentQuestDropBuilder != null)
@@ -1314,16 +1302,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "vortex_location" && elementPath.GetValueOrDefault(1) == "dimensional_vortex")
-			{
-				// Java parity: dataholders/VortexData.afterUnmarshal converts every VortexTemplate into a VortexLocation keyed by id.
-				currentVortexLocation = new VortexLocationBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					reader.GetAttribute("defends_race") ?? string.Empty,
-					reader.GetAttribute("offence_race") ?? string.Empty);
-				continue;
-			}
-
 			if (reader.Depth == 2 && reader.LocalName == "npc_faction" && elementPath.GetValueOrDefault(1) == "npc_factions")
 			{
 				npcFactions.Add(
@@ -1522,25 +1500,6 @@ public sealed partial class StaticData
 						currentGlobalDropRule.Zones.Add(reader.GetAttribute("zone") ?? string.Empty);
 						continue;
 				}
-			}
-
-			if (currentVortexLocation != null && reader.Depth == 3 && elementPath.GetValueOrDefault(2) == "vortex_location")
-			{
-				var point = ReadVortexPoint(reader);
-				switch (reader.LocalName)
-				{
-					case "home_point":
-						currentVortexLocation.HomePoint = point;
-						break;
-					case "resurrection_point":
-						currentVortexLocation.ResurrectionPoint = point;
-						break;
-					case "start_point":
-						currentVortexLocation.StartPoint = point;
-						break;
-				}
-
-				continue;
 			}
 
 			if (currentNpcSpawnMapId != 0
@@ -3166,7 +3125,6 @@ public sealed partial class StaticData
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new RiftLocationTable(riftLocations.AsReadOnly()),
-			new VortexLocationTable(vortexLocations.AsReadOnly()),
 			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new StaticDoorTable(staticDoors.AsReadOnly()),
