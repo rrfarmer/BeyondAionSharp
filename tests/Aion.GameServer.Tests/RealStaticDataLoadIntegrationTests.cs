@@ -378,6 +378,18 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(50.0f, bonus1Mods!.GetChance());
 		Assert.Contains(bonus1Mods.GetModifiers(), m => m.GetName() == Model.Stats.Container.StatEnum.MAXHP);
 
+		// housing/houses.xml: faithful HouseData (Java parity DataManager.init binds data.houseData). Previously hollow
+		// new() -> always empty -> no house addresses/lands (TownService/HousingService/HouseController). A known address
+		// (id 10001, land 325001) resolves with map 700010000, and its owning HousingLand was threaded back via the
+		// cascaded HouseAddress.AfterUnmarshal(land) (GetLand() is load-bearing) -> teleport_npc 810003, id 325001.
+		Assert.True(sd.HouseDataDh.Size() > 0, "HouseDataDh empty after boot");
+		var addr10001 = sd.HouseDataDh.GetAddress(10001);
+		Assert.NotNull(addr10001);
+		Assert.Equal(700010000, addr10001!.GetMapId());
+		Assert.NotNull(addr10001.GetLand());
+		Assert.Equal(325001, addr10001.GetLand().GetId());
+		Assert.Equal(810003, addr10001.GetLand().GetTeleportNpcId());
+
 		// quest_script_data/ merged dir: faithful XMLQuests (16-subtype polymorphic DSL). XML_QUESTS non-empty at
 		// boot and a known scripted quest resolves to its correct subtype (poeta.xml xml_quest 1127 -> XmlQuestData).
 		Assert.True(sd.XmlQuests.GetAllQuests().Count > 0, "XmlQuests empty after boot");

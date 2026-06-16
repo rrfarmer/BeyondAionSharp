@@ -531,6 +531,14 @@ public sealed partial class StaticData
 		// ModifiersTemplate cone (polymorphic add/rate/sub/set/abs StatFunctions) bind via the now-public fields;
 		// ItemRandomBonusData.AfterUnmarshal builds the per-StatBonusType id map inside TryLoadHolder.
 		ItemRandomBonusDataDh = TryLoadHolder(ItemRandomBonusDataDh, Path.Combine(staticDataDirectory, "items", "item_random_bonuses.xml"), logger);
+		// Java imports the single file housing/houses.xml (<house_lands> root) and binds it to StaticData.houseData;
+		// feeds DataManager.HOUSE_DATA, read by TownService + HousingService (and HouseController/SM_HOUSE_* via
+		// HouseAddress.GetLand()). Was a hollow new() -> always empty -> no house addresses/lands. HousingLand/
+		// HouseAddress/Sale/BuildingCapabilities bind via the now-public fields; HouseAddress's nullable Float/Integer
+		// exit_* attrs bind via string proxies (XmlSerializer can't bind Nullable attrs). HouseData.AfterUnmarshal
+		// cascades each HouseAddress.AfterUnmarshal(land) + Building.AfterUnmarshal(land) children-first (threads the
+		// load-bearing owning HousingLand) before building addressesById (XmlSerializer doesn't auto-fire nested callbacks).
+		HouseDataDh = TryLoadHolder(HouseDataDh, Path.Combine(staticDataDirectory, "housing", "houses.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());

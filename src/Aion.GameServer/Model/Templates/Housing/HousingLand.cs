@@ -12,31 +12,31 @@ public class HousingLand
 {
     [XmlArray("addresses")]
     [XmlArrayItem("address")]
-    private List<HouseAddress> addresses;
+    public List<HouseAddress> addresses;
 
     [XmlArray("buildings")]
     [XmlArrayItem("building")]
-    private List<Building> buildings;
+    public List<Building> buildings;
 
-    [XmlElement("sale")] private Sale sale;
+    [XmlElement("sale")] public Sale sale;
 
-    [XmlElement("fee")] private long fee;
+    [XmlElement("fee")] public long fee;
 
-    [XmlElement("caps")] private BuildingCapabilities caps;
+    [XmlElement("caps")] public BuildingCapabilities caps;
 
-    [XmlAttribute("sign_nosale")] private int signNosale;
+    [XmlAttribute("sign_nosale")] public int signNosale;
 
-    [XmlAttribute("sign_sale")] private int signSale;
+    [XmlAttribute("sign_sale")] public int signSale;
 
-    [XmlAttribute("sign_waiting")] private int signWaiting;
+    [XmlAttribute("sign_waiting")] public int signWaiting;
 
-    [XmlAttribute("sign_home")] private int signHome;
+    [XmlAttribute("sign_home")] public int signHome;
 
-    [XmlAttribute("manager_npc")] private int managerNpc;
+    [XmlAttribute("manager_npc")] public int managerNpc;
 
-    [XmlAttribute("teleport_npc")] private int teleportNpc;
+    [XmlAttribute("teleport_npc")] public int teleportNpc;
 
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("id")] public int id;
 
     public List<HouseAddress> GetAddresses()
     {

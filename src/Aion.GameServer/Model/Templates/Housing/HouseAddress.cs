@@ -8,25 +8,56 @@ public class HouseAddress
 {
     [XmlIgnore] private HousingLand land;
 
-    [XmlAttribute("exit_z")] private float? exitZ;
+    // Java parity: nullable Float/Integer attributes. XmlSerializer cannot bind a Nullable<float>/Nullable<int>
+    // attribute (throws at serializer construction -> whole load aborts -> hollow fallback), so public string proxies
+    // carry the wire value and the backing fields stay the faithful nullable types (null when the attribute is absent).
+    [XmlIgnore] public float? exitZ;
 
-    [XmlAttribute("exit_y")] private float? exitY;
+    [XmlIgnore] public float? exitY;
 
-    [XmlAttribute("exit_x")] private float? exitX;
+    [XmlIgnore] public float? exitX;
 
-    [XmlAttribute("exit_map")] private int? exitMap;
+    [XmlIgnore] public int? exitMap;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("exit_z")]
+    public string ExitZRaw
+    {
+        get => exitZ?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        set => exitZ = string.IsNullOrEmpty(value) ? null : float.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("exit_y")]
+    public string ExitYRaw
+    {
+        get => exitY?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        set => exitY = string.IsNullOrEmpty(value) ? null : float.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
 
-    [XmlAttribute("x")] private float x;
+    [XmlAttribute("exit_x")]
+    public string ExitXRaw
+    {
+        get => exitX?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        set => exitX = string.IsNullOrEmpty(value) ? null : float.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
 
-    [XmlAttribute("town")] private int townId;
+    [XmlAttribute("exit_map")]
+    public string ExitMapRaw
+    {
+        get => exitMap?.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        set => exitMap = string.IsNullOrEmpty(value) ? null : int.Parse(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
 
-    [XmlAttribute("map")] private int map;
+    [XmlAttribute("z")] public float z;
 
-    [XmlAttribute("id")] private int id;
+    [XmlAttribute("y")] public float y;
+
+    [XmlAttribute("x")] public float x;
+
+    [XmlAttribute("town")] public int townId;
+
+    [XmlAttribute("map")] public int map;
+
+    [XmlAttribute("id")] public int id;
 
     // Java parity: afterUnmarshal(Unmarshaller, Object parent) — XmlSerializer has no parent callback; invoked by HousingLand's loader.
     public void AfterUnmarshal(object parent)

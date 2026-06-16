@@ -6,17 +6,17 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlRoot("caps")]
 public class BuildingCapabilities
 {
-    [XmlAttribute("addon")] protected bool addon;
+    [XmlAttribute("addon")] public bool addon;
 
-    [XmlAttribute("emblemId")] protected int emblemId;
+    [XmlAttribute("emblemId")] public int emblemId;
 
-    [XmlAttribute("floor")] protected bool floor;
+    [XmlAttribute("floor")] public bool floor;
 
-    [XmlAttribute("room")] protected bool room;
+    [XmlAttribute("room")] public bool room;
 
-    [XmlAttribute("interior")] protected int interior;
+    [XmlAttribute("interior")] public int interior;
 
-    [XmlAttribute("exterior")] protected int exterior;
+    [XmlAttribute("exterior")] public int exterior;
 
     public bool CanHaveAddon()
     {

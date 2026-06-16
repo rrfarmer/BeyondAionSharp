@@ -11,12 +11,27 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("house_lands")]
 public class HouseData
 {
-    [XmlElement("land")] private List<HousingLand> lands = new();
+    [XmlElement("land")] public List<HousingLand> lands = new();
 
     [XmlIgnore] private Dictionary<int, HouseAddress> addressesById = new();
 
     public void AfterUnmarshal(object parent)
     {
+        // Java parity: JAXB fires each nested HouseAddress/Building afterUnmarshal(parent=HousingLand) during
+        // unmarshal (before this holder's). XmlSerializer fires no nested JAXB callbacks, so cascade them
+        // children-first here: HouseAddress.AfterUnmarshal threads its owning HousingLand (load-bearing —
+        // address.GetLand() is read across HouseController/HousingService/SM_HOUSE_*), and Building.AfterUnmarshal
+        // builds partsByType (a no-op for the bare <building id default/> rows in houses.xml, which fall back to
+        // HOUSE_BUILDING_DATA). Then build the addressesById index exactly as Java's afterUnmarshal.
+        foreach (HousingLand land in lands)
+        {
+            if (land.GetAddresses() != null)
+                foreach (HouseAddress address in land.GetAddresses())
+                    address.AfterUnmarshal(land);
+            if (land.GetBuildings() != null)
+                foreach (Building building in land.GetBuildings())
+                    building.AfterUnmarshal(land);
+        }
         foreach (HousingLand land in lands)
         {
             foreach (HouseAddress address in land.GetAddresses())

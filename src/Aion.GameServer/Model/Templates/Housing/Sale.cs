@@ -6,11 +6,11 @@ namespace Aion.GameServer.Model.Templates.Housing;
 [XmlRoot("sale")]
 public class Sale
 {
-    [XmlAttribute("point_price")] protected int pointPrice;
+    [XmlAttribute("point_price")] public int pointPrice;
 
-    [XmlAttribute("gold_price")] protected long goldPrice;
+    [XmlAttribute("gold_price")] public long goldPrice;
 
-    [XmlAttribute("level")] protected int level;
+    [XmlAttribute("level")] public int level;
 
     public int GetPointPrice()
     {
