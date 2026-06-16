@@ -8,9 +8,18 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("CollectItemQuestOperation")]
 public class CollectItemQuestOperation : QuestOperation
 {
-    [XmlElement("true")] protected QuestOperations _true;
-    [XmlElement("false")] protected QuestOperations _false;
-    [XmlAttribute("removeItems")] protected bool? removeItems;
+    [XmlElement("true")] public QuestOperations _true;
+    [XmlElement("false")] public QuestOperations _false;
+
+    // Nullable Boolean removeItems: XmlSerializer rejects [XmlAttribute] on Nullable<bool>, so bind via a string proxy.
+    public bool? removeItems;
+
+    [XmlAttribute("removeItems")]
+    public string RemoveItemsRaw
+    {
+        get => removeItems?.ToString().ToLowerInvariant();
+        set => removeItems = string.IsNullOrEmpty(value) ? (bool?)null : bool.Parse(value);
+    }
 
     public override void DoOperate(QuestEnv env)
     {

@@ -14,8 +14,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
 [XmlInclude(typeof(OnTalkEvent))]
 public abstract class QuestEvent
 {
-    [XmlElement("conditions")] protected QuestConditions conditions;
-    [XmlElement("operations")] protected QuestOperations operations;
+    [XmlElement("conditions")] public QuestConditions conditions;
+    [XmlElement("operations")] public QuestOperations operations;
 
     private List<int> ids;
 

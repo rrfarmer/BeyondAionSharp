@@ -12,7 +12,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("WorkOrdersData")]
 public class WorkOrdersData : XMLQuest
 {
-    [XmlElement("give_component")] protected List<QuestItems> giveComponents;
+    [XmlElement("give_component")] public List<QuestItems> giveComponents;
 
     protected List<int> startNpcIds;
 
@@ -23,7 +23,7 @@ public class WorkOrdersData : XMLQuest
         set => startNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("recipe_id")] protected int recipeId;
+    [XmlAttribute("recipe_id")] public int recipeId;
 
     public int GetRecipeId()
     {

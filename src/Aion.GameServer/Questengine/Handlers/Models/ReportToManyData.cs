@@ -11,8 +11,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("ReportToManyData")]
 public class ReportToManyData : XMLQuest
 {
-    [XmlElement("npc_infos")] private List<NpcInfos> npcInfos;
-    [XmlAttribute("start_item_id")] private int startItemId;
+    [XmlElement("npc_infos")] public List<NpcInfos> npcInfos;
+    [XmlAttribute("start_item_id")] public int startItemId;
 
     private List<int> startNpcIds;
 
@@ -23,7 +23,7 @@ public class ReportToManyData : XMLQuest
         set => startNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("start_dialog_id")] private int startDialogId;
+    [XmlAttribute("start_dialog_id")] public int startDialogId;
 
     public override void Register(QuestEngine questEngine)
     {

@@ -11,8 +11,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("GiveItemOperation")]
 public class GiveItemOperation : QuestOperation
 {
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("count")] protected int count;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public int count;
 
     public override void DoOperate(QuestEnv env)
     {

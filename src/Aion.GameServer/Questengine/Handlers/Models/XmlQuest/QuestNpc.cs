@@ -9,8 +9,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest;
 [XmlType("QuestNpc")]
 public class QuestNpc
 {
-    [XmlElement("dialog")] protected List<QuestDialog> dialog;
-    [XmlAttribute("id")] protected int id;
+    [XmlElement("dialog")] public List<QuestDialog> dialog;
+    [XmlAttribute("id")] public int id;
 
     public bool Operate(QuestEnv env, QuestState qs)
     {

@@ -13,9 +13,9 @@ public class QuestConditions
     [XmlElement("pc_inventory", typeof(PcInventoryCondition))]
     [XmlElement("quest_var", typeof(QuestVarCondition))]
     [XmlElement("dialog_id", typeof(DialogIdCondition))]
-    protected List<QuestCondition> conditions;
+    public List<QuestCondition> conditions;
 
-    [XmlAttribute("operate")] protected ConditionUnionType operate;
+    [XmlAttribute("operate")] public ConditionUnionType operate;
 
     public bool CheckConditionOfSet(QuestEnv env)
     {

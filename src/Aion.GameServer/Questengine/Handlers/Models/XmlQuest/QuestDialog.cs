@@ -9,9 +9,9 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest;
 [XmlType("DialogAction")]
 public class QuestDialog
 {
-    [XmlElement("conditions")] protected QuestConditions conditions;
-    [XmlElement("operations")] protected QuestOperations operations;
-    [XmlAttribute("id")] protected int id;
+    [XmlElement("conditions")] public QuestConditions conditions;
+    [XmlElement("operations")] public QuestOperations operations;
+    [XmlAttribute("id")] public int id;
 
     public bool Operate(QuestEnv env, QuestState qs)
     {

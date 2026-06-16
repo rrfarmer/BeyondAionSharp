@@ -2249,6 +2249,97 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetTemplate(-1));
     }
 
+    [Fact]
+    public void LoadFromFiles_PopulatesXmlQuestsFromRealXml_Merged_PolymorphicBind()
+    {
+        // Java imports quest_script_data/ (89 files, each its own <quest_scripts> root): deserialize each raw,
+        // merge every file's polymorphic XMLQuest rows, then run AfterUnmarshal once (builds questsById).
+        var dir = Path.GetDirectoryName(ResolveStaticDataFile("quest_script_data", "poeta.xml"))!;
+
+        XMLQuests? data = null;
+        foreach (var file in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var part = JaxbHolderLoader.DeserializeFile<XMLQuests>(file);
+            if (data == null) data = part; else data.MergePending(part);
+        }
+        Assert.NotNull(data);
+        JaxbHolderLoader.RunAfterUnmarshal(data!);
+
+        // Polymorphic graph bound (not silently empty): thousands of scripted quests across 15 subtypes.
+        Assert.True(data!.GetAllQuests().Count > 3000);
+
+        // --- Simple subtype: monster_hunt id=1102 in poeta.xml binds to MonsterHuntData with start_npc_ids. ---
+        var hunt = data.GetQuest(1102);
+        Assert.NotNull(hunt);
+        var huntData = Assert.IsType<QuestEngine.Handlers.Models.MonsterHuntData>(hunt);
+        Assert.Equal(1102, huntData.GetId());
+        // start_npc_ids="203057" bound via the StartNpcIdsRaw string proxy.
+        Assert.Equal("203057", huntData.StartNpcIdsRaw);
+
+        // --- item_collecting id=1108 binds to ItemCollectingData with start+end npc ids. ---
+        var collect = data.GetQuest(1108);
+        Assert.NotNull(collect);
+        Assert.IsType<QuestEngine.Handlers.Models.ItemCollectingData>(collect);
+
+        // --- Deep DSL cone: xml_quest id=1127 → XmlQuestData with nested OnTalkEvent/conditions/operations intact. ---
+        var scripted = data.GetQuest(1127);
+        Assert.NotNull(scripted);
+        var xmlQuest = Assert.IsType<QuestEngine.Handlers.Models.XmlQuestData>(scripted);
+        Assert.Equal(1127, xmlQuest.GetId());
+
+        // onTalkEvents bound (the polymorphic Events cone): exactly one <on_talk_event ids="700001">.
+        Assert.NotNull(xmlQuest.onTalkEvents);
+        var onTalk = Assert.Single(xmlQuest.onTalkEvents);
+        Assert.Contains(700001, onTalk.GetIds());
+
+        // <conditions operate="AND"><quest_status value="START" op="EQUAL"/></conditions> bound (Conditions cone).
+        Assert.NotNull(onTalk.conditions);
+        Assert.Equal(QuestEngine.Model.ConditionUnionType.AND, onTalk.conditions!.operate);
+        var cond = Assert.Single(onTalk.conditions.conditions);
+        var statusCond = Assert.IsType<QuestEngine.Handlers.Models.XmlQuest.Conditions.QuestStatusCondition>(cond);
+        Assert.Equal(QuestEngine.Model.ConditionOperation.EQUAL, statusCond.GetOp());
+
+        // Two <var> blocks (value 0 and 1) each with a <npc>/<dialog>/<operations> chain.
+        Assert.Equal(2, onTalk.var.Count);
+
+        // var value="0" → npc 700001 → dialog -1 → operations → <npc_use> (ActionItemUseOperation, polymorphic).
+        var var0 = onTalk.var.Single(v => v.value == 0);
+        var npc0 = Assert.Single(var0.npc);
+        Assert.Equal(700001, npc0.id);
+        var dialog0 = Assert.Single(npc0.dialog);
+        Assert.Equal(-1, dialog0.id);
+        Assert.NotNull(dialog0.operations);
+        var npcUse = Assert.IsType<QuestEngine.Handlers.Models.XmlQuest.Operations.ActionItemUseOperation>(
+            Assert.Single(dialog0.operations!.operations));
+        // <finish><give_item .../><set_quest_var .../></finish> nested operations bound.
+        Assert.NotNull(npcUse.finish);
+        Assert.Equal(2, npcUse.finish!.operations.Count);
+        Assert.IsType<QuestEngine.Handlers.Models.XmlQuest.Operations.GiveItemOperation>(npcUse.finish.operations[0]);
+        var giveItem = (QuestEngine.Handlers.Models.XmlQuest.Operations.GiveItemOperation)npcUse.finish.operations[0];
+        Assert.Equal(182200215, giveItem.itemId);
+        Assert.Equal(1, giveItem.count);
+        Assert.IsType<QuestEngine.Handlers.Models.XmlQuest.Operations.SetQuestVarOperation>(npcUse.finish.operations[1]);
+
+        // var value="1" → npc 798008 → two dialogs (31 npc_dialog, 39 collect_items with true/false branches).
+        var var1 = onTalk.var.Single(v => v.value == 1);
+        var npc1 = Assert.Single(var1.npc);
+        Assert.Equal(798008, npc1.id);
+        Assert.Equal(2, npc1.dialog.Count);
+        var dialog39 = npc1.dialog.Single(d => d.id == 39);
+        var collectOp = Assert.IsType<QuestEngine.Handlers.Models.XmlQuest.Operations.CollectItemQuestOperation>(
+            Assert.Single(dialog39.operations!.operations));
+        // <true><set_quest_status status="REWARD"/><npc_dialog id="5"/></true> branch bound.
+        Assert.NotNull(collectOp._true);
+        Assert.Equal(2, collectOp._true!.operations.Count);
+        var setStatus = Assert.IsType<QuestEngine.Handlers.Models.XmlQuest.Operations.SetQuestStatusOperation>(collectOp._true.operations[0]);
+        Assert.Equal(QuestEngine.Model.QuestStatus.REWARD, setStatus.status);
+        // <false><npc_dialog id="2716"/></false> branch bound.
+        Assert.NotNull(collectOp._false);
+        Assert.Single(collectOp._false!.operations);
+
+        Assert.Null(data.GetQuest(-99999));
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

@@ -12,7 +12,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 [XmlInclude(typeof(QuestStatusCondition))]
 public abstract class QuestCondition
 {
-    [XmlAttribute("op")] protected ConditionOperation op;
+    [XmlAttribute("op")] public ConditionOperation op;
 
     public ConditionOperation GetOp()
     {

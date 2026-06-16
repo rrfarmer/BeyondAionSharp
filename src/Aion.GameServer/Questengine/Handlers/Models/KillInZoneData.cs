@@ -28,9 +28,9 @@ public class KillInZoneData : XMLQuest
         set => endNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("amount")] protected int amount;
-    [XmlAttribute("min_rank")] protected int minRank;
-    [XmlAttribute("level_diff")] protected int levelDiff;
+    [XmlAttribute("amount")] public int amount;
+    [XmlAttribute("min_rank")] public int minRank;
+    [XmlAttribute("level_diff")] public int levelDiff;
 
     private List<string> zones;
 
@@ -41,7 +41,7 @@ public class KillInZoneData : XMLQuest
         set => zones = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
     }
 
-    [XmlAttribute("start_dist_npc_id")] protected int startDistanceNpc;
+    [XmlAttribute("start_dist_npc_id")] public int startDistanceNpc;
 
     public override void Register(QuestEngine questEngine)
     {

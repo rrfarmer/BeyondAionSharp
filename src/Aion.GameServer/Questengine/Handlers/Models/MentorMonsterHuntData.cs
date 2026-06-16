@@ -12,8 +12,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("MentorMonsterHuntData")]
 public class MentorMonsterHuntData : MonsterHuntData
 {
-    [XmlAttribute("min_mente_level")] protected int minMenteLevel = 1;
-    [XmlAttribute("max_mente_level")] protected int maxMenteLevel = 99;
+    [XmlAttribute("min_mente_level")] public int minMenteLevel = 1;
+    [XmlAttribute("max_mente_level")] public int maxMenteLevel = 99;
 
     public int GetMinMenteLevel()
     {

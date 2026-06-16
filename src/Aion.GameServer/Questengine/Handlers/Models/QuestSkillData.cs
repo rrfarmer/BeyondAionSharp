@@ -18,9 +18,9 @@ public class QuestSkillData
         set => skillIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("start_var")] protected int startVar;
-    [XmlAttribute("end_var")] protected int endVar;
-    [XmlAttribute("var_num")] protected int varNum;
+    [XmlAttribute("start_var")] public int startVar;
+    [XmlAttribute("end_var")] public int endVar;
+    [XmlAttribute("var_num")] public int varNum;
 
     public List<int> GetSkillIds()
     {

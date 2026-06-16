@@ -9,10 +9,10 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("CraftingRewardsData")]
 public class CraftingRewardsData : XMLQuest
 {
-    [XmlAttribute("start_npc_id")] protected int startNpcId;
-    [XmlAttribute("end_npc_id")] protected int endNpcId;
-    [XmlAttribute("skill_id")] protected int skillId;
-    [XmlAttribute("level_reward")] protected int levelReward;
+    [XmlAttribute("start_npc_id")] public int startNpcId;
+    [XmlAttribute("end_npc_id")] public int endNpcId;
+    [XmlAttribute("skill_id")] public int skillId;
+    [XmlAttribute("level_reward")] public int levelReward;
 
     public override void Register(QuestEngine questEngine)
     {

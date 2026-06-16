@@ -9,7 +9,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 [XmlType("NpcIdCondition")]
 public class NpcIdCondition : QuestCondition
 {
-    [XmlAttribute("values")] protected int values;
+    [XmlAttribute("values")] public int values;
 
     public override bool DoCheck(QuestEnv env)
     {

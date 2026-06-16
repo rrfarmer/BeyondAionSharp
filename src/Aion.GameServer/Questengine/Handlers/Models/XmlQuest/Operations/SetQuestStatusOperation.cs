@@ -12,7 +12,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("SetQuestStatusOperation")]
 public class SetQuestStatusOperation : QuestOperation
 {
-    [XmlAttribute("status")] protected QuestStatus status;
+    [XmlAttribute("status")] public QuestStatus status;
 
     public override void DoOperate(QuestEnv env)
     {

@@ -9,8 +9,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 [XmlType("PcInventoryCondition")]
 public class PcInventoryCondition : QuestCondition
 {
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("count")] protected long count;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("count")] public long count;
 
     public int GetItemId()
     {

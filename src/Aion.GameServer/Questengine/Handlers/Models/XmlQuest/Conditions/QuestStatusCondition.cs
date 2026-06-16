@@ -9,8 +9,17 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 [XmlType("QuestStatusCondition")]
 public class QuestStatusCondition : QuestCondition
 {
-    [XmlAttribute("value")] protected QuestStatus value;
-    [XmlAttribute("quest_id")] protected int? questId;
+    [XmlAttribute("value")] public QuestStatus value;
+
+    // Nullable Integer quest_id: XmlSerializer rejects [XmlAttribute] on Nullable<int>, so bind via a string proxy.
+    public int? questId;
+
+    [XmlAttribute("quest_id")]
+    public string QuestIdRaw
+    {
+        get => questId?.ToString();
+        set => questId = string.IsNullOrEmpty(value) ? (int?)null : int.Parse(value);
+    }
 
     public override bool DoCheck(QuestEnv env)
     {

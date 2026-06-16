@@ -11,7 +11,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("SkillUseData")]
 public class SkillUseData : XMLQuest
 {
-    [XmlElement("skill")] protected List<QuestSkillData> skills;
+    [XmlElement("skill")] public List<QuestSkillData> skills;
 
     protected List<int> startNpcIds;
     protected List<int> endNpcIds;

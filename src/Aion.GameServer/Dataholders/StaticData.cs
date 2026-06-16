@@ -467,6 +467,11 @@ public sealed partial class StaticData
 		// <pet_feed> root (single file): faithful PetFeedData feeds DataManager.PET_FEED_DATA. PetFlavour/PetRewards/
 		// PetFeedResult bind public fields; <food group="..."> maps to the FoodType enum by wire-name.
 		PetFeedDataDh = TryLoadHolder(PetFeedDataDh, Path.Combine(staticDataDirectory, "pets", "pet_feed.xml"), logger);
+		// Java imports the quest_script_data/ dir (89 files, each its own <quest_scripts> root) with
+		// recursiveImport, so deserialize each file raw, merge every file's polymorphic <xml_quest>/<monster_hunt>/...
+		// rows then run AfterUnmarshal once (builds questsById). The 16-subtype [XmlElement(typeof(...))] map +
+		// deep Events/Conditions/Operations cone bind via the now-public [Xml*] members. Feeds DataManager.XML_QUESTS.
+		XmlQuests = TryLoadMergedHolder<XMLQuests>(Path.Combine(staticDataDirectory, "quest_script_data"), (m, p) => m.MergePending(p), logger);
 		// <world_maps> root (single file): faithful WorldMapsData feeds DataManager.WORLD_MAPS_DATA. The holder is
 		// IEnumerable (collection-typed to XmlSerializer), so the file is read into WorldMapsDataDto and SetData builds
 		// the mapsById index. WorldMapTemplate flags="..." wire tokens map to ZoneAttributes via the FlagsRaw proxy.

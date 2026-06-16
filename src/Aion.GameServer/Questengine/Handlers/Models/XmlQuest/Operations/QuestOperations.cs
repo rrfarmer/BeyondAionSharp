@@ -16,9 +16,17 @@ public class QuestOperations
     [XmlElement("npc_use", typeof(ActionItemUseOperation))]
     [XmlElement("set_quest_var", typeof(SetQuestVarOperation))]
     [XmlElement("collect_items", typeof(CollectItemQuestOperation))]
-    protected List<QuestOperation> operations;
+    public List<QuestOperation> operations;
 
-    [XmlAttribute("override")] protected bool? @override;
+    // Nullable Boolean override: XmlSerializer rejects [XmlAttribute] on Nullable<bool>, so bind via a string proxy.
+    public bool? @override;
+
+    [XmlAttribute("override")]
+    public string OverrideRaw
+    {
+        get => @override?.ToString().ToLowerInvariant();
+        set => @override = string.IsNullOrEmpty(value) ? (bool?)null : bool.Parse(value);
+    }
 
     public bool IsOverride()
     {

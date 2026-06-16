@@ -18,7 +18,7 @@ public class NpcInfos
         set => npcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("movie")] private int movie;
+    [XmlAttribute("movie")] public int movie;
 
     public List<int> GetNpcIds()
     {

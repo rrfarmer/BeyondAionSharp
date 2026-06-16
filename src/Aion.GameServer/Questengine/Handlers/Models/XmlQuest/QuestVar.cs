@@ -8,8 +8,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest;
 [XmlType("QuestVar")]
 public class QuestVar
 {
-    [XmlElement("npc")] protected List<QuestNpc> npc;
-    [XmlAttribute("value")] protected int value;
+    [XmlElement("npc")] public List<QuestNpc> npc;
+    [XmlAttribute("value")] public int value;
 
     public bool Operate(QuestEnv env, QuestState qs)
     {

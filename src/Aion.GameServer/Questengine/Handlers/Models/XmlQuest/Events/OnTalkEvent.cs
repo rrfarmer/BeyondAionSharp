@@ -8,7 +8,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
 [XmlType("OnTalkEvent")]
 public class OnTalkEvent : QuestEvent
 {
-    [XmlElement("var")] protected List<QuestVar> var;
+    [XmlElement("var")] public List<QuestVar> var;
 
     public override bool Operate(QuestEnv env)
     {

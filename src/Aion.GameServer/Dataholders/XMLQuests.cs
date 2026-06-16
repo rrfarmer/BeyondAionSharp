@@ -24,7 +24,7 @@ public class XMLQuests
     [XmlElement("item_order", typeof(ItemOrdersData))]
     [XmlElement("work_order", typeof(WorkOrdersData))]
     [XmlElement("report_on_levelup", typeof(ReportOnLevelUpData))]
-    private List<XMLQuest> data;
+    public List<XMLQuest> data;
 
     [XmlIgnore] private readonly Dictionary<int, XMLQuest> questsById = new();
 
@@ -53,5 +53,18 @@ public class XMLQuests
     {
         this.data = data;
         AfterUnmarshal(null);
+    }
+
+    /// <summary>
+    /// Merge another raw-deserialized holder's pending <c>data</c> rows into this one (merged-folder load:
+    /// Java imports the quest_script_data/ dir, every file its own &lt;quest_scripts&gt; root). Called by
+    /// StaticData.TryLoadMergedHolder before the single final AfterUnmarshal builds questsById.
+    /// </summary>
+    public void MergePending(XMLQuests other)
+    {
+        if (other?.data == null)
+            return;
+        data ??= new List<XMLQuest>();
+        data.AddRange(other.data);
     }
 }

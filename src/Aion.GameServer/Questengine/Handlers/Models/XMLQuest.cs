@@ -24,9 +24,9 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlInclude(typeof(XmlQuestData))]
 public abstract class XMLQuest
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("movie")] protected int questMovie;
-    [XmlAttribute("mission")] protected bool mission;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("movie")] public int questMovie;
+    [XmlAttribute("mission")] public bool mission;
 
     public int GetId()
     {

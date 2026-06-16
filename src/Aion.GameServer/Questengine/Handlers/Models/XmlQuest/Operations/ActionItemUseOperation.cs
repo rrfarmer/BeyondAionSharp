@@ -14,7 +14,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("ActionItemUseOperation")]
 public class ActionItemUseOperation : QuestOperation
 {
-    [XmlElement("finish")] protected QuestOperations finish;
+    [XmlElement("finish")] public QuestOperations finish;
 
     public override void DoOperate(QuestEnv env)
     {

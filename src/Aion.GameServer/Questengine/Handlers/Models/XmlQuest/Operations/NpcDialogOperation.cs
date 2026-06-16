@@ -11,8 +11,17 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("NpcDialogOperation")]
 public class NpcDialogOperation : QuestOperation
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("quest_id")] protected int? questId;
+    [XmlAttribute("id")] public int id;
+
+    // Nullable Integer quest_id: XmlSerializer rejects [XmlAttribute] on Nullable<int>, so bind via a string proxy.
+    public int? questId;
+
+    [XmlAttribute("quest_id")]
+    public string QuestIdRaw
+    {
+        get => questId?.ToString();
+        set => questId = string.IsNullOrEmpty(value) ? (int?)null : int.Parse(value);
+    }
 
     public override void DoOperate(QuestEnv env)
     {

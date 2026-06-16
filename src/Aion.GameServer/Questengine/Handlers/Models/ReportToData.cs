@@ -28,7 +28,7 @@ public class ReportToData : XMLQuest
         set => endNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("start_dialog_id")] private int startDialogId;
+    [XmlAttribute("start_dialog_id")] public int startDialogId;
 
     public override void Register(QuestEngine questEngine)
     {

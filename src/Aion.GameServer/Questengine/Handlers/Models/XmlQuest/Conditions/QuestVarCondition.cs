@@ -9,8 +9,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 [XmlType("QuestVarCondition")]
 public class QuestVarCondition : QuestCondition
 {
-    [XmlAttribute("value")] protected int value;
-    [XmlAttribute("var_id")] protected int varId;
+    [XmlAttribute("value")] public int value;
+    [XmlAttribute("var_id")] public int varId;
 
     public override bool DoCheck(QuestEnv env)
     {

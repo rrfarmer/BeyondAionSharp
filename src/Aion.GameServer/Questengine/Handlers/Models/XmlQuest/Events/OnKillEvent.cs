@@ -13,8 +13,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Events;
 [XmlType("OnKillEvent")]
 public class OnKillEvent : QuestEvent
 {
-    [XmlElement("monster")] protected List<Monster> monster;
-    [XmlElement("complite")] protected QuestOperations complite;
+    [XmlElement("monster")] public List<Monster> monster;
+    [XmlElement("complite")] public QuestOperations complite;
 
     public List<Monster> GetMonsters()
     {

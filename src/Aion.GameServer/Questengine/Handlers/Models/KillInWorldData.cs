@@ -28,9 +28,9 @@ public class KillInWorldData : XMLQuest
         set => endNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("amount")] protected int amount;
-    [XmlAttribute("min_rank")] protected int minRank;
-    [XmlAttribute("level_diff")] protected int levelDiff;
+    [XmlAttribute("amount")] public int amount;
+    [XmlAttribute("min_rank")] public int minRank;
+    [XmlAttribute("level_diff")] public int levelDiff;
 
     protected List<int> worldIds;
 
@@ -41,10 +41,10 @@ public class KillInWorldData : XMLQuest
         set => worldIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("invasion_world")] protected int invasionWorld;
-    [XmlAttribute("start_dialog_id")] protected int startDialogId;
-    [XmlAttribute("start_dist_npc_id")] protected int startDistanceNpcId;
-    [XmlAttribute("end_dialog_id")] protected int endDialogId;
+    [XmlAttribute("invasion_world")] public int invasionWorld;
+    [XmlAttribute("start_dialog_id")] public int startDialogId;
+    [XmlAttribute("start_dist_npc_id")] public int startDistanceNpcId;
+    [XmlAttribute("end_dialog_id")] public int endDialogId;
 
     public override void Register(QuestEngine questEngine)
     {

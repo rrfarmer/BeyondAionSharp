@@ -9,7 +9,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Conditions;
 [XmlType("DialogIdCondition")]
 public class DialogIdCondition : QuestCondition
 {
-    [XmlAttribute("value")] protected int value;
+    [XmlAttribute("value")] public int value;
 
     public int GetValue()
     {

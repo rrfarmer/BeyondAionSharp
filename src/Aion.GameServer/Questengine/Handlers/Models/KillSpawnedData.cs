@@ -10,7 +10,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("KillSpawnedData")]
 public class KillSpawnedData : MonsterHuntData
 {
-    [XmlElement("monster")] protected List<Monster> monster;
+    [XmlElement("monster")] public List<Monster> monster;
 
     public override void Register(QuestEngine questEngine)
     {

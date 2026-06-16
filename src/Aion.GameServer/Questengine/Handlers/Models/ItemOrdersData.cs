@@ -9,9 +9,9 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("ItemOrdersData")]
 public class ItemOrdersData : XMLQuest
 {
-    [XmlAttribute("talk_npc_id1")] protected int talkNpcId1;
-    [XmlAttribute("talk_npc_id2")] protected int talkNpcId2;
-    [XmlAttribute("end_npc_id")] protected int endNpcId;
+    [XmlAttribute("talk_npc_id1")] public int talkNpcId1;
+    [XmlAttribute("talk_npc_id2")] public int talkNpcId2;
+    [XmlAttribute("end_npc_id")] public int endNpcId;
 
     public override void Register(QuestEngine questEngine)
     {

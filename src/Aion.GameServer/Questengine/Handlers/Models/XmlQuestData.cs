@@ -12,8 +12,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("XmlQuest")]
 public class XmlQuestData : XMLQuest
 {
-    [XmlElement("on_talk_event")] protected List<OnTalkEvent> onTalkEvents;
-    [XmlElement("on_kill_event")] protected List<OnKillEvent> onKillEvents;
+    [XmlElement("on_talk_event")] public List<OnTalkEvent> onTalkEvents;
+    [XmlElement("on_kill_event")] public List<OnKillEvent> onKillEvents;
 
     protected List<int> startNpcIds;
     protected List<int> endNpcIds;

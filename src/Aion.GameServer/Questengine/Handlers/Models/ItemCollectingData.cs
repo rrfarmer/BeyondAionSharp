@@ -28,12 +28,12 @@ public class ItemCollectingData : XMLQuest
         set => endNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("next_npc_id")] protected int nextNpcId;
-    [XmlAttribute("start_zone")] protected string startZone;
-    [XmlAttribute("start_dialog_id")] protected int startDialogId;
-    [XmlAttribute("start_dialog_id2")] protected int startDialogId2;
-    [XmlAttribute("check_ok_dialog_id")] protected int checkOkDialogId;
-    [XmlAttribute("check_fail_dialog_id")] protected int checkFailDialogId;
+    [XmlAttribute("next_npc_id")] public int nextNpcId;
+    [XmlAttribute("start_zone")] public string startZone;
+    [XmlAttribute("start_dialog_id")] public int startDialogId;
+    [XmlAttribute("start_dialog_id2")] public int startDialogId2;
+    [XmlAttribute("check_ok_dialog_id")] public int checkOkDialogId;
+    [XmlAttribute("check_fail_dialog_id")] public int checkFailDialogId;
 
     public override void Register(QuestEngine questEngine)
     {

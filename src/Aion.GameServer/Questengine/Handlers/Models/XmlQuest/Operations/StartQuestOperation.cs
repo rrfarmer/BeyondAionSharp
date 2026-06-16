@@ -10,7 +10,7 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("StartQuestOperation")]
 public class StartQuestOperation : QuestOperation
 {
-    [XmlAttribute("id")] protected int id;
+    [XmlAttribute("id")] public int id;
 
     public override void DoOperate(QuestEnv env)
     {

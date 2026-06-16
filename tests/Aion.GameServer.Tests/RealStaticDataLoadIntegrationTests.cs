@@ -286,6 +286,14 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(sanctumMap);
 		Assert.Equal(World.WorldType.ELYSEA, sanctumMap!.GetWorldType());
 		Assert.True(sanctumMap.IsPvpAllowed());
+
+		// quest_script_data/ merged dir: faithful XMLQuests (16-subtype polymorphic DSL). XML_QUESTS non-empty at
+		// boot and a known scripted quest resolves to its correct subtype (poeta.xml xml_quest 1127 -> XmlQuestData).
+		Assert.True(sd.XmlQuests.GetAllQuests().Count > 0, "XmlQuests empty after boot");
+		var scriptedQuest = sd.XmlQuests.GetQuest(1127);
+		Assert.NotNull(scriptedQuest);
+		Assert.IsType<QuestEngine.Handlers.Models.XmlQuestData>(scriptedQuest);
+		Assert.IsType<QuestEngine.Handlers.Models.MonsterHuntData>(sd.XmlQuests.GetQuest(1102));
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

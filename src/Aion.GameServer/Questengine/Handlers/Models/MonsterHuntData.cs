@@ -33,8 +33,8 @@ public class MonsterHuntData : XMLQuest
         set => endNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("start_dialog_id")] protected int startDialogId;
-    [XmlAttribute("end_dialog_id")] protected int endDialogId;
+    [XmlAttribute("start_dialog_id")] public int startDialogId;
+    [XmlAttribute("end_dialog_id")] public int endDialogId;
 
     protected List<int> aggroNpcIds;
 
@@ -45,11 +45,11 @@ public class MonsterHuntData : XMLQuest
         set => aggroNpcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("invasion_world")] protected int invasionWorld;
-    [XmlAttribute("start_zone")] protected string startZone;
-    [XmlAttribute("start_dist_npc_id")] protected int startDistanceNpcId;
-    [XmlAttribute("end_reward")] protected bool reward;
-    [XmlAttribute("end_reward_next_step")] protected bool rewardNextStep;
+    [XmlAttribute("invasion_world")] public int invasionWorld;
+    [XmlAttribute("start_zone")] public string startZone;
+    [XmlAttribute("start_dist_npc_id")] public int startDistanceNpcId;
+    [XmlAttribute("end_reward")] public bool reward;
+    [XmlAttribute("end_reward_next_step")] public bool rewardNextStep;
 
     public override void Register(QuestEngine questEngine)
     {

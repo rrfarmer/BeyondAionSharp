@@ -9,9 +9,9 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models;
 [XmlType("Monster")]
 public class Monster
 {
-    [XmlAttribute("var")] protected int var;
-    [XmlAttribute("start_var")] protected int startVar;
-    [XmlAttribute("end_var")] protected int endVar;
+    [XmlAttribute("var")] public int var;
+    [XmlAttribute("start_var")] public int startVar;
+    [XmlAttribute("end_var")] public int endVar;
 
     private List<int> npcIds;
 
@@ -22,9 +22,9 @@ public class Monster
         set => npcIds = value == null ? null : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("npc_seq")] private int npcSequence;
-    [XmlAttribute("step")] private int step;
-    [XmlAttribute("spawner_object_id")] protected int spawnerObjectId;
+    [XmlAttribute("npc_seq")] public int npcSequence;
+    [XmlAttribute("step")] public int step;
+    [XmlAttribute("spawner_object_id")] public int spawnerObjectId;
 
     public int GetVar() { return var; }
     public void SetVar(int value) { this.var = value; }

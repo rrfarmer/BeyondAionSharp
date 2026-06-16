@@ -12,8 +12,8 @@ namespace Aion.GameServer.QuestEngine.Handlers.Models.XmlQuest.Operations;
 [XmlType("SetQuestVarOperation")]
 public class SetQuestVarOperation : QuestOperation
 {
-    [XmlAttribute("var_id")] protected int varId;
-    [XmlAttribute("value")] protected int value;
+    [XmlAttribute("var_id")] public int varId;
+    [XmlAttribute("value")] public int value;
 
     public override void DoOperate(QuestEnv env)
     {
