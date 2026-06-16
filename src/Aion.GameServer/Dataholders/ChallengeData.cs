@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("challenge_tasks")]
 public class ChallengeData
 {
-    [XmlElement("task")] protected List<ChallengeTaskTemplate> task;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on a protected field).
+    [XmlElement("task")] public List<ChallengeTaskTemplate> task;
 
     [XmlIgnore] protected Dictionary<int, ChallengeTaskTemplate> tasksById = new();
 

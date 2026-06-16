@@ -6,11 +6,12 @@ namespace Aion.GameServer.Model.Templates.Challenge;
 [XmlType("ChallengeQuest")]
 public class ChallengeQuestTemplate
 {
-    [XmlAttribute("score")] protected int score;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on protected fields).
+    [XmlAttribute("score")] public int score;
 
-    [XmlAttribute("repeat_count")] protected int repeatCount;
+    [XmlAttribute("repeat_count")] public int repeatCount;
 
-    [XmlAttribute("id")] protected int id;
+    [XmlAttribute("id")] public int id;
 
     public int GetScore()
     {

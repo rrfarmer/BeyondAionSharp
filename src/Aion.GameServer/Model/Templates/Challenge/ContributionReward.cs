@@ -6,10 +6,11 @@ namespace Aion.GameServer.Model.Templates.Challenge;
 [XmlType("ContributionReward")]
 public class ContributionReward
 {
-    [XmlAttribute("item_count")] protected int itemCount;
-    [XmlAttribute("reward_id")] protected int rewardId;
-    [XmlAttribute("number")] protected int number;
-    [XmlAttribute("rank")] protected int rank;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on protected fields).
+    [XmlAttribute("item_count")] public int itemCount;
+    [XmlAttribute("reward_id")] public int rewardId;
+    [XmlAttribute("number")] public int number;
+    [XmlAttribute("rank")] public int rank;
 
     public int GetItemCount()
     {

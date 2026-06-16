@@ -54,7 +54,7 @@ public sealed class DataManager
 	public static PetFeedData PET_FEED_DATA => SD.PetFeedDataDh;
 	public static NpcSkillData NPC_SKILL_DATA => SD.NpcSkillDataDh;
 	public static CosmeticItemsData COSMETIC_ITEMS_DATA => SD.CosmeticItemsDataDh;
-	public static ChallengeData CHALLENGE_DATA { get; } = new();
+	public static ChallengeData CHALLENGE_DATA => SD.ChallengeDataDh;
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;
 	public static WarehouseExpandData WAREHOUSEEXPANDER_DATA => SD.WarehouseExpandDataDh;
 	public static CubeExpandData CUBEEXPANDER_DATA => SD.CubeExpandDataDh;

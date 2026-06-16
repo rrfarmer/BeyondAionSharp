@@ -330,6 +330,15 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(pepento);
 		Assert.Contains(pepento!.SelectMany(c => c.GetItems()), r => r.GetItemId() == 152000064);
 
+		// quest_data/challenge_tasks.xml: faithful ChallengeData (Java parity DataManager.init binds data.challengeData).
+		// Previously hollow new() -> always empty -> ChallengeTaskService had no tasks. Known task id 300 (LEGION/ELYOS)
+		// resolves and its quest id 17000 maps back to task 300; proves the quest cone bound + AfterUnmarshal indexed.
+		Assert.True(sd.ChallengeDataDh.Size() > 0, "ChallengeDataDh empty after boot");
+		var task300 = sd.ChallengeDataDh.GetTaskByTaskId(300);
+		Assert.NotNull(task300);
+		Assert.Equal(Model.Templates.Challenge.ChallengeType.LEGION, task300!.GetType_());
+		Assert.Equal(300, sd.ChallengeDataDh.GetTaskByQuestId(17000)!.GetId());
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));

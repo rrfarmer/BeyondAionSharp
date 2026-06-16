@@ -9,23 +9,32 @@ namespace Aion.GameServer.Model.Templates.Challenge;
 [XmlType("ChallengeTask")]
 public class ChallengeTaskTemplate : IL10n
 {
-    [XmlElement("quest")] private List<ChallengeQuestTemplate> quest;
-    [XmlElement("contrib")] private List<ContributionReward> contrib;
-    [XmlElement("reward")] private ChallengeReward reward;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on private fields).
+    [XmlElement("quest")] public List<ChallengeQuestTemplate> quest;
+    [XmlElement("contrib")] public List<ContributionReward> contrib;
+    [XmlElement("reward")] public ChallengeReward reward;
 
-    [XmlAttribute("repeat")] private bool repeat;
-    [XmlAttribute("town_residence")] private bool townResidence;
-    [XmlAttribute("name_id")] private int nameId;
-    [XmlAttribute("max_level")] private int maxLevel;
-    [XmlAttribute("min_level")] private int minLevel;
+    [XmlAttribute("repeat")] public bool repeat;
+    [XmlAttribute("town_residence")] public bool townResidence;
+    [XmlAttribute("name_id")] public int nameId;
+    [XmlAttribute("max_level")] public int maxLevel;
+    [XmlAttribute("min_level")] public int minLevel;
 
-    // Java parity: nullable Integer prev_task.
-    [XmlAttribute("prev_task")] private int? prevTask;
+    // Java parity: nullable Integer prev_task. XmlSerializer cannot encode Nullable<int> as an attribute, so it
+    // binds via a string proxy that leaves the backing field null when the attribute is absent (mirrors JAXB).
+    [XmlIgnore] private int? prevTask;
 
-    [XmlAttribute("race")] private Race race;
-    [XmlAttribute("type")] private ChallengeType type;
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("legion_level_task")] private bool legionLevelTask = false;
+    [XmlAttribute("prev_task")]
+    public string PrevTaskRaw
+    {
+        get => prevTask?.ToString();
+        set => prevTask = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
+
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("type")] public ChallengeType type;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("legion_level_task")] public bool legionLevelTask = false;
 
     public List<ChallengeQuestTemplate> GetQuests()
     {

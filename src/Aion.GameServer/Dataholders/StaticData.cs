@@ -311,6 +311,7 @@ public sealed partial class StaticData
 	public StaticDoorData StaticDoorDataDh { get; private set; } = new();
 	public SkillTreeData SkillTreeDataDh { get; private set; } = new();
 	public DecomposableItemsData DecomposableItemsDataDh { get; private set; } = new();
+	public ChallengeData ChallengeDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -498,6 +499,13 @@ public sealed partial class StaticData
 		// ResultedItem/RandomItem.AfterUnmarshal children-first (validates reward item ids vs live ITEM_DATA +
 		// defaults/validates min/max counts) before the parent indexing (XmlSerializer doesn't auto-fire nested callbacks).
 		DecomposableItemsDataDh = TryLoadDecomposableItems(Path.Combine(staticDataDirectory, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
+		// Java imports the single file quest_data/challenge_tasks.xml (<challenge_tasks> root) and binds it to
+		// StaticData.challengeData; feeds DataManager.CHALLENGE_DATA, read by ChallengeTaskService/ChallengeTasksDAO
+		// for legion/town challenge tasks. Was a hollow new() -> always empty -> challenge tasks unavailable.
+		// ChallengeTaskTemplate/ChallengeQuestTemplate/ContributionReward/ChallengeReward attrs bind via the now-
+		// public fields; the nullable Integer attrs (prev_task/msg_id/value) bind via string proxies; race/type
+		// enums bind by member name; ChallengeData.AfterUnmarshal (tasksById index) fires inside TryLoadHolder.
+		ChallengeDataDh = TryLoadHolder(ChallengeDataDh, Path.Combine(staticDataDirectory, "quest_data", "challenge_tasks.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
