@@ -42,7 +42,7 @@ public sealed class DataManager
 	public static TitleData TITLE_DATA => SD.TitleDataDh;
 	public static AtreianPassportData ATREIAN_PASSPORT_DATA => SD.AtreianPassportDataDh;
 	public static WalkerData WALKER_DATA => SD.WalkerDataDh;
-	public static DecomposableItemsData DECOMPOSABLE_ITEMS_DATA { get; } = new();
+	public static DecomposableItemsData DECOMPOSABLE_ITEMS_DATA => SD.DecomposableItemsDataDh;
 	public static ItemPurificationData ITEM_PURIFICATION_DATA => SD.ItemPurificationDataDh;
 	public static GoodsListData GOODSLIST_DATA => SD.GoodsListDataDh;
 	public static PlayerInitialData PLAYER_INITIAL_DATA { get; } = new();

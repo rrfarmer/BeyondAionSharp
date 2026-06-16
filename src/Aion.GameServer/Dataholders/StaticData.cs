@@ -310,6 +310,7 @@ public sealed partial class StaticData
 	public InstanceExitData InstanceExitDataDh { get; private set; } = new();
 	public StaticDoorData StaticDoorDataDh { get; private set; } = new();
 	public SkillTreeData SkillTreeDataDh { get; private set; } = new();
+	public DecomposableItemsData DecomposableItemsDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -489,6 +490,14 @@ public sealed partial class StaticData
 		// (now-public skillTemplates) are merged via MergePending, then the single AfterUnmarshal builds the
 		// per-class/race templates map + templatesById (XmlSerializer doesn't auto-fire JAXB's afterUnmarshal).
 		SkillTreeDataDh = TryLoadMergedHolder<SkillTreeData>(Path.Combine(staticDataDirectory, "skill_tree"), (m, p) => m.MergePending(p), logger);
+		// Java imports the single file decomposable_items/decomposable_items.xml (<decomposable_items> root) and binds
+		// it to StaticData.decomposableItemsData; feeds DataManager.DECOMPOSABLE_ITEMS_DATA, read by DecomposeAction +
+		// CM_SELECT_DECOMPOSABLE for item-decompose rewards. Was a hollow new() -> always empty -> decompose yielded
+		// nothing. DecomposableItemInfo/ExtractedItemsCollection(:ResultedItemsCollection)/ResultedItem/RandomItem
+		// primitive+enum attrs bind via the now-public fields; DecomposableItemsData.AfterUnmarshal cascades each
+		// ResultedItem/RandomItem.AfterUnmarshal children-first (validates reward item ids vs live ITEM_DATA +
+		// defaults/validates min/max counts) before the parent indexing (XmlSerializer doesn't auto-fire nested callbacks).
+		DecomposableItemsDataDh = TryLoadDecomposableItems(Path.Combine(staticDataDirectory, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
@@ -496,6 +505,42 @@ public sealed partial class StaticData
 		catch (Exception ex)
 		{
 			logger?.LogError(ex, "Failed to process global drop rules (gd_npc_names expansion).");
+		}
+		try
+		{
+			// Java parity: DataManager.init() calls DecomposeAction.validateRandomItemIds() after field assignment —
+			// validates the hardcoded random-reward item-id arrays (chunkEarth/chunkSand/chunkRock/...) against the
+			// live ITEM_DATA. Independent of the DECOMPOSABLE holder; throws on an invalid id exactly as Java.
+			Model.Templates.Items.Actions.DecomposeAction.ValidateRandomItemIds();
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to validate decompose random reward item ids.");
+		}
+	}
+
+	// DECOMPOSABLE_ITEMS needs the in-progress ItemData for its children-first AfterUnmarshal (ResultedItem validates
+	// reward ids vs ITEM_DATA), but the DataManager singleton bridge is not registered yet during this load. So
+	// deserialize WITHOUT the auto-AfterUnmarshal (which would route through the un-registered DataManager.ITEM_DATA)
+	// and invoke the ItemData overload explicitly with the already-loaded ItemDataDh. Mirrors Java's StaticDataListener.
+	private static DecomposableItemsData TryLoadDecomposableItems(string xmlFilePath, ItemData itemData, Microsoft.Extensions.Logging.ILogger? logger)
+	{
+		try
+		{
+			if (!File.Exists(xmlFilePath))
+			{
+				logger?.LogWarning("Static data holder file not found, leaving DecomposableItemsData empty: {Path}", xmlFilePath);
+				return new DecomposableItemsData();
+			}
+
+			var holder = LoadingUtils.JaxbHolderLoader.DeserializeFile<DecomposableItemsData>(xmlFilePath);
+			holder.AfterUnmarshal(itemData, null);
+			return holder;
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to load DecomposableItemsData from {Path}; leaving it empty.", xmlFilePath);
+			return new DecomposableItemsData();
 		}
 	}
 

@@ -7,9 +7,10 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("DecomposableItem")]
 public class DecomposableItemInfo
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("selectable")] private bool isSelectable = false;
-    [XmlElement("items")] private List<ExtractedItemsCollection> itemsCollections;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on private fields).
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("selectable")] public bool isSelectable = false;
+    [XmlElement("items")] public List<ExtractedItemsCollection> itemsCollections;
 
     public int GetItemId()
     {

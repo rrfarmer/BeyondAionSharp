@@ -7,8 +7,9 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("ResultedItemsCollection")]
 public class ResultedItemsCollection
 {
-    [XmlElement("item")] private List<ResultedItem> items;
-    [XmlElement("random_item")] private List<RandomItem> randomItems;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on private fields).
+    [XmlElement("item")] public List<ResultedItem> items;
+    [XmlElement("random_item")] public List<RandomItem> randomItems;
 
     public List<ResultedItem> GetItems()
     {

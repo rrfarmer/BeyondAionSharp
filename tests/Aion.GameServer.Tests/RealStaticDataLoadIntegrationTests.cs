@@ -321,6 +321,15 @@ public sealed class RealStaticDataLoadIntegrationTests
 		var rangerLvl10 = sd.SkillTreeDataDh.GetTemplatesFor(Model.PlayerClass.RANGER, 10, Model.Race.ELYOS);
 		Assert.Contains(rangerLvl10, t => t.GetSkillId() == 1);
 
+		// decomposable_items/decomposable_items.xml: faithful DecomposableItemsData (Java parity DataManager.init binds
+		// data.decomposableItemsData). Previously hollow new() -> always empty -> decompose granted nothing. Known
+		// non-selectable box item_id 152000065 (Juicy Pepento) decomposes to item 152000064 (Pepento, min_count 2);
+		// proves the children-first AfterUnmarshal cascade ran (ResultedItem validated vs ITEM_DATA, indexed).
+		Assert.True(sd.DecomposableItemsDataDh.Size() > 0, "DecomposableItemsDataDh empty after boot");
+		var pepento = sd.DecomposableItemsDataDh.GetInfoByItemId(152000065);
+		Assert.NotNull(pepento);
+		Assert.Contains(pepento!.SelectMany(c => c.GetItems()), r => r.GetItemId() == 152000064);
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));

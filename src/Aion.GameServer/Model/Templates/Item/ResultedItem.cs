@@ -12,10 +12,11 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("ResultedItem")]
 public class ResultedItem
 {
-    [XmlAttribute("id")] private int itemId;
-    [XmlAttribute("min_count")] private int minCount = 1;
-    [XmlAttribute("max_count")] private int maxCount;
-    [XmlAttribute("race")] private Race race = Race.PC_ALL;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on private fields).
+    [XmlAttribute("id")] public int itemId;
+    [XmlAttribute("min_count")] public int minCount = 1;
+    [XmlAttribute("max_count")] public int maxCount;
+    [XmlAttribute("race")] public Race race = Race.PC_ALL;
 
     // Java parity: @XmlList @XmlAttribute(name="player_classes") List<PlayerClass> — space-separated.
     private List<PlayerClass> playerClasses;
@@ -32,7 +33,14 @@ public class ResultedItem
     // Java parity: afterUnmarshal(Unmarshaller, Object parent). StaticDataListener (Unmarshaller-keyed) has no C# analog; falls back to DataManager.ITEM_DATA.
     public void AfterUnmarshal(object parent)
     {
-        ItemData itemData = DataManager.ITEM_DATA;
+        AfterUnmarshal(DataManager.ITEM_DATA, parent);
+    }
+
+    // Boot-time overload: during LoadLeafHoldersFromFiles the DataManager singleton bridge is not yet registered,
+    // so the cascading parent (DecomposableItemsData.AfterUnmarshal) passes the in-progress ItemData explicitly —
+    // mirroring Java's StaticDataListener handing the callback the StaticData currently being unmarshalled.
+    public void AfterUnmarshal(ItemData itemData, object parent)
+    {
         if (itemData.GetItemTemplate(itemId) == null)
             throw new ArgumentException("Decomposable reward item ID is invalid: " + itemId);
         if (minCount <= 0)

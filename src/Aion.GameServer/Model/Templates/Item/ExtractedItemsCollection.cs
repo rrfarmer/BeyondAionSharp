@@ -7,9 +7,10 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("ExtractedItemsCollection")]
 public class ExtractedItemsCollection : ResultedItemsCollection, IChance
 {
-    [XmlAttribute("chance")] private float chance = 100f;
-    [XmlAttribute("minlevel")] private int minLevel;
-    [XmlAttribute("maxlevel")] private int maxLevel = 99;
+    // XmlSerializer binds public members only (Java @XmlAccessorType(FIELD) on private fields).
+    [XmlAttribute("chance")] public float chance = 100f;
+    [XmlAttribute("minlevel")] public int minLevel;
+    [XmlAttribute("maxlevel")] public int maxLevel = 99;
 
     public float GetChance()
     {
