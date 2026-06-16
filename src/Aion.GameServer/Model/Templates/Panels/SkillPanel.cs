@@ -9,7 +9,7 @@ namespace Aion.GameServer.Model.Templates.Panels;
 [XmlType("SkillPanel")]
 public class SkillPanel
 {
-    [XmlAttribute("panel_id")] protected sbyte id;
+    [XmlAttribute("panel_id")] public sbyte id;
 
     // Java parity: @XmlAttribute(name="panel_skills") List<Integer> — space-separated attribute.
     protected List<int> skills;

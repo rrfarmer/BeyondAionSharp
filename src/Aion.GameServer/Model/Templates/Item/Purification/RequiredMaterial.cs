@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Items.Purification;
 [XmlRoot("RequiredMaterial")]
 public class RequiredMaterial
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("item_count")] private int itemCount;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("item_count")] public int itemCount;
 
     public int GetItemId()
     {

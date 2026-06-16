@@ -6,15 +6,15 @@ namespace Aion.GameServer.Model.Templates.Spawns;
 [XmlType("HouseSpawn")]
 public class HouseSpawn
 {
-    [XmlAttribute("x")] protected float x;
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] protected float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] protected float z;
+    [XmlAttribute("z")] public float z;
 
-    [XmlAttribute("h")] protected byte h;
+    [XmlAttribute("h")] public byte h;
 
-    [XmlAttribute("type")] protected SpawnType type;
+    [XmlAttribute("type")] public SpawnType type;
 
     public float GetX()
     {

@@ -7,11 +7,11 @@ namespace Aion.GameServer.Model.Templates.Assemblednpc;
 [XmlType("AssembledNpcTemplate")]
 public class AssembledNpcTemplate
 {
-    [XmlAttribute("nr")] private int nr;
-    [XmlAttribute("routeId")] private int routeId;
-    [XmlAttribute("mapId")] private int mapId;
-    [XmlAttribute("liveTime")] private int liveTime;
-    [XmlElement("assembled_part")] private List<AssembledNpcPartTemplate> parts;
+    [XmlAttribute("nr")] public int nr;
+    [XmlAttribute("routeId")] public int routeId;
+    [XmlAttribute("mapId")] public int mapId;
+    [XmlAttribute("liveTime")] public int liveTime;
+    [XmlElement("assembled_part")] public List<AssembledNpcPartTemplate> parts;
 
     public int GetNr()
     {
@@ -41,8 +41,8 @@ public class AssembledNpcTemplate
     [XmlType("AssembledNpcPart")]
     public class AssembledNpcPartTemplate
     {
-        [XmlAttribute("npcId")] private int npcId;
-        [XmlAttribute("staticId")] private int staticId;
+        [XmlAttribute("npcId")] public int npcId;
+        [XmlAttribute("staticId")] public int staticId;
 
         public int GetNpcId()
         {

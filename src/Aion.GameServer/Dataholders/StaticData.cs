@@ -150,7 +150,7 @@ public sealed partial class StaticData
 	public CosmeticItemTable CosmeticItems { get; }
 
 	// Faithful CosmeticItemsData holder (empty-default; runtime XML load deferred) - summary->template re-point.
-	public CosmeticItemsData CosmeticItemsDataDh { get; } = new();
+	public CosmeticItemsData CosmeticItemsDataDh { get; private set; } = new();
 
 	public DecomposableItemTable DecomposableItems { get; }
 
@@ -281,7 +281,7 @@ public sealed partial class StaticData
 	public MotionData Motions { get; } = new();
 	public MapWeatherData MapWeathers { get; private set; } = new();
 	public EventData Events { get; } = new();
-	public PanelSkillsData PanelSkillsDataDh { get; } = new();
+	public PanelSkillsData PanelSkillsDataDh { get; private set; } = new();
 	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; } = new();
 	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; } = new();
 	public AbsoluteStatsData AbsoluteStatsDataDh { get; } = new();
@@ -289,21 +289,21 @@ public sealed partial class StaticData
 	public TeleporterData TeleporterDataDh { get; } = new();
 	public TeleLocationData TeleLocationDataDh { get; private set; } = new();
 	public SkillAliasLocationData SkillAliasLocationDataDh { get; private set; } = new();
-	public SignetDataTemplates SignetDataTemplatesDh { get; } = new();
+	public SignetDataTemplates SignetDataTemplatesDh { get; private set; } = new();
 	public ShieldData ShieldDataDh { get; private set; } = new();
 	public RoadData RoadDataDh { get; private set; } = new();
 	public MultiReturnItemData MultiReturnItemDataDh { get; private set; } = new();
 	public KillBountyData KillBountyDataDh { get; private set; } = new();
-	public InstanceBuffData InstanceBuffDataDh { get; } = new();
+	public InstanceBuffData InstanceBuffDataDh { get; private set; } = new();
 	public HousePartsData HousePartsDataDh { get; } = new();
-	public HouseNpcsData HouseNpcsDataDh { get; } = new();
+	public HouseNpcsData HouseNpcsDataDh { get; private set; } = new();
 	public HotspotData HotspotDataDh { get; private set; } = new();
 	public GatherableData GatherableDataDh { get; private set; } = new();
 	public FlyRingData FlyRingDataDh { get; private set; } = new();
 	public FlyPathData FlyPathDataDh { get; private set; } = new();
 	public CuringObjectsData CuringObjectsDataDh { get; private set; } = new();
 	public BaseData BaseDataDh { get; private set; } = new();
-	public AssembledNpcsData AssembledNpcsDataDh { get; } = new();
+	public AssembledNpcsData AssembledNpcsDataDh { get; private set; } = new();
 	public TitleData TitleDataDh { get; } = new();
 	public NpcData NpcDataDh { get; } = new();
 	public AIData AiDataDh { get; } = new();
@@ -318,9 +318,9 @@ public sealed partial class StaticData
 	public WalkerData WalkerDataDh { get; } = new();
 	public AutoGroupData AutoGroupDataDh { get; } = new();
 	public ItemSetData ItemSetDataDh { get; } = new();
-	public RideData RideDataDh { get; } = new();
+	public RideData RideDataDh { get; private set; } = new();
 	public GoodsListData GoodsListDataDh { get; } = new();
-	public ItemPurificationData ItemPurificationDataDh { get; } = new();
+	public ItemPurificationData ItemPurificationDataDh { get; private set; } = new();
 	public AtreianPassportData AtreianPassportDataDh { get; } = new();
 	public PetDopingData PetDopingDataDh { get; private set; } = new();
 	public NpcSkillData NpcSkillDataDh { get; } = new();
@@ -365,6 +365,14 @@ public sealed partial class StaticData
 		ShieldDataDh = TryLoadHolder(ShieldDataDh, Path.Combine(staticDataDirectory, "siege", "siege_shields.xml"), logger);
 		PortalLocDataDh = TryLoadHolder(PortalLocDataDh, Path.Combine(staticDataDirectory, "portals", "portal_loc.xml"), logger);
 		SkillAliasLocationDataDh = TryLoadHolder(SkillAliasLocationDataDh, Path.Combine(staticDataDirectory, "skills", "alias_locations.xml"), logger);
+		InstanceBuffDataDh = TryLoadHolder(InstanceBuffDataDh, Path.Combine(staticDataDirectory, "instance_bonusattr", "instance_bonusattr.xml"), logger);
+		HouseNpcsDataDh = TryLoadHolder(HouseNpcsDataDh, Path.Combine(staticDataDirectory, "housing", "house_npcs.xml"), logger);
+		CosmeticItemsDataDh = TryLoadHolder(CosmeticItemsDataDh, Path.Combine(staticDataDirectory, "cosmetic_items", "cosmetic_items.xml"), logger);
+		AssembledNpcsDataDh = TryLoadHolder(AssembledNpcsDataDh, Path.Combine(staticDataDirectory, "assembled_npcs", "assembled_npcs.xml"), logger);
+		SignetDataTemplatesDh = TryLoadHolder(SignetDataTemplatesDh, Path.Combine(staticDataDirectory, "skills", "signet_data_templates.xml"), logger);
+		ItemPurificationDataDh = TryLoadHolder(ItemPurificationDataDh, Path.Combine(staticDataDirectory, "items", "item_purifications.xml"), logger);
+		PanelSkillsDataDh = TryLoadHolder(PanelSkillsDataDh, Path.Combine(staticDataDirectory, "polymorph_panels", "polymorph_panels.xml"), logger);
+		RideDataDh = TryLoadHolder(RideDataDh, Path.Combine(staticDataDirectory, "ride", "ride.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

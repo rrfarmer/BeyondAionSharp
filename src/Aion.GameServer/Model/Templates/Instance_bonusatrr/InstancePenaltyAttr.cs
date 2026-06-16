@@ -8,9 +8,9 @@ namespace Aion.GameServer.Model.Templates.Instance_bonusatrr;
 [XmlType("InstancePenaltyAttr")]
 public class InstancePenaltyAttr
 {
-    [XmlAttribute("stat")] protected StatEnum stat;
-    [XmlAttribute("func")] protected Func func;
-    [XmlAttribute("value")] protected int value;
+    [XmlAttribute("stat")] public StatEnum stat;
+    [XmlAttribute("func")] public Func func;
+    [XmlAttribute("value")] public int value;
 
     public StatEnum GetStat()
     {

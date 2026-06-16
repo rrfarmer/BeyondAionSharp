@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Instance_bonusatrr;
 [XmlType("InstanceBonusAttr")]
 public class InstanceBonusAttr
 {
-    [XmlElement("penalty_attr")] protected List<InstancePenaltyAttr> penaltyAttr;
-    [XmlAttribute("buff_id")] protected int buffId;
+    [XmlElement("penalty_attr")] public List<InstancePenaltyAttr> penaltyAttr;
+    [XmlAttribute("buff_id")] public int buffId;
 
     /// <summary>Gets the value of the penaltyAttr property.</summary>
     public List<InstancePenaltyAttr> GetPenaltyAttr()

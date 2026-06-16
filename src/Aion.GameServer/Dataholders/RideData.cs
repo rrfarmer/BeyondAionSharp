@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("rides")]
 public class RideData
 {
-    [XmlElement("ride_info")] private List<RideInfo> rides;
+    [XmlElement("ride_info")] public List<RideInfo> rides;
 
     [XmlIgnore] private readonly Dictionary<int, RideInfo> rideInfos = new();
 

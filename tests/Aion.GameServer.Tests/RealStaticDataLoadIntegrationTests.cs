@@ -63,6 +63,14 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.ShieldDataDh.Size() > 0, "ShieldDataDh empty after boot");
 		Assert.True(sd.PortalLocDataDh.Size() > 0, "PortalLocDataDh empty after boot");
 		Assert.True(sd.SkillAliasLocationDataDh.Size() > 0, "SkillAliasLocationDataDh empty after boot");
+		Assert.True(sd.InstanceBuffDataDh.Size() > 0, "InstanceBuffDataDh empty after boot");
+		Assert.True(sd.HouseNpcsDataDh.Size() > 0, "HouseNpcsDataDh empty after boot");
+		Assert.True(sd.CosmeticItemsDataDh.Size() > 0, "CosmeticItemsDataDh empty after boot");
+		Assert.True(sd.AssembledNpcsDataDh.Size() > 0, "AssembledNpcsDataDh empty after boot");
+		Assert.True(sd.SignetDataTemplatesDh.Size() > 0, "SignetDataTemplatesDh empty after boot");
+		Assert.True(sd.ItemPurificationDataDh.Size() > 0, "ItemPurificationDataDh empty after boot");
+		Assert.True(sd.PanelSkillsDataDh.Size() > 0, "PanelSkillsDataDh empty after boot");
+		Assert.True(sd.RideDataDh.Size() > 0, "RideDataDh empty after boot");
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

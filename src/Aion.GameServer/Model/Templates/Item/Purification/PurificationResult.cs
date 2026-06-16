@@ -7,11 +7,11 @@ namespace Aion.GameServer.Model.Templates.Items.Purification;
 [XmlRoot("PurificationResult")]
 public class PurificationResult
 {
-    [XmlAttribute("result_item_id")] private int resultItemId;
-    [XmlAttribute("min_enchant_count")] private int minEnchantCount;
-    [XmlAttribute("necessary_abyss_points")] private int necessaryAbyssPoints;
-    [XmlAttribute("necessary_kinah")] private long necessaryKinah;
-    [XmlElement("req_material")] private List<RequiredMaterial> requiredMaterials;
+    [XmlAttribute("result_item_id")] public int resultItemId;
+    [XmlAttribute("min_enchant_count")] public int minEnchantCount;
+    [XmlAttribute("necessary_abyss_points")] public int necessaryAbyssPoints;
+    [XmlAttribute("necessary_kinah")] public long necessaryKinah;
+    [XmlElement("req_material")] public List<RequiredMaterial> requiredMaterials;
 
     public int GetResultItemId()
     {

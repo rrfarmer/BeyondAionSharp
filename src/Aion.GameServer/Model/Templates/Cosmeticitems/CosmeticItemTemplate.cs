@@ -7,12 +7,12 @@ namespace Aion.GameServer.Model.Templates.Cosmeticitems;
 [XmlType("CosmeticItemTemplate")]
 public class CosmeticItemTemplate
 {
-    [XmlAttribute("type")] private string type;
-    [XmlAttribute("cosmetic_name")] private string cosmeticName;
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("race")] private Race race;
-    [XmlAttribute("gender_permitted")] private string genderPermitted;
-    [XmlElement("preset")] private Preset preset;
+    [XmlAttribute("type")] public string type;
+    [XmlAttribute("cosmetic_name")] public string cosmeticName;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("gender_permitted")] public string genderPermitted;
+    [XmlElement("preset")] public Preset preset;
 
     public string GetType_()
     {
@@ -47,13 +47,13 @@ public class CosmeticItemTemplate
     [XmlType("Preset")]
     public class Preset
     {
-        [XmlElement("scale")] private float scale;
-        [XmlElement("hair_type")] private int hairType;
-        [XmlElement("face_type")] private int faceType;
-        [XmlElement("hair_color")] private int hairColor;
-        [XmlElement("lip_color")] private int lipColor;
-        [XmlElement("eye_color")] private int eyeColor;
-        [XmlElement("skin_color")] private int skinColor;
+        [XmlElement("scale")] public float scale;
+        [XmlElement("hair_type")] public int hairType;
+        [XmlElement("face_type")] public int faceType;
+        [XmlElement("hair_color")] public int hairColor;
+        [XmlElement("lip_color")] public int lipColor;
+        [XmlElement("eye_color")] public int eyeColor;
+        [XmlElement("skin_color")] public int skinColor;
 
         public float GetScale()
         {

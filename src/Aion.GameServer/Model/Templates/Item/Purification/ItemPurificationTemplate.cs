@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Items.Purification;
 [XmlRoot("ItemPurification")]
 public class ItemPurificationTemplate
 {
-    [XmlElement("purification_result")] private List<PurificationResult> purificationResults;
-    [XmlAttribute("base_item_id")] private int baseItemId;
+    [XmlElement("purification_result")] public List<PurificationResult> purificationResults;
+    [XmlAttribute("base_item_id")] public int baseItemId;
 
     public List<PurificationResult> GetPurificationResults()
     {

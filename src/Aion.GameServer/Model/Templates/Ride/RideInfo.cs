@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml.Serialization;
 using Aion.GameServer.Model.Templates;
 
@@ -7,20 +8,37 @@ namespace Aion.GameServer.Model.Templates.Ride;
 [XmlType("RideInfo")]
 public class RideInfo
 {
-    [XmlElement("bounds")] protected Bounds bounds;
+    [XmlElement("bounds")] public Bounds bounds;
 
     // Java parity: nullable Integer cost_fp.
-    [XmlAttribute("cost_fp")] protected int? costFp;
+    // String-proxy: XmlSerializer cannot bind a nullable value type to an [XmlAttribute] (it emits the
+    // "cannot encode complex types" error). Back the attribute with a string and parse it, mirroring
+    // JAXB's native nullable-attribute handling: missing attribute -> null, present -> Integer.parseInt.
+    [XmlIgnore] protected int? costFp;
 
-    [XmlAttribute("start_fp")] protected int startFp;
-    [XmlAttribute("sprint_speed")] protected float sprintSpeed;
-    [XmlAttribute("fly_speed")] protected float flySpeed;
-    [XmlAttribute("move_speed")] protected float moveSpeed;
+    [XmlAttribute("cost_fp")]
+    public string CostFpRaw
+    {
+        get => costFp?.ToString(CultureInfo.InvariantCulture);
+        set => costFp = string.IsNullOrEmpty(value) ? (int?)null : int.Parse(value, CultureInfo.InvariantCulture);
+    }
 
-    // Java parity: nullable Integer type.
-    [XmlAttribute("type")] protected int? type;
+    [XmlAttribute("start_fp")] public int startFp;
+    [XmlAttribute("sprint_speed")] public float sprintSpeed;
+    [XmlAttribute("fly_speed")] public float flySpeed;
+    [XmlAttribute("move_speed")] public float moveSpeed;
 
-    [XmlAttribute("id")] protected int id;
+    // Java parity: nullable Integer type. (string-proxy — see cost_fp above)
+    [XmlIgnore] protected int? type;
+
+    [XmlAttribute("type")]
+    public string TypeRaw
+    {
+        get => type?.ToString(CultureInfo.InvariantCulture);
+        set => type = string.IsNullOrEmpty(value) ? (int?)null : int.Parse(value, CultureInfo.InvariantCulture);
+    }
+
+    [XmlAttribute("id")] public int id;
 
     public Bounds GetBounds()
     {

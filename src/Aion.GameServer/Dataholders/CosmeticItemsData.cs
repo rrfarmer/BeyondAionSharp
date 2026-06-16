@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 public class CosmeticItemsData
 {
     [XmlElement("cosmetic_item", typeof(CosmeticItemTemplate))]
-    private List<CosmeticItemTemplate> templates;
+    public List<CosmeticItemTemplate> templates;
 
     private readonly Dictionary<string, CosmeticItemTemplate> cosmeticItemTemplates = new();
 

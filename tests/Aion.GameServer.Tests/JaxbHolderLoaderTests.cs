@@ -498,6 +498,229 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetSkillAliasLocation("__nope__"));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesInstanceBuffDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("instance_bonusattr", "instance_bonusattr.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<InstanceBuffData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <instance_bonusattr buff_id="1">
+        //   <penalty_attr stat="PHYSICAL_ACCURACY" func="ADD" value="1100"/> ...
+        //   <penalty_attr stat="SPEED" func="PERCENT" value="70"/></instance_bonusattr>
+        var buff1 = data.GetInstanceBonusattr(1);
+        Assert.NotNull(buff1);
+        Assert.Equal(1, buff1!.GetBuffId());
+        var attrs = buff1.GetPenaltyAttr();
+        Assert.True(attrs.Count >= 5);
+        Assert.Equal(Model.Stats.Container.StatEnum.PHYSICAL_ACCURACY, attrs[0].GetStat());
+        Assert.Equal(SkillEngine.Change.Func.ADD, attrs[0].GetFunc());
+        Assert.Equal(1100, attrs[0].GetValue());
+        var speed = attrs.First(a => a.GetStat() == Model.Stats.Container.StatEnum.SPEED);
+        Assert.Equal(SkillEngine.Change.Func.PERCENT, speed.GetFunc());
+        Assert.Equal(70, speed.GetValue());
+
+        Assert.Null(data.GetInstanceBonusattr(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesHouseNpcsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("housing", "house_npcs.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<HouseNpcsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <house address="20500"><spawn type="SIGN" .../><spawn type="MANAGER" .../>
+        //   <spawn type="TELEPORT" .../></house>
+        var spawns = data.GetSpawnsByAddress(20500);
+        Assert.NotNull(spawns);
+        Assert.Equal(3, spawns!.Count);
+        var sign = spawns.First(s => s.GetType_() == Model.Templates.Spawns.SpawnType.SIGN);
+        Assert.Equal(281.897f, sign.GetX(), 3);
+        Assert.Equal(221.48187f, sign.GetZ(), 3);
+        Assert.Equal((byte)101, sign.GetH());
+
+        Assert.Null(data.GetSpawnsByAddress(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesCosmeticItemsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("cosmetic_items", "cosmetic_items.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<CosmeticItemsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <cosmetic_item type="hair_type" cosmetic_name="test_hair_type_li_m_01a" id="1"
+        //   race="ELYOS" gender_permitted="MALE"/>
+        var t = data.GetCosmeticItemsTemplate("test_hair_type_li_m_01a");
+        Assert.NotNull(t);
+        Assert.Equal("hair_type", t!.GetType_());
+        Assert.Equal(1, t.GetId());
+        Assert.Equal(Model.Race.ELYOS, t.GetRace());
+        Assert.Equal("MALE", t.GetGenderPermitted());
+
+        Assert.Null(data.GetCosmeticItemsTemplate("__nope__"));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesAssembledNpcsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("assembled_npcs", "assembled_npcs.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<AssembledNpcsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <assembled_npc nr="1" routeId="3" liveTime="600000" mapId="210050000">
+        //   <assembled_part npcId="258247" staticId="909"/> ...
+        var npc = data.GetAssembledNpcTemplate(1);
+        Assert.NotNull(npc);
+        Assert.Equal(1, npc!.GetNr());
+        Assert.Equal(3, npc.GetRouteId());
+        Assert.Equal(600000, npc.GetLiveTime());
+        Assert.Equal(210050000, npc.GetMapId());
+        var parts = npc.GetAssembledNpcPartTemplates();
+        Assert.True(parts.Count > 0);
+        Assert.Equal(258247, parts[0].GetNpcId());
+        Assert.Equal(909, parts[0].GetStaticId());
+
+        Assert.Null(data.GetAssembledNpcTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesSignetDataTemplatesFromRealXml()
+    {
+        var path = ResolveStaticDataFile("skills", "signet_data_templates.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<SignetDataTemplates>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <signet_data_template signet_skill="SIGNET1">
+        //   <signet_data lvl="2" add_effect_prob="20" dmg_multi="0.5"/> ...
+        var sd = data.GetSignetData(SkillEngine.Model.SignetEnum.SIGNET1, 2);
+        Assert.NotNull(sd);
+        Assert.Equal(2, sd!.GetLevel());
+        Assert.Equal(20, sd.GetAddEffectProb());
+        Assert.Equal(0.5f, sd.GetDamageMultiplier(), 3);
+
+        Assert.Null(data.GetSignetData(SkillEngine.Model.SignetEnum.SIGNET1, 999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesItemPurificationDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("items", "item_purifications.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<ItemPurificationData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <item_purification base_item_id="100201319">
+        //   <purification_result result_item_id="100201416" min_enchant_count="10"
+        //     necessary_abyss_points="1374005">
+        //     <req_material item_id="186000242" item_count="143" /> ...
+        var tpl = data.GetItemPurificationTemplate(100201319);
+        Assert.NotNull(tpl);
+        Assert.Equal(100201319, tpl!.GetBaseItemId());
+        var results = data.GetResultItemMap(100201319);
+        Assert.NotNull(results);
+        Assert.True(results!.ContainsKey(100201416));
+        var r = results[100201416];
+        Assert.Equal(10, r.GetMinEnchantCount());
+        Assert.Equal(1374005, r.GetNecessaryAbyssPoints());
+        var mats = r.GetRequiredMaterials();
+        Assert.True(mats.Count >= 2);
+        Assert.Equal(186000242, mats[0].GetItemId());
+        Assert.Equal(143, mats[0].GetItemCount());
+
+        Assert.Null(data.GetItemPurificationTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesPanelSkillsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("polymorph_panels", "polymorph_panels.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<PanelSkillsData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <panel panel_id="4" panel_skills="4992001 4992257 4991745 4998145"/>
+        // space-separated-list attribute via SkillsRaw string-proxy.
+        var panel = data.GetSkillPanel(4);
+        Assert.NotNull(panel);
+        Assert.Equal(4, panel!.GetPanelId());
+        // skill 4992001 -> skillId = 4992001>>8 = 19500, level = 4992001 & 0xFF = 1
+        Assert.True(panel.IsSkillPresent(4992001 >> 8));
+        Assert.True(panel.CanUseSkill(4992001 >> 8, 4992001 & 0xFF));
+
+        Assert.Null(data.GetSkillPanel(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesRideDataFromRealXml_PresentNullableAttributes()
+    {
+        var path = ResolveStaticDataFile("ride", "ride.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<RideData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <ride_info id="2000000" type="0" move_speed="12.0" fly_speed="16.0"
+        //   sprint_speed="15.0" start_fp="10" cost_fp="10"><bounds .../></ride_info>
+        // nullable cost_fp / type present -> parsed via string-proxy.
+        var ride = data.GetRideInfo(2000000);
+        Assert.NotNull(ride);
+        Assert.Equal(2000000, ride!.GetNpcId());
+        Assert.Equal(10, ride.GetCostFp());
+        Assert.Equal(0, ride.GetType_());
+        Assert.Equal(10, ride.GetStartFp());
+        Assert.Equal(12.0f, ride.GetMoveSpeed(), 3);
+        Assert.Equal(16.0f, ride.GetFlySpeed(), 3);
+        Assert.Equal(15.0f, ride.GetSprintSpeed(), 3);
+        Assert.NotNull(ride.GetBounds());
+        Assert.Equal(0.724f, ride.GetBounds().GetFront(), 3);
+        Assert.Equal(0.5f, ride.GetBounds().GetAltitude(), 3);
+
+        Assert.Null(data.GetRideInfo(-99999));
+    }
+
+    [Fact]
+    public void RideInfo_StringProxy_AbsentNullableAttributes_YieldNull()
+    {
+        // Java parity: a nullable Integer @XmlAttribute that is absent unmarshals to null.
+        // The real ride.xml has cost_fp/type on every row, so prove the absent-attribute branch of the
+        // string-proxy directly against the faithful holder type with an inline <rides> document.
+        const string xml =
+            "<rides><ride_info id=\"999\" start_fp=\"5\" move_speed=\"1.0\" fly_speed=\"2.0\" sprint_speed=\"3.0\">" +
+            "<bounds front=\"0.1\" side=\"0.2\" upper=\"0.3\" altitude=\"0.4\"/></ride_info></rides>";
+
+        var serializer = new System.Xml.Serialization.XmlSerializer(typeof(RideData));
+        using var reader = new StringReader(xml);
+        var data = (RideData)serializer.Deserialize(reader)!;
+        InvokeAfterUnmarshal(data);
+
+        var ride = data.GetRideInfo(999);
+        Assert.NotNull(ride);
+        // cost_fp and type attributes omitted -> string-proxy parses to null (1:1 with JAXB).
+        Assert.Null(ride!.GetCostFp());
+        Assert.Null(ride.GetType_());
+        Assert.Equal(5, ride.GetStartFp());
+    }
+
+    private static void InvokeAfterUnmarshal(object holder)
+    {
+        var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });
+        method?.Invoke(holder, new object?[] { null });
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

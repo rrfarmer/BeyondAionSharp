@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 public class AssembledNpcsData
 {
     [XmlElement("assembled_npc", typeof(AssembledNpcTemplate))]
-    private List<AssembledNpcTemplate> templates;
+    public List<AssembledNpcTemplate> templates;
 
     private readonly Dictionary<int, AssembledNpcTemplate> assembledNpcsTemplates = new();
 

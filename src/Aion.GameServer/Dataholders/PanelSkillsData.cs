@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("polymorph_panels")]
 public class PanelSkillsData
 {
-    [XmlElement("panel")] protected List<SkillPanel> templates;
+    [XmlElement("panel")] public List<SkillPanel> templates;
 
     [XmlIgnore] private readonly Dictionary<int, SkillPanel> skillPanels = new();
 

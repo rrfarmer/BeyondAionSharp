@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("signet_data_templates")]
 public class SignetDataTemplates
 {
-    [XmlElement("signet_data_template")] private List<SignetDataTemplate> signetDataTemplateList;
+    [XmlElement("signet_data_template")] public List<SignetDataTemplate> signetDataTemplateList;
 
     [XmlIgnore] private Dictionary<SignetEnum, SignetDataTemplate> signets = new();
 

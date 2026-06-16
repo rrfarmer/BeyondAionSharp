@@ -6,7 +6,7 @@ namespace Aion.GameServer.Model.Templates;
 [XmlType("Bounds")]
 public class Bounds : BoundRadius
 {
-    [XmlAttribute("altitude")] private float altitude;
+    [XmlAttribute("altitude")] public float altitude;
 
     public float GetAltitude()
     {

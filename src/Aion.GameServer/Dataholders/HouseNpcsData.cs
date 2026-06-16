@@ -10,7 +10,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("house_npcs")]
 public class HouseNpcsData
 {
-    [XmlElement("house")] private List<HouseSpawns> houseSpawnsData;
+    [XmlElement("house")] public List<HouseSpawns> houseSpawnsData;
 
     [XmlIgnore] private Dictionary<int, List<HouseSpawn>> houseSpawnsByAddressId = new();
 

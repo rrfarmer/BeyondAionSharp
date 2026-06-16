@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("item_purifications")]
 public class ItemPurificationData
 {
-    [XmlElement("item_purification")] protected List<ItemPurificationTemplate> itemPurificationTemplates;
+    [XmlElement("item_purification")] public List<ItemPurificationTemplate> itemPurificationTemplates;
 
     [XmlIgnore] private Dictionary<int, ItemPurificationTemplate> itemPurificationSets;
     [XmlIgnore] private Dictionary<int, Dictionary<int, PurificationResult>> possibleResultItems;

@@ -7,9 +7,9 @@ namespace Aion.GameServer.Model.Templates.Spawns;
 [XmlRoot("house")]
 public class HouseSpawns
 {
-    [XmlElement("spawn")] private List<HouseSpawn> spawns;
+    [XmlElement("spawn")] public List<HouseSpawn> spawns;
 
-    [XmlAttribute("address")] private int address;
+    [XmlAttribute("address")] public int address;
 
     public List<HouseSpawn> GetSpawns()
     {

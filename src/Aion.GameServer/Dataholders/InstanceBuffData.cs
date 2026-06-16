@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("instance_bonusattrs")]
 public class InstanceBuffData
 {
-    [XmlElement("instance_bonusattr")] protected List<InstanceBonusAttr> instanceBonusattr;
+    [XmlElement("instance_bonusattr")] public List<InstanceBonusAttr> instanceBonusattr;
 
     [XmlIgnore] private readonly Dictionary<int, InstanceBonusAttr> templates = new();
 
