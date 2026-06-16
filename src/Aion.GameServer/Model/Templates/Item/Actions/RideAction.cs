@@ -15,7 +15,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("RideAction")]
 public class RideAction : AbstractItemAction
 {
-    [XmlAttribute("npc_id")] protected int npcId;
+    [XmlAttribute("npc_id")] public int npcId;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

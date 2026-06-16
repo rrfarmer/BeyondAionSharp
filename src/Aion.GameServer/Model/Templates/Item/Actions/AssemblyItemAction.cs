@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("AssemblyItemAction")]
 public class AssemblyItemAction : AbstractItemAction
 {
-    [XmlAttribute("item")] private int item;
+    [XmlAttribute("item")] public int item;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

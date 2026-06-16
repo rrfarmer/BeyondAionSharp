@@ -10,9 +10,9 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 /// <summary>Java parity: model/templates/item/actions/ExpExtractAction.</summary>
 public class ExpExtractAction : AbstractItemAction
 {
-    [XmlAttribute("cost")] private long cost;
-    [XmlAttribute("percent")] private bool isPercent;
-    [XmlAttribute("item_id")] private int itemId;
+    [XmlAttribute("cost")] public long cost;
+    [XmlAttribute("percent")] public bool isPercent;
+    [XmlAttribute("item_id")] public int itemId;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("DyeAction")]
 public class DyeAction : AbstractItemAction
 {
-    [XmlAttribute("color")] protected string color;
+    [XmlAttribute("color")] public string color;
 
     // Java parity: @XmlAttribute private Integer minutes; (nullable).
     [XmlIgnore] private int? minutes;

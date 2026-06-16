@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 /// <summary>Java parity: model/templates/item/actions/PackAction.</summary>
 public class PackAction : AbstractItemAction
 {
-    [XmlAttribute("target")] protected UseTarget target;
+    [XmlAttribute("target")] public UseTarget target;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

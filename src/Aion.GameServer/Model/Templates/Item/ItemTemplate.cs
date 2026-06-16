@@ -14,56 +14,58 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("ItemTemplate")]
 public partial class ItemTemplate : VisibleObjectTemplate
 {
-    private int itemId;
-    [XmlElement("modifiers")] private Aion.GameServer.Model.Templates.Stats.ModifiersTemplate modifiers;
-    [XmlElement("actions")] private Aion.GameServer.Model.Templates.Items.Actions.ItemActions actions;
-    [XmlAttribute("mask")] private int mask;
-    [XmlAttribute("weapon_boost")] private int weaponBoost;
-    [XmlAttribute("price")] private int price;
-    [XmlAttribute("max_stack_count")] private int maxStackCount = 1;
-    [XmlAttribute("item_group")] private Aion.GameServer.Model.Templates.Items.Enums.ItemGroup itemGroup = Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.NONE;
-    [XmlAttribute("pack_count")] private int packCount;
-    [XmlAttribute("level")] private int level;
-    [XmlAttribute("quality")] private ItemQuality itemQuality;
-    [XmlAttribute("item_type")] private ItemType itemType;
-    [XmlAttribute("attack_type")] private ItemAttackType attackType;
-    [XmlAttribute("attack_gap")] private float attackGap;
-    [XmlAttribute("desc")] private int description;
-    [XmlAttribute("option_slot_bonus")] private int optionSlotBonus;
-    [XmlAttribute("rnd_bonus")] private int rndBonusId = 0;
-    [XmlAttribute("rnd_count")] private int maxTuneCount = -1;
-    [XmlAttribute("race")] private Race race = Race.PC_ALL;
-    [XmlAttribute("return_world")] private int returnWorldId;
-    [XmlAttribute("return_alias")] private string returnAlias;
-    [XmlElement("godstone")] private GodstoneInfo godstoneInfo;
-    [XmlElement("stigma")] private Stigma stigma;
-    [XmlAttribute("name")] private string name;
-    private byte[] levelRestrictions;
-    private byte[] maxLevelRestrictions;
-    [XmlAttribute("m_slots")] private int manastoneSlots;
-    [XmlAttribute("s_slots")] private int specialSlots;
-    [XmlAttribute("max_enchant")] private int maxEnchant;
-    [XmlAttribute("max_enchant_bonus")] private int maxEnchantBonus;
-    [XmlAttribute("enchant_type")] private int enchantType;
-    [XmlAttribute("max_tampering")] private int maxTampering;
-    [XmlAttribute("temp_exchange_time")] private int temExchangeTime;
-    [XmlAttribute("expire_time")] private int expireTime;
-    [XmlElement("weapon_stats")] private WeaponStats weaponStats;
-    [XmlAttribute("activate_target")] private ItemActivationTarget activationTarget;
-    [XmlAttribute("tempering_name")] private string temperingName;
-    [XmlAttribute("enchant_name")] private string enchantName;
-    [XmlAttribute("activate_count")] private int activationCount;
-    [XmlAttribute("activate_combat")] private bool activateCombat;
-    [XmlAttribute("robot")] private int? robotId;
-    [XmlElement("tradein_list")] private TradeinList tradeinList;
-    [XmlElement("acquisition")] private Acquisition acquisition;
-    [XmlElement("disposition")] private Disposition disposition;
-    [XmlElement("improve")] private Improvement improvement;
-    [XmlElement("uselimits")] private ItemUseLimits useLimits;
-    [XmlElement("inventory")] private ExtraInventory extraInventory;
-    [XmlElement("idian")] private Idian idianAction;
-    [XmlAttribute("can_exceed_enchant")] private bool canExceedEnchant;
-    [XmlAttribute("exceed_enchant_skill")] private ExceedEnchantSkillSetType exceedEnchantSkill;
+    // Public so XmlSerializer can populate these (JAXB read private fields via @XmlAccessorType(FIELD));
+    // faithful Java field names + [Xml*] attribute/element names unchanged. itemId is set via the XmlUid proxy.
+    [XmlIgnore] public int itemId;
+    [XmlElement("modifiers")] public Aion.GameServer.Model.Templates.Stats.ModifiersTemplate modifiers;
+    [XmlElement("actions")] public Aion.GameServer.Model.Templates.Items.Actions.ItemActions actions;
+    [XmlAttribute("mask")] public int mask;
+    [XmlAttribute("weapon_boost")] public int weaponBoost;
+    [XmlAttribute("price")] public int price;
+    [XmlAttribute("max_stack_count")] public int maxStackCount = 1;
+    [XmlAttribute("item_group")] public Aion.GameServer.Model.Templates.Items.Enums.ItemGroup itemGroup = Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.NONE;
+    [XmlAttribute("pack_count")] public int packCount;
+    [XmlAttribute("level")] public int level;
+    [XmlAttribute("quality")] public ItemQuality itemQuality;
+    [XmlAttribute("item_type")] public ItemType itemType;
+    [XmlAttribute("attack_type")] public ItemAttackType attackType;
+    [XmlAttribute("attack_gap")] public float attackGap;
+    [XmlAttribute("desc")] public int description;
+    [XmlAttribute("option_slot_bonus")] public int optionSlotBonus;
+    [XmlAttribute("rnd_bonus")] public int rndBonusId = 0;
+    [XmlAttribute("rnd_count")] public int maxTuneCount = -1;
+    [XmlAttribute("race")] public Race race = Race.PC_ALL;
+    [XmlAttribute("return_world")] public int returnWorldId;
+    [XmlAttribute("return_alias")] public string returnAlias;
+    [XmlElement("godstone")] public GodstoneInfo godstoneInfo;
+    [XmlElement("stigma")] public Stigma stigma;
+    [XmlAttribute("name")] public string name;
+    [XmlIgnore] public byte[] levelRestrictions;
+    [XmlIgnore] public byte[] maxLevelRestrictions;
+    [XmlAttribute("m_slots")] public int manastoneSlots;
+    [XmlAttribute("s_slots")] public int specialSlots;
+    [XmlAttribute("max_enchant")] public int maxEnchant;
+    [XmlAttribute("max_enchant_bonus")] public int maxEnchantBonus;
+    [XmlAttribute("enchant_type")] public int enchantType;
+    [XmlAttribute("max_tampering")] public int maxTampering;
+    [XmlAttribute("temp_exchange_time")] public int temExchangeTime;
+    [XmlAttribute("expire_time")] public int expireTime;
+    [XmlElement("weapon_stats")] public WeaponStats weaponStats;
+    [XmlAttribute("activate_target")] public ItemActivationTarget activationTarget;
+    [XmlAttribute("tempering_name")] public string temperingName;
+    [XmlAttribute("enchant_name")] public string enchantName;
+    [XmlAttribute("activate_count")] public int activationCount;
+    [XmlAttribute("activate_combat")] public bool activateCombat;
+    [XmlIgnore] public int? robotId;
+    [XmlElement("tradein_list")] public TradeinList tradeinList;
+    [XmlElement("acquisition")] public Acquisition acquisition;
+    [XmlElement("disposition")] public Disposition disposition;
+    [XmlElement("improve")] public Improvement improvement;
+    [XmlElement("uselimits")] public ItemUseLimits useLimits;
+    [XmlElement("inventory")] public ExtraInventory extraInventory;
+    [XmlElement("idian")] public Idian idianAction;
+    [XmlAttribute("can_exceed_enchant")] public bool canExceedEnchant;
+    [XmlAttribute("exceed_enchant_skill")] public ExceedEnchantSkillSetType exceedEnchantSkill;
 
     private static readonly WeaponStats emptyWeaponStats = new WeaponStats();
     private static readonly ItemUseLimits emptyUseLimits = new ItemUseLimits();
@@ -74,6 +76,15 @@ public partial class ItemTemplate : VisibleObjectTemplate
     {
         get => itemId.ToString();
         set => itemId = int.Parse(value);
+    }
+
+    // Java parity: @XmlAttribute("robot") Integer (nullable). XmlSerializer cannot bind a nullable value-type
+    // attribute directly, so round-trip via a string proxy (null when absent → GetRobotId returns 0).
+    [XmlAttribute("robot")]
+    public string RobotRaw
+    {
+        get => robotId?.ToString();
+        set => robotId = value == null ? (int?)null : int.Parse(value);
     }
 
     // Java parity: @XmlJavaTypeAdapter(SpaceSeparatedBytesAdapter) on "restrict".
@@ -104,8 +115,12 @@ public partial class ItemTemplate : VisibleObjectTemplate
     }
 
     // Java parity: afterUnmarshal(Unmarshaller, Object) — invoked by the loader after deserialization.
-    public void AfterUnmarshal()
+    // XmlSerializer does not fire JAXB unmarshal callbacks, so ItemData.AfterUnmarshal calls this per template,
+    // and we propagate the nested Stigma.afterUnmarshal callback here (JAXB would fire it independently).
+    public void AfterUnmarshal(object parent)
     {
+        stigma?.AfterUnmarshal();
+
         if (weaponStats == null)
             weaponStats = emptyWeaponStats;
         if (useLimits == null)

@@ -309,7 +309,7 @@ public sealed partial class StaticData
 	public AIData AiDataDh { get; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
-	public ItemData ItemDataDh { get; } = new();
+	public ItemData ItemDataDh { get; private set; } = new();
 	public SkillData SkillDataDh { get; } = new();
 	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();
 	public TradeListData TradeListDataDh { get; } = new();
@@ -389,6 +389,10 @@ public sealed partial class StaticData
 		// Standalone <npc_templates> root (~35MB, no cache imports / no @XmlIDREF resolution at this stage):
 		// the faithful NpcData holder feeds DataManager.NPC_DATA (~25 gameplay consumers).
 		NpcDataDh = TryLoadHolder(NpcDataDh, Path.Combine(staticDataDirectory, "npcs", "npc_templates.xml"), logger);
+		// Standalone <item_templates> root (~65MB; ItemTemplate is the @XmlID *target*, no IDREF source here):
+		// the faithful ItemData holder feeds DataManager.ITEM_DATA (~221 gameplay consumers) and lights up the
+		// already-wired NPC equipment id->ItemTemplate lazy resolution.
+		ItemDataDh = TryLoadHolder(ItemDataDh, Path.Combine(staticDataDirectory, "items", "item_templates.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

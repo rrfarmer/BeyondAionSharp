@@ -40,7 +40,8 @@ public class ItemActions
     [XmlElement("pack", typeof(PackAction))]
     [XmlElement("tampering", typeof(TamperingAction))]
     [XmlElement("multireturn", typeof(MultiReturnAction))]
-    private List<AbstractItemAction> itemActions;
+    // Public so XmlSerializer can populate it (JAXB read the private field via @XmlAccessorType(FIELD)).
+    public List<AbstractItemAction> itemActions;
 
     /// <summary>Gets the value of the itemActions property.</summary>
     public List<AbstractItemAction> GetItemActions()

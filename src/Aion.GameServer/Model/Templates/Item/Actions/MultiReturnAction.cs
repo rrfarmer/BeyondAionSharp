@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("MultiReturnAction")]
 public class MultiReturnAction : AbstractItemAction
 {
-    [XmlAttribute("id")] protected int id;
+    [XmlAttribute("id")] public int id;
 
     [XmlIgnore] private const short USAGE_DELAY = 5000;
 

@@ -8,9 +8,18 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("SkillLearnAction")]
 public class SkillLearnAction : AbstractItemAction
 {
-    [XmlAttribute("skillid")] protected int skillid;
-    [XmlAttribute("level")] protected int level;
-    [XmlAttribute("class")] protected PlayerClass? playerClass;
+    [XmlAttribute("skillid")] public int skillid;
+    [XmlAttribute("level")] public int level;
+    // Java parity: @XmlAttribute("class") PlayerClass (nullable). XmlSerializer cannot bind a nullable enum as
+    // an attribute (complex type), so round-trip via a string proxy (null when absent).
+    [XmlIgnore] public PlayerClass? playerClass;
+
+    [XmlAttribute("class")]
+    public string ClassRaw
+    {
+        get => playerClass?.ToString();
+        set => playerClass = value == null ? (PlayerClass?)null : (PlayerClass)System.Enum.Parse(typeof(PlayerClass), value);
+    }
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

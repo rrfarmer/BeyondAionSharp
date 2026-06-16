@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("ExpandInventoryAction")]
 public class ExpandInventoryAction : AbstractItemAction
 {
-    [XmlAttribute("level")] private int level;
-    [XmlAttribute("storage")] private StorageType storage;
+    [XmlAttribute("level")] public int level;
+    [XmlAttribute("storage")] public StorageType storage;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
@@ -43,7 +43,8 @@ public class ExpandInventoryAction : AbstractItemAction
 }
 
 // Java parity: package-private enum StorageType in ExpandInventoryAction.java (distinct from items.storage.StorageType).
-internal enum StorageType
+// Public so the now-public [XmlAttribute] storage field (XmlSerializer binds public members) can reference it.
+public enum StorageType
 {
     CUBE,
     WAREHOUSE,

@@ -11,8 +11,8 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("TuningAction")]
 public class TuningAction : AbstractItemAction
 {
-    [XmlAttribute("target")] private UseTarget target;
-    [XmlAttribute("no_reduce")] private bool shouldNotReduceTuneCount;
+    [XmlAttribute("target")] public UseTarget target;
+    [XmlAttribute("no_reduce")] public bool shouldNotReduceTuneCount;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

@@ -7,9 +7,10 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlRoot("Stigma")]
 public class Stigma
 {
-    [XmlAttribute("gain_skill_group1")] private string gainSkillGroup1;
-    [XmlAttribute("gain_skill_group2")] private string gainSkillGroup2;
-    [XmlAttribute("chargeable")] private bool chargeable;
+    // Public so XmlSerializer can populate these (JAXB read private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("gain_skill_group1")] public string gainSkillGroup1;
+    [XmlAttribute("gain_skill_group2")] public string gainSkillGroup2;
+    [XmlAttribute("chargeable")] public bool chargeable;
 
     [XmlIgnore] private string[] gainSkillGroups;
 

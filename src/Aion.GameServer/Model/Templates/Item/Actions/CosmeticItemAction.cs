@@ -12,7 +12,7 @@ public class CosmeticItemAction : AbstractItemAction
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    [XmlAttribute("name")] private string cosmeticName;
+    [XmlAttribute("name")] public string cosmeticName;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

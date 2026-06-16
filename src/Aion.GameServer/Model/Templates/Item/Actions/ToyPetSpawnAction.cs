@@ -10,8 +10,8 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("ToyPetSpawnAction")]
 public class ToyPetSpawnAction : AbstractItemAction
 {
-    [XmlAttribute("npcid")] protected int npcid;
-    [XmlAttribute("time")] protected int time;
+    [XmlAttribute("npcid")] public int npcid;
+    [XmlAttribute("time")] public int time;
 
     public int GetNpcId()
     {

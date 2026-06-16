@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("MegaphoneAction")]
 public class MegaphoneAction : AbstractItemAction
 {
-    [XmlAttribute("color")] protected string color;
+    [XmlAttribute("color")] public string color;
 
     public int GetColor()
     {

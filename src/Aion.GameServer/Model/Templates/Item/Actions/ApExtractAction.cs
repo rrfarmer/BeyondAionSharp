@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 /// <summary>Java parity: model/templates/item/actions/ApExtractAction.</summary>
 public class ApExtractAction : AbstractItemAction
 {
-    [XmlAttribute("target")] protected UseTarget target;
-    [XmlAttribute("rate")] protected float rate;
+    [XmlAttribute("target")] public UseTarget target;
+    [XmlAttribute("rate")] public float rate;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("PolishAction")]
 public class PolishAction : AbstractItemAction
 {
-    [XmlAttribute("set_id")] private int polishSetId;
+    [XmlAttribute("set_id")] public int polishSetId;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

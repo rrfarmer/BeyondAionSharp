@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("QuestStartAction")]
 public class QuestStartAction : AbstractItemAction
 {
-    [XmlAttribute("questid")] protected int questid;
+    [XmlAttribute("questid")] public int questid;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

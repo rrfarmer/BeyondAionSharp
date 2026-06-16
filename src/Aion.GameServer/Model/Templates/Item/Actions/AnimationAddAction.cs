@@ -9,12 +9,21 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("AnimationAddAction")]
 public class AnimationAddAction : AbstractItemAction
 {
-    [XmlAttribute("idle")] protected int? idle;
-    [XmlAttribute("run")] protected int? run;
-    [XmlAttribute("jump")] protected int? jump;
-    [XmlAttribute("rest")] protected int? rest;
-    [XmlAttribute("shop")] protected int? shop;
-    [XmlAttribute("minutes")] protected int? minutes;
+    // Java parity: nullable Integer @XmlAttribute fields. XmlSerializer cannot bind Nullable<T> as an attribute,
+    // so each round-trips via a string proxy (null when the attribute is absent).
+    [XmlIgnore] public int? idle;
+    [XmlIgnore] public int? run;
+    [XmlIgnore] public int? jump;
+    [XmlIgnore] public int? rest;
+    [XmlIgnore] public int? shop;
+    [XmlIgnore] public int? minutes;
+
+    [XmlAttribute("idle")] public string IdleRaw { get => idle?.ToString(); set => idle = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("run")] public string RunRaw { get => run?.ToString(); set => run = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("jump")] public string JumpRaw { get => jump?.ToString(); set => jump = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("rest")] public string RestRaw { get => rest?.ToString(); set => rest = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("shop")] public string ShopRaw { get => shop?.ToString(); set => shop = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("minutes")] public string MinutesRaw { get => minutes?.ToString(); set => minutes = value == null ? (int?)null : int.Parse(value); }
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

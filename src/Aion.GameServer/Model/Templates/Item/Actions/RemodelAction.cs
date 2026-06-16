@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 /// <summary>Java parity: model/templates/item/actions/RemodelAction.</summary>
 public class RemodelAction : AbstractItemAction
 {
-    [XmlAttribute("type")] private int extractType;
-    [XmlAttribute("minutes")] private int expireMinutes;
+    [XmlAttribute("type")] public int extractType;
+    [XmlAttribute("minutes")] public int expireMinutes;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

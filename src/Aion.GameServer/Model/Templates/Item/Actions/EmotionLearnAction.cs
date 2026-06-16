@@ -13,8 +13,8 @@ public class EmotionLearnAction : AbstractItemAction
     // Java parity: ConcurrentHashMap.newKeySet() — concurrent int set (BCL has no ConcurrentHashSet, use a ConcurrentDictionary as a set).
     private static readonly ConcurrentDictionary<int, byte> LEARNABLE_IDS = new ConcurrentDictionary<int, byte>();
 
-    [XmlAttribute("emotionid")] private int emotionId;
-    [XmlAttribute("minutes")] private int minutes;
+    [XmlAttribute("emotionid")] public int emotionId;
+    [XmlAttribute("minutes")] public int minutes;
 
     // Java parity: afterUnmarshal(Unmarshaller, Object) — invoked by the loader after deserialization.
     public void AfterUnmarshal()

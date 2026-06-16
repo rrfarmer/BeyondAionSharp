@@ -10,18 +10,20 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("UseLimits")]
 public class ItemUseLimits
 {
-    [XmlAttribute("usedelay")] private int useDelay;
-    [XmlAttribute("usedelayid")] private int useDelayId;
+    // Public so XmlSerializer can populate these (JAXB read private fields via @XmlAccessorType(FIELD));
+    // ownershipWorldIds/genderPermitted/rideUsable are bound via the string proxies below.
+    [XmlAttribute("usedelay")] public int useDelay;
+    [XmlAttribute("usedelayid")] public int useDelayId;
     [XmlIgnore] private List<int> ownershipWorldIds;
-    [XmlAttribute("usearea")] private string usearea;
+    [XmlAttribute("usearea")] public string usearea;
     [XmlIgnore] private Gender? genderPermitted;
     [XmlIgnore] private bool? rideUsable;
-    [XmlAttribute("rank_min")] private int minRank = Aion.GameServer.Utils.Stats.AbyssRankEnum.GRADE9_SOLDIER.GetId();
-    [XmlAttribute("rank_max")] private int maxRank = Aion.GameServer.Utils.Stats.AbyssRankEnum.SUPREME_COMMANDER.GetId();
-    [XmlAttribute("purchable_rank_min")] private int minRankPuchable;
-    [XmlAttribute("recommend_rank")] private int recommendRank;
-    [XmlAttribute("guild_level")] private int guildLevel;
-    [XmlAttribute("pack_count")] private int packCount = -1;
+    [XmlAttribute("rank_min")] public int minRank = Aion.GameServer.Utils.Stats.AbyssRankEnum.GRADE9_SOLDIER.GetId();
+    [XmlAttribute("rank_max")] public int maxRank = Aion.GameServer.Utils.Stats.AbyssRankEnum.SUPREME_COMMANDER.GetId();
+    [XmlAttribute("purchable_rank_min")] public int minRankPuchable;
+    [XmlAttribute("recommend_rank")] public int recommendRank;
+    [XmlAttribute("guild_level")] public int guildLevel;
+    [XmlAttribute("pack_count")] public int packCount = -1;
 
     // Java parity: @XmlAttribute List<Integer> — space-separated world ids.
     [XmlAttribute("ownership_worlds")]

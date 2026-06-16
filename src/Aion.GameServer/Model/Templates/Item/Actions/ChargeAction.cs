@@ -11,7 +11,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("ChargeItemAction")]
 public class ChargeAction : AbstractItemAction
 {
-    [XmlAttribute("capacity")] private int maxChargeLevel;
+    [XmlAttribute("capacity")] public int maxChargeLevel;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

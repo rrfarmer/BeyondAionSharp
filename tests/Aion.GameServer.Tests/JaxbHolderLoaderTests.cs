@@ -1264,6 +1264,57 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetNpcTemplate(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesItemDataFromRealXml_WithKnownItemFieldsAndModifierIntact()
+    {
+        var path = ResolveStaticDataFile("items", "item_templates.xml");
+
+        // ~65MB standalone <item_templates> root; AfterUnmarshal indexes every template by item id and nulls the list.
+        // (Slow: tens of seconds to deserialize the full catalog.)
+        var data = JaxbHolderLoader.LoadFromFile<ItemData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known weapon (Fire Sword), id=100000125:
+        // <item_template id="100000125" name="Fire Sword" level="23" item_group="SWORD" item_type="NORMAL"
+        //   quality="COMMON" attack_type="PHYSICAL" max_enchant="10" m_slots="1">
+        //   <modifiers><add name="PHYSICAL_ATTACK" value="7" bonus="true"/></modifiers>
+        //   <weapon_stats .../></item_template>
+        var item = data.GetItemTemplate(100000125);
+        Assert.NotNull(item);
+
+        // Scalar fields intact (NOT silently dropped).
+        Assert.Equal(100000125, item!.GetTemplateId());
+        Assert.Equal("Fire Sword", item.GetName());
+        Assert.Equal(23, item.GetLevel());
+        Assert.Equal(Model.Templates.Items.ItemQuality.COMMON, item.GetItemQuality());
+        Assert.Equal(Model.Templates.Items.ItemType.NORMAL, item.GetItemType());
+        Assert.Equal(Model.Templates.Items.Enums.ItemGroup.SWORD, item.GetItemGroup());
+        Assert.Equal(Model.Templates.Items.ItemAttackType.PHYSICAL, item.GetAttackType());
+        Assert.Equal(10, item.GetMaxEnchantLevel());
+        Assert.Equal(1, item.GetManastoneSlots());
+        Assert.True(item.GetItemSlot() != 0); // SWORD maps to a real equipment slot
+
+        // Nested <weapon_stats> intact.
+        var ws = item.GetWeaponStats();
+        Assert.NotNull(ws);
+        Assert.Equal(77, ws!.MaxDamage);
+        Assert.Equal(63, ws.MinDamage);
+        Assert.Equal(1400, ws.AttackSpeed);
+
+        // CRITICAL: the polymorphic <modifiers>/<add> subtree must NOT be silently dropped.
+        var modifiers = item.GetModifiers();
+        Assert.NotNull(modifiers);
+        Assert.Single(modifiers);
+        var add = modifiers![0];
+        Assert.IsType<Model.Stats.Calc.Functions.StatAddFunction>(add);
+        Assert.Equal(Model.Stats.Container.StatEnum.PHYSICAL_ATTACK, add.GetName());
+        Assert.Equal(7, add.GetValue());
+        Assert.True(add.IsBonus());
+
+        Assert.Null(data.GetItemTemplate(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

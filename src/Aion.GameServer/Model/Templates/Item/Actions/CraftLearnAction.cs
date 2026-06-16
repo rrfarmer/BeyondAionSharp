@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("CraftLearnAction")]
 public class CraftLearnAction : AbstractItemAction
 {
-    [XmlAttribute("recipeid")] protected int recipeid;
+    [XmlAttribute("recipeid")] public int recipeid;
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

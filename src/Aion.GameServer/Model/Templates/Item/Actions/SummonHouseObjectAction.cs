@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("SummonHouseObjectAction")]
 public class SummonHouseObjectAction : AbstractItemAction
 {
-    [XmlAttribute("id")] private int objectId;
+    [XmlAttribute("id")] public int objectId;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

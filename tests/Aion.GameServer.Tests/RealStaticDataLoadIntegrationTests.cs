@@ -95,6 +95,24 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(Model.Race.ELYOS, fasimedes.GetRace());
 		Assert.Equal(23691, fasimedes.GetStatsTemplate().GetMaxHp());
 
+		// ITEM_DATA boot-wiring: the ~65MB item_templates.xml must load into a non-empty ItemData holder.
+		Assert.True(sd.ItemDataDh.Size() > 0, "ItemDataDh empty after boot");
+
+		// Known weapon (Fire Sword, id=100000125) must load with key fields + its <modifiers>/<add> intact.
+		var fireSword = sd.ItemDataDh.GetItemTemplate(100000125);
+		Assert.NotNull(fireSword);
+		Assert.Equal("Fire Sword", fireSword!.GetName());
+		Assert.Equal(23, fireSword.GetLevel());
+		Assert.Equal(Model.Templates.Items.ItemQuality.COMMON, fireSword.GetItemQuality());
+		Assert.Equal(Model.Templates.Items.Enums.ItemGroup.SWORD, fireSword.GetItemGroup());
+		Assert.Contains(fireSword.GetModifiers(),
+			m => m.GetName() == Model.Stats.Container.StatEnum.PHYSICAL_ATTACK && m.GetValue() == 7);
+
+		// NPC->ITEM linkage lights up: fasimedes' first equipment id now resolves to a real ItemTemplate
+		// in the freshly-loaded ItemData (the lazy IDREF resolution NpcEquippedGear.Init performs at runtime).
+		var firstEquipId = fasimedes.equipmentList!.ItemIds[0];
+		Assert.NotNull(sd.ItemDataDh.GetItemTemplate(firstEquipId));
+
 		// Prove the stat-bearing leaf holders bound their modifiers at boot (not silently dropped):
 		// item set 1 fullbonus carries a SPEED rate; title 1 carries a MAXHP add; conqueror rank 1 a PVP_ATTACK_RATIO add.
 		var itemSet1 = sd.ItemSetDataDh.GetItemSetTemplate(1);

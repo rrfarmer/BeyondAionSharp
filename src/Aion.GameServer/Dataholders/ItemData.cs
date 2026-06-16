@@ -11,7 +11,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("item_templates")]
 public class ItemData
 {
-    [XmlElement("item_template")] private List<ItemTemplate> its;
+    // Public so XmlSerializer can populate it (JAXB read the private field via @XmlAccessorType(FIELD)).
+    [XmlElement("item_template")] public List<ItemTemplate> its;
 
     [XmlIgnore] private readonly Dictionary<int, ItemTemplate> items = new();
     [XmlIgnore] private readonly Dictionary<int, List<ItemTemplate>> manastones = new();
@@ -21,6 +22,9 @@ public class ItemData
     {
         foreach (ItemTemplate it in its)
         {
+            // Java parity: JAXB fires ItemTemplate.afterUnmarshal (and nested Stigma.afterUnmarshal) per element
+            // before the parent holder's; XmlSerializer does not, so fire it here, children-first.
+            it.AfterUnmarshal(this);
             items[it.GetTemplateId()] = it;
             if (it.GetItemGroup() == ItemGroup.MANASTONE)
             {

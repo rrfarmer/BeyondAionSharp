@@ -6,7 +6,16 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 /// <summary>Java parity: model/templates/item/actions/DecorateAction.</summary>
 public class DecorateAction : AbstractItemAction
 {
-    [XmlAttribute("id")] private int? partId;
+    // Java parity: @XmlAttribute("id") Integer (nullable). XmlSerializer cannot bind Nullable<T> as an
+    // attribute, so round-trip via a string proxy (null when absent).
+    [XmlIgnore] public int? partId;
+
+    [XmlAttribute("id")]
+    public string IdRaw
+    {
+        get => partId?.ToString();
+        set => partId = value == null ? (int?)null : int.Parse(value);
+    }
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

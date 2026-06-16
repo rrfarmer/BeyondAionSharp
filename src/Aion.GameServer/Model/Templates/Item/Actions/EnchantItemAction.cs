@@ -11,11 +11,15 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("EnchantItemAction")]
 public class EnchantItemAction : AbstractItemAction
 {
-    [XmlAttribute("count")] private int count;
-    [XmlAttribute("min_level")] private int? min_level;
-    [XmlAttribute("max_level")] private int? max_level;
-    [XmlAttribute("manastone_only")] private bool manastone_only;
-    [XmlAttribute("chance")] private float chance;
+    [XmlAttribute("count")] public int count;
+    // Java parity: nullable Integer @XmlAttribute fields. XmlSerializer cannot bind Nullable<T> as an attribute,
+    // so each round-trips via a string proxy (null when the attribute is absent).
+    [XmlIgnore] public int? min_level;
+    [XmlIgnore] public int? max_level;
+    [XmlAttribute("min_level")] public string MinLevelRaw { get => min_level?.ToString(); set => min_level = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("max_level")] public string MaxLevelRaw { get => max_level?.ToString(); set => max_level = value == null ? (int?)null : int.Parse(value); }
+    [XmlAttribute("manastone_only")] public bool manastone_only;
+    [XmlAttribute("chance")] public float chance;
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

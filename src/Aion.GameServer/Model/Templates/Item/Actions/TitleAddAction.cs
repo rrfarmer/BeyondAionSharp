@@ -8,8 +8,17 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("TitleAddAction")]
 public class TitleAddAction : AbstractItemAction
 {
-    [XmlAttribute("titleid")] protected int titleid;
-    [XmlAttribute("minutes")] protected int? minutes;
+    [XmlAttribute("titleid")] public int titleid;
+    // Java parity: @XmlAttribute("minutes") Integer (nullable). XmlSerializer cannot bind Nullable<T> as an
+    // attribute, so round-trip via a string proxy (null when absent).
+    [XmlIgnore] public int? minutes;
+
+    [XmlAttribute("minutes")]
+    public string MinutesRaw
+    {
+        get => minutes?.ToString();
+        set => minutes = value == null ? (int?)null : int.Parse(value);
+    }
 
     public override bool CanAct(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {

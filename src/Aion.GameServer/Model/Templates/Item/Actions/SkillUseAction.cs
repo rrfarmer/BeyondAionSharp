@@ -9,9 +9,9 @@ namespace Aion.GameServer.Model.Templates.Items.Actions;
 [XmlType("SkillUseAction")]
 public class SkillUseAction : AbstractItemAction
 {
-    [XmlAttribute("skillid")] protected int skillid;
-    [XmlAttribute("level")] protected int level;
-    [XmlAttribute("mapid")] private int mapid;
+    [XmlAttribute("skillid")] public int skillid;
+    [XmlAttribute("level")] public int level;
+    [XmlAttribute("mapid")] public int mapid;
 
     public int GetSkillId()
     {
