@@ -310,6 +310,7 @@ public sealed partial class StaticData
 	public HouseData HouseDataDh { get; private set; } = new();
 	public CustomDrop CustomNpcDropDh { get; private set; } = new();
 	public HousingObjectData HousingObjectDataDh { get; private set; } = new();
+	public PlayerInitialData PlayerInitialDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -551,6 +552,15 @@ public sealed partial class StaticData
 		// remove_count/check_type) — XmlSerializer can't bind Nullable attrs (a single missed one aborts the whole
 		// load). HousingObjectData.AfterUnmarshal indexes by template id (fires inside TryLoadHolder).
 		HousingObjectDataDh = TryLoadHolder(HousingObjectDataDh, Path.Combine(staticDataDirectory, "housing", "housing_objects.xml"), logger);
+		// Java imports the single file player_initial_data.xml (<player_initial_data> root) and binds it to
+		// StaticData.playerInitialData; feeds DataManager.PLAYER_INITIAL_DATA, read by PlayerService.NewPlayer
+		// (per-class starting items + spawn location) and the spawn-location path (TeleportService/World/Player
+		// enter/leave). Was a hollow new() -> empty -> newly-created characters got NO starting items and no spawn.
+		// PlayerCreationData/ItemsType/ItemType/LocationData attrs bind via the now-public fields; ItemType.template
+		// is a JAXB @XmlIDREF (id attr -> ItemTemplate) which XmlSerializer can't bind to an object, so the id is held
+		// in a string proxy and resolved via the in-progress ITEM_DATA in a children-first AfterUnmarshal cascade
+		// (mirrors Java's @XmlIDREF + StaticDataListener handing afterUnmarshal the in-progress StaticData/ItemData).
+		PlayerInitialDataDh = TryLoadPlayerInitialData(Path.Combine(staticDataDirectory, "player_initial_data.xml"), ItemDataDh, logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
@@ -594,6 +604,31 @@ public sealed partial class StaticData
 		{
 			logger?.LogError(ex, "Failed to load DecomposableItemsData from {Path}; leaving it empty.", xmlFilePath);
 			return new DecomposableItemsData();
+		}
+	}
+
+	// PLAYER_INITIAL_DATA's ItemType.template is a JAXB @XmlIDREF that resolves against the in-progress ITEM_DATA, but
+	// the DataManager singleton bridge is not registered yet during this load. So deserialize WITHOUT auto-AfterUnmarshal
+	// (which would route through the un-registered DataManager.ITEM_DATA) and invoke the ItemData overload explicitly with
+	// the already-loaded ItemDataDh. Mirrors Java's StaticDataListener handing afterUnmarshal the in-progress StaticData.
+	private static PlayerInitialData TryLoadPlayerInitialData(string xmlFilePath, ItemData itemData, Microsoft.Extensions.Logging.ILogger? logger)
+	{
+		try
+		{
+			if (!File.Exists(xmlFilePath))
+			{
+				logger?.LogWarning("Static data holder file not found, leaving PlayerInitialData empty: {Path}", xmlFilePath);
+				return new PlayerInitialData();
+			}
+
+			var holder = LoadingUtils.JaxbHolderLoader.DeserializeFile<PlayerInitialData>(xmlFilePath);
+			holder.AfterUnmarshal(itemData, null);
+			return holder;
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to load PlayerInitialData from {Path}; leaving it empty.", xmlFilePath);
+			return new PlayerInitialData();
 		}
 	}
 

@@ -424,6 +424,24 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(7, useItem.GetUseDays());
 		Assert.NotNull(useItem.GetAction());
 
+		// player_initial_data.xml: faithful PlayerInitialData (Java parity DataManager binds data.playerInitialData).
+		// Was a hollow new() -> new characters got NO starting items + no spawn location. The @XmlIDREF id-proxy must
+		// resolve each <item id=...> to a REAL ItemTemplate via the live ITEM_DATA (exactly as Java's JAXB @XmlIDREF).
+		Assert.True(sd.PlayerInitialDataDh.Size() > 0, "PlayerInitialDataDh empty after boot");
+		// Spawn location resolves per race (map ids from the XML).
+		Assert.Equal(210010000, sd.PlayerInitialDataDh.GetSpawnLocation(Model.Race.ELYOS).GetMapId());
+		Assert.Equal(220010000, sd.PlayerInitialDataDh.GetSpawnLocation(Model.Race.ASMODIANS).GetMapId());
+		// WARRIOR starting items: the @XmlIDREF id resolves to a non-null ItemTemplate with the correct id (un-breaks
+		// initial-character items — PlayerService.NewPlayer reads itemType.GetTemplate().GetTemplateId()).
+		var warriorData = sd.PlayerInitialDataDh.GetPlayerCreationData(Model.PlayerClass.WARRIOR);
+		Assert.NotNull(warriorData);
+		var warriorItems = warriorData.GetItems();
+		Assert.NotEmpty(warriorItems);
+		var firstItem = warriorItems[0];
+		Assert.NotNull(firstItem.GetTemplate()); // @XmlIDREF resolved to a real ItemTemplate (not null/stub)
+		Assert.Equal(182400001, firstItem.GetTemplate().GetTemplateId()); // id matches the XML <item id="182400001"/>
+		Assert.Equal(1000, firstItem.GetCount());
+
 		// quest_script_data/ merged dir: faithful XMLQuests (16-subtype polymorphic DSL). XML_QUESTS non-empty at
 		// boot and a known scripted quest resolves to its correct subtype (poeta.xml xml_quest 1127 -> XmlQuestData).
 		Assert.True(sd.XmlQuests.GetAllQuests().Count > 0, "XmlQuests empty after boot");

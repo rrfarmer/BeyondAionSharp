@@ -45,7 +45,7 @@ public sealed class DataManager
 	public static DecomposableItemsData DECOMPOSABLE_ITEMS_DATA => SD.DecomposableItemsDataDh;
 	public static ItemPurificationData ITEM_PURIFICATION_DATA => SD.ItemPurificationDataDh;
 	public static GoodsListData GOODSLIST_DATA => SD.GoodsListDataDh;
-	public static PlayerInitialData PLAYER_INITIAL_DATA { get; } = new();
+	public static PlayerInitialData PLAYER_INITIAL_DATA => SD.PlayerInitialDataDh;
 	public static ItemRandomBonusData ITEM_RANDOM_BONUSES => SD.ItemRandomBonusDataDh;
 	public static AutoGroupData AUTO_GROUP => SD.AutoGroupDataDh;
 	public static WalkerVersionTable WALKER_VERSIONS_DATA => SD.WalkerVersions;
