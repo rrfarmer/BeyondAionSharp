@@ -2,15 +2,17 @@ using System.Xml.Serialization;
 
 namespace Aion.GameServer.Model.Templates;
 
-/// <summary>Java parity: model/templates/BindPointTemplate (avol).</summary>
+/// <summary>Java parity: model/templates/BindPointTemplate (avol).
+/// Fields are public so System.Xml.Serialization.XmlSerializer can populate them (JAXB read private
+/// fields via @XmlAccessorType(FIELD); XmlSerializer only binds public members). Getters preserved 1:1.</summary>
 [XmlRoot("bind_points")]
 public class BindPointTemplate
 {
-    [XmlAttribute("name")] private string name;
+    [XmlAttribute("name")] public string name;
 
-    [XmlAttribute("npcid")] private int npcId;
+    [XmlAttribute("npcid")] public int npcId;
 
-    [XmlAttribute("price")] private int price = 0;
+    [XmlAttribute("price")] public int price = 0;
 
     public string GetName()
     {

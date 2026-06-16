@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("bind_points")]
 public class BindPointData
 {
-    [XmlElement("bind_point")] private List<BindPointTemplate> bplist;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("bind_point")] public List<BindPointTemplate> bplist;
 
     [XmlIgnore] private readonly Dictionary<int, BindPointTemplate> bindplistData = new();
 
