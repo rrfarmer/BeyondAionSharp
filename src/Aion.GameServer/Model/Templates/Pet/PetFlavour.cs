@@ -9,12 +9,13 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlType("PetFlavour")]
 public class PetFlavour
 {
-    [XmlElement("food")] protected List<PetRewards> food;
+    // Public so XmlSerializer can populate them (JAXB used private/protected fields via @XmlAccessorType(FIELD)).
+    [XmlElement("food")] public List<PetRewards> food;
 
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("full_count")] protected int fullCount = 1;
-    [XmlAttribute("loved_limit")] protected int lovedFoodLimit = 0;
-    [XmlAttribute("cd")] protected int cooldown = 0;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("full_count")] public int fullCount = 1;
+    [XmlAttribute("loved_limit")] public int lovedFoodLimit = 0;
+    [XmlAttribute("cd")] public int cooldown = 0;
 
     public List<PetRewards> GetFood()
     {

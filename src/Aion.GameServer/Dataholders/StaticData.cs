@@ -218,8 +218,8 @@ public sealed partial class StaticData
 
 	public PetDopingTable PetDopings { get; }
 
-	// Faithful PetFeedData holder (empty-default; runtime XML load deferred) - see summary->template re-point.
-	public PetFeedData PetFeedDataDh { get; } = new();
+	// Faithful PetFeedData holder — populated from pets/pet_feed.xml at boot (LoadLeafHoldersFromFiles).
+	public PetFeedData PetFeedDataDh { get; private set; } = new();
 
 	public TitleTemplateTable TitleTemplates { get; }
 
@@ -243,11 +243,11 @@ public sealed partial class StaticData
 
 	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
 
-	public CubeExpandData CubeExpandDataDh { get; } = new();
+	public CubeExpandData CubeExpandDataDh { get; private set; } = new();
 
 	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
 
-	public WarehouseExpandData WarehouseExpandDataDh { get; } = new();
+	public WarehouseExpandData WarehouseExpandDataDh { get; private set; } = new();
 
 	public LegionDominionTable LegionDominions { get; }
 
@@ -265,7 +265,7 @@ public sealed partial class StaticData
 	// (e.g. game-server/data/static_data/quest_data/quest_data.xml is a self-contained <quests> root) and assign here.
 	public QuestsData Quests { get; private set; } = new();
 	public TribeRelationsData TribeRelations { get; private set; } = new();
-	public WorldMapsData WorldMaps2 { get; } = new();
+	public WorldMapsData WorldMaps2 { get; private set; } = new();
 	public NpcShoutData NpcShouts { get; private set; } = new();
 	public UpgradeArcadeData UpgradeArcade { get; private set; } = new();
 	public SiegeLocationData SiegeLocations { get; private set; } = new();
@@ -275,7 +275,7 @@ public sealed partial class StaticData
 	public GuideHtmlData GuideHtml { get; private set; } = new();
 	public MaterialData Materials { get; private set; } = new();
 	public ZoneData ZoneInfo { get; private set; } = new();
-	public XMLQuests XmlQuests { get; } = new();
+	public XMLQuests XmlQuests { get; private set; } = new();
 	public TownSpawnsData TownSpawns { get; private set; } = new();
 	public SkillChargeData SkillCharges { get; private set; } = new();
 	public MotionData Motions { get; private set; } = new();
@@ -459,6 +459,40 @@ public sealed partial class StaticData
 		// fires each event's SpawnsData.Initialize children-first). EventTemplate's GlobalRule drop-rule cone
 		// binds nullable restriction_race via a string proxy. Feeds DataManager.EVENT_DATA.
 		Events = TryLoadMergedHolder<EventData>(Path.Combine(staticDataDirectory, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
+		// <warehouse_expander> root (single file): faithful WarehouseExpandData feeds DataManager.WAREHOUSEEXPANDER_DATA.
+		// StorageExpansionTemplate ids="..." space-separated int[] binds via the IdsRaw string proxy; <expand> rows public.
+		WarehouseExpandDataDh = TryLoadHolder(WarehouseExpandDataDh, Path.Combine(staticDataDirectory, "storage_expander", "warehouse_expander.xml"), logger);
+		// <cube_expander> root (single file): faithful CubeExpandData feeds DataManager.CUBEEXPANDER_DATA (same template shape).
+		CubeExpandDataDh = TryLoadHolder(CubeExpandDataDh, Path.Combine(staticDataDirectory, "storage_expander", "cube_expander.xml"), logger);
+		// <pet_feed> root (single file): faithful PetFeedData feeds DataManager.PET_FEED_DATA. PetFlavour/PetRewards/
+		// PetFeedResult bind public fields; <food group="..."> maps to the FoodType enum by wire-name.
+		PetFeedDataDh = TryLoadHolder(PetFeedDataDh, Path.Combine(staticDataDirectory, "pets", "pet_feed.xml"), logger);
+		// <world_maps> root (single file): faithful WorldMapsData feeds DataManager.WORLD_MAPS_DATA. The holder is
+		// IEnumerable (collection-typed to XmlSerializer), so the file is read into WorldMapsDataDto and SetData builds
+		// the mapsById index. WorldMapTemplate flags="..." wire tokens map to ZoneAttributes via the FlagsRaw proxy.
+		WorldMaps2 = TryLoadWorldMaps(Path.Combine(staticDataDirectory, "world_maps.xml"), logger);
+	}
+
+	private static WorldMapsData TryLoadWorldMaps(string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger)
+	{
+		try
+		{
+			if (!File.Exists(xmlFilePath))
+			{
+				logger?.LogWarning("Static data holder file not found, leaving WorldMapsData empty: {Path}", xmlFilePath);
+				return new WorldMapsData();
+			}
+
+			var dto = LoadingUtils.JaxbHolderLoader.DeserializeFile<WorldMapsDataDto>(xmlFilePath);
+			var holder = new WorldMapsData();
+			holder.SetData(dto.Maps);
+			return holder;
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to load WorldMapsData from {Path}; leaving it empty.", xmlFilePath);
+			return new WorldMapsData();
+		}
 	}
 
 	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()

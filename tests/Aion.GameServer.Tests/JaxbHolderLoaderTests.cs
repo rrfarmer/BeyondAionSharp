@@ -2127,6 +2127,128 @@ public sealed class JaxbHolderLoaderTests
         }
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesWarehouseExpandDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("storage_expander", "warehouse_expander.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<WarehouseExpandData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <expansion_npc ids="203221"> with only level 2 & 3 expand prices.
+        var t = data.GetWarehouseExpansionTemplate(203221);
+        Assert.NotNull(t);
+        Assert.Equal(24000, t!.GetPrice(2));
+        Assert.Equal(72600, t.GetPrice(3));
+        Assert.Null(t.GetPrice(1)); // not present for this npc
+        Assert.Equal(2, t.GetMinExpansionLevel());
+        Assert.Equal(3, t.GetMaxExpansionLevel());
+
+        // First row carries level 1..5; spot-check the multi-id binding (ids="203199 ...").
+        var first = data.GetWarehouseExpansionTemplate(203199);
+        Assert.NotNull(first);
+        Assert.Equal(1200, first!.GetPrice(1));
+        Assert.Equal(363000, first.GetPrice(5));
+
+        Assert.Null(data.GetWarehouseExpansionTemplate(-1));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesCubeExpandDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("storage_expander", "cube_expander.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<CubeExpandData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row (Poeta/Ishalgen): <expansion_npc ids="798008 798037"><expand level="1" price="1000"/></expansion_npc>
+        var poeta = data.GetCubeExpansionTemplate(798008);
+        Assert.NotNull(poeta);
+        Assert.Equal(1000, poeta!.GetPrice(1));
+
+        // Sanctum/Pandaemonium row carries levels 1..4.
+        var sanctum = data.GetCubeExpansionTemplate(798011);
+        Assert.NotNull(sanctum);
+        Assert.Equal(1000, sanctum!.GetPrice(1));
+        Assert.Equal(180000, sanctum.GetPrice(4));
+
+        Assert.Null(data.GetCubeExpansionTemplate(-1));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesPetFeedDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("pets", "pet_feed.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<PetFeedData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <flavour id="7" full_count="100" cd="10"><food group="FLUIDS">...5 results...</food></flavour>
+        var flavour7 = data.GetFlavourById(7);
+        Assert.NotNull(flavour7);
+        Assert.Equal(7, flavour7!.GetId());
+        Assert.Equal(100, flavour7.GetFullCount());
+        Assert.Equal(10, flavour7.GetCooldDown());
+
+        var food = flavour7.GetFood();
+        Assert.NotEmpty(food);
+        var fluids = food.First(f => f.GetType_() == Model.Templates.Pet.FoodType.FLUIDS);
+        Assert.Contains(fluids.GetResults(), r => r.GetItem() == 188050758);
+        Assert.Contains(fluids.GetResults(), r => r.GetItem() == 188050762);
+
+        // id 8 = ARMOR group (proves multiple flavours + enum wire-name binding).
+        var flavour8 = data.GetFlavourById(8);
+        Assert.NotNull(flavour8);
+        Assert.Contains(flavour8!.GetFood(), f => f.GetType_() == Model.Templates.Pet.FoodType.ARMOR);
+
+        Assert.Null(data.GetFlavourById(-1));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesWorldMapsDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("world_maps.xml");
+
+        // WorldMapsData is IEnumerable (collection-typed to XmlSerializer); the file is read into the plain DTO and
+        // transferred via SetData, mirroring how StaticData.TryLoadWorldMaps wires it at boot.
+        var dto = JaxbHolderLoader.DeserializeFile<WorldMapsDataDto>(path);
+        var data = new WorldMapsData();
+        data.SetData(dto.Maps);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <map id="110010000" name="Sanctum" cName="LC1" world_type="ELYSEA" world_size="3072"
+        //   drop_type="NONE" flags="RECALL GLIDE RIDE PVP DUEL_SAME_RACE" pve_attack_ratio="150" pve_defend_ratio="50"/>
+        var sanctum = data.GetTemplate(110010000);
+        Assert.NotNull(sanctum);
+        Assert.Equal("Sanctum", sanctum!.GetName());
+        Assert.Equal("LC1", sanctum.GetCName());
+        Assert.Equal(World.WorldType.ELYSEA, sanctum.GetWorldType());
+        Assert.Equal(3072, sanctum.GetWorldSize());
+        Assert.Equal(150, sanctum.GetPvEAttackRatio());
+        // Wire-token flags mapped via the FlagsRaw proxy.
+        Assert.True(sanctum.CanRecall());
+        Assert.True(sanctum.CanGlide());
+        Assert.True(sanctum.CanRide());
+        Assert.True(sanctum.IsPvpAllowed());
+        Assert.True(sanctum.IsSameRaceDuelsAllowed());
+        Assert.False(sanctum.IsOtherRaceDuelsAllowed()); // DUEL_OTHER_RACE absent
+
+        // Twin counts on a field map: Poeta twin_count="5" beginner_twin_count="6".
+        var poeta = data.GetTemplate(210010000);
+        Assert.NotNull(poeta);
+        Assert.Equal(5, poeta!.GetTwinCount());
+        Assert.Equal(6, poeta.GetBeginnerTwinCount());
+
+        // CName reverse lookup.
+        Assert.Equal(110010000, data.GetWorldIdByCName("LC1"));
+
+        Assert.Null(data.GetTemplate(-1));
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

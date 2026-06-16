@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("warehouse_expander")]
 public class WarehouseExpandData
 {
-    [XmlElement("expansion_npc")] private List<StorageExpansionTemplate> expansionTemplates;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("expansion_npc")] public List<StorageExpansionTemplate> expansionTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, StorageExpansionTemplate> expansionTemplatesByNpcId = new();
 

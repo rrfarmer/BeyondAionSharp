@@ -9,7 +9,8 @@ namespace Aion.GameServer.Model.Templates;
 [XmlRoot("expansion_npc")]
 public class StorageExpansionTemplate
 {
-    [XmlElement("expand")] private List<Expand.Expand> expansions;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("expand")] public List<Expand.Expand> expansions;
 
     // Java parity: @XmlAttribute(name="ids") int[] — space-separated.
     // C#: string attribute parsed to int[] via property setter.

@@ -6,7 +6,8 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlType("PetFeedResult")]
 public class PetFeedResult
 {
-    [XmlAttribute("item")] protected int item;
+    // Public so XmlSerializer can populate it (JAXB used a protected field via @XmlAccessorType(FIELD)).
+    [XmlAttribute("item")] public int item;
 
     public int GetItem()
     {

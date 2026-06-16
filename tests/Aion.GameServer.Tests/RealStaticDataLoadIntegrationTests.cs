@@ -269,6 +269,23 @@ public sealed class RealStaticDataLoadIntegrationTests
 		// Absent restriction_race -> null; present "ELYOS" -> typed enum (proves the string proxy both ways).
 		Assert.Contains(rules!, r => r.GetMemberLimit() == 12 && r.GetRestrictionRace() == null);
 		Assert.Contains(rules!, r => r.GetRestrictionRace() == Model.Templates.GlobalDrops.GlobalRule.RestrictionRace.ELYOS);
+
+		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
+		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
+		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));
+		Assert.True(sd.CubeExpandDataDh.Size() > 0, "CubeExpandDataDh empty after boot");
+		Assert.Equal(1000, sd.CubeExpandDataDh.GetCubeExpansionTemplate(798008)!.GetPrice(1));
+
+		// pets/pet_feed.xml: faithful PetFeedData (FoodType enum wire-name binding + nested result cone).
+		Assert.True(sd.PetFeedDataDh.Size() > 0, "PetFeedDataDh empty after boot");
+		Assert.Equal(100, sd.PetFeedDataDh.GetFlavourById(7)!.GetFullCount());
+
+		// world_maps.xml: faithful WorldMapsData (flags wire-token proxy + world_type enum).
+		Assert.True(sd.WorldMaps2.Size() > 0, "WorldMaps2 empty after boot");
+		var sanctumMap = sd.WorldMaps2.GetTemplate(110010000);
+		Assert.NotNull(sanctumMap);
+		Assert.Equal(World.WorldType.ELYSEA, sanctumMap!.GetWorldType());
+		Assert.True(sanctumMap.IsPvpAllowed());
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

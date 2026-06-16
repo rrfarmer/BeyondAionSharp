@@ -6,8 +6,9 @@ namespace Aion.GameServer.Model.Templates.Expand;
 [XmlRoot("expand")]
 public class Expand
 {
-    [XmlAttribute("level")] protected int level;
-    [XmlAttribute("price")] protected int price;
+    // Public so XmlSerializer can populate them (JAXB used private/protected fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("level")] public int level;
+    [XmlAttribute("price")] public int price;
 
     public int GetLevel()
     {

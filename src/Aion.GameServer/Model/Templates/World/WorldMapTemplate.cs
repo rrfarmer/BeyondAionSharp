@@ -39,13 +39,32 @@ public class WorldMapTemplate
         set
         {
             if (value is null) { _flagValues = null; _flags = 0; return; }
+            // Java parity: ZoneAttributes carries @XmlEnumValue wire names ("PVP","DUEL_SAME_RACE",
+            // "NO_RETURN_BATTLE", ...) that differ from the C# member identifiers, so map the wire tokens
+            // explicitly rather than Enum.Parse (which would throw on "PVP"/"DUEL_SAME_RACE"/...).
             _flagValues = value.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                               .Select(s => Enum.Parse<ZoneAttributes>(s, ignoreCase: true))
+                               .Select(ParseFlagToken)
                                .ToList();
             // Java afterUnmarshal: flags = ZoneAttributes.fromList(flagValues)
             _flags = ZoneAttributesExtensions.FromList(_flagValues);
         }
     }
+
+    // Java parity: @XmlEnumValue wire-token → ZoneAttributes constant (matches WorldMapSummary.ParseFlags).
+    private static ZoneAttributes ParseFlagToken(string token) => token switch
+    {
+        "BIND"             => ZoneAttributes.Bind,
+        "RECALL"           => ZoneAttributes.Recall,
+        "GLIDE"            => ZoneAttributes.Glide,
+        "FLY"              => ZoneAttributes.Fly,
+        "RIDE"             => ZoneAttributes.Ride,
+        "FLY_RIDE"         => ZoneAttributes.FlyRide,
+        "PVP"              => ZoneAttributes.PvpEnabled,
+        "DUEL_SAME_RACE"   => ZoneAttributes.DuelSameRaceEnabled,
+        "DUEL_OTHER_RACE"  => ZoneAttributes.DuelOtherRaceEnabled,
+        "NO_RETURN_BATTLE" => ZoneAttributes.NoReturnBattle,
+        _                  => Enum.Parse<ZoneAttributes>(token, ignoreCase: true),
+    };
 
     // ── getters ──────────────────────────────────────────────────────────────
     public string GetName()           => Name;

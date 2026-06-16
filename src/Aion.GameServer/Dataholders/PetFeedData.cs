@@ -9,7 +9,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("pet_feed")]
 public class PetFeedData
 {
-    [XmlElement("flavour")] protected List<PetFlavour> flavours;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("flavour")] public List<PetFlavour> flavours;
 
     [XmlIgnore] private Dictionary<int, PetFlavour> petFlavoursById = new();
 

@@ -7,9 +7,10 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlType("PetRewards")]
 public class PetRewards
 {
-    [XmlElement("result")] protected List<PetFeedResult> results;
-    [XmlAttribute("group")] protected FoodType type;
-    [XmlAttribute("loved")] protected bool loved = false;
+    // Public so XmlSerializer can populate them (JAXB used private/protected fields via @XmlAccessorType(FIELD)).
+    [XmlElement("result")] public List<PetFeedResult> results;
+    [XmlAttribute("group")] public FoodType type;
+    [XmlAttribute("loved")] public bool loved = false;
 
     public List<PetFeedResult> GetResults()
     {
