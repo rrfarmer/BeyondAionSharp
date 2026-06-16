@@ -177,6 +177,12 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_HEADING_UPDATE.json")]
 	[InlineData("SM_POSITION.json")]
 	[InlineData("SM_LOOKATOBJECT.json")]
+	[InlineData("SM_RESURRECT.json")]
+	[InlineData("SM_TRANSFORM.json")]
+	[InlineData("SM_CRAFT_UPDATE.json")]
+	[InlineData("SM_CONQUEROR_PROTECTOR.json")]
+	[InlineData("SM_LEGION_EDIT.json")]
+	[InlineData("SM_UPGRADE_ARCADE.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -257,8 +263,49 @@ public sealed class GoldenPacketFixtureTests
 		"SM_HEADING_UPDATE" => new SM_HEADING_UPDATE(PositionedHarness(inputs.GetProperty("objectId").GetInt32())),
 		"SM_POSITION" => new SM_POSITION(PositionedHarness(inputs.GetProperty("objectId").GetInt32())),
 		"SM_LOOKATOBJECT" => new SM_LOOKATOBJECT(PositionedHarness(inputs.GetProperty("objectId").GetInt32())),
+		"SM_RESURRECT" => new SM_RESURRECT(new PacketHarnessCreature(700001, 1, new Dictionary<StatEnum, int>()), inputs.GetProperty("skillId").GetInt32()),
+		"SM_TRANSFORM" => ReconstructTransform(inputs),
+		"SM_CRAFT_UPDATE" => new SM_CRAFT_UPDATE(inputs.GetProperty("skillId").GetInt32(), new Aion.GameServer.Model.Templates.Items.ItemTemplate(), inputs.GetProperty("success").GetInt32(), inputs.GetProperty("failure").GetInt32(), inputs.GetProperty("action").GetInt32(), inputs.GetProperty("executionSpeed").GetInt32(), inputs.GetProperty("delay").GetInt32()),
+		"SM_CONQUEROR_PROTECTOR" => new SM_CONQUEROR_PROTECTOR(inputs.GetProperty("type").GetInt32(), inputs.GetProperty("buffLvl").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
+		"SM_LEGION_EDIT" => ReconstructLegionEdit(inputs),
+		"SM_UPGRADE_ARCADE" => ReconstructUpgradeArcade(inputs),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
+
+	// SM_TRANSFORM custom (testing) ctor: creature objId + state (harness ACTIVE=1) + scalars + TransformType.
+	private static SM_TRANSFORM ReconstructTransform(JsonElement inputs)
+	{
+		var c = new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>());
+		var type = Enum.Parse<Aion.GameServer.SkillEngine.Model.TransformType>(inputs.GetProperty("type").GetString()!);
+		return new SM_TRANSFORM(c, inputs.GetProperty("modelId").GetInt32(), inputs.GetProperty("unk7").GetInt32(), type,
+			inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32(), inputs.GetProperty("unk3").GetInt32(),
+			inputs.GetProperty("unk4").GetInt32(), inputs.GetProperty("unk5").GetInt32(), inputs.GetProperty("unk6").GetInt32(),
+			inputs.GetProperty("panelId").GetInt32());
+	}
+
+	// SM_LEGION_EDIT: type 0x07 via (int) ctor; type 0x06 via (int type, int unixTime) ctor.
+	private static SM_LEGION_EDIT ReconstructLegionEdit(JsonElement inputs)
+	{
+		return inputs.GetProperty("type").GetInt32() switch
+		{
+			0x07 => new SM_LEGION_EDIT(0x07),
+			0x06 => new SM_LEGION_EDIT(0x06, inputs.GetProperty("unixTime").GetInt32()),
+			var t => throw new NotSupportedException($"No SM_LEGION_EDIT faithful ctor for type {t}"),
+		};
+	}
+
+	// SM_UPGRADE_ARCADE deterministic action branches: 0 (showIcon), 2 (no-arg), 6 (itemId,count), 7 (frenzy).
+	private static SM_UPGRADE_ARCADE ReconstructUpgradeArcade(JsonElement inputs)
+	{
+		return inputs.GetProperty("action").GetInt32() switch
+		{
+			0 => new SM_UPGRADE_ARCADE(inputs.GetProperty("showIcon").GetBoolean()),
+			2 => new SM_UPGRADE_ARCADE(),
+			6 => new SM_UPGRADE_ARCADE(inputs.GetProperty("rewardItemId").GetInt32(), inputs.GetProperty("rewardItemCount").GetInt64()),
+			7 => new SM_UPGRADE_ARCADE(inputs.GetProperty("frenzyDurationSeconds").GetInt32()),
+			var a => throw new NotSupportedException($"No SM_UPGRADE_ARCADE faithful ctor for action {a}"),
+		};
+	}
 
 	// SM_CAPTCHA: type 1 (count,data) and type 3 (isCorrect,banTime) ctors.
 	private static SM_CAPTCHA ReconstructCaptcha(JsonElement inputs)
