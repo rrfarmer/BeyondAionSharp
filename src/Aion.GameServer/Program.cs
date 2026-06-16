@@ -66,32 +66,19 @@ var builder = Host.CreateDefaultBuilder(args)
 							serviceProvider.GetRequiredService<GameWorld>(),
 							cancellationToken,
 							serviceProvider.GetService<CreaturePvpZoneCounterService>())));
-			services.AddSingleton<WorldNpcLifeStatsService>();
-			services.AddSingleton<WorldNpcResourceStatsService>();
 			services.AddSingleton<PlayerVisualStatsUpdateService>();
-			services.AddSingleton<WorldNpcSoloDpRewardService>();
 			services.AddSingleton<PvpApRewardService>();
-			services.AddSingleton<PvpDpRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
 			services.AddSingleton<PvpArenaApRewardService>();
 			services.AddSingleton<AturamSkyFortressApRewardService>();
 			services.AddSingleton<EternalBastionApRewardService>();
 			services.AddSingleton<StonespearReachApRewardService>();
-			services.AddSingleton<WorldNpcSkillResultCalculationService>();
-			services.AddSingleton<Action<WorldNpc>>(
-				serviceProvider => npc =>
-				{
-					var lifeStats = serviceProvider.GetRequiredService<WorldNpcLifeStatsService>();
-					if (npc.Template.MaxHp > 0)
-						lifeStats.Initialize(npc, npc.Template.MaxHp);
-					else
-						lifeStats.Clear(npc.ObjectId);
-				});
-			services.AddSingleton<Action<int>>(
-				serviceProvider => objectId =>
-				{
-					serviceProvider.GetRequiredService<WorldNpcLifeStatsService>().Clear(objectId);
-				});
+			// Reworked WorldNpc DP/HP web (WorldNpcResourceStatsService/WorldNpcLifeStatsService/
+			// WorldNpcSoloDpRewardService/PvpDpRewardService/WorldNpcSkillResultCalculationService + the
+			// shared WorldNpcEffectResourceType enum) retired: dead closed graph, no live faithful consumer.
+			// Faithful DP is player.GetCommonData().AddDp; faithful HP/MP/FP is CreatureLifeStats. The two
+			// Action<WorldNpc>/Action<int> npc-life-stats spawn/despawn delegates fed only WorldNpcSpawnService's
+			// null-guarded optional ctor params (npcLifeStatsInitialize/npcLifeStatsClear default null) -> dropped.
 			// Reworked WorldNpcSkillDamageService/Fanout/burn-island (depended on the deleted PlayerEnterWorldService god's
 			// SaveIdianPolishBurn/SaveItemChargeBurn mutations; gameplay covered by faithful ItemChargeService/ChargeInfo
 			// equipment-observer) removed.
