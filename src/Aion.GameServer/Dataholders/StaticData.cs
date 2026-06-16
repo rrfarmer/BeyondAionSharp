@@ -309,6 +309,7 @@ public sealed partial class StaticData
 	public GlobalNpcExclusionData GlobalNpcExclusionDataDh { get; private set; } = new();
 	public InstanceExitData InstanceExitDataDh { get; private set; } = new();
 	public StaticDoorData StaticDoorDataDh { get; private set; } = new();
+	public SkillTreeData SkillTreeDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -481,6 +482,13 @@ public sealed partial class StaticData
 		// StaticDoorTemplate primitive attrs bind via the now-public fields; StaticDoorData.AfterUnmarshal cascades
 		// each StaticDoorWorld.AfterUnmarshal children-first (XmlSerializer doesn't auto-call nested callbacks).
 		StaticDoorDataDh = TryLoadHolder(StaticDoorDataDh, Path.Combine(staticDataDirectory, "staticdoors", "staticdoor_templates.xml"), logger);
+		// Java imports the skill_tree dir with singleRootTag (<import file="skill_tree" singleRootTag="true"/>):
+		// skill_tree.xml + craft_skill_tree.xml both <skill_tree> roots, merged into StaticData.skillTreeData; feeds
+		// DataManager.SKILL_TREE_DATA, read by StigmaService/SkillLearnService/PlayerSkillList for stigma + skill-learn.
+		// Was a hollow new() -> always empty -> stigma/skill-learn trees silently empty. Each file's <skill> rows
+		// (now-public skillTemplates) are merged via MergePending, then the single AfterUnmarshal builds the
+		// per-class/race templates map + templatesById (XmlSerializer doesn't auto-fire JAXB's afterUnmarshal).
+		SkillTreeDataDh = TryLoadMergedHolder<SkillTreeData>(Path.Combine(staticDataDirectory, "skill_tree"), (m, p) => m.MergePending(p), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());

@@ -49,7 +49,7 @@ public sealed class DataManager
 	public static ItemRandomBonusData ITEM_RANDOM_BONUSES { get; } = new();
 	public static AutoGroupData AUTO_GROUP => SD.AutoGroupDataDh;
 	public static WalkerVersionTable WALKER_VERSIONS_DATA => SD.WalkerVersions;
-	public static SkillTreeData SKILL_TREE_DATA { get; } = new();
+	public static SkillTreeData SKILL_TREE_DATA => SD.SkillTreeDataDh;
 	public static PortalLocData PORTAL_LOC_DATA => SD.PortalLocDataDh;
 	public static PetFeedData PET_FEED_DATA => SD.PetFeedDataDh;
 	public static NpcSkillData NPC_SKILL_DATA => SD.NpcSkillDataDh;

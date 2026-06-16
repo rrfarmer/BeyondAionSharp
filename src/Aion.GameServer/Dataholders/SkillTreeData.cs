@@ -11,10 +11,24 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("skill_tree")]
 public class SkillTreeData
 {
-    [XmlElement("skill")] private List<SkillLearnTemplate> skillTemplates;
+    // XmlSerializer binds public members only (Java field was private; access via @XmlAccessorType(FIELD)).
+    [XmlElement("skill")] public List<SkillLearnTemplate> skillTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, List<SkillLearnTemplate>> templates = new();
     [XmlIgnore] private readonly Dictionary<int, List<SkillLearnTemplate>> templatesById = new();
+
+    /// <summary>
+    /// skill_tree is imported singleRootTag over the skill_tree dir (skill_tree.xml + craft_skill_tree.xml),
+    /// so this appends another file's &lt;skill&gt; rows before the single AfterUnmarshal builds the indices
+    /// (mirrors TryLoadMergedHolder's MergePending; not a Java method — Java unmarshals one merged document).
+    /// </summary>
+    public void MergePending(SkillTreeData other)
+    {
+        if (other.skillTemplates == null)
+            return;
+        skillTemplates ??= new List<SkillLearnTemplate>();
+        skillTemplates.AddRange(other.skillTemplates);
+    }
 
     public void AfterUnmarshal(object parent)
     {

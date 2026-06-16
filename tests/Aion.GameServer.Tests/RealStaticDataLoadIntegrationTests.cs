@@ -311,6 +311,16 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(door33);
 		Assert.Equal(2, door33!.GetState());
 
+		// skill_tree dir (skill_tree.xml + craft_skill_tree.xml, singleRootTag): faithful SkillTreeData (Java parity
+		// DataManager.init binds data.skillTreeData). Previously hollow new() -> always empty -> StigmaService/
+		// SkillLearnService/PlayerSkillList saw no learnable skills. Proves the merged AfterUnmarshal built the
+		// per-class/race templates map (GetTemplatesFor) + templatesById (IsLearnedSkill): skill id 1 is a RANGER
+		// ELYOS skill learnable at minLevel 10 (skill_tree.xml row <skill skillId="1" minLevel="10" race="ELYOS" classId="RANGER"/>).
+		Assert.True(sd.SkillTreeDataDh.Size() > 0, "SkillTreeDataDh empty after boot");
+		Assert.True(sd.SkillTreeDataDh.IsLearnedSkill(1), "SkillTreeData missing known skill id 1");
+		var rangerLvl10 = sd.SkillTreeDataDh.GetTemplatesFor(Model.PlayerClass.RANGER, 10, Model.Race.ELYOS);
+		Assert.Contains(rangerLvl10, t => t.GetSkillId() == 1);
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));
