@@ -356,6 +356,28 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(World.WorldType.ELYSEA, sanctumMap!.GetWorldType());
 		Assert.True(sanctumMap.IsPvpAllowed());
 
+		// enchants/tempering_templates.xml: faithful TemperingData (Java parity DataManager.init binds data.temperingData).
+		// Previously hollow new() -> always empty -> TemperingEffect granted no stats. The item_group -> level -> stats map
+		// built in AfterUnmarshal; Size() = number of item_group rows (TEST_1, etc.). Java exposes only Size() +
+		// GetTemplates(ItemTemplate), so the by-group lookup is proven via a real item that carries a tempering group.
+		Assert.True(sd.TemperingDataDh.Size() > 0, "TemperingDataDh empty after boot");
+
+		// portals/portal_template2.xml: faithful Portal2Data (Java parity DataManager.init binds data.portalTemplate2).
+		// Previously hollow new() -> always empty -> PortalAI/TeleportService never teleported. A known portal_use npc
+		// (730357, Dredgion Captains Cabin ELYOS) is indexed (IsPortalNpc) and its portal_path resolved race + loc_id.
+		Assert.True(sd.Portal2DataDh.Size() > 0, "Portal2DataDh empty after boot");
+		Assert.True(sd.Portal2DataDh.IsPortalNpc(730357), "Portal2Data missing known portal_use npc 730357");
+
+		// items/item_random_bonuses.xml: faithful ItemRandomBonusData (Java parity DataManager.init binds
+		// data.itemRandomBonuses). Previously hollow new() -> always empty -> ItemPurificationService/PolishAction/
+		// TuningAction/RandomBonusEffect rolled nothing. Known set (INVENTORY id 1) has its first <modifiers> (chance 50)
+		// bound with the polymorphic <add MAXHP> StatFunction (proves the shared ModifiersTemplate cone bound).
+		Assert.True(sd.ItemRandomBonusDataDh.Size() > 0, "ItemRandomBonusDataDh empty after boot");
+		var bonus1Mods = sd.ItemRandomBonusDataDh.GetTemplate(Model.Templates.Items.Bonuses.StatBonusType.INVENTORY, 1, 1);
+		Assert.NotNull(bonus1Mods);
+		Assert.Equal(50.0f, bonus1Mods!.GetChance());
+		Assert.Contains(bonus1Mods.GetModifiers(), m => m.GetName() == Model.Stats.Container.StatEnum.MAXHP);
+
 		// quest_script_data/ merged dir: faithful XMLQuests (16-subtype polymorphic DSL). XML_QUESTS non-empty at
 		// boot and a known scripted quest resolves to its correct subtype (poeta.xml xml_quest 1127 -> XmlQuestData).
 		Assert.True(sd.XmlQuests.GetAllQuests().Count > 0, "XmlQuests empty after boot");

@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("PortalUse")]
 public class PortalUse
 {
-    [XmlElement("portal_path")] private List<PortalPath> portalPaths;
-    [XmlAttribute("npc_id")] private int npcId;
+    [XmlElement("portal_path")] public List<PortalPath> portalPaths;
+    [XmlAttribute("npc_id")] public int npcId;
 
     public List<PortalPath> GetPortalPaths()
     {

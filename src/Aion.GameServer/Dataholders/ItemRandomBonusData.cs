@@ -12,7 +12,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("random_bonuses")]
 public class ItemRandomBonusData
 {
-    [XmlElement("random_bonus")] private List<RandomBonusSet> randomBonusSets;
+    [XmlElement("random_bonus")] public List<RandomBonusSet> randomBonusSets;
 
     [XmlIgnore] private readonly Dictionary<StatBonusType, Dictionary<int, RandomBonusSet>> bonusData = new();
 

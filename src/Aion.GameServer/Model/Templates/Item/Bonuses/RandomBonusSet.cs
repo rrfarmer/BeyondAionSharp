@@ -8,9 +8,9 @@ namespace Aion.GameServer.Model.Templates.Items.Bonuses;
 [XmlType("RandomBonusSet")]
 public class RandomBonusSet
 {
-    [XmlElement("modifiers")] private List<ModifiersTemplate> modifiers;
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("type")] private StatBonusType bonusType;
+    [XmlElement("modifiers")] public List<ModifiersTemplate> modifiers;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("type")] public StatBonusType bonusType;
 
     public List<ModifiersTemplate> GetModifiers()
     {

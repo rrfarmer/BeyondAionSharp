@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Enchants;
 [XmlType("tempering_stat")]
 public class TemperingStat
 {
-    [XmlAttribute("stat")] protected StatEnum stat;
-    [XmlAttribute("value")] protected int value;
+    [XmlAttribute("stat")] public StatEnum stat;
+    [XmlAttribute("value")] public int value;
 
     public StatEnum GetStat()
     {

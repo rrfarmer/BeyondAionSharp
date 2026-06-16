@@ -9,7 +9,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("tempering_templates")]
 public class TemperingData
 {
-    [XmlElement("tempering_list")] private List<TemperingList> temperingList;
+    [XmlElement("tempering_list")] public List<TemperingList> temperingList;
 
     private Dictionary<string, Dictionary<int, List<TemperingStat>>> templates = new();
 

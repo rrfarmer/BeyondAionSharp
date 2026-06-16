@@ -7,9 +7,9 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("PortalDialog")]
 public class PortalDialog
 {
-    [XmlElement("portal_path")] private List<PortalPath> portalPaths;
-    [XmlAttribute("npc_id")] private int npcId;
-    [XmlAttribute("teleport_dialog_id")] private int teleportDialogId = 1011;
+    [XmlElement("portal_path")] public List<PortalPath> portalPaths;
+    [XmlAttribute("npc_id")] public int npcId;
+    [XmlAttribute("teleport_dialog_id")] public int teleportDialogId = 1011;
 
     public List<PortalPath> GetPortalPaths()
     {

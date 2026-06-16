@@ -10,9 +10,9 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("portal_templates2")]
 public class Portal2Data
 {
-    [XmlElement("portal_use")] protected List<PortalUse> portalUse;
-    [XmlElement("portal_dialog")] protected List<PortalDialog> portalDialog;
-    [XmlElement("portal_scroll")] protected List<PortalScroll> portalScroll;
+    [XmlElement("portal_use")] public List<PortalUse> portalUse;
+    [XmlElement("portal_dialog")] public List<PortalDialog> portalDialog;
+    [XmlElement("portal_scroll")] public List<PortalScroll> portalScroll;
 
     [XmlIgnore] private readonly Dictionary<int, PortalUse> portalUses = new();
     [XmlIgnore] private readonly Dictionary<int, PortalDialog> portalDialogs = new();

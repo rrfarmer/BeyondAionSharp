@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Enchants;
 [XmlType("tempering_data")]
 public class TemperingTemplateData
 {
-    [XmlElement("tempering_stat")] protected List<TemperingStat> temperingStats;
-    [XmlAttribute("level")] private int level;
+    [XmlElement("tempering_stat")] public List<TemperingStat> temperingStats;
+    [XmlAttribute("level")] public int level;
 
     public int GetLevel()
     {

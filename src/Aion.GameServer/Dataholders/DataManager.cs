@@ -46,7 +46,7 @@ public sealed class DataManager
 	public static ItemPurificationData ITEM_PURIFICATION_DATA => SD.ItemPurificationDataDh;
 	public static GoodsListData GOODSLIST_DATA => SD.GoodsListDataDh;
 	public static PlayerInitialData PLAYER_INITIAL_DATA { get; } = new();
-	public static ItemRandomBonusData ITEM_RANDOM_BONUSES { get; } = new();
+	public static ItemRandomBonusData ITEM_RANDOM_BONUSES => SD.ItemRandomBonusDataDh;
 	public static AutoGroupData AUTO_GROUP => SD.AutoGroupDataDh;
 	public static WalkerVersionTable WALKER_VERSIONS_DATA => SD.WalkerVersions;
 	public static SkillTreeData SKILL_TREE_DATA => SD.SkillTreeDataDh;
@@ -58,14 +58,14 @@ public sealed class DataManager
 	public static WindstreamData WINDSTREAM_DATA => SD.WindstreamDataDh;
 	public static WarehouseExpandData WAREHOUSEEXPANDER_DATA => SD.WarehouseExpandDataDh;
 	public static CubeExpandData CUBEEXPANDER_DATA => SD.CubeExpandDataDh;
-	public static TemperingData TEMPERING_DATA { get; } = new();
+	public static TemperingData TEMPERING_DATA => SD.TemperingDataDh;
 	public static StaticDoorData STATICDOOR_DATA => SD.StaticDoorDataDh;
 	public static RideData RIDE_DATA => SD.RideDataDh;
 	public static PetDopingData PET_DOPING_DATA => SD.PetDopingDataDh;
 	public static LegionDominionData LEGION_DOMINION_DATA => SD.LegionDominionDataDh;
 	public static ItemSetData ITEM_SET_DATA => SD.ItemSetDataDh;
 	public static InstanceExitData INSTANCE_EXIT_DATA => SD.InstanceExitDataDh;
-	public static Portal2Data PORTAL2_DATA { get; } = new();
+	public static Portal2Data PORTAL2_DATA => SD.Portal2DataDh;
 	public static GlobalNpcExclusionData GLOBAL_EXCLUSION_DATA => SD.GlobalNpcExclusionDataDh;
 	public static GlobalDropData GLOBAL_DROP_DATA => SD.GlobalDropDataDh;
 	public static CustomDrop CUSTOM_NPC_DROP { get; } = new();

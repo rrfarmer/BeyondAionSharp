@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("PortalScroll")]
 public class PortalScroll
 {
-    [XmlElement("portal_path")] protected PortalPath portalPath;
-    [XmlAttribute("name")] protected string name;
+    [XmlElement("portal_path")] public PortalPath portalPath;
+    [XmlAttribute("name")] public string name;
 
     public PortalPath GetPortalPath()
     {

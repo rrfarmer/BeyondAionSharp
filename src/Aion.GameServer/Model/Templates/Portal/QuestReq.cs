@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("QuestReq")]
 public class QuestReq
 {
-    [XmlAttribute("quest_id")] protected int questId;
-    [XmlAttribute("quest_step")] protected int questStep;
+    [XmlAttribute("quest_id")] public int questId;
+    [XmlAttribute("quest_step")] public int questStep;
 
     public int GetQuestId()
     {

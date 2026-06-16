@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("ItemReq")]
 public class ItemReq
 {
-    [XmlAttribute("item_id")] protected int itemId;
-    [XmlAttribute("item_count")] protected int itemCount;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("item_count")] public int itemCount;
 
     public int GetItemId()
     {

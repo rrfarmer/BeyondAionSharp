@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Enchants;
 [XmlType("tempering_list")]
 public class TemperingList
 {
-    [XmlElement("tempering_data")] protected List<TemperingTemplateData> temperingDatas;
-    [XmlAttribute("item_group")] private string itemGroup;
+    [XmlElement("tempering_data")] public List<TemperingTemplateData> temperingDatas;
+    [XmlAttribute("item_group")] public string itemGroup;
 
     public string GetItemGroup()
     {

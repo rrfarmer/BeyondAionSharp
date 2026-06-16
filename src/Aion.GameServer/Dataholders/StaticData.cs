@@ -312,6 +312,10 @@ public sealed partial class StaticData
 	public SkillTreeData SkillTreeDataDh { get; private set; } = new();
 	public DecomposableItemsData DecomposableItemsDataDh { get; private set; } = new();
 	public ChallengeData ChallengeDataDh { get; private set; } = new();
+	public TemperingData TemperingDataDh { get; private set; } = new();
+	public Portal2Data Portal2DataDh { get; private set; } = new();
+	public ItemRandomBonusData ItemRandomBonusDataDh { get; private set; } = new();
+	public HouseData HouseDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -506,6 +510,27 @@ public sealed partial class StaticData
 		// public fields; the nullable Integer attrs (prev_task/msg_id/value) bind via string proxies; race/type
 		// enums bind by member name; ChallengeData.AfterUnmarshal (tasksById index) fires inside TryLoadHolder.
 		ChallengeDataDh = TryLoadHolder(ChallengeDataDh, Path.Combine(staticDataDirectory, "quest_data", "challenge_tasks.xml"), logger);
+		// Java imports the single file enchants/tempering_templates.xml (<tempering_templates> root) and binds it to
+		// StaticData.temperingData; feeds DataManager.TEMPERING_DATA, read by TemperingEffect for the item-tempering
+		// stat bonus. Was a hollow new() -> always empty -> tempering granted no stats. TemperingList/
+		// TemperingTemplateData/TemperingStat primitive+enum (StatEnum by member name) attrs bind via the now-public
+		// fields; TemperingData.AfterUnmarshal (item_group -> level -> stats map) fires inside TryLoadHolder.
+		// (The reworked TEMPERING_TABLE projection has 0 live consumers and is a separate slop-delete candidate.)
+		TemperingDataDh = TryLoadHolder(TemperingDataDh, Path.Combine(staticDataDirectory, "enchants", "tempering_templates.xml"), logger);
+		// Java imports the single file portals/portal_template2.xml (<portal_templates2> root) and binds it to
+		// StaticData.portalTemplate2; feeds DataManager.PORTAL2_DATA, read by TeleportService + the PortalAI handlers
+		// (PortalAI/PortalDialogAI/LegionDominionPortalAI/BeshmundirsWalkAI/SealedDanuarMysticariumPortals). Was a
+		// hollow new() -> always empty -> portals never teleported. PortalUse/PortalDialog/PortalScroll/PortalPath
+		// (+ QuestReq/ItemReq) primitive attrs + Race (by member name, PC_ALL default) bind via the now-public fields;
+		// Portal2Data.AfterUnmarshal builds the per-npcId/per-name indices inside TryLoadHolder.
+		Portal2DataDh = TryLoadHolder(Portal2DataDh, Path.Combine(staticDataDirectory, "portals", "portal_template2.xml"), logger);
+		// Java imports the single file items/item_random_bonuses.xml (<random_bonuses> root) and binds it to
+		// StaticData.itemRandomBonuses; feeds DataManager.ITEM_RANDOM_BONUSES, read by ItemPurificationService/
+		// PolishAction/TuningAction/RandomBonusEffect for item random-bonus rolls. Was a hollow new() -> always empty
+		// -> random bonuses never rolled. RandomBonusSet (id/type=StatBonusType by member name) + the shared
+		// ModifiersTemplate cone (polymorphic add/rate/sub/set/abs StatFunctions) bind via the now-public fields;
+		// ItemRandomBonusData.AfterUnmarshal builds the per-StatBonusType id map inside TryLoadHolder.
+		ItemRandomBonusDataDh = TryLoadHolder(ItemRandomBonusDataDh, Path.Combine(staticDataDirectory, "items", "item_random_bonuses.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
