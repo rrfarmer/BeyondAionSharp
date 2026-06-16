@@ -6,10 +6,10 @@ namespace Aion.GameServer.Model.Templates.Rift;
 [XmlType("Rift")]
 public class RiftTemplate
 {
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("world")] private int world;
-    [XmlAttribute("has_spawns")] private bool hasSpawns;
-    [XmlAttribute("auto_closeable")] private bool autoCloseable = true;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("world")] public int world;
+    [XmlAttribute("has_spawns")] public bool hasSpawns;
+    [XmlAttribute("auto_closeable")] public bool autoCloseable = true;
 
     public RiftTemplate()
     {

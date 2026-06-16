@@ -36,6 +36,7 @@ public sealed class DataManager
 	public static NpcFactionsData NPC_FACTIONS_DATA => SD.NpcFactionsDataDh;
 	public static RecipeData RECIPE_DATA => SD.RecipeDataDh;
 	public static VortexData VORTEX_DATA => SD.VortexDataDh;
+	public static RiftData RIFT_DATA => SD.RiftDataDh;
 	public static PetData PET_DATA => SD.PetDataDh;
 	public static PetSkillTable PET_SKILL_DATA => SD.PetSkills;
 	public static TitleData TITLE_DATA => SD.TitleDataDh;

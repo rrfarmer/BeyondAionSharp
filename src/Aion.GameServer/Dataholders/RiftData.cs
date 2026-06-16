@@ -9,12 +9,14 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("rift_locations")]
 public class RiftData
 {
-    [XmlElement("rift_location")] private List<RiftTemplate> riftTemplates;
+    [XmlElement("rift_location")] public List<RiftTemplate> riftTemplates;
 
     [XmlIgnore] private readonly Dictionary<int, RiftLocation> rift = new();
 
     public void AfterUnmarshal(object parent)
     {
+        if (riftTemplates == null)
+            return;
         foreach (RiftTemplate template in riftTemplates)
         {
             rift[template.GetId()] = new RiftLocation(template);

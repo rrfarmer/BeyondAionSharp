@@ -181,6 +181,9 @@ public sealed partial class StaticData
 	// Faithful VortexData holder (empty-default; runtime XML load deferred) - summary->template re-point.
 	public VortexData VortexDataDh { get; private set; } = new();
 
+	// Faithful RiftData holder (dataholders/RiftData) feeds DataManager.RIFT_DATA; loaded from rift/rift_locations.xml.
+	public RiftData RiftDataDh { get; private set; } = new();
+
 	public NpcTemplateTable NpcTemplates { get; }
 
 	public NpcSpawnTable NpcSpawns { get; }
@@ -386,6 +389,7 @@ public sealed partial class StaticData
 		TitleDataDh = TryLoadHolder(TitleDataDh, Path.Combine(staticDataDirectory, "player_titles.xml"), logger);
 		ConquerorAndProtectorDataDh = TryLoadHolder(ConquerorAndProtectorDataDh, Path.Combine(staticDataDirectory, "conqueror_protector_ranks", "conqueror_protector_ranks.xml"), logger);
 		VortexDataDh = TryLoadHolder(VortexDataDh, Path.Combine(staticDataDirectory, "vortex", "dimensional_vortex.xml"), logger);
+		RiftDataDh = TryLoadHolder(RiftDataDh, Path.Combine(staticDataDirectory, "rift", "rift_locations.xml"), logger);
 		// Standalone <npc_templates> root (~35MB, no cache imports / no @XmlIDREF resolution at this stage):
 		// the faithful NpcData holder feeds DataManager.NPC_DATA (~25 gameplay consumers).
 		NpcDataDh = TryLoadHolder(NpcDataDh, Path.Combine(staticDataDirectory, "npcs", "npc_templates.xml"), logger);
