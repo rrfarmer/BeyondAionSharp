@@ -38,6 +38,7 @@ namespace Aion.GameServer.Tests;
 ///  - playerSettings: default new PlayerSettings() (display 0, deny 0); houses: empty (GetActiveHouse == null);
 ///    pcd name/note/race/gender pinned; legion/store/target/flight/casting/mentor absent -> default branches.
 /// </summary>
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GoldenPlayerInfoFixtureTests
 {
     private static readonly long[] ExpTable = BuildExpTable();

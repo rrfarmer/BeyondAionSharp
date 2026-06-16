@@ -34,6 +34,7 @@ namespace Aion.GameServer.Tests;
 ///  - exp/level/dp/repose/salvation pinned via reflection on PlayerCommonData (identical lowercase fields both sides).
 ///  - currentHp/currentMp/currentFp pinned via reflection on the life-stats.
 /// </summary>
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GoldenStatsInfoFixtureTests
 {
     // exp[i] = 100*i^3 + 1000*i — identical to the Java generator's buildExpTable() (67 entries).

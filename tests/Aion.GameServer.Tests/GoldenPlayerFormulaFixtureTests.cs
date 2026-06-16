@@ -31,6 +31,7 @@ namespace Aion.GameServer.Tests;
 /// calculateMagicalResistRate Player-vs-Player min(500,..) branch, adjustStatByMovementModifier Player branches.
 /// Float results compared bit-exact.
 /// </summary>
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GoldenPlayerFormulaFixtureTests
 {
     // Mirror the Java harness: pin the fall-damage config statics to their @Property defaults so the test is

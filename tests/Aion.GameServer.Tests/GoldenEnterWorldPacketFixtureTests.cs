@@ -25,6 +25,7 @@ namespace Aion.GameServer.Tests;
 /// emotions/quests), the active player's objectId, or a constant — nothing live (World/Knownlist/Legion/wall-clock).
 /// Inputs are rebuilt structurally identically to the Java generator (same minimal Player + connection seam).
 /// </summary>
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GoldenEnterWorldPacketFixtureTests
 {
     static GoldenEnterWorldPacketFixtureTests()

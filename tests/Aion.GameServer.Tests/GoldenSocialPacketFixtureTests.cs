@@ -21,6 +21,7 @@ namespace Aion.GameServer.Tests;
 /// player's deterministic state — nothing live (World/Knownlist/AbyssRankingCache/wall-clock/ItemInfoBlob).
 /// Inputs are rebuilt structurally identically to the Java generator (same minimal Player + connection seam).
 /// </summary>
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GoldenSocialPacketFixtureTests
 {
     static GoldenSocialPacketFixtureTests()
