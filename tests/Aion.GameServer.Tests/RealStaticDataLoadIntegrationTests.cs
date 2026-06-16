@@ -259,6 +259,15 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.NotNull(townSpawns);
 		Assert.Contains(townSpawns!, s => s.GetNpcId() == 831222 && s.GetRespawnTime() == 295);
 
+		// SPAWNS_DATA boot-wiring: the spawns/ dir merge loads every spawn_map (Npcs/Instances/Bases/Rifts/Sieges/...).
+		// SpawnsData.Initialize builds the regular spawn maps so SpawnEngine.SpawnAll spawns world NPCs (was hollow → 0 NPCs).
+		Assert.True(sd.SpawnsDh.Size() > 0, "SpawnsData empty after boot");
+		// Sanctum (110010000) is a starter capital with many regular NPC spawns — proves NPCs will spawn.
+		var sanctumSpawns = sd.SpawnsDh.GetSpawnsByWorldId(110010000);
+		Assert.NotEmpty(sanctumSpawns);
+		// Known Sanctum spawn: Euterpe (npc 798173, respawn 295).
+		Assert.Contains(sanctumSpawns, sg => sg.GetNpcId() == 798173);
+
 		// EVENT_DATA boot-wiring: the events/timed_events/ dir merge loads (custom + retail). The EventTemplate
 		// GlobalRule drop-rule cone binds nullable restriction_race via a string proxy; a known event + drop rule
 		// (present AND absent restriction_race) resolves intact.

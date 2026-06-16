@@ -243,6 +243,7 @@ public sealed partial class StaticData
 	public ZoneData ZoneInfo { get; private set; } = new();
 	public XMLQuests XmlQuests { get; private set; } = new();
 	public TownSpawnsData TownSpawns { get; private set; } = new();
+	public SpawnsData SpawnsDh { get; private set; } = new();
 	public SkillChargeData SkillCharges { get; private set; } = new();
 	public MotionData Motions { get; private set; } = new();
 	public MapWeatherData MapWeathers { get; private set; } = new();
@@ -435,6 +436,14 @@ public sealed partial class StaticData
 		// Java imports the town_spawns/ dir file-by-file (each its own <town_spawns_data> root); merge every file's
 		// spawn_map rows then run AfterUnmarshal once. Spawn/SpawnSpotTemplate nullable attrs bind via string proxies.
 		TownSpawns = TryLoadMergedHolder<TownSpawnsData>(Path.Combine(staticDataDirectory, "town_spawns"), (m, p) => m.MergePending(p), logger);
+		// Java imports the spawns/ dir with singleRootTag="true" (every file is a <spawns> root of <spawn_map> rows,
+		// recursive across Npcs/Instances/Bases/Rifts/Sieges/Mercenaries/Statics/Gather/AhserionsFlight). Merge every
+		// file's spawn_map rows then run AfterUnmarshal once → SpawnsData.Initialize builds the regular/base/rift/siege/
+		// vortex/mercenary/ahserion spawn maps. Spawn/SpawnSpotTemplate nullable attrs bind via string proxies; the
+		// per-spawn-type named element lists (spawn/base_spawn/rift_spawn/siege_spawn/vortex_spawn/mercenary_spawn/
+		// ahserion_spawn) + nested enum tokens (handler/occupier/race/mod/state/faction) are all covered (no silent drop).
+		// Feeds DataManager.SPAWNS_DATA → SpawnEngine.SpawnAll spawns the world NPCs.
+		SpawnsDh = TryLoadMergedHolder<SpawnsData>(Path.Combine(staticDataDirectory, "spawns"), (m, p) => m.MergePending(p), logger);
 		// Java imports the events/timed_events/ dir (custom_events.xml + retail_events.xml), each its own
 		// <timed_events> root; merge every file's <event> rows then run AfterUnmarshal once (validates dates +
 		// fires each event's SpawnsData.Initialize children-first). EventTemplate's GlobalRule drop-rule cone

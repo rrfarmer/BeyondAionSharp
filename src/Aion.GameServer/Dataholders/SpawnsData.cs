@@ -37,6 +37,21 @@ public class SpawnsData
     [XmlIgnore] private readonly Dictionary<int, MercenarySpawn>   _mercenarySpawns  = [];
     [XmlIgnore] private readonly Dictionary<int, List<SpawnGroup>> _ahserionSpawnMaps = []; // Ahserion's Flight
 
+    // ── merged-dir loader hooks ──────────────────────────────────────────────
+    // Java imports the spawns/ dir with singleRootTag="true" (every file is a <spawns> root of <spawn_map>
+    // rows). The C# merged loader deserializes each file into its own SpawnsData, accumulates the per-file
+    // spawn_map lists via MergePending, then runs AfterUnmarshal once on the merged holder.
+    public void MergePending(SpawnsData other)
+    {
+        if (other.Templates == null) return;
+        Templates ??= [];
+        Templates.AddRange(other.Templates);
+    }
+
+    // JaxbHolderLoader.RunAfterUnmarshal invokes AfterUnmarshal(object); Java's afterUnmarshal(Unmarshaller, parent)
+    // builds the runtime spawn maps then nulls templates (unless parent is an EventTemplate). Delegate to Initialize.
+    public void AfterUnmarshal(object? parent) => Initialize(parent);
+
     // ── Java afterUnmarshal ──────────────────────────────────────────────────
     /// <summary>
     /// Call after XML deserialization. Pass the parent object so that event
