@@ -174,6 +174,9 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_MANTRA_EFFECT.json")]
 	[InlineData("SM_DELETE.json")]
 	[InlineData("SM_SKILL_REMOVE.json")]
+	[InlineData("SM_HEADING_UPDATE.json")]
+	[InlineData("SM_POSITION.json")]
+	[InlineData("SM_LOOKATOBJECT.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -251,6 +254,9 @@ public sealed class GoldenPacketFixtureTests
 		"SM_MANTRA_EFFECT" => new SM_MANTRA_EFFECT(new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>()), inputs.GetProperty("subEffectId").GetInt32()),
 		"SM_DELETE" => ReconstructDelete(inputs),
 		"SM_SKILL_REMOVE" => new SM_SKILL_REMOVE(new Aion.GameServer.Model.Skill.PlayerSkillEntry(inputs.GetProperty("skillId").GetInt32(), inputs.GetProperty("skillLvl").GetInt32(), inputs.GetProperty("skillType").GetInt32(), Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NOACTION)),
+		"SM_HEADING_UPDATE" => new SM_HEADING_UPDATE(PositionedHarness(inputs.GetProperty("objectId").GetInt32())),
+		"SM_POSITION" => new SM_POSITION(PositionedHarness(inputs.GetProperty("objectId").GetInt32())),
+		"SM_LOOKATOBJECT" => new SM_LOOKATOBJECT(PositionedHarness(inputs.GetProperty("objectId").GetInt32())),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -418,6 +424,23 @@ public sealed class GoldenPacketFixtureTests
 	}
 
 	// ----- Live-object packet reconstruction (deterministic HarnessCreature mirrors the Java harness) -----
+
+	// Deterministic fixed WorldPosition values. MUST mirror the Java side exactly
+	// (GoldenLivePacketFixtureGeneratorTest.HARNESS_*). A bare WorldPosition needs no live World/MapRegion.
+	private const int HARNESS_WORLD_ID = 210010000;
+	private const float HARNESS_X = 100.0f;
+	private const float HARNESS_Y = 200.0f;
+	private const float HARNESS_Z = 300.0f;
+	private const byte HARNESS_HEADING = 0;
+
+	// Harness creature carrying the deterministic WorldPosition (objId + position only; no live world).
+	private static PacketHarnessCreature PositionedHarness(int objectId)
+	{
+		var c = new PacketHarnessCreature(objectId, 50, new Dictionary<StatEnum, int>());
+		c.SetPosition(new Aion.GameServer.World.WorldPosition(
+			HARNESS_WORLD_ID, HARNESS_X, HARNESS_Y, HARNESS_Z, HARNESS_HEADING));
+		return c;
+	}
 
 	private static PacketHarnessCreature BuildHarnessCreatureForState(JsonElement inputs)
 	{
