@@ -78,9 +78,15 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		await _gameTimeService.InitAsync(cancellationToken);
 
+		// Java parity: GameServer.main loads rift location data before spawns (RiftService.getInstance().initRiftLocations()).
+		Aion.GameServer.Services.RiftService.GetInstance().InitRiftLocations();
+
 		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
 		if (engineTasks.Length > 0)
 			await Task.WhenAll(engineTasks);
+
+		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
+		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();
 
 		_world.Initialize();
 		_gameTimeService.StartClock();

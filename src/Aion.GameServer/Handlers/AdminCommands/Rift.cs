@@ -50,12 +50,12 @@ public class Rift : AdminCommand
         if (COMMAND_OPEN.Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
         {
             bool guards = ParseBoolean(paramsArr[2]);
-            result = RiftService.GetInstance().OpenRifts(id, guards).Succeeded;
+            result = RiftService.GetInstance().OpenRifts(id, guards);
             PacketSendUtility.SendMessage(player, result ? "Rifts is opened!" : "Rifts was already opened");
         }
         else if (COMMAND_CLOSE.Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
         {
-            result = RiftService.GetInstance().CloseRifts(id).Succeeded;
+            result = RiftService.GetInstance().CloseRifts(id);
             PacketSendUtility.SendMessage(player, result ? "Rifts is closed!" : "Rifts was already closed");
         }
     }

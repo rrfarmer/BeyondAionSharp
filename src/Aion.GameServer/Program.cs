@@ -100,18 +100,15 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<WorldNpcRandomWalkService>();
 			services.AddSingleton<Func<int, bool>>(
 				serviceProvider => objectId => serviceProvider.GetRequiredService<WorldNpcSpawnService>().CancelRespawn(objectId));
-			services.AddSingleton<Func<int, WorldNpc, bool>>(
-				serviceProvider => (oldObjectId, respawn) => serviceProvider.GetRequiredService<RiftService>().UpdateSpawned(oldObjectId, respawn));
-			services.AddSingleton<RiftManagerService>();
-			services.AddSingleton<RiftService>();
-			services.AddSingleton<RiftInformerService>();
-			services.AddSingleton<RiftScheduleService>();
+			// Faithful Rift surface (services/RiftService.java, RiftManager/RiftInformer/RVController) is a static
+			// singleton (RiftService.getInstance()) wired at boot via GameServerBootstrapService (Java parity:
+			// GameServer.main initRiftLocations/initRifts); the reworked DI Rift*Service slop cluster + the
+			// Func<int,WorldNpc,bool> rift-respawn bridge (faithful RespawnService.respawn -> RiftService.updateSpawned
+			// covers it) are retired.
 			services.AddSingleton<InstanceDestroyWorkflowService>();
 			services.AddSingleton<InstanceEmptyInstanceCheckerService>();
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
 			// Reworked AutoGroup runtime/registration services (depended on the deleted Player*Runtime + PlayerEnterWorldService god) removed.
-			services.AddSingleton<RiftPortalDialogService>();
-			services.AddSingleton<RiftPortalUseService>();
 			services.AddSingleton<VortexLocationService>();
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
@@ -125,8 +122,6 @@ var builder = Host.CreateDefaultBuilder(args)
 				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<WorldNpcSpawnService>());
-			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
-				serviceProvider => serviceProvider.GetRequiredService<RiftScheduleService>());
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<NpcVisibilityService>();
 			services.AddSingleton<CreaturePvpZoneCounterService>();

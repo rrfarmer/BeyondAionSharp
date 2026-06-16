@@ -38,9 +38,4 @@ public sealed class VortexLocationService
 	{
 		return GetLocationByRift(npcId)?.StartPoint;
 	}
-
-	public WorldPosition? ResolveStartPoint(RiftPortalState portal)
-	{
-		return GetStartPointByRift(portal.MasterNpc.TemplateId);
-	}
 }

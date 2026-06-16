@@ -10,10 +10,11 @@ using Aion.GameServer.Model.Templates.Rift;
 using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Spawns.Riftspawns;
 using Aion.GameServer.Services.Cron;
+using Aion.GameServer.Services.Rift;
 using GameWorld = Aion.GameServer.World.World;
 using SpawnEngineClass = Aion.GameServer.SpawnEngine.SpawnEngine;
 
-namespace Aion.GameServer.Services.Rift;
+namespace Aion.GameServer.Services;
 
 /// <summary>
 /// Java parity: services/RiftService.java (author Source). Ported 1:1 from the faithful Java source.
