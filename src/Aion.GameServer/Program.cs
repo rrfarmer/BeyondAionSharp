@@ -87,8 +87,10 @@ var builder = Host.CreateDefaultBuilder(args)
 				serviceProvider => serviceProvider.GetRequiredService<LimitedItemTradeSchedulerService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<HousingWorldService>());
-			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
-				serviceProvider => serviceProvider.GetRequiredService<WorldNpcSpawnService>());
+			// Boot NPC spawn is the faithful SpawnEngine.SpawnAll() (Java parity: GameServer.main), invoked
+			// directly in GameServerBootstrapService after RiftService.initRiftLocations() and before
+			// initRifts(). The reworked WorldNpcSpawnService GameEngine registration was removed so EXACTLY
+			// ONE spawn path runs and _objects is no longer boot-populated.
 			services.AddSingleton<HousingVisibilityService>();
 			services.AddSingleton<NpcVisibilityService>();
 			services.AddSingleton<CreaturePvpZoneCounterService>();

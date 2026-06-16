@@ -85,6 +85,13 @@ public sealed class GameServerBootstrapService : IHostedService
 		if (engineTasks.Length > 0)
 			await Task.WhenAll(engineTasks);
 
+		// Java parity: GameServer.main calls SpawnEngine.spawnAll() after RiftService.initRiftLocations()
+		// and HousingService init, before RiftService.initRifts(). This is the single boot NPC-spawn path:
+		// it materializes faithful Npc/VisibleObject into the faithful World store (_allObjects) via
+		// VisibleObjectSpawner -> BringIntoWorld -> World.StoreObject/Spawn. Replaces the reworked
+		// WorldNpcSpawnService GameEngine, which populated the reworked _objects store with struct WorldNpc.
+		Aion.GameServer.SpawnEngine.SpawnEngine.SpawnAll();
+
 		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();
 

@@ -11,14 +11,20 @@ public static class NpcDialogTargetingService
 		int dialogActionId,
 		GameWorld? world)
 	{
-		// Java parity: model/gameobjects/player/Player.isTargetingNpcWithFunction.
-		if (objectId <= 0 || (player.GetTarget()?.GetObjectId() ?? 0) != objectId)
+		// Java parity: model/gameobjects/player/Player.isTargetingNpcWithFunction
+		//   VisibleObject target = getTarget();
+		//   return target instanceof Npc && target.getObjectId() == objectId
+		//       && ((Npc) target).getObjectTemplate().supportsAction(dialogActionId);
+		// Java checks the player's current target directly (no world lookup); the faithful
+		// VisibleObject store (_allObjects) is reached only via the target reference itself.
+		var target = player.GetTarget();
+		if (objectId <= 0 || target == null || target.GetObjectId() != objectId)
 			return NpcDialogTargetingResult.NotTargeted;
 
-		if (world == null || !world.TryGetObject(objectId, out var gameObject) || gameObject is not IWorldNpcObject npc)
+		if (target is not Npc npc)
 			return NpcDialogTargetingResult.UnknownTarget;
 
-		return npc.Template.SupportsDialogAction(dialogActionId)
+		return npc.GetObjectTemplate().SupportsAction(dialogActionId)
 			? NpcDialogTargetingResult.Valid
 			: NpcDialogTargetingResult.UnsupportedAction;
 	}
