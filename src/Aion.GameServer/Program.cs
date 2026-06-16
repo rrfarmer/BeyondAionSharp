@@ -72,7 +72,8 @@ var builder = Host.CreateDefaultBuilder(args)
 			// covers it) are retired.
 			services.AddSingleton<PeriodicInstanceRegistrationService>();
 			// Reworked AutoGroup runtime/registration services (depended on the deleted Player*Runtime + PlayerEnterWorldService god) removed.
-			services.AddSingleton<VortexLocationService>();
+			// Reworked VortexLocationService removed: faithful services/VortexService.getLocationByRift/getLocationByWorld
+			// (backed by DataManager.VORTEX_DATA) already covers the logic; the DI leaf had zero non-registration consumers.
 			services.AddSingleton<PeriodicSaveService>();
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
 			services.AddSingleton<HousingWorldService>();
