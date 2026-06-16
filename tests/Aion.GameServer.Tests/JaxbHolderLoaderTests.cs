@@ -1603,6 +1603,127 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetRecipeTemplateById(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesTradeListDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("npc_trade_list.xml");
+
+        // Single <npc_trade_list> root with three list kinds (tradelist_template/trade_in_list_template/
+        // purchase_template); AfterUnmarshal indexes each by npc_id then nulls the source lists.
+        var data = JaxbHolderLoader.LoadFromFile<TradeListData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <tradelist_template npc_id="203060" buy_price_rate="200">
+        //   <tradelist id="129"/><tradelist id="130"/><tradelist id="131"/><tradelist id="450"/>
+        var t = data.GetTradeListTemplate(203060);
+        Assert.NotNull(t);
+        Assert.Equal(203060, t!.GetNpcId());
+        Assert.Equal(200, t.GetBuyPriceRate());
+        // Nested <tradelist> goods-list refs must NOT be dropped.
+        var tabs = t.GetTradeTablist();
+        Assert.Equal(4, tabs.Count);
+        Assert.Equal(129, tabs[0].GetId());
+        Assert.Contains(tabs, x => x.GetId() == 450);
+        // Default npc_type (absent) -> NORMAL; nullable save_count (absent) -> null via string proxy.
+        Assert.Equal(Model.Templates.Tradelist.TradeNpcType.NORMAL, t.GetTradeNpcType());
+        Assert.Null(t.IsSaveCount());
+
+        Assert.Null(data.GetTradeListTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesPetDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("pets", "pets.xml");
+
+        // Single <pets> root; AfterUnmarshal indexes by templateId then nulls the source list.
+        var data = JaxbHolderLoader.LoadFromFile<PetData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <pet id="900000" name="siberian wild tiger (purebred)" nameid="1600012"
+        //   condition_reward="188051378"> ...petfunction... <petstats reaction="brave" run_speed="6.0" .../>
+        var pet = data.GetPetTemplate(900000);
+        Assert.NotNull(pet);
+        Assert.Equal(900000, pet!.GetTemplateId());
+        Assert.Equal("siberian wild tiger (purebred)", pet.GetName());
+        Assert.Equal(1600012, pet.GetL10nId());
+        Assert.Equal(188051378, pet.GetConditionReward());
+        // Nested <petfunction> elements not dropped (BAG/DOPING/LOOT/WING present in XML).
+        Assert.Contains(pet.GetPetFunctions(), f => f.GetPetFunctionType() == Model.Templates.Pet.PetFunctionType.LOOT);
+        // Nested <petstats> not dropped.
+        var stats = pet.GetPetStats();
+        Assert.NotNull(stats);
+        Assert.Equal("brave", stats!.GetReaction());
+        Assert.Equal(6.0f, stats.GetRunSpeed(), 3);
+
+        Assert.Null(data.GetPetTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFiles_PopulatesNpcSkillDataFromRealXml_Merged()
+    {
+        // Java imports the npc_skills/ dir with singleRootTag+recursiveImport: merge every <npc_skill_templates>
+        // source (npc_skills.xml + guard/siege/rift + instances/* + open_worlds/*) then run AfterUnmarshal once.
+        var dir = Path.GetDirectoryName(ResolveStaticDataFile("npc_skills", "npc_skills.xml"))!;
+
+        NpcSkillData? data = null;
+        foreach (var file in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var part = JaxbHolderLoader.DeserializeFile<NpcSkillData>(file);
+            if (data == null) data = part; else data.MergePending(part);
+        }
+        Assert.NotNull(data);
+        JaxbHolderLoader.RunAfterUnmarshal(data!);
+
+        Assert.True(data!.Size() > 0);
+
+        // Known row (npc_skills.xml): <npc_skills npc_ids="201010"><npc_skill id="17424" lv="9" prob="25"/>...
+        var list = data.GetNpcSkillList(201010);
+        Assert.NotNull(list);
+        Assert.Contains(201010, list!.GetNpcIds());
+        var skills = list.GetNpcSkills();
+        Assert.NotNull(skills);
+        Assert.Contains(skills!, s => s.GetSkillId() == 17424 && s.GetSkillLevel() == 9 && s.GetProbability() == 25);
+
+        Assert.Null(data.GetNpcSkillList(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFiles_PopulatesWalkerDataFromRealXml_Merged()
+    {
+        // Java imports the npc_walker/ dir with singleRootTag+recursiveImport: merge every <npc_walker> source
+        // (per-instance route files) then run AfterUnmarshal once (which fires each WalkerTemplate.AfterUnmarshal
+        // children-first: route-step indexing).
+        var dir = Path.GetDirectoryName(ResolveStaticDataFile("npc_walker", "300100000_Steel Rake.xml"))!;
+
+        WalkerData? data = null;
+        foreach (var file in Directory.EnumerateFiles(dir, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var part = JaxbHolderLoader.DeserializeFile<WalkerData>(file);
+            if (data == null) data = part; else data.MergePending(part);
+        }
+        Assert.NotNull(data);
+        JaxbHolderLoader.RunAfterUnmarshal(data!);
+
+        Assert.True(data!.Size() > 0);
+
+        // Known route (Steel Rake): route_id="0222C904738D487BE4D4F76C9DC76E63A8FD1EB9" pool="2" formation="SQUARE".
+        var route = data.GetWalkerTemplate("0222C904738D487BE4D4F76C9DC76E63A8FD1EB9");
+        Assert.NotNull(route);
+        Assert.Equal(2, route!.GetPool());
+        // Nested <routestep> elements not dropped; AfterUnmarshal indexed them and flagged the last step.
+        var steps = route.GetRouteSteps();
+        Assert.True(steps.Count > 1);
+        Assert.Equal(0, steps[0].GetStepIndex());
+        Assert.True(steps[steps.Count - 1].IsLastStep());
+        // pool==2 forces SQUARE formation in WalkerTemplate.AfterUnmarshal.
+        Assert.Equal(SpawnEngine.WalkerGroupType.SQUARE, route.GetType_());
+
+        Assert.Null(data.GetWalkerTemplate("__nope__"));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

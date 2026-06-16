@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("pets")]
 public class PetData
 {
-    [XmlElement("pet")] private List<PetTemplate> pets;
+    [XmlElement("pet")] public List<PetTemplate> pets;
 
     [XmlIgnore] private readonly Dictionary<int, PetTemplate> petData = new();
 

@@ -8,24 +8,24 @@ namespace Aion.GameServer.Model.Templates.Npcskill;
 [XmlType("npc_skill")]
 public class NpcSkillTemplate
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("lv")] protected int lv;
-    [XmlAttribute("prob")] protected int prob;
-    [XmlAttribute("min_hp")] protected int minHp = 0;
-    [XmlAttribute("max_hp")] protected int maxHp = 100;
-    [XmlAttribute("max_time")] protected int maxTime = 0;
-    [XmlAttribute("min_time")] protected int minTime = 0;
-    [XmlAttribute("conjunction")] protected ConjunctionType conjunction = ConjunctionType.AND;
-    [XmlAttribute("cd")] protected int cd = 0;
-    [XmlAttribute("is_post_spawn")] protected bool is_post_spawn = false;
-    [XmlAttribute("prio")] protected int prio = 0;
-    [XmlAttribute("next_skill_time")] protected int nextSkillTime = -1; // -1 = random time between 3s and 9s
-    [XmlElement("cond")] protected NpcSkillConditionTemplate conditionTemplate;
-    [XmlElement("spawn_npc")] protected NpcSkillSpawn spawn;
-    [XmlAttribute("next_chain_id")] protected int nextChainId = 0;
-    [XmlAttribute("chain_id")] protected int chainId = 0;
-    [XmlAttribute("max_chain_time")] protected int maxChainTime = 15000;
-    [XmlAttribute("target")] protected NpcSkillTargetAttribute target = NpcSkillTargetAttribute.MOST_HATED;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("lv")] public int lv;
+    [XmlAttribute("prob")] public int prob;
+    [XmlAttribute("min_hp")] public int minHp = 0;
+    [XmlAttribute("max_hp")] public int maxHp = 100;
+    [XmlAttribute("max_time")] public int maxTime = 0;
+    [XmlAttribute("min_time")] public int minTime = 0;
+    [XmlAttribute("conjunction")] public ConjunctionType conjunction = ConjunctionType.AND;
+    [XmlAttribute("cd")] public int cd = 0;
+    [XmlAttribute("is_post_spawn")] public bool is_post_spawn = false;
+    [XmlAttribute("prio")] public int prio = 0;
+    [XmlAttribute("next_skill_time")] public int nextSkillTime = -1; // -1 = random time between 3s and 9s
+    [XmlElement("cond")] public NpcSkillConditionTemplate conditionTemplate;
+    [XmlElement("spawn_npc")] public NpcSkillSpawn spawn;
+    [XmlAttribute("next_chain_id")] public int nextChainId = 0;
+    [XmlAttribute("chain_id")] public int chainId = 0;
+    [XmlAttribute("max_chain_time")] public int maxChainTime = 15000;
+    [XmlAttribute("target")] public NpcSkillTargetAttribute target = NpcSkillTargetAttribute.MOST_HATED;
 
     public int GetSkillId()
     {

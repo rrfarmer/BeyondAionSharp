@@ -6,11 +6,11 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlRoot("petstats")]
 public class PetStatsTemplate
 {
-    [XmlAttribute("reaction")] private string reaction;
-    [XmlAttribute("run_speed")] private float runSpeed;
-    [XmlAttribute("walk_speed")] private float walkSpeed;
-    [XmlAttribute("height")] private float height;
-    [XmlAttribute("altitude")] private float altitude;
+    [XmlAttribute("reaction")] public string reaction;
+    [XmlAttribute("run_speed")] public float runSpeed;
+    [XmlAttribute("walk_speed")] public float walkSpeed;
+    [XmlAttribute("height")] public float height;
+    [XmlAttribute("altitude")] public float altitude;
 
     public string GetReaction()
     {

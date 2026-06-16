@@ -6,10 +6,10 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlRoot("petfunction")]
 public class PetFunction
 {
-    [XmlAttribute("type")] private PetFunctionType type;
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("slots")] private int slots;
-    [XmlAttribute("rate_price")] private int ratePrice;
+    [XmlAttribute("type")] public PetFunctionType type;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("slots")] public int slots;
+    [XmlAttribute("rate_price")] public int ratePrice;
 
     public PetFunctionType GetPetFunctionType()
     {

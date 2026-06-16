@@ -16,17 +16,17 @@ public class WalkerTemplate
         WALK_BACK
     }
 
-    [XmlElement("routestep")] private List<RouteStep> routeStepList;
+    [XmlElement("routestep")] public List<RouteStep> routeStepList;
 
-    [XmlAttribute("route_id")] private string routeId;
+    [XmlAttribute("route_id")] public string routeId;
 
-    [XmlAttribute("pool")] private int pool = 1;
+    [XmlAttribute("pool")] public int pool = 1;
 
-    [XmlAttribute("formation")] private Aion.GameServer.SpawnEngine.WalkerGroupType formation = Aion.GameServer.SpawnEngine.WalkerGroupType.POINT;
+    [XmlAttribute("formation")] public Aion.GameServer.SpawnEngine.WalkerGroupType formation = Aion.GameServer.SpawnEngine.WalkerGroupType.POINT;
 
-    [XmlAttribute("rows")] private string rowValues;
+    [XmlAttribute("rows")] public string rowValues;
 
-    [XmlAttribute("loop_type")] private LoopType loopType = LoopType.NORMAL;
+    [XmlAttribute("loop_type")] public LoopType loopType = LoopType.NORMAL;
 
     [XmlIgnore] private int[] rows;
 

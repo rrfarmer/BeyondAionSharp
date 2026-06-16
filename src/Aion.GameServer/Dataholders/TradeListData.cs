@@ -15,9 +15,9 @@ public class TradeListData
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    [XmlElement("tradelist_template")] private List<TradeListTemplate> tlist;
-    [XmlElement("trade_in_list_template")] private List<TradeListTemplate> tInlist;
-    [XmlElement("purchase_template")] private List<TradeListTemplate> plist;
+    [XmlElement("tradelist_template")] public List<TradeListTemplate> tlist;
+    [XmlElement("trade_in_list_template")] public List<TradeListTemplate> tInlist;
+    [XmlElement("purchase_template")] public List<TradeListTemplate> plist;
 
     [XmlIgnore] private readonly Dictionary<int, TradeListTemplate> npctlistData = new();
     [XmlIgnore] private readonly Dictionary<int, TradeListTemplate> npcTradeInlistData = new();

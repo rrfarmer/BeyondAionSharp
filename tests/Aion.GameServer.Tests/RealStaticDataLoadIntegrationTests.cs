@@ -181,6 +181,30 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(152000401, recipe1!.GetProductId());
 		Assert.Equal(152000901, recipe1.GetComponents()[0].GetComponent()[0].GetItemId());
 
+		// TRADE_LIST_DATA: faithful TradeListData loads npc_trade_list.xml at boot.
+		Assert.True(sd.TradeListDataDh.Size() > 0, "TradeListDataDh empty after boot");
+		var tl = sd.TradeListDataDh.GetTradeListTemplate(203060);
+		Assert.NotNull(tl);
+		Assert.Equal(4, tl!.GetTradeTablist().Count);
+
+		// PET_DATA: faithful PetData loads pets/pets.xml at boot.
+		Assert.True(sd.PetDataDh.Size() > 0, "PetDataDh empty after boot");
+		var pet900000 = sd.PetDataDh.GetPetTemplate(900000);
+		Assert.NotNull(pet900000);
+		Assert.Equal("siberian wild tiger (purebred)", pet900000!.GetName());
+
+		// NPC_SKILL_DATA: faithful NpcSkillData merges npc_skills/ recursively at boot.
+		Assert.True(sd.NpcSkillDataDh.Size() > 0, "NpcSkillDataDh empty after boot");
+		var nsk = sd.NpcSkillDataDh.GetNpcSkillList(201010);
+		Assert.NotNull(nsk);
+		Assert.Contains(nsk!.GetNpcSkills()!, s => s.GetSkillId() == 17424);
+
+		// WALKER_DATA: faithful WalkerData merges npc_walker/ recursively at boot (route-step indexing applied).
+		Assert.True(sd.WalkerDataDh.Size() > 0, "WalkerDataDh empty after boot");
+		var walker = sd.WalkerDataDh.GetWalkerTemplate("0222C904738D487BE4D4F76C9DC76E63A8FD1EB9");
+		Assert.NotNull(walker);
+		Assert.True(walker!.GetRouteSteps()[walker.GetRouteSteps().Count - 1].IsLastStep());
+
 		var absStats1 = sd.AbsoluteStatsDataDh.GetTemplate(1);
 		Assert.NotNull(absStats1);
 		Assert.True(absStats1!.GetModifiers().Count > 1, "AbsoluteStats modifiers dropped at boot");

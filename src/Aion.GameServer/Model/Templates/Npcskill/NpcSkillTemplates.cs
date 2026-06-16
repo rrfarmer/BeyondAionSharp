@@ -10,7 +10,7 @@ public class NpcSkillTemplates
 {
     // Java parity: @XmlList @XmlAttribute("npc_ids") List<Integer> — space-separated.
     [XmlIgnore] protected List<int> npcIds;
-    [XmlElement("npc_skill")] protected List<NpcSkillTemplate> npcSkills;
+    [XmlElement("npc_skill")] public List<NpcSkillTemplate> npcSkills;
 
     [XmlAttribute("npc_ids")]
     public string NpcIdsXml

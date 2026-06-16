@@ -323,7 +323,7 @@ public sealed partial class StaticData
 	public ItemPurificationData ItemPurificationDataDh { get; private set; } = new();
 	public AtreianPassportData AtreianPassportDataDh { get; private set; } = new();
 	public PetDopingData PetDopingDataDh { get; private set; } = new();
-	public NpcSkillData NpcSkillDataDh { get; } = new();
+	public NpcSkillData NpcSkillDataDh { get; private set; } = new();
 	public NpcFactionsData NpcFactionsDataDh { get; private set; } = new();
 	public PortalLocData PortalLocDataDh { get; private set; } = new();
 	public AssemblyItemsData AssemblyItemsDataDh { get; private set; } = new();
@@ -409,6 +409,51 @@ public sealed partial class StaticData
 		AutoGroupDataDh = TryLoadHolder(AutoGroupDataDh, Path.Combine(staticDataDirectory, "auto_group", "auto_group.xml"), logger);
 		// Standalone <recipe_templates> root: faithful RecipeData feeds DataManager.RECIPE_DATA (crafting recipes).
 		RecipeDataDh = TryLoadHolder(RecipeDataDh, Path.Combine(staticDataDirectory, "recipe", "recipe_templates.xml"), logger);
+		// <npc_trade_list> root (single file): faithful TradeListData feeds DataManager.TRADE_LIST_DATA (merchant lists).
+		TradeListDataDh = TryLoadHolder(TradeListDataDh, Path.Combine(staticDataDirectory, "npc_trade_list.xml"), logger);
+		// <pets> root (single file): faithful PetData feeds DataManager.PET_DATA (toypet templates).
+		PetDataDh = TryLoadHolder(PetDataDh, Path.Combine(staticDataDirectory, "pets", "pets.xml"), logger);
+		// <npc_skill_templates> folder (recursive: npc_skills.xml + guard/siege/rift + instances/* + open_worlds/*):
+		// Java imports the npc_skills/ dir with singleRootTag+recursiveImport, so merge every file's <npc_skills>
+		// rows then run AfterUnmarshal once. Feeds DataManager.NPC_SKILL_DATA.
+		NpcSkillDataDh = TryLoadMergedHolder<NpcSkillData>(Path.Combine(staticDataDirectory, "npc_skills"), (m, p) => m.MergePending(p), logger);
+		// <npc_walker> folder (recursive: per-instance route files): Java imports the npc_walker/ dir with
+		// singleRootTag+recursiveImport, so merge every file's <walker_template> rows then run AfterUnmarshal once.
+		// Feeds DataManager.WALKER_DATA.
+		WalkerDataDh = TryLoadMergedHolder<WalkerData>(Path.Combine(staticDataDirectory, "npc_walker"), (m, p) => m.MergePending(p), logger);
+	}
+
+	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()
+	{
+		try
+		{
+			if (!Directory.Exists(directory))
+			{
+				logger?.LogWarning("Static data holder directory not found, leaving {Holder} empty: {Path}", typeof(T).Name, directory);
+				return new T();
+			}
+
+			T? merged = null;
+			foreach (var file in Directory.EnumerateFiles(directory, "*.xml", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.Ordinal))
+			{
+				var part = LoadingUtils.JaxbHolderLoader.DeserializeFile<T>(file);
+				if (merged == null)
+					merged = part;
+				else
+					mergePending(merged, part);
+			}
+
+			if (merged == null)
+				return new T();
+
+			LoadingUtils.JaxbHolderLoader.RunAfterUnmarshal(merged);
+			return merged;
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to load merged static data holder {Holder} from {Path}; leaving it empty.", typeof(T).Name, directory);
+			return new T();
+		}
 	}
 
 	private static AIData TryLoadAiData(string aiDirectory, Microsoft.Extensions.Logging.ILogger? logger)

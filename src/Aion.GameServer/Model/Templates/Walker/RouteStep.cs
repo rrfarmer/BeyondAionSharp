@@ -6,19 +6,20 @@ namespace Aion.GameServer.Model.Templates.Walker;
 [XmlRoot("routestep")]
 public class RouteStep
 {
-    [XmlAttribute("x")] private float x;
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("z")] public float z;
 
-    [XmlAttribute("rest_time")] private int restTime = 0;
+    [XmlAttribute("rest_time")] public int restTime = 0;
 
     [XmlIgnore] private int stepIndex;
 
     [XmlIgnore] private bool isLastStep;
 
-    protected RouteStep()
+    // XmlSerializer requires a public parameterless constructor (JAXB used field access + no-arg ctor).
+    public RouteStep()
     {
     }
 

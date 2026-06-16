@@ -8,17 +8,25 @@ namespace Aion.GameServer.Model.Templates.Tradelist;
 public class TradeListTemplate
 {
     /// <summary>Npc Id.</summary>
-    [XmlAttribute("npc_id")] private int npcId;
-    [XmlAttribute("npc_type")] private TradeNpcType tradeNpcType = TradeNpcType.NORMAL;
-    [XmlAttribute("sell_price_rate")] private int sellPriceRate = 100;
-    [XmlAttribute("sell_price_rate2")] private int sellPriceRate2 = 100;
-    [XmlAttribute("ap_sell_price_rate2")] private int apSellPriceRate2 = 100;
-    [XmlAttribute("buy_price_rate")] private int buyPriceRate;
+    [XmlAttribute("npc_id")] public int npcId;
+    [XmlAttribute("npc_type")] public TradeNpcType tradeNpcType = TradeNpcType.NORMAL;
+    [XmlAttribute("sell_price_rate")] public int sellPriceRate = 100;
+    [XmlAttribute("sell_price_rate2")] public int sellPriceRate2 = 100;
+    [XmlAttribute("ap_sell_price_rate2")] public int apSellPriceRate2 = 100;
+    [XmlAttribute("buy_price_rate")] public int buyPriceRate;
 
-    // Java parity: nullable Boolean save_count.
-    [XmlAttribute("save_count")] private bool? saveCount;
+    // Java parity: nullable Boolean save_count. XmlSerializer cannot bind bool?; round-trip through a string
+    // proxy (absent attribute -> null, 1:1 with JAXB).
+    [XmlIgnore] private bool? saveCount;
 
-    [XmlElement("tradelist")] protected List<TradeTab> tradeTablist;
+    [XmlAttribute("save_count")]
+    public string SaveCountRaw
+    {
+        get => saveCount?.ToString().ToLowerInvariant();
+        set => saveCount = value == null ? null : bool.Parse(value);
+    }
+
+    [XmlElement("tradelist")] public List<TradeTab> tradeTablist;
 
     public List<TradeTab> GetTradeTablist()
     {
@@ -70,7 +78,7 @@ public class TradeListTemplate
     [XmlType("Tradelist")]
     public class TradeTab
     {
-        [XmlAttribute("id")] protected int id;
+        [XmlAttribute("id")] public int id;
 
         public int GetId()
         {

@@ -6,12 +6,12 @@ namespace Aion.GameServer.Model.Templates.Npcskill;
 [XmlType("spawn_npc")]
 public class NpcSkillSpawn
 {
-    [XmlAttribute("npc_id")] private int npcId;
-    [XmlAttribute("delay")] private int delay;
-    [XmlAttribute("min_distance")] private int minDistance;
-    [XmlAttribute("max_distance")] private int maxDistance;
-    [XmlAttribute("min_count")] private int minCount = 1;
-    [XmlAttribute("max_count")] private int maxCount = 0;
+    [XmlAttribute("npc_id")] public int npcId;
+    [XmlAttribute("delay")] public int delay;
+    [XmlAttribute("min_distance")] public int minDistance;
+    [XmlAttribute("max_distance")] public int maxDistance;
+    [XmlAttribute("min_count")] public int minCount = 1;
+    [XmlAttribute("max_count")] public int maxCount = 0;
 
     public int GetNpcId()
     {

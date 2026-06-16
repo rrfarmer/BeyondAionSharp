@@ -6,13 +6,13 @@ namespace Aion.GameServer.Model.Templates.Npcskill;
 [XmlType("cond")]
 public class NpcSkillConditionTemplate
 {
-    [XmlAttribute("cond_type")] protected NpcSkillCondition condType = NpcSkillCondition.NONE;
-    [XmlAttribute("hp_below")] protected int hpBelow = 50;
-    [XmlAttribute("range")] protected int range = 10;
-    [XmlAttribute("npc_id")] protected int npc_id;
-    [XmlAttribute("delay")] protected int delay;
-    [XmlAttribute("can_die")] protected bool canDie = true;
-    [XmlAttribute("despawn_time")] protected int despawn_time = 500;
+    [XmlAttribute("cond_type")] public NpcSkillCondition condType = NpcSkillCondition.NONE;
+    [XmlAttribute("hp_below")] public int hpBelow = 50;
+    [XmlAttribute("range")] public int range = 10;
+    [XmlAttribute("npc_id")] public int npc_id;
+    [XmlAttribute("delay")] public int delay;
+    [XmlAttribute("can_die")] public bool canDie = true;
+    [XmlAttribute("despawn_time")] public int despawn_time = 500;
 
     public NpcSkillCondition GetCondType()
     {

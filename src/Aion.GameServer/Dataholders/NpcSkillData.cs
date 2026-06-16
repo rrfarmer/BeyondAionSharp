@@ -12,9 +12,23 @@ public class NpcSkillData
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    [XmlElement("npc_skills")] private List<NpcSkillTemplates> npcSkills;
+    [XmlElement("npc_skills")] public List<NpcSkillTemplates> npcSkills;
 
     [XmlIgnore] private readonly Dictionary<int, NpcSkillTemplates> npcSkillData = new();
+
+    /// <summary>
+    /// Java parity: the static_data import graph merges every &lt;npc_skill_templates&gt; source under
+    /// npc_skills/ (recursive: npc_skills.xml, guard_skills.xml, instances/*, open_worlds/*, ...) into one
+    /// holder before afterUnmarshal. XmlSerializer loads a single file, so merge the &lt;npc_skills&gt; rows
+    /// from <paramref name="other"/> into this holder's pending list before AfterUnmarshal runs.
+    /// </summary>
+    public void MergePending(NpcSkillData other)
+    {
+        if (other?.npcSkills == null)
+            return;
+        npcSkills ??= new List<NpcSkillTemplates>();
+        npcSkills.AddRange(other.npcSkills);
+    }
 
     public void AfterUnmarshal(object parent)
     {

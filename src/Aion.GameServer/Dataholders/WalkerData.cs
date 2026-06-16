@@ -20,10 +20,27 @@ public class WalkerData
     [XmlIgnore]
     private Dictionary<string, WalkerTemplate> walkerlistData = new();
 
+    /// <summary>
+    /// Java parity: the static_data import graph merges every &lt;npc_walker&gt; source under npc_walker/
+    /// (recursive: per-instance route files) into one holder before afterUnmarshal. XmlSerializer loads a
+    /// single file, so merge the &lt;walker_template&gt; rows from <paramref name="other"/> into this holder's
+    /// pending list before AfterUnmarshal runs.
+    /// </summary>
+    public void MergePending(WalkerData other)
+    {
+        if (other?.walkerlist == null)
+            return;
+        walkerlist ??= new List<WalkerTemplate>();
+        walkerlist.AddRange(other.walkerlist);
+    }
+
     public void AfterUnmarshal(object parent)
     {
         foreach (WalkerTemplate route in walkerlist)
         {
+            // JAXB fires each WalkerTemplate.afterUnmarshal children-first (route-step indexing, loop_type
+            // expansion, formation/rows resolution); XmlSerializer does not, so invoke it here before indexing.
+            route.AfterUnmarshal();
             if (!walkerlistData.TryAdd(route.GetRouteId(), route))
                 log.LogWarning("Duplicate route ID: " + route.GetRouteId());
         }

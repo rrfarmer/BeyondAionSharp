@@ -9,12 +9,12 @@ namespace Aion.GameServer.Model.Templates.Pet;
 [XmlRoot("pet")]
 public class PetTemplate : VisibleObjectTemplate, IL10n
 {
-    [XmlAttribute("id")] private int id;
-    [XmlAttribute("name")] private string name;
-    [XmlAttribute("nameid")] private int nameId;
-    [XmlAttribute("condition_reward")] private int conditionReward;
-    [XmlElement("petfunction")] private List<PetFunction> petFunctions;
-    [XmlElement("petstats")] private PetStatsTemplate petStats;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("nameid")] public int nameId;
+    [XmlAttribute("condition_reward")] public int conditionReward;
+    [XmlElement("petfunction")] public List<PetFunction> petFunctions;
+    [XmlElement("petstats")] public PetStatsTemplate petStats;
 
     [XmlIgnore] private bool? hasPlayerFuncs = null;
 
