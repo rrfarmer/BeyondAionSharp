@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 using Aion.GameServer.Model.Templates.Items;
 
@@ -45,7 +46,15 @@ public class NpcEquippedGear : IEnumerable<KeyValuePair<ItemSlot, ItemTemplate>>
             if (items == null)
             {
                 items = new SortedDictionary<ItemSlot, ItemTemplate>();
-                foreach (ItemTemplate item in v.items)
+                // Java parity: JAXB resolved @XmlIDREF <item> ids into v.items (ItemTemplate[]). For the
+                // standalone npc_templates.xml load the resolved array is null, so resolve the captured raw
+                // ids against ItemData here (deferred IDREF resolution); unknown ids are skipped.
+                if (v.items == null && v.ItemIds != null)
+                    v.items = v.ItemIds
+                        .Select(id => Aion.GameServer.Dataholders.DataManager.ITEM_DATA.GetItemTemplate(id))
+                        .Where(t => t != null)
+                        .ToArray();
+                foreach (ItemTemplate item in v.items ?? System.Array.Empty<ItemTemplate>())
                 {
                     ItemSlot[] itemSlots = ItemSlotExtensions.GetSlotsFor(item.GetItemSlot());
                     foreach (ItemSlot itemSlot in itemSlots)

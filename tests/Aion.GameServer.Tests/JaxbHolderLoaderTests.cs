@@ -1195,6 +1195,75 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetVortexLocation(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesNpcDataFromRealXml_WithKnownNpcFieldsIntact()
+    {
+        var path = ResolveStaticDataFile("npcs", "npc_templates.xml");
+
+        // ~35MB standalone <npc_templates> root; AfterUnmarshal indexes every template by npc_id and nulls the list.
+        var data = JaxbHolderLoader.LoadFromFile<NpcData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known named NPC (Sage Fasimedes):
+        // <npc_template npc_id="203700" level="60" name="fasimedes" name_id="351200" title_id="350335"
+        //   height="2" group_drop="LIGHT" rank="DISCIPLINED" rating="NORMAL" race="ELYOS" tribe="GUARD"
+        //   type="ABYSS_GUARD" ai="simple_abyssguard" srange="7" sangle="300" arange="2" attack_speed="2000"
+        //   hpgauge="3" state="6">
+        //   <stats maxHp="23691"><speeds walk="1.5" run="6" .../></stats>
+        //   <equipment><item>113600393</item>...6 items...</equipment>
+        //   <bound_radius front="0.25" side="0.35" upper="2"/>
+        //   <talk_info distance="5" is_dialog="true" can_talk_invisible="false"/>
+        var npc = data.GetNpcTemplate(203700);
+        Assert.NotNull(npc);
+
+        // Scalar fields intact (NOT silently dropped).
+        Assert.Equal(203700, npc!.GetTemplateId());
+        Assert.Equal("fasimedes", npc.GetName());
+        Assert.Equal(351200, npc.GetL10nId());
+        Assert.Equal(350335, npc.GetTitleId());
+        Assert.Equal((byte)60, npc.GetLevel());
+        Assert.Equal(2f, npc.GetHeight(), 3);
+        Assert.Equal(Model.Templates.Npc.GroupDropType.LIGHT, npc.GetGroupDrop());
+        Assert.Equal(Model.Race.ELYOS, npc.GetRace());
+        Assert.Equal(Model.TribeClass.GUARD, npc.GetTribe());
+        Assert.Equal(Model.Templates.Npc.NpcTemplateType.ABYSS_GUARD, npc.GetNpcTemplateType());
+        Assert.Equal("simple_abyssguard", npc.GetAiName());
+        Assert.Equal(7, npc.GetAggroRange());
+        Assert.Equal(300, npc.GetAggroAngle());
+        Assert.Equal(2, npc.GetAttackRange());
+        Assert.Equal(2000, npc.GetAttackSpeed());
+        Assert.Equal(3, npc.GetHpGauge());
+        Assert.Equal(6, npc.GetState());
+
+        // Nested <stats> + <speeds> intact.
+        var stats = npc.GetStatsTemplate();
+        Assert.NotNull(stats);
+        Assert.Equal(23691, stats!.GetMaxHp());
+        Assert.Equal(1.5f, stats.GetWalkSpeed(), 3);
+        Assert.Equal(6f, stats.GetRunSpeed(), 3);
+
+        // Nested <bound_radius> intact.
+        var br = npc.GetBoundRadius();
+        Assert.NotNull(br);
+        Assert.Equal(0.25f, br.GetFront(), 3);
+        Assert.Equal(2f, br.GetUpper(), 3);
+
+        // Nested <talk_info> intact.
+        Assert.True(npc.IsDialogNpc());
+        Assert.Equal(5, npc.GetTalkDistance());
+
+        // CRITICAL: the <equipment> item-id list must NOT be silently dropped (IDREF resolution is deferred,
+        // but the raw item ids are captured by the NpcEquipmentList proxy).
+        var gear = npc.GetEquipment();
+        Assert.NotNull(gear);
+        Assert.Equal(
+            new[] { 113600393, 110600423, 100000043, 112600380, 111600398, 114600388 },
+            npc.equipmentList!.ItemIds);
+
+        Assert.Null(data.GetNpcTemplate(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

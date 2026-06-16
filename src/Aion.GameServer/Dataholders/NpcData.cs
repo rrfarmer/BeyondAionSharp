@@ -42,6 +42,9 @@ public class NpcData
     {
         foreach (NpcTemplate npc in npcs)
         {
+            // Java parity: JAXB invokes NpcTemplate.afterUnmarshal per element before the parent holder's;
+            // XmlSerializer does not, so fire it here.
+            npc.AfterUnmarshal(this);
             npcData[npc.GetTemplateId()] = npc;
             if (npc.GetFuncDialogIds() != null)
             {

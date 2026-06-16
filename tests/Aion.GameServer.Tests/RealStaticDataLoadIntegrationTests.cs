@@ -84,6 +84,16 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.TitleDataDh.Size() > 0, "TitleDataDh empty after boot");
 		Assert.True(sd.ConquerorAndProtectorDataDh.Size() > 0, "ConquerorAndProtectorDataDh empty after boot");
 		Assert.True(sd.VortexDataDh.Size() > 0, "VortexDataDh empty after boot");
+		Assert.True(sd.NpcDataDh.Size() > 0, "NpcDataDh empty after boot");
+
+		// NPC_DATA boot-wiring: a known named NPC (Sage Fasimedes, npc_id=203700) must load with key fields intact.
+		var fasimedes = sd.NpcDataDh.GetNpcTemplate(203700);
+		Assert.NotNull(fasimedes);
+		Assert.Equal("fasimedes", fasimedes!.GetName());
+		Assert.Equal((byte)60, fasimedes.GetLevel());
+		Assert.Equal(Model.TribeClass.GUARD, fasimedes.GetTribe());
+		Assert.Equal(Model.Race.ELYOS, fasimedes.GetRace());
+		Assert.Equal(23691, fasimedes.GetStatsTemplate().GetMaxHp());
 
 		// Prove the stat-bearing leaf holders bound their modifiers at boot (not silently dropped):
 		// item set 1 fullbonus carries a SPEED rate; title 1 carries a MAXHP add; conqueror rank 1 a PVP_ATTACK_RATIO add.

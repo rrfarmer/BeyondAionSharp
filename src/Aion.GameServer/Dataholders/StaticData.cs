@@ -305,7 +305,7 @@ public sealed partial class StaticData
 	public BaseData BaseDataDh { get; private set; } = new();
 	public AssembledNpcsData AssembledNpcsDataDh { get; private set; } = new();
 	public TitleData TitleDataDh { get; private set; } = new();
-	public NpcData NpcDataDh { get; } = new();
+	public NpcData NpcDataDh { get; private set; } = new();
 	public AIData AiDataDh { get; } = new();
 	public ChestData ChestDataDh { get; private set; } = new();
 	public BindPointData BindPointDataDh { get; private set; } = new();
@@ -386,6 +386,9 @@ public sealed partial class StaticData
 		TitleDataDh = TryLoadHolder(TitleDataDh, Path.Combine(staticDataDirectory, "player_titles.xml"), logger);
 		ConquerorAndProtectorDataDh = TryLoadHolder(ConquerorAndProtectorDataDh, Path.Combine(staticDataDirectory, "conqueror_protector_ranks", "conqueror_protector_ranks.xml"), logger);
 		VortexDataDh = TryLoadHolder(VortexDataDh, Path.Combine(staticDataDirectory, "vortex", "dimensional_vortex.xml"), logger);
+		// Standalone <npc_templates> root (~35MB, no cache imports / no @XmlIDREF resolution at this stage):
+		// the faithful NpcData holder feeds DataManager.NPC_DATA (~25 gameplay consumers).
+		NpcDataDh = TryLoadHolder(NpcDataDh, Path.Combine(staticDataDirectory, "npcs", "npc_templates.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

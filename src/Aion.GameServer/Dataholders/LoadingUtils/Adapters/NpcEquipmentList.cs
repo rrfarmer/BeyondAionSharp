@@ -7,6 +7,13 @@ namespace Aion.GameServer.Dataholders.LoadingUtils.Adapters;
 public class NpcEquipmentList
 {
     // Java parity: @XmlElement("item") @XmlIDREF ItemTemplate[] — references item templates by id.
-    [XmlElement("item")]
+    // Resolved templates: populated by the cache/override path (CustomInstanceBossAI). XmlSerializer cannot
+    // resolve @XmlIDREF, so when loading npc_templates.xml standalone the raw ids land in ItemIds (below)
+    // and are resolved to ItemTemplates lazily in NpcEquippedGear.Init() via DataManager.ITEM_DATA.
+    [XmlIgnore]
     public ItemTemplate[] items;
+
+    // Java parity proxy: the <equipment><item>ID</item>… element list as raw ids (deferred IDREF resolution).
+    [XmlElement("item")]
+    public int[] ItemIds;
 }

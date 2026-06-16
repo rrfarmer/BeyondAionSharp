@@ -11,63 +11,72 @@ namespace Aion.GameServer.Model.Templates.Npc;
 [XmlType("npc_template")]
 public class NpcTemplate : CreatureTemplate
 {
-    private int npcId;
+    // Public so XmlSerializer can populate these (JAXB read private fields via @XmlAccessorType(FIELD));
+    // faithful Java field names + [Xml*] attribute/element names unchanged.
+    [XmlIgnore] public int npcId;
 
-    [XmlAttribute("level")] private byte level;
+    [XmlAttribute("level")] public byte level;
 
-    [XmlAttribute("name_id")] private int nameId;
+    [XmlAttribute("name_id")] public int nameId;
 
-    [XmlAttribute("title_id")] private int titleId;
+    [XmlAttribute("title_id")] public int titleId;
 
-    [XmlAttribute("name")] private string name;
+    [XmlAttribute("name")] public string name;
 
-    [XmlAttribute("group_drop")] private GroupDropType groupDrop;
+    [XmlAttribute("group_drop")] public GroupDropType groupDrop;
 
-    [XmlAttribute("height")] private float height = 1;
+    [XmlAttribute("height")] public float height = 1;
 
-    [XmlElement("stats")] private StatsTemplate statsTemplate;
+    [XmlElement("stats")] public StatsTemplate statsTemplate;
 
-    [XmlElement("equipment")] private Aion.GameServer.Model.Items.NpcEquippedGear equipment;
+    // Java parity: @XmlElement("equipment") @XmlJavaTypeAdapter(NpcEquippedGearAdapter) NpcEquippedGear.
+    // XmlSerializer cannot bind NpcEquippedGear (no parameterless ctor, no public bound members) nor resolve
+    // the @XmlIDREF <item> ids (ItemData is loaded separately); bind the raw <equipment> element into a
+    // NpcEquipmentList proxy that captures the item ids, then build the gear lazily (matches Java's
+    // adapter.unmarshal → NpcEquippedGear.Init() deferred resolution).
+    [XmlElement("equipment")] public Aion.GameServer.Dataholders.LoadingUtils.Adapters.NpcEquipmentList equipmentList;
 
-    [XmlElement("kisk_stats")] private KiskStatsTemplate kiskStatsTemplate;
+    [XmlIgnore] private Aion.GameServer.Model.Items.NpcEquippedGear equipment;
 
-    [XmlElement("ammo_speed")] private int ammoSpeed = 0;
+    [XmlElement("kisk_stats")] public KiskStatsTemplate kiskStatsTemplate;
 
-    [XmlAttribute("rank")] private NpcRank rank;
+    [XmlElement("ammo_speed")] public int ammoSpeed = 0;
 
-    [XmlAttribute("rating")] private NpcRating rating;
+    [XmlAttribute("rank")] public NpcRank rank;
 
-    [XmlAttribute("srange")] private int aggrorange;
+    [XmlAttribute("rating")] public NpcRating rating;
 
-    [XmlAttribute("sangle")] private int aggroAngle = 360;
+    [XmlAttribute("srange")] public int aggrorange;
 
-    [XmlAttribute("arange")] private int attackRange;
+    [XmlAttribute("sangle")] public int aggroAngle = 360;
 
-    [XmlAttribute("attack_speed")] private int attackSpeed = 2000;
+    [XmlAttribute("arange")] public int attackRange;
 
-    [XmlAttribute("cast_speed")] private int castSpeed = 1000;
+    [XmlAttribute("attack_speed")] public int attackSpeed = 2000;
 
-    [XmlAttribute("flag_type")] private int flagType;
+    [XmlAttribute("cast_speed")] public int castSpeed = 1000;
 
-    [XmlAttribute("war_flag")] private int warFlagGroupId;
+    [XmlAttribute("flag_type")] public int flagType;
+
+    [XmlAttribute("war_flag")] public int warFlagGroupId;
 
     /*
      * [XmlAttribute("item_upgrade")] private int itemUpgrade;
      */
 
-    [XmlAttribute("hpgauge")] private int hpGauge;
+    [XmlAttribute("hpgauge")] public int hpGauge;
 
-    [XmlAttribute("tribe")] private TribeClass tribe;
+    [XmlAttribute("tribe")] public TribeClass tribe;
 
-    [XmlAttribute("ai")] private string ai;
+    [XmlAttribute("ai")] public string ai;
 
-    [XmlAttribute("race")] private Race race = Race.NONE;
+    [XmlAttribute("race")] public Race race = Race.NONE;
 
-    [XmlAttribute("state")] private int state;
+    [XmlAttribute("state")] public int state;
 
-    [XmlAttribute("floatcorpse")] private bool floatcorpse;
+    [XmlAttribute("floatcorpse")] public bool floatcorpse;
 
-    [XmlElement("bound_radius")] private BoundRadius boundRadius;
+    [XmlElement("bound_radius")] public BoundRadius boundRadius;
 
     // Java parity: nullable enum attribute (default null → getter returns NONE).
     [XmlIgnore] private NpcTemplateType? npcTemplateType;
@@ -89,12 +98,13 @@ public class NpcTemplate : CreatureTemplate
         set => abyssNpcType = value == null ? (AbyssNpcType?)null : (AbyssNpcType)System.Enum.Parse(typeof(AbyssNpcType), value);
     }
 
-    [XmlElement("talk_info")] private TalkInfo talkInfo;
+    [XmlElement("talk_info")] public TalkInfo talkInfo;
 
-    [XmlElement("massive_loot")] private MassiveLoot massiveLoot;
+    [XmlElement("massive_loot")] public MassiveLoot massiveLoot;
 
-    // Java parity: afterUnmarshal — invoked post-load by the template loader.
-    public void AfterUnmarshal()
+    // Java parity: afterUnmarshal(Unmarshaller, Object) — invoked per-element post-load. XmlSerializer does not
+    // call it automatically, so NpcData.Init invokes it on each template (object parent overload for the loader).
+    public void AfterUnmarshal(object parent)
     {
         if (level > 1 && !"noaction".Equals(ai) && GetAbyssNpcType().Equals(AbyssNpcType.TELEPORTER)) // TODO: reparse npc_template
             ai = "siege_teleporter";
@@ -129,6 +139,10 @@ public class NpcTemplate : CreatureTemplate
 
     public Aion.GameServer.Model.Items.NpcEquippedGear GetEquipment()
     {
+        // Java parity: the NpcEquippedGearAdapter unmarshals <equipment> into a NpcEquippedGear wrapping the
+        // NpcEquipmentList; build it lazily here from the bound proxy (item resolution stays deferred in Init()).
+        if (equipment == null && equipmentList != null)
+            equipment = new Aion.GameServer.Model.Items.NpcEquippedGear(equipmentList);
         return equipment;
     }
 
