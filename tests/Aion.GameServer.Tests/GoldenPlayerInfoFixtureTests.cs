@@ -123,6 +123,105 @@ public sealed class GoldenPlayerInfoFixtureTests
         }
     }
 
+    /// <summary>
+    /// More Player SM_* packets that read a bounded amount of extra deterministic state on top of the scalar
+    /// HarnessPlayer. Mirrors the Java GoldenPlayerInfoFixtureGeneratorTest.generateGoldenPlayerExtraPacketFixtures.
+    /// Java is the oracle.
+    ///  - SM_ABYSS_RANK_UPDATE(action,player): action 0 -> getAbyssRank().getRank().getId() (pinned GRADE9_SOLDIER == 1);
+    ///    action 1 -> getCurrentTeamId() == 0 (no team); action 2 -> isMentor()?1:0 (false). No con.
+    ///  - SM_ABYSS_RANK(player,rankingListPosition): pinned AbyssRank scalar fields (identical both sides) + explicit
+    ///    rankingListPosition (-> no AbyssRankingCache singleton). No con.
+    ///  - SM_PLAYER_SEARCH(players): reads con.GetActivePlayer() (same uninitialized-connection seam SM_PLAYER_INFO uses)
+    ///    + per-player scalar fields; single-element list of the scalar HarnessPlayer.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_ABYSS_RANK_UPDATE.json")]
+    [InlineData("SM_ABYSS_RANK.json")]
+    [InlineData("SM_PLAYER_SEARCH.json")]
+    public void CsharpPlayerExtraPacketMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var packetName = fixture.RootElement.GetProperty("packet").GetString()!;
+
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            byte[] actual;
+            switch (packetName)
+            {
+                case "SM_ABYSS_RANK_UPDATE":
+                {
+                    var player = BuildScalarPlayer();
+                    var packet = new SM_ABYSS_RANK_UPDATE(inputs.GetProperty("action").GetInt32(), player);
+                    actual = CaptureWriteImplPayload(packet, null!);
+                    break;
+                }
+                case "SM_ABYSS_RANK":
+                {
+                    var player = BuildScalarPlayer();
+                    PinAbyssRankScalars(player.GetAbyssRank());
+                    var packet = new SM_ABYSS_RANK(player, inputs.GetProperty("rankingListPosition").GetInt32());
+                    actual = CaptureWriteImplPayload(packet, null!);
+                    break;
+                }
+                case "SM_PLAYER_SEARCH":
+                {
+                    var found = BuildScalarPlayer();
+                    var activePlayer = BuildScalarSearchActivePlayer();
+                    var con = NewConnectionWithActivePlayer(activePlayer);
+                    var packet = new SM_PLAYER_SEARCH(new List<Player> { found });
+                    actual = CaptureWriteImplPayload(packet, con);
+                    break;
+                }
+                default:
+                    throw new NotSupportedException($"No extra Player reconstruction for {packetName}");
+            }
+
+            var actualHex = Convert.ToHexString(actual);
+            Assert.True(expectedHex == actualHex,
+                $"{packetName}/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>Pin the same fixed AbyssRank scalar fields as the Java pinAbyssRankScalars (identical values).</summary>
+    private static void PinAbyssRankScalars(AbyssRank rank)
+    {
+        SetField(typeof(AbyssRank), rank, "currentAp", 1000000);
+        SetField(typeof(AbyssRank), rank, "currentGp", 50000);
+        SetField(typeof(AbyssRank), rank, "allKill", 1234);
+        SetField(typeof(AbyssRank), rank, "maxRank", 7);
+        SetField(typeof(AbyssRank), rank, "dailyKill", 12);
+        SetField(typeof(AbyssRank), rank, "dailyAP", 3000);
+        SetField(typeof(AbyssRank), rank, "dailyGP", 400);
+        SetField(typeof(AbyssRank), rank, "weeklyKill", 56);
+        SetField(typeof(AbyssRank), rank, "weeklyAP", 80000);
+        SetField(typeof(AbyssRank), rank, "weeklyGP", 9000);
+        SetField(typeof(AbyssRank), rank, "lastKill", 7);
+        SetField(typeof(AbyssRank), rank, "lastAP", 200);
+        SetField(typeof(AbyssRank), rank, "lastGP", 30);
+    }
+
+    /// <summary>The same-race active viewer used by SM_PLAYER_SEARCH (mirrors Java scalarSpec().activePlayerSpec()).</summary>
+    private static HarnessPlayer BuildScalarSearchActivePlayer()
+    {
+        var statMap = new Dictionary<StatEnum, int>
+        {
+            [StatEnum.MAXHP] = 100,
+            [StatEnum.MAXMP] = 100,
+            [StatEnum.FLY_TIME] = 60,
+            [StatEnum.MAXDP] = 4000,
+        };
+        var p = new HarnessPlayer(100778, 1, Race.ELYOS, Gender.MALE, PlayerClass.WARRIOR,
+            "ActiveViewer", "", statMap, 100, 100, 60, 220020000, 0f, 0f, 0f, 0);
+        PinCommonData(p.GetCommonData(), 0, 1);
+        return p;
+    }
+
     /// <summary>The single deterministic Elyos warrior IDENTICAL to the Java scalarSpec() (objId 100777).</summary>
     private static HarnessPlayer BuildScalarPlayer()
     {
