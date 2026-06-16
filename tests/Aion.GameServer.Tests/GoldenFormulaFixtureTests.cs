@@ -32,6 +32,11 @@ public sealed class GoldenFormulaFixtureTests
 	[InlineData("AbyssRankEnum.getRankForPoints.json")]
 	[InlineData("AbyssRankEnum.getRankById.json")]
 	[InlineData("StatFunctions.limit.json")]
+	[InlineData("AbyssRankEnum.getId.json")]
+	[InlineData("AbyssRankEnum.getPointsLost.json")]
+	[InlineData("AbyssRankEnum.getPointsGained.json")]
+	[InlineData("AbyssRankEnum.getRequiredAP.json")]
+	[InlineData("AbyssRankEnum.getRequiredGP.json")]
 	public void CsharpFormulaMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		using var fixture = LoadFixture(fixtureFile);
@@ -90,6 +95,11 @@ public sealed class GoldenFormulaFixtureTests
 		"XPLossEnum.getExpLoss" => XPLossEnumExtensions.GetExpLoss(
 			inputs.GetProperty("level").GetInt32(),
 			inputs.GetProperty("expNeed").GetInt64()),
+		"AbyssRankEnum.getId" => ParseAbyssRank(inputs).GetId(),
+		"AbyssRankEnum.getPointsLost" => ParseAbyssRank(inputs).GetPointsLost(),
+		"AbyssRankEnum.getPointsGained" => ParseAbyssRank(inputs).GetPointsGained(),
+		"AbyssRankEnum.getRequiredAP" => ParseAbyssRank(inputs).GetRequiredAP(),
+		"AbyssRankEnum.getRequiredGP" => ParseAbyssRank(inputs).GetRequiredGP(),
 		_ => throw new NotSupportedException($"No C# numeric dispatch registered for formula {formula}"),
 	};
 
@@ -114,6 +124,9 @@ public sealed class GoldenFormulaFixtureTests
 	};
 
 	private static NpcRating ParseNpcRating(string name) => Enum.Parse<NpcRating>(name);
+
+	private static AbyssRankEnum ParseAbyssRank(JsonElement inputs) =>
+		Enum.Parse<AbyssRankEnum>(inputs.GetProperty("rank").GetString()!);
 
 	private static string DescribeInputs(JsonElement inputs) =>
 		string.Join(", ", inputs.EnumerateObject().Select(p => $"{p.Name}={p.Value.GetRawText()}"));
