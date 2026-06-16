@@ -87,6 +87,66 @@ public sealed class GoldenPlayerInfoFixtureTests
         }
     }
 
+    /// <summary>
+    /// Player-only SCALAR SM_* packets whose writeImpl reads ONLY deterministic fixed HarnessPlayer fields
+    /// (objectId, pinned robotId, null target -> 0, empty inventory -> no ticket). Mirrors the Java
+    /// GoldenPlayerInfoFixtureGeneratorTest.generateGoldenPlayerScalarPacketFixtures. Java is the oracle.
+    /// The fixed player fields are IDENTICAL to the Java scalarSpec() (objId 100777, level 10, Elyos warrior).
+    /// </summary>
+    [Theory]
+    [InlineData("SM_PLAYER_STANCE.json")]
+    [InlineData("SM_RIDE_ROBOT.json")]
+    [InlineData("SM_PLASTIC_SURGERY.json")]
+    [InlineData("SM_TARGET_UPDATE.json")]
+    public void CsharpPlayerScalarPacketMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var packetName = fixture.RootElement.GetProperty("packet").GetString()!;
+
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var player = BuildScalarPlayer();
+            var packet = ReconstructScalar(packetName, player, inputs);
+            // These scalar packet writeImpls never read con.
+            var actual = CaptureWriteImplPayload(packet, null!);
+            var actualHex = Convert.ToHexString(actual);
+
+            Assert.True(expectedHex == actualHex,
+                $"{packetName}/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>The single deterministic Elyos warrior IDENTICAL to the Java scalarSpec() (objId 100777).</summary>
+    private static HarnessPlayer BuildScalarPlayer()
+    {
+        var statMap = new Dictionary<StatEnum, int>
+        {
+            [StatEnum.MAXHP] = 1200,
+            [StatEnum.MAXMP] = 800,
+            [StatEnum.FLY_TIME] = 60,
+            [StatEnum.MAXDP] = 4000,
+        };
+        var p = new HarnessPlayer(100777, 10, Race.ELYOS, Gender.MALE, PlayerClass.WARRIOR,
+            "Scalarharness", "", statMap, 1200, 800, 60, 220020000, 100.5f, 200.25f, 300.75f, 30);
+        PinCommonData(p.GetCommonData(), 0, 10);
+        return p;
+    }
+
+    private static AionServerPacket ReconstructScalar(string packetName, HarnessPlayer player, JsonElement inputs) => packetName switch
+    {
+        "SM_PLAYER_STANCE" => new SM_PLAYER_STANCE(player, inputs.GetProperty("state").GetInt32()),
+        "SM_RIDE_ROBOT" => new SM_RIDE_ROBOT(player, inputs.GetProperty("robotId").GetInt32()),
+        "SM_PLASTIC_SURGERY" => new SM_PLASTIC_SURGERY(player, inputs.GetProperty("isGenderSwitch").GetBoolean()),
+        "SM_TARGET_UPDATE" => new SM_TARGET_UPDATE(player),
+        _ => throw new NotSupportedException($"No scalar Player reconstruction for {packetName}"),
+    };
+
     private static HarnessPlayer BuildPlayer(JsonElement spec)
     {
         int objectId = spec.GetProperty("objectId").GetInt32();
