@@ -163,11 +163,11 @@ public sealed class PlayerVisualStatsUpdateService
 	{
 		// Java parity: PlayerGameStats.getMovementSpeed / getAttackSpeed feeds SM_EMOTION(CHANGE_SPEED).
 		var movementSpeed = PlayerMovementSpeedResolver.ResolveKnownMovementSpeed(player);
-		var attackSpeed = ResolveAttackSpeed(player, _runtimeContext?.DataManager?.StaticData.ItemTemplates);
+		var attackSpeed = ResolveAttackSpeed(player);
 		return new PlayerVisualSpeedSnapshot(movementSpeed, attackSpeed, attackSpeed);
 	}
 
-	private static int ResolveAttackSpeed(Player player, ItemTemplateTable? itemTemplates)
+	private static int ResolveAttackSpeed(Player player)
 	{
 		// Java parity: model/stats/calc/functions/PlayerStatFunctions weapon attack-speed read from the faithful Equipment spine.
 		var mainHandItem = player.GetEquipment()?.GetMainHandWeapon();
