@@ -6,19 +6,20 @@ namespace Aion.GameServer.Model.Templates.Road;
 [XmlType("Road")]
 public class RoadTemplate
 {
-    [XmlAttribute("name")] protected string name;
+    // Public so XmlSerializer can bind these members (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("name")] public string name;
 
-    [XmlAttribute("map")] protected int map;
+    [XmlAttribute("map")] public int map;
 
-    [XmlAttribute("radius")] protected float radius;
+    [XmlAttribute("radius")] public float radius;
 
-    [XmlElement("center")] protected RoadPoint center;
+    [XmlElement("center")] public RoadPoint center;
 
-    [XmlElement("p1")] protected RoadPoint p1;
+    [XmlElement("p1")] public RoadPoint p1;
 
-    [XmlElement("p2")] protected RoadPoint p2;
+    [XmlElement("p2")] public RoadPoint p2;
 
-    [XmlElement("roadexit")] protected RoadExit roadExit;
+    [XmlElement("roadexit")] public RoadExit roadExit;
 
     public string GetName()
     {

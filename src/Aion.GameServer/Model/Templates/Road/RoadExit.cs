@@ -6,13 +6,14 @@ namespace Aion.GameServer.Model.Templates.Road;
 [XmlType("RoadExit")]
 public class RoadExit
 {
-    [XmlAttribute("mapid")] private int mapId;
+    // Public so XmlSerializer can bind these attributes (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("mapid")] public int mapId;
 
-    [XmlAttribute("x")] private float x;
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("z")] public float z;
 
     public int GetMap()
     {

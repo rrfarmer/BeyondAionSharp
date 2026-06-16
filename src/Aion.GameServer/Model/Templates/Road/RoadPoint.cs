@@ -6,11 +6,12 @@ namespace Aion.GameServer.Model.Templates.Road;
 [XmlType("RoadPoint")]
 public class RoadPoint
 {
-    [XmlAttribute("x")] private float x;
+    // Public so XmlSerializer can bind these attributes (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("z")] public float z;
 
     public float GetX()
     {

@@ -21,7 +21,8 @@ public class KeyItem
             : value.Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
     }
 
-    [XmlAttribute("count")] private int count;
+    // Public so XmlSerializer can bind this attribute (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlAttribute("count")] public int count;
 
     public List<int> GetItemIds()
     {

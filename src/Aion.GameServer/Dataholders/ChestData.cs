@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("chest_templates")]
 public class ChestData
 {
-    [XmlElement("chest")] private List<ChestTemplate> chests;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("chest")] public List<ChestTemplate> chests;
 
     [XmlIgnore] private readonly Dictionary<int, ChestTemplate> chestData = new();
 

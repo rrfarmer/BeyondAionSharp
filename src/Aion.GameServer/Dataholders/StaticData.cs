@@ -5,6 +5,7 @@ using System.Xml;
 using Aion.GameServer.Model.Templates.Pet;
 using Aion.GameServer.Services;
 using Aion.GameServer.Services.ToyPet;
+using Microsoft.Extensions.Logging;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -290,24 +291,24 @@ public sealed partial class StaticData
 	public SkillAliasLocationData SkillAliasLocationDataDh { get; } = new();
 	public SignetDataTemplates SignetDataTemplatesDh { get; } = new();
 	public ShieldData ShieldDataDh { get; } = new();
-	public RoadData RoadDataDh { get; } = new();
+	public RoadData RoadDataDh { get; private set; } = new();
 	public MultiReturnItemData MultiReturnItemDataDh { get; } = new();
 	public KillBountyData KillBountyDataDh { get; } = new();
 	public InstanceBuffData InstanceBuffDataDh { get; } = new();
 	public HousePartsData HousePartsDataDh { get; } = new();
 	public HouseNpcsData HouseNpcsDataDh { get; } = new();
-	public HotspotData HotspotDataDh { get; } = new();
+	public HotspotData HotspotDataDh { get; private set; } = new();
 	public GatherableData GatherableDataDh { get; } = new();
 	public FlyRingData FlyRingDataDh { get; } = new();
 	public FlyPathData FlyPathDataDh { get; } = new();
-	public CuringObjectsData CuringObjectsDataDh { get; } = new();
+	public CuringObjectsData CuringObjectsDataDh { get; private set; } = new();
 	public BaseData BaseDataDh { get; } = new();
 	public AssembledNpcsData AssembledNpcsDataDh { get; } = new();
 	public TitleData TitleDataDh { get; } = new();
 	public NpcData NpcDataDh { get; } = new();
 	public AIData AiDataDh { get; } = new();
-	public ChestData ChestDataDh { get; } = new();
-	public BindPointData BindPointDataDh { get; } = new();
+	public ChestData ChestDataDh { get; private set; } = new();
+	public BindPointData BindPointDataDh { get; private set; } = new();
 	public ItemData ItemDataDh { get; } = new();
 	public SkillData SkillDataDh { get; } = new();
 	public InstanceCooltimeData InstanceCooltimeDataDh { get; } = new();
@@ -330,6 +331,45 @@ public sealed partial class StaticData
 	public int GetElementCount(string elementName)
 	{
 		return ElementCounts.TryGetValue(elementName, out var count) ? count : 0;
+	}
+
+	/// <summary>
+	/// Java parity: JAXB unmarshal populates the faithful per-feature data holders from the static_data graph.
+	/// The C# model-A streaming parser does not touch these holders, so this loads the proven leaf holders
+	/// directly from their per-feature XML files (game-server/data/static_data/...) via
+	/// <see cref="LoadingUtils.JaxbHolderLoader"/> and assigns them into the *Dh slots that
+	/// <see cref="DataManager"/> delegates to (BIND_POINT_DATA, CHEST_DATA, CURING_OBJECTS_DATA, ROAD_DATA,
+	/// HOTSPOT_DATA). Each load is guarded by a file-exists check and try/catch so a missing or malformed
+	/// feature file never aborts boot (mirrors how Java DataManager tolerates per-holder load failures).
+	/// Only the leaf holders proven against their real XML are wired here; the large/cross-referenced holders
+	/// (Item/Npc/Skill/Quest/AI) remain deferred.
+	/// </summary>
+	public void LoadLeafHoldersFromFiles(string staticDataDirectory, Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		BindPointDataDh = TryLoadHolder(BindPointDataDh, Path.Combine(staticDataDirectory, "bind_points", "bind_points.xml"), logger);
+		ChestDataDh = TryLoadHolder(ChestDataDh, Path.Combine(staticDataDirectory, "chests", "chest_templates.xml"), logger);
+		CuringObjectsDataDh = TryLoadHolder(CuringObjectsDataDh, Path.Combine(staticDataDirectory, "curing_objects", "curing_objects.xml"), logger);
+		RoadDataDh = TryLoadHolder(RoadDataDh, Path.Combine(staticDataDirectory, "roads", "roads.xml"), logger);
+		HotspotDataDh = TryLoadHolder(HotspotDataDh, Path.Combine(staticDataDirectory, "hotspot_template.xml"), logger);
+	}
+
+	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class
+	{
+		try
+		{
+			if (!File.Exists(xmlFilePath))
+			{
+				logger?.LogWarning("Static data holder file not found, leaving {Holder} empty: {Path}", typeof(T).Name, xmlFilePath);
+				return fallback;
+			}
+
+			return LoadingUtils.JaxbHolderLoader.LoadFromFile<T>(xmlFilePath);
+		}
+		catch (Exception ex)
+		{
+			logger?.LogError(ex, "Failed to load static data holder {Holder} from {Path}; leaving it empty.", typeof(T).Name, xmlFilePath);
+			return fallback;
+		}
 	}
 
 	public static async Task<StaticData> LoadFromCacheAsync(

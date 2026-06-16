@@ -7,13 +7,14 @@ namespace Aion.GameServer.Model.Templates.Hotspot;
 [XmlType("Hotspot")]
 public class HotspotTemplate
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("worldId")] protected int worldId;
-    [XmlAttribute("x")] protected float x;
-    [XmlAttribute("y")] protected float y;
-    [XmlAttribute("z")] protected float z;
-    [XmlAttribute("race")] protected Race race;
-    [XmlAttribute("price")] protected long price;
+    // Public so XmlSerializer can bind these attributes (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("worldId")] public int worldId;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("race")] public Race race;
+    [XmlAttribute("price")] public long price;
 
     public int GetId()
     {

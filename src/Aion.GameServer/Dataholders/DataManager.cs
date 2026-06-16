@@ -146,6 +146,15 @@ public sealed class DataManager
 	{
 		// Java parity: DataManager delegates static XML load/cache construction.
 		var staticData = await XmlDataLoader.LoadStaticDataAsync(options, logger, cancellationToken);
+
+		// Populate the proven faithful per-feature leaf holders (model B) from their source XML so the
+		// DataManager.*_DATA accessors that delegate to them return real data at runtime. Guarded internally
+		// (file-exists + try/catch) so a missing/malformed feature file never aborts boot. The large/
+		// cross-referenced holders (Item/Npc/Skill/Quest/AI) remain deferred.
+		var staticDataDirectory = Path.GetDirectoryName(options.MainXmlFilePath);
+		if (!string.IsNullOrEmpty(staticDataDirectory))
+			staticData.LoadLeafHoldersFromFiles(staticDataDirectory, logger);
+
 		return new DataManager(staticData);
 	}
 }

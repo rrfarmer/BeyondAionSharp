@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("roads")]
 public class RoadData
 {
-    [XmlElement("road")] private List<RoadTemplate> roadTemplates;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("road")] public List<RoadTemplate> roadTemplates;
 
     public int Size()
     {

@@ -39,6 +39,16 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.ItemTemplates.Count > 0, $"ItemTemplates empty (GetElementCount('item')={sd.GetElementCount("item")})");
 		Assert.True(sd.NpcTemplates.Count > 0, "NpcTemplates empty");
 		Assert.True(sd.WorldMaps.Count > 0, "WorldMaps empty");
+
+		// Boot-wiring: the proven faithful per-feature leaf holders (model B) are now populated from their
+		// per-feature XML during LoadAsync, so the DataManager.*_DATA accessors (which delegate to these *Dh
+		// slots) return real data at runtime. Assert on the loaded StaticData directly to avoid depending on
+		// the DataManager singleton bridge (RegisterInstance) / cross-test contamination.
+		Assert.True(sd.BindPointDataDh.Size() > 0, "BindPointDataDh empty after boot");
+		Assert.True(sd.ChestDataDh.Size() > 0, "ChestDataDh empty after boot");
+		Assert.True(sd.CuringObjectsDataDh.Size() > 0, "CuringObjectsDataDh empty after boot");
+		Assert.True(sd.RoadDataDh.Size() > 0, "RoadDataDh empty after boot");
+		Assert.True(sd.HotspotDataDh.Size() > 0, "HotspotDataDh empty after boot");
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

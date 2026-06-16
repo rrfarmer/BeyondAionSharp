@@ -6,11 +6,12 @@ namespace Aion.GameServer.Model.Templates.Curingzones;
 [XmlType("CuringTemplate")]
 public class CuringTemplate
 {
-    [XmlAttribute("map_id")] protected int mapId;
-    [XmlAttribute("x")] protected float x;
-    [XmlAttribute("y")] protected float y;
-    [XmlAttribute("z")] protected float z;
-    [XmlAttribute("range")] protected float range;
+    // Public so XmlSerializer can bind these attributes (JAXB used private fields via @XmlAccessorType(FIELD)).
+    [XmlAttribute("map_id")] public int mapId;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("range")] public float range;
 
     public int GetMapId()
     {

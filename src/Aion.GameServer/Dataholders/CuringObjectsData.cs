@@ -8,7 +8,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("curing_objects")]
 public class CuringObjectsData
 {
-    [XmlElement("curing_object")] protected List<CuringTemplate> curingObject;
+    // Public so XmlSerializer can populate it (JAXB used a private field via @XmlAccessorType(FIELD)).
+    [XmlElement("curing_object")] public List<CuringTemplate> curingObject;
 
     [XmlIgnore] private readonly List<CuringTemplate> curingObjects = new();
 
