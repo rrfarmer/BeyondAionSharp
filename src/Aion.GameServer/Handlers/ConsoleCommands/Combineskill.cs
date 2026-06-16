@@ -1,0 +1,105 @@
+using System.Collections.Generic;
+using System.IO;
+using System.Xml.Serialization;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Utils;
+using Aion.GameServer.Utils.ChatHandlers;
+using Aion.GameServer.Utils.Xml;
+
+namespace Aion.GameServer.Handlers.ConsoleCommands;
+
+/// <summary>Java parity: data/handlers/consolecommands/Combineskill (ginho1).</summary>
+public class Combineskill : ConsoleCommand
+{
+    public Combineskill()
+        : base("combineskill")
+    {
+    }
+
+    protected override void Execute(Player admin, params string[] paramsArr)
+    {
+        if (paramsArr.Length < 1)
+        {
+            Info(admin, null);
+            return;
+        }
+
+        VisibleObject target = admin.GetTarget();
+        if (target == null)
+        {
+            PacketSendUtility.SendMessage(admin, "No target selected.");
+            return;
+        }
+
+        if (!(target is Player))
+        {
+            PacketSendUtility.SendMessage(admin, "This command can only be used on a player!");
+            return;
+        }
+
+        Player player = (Player)target;
+
+        string skillName = paramsArr[0];
+        int skillId = 0;
+        int skillLvl = 1;
+
+        if (!int.TryParse(paramsArr[1], out skillLvl))
+        {
+            PacketSendUtility.SendMessage(admin, "Parameters need to be an integer.");
+            return;
+        }
+
+        FileInfo xml = new FileInfo("./data/handlers/consolecommands/data/skills.xml");
+        SkillData data = JAXBUtil.Deserialize<SkillData>(xml);
+        SkillTemplate skillTemplate = data.GetSkillTemplate(skillName);
+
+        if (skillTemplate != null)
+            skillId = skillTemplate.GetTemplateId();
+
+        if (skillId > 0)
+        {
+            player.GetSkillList().AddSkill(player, skillId, skillLvl);
+            PacketSendUtility.SendMessage(admin, "You have success add skill");
+        }
+    }
+
+    private void Info(Player admin, string message)
+    {
+        PacketSendUtility.SendMessage(admin, "syntax ///addcskill <skill name>");
+    }
+
+    [XmlRoot("skill")]
+    public class SkillTemplate
+    {
+        [XmlAttribute("id")]
+        public string id;
+
+        [XmlAttribute("name")]
+        public string name;
+
+        public string GetName() => name;
+
+        // Java parity: afterUnmarshal parsed the @XmlID String id into an int.
+        public int GetTemplateId() => int.Parse(id);
+    }
+
+    [XmlRoot("skills")]
+    public class SkillData
+    {
+        [XmlElement("skill")]
+        public List<SkillTemplate> its;
+
+        public SkillTemplate GetSkillTemplate(string skill)
+        {
+            foreach (SkillTemplate it in GetData())
+            {
+                if (it.GetName().ToLower().Equals(skill.ToLower()))
+                    return it;
+            }
+            return null;
+        }
+
+        protected List<SkillTemplate> GetData() => its;
+    }
+}
