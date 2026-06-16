@@ -316,6 +316,7 @@ public sealed partial class StaticData
 	public Portal2Data Portal2DataDh { get; private set; } = new();
 	public ItemRandomBonusData ItemRandomBonusDataDh { get; private set; } = new();
 	public HouseData HouseDataDh { get; private set; } = new();
+	public CustomDrop CustomNpcDropDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -539,6 +540,15 @@ public sealed partial class StaticData
 		// cascades each HouseAddress.AfterUnmarshal(land) + Building.AfterUnmarshal(land) children-first (threads the
 		// load-bearing owning HousingLand) before building addressesById (XmlSerializer doesn't auto-fire nested callbacks).
 		HouseDataDh = TryLoadHolder(HouseDataDh, Path.Combine(staticDataDirectory, "housing", "houses.xml"), logger);
+		// Java imports the single file custom_drop/custom_drop.xml (<custom_drop> root) and binds it to
+		// StaticData.customNpcDrop; feeds DataManager.CUSTOM_NPC_DROP, read by DropRegistrationService + DropInfo for
+		// per-npc custom drops (currently the only drop source for chests, since global drops exclude chest npcs).
+		// Was a hollow new() -> always empty -> chests/custom-drop npcs dropped nothing. NpcDrop/DropGroup/Drop bind
+		// via the now-public fields (Drop's deserialization ctor made public for XmlSerializer; Race by member name);
+		// CustomDrop.AfterUnmarshal cascades each Drop.AfterUnmarshal() children-first (validates chance/minAmount +
+		// defaults maxAmount=minAmount, load-bearing) before indexing by npc id (XmlSerializer fires no nested callbacks).
+		// (The reworked CustomNpcDropTable/CustomNpcDropSummary projection has 0 live consumers = separate slop-delete candidate.)
+		CustomNpcDropDh = TryLoadHolder(CustomNpcDropDh, Path.Combine(staticDataDirectory, "custom_drop", "custom_drop.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());

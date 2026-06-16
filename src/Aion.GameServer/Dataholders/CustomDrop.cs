@@ -12,7 +12,7 @@ public class CustomDrop
 {
     private static readonly ILogger log = NullLogger.Instance;
 
-    [XmlElement("npc_drop")] private List<NpcDrop> npcDrop;
+    [XmlElement("npc_drop")] public List<NpcDrop> npcDrop;
 
     [XmlIgnore] private Dictionary<int, NpcDrop> dropById = new();
 
@@ -23,6 +23,17 @@ public class CustomDrop
 
     public void AfterUnmarshal(object parent)
     {
+        // Java parity: JAXB fires each nested Drop.afterUnmarshal during unmarshal (validates chance/minAmount and
+        // defaults maxAmount=minAmount when 0 — load-bearing for drop counts). XmlSerializer fires no nested JAXB
+        // callbacks, so cascade Drop.AfterUnmarshal() children-first before indexing the npc drops.
+        foreach (NpcDrop drop in npcDrop)
+        {
+            if (drop.GetDropGroup() != null)
+                foreach (DropGroup dg in drop.GetDropGroup())
+                    if (dg.GetDrop() != null)
+                        foreach (Drop d in dg.GetDrop())
+                            d.AfterUnmarshal();
+        }
         foreach (NpcDrop drop in npcDrop)
         {
             if (!dropById.TryAdd(drop.GetNpcId(), drop))

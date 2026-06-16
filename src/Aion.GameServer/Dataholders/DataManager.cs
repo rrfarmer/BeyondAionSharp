@@ -68,7 +68,7 @@ public sealed class DataManager
 	public static Portal2Data PORTAL2_DATA => SD.Portal2DataDh;
 	public static GlobalNpcExclusionData GLOBAL_EXCLUSION_DATA => SD.GlobalNpcExclusionDataDh;
 	public static GlobalDropData GLOBAL_DROP_DATA => SD.GlobalDropDataDh;
-	public static CustomDrop CUSTOM_NPC_DROP { get; } = new();
+	public static CustomDrop CUSTOM_NPC_DROP => SD.CustomNpcDropDh;
 	public static AssemblyItemsData ASSEMBLY_ITEM_DATA => SD.AssemblyItemsDataDh;
 	public static HousingObjectData HOUSING_OBJECT_DATA { get; } = new();
 	public static EnchantTable ENCHANT_DATA => SD.EnchantTemplates;

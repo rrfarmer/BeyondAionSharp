@@ -390,6 +390,17 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Equal(325001, addr10001.GetLand().GetId());
 		Assert.Equal(810003, addr10001.GetLand().GetTeleportNpcId());
 
+		// custom_drop/custom_drop.xml: faithful CustomDrop (Java parity DataManager.init binds data.customNpcDrop).
+		// Previously hollow new() -> always empty -> DropRegistrationService/DropInfo found no custom drops (chests
+		// dropped nothing). A known npc (210582, Gigantic Box) resolves with its drop_group/drop cone bound and the
+		// children-first Drop.AfterUnmarshal cascade applied (max_amount defaulted to min_amount=1 for a bare drop).
+		Assert.True(sd.CustomNpcDropDh.Size() > 0, "CustomNpcDropDh empty after boot");
+		var box210582 = sd.CustomNpcDropDh.GetNpcDrop(210582);
+		Assert.NotNull(box210582);
+		var box210582Drop = box210582!.GetDropGroup()[0].GetDrop().First(d => d.GetItemId() == 123000508);
+		Assert.Equal(50f, box210582Drop.GetChance());
+		Assert.Equal(1, box210582Drop.GetMaxAmount()); // max_amount absent -> defaulted to min_amount (proves Drop.AfterUnmarshal cascade ran)
+
 		// quest_script_data/ merged dir: faithful XMLQuests (16-subtype polymorphic DSL). XML_QUESTS non-empty at
 		// boot and a known scripted quest resolves to its correct subtype (poeta.xml xml_quest 1127 -> XmlQuestData).
 		Assert.True(sd.XmlQuests.GetAllQuests().Count > 0, "XmlQuests empty after boot");

@@ -6,14 +6,14 @@ namespace Aion.GameServer.Model.Drop;
 [XmlRoot("drop")]
 public class Drop
 {
-    [XmlAttribute("item_id")] private int itemId;
-    [XmlAttribute("min_amount")] private int minAmount = 1;
-    [XmlAttribute("max_amount")] private int maxAmount;
-    [XmlAttribute("chance")] private float chance = 100;
-    [XmlAttribute("each_member")] private bool eachMember = false;
+    [XmlAttribute("item_id")] public int itemId;
+    [XmlAttribute("min_amount")] public int minAmount = 1;
+    [XmlAttribute("max_amount")] public int maxAmount;
+    [XmlAttribute("chance")] public float chance = 100;
+    [XmlAttribute("each_member")] public bool eachMember = false;
 
-    /// <summary>private constructor for deserialization</summary>
-    private Drop()
+    /// <summary>Parameterless constructor for deserialization (XmlSerializer requires a public one).</summary>
+    public Drop()
     {
     }
 

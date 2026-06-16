@@ -10,11 +10,11 @@ namespace Aion.GameServer.Model.Drop;
 [XmlRoot("drop_group")]
 public class DropGroup
 {
-    [XmlElement("drop")] private List<Drop> drops;
-    [XmlAttribute("race")] private Race race = Race.PC_ALL;
-    [XmlAttribute("name")] private string name;
-    [XmlAttribute("level_based_chance_reduction")] private bool useLevelBasedChanceReduction;
-    [XmlAttribute("max_items")] private int maxItems = 1;
+    [XmlElement("drop")] public List<Drop> drops;
+    [XmlAttribute("race")] public Race race = Race.PC_ALL;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("level_based_chance_reduction")] public bool useLevelBasedChanceReduction;
+    [XmlAttribute("max_items")] public int maxItems = 1;
 
     public List<Drop> GetDrop()
     {

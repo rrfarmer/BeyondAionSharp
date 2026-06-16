@@ -9,8 +9,8 @@ namespace Aion.GameServer.Model.Drop;
 [XmlRoot("npc_drop")]
 public class NpcDrop
 {
-    [XmlElement("drop_group")] private List<DropGroup> dropGroup;
-    [XmlAttribute("npc_id")] private int npcId;
+    [XmlElement("drop_group")] public List<DropGroup> dropGroup;
+    [XmlAttribute("npc_id")] public int npcId;
 
     public List<DropGroup> GetDropGroup()
     {
