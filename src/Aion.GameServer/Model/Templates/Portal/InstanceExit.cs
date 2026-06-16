@@ -7,13 +7,14 @@ namespace Aion.GameServer.Model.Templates.Portal;
 [XmlType("InstanceExit")]
 public class InstanceExit
 {
-    [XmlAttribute("instance_id")] protected int instanceId;
-    [XmlAttribute("exit_world")] protected int exitWorld;
-    [XmlAttribute("race")] protected Race race = Race.PC_ALL;
-    [XmlAttribute("x")] protected float x;
-    [XmlAttribute("y")] protected float y;
-    [XmlAttribute("z")] protected float z;
-    [XmlAttribute("h")] protected sbyte h;
+    // XmlSerializer binds only public members (JAXB read these private/protected via @XmlAccessorType(FIELD)).
+    [XmlAttribute("instance_id")] public int instanceId;
+    [XmlAttribute("exit_world")] public int exitWorld;
+    [XmlAttribute("race")] public Race race = Race.PC_ALL;
+    [XmlAttribute("x")] public float x;
+    [XmlAttribute("y")] public float y;
+    [XmlAttribute("z")] public float z;
+    [XmlAttribute("h")] public sbyte h;
 
     // Java parity: declared return type Integer (field is primitive int, never null).
     public int? GetInstanceId()

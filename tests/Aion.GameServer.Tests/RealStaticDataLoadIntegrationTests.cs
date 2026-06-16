@@ -292,6 +292,16 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.Contains(Model.TribeClass.PET, sd.GlobalNpcExclusionDataDh.GetNpcTribes());
 		Assert.Contains(Model.Templates.Npc.AbyssNpcType.DOOR, sd.GlobalNpcExclusionDataDh.GetNpcAbyssTypes());
 
+		// instance_exit/instance_exit.xml: faithful InstanceExitData (Java parity DataManager.init binds
+		// data.instanceExitData). Previously hollow new() -> always empty -> TeleportService instance-exit lookup
+		// returned null. A known row (instance 300110000, exit_world 400010000) resolves per-race (race enum bound
+		// by member name) and the computeIfAbsent worldId index fired in AfterUnmarshal.
+		Assert.True(sd.InstanceExitDataDh.Size() > 0, "InstanceExitDataDh empty after boot");
+		var elyExit = sd.InstanceExitDataDh.GetInstanceExit(300110000, Model.Race.ELYOS);
+		Assert.NotNull(elyExit);
+		Assert.Equal(400010000, elyExit!.GetExitWorld());
+		Assert.Equal(Model.Race.ELYOS, elyExit.GetRace());
+
 		// storage_expander/warehouse_expander.xml + cube_expander.xml: faithful StorageExpansionTemplate index.
 		Assert.True(sd.WarehouseExpandDataDh.Size() > 0, "WarehouseExpandDataDh empty after boot");
 		Assert.Equal(24000, sd.WarehouseExpandDataDh.GetWarehouseExpansionTemplate(203221)!.GetPrice(2));

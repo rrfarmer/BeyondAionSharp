@@ -10,7 +10,8 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("instance_exits")]
 public class InstanceExitData
 {
-    [XmlElement("instance_exit")] protected List<InstanceExit> instanceExit;
+    // XmlSerializer binds only public members (JAXB read this via @XmlAccessorType(FIELD)).
+    [XmlElement("instance_exit")] public List<InstanceExit> instanceExit;
 
     [XmlIgnore] private readonly Dictionary<int, List<InstanceExit>> instanceExitByWorldId = new();
 

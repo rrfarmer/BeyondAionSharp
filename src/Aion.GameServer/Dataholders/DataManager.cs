@@ -64,7 +64,7 @@ public sealed class DataManager
 	public static PetDopingData PET_DOPING_DATA => SD.PetDopingDataDh;
 	public static LegionDominionData LEGION_DOMINION_DATA => SD.LegionDominionDataDh;
 	public static ItemSetData ITEM_SET_DATA => SD.ItemSetDataDh;
-	public static InstanceExitData INSTANCE_EXIT_DATA { get; } = new();
+	public static InstanceExitData INSTANCE_EXIT_DATA => SD.InstanceExitDataDh;
 	public static Portal2Data PORTAL2_DATA { get; } = new();
 	public static GlobalNpcExclusionData GLOBAL_EXCLUSION_DATA => SD.GlobalNpcExclusionDataDh;
 	public static GlobalDropData GLOBAL_DROP_DATA => SD.GlobalDropDataDh;

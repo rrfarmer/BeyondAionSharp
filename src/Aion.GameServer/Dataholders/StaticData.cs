@@ -307,6 +307,7 @@ public sealed partial class StaticData
 	public AssemblyItemsData AssemblyItemsDataDh { get; private set; } = new();
 	public GlobalDropData GlobalDropDataDh { get; private set; } = new();
 	public GlobalNpcExclusionData GlobalNpcExclusionDataDh { get; private set; } = new();
+	public InstanceExitData InstanceExitDataDh { get; private set; } = new();
 
 	public int GetElementCount(string elementName)
 	{
@@ -467,6 +468,12 @@ public sealed partial class StaticData
 		// DataManager.GLOBAL_DROP_DATA. After NPC data is loaded above, run the gd_npc_names -> gd_npc id expansion
 		// (Java parity: DataManager.init() calls GLOBAL_DROP_DATA.processRules(NPC_DATA.getNpcData()) after field assignment).
 		GlobalDropDataDh = TryLoadMergedHolder<GlobalDropData>(Path.Combine(staticDataDirectory, "global_drops", "rules"), (m, p) => m.MergePending(p), logger);
+		// Java imports the single file instance_exit/instance_exit.xml (<instance_exits> root) and binds it to
+		// StaticData.instanceExitData; feeds DataManager.INSTANCE_EXIT_DATA, read by TeleportService for the
+		// per-world instance-exit teleport. Was a hollow new() -> always empty -> exit lookups returned null.
+		// InstanceExit's primitive attrs (incl. race="PC_ALL"/"ELYOS"/"ASMODIANS" -> Race by member name) bind via
+		// the now-public fields; the holder's AfterUnmarshal (computeIfAbsent index) fires inside TryLoadHolder.
+		InstanceExitDataDh = TryLoadHolder(InstanceExitDataDh, Path.Combine(staticDataDirectory, "instance_exit", "instance_exit.xml"), logger);
 		try
 		{
 			GlobalDropDataDh.ProcessRules(NpcDataDh.GetNpcData());
