@@ -6,8 +6,8 @@ namespace Aion.GameServer.Model.Templates.Windstreams;
 [XmlType("WindFlight")]
 public class WindstreamTemplate
 {
-    [XmlElement("locations")] protected StreamLocations locations;
-    [XmlAttribute("mapid")] protected int mapid;
+    [XmlElement("locations")] public StreamLocations locations;
+    [XmlAttribute("mapid")] public int mapid;
 
     /// <summary>Gets the value of the locations property.</summary>
     public StreamLocations GetLocations()

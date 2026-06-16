@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("fly_rings")]
 public class FlyRingData
 {
-    [XmlElement("fly_ring")] private List<FlyRingTemplate> flyRingTemplates;
+    [XmlElement("fly_ring")] public List<FlyRingTemplate> flyRingTemplates;
 
     public int Size()
     {

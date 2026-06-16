@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("multi_return_item")]
 public class MultiReturnItemData
 {
-    [XmlElement("return_item")] private List<MultiReturnItem> multiReturnItemTemplate;
+    [XmlElement("return_item")] public List<MultiReturnItem> multiReturnItemTemplate;
 
     [XmlIgnore] private readonly Dictionary<int, List<ReturnLocList>> returnLocList = new();
 

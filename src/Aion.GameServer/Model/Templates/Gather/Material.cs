@@ -8,10 +8,10 @@ namespace Aion.GameServer.Model.Templates.Gather;
 [XmlType("Material")]
 public class Material : IComparable<Material>, IL10n
 {
-    [XmlAttribute("name")] protected string name;
-    [XmlAttribute("itemid")] protected int itemid;
-    [XmlAttribute("nameid")] protected int nameid;
-    [XmlAttribute("rate")] protected int rate;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("itemid")] public int itemid;
+    [XmlAttribute("nameid")] public int nameid;
+    [XmlAttribute("rate")] public int rate;
 
     public string GetName()
     {

@@ -7,24 +7,24 @@ namespace Aion.GameServer.Model.Templates.Gather;
 [XmlRoot("gatherable_template")]
 public class GatherableTemplate : VisibleObjectTemplate
 {
-    [XmlElement("materials")] protected Materials materials;
-    [XmlElement("exmaterials")] protected ExMaterials exmaterials;
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("name")] protected string name;
-    [XmlAttribute("nameId")] protected int nameId;
-    [XmlAttribute("sourceType")] protected string sourceType;
-    [XmlAttribute("harvestCount")] protected int harvestCount;
-    [XmlAttribute("skillLevel")] protected int skillLevel;
-    [XmlAttribute("harvestSkill")] protected int harvestSkill;
-    [XmlAttribute("successAdj")] protected int successAdj;
-    [XmlAttribute("failureAdj")] protected int failureAdj;
-    [XmlAttribute("aerialAdj")] protected int aerialAdj;
-    [XmlAttribute("captcha")] protected int captcha;
-    [XmlAttribute("lvlLimit")] protected int lvlLimit;
-    [XmlAttribute("reqItem")] protected int reqItem;
-    [XmlAttribute("reqItemNameId")] protected int reqItemNameId;
-    [XmlAttribute("checkType")] protected int checkType;
-    [XmlAttribute("eraseValue")] protected int eraseValue;
+    [XmlElement("materials")] public Materials materials;
+    [XmlElement("exmaterials")] public ExMaterials exmaterials;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("nameId")] public int nameId;
+    [XmlAttribute("sourceType")] public string sourceType;
+    [XmlAttribute("harvestCount")] public int harvestCount;
+    [XmlAttribute("skillLevel")] public int skillLevel;
+    [XmlAttribute("harvestSkill")] public int harvestSkill;
+    [XmlAttribute("successAdj")] public int successAdj;
+    [XmlAttribute("failureAdj")] public int failureAdj;
+    [XmlAttribute("aerialAdj")] public int aerialAdj;
+    [XmlAttribute("captcha")] public int captcha;
+    [XmlAttribute("lvlLimit")] public int lvlLimit;
+    [XmlAttribute("reqItem")] public int reqItem;
+    [XmlAttribute("reqItemNameId")] public int reqItemNameId;
+    [XmlAttribute("checkType")] public int checkType;
+    [XmlAttribute("eraseValue")] public int eraseValue;
 
     public Materials GetMaterials()
     {

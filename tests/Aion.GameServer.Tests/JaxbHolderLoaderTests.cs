@@ -244,6 +244,105 @@ public sealed class JaxbHolderLoaderTests
         Assert.Equal(2289, rift.GetRiftId());
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesGatherableDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("gatherables", "gatherable_templates.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<GatherableData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // First row: <gatherable_template id="400001" name="Kukuru" nameId="701957" sourceType="VEGETABLE"
+        //   harvestCount="3" skillLevel="20" harvestSkill="30002" successAdj="100" failureAdj="100" aerialAdj="100">
+        //   <materials><material rate="10000000" nameid="702021" itemid="152000001" name="Kukuru"/></materials>
+        var kukuru = data.GetGatherableTemplate(400001);
+        Assert.NotNull(kukuru);
+        Assert.Equal("Kukuru", kukuru!.GetName());
+        Assert.Equal(701957, kukuru.GetL10nId());
+        Assert.Equal("VEGETABLE", kukuru.GetSourceType());
+        Assert.Equal(3, kukuru.GetHarvestCount());
+        Assert.Equal(20, kukuru.GetSkillLevel());
+        Assert.Equal(30002, kukuru.GetHarvestSkill());
+
+        var materials = kukuru.GetMaterials();
+        Assert.NotNull(materials);
+        var mats = materials!.GetMaterial();
+        Assert.Single(mats);
+        Assert.Equal(152000001, mats[0].GetItemId());
+        Assert.Equal(10000000, mats[0].GetRate());
+
+        Assert.Null(data.GetGatherableTemplate(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesMultiReturnItemDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("items", "multi_return_item.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<MultiReturnItemData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <return_item id="1"><return_loc index="0" worldid="110010000" desc="Sanctum" alias="LC1_Return_Area_1"/>...
+        var locs = data.GetReturnLocListById(1);
+        Assert.NotNull(locs);
+        Assert.True(locs!.Count > 0);
+        var first = locs[0];
+        Assert.Equal(110010000, first.GetWorldid());
+        Assert.Equal("Sanctum", first.GetDesc());
+        Assert.Equal("LC1_Return_Area_1", first.GetAlias());
+
+        Assert.Null(data.GetReturnLocListById(-99999));
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesFlyRingDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("fly_rings", "fly_rings.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<FlyRingData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        var rings = data.GetFlyRingTemplates();
+        Assert.NotNull(rings);
+
+        // First row: <fly_ring name="PRIMUM_PLAZA_400010000_1" map="400010000" radius="6.0"> + center/p1/p2.
+        var first = rings[0];
+        Assert.Equal("PRIMUM_PLAZA_400010000_1", first.GetName());
+        Assert.Equal(400010000, first.GetMap());
+        Assert.Equal(6.0f, first.GetRadius(), 3);
+        Assert.NotNull(first.GetCenter());
+        Assert.Equal(959.63165f, first.GetCenter().GetX(), 3);
+        Assert.NotNull(first.GetP1());
+        Assert.NotNull(first.GetP2());
+    }
+
+    [Fact]
+    public void LoadFromFile_PopulatesWindstreamDataFromRealXml()
+    {
+        var path = ResolveStaticDataFile("windstreams", "windstreams.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<WindstreamData>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // <windstream mapid="900030000"><locations><location id="76" state="1" fly_path="ONE_WAY"/></locations></windstream>
+        var stream = data.GetStreamTemplate(900030000);
+        Assert.NotNull(stream);
+        Assert.Equal(900030000, stream!.GetMapId());
+        var locations = stream.GetLocations();
+        Assert.NotNull(locations);
+        var locs = locations!.GetLocation();
+        Assert.True(locs.Count > 0);
+        Assert.Equal(76, locs[0].GetId());
+        Assert.Equal(1, locs[0].GetState());
+        Assert.Equal(Model.Flypath.FlyPathType.ONE_WAY, locs[0].GetFlyPathType());
+
+        Assert.Null(data.GetStreamTemplate(-99999));
+    }
+
     private static string ResolveStaticDataFile(params string[] relativeUnderStaticData)
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);

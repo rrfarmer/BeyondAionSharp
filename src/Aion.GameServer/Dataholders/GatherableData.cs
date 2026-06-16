@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("gatherable_templates")]
 public class GatherableData
 {
-    [XmlElement("gatherable_template")] private List<GatherableTemplate> gatherables;
+    [XmlElement("gatherable_template")] public List<GatherableTemplate> gatherables;
 
     [XmlIgnore] private readonly Dictionary<int, GatherableTemplate> gatherableData = new();
 

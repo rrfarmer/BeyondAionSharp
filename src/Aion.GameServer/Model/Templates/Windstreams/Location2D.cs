@@ -7,9 +7,9 @@ namespace Aion.GameServer.Model.Templates.Windstreams;
 [XmlType("Location2D")]
 public class Location2D
 {
-    [XmlAttribute("id")] protected int id;
-    [XmlAttribute("state")] protected int state;
-    [XmlAttribute("fly_path")] protected FlyPathType flyPath;
+    [XmlAttribute("id")] public int id;
+    [XmlAttribute("state")] public int state;
+    [XmlAttribute("fly_path")] public FlyPathType flyPath;
 
     /// <returns>the id</returns>
     public int GetId()

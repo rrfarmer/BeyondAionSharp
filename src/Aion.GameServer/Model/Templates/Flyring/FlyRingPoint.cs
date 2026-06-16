@@ -7,11 +7,11 @@ namespace Aion.GameServer.Model.Templates.Flyring;
 [XmlType("FlyRingPoint")]
 public class FlyRingPoint
 {
-    [XmlAttribute("x")] private float x;
+    [XmlAttribute("x")] public float x;
 
-    [XmlAttribute("y")] private float y;
+    [XmlAttribute("y")] public float y;
 
-    [XmlAttribute("z")] private float z;
+    [XmlAttribute("z")] public float z;
 
     public float GetX()
     {

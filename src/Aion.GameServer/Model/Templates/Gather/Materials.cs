@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Gather;
 [XmlType("Materials")]
 public class Materials
 {
-    [XmlElement("material")] protected List<Material> material;
+    [XmlElement("material")] public List<Material> material;
 
     /// <summary>Gets the value of the material property.</summary>
     public List<Material> GetMaterial()

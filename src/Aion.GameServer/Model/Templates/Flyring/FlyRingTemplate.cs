@@ -7,17 +7,17 @@ namespace Aion.GameServer.Model.Templates.Flyring;
 [XmlType("FlyRing")]
 public class FlyRingTemplate
 {
-    [XmlAttribute("name")] protected string name;
+    [XmlAttribute("name")] public string name;
 
-    [XmlAttribute("map")] protected int map;
+    [XmlAttribute("map")] public int map;
 
-    [XmlAttribute("radius")] protected float radius;
+    [XmlAttribute("radius")] public float radius;
 
-    [XmlElement("center")] protected FlyRingPoint center;
+    [XmlElement("center")] public FlyRingPoint center;
 
-    [XmlElement("p1")] protected FlyRingPoint p1;
+    [XmlElement("p1")] public FlyRingPoint p1;
 
-    [XmlElement("p2")] protected FlyRingPoint p2;
+    [XmlElement("p2")] public FlyRingPoint p2;
 
     public string GetName()
     {

@@ -8,7 +8,7 @@ namespace Aion.GameServer.Dataholders;
 [XmlRoot("windstreams")]
 public class WindstreamData
 {
-    [XmlElement("windstream")] private List<WindstreamTemplate> wts;
+    [XmlElement("windstream")] public List<WindstreamTemplate> wts;
 
     [XmlIgnore] private readonly Dictionary<int, WindstreamTemplate> windstreams = new();
 

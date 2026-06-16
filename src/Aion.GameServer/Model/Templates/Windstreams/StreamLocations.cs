@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Windstreams;
 [XmlType("StreamLocations")]
 public class StreamLocations
 {
-    [XmlElement("location")] protected List<Location2D> location;
+    [XmlElement("location")] public List<Location2D> location;
 
     public List<Location2D> GetLocation()
     {

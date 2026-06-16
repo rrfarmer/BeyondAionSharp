@@ -255,7 +255,7 @@ public sealed partial class StaticData
 
 	public AtreianPassportTable AtreianPassports { get; }
 
-	public WindstreamData WindstreamDataDh { get; } = new();
+	public WindstreamData WindstreamDataDh { get; private set; } = new();
 
 	public Task? ValidationTask { get; }
 
@@ -292,14 +292,14 @@ public sealed partial class StaticData
 	public SignetDataTemplates SignetDataTemplatesDh { get; } = new();
 	public ShieldData ShieldDataDh { get; } = new();
 	public RoadData RoadDataDh { get; private set; } = new();
-	public MultiReturnItemData MultiReturnItemDataDh { get; } = new();
+	public MultiReturnItemData MultiReturnItemDataDh { get; private set; } = new();
 	public KillBountyData KillBountyDataDh { get; private set; } = new();
 	public InstanceBuffData InstanceBuffDataDh { get; } = new();
 	public HousePartsData HousePartsDataDh { get; } = new();
 	public HouseNpcsData HouseNpcsDataDh { get; } = new();
 	public HotspotData HotspotDataDh { get; private set; } = new();
-	public GatherableData GatherableDataDh { get; } = new();
-	public FlyRingData FlyRingDataDh { get; } = new();
+	public GatherableData GatherableDataDh { get; private set; } = new();
+	public FlyRingData FlyRingDataDh { get; private set; } = new();
 	public FlyPathData FlyPathDataDh { get; } = new();
 	public CuringObjectsData CuringObjectsDataDh { get; private set; } = new();
 	public BaseData BaseDataDh { get; private set; } = new();
@@ -355,6 +355,10 @@ public sealed partial class StaticData
 		KillBountyDataDh = TryLoadHolder(KillBountyDataDh, Path.Combine(staticDataDirectory, "bounties", "kill_bounties.xml"), logger);
 		BaseDataDh = TryLoadHolder(BaseDataDh, Path.Combine(staticDataDirectory, "base", "base_locations.xml"), logger);
 		LegionDominionDataDh = TryLoadHolder(LegionDominionDataDh, Path.Combine(staticDataDirectory, "legion_dominion_template.xml"), logger);
+		GatherableDataDh = TryLoadHolder(GatherableDataDh, Path.Combine(staticDataDirectory, "gatherables", "gatherable_templates.xml"), logger);
+		MultiReturnItemDataDh = TryLoadHolder(MultiReturnItemDataDh, Path.Combine(staticDataDirectory, "items", "multi_return_item.xml"), logger);
+		FlyRingDataDh = TryLoadHolder(FlyRingDataDh, Path.Combine(staticDataDirectory, "fly_rings", "fly_rings.xml"), logger);
+		WindstreamDataDh = TryLoadHolder(WindstreamDataDh, Path.Combine(staticDataDirectory, "windstreams", "windstreams.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class

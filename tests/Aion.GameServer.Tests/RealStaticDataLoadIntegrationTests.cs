@@ -53,6 +53,10 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.KillBountyDataDh.Size() > 0, "KillBountyDataDh empty after boot");
 		Assert.True(sd.BaseDataDh.Size() > 0, "BaseDataDh empty after boot");
 		Assert.True(sd.LegionDominionDataDh.Size() > 0, "LegionDominionDataDh empty after boot");
+		Assert.True(sd.GatherableDataDh.Size() > 0, "GatherableDataDh empty after boot");
+		Assert.True(sd.MultiReturnItemDataDh.Size() > 0, "MultiReturnItemDataDh empty after boot");
+		Assert.True(sd.FlyRingDataDh.Size() > 0, "FlyRingDataDh empty after boot");
+		Assert.True(sd.WindstreamDataDh.Size() > 0, "WindstreamDataDh empty after boot");
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

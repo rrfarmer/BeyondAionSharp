@@ -7,8 +7,8 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("MultiReturnItem")]
 public class MultiReturnItem
 {
-    [XmlAttribute("id")] private int id;
-    [XmlElement("return_loc")] private List<ReturnLocList> returnLocList;
+    [XmlAttribute("id")] public int id;
+    [XmlElement("return_loc")] public List<ReturnLocList> returnLocList;
 
     public int GetId()
     {

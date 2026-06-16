@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Gather;
 [XmlType("Exmaterials")]
 public class ExMaterials
 {
-    [XmlElement("material")] protected List<Material> material;
+    [XmlElement("material")] public List<Material> material;
 
     public List<Material> GetMaterial()
     {

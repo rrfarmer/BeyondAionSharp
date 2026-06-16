@@ -6,10 +6,10 @@ namespace Aion.GameServer.Model.Templates.Items;
 [XmlType("ReturnLocList")]
 public class ReturnLocList : ResultedItemsCollection
 {
-    [XmlAttribute("index")] protected int index;
-    [XmlAttribute("worldid")] protected int worldid;
-    [XmlAttribute("desc")] protected string desc;
-    [XmlAttribute("alias")] protected string alias;
+    [XmlAttribute("index")] public int index;
+    [XmlAttribute("worldid")] public int worldid;
+    [XmlAttribute("desc")] public string desc;
+    [XmlAttribute("alias")] public string alias;
 
     public float GetIndex()
     {
