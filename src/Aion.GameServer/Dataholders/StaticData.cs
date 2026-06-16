@@ -34,7 +34,6 @@ public sealed partial class StaticData
 		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
 		RiftLocationTable riftLocations,
-		NpcTemplateTable npcTemplates,
 		NpcSpawnTable npcSpawns,
 		StaticDoorTable staticDoors,
 		NpcRiftSpawnTable npcRiftSpawns,
@@ -90,7 +89,6 @@ public sealed partial class StaticData
 		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
 		RiftLocations = riftLocations;
-		NpcTemplates = npcTemplates;
 		NpcSpawns = npcSpawns;
 		StaticDoors = staticDoors;
 		NpcRiftSpawns = npcRiftSpawns;
@@ -179,8 +177,6 @@ public sealed partial class StaticData
 
 	// Faithful RiftData holder (dataholders/RiftData) feeds DataManager.RIFT_DATA; loaded from rift/rift_locations.xml.
 	public RiftData RiftDataDh { get; private set; } = new();
-
-	public NpcTemplateTable NpcTemplates { get; }
 
 	public NpcSpawnTable NpcSpawns { get; }
 
@@ -3125,7 +3121,6 @@ public sealed partial class StaticData
 			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new RiftLocationTable(riftLocations.AsReadOnly()),
-			new NpcTemplateTable(npcTemplates.AsReadOnly()),
 			new NpcSpawnTable(npcSpawns.AsReadOnly()),
 			new StaticDoorTable(staticDoors.AsReadOnly()),
 			new NpcRiftSpawnTable(npcRiftSpawns.AsReadOnly()),

@@ -37,7 +37,7 @@ public sealed class RealStaticDataLoadIntegrationTests
 		// The merged cache must have parsed real content (these are the highest-traffic gameplay tables).
 		Assert.True(sd.ImportedFileCount > 0, "no source files imported");
 		Assert.True(sd.ItemTemplates.Count > 0, $"ItemTemplates empty (GetElementCount('item')={sd.GetElementCount("item")})");
-		Assert.True(sd.NpcTemplates.Count > 0, "NpcTemplates empty");
+		Assert.True(sd.NpcDataDh.Size() > 0, "NpcDataDh empty after boot");
 		Assert.True(sd.WorldMaps.Count > 0, "WorldMaps empty");
 
 		// Boot-wiring: the proven faithful per-feature leaf holders (model B) are now populated from their
