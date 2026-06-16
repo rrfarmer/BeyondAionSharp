@@ -79,6 +79,15 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.ItemRestrictionCleanupDataDh.Size() > 0, "ItemRestrictionCleanupDataDh empty after boot");
 		Assert.True(sd.AssemblyItemsDataDh.Size() > 0, "AssemblyItemsDataDh empty after boot");
 		Assert.True(sd.AtreianPassportDataDh.Size() > 0, "AtreianPassportDataDh empty after boot");
+		Assert.True(sd.AbsoluteStatsDataDh.Size() > 0, "AbsoluteStatsDataDh empty after boot");
+
+		// Prove the StatFunction polymorphic modifiers actually bound (not silently dropped) at boot:
+		// stats_set id=1 must carry a non-empty <modifiers> list with the known POWER/1 abs row.
+		var absStats1 = sd.AbsoluteStatsDataDh.GetTemplate(1);
+		Assert.NotNull(absStats1);
+		Assert.True(absStats1!.GetModifiers().Count > 1, "AbsoluteStats modifiers dropped at boot");
+		Assert.Contains(absStats1.GetModifiers(),
+			m => m.GetName() == Model.Stats.Container.StatEnum.POWER && m.GetValue() == 1 && !m.IsBonus());
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

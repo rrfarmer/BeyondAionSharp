@@ -12,10 +12,13 @@ namespace Aion.GameServer.Model.Stats.Calc.Functions;
 [XmlType("SimpleModifier")]
 public class StatFunction : IStatFunction
 {
-    [XmlAttribute("name")] protected StatEnum Stat;
-    [XmlAttribute("bonus")] private bool _bonus;
-    [XmlAttribute("value")] protected int Value;
-    [XmlElement("conditions")] private Conditions? _conditions;
+    // Java parity: @XmlAccessorType(FIELD) bound these private/protected fields. XmlSerializer only binds
+    // PUBLIC members, so they are public here; the Java field names (name/bonus/value/conditions) and the
+    // protected-subclass access (Stat/Value in mastery functions) are preserved.
+    [XmlAttribute("name")] public StatEnum Stat;
+    [XmlAttribute("bonus")] public bool _bonus;
+    [XmlAttribute("value")] public int Value;
+    [XmlElement("conditions")] public Conditions? _conditions;
 
     public StatFunction() { }
 

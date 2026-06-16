@@ -1012,6 +1012,44 @@ public sealed class JaxbHolderLoaderTests
         Assert.Null(data.GetAtreianPassportId(-99999));
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesAbsoluteStatsDataFromRealXml_WithModifiersIntact()
+    {
+        var path = ResolveStaticDataFile("stats", "absolute_stats.xml");
+
+        var data = JaxbHolderLoader.LoadFromFile<AbsoluteStatsData>(path);
+
+        // AfterUnmarshal indexed every stats_set by id and nulled the raw list.
+        Assert.True(data.Size() > 0);
+
+        // <stats_set id="1"> carries a <modifiers> block of polymorphic <abs .../> stat functions.
+        // CRITICAL: prove the StatFunction modifiers are NOT silently dropped.
+        var modifiers = data.GetTemplate(1);
+        Assert.NotNull(modifiers);
+        var list = modifiers!.GetModifiers();
+        Assert.NotNull(list);
+        Assert.True(list!.Count > 1, "modifiers list empty -> StatFunctions were dropped on unmarshal");
+
+        // The <abs> elements must deserialize to the StatAbsFunction subtype (polymorphic [XmlElement(typeof(...))]).
+        Assert.All(list, m => Assert.IsType<Model.Stats.Calc.Functions.StatAbsFunction>(m));
+
+        // First row: <abs name="POWER" value="1"/> -> getName()=POWER, getValue()=1, isBonus()=false.
+        var first = list[0];
+        Assert.Equal(Model.Stats.Container.StatEnum.POWER, first.GetName());
+        Assert.Equal(1, first.GetValue());
+        Assert.False(first.IsBonus());
+
+        // A known bonus row: <abs name="MAXHP" value="103" bonus="true"/> -> isBonus()=true with value 103.
+        var maxHpBonus = list.First(m => m.GetName() == Model.Stats.Container.StatEnum.MAXHP && m.IsBonus());
+        Assert.Equal(103, maxHpBonus.GetValue());
+
+        // A known non-bonus row: <abs name="MAXHP" value="101"/>.
+        var maxHpBase = list.First(m => m.GetName() == Model.Stats.Container.StatEnum.MAXHP && !m.IsBonus());
+        Assert.Equal(101, maxHpBase.GetValue());
+
+        Assert.Null(data.GetTemplate(-99999));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

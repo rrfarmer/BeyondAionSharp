@@ -16,8 +16,9 @@ public class AbsoluteStatsData
     [XmlIgnore]
     private readonly Dictionary<int, ModifiersTemplate> absoluteStatsData = new Dictionary<int, ModifiersTemplate>();
 
-    // Java parity: afterUnmarshal — index templates by id, then drop the raw list.
-    public void AfterUnmarshal()
+    // Java parity: afterUnmarshal(Unmarshaller, Object) — index templates by id, then drop the raw list.
+    // Single object param matches JaxbHolderLoader's reflective AfterUnmarshal(object) invocation.
+    public void AfterUnmarshal(object parent)
     {
         foreach (AbsoluteStatsTemplate stats in absoluteStats)
         {

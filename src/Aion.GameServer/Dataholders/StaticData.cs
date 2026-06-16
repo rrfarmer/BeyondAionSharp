@@ -284,7 +284,7 @@ public sealed partial class StaticData
 	public PanelSkillsData PanelSkillsDataDh { get; private set; } = new();
 	public ItemRestrictionCleanupData ItemRestrictionCleanupDataDh { get; private set; } = new();
 	public ConquerorAndProtectorData ConquerorAndProtectorDataDh { get; } = new();
-	public AbsoluteStatsData AbsoluteStatsDataDh { get; } = new();
+	public AbsoluteStatsData AbsoluteStatsDataDh { get; private set; } = new();
 	public WorldRaidData WorldRaidDataDh { get; private set; } = new();
 	public TeleporterData TeleporterDataDh { get; private set; } = new();
 	public TeleLocationData TeleLocationDataDh { get; private set; } = new();
@@ -381,6 +381,7 @@ public sealed partial class StaticData
 		ItemRestrictionCleanupDataDh = TryLoadHolder(ItemRestrictionCleanupDataDh, Path.Combine(staticDataDirectory, "items", "item_restriction_cleanups.xml"), logger);
 		AssemblyItemsDataDh = TryLoadHolder(AssemblyItemsDataDh, Path.Combine(staticDataDirectory, "items", "assembly_items.xml"), logger);
 		AtreianPassportDataDh = TryLoadHolder(AtreianPassportDataDh, Path.Combine(staticDataDirectory, "events", "login_events.xml"), logger);
+		AbsoluteStatsDataDh = TryLoadHolder(AbsoluteStatsDataDh, Path.Combine(staticDataDirectory, "stats", "absolute_stats.xml"), logger);
 	}
 
 	private static T TryLoadHolder<T>(T fallback, string xmlFilePath, Microsoft.Extensions.Logging.ILogger? logger) where T : class
