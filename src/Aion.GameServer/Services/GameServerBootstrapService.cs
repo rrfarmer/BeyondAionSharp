@@ -53,6 +53,13 @@ public sealed class GameServerBootstrapService : IHostedService
 		var stopwatch = Stopwatch.StartNew();
 		_logger.LogInformation("Starting game-server bootstrap");
 
+		// Java parity: GameServer.main initUtilityServicesAndConfig initializes ThreadPoolManager.getInstance()
+		// early (before the services that schedule tasks through it: DebugService/CuringZoneService/CronJobService).
+		// Bind the Java-style static accessor to the DI-created instance here so those boot-wired services resolve it.
+		// Idempotent (RegisterInstance overwrites) so a re-entrant boot in one process is safe; production also binds
+		// it in Program.cs before host.RunAsync.
+		ThreadPoolManager.RegisterInstance(_threadPoolManager);
+
 		var usedIds = await _usedIdRepository.LoadUsedIdsAsync(cancellationToken);
 		_idFactory.LockIds(usedIds);
 		_logger.LogInformation(
@@ -92,6 +99,11 @@ public sealed class GameServerBootstrapService : IHostedService
 		// WorldNpcSpawnService GameEngine, which populated the reworked _objects store with struct WorldNpc.
 		Aion.GameServer.SpawnEngine.SpawnEngine.SpawnAll();
 
+		// Java parity: GameServer.main calls FlyRingService.getInstance() after SpawnEngine.spawnAll() (and
+		// TownService.getInstance()), before RiftService.initRifts(). Its ctor spawns every fly_rings/ template
+		// into the world; empty/unloaded FLY_RING_DATA yields a no-op.
+		Aion.GameServer.Services.FlyRingService.GetInstance();
+
 		// Java parity: GameServer.main initializes the CronService singleton during early utility init
 		// (CronService.initSingleton(ThreadPoolManagerRunnableRunner.class, TimeZone.getTimeZone(GSConfig.TIME_ZONE_ID)))
 		// before RiftService.initRifts() schedules rift openings through it. Guard the once-only init so a
@@ -103,6 +115,17 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();
+
+		// Java parity: GameServer.main starts these singleton services after the siege/base/world-raid init block.
+		// They self-register their work in their ctors (ThreadPoolManager / CronService schedules, spawns), so a
+		// single getInstance() touch is the faithful boot wire.
+		// DebugService: schedules the periodic world-player analysis task.
+		Aion.GameServer.Services.DebugService.GetInstance();
+		// CuringZoneService: Java only starts it when geo materials are disabled (GeoDataConfig.GEO_MATERIALS_ENABLE).
+		if (!Aion.GameServer.Configs.Main.GeoDataConfig.GEO_MATERIALS_ENABLE)
+			Aion.GameServer.Services.CuringZoneService.GetInstance();
+		// RoadService: spawns every roads/ template into each available instance of its world map.
+		Aion.GameServer.Services.RoadService.GetInstance();
 
 		_world.Initialize();
 		_gameTimeService.StartClock();
