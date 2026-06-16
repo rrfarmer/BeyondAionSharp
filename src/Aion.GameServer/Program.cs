@@ -35,8 +35,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<GameServerRuntimeContext>();
 			services.AddSingleton<GameWorld>();
 			services.AddSingleton<GameTimeService>();
-			services.AddSingleton<IHouseDoorStateService, HouseDoorStateService>();
-			services.AddSingleton<IStaticPlaceableStateService, StaticPlaceableStateService>();
 			// Reworked WorldNpc drop/loot mini-web (WorldNpcDropRegistrationService[+IWorldNpcDropRegistrationLookup]/
 			// WorldNpcCustomDropService/WorldNpcQuestDropService/WorldNpcGlobalDropService/
 			// WorldNpcEventDropRuleService/WorldNpcDropModifierService/WorldNpcDropRegistrationWorkflowService/
@@ -49,7 +47,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			// IWorldNpcDropRegistrationLookup) is likewise retired: boot NPC spawn is now the faithful
 			// SpawnEngine.SpawnAll() (see GameServerBootstrapService), and faithful WalkManager/NpcAI cover
 			// random/route walk + AI state. The PlayerKisk*Cleanup death/despawn Funcs survive as a separate kisk pillar.
-			services.AddSingleton<PlayerVisualStatsUpdateService>();
 			services.AddSingleton<PvpApRewardService>();
 			services.AddSingleton<PvpInstanceApRewardService>();
 			services.AddSingleton<PvpArenaApRewardService>();
@@ -86,8 +83,6 @@ var builder = Host.CreateDefaultBuilder(args)
 			// ONE spawn path runs and _objects is no longer boot-populated. Houses enter the same _allObjects
 			// store via the faithful SpawnEngine -> HousingService.SpawnHouses path (the reworked
 			// HousingWorldService/HousingVisibilityService parallel object subsystem was retired).
-			services.AddSingleton<NpcVisibilityService>();
-			services.AddSingleton<CreaturePvpZoneCounterService>();
 			services.AddSingleton<HouseAuctionTimingService>();
 			services.AddSingleton<HouseMaintenanceTimingService>();
 			services.AddSingleton<ShutdownHook>();
