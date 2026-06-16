@@ -8,9 +8,9 @@ namespace Aion.GameServer.Model.Templates.Mail;
 [XmlType("SysMail")]
 public class SysMail
 {
-    [XmlElement("template")] private List<MailTemplate> templates;
+    [XmlElement("template")] public List<MailTemplate> templates;
 
-    [XmlAttribute("name")] private string name;
+    [XmlAttribute("name")] public string name;
 
     [XmlIgnore] private Dictionary<string, List<MailTemplate>> mailCaseTemplates = new Dictionary<string, List<MailTemplate>>();
 

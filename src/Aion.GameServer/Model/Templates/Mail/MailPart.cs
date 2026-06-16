@@ -11,7 +11,16 @@ namespace Aion.GameServer.Model.Templates.Mail;
 [XmlInclude(typeof(Title))]
 public abstract class MailPart : StringParamList, IMailFormatter
 {
-    [XmlAttribute("id")] protected int? id;
+    // Java parity: nullable Integer id. XmlSerializer cannot bind Nullable<int> to an attribute, so a public
+    // string proxy carries the wire value and the backing field stays the faithful int?.
+    [XmlIgnore] protected int? id;
+
+    [XmlAttribute("id")]
+    public string IdRaw
+    {
+        get => id?.ToString();
+        set => id = string.IsNullOrEmpty(value) ? null : int.Parse(value);
+    }
 
     // Java parity: getType() — renamed GetType_ (GetType collides with object.GetType()).
     public virtual MailPartType GetType_()

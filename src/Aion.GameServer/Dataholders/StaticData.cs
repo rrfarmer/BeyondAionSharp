@@ -270,7 +270,7 @@ public sealed partial class StaticData
 	public UpgradeArcadeData UpgradeArcade { get; private set; } = new();
 	public SiegeLocationData SiegeLocations { get; private set; } = new();
 	public ItemGroupsData ItemGroups { get; private set; } = new();
-	public Aion.GameServer.Model.Templates.Mail.Mails SystemMailTemplates { get; } = new();
+	public Aion.GameServer.Model.Templates.Mail.Mails SystemMailTemplates { get; private set; } = new();
 	public HouseBuildingData HouseBuildings { get; private set; } = new();
 	public GuideHtmlData GuideHtml { get; private set; } = new();
 	public MaterialData Materials { get; private set; } = new();
@@ -448,6 +448,9 @@ public sealed partial class StaticData
 		// Java imports the zones/ dir with singleRootTag+recursiveImport, so merge every file's <zone> rows then run
 		// AfterUnmarshal once (builds Poly/Cylinder/Sphere/Semisphere areas + weather-zone numbering). Feeds ZONE_DATA.
 		ZoneInfo = TryLoadMergedHolder<ZoneData>(Path.Combine(staticDataDirectory, "zones"), (m, p) => m.MergePending(p), logger);
+		// <mails> root (single file): faithful Mails feeds DataManager.SYSTEM_MAIL_TEMPLATES; AfterUnmarshal cascades
+		// each MailTemplate/SysMail AfterUnmarshal children-first to build the part/case indices.
+		SystemMailTemplates = TryLoadHolder(SystemMailTemplates, Path.Combine(staticDataDirectory, "mail_templates.xml"), logger);
 	}
 
 	private static T TryLoadMergedHolder<T>(string directory, Action<T, T> mergePending, Microsoft.Extensions.Logging.ILogger? logger) where T : class, new()

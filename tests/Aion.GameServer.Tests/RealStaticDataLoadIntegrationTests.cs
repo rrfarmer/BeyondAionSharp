@@ -246,6 +246,9 @@ public sealed class RealStaticDataLoadIntegrationTests
 
 		Assert.True(sd.ZoneInfo.Size() > 0, "ZoneInfo empty after boot");
 		Assert.True(sd.ZoneInfo.GetZones().ContainsKey(110010000), "ZoneInfo missing map 110010000 after boot");
+
+		Assert.True(sd.SystemMailTemplates.Size() > 0, "SystemMailTemplates empty after boot");
+		Assert.NotNull(sd.SystemMailTemplates.GetMailTemplate("$$ABYSS_REWARD_MAIL", "", Model.Race.ELYOS));
 	}
 
 	private static string? FindRepoRoot(string startDirectory)

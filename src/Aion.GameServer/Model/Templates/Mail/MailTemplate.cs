@@ -14,20 +14,21 @@ public class MailTemplate
     [XmlElement("header", typeof(Header))]
     [XmlElement("body", typeof(Body))]
     [XmlElement("tail", typeof(Tail))]
-    private List<MailPart> mailParts;
+    public List<MailPart> mailParts;
 
-    [XmlAttribute("name")] protected string name;
-    [XmlAttribute("race")] protected Race race;
+    [XmlAttribute("name")] public string name;
+    [XmlAttribute("race")] public Race race;
 
     [XmlIgnore] private Dictionary<MailPartType, MailPart> mailPartsMap = new Dictionary<MailPartType, MailPart>();
 
     // Java parity: afterUnmarshal(Unmarshaller, Object parent).
     public void AfterUnmarshal(object parent)
     {
-        foreach (MailPart part in mailParts)
-        {
-            mailPartsMap[((IMailFormatter) part).GetType_()] = part;
-        }
+        if (mailParts != null)
+            foreach (MailPart part in mailParts)
+            {
+                mailPartsMap[((IMailFormatter) part).GetType_()] = part;
+            }
         mailParts = null;
     }
 

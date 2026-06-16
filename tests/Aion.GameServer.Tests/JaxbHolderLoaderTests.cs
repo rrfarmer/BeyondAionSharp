@@ -1934,6 +1934,22 @@ public sealed class JaxbHolderLoaderTests
         Assert.NotEmpty(zones[110010000]);
     }
 
+    [Fact]
+    public void LoadFromFile_PopulatesSystemMailTemplatesFromRealXml()
+    {
+        var path = ResolveStaticDataFile("mail_templates.xml");
+        var data = JaxbHolderLoader.LoadFromFile<Model.Templates.Mail.Mails>(path);
+
+        Assert.True(data.Size() > 0);
+
+        // Known row: <mail name="$$ABYSS_REWARD_MAIL"><template name="" race="PC_ALL">...
+        // GetMailTemplate(mailName, eventName=template name, playerRace) resolves the PC_ALL template for any race.
+        var t = data.GetMailTemplate("$$ABYSS_REWARD_MAIL", "", Model.Race.ELYOS);
+        Assert.NotNull(t);
+
+        Assert.Null(data.GetMailTemplate("__nope__", "", Model.Race.ELYOS));
+    }
+
     private static void InvokeAfterUnmarshal(object holder)
     {
         var method = holder.GetType().GetMethod("AfterUnmarshal", new[] { typeof(object) });

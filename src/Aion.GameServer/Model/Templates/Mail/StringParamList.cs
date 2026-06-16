@@ -7,7 +7,7 @@ namespace Aion.GameServer.Model.Templates.Mail;
 [XmlInclude(typeof(MailPart))]
 public class StringParamList
 {
-    [XmlElement("param")] protected List<Param> @params;
+    [XmlElement("param")] public List<Param> @params;
 
     public List<Param> GetParams()
     {
@@ -18,7 +18,7 @@ public class StringParamList
     [XmlType(AnonymousType = true)]
     public class Param
     {
-        [XmlAttribute("id")] protected string id;
+        [XmlAttribute("id")] public string id;
 
         public string GetId()
         {

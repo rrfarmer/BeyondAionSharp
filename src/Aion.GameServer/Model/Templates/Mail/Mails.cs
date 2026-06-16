@@ -8,7 +8,7 @@ namespace Aion.GameServer.Model.Templates.Mail;
 [XmlRoot("mails")]
 public class Mails
 {
-    [XmlElement("mail")] private List<SysMail> sysMailTemplates;
+    [XmlElement("mail")] public List<SysMail> sysMailTemplates;
 
     [XmlIgnore] private Dictionary<string, SysMail> sysMailByName = new Dictionary<string, SysMail>();
 
@@ -17,6 +17,11 @@ public class Mails
     {
         foreach (SysMail template in sysMailTemplates)
         {
+            // XmlSerializer does not fire JAXB child callbacks; cascade children-first so each MailTemplate's
+            // mailPartsMap and each SysMail's mailCaseTemplates index are built before their source lists are nulled.
+            foreach (MailTemplate mailTemplate in template.templates)
+                mailTemplate.AfterUnmarshal(this);
+            template.AfterUnmarshal(this);
             string sysMailName = template.GetName().ToLower();
             sysMailByName[sysMailName] = template;
         }

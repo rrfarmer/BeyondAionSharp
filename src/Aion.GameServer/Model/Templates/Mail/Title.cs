@@ -6,7 +6,14 @@ namespace Aion.GameServer.Model.Templates.Mail;
 [XmlType("Title")]
 public class Title : MailPart
 {
-    [XmlAttribute("type")] protected MailPartType? type;
+    [XmlIgnore] protected MailPartType? type;
+
+    [XmlAttribute("type")]
+    public string TypeRaw
+    {
+        get => type?.ToString();
+        set => type = string.IsNullOrEmpty(value) ? null : System.Enum.Parse<MailPartType>(value);
+    }
 
     public override MailPartType GetType_()
     {
