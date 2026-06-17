@@ -16,14 +16,17 @@ public static class HousingConfig
     /// <summary>Key: gameserver.housing.pay.enable (default true)</summary>
     public static bool ENABLE_HOUSE_PAY = true;
 
-    /// <summary>Key: gameserver.housing.auction.end_time (default "0 0 12 ? * SUN")</summary>
-    public static CronExpression HOUSE_AUCTION_END_TIME;
+    /// <summary>Key: gameserver.housing.auction.end_time (default "0 0 12 ? * SUN"). Initialized from the Java
+    /// @Property defaultValue via CronExpressions.GetOrCreate (no invented value) so AuctionEndTask is ACTIVE like
+    /// Java rather than silently AbstractCronTask-"deactivated" on a null expression.</summary>
+    public static CronExpression HOUSE_AUCTION_END_TIME = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 12 ? * SUN");
 
     /// <summary>Key: gameserver.housing.auction.register_days (default 1, 5)</summary>
     public static int[] HOUSE_AUCTION_REGISTER_DAYS;
 
-    /// <summary>Key: gameserver.housing.maintain.time (default "0 0 0 ? * MON")</summary>
-    public static CronExpression HOUSE_MAINTENANCE_TIME;
+    /// <summary>Key: gameserver.housing.maintain.time (default "0 0 0 ? * MON"). Initialized from the Java
+    /// @Property defaultValue via CronExpressions.GetOrCreate (no invented value).</summary>
+    public static CronExpression HOUSE_MAINTENANCE_TIME = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 0 ? * MON");
 
     /// <summary>Auction default bid prices. Key: gameserver.housing.auction.default_bid.house (default 0)</summary>
     public static int HOUSE_MIN_BID = 0;
@@ -53,8 +56,9 @@ public static class HousingConfig
     /// <summary>Key: gameserver.housing.auction.steplimit (default 100)</summary>
     public static float AUCTION_BID_STEP_LIMIT = 100f;
 
-    /// <summary>Key: gameserver.housing.auction.auto_fill.time (default "0 0 0 ? * MON")</summary>
-    public static CronExpression AUCTION_AUTO_FILL_TIME;
+    /// <summary>Key: gameserver.housing.auction.auto_fill.time (default "0 0 0 ? * MON"). Initialized from the Java
+    /// @Property defaultValue via CronExpressions.GetOrCreate (no invented value).</summary>
+    public static CronExpression AUCTION_AUTO_FILL_TIME = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 0 ? * MON");
     /// <summary>@Properties keyPattern ^gameserver\.housing\.auction\.auto_fill\.limit\.(.+)</summary>
     public static Dictionary<HouseType, int> AUCTION_AUTO_FILL_LIMITS;
 }

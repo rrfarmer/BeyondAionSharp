@@ -97,6 +97,10 @@ public sealed class GameServerBootstrapService : IHostedService
 				typeof(Aion.GameServer.Utils.Cron.ThreadPoolManagerRunnableRunner),
 				Aion.GameServer.Configs.Main.GSConfig.TIME_ZONE_ID ?? System.TimeZoneInfo.Local);
 
+		// DropRegistrationService.getInstance() (GameServer.main:108): empty ctor (drop-table registration happens
+		// per-NPC-death at runtime via RegisterDrop). Bounded singleton touch, dep-clean.
+		Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance();
+
 		// Java parity: GameServer.main location-init cluster (lines 111-117), after DropRegistration, before
 		// HousingService/spawns. Each loads only LOCATION data (no schedules/spawns yet — those are the second-pass
 		// init*() calls later). All are bounded singleton getInstance()/init touches whose ctors iterate the
@@ -126,6 +130,29 @@ public sealed class GameServerBootstrapService : IHostedService
 		// LEGION_DOMINION_DATA template + LegionDominionDAO.LoadOrCreate/LoadParticipants (try/catch-guarded DB reads).
 		Aion.GameServer.Services.LegionDominionService.GetInstance().InitLocations();
 
+		// Java parity: GameServer.main housing init block (lines 119-123), AFTER the location-init cluster, BEFORE
+		// SpawnEngine.spawnAll() (HousingService is init'd before spawns because it is touched on every instance spawn).
+		//
+		// HousingService.getInstance() (main:119) + HousingBidService.getInstance() (main:120) are DEFERRED: the
+		// HousingService ctor calls RevokeOwnershipOfDeletedPlayers() => new HashSet<int>(PlayerDAO.GetUsedIDs()),
+		// and PlayerDAO.GetUsedIDs() returns NULL on DB failure (faithful: Java returns null too), so with the
+		// bootstrap fixture's no-DB env new HashSet<>(null) throws ArgumentNullException (Java NPEs identically;
+		// the real server always has a DB returning an empty array). HousingBidService.ctor -> SetBidInfoToHouses ->
+		// HousingService.GetInstance() inherits the same failure. No-DB edge, NOT a port defect — wire once the
+		// bootstrap harness provides a DB (or PlayerDAO.GetUsedIDs returns empty on no-DB). The 3 AbstractCronTask
+		// auction tasks (main:121-123) are conceptually part of this housing block and run their Run() on the thread
+		// pool (would touch the deferred housing services), so they are deferred together for now.
+		// (HousingConfig.HOUSE_AUCTION_END_TIME / AUCTION_AUTO_FILL_TIME / HOUSE_MAINTENANCE_TIME cron defaults ARE
+		// now populated — that fix stands independent of this deferral.)
+		// Aion.GameServer.Services.HousingService.GetInstance();
+		// Aion.GameServer.Services.HousingBidService.GetInstance();
+		// Aion.GameServer.Taskmanager.Tasks.Housing.AuctionEndTask.GetInstance();
+		// Aion.GameServer.Taskmanager.Tasks.Housing.AuctionAutoFillTask.GetInstance();
+		// Aion.GameServer.Taskmanager.Tasks.Housing.MaintenanceTask.GetInstance();
+
+		// ChallengeTaskService.getInstance() (GameServer.main:124): ctor initializes empty task maps. Dep-clean.
+		Aion.GameServer.Services.ChallengeTaskService.GetInstance();
+
 		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
 		if (engineTasks.Length > 0)
 			await Task.WhenAll(engineTasks);
@@ -149,6 +176,11 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		// Java parity: GameServer.main registers scheduled rift openings after SpawnEngine.spawnAll() (RiftService.getInstance().initRifts()).
 		Aion.GameServer.Services.RiftService.GetInstance().InitRifts();
+
+		// LimitedItemTradeService.getInstance().start() (GameServer.main:136): collects limited-trade NPCs from
+		// TRADE_LIST_DATA + GOODSLIST_DATA (both empty-but-non-null on the fixture => no NPCs collected) and
+		// schedules each limited item's reset cron (item.GetSalesTime()). Empty data => no-op. Dep-clean.
+		Aion.GameServer.Services.LimitedItemTradeService.GetInstance().Start();
 
 		// Java parity: GameServer.main second-pass init block (lines 142-150), AFTER spawnAll/initRifts, BEFORE
 		// DebugService/Weather/etc. These run separately from the location-init first pass because they depend on
