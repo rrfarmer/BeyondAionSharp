@@ -23,7 +23,7 @@ public class MultiReturnAction : AbstractItemAction
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item item, Item targetItem, params object[] @params)
     {
         int indexReturn = (int)@params[0];
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), USAGE_DELAY, 0, 0), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), USAGE_DELAY, 0, 0), true);
 
         ItemUseObserver observer = new MultiReturnUseObserver(player, item);
         player.GetObserveController().Attach(observer);
@@ -62,7 +62,7 @@ public class MultiReturnAction : AbstractItemAction
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(item.GetItemTemplate().GetUseLimits().GetDelayId());
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 2, 0), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }
     }

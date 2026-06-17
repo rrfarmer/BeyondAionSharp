@@ -129,10 +129,10 @@ public class _10501ResearchtheRuins : AbstractQuestHandler
             return HandlerResult.UNKNOWN;
 
         int itemObjId = item.GetObjectId();
-        PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 1000, 0, 0), true);
+        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 1000, 0, 0), true);
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
+            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
             int var = qs.GetQuestVarById(0);
             // Step 1: Use the Ruins Location Map to find the first location
             // Step 3: Use the Ruins Location Map to find the second location

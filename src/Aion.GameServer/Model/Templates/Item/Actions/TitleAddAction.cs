@@ -39,7 +39,7 @@ public class TitleAddAction : AbstractItemAction
     {
         Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), itemTemplate.GetTemplateId()), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), itemTemplate.GetTemplateId()), true);
 
         if (player.GetTitleList().AddTitle(titleid, false, minutes == null ? 0 : ((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000)) + minutes.Value * 60))
         {

@@ -79,10 +79,10 @@ public class _28405KexkrasPast : AbstractQuestHandler
 
         if (id != 182215014)
             return HandlerResult.FAILED;
-        PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
+        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
+            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
             SendQuestDialog(env, 4);
             return ValueTask.CompletedTask;
         }, 3000L);

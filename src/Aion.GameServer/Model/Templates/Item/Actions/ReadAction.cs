@@ -20,10 +20,10 @@ public class ReadAction : AbstractItemAction
         int itemObjId = parentItem.GetObjectId();
         int id = parentItem.GetItemTemplate().GetTemplateId();
 
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 50, 0, 0), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 50, 0, 0), true);
         Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(50));
     }

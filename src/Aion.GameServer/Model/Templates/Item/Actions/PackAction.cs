@@ -99,7 +99,7 @@ public class PackAction : AbstractItemAction
         int parentItemId = parentItem.GetItemId();
         int parentObjectId = parentItem.GetObjectId();
         int packCount = targetItem.GetPackCount();
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentObjectId, parentItemId, 0, 1, 1), true);
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentObjectId, parentItemId, 0, 1, 1), true);
         if (!player.GetInventory().DecreaseByObjectId(parentObjectId, 1))
         {
             return;

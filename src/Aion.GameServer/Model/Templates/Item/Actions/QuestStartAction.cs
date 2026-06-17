@@ -26,7 +26,7 @@ public class QuestStartAction : AbstractItemAction
 
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId()));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId()));
         Aion.GameServer.QuestEngine.QuestEngine.GetInstance().OnDialog(new Aion.GameServer.QuestEngine.Model.QuestEnv(null, player, questid, Aion.GameServer.Model.DialogAction.ASK_QUEST_ACCEPT));
     }
 }

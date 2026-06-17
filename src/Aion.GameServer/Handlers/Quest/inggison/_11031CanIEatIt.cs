@@ -104,10 +104,10 @@ namespace Aion.GameServer.Handlers.Quest
 
             if (id != 182206724)
                 return HandlerResult.UNKNOWN;
-            PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 1000, 0, 0), true);
+            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 1000, 0, 0), true);
             ThreadPoolManager.GetInstance().Schedule(ct =>
             {
-                PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
+                PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
                 RemoveQuestItem(env, 182206724, 1);
                 qs.SetStatus(QuestStatus.REWARD);
                 UpdateQuestStatus(env);

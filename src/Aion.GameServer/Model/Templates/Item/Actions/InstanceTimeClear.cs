@@ -48,7 +48,7 @@ public class InstanceTimeClear : AbstractItemAction
     {
         int syncId = (int)@params[0];
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 1000, 0, 0));
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 1000, 0, 0));
 
         ItemUseObserver observer = new InstanceTimeClearUseObserver(player, parentItem);
         player.GetObserveController().Attach(observer);
@@ -75,7 +75,7 @@ public class InstanceTimeClear : AbstractItemAction
 
             player.GetPortalCooldownList().SendEntryInfo(worldId);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0));
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(1000)));
     }
@@ -99,7 +99,7 @@ public class InstanceTimeClear : AbstractItemAction
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }
     }

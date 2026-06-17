@@ -127,7 +127,7 @@ public class _2136TheLostAxe : AbstractQuestHandler
 
         if (id != 182203130)
             return HandlerResult.UNKNOWN;
-        PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 20, 1, 0), true);
+        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 20, 1, 0), true);
         if (qs == null || qs.IsStartable())
         {
             QuestService.StartQuest(env);

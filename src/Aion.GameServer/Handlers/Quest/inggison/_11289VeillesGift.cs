@@ -84,7 +84,7 @@ public class _11289VeillesGift : AbstractQuestHandler
 
         if (id != 182213147)
             return HandlerResult.UNKNOWN;
-        PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 20, 1, 0), true);
+        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 20, 1, 0), true);
         if (qs == null || qs.IsStartable())
             SendQuestDialog(env, 4);
         return HandlerResult.SUCCESS;

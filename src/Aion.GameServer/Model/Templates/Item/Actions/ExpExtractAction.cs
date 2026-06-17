@@ -39,7 +39,7 @@ public class ExpExtractAction : AbstractItemAction
     public override void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item parentItem, Item targetItem, params object[] @params)
     {
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
 
         player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
 
@@ -57,7 +57,7 @@ public class ExpExtractAction : AbstractItemAction
             {
                 player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                    new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
+                    new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
                 return ValueTask.CompletedTask;
             }
 
@@ -66,7 +66,7 @@ public class ExpExtractAction : AbstractItemAction
             string rewardItem = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetL10n();
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_EXP_EXTRACTION_USE(parentItem.GetL10n(), requiredExp, rewardItem));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0));
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(5000)));
     }
@@ -97,7 +97,7 @@ public class ExpExtractAction : AbstractItemAction
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
             player.GetObserveController().RemoveObserver(this);
         }
     }

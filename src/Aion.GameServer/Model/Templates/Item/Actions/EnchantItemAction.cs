@@ -84,7 +84,7 @@ public class EnchantItemAction : AbstractItemAction
         int currentEnchant = targetItem.GetEnchantLevel();
         bool isSuccess = IsSuccess(player, parentItem, targetItem, supplementItem, targetWeapon);
         // Item template
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), targetItem.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), enchantDurationMillis, 0, 0, 1, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), targetItem.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), enchantDurationMillis, 0, 0, 1, 0, 0));
 
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
@@ -93,7 +93,7 @@ public class EnchantItemAction : AbstractItemAction
             if (player.GetInventory().GetItemByObjId(targetItem.GetObjectId()) == null && !targetItem.IsEquipped())
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ENCHANT_ITEM_NO_TARGET_ITEM());
-                Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
+                Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
                 return ValueTask.CompletedTask;
             }
 
@@ -102,7 +102,7 @@ public class EnchantItemAction : AbstractItemAction
             else // Manastone
                 Aion.GameServer.Services.EnchantService.SocketManastoneAct(player, parentItem, targetItem, supplementItem, targetWeapon, isSuccess);
 
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, isSuccess ? 1 : 2, 0));
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, isSuccess ? 1 : 2, 0));
             if (Aion.GameServer.Configs.Main.CustomConfig.ENABLE_ENCHANT_ANNOUNCE)
             {
                 if (isEnchantmentStone && isSuccess && (targetItem.GetEnchantLevel() == 15 || targetItem.GetEnchantLevel() == 20))

@@ -29,7 +29,6 @@ public sealed class GoldenPacketFixtureTests
 	[Theory]
 	// NOTE: SM_GROUP_DATA_EXCHANGE is NOT here — it is an AionServerPacket (no SerializeFrame),
 	// so it is captured via the raw WriteImpl path in FaithfulCsharpPayloadMatchesJavaGoldenFixture below.
-	[InlineData("SM_ITEM_USAGE_ANIMATION.json")]
 	[InlineData("SM_ATTACK_STATUS.json")]
 	public void CsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
@@ -54,7 +53,6 @@ public sealed class GoldenPacketFixtureTests
 
 	private static GameServerPacket Reconstruct(string packetName, JsonElement inputs) => packetName switch
 	{
-		"SM_ITEM_USAGE_ANIMATION" => ReconstructItemUsageAnimation(inputs),
 		"SM_ATTACK_STATUS" => ReconstructAttackStatus(inputs),
 		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
 	};
@@ -64,6 +62,7 @@ public sealed class GoldenPacketFixtureTests
 	// We capture the raw writeImpl payload exactly like the Java harness does: a LITTLE_ENDIAN
 	// ByteBuffer, invoke WriteImpl reflectively, read Position() bytes. No opcode, no crypt.
 	[Theory]
+	[InlineData("SM_ITEM_USAGE_ANIMATION.json")]
 	[InlineData("SM_QUIT_RESPONSE.json")]
 	[InlineData("SM_DELETE_WAREHOUSE_ITEM.json")]
 	[InlineData("SM_BLOCK_RESPONSE.json")]
@@ -185,6 +184,7 @@ public sealed class GoldenPacketFixtureTests
 
 	private static AionServerPacket ReconstructFaithful(string packetName, JsonElement inputs) => packetName switch
 	{
+		"SM_ITEM_USAGE_ANIMATION" => ReconstructItemUsageAnimation(inputs),
 		"SM_QUIT_RESPONSE" => new SM_QUIT_RESPONSE(inputs.GetProperty("editMode").GetBoolean()),
 		"SM_DELETE_WAREHOUSE_ITEM" => new SM_DELETE_WAREHOUSE_ITEM(inputs.GetProperty("warehouseType").GetInt32(), inputs.GetProperty("itemObjectId").GetInt32(), ResolveItemDeleteType(inputs.GetProperty("deleteType").GetInt32())),
 		"SM_BLOCK_RESPONSE" => new SM_BLOCK_RESPONSE(inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
@@ -603,19 +603,20 @@ public sealed class GoldenPacketFixtureTests
 	}
 
 	// SM_ITEM_USAGE_ANIMATION: select the ctor matching the Java generator (time==0 paths only).
-	private static SmItemUsageAnimation ReconstructItemUsageAnimation(JsonElement inputs)
+	// Faithful SM_ITEM_USAGE_ANIMATION : AionServerPacket (captured via WriteImpl path).
+	private static SM_ITEM_USAGE_ANIMATION ReconstructItemUsageAnimation(JsonElement inputs)
 	{
 		var ctor = inputs.GetProperty("ctor").GetString()!;
 		switch (ctor)
 		{
 			case "player_itemObj_itemId":
-				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32());
+				return new SM_ITEM_USAGE_ANIMATION(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32());
 			case "player_itemObj_itemId_time_end_unk":
-				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk3").GetInt32());
+				return new SM_ITEM_USAGE_ANIMATION(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk3").GetInt32());
 			case "player_target_itemObj_itemId_time_end_unk":
-				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk3").GetInt32());
+				return new SM_ITEM_USAGE_ANIMATION(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk3").GetInt32());
 			case "full":
-				return new SmItemUsageAnimation(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk").GetInt32(), inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32(), inputs.GetProperty("unk3").GetInt32());
+				return new SM_ITEM_USAGE_ANIMATION(inputs.GetProperty("playerObjId").GetInt32(), inputs.GetProperty("targetObjId").GetInt32(), inputs.GetProperty("itemObjId").GetInt32(), inputs.GetProperty("itemId").GetInt32(), inputs.GetProperty("time").GetInt32(), inputs.GetProperty("end").GetInt32(), inputs.GetProperty("unk").GetInt32(), inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32(), inputs.GetProperty("unk3").GetInt32());
 			default:
 				throw new NotSupportedException($"No SM_ITEM_USAGE_ANIMATION ctor for {ctor}");
 		}

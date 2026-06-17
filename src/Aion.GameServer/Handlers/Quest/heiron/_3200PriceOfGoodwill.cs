@@ -134,10 +134,10 @@ public class _3200PriceOfGoodwill : AbstractQuestHandler
         if (id != 182209082 || qs == null || qs.GetQuestVarById(0) != 2)
             return HandlerResult.UNKNOWN;
 
-        PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
+        PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 3000, 0, 0), true);
         ThreadPoolManager.GetInstance().Schedule(ct =>
         {
-            PacketSendUtility.BroadcastPacket(player, new SmItemUsageAnimation(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
+            PacketSendUtility.BroadcastPacket(player, new SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), itemObjId, id, 0, 1, 0), true);
             RemoveQuestItem(env, 182209082, 1);
             // teleport location(BlackCloudIsland): 400010000 3419.16 2445.43 2766.54 57
             TeleportService.TeleportTo(player, 400010000, 3419.16f, 2445.43f, 2766.54f, (byte)57);

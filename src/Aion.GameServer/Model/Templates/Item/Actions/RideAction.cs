@@ -59,7 +59,7 @@ public class RideAction : AbstractItemAction
         }
 
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 3000, 0, 0), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 3000, 0, 0), true);
         ItemUseObserver observer = new RideUseObserver(player, parentItem);
 
         player.GetObserveController().Attach(observer);
@@ -75,7 +75,7 @@ public class RideAction : AbstractItemAction
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.CHANGE_SPEED, 0, 0), true);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.RIDE, 0, GetRideInfo().GetNpcId()), true);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 1), true);
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 1), true);
             player.GetController().CancelTask(TaskId.ITEM_USE);
             Aion.GameServer.QuestEngine.QuestEngine.GetInstance().RideAction(new Aion.GameServer.QuestEngine.Model.QuestEnv(null, player, 0), itemTemplate.GetTemplateId());
             return ValueTask.CompletedTask;
@@ -118,7 +118,7 @@ public class RideAction : AbstractItemAction
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 3, 0), true);
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 3, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }
     }

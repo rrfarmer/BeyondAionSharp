@@ -41,7 +41,7 @@ public class CompositionAction : AbstractItemAction
 
     public void Act(Aion.GameServer.Model.GameObjects.Players.Player player, Item tools, Item first, Item second)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 5000, 0, 0));
         player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
 
         ItemUseObserver observer = new CompositionUseObserver(player, tools);
@@ -56,7 +56,7 @@ public class CompositionAction : AbstractItemAction
             {
                 Aion.GameServer.Services.Items.ItemService.AddItem(player, GetItemId(CalcLevel(first.GetItemTemplate().GetLevel(), second.GetItemTemplate().GetLevel())), 1);
             }
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 0, 1, 0));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 0, 1, 0));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(5000)));
     }
@@ -97,7 +97,7 @@ public class CompositionAction : AbstractItemAction
         public override void Abort()
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 0, 2, 0));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tools.GetObjectId(), tools.GetItemTemplate().GetTemplateId(), 0, 2, 0));
             player.GetObserveController().RemoveObserver(this);
         }
     }

@@ -48,13 +48,13 @@ public class TuningAction : AbstractItemAction
         int tuningScrollItemId = parentItem.GetItemId();
         int tuningScrollObjectId = parentItem.GetObjectId();
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
-            new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), tuningScrollItemId, 5000, 12, 0), true);
+            new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), tuningScrollItemId, 5000, 12, 0), true);
         ItemUseObserver observer = new TuneUseObserver(player, parentItem, targetItem, tuningScrollItemId, tuningScrollObjectId);
         player.GetObserveController().Attach(observer);
         player.GetController().AddTask(Aion.GameServer.Model.TaskId.ITEM_USE, Aion.GameServer.Utils.ThreadPoolManager.GetInstance().Schedule(ct =>
         {
             player.GetObserveController().RemoveObserver(observer);
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, 0, 13, 0), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, 0, 13, 0), true);
             if (!player.GetInventory().DecreaseByObjectId(tuningScrollObjectId, 1))
                 return ValueTask.CompletedTask;
 
@@ -108,7 +108,7 @@ public class TuningAction : AbstractItemAction
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_CANCELED(targetItem.GetL10n()));
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, 0, 14, 0), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, 0, 14, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }
     }

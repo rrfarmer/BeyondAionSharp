@@ -88,7 +88,7 @@ public partial class Equipment
             responder.GetController().CancelUseItem();
 
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 5000, 4), true);
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 5000, 4), true);
 
             responder.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
 
@@ -101,7 +101,7 @@ public partial class Equipment
                 responder.GetObserveController().RemoveObserver(moveObserver);
 
                 Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
-                    new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 6), true);
+                    new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 6), true);
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_ITEM_SUCCEED(item.GetL10n()));
 
                 item.SetSoulBound(true);
@@ -136,7 +136,7 @@ public partial class Equipment
             responder.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 8), true);
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 8), true);
         }
     }
 
