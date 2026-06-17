@@ -17,7 +17,7 @@ using Aion.GameServer.World;
 
 namespace Aion.GameServer.Services.Findgroup;
 
-/// <summary>Java parity: services/findgroup/FindGroupService (cura, MrPoke). Singleton; ConcurrentDictionary recruitments/applications/instanceGroups; show/add/update/remove for the Recruit/Apply/Instance tabs, server-wide instance application flow, onJoinedTeam/onLogout cleanup. ConcurrentHashMap->ConcurrentDictionary; values().stream().filter().toList()->Values.Where().ToList(); map.get->GetValueOrDefault; remove->TryRemove; put->indexer; List.of->new List; instanceof Npc npc->is Npc npc; broadcastToWorld predicate->lambda. Golden-capture FindGroupMutationPostTraceCaptureHooks calls (no-op instrumentation, not Aion gameplay) omitted. SM_FIND_GROUP overloads/TemporaryPlayerTeam wildcard red-tolerated.</summary>
+/// <summary>Java parity: services/findgroup/FindGroupService (cura, MrPoke). Singleton; ConcurrentDictionary recruitments/applications/instanceGroups; show/add/update/remove for the Recruit/Apply/Instance tabs, server-wide instance application flow, onJoinedTeam/onLogout cleanup. ConcurrentHashMap->ConcurrentDictionary; values().stream().filter().toList()->Values.Where().ToList(); map.get->GetValueOrDefault; remove->TryRemove; put->indexer; List.of->new List; instanceof Npc npc->is Npc npc; broadcastToWorld predicate->lambda. SM_FIND_GROUP overloads/TemporaryPlayerTeam wildcard red-tolerated.</summary>
 public class FindGroupService
 {
     private readonly ConcurrentDictionary<int, GroupRecruitment> recruitments = new ConcurrentDictionary<int, GroupRecruitment>(); // Recruit Group Members tab
