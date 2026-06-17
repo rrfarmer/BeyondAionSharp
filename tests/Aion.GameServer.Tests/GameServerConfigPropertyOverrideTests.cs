@@ -1,6 +1,8 @@
+using System.Collections.Generic;
 using System.IO;
 using Aion.Commons.Configuration;
 using Aion.GameServer.Configs;
+using Aion.GameServer.Configs.Administration;
 using Aion.GameServer.Configs.Main;
 
 namespace Aion.GameServer.Tests;
@@ -13,8 +15,11 @@ namespace Aion.GameServer.Tests;
 /// ConfigurableProcessor binds GSConfig.TIME_ZONE_ID through the new ZoneIdTransformer.
 ///
 /// Static config holders are process-global; this test restores them to their annotated defaults on exit so it
-/// does not leak into sibling tests.
+/// does not leak into sibling tests. It joins the GoldenDataManager (non-parallel) collection because
+/// GameServerBootstrapTests calls Config.Load() — which now also binds these shared static holders — and the two
+/// must not race over the global config state.
 /// </summary>
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GameServerConfigPropertyOverrideTests
 {
     [Fact]
@@ -151,6 +156,78 @@ public sealed class GameServerConfigPropertyOverrideTests
         finally
         {
             RestoreBatchCDefaults();
+        }
+    }
+
+    [Fact]
+    public void RealPropertiesFile_BindsCollectionFields_AdminAndSecurity()
+    {
+        var repoRoot = FindRepoRoot(AppContext.BaseDirectory);
+        if (repoRoot is null)
+            return; // data-less checkout: the real config tree is not present.
+        var configAdmin = Path.Combine(repoRoot, "game-server", "config", "administration");
+        var configMain = Path.Combine(repoRoot, "game-server", "config", "main");
+        if (!File.Exists(Path.Combine(configAdmin, "admin.properties"))
+            || !File.Exists(Path.Combine(configMain, "security.properties")))
+            return;
+
+        try
+        {
+            var adminProps = new JavaProperties();
+            adminProps.LoadFromDirectory(configAdmin, false);
+            ConfigurableProcessor.Process(adminProps, typeof(AdminConfig));
+
+            // Collection transformer parity: //invis, //invul, //enemy none, //see is comma-split into a List<string>.
+            Assert.Equal(
+                new List<string> { "//invis", "//invul", "//enemy none", "//see" },
+                AdminConfig.LOGIN_EXECUTE_COMMANDS);
+            // Single-element list (no comma): "*".
+            Assert.Equal(new List<string> { "*" }, AdminConfig.ANNOUNCE_LEVELS);
+            // string[] (Array transformer) — the customtags value has 9 %s entries.
+            Assert.NotNull(AdminConfig.NAME_TAGS);
+            Assert.Equal(9, AdminConfig.NAME_TAGS.Length);
+
+            var secProps = new JavaProperties();
+            secProps.LoadFromDirectory(configMain, false);
+            ConfigurableProcessor.Process(secProps, typeof(SecurityConfig));
+
+            // Set transformer parity: the shipped value is empty -> empty HashSet (never null).
+            Assert.NotNull(SecurityConfig.MULTI_CLIENTING_IGNORED_MAC_ADDRESSES);
+            Assert.Empty(SecurityConfig.MULTI_CLIENTING_IGNORED_MAC_ADDRESSES);
+            // Enum transformer parity: restriction mode NONE.
+            Assert.Equal(SecurityConfig.MultiClientingRestrictionMode.NONE,
+                SecurityConfig.MULTI_CLIENTING_RESTRICTION_MODE);
+        }
+        finally
+        {
+            ConfigurableProcessor.Process(new JavaProperties(), typeof(AdminConfig), typeof(SecurityConfig));
+        }
+    }
+
+    [Fact]
+    public void ExplicitOverride_CollectionTransformer_ListAndSet()
+    {
+        try
+        {
+            var props = new JavaProperties();
+            // List<string> override with quoted token containing a comma (CSV quote semantics).
+            props.SetProperty("gameserver.administration.login.execute_commands", "//see, \"//enemy a,b\", //invis");
+            // Set<string> override that de-duplicates (HashSet semantics like Java HashSet).
+            props.SetProperty("gameserver.security.multi_clienting.ignored_mac_addresses", "AA, BB, AA, CC");
+
+            ConfigurableProcessor.Process(props, typeof(AdminConfig), typeof(SecurityConfig));
+
+            Assert.Equal(
+                new List<string> { "//see", "//enemy a,b", "//invis" },
+                AdminConfig.LOGIN_EXECUTE_COMMANDS);
+            Assert.Equal(
+                new HashSet<string> { "AA", "BB", "CC" },
+                SecurityConfig.MULTI_CLIENTING_IGNORED_MAC_ADDRESSES);
+            Assert.Equal(3, SecurityConfig.MULTI_CLIENTING_IGNORED_MAC_ADDRESSES.Count);
+        }
+        finally
+        {
+            ConfigurableProcessor.Process(new JavaProperties(), typeof(AdminConfig), typeof(SecurityConfig));
         }
     }
 

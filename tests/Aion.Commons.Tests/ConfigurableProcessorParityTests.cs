@@ -38,7 +38,41 @@ public class ConfigurableProcessorParityTests
         [Property(key: "test.untouched")]
         public static int Untouched = 999;
 
+        [Property(key: "test.list", defaultValue: "a, b, c")]
+        public static System.Collections.Generic.List<string> Words
+            = new System.Collections.Generic.List<string>();
+
+        [Property(key: "test.set", defaultValue: "x, y")]
+        public static System.Collections.Generic.ISet<string> Tags
+            = new System.Collections.Generic.HashSet<string>();
+
         public enum Source { FILE, URL }
+    }
+
+    [Fact]
+    public void CollectionTransformer_BindsListAndSet_FromDefaultsAndOverrides()
+    {
+        // Defaults from the annotation.
+        ConfigurableProcessor.Process(new JavaProperties(), typeof(Holder));
+        Assert.Equal(new System.Collections.Generic.List<string> { "a", "b", "c" }, Holder.Words);
+        Assert.Equal(new System.Collections.Generic.HashSet<string> { "x", "y" }, Holder.Tags);
+
+        // Overrides: List preserves order + quoted comma; Set de-duplicates (HashSet parity).
+        var props = new JavaProperties();
+        props.SetProperty("test.list", "one, \"two,three\", four");
+        props.SetProperty("test.set", "p, q, p, r");
+        ConfigurableProcessor.Process(props, typeof(Holder));
+
+        Assert.Equal(new System.Collections.Generic.List<string> { "one", "two,three", "four" }, Holder.Words);
+        Assert.Equal(new System.Collections.Generic.HashSet<string> { "p", "q", "r" }, Holder.Tags);
+
+        // Empty value -> empty collection (never null), matching Java.
+        var empty = new JavaProperties();
+        empty.SetProperty("test.list", "");
+        empty.SetProperty("test.set", "");
+        ConfigurableProcessor.Process(empty, typeof(Holder));
+        Assert.Empty(Holder.Words);
+        Assert.Empty(Holder.Tags);
     }
 
     [Fact]

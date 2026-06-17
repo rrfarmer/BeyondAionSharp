@@ -52,6 +52,7 @@ public static class Config
     /// </summary>
     private static readonly IReadOnlyList<Type> MigratedConfigs = new[]
     {
+        typeof(AdminConfig),
         typeof(AIConfig),
         typeof(CommonsConfig),
         typeof(CleaningConfig),
@@ -64,6 +65,7 @@ public static class Config
         typeof(NameConfig),
         typeof(PeriodicSaveConfig),
         typeof(RatesConfig),
+        typeof(SecurityConfig),
         typeof(ThreadConfig),
         typeof(WorldConfig),
         typeof(NetworkConfig),
