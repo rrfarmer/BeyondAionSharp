@@ -30,6 +30,7 @@ public class SM_VERSION_CHECK : AionServerPacket
         this.cityDecoration = cityDecoration;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_VERSION_CHECK.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         int characterLimitCount = GSConfig.CHARACTER_LIMIT_COUNT;

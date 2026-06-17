@@ -19,6 +19,7 @@ public class SM_FRIEND_UPDATE : AionServerPacket
         this.friendObjId = friendObjId;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_FRIEND_UPDATE.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         Friend f = con.GetActivePlayer().GetFriendList().GetFriend(friendObjId);

@@ -24,6 +24,7 @@ public class SM_DIALOG_WINDOW : AionServerPacket
         this.questId = questId;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_DIALOG_WINDOW.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         Player player = con.GetActivePlayer();

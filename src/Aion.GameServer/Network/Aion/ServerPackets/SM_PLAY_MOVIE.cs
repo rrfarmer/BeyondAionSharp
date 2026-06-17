@@ -23,6 +23,7 @@ public class SM_PLAY_MOVIE : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_PLAY_MOVIE.java): 2026-06-17
         con.GetActivePlayer().SetCustomState(CustomPlayerState.WATCHING_CUTSCENE);
         WriteC(isMovie ? 1 : 0); // if 1: CutSceneMovies else CutScenes
         WriteD(objectId);

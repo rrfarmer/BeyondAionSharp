@@ -6,6 +6,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_PRICES (xavier, Sarynth, Wakizashi). Sends influence-based buying price %, price modifier, and tax for the player's race. Converges PlayerEnterWorldService; uses ported PricesService. AionServerPacket red-tolerated.</summary>
 public class SM_PRICES : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_PRICES.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         WriteC(PricesService.GetGlobalPrices(con.GetActivePlayer().GetRace())); // Display Buying Price %

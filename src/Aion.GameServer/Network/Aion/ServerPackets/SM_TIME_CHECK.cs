@@ -15,6 +15,7 @@ public class SM_TIME_CHECK : AionServerPacket
         this.nanoTime = nanoTime;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_TIME_CHECK.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         WriteD(serverUpTime);

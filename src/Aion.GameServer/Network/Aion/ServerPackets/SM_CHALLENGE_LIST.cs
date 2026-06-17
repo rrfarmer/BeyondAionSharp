@@ -32,6 +32,7 @@ public class SM_CHALLENGE_LIST : AionServerPacket
         this.task = task;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_CHALLENGE_LIST.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         Player player = con.GetActivePlayer();
