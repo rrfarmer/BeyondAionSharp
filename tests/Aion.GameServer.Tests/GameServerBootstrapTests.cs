@@ -12,6 +12,12 @@ using GameWorld = Aion.GameServer.World.World;
 
 namespace Aion.GameServer.Tests;
 
+// Joins the GoldenDataManager non-parallel collection: this test constructs a GameTimeService whose ctor
+// unconditionally overwrites the GameTimeService singleton and then advances it to a non-zero game-minute
+// (WaitUntilAsync(gameTime.GameMinutes > 0)). Run in parallel, that polluted the singleton mid-read for the
+// golden packet fixtures, which read GameTimeService.GetInstance().GetGameTime().GetTime() and assert time 0
+// (SM_STATS_INFO byte#4). Serializing with the golden classes removes that cross-test race.
+[Xunit.Collection("GoldenDataManager")]
 public sealed class GameServerBootstrapTests
 {
 	[Fact]

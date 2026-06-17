@@ -132,7 +132,8 @@ public class GameServerOptionsTests
 		var options = GameServerOptions.LoadDatabaseOptionsFromJavaConfig(AppContext.BaseDirectory);
 
 		Assert.Equal("localhost", options.Server);
-		Assert.Equal(3306, options.Port);
+		// mygs.properties (loaded last, Java mygs-override-wins parity) points at the local Docker MySQL on 3307.
+		Assert.Equal(3307, options.Port);
 		Assert.Equal("aion_gs", options.Database);
 		Assert.Equal("root", options.UserId);
 		Assert.Equal(5, options.MaxPoolSize);

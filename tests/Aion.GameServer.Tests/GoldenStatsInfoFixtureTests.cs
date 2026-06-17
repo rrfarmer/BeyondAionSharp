@@ -110,15 +110,13 @@ public sealed class GoldenStatsInfoFixtureTests
 
     private static void EnsureGameTimeSingleton()
     {
-        try { _ = GameTimeService.GetInstance(); }
-        catch (InvalidOperationException)
-        {
-            // Construct a DI GameTimeService; the ctor registers it as the singleton with 0 game-minutes.
-            var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<GameTimeService>.Instance;
-            var tpm = (Aion.GameServer.Utils.ThreadPoolManager)RuntimeHelpers.GetUninitializedObject(
-                typeof(Aion.GameServer.Utils.ThreadPoolManager));
-            _ = new GameTimeService(logger, tpm); // ctor sets _instance; _gameMinutes defaults to 0 -> time 0
-        }
+        // Always (re)construct a 0-game-minute instance: the ctor unconditionally sets _instance, so this resets
+        // the singleton even if a serialized sibling class (e.g. GameServerBootstrapTests) left it at a non-zero
+        // game time. The Java generator stub resolves time 0; SM_STATS_INFO byte#4 must read 0.
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<GameTimeService>.Instance;
+        var tpm = (Aion.GameServer.Utils.ThreadPoolManager)RuntimeHelpers.GetUninitializedObject(
+            typeof(Aion.GameServer.Utils.ThreadPoolManager));
+        _ = new GameTimeService(logger, tpm); // ctor sets _instance; _gameMinutes defaults to 0 -> time 0
     }
 
     // The faithful Player ctor reads DataManager.ABSOLUTE_STATS_DATA; SM_STATS_INFO additionally reads

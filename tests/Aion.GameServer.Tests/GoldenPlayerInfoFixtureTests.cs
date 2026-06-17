@@ -309,14 +309,12 @@ public sealed class GoldenPlayerInfoFixtureTests
 
     private static void EnsureGameTimeSingleton()
     {
-        try { _ = GameTimeService.GetInstance(); }
-        catch (InvalidOperationException)
-        {
-            var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<GameTimeService>.Instance;
-            var tpm = (Aion.GameServer.Utils.ThreadPoolManager)RuntimeHelpers.GetUninitializedObject(
-                typeof(Aion.GameServer.Utils.ThreadPoolManager));
-            _ = new GameTimeService(logger, tpm);
-        }
+        // Always (re)construct a 0-game-minute instance: the ctor unconditionally sets _instance, so this resets
+        // the singleton even if a serialized sibling class (e.g. GameServerBootstrapTests) advanced game time.
+        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<GameTimeService>.Instance;
+        var tpm = (Aion.GameServer.Utils.ThreadPoolManager)RuntimeHelpers.GetUninitializedObject(
+            typeof(Aion.GameServer.Utils.ThreadPoolManager));
+        _ = new GameTimeService(logger, tpm);
     }
 
     private static void EnsureDataManagerBridgeWithExpTable()

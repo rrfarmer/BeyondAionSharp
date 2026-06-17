@@ -2238,10 +2238,13 @@ public sealed class JaxbHolderLoaderTests
         Assert.False(sanctum.IsOtherRaceDuelsAllowed()); // DUEL_OTHER_RACE absent
 
         // Twin counts on a field map: Poeta twin_count="5" beginner_twin_count="6".
+        // Assert the raw deserialized XML fields (this test proves XML binding); the GetTwinCount()/
+        // GetBeginnerTwinCount() accessors apply the faithful Java WorldConfig clamp (WORLD_MAX_TWINS_USUAL
+        // default 1, WORLD_MAX_TWINS_BEGINNER default -1=disabled) which depends on mutable config statics.
         var poeta = data.GetTemplate(210010000);
         Assert.NotNull(poeta);
-        Assert.Equal(5, poeta!.GetTwinCount());
-        Assert.Equal(6, poeta.GetBeginnerTwinCount());
+        Assert.Equal(5, poeta!.TwinCount);
+        Assert.Equal(6, poeta.BeginnerTwinCount);
 
         // CName reverse lookup.
         Assert.Equal(110010000, data.GetWorldIdByCName("LC1"));
