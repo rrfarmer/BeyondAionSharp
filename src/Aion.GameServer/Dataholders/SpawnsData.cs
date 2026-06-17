@@ -12,7 +12,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Aion.GameServer.Utils.Xml;
 using Aion.GameServer.Model;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.SpawnEngine;
 using Aion.GameServer.Utils;
 using Aion.GameServer.World;
 
@@ -359,7 +361,150 @@ public class SpawnsData
         return spawnSpots.Count == 0 ? null : ToSpawnSearchResult(worldId, spawnSpots[0]);
     }
 
-    // TODO-backlog: saveSpawn(VisibleObject, bool) — needs VisibleObject, WorldMapInstance, JAXBUtil.
-    // TODO-backlog: getRelativePath(VisibleObject) — needs VisibleObject, Gatherable, WorldMapInstance.
-    // TODO-backlog: loadSpawnsFromTemplateFiles / findSpawnTemplate / positionMatches — helpers for above.
+    // ── Java parity: admin-save helpers (//addspawn //savespawn //deletespawn) ───────────────────────
+    private static readonly object SaveSpawnLock = new();
+
+    public bool SaveSpawn(VisibleObject visibleObject, bool delete)
+    {
+        lock (SaveSpawnLock) // Java parity: synchronized method
+        {
+            SpawnTemplate? spawn = visibleObject.GetSpawn();
+            if (spawn == null) // some objects like house objects have no spawn template
+                return false;
+            if (spawn.GetType() != typeof(SpawnTemplate)) // do not save special/temporary spawns (siege, base, rift spawn, ...) as world spawns
+                return false;
+            if (spawn.GetRespawnTime() <= 0) // do not save single time spawns (world raid, handler spawn, ...) as world spawns
+                return false;
+            if (spawn.IsTemporarySpawn()) // spawn start and end times of temporary world spawns (shugos, agrints, ...) would get lost
+                return false;
+
+            string folder = "./data/static_data/spawns/" + GetRelativePath(visibleObject);
+            string fileName = visibleObject.GetWorldId() + "_"
+                + visibleObject.GetPosition().GetWorldMapInstance().GetParent().GetName().Replace(' ', '_') + ".xml";
+            var xml = new FileInfo(folder + "/New/" + fileName);
+            string schema = "./data/static_data/spawns/spawns.xsd";
+            SpawnsData data = xml.Exists ? JAXBUtil.Deserialize<SpawnsData>(xml, schema) : new SpawnsData();
+            SpawnMap? spawnMap = data.Templates == null ? null
+                : data.Templates.FirstOrDefault(m => m.GetMapId() == visibleObject.GetWorldId());
+            if (spawnMap == null)
+            {
+                spawnMap = new SpawnMap(visibleObject.GetWorldId());
+                if (data.Templates == null)
+                    data.Templates = [spawnMap];
+                else
+                    data.Templates.Add(spawnMap);
+            }
+            Spawn? oldGroup = FindSpawnTemplate(spawnMap, spawn, delete); // find in new file
+            if (oldGroup == null)
+            {
+                oldGroup = LoadSpawnsFromTemplateFiles(folder, schema, spawn, delete); // load from old files
+                if (oldGroup != null)
+                    spawnMap.GetSpawns().Add(oldGroup);
+            }
+            if (oldGroup == null)
+            {
+                oldGroup = new Spawn(spawn.GetNpcId(), spawn.GetRespawnTime(), spawn.GetHandlerType()!.Value);
+                spawnMap.GetSpawns().Add(oldGroup);
+            }
+            oldGroup.SetCustom(true);
+
+            var spot = new SpawnSpotTemplate(visibleObject.GetX(), visibleObject.GetY(), visibleObject.GetZ(), visibleObject.GetHeading(),
+                visibleObject.GetSpawn()!.GetRandomWalkRange(), visibleObject.GetSpawn()!.GetWalkerId(), visibleObject.GetSpawn()!.GetWalkerIndex());
+            int oldSpotIndex = -1;
+            for (int i = 0; i < oldGroup.GetSpawnSpotTemplates().Count; i++)
+            {
+                SpawnSpotTemplate s = oldGroup.GetSpawnSpotTemplates()[i];
+                if (PositionMatches(spawn, s))
+                {
+                    oldSpotIndex = i;
+                    break;
+                }
+            }
+            if (oldSpotIndex >= 0)
+            {
+                if (delete)
+                    oldGroup.GetSpawnSpotTemplates().RemoveAt(oldSpotIndex);
+                else
+                    oldGroup.GetSpawnSpotTemplates()[oldSpotIndex] = spot;
+            }
+            else if (!delete)
+                oldGroup.GetSpawnSpotTemplates().Add(spot);
+
+            xml.Directory?.Create(); // Java: xml.getParentFile().mkdir()
+            try
+            {
+                File.WriteAllText(xml.FullName, JAXBUtil.Serialize(data, schema));
+            }
+            catch (Exception e)
+            {
+                Log.LogError(e, "Could not save XML file!");
+                return false;
+            }
+            // update spawn coords at the end, because we need previous coords above to find the old spawn template
+            spawn.SetX(spot.GetX());
+            spawn.SetY(spot.GetY());
+            spawn.SetZ(spot.GetZ());
+            spawn.SetHeading(spot.GetHeading());
+            AddRegularSpawns(spawnMap);
+            return true;
+        }
+    }
+
+    private Spawn? LoadSpawnsFromTemplateFiles(string folder, string schema, SpawnTemplate spawn, bool exactMatch)
+    {
+        Spawn? match = null;
+        try
+        {
+            if (Directory.Exists(folder))
+            {
+                foreach (string file in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
+                {
+                    if (!file.ToLowerInvariant().EndsWith(".xml"))
+                        continue;
+                    SpawnsData fileData = JAXBUtil.Deserialize<SpawnsData>(new FileInfo(file), schema);
+                    foreach (SpawnMap spawnMap in fileData.Templates ?? [])
+                    {
+                        Spawn? s = FindSpawnTemplate(spawnMap, spawn, exactMatch);
+                        if (s != null)
+                        {
+                            match = s;
+                            return match; // Java: FileVisitResult.TERMINATE
+                        }
+                    }
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            Log.LogError(e, "");
+        }
+        return match;
+    }
+
+    private Spawn? FindSpawnTemplate(SpawnMap spawnMap, SpawnTemplate spawn, bool exactMatch)
+    {
+        if (spawnMap.GetMapId() != spawn.GetWorldId())
+            return null;
+        return spawnMap.GetSpawns()
+            .FirstOrDefault(s => s.GetNpcId() == spawn.GetNpcId()
+                && (!exactMatch || s.GetSpawnSpotTemplates().Any(spot => PositionMatches(spawn, spot))));
+    }
+
+    private bool PositionMatches(SpawnTemplate spawn, SpawnSpotTemplate spawnSpotTemplate)
+    {
+        return spawnSpotTemplate.GetX() == spawn.GetX() && spawnSpotTemplate.GetY() == spawn.GetY()
+            && spawnSpotTemplate.GetZ() == spawn.GetZ() && spawnSpotTemplate.GetHeading() == spawn.GetHeading();
+    }
+
+    private static string GetRelativePath(VisibleObject visibleObject)
+    {
+        if (visibleObject.GetSpawn()!.GetHandlerType() == SpawnHandlerType.RIFT)
+            return "Rifts";
+        else if (visibleObject is Gatherable)
+            return "Gather";
+        else if (visibleObject.GetPosition().GetWorldMapInstance().GetParent().IsInstanceType())
+            return "Instances";
+        else
+            return "Npcs";
+    }
 }
