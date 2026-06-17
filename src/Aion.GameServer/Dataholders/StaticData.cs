@@ -29,7 +29,6 @@ public sealed partial class StaticData
 		ItemRandomBonusTable itemRandomBonuses,
 		ItemSetTable itemSets,
 		EnchantTable enchantTemplates,
-		WalkerTemplateTable walkerTemplates,
 		WalkerVersionTable walkerVersions,
 		RiftLocationTable riftLocations,
 		StaticDoorTable staticDoors,
@@ -39,19 +38,13 @@ public sealed partial class StaticData
 		QuestDropTable questDrops,
 		NpcSkillTable npcSkills,
 		PetSkillTable petSkills,
-		PetTemplateTable petTemplates,
 		PetDopingTable petDopings,
-		TitleTemplateTable titleTemplates,
-		RecipeTemplateTable recipeTemplates,
 		WorkOrderRecipeTable workOrderRecipes,
-		HousingTemplateTable housingTemplates,
 		InstanceCooltimeTable instanceCooltimes,
 		InstanceExitTable instanceExits,
 		PortalLocTable portalLocs,
 		AutoGroupTable autoGroups,
 		PlayerInitialDataTable playerInitialData,
-		StorageExpansionTemplateTable cubeExpansionTemplates,
-		StorageExpansionTemplateTable warehouseExpansionTemplates,
 		LegionDominionTable legionDominions,
 		AtreianPassportTable atreianPassports,
 		Task? validationTask)
@@ -73,7 +66,6 @@ public sealed partial class StaticData
 		ItemRandomBonuses = itemRandomBonuses;
 		ItemSets = itemSets;
 		EnchantTemplates = enchantTemplates;
-		WalkerTemplates = walkerTemplates;
 		WalkerVersions = walkerVersions;
 		RiftLocations = riftLocations;
 		StaticDoors = staticDoors;
@@ -83,19 +75,13 @@ public sealed partial class StaticData
 		QuestDrops = questDrops;
 		NpcSkills = npcSkills;
 		PetSkills = petSkills;
-		PetTemplates = petTemplates;
 		PetDopings = petDopings;
-		TitleTemplates = titleTemplates;
-		RecipeTemplates = recipeTemplates;
 		WorkOrderRecipes = workOrderRecipes;
-		HousingTemplates = housingTemplates;
 		InstanceCooltimes = instanceCooltimes;
 		InstanceExits = instanceExits;
 		PortalLocs = portalLocs;
 		AutoGroups = autoGroups;
 		PlayerInitialData = playerInitialData;
-		CubeExpansionTemplates = cubeExpansionTemplates;
-		WarehouseExpansionTemplates = warehouseExpansionTemplates;
 		LegionDominions = legionDominions;
 		AtreianPassports = atreianPassports;
 		ValidationTask = validationTask;
@@ -140,8 +126,6 @@ public sealed partial class StaticData
 
 	public EnchantTable EnchantTemplates { get; }
 
-	public WalkerTemplateTable WalkerTemplates { get; }
-
 	public WalkerVersionTable WalkerVersions { get; }
 
 	public RiftLocationTable RiftLocations { get; }
@@ -166,20 +150,12 @@ public sealed partial class StaticData
 
 	public PetSkillTable PetSkills { get; }
 
-	public PetTemplateTable PetTemplates { get; }
-
 	public PetDopingTable PetDopings { get; }
 
 	// Faithful PetFeedData holder — populated from pets/pet_feed.xml at boot (LoadLeafHoldersFromFiles).
 	public PetFeedData PetFeedDataDh { get; private set; } = new();
 
-	public TitleTemplateTable TitleTemplates { get; }
-
-	public RecipeTemplateTable RecipeTemplates { get; }
-
 	public WorkOrderRecipeTable WorkOrderRecipes { get; }
-
-	public HousingTemplateTable HousingTemplates { get; }
 
 	public InstanceCooltimeTable InstanceCooltimes { get; }
 
@@ -191,11 +167,7 @@ public sealed partial class StaticData
 
 	public PlayerInitialDataTable PlayerInitialData { get; }
 
-	public StorageExpansionTemplateTable CubeExpansionTemplates { get; }
-
 	public CubeExpandData CubeExpandDataDh { get; private set; } = new();
-
-	public StorageExpansionTemplateTable WarehouseExpansionTemplates { get; }
 
 	public WarehouseExpandData WarehouseExpandDataDh { get; private set; } = new();
 
@@ -434,7 +406,7 @@ public sealed partial class StaticData
 		// binds nullable restriction_race via a string proxy. Feeds DataManager.EVENT_DATA.
 		Events = TryLoadMergedHolder<EventData>(Path.Combine(staticDataDirectory, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
 		// <warehouse_expander> root (single file): faithful WarehouseExpandData feeds DataManager.WAREHOUSEEXPANDER_DATA.
-		// StorageExpansionTemplate ids="..." space-separated int[] binds via the IdsRaw string proxy; <expand> rows public.
+		// ExpandTemplate ids="..." space-separated int[] binds via the IdsRaw string proxy; <expand> rows public.
 		WarehouseExpandDataDh = TryLoadHolder(WarehouseExpandDataDh, Path.Combine(staticDataDirectory, "storage_expander", "warehouse_expander.xml"), logger);
 		// <cube_expander> root (single file): faithful CubeExpandData feeds DataManager.CUBEEXPANDER_DATA (same template shape).
 		CubeExpandDataDh = TryLoadHolder(CubeExpandDataDh, Path.Combine(staticDataDirectory, "storage_expander", "cube_expander.xml"), logger);
@@ -760,7 +732,6 @@ public sealed partial class StaticData
 		var itemRandomBonuses = new List<ItemRandomBonusSummary>();
 		var itemSets = new List<ItemSetSummary>();
 		var enchantGroups = new List<EnchantGroupSummary>();
-		var walkerTemplates = new List<WalkerTemplateSummary>();
 		var walkerVersionParents = new Dictionary<string, string>(StringComparer.Ordinal);
 		var riftLocations = new List<RiftLocationSummary>();
 		var staticDoors = new List<StaticDoorSummary>();
@@ -773,24 +744,12 @@ public sealed partial class StaticData
 		var goodsPurchaseLists = new List<GoodsListSummary>();
 		var questDrops = new List<QuestDropSummary>();
 		var npcSkillLists = new List<NpcSkillListSummary>();
-		var titleTemplates = new List<TitleTemplateSummary>();
-		var recipeTemplates = new List<RecipeTemplateSummary>();
-		var housingAddresses = new List<HousingAddressSummary>();
-		var housingLandMinLevels = new Dictionary<int, int>();
-		var housingLandMaintenanceFees = new Dictionary<int, long>();
-		var housingLandFirstBuildingIds = new Dictionary<int, int>();
-		var housingLandDefaultBuildingIds = new Dictionary<int, int>();
-		var housingBuildings = new List<HousingBuildingSummary>();
-		var housingParts = new List<HousingPartSummary>();
 		var instanceCooltimes = new List<InstanceCooltimeSummary>();
 		var instanceExits = new List<InstanceExitSummary>();
 		var portalLocs = new List<PortalLocSummary>();
 		var autoGroups = new List<AutoGroupSummary>();
 		var petSkills = new List<PetSkillSummary>();
-		var petTemplates = new List<PetTemplateSummary>();
 		var petDopings = new List<PetDopingEntrySummary>();
-		var cubeExpansionTemplates = new List<StorageExpansionTemplateSummary>();
-		var warehouseExpansionTemplates = new List<StorageExpansionTemplateSummary>();
 		var legionDominions = new List<LegionDominionLocationSummary>();
 		var atreianPassports = new List<AtreianPassportSummary>();
 		var creationItemsByClass = new Dictionary<string, List<StartingItem>>(StringComparer.OrdinalIgnoreCase);
@@ -800,7 +759,6 @@ public sealed partial class StaticData
 		ItemRandomBonusBuilder? currentItemRandomBonus = null;
 		ItemSetBuilder? currentItemSet = null;
 		EnchantGroupBuilder? currentEnchantGroup = null;
-		WalkerTemplateBuilder? currentWalkerTemplate = null;
 		TradeListTemplateBuilder? currentTradeListTemplate = null;
 		TradeListTemplateKind currentTradeListTemplateKind = TradeListTemplateKind.TradeList;
 		int currentTradeListTemplateDepth = -1;
@@ -812,23 +770,13 @@ public sealed partial class StaticData
 		string currentWalkerParentRouteId = string.Empty;
 		NpcSkillListBuilder? currentNpcSkillList = null;
 		NpcSkillTemplateBuilder? currentNpcSkill = null;
-		PetTemplateBuilder? currentPetTemplate = null;
-		int currentPetTemplateDepth = -1;
-		TitleTemplateBuilder? currentTitleTemplate = null;
-		RecipeTemplateBuilder? currentRecipeTemplate = null;
-		List<int>? currentStorageExpansionNpcIds = null;
-		List<StorageExpansionPrice>? currentStorageExpansionPrices = null;
-		bool currentStorageExpansionIsCube = false;
 		CosmeticItemBuilder? currentCosmeticItem = null;
 		DecomposableItemBuilder? currentDecomposableItem = null;
 		int currentItemPurificationBaseItemId = 0;
 		List<ItemPurificationResultSummary>? currentItemPurificationResults = null;
 		ItemPurificationResultBuilder? currentItemPurificationResult = null;
-		HousingBuildingBuilder? currentHousingBuilding = null;
 		FlightZoneBuilder? currentFlightZone = null;
 		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
-		int currentHousingLandId = 0;
-		int currentHousingManagerNpcId = 0;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
 		{
@@ -850,33 +798,12 @@ public sealed partial class StaticData
 					currentInstanceCooltime = null;
 				}
 
-				if (reader.Depth == 2 && reader.LocalName == "expansion_npc" && currentStorageExpansionNpcIds != null && currentStorageExpansionPrices != null)
-				{
-					var summary = new StorageExpansionTemplateSummary(
-						currentStorageExpansionNpcIds.AsReadOnly(),
-						currentStorageExpansionPrices.AsReadOnly());
-					if (currentStorageExpansionIsCube)
-						cubeExpansionTemplates.Add(summary);
-					else
-						warehouseExpansionTemplates.Add(summary);
-					currentStorageExpansionNpcIds = null;
-					currentStorageExpansionPrices = null;
-				}
 
 				if (reader.Depth == 2 && reader.LocalName == "cosmetic_item" && currentCosmeticItem != null)
 				{
 					cosmeticItems.Add(currentCosmeticItem.ToSummary());
 					currentCosmeticItem = null;
 				}
-
-				if (reader.Depth == 2 && reader.LocalName == "recipe_template" && currentRecipeTemplate != null)
-				{
-					recipeTemplates.Add(currentRecipeTemplate.ToSummary());
-					currentRecipeTemplate = null;
-				}
-
-				if (reader.Depth == 3 && reader.LocalName == "components_data" && currentRecipeTemplate != null)
-					currentRecipeTemplate.EndComponentData();
 
 				if (reader.Depth == 2 && reader.LocalName == "decomposable" && currentDecomposableItem != null)
 				{
@@ -926,12 +853,6 @@ public sealed partial class StaticData
 				if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
 					currentEnchantGroup.EndLevel();
 
-				if (reader.Depth == 2 && reader.LocalName == "walker_template" && currentWalkerTemplate != null)
-				{
-					walkerTemplates.Add(currentWalkerTemplate.ToSummary());
-					currentWalkerTemplate = null;
-				}
-
 				if (reader.Depth == 2 && reader.LocalName == "zone" && currentFlightZone != null)
 				{
 					if (currentFlightZone.HasEnoughPoints)
@@ -948,13 +869,6 @@ public sealed partial class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName == "walk_parent" && elementPath.GetValueOrDefault(1) == "walker_versions")
 					currentWalkerParentRouteId = string.Empty;
-
-				if (reader.Depth == currentPetTemplateDepth && reader.LocalName == "pet" && currentPetTemplate != null)
-				{
-					petTemplates.Add(currentPetTemplate.ToSummary());
-					currentPetTemplate = null;
-					currentPetTemplateDepth = -1;
-				}
 
 				if (reader.Depth == currentTradeListTemplateDepth && currentTradeListTemplate != null)
 				{
@@ -989,17 +903,6 @@ public sealed partial class StaticData
 				if (reader.Depth == 2 && reader.LocalName == "world" && elementPath.GetValueOrDefault(1) == "staticdoor_templates")
 					currentStaticDoorWorldId = 0;
 
-				if (reader.Depth == 2 && reader.LocalName == "title" && currentTitleTemplate != null)
-				{
-					titleTemplates.Add(currentTitleTemplate.ToSummary());
-					currentTitleTemplate = null;
-				}
-
-				if (reader.Depth == 2 && reader.LocalName == "building" && currentHousingBuilding != null)
-				{
-					housingBuildings.Add(currentHousingBuilding.ToSummary());
-					currentHousingBuilding = null;
-				}
 
 				if (reader.LocalName == "npc_skill" && currentNpcSkillList != null && currentNpcSkill != null)
 				{
@@ -1015,11 +918,6 @@ public sealed partial class StaticData
 
 				if (reader.Depth == 2 && reader.LocalName == "player_data")
 					currentPlayerCreationClass = null;
-				if (reader.Depth == 2 && reader.LocalName == "land")
-				{
-					currentHousingLandId = 0;
-					currentHousingManagerNpcId = 0;
-				}
 				elementPath.Remove(reader.Depth);
 				continue;
 			}
@@ -1347,37 +1245,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "walker_template" && elementPath.GetValueOrDefault(1) == "npc_walker")
-			{
-				// Java parity: dataholders/WalkerData loads npc_walker WalkerTemplate routes by route_id.
-				currentWalkerTemplate = new WalkerTemplateBuilder(
-					reader.GetAttribute("route_id") ?? string.Empty,
-					ReadOptionalIntAttribute(reader, "pool", 1),
-					reader.GetAttribute("formation") ?? "POINT",
-					reader.GetAttribute("loop_type") ?? "NORMAL",
-					reader.GetAttribute("rows") ?? string.Empty);
-				if (reader.IsEmptyElement)
-				{
-					walkerTemplates.Add(currentWalkerTemplate.ToSummary());
-					currentWalkerTemplate = null;
-				}
-				continue;
-			}
-
-			if (reader.Depth == 3
-				&& reader.LocalName == "routestep"
-				&& currentWalkerTemplate != null
-				&& elementPath.GetValueOrDefault(2) == "walker_template")
-			{
-				// Java parity: model/templates/walker/RouteStep x/y/z/rest_time route points.
-				currentWalkerTemplate.AddRouteStep(
-					ReadFloatAttribute(reader, "x"),
-					ReadFloatAttribute(reader, "y"),
-					ReadFloatAttribute(reader, "z"),
-					ReadIntAttribute(reader, "rest_time"));
-				continue;
-			}
-
 			if (reader.Depth == 2
 				&& reader.LocalName == "item"
 				&& elementPath.GetValueOrDefault(1) == "assembly_items")
@@ -1535,99 +1402,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2 && reader.LocalName == "land")
-			{
-				// Java parity: model/templates/housing/HousingLand id/manager_npc used by House.matchesLandRace.
-				currentHousingLandId = ReadRequiredIntAttribute(reader, "id");
-				currentHousingManagerNpcId = ReadRequiredIntAttribute(reader, "manager_npc");
-				continue;
-			}
-
-			if (reader.Depth == 4 && reader.LocalName == "address" && currentHousingLandId != 0)
-			{
-				// Java parity: model/templates/housing/HouseAddress links an address back to its HousingLand and town id.
-				housingAddresses.Add(
-					new HousingAddressSummary(
-						ReadRequiredIntAttribute(reader, "id"),
-						currentHousingLandId,
-						currentHousingManagerNpcId,
-						ReadIntAttribute(reader, "town"),
-						MapId: ReadRequiredIntAttribute(reader, "map"),
-						X: ReadFloatAttribute(reader, "x"),
-						Y: ReadFloatAttribute(reader, "y"),
-						Z: ReadFloatAttribute(reader, "z"),
-						ExitMapId: ReadNullableIntAttribute(reader, "exit_map"),
-						ExitX: ReadNullableFloatAttribute(reader, "exit_x"),
-						ExitY: ReadNullableFloatAttribute(reader, "exit_y"),
-						ExitZ: ReadNullableFloatAttribute(reader, "exit_z")));
-				continue;
-			}
-
-			if (reader.Depth == 4
-				&& reader.LocalName == "building"
-				&& currentHousingLandId != 0
-				&& elementPath.GetValueOrDefault(3) == "buildings")
-			{
-				// Java parity: model/templates/housing/HousingLand.getDefaultBuilding.
-				var buildingId = ReadRequiredIntAttribute(reader, "id");
-				housingLandFirstBuildingIds.TryAdd(currentHousingLandId, buildingId);
-				if (ReadBoolAttribute(reader, "default") && !housingLandDefaultBuildingIds.ContainsKey(currentHousingLandId))
-					housingLandDefaultBuildingIds[currentHousingLandId] = buildingId;
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "sale" && currentHousingLandId != 0)
-			{
-				// Java parity: model/templates/housing/Sale.level used as fallback minimum bid level.
-				housingLandMinLevels[currentHousingLandId] = ReadIntAttribute(reader, "level");
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "fee" && currentHousingLandId != 0)
-			{
-				// Java parity: model/templates/housing/HousingLand.maintenanceFee used by CM_HOUSE_PAY_RENT.
-				var value = await ReadElementTextAsync(reader, cancellationToken);
-				housingLandMaintenanceFees[currentHousingLandId] = long.TryParse(value, out var parsedFee) ? parsedFee : 0;
-				continue;
-			}
-
-			if (reader.Depth == 2
-				&& reader.LocalName == "building"
-				&& elementPath.TryGetValue(1, out var rootElement)
-				&& rootElement == "buildings")
-			{
-				// Java parity: model/templates/housing/Building fields from housing/house_buildings.xml.
-				var size = reader.GetAttribute("size") ?? string.Empty;
-				currentHousingBuilding = new HousingBuildingBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					size,
-					GetHouseTypeId(size),
-					reader.GetAttribute("type") ?? string.Empty,
-					reader.GetAttribute("parts_match") ?? string.Empty);
-				continue;
-			}
-
-			if (currentHousingBuilding != null && IsHousingBuildingPartElement(reader.LocalName))
-			{
-				var partName = reader.LocalName;
-				var value = await ReadElementTextAsync(reader, cancellationToken);
-				currentHousingBuilding.SetDefaultPart(partName, int.TryParse(value, out var parsedPartId) ? parsedPartId : 0);
-				continue;
-			}
-
-			if (reader.Depth == 2
-				&& elementPath.GetValueOrDefault(1) == "house_parts"
-				&& reader.LocalName == "house_part")
-			{
-				// Java parity: dataholders/HousePartsData indexes HousePart by id for decoration validation.
-				housingParts.Add(
-					new HousingPartSummary(
-						ReadRequiredIntAttribute(reader, "id"),
-						reader.GetAttribute("type") ?? string.Empty,
-						SplitHousePartTags(reader.GetAttribute("building_tags"))));
-				continue;
-			}
-
 			if (reader.Depth == 3 && reader.LocalName == "type" && currentInstanceCooltime != null)
 			{
 				currentInstanceCooltime.CoolTimeType = await ReadElementTextAsync(reader, cancellationToken);
@@ -1700,40 +1474,6 @@ public sealed partial class StaticData
 			{
 				var value = await ReadElementTextAsync(reader, cancellationToken);
 				currentInstanceCooltime.CanEnterMentor = bool.TryParse(value, out var parsedCanEnterMentor) && parsedCanEnterMentor;
-				continue;
-			}
-
-			if (reader.Depth == 2
-				&& reader.LocalName == "expansion_npc"
-				&& elementPath.GetValueOrDefault(1) is "cube_expander" or "warehouse_expander")
-			{
-				// Java parity: dataholders/CubeExpandData and WarehouseExpandData afterUnmarshal flatten ids to template lookup maps.
-				currentStorageExpansionNpcIds = ReadIntListAttribute(reader, "ids").ToList();
-				currentStorageExpansionPrices = [];
-				currentStorageExpansionIsCube = elementPath.GetValueOrDefault(1) == "cube_expander";
-				if (reader.IsEmptyElement)
-				{
-					var summary = new StorageExpansionTemplateSummary(
-						currentStorageExpansionNpcIds.AsReadOnly(),
-						currentStorageExpansionPrices.AsReadOnly());
-					if (currentStorageExpansionIsCube)
-						cubeExpansionTemplates.Add(summary);
-					else
-						warehouseExpansionTemplates.Add(summary);
-					currentStorageExpansionNpcIds = null;
-					currentStorageExpansionPrices = null;
-				}
-
-				continue;
-			}
-
-			if (reader.Depth == 3 && reader.LocalName == "expand" && currentStorageExpansionPrices != null)
-			{
-				// Java parity: model/templates/expand/Expand level/price attributes.
-				currentStorageExpansionPrices.Add(
-					new StorageExpansionPrice(
-						ReadRequiredIntAttribute(reader, "level"),
-						ReadRequiredIntAttribute(reader, "price")));
 				continue;
 			}
 
@@ -1873,27 +1613,6 @@ public sealed partial class StaticData
 			}
 
 			if (reader.Depth == 2
-				&& reader.LocalName == "pet"
-				&& elementPath.GetValueOrDefault(1) == "pets")
-			{
-				// Java parity: dataholders/PetData indexes PetTemplate by pet id after static_data/pets/pets.xml unmarshalling.
-				currentPetTemplate = new PetTemplateBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					reader.GetAttribute("name") ?? string.Empty,
-					ReadIntAttribute(reader, "nameid"),
-					ReadIntAttribute(reader, "condition_reward"));
-				currentPetTemplateDepth = reader.Depth;
-				if (reader.IsEmptyElement)
-				{
-					petTemplates.Add(currentPetTemplate.ToSummary());
-					currentPetTemplate = null;
-					currentPetTemplateDepth = -1;
-				}
-
-				continue;
-			}
-
-			if (reader.Depth == 2
 				&& reader.LocalName == "doping"
 				&& elementPath.GetValueOrDefault(1) == "dopings")
 			{
@@ -1903,19 +1622,6 @@ public sealed partial class StaticData
 					ReadRequiredBoolAttribute(reader, "usedrink"),
 					ReadRequiredBoolAttribute(reader, "usefood"),
 					ReadRequiredIntAttribute(reader, "usescroll")));
-				continue;
-			}
-
-			if (currentPetTemplate != null
-				&& reader.Depth == currentPetTemplateDepth + 1
-				&& reader.LocalName == "petfunction")
-			{
-				// Java parity: model/templates/pet/PetFunction fields id/type/slots/rate_price.
-				currentPetTemplate.AddFunction(new PetFunctionSummary(
-					ReadIntAttribute(reader, "id"),
-					ReadPetFunctionTypeAttribute(reader.GetAttribute("type")),
-					ReadIntAttribute(reader, "slots"),
-					ReadIntAttribute(reader, "rate_price")));
 				continue;
 			}
 
@@ -1986,89 +1692,6 @@ public sealed partial class StaticData
 				continue;
 			}
 
-			if (reader.Depth == 2
-				&& reader.LocalName == "title"
-				&& elementPath.TryGetValue(1, out var titleParent)
-				&& titleParent == "player_titles")
-			{
-				currentTitleTemplate = new TitleTemplateBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					ReadIntAttribute(reader, "nameId"),
-					reader.GetAttribute("desc") ?? string.Empty,
-					reader.GetAttribute("race") ?? string.Empty);
-				if (reader.IsEmptyElement)
-				{
-					titleTemplates.Add(currentTitleTemplate.ToSummary());
-					currentTitleTemplate = null;
-				}
-				continue;
-			}
-
-			if (reader.Depth == 4
-				&& currentTitleTemplate != null
-				&& IsStatModifierElement(reader.LocalName)
-				&& elementPath.TryGetValue(reader.Depth - 1, out var titleModifierParent)
-				&& titleModifierParent == "modifiers")
-			{
-				currentTitleTemplate.AddModifier(
-					new ItemStatModifier(
-						reader.LocalName,
-						reader.GetAttribute("name") ?? string.Empty,
-						ReadIntAttribute(reader, "value"),
-						ReadBoolAttribute(reader, "bonus")));
-				continue;
-			}
-
-			if (reader.Depth == 2 && reader.LocalName == "recipe_template")
-			{
-				currentRecipeTemplate = new RecipeTemplateBuilder(
-					ReadRequiredIntAttribute(reader, "id"),
-					ReadIntAttribute(reader, "nameid"),
-					ReadIntAttribute(reader, "skillid"),
-					reader.GetAttribute("race") ?? string.Empty,
-					ReadIntAttribute(reader, "skillpoint"),
-					ReadIntAttribute(reader, "dp"),
-					ReadIntAttribute(reader, "autolearn"),
-					ReadIntAttribute(reader, "productid"),
-					ReadIntAttribute(reader, "quantity"),
-					ReadNullableIntAttribute(reader, "craft_delay_id"),
-					ReadNullableIntAttribute(reader, "craft_delay_time"),
-					ReadNullableIntAttribute(reader, "max_production_count"));
-				if (reader.IsEmptyElement)
-				{
-					recipeTemplates.Add(currentRecipeTemplate.ToSummary());
-					currentRecipeTemplate = null;
-				}
-				continue;
-			}
-
-			if (reader.Depth == 3
-				&& currentRecipeTemplate != null
-				&& reader.LocalName == "components_data")
-			{
-				currentRecipeTemplate.BeginComponentData();
-				if (reader.IsEmptyElement)
-					currentRecipeTemplate.EndComponentData();
-				continue;
-			}
-
-			if (reader.Depth == 4
-				&& currentRecipeTemplate != null
-				&& reader.LocalName == "component")
-			{
-				currentRecipeTemplate.AddComponent(
-					ReadRequiredIntAttribute(reader, "itemid"),
-					ReadLongAttribute(reader, "quantity"));
-				continue;
-			}
-
-			if (reader.Depth == 3
-				&& currentRecipeTemplate != null
-				&& reader.LocalName == "comboproduct")
-			{
-				currentRecipeTemplate.AddComboProduct(ReadRequiredIntAttribute(reader, "itemid"));
-				continue;
-			}
 
 			if (reader.NodeType == XmlNodeType.Element && reader.LocalName == "pet_skill")
 			{
@@ -2131,7 +1754,6 @@ public sealed partial class StaticData
 			new ItemRandomBonusTable(itemRandomBonuses.AsReadOnly()),
 			new ItemSetTable(itemSets.AsReadOnly()),
 			new EnchantTable(enchantGroups.AsReadOnly()),
-			new WalkerTemplateTable(walkerTemplates.AsReadOnly()),
 			new WalkerVersionTable(new ReadOnlyDictionary<string, string>(walkerVersionParents)),
 			new RiftLocationTable(riftLocations.AsReadOnly()),
 			new StaticDoorTable(staticDoors.AsReadOnly()),
@@ -2147,33 +1769,8 @@ public sealed partial class StaticData
 			new QuestDropTable(questDrops.AsReadOnly()),
 			new NpcSkillTable(npcSkillLists.AsReadOnly()),
 			new PetSkillTable(petSkills.AsReadOnly()),
-			new PetTemplateTable(petTemplates.AsReadOnly()),
 			new PetDopingTable(petDopings.AsReadOnly()),
-			new TitleTemplateTable(titleTemplates.AsReadOnly()),
-			new RecipeTemplateTable(recipeTemplates.AsReadOnly()),
 			workOrderRecipes,
-			new HousingTemplateTable(
-				housingAddresses
-					.Select(
-						address => address with
-						{
-							MinLevel = housingLandMinLevels.GetValueOrDefault(address.LandId),
-							MaintenanceFee = housingLandMaintenanceFees.GetValueOrDefault(address.LandId),
-							DefaultBuildingId = GetDefaultBuildingId(
-								address.LandId,
-								housingLandDefaultBuildingIds,
-								housingLandFirstBuildingIds),
-							DefaultBuildingType = housingBuildings
-								.FirstOrDefault(
-									building => building.BuildingId == GetDefaultBuildingId(
-										address.LandId,
-										housingLandDefaultBuildingIds,
-										housingLandFirstBuildingIds))
-								?.BuildingType ?? string.Empty,
-						})
-					.ToArray(),
-				housingBuildings.AsReadOnly(),
-				housingParts.AsReadOnly()),
 			new InstanceCooltimeTable(instanceCooltimes.AsReadOnly()),
 			new InstanceExitTable(instanceExits.AsReadOnly()),
 			new PortalLocTable(portalLocs.AsReadOnly()),
@@ -2184,8 +1781,6 @@ public sealed partial class StaticData
 					pair => new PlayerCreationData(pair.Key, pair.Value.AsReadOnly()),
 					StringComparer.OrdinalIgnoreCase),
 				spawnLocationsByRace),
-			new StorageExpansionTemplateTable(cubeExpansionTemplates.AsReadOnly()),
-			new StorageExpansionTemplateTable(warehouseExpansionTemplates.AsReadOnly()),
 			new LegionDominionTable(legionDominions.AsReadOnly()),
 			new AtreianPassportTable(atreianPassports.AsReadOnly()),
 			validationTask);

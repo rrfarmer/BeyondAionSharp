@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Xml;
-using Aion.GameServer.Model.Templates.Pet;
 
 namespace Aion.GameServer.Dataholders;
 
@@ -102,25 +101,6 @@ public sealed partial class StaticData
 		return int.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : defaultValue;
 	}
 
-	private static PetFunctionType ReadPetFunctionTypeAttribute(string? value)
-	{
-		// Java parity: model/templates/pet/PetFunctionType JAXB enum names.
-		return value switch
-		{
-			"WAREHOUSE" => PetFunctionType.WAREHOUSE,
-			"FOOD" => PetFunctionType.FOOD,
-			"DOPING" => PetFunctionType.DOPING,
-			"LOOT" => PetFunctionType.LOOT,
-			"BUFF" => PetFunctionType.BUFF,
-			"MERCHANT" => PetFunctionType.MERCHANT,
-			"NONE" => PetFunctionType.NONE,
-			"APPEARANCE" => PetFunctionType.APPEARANCE,
-			"BAG" => PetFunctionType.BAG,
-			"WING" => PetFunctionType.WING,
-			_ => throw new FormatException($"Unexpected PetFunctionType value '{value}'."),
-		};
-	}
-
 	private static float ReadOptionalFloatAttribute(XmlReader reader, string attributeName, float defaultValue)
 	{
 		return float.TryParse(reader.GetAttribute(attributeName), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed)
@@ -199,29 +179,6 @@ public sealed partial class StaticData
 	private static long ReadLongAttribute(XmlReader reader, string attributeName)
 	{
 		return long.TryParse(reader.GetAttribute(attributeName), out var parsed) ? parsed : 0;
-	}
-
-	private static int GetHouseTypeId(string size)
-	{
-		// Java parity: model/templates/housing/HouseType enum ids.
-		return size.ToUpperInvariant() switch
-		{
-			"STUDIO" => 0,
-			"HOUSE" => 1,
-			"MANSION" => 2,
-			"ESTATE" => 3,
-			"PALACE" => 4,
-			_ => 0,
-		};
-	}
-
-	private static int GetDefaultBuildingId(
-		int landId,
-		IReadOnlyDictionary<int, int> defaultBuildingIds,
-		IReadOnlyDictionary<int, int> firstBuildingIds)
-	{
-		// Java parity: model/templates/housing/HousingLand.getDefaultBuilding defaults to the first listed building.
-		return defaultBuildingIds.GetValueOrDefault(landId, firstBuildingIds.GetValueOrDefault(landId));
 	}
 
 	private static IReadOnlySet<string> ReadPlayerClasses(string? playerClasses)
