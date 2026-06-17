@@ -20,6 +20,14 @@ public sealed class DataManager
 
 	public static void RegisterInstance(DataManager instance) => _instance = instance;
 
+	// Snapshot/restore hook for tests: a process that temporarily rebinds the bridge (e.g. a bootstrap
+	// integration test loading a throwaway fixture) can capture the previously-bound instance and restore it
+	// afterward, so the process-global singleton is not leaked into sibling tests in the same process. A null
+	// argument clears the binding (back to the uninitialized state).
+	public static DataManager? GetRegisteredInstance() => _instance;
+
+	public static void RestoreInstance(DataManager? instance) => _instance = instance;
+
 	private static StaticData SD => (_instance ?? throw new InvalidOperationException(
 		"DataManager singleton bridge not initialized; call DataManager.RegisterInstance(...) at startup.")).StaticData;
 

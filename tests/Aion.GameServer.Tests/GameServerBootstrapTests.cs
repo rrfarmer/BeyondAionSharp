@@ -16,6 +16,7 @@ public sealed class GameServerBootstrapTests
 	[Fact]
 	public async Task GameServerBootstrap_LoadsDataInitializesWorldAndStartsGameTime()
 	{
+		using var dataManagerGuard = DataManagerSingletonGuard.Capture();
 		using var temp = StaticDataFixture.Create();
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
 		var engine = new TrackingEngine("QuestEngine");
@@ -177,6 +178,7 @@ public sealed class GameServerBootstrapTests
 	[Fact]
 	public async Task GameServerBootstrap_PreloadsUsedObjectIds()
 	{
+		using var dataManagerGuard = DataManagerSingletonGuard.Capture();
 		using var temp = StaticDataFixture.Create();
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
 		var idFactory = new IDFactory();
@@ -214,6 +216,22 @@ public sealed class GameServerBootstrapTests
 		{
 			await Task.Delay(10, timeout.Token);
 		}
+	}
+
+	// Test isolation: the bootstrap path calls DataManager.RegisterInstance(...) with a throwaway fixture,
+	// overwriting the process-global DataManager singleton bridge. Snapshot it on entry and restore it on
+	// dispose (including on a failing/throwing boot) so sibling test classes in the same process — e.g.
+	// GoldenStatsInfoFixtureTests, which binds a synthetic PlayerExperienceTable once in its static ctor —
+	// keep reading their own DataManager instead of this test's minimal/real fixture.
+	private readonly struct DataManagerSingletonGuard : IDisposable
+	{
+		private readonly DataManager? _previous;
+
+		private DataManagerSingletonGuard(DataManager? previous) => _previous = previous;
+
+		public static DataManagerSingletonGuard Capture() => new(DataManager.GetRegisteredInstance());
+
+		public void Dispose() => DataManager.RestoreInstance(_previous);
 	}
 
 	private sealed class TrackingEngine : GameEngine
