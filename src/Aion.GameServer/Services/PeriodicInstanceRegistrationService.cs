@@ -43,19 +43,19 @@ public sealed class PeriodicInstanceRegistrationService
 			return _closeTaskIntentsByMaskId.TryGetValue(maskId, out var intent) ? intent : null;
 	}
 
-	public static SmSystemMessage? CreateOpeningMessageForMaskId(int maskId)
+	public static SM_SYSTEM_MESSAGE? CreateOpeningMessageForMaskId(int maskId)
 	{
 		// Java parity: PeriodicInstanceManager constructor passes these
 		// SM_SYSTEM_MESSAGE helpers to scheduleRegistration for each mask id.
 		return maskId switch
 		{
-			1 => SmSystemMessage.InstanceOpenIdab1Dredgion(),
-			2 => SmSystemMessage.InstanceOpenIdDredgion02(),
-			3 => SmSystemMessage.InstanceOpenIdDredgion03(),
-			107 => SmSystemMessage.InstanceOpenIdKamar(),
-			108 => SmSystemMessage.InstanceOpenIdLdf5Under01War(),
-			109 => SmSystemMessage.InstanceOpenIdF5TdWar(),
-			111 => SmSystemMessage.InstanceOpenIdLdf5FortressRe(),
+			1 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDAB1_DREADGION(),
+			2 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDDREADGION_02(),
+			3 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDDREADGION_03(),
+			107 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDKamar(),
+			108 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDLDF5_Under_01_War(),
+			109 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDF5_TD_war(),
+			111 => SM_SYSTEM_MESSAGE.STR_MSG_INSTANCE_OPEN_IDLDF5_Fortress_Re(),
 			_ => null,
 		};
 	}
@@ -84,7 +84,7 @@ public sealed class PeriodicInstanceRegistrationService
 		int maskId,
 		AutoGroupTable? autoGroups,
 		IReadOnlyList<Player> players,
-		SmSystemMessage? openingMessage = null)
+		SM_SYSTEM_MESSAGE? openingMessage = null)
 	{
 		lock (_sync)
 		{
@@ -129,7 +129,7 @@ public sealed class PeriodicInstanceRegistrationService
 		int maskId,
 		AutoGroupTable? autoGroups,
 		GameWorld world,
-		SmSystemMessage? openingMessage = null,
+		SM_SYSTEM_MESSAGE? openingMessage = null,
 		CancellationToken cancellationToken = default)
 	{
 		var players = GetOnlinePlayers(world);
@@ -235,7 +235,7 @@ public sealed class PeriodicInstanceRegistrationService
 		IReadOnlyList<Player> players,
 		bool isClosed,
 		PeriodicInstanceRegistrationBroadcastStatus status,
-		SmSystemMessage? openingMessage)
+		SM_SYSTEM_MESSAGE? openingMessage)
 	{
 		// Java parity: PeriodicInstanceManager.broadcastRegistrationUpdate gets
 		// AutoGroupType by mask id, filters only by player level, then sends
@@ -299,7 +299,7 @@ public sealed class PeriodicInstanceRegistrationService
 			cronExpressions,
 			registrationPeriodMinutes,
 			TimeSpan.FromMinutes(registrationPeriodMinutes),
-			openingMessage.MessageId);
+			openingMessage.GetId());
 	}
 
 	private static int SendBroadcastPlan(
