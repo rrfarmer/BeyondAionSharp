@@ -1,46 +1,67 @@
 using System.Buffers.Binary;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
-using Aion.Commons.Network;
+using Aion.Commons.Nio;
+using Aion.GameServer.Network;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 
 namespace Aion.GameServer.Tests;
 
+/// <summary>
+/// Crypt-framing parity for the GS -> Aion server crypt seam. Exercises the FAITHFUL packets
+/// SM_KEY / SM_PONG through their real AionServerPacket.Write(con, buffer) -> con.Encrypt path on
+/// an uninitialized AionConnection (RuntimeHelpers.GetUninitializedObject; precedent: the Golden*
+/// fixture harnesses) wired with only the field Write/Encrypt touch -- a live faithful Crypt.
+///
+/// Java is the oracle: network/Crypt + network/EncryptionKeyPair drive the framing/encryption.
+/// The faithful Crypt seeds its key from Rnd (non-deterministic), so each case captures the actual
+/// baseKey the crypt used (Crypt.packetKey.GetBaseKey via reflection) and independently recomputes
+/// the expected enciphered key and the expected encrypted frame from that same baseKey using a
+/// verbatim copy of EncryptionKeyPair.Encrypt -- never a hard-coded byte blob.
+/// </summary>
 public sealed class GameCryptTests
 {
 	[Fact]
-	public void SerializeFrame_LeavesSmKeyUnencryptedThenEncryptsNextServerPacket()
+	public void Write_LeavesSmKeyUnencryptedThenEncryptsNextServerPacket()
 	{
-		var crypt = new GameCrypt(() => 0x01020304);
-		var smKeyFrame = new SmKey().SerializeFrame(crypt);
-		var expectedSmKeyFrame = CreateServerFrame(72, writer => writer.WriteD(GetEncodedKey(0x01020304)));
+		var con = NewConnectionWithFreshCrypt();
+
+		// SM_KEY: first server packet. enableCryptKey() generates the key; the frame is NOT encrypted.
+		var smKeyFrame = WriteFaithful(new SM_KEY(), con);
+		var baseKey = GetBaseKey(con);
+		var expectedSmKeyFrame = CreateServerFrame(72, writer => writer.PutInt(GetEncodedKey(baseKey)));
 
 		Assert.Equal(expectedSmKeyFrame, smKeyFrame);
-		Assert.True(crypt.IsEnabled);
+		Assert.True(GetCrypt(con).IsEnabled());
 
-		var smPongFrame = new SmPong().SerializeFrame(crypt);
+		// SM_PONG: second server packet -> encrypted with the now-enabled key.
+		var smPongFrame = WriteFaithful(new SM_PONG(), con);
 		var expectedSmPongFrame = CreateServerFrame(142, writer =>
 		{
-			writer.WriteC(0);
-			writer.WriteC(0);
+			writer.Put((byte)0);
+			writer.Put((byte)0);
 		});
-		var encryptor = new ServerPayloadEncryptor(0x01020304);
+		var encryptor = new ServerPayloadEncryptor(baseKey);
 		encryptor.Encrypt(expectedSmPongFrame.AsSpan(2));
 
 		Assert.Equal(expectedSmPongFrame, smPongFrame);
 	}
 
 	[Fact]
-	public void SerializeFrame_AdvancesServerKeyAcrossEncryptedPackets()
+	public void Write_AdvancesServerKeyAcrossEncryptedPackets()
 	{
-		var crypt = new GameCrypt(() => 0x01020304);
-		new SmKey().SerializeFrame(crypt);
-		var encryptor = new ServerPayloadEncryptor(0x01020304);
+		var con = NewConnectionWithFreshCrypt();
+		WriteFaithful(new SM_KEY(), con);
+		var baseKey = GetBaseKey(con);
+
+		var encryptor = new ServerPayloadEncryptor(baseKey);
 		var expectedFirstPong = CreateEncryptedSmPongFrame(encryptor);
 		var expectedSecondPong = CreateEncryptedSmPongFrame(encryptor);
 
-		var firstPong = new SmPong().SerializeFrame(crypt);
-		var secondPong = new SmPong().SerializeFrame(crypt);
+		var firstPong = WriteFaithful(new SM_PONG(), con);
+		var secondPong = WriteFaithful(new SM_PONG(), con);
 
 		Assert.Equal(expectedFirstPong, firstPong);
 		Assert.Equal(expectedSecondPong, secondPong);
@@ -50,14 +71,13 @@ public sealed class GameCryptTests
 	[Fact]
 	public void DecryptClientPayload_AdvancesClientKeyAfterValidPacket()
 	{
-		var crypt = new GameCrypt(() => 0x01020304);
-		crypt.EnableKey();
+		var crypt = NewCryptWithBaseKey(0x01020304);
 		var encryptor = new ClientPayloadEncryptor(0x01020304);
 		var first = encryptor.Encrypt(CreateClientPayload(37, 5001, 0));
 		var second = encryptor.Encrypt(CreateClientPayload(236, 5001, 0, 1));
 
-		Assert.True(crypt.DecryptClientPayload(first));
-		Assert.True(crypt.DecryptClientPayload(second));
+		Assert.True(DecryptClientPayload(crypt, first));
+		Assert.True(DecryptClientPayload(crypt, second));
 		Assert.Equal(CreateClientPayload(37, 5001, 0), first);
 		Assert.Equal(CreateClientPayload(236, 5001, 0, 1), second);
 	}
@@ -65,33 +85,108 @@ public sealed class GameCryptTests
 	[Fact]
 	public void DecryptClientPayload_DoesNotAdvanceClientKeyWhenPacketValidationFails()
 	{
-		var crypt = new GameCrypt(() => 0x01020304);
-		crypt.EnableKey();
+		var crypt = NewCryptWithBaseKey(0x01020304);
 		var corrupt = new ClientPayloadEncryptor(0x01020304).Encrypt(CreateClientPayload(37, 5001, 0));
 		corrupt[2] ^= 0x7f;
 		var nextValid = new ClientPayloadEncryptor(0x01020304).Encrypt(CreateClientPayload(236, 5001, 0, 1));
 
-		Assert.False(crypt.DecryptClientPayload(corrupt));
-		Assert.True(crypt.DecryptClientPayload(nextValid));
+		Assert.False(DecryptClientPayload(crypt, corrupt));
+		Assert.True(DecryptClientPayload(crypt, nextValid));
 		Assert.Equal(CreateClientPayload(236, 5001, 0, 1), nextValid);
 	}
 
+	// ---- faithful crypt seam (uninitialized AionConnection wired with only a live Crypt) ----
+
+	/// <summary>
+	/// Allocate an uninitialized AionConnection (no socket / Dispatcher) and pin its private
+	/// readonly <c>crypt</c> field to a fresh faithful Crypt -- the only field Write/Encrypt touch.
+	/// </summary>
+	private static AionConnection NewConnectionWithFreshCrypt()
+	{
+		var con = (AionConnection)RuntimeHelpers.GetUninitializedObject(typeof(AionConnection));
+		SetPrivateField(con, "crypt", new Crypt());
+		return con;
+	}
+
+	/// <summary>Serialize a faithful AionServerPacket through its real Write(con, buffer) framing+encrypt path.</summary>
+	private static byte[] WriteFaithful(AionServerPacket packet, AionConnection con)
+	{
+		var buffer = ByteBuffer.Allocate(AionServerPacket.MAX_CLIENT_SUPPORTED_PACKET_SIZE).Order(ByteOrder.LITTLE_ENDIAN);
+		packet.Write(con, buffer);
+		// After Write, the framed (and possibly encrypted) bytes occupy [0, limit) of the backing buffer.
+		var length = buffer.Limit();
+		var frame = new byte[length];
+		System.Array.Copy(buffer.Array(), buffer.ArrayOffset(), frame, 0, length);
+		return frame;
+	}
+
+	private static Crypt GetCrypt(AionConnection con) => (Crypt)GetPrivateField(con, "crypt")!;
+
+	private static int GetBaseKey(AionConnection con)
+	{
+		var packetKey = GetPrivateField(GetCrypt(con), "packetKey");
+		Assert.NotNull(packetKey);
+		return ((EncryptionKeyPair)packetKey).GetBaseKey();
+	}
+
+	private static Crypt NewCryptWithBaseKey(int baseKey)
+	{
+		var crypt = new Crypt();
+		// Mirror Crypt.EnableKey()'s post-state deterministically (Rnd would pick the baseKey otherwise):
+		// install the EncryptionKeyPair and flip isEnabled so DecryptClientPayload can run.
+		SetPrivateField(crypt, "packetKey", new EncryptionKeyPair(baseKey));
+		SetPrivateField(crypt, "isEnabled", true);
+		return crypt;
+	}
+
+	private static bool DecryptClientPayload(Crypt crypt, byte[] payload)
+	{
+		var buffer = ByteBuffer.Allocate(payload.Length).Order(ByteOrder.LITTLE_ENDIAN);
+		buffer.Put(payload);
+		buffer.Flip();
+		var ok = crypt.Decrypt(buffer);
+		System.Array.Copy(buffer.Array(), buffer.ArrayOffset(), payload, 0, payload.Length);
+		return ok;
+	}
+
+	// ---- reflection helpers ----
+
+	private static void SetPrivateField(object target, string name, object value)
+	{
+		var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+			?? throw new MissingFieldException(target.GetType().FullName, name);
+		field.SetValue(target, value);
+	}
+
+	private static object? GetPrivateField(object target, string name)
+	{
+		var field = target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)
+			?? throw new MissingFieldException(target.GetType().FullName, name);
+		return field.GetValue(target);
+	}
+
+	// ---- expected-frame builders (independent recomputation; Java EncryptionKeyPair is the oracle) ----
+
 	private static byte[] CreateClientPayload(int opcode, params int[] values)
 	{
-		using var buffer = new PacketBuffer();
+		var buffer = ByteBuffer.Allocate(64).Order(ByteOrder.LITTLE_ENDIAN);
 		var encodedOpcode = EncodeClientPacketOpcode(opcode);
-		buffer.WriteH(encodedOpcode);
-		buffer.WriteC(0x65);
-		buffer.WriteH(~encodedOpcode);
+		buffer.PutShort((short)encodedOpcode);
+		buffer.Put((byte)0x65);
+		buffer.PutShort((short)~encodedOpcode);
 		foreach (var value in values)
 		{
 			if (value <= byte.MaxValue)
-				buffer.WriteC(value);
+				buffer.Put((byte)value);
 			else
-				buffer.WriteD(value);
+				buffer.PutInt(value);
 		}
 
-		return buffer.ToArray();
+		var length = buffer.Position();
+		var data = new byte[length];
+		buffer.Flip();
+		buffer.Get(data);
+		return data;
 	}
 
 	private static int EncodeClientPacketOpcode(int opcode)
@@ -99,16 +194,19 @@ public sealed class GameCryptTests
 		return ((((opcode + 207) ^ 0xEF) + 0x0C) ^ 0xEF) & 0xffff;
 	}
 
-	private static byte[] CreateServerFrame(int opcode, Action<PacketBuffer> writePayload)
+	private static byte[] CreateServerFrame(int opcode, Action<ByteBuffer> writePayload)
 	{
-		using var buffer = new PacketBuffer();
-		buffer.WriteH(0);
-		var encodedOpcode = GameCrypt.EncodeServerPacketOpcode(opcode);
-		buffer.WriteH(encodedOpcode);
-		buffer.WriteC(0x44);
-		buffer.WriteH(~encodedOpcode);
+		var buffer = ByteBuffer.Allocate(AionServerPacket.MAX_CLIENT_SUPPORTED_PACKET_SIZE).Order(ByteOrder.LITTLE_ENDIAN);
+		buffer.PutShort((short)0);
+		var encodedOpcode = Crypt.EncodeServerPacketOpcode(opcode);
+		buffer.PutShort((short)encodedOpcode);
+		buffer.Put(Crypt.staticServerPacketCode);
+		buffer.PutShort((short)~encodedOpcode);
 		writePayload(buffer);
-		var frame = buffer.ToArray();
+		var length = buffer.Position();
+		var frame = new byte[length];
+		buffer.Flip();
+		buffer.Get(frame);
 		BinaryPrimitives.WriteUInt16LittleEndian(frame.AsSpan(0, 2), (ushort)frame.Length);
 		return frame;
 	}
@@ -122,13 +220,14 @@ public sealed class GameCryptTests
 	{
 		var frame = CreateServerFrame(142, writer =>
 		{
-			writer.WriteC(0);
-			writer.WriteC(0);
+			writer.Put((byte)0);
+			writer.Put((byte)0);
 		});
 		encryptor.Encrypt(frame.AsSpan(2));
 		return frame;
 	}
 
+	// Verbatim mirror of Java network/EncryptionKeyPair client decrypt-side keystream (oracle).
 	private sealed class ClientPayloadEncryptor
 	{
 		private static readonly byte[] StaticKey = Encoding.ASCII.GetBytes("nKO/WctQ0AVLbpzfBkS6NevDYT8ourG5CRlmdjyJ72aswx4EPq1UgZhFMXH?3iI9");
@@ -176,6 +275,7 @@ public sealed class GameCryptTests
 		}
 	}
 
+	// Verbatim mirror of Java network/EncryptionKeyPair server encrypt-side keystream (oracle).
 	private sealed class ServerPayloadEncryptor
 	{
 		private static readonly byte[] StaticKey = Encoding.ASCII.GetBytes("nKO/WctQ0AVLbpzfBkS6NevDYT8ourG5CRlmdjyJ72aswx4EPq1UgZhFMXH?3iI9");
