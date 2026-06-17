@@ -188,6 +188,52 @@ public sealed class GoldenPlayerInfoFixtureTests
         }
     }
 
+    /// <summary>
+    /// Player SM_* packets that read ONLY the scalar HarnessPlayer's objectId/name plus ctor-stored scalars/strings/zone
+    /// names. Mirrors the Java GoldenPlayerInfoFixtureGeneratorTest.generateGoldenPlayerZonePacketFixtures. Java is the
+    /// oracle.
+    ///  - SM_PLAYER_REGION(player, subZone): writeD(objId) + 3x writeC(0) + writeD(subZone.name().hashCode()); the C#
+    ///    packet reproduces Java's String.hashCode via JavaStringHashCode. subZone is ZoneName.None / CreateOrGet(name).
+    ///  - SM_RENAME(player, oldName): writeD(0) writeD(0) writeD(objId) writeS(oldName) writeS(player.GetName()).
+    ///    GetName() == pcd name pinned on the scalar player ("Scalarharness"). No con.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_PLAYER_REGION.json")]
+    [InlineData("SM_RENAME.json")]
+    public void CsharpPlayerZonePacketMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var packetName = fixture.RootElement.GetProperty("packet").GetString()!;
+
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var player = BuildScalarPlayer();
+            AionServerPacket packet = packetName switch
+            {
+                "SM_PLAYER_REGION" => new SM_PLAYER_REGION(player, ResolveZone(inputs.GetProperty("subZone").GetString()!)),
+                "SM_RENAME" => new SM_RENAME(player, inputs.GetProperty("oldName").GetString()!),
+                _ => throw new NotSupportedException($"No zone Player reconstruction for {packetName}"),
+            };
+            var actual = CaptureWriteImplPayload(packet, null!);
+            var actualHex = Convert.ToHexString(actual);
+
+            Assert.True(expectedHex == actualHex,
+                $"{packetName}/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>Resolve the same ZoneName both sides use: "NONE" -> ZoneName.None, else ZoneName.CreateOrGet(name).</summary>
+    private static Aion.GameServer.World.Zone.ZoneName ResolveZone(string name) =>
+        name == "NONE"
+            ? Aion.GameServer.World.Zone.ZoneName.None
+            : Aion.GameServer.World.Zone.ZoneName.CreateOrGet(name);
+
     /// <summary>Pin the same fixed AbyssRank scalar fields as the Java pinAbyssRankScalars (identical values).</summary>
     private static void PinAbyssRankScalars(AbyssRank rank)
     {
