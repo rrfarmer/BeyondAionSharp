@@ -142,7 +142,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
         }
         if (this.GetPlayer() != null)
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(GetPlayer(),
-                new Aion.GameServer.Network.Aion.ServerPackets.SmStatUpdateExp(GetExpShown(), GetExpRecoverable(), GetExpNeed(), this.GetCurrentReposeEnergy(), this.GetMaxReposeEnergy()));
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_STATUPDATE_EXP(GetExpShown(), GetExpRecoverable(), GetExpNeed(), this.GetCurrentReposeEnergy(), this.GetMaxReposeEnergy()));
     }
 
     public void SetRecoverableExp(long expRecoverable)
@@ -312,7 +312,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
             {
                 player.GetController().OnLevelChange(oldLevel, level);
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                    new Aion.GameServer.Network.Aion.ServerPackets.SmStatUpdateExp(GetExpShown(), GetExpRecoverable(), GetExpNeed(), GetCurrentReposeEnergy(), GetMaxReposeEnergy()));
+                    new Aion.GameServer.Network.Aion.ServerPackets.SM_STATUPDATE_EXP(GetExpShown(), GetExpRecoverable(), GetExpNeed(), GetCurrentReposeEnergy(), GetMaxReposeEnergy()));
             }
         }
     }
@@ -526,7 +526,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
 
         if (GetPlayer() != null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(GetPlayer(), new Aion.GameServer.Network.Aion.ServerPackets.SmDpInfo(playerObjId, this.dp), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(GetPlayer(), new Aion.GameServer.Network.Aion.ServerPackets.SM_DP_INFO(playerObjId, this.dp), true);
             GetPlayer().GetGameStats().UpdateStatsAndSpeedVisually();
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(GetPlayer(), new Aion.GameServer.Network.Aion.ServerPackets.SmStatUpdateDp(this.dp));
         }

@@ -81,8 +81,8 @@ public class SummonsService
                         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE());
                     else
                         PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_UNSUMMONED(summon.GetL10n()));
-                    PacketSendUtility.SendPacket(master, new SmSummonPanelRemove(summon.GetSummonedBySkillId()));
-                    PacketSendUtility.SendPacket(master, new SmSummonOwnerRemove(summon.GetObjectId()));
+                    PacketSendUtility.SendPacket(master, new SM_SUMMON_PANEL_REMOVE(summon.GetSummonedBySkillId()));
+                    PacketSendUtility.SendPacket(master, new SM_SUMMON_OWNER_REMOVE(summon.GetObjectId()));
                     if (!addedMasterHate)
                         ScheduleAddMasterHate(summon);
                     break;

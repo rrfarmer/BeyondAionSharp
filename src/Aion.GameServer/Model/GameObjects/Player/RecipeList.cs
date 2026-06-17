@@ -26,7 +26,7 @@ public class RecipeList
         if (!IsRecipePresent(recipeId) && Aion.GameServer.Dao.PlayerRecipesDAO.AddRecipe(player.GetObjectId(), recipeId))
         {
             recipeList.Add(recipeId);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmLearnRecipe(recipeId));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_LEARN_RECIPE(recipeId));
             return true;
         }
         return false;
@@ -37,7 +37,7 @@ public class RecipeList
         if (recipeList.Contains(recipeId) && Aion.GameServer.Dao.PlayerRecipesDAO.DelRecipe(player.GetObjectId(), recipeId))
         {
             recipeList.Remove(recipeId);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmRecipeDelete(recipeId));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_RECIPE_DELETE(recipeId));
             return true;
         }
         return false;

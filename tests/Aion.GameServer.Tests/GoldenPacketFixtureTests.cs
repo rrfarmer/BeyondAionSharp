@@ -30,18 +30,11 @@ public sealed class GoldenPacketFixtureTests
 	// NOTE: SM_GROUP_DATA_EXCHANGE is NOT here — it is an AionServerPacket (no SerializeFrame),
 	// so it is captured via the raw WriteImpl path in FaithfulCsharpPayloadMatchesJavaGoldenFixture below.
 	[InlineData("SM_QUIT_RESPONSE.json")]
-	[InlineData("SM_DELETE_ITEM.json")]
 	[InlineData("SM_DELETE_WAREHOUSE_ITEM.json")]
-	[InlineData("SM_RECIPE_DELETE.json")]
 	[InlineData("SM_BLOCK_RESPONSE.json")]
 	[InlineData("SM_FRIEND_RESPONSE.json")]
 	[InlineData("SM_CLOSE_QUESTION_WINDOW.json")]
-	[InlineData("SM_LEARN_RECIPE.json")]
-	[InlineData("SM_SUMMON_OWNER_REMOVE.json")]
-	[InlineData("SM_SUMMON_PANEL_REMOVE.json")]
-	[InlineData("SM_DP_INFO.json")]
 	[InlineData("SM_STATUPDATE_DP.json")]
-	[InlineData("SM_STATUPDATE_EXP.json")]
 	[InlineData("SM_FRIEND_NOTIFY.json")]
 	[InlineData("SM_BIND_POINT_TELEPORT.json")]
 	[InlineData("SM_SKILL_CANCEL.json")]
@@ -71,18 +64,11 @@ public sealed class GoldenPacketFixtureTests
 	private static GameServerPacket Reconstruct(string packetName, JsonElement inputs) => packetName switch
 	{
 		"SM_QUIT_RESPONSE" => new SmQuitResponse(inputs.GetProperty("editMode").GetBoolean()),
-		"SM_DELETE_ITEM" => new SmDeleteItem(inputs.GetProperty("itemObjectId").GetInt32(), inputs.GetProperty("deleteType").GetInt32()),
 		"SM_DELETE_WAREHOUSE_ITEM" => new SmDeleteWarehouseItem(inputs.GetProperty("warehouseType").GetInt32(), inputs.GetProperty("itemObjectId").GetInt32(), inputs.GetProperty("deleteType").GetInt32()),
-		"SM_RECIPE_DELETE" => new SmRecipeDelete(inputs.GetProperty("recipeId").GetInt32()),
 		"SM_BLOCK_RESPONSE" => new SmBlockResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
 		"SM_FRIEND_RESPONSE" => new SmFriendResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
 		"SM_CLOSE_QUESTION_WINDOW" => ReconstructCloseQuestionWindow(inputs),
-		"SM_LEARN_RECIPE" => new SmLearnRecipe(inputs.GetProperty("recipeId").GetInt32()),
-		"SM_SUMMON_OWNER_REMOVE" => new SmSummonOwnerRemove(inputs.GetProperty("summonObjId").GetInt32()),
-		"SM_SUMMON_PANEL_REMOVE" => new SmSummonPanelRemove(inputs.GetProperty("skillId").GetInt32()),
-		"SM_DP_INFO" => new SmDpInfo(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("currentDp").GetInt32()),
 		"SM_STATUPDATE_DP" => new SmStatUpdateDp(inputs.GetProperty("currentDp").GetInt32()),
-		"SM_STATUPDATE_EXP" => new SmStatUpdateExp(inputs.GetProperty("currentExp").GetInt64(), inputs.GetProperty("recoverableExp").GetInt64(), inputs.GetProperty("maxExp").GetInt64(), inputs.GetProperty("rep1").GetInt64(), inputs.GetProperty("rep2").GetInt64()),
 		"SM_FRIEND_NOTIFY" => new SmFriendNotify((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("name").GetString()!),
 		"SM_BIND_POINT_TELEPORT" => new SmBindPointTeleport((byte)inputs.GetProperty("action").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("locId").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
 		"SM_SKILL_CANCEL" => new SmSkillCancel(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("skillId").GetInt32()),
@@ -178,6 +164,13 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_NICKNAME_CHECK_RESPONSE.json")]
 	[InlineData("SM_STATUPDATE_HP.json")]
 	[InlineData("SM_STATUPDATE_MP.json")]
+	[InlineData("SM_DELETE_ITEM.json")]
+	[InlineData("SM_RECIPE_DELETE.json")]
+	[InlineData("SM_LEARN_RECIPE.json")]
+	[InlineData("SM_SUMMON_OWNER_REMOVE.json")]
+	[InlineData("SM_SUMMON_PANEL_REMOVE.json")]
+	[InlineData("SM_DP_INFO.json")]
+	[InlineData("SM_STATUPDATE_EXP.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -283,6 +276,13 @@ public sealed class GoldenPacketFixtureTests
 		"SM_NICKNAME_CHECK_RESPONSE" => new SM_NICKNAME_CHECK_RESPONSE(inputs.GetProperty("value").GetInt32()),
 		"SM_STATUPDATE_HP" => new SM_STATUPDATE_HP(inputs.GetProperty("currentHp").GetInt32(), inputs.GetProperty("maxHp").GetInt32()),
 		"SM_STATUPDATE_MP" => new SM_STATUPDATE_MP(inputs.GetProperty("currentMp").GetInt32(), inputs.GetProperty("maxMp").GetInt32()),
+		"SM_DELETE_ITEM" => new SM_DELETE_ITEM(inputs.GetProperty("itemObjectId").GetInt32(), ResolveItemDeleteType(inputs.GetProperty("deleteType").GetInt32())),
+		"SM_RECIPE_DELETE" => new SM_RECIPE_DELETE(inputs.GetProperty("recipeId").GetInt32()),
+		"SM_LEARN_RECIPE" => new SM_LEARN_RECIPE(inputs.GetProperty("recipeId").GetInt32()),
+		"SM_SUMMON_OWNER_REMOVE" => new SM_SUMMON_OWNER_REMOVE(inputs.GetProperty("summonObjId").GetInt32()),
+		"SM_SUMMON_PANEL_REMOVE" => new SM_SUMMON_PANEL_REMOVE(inputs.GetProperty("skillId").GetInt32()),
+		"SM_DP_INFO" => new SM_DP_INFO(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("currentDp").GetInt32()),
+		"SM_STATUPDATE_EXP" => new SM_STATUPDATE_EXP(inputs.GetProperty("currentExp").GetInt64(), inputs.GetProperty("recoverableExp").GetInt64(), inputs.GetProperty("maxExp").GetInt64(), inputs.GetProperty("rep1").GetInt64(), inputs.GetProperty("rep2").GetInt64()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -295,6 +295,20 @@ public sealed class GoldenPacketFixtureTests
 			inputs.GetProperty("unk1").GetInt32(), inputs.GetProperty("unk2").GetInt32(), inputs.GetProperty("unk3").GetInt32(),
 			inputs.GetProperty("unk4").GetInt32(), inputs.GetProperty("unk5").GetInt32(), inputs.GetProperty("unk6").GetInt32(),
 			inputs.GetProperty("panelId").GetInt32());
+	}
+
+	// SM_DELETE_ITEM: map the fixture's raw delete-type mask to the matching ItemDeleteType class-enum
+	// instance (Java parity: SM_DELETE_ITEM writes deleteType.getMask()). Fixture uses 0 (DEFAULT) / 0x15 (DISCARD).
+	private static global::Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType ResolveItemDeleteType(int mask)
+	{
+		var t = typeof(global::Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType);
+		foreach (var field in t.GetFields(BindingFlags.Public | BindingFlags.Static))
+		{
+			var value = (global::Aion.GameServer.Services.Items.ItemPacketService.ItemDeleteType)field.GetValue(null)!;
+			if (value.GetMask() == mask)
+				return value;
+		}
+		throw new NotSupportedException($"No ItemDeleteType with mask 0x{mask:X}");
 	}
 
 	// SM_LEGION_EDIT: type 0x07 via (int) ctor; type 0x06 via (int type, int unixTime) ctor.

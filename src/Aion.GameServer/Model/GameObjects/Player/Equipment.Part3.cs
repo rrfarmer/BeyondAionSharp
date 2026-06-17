@@ -56,7 +56,7 @@ public partial class Equipment
         {
             Aion.GameServer.Dao.InventoryDAO.Store(equippedItem, owner); // must store (delete) before unequip
             Unequip(equippedItem);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDeleteItem(equippedItem.GetObjectId()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DELETE_ITEM(equippedItem.GetObjectId()));
         }
         else
         {
