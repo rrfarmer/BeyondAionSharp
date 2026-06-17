@@ -9,6 +9,7 @@ using Aion.GameServer.Network.Aion;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_LOOT_ITEMLIST (alexa026, Avol, Metos, ATracer, KID, Sykra). Drop list for a corpse: per-item index/itemId/count/socket + loot-confirmation flag. (int) cast on count; Set/Collection iteration. Drop/DropItem/DropNpc/DataManager red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_LOOT_ITEMLIST.java): 2026-06-17
 public class SM_LOOT_ITEMLIST : AionServerPacket
 {
     private readonly int targetObjectId;

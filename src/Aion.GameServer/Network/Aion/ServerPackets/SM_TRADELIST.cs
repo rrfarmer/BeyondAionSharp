@@ -12,6 +12,7 @@ using TradeTab = global::Aion.GameServer.Model.Templates.Tradelist.TradeListTemp
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_TRADELIST (alexa026, ATracer, Sarynth, xTz, Neon). Vendor trade list (npc type/buy modifier/tabs filtered by legion level + limited items). ArrayList->new List; addAll->AddRange; TradeTab aliased. Npc/TradeListTemplate/GoodsList/LimitedItem/LimitedItemTradeService red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_TRADELIST.java): 2026-06-17
 public class SM_TRADELIST : AionServerPacket
 {
     private int targetObjId;

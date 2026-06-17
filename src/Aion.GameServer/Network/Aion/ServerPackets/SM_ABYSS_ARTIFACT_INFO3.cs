@@ -6,6 +6,7 @@ using Aion.GameServer.Services;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_ABYSS_ARTIFACT_INFO3. Sends abyss artifact status (locationId*10+1 + status). ArtifactLocation/SiegeService red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_ABYSS_ARTIFACT_INFO3.java): 2026-06-17
 public class SM_ABYSS_ARTIFACT_INFO3 : AionServerPacket
 {
     private ICollection<ArtifactLocation> locations;

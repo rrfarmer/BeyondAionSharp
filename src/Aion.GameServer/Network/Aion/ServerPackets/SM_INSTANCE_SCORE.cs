@@ -6,6 +6,7 @@ using Aion.GameServer.Network.Aion.Instanceinfo;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_INSTANCE_SCORE (Dns, ginho1, nrg, xTz). Instance/arena score. Wildcard InstanceScoreWriter&lt;?&gt; erased to bound InstanceScoreWriter&lt;InstanceScore&lt;InstancePlayerReward&gt;&gt;; writeMe(buf)->WriteMe(GetBuf()). Instanceinfo writers red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_INSTANCE_SCORE.java): 2026-06-17
 public class SM_INSTANCE_SCORE : AionServerPacket
 {
     private readonly int mapId;
