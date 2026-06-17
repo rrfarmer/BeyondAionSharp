@@ -2,17 +2,22 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Aion.Commons.Nio;
+using Aion.GameServer.Controllers;
 using Aion.GameServer.Dataholders;
+using Aion.GameServer.Model;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates;
+using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
+using Aion.GameServer.Model.Templates.Spawns;
 using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using IDFactory = Aion.GameServer.Utils.IdFactory.IDFactory;
 
 namespace Aion.GameServer.Tests;
 
@@ -54,6 +59,24 @@ public sealed class GoldenWorldPacketFixtureTests
 
     // SM_TRADE_IN_LIST: the live-Npc objectId the fixture reads (mirrors the Java side; the only live read).
     private const int TradeNpcObjectId = 700123;
+
+    // SM_NPC_INFO real-Npc-ctor seam: the structurally-identical Npc/NpcTemplate/StatsTemplate scalars (== Java side).
+    private const int NpcInfoObjectId = 740555;
+    private const int NpcInfoNpcId = 215220;
+    private const int NpcInfoWorldId = 220020000;
+    private const int NpcInfoNameId = 350123;
+    private const int NpcInfoTitleId = 4242;
+    private const byte NpcInfoLevel = 55;
+    private const int NpcInfoMaxHp = 123456;
+    private const int NpcInfoAttackSpeed = 1500;
+    private const float NpcInfoHeight = 1.75f;
+    private const float NpcInfoBrFront = 1.25f;
+    private const float NpcInfoBrSide = 0.95f;
+    private const float NpcInfoBrUpper = 2.5f;
+    private const float NpcInfoX = 1450.5f;
+    private const float NpcInfoY = 1602.25f;
+    private const float NpcInfoZ = 250.125f;
+    private const byte NpcInfoHeading = 60;
 
     private static readonly long[] ExpTable = BuildExpTable();
 
@@ -229,6 +252,92 @@ public sealed class GoldenWorldPacketFixtureTests
         return npc;
     }
 
+    // ---- real-Npc-ctor object seam (SM_NPC_INFO) ----------------------------------------------------------------
+
+    /// <summary>
+    /// The real-Npc-ctor golden seam. SM_NPC_INFO is the maximal Npc-reading packet: its WriteImpl reads the live Npc's
+    /// stat containers (GetLifeStats().GetHpPercentage(), GetGameStats().GetMaxHp(), GetMovementSpeedFloat()), the move
+    /// controller (GetTargetX2/Y2/Z2/GetMovementMask), the NpcTemplate, and TownService. So this drives a REAL
+    /// Npc(controller, spawn, template) ctor through SetupStatContainers -> NpcGameStats/NpcLifeStats (built from a
+    /// populated StatsTemplate) with a DummyAI (NpcTemplate.ai == null + SpawnTemplate.aiName == null) — no
+    /// World/Knownlist/SkillEngine/DataManager-cascade. Built IDENTICALLY to the Java oracle side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_NPC_INFO.json")]
+    public void CsharpNpcInfoMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(NpcInfoObjectId, inputs.GetProperty("objectId").GetInt32());
+            var creatureType = Enum.Parse<CreatureType>(inputs.GetProperty("creatureType").GetString()!);
+
+            var npc = BuildRealNpc(NpcInfoObjectId, creatureType);
+            // player arg null: npc.type is pinned so GetType_(player) short-circuits without dereferencing the player.
+            var packet = new SM_NPC_INFO(npc, null);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_NPC_INFO/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a REAL Npc through the full Npc(controller, spawn, template) ctor (== Java buildRealNpc), then make it
+    /// deterministic: overwrite the IDFactory-assigned objectId with a pinned value and pin the npc.type field (so
+    /// GetType_(player) short-circuits). The template carries a populated StatsTemplate (maxHp) + FLAG type.
+    /// </summary>
+    private static Npc BuildRealNpc(int objectId, CreatureType type)
+    {
+        var template = BuildNpcTemplate();
+        var spawnGroup = new SpawnGroup(NpcInfoWorldId, NpcInfoNpcId, 0, null);
+        // staticId 0 -> SM_NPC_INFO writes GetSpawn().GetStaticId() == 0.
+        var spawn = new SpawnTemplate(spawnGroup, NpcInfoX, NpcInfoY, NpcInfoZ, NpcInfoHeading, 0, null, 0);
+        var controller = new NpcController();
+        var npc = new Npc(controller, spawn, template);
+
+        // Pin objectId (IDFactory-assigned is non-deterministic).
+        var idField = typeof(AionObject).GetField("_objectId", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(AionObject).FullName, "_objectId");
+        idField.SetValue(npc, objectId);
+
+        // Pin the npc.type field so GetType_(player) short-circuits (player can be null).
+        var typeField = typeof(Npc).GetField("type", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(Npc).FullName, "type");
+        typeField.SetValue(npc, type);
+        return npc;
+    }
+
+    private static NpcTemplate BuildNpcTemplate()
+    {
+        var t = new NpcTemplate();
+        SetField(t, "npcId", NpcInfoNpcId);
+        SetField(t, "nameId", NpcInfoNameId);
+        SetField(t, "titleId", NpcInfoTitleId);
+        SetField(t, "level", NpcInfoLevel);
+        SetField(t, "height", NpcInfoHeight);
+        SetField(t, "attackSpeed", NpcInfoAttackSpeed);
+        SetField(t, "npcTemplateType", (NpcTemplateType?)NpcTemplateType.FLAG); // IsFlag() == true -> deterministic
+        t.boundRadius = new BoundRadius(NpcInfoBrFront, NpcInfoBrSide, NpcInfoBrUpper);
+        t.statsTemplate = BuildStatsTemplate();
+        // ai left null -> DummyAI (no AIEngine registration needed).
+        return t;
+    }
+
+    private static StatsTemplate BuildStatsTemplate()
+    {
+        var s = new StatsTemplate { MaxHp = NpcInfoMaxHp };
+        // Speeds left null -> GetRunSpeed() == 0 -> GetMovementSpeedFloat() == 0.0f (deterministic).
+        return s;
+    }
+
     // ---- World/instance DataManager seam ------------------------------------------------------------------------
 
     /// <summary>
@@ -253,11 +362,22 @@ public sealed class GoldenWorldPacketFixtureTests
         SetAutoProperty(staticData, nameof(StaticData.WorldMaps2), BuildWorldMaps());
         SetAutoProperty(staticData, nameof(StaticData.SkillDataDh), BuildSkillData());
         SetAutoProperty(staticData, nameof(StaticData.Quests), BuildQuestsData());
+        // SM_NPC_INFO real-Npc seam: NpcSkillList(owner) reads NPC_SKILL_DATA; TownService ctor reads HOUSE_DATA.GetLands().
+        // The uninitialized StaticData skips field initializers, so seed both with empty holders (NpcSkillData/HouseData
+        // default-ctor empty -> getNpcSkillList(npcId) null + getLands() empty). Mirrors the Java HOUSE_DATA/NPC_SKILL_DATA seam.
+        SetAutoProperty(staticData, nameof(StaticData.NpcSkillDataDh), new NpcSkillData());
+        SetAutoProperty(staticData, nameof(StaticData.HouseDataDh), new HouseData());
 
         var dmCtor = typeof(DataManager).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(StaticData) }, modifiers: null)!;
         var dm = (DataManager)dmCtor.Invoke(new object[] { staticData });
         DataManager.RegisterInstance(dm);
+
+        // IDFactory singleton bridge: the real Npc(controller,spawn,template) ctor calls IDFactory.GetInstance().NextId().
+        // Register a fresh empty IDFactory if none is bound (mirrors the Java lazy SingletonHolder; the assigned objectId
+        // is overwritten with a pinned value, so its value is irrelevant).
+        try { _ = IDFactory.GetInstance(); }
+        catch (InvalidOperationException) { IDFactory.RegisterInstance(new IDFactory()); }
     }
 
     /// <summary>Build a WorldMapsData with exactly one regular and one instance template (structurally == Java side).</summary>
