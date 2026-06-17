@@ -131,6 +131,13 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_SUMMON_PANEL_REMOVE.json")]
 	[InlineData("SM_DP_INFO.json")]
 	[InlineData("SM_STATUPDATE_EXP.json")]
+	// ----- Batch 10: pure scalar / simple-DTO con-null-safe SM_* packets -----
+	[InlineData("SM_CHARACTER_SELECT.json")]
+	[InlineData("SM_AFTER_SIEGE_LOCINFO_475.json")]
+	[InlineData("SM_NEARBY_QUESTS.json")]
+	[InlineData("SM_MACRO_LIST.json")]
+	[InlineData("SM_FIRST_SHOW_DECOMPOSABLE.json")]
+	[InlineData("SM_SECONDARY_SHOW_DECOMPOSABLE.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -254,8 +261,54 @@ public sealed class GoldenPacketFixtureTests
 		"SM_SUMMON_PANEL_REMOVE" => new SM_SUMMON_PANEL_REMOVE(inputs.GetProperty("skillId").GetInt32()),
 		"SM_DP_INFO" => new SM_DP_INFO(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("currentDp").GetInt32()),
 		"SM_STATUPDATE_EXP" => new SM_STATUPDATE_EXP(inputs.GetProperty("currentExp").GetInt64(), inputs.GetProperty("recoverableExp").GetInt64(), inputs.GetProperty("maxExp").GetInt64(), inputs.GetProperty("rep1").GetInt64(), inputs.GetProperty("rep2").GetInt64()),
+		// ----- Batch 10 -----
+		"SM_CHARACTER_SELECT" => ReconstructCharacterSelect(inputs),
+		"SM_AFTER_SIEGE_LOCINFO_475" => new SM_AFTER_SIEGE_LOCINFO_475(),
+		"SM_NEARBY_QUESTS" => new SM_NEARBY_QUESTS(ReconstructIntIntMap(inputs.GetProperty("entries"))),
+		"SM_MACRO_LIST" => new SM_MACRO_LIST(inputs.GetProperty("playerObjectId").GetInt32(), ReconstructMacros(inputs.GetProperty("macros")), inputs.GetProperty("clearList").GetBoolean()),
+		"SM_FIRST_SHOW_DECOMPOSABLE" => new SM_FIRST_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructResultedItems(inputs.GetProperty("items"))),
+		"SM_SECONDARY_SHOW_DECOMPOSABLE" => new SM_SECONDARY_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructResultedItems(inputs.GetProperty("items"))),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
+
+	// ----- Batch 10 reconstruct helpers -----
+
+	// SM_CHARACTER_SELECT: 1-arg (type) vs 3-arg (type,messageType,wrongCount) ctor selected by the "ctor" tag.
+	// Pin SecurityConfig.PASSKEY_WRONG_MAXCOUNT=5 (the faithful @Property default) to match the Java oracle fixture.
+	private static SM_CHARACTER_SELECT ReconstructCharacterSelect(JsonElement inputs)
+	{
+		Aion.GameServer.Configs.Main.SecurityConfig.PASSKEY_WRONG_MAXCOUNT = 5;
+		if (inputs.GetProperty("ctor").GetString() == "type")
+			return new SM_CHARACTER_SELECT(inputs.GetProperty("type").GetInt32());
+		return new SM_CHARACTER_SELECT(inputs.GetProperty("type").GetInt32(),
+			(short)inputs.GetProperty("messageType").GetInt32(), inputs.GetProperty("wrongCount").GetInt32());
+	}
+
+	// Insertion-ordered int->int map mirroring the Java LinkedHashMap (C# Dictionary preserves insertion order).
+	private static Dictionary<int, int> ReconstructIntIntMap(JsonElement entries)
+	{
+		var map = new Dictionary<int, int>();
+		foreach (var e in entries.EnumerateArray())
+			map[e[0].GetInt32()] = e[1].GetInt32();
+		return map;
+	}
+
+	private static List<Aion.GameServer.Model.GameObjects.Players.Macros.Macro> ReconstructMacros(JsonElement macros)
+	{
+		var list = new List<Aion.GameServer.Model.GameObjects.Players.Macros.Macro>();
+		foreach (var m in macros.EnumerateArray())
+			list.Add(new Aion.GameServer.Model.GameObjects.Players.Macros.Macro(m[0].GetInt32(), m[1].GetString()!));
+		return list;
+	}
+
+	// ResultedItem is XML-built; set itemId/minCount directly (public XML fields), bypassing afterUnmarshal (no DataManager).
+	private static List<Aion.GameServer.Model.Templates.Items.ResultedItem> ReconstructResultedItems(JsonElement items)
+	{
+		var list = new List<Aion.GameServer.Model.Templates.Items.ResultedItem>();
+		foreach (var it in items.EnumerateArray())
+			list.Add(new Aion.GameServer.Model.Templates.Items.ResultedItem { itemId = it[0].GetInt32(), minCount = it[1].GetInt32() });
+		return list;
+	}
 
 	// SM_TRANSFORM custom (testing) ctor: creature objId + state (harness ACTIVE=1) + scalars + TransformType.
 	private static SM_TRANSFORM ReconstructTransform(JsonElement inputs)
