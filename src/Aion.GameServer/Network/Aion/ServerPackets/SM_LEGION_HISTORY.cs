@@ -29,6 +29,7 @@ public class SM_LEGION_HISTORY : AionServerPacket
         this.type = type;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../SM_LEGION_HISTORY.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         WriteD(totalEntries);

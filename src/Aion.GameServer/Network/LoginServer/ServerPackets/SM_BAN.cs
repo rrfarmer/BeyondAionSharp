@@ -30,6 +30,7 @@ public sealed class SM_BAN : LoginServerPacket
         _adminObjId = adminObjId;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../loginserver/serverpackets/SM_BAN.java): 2026-06-17
     protected override void WritePayload(PacketBuffer buffer)
     {
         buffer.WriteC(0x06);

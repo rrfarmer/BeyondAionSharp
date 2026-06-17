@@ -23,6 +23,7 @@ public class SM_LEGION_DOMINION_RANK : AionServerPacket
             topParticipants[topParticipants.Count - 1] = ranking[rank - 1];
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../SM_LEGION_DOMINION_RANK.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         WriteD(loc.GetLocationId());

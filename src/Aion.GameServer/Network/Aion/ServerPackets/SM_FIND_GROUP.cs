@@ -59,6 +59,7 @@ public class SM_FIND_GROUP : AionServerPacket
         this.instanceMaskIds = instanceMaskIds;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../SM_FIND_GROUP.java): 2026-06-17
     protected override void WriteImpl(AionConnection con)
     {
         WriteC(action);

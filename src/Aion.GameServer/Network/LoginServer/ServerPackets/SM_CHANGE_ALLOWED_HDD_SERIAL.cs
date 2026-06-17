@@ -18,6 +18,7 @@ public sealed class SM_CHANGE_ALLOWED_HDD_SERIAL : LoginServerPacket
         this.hddSerial = playerAccount.GetAllowedHddSerial();
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../loginserver/serverpackets/SM_CHANGE_ALLOWED_HDD_SERIAL.java): 2026-06-17
     protected override void WritePayload(PacketBuffer buffer)
     {
         // Java parity: SM_CHANGE_ALLOWED_HDD_SERIAL super(15); writeImpl writeD(accountId) + writeS(hddSerial).

@@ -47,6 +47,12 @@ public sealed class SM_PTRANSFER_CONTROL : LoginServerPacket
         _player = tp.player;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../loginserver/serverpackets/SM_PTRANSFER_CONTROL.java): 2026-06-17
+    // Control path (OK / ERROR / TASK_STOP) is byte-identical to Java. The *_INFORMATION branches
+    // (CHARACTER/ITEMS/DATA/SKILL/RECIPE/QUEST) are a TRACKED DEFERRAL, not yet 1:1: their full bodies
+    // read live DB (InventoryDAO/ItemStoneListDAO) plus Player emotion/motion/title subsystems that are not
+    // wired onto the faithful Player (no GetEmotions/GetMotions/GetTitleList accessors exist yet). Until those
+    // dependencies are ported, these branches write only writeC(type)+writeD(taskId) — see backlog §C/§D.
     protected override void WritePayload(PacketBuffer buffer)
     {
         buffer.WriteC(_type);

@@ -16,6 +16,7 @@ public sealed class SM_PREMIUM_CONTROL : LoginServerPacket
         _cost = cost;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../loginserver/serverpackets/SM_PREMIUM_CONTROL.java): 2026-06-17
     protected override void WritePayload(PacketBuffer buffer)
     {
         buffer.WriteC(11);

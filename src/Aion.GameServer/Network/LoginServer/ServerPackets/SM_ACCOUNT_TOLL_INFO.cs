@@ -14,6 +14,7 @@ public sealed class SM_ACCOUNT_TOLL_INFO : LoginServerPacket
 		_toll = toll;
 	}
 
+	// Java parity (writeImpl audited 1:1 vs game-server/.../loginserver/serverpackets/SM_ACCOUNT_TOLL_INFO.java): 2026-06-17
 	protected override void WritePayload(PacketBuffer buffer)
 	{
 		// Java parity: gameserver/network/loginserver/serverpackets/SM_ACCOUNT_TOLL_INFO.writeImpl.
