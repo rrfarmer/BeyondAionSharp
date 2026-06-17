@@ -43,6 +43,8 @@ public sealed class GoldenFormulaFixtureTests
 	[InlineData("XPLossEnum.getParam.json")]
 	[InlineData("StatCapUtil.getDifferenceLimit.json")]
 	[InlineData("StatCapUtil.getElementalDefenseBaseValue.json")]
+	[InlineData("StatCapUtil.limitValueForPvpOrPveStat.json")]
+	[InlineData("SkillElement.getStatForElement.json")]
 	public void CsharpFormulaMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		using var fixture = LoadFixture(fixtureFile);
@@ -122,6 +124,10 @@ public sealed class GoldenFormulaFixtureTests
 		"StatCapUtil.getDifferenceLimit" => Aion.GameServer.Model.Stats.Calc.StatCapUtil.GetDifferenceLimit(
 			Enum.Parse<StatEnum>(inputs.GetProperty("statEnum").GetString()!)),
 		"StatCapUtil.getElementalDefenseBaseValue" => Aion.GameServer.Model.Stats.Calc.StatCapUtil.GetElementalDefenseBaseValue(),
+		"StatCapUtil.limitValueForPvpOrPveStat" => Aion.GameServer.Model.Stats.Calc.StatCapUtil.LimitValueForPvpOrPveStat(
+			Enum.Parse<Aion.GameServer.Model.Stats.Container.CombatMode>(inputs.GetProperty("mode").GetString()!),
+			Enum.Parse<Aion.GameServer.Model.Stats.Container.RatioType>(inputs.GetProperty("type").GetString()!),
+			inputs.GetProperty("value").GetInt32()),
 		_ => throw new NotSupportedException($"No C# numeric dispatch registered for formula {formula}"),
 	};
 
@@ -148,6 +154,12 @@ public sealed class GoldenFormulaFixtureTests
 			inputs.GetProperty("gp").GetInt32()).ToString(),
 		"AbyssRankEnum.getRankById" => AbyssRankEnumExtensions.GetRankById(
 			inputs.GetProperty("id").GetInt32()).ToString(),
+		// getStatForElement returns a nullable StatEnum; Java serializes the null (NONE) case as the
+		// literal "null", so map a null C# result to "null" to compare by NAME bit-for-bit with Java.
+		"SkillElement.getStatForElement" =>
+			Aion.GameServer.Model.SkillElementExtensions.GetStatForElement(
+				Enum.Parse<Aion.GameServer.Model.SkillElement>(inputs.GetProperty("element").GetString()!))
+				is { } stat ? stat.ToString() : "null",
 		_ => throw new NotSupportedException($"No C# enum dispatch registered for formula {formula}"),
 	};
 
