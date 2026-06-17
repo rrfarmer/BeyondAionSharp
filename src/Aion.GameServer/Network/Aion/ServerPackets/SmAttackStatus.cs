@@ -1,5 +1,5 @@
-using Aion.Commons.Network;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
@@ -13,7 +13,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// writes -value, the other +value). A plain C# enum would collapse these aliases and cannot distinguish them in a
 /// switch. <see cref="LOG"/> has no duplicate ids, so it stays a plain enum.
 /// </remarks>
-public sealed class SmAttackStatus : GameServerPacket
+public sealed class SmAttackStatus : AionServerPacket
 {
     public const int PacketOpCode = 5;
 
@@ -45,35 +45,35 @@ public sealed class SmAttackStatus : GameServerPacket
 
     public int SkillId => skillId;
 
-    protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
+    protected override void WriteImpl(AionConnection con)
     {
         int hpOrMp;
-        buffer.WriteD(creature.GetObjectId());
+        WriteD(creature.GetObjectId());
         if (type == TYPE.DAMAGE || type == TYPE.DELAYDAMAGE || type == TYPE.FALL_DAMAGE || type == TYPE.FP_DAMAGE
             || type == TYPE.MAGICCOUNTERATK || type == TYPE.DISPELBUFFCOUNTERATK || type == TYPE.USED_HP || type == TYPE.DROWNING)
         {
-            buffer.WriteD(-value);
+            WriteD(-value);
             hpOrMp = creature.GetLifeStats().GetHpPercentage();
         }
         else if (type == TYPE.USED_MP || type == TYPE.DAMAGE_MP)
         {
-            buffer.WriteD(-value);
+            WriteD(-value);
             hpOrMp = creature.GetLifeStats().GetMpPercentage();
         }
         else if (type == TYPE.MP || type == TYPE.NATURAL_MP || type == TYPE.HEAL_MP || type == TYPE.ABSORBED_MP)
         {
-            buffer.WriteD(value);
+            WriteD(value);
             hpOrMp = creature.GetLifeStats().GetMpPercentage();
         }
         else
         {
-            buffer.WriteD(value);
+            WriteD(value);
             hpOrMp = creature.GetLifeStats().GetHpPercentage();
         }
-        buffer.WriteC(type.GetValue());
-        buffer.WriteC(hpOrMp);
-        buffer.WriteH(skillId);
-        buffer.WriteH(logId);
+        WriteC(type.GetValue());
+        WriteC(hpOrMp);
+        WriteH(skillId);
+        WriteH(logId);
     }
 
     /// <summary>Java parity: SmAttackStatus.TYPE (class-enum; constants may share ids).</summary>

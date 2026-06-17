@@ -26,42 +26,12 @@ namespace Aion.GameServer.Tests;
 /// </summary>
 public sealed class GoldenPacketFixtureTests
 {
-	[Theory]
-	// NOTE: SM_GROUP_DATA_EXCHANGE is NOT here — it is an AionServerPacket (no SerializeFrame),
-	// so it is captured via the raw WriteImpl path in FaithfulCsharpPayloadMatchesJavaGoldenFixture below.
-	[InlineData("SM_ATTACK_STATUS.json")]
-	public void CsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
-	{
-		var fixture = LoadFixture(fixtureFile);
-		var packetName = fixture.RootElement.GetProperty("packet").GetString()!;
-
-		foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
-		{
-			var caseName = caseElement.GetProperty("name").GetString()!;
-			var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
-			var inputs = caseElement.GetProperty("inputs");
-
-			var packet = Reconstruct(packetName, inputs);
-			var actual = SerializeUnencryptedPayload(packet);
-			var actualHex = Convert.ToHexString(actual);
-
-			Assert.True(expectedHex == actualHex,
-				$"{packetName}/{caseName}: C# payload diverged from Java golden.\n" +
-				$"  Java : {expectedHex}\n  C#   : {actualHex}");
-		}
-	}
-
-	private static GameServerPacket Reconstruct(string packetName, JsonElement inputs) => packetName switch
-	{
-		"SM_ATTACK_STATUS" => ReconstructAttackStatus(inputs),
-		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
-	};
-
 	// ----- New batch: faithful SM_* packets (AionServerPacket-derived). -----
 	// These extend AionServerPacket, not GameServerPacket, so they have no SerializeFrame.
 	// We capture the raw writeImpl payload exactly like the Java harness does: a LITTLE_ENDIAN
 	// ByteBuffer, invoke WriteImpl reflectively, read Position() bytes. No opcode, no crypt.
 	[Theory]
+	[InlineData("SM_ATTACK_STATUS.json")]
 	[InlineData("SM_ITEM_USAGE_ANIMATION.json")]
 	[InlineData("SM_QUIT_RESPONSE.json")]
 	[InlineData("SM_DELETE_WAREHOUSE_ITEM.json")]
@@ -184,6 +154,7 @@ public sealed class GoldenPacketFixtureTests
 
 	private static AionServerPacket ReconstructFaithful(string packetName, JsonElement inputs) => packetName switch
 	{
+		"SM_ATTACK_STATUS" => ReconstructAttackStatus(inputs),
 		"SM_ITEM_USAGE_ANIMATION" => ReconstructItemUsageAnimation(inputs),
 		"SM_QUIT_RESPONSE" => new SM_QUIT_RESPONSE(inputs.GetProperty("editMode").GetBoolean()),
 		"SM_DELETE_WAREHOUSE_ITEM" => new SM_DELETE_WAREHOUSE_ITEM(inputs.GetProperty("warehouseType").GetInt32(), inputs.GetProperty("itemObjectId").GetInt32(), ResolveItemDeleteType(inputs.GetProperty("deleteType").GetInt32())),
@@ -652,14 +623,6 @@ public sealed class GoldenPacketFixtureTests
 		"REGULAR" => SmAttackStatus.TYPE.REGULAR,
 		_ => throw new NotSupportedException($"No SM_ATTACK_STATUS TYPE for {name}"),
 	};
-
-	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
-	{
-		// Mirrors existing SmGroupDataExchangeTests: deterministic key, strip the 7-byte frame header.
-		var crypt = new GameCrypt(() => 0x01020304);
-		crypt.EnableKey();
-		return packet.SerializeFrame(crypt)[7..];
-	}
 
 	private static JsonDocument LoadFixture(string fileName)
 	{
