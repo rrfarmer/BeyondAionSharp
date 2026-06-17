@@ -56,11 +56,11 @@ public partial class Equipment
 
         Aion.GameServer.Model.GameObjects.Players.RequestResponseHandler<Player> responseHandler = new SoulBindResponseHandler(player, this, item, slot);
 
-        bool requested = player.GetResponseRequester().PutRequest(Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow.STR_SOUL_BOUND_ITEM_DO_YOU_WANT_SOUL_BOUND, responseHandler);
+        bool requested = player.GetResponseRequester().PutRequest(Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTION_WINDOW.STR_SOUL_BOUND_ITEM_DO_YOU_WANT_SOUL_BOUND, responseHandler);
         if (requested)
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow(Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow.STR_SOUL_BOUND_ITEM_DO_YOU_WANT_SOUL_BOUND, 0, 0, item.GetL10n()));
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTION_WINDOW(Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTION_WINDOW.STR_SOUL_BOUND_ITEM_DO_YOU_WANT_SOUL_BOUND, 0, 0, item.GetL10n()));
         }
         else
         {

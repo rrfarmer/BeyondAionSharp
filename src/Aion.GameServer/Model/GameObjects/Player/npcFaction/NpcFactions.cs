@@ -166,11 +166,11 @@ public class NpcFactions
         NpcFaction activeNpcFactionLocal = GetActiveNpcFaction(npcFactionTemplate.IsMentor());
         Aion.GameServer.Model.Templates.Factions.NpcFactionTemplate activeNpcFactionTemplate = Aion.GameServer.Dataholders.DataManager.NPC_FACTIONS_DATA.GetNpcFactionById(activeNpcFactionLocal.GetId());
         Aion.GameServer.Model.GameObjects.Players.RequestResponseHandler<Player> responseHandler = new AskLeaveResponseHandler(owner, this, npc, activeNpcFactionLocal);
-        bool requested = owner.GetResponseRequester().PutRequest(Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow.STR_ASK_JOIN_NEW_FACTION, responseHandler);
+        bool requested = owner.GetResponseRequester().PutRequest(Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTION_WINDOW.STR_ASK_JOIN_NEW_FACTION, responseHandler);
         if (requested)
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner,
-                new Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow(Aion.GameServer.Network.Aion.ServerPackets.SmQuestionWindow.STR_ASK_JOIN_NEW_FACTION, 0, 0, activeNpcFactionTemplate.GetL10n(), npcFactionTemplate.GetL10n()));
+                new Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTION_WINDOW(Aion.GameServer.Network.Aion.ServerPackets.SM_QUESTION_WINDOW.STR_ASK_JOIN_NEW_FACTION, 0, 0, activeNpcFactionTemplate.GetL10n(), npcFactionTemplate.GetL10n()));
         }
     }
 

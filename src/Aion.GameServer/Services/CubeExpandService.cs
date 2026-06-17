@@ -45,10 +45,10 @@ public class CubeExpandService
             return;
         }
         RequestResponseHandler<Npc> responseHandler = new CubeExpandResponseHandler(npc, price.Value);
-        bool result = player.GetResponseRequester().PutRequest(SmQuestionWindow.WarehouseExpandWarning, responseHandler);
+        bool result = player.GetResponseRequester().PutRequest(SM_QUESTION_WINDOW.STR_WAREHOUSE_EXPAND_WARNING, responseHandler);
         if (result)
         {
-            PacketSendUtility.SendPacket(player, new SmQuestionWindow(SmQuestionWindow.WarehouseExpandWarning, 0, 0, price.Value.ToString()));
+            PacketSendUtility.SendPacket(player, new SM_QUESTION_WINDOW(SM_QUESTION_WINDOW.STR_WAREHOUSE_EXPAND_WARNING, 0, 0, price.Value.ToString()));
         }
     }
 

@@ -11,10 +11,10 @@ public sealed class QuestionResponseRegistryTests
 		var registry = new QuestionResponseRegistry();
 		var request = new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite, Payload: "invite");
 
-		Assert.False(registry.PutRequest(SmQuestionWindow.UnionInviteMe, null));
-		Assert.True(registry.PutRequest(SmQuestionWindow.UnionInviteMe, request));
+		Assert.False(registry.PutRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, null));
+		Assert.True(registry.PutRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, request));
 		Assert.False(registry.PutRequest(
-			SmQuestionWindow.UnionInviteMe,
+			SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME,
 			new QuestionResponseRequest(1002, QuestionResponseRequestKind.FriendInvite)));
 		Assert.Equal(1, registry.Count);
 	}
@@ -25,14 +25,14 @@ public sealed class QuestionResponseRegistryTests
 		var registry = new QuestionResponseRegistry();
 		var request = new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite);
 
-		Assert.True(registry.IsRequestSlotAvailable(SmQuestionWindow.UnionInviteMe));
-		Assert.False(registry.ContainsRequest(SmQuestionWindow.UnionInviteMe));
+		Assert.True(registry.IsRequestSlotAvailable(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME));
+		Assert.False(registry.ContainsRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME));
 
-		Assert.True(registry.PutRequest(SmQuestionWindow.UnionInviteMe, request));
+		Assert.True(registry.PutRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, request));
 
-		Assert.True(registry.ContainsRequest(SmQuestionWindow.UnionInviteMe));
-		Assert.False(registry.IsRequestSlotAvailable(SmQuestionWindow.UnionInviteMe));
-		Assert.True(registry.IsRequestSlotAvailable(SmQuestionWindow.BuddyListAddBuddyRequest));
+		Assert.True(registry.ContainsRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME));
+		Assert.False(registry.IsRequestSlotAvailable(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME));
+		Assert.True(registry.IsRequestSlotAvailable(SM_QUESTION_WINDOW.STR_BUDDYLIST_ADD_BUDDY_REQUEST));
 	}
 
 	[Fact]
@@ -40,19 +40,19 @@ public sealed class QuestionResponseRegistryTests
 	{
 		var registry = new QuestionResponseRegistry();
 		var request = new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite);
-		Assert.True(registry.PutRequest(SmQuestionWindow.UnionInviteMe, request));
+		Assert.True(registry.PutRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, request));
 
-		var deny = Assert.IsType<QuestionResponseDispatch>(registry.Respond(SmQuestionWindow.UnionInviteMe, responseCode: 0));
+		var deny = Assert.IsType<QuestionResponseDispatch>(registry.Respond(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, responseCode: 0));
 
-		Assert.Equal(SmQuestionWindow.UnionInviteMe, deny.QuestionId);
+		Assert.Equal(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, deny.QuestionId);
 		Assert.Equal(0, deny.ResponseCode);
 		Assert.False(deny.Accepted);
 		Assert.Same(request, deny.Request);
 		Assert.Equal(0, registry.Count);
-		Assert.Null(registry.Respond(SmQuestionWindow.UnionInviteMe, responseCode: 1));
+		Assert.Null(registry.Respond(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, responseCode: 1));
 
-		Assert.True(registry.PutRequest(SmQuestionWindow.UnionInviteMe, request));
-		var accept = Assert.IsType<QuestionResponseDispatch>(registry.Respond(SmQuestionWindow.UnionInviteMe, responseCode: 7));
+		Assert.True(registry.PutRequest(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, request));
+		var accept = Assert.IsType<QuestionResponseDispatch>(registry.Respond(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, responseCode: 7));
 		Assert.True(accept.Accepted);
 		Assert.Equal(7, accept.ResponseCode);
 		Assert.Equal(0, registry.Count);
@@ -63,12 +63,12 @@ public sealed class QuestionResponseRegistryTests
 	{
 		var registry = new QuestionResponseRegistry();
 		Assert.True(registry.PutRequest(
-			SmQuestionWindow.UnionInviteMe,
+			SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME,
 			new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite)));
 
-		Assert.True(registry.Remove(SmQuestionWindow.UnionInviteMe));
-		Assert.False(registry.Remove(SmQuestionWindow.UnionInviteMe));
-		Assert.Null(registry.Respond(SmQuestionWindow.UnionInviteMe, responseCode: 1));
+		Assert.True(registry.Remove(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME));
+		Assert.False(registry.Remove(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME));
+		Assert.Null(registry.Respond(SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, responseCode: 1));
 	}
 
 	[Fact]
@@ -76,10 +76,10 @@ public sealed class QuestionResponseRegistryTests
 	{
 		var registry = new QuestionResponseRegistry();
 		Assert.True(registry.PutRequest(
-			SmQuestionWindow.UnionInviteMe,
+			SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME,
 			new QuestionResponseRequest(1001, QuestionResponseRequestKind.LeagueInvite)));
 		Assert.True(registry.PutRequest(
-			SmQuestionWindow.BuddyListAddBuddyRequest,
+			SM_QUESTION_WINDOW.STR_BUDDYLIST_ADD_BUDDY_REQUEST,
 			new QuestionResponseRequest(1002, QuestionResponseRequestKind.FriendInvite)));
 
 		var dispatches = registry.DenyAll();
@@ -91,7 +91,7 @@ public sealed class QuestionResponseRegistryTests
 			Assert.False(dispatch.Accepted);
 		});
 		Assert.Equal(
-			new[] { SmQuestionWindow.UnionInviteMe, SmQuestionWindow.BuddyListAddBuddyRequest }.Order().ToArray(),
+			new[] { SM_QUESTION_WINDOW.STR_MSGBOX_UNION_INVITE_ME, SM_QUESTION_WINDOW.STR_BUDDYLIST_ADD_BUDDY_REQUEST }.Order().ToArray(),
 			dispatches.Select(dispatch => dispatch.QuestionId).Order().ToArray());
 		Assert.Equal(0, registry.Count);
 		Assert.Empty(registry.DenyAll());
