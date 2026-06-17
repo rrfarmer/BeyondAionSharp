@@ -82,12 +82,12 @@ public class TransformModel
         if (_owner is Npc npc)
         {
             npc.GetKnownList().ForEachPlayer(player =>
-                PacketSendUtility.SendPacket(player, new SmCustomSettings(npc.ObjectId, 0, npc.GetTypeValue(player).GetId(), 0)));
+                PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_CUSTOM_SETTINGS(npc.ObjectId, 0, npc.GetTypeValue(player).GetId(), 0)));
         }
         else if (_owner is Player player)
         {
             player.GetKnownList().ForEachNpc(npc =>
-                PacketSendUtility.SendPacket(player, new SmCustomSettings(npc.ObjectId, 0, npc.GetTypeValue(player).GetId(), 0)));
+                PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_CUSTOM_SETTINGS(npc.ObjectId, 0, npc.GetTypeValue(player).GetId(), 0)));
         }
     }
 

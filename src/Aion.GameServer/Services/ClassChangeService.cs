@@ -1,4 +1,5 @@
 using Aion.GameServer.Model;
+using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.QuestEngine.Model;
@@ -74,7 +75,7 @@ public class ClassChangeService
         player.GetCommonData().SetPlayerClass(nc);
         player.GetGameStats().UpdateStatsTemplate();
         player.GetController().UpgradePlayer();
-        PacketSendUtility.BroadcastPacket(player, new SmActionAnimation(player.GetObjectId(), SmActionAnimation.ClassChange, player.GetLevel()), true);
+        PacketSendUtility.BroadcastPacket(player, new SM_ACTION_ANIMATION(player.GetObjectId(), ActionAnimation.CLASS_CHANGE, player.GetLevel()), true);
         PacketSendUtility.BroadcastPacket(player, new SM_PLAYER_INFO(player));
         SkillLearnService.LearnNewSkills(player, 9, player.GetLevel());
 
