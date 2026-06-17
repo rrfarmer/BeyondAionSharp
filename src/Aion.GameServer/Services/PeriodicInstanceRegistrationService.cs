@@ -180,20 +180,20 @@ public sealed class PeriodicInstanceRegistrationService
 		return new PeriodicInstanceRegistrationBroadcastDispatchResult(plan, sentPackets, stoppedRegistrations);
 	}
 
-	public IReadOnlyList<SmAutoGroup> CreateOpenRegistrationPackets(
+	public IReadOnlyList<SM_AUTO_GROUP> CreateOpenRegistrationPackets(
 		Player player,
 		AutoGroupTable? autoGroups,
 		InstanceCooltimeTable? instanceCooltimes,
 		DateTimeOffset now)
 	{
 		if (autoGroups == null || instanceCooltimes == null)
-			return Array.Empty<SmAutoGroup>();
+			return Array.Empty<SM_AUTO_GROUP>();
 
 		int[] openedMaskIds;
 		lock (_sync)
 			openedMaskIds = _openedRegistrations.ToArray();
 
-		var packets = new List<SmAutoGroup>();
+		var packets = new List<SM_AUTO_GROUP>();
 		foreach (var maskId in openedMaskIds)
 		{
 			var autoGroup = autoGroups.GetTemplateByInstanceMaskId(maskId);
@@ -204,13 +204,13 @@ public sealed class PeriodicInstanceRegistrationService
 			if (player.GetPortalCooldownList().IsPortalUseDisabled(autoGroup.InstanceMapId))
 				continue;
 
-			packets.Add(new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: false));
+			packets.Add(new SM_AUTO_GROUP(maskId, SM_AUTO_GROUP.WND_ENTRY_ICON, false));
 		}
 
 		return packets;
 	}
 
-	public SmAutoGroup? CreateRequestPacket(Player player, int maskId, AutoGroupTable? autoGroups)
+	public SM_AUTO_GROUP? CreateRequestPacket(Player player, int maskId, AutoGroupTable? autoGroups)
 	{
 		// Java parity: PeriodicInstanceManager.handleRequest only checks whether the
 		// requested registration is open and whether the player is inside the level range.
@@ -226,7 +226,7 @@ public sealed class PeriodicInstanceRegistrationService
 		if (player.Level < autoGroup.MinLevel || player.Level > autoGroup.MaxLevel)
 			return null;
 
-		return new SmAutoGroup(autoGroup);
+		return new SM_AUTO_GROUP(maskId);
 	}
 
 	private static PeriodicInstanceRegistrationBroadcastPlan CreateRegistrationBroadcastPlan(
@@ -259,7 +259,7 @@ public sealed class PeriodicInstanceRegistrationService
 
 			var packets = new List<AionServerPacket>
 			{
-				new SmAutoGroup(autoGroup, SmAutoGroup.EntryIconWindowId, close: isClosed),
+				new SM_AUTO_GROUP(maskId, SM_AUTO_GROUP.WND_ENTRY_ICON, isClosed),
 			};
 			if (openingMessage != null)
 				packets.Add(openingMessage);
