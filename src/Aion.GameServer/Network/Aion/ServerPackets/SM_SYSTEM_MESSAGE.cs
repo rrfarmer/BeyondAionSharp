@@ -22263,6 +22263,24 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
         return new SM_SYSTEM_MESSAGE(1401614);
     }
 
+    /* The battle with Tiamat will automatically end in 30 minutes. */
+    public static SM_SYSTEM_MESSAGE IDTIAMAT_TIAMAT_COUNTDOWN_START()
+    {
+        return new SM_SYSTEM_MESSAGE(1401547);
+    }
+
+    /* The Empyrean Lord absorbed the Balaur Spiritualist's mental energy! */
+    public static SM_SYSTEM_MESSAGE IDTIAMAT_TIAMAT_DRAKAN_ON_DIE()
+    {
+        return new SM_SYSTEM_MESSAGE(1401551);
+    }
+
+    /* Tiamat has regained power and escaped to safety. */
+    public static SM_SYSTEM_MESSAGE IDTIAMAT_TIAMAT_COUNTDOWN_OVER()
+    {
+        return new SM_SYSTEM_MESSAGE(1401563);
+    }
+
     /* Canceled tuning of %0. */
     public static SM_SYSTEM_MESSAGE STR_MSG_ITEM_IDENTIFY_CANCELED(string itemL10n)
     {
