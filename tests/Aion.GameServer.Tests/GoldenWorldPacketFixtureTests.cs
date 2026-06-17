@@ -11,9 +11,13 @@ using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Spawns;
+using Aion.GameServer.Model.Templates.Items;
+using Aion.GameServer.Model.Templates.Items.Enums;
+using Aion.GameServer.Model.Templates.Restriction;
 using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Model.Templates.World;
+using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
@@ -62,6 +66,14 @@ public sealed class GoldenWorldPacketFixtureTests
 
     // SM_SELL_ITEM: the purchase-template buy-price-rate the fixture reads from TRADE_LIST_DATA (== Java side).
     private const int SellBuyPriceRate = 115;
+
+    // SM_INVENTORY_UPDATE_ITEM item/ItemInfoBlob seam: the non-equippable Item/ItemTemplate scalars (== Java side).
+    private const int ItemObjectId = 268500001;
+    private const int ItemTemplateId = 161000001;
+    private const int ItemMask = 0x1A2B;
+    private const int ItemDescL10n = 350123;
+    private const long ItemCount = 7L;
+    private const string ItemCreator = "Daeva";
 
     // SM_NPC_INFO real-Npc-ctor seam: the structurally-identical Npc/NpcTemplate/StatsTemplate scalars (== Java side).
     private const int NpcInfoObjectId = 740555;
@@ -347,6 +359,67 @@ public sealed class GoldenWorldPacketFixtureTests
         }
     }
 
+    // ---- item / ItemInfoBlob seam (SM_INVENTORY_UPDATE_ITEM) ----------------------------------------------------
+
+    /// <summary>
+    /// The FIRST golden seam that drives a packet through a live Item game-object + the ItemInfoBlob blob-writer family.
+    /// SM_INVENTORY_UPDATE_ITEM(player, item) defaults to ItemUpdateType.DEC_ITEM_USE -> ItemInfoBlob.GetFullBlob. The item
+    /// template is pinned to a NON-EQUIPPABLE group (ItemGroup.NONE -> GetValidEquipmentSlots()==0, IsWeapon/IsArmor/
+    /// IsTwoHandWeapon false) with no fusion / packCount 0 / not STIGMA_SHARD, so GetFullBlob adds EXACTLY ONE blob entry:
+    /// GENERAL_INFO. That entry reads ONLY Item + ItemTemplate scalars (GetItemMask()->template mask, GetItemCount(),
+    /// GetItemCreator(), SecondsUntilExpiration() [expireTime 0 -> 0, no clock], GetTemporaryExchangeTimeRemaining() [0],
+    /// GetItemId()) plus DataManager.ITEM_CLEAN_UP.HasAccountOrLegionWhStorabilityDisabled (empty bplist -> false). The host
+    /// packet also writes item.GetObjectId() + template.GetL10n() (ChatUtil.L10n(desc), pure scalar) + the DEC_ITEM_USE mask.
+    /// No live Player deref, no World/stones/enchant/godstone cascade, no DataManager beyond the bounded ITEM_CLEAN_UP holder.
+    /// Built IDENTICALLY to the Java oracle side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_INVENTORY_UPDATE_ITEM.json")]
+    public void CsharpInventoryUpdateItemMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(ItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var creatorJson = inputs.GetProperty("itemCreator");
+            string? creator = creatorJson.ValueKind == JsonValueKind.Null ? null : creatorJson.GetString();
+
+            var item = BuildSimpleItem(ItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, creator);
+            // player arg null: GetFullBlob only stashes it as blob owner; GENERAL_INFO never dereferences it.
+            var packet = new SM_INVENTORY_UPDATE_ITEM(null, item, ItemUpdateType.DEC_ITEM_USE);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_UPDATE_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a minimal non-equippable Item via the simple Item(objId, itemTemplate) ctor (== Java buildSimpleItem). The
+    /// template is directly constructed with itemId/mask/desc set, itemGroup NONE (no equip slots) and maxTuneCount pinned
+    /// to 0 (what AfterUnmarshal sets for a slot-0 item) so CanTune() is false identically on both sides. The objectId is
+    /// passed to the ctor directly (no IDFactory).
+    /// </summary>
+    private static Item BuildSimpleItem(int objectId, int itemId, int mask, int desc, long itemCount, string? creator)
+    {
+        var template = new ItemTemplate();
+        template.itemId = itemId;
+        template.mask = mask;
+        template.description = desc;
+        template.itemGroup = ItemGroup.NONE;
+        template.maxTuneCount = 0; // CanTune() == false (deterministic, identical both sides)
+        var item = new Item(objectId, template);
+        item.SetItemCount(itemCount);
+        item.SetItemCreator(creator);
+        return item;
+    }
+
     /// <summary>
     /// Build a REAL Npc through the full Npc(controller, spawn, template) ctor (== Java buildRealNpc), then make it
     /// deterministic: overwrite the IDFactory-assigned objectId with a pinned value and pin the npc.type field (so
@@ -430,6 +503,9 @@ public sealed class GoldenWorldPacketFixtureTests
         SetAutoProperty(staticData, nameof(StaticData.HouseDataDh), new HouseData());
         // SM_SELL_ITEM seam: TRADE_LIST_DATA carries one purchase template under the npc id (== Java side).
         SetAutoProperty(staticData, nameof(StaticData.TradeListDataDh), BuildTradeListData());
+        // SM_INVENTORY_UPDATE_ITEM seam: ITEM_CLEAN_UP with an empty (non-null) cleanup list -> GENERAL_INFO's
+        // HasAccountOrLegionWhStorabilityDisabled streams an empty list -> false (mirrors the Java empty-bplist seam).
+        SetAutoProperty(staticData, nameof(StaticData.ItemRestrictionCleanupDataDh), BuildItemCleanupData());
 
         var dmCtor = typeof(DataManager).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(StaticData) }, modifiers: null)!;
@@ -502,6 +578,12 @@ public sealed class GoldenWorldPacketFixtureTests
         var holder = new TradeListData();
         PutPrivateMapEntry(holder, "npcPurchaseTemplateData", NpcInfoNpcId, t);
         return holder;
+    }
+
+    /// <summary>Build an ItemRestrictionCleanupData with an empty (non-null) cleanup list (structurally == Java side).</summary>
+    private static ItemRestrictionCleanupData BuildItemCleanupData()
+    {
+        return new ItemRestrictionCleanupData { bplist = new List<ItemCleanupTemplate>() };
     }
 
     private static void SetField(object target, string fieldName, object value)
