@@ -228,6 +228,73 @@ public sealed class GoldenPlayerInfoFixtureTests
         }
     }
 
+    /// <summary>
+    /// More Player SM_* packets whose writeImpl reads ONLY the scalar HarnessPlayer's objectId/name/note/worldId/x/y/z
+    /// plus ctor scalars/strings. Mirrors the Java GoldenPlayerInfoFixtureGeneratorTest.generateGoldenPlayerStringPacketFixtures.
+    /// Java is the oracle.
+    ///  - SM_UPDATE_NOTE(player): writeD(objId) + writeS(pcd.GetNote()); note pinned identically to the Java side.
+    ///  - SM_GM_SEARCH(player): writeS("search " + GetName() + " " + GetWorldId() + " " + (int)GetX/Y/Z()). All scalar.
+    ///  - SM_TRANSFORM_IN_SUMMON(player, creatureObjectId): writeD(creatureObjectId) + writeS(GetName()) + writeD(objId).
+    ///  - SM_SHOW_NPC_ON_MAP(player, npcid, worldid, x, y, z): instanceId derived purely from the scalar WorldPosition
+    ///    (GetMapId()/IsInInstance()==false/GetInstanceId()==1). No con on any of these.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_UPDATE_NOTE.json")]
+    [InlineData("SM_GM_SEARCH.json")]
+    [InlineData("SM_TRANSFORM_IN_SUMMON.json")]
+    [InlineData("SM_SHOW_NPC_ON_MAP.json")]
+    public void CsharpPlayerStringPacketMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var packetName = fixture.RootElement.GetProperty("packet").GetString()!;
+
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            AionServerPacket packet;
+            switch (packetName)
+            {
+                case "SM_UPDATE_NOTE":
+                {
+                    var player = BuildScalarPlayer();
+                    player.GetCommonData().SetNote(inputs.GetProperty("note").GetString()!);
+                    packet = new SM_UPDATE_NOTE(player);
+                    break;
+                }
+                case "SM_GM_SEARCH":
+                    packet = new SM_GM_SEARCH(BuildScalarPlayer());
+                    break;
+                case "SM_TRANSFORM_IN_SUMMON":
+                    packet = new SM_TRANSFORM_IN_SUMMON(BuildScalarPlayer(), inputs.GetProperty("summonObject").GetInt32());
+                    break;
+                case "SM_SHOW_NPC_ON_MAP":
+                {
+                    var player = BuildScalarPlayer();
+                    packet = new SM_SHOW_NPC_ON_MAP(player,
+                        inputs.GetProperty("npcid").GetInt32(),
+                        inputs.GetProperty("worldid").GetInt32(),
+                        inputs.GetProperty("x").GetSingle(),
+                        inputs.GetProperty("y").GetSingle(),
+                        inputs.GetProperty("z").GetSingle());
+                    break;
+                }
+                default:
+                    throw new NotSupportedException($"No string Player reconstruction for {packetName}");
+            }
+
+            var actual = CaptureWriteImplPayload(packet, null!);
+            var actualHex = Convert.ToHexString(actual);
+
+            Assert.True(expectedHex == actualHex,
+                $"{packetName}/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
     /// <summary>Resolve the same ZoneName both sides use: "NONE" -> ZoneName.None, else ZoneName.CreateOrGet(name).</summary>
     private static Aion.GameServer.World.Zone.ZoneName ResolveZone(string name) =>
         name == "NONE"
