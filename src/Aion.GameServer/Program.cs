@@ -47,12 +47,13 @@ var builder = Host.CreateDefaultBuilder(args)
 			// IWorldNpcDropRegistrationLookup) is likewise retired: boot NPC spawn is now the faithful
 			// SpawnEngine.SpawnAll() (see GameServerBootstrapService), and faithful WalkManager/NpcAI cover
 			// random/route walk + AI state. The PlayerKisk*Cleanup death/despawn Funcs survive as a separate kisk pillar.
-			services.AddSingleton<PvpApRewardService>();
-			services.AddSingleton<PvpInstanceApRewardService>();
-			services.AddSingleton<PvpArenaApRewardService>();
-			services.AddSingleton<AturamSkyFortressApRewardService>();
-			services.AddSingleton<EternalBastionApRewardService>();
-			services.AddSingleton<StonespearReachApRewardService>();
+			// Reworked *ApRewardService stand-ins (PvpApRewardService/PvpInstanceApRewardService/
+			// PvpArenaApRewardService/AturamSkyFortressApRewardService/EternalBastionApRewardService/
+			// StonespearReachApRewardService) retired: invented Service+Result+Status blow-ups with NO Java
+			// counterpart class, dead-island (referenced only by Program.cs DI + each own file, 0 production/test
+			// consumers). The faithful AP-reward logic now lives 1:1 in the ported instance handlers
+			// (AturamSkyFortressInstance/EternalBastionInstance/StonespearReachInstance onDie -> AbyssPointsService.AddAp);
+			// the Pvp* ones had no faithful counterpart at all. Files deleted as orphans.
 			// Reworked WorldNpc DP/HP web (WorldNpcResourceStatsService/WorldNpcLifeStatsService/
 			// WorldNpcSoloDpRewardService/PvpDpRewardService/WorldNpcSkillResultCalculationService + the
 			// shared WorldNpcEffectResourceType enum) retired: dead closed graph, no live faithful consumer.
