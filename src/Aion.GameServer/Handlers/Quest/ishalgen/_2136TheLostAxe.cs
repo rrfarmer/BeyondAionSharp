@@ -41,11 +41,11 @@ public class _2136TheLostAxe : AbstractQuestHandler
             if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
             {
                 QuestService.StartQuest(env);
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                 return true;
             }
             else
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
         }
 
         if (qs == null)

@@ -16,13 +16,13 @@ public class ClassChangeService
         Race playerRace = player.GetRace();
         if (player.GetLevel() >= 9 && playerClass.IsStartingClass())
             PacketSendUtility.SendPacket(player,
-                new SmDialogWindow(0, GetClassSelectionDialogPageId(playerRace, playerClass), playerRace == Race.ELYOS ? 1006 : 2008));
+                new SM_DIALOG_WINDOW(0, GetClassSelectionDialogPageId(playerRace, playerClass), playerRace == Race.ELYOS ? 1006 : 2008));
     }
 
     public static void ChangeClassToSelection(Player player, int dialogActionId)
     {
         SetClass(player, GetSelectedPlayerClass(player.GetRace(), dialogActionId), true, true);
-        PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0)); // close dialog window
+        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0)); // close dialog window
     }
 
     public static void CompleteAscensionQuest(Player player)

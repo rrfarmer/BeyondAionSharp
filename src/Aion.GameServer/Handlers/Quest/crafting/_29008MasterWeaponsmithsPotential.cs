@@ -61,7 +61,7 @@ public class _29008MasterWeaponsmithsPotential : AbstractQuestHandler
                                 return true;
                             qs.SetQuestVarById(0, 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         case DialogAction.SETPRO20:
                             if (!GiveQuestItem(env, 152206709, 1))
@@ -70,7 +70,7 @@ public class _29008MasterWeaponsmithsPotential : AbstractQuestHandler
                                 return true;
                             qs.SetQuestVarById(0, 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                     }
                     return false;

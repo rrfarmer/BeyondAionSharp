@@ -37,12 +37,12 @@ public class _11465MysteriousSeed : AbstractQuestHandler
             if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
             {
                 QuestService.StartQuest(env);
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                 return true;
             }
             else if (env.GetDialogActionId() == DialogAction.QUEST_REFUSE_1)
             {
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                 return true;
             }
         }

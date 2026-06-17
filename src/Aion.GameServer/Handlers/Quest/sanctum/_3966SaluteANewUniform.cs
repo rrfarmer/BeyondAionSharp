@@ -59,7 +59,7 @@ public class _3966SaluteANewUniform : AbstractQuestHandler
                 {
                     qs.SetQuestVar(++var);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -76,7 +76,7 @@ public class _3966SaluteANewUniform : AbstractQuestHandler
                 {
                     qs.SetQuestVar(++var);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -94,7 +94,7 @@ public class _3966SaluteANewUniform : AbstractQuestHandler
                     qs.SetQuestVar(++var);
                     qs.SetStatus(QuestStatus.REWARD);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else

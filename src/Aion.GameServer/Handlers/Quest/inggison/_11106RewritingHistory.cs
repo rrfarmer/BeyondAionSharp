@@ -85,7 +85,7 @@ public class _11106RewritingHistory : AbstractQuestHandler
                         if (GiveQuestItem(env, 182206781, 1))
                             qs.SetQuestVarById(0, var + 1);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;
@@ -107,7 +107,7 @@ public class _11106RewritingHistory : AbstractQuestHandler
                             qs.SetQuestVarById(0, var + 1);
                         qs.SetStatus(QuestStatus.REWARD);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;

@@ -89,18 +89,18 @@ public class _1901KrallicPotion : AbstractQuestHandler
                                     qs.SetQuestVarById(0, 5); // Reward (5)
                                     qs.SetStatus(QuestStatus.REWARD);
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                                 case DialogAction.SETPRO2:
                                     qs.SetQuestVarById(0, 1); // 1
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                                 case DialogAction.SETPRO7:
                                     qs.SetQuestVarById(0, 5); // 5
                                     qs.SetStatus(QuestStatus.REWARD);
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                                 default:
                                     return SendQuestStartDialog(env);
@@ -117,13 +117,13 @@ public class _1901KrallicPotion : AbstractQuestHandler
                                 case DialogAction.SETPRO3:
                                     qs.SetQuestVarById(0, var + 1); // var==2
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                                 case DialogAction.SETPRO6:
                                     RemoveQuestItem(env, 182206000, 1);
                                     qs.SetQuestVarById(0, var + 1); // var==5
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                             }
                             return false;
@@ -135,7 +135,7 @@ public class _1901KrallicPotion : AbstractQuestHandler
                                 case DialogAction.SETPRO4:
                                     qs.SetQuestVarById(0, var + 1); // var==3
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                             }
                             return false;
@@ -150,7 +150,7 @@ public class _1901KrallicPotion : AbstractQuestHandler
                                             return true;
                                     qs.SetQuestVarById(0, var + 1); // var==4
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                     return true;
                             }
                             break;

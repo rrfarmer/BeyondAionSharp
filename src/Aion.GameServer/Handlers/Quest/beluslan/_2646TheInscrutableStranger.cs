@@ -83,7 +83,7 @@ public class _2646TheInscrutableStranger : AbstractQuestHandler
                                 return true;
                             qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         }
                         break;
@@ -103,7 +103,7 @@ public class _2646TheInscrutableStranger : AbstractQuestHandler
                             RemoveQuestItem(env, 182204515, 1);
                             qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         }
                         break;
@@ -123,7 +123,7 @@ public class _2646TheInscrutableStranger : AbstractQuestHandler
                             RemoveQuestItem(env, 182204516, 1);
                             qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         }
                         break;

@@ -72,7 +72,7 @@ public class _11009MeiriaFriendlySuggestion : AbstractQuestHandler
                             RemoveQuestItem(env, 182206711, 1);
                             qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         }
                     }
@@ -89,7 +89,7 @@ public class _11009MeiriaFriendlySuggestion : AbstractQuestHandler
                             RemoveQuestItem(env, 182206711, 1);
                             qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             if (GiveQuestItem(env, 182206712, 1))
                                 return true;
                             break;
@@ -109,7 +109,7 @@ public class _11009MeiriaFriendlySuggestion : AbstractQuestHandler
                             qs.SetQuestVar(3);
                             qs.SetStatus(QuestStatus.REWARD);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         }
                     }

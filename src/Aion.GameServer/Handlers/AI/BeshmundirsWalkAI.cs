@@ -21,7 +21,7 @@ public class BeshmundirsWalkAI : ActionItemNpcAI
 
     protected override void HandleUseItemFinish(Player player)
     {
-        PacketSendUtility.SendPacket(player, new SmDialogWindow(GetObjectId(), 10)); // Initial dialog
+        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(GetObjectId(), 10)); // Initial dialog
     }
 
     public override bool OnDialogSelect(Player player, int dialogActionId, int questId, int extendedRewardIndex)
@@ -39,7 +39,7 @@ public class BeshmundirsWalkAI : ActionItemNpcAI
                 }
                 if (player.GetPlayerGroup().IsLeader(player))
                 {
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(GetObjectId(), 4762)); // Path selection
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(GetObjectId(), 4762)); // Path selection
                 }
                 else
                 {
@@ -58,7 +58,7 @@ public class BeshmundirsWalkAI : ActionItemNpcAI
                 int pathL10nId = dialogActionId == DialogAction.SELECT_NONE_1 ? 902051 : 902052;
                 AIActions.AddRequest(this, player, SM_QUESTION_WINDOW.STR_INSTANCE_DUNGEON_WITH_DIFFICULTY_ENTER_CONFIRM, request, "300170000",
                     ChatUtil.L10n(pathL10nId));
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(GetObjectId(), 4762)); // Path selection
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(GetObjectId(), 4762)); // Path selection
                 break;
         }
         return true;

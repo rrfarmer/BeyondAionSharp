@@ -35,7 +35,7 @@ public class _28405KexkrasPast : AbstractQuestHandler
         if (env.GetTargetId() == 0 && env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
         {
             QuestService.StartQuest(env);
-            PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
             return true;
         }
 

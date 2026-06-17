@@ -75,7 +75,7 @@ public class _30202SuspiciousCeremony : AbstractQuestHandler
                     RemoveQuestItem(env, 182209602, 1);
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -92,7 +92,7 @@ public class _30202SuspiciousCeremony : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else

@@ -91,7 +91,7 @@ public class _1926SecretLibraryAccess : AbstractQuestHandler
                         qs.SetStatus(QuestStatus.REWARD);
                         UpdateQuestStatus(env);
                     }
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 0));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                     return true;
                 }
                 else

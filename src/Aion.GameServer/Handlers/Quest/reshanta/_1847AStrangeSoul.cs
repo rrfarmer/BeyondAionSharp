@@ -38,11 +38,11 @@ public class _1847AStrangeSoul : AbstractQuestHandler
             if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
             {
                 QuestService.StartQuest(env);
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                 return true;
             }
             else
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
         }
         else if (qs.GetStatus() == QuestStatus.START)
         {
@@ -54,7 +54,7 @@ public class _1847AStrangeSoul : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
             }
@@ -66,7 +66,7 @@ public class _1847AStrangeSoul : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
             }
@@ -79,7 +79,7 @@ public class _1847AStrangeSoul : AbstractQuestHandler
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     qs.SetStatus(QuestStatus.REWARD);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return SendQuestEndDialog(env);
                 }
             }

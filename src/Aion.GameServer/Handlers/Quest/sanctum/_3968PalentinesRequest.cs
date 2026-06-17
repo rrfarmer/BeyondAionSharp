@@ -61,7 +61,7 @@ public class _3968PalentinesRequest : AbstractQuestHandler
                     {
                         qs.SetQuestVar(++var);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     }
                     return true;
                 }
@@ -81,7 +81,7 @@ public class _3968PalentinesRequest : AbstractQuestHandler
                     {
                         qs.SetQuestVar(++var);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     }
                     return true;
                 }
@@ -102,7 +102,7 @@ public class _3968PalentinesRequest : AbstractQuestHandler
                         qs.SetQuestVar(++var);
                         qs.SetStatus(QuestStatus.REWARD);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     }
                     return true;
                 }

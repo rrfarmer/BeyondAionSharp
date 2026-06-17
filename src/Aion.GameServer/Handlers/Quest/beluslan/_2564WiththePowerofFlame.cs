@@ -83,7 +83,7 @@ public class _2564WiththePowerofFlame : AbstractQuestHandler
                     {
                         qs.SetQuestVarById(0, var + 1);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;
@@ -102,7 +102,7 @@ public class _2564WiththePowerofFlame : AbstractQuestHandler
                     {
                         qs.SetQuestVarById(0, var + 1);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;
@@ -122,7 +122,7 @@ public class _2564WiththePowerofFlame : AbstractQuestHandler
                         qs.SetQuestVarById(0, var + 1);
                         qs.SetStatus(QuestStatus.REWARD);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;

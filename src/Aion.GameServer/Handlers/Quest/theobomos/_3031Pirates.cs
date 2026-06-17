@@ -45,7 +45,7 @@ public class _3031Pirates : AbstractQuestHandler
                         return SendQuestDialog(env, 4762);
                     case DialogAction.SETPRO1:
                         QuestService.StartQuest(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                         return true;
                     default:
                         return SendQuestStartDialog(env);

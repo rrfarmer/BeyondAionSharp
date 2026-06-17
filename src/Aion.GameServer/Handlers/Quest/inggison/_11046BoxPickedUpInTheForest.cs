@@ -38,10 +38,10 @@ public class _11046BoxPickedUpInTheForest : AbstractQuestHandler
             {
                 case DialogAction.QUEST_ACCEPT_1:
                     QuestService.StartQuest(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                     return true;
                 case DialogAction.QUEST_REFUSE_1:
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                     return true;
             }
         }

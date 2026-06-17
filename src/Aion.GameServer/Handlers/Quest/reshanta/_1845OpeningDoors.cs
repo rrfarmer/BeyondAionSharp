@@ -39,7 +39,7 @@ public class _1845OpeningDoors : AbstractQuestHandler
             if (env.GetDialogActionId() == DialogAction.QUEST_ACCEPT_1)
             {
                 qs.SetStatus(QuestStatus.START);
-                PacketSendUtility.SendPacket(player, new SmDialogWindow(0, 0));
+                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(0, 0));
                 return true;
             }
         }
@@ -53,7 +53,7 @@ public class _1845OpeningDoors : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -70,7 +70,7 @@ public class _1845OpeningDoors : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else

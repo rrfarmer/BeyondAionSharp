@@ -71,7 +71,7 @@ public class _11012PracticalNursing : AbstractQuestHandler
                     qs.SetQuestVar(++var);
                     UpdateQuestStatus(env);
                     RemoveQuestItem(env, 182206715, 1);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -88,7 +88,7 @@ public class _11012PracticalNursing : AbstractQuestHandler
                     qs.SetQuestVar(++var);
                     UpdateQuestStatus(env);
                     RemoveQuestItem(env, 182206715, 1);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -105,7 +105,7 @@ public class _11012PracticalNursing : AbstractQuestHandler
                     qs.SetStatus(QuestStatus.REWARD);
                     UpdateQuestStatus(env);
                     RemoveQuestItem(env, 182206715, 1);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else

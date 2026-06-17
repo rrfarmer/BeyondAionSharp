@@ -51,7 +51,7 @@ public class _18409GroupTiamatsPowerUnleashed : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else

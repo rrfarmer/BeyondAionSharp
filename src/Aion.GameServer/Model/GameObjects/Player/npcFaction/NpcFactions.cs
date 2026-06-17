@@ -77,10 +77,10 @@ public class NpcFactions
         NpcFaction npcFaction = GetFactionById(npcFactionTemplate.GetId());
         if (npcFaction == null || !npcFaction.IsActive())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDialogWindow(targetObjectId, 1438));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1438));
             return;
         }
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDialogWindow(targetObjectId, 1353));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1353));
         LeaveNpcFaction(npcFaction);
     }
 
@@ -127,18 +127,18 @@ public class NpcFactions
             }
             if (!canEnter)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDialogWindow(targetObjectId, 1098));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1098));
                 return;
             }
         }
         if (owner.GetLevel() < npcFactionTemplate.GetMinLevel() || owner.GetLevel() > npcFactionTemplate.GetMaxLevel())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDialogWindow(targetObjectId, 1182));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1182));
             return;
         }
         if (owner.GetRace() != npcFactionTemplate.GetRace() && npcFactionTemplate.GetRace() != Aion.GameServer.Model.Race.NPC)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDialogWindow(targetObjectId, 1097));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1097));
             return;
         }
         if (npcFaction != null && npcFaction.IsActive())
@@ -154,7 +154,7 @@ public class NpcFactions
         if (npcFaction == null || !npcFaction.IsActive())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FACTION_JOIN(npcFactionTemplate.GetL10n()));
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmDialogWindow(targetObjectId, 1012));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1012));
             SetActive(npcFactionId);
             SendDailyQuest();
         }

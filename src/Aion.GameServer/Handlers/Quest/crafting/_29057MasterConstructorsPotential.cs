@@ -75,7 +75,7 @@ public class _29057MasterConstructorsPotential : AbstractQuestHandler
                                 player.GetInventory().DecreaseKinah(167500);
                                 qs.SetQuestVarById(0, 1);
                                 UpdateQuestStatus(env);
-                                PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                 return true;
                             }
                             else
@@ -88,7 +88,7 @@ public class _29057MasterConstructorsPotential : AbstractQuestHandler
                                 player.GetInventory().DecreaseKinah(223000);
                                 qs.SetQuestVarById(0, 1);
                                 UpdateQuestStatus(env);
-                                PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                 return true;
                             }
                             else

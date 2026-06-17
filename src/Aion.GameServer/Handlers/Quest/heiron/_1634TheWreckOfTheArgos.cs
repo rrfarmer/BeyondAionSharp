@@ -71,7 +71,7 @@ namespace Aion.GameServer.Handlers.Quest
                                 {
                                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 0));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                                     return true;
                                 }
                         }
@@ -88,7 +88,7 @@ namespace Aion.GameServer.Handlers.Quest
                                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                                     RemoveQuestItem(env, 182201760, 1);
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 0));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                                     return true;
                                 }
                         }
@@ -106,7 +106,7 @@ namespace Aion.GameServer.Handlers.Quest
                                     RemoveQuestItem(env, 182201760, 1);
                                     qs.SetStatus(QuestStatus.REWARD);
                                     UpdateQuestStatus(env);
-                                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 0));
+                                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                                     return true;
                                 }
                         }

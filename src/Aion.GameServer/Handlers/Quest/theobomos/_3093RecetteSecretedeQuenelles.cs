@@ -68,7 +68,7 @@ public class _3093RecetteSecretedeQuenelles : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -85,7 +85,7 @@ public class _3093RecetteSecretedeQuenelles : AbstractQuestHandler
                 {
                     qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else
@@ -103,7 +103,7 @@ public class _3093RecetteSecretedeQuenelles : AbstractQuestHandler
                     GiveQuestItem(env, 182208052, 1);
                     qs.SetStatus(QuestStatus.REWARD);
                     UpdateQuestStatus(env);
-                    PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                    PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                     return true;
                 }
                 else

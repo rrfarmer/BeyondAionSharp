@@ -78,7 +78,7 @@ public class _1643TheStarOfHeiron : AbstractQuestHandler
                                 qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                                 RemoveQuestItem(env, 182201764, 1);
                                 UpdateQuestStatus(env);
-                                PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 0));
+                                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                                 SpawnForFiveMinutes(204614, player.GetWorldMapInstance(), (float)1591.4327, (float)2774.2283, (float)127.63001, (byte)0);
                                 return true;
                             }
@@ -86,7 +86,7 @@ public class _1643TheStarOfHeiron : AbstractQuestHandler
                             {
                                 qs.SetStatus(QuestStatus.REWARD);
                                 UpdateQuestStatus(env);
-                                PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 0));
+                                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 0));
                                 return true;
                             }
                     }
@@ -106,7 +106,7 @@ public class _1643TheStarOfHeiron : AbstractQuestHandler
                             {
                                 qs.SetQuestVarById(0, qs.GetQuestVarById(0) + 1);
                                 UpdateQuestStatus(env);
-                                PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                                PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                                 Npc npc = (Npc)env.GetVisibleObject();
                                 ThreadPoolManager.GetInstance().Schedule(ct =>
                                 {

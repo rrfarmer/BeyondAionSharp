@@ -68,7 +68,7 @@ public class _1003IllegalLogging : AbstractQuestHandler
                         {
                             qs.SetQuestVarById(0, var + 1);
                             UpdateQuestStatus(env);
-                            PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                            PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                             return true;
                         }
                         break;

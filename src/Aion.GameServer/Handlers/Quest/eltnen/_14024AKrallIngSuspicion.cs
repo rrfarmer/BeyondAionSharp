@@ -116,7 +116,7 @@ public class _14024AKrallIngSuspicion : AbstractQuestHandler
                     {
                         qs.SetQuestVarById(0, var + 1);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;
@@ -126,7 +126,7 @@ public class _14024AKrallIngSuspicion : AbstractQuestHandler
                         PlayQuestMovie(env, 50);
                         qs.SetQuestVarById(0, var + 1);
                         UpdateQuestStatus(env);
-                        PacketSendUtility.SendPacket(player, new SmDialogWindow(env.GetVisibleObject().GetObjectId(), 10));
+                        PacketSendUtility.SendPacket(player, new SM_DIALOG_WINDOW(env.GetVisibleObject().GetObjectId(), 10));
                         return true;
                     }
                     return false;
