@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using Aion.Commons.Scripting.Metadata;
 using Microsoft.Extensions.Logging;
@@ -45,7 +46,24 @@ public class OnClassLoadUnloadListener : ClassListener
             if (!m.IsStatic)
                 continue;
 
-            if (m.GetCustomAttribute(annotationClass) != null)
+            // Infra divergence guard (gameplay-faithful / infra-idiomatic): the C# ScriptManager discovers handler
+            // candidates by scanning every loaded assembly (vs Java compiling a source dir). When the host has loaded
+            // unrelated assemblies (e.g. the test platform), reflecting their custom attributes can raise a
+            // TypeLoad/FileNotFoundException because an attribute type the method declares is not resolvable in this
+            // runtime. Such a method is never an Aion @OnClassLoad/@OnClassUnload hook, so skip it. In production
+            // (game-server assemblies only) the attribute always resolves and this never triggers, so behaviour is
+            // identical to Java's source-dir scan.
+            bool hasAnnotation;
+            try
+            {
+                hasAnnotation = m.GetCustomAttribute(annotationClass) != null;
+            }
+            catch (Exception e) when (e is TypeLoadException || e is FileNotFoundException || e is FileLoadException)
+            {
+                continue;
+            }
+
+            if (hasAnnotation)
             {
                 try
                 {

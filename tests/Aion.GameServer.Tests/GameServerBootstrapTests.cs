@@ -209,6 +209,110 @@ public sealed class GameServerBootstrapTests
 		await bootstrap.StopAsync(CancellationToken.None);
 	}
 
+	[Fact]
+	public async Task GameServerBootstrap_RealSpawnDataMaterializesNpcsIntoWorld()
+	{
+		// Spawn-data-backed integration proof: unlike the minimal-fixture tests above (which seed a temp
+		// static_data dir with a single item and assert an EMPTY world), this test boots the REAL game-server/data
+		// + cache through the production DataManager.LoadAsync(repoRoot) path (the same real-data load proven by
+		// RealStaticDataLoadIntegrationTests) so SPAWNS_DATA + WORLD_MAPS_DATA are populated, brings up the real
+		// boot machinery (DataManager + World maps + IDFactory + ThreadPool + the AIEngine/ZoneService/GeoService
+		// engines the spawn path needs), then drives the faithful SpawnEngine spawn path for a known starter map and
+		// asserts the World object store materializes real Npc instances. This is the END-TO-END NPC-spawn proof:
+		// before the SPAWNS_DATA fix, DataManager.SPAWNS_DATA was a hollow singleton returning [] for every world,
+		// so zero NPCs spawned at boot. It guards that the fix actually turns spawn templates into live world NPCs.
+		//
+		// SCOPE NOTE: this drives the spawn path for a single regular map (Sanctum 110010000) via the faithful
+		// SpawnEngine.SpawnObject, NOT the whole-world SpawnEngine.SpawnAll(). SpawnAll() iterates every WorldMap's
+		// every twin instance and, per instance, calls HousingService.SpawnHouses() — which (a) needs a live DB
+		// (HousingService ctor -> PlayerDAO.GetUsedIDs() returns null on no-DB, the documented #2 deferral; Java
+		// NPEs identically and does not guard it) and (b) re-spawns the same address-cached House object into each
+		// of a map's multiple twin instances (e.g. Heiron 210040000 has beginner_twin_count=3 => 4 instances),
+		// colliding on the House objectId in World.StoreObject. Both are pre-existing whole-world-boot concerns
+		// orthogonal to proving spawn materialization, so this guard scopes to the deterministic single-map spawn.
+		using var dataManagerGuard = DataManagerSingletonGuard.Capture();
+		var repoRoot = StaticDataFixture.FindRepoRoot(AppContext.BaseDirectory);
+		var cacheFile = repoRoot is null
+			? null
+			: System.IO.Path.Combine(repoRoot, "game-server", "cache", "static_data.xml");
+		if (cacheFile is null || !File.Exists(cacheFile))
+			return; // Real game-server data/cache not present (e.g. data-less CI checkout); skip the spawn integration check.
+
+		// Load + register the real DataManager (the same DataManager.LoadAsync(repoRoot) the production
+		// StaticDataService uses). Register before constructing any engine singleton: some engine ctors read
+		// DataManager.* (e.g. ZoneService reads ZONE_DATA), and Java's engine getInstance() block runs after
+		// DataManager.getInstance().
+		using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+		var dataManager = await DataManager.LoadAsync(
+			repoRoot!,
+			cacheDirectory: null,
+			validateWhenCacheChanges: false,
+			logger: null,
+			cancellationToken: cts.Token);
+		DataManager.RegisterInstance(dataManager);
+
+		// Java parity: World() ctor loads all world maps (WORLD_MAPS_DATA -> new WorldMap(template)); bind the
+		// World + IDFactory + ThreadPoolManager singleton bridges the spawn path reads (World.GetInstance() in
+		// BringIntoWorld, IDFactory.GetInstance().NextId() in every VisibleObject ctor).
+		var world = new GameWorld(NullLogger<GameWorld>.Instance);
+		world.LoadWorldMaps(DataManager.WORLD_MAPS_DATA);
+		GameWorld.RegisterInstance(world);
+		IDFactory.RegisterInstance(new IDFactory());
+		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
+		ThreadPoolManager.RegisterInstance(threadPoolManager);
+
+		// Java parity: GameServer.main inits the engines before the spawn path. The NPC-spawn path needs these
+		// three: each spawned Npc resolves its AI by name via AIEngine.NewAI (its ScriptManager.Load scans the
+		// loaded assemblies for [AIName] handlers), and Npc OnAfterSpawn reads the per-world geo/zone maps that
+		// GeoService.Init()/ZoneService.Init() seed for every WORLD_MAPS_DATA map (an empty GeoMap is created per
+		// world even when geo files are disabled, so WorldHasTerrainMaterials no longer KeyNotFounds).
+		await Aion.GameServer.Ai.AIEngine.GetInstance().InitAsync(cts.Token);
+		await Aion.GameServer.World.Zone.ZoneService.GetInstance().InitAsync(cts.Token);
+		await Aion.GameServer.World.Geo.GeoService.GetInstance().InitAsync(cts.Token);
+
+		// SPAWNS_DATA must carry real spawn groups for Sanctum (proven by RealStaticDataLoadIntegrationTests too).
+		var sanctumSpawns = DataManager.SPAWNS_DATA.GetSpawnsByWorldId(110010000);
+		Assert.NotEmpty(sanctumSpawns);
+
+		// Drive the faithful SpawnEngine spawn path for Sanctum's main instance: SpawnEngine.SpawnObject ->
+		// VisibleObjectSpawner.SpawnNpc -> new Npc (AI + geo/zone) -> BringIntoWorld -> World.StoreObject/Spawn,
+		// i.e. the exact pipeline SpawnEngine.SpawnAll() runs per regular NPC. This materializes real Npc instances
+		// into the World _allObjects store from the real SPAWNS_DATA.
+		var sanctumInstanceId = world.GetWorldMap(110010000).GetMainWorldMapInstance().GetInstanceId();
+		var spawnedNpcs = 0;
+		foreach (var group in sanctumSpawns)
+		{
+			if (group.GetHandlerType() != null || group.IsTemporarySpawn() || group.HasPool())
+				continue; // skip handler/pool/temporary groups — assert on the plain regular-NPC spawns
+			foreach (var template in group.GetSpawnTemplates())
+			{
+				if (Aion.GameServer.SpawnEngine.SpawnEngine.SpawnObject(template, sanctumInstanceId) != null)
+					spawnedNpcs++;
+			}
+		}
+
+		// END-TO-END SPAWN PROOF: real spawn templates became live VisibleObjects in the World store.
+		// (SpawnObject returns a VisibleObject for each spawned template — most are Npc, a few Sanctum spawns are
+		// Gatherable (npcId 400000-499999), so the Npc-only count is a lower-bound <= spawnedNpcs, not equal.)
+		Assert.True(spawnedNpcs > 0, "no regular spawns materialized from real Sanctum SPAWNS_DATA");
+		Assert.True(world.ObjectCount > 0, $"World empty after spawning real Sanctum NPCs (ObjectCount={world.ObjectCount})");
+		var sanctumNpcs = 0;
+		world.GetWorldMap(110010000).ForEachObject(o => { if (o is Aion.GameServer.Model.GameObjects.Npc) sanctumNpcs++; });
+		Assert.True(sanctumNpcs > 0, "no Npc instances materialized into Sanctum");
+		// Every Sanctum spawn enters the single World store; a few of the spawned templates are gatherables or
+		// relocate via their controller, so the World count tracks the spawn calls within a small delta rather than
+		// matching exactly (data-version sensitive). Assert it is populated and on the same order as the spawn calls.
+		Assert.True(world.ObjectCount >= sanctumNpcs, $"World store ({world.ObjectCount}) < Sanctum Npc count ({sanctumNpcs})");
+		// Known Sanctum NPC Euterpe (npc 798173) is among the regular spawns -> proves a real template id resolved.
+		var euterpeSpawned = false;
+		world.GetWorldMap(110010000).ForEachObject(o =>
+		{
+			if (o is Aion.GameServer.Model.GameObjects.Npc npc && npc.GetNpcId() == 798173)
+				euterpeSpawned = true;
+		});
+		Assert.True(euterpeSpawned, "known Sanctum NPC 798173 (Euterpe) did not spawn into the world");
+	}
+
 	private static async Task WaitUntilAsync(Func<bool> condition)
 	{
 		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));

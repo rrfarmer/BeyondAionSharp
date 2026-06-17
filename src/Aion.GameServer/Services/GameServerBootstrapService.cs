@@ -62,6 +62,12 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		var usedIds = await _usedIdRepository.LoadUsedIdsAsync(cancellationToken);
 		_idFactory.LockIds(usedIds);
+		// Java parity: GameServer.main initializes IDFactory.getInstance() before DataManager/spawns; every
+		// VisibleObject ctor (Npc/Gatherable/FlyRing/...) takes its objectId from IDFactory.getInstance().nextId().
+		// Bind the DI-created instance to the Java-style static accessor here (mirroring the ThreadPoolManager/World/
+		// DataManager singleton bridges) so SpawnEngine.SpawnAll() and the location-init spawns can allocate ids.
+		// Idempotent (RegisterInstance overwrites); production also relies on this bind for the spawn path.
+		IDFactory.RegisterInstance(_idFactory);
 		_logger.LogInformation(
 			"IDFactory initialized with {Count} reserved IDs ({PreloadedCount} preloaded from DB)",
 			_idFactory.GetUsedCount(),
@@ -96,6 +102,19 @@ public sealed class GameServerBootstrapService : IHostedService
 			Aion.GameServer.Services.Cron.CronService.InitSingleton(
 				typeof(Aion.GameServer.Utils.Cron.ThreadPoolManagerRunnableRunner),
 				Aion.GameServer.Configs.Main.GSConfig.TIME_ZONE_ID ?? System.TimeZoneInfo.Local);
+
+		// Java parity: GameServer.main inits the engines in parallel (QuestEngine/AIEngine/InstanceEngine/
+		// ChatProcessor/ZoneService/GeoService.getInstance() -> GameEngine::init, line 101-102) right after
+		// DataManager.getInstance() and BEFORE the location-init cluster + SpawnEngine.spawnAll(). This ordering is
+		// load-bearing: every Npc spawned by VortexService/SiegeService/SpawnEngine resolves its AI by name via
+		// AIEngine.NewAI, so the AIEngine (and the other engines) MUST be initialized before any spawn path runs.
+		// (DataManager + World are already registered above, so engines that touch NPC_DATA/WorldMapInstance during
+		// init resolve them.) Previously this block sat just before SpawnEngine.spawnAll(), i.e. AFTER the
+		// location-init cluster's spawning services (VortexService.initVortexLocations) — an ordering bug that
+		// surfaced only once the spawn path was driven with real spawn data.
+		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
+		if (engineTasks.Length > 0)
+			await Task.WhenAll(engineTasks);
 
 		// DropRegistrationService.getInstance() (GameServer.main:108): empty ctor (drop-table registration happens
 		// per-NPC-death at runtime via RegisterDrop). Bounded singleton touch, dep-clean.
@@ -152,10 +171,6 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		// ChallengeTaskService.getInstance() (GameServer.main:124): ctor initializes empty task maps. Dep-clean.
 		Aion.GameServer.Services.ChallengeTaskService.GetInstance();
-
-		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
-		if (engineTasks.Length > 0)
-			await Task.WhenAll(engineTasks);
 
 		// Java parity: GameServer.main calls SpawnEngine.spawnAll() after RiftService.initRiftLocations()
 		// and HousingService init, before RiftService.initRifts(). This is the single boot NPC-spawn path:
