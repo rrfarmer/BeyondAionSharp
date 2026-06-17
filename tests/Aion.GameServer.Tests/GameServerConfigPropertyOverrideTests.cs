@@ -231,6 +231,122 @@ public sealed class GameServerConfigPropertyOverrideTests
         }
     }
 
+    [Fact]
+    public void ExplicitOverride_DiffersFromAnnotatedDefault_AcrossBatchC2Holders()
+    {
+        try
+        {
+            // Baseline: empty properties -> annotated [Property] defaults for the batch-C2 holders.
+            RestoreBatchC2Defaults();
+            Assert.False(HTMLConfig.ENABLE_HTML_WELCOME);          // default false
+            Assert.Equal("UTF-8", HTMLConfig.HTML_ENCODING);       // default UTF-8
+            Assert.False(InGameShopConfig.ENABLE_IN_GAME_SHOP);    // default false
+            Assert.True(InGameShopConfig.ALLOW_GIFTS);             // default true
+            Assert.Equal(1, InstanceConfig.INSTANCE_COOLDOWN_RATE); // default 1
+            Assert.Empty(InstanceConfig.INSTANCE_COOLDOWN_RATE_EXCLUDED_MAPS); // default empty set
+            Assert.Equal(86400, LegionConfig.LEGION_DISBAND_TIME); // default 86400
+            Assert.True(LegionConfig.LEGION_WAREHOUSE);            // default true
+            Assert.True(LoggingConfig.LOG_AUDIT);                  // default true
+            Assert.False(LoggingConfig.LOG_KILL);                 // default false
+            Assert.Equal(0L, PlayerTransferConfig.MAX_KINAH);     // default 0
+            Assert.Equal("*", PlayerTransferConfig.REMOVE_SKILL_LIST); // default *
+            Assert.Equal(100, PricesConfig.DEFAULT_PRICES);       // default 100
+            Assert.Equal(20, PricesConfig.VENDOR_SELL_MODIFIER);  // default 20
+            Assert.False(PunishmentConfig.PUNISHMENT_ENABLE);     // default false
+            Assert.Equal(1440, PunishmentConfig.PUNISHMENT_TIME); // default 1440
+
+            // Override every probed key to a value that differs from the [Property] default; prove flow-through.
+            var props = new JavaProperties();
+            props.SetProperty("gameserver.html.welcome.enable", "true");
+            props.SetProperty("gameserver.html.encoding", "ISO-8859-1");
+            props.SetProperty("gameserver.ingameshop.enable", "true");
+            props.SetProperty("gameserver.ingameshop.allow.gift", "false");
+            props.SetProperty("gameserver.instance.cooldown_rate", "3");
+            props.SetProperty("gameserver.instance.cooldown_rate.excluded_maps", "300080000, 300090000, 300060000");
+            props.SetProperty("gameserver.legion.disbandtime", "172800");
+            props.SetProperty("gameserver.legion.warehouse", "false");
+            props.SetProperty("gameserver.log.audit", "false");
+            props.SetProperty("gameserver.log.kill", "true");
+            props.SetProperty("ptransfer.max.kinah", "5000000000"); // > int range: proves long binding
+            props.SetProperty("ptransfer.remove.skills.list", "1500, 1501");
+            props.SetProperty("gameserver.prices.default.prices", "150");
+            props.SetProperty("gameserver.prices.vendor.sellmod", "35");
+            props.SetProperty("gameserver.punishment.enable", "true");
+            props.SetProperty("gameserver.punishment.time", "60");
+
+            ConfigurableProcessor.Process(props, typeof(HTMLConfig), typeof(InGameShopConfig),
+                typeof(InstanceConfig), typeof(LegionConfig), typeof(LoggingConfig),
+                typeof(PlayerTransferConfig), typeof(PricesConfig), typeof(PunishmentConfig));
+
+            Assert.True(HTMLConfig.ENABLE_HTML_WELCOME);
+            Assert.Equal("ISO-8859-1", HTMLConfig.HTML_ENCODING);
+            Assert.True(InGameShopConfig.ENABLE_IN_GAME_SHOP);
+            Assert.False(InGameShopConfig.ALLOW_GIFTS);
+            Assert.Equal(3, InstanceConfig.INSTANCE_COOLDOWN_RATE);
+            Assert.Equal(new HashSet<int> { 300080000, 300090000, 300060000 },
+                InstanceConfig.INSTANCE_COOLDOWN_RATE_EXCLUDED_MAPS);
+            Assert.Equal(172800, LegionConfig.LEGION_DISBAND_TIME);
+            Assert.False(LegionConfig.LEGION_WAREHOUSE);
+            Assert.False(LoggingConfig.LOG_AUDIT);
+            Assert.True(LoggingConfig.LOG_KILL);
+            Assert.Equal(5000000000L, PlayerTransferConfig.MAX_KINAH);
+            Assert.Equal("1500, 1501", PlayerTransferConfig.REMOVE_SKILL_LIST);
+            Assert.Equal(150, PricesConfig.DEFAULT_PRICES);
+            Assert.Equal(35, PricesConfig.VENDOR_SELL_MODIFIER);
+            Assert.True(PunishmentConfig.PUNISHMENT_ENABLE);
+            Assert.Equal(60, PunishmentConfig.PUNISHMENT_TIME);
+        }
+        finally
+        {
+            RestoreBatchC2Defaults();
+        }
+    }
+
+    [Fact]
+    public void RealPropertiesFile_BindsNewlyMigratedHolders_BatchC2()
+    {
+        var repoRoot = FindRepoRoot(AppContext.BaseDirectory);
+        if (repoRoot is null)
+            return; // data-less checkout: the real config tree is not present.
+        var configMain = Path.Combine(repoRoot, "game-server", "config", "main");
+        if (!File.Exists(Path.Combine(configMain, "legions.properties")))
+            return;
+
+        try
+        {
+            var props = new JavaProperties();
+            props.LoadFromDirectory(configMain, false);
+
+            ConfigurableProcessor.Process(props, typeof(HTMLConfig), typeof(InGameShopConfig),
+                typeof(InstanceConfig), typeof(LegionConfig), typeof(PricesConfig), typeof(PunishmentConfig));
+
+            // Pattern transformer parity: the shipped legion name pattern compiles into a Regex.
+            Assert.NotNull(LegionConfig.LEGION_NAME_PATTERN);
+            // Real cascaded values flow into the static fields (mirror the shipped config/main/*.properties).
+            Assert.Equal("./data/static_data/HTML/", HTMLConfig.HTML_ROOT);
+            Assert.Equal(86400, LegionConfig.LEGION_DISBAND_TIME);
+            Assert.True(LegionConfig.LEGION_WAREHOUSE);
+            Assert.Equal(60, LegionConfig.LEGION_LEVEL2_MAX_MEMBERS);
+            Assert.Equal(100, PricesConfig.DEFAULT_PRICES);
+            Assert.Equal(1, PunishmentConfig.PUNISHMENT_TYPE);
+            // Set transformer parity: shipped excluded_maps is empty -> empty HashSet (never null).
+            Assert.NotNull(InstanceConfig.INSTANCE_COOLDOWN_RATE_EXCLUDED_MAPS);
+            Assert.Empty(InstanceConfig.INSTANCE_COOLDOWN_RATE_EXCLUDED_MAPS);
+        }
+        finally
+        {
+            RestoreBatchC2Defaults();
+        }
+    }
+
+    /// <summary>Restore the batch-C2 holders to their annotated [Property] defaults (empty properties).</summary>
+    private static void RestoreBatchC2Defaults()
+    {
+        ConfigurableProcessor.Process(new JavaProperties(), typeof(HTMLConfig), typeof(InGameShopConfig),
+            typeof(InstanceConfig), typeof(LegionConfig), typeof(LoggingConfig), typeof(PlayerTransferConfig),
+            typeof(PricesConfig), typeof(PunishmentConfig));
+    }
+
     /// <summary>Restore the batch-C holders to their annotated [Property] defaults (empty properties).</summary>
     private static void RestoreBatchCDefaults()
     {
