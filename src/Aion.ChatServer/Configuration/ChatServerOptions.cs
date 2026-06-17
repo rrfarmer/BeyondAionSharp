@@ -23,46 +23,67 @@ public sealed class ChatServerOptions
 
 	public bool LogChatToDatabase { get; init; }
 
+	/// <summary>
+	/// Non-Java C# extension (no corresponding Java key). Java's chat server has no keyword filter; this stays empty
+	/// unless a host explicitly populates it, so it never alters Java-parity behavior.
+	/// </summary>
 	public IReadOnlyCollection<string> FilteredKeywords { get; init; } = [];
 
+	/// <summary>
+	/// Java parity: builds the options object from the faithful [Property] holder <see cref="Config"/>, which is bound
+	/// by <see cref="ConfigurableProcessor"/> over the exact Java load order (config/main + config/network defaults,
+	/// then mycs.properties overrides) — same key/default/precedence contract as Java's Config.load(), including the
+	/// processor's ${...} placeholder resolution (connect_address = ${...socket_address}). The IPEndPoint fields parse
+	/// the holder's verbatim "host:port" string (the socket-layer convention).
+	/// </summary>
 	public static ChatServerOptions LoadFromJavaConfig(string startDirectory)
 	{
-		var loader = LoadProperties(startDirectory);
-		var clientSocket = GetWithEnvironment(loader, "chatserver.network.client.socket_address", "0.0.0.0:10241");
-		var clientConnect = ResolvePropertyReference(
-			GetWithEnvironment(loader, "chatserver.network.client.connect_address", clientSocket),
-			loader,
-			clientSocket);
+		Config.Load(startDirectory);
 
 		return new ChatServerOptions
 		{
-			ClientEndPoint = ParseEndPoint(clientSocket),
-			ClientConnectEndPoint = ParseEndPoint(clientConnect),
-			GameServerEndPoint = ParseEndPoint(GetWithEnvironment(loader, "chatserver.network.gameserver.socket_address", "0.0.0.0:9021")),
-			GameServerPassword = GetWithEnvironment(loader, "chatserver.network.gameserver.password", string.Empty),
-			NioReadWriteThreads = GetIntWithEnvironment(loader, "chatserver.network.nio.threads", 1),
-			LogChannelRequests = GetBoolWithEnvironment(loader, "chatserver.log.channel.request", false),
-			LogInvalidChannels = GetBoolWithEnvironment(loader, "chatserver.log.channel.invalid", false),
-			LogChat = GetBoolWithEnvironment(loader, "chatserver.log.chat", false),
-			LogChatToDatabase = GetBoolWithEnvironment(loader, "chatserver.log.chat_to_db", false),
-			FilteredKeywords = GetListWithEnvironment(loader, "chatserver.chat.filter.keywords"),
+			ClientEndPoint = ParseEndPoint(Config.CLIENT_SOCKET_ADDRESS),
+			ClientConnectEndPoint = ParseEndPoint(Config.CLIENT_CONNECT_ADDRESS),
+			GameServerEndPoint = ParseEndPoint(Config.GAMESERVER_SOCKET_ADDRESS),
+			GameServerPassword = Config.GAMESERVER_PASSWORD,
+			NioReadWriteThreads = Config.NIO_READ_WRITE_THREADS,
+			LogChannelRequests = Config.LOG_CHANNEL_REQUEST,
+			LogInvalidChannels = Config.LOG_CHANNEL_INVALID,
+			LogChat = Config.LOG_CHAT,
+			LogChatToDatabase = Config.LOG_CHAT_TO_DB,
+			FilteredKeywords = [],
 		};
 	}
 
+	/// <summary>
+	/// Java parity: chat-server uses the commons DatabaseConfig (database.url/user/password/pool) loaded over the same
+	/// cascade. Mirrors <see cref="DatabaseOptions.LoadFromJavaConfig"/> but rooted at chat-server/config so the
+	/// highest-precedence mycs.properties override wins, exactly as Java's PropertiesUtils applies it.
+	/// </summary>
 	public static DatabaseOptions LoadDatabaseOptionsFromJavaConfig(string startDirectory)
 	{
-		var loader = LoadProperties(startDirectory);
-		var jdbcUrl = GetWithEnvironment(loader, "database.url", "jdbc:mysql://localhost:3306/aion_cs");
+		var loader = new ConfigLoader();
+		var repoRoot = FindRepoRoot(startDirectory);
+		if (repoRoot != null)
+		{
+			var configRoot = Path.Combine(repoRoot, "chat-server", "config");
+			loader.LoadCascading(
+				Path.Combine(configRoot, "main"),
+				Path.Combine(configRoot, "network"),
+				Path.Combine(configRoot, "mycs.properties"));
+		}
+
+		var jdbcUrl = loader.Get("database.url", "jdbc:mysql://localhost:3306/aion_cs");
 		var (server, port, database) = DatabaseOptions.ParseJdbcMysqlUrl(jdbcUrl);
 		return new DatabaseOptions
 		{
 			Server = server,
 			Port = port,
 			Database = database,
-			UserId = GetWithEnvironment(loader, "database.user", "root"),
-			Password = GetWithEnvironment(loader, "database.password", string.Empty),
-			MaxPoolSize = GetIntWithEnvironment(loader, "database.connectionpool.connections.max", 5),
-			ConnectionTimeout = GetIntWithEnvironment(loader, "database.connectionpool.timeout", 5000),
+			UserId = loader.Get("database.user", "root"),
+			Password = loader.Get("database.password", string.Empty),
+			MaxPoolSize = loader.GetInt("database.connectionpool.connections.max", 5),
+			ConnectionTimeout = loader.GetInt("database.connectionpool.timeout", 5000),
 		};
 	}
 
@@ -79,56 +100,6 @@ public sealed class ChatServerOptions
 			: Dns.GetHostAddresses(host).First(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
 
 		return new IPEndPoint(address, port);
-	}
-
-	private static ConfigLoader LoadProperties(string startDirectory)
-	{
-		var loader = new ConfigLoader();
-		var repoRoot = FindRepoRoot(startDirectory);
-		if (repoRoot != null)
-		{
-			var configRoot = Path.Combine(repoRoot, "chat-server", "config");
-			loader.LoadCascading(
-				Path.Combine(configRoot, "main"),
-				Path.Combine(configRoot, "network"),
-				Path.Combine(configRoot, "mycs.properties"));
-		}
-
-		return loader;
-	}
-
-	private static string GetWithEnvironment(ConfigLoader loader, string key, string defaultValue)
-	{
-		return Environment.GetEnvironmentVariable(key)
-			?? Environment.GetEnvironmentVariable(key.ToUpperInvariant().Replace('.', '_'))
-			?? loader.Get(key, defaultValue);
-	}
-
-	private static int GetIntWithEnvironment(ConfigLoader loader, string key, int defaultValue)
-	{
-		var value = GetWithEnvironment(loader, key, defaultValue.ToString());
-		return int.TryParse(value, out var parsed) ? parsed : defaultValue;
-	}
-
-	private static bool GetBoolWithEnvironment(ConfigLoader loader, string key, bool defaultValue)
-	{
-		var value = GetWithEnvironment(loader, key, defaultValue.ToString());
-		return bool.TryParse(value, out var parsed) ? parsed : defaultValue;
-	}
-
-	private static IReadOnlyCollection<string> GetListWithEnvironment(ConfigLoader loader, string key)
-	{
-		var value = GetWithEnvironment(loader, key, string.Empty);
-		return value.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-	}
-
-	private static string ResolvePropertyReference(string value, ConfigLoader loader, string defaultValue)
-	{
-		if (!value.StartsWith("${", StringComparison.Ordinal) || !value.EndsWith('}'))
-			return value;
-
-		var key = value[2..^1];
-		return GetWithEnvironment(loader, key, defaultValue);
 	}
 
 	private static string? FindRepoRoot(string startDirectory)
