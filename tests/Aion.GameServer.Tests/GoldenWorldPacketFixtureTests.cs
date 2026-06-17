@@ -4,10 +4,13 @@ using System.Text.Json;
 using Aion.Commons.Nio;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Animations;
+using Aion.GameServer.Model.Templates;
+using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Aion.GameServer.SkillEngine.Model;
 
 namespace Aion.GameServer.Tests;
 
@@ -38,6 +41,14 @@ public sealed class GoldenWorldPacketFixtureTests
     // both ways. Morheim (220020000) is a regular field map; Draupnir Cave (320080000) is an instance.
     private const int RegularMapId = 220020000;
     private const int InstanceMapId = 320080000;
+
+    // SM_SKILL_COOLDOWN: the one skill template the fixture reads from SKILL_DATA (id + raw cooldown; wire = cooldown*100).
+    private const int CooldownSkillId = 1968;
+    private const int CooldownRaw = 250;
+
+    // SM_QUEST_ACTION: the two quest templates the fixture reads from QUEST_DATA (one NONE category, one extra category).
+    private const int QuestIdNone = 1006;
+    private const int QuestIdExtra = 1007;
 
     private static readonly long[] ExpTable = BuildExpTable();
 
@@ -90,6 +101,60 @@ public sealed class GoldenWorldPacketFixtureTests
         }
     }
 
+    [Theory]
+    [InlineData("SM_SKILL_COOLDOWN.json")]
+    public void CsharpSkillCooldownMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            // Scalar ctor (skillId, expirationTimeMillis); expiration 0 -> deterministic (no UtcNow read).
+            var packet = new SM_SKILL_COOLDOWN(
+                inputs.GetProperty("skillId").GetInt32(),
+                inputs.GetProperty("expirationTimeMillis").GetInt64());
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_SKILL_COOLDOWN/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    [Theory]
+    [InlineData("SM_QUEST_ACTION.json")]
+    public void CsharpQuestActionMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var ctor = inputs.GetProperty("ctor").GetString()!;
+            var questId = inputs.GetProperty("questId").GetInt32();
+            SM_QUEST_ACTION packet = ctor switch
+            {
+                "unk" => new SM_QUEST_ACTION(questId),
+                "timer" => new SM_QUEST_ACTION(questId, inputs.GetProperty("timer").GetInt32()),
+                "share" => new SM_QUEST_ACTION(questId, inputs.GetProperty("sharerId").GetInt32(),
+                    inputs.GetProperty("shareInAlliance").GetBoolean()),
+                _ => throw new NotSupportedException($"Unknown SM_QUEST_ACTION ctor: {ctor}"),
+            };
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_QUEST_ACTION/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
     // ---- World/instance DataManager seam ------------------------------------------------------------------------
 
     /// <summary>
@@ -112,6 +177,8 @@ public sealed class GoldenWorldPacketFixtureTests
         SetAutoProperty(staticData, nameof(StaticData.AbsoluteStatsDataDh), new AbsoluteStatsData());
         SetAutoProperty(staticData, nameof(StaticData.PlayerExperienceTable), new PlayerExperienceTable(ExpTable));
         SetAutoProperty(staticData, nameof(StaticData.WorldMaps2), BuildWorldMaps());
+        SetAutoProperty(staticData, nameof(StaticData.SkillDataDh), BuildSkillData());
+        SetAutoProperty(staticData, nameof(StaticData.Quests), BuildQuestsData());
 
         var dmCtor = typeof(DataManager).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(StaticData) }, modifiers: null)!;
@@ -127,6 +194,49 @@ public sealed class GoldenWorldPacketFixtureTests
         var holder = new WorldMapsData();
         holder.SetData(new List<WorldMapTemplate> { regular, instance });
         return holder;
+    }
+
+    /// <summary>Build a SkillData carrying exactly the one skill template SM_SKILL_COOLDOWN reads (== Java side).</summary>
+    private static SkillData BuildSkillData()
+    {
+        var t = new SkillTemplate();
+        SetField(t, "skillId", CooldownSkillId);
+        SetField(t, "cooldown", CooldownRaw);
+        var holder = new SkillData();
+        PutPrivateMapEntry(holder, "skillTemplateById", CooldownSkillId, t);
+        return holder;
+    }
+
+    /// <summary>Build a QuestsData carrying the NONE + extra-category quest templates SM_QUEST_ACTION reads (== Java side).</summary>
+    private static QuestsData BuildQuestsData()
+    {
+        var none = new QuestTemplate();
+        SetField(none, "id", QuestIdNone);
+        SetField(none, "extraCategory", QuestExtraCategory.NONE);
+        var extra = new QuestTemplate();
+        SetField(extra, "id", QuestIdExtra);
+        SetField(extra, "extraCategory", QuestExtraCategory.COIN_QUEST);
+        var holder = new QuestsData();
+        PutPrivateMapEntry(holder, "questTemplates", QuestIdNone, none);
+        PutPrivateMapEntry(holder, "questTemplates", QuestIdExtra, extra);
+        return holder;
+    }
+
+    private static void SetField(object target, string fieldName, object value)
+    {
+        var field = target.GetType().GetField(fieldName,
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+            ?? throw new MissingFieldException(target.GetType().FullName, fieldName);
+        field.SetValue(target, value);
+    }
+
+    /// <summary>Mirror the Java reflective-index populate: put one entry into a holder's private id->template map.</summary>
+    private static void PutPrivateMapEntry<TKey, TValue>(object holder, string mapFieldName, TKey key, TValue value)
+    {
+        var field = holder.GetType().GetField(mapFieldName, BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(holder.GetType().FullName, mapFieldName);
+        var map = (IDictionary<TKey, TValue>)field.GetValue(holder)!;
+        map[key] = value;
     }
 
     private static void SetAutoProperty(object target, string propertyName, object value)
