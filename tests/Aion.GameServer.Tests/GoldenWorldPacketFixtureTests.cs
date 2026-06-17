@@ -4,9 +4,11 @@ using System.Text.Json;
 using Aion.Commons.Nio;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.Animations;
+using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Quest;
 using Aion.GameServer.Model.Templates.Stats;
+using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Model.Templates.World;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
@@ -49,6 +51,9 @@ public sealed class GoldenWorldPacketFixtureTests
     // SM_QUEST_ACTION: the two quest templates the fixture reads from QUEST_DATA (one NONE category, one extra category).
     private const int QuestIdNone = 1006;
     private const int QuestIdExtra = 1007;
+
+    // SM_TRADE_IN_LIST: the live-Npc objectId the fixture reads (mirrors the Java side; the only live read).
+    private const int TradeNpcObjectId = 700123;
 
     private static readonly long[] ExpTable = BuildExpTable();
 
@@ -153,6 +158,75 @@ public sealed class GoldenWorldPacketFixtureTests
                 $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
                 $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
         }
+    }
+
+    // ---- live-Npc object seam (SM_TRADE_IN_LIST) ----------------------------------------------------------------
+
+    /// <summary>
+    /// FIRST golden seam that drives a packet through a live Npc game-object. SM_TRADE_IN_LIST.WriteImpl reads ONLY
+    /// npc.GetObjectId() from the live object (no template/stats/AI/World), plus the directly-constructed
+    /// TradeListTemplate scalars — so the bounded live Npc is allocated uninitialized (RuntimeHelpers.GetUninitializedObject,
+    /// the established harness precedent, mirroring the Java Unsafe.allocateInstance side) with only the final
+    /// AionObject._objectId pinned. Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_TRADE_IN_LIST.json")]
+    public void CsharpTradeInListMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var npc = NewUninitializedNpc(TradeNpcObjectId);
+
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(TradeNpcObjectId, inputs.GetProperty("objectId").GetInt32());
+            var npcId = inputs.GetProperty("npcId").GetInt32();
+            var npcType = Enum.Parse<TradeNpcType>(inputs.GetProperty("npcType").GetString()!);
+            var buyPriceModifier = inputs.GetProperty("buyPriceModifier").GetInt32();
+            var tabIds = inputs.GetProperty("tabIds").EnumerateArray().Select(e => e.GetInt32()).ToArray();
+
+            var tlist = BuildTradeListTemplate(npcId, npcType, tabIds);
+            var packet = new SM_TRADE_IN_LIST(npc, tlist, buyPriceModifier);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_TRADE_IN_LIST/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>Build a TradeListTemplate carrying the structurally-identical scalars + trade tabs (== Java side).</summary>
+    private static TradeListTemplate BuildTradeListTemplate(int npcId, TradeNpcType npcType, int[] tabIds)
+    {
+        var t = new TradeListTemplate();
+        SetField(t, "npcId", npcId);
+        SetField(t, "tradeNpcType", npcType);
+        var tabs = new List<TradeListTemplate.TradeTab>();
+        foreach (var id in tabIds)
+        {
+            var tab = new TradeListTemplate.TradeTab();
+            SetField(tab, "id", id);
+            tabs.Add(tab);
+        }
+        SetField(t, "tradeTablist", tabs);
+        return t;
+    }
+
+    /// <summary>
+    /// Allocate an Npc WITHOUT running any constructor (mirrors the Java Unsafe.allocateInstance seam), then pin only
+    /// the final AionObject._objectId. SM_TRADE_IN_LIST reads nothing else from the live object.
+    /// </summary>
+    private static Npc NewUninitializedNpc(int objectId)
+    {
+        var npc = (Npc)RuntimeHelpers.GetUninitializedObject(typeof(Npc));
+        var idField = typeof(AionObject).GetField("_objectId", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(AionObject).FullName, "_objectId");
+        idField.SetValue(npc, objectId);
+        return npc;
     }
 
     // ---- World/instance DataManager seam ------------------------------------------------------------------------
