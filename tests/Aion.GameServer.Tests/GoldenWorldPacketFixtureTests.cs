@@ -18,6 +18,7 @@ using Aion.GameServer.Model.Templates.Stats;
 using Aion.GameServer.Model.Templates.Tradelist;
 using Aion.GameServer.Model.Templates.World;
 using ItemUpdateType = Aion.GameServer.Services.Items.ItemPacketService.ItemUpdateType;
+using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
@@ -74,6 +75,14 @@ public sealed class GoldenWorldPacketFixtureTests
     private const int ItemDescL10n = 350123;
     private const long ItemCount = 7L;
     private const string ItemCreator = "Daeva";
+
+    // SM_INVENTORY_ADD_ITEM equippable-weapon item/ItemInfoBlob seam: the equippable Item/ItemTemplate scalars (== Java side).
+    private const int EqItemObjectId = 268700001;
+    private const int EqItemTemplateId = 100000855;
+    private const int EqItemMask = 0x2C4D;
+    private const int EqItemDescL10n = 350456;
+    private const long EqItemCount = 1L;
+    private const string EqItemCreator = "Smith";
 
     // SM_NPC_INFO real-Npc-ctor seam: the structurally-identical Npc/NpcTemplate/StatsTemplate scalars (== Java side).
     private const int NpcInfoObjectId = 740555;
@@ -414,6 +423,62 @@ public sealed class GoldenWorldPacketFixtureTests
         template.description = desc;
         template.itemGroup = ItemGroup.NONE;
         template.maxTuneCount = 0; // CanTune() == false (deterministic, identical both sides)
+        var item = new Item(objectId, template);
+        item.SetItemCount(itemCount);
+        item.SetItemCreator(creator);
+        return item;
+    }
+
+    // ---- equippable item / ItemInfoBlob seam (SM_INVENTORY_ADD_ITEM, weapon blob path) --------------------------
+
+    /// <summary>
+    /// Extends the item/ItemInfoBlob seam to the EQUIPPABLE-item blob path. SM_INVENTORY_ADD_ITEM writes per-item
+    /// item.GetObjectId() + template.GetTemplateId() + template.GetL10n(), then ItemInfoBlob.GetFullBlob(player, item).WriteMe(),
+    /// then (item.GetEquipmentSlot() &amp; 0xFFFF) + (template.IsCloth() ? 1 : 0). For an EQUIPPABLE item GetFullBlob adds, in order,
+    /// EQUIPPED_SLOT + the per-type blob (SLOTS_WEAPON for a 1H sword) + ENCHANT_INFO + PREMIUM_OPTION + GENERAL_INFO. The item
+    /// template is pinned to ItemGroup.SWORD (ONE_HAND weapon: IsWeapon true, IsTwoHandWeapon false, no fusion) with no
+    /// stones/godstone/idian/dye/tempering, so every blob writer is deterministic on the bare simple-ctor Item. No live Player
+    /// deref. Built IDENTICALLY to the Java oracle side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_INVENTORY_ADD_ITEM.json")]
+    public void CsharpInventoryAddItemEquippableMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(EqItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var addType = Enum.Parse<ItemAddType>(inputs.GetProperty("addType").GetString()!);
+
+            var item = BuildEquippableWeapon(EqItemObjectId, EqItemTemplateId, EqItemMask, EqItemDescL10n, EqItemCount, EqItemCreator);
+            // player arg null: GetFullBlob only stashes it as blob owner; the weapon/equipped/enchant/premium/general writers never deref it.
+            var packet = new SM_INVENTORY_ADD_ITEM(new List<Item> { item }, null, addType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_ADD_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a minimal EQUIPPABLE 1H-sword Item via the simple Item(objId, itemTemplate) ctor (== Java buildEquippableWeapon).
+    /// itemGroup SWORD (ONE_HAND weapon, valid equip slots) + maxTuneCount 0 (CanTune() false -> IsIdentified() true). Left
+    /// unequipped with no stones/godstone/idian/dye/tempering/fusion so the equippable blob path is deterministic.
+    /// </summary>
+    private static Item BuildEquippableWeapon(int objectId, int itemId, int mask, int desc, long itemCount, string creator)
+    {
+        var template = new ItemTemplate();
+        template.itemId = itemId;
+        template.mask = mask;
+        template.description = desc;
+        template.itemGroup = ItemGroup.SWORD;
+        template.maxTuneCount = 0; // CanTune() == false -> IsIdentified() == true (deterministic, identical both sides)
         var item = new Item(objectId, template);
         item.SetItemCount(itemCount);
         item.SetItemCreator(creator);
