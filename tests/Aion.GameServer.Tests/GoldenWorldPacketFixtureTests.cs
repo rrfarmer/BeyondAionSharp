@@ -98,6 +98,18 @@ public sealed class GoldenWorldPacketFixtureTests
     private const int EqDyedArmorObjectId = 268700004;
     private const int EqDyedArmorColor = 0x3399CC;
 
+    // SM_INVENTORY_ADD_ITEM_SUBOBJECT: ENCHANT_INFO sub-object writers on a 1H-sword base. Distinct objectIds so they
+    // never clobber the weapon/armor/accessory/shield/wing/plume fixtures. Mirror the Java EQ_MS_*/EQ_GS_*/EQ_SUBOBJ_* constants.
+    private const int EqMsObjectId = 268700201;
+    private const int EqGsObjectId = 268700202;
+    private const int EqMsGsObjectId = 268700203;
+    private const int EqSubObjTemplateId = 100000855; // same 1H sword template id as the weapon seam
+    private const int EqSubObjMask = 0x2C4D;
+    private const int EqSubObjDescL10n = 350456;
+    private const int EqMsSlot0ItemId = 167000001;
+    private const int EqMsSlot2ItemId = 167000002;
+    private const int EqGsItemId = 168000123;
+
     // SM_VIEW_PLAYER_DETAILS: the live-Player objectId the fixture reads (mirrors the Java side; the only live read).
     private const int ViewDetailsPlayerObjectId = 268900001;
 
@@ -659,6 +671,81 @@ public sealed class GoldenWorldPacketFixtureTests
         return item;
     }
 
+    // ---- equippable item / ItemInfoBlob seam: ENCHANT_INFO SUB-OBJECT writers (socketed ManaStone / GodStone) ----
+
+    /// <summary>
+    /// Reuses the equippable-weapon seam (1H SWORD base -> SLOTS_WEAPON, already byte-validated) and POPULATES the
+    /// ENCHANT_INFO sub-object slots the bare-item seam left null/empty, each a DISTINCT fixture case with a DISTINCT
+    /// objectId in a NEW fixture file (never clobbers the weapon/armor/accessory/shield/wing/plume fixtures):
+    ///   (a) socketedManastones: item.GetItemStones() carries two ManaStones (slot 0 + slot 2, distinct itemIds). The
+    ///       ENCHANT_INFO writer's CreateManastoneMap builds a slot-&gt;stone map; the Item.MAX_BASIC_STONES (6) loop writes
+    ///       stone.GetItemId() at the populated slots and 0 elsewhere. ManaStone(itemObjId, itemId, slot, NEW) ctor reads
+    ///       DataManager.ITEM_DATA.GetItemTemplate(itemId) (empty holder -> null, tolerated) -> only the ItemStone scalars
+    ///       (slot/itemId) are read by the writer.
+    ///   (b) godStone: item.SetGodStone(new GodStone(item, 0, godStoneId, null, NEW)) -> GetGodStoneId() == godStoneId. The
+    ///       GodStone ctor takes godstoneInfo directly (null OK; the writer only reads GetItemId()), DataManager-free.
+    ///   (c) manastonesAndGodStone: BOTH branches populated on one item.
+    /// All other ENCHANT_INFO/SLOTS_WEAPON/PREMIUM_OPTION/GENERAL_INFO reads are identical to the weapon seam (no idian/
+    /// dye/tempering/fusion). Built IDENTICALLY to the Java oracle side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_INVENTORY_ADD_ITEM_SUBOBJECT.json")]
+    public void CsharpInventoryAddItemSubObjectMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var objectId = inputs.GetProperty("objectId").GetInt32();
+            var withManastones = inputs.GetProperty("withManastones").GetBoolean();
+            var withGodStone = inputs.GetProperty("withGodStone").GetBoolean();
+            var addType = Enum.Parse<ItemAddType>(inputs.GetProperty("addType").GetString()!);
+
+            var item = BuildSubObjectWeapon(objectId, withManastones, withGodStone);
+            // player arg null: GetFullBlob only stashes it as blob owner; the weapon/enchant/premium/general writers never deref it.
+            var packet = new SM_INVENTORY_ADD_ITEM(new List<Item> { item }, null, addType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_ADD_ITEM_SUBOBJECT/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a 1H-sword Item (same base as BuildEquippableWeapon) and POPULATE the ENCHANT_INFO sub-objects: optional
+    /// socketed manastones at slots 0/2 (via GetItemStones().Add(new ManaStone(..))) and/or a godstone (via
+    /// SetGodStone(new GodStone(..))). The ManaStone ctor reads DataManager.ITEM_DATA.GetItemTemplate(itemId) (empty
+    /// holder -> null, tolerated); the GodStone ctor takes godstoneInfo directly (null OK). Mirrors the Java side exactly.
+    /// </summary>
+    private static Item BuildSubObjectWeapon(int objectId, bool withManastones, bool withGodStone)
+    {
+        var template = new ItemTemplate();
+        template.itemId = EqSubObjTemplateId;
+        template.mask = EqSubObjMask;
+        template.description = EqSubObjDescL10n;
+        template.itemGroup = ItemGroup.SWORD;
+        template.maxTuneCount = 0; // CanTune() == false -> IsIdentified() == true (deterministic)
+        var item = new Item(objectId, template);
+        item.SetItemCount(1L);
+        item.SetItemCreator("Smith");
+        if (withManastones)
+        {
+            item.GetItemStones().Add(new Aion.GameServer.Model.Items.ManaStone(objectId, EqMsSlot0ItemId, 0,
+                Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NEW));
+            item.GetItemStones().Add(new Aion.GameServer.Model.Items.ManaStone(objectId, EqMsSlot2ItemId, 2,
+                Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NEW));
+        }
+        if (withGodStone)
+            item.SetGodStone(new Aion.GameServer.Model.Items.GodStone(item, 0, EqGsItemId, null,
+                Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NEW));
+        return item;
+    }
+
     // ---- SM_VIEW_PLAYER_DETAILS (reuse the equippable-item / ItemInfoBlob seam) ---------------------------------
 
     /// <summary>
@@ -801,6 +888,9 @@ public sealed class GoldenWorldPacketFixtureTests
         // SM_INVENTORY_UPDATE_ITEM seam: ITEM_CLEAN_UP with an empty (non-null) cleanup list -> GENERAL_INFO's
         // HasAccountOrLegionWhStorabilityDisabled streams an empty list -> false (mirrors the Java empty-bplist seam).
         SetAutoProperty(staticData, nameof(StaticData.ItemRestrictionCleanupDataDh), BuildItemCleanupData());
+        // SM_INVENTORY_ADD_ITEM_SUBOBJECT seam: empty (non-null) ItemData so the ManaStone ctor's
+        // DataManager.ITEM_DATA.GetItemTemplate(itemId) returns null gracefully (mirrors the Java empty ItemData seam).
+        SetAutoProperty(staticData, nameof(StaticData.ItemDataDh), new ItemData());
 
         var dmCtor = typeof(DataManager).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(StaticData) }, modifiers: null)!;
