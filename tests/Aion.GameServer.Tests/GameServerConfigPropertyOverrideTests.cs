@@ -439,6 +439,73 @@ public sealed class GameServerConfigPropertyOverrideTests
             typeof(DropConfig), typeof(EventsConfig), typeof(SiegeConfig), typeof(ShutdownConfig));
     }
 
+    [Fact]
+    public void ActiveEventConfigProperties_OverrideBaseConfig_AtProcessTime()
+    {
+        // Full-Parity §C proof of the active-event override merge (Java Config.load line 49:
+        // properties.putAll(EventService.getInstance().getActiveEventConfigProperties())). An active event's inline
+        // <config_properties><property>key=value</property> overrides the loaded base config when the holder is
+        // processed. We mirror the exact merge shape: base props -> PutAll(event props) -> ConfigurableProcessor.Process.
+        try
+        {
+            // Base config sets the key to a non-default value (as a shipped .properties would).
+            var properties = new JavaProperties();
+            properties.SetProperty("gameserver.character.reentry.time", "10");
+
+            // An active event template carries an inline config_properties override (parsed exactly like Java's
+            // EventTemplate.loadConfigProperties via StringReader key=value).
+            var eventTemplate = new Model.Templates.Event.EventTemplate
+            {
+                Name = "TestReentryEvent",
+                ConfigProperties = new List<string> { "gameserver.character.reentry.time=42" },
+            };
+            var eventProps = eventTemplate.LoadConfigProperties();
+            Assert.NotNull(eventProps);
+            Assert.Equal("42", eventProps["gameserver.character.reentry.time"]);
+
+            // Merge: the event's config properties putAll over the base config (event wins).
+            properties.PutAll(eventProps);
+            Assert.Equal("42", properties.GetProperty("gameserver.character.reentry.time"));
+
+            // Process: the merged value flows into the static holder, proving the override took effect.
+            ConfigurableProcessor.Process(properties, typeof(GSConfig));
+            Assert.Equal(42, GSConfig.CHARACTER_REENTRY_TIME);
+            Assert.NotEqual(10, GSConfig.CHARACTER_REENTRY_TIME);
+            Assert.NotEqual(20, GSConfig.CHARACTER_REENTRY_TIME);
+        }
+        finally
+        {
+            ConfigurableProcessor.Process(new JavaProperties(), typeof(GSConfig));
+        }
+    }
+
+    [Fact]
+    public void GetActiveEventConfigProperties_EmptyWhenNoActiveEvents_AndLaterEventWins()
+    {
+        // With no active events, the merge contributes nothing (base config is untouched).
+        var fromService = Services.Event.EventService.GetInstance().GetActiveEventConfigProperties();
+        Assert.Empty(fromService);
+
+        // Ordering parity: EventService sorts events nullsFirst by startDate and putAll's in order, so a later-starting
+        // event's value wins on key collision. Mirror that putAll ordering at the dictionary level.
+        var early = new Model.Templates.Event.EventTemplate
+        {
+            Name = "Early", Start = "2024-01-01T00:00:00",
+            ConfigProperties = new List<string> { "gameserver.character.reentry.time=11" },
+        };
+        var late = new Model.Templates.Event.EventTemplate
+        {
+            Name = "Late", Start = "2024-12-31T00:00:00",
+            ConfigProperties = new List<string> { "gameserver.character.reentry.time=99" },
+        };
+
+        var merged = new JavaProperties();
+        // Emulate nullsFirst-by-startDate ordering: early then late; late putAll overwrites.
+        merged.PutAll(early.LoadConfigProperties()!);
+        merged.PutAll(late.LoadConfigProperties()!);
+        Assert.Equal("99", merged.GetProperty("gameserver.character.reentry.time"));
+    }
+
     private static string? FindRepoRoot(string startDirectory)
     {
         var directory = new DirectoryInfo(startDirectory);

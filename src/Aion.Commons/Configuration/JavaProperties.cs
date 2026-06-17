@@ -28,6 +28,17 @@ public sealed class JavaProperties
     /// <summary>Java parity: Properties.setProperty.</summary>
     public void SetProperty(string key, string value) => _map[key] = value;
 
+    /// <summary>
+    /// Java parity: Properties.putAll(Map) — copies every entry of <paramref name="source"/> into this instance's
+    /// own map (NOT the chained defaults), overwriting existing keys. Mirrors Hashtable.putAll semantics used by
+    /// Config.load() to merge the active-event config overrides over the loaded base properties.
+    /// </summary>
+    public void PutAll(IEnumerable<KeyValuePair<string, string>> source)
+    {
+        foreach (var kv in source)
+            _map[kv.Key] = kv.Value;
+    }
+
     /// <summary>Java parity: Properties.getProperty(key) — consults defaults on miss; null if absent everywhere.</summary>
     public string? GetProperty(string key)
     {

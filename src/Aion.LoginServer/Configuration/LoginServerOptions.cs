@@ -29,30 +29,28 @@ public sealed class LoginServerOptions
 
 	public bool UseExternalAuth => !string.IsNullOrWhiteSpace(ExternalAuthUrl);
 
+	/// <summary>
+	/// Java parity: builds the options object from the faithful [Property] holder <see cref="Config"/>, which is bound
+	/// by <see cref="ConfigurableProcessor"/> over the exact Java load order (config/main + config/network defaults,
+	/// then myls.properties overrides) — same key/default/precedence contract as Java's Config.load(). The IPEndPoint
+	/// fields parse the holder's verbatim "host:port" string (the socket-layer convention). MaxClient/GameServer
+	/// connections are not Java config keys and keep their C# defaults.
+	/// </summary>
 	public static LoginServerOptions LoadFromJavaConfig(string startDirectory)
 	{
-		var loader = new ConfigLoader();
-		var repoRoot = FindRepoRoot(startDirectory);
-		if (repoRoot != null)
-		{
-			var configRoot = Path.Combine(repoRoot, "login-server", "config");
-			loader.LoadCascading(
-				Path.Combine(configRoot, "main"),
-				Path.Combine(configRoot, "network"),
-				Path.Combine(configRoot, "myls.properties"));
-		}
+		Config.Load(startDirectory);
 
 		return new LoginServerOptions
 		{
-			ClientEndPoint = ParseEndPoint(loader.Get("loginserver.network.client.socket_address", "0.0.0.0:2106")),
-			GameServerEndPoint = ParseEndPoint(loader.Get("loginserver.network.gameserver.socket_address", "0.0.0.0:9014")),
-			AutoCreateAccounts = loader.GetBool("loginserver.accounts.autocreate", true),
-			LoginTryBeforeBan = loader.GetInt("loginserver.network.client.logintrybeforeban", 5),
-			WrongLoginBanMinutes = loader.GetInt("loginserver.network.client.bantimeforbruteforcing", 15),
-			NioReadWriteThreads = loader.GetInt("loginserver.network.nio.threads", 0),
-			BruteForceProtectionEnabled = loader.GetBool("loginserver.server.bruteforceprotector", true),
-			LogGameServerLogins = loader.GetBool("loginserver.log.logins", false),
-			ExternalAuthUrl = loader.Get("loginserver.accounts.external_auth.url", string.Empty),
+			ClientEndPoint = ParseEndPoint(Config.CLIENT_SOCKET_ADDRESS),
+			GameServerEndPoint = ParseEndPoint(Config.GAMESERVER_SOCKET_ADDRESS),
+			AutoCreateAccounts = Config.ACCOUNT_AUTO_CREATION,
+			LoginTryBeforeBan = Config.LOGIN_TRY_BEFORE_BAN,
+			WrongLoginBanMinutes = Config.WRONG_LOGIN_BAN_TIME,
+			NioReadWriteThreads = Config.NIO_READ_WRITE_THREADS,
+			BruteForceProtectionEnabled = Config.ENABLE_BRUTEFORCE_PROTECTION,
+			LogGameServerLogins = Config.LOG_LOGINS,
+			ExternalAuthUrl = Config.EXTERNAL_AUTH_URL,
 		};
 	}
 
@@ -69,18 +67,5 @@ public sealed class LoginServerOptions
 			: Dns.GetHostAddresses(host).First(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
 
 		return new IPEndPoint(address, port);
-	}
-
-	private static string? FindRepoRoot(string startDirectory)
-	{
-		var directory = new DirectoryInfo(startDirectory);
-		while (directory != null)
-		{
-			if (Directory.Exists(Path.Combine(directory.FullName, "login-server", "config")))
-				return directory.FullName;
-			directory = directory.Parent;
-		}
-
-		return null;
 	}
 }

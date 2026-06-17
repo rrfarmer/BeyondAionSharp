@@ -113,6 +113,11 @@ public static class Config
     {
         JavaProperties properties = LoadProperties();
 
+        // Java parity (Config.load line 49): properties.putAll(EventService.getInstance().getActiveEventConfigProperties()).
+        // Active events' inline <config_properties> override the loaded base config (operator/.properties values), with
+        // later-starting events winning (EventService sorts nullsFirst by startDate and putAll's in order).
+        properties.PutAll(Aion.GameServer.Services.Event.EventService.GetInstance().GetActiveEventConfigProperties());
+
         // Java parity: validate each requested config is an allowed config (against the full CONFIGS list).
         foreach (var config in allowedConfigs)
         {
