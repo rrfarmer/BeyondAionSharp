@@ -13,6 +13,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// </summary>
 public class SM_CUSTOM_PACKET : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/.../serverpackets/SM_CUSTOM_PACKET.java): 2026-06-17. admin //fsc builder, no plain-value ctor -> T2 audit; writeImpl iterates elements, each PacketElementType.write byte-identical (d/h/c via Integer.decode, b via Integer.valueOf decimal, q via Long.decode, f/e Float/Double, s writeS); con never read.
     /// <summary>Enumeration of types of packet elements.</summary>
     public abstract class PacketElementType
     {

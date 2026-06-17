@@ -12,6 +12,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_MAIL_SERVICE (kosyachok, Source, Neon). Mailbox state / message / list / read / attachment / delete by serviceId. Converges MailService/SystemMailService. Function->Func; switch-arrow->switch statement; byteLengthForString (inherited static)->ByteLengthForString; writeMe(getBuf())->WriteMe(GetBuf()); int... -> params int[]. Letter/Mailbox/MailMessage/ItemInfoBlob red-tolerated.</summary>
 public class SM_MAIL_SERVICE : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/.../serverpackets/SM_MAIL_SERVICE.java): 2026-06-17. writeImpl reads con.getActivePlayer().getMailbox() (live graph) + full Letter/Item/ItemInfoBlob graph -> T2 audit; serviceId switch (0/1/2/3/5/6), letters.size()*-1 on isLastPacket, totalCount+unreadCount*0x10000, item-blob-vs-writeQ(0)/writeQ(0)/writeD(0), (int)(time/1000), letterType.getId() explicit-id; byte-identical.
     public const int STATIC_BODY_SIZE = 8;
     public static readonly Func<Letter, int> DYNAMIC_BODY_PART_SIZE_CALCULATOR = letter => 22 + ByteLengthForString(letter.GetSenderName())
         + ByteLengthForString(letter.GetTitle());

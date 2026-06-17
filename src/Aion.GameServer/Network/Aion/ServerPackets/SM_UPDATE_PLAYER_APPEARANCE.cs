@@ -7,6 +7,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_UPDATE_PLAYER_APPEARANCE (Avol, ATracer, Neon). Updates a player's equipped appearance via AbstractPlayerInfoPacket.WriteEquippedItems. Item red-tolerated.</summary>
 public class SM_UPDATE_PLAYER_APPEARANCE : AbstractPlayerInfoPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/.../serverpackets/SM_UPDATE_PLAYER_APPEARANCE.java): 2026-06-17. writeD(playerId) + AbstractPlayerInfoPacket.writeEquippedItems(items) (live Item graph: equipmentSlot mask w/ TwoHanded SUB_HAND removal, then per-item writeD skinTemplateId/godStoneId + writeDyeInfo(color)/writeH(enchantParam)/writeH(0)) -> T2 audit; con never read; byte-identical.
     private int playerId;
     private List<Item> items;
 

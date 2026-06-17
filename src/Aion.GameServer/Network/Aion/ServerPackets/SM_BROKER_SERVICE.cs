@@ -12,6 +12,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_BROKER_SERVICE (IlBuono, kosyachok). Broker search/register/settled/sell packets. CRITICAL: BrokerPacketType has DUPLICATE ids (SHOW_SETTLED_ICON=5, SETTLED_ITEMS=5) and the switch distinguishes by identity -> sealed value-class + reference-equality if-chain (a plain enum gives duplicate case-label errors), like SM_ATTACK_STATUS. Function->Func; toArray->ToArray; TimeUnit.MILLISECONDS.toDays(ms)->ms/86400000; currentTimeMillis()->DateTimeOffset; getBuf()->GetBuf(). BrokerItem/Item/EnchantInfoBlobEntry/ItemInfoBlob red-tolerated.</summary>
 public class SM_BROKER_SERVICE : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/.../serverpackets/SM_BROKER_SERVICE.java): 2026-06-17. live BrokerItem/Item/EnchantInfoBlobEntry/ItemInfoBlob graph + System.currentTimeMillis + PlayerService.getPlayerName singleton + settleTime -> T2 audit; duplicate-id BrokerPacketType (SHOW_SETTLED_ICON=5/SETTLED_ITEMS=5) distinguished by reference-identity if-chain == Java identity switch; toDays(ms)==ms/86400000 (trunc-toward-zero), settleTime/60000; all 8 writers byte-identical; con never read.
     public const int SETTLED_ITEMS_STATIC_BODY_SIZE = 18;
     public static readonly Func<BrokerItem, int> SETTLED_ITEMS_DYNAMIC_BODY_PART_SIZE_CALCULATOR =
         item => 32 + EnchantInfoBlobEntry.SIZE + (item.GetItemCreator() == null ? 2 : item.GetItemCreator().Length * 2 + 2);

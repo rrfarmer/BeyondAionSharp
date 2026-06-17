@@ -7,6 +7,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_AUTO_GROUP (SheppeR, Guapo, nrg, Estrayl). Auto-group/instance matchmaking UI packet keyed by windowId (request/waiting/pass/enter/icon windows). Converges AutoGroupUtility SM_AUTO_GROUP ctors. switch-arrow grouped cases->stacked case labels; AutoGroupType.getAGTByMaskId->GetAGTByMaskId; IllegalArgument->Argument. AionServerPacket/AutoGroupType/write* red-tolerated.</summary>
 public class SM_AUTO_GROUP : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/.../serverpackets/SM_AUTO_GROUP.java): 2026-06-17. ctor reads DataManager.AUTO_GROUP (live holder via AutoGroupType enum static-init) -> T2 audit; writeImpl reads only cached scalars + name, con never read; windowId switch case-groupings (0,7 / 1,3,8 / 2,4,5 / 6) and per-case 3x writeD byte-identical.
     public const byte WND_ENTRY_ICON = 6;
     private readonly int maskId;
     private readonly int mapId;

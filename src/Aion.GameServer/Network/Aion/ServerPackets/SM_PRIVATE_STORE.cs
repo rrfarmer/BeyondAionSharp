@@ -9,6 +9,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_PRIVATE_STORE (Simple). Sends a private store's sold items (objId/itemId/count/price + full ItemInfoBlob). (int) count cast; getBuf()->GetBuf(); Map.values iteration. PrivateStore/TradePSItem/ItemInfoBlob red-tolerated.</summary>
 public class SM_PRIVATE_STORE : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/.../serverpackets/SM_PRIVATE_STORE.java): 2026-06-17. live PrivateStore/seller Player/Inventory + ItemInfoBlob.getFullBlob graph -> T2 audit; null-store guard, writeD(seller objId)/writeH(size) then per-item writeD objId/itemId, writeH((int)count), writeQ(price), getFullBlob.writeMe(buf); con never read; byte-identical.
     private Player player;
     private PrivateStore store;
 
