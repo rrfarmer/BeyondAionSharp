@@ -572,6 +572,93 @@ public sealed class GoldenWorldPacketFixtureTests
         return item;
     }
 
+    // ---- equippable item / ItemInfoBlob seam: per-type SHIELD / WING / PLUME blob writers (SM_INVENTORY_ADD_ITEM) ----
+
+    /// <summary>
+    /// Reuses the equippable-item seam to cover the THREE per-type blob writers GetFullBlob selects BEFORE the IsArmor()/
+    /// IsWeapon() branches (itemGroup == WING / SHIELD / PLUME), each a DISTINCT fixture case with a DISTINCT objectId in a
+    /// NEW fixture file (never clobbers the weapon/armor/accessory fixtures):
+    ///   (a) SHIELD: GetFullBlob -> EQUIPPED_SLOT + SLOTS_SHIELD + ENCHANT_INFO + PREMIUM_OPTION + GENERAL_INFO. ShieldInfoBlobEntry
+    ///       = WriteQ(GetSlotFor(GetItemSlot()).GetSlotIdMask()) [SHIELD -> ItemSlot.SUB_HAND], WriteQ(0), WriteDyeInfo(GetItemColor())
+    ///       [null -> 4 zero bytes]. SHIELD subType -> ArmorType.GENERAL -> IsArmor() true, not ACCESSORY/BELT -> IsCloth() true -> trailing byte 1.
+    ///   (b) WING: -> SLOTS_WING = WriteQ(GetSlotFor(GetItemSlot()).GetSlotIdMask()) [WING -> ItemSlot.WINGS], WriteQ(0). IsCloth() true -> byte 1.
+    ///   (c) PLUME (untempered): -> PLUME_INFO = WriteQ(GetSlotFor(GetItemSlot()).GetSlotIdMask()) [PLUME -> ItemSlot.PLUME],
+    ///       WriteQ(0x100000), WriteD(0)x4. PLUME subType -> EquipType.PLUME (not armor) -> IsCloth() false -> trailing byte 0.
+    /// Plus two TEMPERED-plume cases (tempering>0, itemGroup PLUME) exercising the ENCHANT_INFO plume branch: temperingName
+    /// "TSHIRT_PHYSICAL" (-> PLUM_PHISICAL_ATTACK) and a non-match name (-> PLUM_BOOST_MAGICAL_SKILL), each with a pinned
+    /// tempering level + rndPlumeBonusValue, so BOTH PlumStatEnum branches are covered. Built IDENTICALLY to the Java oracle
+    /// side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_INVENTORY_ADD_ITEM_PERTYPE.json")]
+    public void CsharpInventoryAddItemPerTypeMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var objectId = inputs.GetProperty("objectId").GetInt32();
+            var itemId = inputs.GetProperty("itemId").GetInt32();
+            var mask = inputs.GetProperty("mask").GetInt32();
+            var desc = inputs.GetProperty("desc").GetInt32();
+            var creator = inputs.GetProperty("itemCreator").GetString()!;
+            var itemGroup = Enum.Parse<ItemGroup>(inputs.GetProperty("itemGroup").GetString()!);
+            var addType = Enum.Parse<ItemAddType>(inputs.GetProperty("addType").GetString()!);
+
+            Item item;
+            if (inputs.TryGetProperty("tempering", out var temperingJson))
+            {
+                // Tempered plume: temperingName + tempering level + rndPlumeBonusValue (exercises ENCHANT_INFO plume branch).
+                var temperingName = inputs.GetProperty("temperingName").GetString()!;
+                var tempering = temperingJson.GetInt32();
+                var rndPlumeBonus = inputs.GetProperty("rndPlumeBonusValue").GetInt32();
+                item = BuildTemperedPlume(objectId, itemId, mask, desc, creator, temperingName, tempering, rndPlumeBonus);
+            }
+            else
+            {
+                var colorJson = inputs.GetProperty("itemColor");
+                int? itemColor = colorJson.ValueKind == JsonValueKind.Null ? null : colorJson.GetInt32();
+                item = BuildEquippableVariant(objectId, itemId, mask, desc, creator, itemGroup, itemColor);
+            }
+
+            // player arg null: GetFullBlob only stashes it as blob owner; the per-type/enchant/premium/general writers never deref it.
+            var packet = new SM_INVENTORY_ADD_ITEM(new List<Item> { item }, null, addType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_ADD_ITEM_PERTYPE/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a minimal EQUIPPABLE TEMPERED plume Item via the simple Item(objId, itemTemplate) ctor (== Java buildTemperedPlume).
+    /// itemGroup PLUME (PLUME slot, IsArmor false) + temperingName set (so GetTemperingName().Equals(..) doesn't NRE) + tempering
+    /// level + a random plume bonus value, so the ENCHANT_INFO plume branch fires. maxTuneCount 0 (CanTune() false -> IsIdentified()
+    /// true). No stones/godstone/idian/dye/conditioning/fusion. Mirrors the Java side exactly.
+    /// </summary>
+    private static Item BuildTemperedPlume(int objectId, int itemId, int mask, int desc, string creator,
+        string temperingName, int tempering, int rndPlumeBonusValue)
+    {
+        var template = new ItemTemplate();
+        template.itemId = itemId;
+        template.mask = mask;
+        template.description = desc;
+        template.itemGroup = ItemGroup.PLUME;
+        template.temperingName = temperingName;
+        template.maxTuneCount = 0; // CanTune() == false -> IsIdentified() == true (deterministic)
+        var item = new Item(objectId, template);
+        item.SetItemCount(1L);
+        item.SetItemCreator(creator);
+        item.SetTempering(tempering);
+        item.SetRndPlumeBonusValue(rndPlumeBonusValue);
+        return item;
+    }
+
     // ---- SM_VIEW_PLAYER_DETAILS (reuse the equippable-item / ItemInfoBlob seam) ---------------------------------
 
     /// <summary>
