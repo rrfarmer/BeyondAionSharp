@@ -1,76 +1,123 @@
-using Aion.GameServer.Data;
-using Aion.GameServer.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Aion.GameServer.Configs.Main;
+using Aion.GameServer.Dao;
+using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Utils;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aion.GameServer.Services;
 
-public sealed class PeriodicSaveService : GameEngine
+/// <summary>
+/// Java parity: services/PeriodicSaveService (author ATracer).
+/// Singleton whose ctor schedules the legion-warehouse save task and the server-runtime save task
+/// at the PeriodicSaveConfig intervals via ThreadPoolManager.scheduleAtFixedRate.
+/// </summary>
+public class PeriodicSaveService
 {
-	private const string ServerLastRunVariable = "serverLastRun";
-	private static readonly TimeSpan DefaultServerRuntimeDelay = TimeSpan.FromMinutes(2);
-	private static readonly TimeSpan DefaultServerRuntimePeriod = TimeSpan.FromMinutes(2);
-	private readonly IServerVariablesRepository _serverVariablesRepository;
-	private readonly ThreadPoolManager _threadPoolManager;
-	private readonly ILogger<PeriodicSaveService> _logger;
-	private readonly TimeSpan _serverRuntimeDelay;
-	private readonly TimeSpan _serverRuntimePeriod;
-	private int _isInitialized;
-	private Task? _serverRuntimeTask;
+	private static readonly ILogger Log = NullLoggerFactory.Instance.CreateLogger(nameof(PeriodicSaveService));
 
-	public PeriodicSaveService(
-		IServerVariablesRepository serverVariablesRepository,
-		ThreadPoolManager threadPoolManager,
-		ILogger<PeriodicSaveService> logger)
-		: this(serverVariablesRepository, threadPoolManager, logger, DefaultServerRuntimeDelay, DefaultServerRuntimePeriod)
+	private readonly List<PeriodicSaveTask> _tasks;
+
+	public static PeriodicSaveService GetInstance()
 	{
+		return SingletonHolder.Instance;
 	}
 
-	public PeriodicSaveService(
-		IServerVariablesRepository serverVariablesRepository,
-		ThreadPoolManager threadPoolManager,
-		ILogger<PeriodicSaveService> logger,
-		TimeSpan serverRuntimeDelay,
-		TimeSpan serverRuntimePeriod)
+	private PeriodicSaveService()
 	{
-		_serverVariablesRepository = serverVariablesRepository;
-		_threadPoolManager = threadPoolManager;
-		_logger = logger;
-		_serverRuntimeDelay = serverRuntimeDelay;
-		_serverRuntimePeriod = serverRuntimePeriod;
+		_tasks = new List<PeriodicSaveTask> { new LegionWarehouseSaveTask(), new ServerRunTimeSaveTask() };
 	}
 
-	public string Name => "PeriodicSaveService";
-
-	public ValueTask InitAsync(CancellationToken cancellationToken = default)
+	/// <summary>
+	/// Save data on shutdown
+	/// </summary>
+	public void OnShutdown()
 	{
-		// Java parity: services/PeriodicSaveService constructor schedules ServerRunTimeSaveTask.
-		if (Interlocked.Exchange(ref _isInitialized, 1) == 0)
+		Log.LogInformation("Starting data save on shutdown.");
+		foreach (PeriodicSaveTask task in _tasks)
 		{
-			_serverRuntimeTask = _threadPoolManager.ScheduleAtFixedRate(
-				async token => await StoreServerLastRunAsync(token),
-				_serverRuntimeDelay,
-				_serverRuntimePeriod,
-				cancellationToken);
+			task.StoreDataAndCancel();
 		}
 
-		return ValueTask.CompletedTask;
+		Log.LogInformation("Data successfully saved.");
 	}
 
-	public async ValueTask ShutdownAsync(CancellationToken cancellationToken = default)
+	private sealed class LegionWarehouseSaveTask : PeriodicSaveTask
 	{
-		// Java parity: services/PeriodicSaveService.onShutdown -> PeriodicSaveTask.storeDataAndCancel.
-		_logger.LogInformation("Starting data save on shutdown.");
-		await StoreServerLastRunAsync(cancellationToken);
-		_logger.LogInformation("Data successfully saved.");
+		public LegionWarehouseSaveTask()
+			: base(PeriodicSaveConfig.LEGION_ITEMS * 1000)
+		{
+		}
+
+		public override void Run()
+		{
+			Log.LogInformation("Legion WH update task started.");
+			long startTime = System.Environment.TickCount64;
+			int legionWhUpdated = 0;
+			foreach (Legion legion in LegionService.GetInstance().GetCachedLegions())
+			{
+				List<Item> allItems = legion.GetLegionWarehouse().GetItemsWithKinah();
+				allItems.AddRange(legion.GetLegionWarehouse().GetDeletedItems());
+				try
+				{
+					// 1. save items first
+					InventoryDAO.Store(allItems, null, null, legion.GetLegionId());
+					// 2. save item stones
+					ItemStoneListDAO.Save(allItems);
+				}
+				catch (Exception ex)
+				{
+					Log.LogError(ex, "Exception during periodic saving of legion WH");
+				}
+
+				legionWhUpdated++;
+			}
+
+			long workTime = System.Environment.TickCount64 - startTime;
+			Log.LogInformation("Legion WH update: " + workTime + " ms, legions: " + legionWhUpdated + ".");
+		}
 	}
 
-	public Task<bool> StoreServerLastRunAsync(CancellationToken cancellationToken = default)
+	private sealed class ServerRunTimeSaveTask : PeriodicSaveTask
 	{
-		// Java parity: PeriodicSaveService.ServerRunTimeSaveTask.run.
-		return _serverVariablesRepository.StoreAsync(
-			ServerLastRunVariable,
-			DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-			cancellationToken);
+		public ServerRunTimeSaveTask()
+			: base((long)TimeSpan.FromMinutes(2).TotalMilliseconds)
+		{
+		}
+
+		public override void Run()
+		{
+			ServerVariablesDAO.Store("serverLastRun", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+		}
+	}
+
+	private abstract class PeriodicSaveTask
+	{
+		private readonly ScheduledTask _future;
+
+		protected PeriodicSaveTask(long periodMillis)
+		{
+			_future = ThreadPoolManager.GetInstance().ScheduleAtFixedRateTask(
+				_ => { Run(); return ValueTask.CompletedTask; },
+				TimeSpan.FromMilliseconds(periodMillis),
+				TimeSpan.FromMilliseconds(periodMillis));
+		}
+
+		public abstract void Run();
+
+		public void StoreDataAndCancel()
+		{
+			_future.Cancel(false);
+			Run();
+		}
+	}
+
+	private static class SingletonHolder
+	{
+		internal static readonly PeriodicSaveService Instance = new PeriodicSaveService();
 	}
 }

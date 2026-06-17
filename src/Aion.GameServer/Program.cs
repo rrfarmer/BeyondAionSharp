@@ -71,10 +71,10 @@ var builder = Host.CreateDefaultBuilder(args)
 			// Reworked AutoGroup runtime/registration services (depended on the deleted Player*Runtime + PlayerEnterWorldService god) removed.
 			// Reworked VortexLocationService removed: faithful services/VortexService.getLocationByRift/getLocationByWorld
 			// (backed by DataManager.VORTEX_DATA) already covers the logic; the DI leaf had zero non-registration consumers.
-			services.AddSingleton<PeriodicSaveService>();
+			// PeriodicSaveService is now the faithful Java singleton (services/PeriodicSaveService.getInstance()),
+			// wired at boot in GameServerBootstrapService (GameServer.main:156); the reworked DI GameEngine
+			// registration was retired.
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
-			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
-				serviceProvider => serviceProvider.GetRequiredService<PeriodicSaveService>());
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<LimitedItemTradeSchedulerService>());
 			// Boot NPC spawn is the faithful SpawnEngine.SpawnAll() (Java parity: GameServer.main), invoked

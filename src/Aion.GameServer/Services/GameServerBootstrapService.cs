@@ -252,11 +252,12 @@ public sealed class GameServerBootstrapService : IHostedService
 		// ExchangeService.getInstance() (GameServer.main:155): empty ctor (no boot work). Faithful no-op touch.
 		Aion.GameServer.Services.ExchangeService.GetInstance();
 
-		// PeriodicSaveService (GameServer.main:156): DEFERRED. The C# PeriodicSaveService is a reworked DI-constructed
-		// GameEngine (only schedules a "server last run" variable) — NOT a faithful 1:1 of Java's singleton
-		// PeriodicSaveService (which schedules player/legion/etc. periodic saves through ThreadPoolManager). Wiring it
-		// faithfully needs a DI-injected instance + a faithful re-port of the save tasks; out of scope for a bounded
-		// singleton getInstance() wire. Defer until the faithful re-port lands.
+		// PeriodicSaveService.getInstance() (GameServer.main:156): faithful singleton; ctor schedules the
+		// LegionWarehouseSaveTask (PeriodicSaveConfig.LEGION_ITEMS * 1000 ms) + ServerRunTimeSaveTask (2 min) via
+		// ThreadPoolManager.scheduleAtFixedRate. Scheduling boots cleanly (ThreadPoolManager initialized); the task
+		// bodies run at interval-fire against the live DB (LegionService.getCachedLegions empty + DB-guarded DAOs =>
+		// no-op no-DB). The reworked DI GameEngine PeriodicSaveService was retired.
+		Aion.GameServer.Services.PeriodicSaveService.GetInstance();
 
 		// AtreianPassportService.getInstance() (GameServer.main:157): ctor computes the passport expire date from
 		// ATREIAN_PASSPORT_DATA (empty => null expire => not disabled) and, when enabled, schedules the daily 09:00
