@@ -4,8 +4,8 @@ using Aion.GameServer.Model.GameObjects;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>
-/// Java parity: network/aion/serverpackets/SM_ATTACK_STATUS. Faithful 1:1 rewrite replacing the divergent
-/// SmAttackStatusType/SmAttackStatusLog port (rule 8). Class name kept PascalCase per the C# packet convention.
+/// Java parity: network/aion/serverpackets/SM_ATTACK_STATUS. Faithful 1:1 port. Class name kept PascalCase
+/// per the C# packet convention; nested TYPE/LOG mirror Java's nested enums exactly.
 /// </summary>
 /// <remarks>
 /// <see cref="TYPE"/> is modeled as a Java-style class-enum (static instances) because Java's TYPE has multiple
@@ -22,46 +22,6 @@ public sealed class SmAttackStatus : GameServerPacket
     private readonly int skillId;
     private readonly int value;
     private readonly int logId;
-
-    // Reworked WorldNpc damage/resource-stat spawn pillar has no faithful Creature/CreatureLifeStats; this
-    // objectId-based path serializes the identical SM_ATTACK_STATUS wire form from precomputed primitives
-    // (objectId + clamped hp/mp percentage), using the standalone SmAttackStatusType/Log enums those services hold.
-    private readonly bool _rawObjectIdMode;
-    private readonly int _rawObjectId;
-    private readonly SmAttackStatusType _rawType;
-    private readonly int _rawValue;
-    private readonly int _rawHpOrMpPercentage;
-    private readonly int _rawLog;
-    private readonly bool? _rawUsesNegativeValueOverride;
-
-    public SmAttackStatus(
-        int creatureObjectId,
-        SmAttackStatusType type,
-        int skillId,
-        int value,
-        int hpOrMpPercentage,
-        SmAttackStatusLog log = SmAttackStatusLog.Regular,
-        bool? usesNegativeValue = null)
-        : base(PacketOpCode)
-    {
-        _rawObjectIdMode = true;
-        _rawObjectId = creatureObjectId;
-        _rawType = type;
-        this.skillId = skillId;
-        _rawValue = value;
-        _rawHpOrMpPercentage = Math.Clamp(hpOrMpPercentage, 0, 100);
-        _rawLog = (int)log;
-        _rawUsesNegativeValueOverride = usesNegativeValue;
-    }
-
-    private static bool UsesNegativeValue(SmAttackStatusType type)
-    {
-        return type
-            is SmAttackStatusType.Damage
-            or SmAttackStatusType.DelayDamage
-            or SmAttackStatusType.DamageMp
-            or SmAttackStatusType.FpDamage;
-    }
 
     public SmAttackStatus(Creature creature, TYPE type, int skillId, int value, LOG log)
         : base(PacketOpCode)
@@ -87,17 +47,6 @@ public sealed class SmAttackStatus : GameServerPacket
 
     protected override void WritePayload(PacketBuffer buffer, GameCrypt crypt)
     {
-        if (_rawObjectIdMode)
-        {
-            buffer.WriteD(_rawObjectId);
-            buffer.WriteD((_rawUsesNegativeValueOverride ?? UsesNegativeValue(_rawType)) ? -_rawValue : _rawValue);
-            buffer.WriteC((int)_rawType);
-            buffer.WriteC(_rawHpOrMpPercentage);
-            buffer.WriteH(skillId);
-            buffer.WriteH(_rawLog);
-            return;
-        }
-
         int hpOrMp;
         buffer.WriteD(creature.GetObjectId());
         if (type == TYPE.DAMAGE || type == TYPE.DELAYDAMAGE || type == TYPE.FALL_DAMAGE || type == TYPE.FP_DAMAGE
