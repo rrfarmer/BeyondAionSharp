@@ -1020,6 +1020,173 @@ public sealed class GoldenWorldPacketFixtureTests
         }
     }
 
+    // ---- SM_TUNE_RESULT (item / ItemInfoBlob EnchantInfoBlobEntry.WriteInfo seam) -------------------------------
+    //
+    // SM_TUNE_RESULT.WriteImpl reads targetItem.GetObjectId(), tuningScrollItemId, result.GetStatBonusId() (PendingTuneResult
+    // is a pure DTO), then EnchantInfoBlobEntry.WriteInfo(buf, targetItem, optionalSockets, enchantBonus) — the already
+    // byte-validated ENCHANT_INFO writer on a bare simple-ctor Item (deterministic) with the last two args from the DTO
+    // scalars, then WriteC(showManastoneSlots?0:1) + WriteC(tuneCancelPossible?0:1) (both == !IsAttributeOnly()). No con
+    // read, no live Player. Item built IDENTICALLY to the Java oracle side via BuildSimpleItem. Java is the oracle.
+    private const int TuneItemObjectId = 268520001;
+
+    [Theory]
+    [InlineData("SM_TUNE_RESULT.json")]
+    public void CsharpTuneResultMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(TuneItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var tuningScrollItemId = inputs.GetProperty("tuningScrollItemId").GetInt32();
+            var result = new Aion.GameServer.Model.Items.PendingTuneResult(
+                inputs.GetProperty("optionalSockets").GetInt32(),
+                inputs.GetProperty("enchantBonus").GetInt32(),
+                inputs.GetProperty("statBonusId").GetInt32(),
+                inputs.GetProperty("attributeOnly").GetBoolean());
+
+            var item = BuildSimpleItem(TuneItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator);
+            var packet = new SM_TUNE_RESULT(item, tuningScrollItemId, result);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_TUNE_RESULT/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    // ---- SM_SKILL_LIST (silent ctor, DataManager-free) ----------------------------------------------------------
+    //
+    // The silent ctor (silentUpdate=true, messageId=0) reads no SKILL_DATA. WriteImpl writes size + 1 + per-entry
+    // SkillEntryWriter + WriteD(0). Stigma entries (skillType>0) -> IsNormalSkill() false -> GetFlag()==0 (no clock),
+    // IsProfessionSkill() false -> ProfessionSkillBarSize 0. Built IDENTICALLY to the Java oracle side. Java is the oracle.
+    [Theory]
+    [InlineData("SM_SKILL_LIST.json")]
+    public void CsharpSkillListMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var skills = new List<Aion.GameServer.Model.Skill.PlayerSkillEntry>();
+            foreach (var s in inputs.GetProperty("skills").EnumerateArray())
+                skills.Add(new Aion.GameServer.Model.Skill.PlayerSkillEntry(
+                    s.GetProperty("skillId").GetInt32(),
+                    s.GetProperty("skillLvl").GetInt32(),
+                    s.GetProperty("skillType").GetInt32(),
+                    Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NOACTION));
+            var packet = new SM_SKILL_LIST(skills);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_SKILL_LIST/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    // ---- SM_WAREHOUSE_ADD_ITEM (item / ItemInfoBlob seam, player == blob owner only) ----------------------------
+    //
+    // WriteImpl reads WriteC(warehouseType) + WriteH(addType.GetMask()) (enum scalar) + WriteH(items.Count) + per-item
+    // objId/templateId/WriteC(0)/L10n/GetFullBlob(player,item).WriteMe()/equipmentSlot. Player only blob owner -> null.
+    // Same GENERAL_INFO-only item seam as SM_EXCHANGE_ADD_ITEM. Built IDENTICALLY to the Java oracle side. Java is the oracle.
+    private const int WhAddItemObjectId = 268520002;
+
+    [Theory]
+    [InlineData("SM_WAREHOUSE_ADD_ITEM.json")]
+    public void CsharpWarehouseAddItemMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(WhAddItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var warehouseType = inputs.GetProperty("warehouseType").GetInt32();
+            var addType = Enum.Parse<ItemAddType>(inputs.GetProperty("addType").GetString()!);
+
+            var item = BuildSimpleItem(WhAddItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator);
+            var packet = new SM_WAREHOUSE_ADD_ITEM(item, warehouseType, null, addType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_WAREHOUSE_ADD_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    // ---- SM_INVENTORY_INFO (player-scalar seam: npc/quest/item expands) -----------------------------------------
+    //
+    // WriteImpl reads WriteC(isFirstPacket?1:0) + the three player cube-expand scalars (GetNpcExpands/GetQuestExpands/
+    // GetItemExpands via GetCommonData() -> playerAccountData.GetPlayerCommonData()) + WriteH(items.Count) + per item.
+    // The ONLY live-Player reads are the three int scalars; GetFullBlob uses player only as blob owner. So the player is
+    // allocated uninitialized with ONLY playerAccountData pinned to a PlayerAccountData whose PlayerCommonData carries the
+    // three pinned expands. Non-equippable GENERAL_INFO-only item. Built IDENTICALLY to the Java oracle side. Java is oracle.
+    private const int InvInfoItemObjectId = 268520003;
+    private const int InvInfoNpcExpands = 3;
+    private const int InvInfoQuestExpands = 2;
+    private const int InvInfoItemExpands = 4;
+
+    [Theory]
+    [InlineData("SM_INVENTORY_INFO.json")]
+    public void CsharpInventoryInfoMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var player = NewPlayerWithExpands(InvInfoNpcExpands, InvInfoQuestExpands, InvInfoItemExpands);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var firstPacket = inputs.GetProperty("firstPacket").GetBoolean();
+            var itemCount = inputs.GetProperty("itemCount").GetInt32();
+
+            var items = new List<Item>();
+            if (itemCount > 0)
+                items.Add(BuildSimpleItem(InvInfoItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator));
+            var packet = new SM_INVENTORY_INFO(firstPacket, items, player);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_INFO/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Allocate a Player WITHOUT running any constructor (the established harness precedent), then pin ONLY its
+    /// playerAccountData field to a PlayerAccountData (also uninitialized to dodge the appearance-deref ctor) whose
+    /// playerCommonData carries the three pinned cube-expand scalars. SM_INVENTORY_INFO reads nothing else from the live
+    /// Player. Mirrors the Java oracle side exactly.
+    /// </summary>
+    private static Player NewPlayerWithExpands(int npcExpands, int questExpands, int itemExpands)
+    {
+        var pcd = new Aion.GameServer.Model.GameObjects.Players.PlayerCommonData(InvInfoItemObjectId);
+        pcd.SetNpcExpands(npcExpands);
+        pcd.SetQuestExpands(questExpands);
+        pcd.SetItemExpands(itemExpands);
+
+        var accountData = (Aion.GameServer.Model.Account.PlayerAccountData)
+            RuntimeHelpers.GetUninitializedObject(typeof(Aion.GameServer.Model.Account.PlayerAccountData));
+        SetField(accountData, "playerCommonData", pcd);
+
+        var player = (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));
+        SetField(player, "playerAccountData", accountData);
+        return player;
+    }
+
     /// <summary>
     /// Allocate SM_REPURCHASE WITHOUT running its ctor (whose body pulls items from the RepurchaseService singleton —
     /// RuntimeHelpers.GetUninitializedObject, mirroring the Java Unsafe.allocateInstance side), then reflectively pin only
