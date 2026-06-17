@@ -16,7 +16,6 @@ public sealed partial class StaticData
 		IReadOnlyList<string> importedFiles,
 		IReadOnlyDictionary<string, int> elementCounts,
 		IReadOnlyList<string> topLevelElements,
-		FlightZoneTable flightZones,
 		CreaturePvpZoneTable creaturePvpZones,
 		PlayerExperienceTable playerExperienceTable,
 		CosmeticItemTable cosmeticItems,
@@ -52,7 +51,6 @@ public sealed partial class StaticData
 		ImportedFiles = importedFiles;
 		ElementCounts = elementCounts;
 		TopLevelElements = topLevelElements;
-		FlightZones = flightZones;
 		CreaturePvpZones = creaturePvpZones;
 		PlayerExperienceTable = playerExperienceTable;
 		CosmeticItems = cosmeticItems;
@@ -94,8 +92,6 @@ public sealed partial class StaticData
 	public IReadOnlyDictionary<string, int> ElementCounts { get; }
 
 	public IReadOnlyList<string> TopLevelElements { get; }
-
-	public FlightZoneTable FlightZones { get; }
 
 	public CreaturePvpZoneTable CreaturePvpZones { get; }
 
@@ -715,7 +711,6 @@ public sealed partial class StaticData
 		// Java parity: dataholders/DataManager static_data.xml import graph plus typed DataHolder caches.
 		var counts = new Dictionary<string, int>(StringComparer.Ordinal);
 		var topLevelElements = new List<string>();
-		var flightZones = new List<FlightZoneSummary>();
 		var creaturePvpZones = new List<CreaturePvpZoneSummary>();
 		var experience = new List<long>();
 		var cosmeticItems = new List<CosmeticItemSummary>();
@@ -770,7 +765,6 @@ public sealed partial class StaticData
 		int currentItemPurificationBaseItemId = 0;
 		List<ItemPurificationResultSummary>? currentItemPurificationResults = null;
 		ItemPurificationResultBuilder? currentItemPurificationResult = null;
-		FlightZoneBuilder? currentFlightZone = null;
 		CreaturePvpZoneBuilder? currentCreaturePvpZone = null;
 		var elementPath = new Dictionary<int, string>();
 		var settings = new XmlReaderSettings
@@ -847,13 +841,6 @@ public sealed partial class StaticData
 
 				if (reader.Depth == 3 && reader.LocalName == "enchant_data" && currentEnchantGroup != null)
 					currentEnchantGroup.EndLevel();
-
-				if (reader.Depth == 2 && reader.LocalName == "zone" && currentFlightZone != null)
-				{
-					if (currentFlightZone.HasEnoughPoints)
-						flightZones.Add(currentFlightZone.ToSummary());
-					currentFlightZone = null;
-				}
 
 				if (reader.Depth == 2 && reader.LocalName == "zone" && currentCreaturePvpZone != null)
 				{
@@ -1090,26 +1077,23 @@ public sealed partial class StaticData
 
 			if (reader.Depth == 2 && reader.LocalName == "zone" && elementPath.GetValueOrDefault(1) == "zones")
 			{
-				currentFlightZone = FlightZoneBuilder.TryCreate(reader);
 				currentCreaturePvpZone = CreaturePvpZoneBuilder.TryCreate(reader);
 				continue;
 			}
 
-			if (reader.Depth == 3 && reader.LocalName == "points" && (currentFlightZone != null || currentCreaturePvpZone != null))
+			if (reader.Depth == 3 && reader.LocalName == "points" && currentCreaturePvpZone != null)
 			{
 				var bottom = ReadFloatAttribute(reader, "bottom");
 				var top = ReadFloatAttribute(reader, "top");
-				currentFlightZone?.SetVerticalBounds(bottom, top);
-				currentCreaturePvpZone?.SetVerticalBounds(bottom, top);
+				currentCreaturePvpZone.SetVerticalBounds(bottom, top);
 				continue;
 			}
 
-			if (reader.Depth == 4 && reader.LocalName == "point" && (currentFlightZone != null || currentCreaturePvpZone != null))
+			if (reader.Depth == 4 && reader.LocalName == "point" && currentCreaturePvpZone != null)
 			{
 				var x = ReadFloatAttribute(reader, "x");
 				var y = ReadFloatAttribute(reader, "y");
-				currentFlightZone?.AddPoint(x, y);
-				currentCreaturePvpZone?.AddPoint(x, y);
+				currentCreaturePvpZone.AddPoint(x, y);
 				continue;
 			}
 
@@ -1718,7 +1702,6 @@ public sealed partial class StaticData
 			importedFiles,
 			new ReadOnlyDictionary<string, int>(counts),
 			topLevelElements.AsReadOnly(),
-			new FlightZoneTable(flightZones.AsReadOnly()),
 			new CreaturePvpZoneTable(creaturePvpZones.AsReadOnly()),
 			new PlayerExperienceTable(experience.AsReadOnly()),
 			new CosmeticItemTable(cosmeticItems.AsReadOnly()),
