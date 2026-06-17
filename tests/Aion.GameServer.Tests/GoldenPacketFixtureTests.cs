@@ -189,6 +189,7 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_CHAT_INIT.json")]
 	[InlineData("SM_RECEIVE_BIDS.json")]
 	[InlineData("SM_CUSTOM_SETTINGS.json")]
+	[InlineData("SM_ATTACK.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -281,6 +282,7 @@ public sealed class GoldenPacketFixtureTests
 		"SM_CHAT_INIT" => new SM_CHAT_INIT(inputs.GetProperty("token").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray()),
 		"SM_RECEIVE_BIDS" => new SM_RECEIVE_BIDS(inputs.GetProperty("unk").GetInt32()),
 		"SM_CUSTOM_SETTINGS" => new SM_CUSTOM_SETTINGS(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("unk").GetInt32(), inputs.GetProperty("display").GetInt32(), inputs.GetProperty("deny").GetInt32()),
+		"SM_ATTACK" => ReconstructAttack(inputs),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -360,6 +362,44 @@ public sealed class GoldenPacketFixtureTests
 			default:
 				throw new NotSupportedException($"No SM_PET reconstruction for action {action}");
 		}
+	}
+
+	// SM_ATTACK: attacker + target are non-Player harness Creatures (avoids the instanceof Player branch).
+	// Each carries MAXHP via the harness game-stats + currentHp via harness life-stats, so getHpPercentage()
+	// matches the Java HarnessAttackLifeStats (currentHp*100/maxHp). Per-hit AttackResult list mirrors Java 1:1.
+	private static SM_ATTACK ReconstructAttack(JsonElement inputs)
+	{
+		var attacker = BuildAttackCreature(inputs.GetProperty("attackerObjId").GetInt32(),
+			inputs.GetProperty("attackerMaxHp").GetInt32(), inputs.GetProperty("attackerCurrentHp").GetInt32());
+		var target = BuildAttackCreature(inputs.GetProperty("targetObjId").GetInt32(),
+			inputs.GetProperty("targetMaxHp").GetInt32(), inputs.GetProperty("targetCurrentHp").GetInt32());
+		var type = Enum.Parse<Aion.GameServer.Model.Animations.AttackTypeAnimation>(inputs.GetProperty("attackType").GetString()!);
+		var hand = Enum.Parse<Aion.GameServer.Model.Animations.AttackHandAnimation>(inputs.GetProperty("attackHand").GetString()!);
+		var hits = new List<Aion.GameServer.Controllers.Attack.AttackResult>();
+		foreach (var hit in inputs.GetProperty("hits").EnumerateArray())
+		{
+			var status = Enum.Parse<Aion.GameServer.Controllers.Attack.AttackStatus>(hit.GetProperty("status").GetString()!);
+			var r = new Aion.GameServer.Controllers.Attack.AttackResult(hit.GetProperty("damage").GetSingle(), status);
+			if (hit.TryGetProperty("shieldType", out var st) && st.GetInt32() != 0)
+				r.SetShieldType(st.GetInt32());
+			if (hit.TryGetProperty("protectorId", out var pid))
+				r.SetProtectorId(pid.GetInt32());
+			if (hit.TryGetProperty("protectedDamage", out var pd))
+				r.SetProtectedDamage(pd.GetInt32());
+			if (hit.TryGetProperty("protectedSkillId", out var psid))
+				r.SetProtectedSkillId(psid.GetInt32());
+			hits.Add(r);
+		}
+		return new SM_ATTACK(attacker, target, inputs.GetProperty("attackno").GetInt32(),
+			inputs.GetProperty("time").GetInt32(), type, hand, hits);
+	}
+
+	private static PacketHarnessCreature BuildAttackCreature(int objectId, int maxHp, int currentHp)
+	{
+		var stats = new Dictionary<StatEnum, int> { [StatEnum.MAXHP] = maxHp };
+		var c = new PacketHarnessCreature(objectId, 50, stats);
+		c.SetLifeStats(new PacketHarnessLifeStats(c, currentHp, 0));
+		return c;
 	}
 
 	private static SM_ATTACK_RESPONSE ReconstructAttackResponse(JsonElement inputs)
