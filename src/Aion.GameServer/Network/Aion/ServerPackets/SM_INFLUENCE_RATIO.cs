@@ -7,6 +7,8 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_INFLUENCE_RATIO (Nemiroff). Faction influence rates + per-world influence (subset of SM_FORTRESS_STATUS). Influence/SiegeRace/SiegeService red-tolerated.</summary>
 public class SM_INFLUENCE_RATIO : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_INFLUENCE_RATIO.java): 2026-06-17
+    // TIER-2 audit-only: reads live Influence + SiegeService singletons (no bounded unit seam).
     protected override void WriteImpl(AionConnection con)
     {
         Influence inf = Influence.GetInstance();

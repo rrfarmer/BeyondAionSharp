@@ -8,6 +8,8 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_LEGION_DOMINION_LOC_INFO (Neon, Yeats). Sends each legion-dominion location with owning legion + emblem (id/type/argb) + name. Converges PlayerEnterWorldService. LegionDominionLocation/Legion/LegionEmblem/services red-tolerated.</summary>
 public class SM_LEGION_DOMINION_LOC_INFO : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_LEGION_DOMINION_LOC_INFO.java): 2026-06-17
+    // TIER-2 audit-only: reads live LegionDominionService + LegionService singletons + full Legion/emblem graph (no bounded unit seam).
     protected override void WriteImpl(AionConnection con)
     {
         WriteH(LegionDominionService.GetInstance().GetLegionDominions().Count);

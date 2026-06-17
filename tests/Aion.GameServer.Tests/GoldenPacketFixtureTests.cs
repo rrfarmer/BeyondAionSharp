@@ -142,6 +142,9 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_ABYSS_RANKING_LEGIONS.json")]
 	[InlineData("SM_ABYSS_RANKING_PLAYERS.json")]
 	[InlineData("SM_GM_SHOW_PLAYER_SKILLS.json")]
+	// ----- Batch 14: con-null-safe DTO/scalar packets (no con, no live World, no live singleton) -----
+	[InlineData("SM_NPC_ASSEMBLER.json")]
+	[InlineData("SM_GATHER_UPDATE.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -276,6 +279,9 @@ public sealed class GoldenPacketFixtureTests
 		"SM_ABYSS_RANKING_LEGIONS" => ReconstructAbyssRankingLegions(inputs),
 		"SM_ABYSS_RANKING_PLAYERS" => ReconstructAbyssRankingPlayers(inputs),
 		"SM_GM_SHOW_PLAYER_SKILLS" => new SM_GM_SHOW_PLAYER_SKILLS(ReconstructPlayerSkills(inputs.GetProperty("skills"))),
+		// ----- Batch 14 -----
+		"SM_NPC_ASSEMBLER" => ReconstructNpcAssembler(inputs),
+		"SM_GATHER_UPDATE" => ReconstructGatherUpdate(inputs),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -316,6 +322,48 @@ public sealed class GoldenPacketFixtureTests
 		foreach (var it in items.EnumerateArray())
 			list.Add(new Aion.GameServer.Model.Templates.Items.ResultedItem { itemId = it[0].GetInt32(), minCount = it[1].GetInt32() });
 		return list;
+	}
+
+	// ----- Batch 14 reconstruct helpers -----
+
+	// SM_NPC_ASSEMBLER: AssembledNpc(routeId, mapId, liveTime, parts) + reflect-set part template npcId/staticId; the
+	// packet caches timeOnMap (System time) at ctor, so reflect-pin the private timeOnMap field to the fixture value.
+	private static SM_NPC_ASSEMBLER ReconstructNpcAssembler(JsonElement inputs)
+	{
+		if (inputs.TryGetProperty("assembledNpc", out var an) && an.ValueKind == JsonValueKind.Null)
+			return new SM_NPC_ASSEMBLER(null);
+
+		int routeId = inputs.GetProperty("routeId").GetInt32();
+		var parts = new List<Aion.GameServer.Model.Assemblednpc.AssembledNpcPart>();
+		foreach (var p in inputs.GetProperty("parts").EnumerateArray())
+		{
+			var pt = new Aion.GameServer.Model.Templates.Assemblednpc.AssembledNpcTemplate.AssembledNpcPartTemplate
+			{
+				npcId = p[1].GetInt32(),
+				staticId = p[2].GetInt32(),
+			};
+			parts.Add(new Aion.GameServer.Model.Assemblednpc.AssembledNpcPart(p[0].GetInt32(), pt));
+		}
+		var npc = new Aion.GameServer.Model.Assemblednpc.AssembledNpc(routeId, 0, 0, parts);
+		var packet = new SM_NPC_ASSEMBLER(npc);
+		var f = typeof(SM_NPC_ASSEMBLER).GetField("timeOnMap",
+			System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+		f.SetValue(packet, inputs.GetProperty("timeOnMap").GetInt64());
+		return packet;
+	}
+
+	// SM_GATHER_UPDATE: ctor caches template.GetHarvestSkill() + material.GetItemId()/GetL10n() + scalars. Set the public
+	// XML fields directly (bypass XML load); l10n is ChatUtil.L10n(nameid) (pure). action selects the system-message id.
+	private static SM_GATHER_UPDATE ReconstructGatherUpdate(JsonElement inputs)
+	{
+		var tmpl = new Aion.GameServer.Model.Templates.Gather.GatherableTemplate { harvestSkill = inputs.GetProperty("skillId").GetInt32() };
+		var mat = new Aion.GameServer.Model.Templates.Gather.Material { itemid = inputs.GetProperty("itemId").GetInt32(), nameid = inputs.GetProperty("nameId").GetInt32() };
+		return new SM_GATHER_UPDATE(tmpl, mat,
+			inputs.GetProperty("success").GetInt32(),
+			inputs.GetProperty("failure").GetInt32(),
+			inputs.GetProperty("action").GetInt32(),
+			inputs.GetProperty("executionSpeed").GetInt32(),
+			inputs.GetProperty("delay").GetInt32());
 	}
 
 	// ----- Batch 11 reconstruct helpers -----

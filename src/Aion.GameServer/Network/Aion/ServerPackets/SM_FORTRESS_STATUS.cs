@@ -8,6 +8,8 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_FORTRESS_STATUS. Global fortress + influence state: next-state countdown, faction influence rates, per-world influence, per-fortress next state. FortressLocation/Influence/SiegeRace/SiegeService red-tolerated.</summary>
 public class SM_FORTRESS_STATUS : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_FORTRESS_STATUS.java): 2026-06-17
+    // TIER-2 audit-only: reads live SiegeService.getFortresses() + Influence singletons (no bounded unit seam).
     protected override void WriteImpl(AionConnection con)
     {
         IDictionary<int, FortressLocation> fortresses = SiegeService.GetInstance().GetFortresses();
