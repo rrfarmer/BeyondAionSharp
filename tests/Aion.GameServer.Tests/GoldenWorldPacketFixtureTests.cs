@@ -8,6 +8,7 @@ using Aion.GameServer.Model;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
 using Aion.GameServer.Model.GameObjects.Players;
+using Aion.GameServer.Model.Items.Storage;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
@@ -898,6 +899,138 @@ public sealed class GoldenWorldPacketFixtureTests
                 $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
                 $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
         }
+    }
+
+    // ---- item / ItemInfoBlob seam: more host packets (SM_EXCHANGE_ADD_ITEM, SM_WAREHOUSE_INFO/UPDATE_ITEM, SM_REPURCHASE) ----
+    //
+    // C# asserters mirroring the Java GoldenWorldPacketFixtureGeneratorTest seam: each host packet wraps the SAME
+    // already-byte-validated ItemInfoBlob seam (GENERAL_INFO on a non-equippable item). Each WriteImpl reads the Player
+    // ONLY as the GetFullBlob blob owner (never dereferenced for these deterministic items) -> player null. Items built
+    // IDENTICALLY to the Java oracle side via BuildSimpleItem. Java is the oracle.
+    private const int ExchangeItemObjectId = 268510001;
+    private const int WhInfoItemObjectId = 268510002;
+    private const int WhUpdateItemObjectId = 268510003;
+    private const int RepurchaseItemObjectId = 268510004;
+    private const long RepurchasePrice = 123456789L;
+
+    [Theory]
+    [InlineData("SM_EXCHANGE_ADD_ITEM.json")]
+    public void CsharpExchangeAddItemMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(ExchangeItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var action = inputs.GetProperty("action").GetInt32();
+
+            var item = BuildSimpleItem(ExchangeItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator);
+            var packet = new SM_EXCHANGE_ADD_ITEM(action, item, null);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_EXCHANGE_ADD_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    [Theory]
+    [InlineData("SM_WAREHOUSE_INFO.json")]
+    public void CsharpWarehouseInfoMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var warehouseType = inputs.GetProperty("warehouseType").GetInt32();
+            var expandLvl = inputs.GetProperty("expandLvl").GetInt32();
+            var firstPacket = inputs.GetProperty("firstPacket").GetBoolean();
+            var itemCount = inputs.GetProperty("itemCount").GetInt32();
+
+            var items = new List<Item>();
+            if (itemCount > 0)
+                items.Add(BuildSimpleItem(WhInfoItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator));
+            var packet = new SM_WAREHOUSE_INFO(items, warehouseType, expandLvl, firstPacket, null);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_WAREHOUSE_INFO/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    [Theory]
+    [InlineData("SM_WAREHOUSE_UPDATE_ITEM.json")]
+    public void CsharpWarehouseUpdateItemMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(WhUpdateItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var warehouseType = inputs.GetProperty("warehouseType").GetInt32();
+            var updateType = Enum.Parse<ItemUpdateType>(inputs.GetProperty("updateType").GetString()!);
+
+            var item = BuildSimpleItem(WhUpdateItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator);
+            // player null: new ItemInfoBlob(player, item) only stashes it as blob owner; GENERAL_INFO never derefs it.
+            var packet = new SM_WAREHOUSE_UPDATE_ITEM(null, item, warehouseType, updateType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_WAREHOUSE_UPDATE_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    [Theory]
+    [InlineData("SM_REPURCHASE.json")]
+    public void CsharpRepurchaseMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(RepurchaseItemObjectId, inputs.GetProperty("objectId").GetInt32());
+            var targetObjectId = inputs.GetProperty("targetObjectId").GetInt32();
+
+            var item = BuildSimpleItem(RepurchaseItemObjectId, ItemTemplateId, ItemMask, ItemDescL10n, ItemCount, ItemCreator);
+            SetField(item, "repurchasePrice", RepurchasePrice);
+            var packet = BuildRepurchasePacket(targetObjectId, new List<Item> { item });
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_REPURCHASE/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Allocate SM_REPURCHASE WITHOUT running its ctor (whose body pulls items from the RepurchaseService singleton —
+    /// RuntimeHelpers.GetUninitializedObject, mirroring the Java Unsafe.allocateInstance side), then reflectively pin only
+    /// the three final fields WriteImpl reads (player blob-owner null, targetObjectId, items).
+    /// </summary>
+    private static SM_REPURCHASE BuildRepurchasePacket(int targetObjectId, ICollection<Item> items)
+    {
+        var packet = (SM_REPURCHASE)RuntimeHelpers.GetUninitializedObject(typeof(SM_REPURCHASE));
+        SetField(packet, "targetObjectId", targetObjectId);
+        SetField(packet, "items", items);
+        return packet;
     }
 
     /// <summary>
