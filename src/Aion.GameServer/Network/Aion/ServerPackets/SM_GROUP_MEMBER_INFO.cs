@@ -45,6 +45,7 @@ public class SM_GROUP_MEMBER_INFO : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_GROUP_MEMBER_INFO.java): 2026-06-17. Live Player/Group/Effect graph; SkillTargetSlot.ordinal() = Array.IndexOf(Enum.GetValues).
         PlayerLifeStats pls = player.GetLifeStats();
         PlayerCommonData pcd = player.GetCommonData();
         WorldPosition wp = player.GetPosition();

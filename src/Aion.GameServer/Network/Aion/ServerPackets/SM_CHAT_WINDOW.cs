@@ -22,6 +22,7 @@ public class SM_CHAT_WINDOW : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_CHAT_WINDOW.java): 2026-06-17. Live Player/Group/Alliance graph + Account; PlayerClass.values().length = Enum.GetValues.Length.
         if (target == null)
             return;
 

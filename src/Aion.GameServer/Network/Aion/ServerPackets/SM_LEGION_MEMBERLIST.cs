@@ -23,6 +23,7 @@ public class SM_LEGION_MEMBERLIST : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_LEGION_MEMBERLIST.java): 2026-06-17. Live LegionMember graph + HousingService singleton.
         int size = legionMembers.Count;
         WriteC(isFirst ? 1 : 0);
         WriteH(isLast ? -size : size);

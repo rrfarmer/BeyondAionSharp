@@ -18,6 +18,7 @@ public class SM_LEGION_INFO : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_LEGION_INFO.java): 2026-06-17. Live Legion graph + AbyssRankingCache singleton.
         WriteS(legion.GetName());
         WriteC(legion.GetLegionLevel());
         WriteD(AbyssRankingCache.GetInstance().GetRankingListPosition(legion));

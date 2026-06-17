@@ -17,6 +17,7 @@ public class SM_PRIVATE_STORE_NAME : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_PRIVATE_STORE_NAME.java): 2026-06-17. ctor reads live Player.getStore() graph.
         WriteD(playerObjId);
         WriteS(name);
     }

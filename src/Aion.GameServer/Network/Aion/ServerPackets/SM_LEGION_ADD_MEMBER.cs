@@ -24,6 +24,7 @@ public class SM_LEGION_ADD_MEMBER : AionServerPacket
 
     protected override void WriteImpl(AionConnection con)
     {
+        // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_LEGION_ADD_MEMBER.java): 2026-06-17. Live Player + LegionMember graph.
         WriteD(player.GetObjectId());
         WriteS(player.GetName());
         WriteC(player.GetLegionMember().GetRank().GetRankId());
