@@ -130,7 +130,7 @@ public sealed class GameTimeService : GameEngine
 					if (broadcastToWorld != null)
 					{
 						_logger.LogInformation("Sending current game time to all players");
-						await broadcastToWorld(new SmGameTime(GameMinutes), cancellationToken);
+						await broadcastToWorld(new SM_GAME_TIME(), cancellationToken);
 					}
 
 					if (await SaveGameTimeAsync())

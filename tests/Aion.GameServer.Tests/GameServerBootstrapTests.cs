@@ -132,7 +132,7 @@ public sealed class GameServerBootstrapTests
 		await using var threadPoolManager = new ThreadPoolManager(NullLogger<ThreadPoolManager>.Instance);
 		var repository = new TrackingServerVariablesRepository { LoadedInt = 42 };
 		var broadcastCount = 0;
-		SmGameTime? lastBroadcast = null;
+		SM_GAME_TIME? lastBroadcast = null;
 		var gameTime = new GameTimeService(
 			NullLogger<GameTimeService>.Instance,
 			threadPoolManager,
@@ -145,7 +145,7 @@ public sealed class GameServerBootstrapTests
 			(packet, _) =>
 			{
 				Interlocked.Increment(ref broadcastCount);
-				lastBroadcast = Assert.IsType<SmGameTime>(packet);
+				lastBroadcast = Assert.IsType<SM_GAME_TIME>(packet);
 				return Task.FromResult(0);
 			});
 
