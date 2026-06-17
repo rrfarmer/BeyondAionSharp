@@ -8,8 +8,9 @@ namespace Aion.Commons.Configuration.Transformers;
 /// resolves the first transformer that matches a target type.
 /// <para>
 /// Ported this slice (covers every type the migrated *Config holders use): Number, Boolean, Char, String, Enum,
-/// Array. Java additionally registers Collection, File, InetSocketAddress, Pattern (registered here), Class,
-/// TimeZone, ZoneId — added incrementally as config holders that need them are migrated (see Full-Parity-Backlog §C).
+/// Array, Pattern, ZoneId (TimeZoneInfo, for GSConfig.TIME_ZONE_ID). Java additionally registers Collection, File,
+/// InetSocketAddress, Class, TimeZone — added incrementally as config holders that need them are migrated (see
+/// Full-Parity-Backlog §C; File/InetSocketAddress fields are currently held as string and bound via StringTransformer).
 /// </para>
 /// </summary>
 public static class PropertyTransformers
@@ -25,6 +26,7 @@ public static class PropertyTransformers
         Register(new EnumTransformer());
         Register(new ArrayTransformer());
         Register(new PatternTransformer());
+        Register(new ZoneIdTransformer());
     }
 
     public static void Register(PropertyTransformer propertyTransformer) => Registry.Add(propertyTransformer);
