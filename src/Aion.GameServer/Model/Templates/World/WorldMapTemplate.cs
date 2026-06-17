@@ -50,7 +50,7 @@ public class WorldMapTemplate
         }
     }
 
-    // Java parity: @XmlEnumValue wire-token → ZoneAttributes constant (matches WorldMapSummary.ParseFlags).
+    // Java parity: @XmlEnumValue wire-token → ZoneAttributes constant.
     private static ZoneAttributes ParseFlagToken(string token) => token switch
     {
         "BIND"             => ZoneAttributes.Bind,

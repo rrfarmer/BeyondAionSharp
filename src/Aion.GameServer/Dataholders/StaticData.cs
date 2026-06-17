@@ -16,7 +16,6 @@ public sealed partial class StaticData
 		IReadOnlyList<string> importedFiles,
 		IReadOnlyDictionary<string, int> elementCounts,
 		IReadOnlyList<string> topLevelElements,
-		IReadOnlyList<WorldMapSummary> worldMaps,
 		FlightZoneTable flightZones,
 		CreaturePvpZoneTable creaturePvpZones,
 		PlayerExperienceTable playerExperienceTable,
@@ -53,7 +52,6 @@ public sealed partial class StaticData
 		ImportedFiles = importedFiles;
 		ElementCounts = elementCounts;
 		TopLevelElements = topLevelElements;
-		WorldMaps = worldMaps;
 		FlightZones = flightZones;
 		CreaturePvpZones = creaturePvpZones;
 		PlayerExperienceTable = playerExperienceTable;
@@ -96,8 +94,6 @@ public sealed partial class StaticData
 	public IReadOnlyDictionary<string, int> ElementCounts { get; }
 
 	public IReadOnlyList<string> TopLevelElements { get; }
-
-	public IReadOnlyList<WorldMapSummary> WorldMaps { get; }
 
 	public FlightZoneTable FlightZones { get; }
 
@@ -719,7 +715,6 @@ public sealed partial class StaticData
 		// Java parity: dataholders/DataManager static_data.xml import graph plus typed DataHolder caches.
 		var counts = new Dictionary<string, int>(StringComparer.Ordinal);
 		var topLevelElements = new List<string>();
-		var worldMaps = new List<WorldMapSummary>();
 		var flightZones = new List<FlightZoneSummary>();
 		var creaturePvpZones = new List<CreaturePvpZoneSummary>();
 		var experience = new List<long>();
@@ -940,24 +935,6 @@ public sealed partial class StaticData
 				if (long.TryParse(value, out var parsedExperience))
 					experience.Add(parsedExperience);
 				continue;
-			}
-
-			if (reader.Depth == 2 && reader.LocalName == "map")
-			{
-				var idText = reader.GetAttribute("id");
-				if (int.TryParse(idText, out var mapId))
-				{
-					var isInstance = bool.TryParse(reader.GetAttribute("instance"), out var parsedInstance) && parsedInstance;
-					var twinCount = int.TryParse(reader.GetAttribute("twin_count"), out var parsedTwinCount) ? parsedTwinCount : 0;
-					var flags = WorldMapSummary.ParseFlags(reader.GetAttribute("flags"));
-					worldMaps.Add(new WorldMapSummary(
-						mapId,
-						isInstance,
-						twinCount,
-						reader.GetAttribute("drop_type") ?? "NONE",
-						flags,
-						reader.GetAttribute("world_type") ?? "NONE"));
-				}
 			}
 
 			if (reader.Depth == 2
@@ -1741,7 +1718,6 @@ public sealed partial class StaticData
 			importedFiles,
 			new ReadOnlyDictionary<string, int>(counts),
 			topLevelElements.AsReadOnly(),
-			worldMaps.AsReadOnly(),
 			new FlightZoneTable(flightZones.AsReadOnly()),
 			new CreaturePvpZoneTable(creaturePvpZones.AsReadOnly()),
 			new PlayerExperienceTable(experience.AsReadOnly()),

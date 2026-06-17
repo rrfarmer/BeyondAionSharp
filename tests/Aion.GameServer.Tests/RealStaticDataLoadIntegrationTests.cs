@@ -39,7 +39,7 @@ public sealed class RealStaticDataLoadIntegrationTests
 		Assert.True(sd.ImportedFileCount > 0, "no source files imported");
 		Assert.True(sd.ItemDataDh.Size() > 0, $"ItemDataDh empty after boot (GetElementCount('item')={sd.GetElementCount("item")})");
 		Assert.True(sd.NpcDataDh.Size() > 0, "NpcDataDh empty after boot");
-		Assert.True(sd.WorldMaps.Count > 0, "WorldMaps empty");
+		Assert.True(sd.WorldMaps2.Size() > 0, "WorldMaps2 empty");
 
 		// Boot-wiring: the proven faithful per-feature leaf holders (model B) are now populated from their
 		// per-feature XML during LoadAsync, so the DataManager.*_DATA accessors (which delegate to these *Dh

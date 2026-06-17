@@ -37,22 +37,6 @@ public sealed record FlightZoneSummary(
 	float Top,
 	IReadOnlyList<ZonePoint2D> Points)
 {
-	public bool CanFly(WorldMapSummary worldMap, WorldZoneAttributes currentWorldFlags)
-	{
-		// Java parity: world/zone/ZoneInstance.canFly option resolution; zone_type FLY membership is handled separately.
-		return ShouldUseWorldMapOption(worldMap, WorldZoneAttributes.Fly, currentWorldFlags)
-			? worldMap.IsFlightAllowed(currentWorldFlags)
-			: HasFlag(WorldZoneAttributes.Fly);
-	}
-
-	public bool CanGlide(WorldMapSummary worldMap, WorldZoneAttributes currentWorldFlags)
-	{
-		// Java parity: world/zone/ZoneInstance.canGlide option resolution; not a zone membership predicate.
-		return ShouldUseWorldMapOption(worldMap, WorldZoneAttributes.Glide, currentWorldFlags)
-			? worldMap.CanGlide(currentWorldFlags)
-			: HasFlag(WorldZoneAttributes.Glide);
-	}
-
 	public bool Contains(WorldPosition position)
 	{
 		return MapId == position.WorldId && Contains(position.X, position.Y, position.Z);
@@ -80,18 +64,6 @@ public sealed record FlightZoneSummary(
 		return inside;
 	}
 
-	private bool ShouldUseWorldMapOption(
-		WorldMapSummary worldMap,
-		WorldZoneAttributes option,
-		WorldZoneAttributes currentWorldFlags)
-	{
-		return Flags is -1 or 0 || worldMap.HasOverriddenOption(option, currentWorldFlags);
-	}
-
-	private bool HasFlag(WorldZoneAttributes attribute)
-	{
-		return (Flags & (int)attribute) != 0;
-	}
 }
 
 public readonly record struct ZonePoint2D(float X, float Y);
