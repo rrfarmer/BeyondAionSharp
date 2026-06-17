@@ -3,8 +3,12 @@ namespace Aion.GameServer.Configs.Main;
 /// <summary>Java parity: configs/main/MembershipConfig. SCREAMING_SNAKE field names + @Property defaults.</summary>
 public static class MembershipConfig
 {
-    /// <summary>Key: gameserver.membership.types. Default: Premium (framework-loaded array).</summary>
-    public static string[] MEMBERSHIP_TYPES;
+    /// <summary>Key: gameserver.membership.types (config value "Premium"). Initialized from the shipped
+    /// config/main/membership.properties value as a field initializer (Java @Property has no defaultValue; the
+    /// value is loaded from the properties file -> String[]{"Premium"}). PlayerEnterWorldService dereferences
+    /// MEMBERSHIP_TYPES.Length and MEMBERSHIP_TYPES[membership-1] on enter-world for any membership>0 account, so
+    /// a null here NREs the live enter-world path; matches the Java non-null runtime array.</summary>
+    public static string[] MEMBERSHIP_TYPES = { "Premium" };
 
     /// <summary>Key: gameserver.membership.gathering.allow_on_mount</summary>
     public static byte GATHERING_ALLOW_ON_MOUNT = 10;

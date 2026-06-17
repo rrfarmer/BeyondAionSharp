@@ -21,8 +21,11 @@ public static class HousingConfig
     /// Java rather than silently AbstractCronTask-"deactivated" on a null expression.</summary>
     public static CronExpression HOUSE_AUCTION_END_TIME = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 12 ? * SUN");
 
-    /// <summary>Key: gameserver.housing.auction.register_days (default 1, 5)</summary>
-    public static int[] HOUSE_AUCTION_REGISTER_DAYS;
+    /// <summary>Key: gameserver.housing.auction.register_days (config value "1, 5"). Initialized from the
+    /// shipped config/main/housing.properties value as a field initializer (Java @Property has no defaultValue;
+    /// the value is loaded from the properties file -> int[]{1,5}). HousingBidService indexes [0]/[1]
+    /// unconditionally, so a null here NREs auction registration; matches the Java non-null runtime array.</summary>
+    public static int[] HOUSE_AUCTION_REGISTER_DAYS = { 1, 5 };
 
     /// <summary>Key: gameserver.housing.maintain.time (default "0 0 0 ? * MON"). Initialized from the Java
     /// @Property defaultValue via CronExpressions.GetOrCreate (no invented value).</summary>
