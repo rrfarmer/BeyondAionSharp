@@ -5,7 +5,9 @@ using Aion.GameServer.Model.GameObjects;
 
 namespace Aion.GameServer.Model.Items.Storage;
 
-/// <summary>Java parity: model/items/storage/LegionStorageProxy extends Storage.</summary>
+/// <summary>Java parity: model/items/storage/LegionStorageProxy.java extends Storage. The quest-status decrease overloads
+/// and SetOwner throw UnsupportedOperationException ("Quests should not update LWH!" / "LWH doesnt have owner") in Java —
+/// faithful guards, not gaps.</summary>
 public class LegionStorageProxy : Storage
 {
     private readonly Aion.GameServer.Model.GameObjects.Players.Player actor;

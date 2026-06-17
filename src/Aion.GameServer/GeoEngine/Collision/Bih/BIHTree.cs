@@ -220,6 +220,7 @@ public class BIHTree : CollisionData
         {
             return CollideWithRay(ray, worldMatrix, worldBound, results);
         }
+        // Java parity: geoEngine/collision/bih/BIHTree.java::collideWith throws UnsupportedCollisionException
         throw new UnsupportedCollisionException();
     }
 }

@@ -29,6 +29,7 @@ public class AcceptDispatcherImpl : Dispatcher
 
     internal override void CloseConnection(AConnection con)
     {
+        // Java parity: commons/network/AcceptDispatcherImpl.java::closeConnection throws UnsupportedOperationException
         throw new NotSupportedException("This method should never be called!");
     }
 }

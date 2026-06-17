@@ -297,7 +297,8 @@ public class _2900NoEscapingDestiny : AbstractQuestHandler
 			case PlayerClass.SPIRIT_MASTER:
 				return 140000004; // Hydro Eruption II
 			default:
-				throw new System.NotSupportedException("Unhandled player class " + player.GetPlayerClass());
+				// Java parity: data/handlers/quest/pandaemonium/_2900NoEscapingDestiny.java throws UnsupportedOperationException
+					throw new System.NotSupportedException("Unhandled player class " + player.GetPlayerClass());
 		}
 	}
 

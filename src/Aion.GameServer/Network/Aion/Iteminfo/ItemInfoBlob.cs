@@ -50,6 +50,7 @@ public class ItemInfoBlob : PacketWriteHelper
     public static ItemBlobEntry NewBlobEntry(ItemBlobType type, Player player, Item item)
     {
         if (type == ItemBlobType.STAT_BONUSES)
+            // Java parity: network/aion/iteminfo/ItemInfoBlob.java::newBlobEntry throws UnsupportedOperationException
             throw new NotSupportedException();
         ItemBlobEntry ent = type.NewBlobEntry();
         ent.SetOwner(player, item, null);

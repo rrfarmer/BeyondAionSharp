@@ -5,7 +5,9 @@ using Aion.GameServer.Model.Items.Storage;
 
 namespace Aion.GameServer.Model.Team.Legion;
 
-/// <summary>Java parity: model/team/legion/LegionWarehouse extends Storage.</summary>
+/// <summary>Java parity: model/team/legion/LegionWarehouse.java extends Storage. The player-storage mutators
+/// (Increase/DecreaseKinah(updateType), Item add/delete/decrease, SetOwner, SetLimit) all throw UnsupportedOperationException
+/// in Java because LWH access goes through LegionStorageProxy — the proxy is the implementation. Faithful guards, not gaps.</summary>
 public class LegionWarehouse : Storage
 {
     private const int DEFAULT_ROWS = 3; // hardcoded, as the client doesn't allow to change it

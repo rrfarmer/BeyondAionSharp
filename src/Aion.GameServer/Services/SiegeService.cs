@@ -767,6 +767,7 @@ public class SiegeService
                 minutes += 60;
                 hours -= 1;
                 if (hours < 0)
+                    // Java parity: services/SiegeService.java throws UnsupportedOperationException (preparation over midnight unsupported)
                     throw new NotSupportedException("Failed converting cron expression: " + siegeTime + "\nPreparation over midnight not supported.");
             }
             cronParts[1] = minutes.ToString();
@@ -775,6 +776,7 @@ public class SiegeService
         }
         catch (FormatException e)
         {
+            // Java parity: services/SiegeService.java catch(NumberFormatException) throws UnsupportedOperationException
             throw new NotSupportedException("Failed converting cron expression: " + siegeTime, e);
         }
     }

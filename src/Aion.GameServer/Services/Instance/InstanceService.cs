@@ -33,6 +33,7 @@ public class InstanceService
         WorldMap map = World.World.GetInstance().GetWorldMap(worldId);
 
         if (!map.IsInstanceType() || map.GetWorldType() == WorldType.PANESTERRA && !map.GetAvailableInstanceIds().IsEmpty())
+            // Java parity: services/instance/InstanceService.java::getNextAvailableInstance throws UnsupportedOperationException
             throw new NotSupportedException("Invalid call for next available instance  of " + worldId);
 
         WorldMapInstance instance;

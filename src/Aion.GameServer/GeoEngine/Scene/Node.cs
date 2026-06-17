@@ -369,6 +369,7 @@ public class Node : Spatial
             else if (spatial is Node n)
                 node.AttachChild(n.Clone());
             else
+                // Java parity: geoEngine/scene/Node.java::clone throws CloneNotSupportedException
                 throw new NotSupportedException();
         return node;
     }

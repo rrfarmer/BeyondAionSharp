@@ -387,6 +387,7 @@ public class BoundingBox : BoundingVolume
         {
             return CollideWithRay(ray, results);
         }
+        // Java parity: geoEngine/bounding/BoundingBox.java::collideWith throws UnsupportedCollisionException
         throw new UnsupportedCollisionException("With: " + other.GetType().Name);
     }
 

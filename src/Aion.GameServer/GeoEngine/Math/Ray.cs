@@ -197,6 +197,7 @@ public sealed class Ray : Collidable
         }
         else
         {
+            // Java parity: geoEngine/math/Ray.java::collideWith throws UnsupportedCollisionException
             throw new UnsupportedCollisionException();
         }
     }

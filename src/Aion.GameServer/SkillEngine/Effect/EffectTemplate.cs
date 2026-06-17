@@ -381,6 +381,7 @@ public abstract class EffectTemplate
                     hate += HopB + HopA * skillLvl; // Aggro-value of the effect
                     break;
                 default:
+                    // Java parity: skillengine/effect/EffectTemplate.java::calculateHate throws UnsupportedOperationException
                     throw new NotSupportedException("Unhandled effect type " + Hoptype + " for hate calculation");
             }
             return System.Math.Max(1, hate);

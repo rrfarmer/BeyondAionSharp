@@ -57,6 +57,7 @@ public class DespawnableNode : Node
             }
             else
             {
+                // Java parity: geoEngine/scene/DespawnableNode.java copy-ctor throws CloneNotSupportedException
                 throw new NotSupportedException();
             }
         }
@@ -125,6 +126,7 @@ public class DespawnableNode : Node
             }
             else
             {
+                // Java parity: geoEngine/scene/DespawnableNode.java::clone throws CloneNotSupportedException
                 throw new NotSupportedException();
             }
         }

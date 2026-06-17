@@ -603,6 +603,7 @@ public static class FastMath
     {
         if (float.IsNaN(flt))
         {
+            // Java parity: geoEngine/math/FastMath.java::convertFloatToHalf throws UnsupportedOperationException
             throw new NotSupportedException("NaN to half conversion not supported!");
         }
         else if (flt == float.PositiveInfinity)
