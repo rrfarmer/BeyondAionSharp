@@ -24,6 +24,9 @@ using ItemAddType = Aion.GameServer.Services.Items.ItemPacketService.ItemAddType
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.SkillEngine.Model;
+using Aion.GameServer.Model.Templates.Gather;
+using Aion.GameServer.QuestEngine.Model;
+using WorldPosition = Aion.GameServer.World.WorldPosition;
 using IDFactory = Aion.GameServer.Utils.IdFactory.IDFactory;
 
 namespace Aion.GameServer.Tests;
@@ -63,6 +66,25 @@ public sealed class GoldenWorldPacketFixtureTests
     // SM_QUEST_ACTION: the two quest templates the fixture reads from QUEST_DATA (one NONE category, one extra category).
     private const int QuestIdNone = 1006;
     private const int QuestIdExtra = 1007;
+
+    // SM_GATHERABLE_INFO real-VisibleObject seam: the scalar/template state the packet reads (== Java side).
+    private const int GatherObjectId = 0x12345678;
+    private const int GatherStaticId = 7700;
+    private const int GatherTemplateId = 700001;
+    private const int GatherL10nId = 350123;
+    private const float GatherX = 1234.5f;
+    private const float GatherY = 678.25f;
+    private const float GatherZ = 91.5f;
+    private const byte GatherHeading = 42;
+    private const int GatherMapId = 210010000;
+
+    // SM_QUEST_COMPLETED_LIST QUEST_DATA-holder seam: two NON-time-based quests covering both CanRepeat() branches (== Java side).
+    private const int QcRepeatableId = 2001;
+    private const int QcRepeatableMax = 255;
+    private const int QcRepeatableCount = 3;
+    private const int QcExhaustedId = 2002;
+    private const int QcExhaustedMax = 1;
+    private const int QcExhaustedCount = 2;
 
     // SM_TRADE_IN_LIST: the live-Npc objectId the fixture reads (mirrors the Java side; the only live read).
     private const int TradeNpcObjectId = 700123;
@@ -395,6 +417,83 @@ public sealed class GoldenWorldPacketFixtureTests
                 $"SM_SELL_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
                 $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
                 $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    // ---- batch 15: SM_GATHERABLE_INFO (real VisibleObject) + SM_QUEST_COMPLETED_LIST (QUEST_DATA holder) ----------
+
+    /// <summary>
+    /// SM_GATHERABLE_INFO reads ONLY the VisibleObject's scalar/template state: GetX/Y/Z (WorldPosition), GetObjectId(),
+    /// GetSpawn().GetStaticId()/GetHeading() (SpawnTemplate), GetObjectTemplate().GetTemplateId()/GetL10nId(). The object
+    /// is NOT a StaticDoor -> WriteH(1). No con, no live World/DataManager/time. Built through a minimal concrete
+    /// VisibleObject (the harness precedent) so the ctor pulls in no DataManager/IDFactory/KnownList cascade. Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_GATHERABLE_INFO.json")]
+    public void CsharpGatherableInfoMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var obj = BuildHarnessGatherable();
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            Assert.Equal(GatherObjectId, caseElement.GetProperty("inputs").GetProperty("objectId").GetInt32());
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(new SM_GATHERABLE_INFO(obj)));
+            Assert.True(expectedHex == actualHex,
+                $"SM_GATHERABLE_INFO/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// SM_QUEST_COMPLETED_LIST: WriteC(1) WriteC(updateMode) WriteH(-size & 0xFFFF) + per QuestState WriteD(GetQuestId())
+    /// WriteC(Min(completeCount,255)) WriteC(CanRepeat() ? 0 : 1). CanRepeat() reads DataManager.QUEST_DATA.GetQuestById
+    /// -> the bounded QUEST_DATA holder seam (both quests NON-time-based so no clock). Quests cover both CanRepeat branches.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_QUEST_COMPLETED_LIST.json")]
+    public void CsharpQuestCompletedListMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        EnsureDataManagerBridgeWithWorldMaps();
+        using var fixture = LoadFixture(fixtureFile);
+        var states = new List<QuestState>
+        {
+            new(QcRepeatableId, QuestStatus.COMPLETE, 0, 0, QcRepeatableCount, null, null, null),
+            new(QcExhaustedId, QuestStatus.COMPLETE, 0, 0, QcExhaustedCount, null, null, null),
+        };
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var updateMode = caseElement.GetProperty("inputs").GetProperty("updateMode").GetInt32();
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(new SM_QUEST_COMPLETED_LIST(updateMode, states)));
+            Assert.True(expectedHex == actualHex,
+                $"SM_QUEST_COMPLETED_LIST/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>Minimal concrete (non-StaticDoor) VisibleObject carrying the position / spawn / template the packet reads.</summary>
+    private static VisibleObject BuildHarnessGatherable()
+    {
+        var template = new GatherableTemplate { id = GatherTemplateId, nameId = GatherL10nId };
+        var spawnGroup = new SpawnGroup(GatherMapId, 0, 0, null);
+        var spawn = new SpawnTemplate(spawnGroup, GatherX, GatherY, GatherZ, GatherHeading, 0, null, GatherStaticId);
+        var position = new WorldPosition(GatherMapId, GatherX, GatherY, GatherZ, GatherHeading);
+        return new HarnessGatherable(GatherObjectId, spawn, template, position);
+    }
+
+    /// <summary>Concrete VisibleObject for the gatherable seam (Java uses an anonymous subclass; C# needs a named type).</summary>
+    private sealed class HarnessGatherable : VisibleObject
+    {
+        public HarnessGatherable(int objId, SpawnTemplate spawn, VisibleObjectTemplate template, WorldPosition position)
+            : base(objId, null!, spawn, template, position, false)
+        {
         }
     }
 
@@ -1346,9 +1445,19 @@ public sealed class GoldenWorldPacketFixtureTests
         var extra = new QuestTemplate();
         SetField(extra, "id", QuestIdExtra);
         SetField(extra, "extraCategory", QuestExtraCategory.COIN_QUEST);
+        // SM_QUEST_COMPLETED_LIST seam: two NON-time-based quests (repeatCycle null -> IsTimeBased() false, no clock)
+        // covering both CanRepeat() branches (255 maxRepeatCount -> true; completeCount>=maxRepeatCount!=255 -> false).
+        var qcRepeatable = new QuestTemplate();
+        SetField(qcRepeatable, "id", QcRepeatableId);
+        SetField(qcRepeatable, "maxRepeatCount", QcRepeatableMax);
+        var qcExhausted = new QuestTemplate();
+        SetField(qcExhausted, "id", QcExhaustedId);
+        SetField(qcExhausted, "maxRepeatCount", QcExhaustedMax);
         var holder = new QuestsData();
         PutPrivateMapEntry(holder, "questTemplates", QuestIdNone, none);
         PutPrivateMapEntry(holder, "questTemplates", QuestIdExtra, extra);
+        PutPrivateMapEntry(holder, "questTemplates", QcRepeatableId, qcRepeatable);
+        PutPrivateMapEntry(holder, "questTemplates", QcExhaustedId, qcExhausted);
         return holder;
     }
 
