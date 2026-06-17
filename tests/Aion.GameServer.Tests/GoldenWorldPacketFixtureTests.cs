@@ -60,6 +60,9 @@ public sealed class GoldenWorldPacketFixtureTests
     // SM_TRADE_IN_LIST: the live-Npc objectId the fixture reads (mirrors the Java side; the only live read).
     private const int TradeNpcObjectId = 700123;
 
+    // SM_SELL_ITEM: the purchase-template buy-price-rate the fixture reads from TRADE_LIST_DATA (== Java side).
+    private const int SellBuyPriceRate = 115;
+
     // SM_NPC_INFO real-Npc-ctor seam: the structurally-identical Npc/NpcTemplate/StatsTemplate scalars (== Java side).
     private const int NpcInfoObjectId = 740555;
     private const int NpcInfoNpcId = 215220;
@@ -289,6 +292,61 @@ public sealed class GoldenWorldPacketFixtureTests
         }
     }
 
+    // ---- additional real-Npc-ctor packets (reuse the SM_NPC_INFO seam) ------------------------------------------
+
+    /// <summary>
+    /// SM_MOVE reuses the seam: WriteImpl reads objectId + X/Y/Z/Heading (the un-spawned Npc's WorldPosition == 0,
+    /// identical both sides) + movementMask; NpcMoveController is a plain CreatureMoveController (pmc == null), so the
+    /// POSITION|MANUAL branch writes GetTargetX2/Y2/Z2 (TargetDest* default 0). No glide/vehicle bits set.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_MOVE.json")]
+    public void CsharpMoveMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var npc = BuildRealNpc(NpcInfoObjectId, CreatureType.PEACE);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+            Assert.Equal(NpcInfoObjectId, inputs.GetProperty("objectId").GetInt32());
+            var movementMask = (byte)inputs.GetProperty("movementMask").GetInt32();
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(new SM_MOVE(npc, movementMask)));
+            Assert.True(expectedHex == actualHex,
+                $"SM_MOVE/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// SM_SELL_ITEM reuses the seam: the ctor reads the vendor purchase TradeListTemplate (NORMAL type / buy-rate /
+    /// trade tabs) from the bounded TRADE_LIST_DATA holder + the npc's CanSell/CanBuy/CanPurchase dialog flags. The npc
+    /// template has NO talkInfo -> SupportsAction(..) is false -> showBuyTab/showSellTab == 0; the purchase template is
+    /// present so tradeNpcType/buyPriceRate/tabs come from the template (PricesService config default not reached).
+    /// </summary>
+    [Theory]
+    [InlineData("SM_SELL_ITEM.json")]
+    public void CsharpSellItemMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        var npc = BuildRealNpc(NpcInfoObjectId, CreatureType.PEACE);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            Assert.Equal(NpcInfoObjectId, caseElement.GetProperty("inputs").GetProperty("objectId").GetInt32());
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(new SM_SELL_ITEM(npc)));
+            Assert.True(expectedHex == actualHex,
+                $"SM_SELL_ITEM/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
     /// <summary>
     /// Build a REAL Npc through the full Npc(controller, spawn, template) ctor (== Java buildRealNpc), then make it
     /// deterministic: overwrite the IDFactory-assigned objectId with a pinned value and pin the npc.type field (so
@@ -325,6 +383,9 @@ public sealed class GoldenWorldPacketFixtureTests
         SetField(t, "height", NpcInfoHeight);
         SetField(t, "attackSpeed", NpcInfoAttackSpeed);
         SetField(t, "npcTemplateType", (NpcTemplateType?)NpcTemplateType.FLAG); // IsFlag() == true -> deterministic
+        // rating NORMAL -> GetCongenitalSeeState() == Normal (id 0); needed by Npc.GetSeeState() (SM_PLAYER_STATE),
+        // harmless to SM_NPC_INFO (reads GetVisualState() only). Mirrors the Java side.
+        SetField(t, "rating", NpcRating.NORMAL);
         t.boundRadius = new BoundRadius(NpcInfoBrFront, NpcInfoBrSide, NpcInfoBrUpper);
         t.statsTemplate = BuildStatsTemplate();
         // ai left null -> DummyAI (no AIEngine registration needed).
@@ -367,6 +428,8 @@ public sealed class GoldenWorldPacketFixtureTests
         // default-ctor empty -> getNpcSkillList(npcId) null + getLands() empty). Mirrors the Java HOUSE_DATA/NPC_SKILL_DATA seam.
         SetAutoProperty(staticData, nameof(StaticData.NpcSkillDataDh), new NpcSkillData());
         SetAutoProperty(staticData, nameof(StaticData.HouseDataDh), new HouseData());
+        // SM_SELL_ITEM seam: TRADE_LIST_DATA carries one purchase template under the npc id (== Java side).
+        SetAutoProperty(staticData, nameof(StaticData.TradeListDataDh), BuildTradeListData());
 
         var dmCtor = typeof(DataManager).GetConstructor(
             BindingFlags.Instance | BindingFlags.NonPublic, binder: null, new[] { typeof(StaticData) }, modifiers: null)!;
@@ -413,6 +476,31 @@ public sealed class GoldenWorldPacketFixtureTests
         var holder = new QuestsData();
         PutPrivateMapEntry(holder, "questTemplates", QuestIdNone, none);
         PutPrivateMapEntry(holder, "questTemplates", QuestIdExtra, extra);
+        return holder;
+    }
+
+    /// <summary>
+    /// Build a TradeListData carrying one purchase template (npcId == NpcInfoNpcId, NORMAL type, SellBuyPriceRate, two
+    /// trade tabs) in its private npcPurchaseTemplateData index — structurally == the Java side. The tradelist/trade-in
+    /// indices stay empty (so CanSell/CanBuy with no talkInfo are false regardless).
+    /// </summary>
+    private static TradeListData BuildTradeListData()
+    {
+        var t = new TradeListTemplate();
+        SetField(t, "npcId", NpcInfoNpcId);
+        SetField(t, "tradeNpcType", TradeNpcType.NORMAL);
+        SetField(t, "buyPriceRate", SellBuyPriceRate);
+        var tabs = new List<TradeListTemplate.TradeTab>();
+        foreach (var id in new[] { 7, 8 })
+        {
+            var tab = new TradeListTemplate.TradeTab();
+            SetField(tab, "id", id);
+            tabs.Add(tab);
+        }
+        SetField(t, "tradeTablist", tabs);
+
+        var holder = new TradeListData();
+        PutPrivateMapEntry(holder, "npcPurchaseTemplateData", NpcInfoNpcId, t);
         return holder;
     }
 
