@@ -83,12 +83,12 @@ public class FriendList : IEnumerable<Friend>
             if (previousStatus == Status.OFFLINE)
             {
                 // Show LOGIN message
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(friendPlayer, new Aion.GameServer.Network.Aion.ServerPackets.SmFriendNotify(Aion.GameServer.Network.Aion.ServerPackets.SmFriendNotify.LOGIN, player.GetName()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(friendPlayer, new Aion.GameServer.Network.Aion.ServerPackets.SM_FRIEND_NOTIFY(Aion.GameServer.Network.Aion.ServerPackets.SM_FRIEND_NOTIFY.LOGIN, player.GetName()));
             }
             else if (status == Status.OFFLINE)
             {
                 // Show LOGOUT message
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(friendPlayer, new Aion.GameServer.Network.Aion.ServerPackets.SmFriendNotify(Aion.GameServer.Network.Aion.ServerPackets.SmFriendNotify.LOGOUT, player.GetName()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(friendPlayer, new Aion.GameServer.Network.Aion.ServerPackets.SM_FRIEND_NOTIFY(Aion.GameServer.Network.Aion.ServerPackets.SM_FRIEND_NOTIFY.LOGOUT, player.GetName()));
             }
         }
     }

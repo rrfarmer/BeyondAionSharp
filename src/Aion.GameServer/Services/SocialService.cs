@@ -17,7 +17,7 @@ public class SocialService
         {
             player.GetBlockList().Add(new BlockedPlayer(blockedPlayer.GetPlayerObjId(), blockedPlayer.GetName(), reason));
             PacketSendUtility.SendPacket(player, new SM_BLOCK_LIST());
-            PacketSendUtility.SendPacket(player, new SmBlockResponse(SmBlockResponse.BlockSuccessful, blockedPlayer.GetName()));
+            PacketSendUtility.SendPacket(player, new SM_BLOCK_RESPONSE(SM_BLOCK_RESPONSE.BLOCK_SUCCESSFUL, blockedPlayer.GetName()));
             return true;
         }
         return false;
@@ -29,7 +29,7 @@ public class SocialService
         {
             player.GetBlockList().Remove(target.GetObjId());
             PacketSendUtility.SendPacket(player, new SM_BLOCK_LIST());
-            PacketSendUtility.SendPacket(player, new SmBlockResponse(SmBlockResponse.UnblockSuccessful, target.GetName()));
+            PacketSendUtility.SendPacket(player, new SM_BLOCK_RESPONSE(SM_BLOCK_RESPONSE.UNBLOCK_SUCCESSFUL, target.GetName()));
             return true;
         }
         return false;
@@ -47,7 +47,7 @@ public class SocialService
             {
                 target.SetReason(reason);
                 PacketSendUtility.SendPacket(player, new SM_BLOCK_LIST());
-                PacketSendUtility.SendPacket(player, new SmBlockResponse(SmBlockResponse.EditNote, target.GetName()));
+                PacketSendUtility.SendPacket(player, new SM_BLOCK_RESPONSE(SM_BLOCK_RESPONSE.EDIT_NOTE, target.GetName()));
                 return true;
             }
         }
@@ -85,8 +85,8 @@ public class SocialService
             PacketSendUtility.SendPacket(friend1, new SM_FRIEND_LIST());
             PacketSendUtility.SendPacket(friend2, new SM_FRIEND_LIST());
 
-            PacketSendUtility.SendPacket(friend1, new SmFriendResponse(SmFriendResponse.TargetAdded, friend2.GetName()));
-            PacketSendUtility.SendPacket(friend2, new SmFriendResponse(SmFriendResponse.TargetAdded, friend1.GetName()));
+            PacketSendUtility.SendPacket(friend1, SM_FRIEND_RESPONSE.TARGET_ADDED(friend2.GetName()));
+            PacketSendUtility.SendPacket(friend2, SM_FRIEND_RESPONSE.TARGET_ADDED(friend1.GetName()));
             return true;
         }
         return false;
@@ -106,12 +106,12 @@ public class SocialService
             {
                 friendPlayer.GetFriendList().DelFriend(deleter.GetObjectId());
                 PacketSendUtility.SendPacket(friendPlayer, new SM_FRIEND_LIST());
-                PacketSendUtility.SendPacket(friendPlayer, new SmFriendNotify(SmFriendNotify.Deleted, deleter.GetName()));
+                PacketSendUtility.SendPacket(friendPlayer, new SM_FRIEND_NOTIFY(SM_FRIEND_NOTIFY.DELETED, deleter.GetName()));
             }
             // Delete from deleter's friend list and send packets
             deleter.GetFriendList().DelFriend(friendObjId);
             PacketSendUtility.SendPacket(deleter, new SM_FRIEND_LIST());
-            PacketSendUtility.SendPacket(deleter, new SmFriendResponse(SmFriendResponse.TargetRemoved, friend.GetName()));
+            PacketSendUtility.SendPacket(deleter, SM_FRIEND_RESPONSE.TARGET_REMOVED(friend.GetName()));
             return true;
         }
         return false;

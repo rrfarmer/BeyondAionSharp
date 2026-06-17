@@ -528,7 +528,7 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
         {
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(GetPlayer(), new Aion.GameServer.Network.Aion.ServerPackets.SM_DP_INFO(playerObjId, this.dp), true);
             GetPlayer().GetGameStats().UpdateStatsAndSpeedVisually();
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(GetPlayer(), new Aion.GameServer.Network.Aion.ServerPackets.SmStatUpdateDp(this.dp));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(GetPlayer(), new Aion.GameServer.Network.Aion.ServerPackets.SM_STATUPDATE_DP(this.dp));
         }
     }
 

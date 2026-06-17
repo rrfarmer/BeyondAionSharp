@@ -29,15 +29,6 @@ public sealed class GoldenPacketFixtureTests
 	[Theory]
 	// NOTE: SM_GROUP_DATA_EXCHANGE is NOT here — it is an AionServerPacket (no SerializeFrame),
 	// so it is captured via the raw WriteImpl path in FaithfulCsharpPayloadMatchesJavaGoldenFixture below.
-	[InlineData("SM_QUIT_RESPONSE.json")]
-	[InlineData("SM_DELETE_WAREHOUSE_ITEM.json")]
-	[InlineData("SM_BLOCK_RESPONSE.json")]
-	[InlineData("SM_FRIEND_RESPONSE.json")]
-	[InlineData("SM_CLOSE_QUESTION_WINDOW.json")]
-	[InlineData("SM_STATUPDATE_DP.json")]
-	[InlineData("SM_FRIEND_NOTIFY.json")]
-	[InlineData("SM_BIND_POINT_TELEPORT.json")]
-	[InlineData("SM_SKILL_CANCEL.json")]
 	[InlineData("SM_ITEM_USAGE_ANIMATION.json")]
 	[InlineData("SM_ATTACK_STATUS.json")]
 	public void CsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
@@ -63,15 +54,6 @@ public sealed class GoldenPacketFixtureTests
 
 	private static GameServerPacket Reconstruct(string packetName, JsonElement inputs) => packetName switch
 	{
-		"SM_QUIT_RESPONSE" => new SmQuitResponse(inputs.GetProperty("editMode").GetBoolean()),
-		"SM_DELETE_WAREHOUSE_ITEM" => new SmDeleteWarehouseItem(inputs.GetProperty("warehouseType").GetInt32(), inputs.GetProperty("itemObjectId").GetInt32(), inputs.GetProperty("deleteType").GetInt32()),
-		"SM_BLOCK_RESPONSE" => new SmBlockResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
-		"SM_FRIEND_RESPONSE" => new SmFriendResponse((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
-		"SM_CLOSE_QUESTION_WINDOW" => ReconstructCloseQuestionWindow(inputs),
-		"SM_STATUPDATE_DP" => new SmStatUpdateDp(inputs.GetProperty("currentDp").GetInt32()),
-		"SM_FRIEND_NOTIFY" => new SmFriendNotify((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("name").GetString()!),
-		"SM_BIND_POINT_TELEPORT" => new SmBindPointTeleport((byte)inputs.GetProperty("action").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("locId").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
-		"SM_SKILL_CANCEL" => new SmSkillCancel(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("skillId").GetInt32()),
 		"SM_ITEM_USAGE_ANIMATION" => ReconstructItemUsageAnimation(inputs),
 		"SM_ATTACK_STATUS" => ReconstructAttackStatus(inputs),
 		_ => throw new NotSupportedException($"No C# reconstruction registered for {packetName}"),
@@ -82,6 +64,15 @@ public sealed class GoldenPacketFixtureTests
 	// We capture the raw writeImpl payload exactly like the Java harness does: a LITTLE_ENDIAN
 	// ByteBuffer, invoke WriteImpl reflectively, read Position() bytes. No opcode, no crypt.
 	[Theory]
+	[InlineData("SM_QUIT_RESPONSE.json")]
+	[InlineData("SM_DELETE_WAREHOUSE_ITEM.json")]
+	[InlineData("SM_BLOCK_RESPONSE.json")]
+	[InlineData("SM_FRIEND_RESPONSE.json")]
+	[InlineData("SM_CLOSE_QUESTION_WINDOW.json")]
+	[InlineData("SM_STATUPDATE_DP.json")]
+	[InlineData("SM_FRIEND_NOTIFY.json")]
+	[InlineData("SM_BIND_POINT_TELEPORT.json")]
+	[InlineData("SM_SKILL_CANCEL.json")]
 	[InlineData("SM_GROUP_DATA_EXCHANGE.json")]
 	[InlineData("SM_RECONNECT_KEY.json")]
 	[InlineData("SM_PLAYER_STATE.json")]
@@ -194,6 +185,15 @@ public sealed class GoldenPacketFixtureTests
 
 	private static AionServerPacket ReconstructFaithful(string packetName, JsonElement inputs) => packetName switch
 	{
+		"SM_QUIT_RESPONSE" => new SM_QUIT_RESPONSE(inputs.GetProperty("editMode").GetBoolean()),
+		"SM_DELETE_WAREHOUSE_ITEM" => new SM_DELETE_WAREHOUSE_ITEM(inputs.GetProperty("warehouseType").GetInt32(), inputs.GetProperty("itemObjectId").GetInt32(), ResolveItemDeleteType(inputs.GetProperty("deleteType").GetInt32())),
+		"SM_BLOCK_RESPONSE" => new SM_BLOCK_RESPONSE(inputs.GetProperty("code").GetInt32(), inputs.GetProperty("playerName").GetString()!),
+		"SM_FRIEND_RESPONSE" => new SM_FRIEND_RESPONSE(inputs.GetProperty("playerName").GetString()!, inputs.GetProperty("code").GetInt32()),
+		"SM_CLOSE_QUESTION_WINDOW" => ReconstructCloseQuestionWindow(inputs),
+		"SM_STATUPDATE_DP" => new SM_STATUPDATE_DP(inputs.GetProperty("currentDp").GetInt32()),
+		"SM_FRIEND_NOTIFY" => new SM_FRIEND_NOTIFY((byte)inputs.GetProperty("code").GetInt32(), inputs.GetProperty("name").GetString()!),
+		"SM_BIND_POINT_TELEPORT" => new SM_BIND_POINT_TELEPORT(inputs.GetProperty("action").GetInt32(), inputs.GetProperty("playerId").GetInt32(), inputs.GetProperty("locId").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
+		"SM_SKILL_CANCEL" => new SM_SKILL_CANCEL(new PacketHarnessCreature(inputs.GetProperty("objectId").GetInt32(), 50, new Dictionary<StatEnum, int>()), inputs.GetProperty("skillId").GetInt32()),
 		"SM_GROUP_DATA_EXCHANGE" => ReconstructGroupDataExchange(inputs),
 		"SM_PLAYER_STATE" => new SM_PLAYER_STATE(BuildHarnessCreatureForState(inputs)),
 		"SM_TARGET_SELECTED_LIVE" => new SM_TARGET_SELECTED(BuildHarnessCreatureForTarget(inputs)),
@@ -589,15 +589,15 @@ public sealed class GoldenPacketFixtureTests
 		return new SM_EMOTION(c, type);
 	}
 
-	private static SmCloseQuestionWindow ReconstructCloseQuestionWindow(JsonElement inputs)
+	private static SM_CLOSE_QUESTION_WINDOW ReconstructCloseQuestionWindow(JsonElement inputs)
 	{
 		var messageId = inputs.GetProperty("messageId").GetInt32();
 		var parameters = inputs.GetProperty("params").EnumerateArray().Select(p => p.GetString()!).ToArray();
 		return messageId switch
 		{
-			0 => SmCloseQuestionWindow.CloseQuestionWindow(),
-			1300134 => SmCloseQuestionWindow.DuelRequesterWithdrawRequest(parameters[0]),
-			1300097 => SmCloseQuestionWindow.DuelHeRejectDuel(parameters[0]),
+			0 => SM_CLOSE_QUESTION_WINDOW.CLOSE_QUESTION_WINDOW(),
+			1300134 => SM_CLOSE_QUESTION_WINDOW.STR_DUEL_REQUESTER_WITHDRAW_REQUEST(parameters[0]),
+			1300097 => SM_CLOSE_QUESTION_WINDOW.STR_DUEL_HE_REJECT_DUEL(parameters[0]),
 			_ => throw new NotSupportedException($"No SM_CLOSE_QUESTION_WINDOW factory for messageId {messageId}"),
 		};
 	}

@@ -22,7 +22,7 @@ public class PunishmentService
         // if player is online - kick him
         Aion.GameServer.Model.GameObjects.Players.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerId);
         if (player != null)
-            player.GetClientConnection().Close(new Aion.GameServer.Network.Aion.ServerPackets.SmQuitResponse());
+            player.GetClientConnection().Close(new Aion.GameServer.Network.Aion.ServerPackets.SM_QUIT_RESPONSE());
     }
 
     /// <summary>Calculates the timestamp when a given number of days is over.</summary>
