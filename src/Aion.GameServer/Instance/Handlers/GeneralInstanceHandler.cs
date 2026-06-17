@@ -160,7 +160,7 @@ public class GeneralInstanceHandler : IInstanceHandler
         }
     }
 
-    public bool IsBoss(Npc npc)
+    public virtual bool IsBoss(Npc npc)
     {
         return npc.GetLevel() >= 60 && (npc.GetRating() == NpcRating.HERO || npc.GetRating() == NpcRating.LEGENDARY);
     }
