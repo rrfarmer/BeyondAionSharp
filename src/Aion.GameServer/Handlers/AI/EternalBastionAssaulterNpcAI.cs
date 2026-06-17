@@ -36,13 +36,13 @@ public class EternalBastionAssaulterNpcAI : EternalBastionAggressiveNpcAI
     {
         WalkManager.StartWalking(this);
         GetOwner().UnsetState(CreatureState.WALK_MODE);
-        PacketSendUtility.BroadcastPacket(GetOwner(), new SmEmotion(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetObjectId()));
+        PacketSendUtility.BroadcastPacket(GetOwner(), new SM_EMOTION(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetObjectId()));
     }
 
     public override bool IsDestinationReached()
     {
         GetOwner().UnsetState(CreatureState.WALK_MODE);
-        PacketSendUtility.BroadcastPacket(GetOwner(), new SmEmotion(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetObjectId()));
+        PacketSendUtility.BroadcastPacket(GetOwner(), new SM_EMOTION(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetObjectId()));
         HateCommander();
         return base.IsDestinationReached();
     }

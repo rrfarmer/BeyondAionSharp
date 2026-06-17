@@ -28,7 +28,7 @@ public class AethericFieldBlaststoneAI : NpcAI
             GetOwner().GetSpawn().SetWalkerId("301500000_clown_path");
             WalkManager.StartWalking(this);
             GetOwner().SetState(CreatureState.WALK_MODE);
-            PacketSendUtility.BroadcastPacket(GetOwner(), new SmEmotion(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetOwner().GetObjectId()));
+            PacketSendUtility.BroadcastPacket(GetOwner(), new SM_EMOTION(GetOwner(), EmotionType.CHANGE_SPEED, 0, GetOwner().GetObjectId()));
         }
     }
 

@@ -72,8 +72,8 @@ public class RideAction : AbstractItemAction
             player.GetObserveController().RemoveObserver(observer);
             Aion.GameServer.Model.Templates.Items.ItemTemplate itemTemplate = parentItem.GetItemTemplate();
             player.SetPlayerMode(PlayerMode.RIDE, GetRideInfo());
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.CHANGE_SPEED, 0, 0), true);
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.RIDE, 0, GetRideInfo().GetNpcId()), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.CHANGE_SPEED, 0, 0), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.RIDE, 0, GetRideInfo().GetNpcId()), true);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 1), true);
             player.GetController().CancelTask(TaskId.ITEM_USE);

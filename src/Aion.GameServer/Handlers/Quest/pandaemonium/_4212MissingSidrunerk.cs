@@ -94,7 +94,7 @@ public class _4212MissingSidrunerk : AbstractQuestHandler
                     Npc npc = (Npc) env.GetVisibleObject();
                     npc.GetSpawn().SetWalkerId("4212");
                     WalkManager.StartWalking((NpcAI) npc.GetAi());
-                    PacketSendUtility.BroadcastPacket(npc, new SmEmotion(npc, EmotionType.CHANGE_SPEED, 0, npc.GetObjectId()));
+                    PacketSendUtility.BroadcastPacket(npc, new SM_EMOTION(npc, EmotionType.CHANGE_SPEED, 0, npc.GetObjectId()));
                     player.GetController().AddTask(TaskId.QUEST_FOLLOW, QuestTasks.NewFollowingToTargetCheckTask(env, npc, 505.69427f, 437.69382f, 885.1844f));
                     return DefaultCloseDialog(env, 2, 3);
                 }

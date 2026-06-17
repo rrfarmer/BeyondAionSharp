@@ -77,7 +77,7 @@ public class _2333ARibbitOutOfWater : AbstractQuestHandler
                     Npc debrie = (Npc) SpawnInFrontOf(204416, player);
                     WalkManager.StartWalking((NpcAI) debrie.GetAi());
                     debrie.GetAi().OnCreatureEvent(AiEventType.FOLLOW_ME, player);
-                    PacketSendUtility.BroadcastPacket(debrie, new SmEmotion(debrie, EmotionType.CHANGE_SPEED, 0, debrie.GetObjectId()));
+                    PacketSendUtility.BroadcastPacket(debrie, new SM_EMOTION(debrie, EmotionType.CHANGE_SPEED, 0, debrie.GetObjectId()));
                     player.GetController().AddTask(TaskId.QUEST_FOLLOW,
                         QuestTasks.NewFollowingToTargetCheckTask(env, debrie, ZoneName.Get("DF2_SENSORYAREA_Q2333_206057_1_220020000")));
                     return DefaultCloseDialog(env, 1, 2);

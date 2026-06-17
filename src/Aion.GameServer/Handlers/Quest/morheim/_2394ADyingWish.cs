@@ -69,7 +69,7 @@ public class _2394ADyingWish : AbstractQuestHandler
                     Npc orlan = (Npc) SpawnInFrontOf(790021, player);
                     WalkManager.StartWalking((NpcAI) orlan.GetAi());
                     orlan.GetAi().OnCreatureEvent(AiEventType.FOLLOW_ME, player);
-                    PacketSendUtility.BroadcastPacket(orlan, new SmEmotion(orlan, EmotionType.CHANGE_SPEED, 0, orlan.GetObjectId()));
+                    PacketSendUtility.BroadcastPacket(orlan, new SM_EMOTION(orlan, EmotionType.CHANGE_SPEED, 0, orlan.GetObjectId()));
                     player.GetController().AddTask(TaskId.QUEST_FOLLOW,
                         QuestTasks.NewFollowingToTargetCheckTask(env, orlan, ZoneName.Get("HALABANA_HOT_SPRINGS_220020000")));
                     return DefaultCloseDialog(env, 0, 1);

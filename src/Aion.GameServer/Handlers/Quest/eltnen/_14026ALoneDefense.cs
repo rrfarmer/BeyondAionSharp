@@ -269,7 +269,7 @@ public class _14026ALoneDefense : AbstractQuestHandler
             spawn.GetAi().SetStateIfNot(AIState.WALKING);
             spawn.SetState(CreatureState.ACTIVE, true);
             spawn.GetMoveController().MoveToTargetObject();
-            PacketSendUtility.BroadcastPacket(spawn, new SmEmotion(spawn, EmotionType.CHANGE_SPEED, 0, spawn.GetObjectId()));
+            PacketSendUtility.BroadcastPacket(spawn, new SM_EMOTION(spawn, EmotionType.CHANGE_SPEED, 0, spawn.GetObjectId()));
         }
     }
 }

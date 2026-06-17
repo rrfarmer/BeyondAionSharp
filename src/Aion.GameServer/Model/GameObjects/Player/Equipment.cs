@@ -254,7 +254,7 @@ public partial class Equipment : IPersistable
             if (itemToUnequip.GetItemTemplate().GetItemGroup() == Aion.GameServer.Model.Templates.Items.Enums.ItemGroup.POWER_SHARDS)
             {
                 owner.UnsetState(CreatureState.POWERSHARD);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(owner, Aion.GameServer.Model.EmotionType.POWERSHARD_OFF, 0, 0));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(owner, Aion.GameServer.Model.EmotionType.POWERSHARD_OFF, 0, 0));
             }
 
             if (itemToUnequip.GetItemTemplate().IsStigma())

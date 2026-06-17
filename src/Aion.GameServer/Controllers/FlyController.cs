@@ -24,7 +24,7 @@ public class FlyController
             if (!player.IsInFlyState(FlyState.FLYING))
             {
                 player.GetLifeStats().TriggerFpRestore();
-                Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.STOP_GLIDE), true);
+                Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.STOP_GLIDE), true);
             }
             else
             {
@@ -47,7 +47,7 @@ public class FlyController
         player.GetGameStats().UpdateStatsAndSpeedVisually();
 
         if (broadcastPacket && player.IsSpawned())
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.LAND), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.LAND), true);
         player.GetLifeStats().TriggerFpRestore();
     }
 
@@ -77,7 +77,7 @@ public class FlyController
         player.GetGameStats().UpdateStatsAndSpeedVisually();
 
         if (broadcastPacket)
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SmEmotion(player, EmotionType.FLY), true);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastToSightedPlayers(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_EMOTION(player, EmotionType.FLY), true);
         return true;
     }
 
