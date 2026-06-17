@@ -7,6 +7,7 @@ using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model;
 using Aion.GameServer.Model.Animations;
 using Aion.GameServer.Model.GameObjects;
+using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates;
 using Aion.GameServer.Model.Templates.Npc;
 using Aion.GameServer.Model.Templates.Quest;
@@ -83,6 +84,22 @@ public sealed class GoldenWorldPacketFixtureTests
     private const int EqItemDescL10n = 350456;
     private const long EqItemCount = 1L;
     private const string EqItemCreator = "Smith";
+
+    // SM_INVENTORY_ADD_ITEM more per-type variants (armor SLOTS_ARMOR / accessory SLOTS_ACCESSORY / dyed armor). Distinct
+    // objectIds so they never clobber the weapon fixture. Mirror the Java EQ_ARMOR_*/EQ_ACCESSORY_*/EQ_DYED_* constants.
+    private const int EqArmorObjectId = 268700002;
+    private const int EqArmorTemplateId = 110000777;
+    private const int EqArmorMask = 0x33AA;
+    private const int EqArmorDescL10n = 350789;
+    private const int EqAccessoryObjectId = 268700003;
+    private const int EqAccessoryTemplateId = 115000333;
+    private const int EqAccessoryMask = 0x44BB;
+    private const int EqAccessoryDescL10n = 350790;
+    private const int EqDyedArmorObjectId = 268700004;
+    private const int EqDyedArmorColor = 0x3399CC;
+
+    // SM_VIEW_PLAYER_DETAILS: the live-Player objectId the fixture reads (mirrors the Java side; the only live read).
+    private const int ViewDetailsPlayerObjectId = 268900001;
 
     // SM_NPC_INFO real-Npc-ctor seam: the structurally-identical Npc/NpcTemplate/StatsTemplate scalars (== Java side).
     private const int NpcInfoObjectId = 740555;
@@ -483,6 +500,132 @@ public sealed class GoldenWorldPacketFixtureTests
         item.SetItemCount(itemCount);
         item.SetItemCreator(creator);
         return item;
+    }
+
+    // ---- equippable item / ItemInfoBlob seam: more per-type variants (SM_INVENTORY_ADD_ITEM) -------------------
+
+    /// <summary>
+    /// Reuses the equippable-item seam to cover the OTHER per-type blob writers selected by GetFullBlob's itemGroup branch,
+    /// each a DISTINCT fixture case with a DISTINCT objectId (never clobbers the weapon fixture):
+    ///   (a) ARMOR (itemGroup PL_TORSO, a PLATE torso): IsArmor() true, armorType != ACCESSORY -> SLOTS_ARMOR. Its writer is
+    ///       WriteQ(GetSlotFor(GetItemSlot()).GetSlotIdMask()) [PL_TORSO -> ItemSlot.TORSO, single slot], WriteQ(0),
+    ///       WriteDyeInfo(GetItemColor()). Two armor cases: UNDYED (itemColor null -> 4 zero bytes) and DYED (itemColor pinned,
+    ///       colorExpireTime 0 so GetColorTimeLeft()==0 -> NO clock; the dye-populated branch fires in BOTH SLOTS_ARMOR AND
+    ///       ENCHANT_INFO). IsCloth() true for a non-accessory armor -> the host packet's trailing IsCloth byte is 1.
+    ///   (b) ACCESSORY (itemGroup RING): IsArmor() true, armorType == ACCESSORY -> SLOTS_ACCESSORY. Reads GetSlotsFor(GetItemSlot())
+    ///       [RING -> RING_LEFT|RING_RIGHT, length 2] -> WriteQ(slots[0]) + WriteQ(slots[1]). IsCloth() false -> trailing byte 0.
+    /// All other blob reads are identical to the weapon seam. Built IDENTICALLY to the Java oracle side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_INVENTORY_ADD_ITEM_VARIANTS.json")]
+    public void CsharpInventoryAddItemEquippableVariantsMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var objectId = inputs.GetProperty("objectId").GetInt32();
+            var itemId = inputs.GetProperty("itemId").GetInt32();
+            var mask = inputs.GetProperty("mask").GetInt32();
+            var desc = inputs.GetProperty("desc").GetInt32();
+            var creator = inputs.GetProperty("itemCreator").GetString()!;
+            var itemGroup = Enum.Parse<ItemGroup>(inputs.GetProperty("itemGroup").GetString()!);
+            var colorJson = inputs.GetProperty("itemColor");
+            int? itemColor = colorJson.ValueKind == JsonValueKind.Null ? null : colorJson.GetInt32();
+            var addType = Enum.Parse<ItemAddType>(inputs.GetProperty("addType").GetString()!);
+
+            var item = BuildEquippableVariant(objectId, itemId, mask, desc, creator, itemGroup, itemColor);
+            // player arg null: GetFullBlob only stashes it as blob owner; the per-type/enchant/premium/general writers never deref it.
+            var packet = new SM_INVENTORY_ADD_ITEM(new List<Item> { item }, null, addType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_ADD_ITEM_VARIANTS/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a minimal EQUIPPABLE non-weapon Item (armor or accessory) via the simple Item(objId, itemTemplate) ctor
+    /// (== Java buildEquippableVariant). itemGroup selects the per-type blob (PL_TORSO -> SLOTS_ARMOR, RING -> SLOTS_ACCESSORY).
+    /// maxTuneCount 0 (CanTune() false -> IsIdentified() true). Optionally dyed via SetItemColor (colorExpireTime stays 0 ->
+    /// GetColorTimeLeft()==0, no clock). No stones/godstone/idian/tempering/fusion so the equippable blob path is deterministic.
+    /// </summary>
+    private static Item BuildEquippableVariant(int objectId, int itemId, int mask, int desc, string creator,
+        ItemGroup itemGroup, int? itemColor)
+    {
+        var template = new ItemTemplate();
+        template.itemId = itemId;
+        template.mask = mask;
+        template.description = desc;
+        template.itemGroup = itemGroup;
+        template.maxTuneCount = 0; // CanTune() == false -> IsIdentified() == true (deterministic)
+        var item = new Item(objectId, template);
+        item.SetItemCount(1L);
+        item.SetItemCreator(creator);
+        if (itemColor.HasValue)
+            item.SetItemColor(itemColor.Value); // colorExpireTime stays 0 -> GetColorTimeLeft() == 0 (deterministic)
+        return item;
+    }
+
+    // ---- SM_VIEW_PLAYER_DETAILS (reuse the equippable-item / ItemInfoBlob seam) ---------------------------------
+
+    /// <summary>
+    /// SM_VIEW_PLAYER_DETAILS(items, player) is bounded by the SAME seam as SM_INVENTORY_ADD_ITEM: the ctor reads ONLY
+    /// player.GetObjectId() (a single AionObject scalar) + items.Count; WriteImpl writes targetObjId + the constant 11 +
+    /// itemSize, then per item: WriteD(0) + template.GetTemplateId() + template.GetL10n() + GetFullBlob(player, item).WriteMe().
+    /// The player is passed to GetFullBlob ONLY as the blob owner (never dereferenced for these deterministic items). So no
+    /// live Player/Legion/appearance/equipment-iteration is needed: the live Player is allocated uninitialized (the
+    /// established harness precedent) with ONLY the final AionObject._objectId pinned. The items reuse the seam's exact
+    /// builders so the per-item bytes are byte-identical to the weapon/armor fixtures. Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_VIEW_PLAYER_DETAILS.json")]
+    public void CsharpViewPlayerDetailsMatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            Assert.Equal(ViewDetailsPlayerObjectId, inputs.GetProperty("playerObjectId").GetInt32());
+
+            var player = NewUninitializedPlayer(ViewDetailsPlayerObjectId);
+            // Two-item view reusing the seam's exact builders (weapon 1H sword + plate-torso armor, undyed).
+            var items = new List<Item>
+            {
+                BuildEquippableWeapon(EqItemObjectId, EqItemTemplateId, EqItemMask, EqItemDescL10n, EqItemCount, EqItemCreator),
+                BuildEquippableVariant(EqArmorObjectId, EqArmorTemplateId, EqArmorMask, EqArmorDescL10n, "Armorsmith",
+                    ItemGroup.PL_TORSO, null),
+            };
+            var packet = new SM_VIEW_PLAYER_DETAILS(items, player);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_VIEW_PLAYER_DETAILS/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Allocate a Player WITHOUT running any constructor (RuntimeHelpers.GetUninitializedObject — the established harness
+    /// precedent, mirroring the Java Unsafe.allocateInstance side), then pin only the final AionObject._objectId.
+    /// SM_VIEW_PLAYER_DETAILS reads nothing else from the live Player (GetFullBlob only stashes it as blob owner).
+    /// </summary>
+    private static Player NewUninitializedPlayer(int objectId)
+    {
+        var player = (Player)RuntimeHelpers.GetUninitializedObject(typeof(Player));
+        var idField = typeof(AionObject).GetField("_objectId", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(AionObject).FullName, "_objectId");
+        idField.SetValue(player, objectId);
+        return player;
     }
 
     /// <summary>
