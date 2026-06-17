@@ -86,12 +86,22 @@ public class WorldMapTemplate
     public int    GetPvEDefendRatio() => PveDefendRatio;
 
     // Java parity: getTwinCount() — clamps by WorldConfig.WORLD_MAX_TWINS_USUAL
-    // TODO-backlog: apply WorldConfig.WORLD_MAX_TWINS_USUAL cap when WorldConfig is ported
-    public int GetTwinCount()         => TwinCount;
+    public int GetTwinCount()
+    {
+        if (Configs.Main.WorldConfig.WorldMaxTwinsUsual == 0)
+            return TwinCount;
+        return System.Math.Min(Configs.Main.WorldConfig.WorldMaxTwinsUsual, TwinCount);
+    }
 
     // Java parity: getBeginnerTwinCount() — clamps by WorldConfig.WORLD_MAX_TWINS_BEGINNER
-    // TODO-backlog: apply WorldConfig.WORLD_MAX_TWINS_BEGINNER cap when WorldConfig is ported
-    public int GetBeginnerTwinCount() => BeginnerTwinCount;
+    public int GetBeginnerTwinCount()
+    {
+        if (Configs.Main.WorldConfig.WorldMaxTwinsBeginner == 0)
+            return BeginnerTwinCount;
+        else if (Configs.Main.WorldConfig.WorldMaxTwinsBeginner == -1) // disabled
+            return 0;
+        return System.Math.Min(Configs.Main.WorldConfig.WorldMaxTwinsBeginner, BeginnerTwinCount);
+    }
 
     // ── flag bit-checks ───────────────────────────────────────────────────────
     public bool IsFly()                    => (_flags & (int)ZoneAttributes.Fly)                  != 0;

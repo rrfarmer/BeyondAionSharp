@@ -397,48 +397,58 @@ public sealed class GameServerBootstrapTests
 			new GameServerRuntimeContext(),
 			NullLogger<GameServerBootstrapService>.Instance);
 
-		// Run the FULL StartAsync. Capture whatever happens — both outcomes are valuable empirical data:
-		//  - completes  => the housing no-DB + house-twin deferrals are lifted with real data + DB (no twin collision).
-		//  - throws      => capture the exact exception; a DuplicateAionObjectException out of SpawnHouses confirms the
-		//                   documented Java-latent house-twin throw (do NOT add an un-faithful guard to force a pass).
+		// Run the FULL StartAsync. The house-twin DuplicateAionObjectException is FIXED (WorldMapTemplate now applies
+		// the Java WorldConfig twin clamps: WORLD_MAX_TWINS_BEGINNER=-1 disables beginner twins, WORLD_MAX_TWINS_USUAL=1
+		// caps usual twins -> getInstanceCount()=1 for Heiron/Beluslan, so HousingService.SpawnHouses runs exactly once
+		// per house map and never re-stores an address-cached House objectId). The boot must now complete cleanly.
+		//
+		// HTMLCache (and any other production relative-path data lookup) resolves "./data/static_data/..." against the
+		// process working directory, which in a real deployment is the game-server dir. Point CWD at the repo's
+		// game-server dir for the duration of the boot so the production relative paths resolve to the real data tree.
+		var gameServerDir = System.IO.Path.Combine(repoRoot!, "game-server");
+		var savedCwd = Directory.GetCurrentDirectory();
 		Exception? bootException = null;
 		try
 		{
+			Directory.SetCurrentDirectory(gameServerDir);
 			await bootstrap.StartAsync(cts.Token);
 		}
 		catch (Exception ex)
 		{
 			bootException = ex;
 		}
+		finally
+		{
+			Directory.SetCurrentDirectory(savedCwd);
+		}
 
-		if (bootException is null)
+		// REGRESSION GUARD: the house-twin DuplicateAionObjectException must NOT reappear. Before the WorldConfig twin
+		// clamp was ported, the full boot threw DuplicateAionObjectException out of HousingService.SpawnHouses (a House
+		// re-stored into a second twin instance of Heiron/Beluslan). That was a C# divergence — Java's
+		// WorldMapTemplate.getBeginnerTwinCount()/getTwinCount() clamp by WorldConfig (beginner=-1 disabled, usual=1) so
+		// getInstanceCount()=1 and houses spawn once. If the dup ever resurfaces, the clamp regressed.
+		if (bootException is not null)
 		{
-			// CLEAN FULL BOOT: the real spawn path (incl. HousingService.SpawnHouses across every twin instance) ran
-			// to completion. Assert the boot actually populated the world and reached the started state.
-			Assert.True(bootstrap.IsStarted, "full DB-backed boot did not reach IsStarted");
-			Assert.True(world.IsInitialized, "world not initialized after full DB-backed boot");
-			Assert.True(world.ObjectCount > 0, $"world empty after full DB-backed boot (ObjectCount={world.ObjectCount})");
-			await bootstrap.StopAsync(cts.Token);
-			Assert.False(bootstrap.IsStarted);
-		}
-		else
-		{
-			// FAITHFUL-BOUNDARY ASSERTION: the full boot threw. Surface the exact type/message/origin so the boundary
-			// is documented, and assert it is the documented Java-latent house-twin DuplicateAionObjectException out of
-			// the HousingService.SpawnHouses path (not an unrelated DAO/NRE regression). DuplicateAionObjectException
-			// derives from AionRuntimeException; SpawnAll surfaces it (possibly wrapped by parallel ForEachParalllel as
-			// an AggregateException) when a map's twin instances re-spawn the same address-cached House objectId.
-			var flat = Flatten(bootException).ToList();
-			var dup = flat.OfType<Aion.GameServer.World.Exceptions.DuplicateAionObjectException>().FirstOrDefault();
+			var flat0 = Flatten(bootException).ToList();
+			var dup = flat0.OfType<Aion.GameServer.World.Exceptions.DuplicateAionObjectException>().FirstOrDefault();
 			Assert.True(
-				dup != null,
-				$"DB-backed full boot threw a NON-house-twin exception (unexpected boundary): " +
-				string.Join(" => ", flat.Select(e => $"{e.GetType().FullName}: {e.Message}")) +
-				Environment.NewLine + bootException);
-			// Java-latent house-twin throw confirmed: a House object was stored twice (re-spawned into a second twin
-			// instance of the same map). This is faithful Java behavior — Heiron/Beluslan housing-twin maps collide on
-			// the address-cached House objectId in World.StoreObject. Documented boundary, not a port defect.
+				dup is null,
+				"DB-backed full boot threw the house-twin DuplicateAionObjectException again — the WorldConfig twin clamp " +
+				"(WorldMapTemplate.GetBeginnerTwinCount/GetTwinCount) regressed: " +
+				string.Join(" => ", flat0.Select(e => $"{e.GetType().FullName}: {e.Message}")));
 		}
+
+		// CLEAN FULL BOOT: with the twin clamp in place the real spawn path (incl. HousingService.SpawnHouses across the
+		// single non-twin instance of every house map) runs to completion against live MySQL + real static data.
+		Assert.True(bootException is null,
+			"DB-backed full boot did not complete cleanly: " +
+			(bootException is null ? "" : string.Join(" => ", Flatten(bootException).Select(e => $"{e.GetType().FullName}: {e.Message}")) +
+			Environment.NewLine + bootException));
+		Assert.True(bootstrap.IsStarted, "full DB-backed boot did not reach IsStarted");
+		Assert.True(world.IsInitialized, "world not initialized after full DB-backed boot");
+		Assert.True(world.ObjectCount > 0, $"world empty after full DB-backed boot (ObjectCount={world.ObjectCount})");
+		await bootstrap.StopAsync(cts.Token);
+		Assert.False(bootstrap.IsStarted);
 	}
 
 	private static IEnumerable<Exception> Flatten(Exception ex)
