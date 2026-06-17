@@ -322,7 +322,50 @@ public sealed class GameServerBootstrapTests
 				<?xml version="1.0" encoding="UTF-8"?>
 				<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" />
 				""");
+
+			// Faithful boot-init fixture enrichment: seed the specific REAL static_data leaf files that the
+			// otherwise-deferred boot services need at init, copied verbatim from the on-disk game-server data
+			// (never invented). LoadLeafHoldersFromFiles reads each holder from a fixed sub-path of this temp
+			// static_data dir, so dropping the real file at that sub-path populates exactly that holder, leaving
+			// every other holder empty (minimal). When the real repo data is absent (e.g. CI without the game
+			// data tree), the copy is skipped and the corresponding service stays a guarded no-op.
+			var repoRoot = FindRepoRoot(AppContext.BaseDirectory);
+			if (repoRoot != null)
+			{
+				var realStaticData = System.IO.Path.Combine(repoRoot, "game-server", "data", "static_data");
+
+				// AUTO_GROUP_DATA: unblocks PeriodicInstanceManager (its ctor's GetAGTByMaskId iterates every
+				// AutoGroupType, each GetTemplate() reads DataManager.AUTO_GROUP — empty => null template => NRE).
+				CopyRealFile(realStaticData, dataDirectory.FullName, System.IO.Path.Combine("auto_group", "auto_group.xml"));
+			}
+
 			return new StaticDataFixture(path);
+		}
+
+		// Java parity helper: locate the repo root by walking up to the dir that holds game-server/data/static_data.
+		internal static string? FindRepoRoot(string startDirectory)
+		{
+			var directory = new DirectoryInfo(startDirectory);
+			while (directory != null)
+			{
+				if (File.Exists(System.IO.Path.Combine(directory.FullName, "game-server", "data", "static_data", "static_data.xml")))
+					return directory.FullName;
+				directory = directory.Parent;
+			}
+
+			return null;
+		}
+
+		private static void CopyRealFile(string realStaticDataDir, string fixtureStaticDataDir, string relativePath)
+		{
+			var source = System.IO.Path.Combine(realStaticDataDir, relativePath);
+			if (!File.Exists(source))
+				return;
+			var destination = System.IO.Path.Combine(fixtureStaticDataDir, relativePath);
+			var destinationDir = System.IO.Path.GetDirectoryName(destination);
+			if (!string.IsNullOrEmpty(destinationDir))
+				Directory.CreateDirectory(destinationDir);
+			File.Copy(source, destination, overwrite: true);
 		}
 
 		public async Task<DataManager> LoadAsync(CancellationToken cancellationToken = default)

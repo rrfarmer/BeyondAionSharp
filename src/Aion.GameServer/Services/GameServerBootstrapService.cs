@@ -297,14 +297,16 @@ public sealed class GameServerBootstrapService : IHostedService
 		// so CronService.Schedule no longer receives a null CronExpression (the CronJobService null-cron failure mode).
 		Aion.GameServer.Services.Abyss.AbyssRankUpdateService.ScheduleUpdate();
 
-		// PeriodicInstanceManager.getInstance() (GameServer.main:166): DEFERRED. Its ctor (guarded by
+		// PeriodicInstanceManager.getInstance() (GameServer.main:166): Its ctor (guarded by
 		// AutoGroupConfig.AUTO_GROUP_ENABLE, default true) calls ScheduleRegistration, whose log line invokes
 		// AutoGroupTypeExtensions.GetAGTByMaskId -> AutoGroupType.GetTemplate() -> data[self].Template. That
 		// per-type AutoGroup template comes from AUTO_GROUP_DATA, which the bootstrap fixture does NOT load (empty),
 		// so GetTemplate() NREs/KeyNotFounds. (The null-CronExpression[] hazard IS fixed — AutoGroupConfig.*_TIMES
 		// are now populated from the Java @Property defaults — but the AutoGroup template dependency remains a
-		// fixture-data gap.) Faithful against real AUTO_GROUP_DATA; wire once the bootstrap fixture seeds it.
-		// Aion.GameServer.Services.Instance.PeriodicInstanceManager.GetInstance();
+		// fixture-data gap.) The bootstrap fixture now seeds the real auto_group/auto_group.xml (covers every
+		// static-init maskId), so every GetTemplate() resolves a non-null template and the dredgion/kamar/ophidan/
+		// iron-wall/idgel registration crons schedule cleanly. Dep-clean against the seeded AUTO_GROUP_DATA.
+		Aion.GameServer.Services.Instance.PeriodicInstanceManager.GetInstance();
 
 		// EventService.getInstance().start() (GameServer.main:167): validates configured event names + collects
 		// active events from EVENT_DATA (now empty-but-non-null via EventData.events = new(); EventsConfig.DISABLED_EVENTS
