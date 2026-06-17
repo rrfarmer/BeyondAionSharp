@@ -15,6 +15,7 @@ public class SM_DIE : AionServerPacket
     private readonly bool allowInstanceRevive;
     private readonly bool invasion;
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_DIE.java): 2026-06-17. Ctor reads full live Player/WorldMapInstance/InstanceHandler/Kisk graph; writeImpl pure-scalar.
     public SM_DIE(Player player)
     {
         IInstanceHandler instanceHandler = player.GetWorldMapInstance().GetInstanceHandler();

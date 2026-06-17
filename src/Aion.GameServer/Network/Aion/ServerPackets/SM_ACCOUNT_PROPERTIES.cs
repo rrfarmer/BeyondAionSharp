@@ -6,6 +6,7 @@ namespace Aion.GameServer.Network.Aion.ServerPackets;
 /// <summary>Java parity: network/aion/serverpackets/SM_ACCOUNT_PROPERTIES (pixfid, Rolandas, Yeats, Neon). Account flags incl. GM panel enable; mostly fixed/zero fields + account status. AdminConfig red-tolerated.</summary>
 public class SM_ACCOUNT_PROPERTIES : AionServerPacket
 {
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_ACCOUNT_PROPERTIES.java): 2026-06-17. Reads con.getAccount().getAccessLevel(); rest fixed/zero fields.
     public SM_ACCOUNT_PROPERTIES()
     {
     }

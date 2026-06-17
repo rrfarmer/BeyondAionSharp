@@ -29,6 +29,7 @@ public class SM_SIEGE_LOCATION_INFO : AionServerPacket
         locations[loc.GetLocationId()] = loc;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_SIEGE_LOCATION_INFO.java): 2026-06-17. Reads con.getActivePlayer() + live SiegeService/LegionService singletons + SiegeLocation/LegionEmblem graph.
     protected override void WriteImpl(AionConnection con)
     {
         Player player = con.GetActivePlayer();

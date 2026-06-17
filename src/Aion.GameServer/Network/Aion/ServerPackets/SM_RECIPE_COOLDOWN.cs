@@ -11,6 +11,7 @@ public class SM_RECIPE_COOLDOWN : AionServerPacket
     private int mode = 0;
     private readonly Dictionary<int, int> cooldowns = new Dictionary<int, int>();
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_RECIPE_COOLDOWN.java): 2026-06-17. Ctor reads live Player.getCraftCooldowns() (time-based remainingSeconds); writeImpl pure-map iteration.
     public SM_RECIPE_COOLDOWN(Player player, int mode)
     {
         this.mode = mode;

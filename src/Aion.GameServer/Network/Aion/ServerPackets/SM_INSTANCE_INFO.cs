@@ -27,6 +27,7 @@ public class SM_INSTANCE_INFO : AionServerPacket
         this.instanceIds = instanceId.Length > 0 ? instanceId : DataManager.INSTANCE_COOLTIME_DATA.GetInstanceCooltimes().Keys.ToArray();
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_INSTANCE_INFO.java): 2026-06-17. Reads con.getActivePlayer() + System.currentTimeMillis + live Player portal-cooldown graph; (int)(reuse-now)/1000 cast precedence matches Java.
     protected override void WriteImpl(AionConnection con)
     {
         Player activePlayer = con.GetActivePlayer();

@@ -15,6 +15,7 @@ public class SM_ITEM_COOLDOWN : AionServerPacket
         this.cooldowns = cooldowns;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_ITEM_COOLDOWN.java): 2026-06-17. Reads System.currentTimeMillis; (int)((reuse-now)/1000) cast precedence matches Java.
     protected override void WriteImpl(AionConnection con)
     {
         WriteH(cooldowns.Count);

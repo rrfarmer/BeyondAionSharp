@@ -15,6 +15,7 @@ public class SM_PLAYER_SPAWN : AionServerPacket
         this.player = player;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_PLAYER_SPAWN.java): 2026-06-17. Reads live World singleton (getWorldMap().getTemplate().getBeginnerTwinCount()) + live Player position graph.
     protected override void WriteImpl(AionConnection con)
     {
         bool isPersonal = WorldMapTypeExtensions.GetWorld(player.GetWorldId()).IsPersonal();
