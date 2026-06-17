@@ -182,6 +182,13 @@ public sealed class GameServerBootstrapService : IHostedService
 		// schedules each limited item's reset cron (item.GetSalesTime()). Empty data => no-op. Dep-clean.
 		Aion.GameServer.Services.LimitedItemTradeService.GetInstance().Start();
 
+		// PlayerLimitService.getInstance().scheduleUpdate() (GameServer.main:137-138, guarded by
+		// CustomConfig.LIMITS_ENABLED, default true): schedules the daily NPC-sell-limit reset cron.
+		// CustomConfig.LIMITS_UPDATE is now populated from the Java @Property default "0 0 0 ? * *" via
+		// CronExpressions.GetOrCreate (was null => CronService.Schedule NRE). Dep-clean.
+		if (Aion.GameServer.Configs.Main.CustomConfig.LIMITS_ENABLED)
+			Aion.GameServer.Services.Players.PlayerLimitService.GetInstance().ScheduleUpdate();
+
 		// Java parity: GameServer.main second-pass init block (lines 142-150), AFTER spawnAll/initRifts, BEFORE
 		// DebugService/Weather/etc. These run separately from the location-init first pass because they depend on
 		// the spawn engine having run: they despawn the spawn-engine NPCs at each siege/base location and re-spawn

@@ -158,8 +158,10 @@ public static class CustomConfig
     /// <summary>Key: gameserver.limits.enable_dynamic_cap</summary>
     public static bool LIMITS_ENABLE_DYNAMIC_CAP = false;
 
-    /// <summary>Key: gameserver.limits.update. Default cron: 0 0 0 ? * *</summary>
-    public static Quartz.CronExpression LIMITS_UPDATE;
+    /// <summary>Key: gameserver.limits.update. Default cron "0 0 0 ? * *" — initialized from the Java @Property
+    /// defaultValue via CronExpressions.GetOrCreate (no invented value) so PlayerLimitService.ScheduleUpdate
+    /// doesn't pass a null CronExpression to CronService.Schedule (the null-cron failure mode).</summary>
+    public static Quartz.CronExpression LIMITS_UPDATE = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 0 0 ? * *");
 
     /// <summary>Key: gameserver.abyssxform.afterlogout</summary>
     public static bool ABYSSXFORM_LOGOUT = false;
