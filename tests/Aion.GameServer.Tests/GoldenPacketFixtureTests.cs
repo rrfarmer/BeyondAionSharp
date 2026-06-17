@@ -138,6 +138,10 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_MACRO_LIST.json")]
 	[InlineData("SM_FIRST_SHOW_DECOMPOSABLE.json")]
 	[InlineData("SM_SECONDARY_SHOW_DECOMPOSABLE.json")]
+	// ----- Batch 11: con-null-safe scalar / simple-DTO list packets -----
+	[InlineData("SM_ABYSS_RANKING_LEGIONS.json")]
+	[InlineData("SM_ABYSS_RANKING_PLAYERS.json")]
+	[InlineData("SM_GM_SHOW_PLAYER_SKILLS.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -268,6 +272,10 @@ public sealed class GoldenPacketFixtureTests
 		"SM_MACRO_LIST" => new SM_MACRO_LIST(inputs.GetProperty("playerObjectId").GetInt32(), ReconstructMacros(inputs.GetProperty("macros")), inputs.GetProperty("clearList").GetBoolean()),
 		"SM_FIRST_SHOW_DECOMPOSABLE" => new SM_FIRST_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructResultedItems(inputs.GetProperty("items"))),
 		"SM_SECONDARY_SHOW_DECOMPOSABLE" => new SM_SECONDARY_SHOW_DECOMPOSABLE(inputs.GetProperty("objectId").GetInt32(), ReconstructResultedItems(inputs.GetProperty("items"))),
+		// ----- Batch 11 -----
+		"SM_ABYSS_RANKING_LEGIONS" => ReconstructAbyssRankingLegions(inputs),
+		"SM_ABYSS_RANKING_PLAYERS" => ReconstructAbyssRankingPlayers(inputs),
+		"SM_GM_SHOW_PLAYER_SKILLS" => new SM_GM_SHOW_PLAYER_SKILLS(ReconstructPlayerSkills(inputs.GetProperty("skills"))),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -307,6 +315,59 @@ public sealed class GoldenPacketFixtureTests
 		var list = new List<Aion.GameServer.Model.Templates.Items.ResultedItem>();
 		foreach (var it in items.EnumerateArray())
 			list.Add(new Aion.GameServer.Model.Templates.Items.ResultedItem { itemId = it[0].GetInt32(), minCount = it[1].GetInt32() });
+		return list;
+	}
+
+	// ----- Batch 11 reconstruct helpers -----
+
+	private static Aion.GameServer.Model.Race ParseRace(string r) =>
+		r == "ELYOS" ? Aion.GameServer.Model.Race.ELYOS : Aion.GameServer.Model.Race.ASMODIANS;
+
+	// SM_ABYSS_RANKING_LEGIONS: 3-arg ctor (with list) vs 2-arg ctor (empty). RankingListLegion record positional order:
+	// (Position, OldPosition, Id, Name, Race, Level, ContributionPoints, MemberCount). Race in the row is unused by writeImpl.
+	// inputs legion row order mirrored from the Java fixture: [position, oldPosition, id, level, memberCount, contributionPoints, name].
+	private static SM_ABYSS_RANKING_LEGIONS ReconstructAbyssRankingLegions(JsonElement inputs)
+	{
+		var race = ParseRace(inputs.GetProperty("race").GetString()!);
+		var legions = inputs.GetProperty("legions");
+		if (legions.GetArrayLength() == 0)
+			return new SM_ABYSS_RANKING_LEGIONS(inputs.GetProperty("updateTime").GetInt32(), race);
+		var list = new List<Aion.GameServer.Dao.AbyssRankDAO.RankingListLegion>();
+		foreach (var l in legions.EnumerateArray())
+			list.Add(new Aion.GameServer.Dao.AbyssRankDAO.RankingListLegion(
+				l[0].GetInt32(), l[1].GetInt32(), l[2].GetInt32(), l[6].GetString()!, race,
+				l[3].GetInt32(), l[5].GetInt64(), l[4].GetInt32()));
+		return new SM_ABYSS_RANKING_LEGIONS(inputs.GetProperty("updateTime").GetInt32(), list, race);
+	}
+
+	// SM_ABYSS_RANKING_PLAYERS: 5-arg ctor (with list/page/end) vs 2-arg ctor (empty). RankingListPlayer record positional order:
+	// (Position, OldPosition, Id, Name, Race, Level, AbyssRank, Ap, Gp, Title, PlayerClass, Gender, LegionName).
+	// inputs player row order from the Java fixture: [position, abyssRank, oldPosition, id, classId, genderId, ap, gp, level, name, legionName].
+	private static SM_ABYSS_RANKING_PLAYERS ReconstructAbyssRankingPlayers(JsonElement inputs)
+	{
+		var race = ParseRace(inputs.GetProperty("race").GetString()!);
+		var players = inputs.GetProperty("players");
+		if (players.GetArrayLength() == 0)
+			return new SM_ABYSS_RANKING_PLAYERS(inputs.GetProperty("lastUpdate").GetInt32(), race);
+		var list = new List<Aion.GameServer.Dao.AbyssRankDAO.RankingListPlayer>();
+		foreach (var p in players.EnumerateArray())
+			list.Add(new Aion.GameServer.Dao.AbyssRankDAO.RankingListPlayer(
+				p[0].GetInt32(), p[2].GetInt32(), p[3].GetInt32(), p[9].GetString()!, race,
+				p[8].GetInt32(), p[1].GetInt32(), p[6].GetInt32(), p[7].GetInt32(), 0,
+				Aion.GameServer.Model.PlayerClassExtensions.GetPlayerClassById((byte)p[4].GetInt32()),
+				(Aion.GameServer.Model.Gender)p[5].GetInt32(), p[10].GetString()!));
+		return new SM_ABYSS_RANKING_PLAYERS(inputs.GetProperty("lastUpdate").GetInt32(), list, race,
+			inputs.GetProperty("page").GetInt32(), inputs.GetProperty("isEndPacket").GetBoolean());
+	}
+
+	// PlayerSkillEntry(skillId, skillLvl, skillType, PersistentState). Rows: [skillId, skillLvl, skillType].
+	private static List<Aion.GameServer.Model.Skill.PlayerSkillEntry> ReconstructPlayerSkills(JsonElement skills)
+	{
+		var list = new List<Aion.GameServer.Model.Skill.PlayerSkillEntry>();
+		foreach (var s in skills.EnumerateArray())
+			list.Add(new Aion.GameServer.Model.Skill.PlayerSkillEntry(
+				s[0].GetInt32(), s[1].GetInt32(), s[2].GetInt32(),
+				Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.NOACTION));
 		return list;
 	}
 
