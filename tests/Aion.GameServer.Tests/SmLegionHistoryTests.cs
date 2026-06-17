@@ -1,106 +1,135 @@
-using Aion.Commons.Network;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Reflection;
+using System.Text;
+using Aion.GameServer.Model.Team.Legion;
 using Aion.GameServer.Network.Aion;
 using Aion.GameServer.Network.Aion.ServerPackets;
+using Type = Aion.GameServer.Model.Team.Legion.LegionHistoryAction.Type;
 
 namespace Aion.GameServer.Tests;
 
+/// <summary>
+/// Faithful golden coverage for network/aion/serverpackets/SM_LEGION_HISTORY. Drives the LIVE model
+/// (LegionHistoryEntry + LegionHistoryAction class-enum + nested Type enum) exactly as
+/// LegionService/CM_LEGION_HISTORY do, instead of the retired flat-snapshot reworked SmLegionHistory
+/// packet. Java has no Unsafe golden test for this packet; this migrates the byte coverage onto the
+/// faithful WriteImpl path. Per-entry layout: epochSeconds(D), actionId(C), 0(C), name(S,32),
+/// description(S,32), H(0); trailing type ordinal(H).
+/// </summary>
 public sealed class SmLegionHistoryTests
 {
-	[Fact]
-	public void OpcodeIs12()
-	{
-		// Java parity: ServerPacketsOpcodes addPacketOpcode(12, SM_LEGION_HISTORY.class).
-		Assert.Equal(12, SmLegionHistory.PacketOpCode);
-	}
+    [Fact]
+    public void EmptyHistory_WritesHeaderAndTypeOrdinalOnly()
+    {
+        // type REWARD => ordinal 1.
+        var packet = new SM_LEGION_HISTORY(new List<LegionHistoryEntry>(), page: 0, type: Type.REWARD);
+        var reader = new HexReader(Write(packet));
 
-	[Fact]
-	public void EmptyHistory_WritesHeaderAndTypeOrdinalOnly()
-	{
-		// Java parity: writeImpl with empty history -> totalEntries=0, page, pageEntries.size()=0, then type.ordinal().
-		var packet = new SmLegionHistory(Array.Empty<LegionHistoryEntryRow>(), page: 0, typeOrdinal: 1);
-		using var buffer = new PacketBuffer(SerializeUnencryptedPayload(packet));
+        Assert.Equal(0, reader.D()); // totalEntries
+        Assert.Equal(0, reader.D()); // page
+        Assert.Equal(0, reader.D()); // pageEntries count
+        Assert.Equal(1, reader.H()); // type ordinal (REWARD = 1)
+        Assert.True(reader.AtEnd);
+    }
 
-		Assert.Equal(0, buffer.ReadD()); // totalEntries
-		Assert.Equal(0, buffer.ReadD()); // page
-		Assert.Equal(0, buffer.ReadD()); // pageEntries count
-		Assert.Equal(1, buffer.ReadH()); // type ordinal (REWARD = 1)
-	}
+    [Fact]
+    public void SingleEntry_WritesEntryFieldsAndFixedStrings()
+    {
+        // KICK => actionId 2; type LEGION => ordinal 0.
+        var entry = new LegionHistoryEntry(1, 1717459200, LegionHistoryAction.KICK, "Hi", "d");
+        var packet = new SM_LEGION_HISTORY(new List<LegionHistoryEntry> { entry }, page: 0, type: Type.LEGION);
+        var reader = new HexReader(Write(packet));
 
-	[Fact]
-	public void SingleEntry_WritesEntryFieldsAndFixedStrings()
-	{
-		// Java parity: per-entry layout = epochSeconds(D), actionId(C), 0(C), name(S,32), description(S,32), H(0); trailing type ordinal(H).
-		var entry = new LegionHistoryEntryRow(EpochSeconds: 1717459200, ActionId: 2 /* KICK */, Name: "Hi", Description: "d");
-		var packet = new SmLegionHistory(new[] { entry }, page: 0, typeOrdinal: 0);
-		using var buffer = new PacketBuffer(SerializeUnencryptedPayload(packet));
+        Assert.Equal(1, reader.D()); // totalEntries
+        Assert.Equal(0, reader.D()); // page
+        Assert.Equal(1, reader.D()); // pageEntries count
 
-		Assert.Equal(1, buffer.ReadD()); // totalEntries
-		Assert.Equal(0, buffer.ReadD()); // page
-		Assert.Equal(1, buffer.ReadD()); // pageEntries count
+        Assert.Equal(1717459200, reader.D()); // epochSeconds
+        Assert.Equal(2, reader.C()); // actionId (KICK)
+        Assert.Equal(0, reader.C()); // unk
 
-		Assert.Equal(1717459200, buffer.ReadD()); // epochSeconds
-		Assert.Equal(2, buffer.ReadC()); // actionId
-		Assert.Equal(0, buffer.ReadC()); // unk
+        // name: 32 fixed UTF-16 chars (zero padded) + terminator.
+        Assert.Equal('H', (char)reader.H());
+        Assert.Equal('i', (char)reader.H());
+        for (var i = 2; i < 32; i++)
+            Assert.Equal(0, reader.H());
+        Assert.Equal(0, reader.H()); // name terminator
 
-		// name: 32 fixed UTF-16 chars (zero padded) + terminator.
-		Assert.Equal('H', (char)buffer.ReadH());
-		Assert.Equal('i', (char)buffer.ReadH());
-		for (var i = 2; i < 32; i++)
-			Assert.Equal(0, buffer.ReadH());
-		Assert.Equal(0, buffer.ReadH()); // name terminator
+        // description: 32 fixed chars + terminator.
+        Assert.Equal('d', (char)reader.H());
+        for (var i = 1; i < 32; i++)
+            Assert.Equal(0, reader.H());
+        Assert.Equal(0, reader.H()); // description terminator
 
-		// description: 32 fixed chars + terminator.
-		Assert.Equal('d', (char)buffer.ReadH());
-		for (var i = 1; i < 32; i++)
-			Assert.Equal(0, buffer.ReadH());
-		Assert.Equal(0, buffer.ReadH()); // description terminator
+        Assert.Equal(0, reader.H()); // trailing per-entry H(0)
+        Assert.Equal(0, reader.H()); // type ordinal (LEGION = 0)
+        Assert.True(reader.AtEnd);
+    }
 
-		Assert.Equal(0, buffer.ReadH()); // trailing per-entry H(0)
-		Assert.Equal(0, buffer.ReadH()); // type ordinal (LEGION = 0)
-	}
+    [Fact]
+    public void Paging_SlicesEightPerPageAndReportsFullTotal()
+    {
+        // ENTRIES_PER_PAGE=8; page 1 of 10 yields entries [8,10).
+        var history = new List<LegionHistoryEntry>();
+        for (var i = 0; i < 10; i++)
+            history.Add(new LegionHistoryEntry(i, i, LegionHistoryAction.CREATE, "n" + i, string.Empty));
 
-	[Fact]
-	public void Paging_SlicesEightPerPageAndReportsFullTotal()
-	{
-		// Java parity: findEntriesForCurrentPage — ENTRIES_PER_PAGE=8; page 1 of 10 yields entries [8,10).
-		var history = new List<LegionHistoryEntryRow>();
-		for (var i = 0; i < 10; i++)
-			history.Add(new LegionHistoryEntryRow(EpochSeconds: i, ActionId: 0, Name: "n" + i, Description: string.Empty));
+        var packet = new SM_LEGION_HISTORY(history, page: 1, type: Type.WAREHOUSE);
+        var reader = new HexReader(Write(packet));
 
-		var packet = new SmLegionHistory(history, page: 1, typeOrdinal: 2);
-		using var buffer = new PacketBuffer(SerializeUnencryptedPayload(packet));
+        Assert.Equal(10, reader.D()); // totalEntries = full history size
+        Assert.Equal(1, reader.D()); // page
+        Assert.Equal(2, reader.D()); // pageEntries count (entries 8 and 9)
 
-		Assert.Equal(10, buffer.ReadD()); // totalEntries = full history size
-		Assert.Equal(1, buffer.ReadD()); // page
-		Assert.Equal(2, buffer.ReadD()); // pageEntries count (entries 8 and 9)
+        Assert.Equal(8, reader.D()); // epochSeconds of entry index 8
+    }
 
-		// First entry on page 1 is original index 8.
-		Assert.Equal(8, buffer.ReadD()); // epochSeconds of entry index 8
-	}
+    [Fact]
+    public void PageBeyondEnd_WritesEmptyPageButFullTotal()
+    {
+        // startIndex >= size -> empty list, but totalEntries still reports full size.
+        var history = new List<LegionHistoryEntry>
+        {
+            new(0, 5, LegionHistoryAction.CREATE, "a", "b"),
+        };
 
-	[Fact]
-	public void PageBeyondEnd_WritesEmptyPageButFullTotal()
-	{
-		// Java parity: startIndex >= size -> Collections.emptyList(), but totalEntries still reports full size.
-		var history = new List<LegionHistoryEntryRow>
-		{
-			new(EpochSeconds: 5, ActionId: 0, Name: "a", Description: "b"),
-		};
+        var packet = new SM_LEGION_HISTORY(history, page: 3, type: Type.LEGION);
+        var reader = new HexReader(Write(packet));
 
-		var packet = new SmLegionHistory(history, page: 3, typeOrdinal: 0);
-		using var buffer = new PacketBuffer(SerializeUnencryptedPayload(packet));
+        Assert.Equal(1, reader.D()); // totalEntries
+        Assert.Equal(3, reader.D()); // page
+        Assert.Equal(0, reader.D()); // pageEntries count (out of range)
+        Assert.Equal(0, reader.H()); // type ordinal
+        Assert.True(reader.AtEnd);
+    }
 
-		Assert.Equal(1, buffer.ReadD()); // totalEntries
-		Assert.Equal(3, buffer.ReadD()); // page
-		Assert.Equal(0, buffer.ReadD()); // pageEntries count (out of range)
-		Assert.Equal(0, buffer.ReadH()); // type ordinal
-	}
+    private static byte[] Write(SM_LEGION_HISTORY packet)
+    {
+        var buffer = Aion.Commons.Nio.ByteBuffer.Allocate(8192).Order(Aion.Commons.Nio.ByteOrder.LITTLE_ENDIAN);
+        packet.SetBuf(buffer);
+        var writeImpl = typeof(AionServerPacket).GetMethod("WriteImpl",
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            new[] { typeof(AionConnection) })!;
+        writeImpl.Invoke(packet, new object?[] { null });
+        var length = buffer.Position();
+        var payload = new byte[length];
+        buffer.Flip();
+        buffer.Get(payload);
+        return payload;
+    }
 
-	private static byte[] SerializeUnencryptedPayload(GameServerPacket packet)
-	{
-		var crypt = new GameCrypt(() => 0x01020304);
-		crypt.EnableKey();
-		var frame = packet.SerializeFrame(crypt);
-		return frame[7..]; // skip 2-byte length + 2-byte opcode + 1-byte static code + 2-byte ~opcode
-	}
+    private sealed class HexReader(byte[] payload)
+    {
+        private int _pos;
+
+        public bool AtEnd => _pos >= payload.Length;
+
+        public int C() => payload[_pos++];
+
+        public int H() => payload[_pos++] | (payload[_pos++] << 8);
+
+        public int D() => payload[_pos++] | (payload[_pos++] << 8) | (payload[_pos++] << 16) | (payload[_pos++] << 24);
+    }
 }
