@@ -47,7 +47,7 @@ public class PlayerDisconnectedEvent : ITeamEvent
         {
             if (!disconnected.Equals(member))
             {
-                PacketSendUtility.SendPacket(member, SmSystemMessage.ForceHeBecomeOffline(disconnected.GetName()));
+                PacketSendUtility.SendPacket(member, SM_SYSTEM_MESSAGE.STR_FORCE_HE_BECOME_OFFLINE(disconnected.GetName()));
                 PacketSendUtility.SendPacket(member, new SM_ALLIANCE_MEMBER_INFO(disconnectedMember, PlayerAllianceEvent.DISCONNECTED));
                 PacketSendUtility.SendPacket(member, new SM_ALLIANCE_INFO(alliance));
             }

@@ -34,14 +34,14 @@ public class CubeExpandService
         int minExpansionLevel = template.GetMinExpansionLevel();
         if (newNpcExpansions < minExpansionLevel)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.InventoryCantExtendBelowNpcMinimum(npc.GetObjectTemplate().GetL10n(), minExpansionLevel - 1));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_DUE_TO_MINIMUM_EXTEND_LEVEL_BY_THIS_NPC(npc.GetObjectTemplate().GetL10n(), minExpansionLevel - 1));
             return;
         }
         int? price = template.GetPrice(newNpcExpansions);
         int maxExpansionLevel = Math.Min(template.GetMaxExpansionLevel(), CustomConfig.NPC_CUBE_EXPANDS_SIZE_LIMIT);
         if (price == null || newNpcExpansions > maxExpansionLevel)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.InventoryCantExtendAboveNpcMaximum(npc.GetObjectTemplate().GetL10n(), maxExpansionLevel));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE_DUE_TO_MAXIMUM_EXTEND_LEVEL_BY_THIS_NPC(npc.GetObjectTemplate().GetL10n(), maxExpansionLevel));
             return;
         }
         RequestResponseHandler<Npc> responseHandler = new CubeExpandResponseHandler(npc, price.Value);
@@ -68,7 +68,7 @@ public class CubeExpandService
             if (responder.GetInventory().TryDecreaseKinah(price, ItemUpdateType.DEC_KINAH_CUBE))
                 NpcExpand(responder);
             else
-                PacketSendUtility.SendPacket(responder, SmSystemMessage.WarehouseExpandNotEnoughMoney()); // warehouse and cube use the same msg..
+                PacketSendUtility.SendPacket(responder, SM_SYSTEM_MESSAGE.STR_WAREHOUSE_EXPAND_NOT_ENOUGH_MONEY()); // warehouse and cube use the same msg..
         }
     }
 
@@ -80,7 +80,7 @@ public class CubeExpandService
     {
         if (!CanExpand(player))
             return;
-        PacketSendUtility.SendPacket(player, SmSystemMessage.InventorySizeExtended(9));
+        PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_SIZE_EXTENDED(9));
         switch (type)
         {
             case 1: // npc
@@ -118,7 +118,7 @@ public class CubeExpandService
             return false;
         if (player.GetItemExpands() >= ticketLevel)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.InventoryCantExtendMore());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE());
             return false;
         }
         return true;
@@ -131,7 +131,7 @@ public class CubeExpandService
             return false;
         if (newExpansions > CustomConfig.CUBE_EXPANSION_LIMIT)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.InventoryCantExtendMore());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_EXTEND_INVENTORY_CANT_EXTEND_MORE());
             return false;
         }
         return true;

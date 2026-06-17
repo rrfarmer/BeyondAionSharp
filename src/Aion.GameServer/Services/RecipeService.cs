@@ -21,7 +21,7 @@ public class RecipeService
         RecipeTemplate template = DataManager.RECIPE_DATA.GetRecipeTemplateById(recipeId);
         if (template == null)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.RecipeItemCannotUseNoRecipe());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_RECIPEITEM_CANT_USE_NO_RECIPE());
             return null;
         }
 
@@ -29,27 +29,27 @@ public class RecipeService
         {
             if (template.GetRace() != player.GetRace())
             {
-                PacketSendUtility.SendPacket(player, SmSystemMessage.CraftRecipeRaceCheck());
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CRAFTRECIPE_RACE_CHECK());
                 return null;
             }
         }
 
         if (player.GetRecipeList().IsRecipePresent(recipeId))
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CraftRecipeLearnedAlready());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_LEARNED_ALREADY());
             return null;
         }
 
         if (!player.GetSkillList().IsSkillPresent(template.GetSkillId()))
         {
             PacketSendUtility.SendPacket(player,
-                SmSystemMessage.CraftRecipeCantLearnSkill(DataManager.SKILL_DATA.GetSkillTemplate(template.GetSkillId()).GetL10n()));
+                SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_CANT_LEARN_SKILL(DataManager.SKILL_DATA.GetSkillTemplate(template.GetSkillId()).GetL10n()));
             return null;
         }
 
         if (template.GetSkillpoint() > player.GetSkillList().GetSkillLevel(template.GetSkillId()))
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CraftRecipeCantLearnSkillPoint());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_CANT_LEARN_SKILLPOINT());
             return null;
         }
 
@@ -69,7 +69,7 @@ public class RecipeService
 
         if (player.GetRecipeList().AddRecipe(player, recipeId))
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CraftRecipeLearn(recipeId, player.GetName()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CRAFT_RECIPE_LEARN(recipeId, player.GetName()));
             return true;
         }
         return false;

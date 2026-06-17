@@ -44,7 +44,7 @@ public class SurveyService
         activeItems.TryGetValue(survId, out SurveyItem item);
         if (item == null || item.ownerId != player.GetObjectId())
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CannotFindPoll());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CANNOT_FIND_POLL());
             return;
         }
 
@@ -55,7 +55,7 @@ public class SurveyService
         }
         if (player.GetInventory().IsFull(template.GetExtraInventoryId()))
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.FullInventory());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_FULL_INVENTORY());
             log.LogWarning("[SurveyController] player " + player.GetName() + " tried to receive item with full inventory.");
             return;
         }
@@ -63,11 +63,11 @@ public class SurveyService
         {
             ItemService.AddItem(player, item.itemId, item.count);
             if (item.itemId == ItemId.KINAH)
-                PacketSendUtility.SendPacket(player, SmSystemMessage.GetPollRewardMoney(item.count));
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_GET_POLL_REWARD_MONEY(item.count));
             else if (item.count == 1)
-                PacketSendUtility.SendPacket(player, SmSystemMessage.GetPollRewardItem(template.GetL10n()));
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_GET_POLL_REWARD_ITEM(template.GetL10n()));
             else
-                PacketSendUtility.SendPacket(player, SmSystemMessage.GetPollRewardItemMulti(item.count, template.GetL10n()));
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_GET_POLL_REWARD_ITEM_MULTI(item.count, template.GetL10n()));
 
             activeItems.Remove(survId);
         }

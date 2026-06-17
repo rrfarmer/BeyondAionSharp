@@ -54,7 +54,7 @@ public class RepurchaseService
         {
             if (player.GetInventory().IsFull())
             {
-                PacketSendUtility.SendPacket(player, SmSystemMessage.DiceInventoryError());
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR());
                 break;
             }
 

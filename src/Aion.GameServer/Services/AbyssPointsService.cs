@@ -44,8 +44,8 @@ public static class AbyssPointsService
 		var packets = new List<AionServerPacket>
 		{
 			amount >= 0
-				? SmSystemMessage.CombatMyAbyssPointGain(added)
-				: SmSystemMessage.UseAbyssPoint(-added),
+				? SM_SYSTEM_MESSAGE.STR_MSG_COMBAT_MY_ABYSS_POINT_GAIN(added)
+				: SM_SYSTEM_MESSAGE.STR_MSG_USE_ABYSSPOINT(-added),
 		};
 		if (added != 0 || rankChanged)
 			packets.Add(new SmAbyssRank(updatedRank));

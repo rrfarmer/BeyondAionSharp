@@ -118,7 +118,7 @@ public abstract class Base
             if (isStopped.Get())
                 return ValueTask.CompletedTask;
             SpawnBySpawnHandler(SpawnHandlerType.BOSS, GetOccupier());
-            SmSystemMessage bossSpawnMsg = GetBossSpawnMsg();
+            SM_SYSTEM_MESSAGE bossSpawnMsg = GetBossSpawnMsg();
             if (bossSpawnMsg != null)
                 PacketSendUtility.BroadcastToMap(flag.GetPosition().GetWorldMapInstance(), bossSpawnMsg);
             ScheduleAssault();
@@ -138,7 +138,7 @@ public abstract class Base
             if (flag.GetPosition().IsMapRegionActive())
             {
                 SpawnBySpawnHandler(SpawnHandlerType.ATTACKER, ChooseAssaultRace());
-                SmSystemMessage assaultMsg = GetAssaultMsg();
+                SM_SYSTEM_MESSAGE assaultMsg = GetAssaultMsg();
                 if (assaultMsg != null)
                     PacketSendUtility.BroadcastToMap(flag.GetPosition().GetWorldMapInstance(), assaultMsg);
                 ScheduleAssaultDespawn();
@@ -222,44 +222,44 @@ public abstract class Base
         return bossKiller == null ? GetLocation().GetTemplate().GetDefaultOccupier() : BaseOccupierExtensions.FindBy(bossKiller.GetRace());
     }
 
-    private SmSystemMessage GetBossSpawnMsg()
+    private SM_SYSTEM_MESSAGE GetBossSpawnMsg()
     {
         return id switch
         {
-            6101 => SmSystemMessage.MsgLdf4AdvanceChiefV01(),
-            6102 => SmSystemMessage.MsgLdf4AdvanceChiefV02(),
-            6103 => SmSystemMessage.MsgLdf4AdvanceChiefV03(),
-            6104 => SmSystemMessage.MsgLdf4AdvanceChiefV04(),
-            6105 => SmSystemMessage.MsgLdf4AdvanceChiefV05(),
-            6106 => SmSystemMessage.MsgLdf4AdvanceChiefV06(),
-            6107 => SmSystemMessage.MsgLdf4AdvanceChiefV07(),
-            6108 => SmSystemMessage.MsgLdf4AdvanceChiefV08(),
-            6109 => SmSystemMessage.MsgLdf4AdvanceChiefV09(),
-            6110 => SmSystemMessage.MsgLdf4AdvanceChiefV10(),
-            6111 => SmSystemMessage.MsgLdf4AdvanceChiefV11(),
-            6112 => SmSystemMessage.MsgLdf4AdvanceChiefV12(),
-            6113 => SmSystemMessage.MsgLdf4AdvanceChiefV13(),
+            6101 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V01(),
+            6102 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V02(),
+            6103 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V03(),
+            6104 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V04(),
+            6105 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V05(),
+            6106 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V06(),
+            6107 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V07(),
+            6108 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V08(),
+            6109 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V09(),
+            6110 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V10(),
+            6111 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V11(),
+            6112 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V12(),
+            6113 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_CHIEF_V13(),
             _ => null,
         };
     }
 
-    private SmSystemMessage GetAssaultMsg()
+    private SM_SYSTEM_MESSAGE GetAssaultMsg()
     {
         return id switch
         {
-            6101 => SmSystemMessage.MsgLdf4AdvanceKillerV01(),
-            6102 => SmSystemMessage.MsgLdf4AdvanceKillerV02(),
-            6103 => SmSystemMessage.MsgLdf4AdvanceKillerV03(),
-            6104 => SmSystemMessage.MsgLdf4AdvanceKillerV04(),
-            6105 => SmSystemMessage.MsgLdf4AdvanceKillerV05(),
-            6106 => SmSystemMessage.MsgLdf4AdvanceKillerV06(),
-            6107 => SmSystemMessage.MsgLdf4AdvanceKillerV07(),
-            6108 => SmSystemMessage.MsgLdf4AdvanceKillerV08(),
-            6109 => SmSystemMessage.MsgLdf4AdvanceKillerV09(),
-            6110 => SmSystemMessage.MsgLdf4AdvanceKillerV10(),
-            6111 => SmSystemMessage.MsgLdf4AdvanceKillerV11(),
-            6112 => SmSystemMessage.MsgLdf4AdvanceKillerV12(),
-            6113 => SmSystemMessage.MsgLdf4AdvanceKillerV13(),
+            6101 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V01(),
+            6102 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V02(),
+            6103 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V03(),
+            6104 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V04(),
+            6105 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V05(),
+            6106 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V06(),
+            6107 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V07(),
+            6108 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V08(),
+            6109 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V09(),
+            6110 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V10(),
+            6111 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V11(),
+            6112 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V12(),
+            6113 => SM_SYSTEM_MESSAGE.STR_MSG_LDF4_ADVANCE_KILLER_V13(),
             _ => null,
         };
     }

@@ -27,10 +27,10 @@ public class ArmsfusionService
         {
             if (player.GetEquipment().GetEquippedItemByObjId(mainWeaponObjId) != null
                 || player.GetEquipment().GetEquippedItemByObjId(fuseWeaponObjId) != null)
-                PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorEquipedItem());
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_EQUIPED_ITEM());
             else
             {
-                PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundItemNoTargetItem());
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ITEM_NO_TARGET_ITEM());
                 AuditLogger.Log(player, "tried to fuse weapons he doesn't have (obj IDs:" + mainWeaponObjId + ", " + fuseWeaponObjId + ")");
             }
             return;
@@ -39,7 +39,7 @@ public class ArmsfusionService
         if (!mainWeapon.GetItemTemplate().IsCanFuse() || !fuseWeapon.GetItemTemplate().IsCanFuse())
         {
             Item item = mainWeapon.GetItemTemplate().IsCanFuse() ? mainWeapon : fuseWeapon;
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorNotAvailable(item.GetL10n()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_AVAILABLE(item.GetL10n()));
             AuditLogger.Log(player,
                 "tried to fuse item " + fuseWeapon.GetItemId() + " onto " + mainWeapon.GetItemId() + " (" + item.GetItemId() + " isn't fusible)");
             return;
@@ -51,13 +51,13 @@ public class ArmsfusionService
 
         if (player.GetInventory().GetKinah() < price)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorNotEnoughMoney(mainWeapon.GetL10n(), fuseWeapon.GetL10n()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_ENOUGH_MONEY(mainWeapon.GetL10n(), fuseWeapon.GetL10n()));
             return;
         }
 
         if (mainWeapon.GetTemporaryExchangeTime() != 0)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorTemporaryExchangeItem());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_TEMPORARY_EXCHANGE_ITEM());
             return;
         }
 
@@ -65,21 +65,21 @@ public class ArmsfusionService
         if (mainWeapon.HasFusionedItem() || fuseWeapon.HasFusionedItem())
         {
             Item item = mainWeapon.HasFusionedItem() ? mainWeapon : fuseWeapon;
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorNotAvailable(item.GetL10n()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_AVAILABLE(item.GetL10n()));
             return;
         }
 
         // Fusioned weapons must have same type
         if (mainWeapon.GetItemTemplate().GetItemGroup() != fuseWeapon.GetItemTemplate().GetItemGroup())
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorDifferentType());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_DIFFERENT_TYPE());
             return;
         }
 
         // Second weapon must have inferior or equal lvl. in relation to first weapon
         if (fuseWeapon.GetItemTemplate().GetLevel() > mainWeapon.GetItemTemplate().GetLevel())
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorMainRequireHigherLevel());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_MAIN_REQUIRE_HIGHER_LEVEL());
             return;
         }
 
@@ -88,7 +88,7 @@ public class ArmsfusionService
         {
             if (mainWeapon.GetImprovement().GetChargeWay() != fuseWeapon.GetImprovement().GetChargeWay())
             {
-                PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundErrorNotComparableItem());
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_ERROR_NOT_COMPARABLE_ITEM());
                 return;
             }
         }
@@ -102,7 +102,7 @@ public class ArmsfusionService
 
         ItemPacketService.UpdateItemAfterInfoChange(player, mainWeapon);
         player.GetInventory().DecreaseKinah(price);
-        PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundSuccess(mainWeapon.GetL10n(), fuseWeapon.GetL10n()));
+        PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUND_SUCCESS(mainWeapon.GetL10n(), fuseWeapon.GetL10n()));
     }
 
     private static long GetBasePricePerLevelSquared(ItemQuality rarity)
@@ -132,13 +132,13 @@ public class ArmsfusionService
 
         if (weaponToBreak == null)
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.DecompoundItemNoTargetItem());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_DECOMPOUND_ITEM_NO_TARGET_ITEM());
             return;
         }
 
         if (!weaponToBreak.HasFusionedItem())
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.DecompoundErrorNotAvailable(weaponToBreak.GetL10n()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_DECOMPOUND_ERROR_NOT_AVAILABLE(weaponToBreak.GetL10n()));
             return;
         }
 
@@ -147,6 +147,6 @@ public class ArmsfusionService
 
         ItemPacketService.UpdateItemAfterInfoChange(player, weaponToBreak);
 
-        PacketSendUtility.SendPacket(player, SmSystemMessage.CompoundedItemDecompoundSuccess(weaponToBreak.GetL10n()));
+        PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_COMPOUNDED_ITEM_DECOMPOUND_SUCCESS(weaponToBreak.GetL10n()));
     }
 }

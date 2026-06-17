@@ -144,7 +144,7 @@ public class HTMLService
 
             if (items.Count > player.GetInventory().GetFreeSlots())
             {
-                PacketSendUtility.SendPacket(player, SmSystemMessage.DiceInventoryError());
+                PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR());
                 return;
             }
             List<SurveyTemplate> templates = null;

@@ -39,8 +39,8 @@ public static class GloryPointsService
 		var packets = new List<AionServerPacket>
 		{
 			amount >= 0
-				? SmSystemMessage.GloryPointGain(added)
-				: SmSystemMessage.GloryPointLose(-added),
+				? SM_SYSTEM_MESSAGE.STR_MSG_GLORY_POINT_GAIN(added)
+				: SM_SYSTEM_MESSAGE.STR_MSG_GLORY_POINT_LOSE(-added),
 		};
 		if (added != 0)
 			packets.Add(new SmAbyssRank(updatedRank));

@@ -87,7 +87,7 @@ public class StaticDoorService
 
         if (!player.GetInventory().DecreaseByItemId(keyId, 1))
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.CannotOpenDoorNeedKeyItem());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_CANNOT_OPEN_DOOR_NEED_KEY_ITEM());
             return false;
         }
 
