@@ -183,6 +183,12 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_CONQUEROR_PROTECTOR.json")]
 	[InlineData("SM_LEGION_EDIT.json")]
 	[InlineData("SM_UPGRADE_ARCADE.json")]
+	[InlineData("SM_GM_BOOKMARK_ADD.json")]
+	[InlineData("SM_ALLIANCE_READY_CHECK.json")]
+	[InlineData("SM_BIND_POINT_INFO.json")]
+	[InlineData("SM_CHAT_INIT.json")]
+	[InlineData("SM_RECEIVE_BIDS.json")]
+	[InlineData("SM_CUSTOM_SETTINGS.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -269,6 +275,12 @@ public sealed class GoldenPacketFixtureTests
 		"SM_CONQUEROR_PROTECTOR" => new SM_CONQUEROR_PROTECTOR(inputs.GetProperty("type").GetInt32(), inputs.GetProperty("buffLvl").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
 		"SM_LEGION_EDIT" => ReconstructLegionEdit(inputs),
 		"SM_UPGRADE_ARCADE" => ReconstructUpgradeArcade(inputs),
+		"SM_GM_BOOKMARK_ADD" => new SM_GM_BOOKMARK_ADD(inputs.GetProperty("name").GetString()!, inputs.GetProperty("worldId").GetInt32(), inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle()),
+		"SM_ALLIANCE_READY_CHECK" => new SM_ALLIANCE_READY_CHECK(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("statusCode").GetInt32()),
+		"SM_BIND_POINT_INFO" => new SM_BIND_POINT_INFO(inputs.GetProperty("mapId").GetInt32(), inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle()),
+		"SM_CHAT_INIT" => new SM_CHAT_INIT(inputs.GetProperty("token").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray()),
+		"SM_RECEIVE_BIDS" => new SM_RECEIVE_BIDS(inputs.GetProperty("unk").GetInt32()),
+		"SM_CUSTOM_SETTINGS" => new SM_CUSTOM_SETTINGS(inputs.GetProperty("objectId").GetInt32(), inputs.GetProperty("unk").GetInt32(), inputs.GetProperty("display").GetInt32(), inputs.GetProperty("deny").GetInt32()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
