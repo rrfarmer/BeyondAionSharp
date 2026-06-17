@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Aion.Commons.Configuration;
 using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Configs.Network;
@@ -7,9 +8,11 @@ namespace Aion.GameServer.Configs.Network;
 public static class PffConfig
 {
     /// <summary>Key: gameserver.network.pff.mode (default 1)</summary>
+    [Property(key: "gameserver.network.pff.mode", defaultValue: "1")]
     public static int PFF_MODE = 1;
 
-    /// <summary>@Properties keyPattern ^gameserver\.network\.pff\.packet\.(0[xX][0-9a-fA-F]+)$</summary>
+    /// <summary>@Properties keyPattern ^gameserver\.network\.pff\.packet\.(0[xX][0-9a-fA-F]+)$ — map key is the hex opcode (NumberTransformer decodes 0x...).</summary>
+    [Properties(keyPattern: "^gameserver\\.network\\.pff\\.packet\\.(0[xX][0-9a-fA-F]+)$")]
     public static Dictionary<int, int> THRESHOLD_MILLIS_BY_PACKET_OPCODE;
 
     /// <returns>The allowed delay in milliseconds in which two packets of the given type may be sent from one client.</returns>

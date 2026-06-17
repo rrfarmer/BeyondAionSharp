@@ -24,6 +24,7 @@ public static class PropertyTransformers
         Register(new BooleanTransformer());
         Register(new CharTransformer());
         Register(new StringTransformer());
+        Register(new FileTransformer());
         Register(new EnumTransformer());
         Register(new ArrayTransformer());
         Register(new CollectionTransformer());

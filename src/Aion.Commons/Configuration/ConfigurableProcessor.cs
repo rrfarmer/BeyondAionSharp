@@ -15,7 +15,8 @@ namespace Aion.Commons.Configuration;
 /// C# note: Java processes static fields of classes (and walks superclasses + interfaces). The C# config holders
 /// are static classes whose members are static fields or static properties; this processor binds both. Instance
 /// processing is supported symmetrically (pass an object). The Java @Properties (key-pattern map) annotation is
-/// not yet ported — no migrated holder uses it; see Full-Parity-Backlog §C.
+/// ported via <see cref="PropertiesAttribute"/> + <see cref="Transformers.MapTransformer"/> — a member may carry
+/// [Property] XOR [Properties], exactly as Java.
 /// </para>
 /// </summary>
 public static class ConfigurableProcessor
@@ -62,10 +63,11 @@ public static class ConfigurableProcessor
             if (!isStatic && obj == null) continue;  // instance field skipped when processing a class
 
             var attr = field.GetCustomAttribute<PropertyAttribute>(inherit: true);
-            if (attr == null) continue;
+            var mapAttr = field.GetCustomAttribute<PropertiesAttribute>(inherit: true);
+            if (attr == null && mapAttr == null) continue;
             if (field.IsInitOnly)
                 throw new InvalidOperationException($"Can't process readonly field {field.Name} of class {type.FullName}");
-            BindField(field, attr, obj, props, unused);
+            BindMember(field.FieldType, v => field.SetValue(obj, v), field.Name, type, attr, mapAttr, obj, props, unused);
         }
 
         foreach (var prop in type.GetProperties(flags))
@@ -77,44 +79,69 @@ public static class ConfigurableProcessor
             if (!isStatic && obj == null) continue;
 
             var attr = prop.GetCustomAttribute<PropertyAttribute>(inherit: true);
-            if (attr == null) continue;
+            var mapAttr = prop.GetCustomAttribute<PropertiesAttribute>(inherit: true);
+            if (attr == null && mapAttr == null) continue;
             if (!prop.CanWrite)
                 throw new InvalidOperationException($"Can't process get-only property {prop.Name} of class {type.FullName}");
-            BindProperty(prop, attr, obj, props, unused);
+            BindMember(prop.PropertyType, v => prop.SetValue(obj, v), prop.Name, type, attr, mapAttr, obj, props, unused);
         }
     }
 
-    private static void BindField(FieldInfo field, PropertyAttribute attr, object? obj, JavaProperties props, ISet<string> unused)
+    /// <summary>
+    /// Java parity: processField — a member may be annotated with [Property] XOR [Properties] (not both). For
+    /// [Property], bind a single key/default (skipping the DO_NOT_OVERWRITE sentinel). For [Properties], scan all
+    /// loaded keys, filter by the key pattern (capturing-group → map key), and coerce into the map field.
+    /// </summary>
+    private static void BindMember(Type memberType, Action<object?> setter, string memberName, Type declaringType,
+        PropertyAttribute? attr, PropertiesAttribute? mapAttr, object? obj, JavaProperties props, ISet<string> unused)
     {
         try
         {
-            string value = GetValue(attr.Key, attr.DefaultValue, props, unused);
-            if (!PropertyAttribute.DEFAULT_VALUE.Equals(value))
-                field.SetValue(obj, Transform(value, field.FieldType));
+            if (attr != null)
+            {
+                if (mapAttr != null)
+                    throw new NotSupportedException("Field can only be annotated with [Property] or [Properties], not both.");
+                string value = GetValue(attr.Key, attr.DefaultValue, props, unused);
+                if (!PropertyAttribute.DEFAULT_VALUE.Equals(value))
+                    setter(Transform(value, memberType));
+            }
+            else
+            {
+                var pattern = new Regex(mapAttr!.KeyPattern);
+                IDictionary<string, string> values = FilterProperties(pattern, props, unused);
+                setter(Transformers.MapTransformer.Transform(values, memberType));
+            }
         }
         catch (Exception e)
         {
-            throw new InvalidOperationException($"Error modifying field {field.Name} of {(object?)obj ?? field.DeclaringType}", e);
-        }
-    }
-
-    private static void BindProperty(PropertyInfo prop, PropertyAttribute attr, object? obj, JavaProperties props, ISet<string> unused)
-    {
-        try
-        {
-            string value = GetValue(attr.Key, attr.DefaultValue, props, unused);
-            if (!PropertyAttribute.DEFAULT_VALUE.Equals(value))
-                prop.SetValue(obj, Transform(value, prop.PropertyType));
-        }
-        catch (Exception e)
-        {
-            throw new InvalidOperationException($"Error modifying property {prop.Name} of {(object?)obj ?? prop.DeclaringType}", e);
+            throw new InvalidOperationException($"Error modifying field {memberName} of {(object?)obj ?? declaringType}", e);
         }
     }
 
     /// <summary>Java parity: ConfigurableProcessor.transform(String, Field) — resolves the transformer by member type.</summary>
     public static object? Transform(string value, Type targetType)
         => PropertyTransformers.Get(targetType).Transform(value, targetType);
+
+    /// <summary>
+    /// Java parity: filterProperties — for every loaded key, if the pattern matches (Java <c>Matcher.find()</c>),
+    /// the map key is the first capturing group when present, otherwise the whole key; the value is resolved via
+    /// getValue (default "", placeholder substitution, unused-key tracking).
+    /// </summary>
+    private static IDictionary<string, string> FilterProperties(Regex pattern, JavaProperties props, ISet<string> unused)
+    {
+        var input = new Dictionary<string, string>();
+        foreach (var k in props.StringPropertyNames())
+        {
+            Match m = pattern.Match(k);
+            if (m.Success)
+            {
+                string key = m.Groups.Count > 1 ? m.Groups[1].Value : k;
+                string value = GetValue(k, "", props, unused);
+                input[key] = value;
+            }
+        }
+        return input;
+    }
 
     /// <summary>Java parity: getValue — default fallback, unused-key tracking, "" literal-empty, and ${...} substitution.</summary>
     private static string GetValue(string key, string defaultValue, JavaProperties props, ISet<string>? unused)

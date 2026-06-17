@@ -64,6 +64,7 @@ public static class Config
     private static readonly IReadOnlyList<Type> MigratedConfigs = new[]
     {
         typeof(AdminConfig),
+        typeof(CommandsConfig),
         typeof(AIConfig),
         typeof(AutoGroupConfig),
         typeof(CommonsConfig),
@@ -76,6 +77,7 @@ public static class Config
         typeof(GSConfig),
         typeof(GeoDataConfig),
         typeof(GroupConfig),
+        typeof(HousingConfig),
         typeof(HTMLConfig),
         typeof(InGameShopConfig),
         typeof(InstanceConfig),
@@ -87,6 +89,7 @@ public static class Config
         typeof(PlayerTransferConfig),
         typeof(PricesConfig),
         typeof(PunishmentConfig),
+        typeof(RankingConfig),
         typeof(RatesConfig),
         typeof(SecurityConfig),
         typeof(ShutdownConfig),
@@ -94,6 +97,7 @@ public static class Config
         typeof(ThreadConfig),
         typeof(WorldConfig),
         typeof(NetworkConfig),
+        typeof(PffConfig),
     };
 
     /// <summary>Java parity: loadProperties default folders (relative to the game-server working directory).</summary>
