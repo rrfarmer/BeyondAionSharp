@@ -225,8 +225,8 @@ public class NpcFactions
         if (questTemplate.GetMentorType() == Aion.GameServer.Model.Templates.Quest.QuestMentorType.MENTOR)
         {
             owner.GetCommonData().SetMentorFlagTime((int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000) + 60 * 60 * 24); // TODO 1 day
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(owner, true), false);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(true));
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(owner, true), false);
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(true));
         }
     }
 

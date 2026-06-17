@@ -80,15 +80,15 @@ public class TitleList
 
     public void SetDisplayTitle(int titleId)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(titleId));
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(owner, titleId));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(titleId));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(owner, titleId));
         owner.GetCommonData().SetTitleId(titleId);
         owner.GetController().UpdateNearbyQuests();
     }
 
     public void SetBonusTitle(int bonusTitleId)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmTitleInfo(6, bonusTitleId));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(6, bonusTitleId));
         if (owner.GetCommonData().GetBonusTitleId() > 0)
         {
             if (owner.GetGameStats() != null)

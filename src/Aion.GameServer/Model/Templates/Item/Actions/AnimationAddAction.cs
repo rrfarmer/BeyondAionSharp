@@ -56,7 +56,7 @@ public class AnimationAddAction : AbstractItemAction
                 AddMotion(player, shop.Value);
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SmItemUsageAnimation(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0));
-            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmMotion(player.GetObjectId(), player.GetMotions().GetActiveMotions()), false);
+            Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_MOTION(player.GetObjectId(), player.GetMotions().GetActiveMotions()), false);
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(1000)));
     }
@@ -66,6 +66,6 @@ public class AnimationAddAction : AbstractItemAction
         Aion.GameServer.Model.GameObjects.Players.Motion.Motion motion = new Aion.GameServer.Model.GameObjects.Players.Motion.Motion(motionId, minutes == null ? 0 : (int)(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000) + minutes.Value * 60, true);
         player.GetMotions().Add(motion, true);
         // Java parity: default interface method — C# requires an explicit IExpirable cast (foundational diff).
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SmMotion((short)motion.GetId(), ((Aion.GameServer.Model.IExpirable)motion).SecondsUntilExpiration()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_MOTION((short)motion.GetId(), ((Aion.GameServer.Model.IExpirable)motion).SecondsUntilExpiration()));
     }
 }

@@ -346,7 +346,7 @@ public class Legion : AionObject
             {
                 foreach (Aion.GameServer.Model.GameObjects.Players.Player member in members)
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmIconInfo(1, true));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SM_ICON_INFO(1, true));
                 }
             }
         }
@@ -361,7 +361,7 @@ public class Legion : AionObject
             {
                 foreach (Aion.GameServer.Model.GameObjects.Players.Player member in members)
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmIconInfo(1, false));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SM_ICON_INFO(1, false));
                 }
             }
         }

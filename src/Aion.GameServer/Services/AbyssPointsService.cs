@@ -51,7 +51,7 @@ public static class AbyssPointsService
 			packets.Add(new SmAbyssRank(updatedRank));
 
 		var rankUpdate = rankChanged
-			? SmAbyssRankUpdate.RankChange(player)
+			? new SM_ABYSS_RANK_UPDATE(0, player)
 			: null;
 		var legionContribution = CreateLegionContribution(player, added, options);
 		return new AbyssPointsAddPlan(
@@ -118,7 +118,7 @@ public sealed record AbyssPointsAddPlan(
 	int OldRank,
 	PlayerAbyssRank? UpdatedRank,
 	IReadOnlyList<AionServerPacket> PlayerPackets,
-	SmAbyssRankUpdate? RankUpdatePacket,
+	SM_ABYSS_RANK_UPDATE? RankUpdatePacket,
 	bool ShouldCheckRankLimitItems,
 	bool ShouldUpdateAbyssSkills,
 	AbyssPointsLegionContribution? LegionContribution,

@@ -68,7 +68,7 @@ public class MotionList
             motions.Remove(motionId);
         if (motion != null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmMotion((short)motionId));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_MOTION((short)motionId));
             Aion.GameServer.Dao.MotionDAO.DeleteMotion(owner.GetObjectId(), motionId);
             if (motion.IsActive())
             {
@@ -107,7 +107,7 @@ public class MotionList
             old.SetActive(false);
             Aion.GameServer.Dao.MotionDAO.UpdateMotion(owner.GetObjectId(), old);
         }
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmMotion((short)motionId, (byte)motionType));
-        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SmMotion(owner.GetObjectId(), activeMotions), true);
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_MOTION((short)motionId, (byte)motionType));
+        Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_MOTION(owner.GetObjectId(), activeMotions), true);
     }
 }

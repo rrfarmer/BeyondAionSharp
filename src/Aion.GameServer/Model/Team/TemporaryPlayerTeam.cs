@@ -94,12 +94,12 @@ public abstract class TemporaryPlayerTeam : GeneralTeam
     public void UpdateBrand(int brandId, int targetObjectId)
     {
         targetIdsByBrandId[brandId] = targetObjectId;
-        SendPackets(new Aion.GameServer.Network.Aion.ServerPackets.SmShowBrand(brandId, targetObjectId));
+        SendPackets(new Aion.GameServer.Network.Aion.ServerPackets.SM_SHOW_BRAND(brandId, targetObjectId));
     }
 
     public void SendBrands(Aion.GameServer.Model.GameObjects.Players.Player member)
     {
-        PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SmShowBrand(targetIdsByBrandId));
+        PacketSendUtility.SendPacket(member, new Aion.GameServer.Network.Aion.ServerPackets.SM_SHOW_BRAND(targetIdsByBrandId));
     }
 
     public override Race GetRace()
