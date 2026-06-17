@@ -1,4 +1,5 @@
 using System.IO;
+using Aion.Commons.Configs;
 using Aion.Commons.Configuration;
 
 namespace Aion.Commons.Tests;
@@ -255,11 +256,66 @@ database.user=admin
 		var options = DatabaseOptions.LoadFromJavaConfig(AppContext.BaseDirectory);
 
 		Assert.Equal("localhost", options.Server);
-		Assert.Equal(3306, options.Port);
+		// Faithful to disk: login-server/config/network/database.properties defaults to port 3306, but the
+		// highest-precedence per-instance override (login-server/config/myls.properties) points database.url at
+		// localhost:3307. The cascade applies the my* file last, exactly as Java's PropertiesUtils does, so the
+		// loaded value is 3307 — the faithful result of the checked-in .properties, not the network/ default.
+		Assert.Equal(3307, options.Port);
 		Assert.Equal("aion_ls", options.Database);
 		Assert.Equal("root", options.UserId);
 		Assert.Equal(5, options.MaxPoolSize);
 		Assert.Equal(5000, options.ConnectionTimeout);
 		Assert.False(string.IsNullOrEmpty(options.Password));
+	}
+
+	/// <summary>
+	/// Override-proof: the faithful commons DatabaseConfig holder ([Property] keys copied verbatim from Java) is
+	/// bound by ConfigurableProcessor over a JavaProperties cascade — a per-instance override (my*.properties, loaded
+	/// last) must win over the network/ default, exactly as Java's PropertiesUtils precedence dictates.
+	/// </summary>
+	[Fact]
+	public void DatabaseConfig_PropertyHolder_BindsPerInstanceOverride()
+	{
+		var networkDir = Path.Combine(_testDir, "network");
+		Directory.CreateDirectory(networkDir);
+		File.WriteAllText(
+			Path.Combine(networkDir, "database.properties"),
+			"database.url = jdbc:mysql://localhost:3306/aion_ls?characterEncoding=UTF-8\n" +
+			"database.user = root\n" +
+			"database.password = secret\n" +
+			"database.connectionpool.connections.max = 5\n" +
+			"database.connectionpool.timeout = 5000\n");
+
+		var myFile = Path.Combine(_testDir, "myls.properties");
+		File.WriteAllText(
+			myFile,
+			"database.url = jdbc:mysql://localhost:3307/aion_ls?characterEncoding=UTF-8\n" +
+			"database.connectionpool.connections.max = 9\n");
+
+		// Cascade: network/ defaults first, then my* override last (Java PropertiesUtils precedence).
+		var props = new JavaProperties();
+		props.LoadFromDirectory(networkDir, recursive: false);
+		props.LoadFromFile(myFile);
+
+		try
+		{
+			ConfigurableProcessor.Process(props, typeof(DatabaseConfig));
+
+			// Override wins for url (3307) and max-connections (9); non-overridden keys keep the network/ value.
+			Assert.Equal("jdbc:mysql://localhost:3307/aion_ls?characterEncoding=UTF-8", DatabaseConfig.DATABASE_URL);
+			Assert.Equal("root", DatabaseConfig.DATABASE_USER);
+			Assert.Equal("secret", DatabaseConfig.DATABASE_PASSWORD);
+			Assert.Equal(9, DatabaseConfig.DATABASE_CONNECTIONS_MAX);
+			Assert.Equal(5000, DatabaseConfig.DATABASE_TIMEOUT);
+		}
+		finally
+		{
+			// Static holder — reset so the test leaves no cross-test residue.
+			DatabaseConfig.DATABASE_URL = null;
+			DatabaseConfig.DATABASE_USER = null;
+			DatabaseConfig.DATABASE_PASSWORD = null;
+			DatabaseConfig.DATABASE_CONNECTIONS_MAX = 0;
+			DatabaseConfig.DATABASE_TIMEOUT = 0;
+		}
 	}
 }
