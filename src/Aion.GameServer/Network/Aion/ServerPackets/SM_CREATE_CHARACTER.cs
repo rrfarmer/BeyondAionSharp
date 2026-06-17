@@ -50,6 +50,9 @@ public class SM_CREATE_CHARACTER : AbstractPlayerInfoPacket
         this.responseCode = responseCode;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../SM_CREATE_CHARACTER.java): 2026-06-17
+    // Non-OK branch (writeD(responseCode) + return) golden'd byte-exact (batch 23). OK branch delegates to
+    // writePlayerInfo (AbstractPlayerInfoPacket, validated separately on the live PlayerAccountData graph).
     protected override void WriteImpl(AionConnection con)
     {
         WriteD(responseCode);

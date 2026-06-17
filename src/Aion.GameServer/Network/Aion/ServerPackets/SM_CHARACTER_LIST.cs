@@ -19,6 +19,8 @@ public class SM_CHARACTER_LIST : AbstractPlayerInfoPacket
         this.playOk2 = playOk2;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../SM_CHARACTER_LIST.java): 2026-06-17
+    // con.getAccount() (live) + account.size() + per-char writePlayerInfo (AbstractPlayerInfoPacket, validated separately) -> TIER 2 audit.
     protected override void WriteImpl(AionConnection con)
     {
         Account account = con.GetAccount();

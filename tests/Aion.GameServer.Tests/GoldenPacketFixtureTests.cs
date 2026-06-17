@@ -147,6 +147,10 @@ public sealed class GoldenPacketFixtureTests
 	[InlineData("SM_GATHER_UPDATE.json")]
 	// ----- Batch 20: con-null-safe DTO/scalar packet (PlayerScript record; no con, no live graph) -----
 	[InlineData("SM_HOUSE_SCRIPTS.json")]
+	// ----- Batch 23: login/account-flow deterministic packets (con never read on the captured branch) -----
+	[InlineData("SM_LOGIN_QUEUE.json")]
+	[InlineData("SM_SYSTEM_MESSAGE.json")]
+	[InlineData("SM_CREATE_CHARACTER.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -285,8 +289,27 @@ public sealed class GoldenPacketFixtureTests
 		"SM_NPC_ASSEMBLER" => ReconstructNpcAssembler(inputs),
 		"SM_GATHER_UPDATE" => ReconstructGatherUpdate(inputs),
 		"SM_HOUSE_SCRIPTS" => new SM_HOUSE_SCRIPTS(inputs.GetProperty("houseAddress").GetInt32(), ReconstructPlayerScripts(inputs.GetProperty("scripts"))),
+		"SM_LOGIN_QUEUE" => ReconstructLoginQueue(inputs),
+		"SM_SYSTEM_MESSAGE" => ReconstructSystemMessage(inputs),
+		"SM_CREATE_CHARACTER" => new SM_CREATE_CHARACTER(null!, inputs.GetProperty("responseCode").GetInt32()),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
+
+	// SM_LOGIN_QUEUE: private no-arg ctor pins fixed scalars (5/60/50) — instantiate via non-public reflection.
+	private static SM_LOGIN_QUEUE ReconstructLoginQueue(JsonElement inputs)
+		=> (SM_LOGIN_QUEUE)System.Activator.CreateInstance(typeof(SM_LOGIN_QUEUE), nonPublic: true)!;
+
+	// SM_SYSTEM_MESSAGE(int msgId, params object[]): GOLDEN_YELLOW chat type, null sender. Params are int ({"i"}) or string ({"s"}).
+	private static SM_SYSTEM_MESSAGE ReconstructSystemMessage(JsonElement inputs)
+	{
+		var prms = new List<object>();
+		foreach (var p in inputs.GetProperty("params").EnumerateArray())
+		{
+			if (p.TryGetProperty("i", out var iv)) prms.Add(iv.GetInt32());
+			else prms.Add(p.GetProperty("s").GetString()!);
+		}
+		return new SM_SYSTEM_MESSAGE(inputs.GetProperty("msgId").GetInt32(), prms.ToArray());
+	}
 
 	// ----- Batch 10 reconstruct helpers -----
 

@@ -50,6 +50,9 @@ public class SM_L2AUTH_LOGIN_CHECK : AionServerPacket
         this.accountName = accountName;
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/.../SM_L2AUTH_LOGIN_CHECK.java): 2026-06-17
+    // writeD(ok?0:1) + writeB(standardData hex-literal, byte-identical) + writeH(DataManager.WORLD_MAPS_DATA.size()) live
+    // holder iteration (per-map writeD(mapId) + writeH(isInstance?0:twinCount)) + writeS(accountName) -> TIER 2 audit.
     protected override void WriteImpl(AionConnection con)
     {
         WriteD(ok ? 0x00 : 0x01);

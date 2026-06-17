@@ -24660,6 +24660,10 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
         this.specialParams = specialParams;
     }
 
+    // Java parity (writeImpl golden'd byte-exact vs game-server/.../SM_SYSTEM_MESSAGE.java): 2026-06-17 batch 23
+    // Wire-format path validated: (int,Object...) ctor -> GOLDEN_YELLOW(25) + null sender(0); writeC(chatType) writeC(0)
+    // writeD(senderObjId) writeD(msgId) writeC(params.length) per-param writeS(param.ToString()) writeC(specialParams.length)
+    // per writeS. Integer.toString == int.ToString. The 28k-line msgId catalog is DATA (verified path, not every entry).
     protected override void WriteImpl(AionConnection con)
     {
         WriteC(chatType);

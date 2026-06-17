@@ -16,6 +16,7 @@ public class SM_LOGIN_QUEUE : AionServerPacket
         this.waitingCount = 50;
     }
 
+    // Java parity (writeImpl golden'd byte-exact vs game-server/.../SM_LOGIN_QUEUE.java): 2026-06-17 batch 23
     protected override void WriteImpl(AionConnection con)
     {
         WriteD(waitingPosition);
