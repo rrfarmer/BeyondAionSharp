@@ -13,7 +13,11 @@ public class EventData
 {
     // Java parity: @XmlElement(name="event") List<EventTemplate> events (private field under
     // @XmlAccessorType(FIELD)). XmlSerializer only binds public members, so expose it publicly.
-    [XmlElement("event")] public List<EventTemplate> events { get; set; }
+    // = new() so GetEvents() is empty-but-non-null when the timed_events XML is absent (e.g. the minimal
+    // bootstrap-test fixture); EventService.CollectActiveEvents/ValidateConfiguredEventNames iterate it without
+    // a null guard. Matches the established BaseData.baseTemplates / HouseData.lands convention (XmlSerializer
+    // adds to the existing list; stays empty when the element is absent).
+    [XmlElement("event")] public List<EventTemplate> events { get; set; } = new();
 
     public void AfterUnmarshal(object parent)
     {

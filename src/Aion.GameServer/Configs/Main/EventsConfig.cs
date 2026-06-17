@@ -5,8 +5,12 @@ namespace Aion.GameServer.Configs.Main;
 /// <summary>Java parity: configs/main/EventsConfig. Set&lt;String&gt;→ISet&lt;string&gt;, Set&lt;Integer&gt;→ISet&lt;int&gt;.</summary>
 public static class EventsConfig
 {
-    /// <summary>Property key: gameserver.event.service.disabled_events</summary>
-    public static ISet<string> DISABLED_EVENTS;
+    /// <summary>Property key: gameserver.event.service.disabled_events. Java @Property has NO defaultValue but
+    /// config/main/events.properties sets it to an EMPTY value, and the CommaSeparatedValueTransformer turns an
+    /// empty string into an EMPTY set (not null). Initialized to an empty set so EventService.IsAllEvents/
+    /// CollectActiveEvents (which call .Count / .Contains) don't NRE on null. No invented value (empty == the
+    /// shipped properties value).</summary>
+    public static ISet<string> DISABLED_EVENTS = new HashSet<string>();
 
     /// <summary>Property key: gameserver.event.arcade.enable</summary>
     public static bool ENABLE_EVENT_ARCADE = false;

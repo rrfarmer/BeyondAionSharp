@@ -236,6 +236,65 @@ public sealed class GameServerBootstrapService : IHostedService
 		// RoadService: spawns every roads/ template into each available instance of its world map.
 		Aion.GameServer.Services.RoadService.GetInstance();
 
+		// Java parity: GameServer.main trailing feature services (lines 163-177), after RoadService.
+
+		// HTMLCache.getInstance() (GameServer.main:163): DEFERRED. Its ctor Reload(false) falls through to
+		// ParseDir(HTMLConfig.HTML_ROOT = "./data/static_data/HTML/") when no html.cache file exists, and
+		// Directory.GetFileSystemEntries throws DirectoryNotFoundException for the missing dir (Java's
+		// dir.listFiles(HTML_FILTER) returns null there => Java NPEs too; the real server always ships the HTML
+		// tree). The GameServerBootstrapTests fixture writes only an items-only static_data dir (no HTML/ subtree
+		// and no cache file), so wiring HTMLCache breaks the gate. Test-fixture data gap, NOT a port defect — wire
+		// once the bootstrap fixture seeds an HTML dir (or a prebuilt html.cache). Do NOT add an un-faithful guard.
+		// Aion.GameServer.Cache.HTMLCache.GetInstance();
+
+		// AbyssRankingCache.getInstance() (GameServer.main:164): ctor RefreshCache() loads ranking players/legions
+		// via AbyssRankDAO (DB.Select try/catch-guarded => empty no-DB) and builds per-race window packets from
+		// empty lists. Dep-clean.
+		Aion.GameServer.Services.Abyss.AbyssRankingCache.GetInstance();
+
+		// AbyssRankUpdateService.scheduleUpdate() (GameServer.main:165): schedules the rank-update + daily-GP-loss
+		// crons. RankingConfig.TOP_RANKING_UPDATE_RULE / TOP_RANKING_DAILY_GP_LOSS_TIME are now initialized from the
+		// Java @Property defaultValue cron strings ("0 0 0 ? * *" / "0 0 12 ? * *") via CronExpressions.GetOrCreate,
+		// so CronService.Schedule no longer receives a null CronExpression (the CronJobService null-cron failure mode).
+		Aion.GameServer.Services.Abyss.AbyssRankUpdateService.ScheduleUpdate();
+
+		// PeriodicInstanceManager.getInstance() (GameServer.main:166): DEFERRED. Its ctor (guarded by
+		// AutoGroupConfig.AUTO_GROUP_ENABLE, default true) calls ScheduleRegistration, whose log line invokes
+		// AutoGroupTypeExtensions.GetAGTByMaskId -> AutoGroupType.GetTemplate() -> data[self].Template. That
+		// per-type AutoGroup template comes from AUTO_GROUP_DATA, which the bootstrap fixture does NOT load (empty),
+		// so GetTemplate() NREs/KeyNotFounds. (The null-CronExpression[] hazard IS fixed — AutoGroupConfig.*_TIMES
+		// are now populated from the Java @Property defaults — but the AutoGroup template dependency remains a
+		// fixture-data gap.) Faithful against real AUTO_GROUP_DATA; wire once the bootstrap fixture seeds it.
+		// Aion.GameServer.Services.Instance.PeriodicInstanceManager.GetInstance();
+
+		// EventService.getInstance().start() (GameServer.main:167): validates configured event names + collects
+		// active events from EVENT_DATA (now empty-but-non-null via EventData.events = new(); EventsConfig.DISABLED_EVENTS
+		// now an empty set per the shipped events.properties) and schedules the 5-min check cron ("0 0/5 * ? * *").
+		Aion.GameServer.Services.Event.EventService.GetInstance().Start();
+
+		// AdminService.getInstance() (GameServer.main:169): ctor Reload() reads config/administration/item.restriction.txt
+		// inside a try/catch(IOException) (missing file => logged, empty list). Dep-clean.
+		Aion.GameServer.Services.AdminService.GetInstance();
+
+		// CommandsAccessService.loadAccesses() (GameServer.main:170): loads command ACLs via CommandsAccessDAO
+		// (DB.Select try/catch-guarded => empty no-DB). Static method, faithful boot wire.
+		Aion.GameServer.Services.CommandsAccessService.LoadAccesses();
+
+		// PlayerTransferService.getInstance() (GameServer.main:172): ctor parses PlayerTransferConfig.REMOVE_SKILL_LIST
+		// (default "*" => skip, no parsing). Dep-clean.
+		Aion.GameServer.Services.Transfers.PlayerTransferService.GetInstance();
+
+		// PvpMapService.getInstance().init() (GameServer.main:176): DEFERRED. Init() calls (unconditionally, not
+		// config-gated) InstanceService.GetNextAvailableInstance(301220000, ...) which needs world map 301220000 to
+		// exist; the bootstrap fixture loads EMPTY WORLD_MAPS_DATA, so there is no such map and the instance lookup
+		// has no WorldMap to register into (NRE risk). Test-fixture data gap — wire once the bootstrap fixture
+		// carries the pvp-map world (or guard the lookup faithfully upstream).
+		// Aion.GameServer.Custom.Pvpmap.PvpMapService.GetInstance().Init();
+
+		// CustomInstanceService.getInstance() (GameServer.main:177): empty ctor; the LEADERBOARD_WINDOW_OBJECT_ID
+		// static field calls IDFactory.GetInstance().NextId() (IDFactory is live at this boot point). Dep-clean.
+		Aion.GameServer.Custom.Instance.CustomInstanceService.GetInstance();
+
 		_world.Initialize();
 		_gameTimeService.StartClock();
 
