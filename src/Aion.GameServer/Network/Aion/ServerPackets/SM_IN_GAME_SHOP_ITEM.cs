@@ -5,6 +5,7 @@ using Aion.GameServer.Network.Aion;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_IN_GAME_SHOP_ITEM (xTz, KID). In-game shop item detail (price/itemId/count/gift/type/descriptions). IGItem/InGameShopEn red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_IN_GAME_SHOP_ITEM.java): 2026-06-17
 public class SM_IN_GAME_SHOP_ITEM : AionServerPacket
 {
     private IGItem item;

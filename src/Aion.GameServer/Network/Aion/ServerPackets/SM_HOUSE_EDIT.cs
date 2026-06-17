@@ -9,6 +9,7 @@ using Aion.GameServer.Model.Templates.Housing;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_EDIT (Rolandas). House decorate edit (add 3 / remove 4 / spawn-move 5 / despawn 7). HouseObject&lt;?&gt; erased to HouseObject&lt;PlaceableHouseObject&gt;; instanceof UseableItemObject->is+cast; getBuf()->GetBuf(); LoggerFactory->NullLogger. HouseObject/UseableItemObject/HouseDecoration red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_HOUSE_EDIT.java): 2026-06-17
 public class SM_HOUSE_EDIT : AionServerPacket
 {
     private int action;

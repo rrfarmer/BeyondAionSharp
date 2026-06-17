@@ -7,6 +7,7 @@ using Aion.GameServer.Model.Templates.Housing;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_OBJECT (Rolandas). Spawns a single placed house object (template/pos/rotation/cooldown/expiration + type-specific use/npc data). HouseObject&lt;?&gt; erased to HouseObject&lt;PlaceableHouseObject&gt;; (UseableItemObject)/(NpcObject) casts; getBuf()->GetBuf(). HouseObject/NpcObject/UseableItemObject red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_HOUSE_OBJECT.java): 2026-06-17
 public class SM_HOUSE_OBJECT : AionServerPacket
 {
     private HouseObject houseObject;

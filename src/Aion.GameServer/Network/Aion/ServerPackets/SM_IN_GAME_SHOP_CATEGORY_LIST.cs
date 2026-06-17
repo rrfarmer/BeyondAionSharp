@@ -6,6 +6,7 @@ using Aion.GameServer.Network.Aion;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_IN_GAME_SHOP_CATEGORY_LIST (xTz). In-game shop categories (type 0) or a category's sub-categories (type 2). List.get->indexer. InGameShopProperty/InGameShopEn/IGCategory red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_IN_GAME_SHOP_CATEGORY_LIST.java): 2026-06-17
 public class SM_IN_GAME_SHOP_CATEGORY_LIST : AionServerPacket
 {
     private int type;

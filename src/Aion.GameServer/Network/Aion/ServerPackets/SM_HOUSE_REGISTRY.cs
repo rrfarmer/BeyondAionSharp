@@ -8,6 +8,7 @@ using Aion.GameServer.Model.Templates.Housing;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_REGISTRY (Rolandas). Lists not-spawned house objects (action 1) or default+unused decorations (action 2). HouseObject&lt;?&gt; erased to HouseObject&lt;PlaceableHouseObject&gt;; instanceof UseableItemObject->is+cast; getBuf()->GetBuf(). HouseRegistry/HouseObject/HouseDecoration red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_HOUSE_REGISTRY.java): 2026-06-17
 public class SM_HOUSE_REGISTRY : AionServerPacket
 {
     private readonly int action;

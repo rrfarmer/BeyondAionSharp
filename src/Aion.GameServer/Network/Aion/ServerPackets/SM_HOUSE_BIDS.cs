@@ -9,6 +9,7 @@ using Aion.GameServer.Taskmanager.Tasks.Housing;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_BIDS (Rolandas, Neon). Paged house auction bid list. Function&lt;HouseBids,Integer&gt;->Func&lt;HouseBids,int&gt;; HouseBids.Bid nested. HouseBids/HousingBidService/HousingService/AuctionEndTask red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_HOUSE_BIDS.java): 2026-06-17
 public class SM_HOUSE_BIDS : AionServerPacket
 {
     public const int STATIC_BODY_SIZE = 28;
