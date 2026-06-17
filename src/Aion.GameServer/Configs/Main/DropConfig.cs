@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Aion.Commons.Configuration;
 using Aion.GameServer.Model.Templates.Items;
 
 namespace Aion.GameServer.Configs.Main;
@@ -7,8 +8,10 @@ namespace Aion.GameServer.Configs.Main;
 public static class DropConfig
 {
     /// <summary>Property key: gameserver.drop.announce_quality</summary>
+    [Property(key: "gameserver.drop.announce_quality")]
     public static ItemQuality? MIN_ANNOUNCE_QUALITY;
 
     /// <summary>Property key: gameserver.drop.disable_range_check_maps</summary>
+    [Property(key: "gameserver.drop.disable_range_check_maps")]
     public static ISet<int> DISABLE_RANGE_CHECK_MAPS;
 }

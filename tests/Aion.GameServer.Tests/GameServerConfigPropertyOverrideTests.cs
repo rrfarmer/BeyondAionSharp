@@ -355,6 +355,90 @@ public sealed class GameServerConfigPropertyOverrideTests
             typeof(MembershipConfig), typeof(NameConfig), typeof(PeriodicSaveConfig));
     }
 
+    [Fact]
+    public void RealPropertiesFile_BindsNewlyMigratedHolders_BatchC3_IncludingCron()
+    {
+        var repoRoot = FindRepoRoot(AppContext.BaseDirectory);
+        if (repoRoot is null)
+            return; // data-less checkout: the real config tree is not present.
+        var configMain = Path.Combine(repoRoot, "game-server", "config", "main");
+        if (!File.Exists(Path.Combine(configMain, "custom.properties")))
+            return;
+
+        // The Cron transformer lives in game-server (it depends on Quartz CronExpression). Config's static ctor
+        // registers it; touch Config so the transformer is registered before processing CronExpression holders.
+        Services.Cron.CronExpressionTransformer.EnsureRegistered();
+
+        try
+        {
+            var props = new JavaProperties();
+            props.LoadFromDirectory(configMain, false);
+
+            ConfigurableProcessor.Process(props, typeof(AutoGroupConfig), typeof(CustomConfig),
+                typeof(DropConfig), typeof(EventsConfig), typeof(SiegeConfig), typeof(ShutdownConfig));
+
+            // Scalar overrides flow from the real shipped files.
+            Assert.Equal(2, CustomConfig.VORTEX_DURATION);                // custom.properties = 2 (vs [Property] default 1)
+            Assert.True(SiegeConfig.BALAUR_AUTO_ASSAULT);                 // siege.properties = true (vs default false)
+            // Enum (nullable) override: drop.properties announce_quality = MYTHIC.
+            Assert.Equal(Model.Templates.Items.ItemQuality.MYTHIC, DropConfig.MIN_ANNOUNCE_QUALITY);
+            // Set<int> present-but-empty -> empty HashSet (never null).
+            Assert.NotNull(DropConfig.DISABLE_RANGE_CHECK_MAPS);
+            Assert.Empty(DropConfig.DISABLE_RANGE_CHECK_MAPS);
+            Assert.Empty(EventsConfig.DISABLED_EVENTS);
+
+            // Cron transformer parity (REAL Quartz CronExpression): the shipped vortex schedules compile.
+            Assert.NotNull(CustomConfig.VORTEX_BRUSTHONIN_SCHEDULE);
+            Assert.Equal("0 0 16 ? * SAT", CustomConfig.VORTEX_BRUSTHONIN_SCHEDULE.CronExpressionString);
+            Assert.NotNull(SiegeConfig.MOLTENUS_SPAWN_SCHEDULE);
+            Assert.Equal("0 0 22 ? * SUN", SiegeConfig.MOLTENUS_SPAWN_SCHEDULE.CronExpressionString);
+            // CronExpression[] (ArrayTransformer -> per-element CronExpressionTransformer): quoted single-cron default.
+            Assert.Single(AutoGroupConfig.DREDGION_TIMES);
+            Assert.Equal("0 0 0,12,20 ? * *", AutoGroupConfig.DREDGION_TIMES[0].CronExpressionString);
+            // shutdown.properties restart_schedule is present-but-empty -> null (Java: value.isEmpty() ? null).
+            Assert.Null(ShutdownConfig.RESTART_SCHEDULE);
+        }
+        finally
+        {
+            RestoreBatchC3Defaults();
+        }
+    }
+
+    [Fact]
+    public void ExplicitOverride_BindsCron_AndScalars_BatchC3()
+    {
+        Services.Cron.CronExpressionTransformer.EnsureRegistered();
+        try
+        {
+            var props = new JavaProperties();
+            // Override a Cron field to a value that differs from the [Property] default and prove it flows through.
+            props.SetProperty("gameserver.shutdown.restart_schedule", "0 0 6 ? * *");
+            props.SetProperty("gameserver.vortex.duration", "9");
+            props.SetProperty("gameserver.cp.worlds", "111, 222, 333");
+            props.SetProperty("gameserver.drop.announce_quality", "LEGEND");
+
+            ConfigurableProcessor.Process(props, typeof(CustomConfig), typeof(DropConfig), typeof(ShutdownConfig));
+
+            Assert.NotNull(ShutdownConfig.RESTART_SCHEDULE);
+            Assert.Equal("0 0 6 ? * *", ShutdownConfig.RESTART_SCHEDULE.CronExpressionString);
+            Assert.Equal(9, CustomConfig.VORTEX_DURATION);
+            Assert.Equal(new HashSet<int> { 111, 222, 333 }, CustomConfig.CONQUEROR_AND_PROTECTOR_WORLDS);
+            Assert.Equal(Model.Templates.Items.ItemQuality.LEGEND, DropConfig.MIN_ANNOUNCE_QUALITY);
+        }
+        finally
+        {
+            RestoreBatchC3Defaults();
+        }
+    }
+
+    /// <summary>Restore the batch-C3 holders to their annotated [Property] defaults (empty properties).</summary>
+    private static void RestoreBatchC3Defaults()
+    {
+        Services.Cron.CronExpressionTransformer.EnsureRegistered();
+        ConfigurableProcessor.Process(new JavaProperties(), typeof(AutoGroupConfig), typeof(CustomConfig),
+            typeof(DropConfig), typeof(EventsConfig), typeof(SiegeConfig), typeof(ShutdownConfig));
+    }
+
     private static string? FindRepoRoot(string startDirectory)
     {
         var directory = new DirectoryInfo(startDirectory);

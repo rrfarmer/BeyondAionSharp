@@ -30,6 +30,17 @@ public static class Config
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(Config));
 
     /// <summary>
+    /// Java parity: GameServer.main registers the CronExpressionTransformer into PropertyTransformers before any
+    /// config is processed (it lives in game-server because it depends on the Quartz CronExpression type). The C#
+    /// port registers it from this static ctor so every Config.Load/LoadFrom — and the bootstrap path — binds the
+    /// CronExpression(/[]) holder fields (AutoGroup/Custom/Shutdown/Siege/Ranking/Housing) for real.
+    /// </summary>
+    static Config()
+    {
+        Aion.GameServer.Services.Cron.CronExpressionTransformer.EnsureRegistered();
+    }
+
+    /// <summary>
     /// Java parity: Config.CONFIGS — the full allowed-config list (declaration order). Used to validate allowedConfigs
     /// passed to <see cref="Load"/>, exactly as Java does. ConfigurableProcessor only reflects over the
     /// <see cref="MigratedConfigs"/> intersection; the others keep their field-initializer defaults until migrated.
@@ -54,9 +65,13 @@ public static class Config
     {
         typeof(AdminConfig),
         typeof(AIConfig),
+        typeof(AutoGroupConfig),
         typeof(CommonsConfig),
         typeof(CleaningConfig),
         typeof(CraftConfig),
+        typeof(CustomConfig),
+        typeof(DropConfig),
+        typeof(EventsConfig),
         typeof(FallDamageConfig),
         typeof(GSConfig),
         typeof(GeoDataConfig),
@@ -74,6 +89,8 @@ public static class Config
         typeof(PunishmentConfig),
         typeof(RatesConfig),
         typeof(SecurityConfig),
+        typeof(ShutdownConfig),
+        typeof(SiegeConfig),
         typeof(ThreadConfig),
         typeof(WorldConfig),
         typeof(NetworkConfig),
