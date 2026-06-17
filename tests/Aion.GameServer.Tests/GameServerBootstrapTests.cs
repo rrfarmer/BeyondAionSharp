@@ -337,6 +337,21 @@ public sealed class GameServerBootstrapTests
 				// AUTO_GROUP_DATA: unblocks PeriodicInstanceManager (its ctor's GetAGTByMaskId iterates every
 				// AutoGroupType, each GetTemplate() reads DataManager.AUTO_GROUP — empty => null template => NRE).
 				CopyRealFile(realStaticData, dataDirectory.FullName, System.IO.Path.Combine("auto_group", "auto_group.xml"));
+
+				// HTMLCache: its ctor Reload(false) falls through to ParseDir(HTMLConfig.HTML_ROOT) when no
+				// html.cache exists, and Directory.GetFileSystemEntries throws DirectoryNotFoundException on a
+				// missing dir. Point HTML_ROOT at a temp copy of the REAL game-server HTML tree (verbatim .xhtml
+				// files) and HTML_CACHE_FILE at a fresh temp path (no stale cache => ParseDir runs over the real
+				// files). HTMLConfig fields are process-global statics; set before the StartAsync wire constructs
+				// the singleton. Idempotent across fixture instances (same real source).
+				var realHtmlDir = System.IO.Path.Combine(realStaticData, "HTML");
+				if (Directory.Exists(realHtmlDir))
+				{
+					var fixtureHtmlDir = System.IO.Path.Combine(dataDirectory.FullName, "HTML");
+					CopyDirectory(realHtmlDir, fixtureHtmlDir);
+					Aion.GameServer.Configs.Main.HTMLConfig.HTML_ROOT = fixtureHtmlDir + System.IO.Path.DirectorySeparatorChar;
+					Aion.GameServer.Configs.Main.HTMLConfig.HTML_CACHE_FILE = System.IO.Path.Combine(path, "cache", "html.cache");
+				}
 			}
 
 			return new StaticDataFixture(path);
@@ -366,6 +381,15 @@ public sealed class GameServerBootstrapTests
 			if (!string.IsNullOrEmpty(destinationDir))
 				Directory.CreateDirectory(destinationDir);
 			File.Copy(source, destination, overwrite: true);
+		}
+
+		private static void CopyDirectory(string sourceDir, string destinationDir)
+		{
+			Directory.CreateDirectory(destinationDir);
+			foreach (var file in Directory.GetFiles(sourceDir))
+				File.Copy(file, System.IO.Path.Combine(destinationDir, System.IO.Path.GetFileName(file)), overwrite: true);
+			foreach (var subDir in Directory.GetDirectories(sourceDir))
+				CopyDirectory(subDir, System.IO.Path.Combine(destinationDir, System.IO.Path.GetFileName(subDir)));
 		}
 
 		public async Task<DataManager> LoadAsync(CancellationToken cancellationToken = default)

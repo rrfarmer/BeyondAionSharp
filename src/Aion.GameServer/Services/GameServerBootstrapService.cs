@@ -277,14 +277,13 @@ public sealed class GameServerBootstrapService : IHostedService
 
 		// Java parity: GameServer.main trailing feature services (lines 163-177), after RoadService.
 
-		// HTMLCache.getInstance() (GameServer.main:163): DEFERRED. Its ctor Reload(false) falls through to
-		// ParseDir(HTMLConfig.HTML_ROOT = "./data/static_data/HTML/") when no html.cache file exists, and
-		// Directory.GetFileSystemEntries throws DirectoryNotFoundException for the missing dir (Java's
-		// dir.listFiles(HTML_FILTER) returns null there => Java NPEs too; the real server always ships the HTML
-		// tree). The GameServerBootstrapTests fixture writes only an items-only static_data dir (no HTML/ subtree
-		// and no cache file), so wiring HTMLCache breaks the gate. Test-fixture data gap, NOT a port defect — wire
-		// once the bootstrap fixture seeds an HTML dir (or a prebuilt html.cache). Do NOT add an un-faithful guard.
-		// Aion.GameServer.Cache.HTMLCache.GetInstance();
+		// HTMLCache.getInstance() (GameServer.main:163): ctor Reload(false) falls through to
+		// ParseDir(HTMLConfig.HTML_ROOT) when no html.cache file exists, caching every *.xhtml under the HTML
+		// tree (Java parity: dir.listFiles(HTML_FILTER) recursive). The bootstrap fixture now points
+		// HTMLConfig.HTML_ROOT at a temp copy of the real game-server HTML tree (and HTML_CACHE_FILE at a fresh
+		// temp path), so ParseDir reads the real .xhtml files instead of throwing DirectoryNotFoundException.
+		// Production reads the shipped ./data/static_data/HTML/. Dep-clean against the seeded HTML dir.
+		Aion.GameServer.Cache.HTMLCache.GetInstance();
 
 		// AbyssRankingCache.getInstance() (GameServer.main:164): ctor RefreshCache() loads ranking players/legions
 		// via AbyssRankDAO (DB.Select try/catch-guarded => empty no-DB) and builds per-race window packets from
