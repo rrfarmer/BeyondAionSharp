@@ -22,6 +22,12 @@ public class SM_GM_SHOW_PLAYER_STATUS : AionServerPacket
         this.pls = player.GetLifeStats();
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_GM_SHOW_PLAYER_STATUS.java): 2026-06-17.
+    // TIER-2 audit (reads a full live PlayerGameStats/LifeStats/CommonData + inventory graph; not unit-golden'able).
+    // Confirmed identical field set/order/encoding line-for-line: writeS name, 12x writeQ(0), writeD(0), writeC(0), the full
+    // current-stat block (writeH/writeD/writeF, same StatEnum lookups + CalculationType.DISPLAY + /1000f conversions),
+    // inventory getLimit()/size(), playerClass classId, repose/salvation writeQ, the 4.3/4.8 unk constants, then the full
+    // base-stat block. Only mechanical getCurrent()/getBase()/size()->PascalCase renames; constants (21592, 0/1 unks) match.
     protected override void WriteImpl(AionConnection con)
     {
         WriteS(player.GetName());

@@ -22,6 +22,10 @@ public class SM_GROUP_INFO : AionServerPacket
         type = group.GetTeamType();
     }
 
+    // Java parity (writeImpl audited 1:1 vs game-server/src/com/aionemu/gameserver/network/aion/serverpackets/SM_GROUP_INFO.java): 2026-06-17.
+    // TIER-2 audit (reads con.getActivePlayer + live PlayerGroup; not unit-golden'able). Identical field set/order/encoding
+    // (writeD groupId/leaderId/mapId, loot-rule writeD x8, writeD 0x02, writeC 0x00, writeD type/subType, writeD 0 msgId, writeS "");
+    // getType()->GetType_() is the only (Object.GetType collision) rename.
     protected override void WriteImpl(AionConnection con)
     {
         Player player = con.GetActivePlayer();
