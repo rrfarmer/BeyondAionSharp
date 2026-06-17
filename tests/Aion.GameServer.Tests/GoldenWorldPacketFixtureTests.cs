@@ -746,6 +746,118 @@ public sealed class GoldenWorldPacketFixtureTests
         return item;
     }
 
+    // ---- equippable item / ItemInfoBlob seam: more sub-object blob entries (CONDITIONING_INFO / COMPOSITE_ITEM / POLISH_INFO) ----
+
+    // SM_INVENTORY_ADD_ITEM_SUBOBJECT2: the three remaining BOUNDED sub-object blob entries on a 1H-sword base. Distinct
+    // objectIds so they never clobber the weapon/armor/accessory/shield/wing/plume/manastone/godstone fixtures. Mirror the
+    // Java EQ_COND_*/EQ_COMP_*/EQ_POLISH_* constants.
+    private const int EqCondObjectId = 268700301;
+    private const int EqCompObjectId = 268700302;
+    private const int EqPolishObjectId = 268700303;
+    private const int EqSubObj2TemplateId = 100000855; // same 1H sword template id as the weapon seam
+    private const int EqSubObj2Mask = 0x2C4D;
+    private const int EqSubObj2DescL10n = 350456;
+    private const int EqCompFusionedTemplateId = 100000999;
+
+    /// <summary>
+    /// Reuses the equippable-weapon seam (1H SWORD base -> SLOTS_WEAPON, already byte-validated) and POPULATES the three
+    /// remaining BOUNDED sub-object blob entries getFullBlob can add (one per case, distinct objectIds, in a NEW fixture file):
+    ///   (a) CONDITIONING_INFO: item.GetConditioningInfo() != null (ChargeInfo with a pinned chargePoints set on the private
+    ///       conditioningInfo field; the ChargeInfo ctor reads GetImprovement() == null -> deterministic). The writer reads
+    ///       only GetChargePoints() (== the ctor arg). Added AFTER ENCHANT_INFO inside the equippable block.
+    ///   (b) COMPOSITE_ITEM: item.HasFusionedItem() true (SetFusionedItem(template, bonusStatsId=0, optionalSockets)). The
+    ///       writer = WriteD(GetFusionedItemId()) + 24 zero fusion-stone bytes (no fusion stones) + WriteC(optionalSockets)
+    ///       + WriteC(GetFusionedItemBonusStatsId()==0). Added FIRST (before EQUIPPED_SLOT).
+    ///   (c) POLISH_INFO: itemTemplate.IsCanPolish() (CAN_POLISH mask bit set) with a null idian stone -> WriteD(0). Added
+    ///       BEFORE PREMIUM_OPTION. IdianStone is SKIPPED (unbounded for the unit harness: its ctor NREs on empty ITEM_DATA).
+    /// All other blob reads are identical to the weapon seam. Built IDENTICALLY to the Java oracle side; Java is the oracle.
+    /// </summary>
+    [Theory]
+    [InlineData("SM_INVENTORY_ADD_ITEM_SUBOBJECT2.json")]
+    public void CsharpInventoryAddItemSubObject2MatchesJavaGoldenFixture(string fixtureFile)
+    {
+        using var fixture = LoadFixture(fixtureFile);
+        foreach (var caseElement in fixture.RootElement.GetProperty("cases").EnumerateArray())
+        {
+            var caseName = caseElement.GetProperty("name").GetString()!;
+            var expectedHex = caseElement.GetProperty("payloadHex").GetString()!;
+            var inputs = caseElement.GetProperty("inputs");
+
+            var objectId = inputs.GetProperty("objectId").GetInt32();
+            var subObject = inputs.GetProperty("subObject").GetString()!;
+            var addType = Enum.Parse<ItemAddType>(inputs.GetProperty("addType").GetString()!);
+
+            Item item;
+            switch (subObject)
+            {
+                case "conditioning":
+                    item = BuildSubObject2Weapon(objectId, EqSubObj2Mask);
+                    SetConditioningInfo(item, inputs.GetProperty("chargePoints").GetInt32());
+                    break;
+                case "composite":
+                    item = BuildSubObject2Weapon(objectId, EqSubObj2Mask);
+                    // SetFusionedItem(template, bonusStatsId=0, optionalSockets): bonusStatsId 0 -> GetFusionedItemBonusStatsId()==0.
+                    item.SetFusionedItem(FusionedItemTemplate(inputs.GetProperty("fusionedItemId").GetInt32()), 0,
+                        inputs.GetProperty("optionalSockets").GetInt32());
+                    break;
+                case "polish":
+                    // CAN_POLISH mask bit set -> IsCanPolish() true; idian stone left null -> WriteD 0.
+                    item = BuildSubObject2Weapon(objectId, EqSubObj2Mask | Aion.GameServer.Model.Items.ItemMask.CAN_POLISH);
+                    break;
+                default:
+                    throw new NotSupportedException($"Unknown subObject: {subObject}");
+            }
+
+            // player arg null: GetFullBlob only stashes it as blob owner; the writers never deref it.
+            var packet = new SM_INVENTORY_ADD_ITEM(new List<Item> { item }, null, addType);
+
+            var actualHex = Convert.ToHexString(CaptureWriteImplPayload(packet));
+            Assert.True(expectedHex == actualHex,
+                $"SM_INVENTORY_ADD_ITEM_SUBOBJECT2/{caseName}: C# payload diverged from Java golden.\n" +
+                $"  Java : {expectedHex}\n  C#   : {actualHex}\n" +
+                $"  firstDiffByte: {FirstDiffByte(expectedHex, actualHex)}");
+        }
+    }
+
+    /// <summary>
+    /// Build a 1H-sword Item (same base as BuildEquippableWeapon) with the given mask. itemGroup SWORD -> SLOTS_WEAPON;
+    /// maxTuneCount 0 (CanTune() false -> IsIdentified() true). No stones/godstone/idian/dye/tempering by default.
+    /// </summary>
+    private static Item BuildSubObject2Weapon(int objectId, int mask)
+    {
+        var template = new ItemTemplate();
+        template.itemId = EqSubObj2TemplateId;
+        template.mask = mask;
+        template.description = EqSubObj2DescL10n;
+        template.itemGroup = ItemGroup.SWORD;
+        template.maxTuneCount = 0; // CanTune() == false -> IsIdentified() == true (deterministic)
+        var item = new Item(objectId, template);
+        item.SetItemCount(1L);
+        item.SetItemCreator("Smith");
+        return item;
+    }
+
+    /// <summary>
+    /// Pin the private Item.conditioningInfo field to a ChargeInfo with the given chargePoints. The ChargeInfo ctor reads
+    /// item.GetImprovement() (null on the bare item -> attackBurn/defendBurn 0); the CONDITIONING_INFO writer reads only
+    /// GetChargePoints() (== the ctor arg). Mirrors the Java side exactly.
+    /// </summary>
+    private static void SetConditioningInfo(Item item, int chargePoints)
+    {
+        var charge = new Aion.GameServer.Model.Items.ChargeInfo(chargePoints, item);
+        var field = typeof(Item).GetField("conditioningInfo", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new MissingFieldException(typeof(Item).FullName, "conditioningInfo");
+        field.SetValue(item, charge);
+    }
+
+    /// <summary>Build a fusioned ItemTemplate carrying only the templateId (GetFusionedItemId() reads GetTemplateId()).</summary>
+    private static ItemTemplate FusionedItemTemplate(int itemId)
+    {
+        var t = new ItemTemplate();
+        t.itemId = itemId;
+        return t;
+    }
+
     // ---- SM_VIEW_PLAYER_DETAILS (reuse the equippable-item / ItemInfoBlob seam) ---------------------------------
 
     /// <summary>
