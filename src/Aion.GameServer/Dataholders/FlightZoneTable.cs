@@ -66,8 +66,6 @@ public sealed record FlightZoneSummary(
 
 }
 
-public readonly record struct ZonePoint2D(float X, float Y);
-
 public enum FlightZoneType
 {
 	Fly,
