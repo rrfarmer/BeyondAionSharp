@@ -4,6 +4,7 @@ using Aion.GameServer.Network.Aion;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_PET_EMOTE (ATracer, Neon). Pet emote/movement packet. Existing C# PetEmote enum uses PascalCase members with value==emoteId, so getEmoteId()->(int)emote; Java MOVE_STOP/MOVETO -> PetEmote.MoveStop/MoveTo. Pet red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_PET_EMOTE.java): 2026-06-17 — reads live Pet/MoveController graph; PetEmote enum value==Java emoteId so (int)emote==getEmoteId() (T2 audit-only).
 public class SM_PET_EMOTE : AionServerPacket
 {
     private Pet pet;

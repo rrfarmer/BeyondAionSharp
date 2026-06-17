@@ -6,6 +6,7 @@ using Aion.GameServer.Model.Templates.Housing;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_HOUSE_OBJECTS (Rolandas). Bulk house object positions (template + x/y/z). HouseObject&lt;?&gt; erased to HouseObject&lt;PlaceableHouseObject&gt;. HouseObject red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_HOUSE_OBJECTS.java): 2026-06-17 — reads live HouseObject graph getObjectTemplate()/x/y/z (T2 audit-only).
 public class SM_HOUSE_OBJECTS : AionServerPacket
 {
     private readonly List<HouseObject> objects;

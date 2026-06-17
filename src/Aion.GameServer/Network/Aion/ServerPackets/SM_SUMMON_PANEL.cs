@@ -5,6 +5,7 @@ using Aion.GameServer.Utils.Stats;
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
 /// <summary>Java parity: network/aion/serverpackets/SM_SUMMON_PANEL (ATracer, xTz). Summon status panel: objId/level/hp/maxhp/attack/pdef/mresist/livetime. Summon/CalculationType red-tolerated.</summary>
+// Java parity (writeImpl audited 1:1 vs game-server/.../SM_SUMMON_PANEL.java): 2026-06-17 — reads live Summon/lifeStats/gameStats graph (T2 audit-only).
 public class SM_SUMMON_PANEL : AionServerPacket
 {
     private Summon summon;

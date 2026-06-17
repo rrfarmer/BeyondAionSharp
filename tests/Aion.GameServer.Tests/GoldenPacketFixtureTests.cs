@@ -145,6 +145,8 @@ public sealed class GoldenPacketFixtureTests
 	// ----- Batch 14: con-null-safe DTO/scalar packets (no con, no live World, no live singleton) -----
 	[InlineData("SM_NPC_ASSEMBLER.json")]
 	[InlineData("SM_GATHER_UPDATE.json")]
+	// ----- Batch 20: con-null-safe DTO/scalar packet (PlayerScript record; no con, no live graph) -----
+	[InlineData("SM_HOUSE_SCRIPTS.json")]
 	public void FaithfulCsharpPayloadMatchesJavaGoldenFixture(string fixtureFile)
 	{
 		var fixture = LoadFixture(fixtureFile);
@@ -282,6 +284,7 @@ public sealed class GoldenPacketFixtureTests
 		// ----- Batch 14 -----
 		"SM_NPC_ASSEMBLER" => ReconstructNpcAssembler(inputs),
 		"SM_GATHER_UPDATE" => ReconstructGatherUpdate(inputs),
+		"SM_HOUSE_SCRIPTS" => new SM_HOUSE_SCRIPTS(inputs.GetProperty("houseAddress").GetInt32(), ReconstructPlayerScripts(inputs.GetProperty("scripts"))),
 		_ => throw new NotSupportedException($"No faithful C# reconstruction registered for {packetName}"),
 	};
 
@@ -321,6 +324,22 @@ public sealed class GoldenPacketFixtureTests
 		var list = new List<Aion.GameServer.Model.Templates.Items.ResultedItem>();
 		foreach (var it in items.EnumerateArray())
 			list.Add(new Aion.GameServer.Model.Templates.Items.ResultedItem { itemId = it[0].GetInt32(), minCount = it[1].GetInt32() });
+		return list;
+	}
+
+	// PlayerScript is a plain record (id, compressedBytes, uncompressedSize). Build directly (no CompressUtil) for determinism.
+	private static List<Aion.GameServer.Model.House.PlayerScript> ReconstructPlayerScripts(JsonElement scripts)
+	{
+		var list = new List<Aion.GameServer.Model.House.PlayerScript>();
+		foreach (var s in scripts.EnumerateArray())
+		{
+			var bytesEl = s.GetProperty("compressedBytes");
+			var bytes = new byte[bytesEl.GetArrayLength()];
+			int i = 0;
+			foreach (var b in bytesEl.EnumerateArray())
+				bytes[i++] = (byte)b.GetInt32();
+			list.Add(new Aion.GameServer.Model.House.PlayerScript(s.GetProperty("id").GetInt32(), bytes, s.GetProperty("uncompressedSize").GetInt32()));
+		}
 		return list;
 	}
 
