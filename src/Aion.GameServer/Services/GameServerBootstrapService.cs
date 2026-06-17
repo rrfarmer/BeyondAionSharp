@@ -152,15 +152,24 @@ public sealed class GameServerBootstrapService : IHostedService
 		// Java parity: GameServer.main housing init block (lines 119-123), AFTER the location-init cluster, BEFORE
 		// SpawnEngine.spawnAll() (HousingService is init'd before spawns because it is touched on every instance spawn).
 		//
-		// HousingService.getInstance() (main:119) + HousingBidService.getInstance() (main:120) are DEFERRED: the
-		// HousingService ctor calls RevokeOwnershipOfDeletedPlayers() => new HashSet<int>(PlayerDAO.GetUsedIDs()),
-		// and PlayerDAO.GetUsedIDs() returns NULL on DB failure (faithful: Java returns null too), so with the
-		// bootstrap fixture's no-DB env new HashSet<>(null) throws ArgumentNullException (Java NPEs identically;
-		// the real server always has a DB returning an empty array). HousingBidService.ctor -> SetBidInfoToHouses ->
-		// HousingService.GetInstance() inherits the same failure. No-DB edge, NOT a port defect — wire once the
-		// bootstrap harness provides a DB (or PlayerDAO.GetUsedIDs returns empty on no-DB). The 3 AbstractCronTask
-		// auction tasks (main:121-123) are conceptually part of this housing block and run their Run() on the thread
-		// pool (would touch the deferred housing services), so they are deferred together for now.
+		// HousingService.getInstance() (main:119) + HousingBidService.getInstance() (main:120) are DEFERRED for the
+		// no-DB bootstrap fixture: the HousingService ctor calls RevokeOwnershipOfDeletedPlayers() =>
+		// new HashSet<int>(PlayerDAO.GetUsedIDs()), and PlayerDAO.GetUsedIDs() returns NULL on DB failure (faithful:
+		// Java returns null too), so with the no-DB fixture new HashSet<>(null) throws ArgumentNullException (Java NPEs
+		// identically; the real server always has a DB returning an empty array). The 3 AbstractCronTask auction tasks
+		// (main:121-123) touch the same housing services and are deferred together.
+		//
+		// EMPIRICAL (DB-backed full-boot smoke, GameServerBootstrapTests.GameServerBootstrap_DbBackedFullBoot_*,
+		// run against the live MySQL container with real game-server data): the no-DB ArgumentNullException blocker is
+		// LIFTED with a live (empty) players table — PlayerDAO.GetUsedIDs() returns int[0], the HousingService ctor
+		// loads cleanly, and SpawnEngine.SpawnAll() reaches HousingService.SpawnHouses across every twin instance.
+		// HOWEVER, the with-DB full SpawnAll() then throws the documented Java-latent house-twin
+		// DuplicateAionObjectException: Heiron(210040000) HOUSE_6001 (objectId 130885) and Beluslan(220040000)
+		// HOUSE_7001 (objectId 152343) are address-cached House objects re-spawned into a 2nd twin instance of the same
+		// map, colliding on the House objectId in World.StoreObject (Java behaves identically — no upstream guard). So
+		// this block stays DEFERRED here too: enabling it does not change the SpawnAll() house-twin boundary, and the
+		// no-DB fixture path (empty WORLD_MAPS_DATA => SpawnAll iterates zero maps => HousingService never reached) must
+		// stay green. DO NOT add an un-faithful guard to force a whole-world boot past the house-twin throw.
 		// (HousingConfig.HOUSE_AUCTION_END_TIME / AUCTION_AUTO_FILL_TIME / HOUSE_MAINTENANCE_TIME cron defaults ARE
 		// now populated — that fix stands independent of this deferral.)
 		// Aion.GameServer.Services.HousingService.GetInstance();
