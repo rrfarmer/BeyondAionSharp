@@ -117,7 +117,7 @@ public class PunishmentService
         }
         else
         {
-            PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CAPTCHA_RECOVERED());
+            PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CAPTCHA_RECOVERED());
             player.SetCaptchaWord(null);
             player.SetCaptchaImage(null);
             player.SetGatherRestrictionExpirationTime(0);

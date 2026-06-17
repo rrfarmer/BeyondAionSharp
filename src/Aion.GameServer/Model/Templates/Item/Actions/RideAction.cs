@@ -30,19 +30,19 @@ public class RideAction : AbstractItemAction
                 {
                     if (!zone.CanRide())
                     {
-                        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANNOT_RIDE_INVALID_LOCATION());
+                        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_RIDE_INVALID_LOCATION());
                         return false;
                     }
                 }
             }
             if (player.IsInState(CreatureState.RESTING))
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANT_RIDE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_RIDE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
                 return false;
             }
             if (player.GetEffectController().IsInAnyAbnormalState(AbnormalState.DISMOUNT_RIDE))
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANNOT_RIDE_ABNORMAL_STATE());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANNOT_RIDE_ABNORMAL_STATE());
                 return false;
             }
         }
@@ -116,7 +116,7 @@ public class RideAction : AbstractItemAction
         {
             player.GetController().CancelTask(TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 3, 0), true);
             player.GetObserveController().RemoveObserver(this);
@@ -139,7 +139,7 @@ public class RideAction : AbstractItemAction
             if ((state.GetId() & AbnormalState.DISMOUNT_RIDE.GetId()) != 0)
             {
                 player.UnsetPlayerMode(PlayerMode.RIDE);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_UNRIDE_ABNORMAL_STATE());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_UNRIDE_ABNORMAL_STATE());
             }
         }
     }

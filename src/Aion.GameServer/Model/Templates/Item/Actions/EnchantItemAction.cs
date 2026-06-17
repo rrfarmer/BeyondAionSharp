@@ -30,7 +30,7 @@ public class EnchantItemAction : AbstractItemAction
         if (targetItem == null) // no item selected.
         {
             bool isEnchantmentStone2 = parentItem.GetItemTemplate().GetItemGroup() == ItemGroup.ENCHANTMENT;
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, isEnchantmentStone2 ? Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ENCHANT_ITEM_NO_TARGET_ITEM() : Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GIVE_ITEM_OPTION_NO_TARGET_ITEM());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, isEnchantmentStone2 ? Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_NO_TARGET_ITEM() : Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_NO_TARGET_ITEM());
             return false;
         }
         if (parentItem.GetItemTemplate().GetItemGroup() == ItemGroup.ENCHANTMENT)
@@ -39,22 +39,22 @@ public class EnchantItemAction : AbstractItemAction
                 return false;
             if (targetItem.GetItemTemplate().GetMaxEnchantLevel() == 0 && !targetItem.GetItemTemplate().CanExceedEnchant())
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
                 return false;
             }
             else if (!targetItem.IsAmplified() && targetItem.GetEnchantLevel() >= targetItem.GetMaxEnchantLevel())
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
                 return false;
             }
             else if (targetItem.GetEnchantLevel() >= 255)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_IT_CAN_NOT_BE_GIVEN_OPTION_MORE_TIME(targetItem.GetItemTemplate().GetL10n(), parentItem.GetItemTemplate().GetL10n()));
                 return false;
             }
             else if (targetItem.IsAmplified() && Aion.GameServer.Model.Enchants.EnchantmentStoneExtensions.GetByItemId(parentItem.GetItemId()) != Aion.GameServer.Model.Enchants.EnchantmentStone.OMEGA)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_EXCEED_CANNOT_02(parentItem.GetItemTemplate().GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_EXCEED_CANNOT_02(parentItem.GetItemTemplate().GetL10n()));
                 return false;
             }
         }
@@ -92,7 +92,7 @@ public class EnchantItemAction : AbstractItemAction
 
             if (player.GetInventory().GetItemByObjId(targetItem.GetObjectId()) == null && !targetItem.IsEquipped())
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ENCHANT_ITEM_NO_TARGET_ITEM());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_NO_TARGET_ITEM());
                 Aion.GameServer.Utils.PacketSendUtility.BroadcastPacketAndReceive(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
                 return ValueTask.CompletedTask;
             }
@@ -107,11 +107,11 @@ public class EnchantItemAction : AbstractItemAction
             {
                 if (isEnchantmentStone && isSuccess && (targetItem.GetEnchantLevel() == 15 || targetItem.GetEnchantLevel() == 20))
                 {
-                    Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage packet;
+                    Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE packet;
                     if (targetItem.GetEnchantLevel() == 15)
-                        packet = Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ENCHANT_ITEM_SUCCEEDED_15(player.GetName(), targetItem.GetItemTemplate().GetL10n());
+                        packet = Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_ITEM_SUCCEEDED_15(player.GetName(), targetItem.GetItemTemplate().GetL10n());
                     else
-                        packet = Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ENCHANT_ITEM_SUCCEEDED_20(player.GetName(), targetItem.GetItemTemplate().GetL10n());
+                        packet = Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ENCHANT_ITEM_SUCCEEDED_20(player.GetName(), targetItem.GetItemTemplate().GetL10n());
                     Aion.GameServer.Utils.PacketSendUtility.BroadcastToWorld(packet, Aion.GameServer.Utils.Collections.Predicates.Players.SameRace(player));
                 }
             }
@@ -188,7 +188,7 @@ public class EnchantItemAction : AbstractItemAction
             if (minEnchantLevel <= targetItemTemplate.GetLevel() && maxEnchantLevel >= targetItemTemplate.GetLevel())
                 return true;
 
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_ENCHANT_ASSISTANT_NO_RIGHT_ITEM());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_ENCHANT_ASSISTANT_NO_RIGHT_ITEM());
             return false;
         }
         return true;
@@ -213,7 +213,7 @@ public class EnchantItemAction : AbstractItemAction
             base.Moved();
             player.GetObserveController().RemoveObserver(this);
             player.GetController().CancelUseItem();
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, isEnchantmentStone ? Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ENCHANT_ITEM_CANCELED(targetItem.GetL10n()) : Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GIVE_ITEM_OPTION_CANCELED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, isEnchantmentStone ? Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_CANCELED(targetItem.GetL10n()) : Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GIVE_ITEM_OPTION_CANCELED(targetItem.GetL10n()));
         }
     }
 }

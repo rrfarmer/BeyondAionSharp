@@ -26,12 +26,12 @@ public class EmotionLearnAction : AbstractItemAction
     {
         if (emotionId == 0 || parentItem == null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_COLOR_ERROR());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_ERROR());
             return false;
         }
         if (player.GetEmotions() != null && player.GetEmotions().Contains(emotionId))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_TOOLTIP_LEARNED_EMOTION());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_TOOLTIP_LEARNED_EMOTION());
             return false;
         }
         return true;

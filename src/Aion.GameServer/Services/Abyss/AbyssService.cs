@@ -26,13 +26,13 @@ public class AbyssService
     {
         if (!ShouldAnnounceHighRankedDeath(victim))
             return;
-        PacketSendUtility.BroadcastToWorld(Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ABYSS_ORDER_RANKER_DIE(victim),
+        PacketSendUtility.BroadcastToWorld(Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ABYSS_ORDER_RANKER_DIE(victim),
             p => p != victim && victim.GetWorldType() == p.GetWorldType() && !p.IsInInstance());
     }
 
     public static void AnnounceAbyssSkillUsage(Aion.GameServer.Model.GameObjects.Players.Player player, string skillL10n)
     {
-        PacketSendUtility.BroadcastToWorld(Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_ABYSS_SKILL_IS_FIRED(player, skillL10n),
+        PacketSendUtility.BroadcastToWorld(Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SKILL_ABYSS_SKILL_IS_FIRED(player, skillL10n),
             p => p != player && player.GetWorldType() == p.GetWorldType() && !p.IsInInstance());
     }
 }

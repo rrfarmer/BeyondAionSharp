@@ -14,17 +14,17 @@ public class ExtractAction : AbstractItemAction
     {
         if (targetItem == null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM());
             return false;
         }
         if (!targetItem.GetItemTemplate().IsArmor() && !targetItem.GetItemTemplate().IsWeapon())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED(targetItem.GetL10n()));
             return false;
         }
         if (targetItem.IsEquipped())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_EQUIP_ITEM_CAN_NOT_BE_DECOMPOSED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_EQUIP_ITEM_CAN_NOT_BE_DECOMPOSED());
             return false;
         }
 
@@ -63,7 +63,7 @@ public class ExtractAction : AbstractItemAction
         public override void Abort()
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_CANCELED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED(targetItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
             player.GetObserveController().RemoveObserver(this);
         }

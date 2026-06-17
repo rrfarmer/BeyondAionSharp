@@ -25,12 +25,12 @@ public class ExpExtractAction : AbstractItemAction
     {
         if (player.GetInventory().IsFull())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DECOMPRESS_INVENTORY_IS_FULL());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_DECOMPRESS_INVENTORY_IS_FULL());
             return false;
         }
         if (newExp < DataManager.PLAYER_EXPERIENCE_TABLE.GetStartExpForLevel(player.GetLevel()))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_EXP_EXTRACTION_USE_NOT_ENOUGH_EXP());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_EXP_EXTRACTION_USE_NOT_ENOUGH_EXP());
             return false;
         }
         return true;
@@ -64,7 +64,7 @@ public class ExpExtractAction : AbstractItemAction
             cd.SetExp(newExp);
             Aion.GameServer.Services.Items.ItemService.AddItem(player, itemId, 1);
             string rewardItem = DataManager.ITEM_DATA.GetItemTemplate(itemId).GetL10n();
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_EXP_EXTRACTION_USE(parentItem.GetL10n(), requiredExp, rewardItem));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_EXP_EXTRACTION_USE(parentItem.GetL10n(), requiredExp, rewardItem));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 1, 0));
             return ValueTask.CompletedTask;
@@ -95,7 +95,7 @@ public class ExpExtractAction : AbstractItemAction
         public override void Abort()
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0));
             player.GetObserveController().RemoveObserver(this);

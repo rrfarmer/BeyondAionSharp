@@ -39,7 +39,7 @@ public class MultiReturnAction : AbstractItemAction
                 }
                 player.GetObserveController().RemoveObserver(observer);
                 Aion.GameServer.Services.Teleport.TeleportService.UseTeleportScroll(player, loc.GetAlias().ToUpperInvariant(), loc.GetWorldid());
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_USE_ITEM(item.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_USE_ITEM(item.GetL10n()));
             }
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(USAGE_DELAY)));
@@ -61,7 +61,7 @@ public class MultiReturnAction : AbstractItemAction
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(item.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }

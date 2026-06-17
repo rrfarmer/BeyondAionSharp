@@ -302,7 +302,7 @@ public class PetCommonData : IExpirable
 
     public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PET_ABANDON_EXPIRE_TIME_COMPLETE(name));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PET_ABANDON_EXPIRE_TIME_COMPLETE(name));
         Aion.GameServer.Services.ToyPet.PetAdoptionService.SurrenderPet(player, templateId);
     }
 

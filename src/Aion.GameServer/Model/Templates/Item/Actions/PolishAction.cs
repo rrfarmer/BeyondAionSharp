@@ -17,12 +17,12 @@ public class PolishAction : AbstractItemAction
     {
         if (parentItem.GetItemTemplate().GetLevel() > targetItem.GetItemTemplate().GetLevel())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_POLISH_WRONG_LEVEL());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_POLISH_WRONG_LEVEL());
             return false;
         }
         if (!targetItem.IsIdentified())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_POLISH_NEED_IDENTIFY());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_POLISH_NEED_IDENTIFY());
             return false;
         }
         return !player.IsInAttackMode() && targetItem.GetItemTemplate().IsWeapon() && targetItem.GetItemTemplate().IsCanPolish();
@@ -47,10 +47,10 @@ public class PolishAction : AbstractItemAction
             int bonusNumber = DataManager.ITEM_RANDOM_BONUSES.SelectRandomBonusNumber(Aion.GameServer.Model.Templates.Items.Bonuses.StatBonusType.POLISH, polishSetId);
             if (bonusNumber == 0)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ENCHANT_ITEM_FAILED(parentItem.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ENCHANT_ITEM_FAILED(parentItem.GetL10n()));
                 return ValueTask.CompletedTask;
             }
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_POLISH_SUCCEED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_POLISH_SUCCEED(targetItem.GetL10n()));
             Aion.GameServer.Model.Items.IdianStone idianStone = targetItem.GetIdianStone();
             if (idianStone != null)
             {
@@ -86,7 +86,7 @@ public class PolishAction : AbstractItemAction
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);

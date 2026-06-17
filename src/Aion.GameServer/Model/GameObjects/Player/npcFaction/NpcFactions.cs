@@ -88,7 +88,7 @@ public class NpcFactions
     {
         Aion.GameServer.Model.Templates.Factions.NpcFactionTemplate npcFactionTemplate = Aion.GameServer.Dataholders.DataManager.NPC_FACTIONS_DATA.GetNpcFactionById(npcFaction.GetId());
 
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FACTION_LEAVE(npcFactionTemplate.GetL10n()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FACTION_LEAVE(npcFactionTemplate.GetL10n()));
         npcFaction.SetActive(false);
         activeNpcFaction[npcFactionTemplate.IsMentor() ? 1 : 0] = null;
         if (npcFaction.GetState() == ENpcFactionQuestState.START)
@@ -143,7 +143,7 @@ public class NpcFactions
         }
         if (npcFaction != null && npcFaction.IsActive())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FACTION_CAN_NOT_JOIN());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FACTION_CAN_NOT_JOIN());
             return;
         }
         if (activeNpcFactionLocal != null && activeNpcFactionLocal.GetId() != npcFactionId)
@@ -153,7 +153,7 @@ public class NpcFactions
         }
         if (npcFaction == null || !npcFaction.IsActive())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FACTION_JOIN(npcFactionTemplate.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FACTION_JOIN(npcFactionTemplate.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_DIALOG_WINDOW(targetObjectId, 1012));
             SetActive(npcFactionId);
             SendDailyQuest();
@@ -282,7 +282,7 @@ public class NpcFactions
                 activeNpcFaction[i] = null;
                 if (faction.GetState() == ENpcFactionQuestState.START)
                     Aion.GameServer.Services.QuestService.AbandonQuest(owner, faction.GetQuestId());
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FACTION_LEAVE_BY_LEVEL_LIMIT(npcFactionTemplate.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FACTION_LEAVE_BY_LEVEL_LIMIT(npcFactionTemplate.GetL10n()));
                 faction.SetState(ENpcFactionQuestState.NOTING);
             }
         }

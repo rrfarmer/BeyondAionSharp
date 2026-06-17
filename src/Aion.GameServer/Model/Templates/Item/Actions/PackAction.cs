@@ -13,48 +13,48 @@ public class PackAction : AbstractItemAction
     {
         if (targetItem == null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_NO_TARGET_ITEM());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_NO_TARGET_ITEM());
             return false;
         }
         if (Aion.GameServer.Configs.Main.GSConfig.ITEM_WRAP_LIMIT < 0 || Aion.GameServer.Configs.Main.GSConfig.ITEM_WRAP_LIMIT > 127 && Aion.GameServer.Configs.Main.GSConfig.ITEM_WRAP_LIMIT != 255)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_CANNOT(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_CANNOT(targetItem.GetL10n()));
             return false;
         }
         if (targetItem.IsEquipped())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_EQUIPED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_EQUIPED());
             return false;
         }
         if (targetItem.GetItemTemplate().IsTradeable())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_EXCHANGE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_EXCHANGE());
             return false;
         }
         if (targetItem.IsSoulBound())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_SEAL());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_SEAL());
             return false;
         }
         if (targetItem.GetFusionedItemId() != 0)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_COMPOSITION());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_COMPOSITION());
             return false;
         }
         if (!targetItem.IsIdentified())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_NEED_IDENTIFY());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_NEED_IDENTIFY());
             return false;
         }
         if (targetItem.GetItemTemplate().GetItemQuality().GetQualityId() > parentItem.GetItemTemplate().GetItemQuality().GetQualityId())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_QUALITY(parentItem.GetL10n(), targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_QUALITY(parentItem.GetL10n(), targetItem.GetL10n()));
             return false;
         }
         if (targetItem.GetItemTemplate().GetLevel() > parentItem.GetItemTemplate().GetLevel())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_LEVEL(targetItem.GetL10n(), targetItem.GetItemTemplate().GetLevel()));
+                Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_LEVEL(targetItem.GetL10n(), targetItem.GetItemTemplate().GetLevel()));
             return false;
         }
         UseTarget? type = targetItem.GetItemTemplate().GetItemGroup() switch
@@ -66,7 +66,7 @@ public class PackAction : AbstractItemAction
         };
         if (type == null || target != type)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_WRONG_TARGET_ITEM_CATEGORY(parentItem.GetL10n(), targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_WRONG_TARGET_ITEM_CATEGORY(parentItem.GetL10n(), targetItem.GetL10n()));
             return false;
         }
         int packCount = targetItem.GetPackCount();
@@ -87,7 +87,7 @@ public class PackAction : AbstractItemAction
             }
             if (packCount >= allowedPackCount)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_CANNOT(targetItem.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_CANNOT(targetItem.GetL10n()));
                 return false;
             }
         }
@@ -111,7 +111,7 @@ public class PackAction : AbstractItemAction
         targetItem.SetPackCount(++packCount);
         targetItem.SetPersistentState(IPersistable.PersistentState.UPDATE_REQUIRED);
         Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_INVENTORY_UPDATE_ITEM(player, targetItem));
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_PACK_ITEM_SUCCEED(targetItem.GetL10n()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_PACK_ITEM_SUCCEED(targetItem.GetL10n()));
     }
 
     public UseTarget GetTarget()

@@ -16,10 +16,10 @@ public class QuestStartAction : AbstractItemAction
         if (qs == null || qs.IsStartable())
             return true;
         else if (qs.GetStatus() != Aion.GameServer.QuestEngine.Model.QuestStatus.COMPLETE)
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_QUEST_ACQUIRE_ERROR_WORKING_QUEST());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_WORKING_QUEST());
         else if (!qs.CanRepeat())
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_QUEST_ACQUIRE_ERROR_NONE_REPEATABLE(DataManager.QUEST_DATA.GetQuestById(questid).GetName()));
+                Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_QUEST_ACQUIRE_ERROR_NONE_REPEATABLE(DataManager.QUEST_DATA.GetQuestById(questid).GetName()));
 
         return false;
     }

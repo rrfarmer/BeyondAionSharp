@@ -89,12 +89,12 @@ public class DecomposeAction : AbstractItemAction
         {
             if (DataManager.DECOMPOSABLE_ITEMS_DATA.GetSelectableItems(parentItem.GetItemId()) != null) // selectable decomposable
                 return true;
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED(parentItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_IT_CAN_NOT_BE_DECOMPOSED(parentItem.GetL10n()));
             return false;
         }
         if (player.GetInventory().IsFull() || player.GetInventory().IsFullSpecialCube() && ContainsSpecialCubeItems(itemsCollections, player))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_INVENTORY_IS_FULL());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_INVENTORY_IS_FULL());
             return false;
         }
         return true;
@@ -119,7 +119,7 @@ public class DecomposeAction : AbstractItemAction
         {
             log.LogWarning(
                 "Empty decomposable " + parentItem.GetItemId() + " for " + player + ", class: " + player.GetPlayerClass() + ", level: " + player.GetLevel());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_FAILED(parentItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_FAILED(parentItem.GetL10n()));
             return;
         }
 
@@ -135,7 +135,7 @@ public class DecomposeAction : AbstractItemAction
             bool validAction = PostValidate(player, parentItem, targetItem);
             if (validAction)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_SUCCEED(parentItem.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_SUCCEED(parentItem.GetL10n()));
                 foreach (ResultedItem resultItem in selectedCollection.GetItems())
                 {
                     if (resultItem.IsObtainableFor(player))
@@ -371,7 +371,7 @@ public class DecomposeAction : AbstractItemAction
         }
         if (!player.GetInventory().DecreaseByObjectId(parentItem.GetObjectId(), 1))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_NO_TARGET_ITEM());
             return false;
         }
         return true;
@@ -458,7 +458,7 @@ public class DecomposeAction : AbstractItemAction
         {
             player.GetController().CancelTask(TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DECOMPOSE_ITEM_CANCELED(parentItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);

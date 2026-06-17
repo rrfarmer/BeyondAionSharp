@@ -84,7 +84,7 @@ public class ItemService
             count = AddNonStackableItem(player, itemTemplate, count, sourceItem, allowInventoryOverflow, predicate);
 
         if (count > 0 && inventory.IsFull(itemTemplate.GetExtraInventoryId()))
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DICE_INVEN_ERROR());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_DICE_INVEN_ERROR());
 
         return count;
     }

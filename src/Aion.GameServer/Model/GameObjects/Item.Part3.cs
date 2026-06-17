@@ -119,11 +119,11 @@ public partial class Item
                 storage.Delete(this);
                 if (i == Aion.GameServer.Model.Items.Storage.StorageType.CUBE)
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DELETE_CASH_ITEM_BY_TIMEOUT(GetL10n()));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_ITEM_BY_TIMEOUT(GetL10n()));
                 }
                 else if (i == Aion.GameServer.Model.Items.Storage.StorageType.ACCOUNT_WAREHOUSE || i == Aion.GameServer.Model.Items.Storage.StorageType.REGULAR_WAREHOUSE)
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DELETE_CASH_ITEM_BY_TIMEOUT_IN_WAREHOUSE(GetL10n()));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_ITEM_BY_TIMEOUT_IN_WAREHOUSE(GetL10n()));
                 }
             }
         }
@@ -131,7 +131,7 @@ public partial class Item
 
     public void OnBeforeExpire(Aion.GameServer.Model.GameObjects.Players.Player player, int remainingMinutes)
     {
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CASH_ITEM_TIME_LEFT(GetL10n(), remainingMinutes));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CASH_ITEM_TIME_LEFT(GetL10n(), remainingMinutes));
     }
 
     public void SetRepurchasePrice(long price)

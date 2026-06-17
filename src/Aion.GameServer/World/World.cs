@@ -160,7 +160,7 @@ public sealed class World
 				if (!player.IsStaff())
 				{
 					AuditLogger.Log(player, "is outside valid regions: " + position);
-					player.GetClientConnection().Close(SmSystemMessage.STR_KICK_CHARACTER());
+					player.GetClientConnection().Close(SM_SYSTEM_MESSAGE.STR_KICK_CHARACTER());
 				}
 			}
 			else

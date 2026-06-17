@@ -85,22 +85,22 @@ public class FlyController
     {
         if (!player.GetCommonData().IsDaeva())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GLIDE_ONLY_DEVA_CAN());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GLIDE_ONLY_DEVA_CAN());
             return false;
         }
         if (!player.HasAccess(Aion.GameServer.Configs.Administration.AdminConfig.FREE_FLIGHT) && (player.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.NO_FLY) || !player.IsInsideZoneType(Aion.GameServer.Model.Templates.Zone.ZoneType.FLY)))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FLYING_FORBIDDEN_HERE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FLYING_FORBIDDEN_HERE());
             return false;
         }
         if (player.GetEffectController().IsAbnormalSet(Aion.GameServer.SkillEngine.Effects.AbnormalState.NOFLY))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANT_FLY_NOW_DUE_TO_NOFLY());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANT_FLY_NOW_DUE_TO_NOFLY());
             return false;
         }
         if (player.GetTransformModel().GetRes6() == 1)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_FLY_CANNOT_FLY_POLYMORPH_STATUS());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_FLY_CANNOT_FLY_POLYMORPH_STATUS());
             return false;
         }
         return player.GetStore() == null;
@@ -134,12 +134,12 @@ public class FlyController
     {
         if (!player.GetCommonData().IsDaeva())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GLIDE_ONLY_DEVA_CAN());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GLIDE_ONLY_DEVA_CAN());
             return false;
         }
         if (player.GetTransformModel().GetRes6() == 1)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GLIDE_CANNOT_GLIDE_POLYMORPH_STATUS());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GLIDE_CANNOT_GLIDE_POLYMORPH_STATUS());
             return false;
         }
         return true;

@@ -344,7 +344,7 @@ public partial class Player
         }
         if (base.IsSkillDisabled(template))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(this, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_NOT_READY());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(this, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SKILL_NOT_READY());
             return true;
         }
         return false;

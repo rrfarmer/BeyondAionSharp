@@ -64,13 +64,13 @@ public class TitleList
             }
             else
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_TOOLTIP_LEARNED_TITLE());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_TOOLTIP_LEARNED_TITLE());
                 return false;
             }
             if (questReward)
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_QUEST_GET_REWARD_TITLE(tt.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_QUEST_GET_REWARD_TITLE(tt.GetL10n()));
             else
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_GET_CASH_TITLE(tt.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_GET_CASH_TITLE(tt.GetL10n()));
 
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, new Aion.GameServer.Network.Aion.ServerPackets.SM_TITLE_INFO(owner));
             return true;

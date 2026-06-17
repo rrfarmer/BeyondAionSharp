@@ -186,7 +186,7 @@ public class Kisk : SummonedObject<Aion.GameServer.Model.GameObjects.Players.Pla
     }
 
     // Java parity: Kisk.broadcastPacket(SM_SYSTEM_MESSAGE message) — uses the faithful SM_SYSTEM_MESSAGE
-    // (the STR_BINDSTONE_* factories return SM_SYSTEM_MESSAGE), not the reworked SmSystemMessage.
+    // (the STR_BINDSTONE_* factories return SM_SYSTEM_MESSAGE), not the reworked SM_SYSTEM_MESSAGE.
     public void BroadcastPacket(Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE message)
     {
         foreach (Aion.GameServer.Model.GameObjects.Players.Player member in GetCurrentMemberList())

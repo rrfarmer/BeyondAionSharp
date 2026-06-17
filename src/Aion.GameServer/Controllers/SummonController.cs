@@ -59,7 +59,7 @@ public class SummonController : CreatureController<Summon>
     {
         if (target.IsDead() || target.GetLifeStats().IsAboutToDie() || !GetOwner().IsEnemy(target))
         {
-            PacketSendUtility.SendPacket(GetMaster(), SmSystemMessage.STR_INVALID_TARGET());
+            PacketSendUtility.SendPacket(GetMaster(), SM_SYSTEM_MESSAGE.STR_INVALID_TARGET());
             return;
         }
 

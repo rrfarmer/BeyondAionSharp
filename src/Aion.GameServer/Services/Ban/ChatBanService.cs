@@ -25,7 +25,7 @@ public class ChatBanService
         player.GetController().CancelTask(TaskId.GAG);
         Aion.GameServer.Network.ChatServer.ChatServer.GetInstance().SendPlayerGagPacket(player.GetObjectId(), 0);
         if (chatBans.TryRemove(player.GetObjectId(), out _) && player.IsOnline())
-            PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CAN_CHAT_NOW());
+            PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CAN_CHAT_NOW());
     }
 
     private static void RegisterUnban(Aion.GameServer.Model.GameObjects.Players.Player player, long delay)

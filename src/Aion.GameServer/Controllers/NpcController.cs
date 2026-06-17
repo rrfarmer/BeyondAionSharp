@@ -244,9 +244,9 @@ public class NpcController : CreatureController<Npc>
         if (!PositionUtil.IsInTalkRange(player, GetOwner()))
         {
             if (GetOwner().GetObjectTemplate().IsDialogNpc())
-                PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_DIALOG_TOO_FAR_TO_TALK());
+                PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_DIALOG_TOO_FAR_TO_TALK());
             else
-                PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_WAREHOUSE_TOO_FAR_FROM_NPC());
+                PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_WAREHOUSE_TOO_FAR_FROM_NPC());
             return;
         }
 

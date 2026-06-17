@@ -138,7 +138,7 @@ public abstract class TemporaryPlayerTeam : GeneralTeam
     {
         this.lootGroupRules = lootGroupRules;
         if (lootGroupRules != null && lootGroupRules.GetLootRule() == LootRuleType.FREEFORALL)
-            SendPacket(Predicates.Players.WITH_LOOT_PET, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_LOOTING_PET_MESSAGE03());
+            SendPacket(Predicates.Players.WITH_LOOT_PET, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_LOOTING_PET_MESSAGE03());
     }
 }
 

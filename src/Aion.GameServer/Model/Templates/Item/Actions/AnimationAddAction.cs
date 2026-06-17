@@ -29,7 +29,7 @@ public class AnimationAddAction : AbstractItemAction
     {
         if (parentItem == null) // no item selected.
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_COLOR_ERROR());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_ERROR());
             return false;
         }
 

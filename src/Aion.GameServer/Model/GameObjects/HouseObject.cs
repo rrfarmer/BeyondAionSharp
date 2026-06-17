@@ -101,9 +101,9 @@ public abstract class HouseObject : VisibleObject, IExpirable, IPersistable
         }
         PacketSendUtility.SendPacket(player, new SM_HOUSE_EDIT(4, 1, GetObjectId()));
         if (isExpired)
-            PacketSendUtility.SendPacket(player, SmSystemMessage.STR_MSG_HOUSING_OBJECT_DELETE_EXPIRE_TIME(GetObjectTemplate().GetL10n()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_DELETE_EXPIRE_TIME(GetObjectTemplate().GetL10n()));
         else
-            PacketSendUtility.SendPacket(player, SmSystemMessage.STR_MSG_HOUSING_OBJECT_DELETE_USE_COUNT_FINAL(GetObjectTemplate().GetL10n()));
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_DELETE_USE_COUNT_FINAL(GetObjectTemplate().GetL10n()));
         registry.DiscardObject(this, false);
 
         // if owner is not online, we should save his items

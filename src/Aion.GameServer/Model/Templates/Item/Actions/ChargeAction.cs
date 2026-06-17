@@ -57,9 +57,9 @@ public class ChargeAction : AbstractItemAction
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             if (chargeWay == 1)
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_CHARGE_CANCELED());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE_CANCELED());
             else
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_CHARGE2_CANCELED());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_CHARGE2_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemId(), 0, 1, 0), true);
             player.GetObserveController().RemoveObserver(this);

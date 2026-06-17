@@ -117,7 +117,7 @@ public sealed class PlayerSkillList : SkillList<Aion.GameServer.Model.GameObject
                         case 449:
                         case 499:
                         case 549:
-                            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CRAFT_INFO_MAXPOINT_UP());
+                            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CRAFT_INFO_MAXPOINT_UP());
                             return false; // disable exp gain to force mastering upgrade via npc
                     }
                     break;

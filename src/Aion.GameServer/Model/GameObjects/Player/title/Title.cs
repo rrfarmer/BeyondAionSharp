@@ -36,6 +36,6 @@ public class Title : IExpirable
     public void OnExpire(Aion.GameServer.Model.GameObjects.Players.Player player)
     {
         player.GetTitleList().RemoveTitle(id);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DELETE_CASH_TITLE_BY_TIMEOUT(template.GetL10n()));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_TITLE_BY_TIMEOUT(template.GetL10n()));
     }
 }

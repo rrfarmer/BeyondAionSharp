@@ -50,7 +50,7 @@ public class KiskService
 
         kisk.AddPlayer(player);
         Aion.GameServer.Services.Teleport.TeleportService.SendKiskBindPoint(player);
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_BINDSTONE_REGISTER());
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_BINDSTONE_REGISTER());
         // Send Animated Bind Flash
         Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ACTION_ANIMATION(player.GetObjectId(), ActionAnimation.BindKisk), true);
     }

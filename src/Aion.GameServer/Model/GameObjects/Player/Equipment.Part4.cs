@@ -20,37 +20,37 @@ public partial class Equipment
             return false;
         if (player.IsDead())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400059)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400059)));
             return false;
         }
         else if (player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400056)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400056)));
             return false;
         }
         else if (player.IsInState(CreatureState.CHAIR))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400058)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400058)));
             return false;
         }
         else if (player.IsInState(CreatureState.RESTING))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400057)));
             return false;
         }
         else if (player.IsInState(CreatureState.GLIDING))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400082)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400082)));
             return false;
         }
         else if (player.IsInState(CreatureState.FLYING))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400055)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400055)));
             return false;
         }
         else if (player.IsInState(CreatureState.WEAPON_EQUIPPED))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400079)));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_INVALID_STANCE(Aion.GameServer.Utils.ChatUtil.L10n(1400079)));
             return false;
         }
 
@@ -64,7 +64,7 @@ public partial class Equipment
         }
         else
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_CLOSE_OTHER_MSG_BOX_AND_RETRY());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_CLOSE_OTHER_MSG_BOX_AND_RETRY());
         }
         return false;
     }
@@ -102,7 +102,7 @@ public partial class Equipment
 
                 Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
                     new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 6), true);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_ITEM_SUCCEED(item.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_SUCCEED(item.GetL10n()));
 
                 item.SetSoulBound(true);
                 Aion.GameServer.Services.Items.ItemPacketService.UpdateItemAfterInfoChange(eq.owner, item);
@@ -115,7 +115,7 @@ public partial class Equipment
 
         public override void DenyRequest(Player requester, Player responder)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
         }
     }
 
@@ -134,7 +134,7 @@ public partial class Equipment
         public override void Moved()
         {
             responder.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(responder, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SOUL_BOUND_ITEM_CANCELED(item.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(responder,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(responder.GetObjectId(), item.GetObjectId(), item.GetItemId(), 0, 8), true);
         }
@@ -157,7 +157,7 @@ public partial class Equipment
             if (!VerifyRankLimits(item))
             {
                 UnEquipItem(item.GetObjectId(), false);
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_UNEQUIP_RANKITEM(item.GetL10n()));
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_UNEQUIP_RANKITEM(item.GetL10n()));
                 // TODO: Check retail what happens with full inv and the task msgs.
             }
         }

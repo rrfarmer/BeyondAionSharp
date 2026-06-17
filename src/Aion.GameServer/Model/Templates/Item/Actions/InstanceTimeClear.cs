@@ -38,7 +38,7 @@ public class InstanceTimeClear : AbstractItemAction
         Aion.GameServer.Model.GameObjects.Players.PortalCooldown portalCooldown = player.GetPortalCooldownList().GetPortalCooldown(worldId);
         if (portalCooldown == null || (portalCooldown.GetReuseTime() < DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() && portalCooldown.GetEnterCount() == 0))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANT_INSTANCE_COOL_TIME_INIT());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_INSTANCE_COOL_TIME_INIT());
             return false;
         }
         return true;
@@ -97,7 +97,7 @@ public class InstanceTimeClear : AbstractItemAction
             // TODO: abort is invalid. Should we abort all or only the last syncid?
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
             player.GetObserveController().RemoveObserver(this);

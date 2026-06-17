@@ -27,22 +27,22 @@ public class ToyPetSpawnAction : AbstractItemAction
     {
         if (player.IsFlying())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_BINDSTONE_ITEM_WHILE_FLYING());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_BINDSTONE_ITEM_WHILE_FLYING());
             return false;
         }
         if (player.IsInInstance())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_REGISTER_BINDSTONE_FAR_FROM_NPC());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_REGISTER_BINDSTONE_FAR_FROM_NPC());
             return false;
         }
         if (Aion.GameServer.Services.KiskService.GetInstance().HaveKisk(player.GetObjectId()) && Aion.GameServer.Configs.Main.CustomConfig.ENABLE_KISK_RESTRICTION)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_BINDSTONE_ALREADY_INSTALLED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_BINDSTONE_ALREADY_INSTALLED());
             return false;
         }
         if (!IsPutKiskZone(player))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_LOCATION());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_LOCATION());
             return false;
         }
         return true;
@@ -120,7 +120,7 @@ public class ToyPetSpawnAction : AbstractItemAction
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_CANCELED());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_CANCELED());
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player,
                 new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), parentItem.GetObjectId(), parentItem.GetItemTemplate().GetTemplateId(), 0, 2, 0), true);
         }

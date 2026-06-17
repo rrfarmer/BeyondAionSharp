@@ -20,23 +20,23 @@ public class TuningAction : AbstractItemAction
             return false;
         if (!targetItem.IsIdentified())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_DIDNT_IDENTIFY(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_DIDNT_IDENTIFY(targetItem.GetL10n()));
             return false;
         }
         if (!targetItem.GetItemTemplate().CanTune())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_CANNOT_REIDENTIFY(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_CANNOT_REIDENTIFY(targetItem.GetL10n()));
             return false;
         }
         if (target == UseTarget.WEAPON && !targetItem.GetItemTemplate().IsWeapon()
             || target == UseTarget.ARMOR && !targetItem.GetItemTemplate().IsArmor())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_WRONG_SELECT(parentItem.GetL10n(), targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_WRONG_SELECT(parentItem.GetL10n(), targetItem.GetL10n()));
             return false;
         }
         if (targetItem.GetItemTemplate().GetLevel() > parentItem.GetItemTemplate().GetLevel())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_WRONG_LEVEL(parentItem.GetL10n(), targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_WRONG_LEVEL(parentItem.GetL10n(), targetItem.GetL10n()));
             return false;
         }
 
@@ -75,7 +75,7 @@ public class TuningAction : AbstractItemAction
             Aion.GameServer.Model.Items.PendingTuneResult result = new Aion.GameServer.Model.Items.PendingTuneResult(newOptionalSockets, newEnchantBonus, newStatBonusId, shouldNotReduceTuneCount);
             targetItem.SetPendingTuneResult(result);
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_TUNE_RESULT(targetItem, tuningScrollItemId, result));
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_SUCCEED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_SUCCEED(targetItem.GetL10n()));
             return ValueTask.CompletedTask;
         }, TimeSpan.FromMilliseconds(5000)));
     }
@@ -107,7 +107,7 @@ public class TuningAction : AbstractItemAction
         {
             player.GetController().CancelTask(Aion.GameServer.Model.TaskId.ITEM_USE);
             player.RemoveItemCoolDown(parentItem.GetItemTemplate().GetUseLimits().GetDelayId());
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_REIDENTIFY_CANCELED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_REIDENTIFY_CANCELED(targetItem.GetL10n()));
             Aion.GameServer.Utils.PacketSendUtility.BroadcastPacket(player, new Aion.GameServer.Network.Aion.ServerPackets.SM_ITEM_USAGE_ANIMATION(player.GetObjectId(), tuningScrollObjectId, tuningScrollItemId, 0, 14, 0), true);
             player.GetObserveController().RemoveObserver(this);
         }

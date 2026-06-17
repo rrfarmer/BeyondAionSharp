@@ -29,6 +29,6 @@ public class Emotion : IExpirable
     {
         player.GetEmotions().Remove(id);
         // TODO emotion templates -> parse nameIds for system message, like 600228 for STR_EMOTION_CASH_DISCODANCE (Aion Boogie) etc.
-        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_DELETE_CASH_SOCIALACTION_BY_TIMEOUT(/* nameId */));
+        Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_DELETE_CASH_SOCIALACTION_BY_TIMEOUT(/* nameId */));
     }
 }

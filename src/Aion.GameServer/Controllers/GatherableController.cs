@@ -19,37 +19,37 @@ public class GatherableController : VisibleObjectController<Gatherable>
         Aion.GameServer.Model.Templates.Gather.GatherableTemplate template = GetOwner().GetObjectTemplate();
         if (player.GetLevel() < template.GetLevelLimit())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANT_GATHERING_B_LEVEL_CHECK(template.GetLevelLimit()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_GATHERING_B_LEVEL_CHECK(template.GetLevelLimit()));
             return;
         }
         if (player.IsInPlayerMode(PlayerMode.RIDE) && !player.HasPermission(MembershipConfig.GATHERING_ALLOW_ON_MOUNT))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_GATHER_RESTRICTION_RIDE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_GATHER_RESTRICTION_RIDE());
             return;
         }
         if (player.GetInventory().IsFull())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GATHER_INVENTORY_IS_FULL());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GATHER_INVENTORY_IS_FULL());
             return;
         }
         if (player.GetController().IsUnderStance())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_CAN_NOT_GATHER_WHILE_IN_CURRENT_STANCE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_GATHER_WHILE_IN_CURRENT_STANCE());
             return;
         }
         if (!Aion.GameServer.Utils.PositionUtil.IsInRange(GetOwner(), player, 3, false))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GATHER_TOO_FAR_FROM_GATHER_SOURCE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GATHER_TOO_FAR_FROM_GATHER_SOURCE());
             return;
         }
         if (!Aion.GameServer.World.Geo.GeoService.GetInstance().CanSee(player, GetOwner()))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GATHER_OBSTACLE_EXIST());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GATHER_OBSTACLE_EXIST());
             return;
         }
         if (player.IsGatherRestricted())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CAPTCHA_REMAIN_RESTRICT_TIME(player.GetGatherRestrictionDurationSeconds()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CAPTCHA_REMAIN_RESTRICT_TIME(player.GetGatherRestrictionDurationSeconds()));
             return;
         }
 
@@ -113,19 +113,19 @@ public class GatherableController : VisibleObjectController<Gatherable>
         {
             if (harvestSkillId == 30001)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GATHER_INCORRECT_SKILL());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GATHER_INCORRECT_SKILL());
             }
             else
             {
                 Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                    Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GATHER_LEARN_SKILL(DataManager.SKILL_DATA.GetSkillTemplate(harvestSkillId).GetL10n()));
+                    Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GATHER_LEARN_SKILL(DataManager.SKILL_DATA.GetSkillTemplate(harvestSkillId).GetL10n()));
             }
             return false;
         }
         if (player.GetSkillList().GetSkillLevel(harvestSkillId) < template.GetSkillLevel())
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GATHER_OUT_OF_SKILL_POINT(DataManager.SKILL_DATA.GetSkillTemplate(harvestSkillId).GetL10n()));
+                Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GATHER_OUT_OF_SKILL_POINT(DataManager.SKILL_DATA.GetSkillTemplate(harvestSkillId).GetL10n()));
             return false;
         }
         return true;
@@ -146,7 +146,7 @@ public class GatherableController : VisibleObjectController<Gatherable>
                 if (player.GetInventory().GetItemCountByItemId(template.GetRequiredItemId()) < template.GetEraseValue())
                 {
                     string requiredItemL10n = Aion.GameServer.Utils.ChatUtil.L10n(template.GetRequiredItemNameId());
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_CANT_GATHERING_B_ITEM_CHECK(requiredItemL10n));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_CANT_GATHERING_B_ITEM_CHECK(requiredItemL10n));
                     return null;
                 }
                 return template.GetExtraMaterials().GetMaterial();
@@ -186,11 +186,11 @@ public class GatherableController : VisibleObjectController<Gatherable>
 
             if (player.GetSkillList().AddSkillXp(player, skillId, gainedGatherXp, skillLvl))
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_EXTRACT_GATHERING_SUCCESS_GETEXP());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_EXTRACT_GATHERING_SUCCESS_GETEXP());
                 player.GetCommonData().AddExp(xpReward, Aion.GameServer.Model.GameObjects.Players.Rates.XP_GATHERING);
             }
             else
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE
                     .STR_MSG_DONT_GET_PRODUCTION_EXP(DataManager.SKILL_DATA.GetSkillTemplate(skillId).GetL10n()));
         }
     }

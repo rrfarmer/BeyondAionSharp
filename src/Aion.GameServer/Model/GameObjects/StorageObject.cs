@@ -18,17 +18,17 @@ public class StorageObject : UseableHouseObject<HousingStorage>
     {
         if (player.GetObjectId() != GetOwnerHouse().GetOwnerId())
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.STR_MSG_HOUSING_OBJECT_IS_ONLY_FOR_OWNER_VALID());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_IS_ONLY_FOR_OWNER_VALID());
             return;
         }
 
         if (!SetOccupant(player))
         {
-            PacketSendUtility.SendPacket(player, SmSystemMessage.STR_MSG_HOUSING_OBJECT_OCCUPIED_BY_OTHER());
+            PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_OCCUPIED_BY_OTHER());
             return;
         }
 
-        PacketSendUtility.SendPacket(player, SmSystemMessage.STR_MSG_HOUSING_OBJECT_USE(GetObjectTemplate().GetL10n()));
+        PacketSendUtility.SendPacket(player, SM_SYSTEM_MESSAGE.STR_MSG_HOUSING_OBJECT_USE(GetObjectTemplate().GetL10n()));
         PacketSendUtility.SendPacket(player, new SM_OBJECT_USE_UPDATE(player.GetObjectId(), 0, 0, this));
     }
 }

@@ -23,20 +23,20 @@ public class CosmeticItemAction : AbstractItemAction
         }
         if (!template.GetRace().Equals(player.GetRace()))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_RACE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RACE());
             return false;
         }
         if (!template.GetGenderPermitted().Equals("ALL"))
         {
             if (!player.GetGender().ToString().Equals(template.GetGenderPermitted()))
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_GENDER());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_GENDER());
                 return false;
             }
         }
         if (player.IsInPlayerMode(Aion.GameServer.Model.Actions.PlayerMode.RIDE))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_RESTRICTION_RIDE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_RESTRICTION_RIDE());
             return false;
         }
         return true;

@@ -64,9 +64,9 @@ public class GMService
     private void BroadcastConnectionStatus(Aion.GameServer.Model.GameObjects.Players.Player gm, bool connected)
     {
         string name = Aion.GameServer.Utils.ChatUtil.Name(gm);
-        Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage sysMsg = connected
-            ? Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_NOTIFY_LOGIN_BUDDY(name)
-            : Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_NOTIFY_LOGOFF_BUDDY(name);
+        Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE sysMsg = connected
+            ? Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_NOTIFY_LOGIN_BUDDY(name)
+            : Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_NOTIFY_LOGOFF_BUDDY(name);
 
         if ((connected && AdminConfig.ANNOUNCE_LOGIN_TO_ALL_PLAYERS) || (!connected && AdminConfig.ANNOUNCE_LOGOUT_TO_ALL_PLAYERS))
         {

@@ -46,46 +46,46 @@ public partial class Equipment : IPersistable
 
         if (!itemTemplate.IsClassSpecific(owner.GetPlayerClass()))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_CLASS());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_CLASS());
             return null;
         }
         // don't allow to wear items of not allowed level
         int requiredLevel = itemTemplate.GetRequiredLevel(owner.GetPlayerClass());
         if (requiredLevel == -1 || requiredLevel > owner.GetLevel())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_TOO_LOW_LEVEL_MUST_BE_THIS_LEVEL(item.GetL10n(), requiredLevel));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_TOO_LOW_LEVEL_MUST_BE_THIS_LEVEL(item.GetL10n(), requiredLevel));
             return null;
         }
 
         sbyte levelRestrict = (sbyte)itemTemplate.GetMaxLevelRestrict(owner.GetPlayerClass());
         if (levelRestrict != 0 && owner.GetLevel() > levelRestrict)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_TOO_HIGH_LEVEL(levelRestrict, itemTemplate.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_TOO_HIGH_LEVEL(levelRestrict, itemTemplate.GetL10n()));
             return null;
         }
 
         if (itemTemplate.GetRace() != Aion.GameServer.Model.Race.PC_ALL && itemTemplate.GetRace() != owner.GetRace())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_RACE());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RACE());
             return null;
         }
 
         Aion.GameServer.Model.Templates.Items.ItemUseLimits limits = itemTemplate.GetUseLimits();
         if (limits.GetGenderPermitted() != null && limits.GetGenderPermitted() != owner.GetGender())
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_GENDER());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_GENDER());
             return null;
         }
 
         if (!VerifyRankLimits(item))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_CANNOT_USE_ITEM_INVALID_RANK(Aion.GameServer.Utils.Stats.AbyssRankEnumExtensions.GetRankL10n(owner.GetRace(), limits.GetMinRank())));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_CANNOT_USE_ITEM_INVALID_RANK(Aion.GameServer.Utils.Stats.AbyssRankEnumExtensions.GetRankL10n(owner.GetRace(), limits.GetMinRank())));
             return null;
         }
 
         if (!CheckInventorySlots(slot))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_UI_INVENTORY_FULL());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(owner, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_UI_INVENTORY_FULL());
             return null;
         }
 

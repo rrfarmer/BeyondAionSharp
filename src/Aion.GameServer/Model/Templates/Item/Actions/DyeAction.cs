@@ -25,19 +25,19 @@ public class DyeAction : AbstractItemAction
         HouseObject targetHouseObject = (HouseObject)@params[0];
         if (targetHouseObject == null && targetItem == null) // nothing to dye
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_COLOR_ERROR());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_ERROR());
             return false;
         }
         if (targetHouseObject != null)
         {
             if (color.Equals("no") && targetHouseObject.GetColor() == null)
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_PAINT_ERROR_CANNOTREMOVE());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_PAINT_ERROR_CANNOTREMOVE());
                 return false;
             }
             if (!targetHouseObject.GetObjectTemplate().GetCanDye())
             {
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_PAINT_ERROR_CANNOTPAINT());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_PAINT_ERROR_CANNOTPAINT());
                 return false;
             }
         }
@@ -66,12 +66,12 @@ public class DyeAction : AbstractItemAction
             targetItem.SetColorExpireTime(0);
         if (targetItem.GetItemColor() == null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_COLOR_REMOVE_SUCCEED(targetItem.GetL10n()));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_REMOVE_SUCCEED(targetItem.GetL10n()));
         }
         else
         {
             Aion.GameServer.Utils.PacketSendUtility.SendPacket(player,
-                Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_ITEM_COLOR_CHANGE_SUCCEED(targetItem.GetL10n(), parentItem.GetL10n()));
+                Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_ITEM_COLOR_CHANGE_SUCCEED(targetItem.GetL10n(), parentItem.GetL10n()));
         }
 
         // item is equipped, so need broadcast packet
@@ -109,12 +109,12 @@ public class DyeAction : AbstractItemAction
         string objectName = houseObject.GetObjectTemplate().GetL10n();
         if (houseObject.GetColor() == null)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_PAINT_REMOVE_SUCCEED(objectName));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_PAINT_REMOVE_SUCCEED(objectName));
         }
         else
         {
             string paintName = dyeItem.GetItemTemplate().GetL10n();
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_MSG_ITEM_PAINT_SUCCEED(objectName, paintName));
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_MSG_ITEM_PAINT_SUCCEED(objectName, paintName));
         }
     }
 }

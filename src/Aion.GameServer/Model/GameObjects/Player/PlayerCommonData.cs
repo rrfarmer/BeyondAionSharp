@@ -206,33 +206,33 @@ public class PlayerCommonData : Aion.GameServer.Model.GameObjects.CreatureTempla
             if (repose > 0 && salvation > 0)
             {
                 if (name != null) // You have gained %num1 XP from %0 (Energy of Repose %num2, Energy of Salvation %num3).
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP_VITAL_MAKEUP_BONUS(name, reward, repose, salvation));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP_VITAL_MAKEUP_BONUS(name, reward, repose, salvation));
                 else // You have gained %num1 XP(Energy of Repose %num2, Energy of Salvation %num3).
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP2_VITAL_MAKEUP_BONUS(reward, repose, salvation));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP2_VITAL_MAKEUP_BONUS(reward, repose, salvation));
             }
             else if (repose > 0 && salvation == 0)
             {
                 if (name != null) // You have gained %num1 XP from %0 (Energy of Repose %num2).
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP_VITAL_BONUS(name, reward, repose));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP_VITAL_BONUS(name, reward, repose));
                 else // You have gained %num1 XP(Energy of Repose %num2).
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP2_VITAL_BONUS(reward, repose));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP2_VITAL_BONUS(reward, repose));
             }
             else if (repose == 0 && salvation > 0)
             {
                 if (name != null) // You have gained %num1 XP from %0 (Energy of Salvation %num2).
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP_MAKEUP_BONUS(name, reward, salvation));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP_MAKEUP_BONUS(name, reward, salvation));
                 else // You have gained %num1 XP (Energy of Salvation %num2).
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP2_MAKEUP_BONUS(reward, salvation));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP2_MAKEUP_BONUS(reward, salvation));
             }
             else
             {
                 if (name != null) // You have gained %num1 XP from %0.
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP(name, reward));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP(name, reward));
                 else // You have gained %num1 XP.
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_GET_EXP2(reward));
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_GET_EXP2(reward));
             }
             if (GetLevel() == 9 && exp >= DataManager.PLAYER_EXPERIENCE_TABLE.GetStartExpForLevel(10))
-                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_LEVEL_LIMIT_QUEST_NOT_FINISHED1());
+                Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_LEVEL_LIMIT_QUEST_NOT_FINISHED1());
         }
     }
 

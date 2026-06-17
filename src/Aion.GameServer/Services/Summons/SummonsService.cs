@@ -20,7 +20,7 @@ public class SummonsService
     {
         if (master.GetSummon() != null)
         {
-            PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER());
+            PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER());
             return null;
         }
         Summon summon = Aion.GameServer.SpawnEngine.VisibleObjectSpawner.SpawnSummon(master, npcId, skillId, time);
@@ -78,9 +78,9 @@ public class SummonsService
                         master.SetSkillCoolDown(summoningSkill.GetCooldownId(), summoningSkill.GetCooldown() * 100 + DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
 
                     if (unsummonType == UnsummonType.DISTANCE)
-                        PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE());
+                        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_BY_TOO_DISTANCE());
                     else
-                        PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_UNSUMMONED(summon.GetL10n()));
+                        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMONED(summon.GetL10n()));
                     PacketSendUtility.SendPacket(master, new SM_SUMMON_PANEL_REMOVE(summon.GetSummonedBySkillId()));
                     PacketSendUtility.SendPacket(master, new SM_SUMMON_OWNER_REMOVE(summon.GetObjectId()));
                     if (!addedMasterHate)
@@ -108,7 +108,7 @@ public class SummonsService
                     }, TimeSpan.FromMilliseconds(5000));
                     if (unsummonType == UnsummonType.COMMAND) // make it cancelable if released by master, master hate will be added delayed
                     {
-                        PacketSendUtility.SendPacket(summon.GetMaster(), SmSystemMessage.STR_SKILL_SUMMON_UNSUMMON_FOLLOWER(summon.GetL10n()));
+                        PacketSendUtility.SendPacket(summon.GetMaster(), SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_UNSUMMON_FOLLOWER(summon.GetL10n()));
                         PacketSendUtility.SendPacket(summon.GetMaster(), new SM_SUMMON_UPDATE(summon));
                         summon.SetReleaseTask(releaseTask);
                     }
@@ -156,7 +156,7 @@ public class SummonsService
         summon.GetController().CancelCurrentSkill((Creature)null);
         summon.SetMode(SummonMode.REST);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
-        PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_REST_MODE(summon.GetL10n()));
+        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_REST_MODE(summon.GetL10n()));
         PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
         summon.GetLifeStats().TriggerRestoreTask();
     }
@@ -174,7 +174,7 @@ public class SummonsService
         summon.GetController().CancelCurrentSkill((Creature)null);
         summon.SetMode(SummonMode.GUARD);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
-        PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_GUARD_MODE(summon.GetL10n()));
+        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_GUARD_MODE(summon.GetL10n()));
         PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
         summon.GetLifeStats().TriggerRestoreTask();
     }
@@ -184,7 +184,7 @@ public class SummonsService
     {
         summon.SetMode(SummonMode.ATTACK);
         Aion.GameServer.Model.GameObjects.Players.Player master = summon.GetMaster();
-        PacketSendUtility.SendPacket(master, SmSystemMessage.STR_SKILL_SUMMON_ATTACK_MODE(summon.GetL10n()));
+        PacketSendUtility.SendPacket(master, SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_ATTACK_MODE(summon.GetL10n()));
         PacketSendUtility.SendPacket(master, new SM_SUMMON_UPDATE(summon));
         summon.GetLifeStats().CancelRestoreTask();
     }

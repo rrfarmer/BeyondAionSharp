@@ -27,7 +27,7 @@ public class SkillUseAction : AbstractItemAction
     {
         if (mapid != 0 && player.GetWorldId() != mapid)
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_CAN_NOT_USE_ITEM_IN_CURRENT_POSITION());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_USE_ITEM_IN_CURRENT_POSITION());
             return false;
         }
         Aion.GameServer.SkillEngine.Model.Skill skill = Aion.GameServer.SkillEngine.SkillEngine.GetInstance().GetSkill(player, skillid, level, player.GetTarget(), parentItem.GetItemTemplate());
@@ -40,12 +40,12 @@ public class SkillUseAction : AbstractItemAction
             {
                 if (player.IsTransformed() && template is Aion.GameServer.SkillEngine.Effects.TransformEffect) // Cant use transform items while already transformed
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_CAN_NOT_CAST_IN_SHAPECHANGE());
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SKILL_CAN_NOT_CAST_IN_SHAPECHANGE());
                     return false;
                 }
                 if (player.GetSummon() != null && template is Aion.GameServer.SkillEngine.Effects.SummonEffect)
                 {
-                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER());
+                    Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_SKILL_SUMMON_ALREADY_HAVE_A_FOLLOWER());
                     return false;
                 }
             }
@@ -54,7 +54,7 @@ public class SkillUseAction : AbstractItemAction
             return false;
         if (Aion.GameServer.Configs.Main.CustomConfig.IGNORE_POTIONS_AT_FULL_HEALTH && IsIneffectiveHealSkill(effects, skill.GetEffectedList()))
         {
-            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SmSystemMessage.STR_NOTHING_HAPPEN());
+            Aion.GameServer.Utils.PacketSendUtility.SendPacket(player, Aion.GameServer.Network.Aion.ServerPackets.SM_SYSTEM_MESSAGE.STR_NOTHING_HAPPEN());
             return false;
         }
         return true;

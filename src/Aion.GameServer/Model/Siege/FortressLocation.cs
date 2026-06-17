@@ -82,12 +82,12 @@ public class FortressLocation : SiegeLocation
                             if (creature.GetRace() == Race.ELYOS)
                             {
                                 PacketSendUtility.SendPacket((Player) creature, siegeBuffAction == SiegeBuffAction.LEAVE_ZONE_REMOVE ?
-                                        SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_LIGHT_GET_OUT_AREA() : SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_LIGHT_MIST_OFF());
+                                        SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_LIGHT_GET_OUT_AREA() : SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_LIGHT_MIST_OFF());
                             }
                             else
                             {
                                 PacketSendUtility.SendPacket((Player) creature, siegeBuffAction == SiegeBuffAction.LEAVE_ZONE_REMOVE ?
-                                        SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_DARK_GET_OUT_AREA() : SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_DARK_MIST_OFF());
+                                        SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_DARK_GET_OUT_AREA() : SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_DARK_MIST_OFF());
                             }
                             break;
                         }
@@ -100,11 +100,11 @@ public class FortressLocation : SiegeLocation
                         if (balance < 0)
                         {
                             Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(8866 + Math.Abs(balance), creature, creature);
-                            PacketSendUtility.SendPacket((Player) creature, SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_LIGHT_GAIN());
+                            PacketSendUtility.SendPacket((Player) creature, SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_LIGHT_GAIN());
                         }
                         else
                         {
-                            PacketSendUtility.SendPacket((Player) creature, SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_DARK_WARNING());
+                            PacketSendUtility.SendPacket((Player) creature, SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_DARK_WARNING());
                         }
                     }
                     else if (creature.GetRace() == Race.ASMODIANS)
@@ -112,11 +112,11 @@ public class FortressLocation : SiegeLocation
                         if (balance > 0)
                         {
                             Aion.GameServer.SkillEngine.SkillEngine.GetInstance().ApplyEffectDirectly(8875 + balance, creature, creature);
-                            PacketSendUtility.SendPacket((Player) creature, SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_DARK_GAIN());
+                            PacketSendUtility.SendPacket((Player) creature, SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_DARK_GAIN());
                         }
                         else
                         {
-                            PacketSendUtility.SendPacket((Player) creature, SmSystemMessage.STR_MSG_WEAK_RACE_BUFF_LIGHT_WARNING());
+                            PacketSendUtility.SendPacket((Player) creature, SM_SYSTEM_MESSAGE.STR_MSG_WEAK_RACE_BUFF_LIGHT_WARNING());
                         }
                     }
                     break;
