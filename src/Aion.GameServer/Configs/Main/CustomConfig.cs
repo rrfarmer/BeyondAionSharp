@@ -193,8 +193,11 @@ public static class CustomConfig
     /// <summary>Key: gameserver.pvpmap.random_boss.rate</summary>
     public static int PVP_MAP_RANDOM_BOSS_BASE_RATE = 40;
 
-    /// <summary>Key: gameserver.pvpmap.random_boss.time. Default cron: 0 30 14,18,21 ? * *</summary>
-    public static Quartz.CronExpression PVP_MAP_RANDOM_BOSS_SCHEDULE;
+    /// <summary>Key: gameserver.pvpmap.random_boss.time. Java @Property defaultValue "0 30 14,18,21 ? * *"
+    /// (CustomConfig.java:264) parsed into a CronExpression via CronExpressions.GetOrCreate — same faithful inline-default
+    /// pattern as AutoGroupConfig's CronExpression[] fields. Left null this NREs CronService.Schedule (cronExpression
+    /// .CronExpressionString) when PvpMapHandler.StartRandomBossTask schedules off it during PvpMapService.Init().</summary>
+    public static Quartz.CronExpression PVP_MAP_RANDOM_BOSS_SCHEDULE = Aion.GameServer.Services.Cron.CronExpressions.GetOrCreate("0 30 14,18,21 ? * *");
 
     /// <summary>Key: gameserver.rates.godstone.activation.rate</summary>
     public static float GODSTONE_ACTIVATION_RATE = 1.0f;

@@ -447,6 +447,44 @@ public sealed class GameServerBootstrapTests
 		Assert.True(bootstrap.IsStarted, "full DB-backed boot did not reach IsStarted");
 		Assert.True(world.IsInitialized, "world not initialized after full DB-backed boot");
 		Assert.True(world.ObjectCount > 0, $"world empty after full DB-backed boot (ObjectCount={world.ObjectCount})");
+
+		// BOOT-TAIL CLOSURE: the two GameServer.main wires deferred out of the always-on StartAsync path —
+		// SiegeService.initSieges() (main:142) and PvpMapService.init() (main:176) — are FAITHFUL DB-gated, not
+		// guarded for empty data. Java SiegeService.initSieges() runs its FULL body whenever SiegeConfig.SIEGE_ENABLED
+		// (default true): it despawns/spawns from real SIEGE_LOCATION_DATA fortress/outpost/artifact registries,
+		// schedules from the full config/schedule/siege_schedule.xml, and UpdateFortressNextState() does
+		// GetSiegeLocation(scheduledLocId).SetNextState(...) with NO null guard — so it REQUIRES populated
+		// SIEGE_LOCATION_DATA (the empty no-DB minimal fixture would NRE; adding a guard would be un-faithful).
+		// PvpMapService.init() has no config gate at all and unconditionally resolves world map 301220000 via
+		// InstanceService.GetNextAvailableInstance — it REQUIRES the populated WORLD_MAPS_DATA the real boot carries.
+		// Both run clean ONLY against real data, so the faithful home for them is this DB-backed boot, not the
+		// minimal-fixture StartAsync path. Exercise + assert them here (CWD = game-server so the siege_schedule.xml
+		// relative path resolves), proving the boot tail is closed under real data.
+		Exception? tailException = null;
+		try
+		{
+			Directory.SetCurrentDirectory(gameServerDir);
+			Aion.GameServer.Services.SiegeService.GetInstance().InitSieges();
+			Aion.GameServer.Custom.Pvpmap.PvpMapService.GetInstance().Init();
+		}
+		catch (Exception ex)
+		{
+			tailException = ex;
+		}
+		finally
+		{
+			Directory.SetCurrentDirectory(savedCwd);
+		}
+		Assert.True(tailException is null,
+			"DB-backed SiegeService.InitSieges()/PvpMapService.Init() boot-tail wires threw against real data: " +
+			(tailException is null ? "" : string.Join(" => ", Flatten(tailException).Select(e => $"{e.GetType().FullName}: {e.Message}")) +
+			Environment.NewLine + tailException));
+		Assert.True(Aion.GameServer.Configs.Main.SiegeConfig.SIEGE_ENABLED,
+			"SIEGE_ENABLED must default true (Java siege.properties gameserver.siege.enable=true) for InitSieges to run its full body");
+		// PvpMapService.Init() registered the pvp-map instance handler; GetParticipantsSize()==0 is the live-handler
+		// path (not the null-handler short-circuit) — any unported dep would have thrown into tailException above.
+		Assert.Equal(0, Aion.GameServer.Custom.Pvpmap.PvpMapService.GetInstance().GetParticipantsSize());
+
 		await bootstrap.StopAsync(cts.Token);
 		Assert.False(bootstrap.IsStarted);
 	}

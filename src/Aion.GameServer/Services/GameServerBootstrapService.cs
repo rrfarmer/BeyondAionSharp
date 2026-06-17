@@ -221,17 +221,19 @@ public sealed class GameServerBootstrapService : IHostedService
 		// is absent => no-op), the schedule files (config/schedule/{siege,world_raid}_schedule.xml) are present, and
 		// the DAO reads are DB.Select try/catch-guarded (no DB => empty + logged).
 
-		// SiegeService.getInstance().initSieges() (GameServer.main:142): DEFERRED. Its faithful 1:1 body schedules
-		// fortress sieges from the FULL real config/schedule/siege_schedule.xml (fortress IDs 1011, 1131, 2011, ...)
-		// then UpdateFortressNextState() does SiegeLocation fortress = GetSiegeLocation(scheduledLocId);
-		// fortress.SetNextState(...) with NO null guard — exactly like Java SiegeService.updateFortressNextState
-		// (no guard there either; Java is safe only because real SIEGE_LOCATION_DATA carries those fortress
-		// locations). The GameServerBootstrapTests fixture loads an EMPTY SIEGE_LOCATION_DATA (items-only static
-		// data) while siege_schedule.xml stays the full real file, so GetSiegeLocation(scheduledLocId) returns null
-		// and the faithful fortress.SetNextState NREs the bootstrap gate. This is a test-fixture data gap, NOT a
-		// port defect — initSieges is dep-clean against real SIEGE_LOCATION_DATA. Wire it once the bootstrap
-		// fixture seeds matching siege location data (or guard is added upstream faithfully). DO NOT add an
-		// un-faithful null guard solely to pass the empty-fixture gate.
+		// SiegeService.getInstance().initSieges() (GameServer.main:142): FAITHFUL DB-GATED — kept OUT of this always-on
+		// StartAsync path, exercised+asserted in the DB-backed integration test instead. Java initSieges() runs its FULL
+		// body whenever SiegeConfig.SIEGE_ENABLED (siege.properties default true): it despawns/spawns from the real
+		// SIEGE_LOCATION_DATA fortress/outpost/artifact registries, schedules sieges from the FULL real
+		// config/schedule/siege_schedule.xml (fortress IDs 1011, 1131, 2011, ...), then UpdateFortressNextState() does
+		// GetSiegeLocation(scheduledLocId).SetNextState(...) with NO null guard — exactly like Java
+		// updateFortressNextState (no guard there either; Java is safe only because real SIEGE_LOCATION_DATA carries
+		// those fortress locations). The GameServerBootstrapTests minimal fixture loads an EMPTY SIEGE_LOCATION_DATA
+		// (items-only static data) while siege_schedule.xml stays the full real file, so GetSiegeLocation returns null
+		// and the faithful fortress.SetNextState would NRE the minimal-fixture bootstrap gate. Java does NOT guard for
+		// empty data and adding a C# null guard would be UN-FAITHFUL, so the faithful home for this wire is the
+		// DB-backed boot (real SIEGE_LOCATION_DATA): GameServerBootstrapTests.GameServerBootstrap_DbBackedFullBoot_*
+		// calls InitSieges() after the clean StartAsync and asserts it completes. Proven clean against real data there.
 		// Aion.GameServer.Services.SiegeService.GetInstance().InitSieges();
 
 		// BaseService.getInstance().initBases() (GameServer.main:144): starts casual/stained/panesterra bases
@@ -349,11 +351,16 @@ public sealed class GameServerBootstrapService : IHostedService
 		// (default "*" => skip, no parsing). Dep-clean.
 		Aion.GameServer.Services.Transfers.PlayerTransferService.GetInstance();
 
-		// PvpMapService.getInstance().init() (GameServer.main:176): DEFERRED. Init() calls (unconditionally, not
-		// config-gated) InstanceService.GetNextAvailableInstance(301220000, ...) which needs world map 301220000 to
-		// exist; the bootstrap fixture loads EMPTY WORLD_MAPS_DATA, so there is no such map and the instance lookup
-		// has no WorldMap to register into (NRE risk). Test-fixture data gap — wire once the bootstrap fixture
-		// carries the pvp-map world (or guard the lookup faithfully upstream).
+		// PvpMapService.getInstance().init() (GameServer.main:176): FAITHFUL DB-GATED — kept OUT of this always-on
+		// StartAsync path, exercised+asserted in the DB-backed integration test instead. Init() calls (unconditionally,
+		// NO config gate — PVP_MAP_ENABLED is not checked here) InstanceService.GetNextAvailableInstance(301220000, ...)
+		// which needs world map 301220000 to exist; the minimal fixture loads EMPTY WORLD_MAPS_DATA so the lookup has no
+		// WorldMap to register into (NRE). Java does not guard, so the faithful home is the DB-backed boot (real
+		// WORLD_MAPS_DATA): GameServerBootstrapTests.GameServerBootstrap_DbBackedFullBoot_* calls Init() after the clean
+		// StartAsync and asserts it completes. NOTE: this surfaced a real port defect — CustomConfig.PVP_MAP_RANDOM_BOSS
+		// _SCHEDULE was left null (should carry the Java @Property defaultValue "0 30 14,18,21 ? * *"); PvpMapHandler
+		// .StartRandomBossTask schedules off it during Init() and NRE'd CronService.Schedule. Fixed faithfully (inline
+		// CronExpressions.GetOrCreate default, same pattern as AutoGroupConfig). Proven clean against real data.
 		// Aion.GameServer.Custom.Pvpmap.PvpMapService.GetInstance().Init();
 
 		// CustomInstanceService.getInstance() (GameServer.main:177): empty ctor; the LEADERBOARD_WINDOW_OBJECT_ID
