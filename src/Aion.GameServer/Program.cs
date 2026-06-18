@@ -13,6 +13,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using GameWorld = Aion.GameServer.World.World;
 
+// NOTE: the working directory is re-rooted to <repo>/game-server inside GameServerBootstrapService.StartAsync (the
+// boot entry shared by the host and the integration tests) so relative-path lookups ("./config/schedule/*.xml",
+// "./data/handlers/instance", HTMLCache "./data/static_data/HTML") resolve exactly as in Java regardless of launcher.
+
 var builder = Host.CreateDefaultBuilder(args)
 	.ConfigureAppConfiguration(
 		(hostContext, config) =>
@@ -78,6 +82,11 @@ var builder = Host.CreateDefaultBuilder(args)
 			services.AddSingleton<LimitedItemTradeSchedulerService>();
 			services.AddSingleton<Aion.GameServer.Model.GameEngine>(
 				serviceProvider => serviceProvider.GetRequiredService<LimitedItemTradeSchedulerService>());
+			// NOTE: the faithful engines (QuestEngine/AIEngine/InstanceEngine/ChatProcessor/ZoneService/GeoService)
+			// are NOT registered as DI GameEngine singletons — DI would eagerly construct them when the bootstrap's
+			// IEnumerable<GameEngine> is injected, i.e. BEFORE DataManager.RegisterInstance runs, and their
+			// ctors/holders touch DataManager. They are instead initialized inline in GameServerBootstrapService
+			// (Java parity: GameServer.main:100-101, after DataManager.getInstance()).
 			// Boot NPC spawn is the faithful SpawnEngine.SpawnAll() (Java parity: GameServer.main), invoked
 			// directly in GameServerBootstrapService after RiftService.initRiftLocations() and before
 			// initRifts(). The reworked WorldNpcSpawnService GameEngine registration was removed so EXACTLY

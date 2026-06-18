@@ -59,6 +59,17 @@ public class QuestHandlerLoader : ClassListener
         if (!clazz.IsPublic)
             return false;
 
+        // Java parity (effective): Java's scriptManager.load() only compiles the data/handlers/quest SCRIPTS, which
+        // always expose a public no-arg ctor (Java instantiates via getDeclaredConstructor().newInstance()). The
+        // data-driven TEMPLATE handlers (CraftingRewards/MonsterHunt/ItemCollecting/... : AbstractTemplateQuestHandler)
+        // have parameterized ctors and are registered separately via their *Data loaders
+        // (e.g. CraftingRewardsData -> questEngine.AddQuestHandler(new CraftingRewards(id, ...))). The C# ScriptManager
+        // scans the whole assembly (not a per-directory compile), so it also sees those template handlers; skip any
+        // AbstractQuestHandler subclass without a public parameterless ctor so we auto-register exactly the script set
+        // Java does (the templates come in through the data path, not reflection).
+        if (typeof(AbstractQuestHandler).IsAssignableFrom(clazz) && clazz.GetConstructor(Type.EmptyTypes) == null)
+            return false;
+
         return true;
     }
 }

@@ -141,14 +141,28 @@ public static class Config
     /// <summary>Java parity: loadProperties() — cascade config/{administration,main,network}/* then mygs.properties.</summary>
     private static JavaProperties LoadProperties()
     {
-        var defaults = new JavaProperties();
-        foreach (var configDir in DefaultsFolders)
+        // Resolve the real game-server/config tree by walking up from the exe output dir (mirrors
+        // GameServerOptions.FindRepoRoot), so the [Property] config loads regardless of working directory.
+        // Falls back to the DefaultsFolders relative paths (Java runtime convention: CWD = game-server).
+        string? configRoot = null;
+        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
         {
+            var candidate = System.IO.Path.Combine(dir.FullName, "game-server", "config");
+            if (System.IO.Directory.Exists(candidate)) { configRoot = candidate; break; }
+            dir = dir.Parent;
+        }
+
+        var defaults = new JavaProperties();
+        foreach (var sub in new[] { "administration", "main", "network" })
+        {
+            var configDir = configRoot != null ? System.IO.Path.Combine(configRoot, sub) : "./config/" + sub;
             log.LogInformation("Loading default configuration values from: {ConfigDir}/*", configDir);
             defaults.LoadFromDirectory(configDir, false);
         }
-        log.LogInformation("Loading: ./config/mygs.properties");
-        JavaProperties properties = JavaProperties.Load("./config/mygs.properties", defaults);
+        var mygs = configRoot != null ? System.IO.Path.Combine(configRoot, "mygs.properties") : "./config/mygs.properties";
+        log.LogInformation("Loading: {Mygs}", mygs);
+        JavaProperties properties = JavaProperties.Load(mygs, defaults);
         if (properties.Count == 0)
             log.LogInformation("No override properties found");
         return properties;

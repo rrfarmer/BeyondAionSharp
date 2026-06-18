@@ -12,6 +12,10 @@ namespace Aion.GameServer.Services;
 
 public sealed class GameServerBootstrapService : IHostedService
 {
+	// Faithful engine singletons (AIEngine/QuestEngine/...) register handlers into static maps once per process;
+	// guarded so the test host's repeated StartAsync doesn't double-register (production boots once).
+	private static bool _faithfulEnginesInitialized;
+
 	private readonly IStaticDataLoader _staticDataLoader;
 	private readonly IUsedIdRepository _usedIdRepository;
 	private readonly IDFactory _idFactory;
@@ -52,6 +56,25 @@ public sealed class GameServerBootstrapService : IHostedService
 		// Java parity: GameServer.main startup order through IDFactory, DataManager, engines, World, GameTime.
 		var stopwatch = Stopwatch.StartNew();
 		_logger.LogInformation("Starting game-server bootstrap");
+
+		// Java parity: the game server runs with its working directory at game-server/, so many subsystems use
+		// relative paths ("./config/schedule/*.xml", "./data/handlers/instance", HTMLCache "./data/static_data/HTML").
+		// When launched from the build output (VS / dotnet run) or under the test host, CWD is the bin folder. Re-root
+		// CWD to <repo>/game-server (walk up from the exe dir to the dir containing game-server/config) so those
+		// relative lookups resolve to the real data tree. AppContext.BaseDirectory-based loaders are unaffected.
+		{
+			var probe = new System.IO.DirectoryInfo(System.AppContext.BaseDirectory);
+			while (probe != null)
+			{
+				var gameServerDir = System.IO.Path.Combine(probe.FullName, "game-server");
+				if (System.IO.Directory.Exists(System.IO.Path.Combine(gameServerDir, "config")))
+				{
+					System.IO.Directory.SetCurrentDirectory(gameServerDir);
+					break;
+				}
+				probe = probe.Parent;
+			}
+		}
 
 		// Java parity: GameServer.main initUtilityServicesAndConfig initializes ThreadPoolManager.getInstance()
 		// early (before the services that schedule tasks through it: DebugService/CuringZoneService/CronJobService).
@@ -98,6 +121,14 @@ public sealed class GameServerBootstrapService : IHostedService
 		// VortexService.initVortexLocations()/WorldRaidService/RiftService.initRifts() all resolve a live
 		// CronService.getInstance(). Guard the once-only init so a re-entrant boot (test host running StartAsync
 		// repeatedly in one process) doesn't throw "already initialized".
+		// Java parity: GameServer.main calls Config.load() early (initUtilityServicesAndConfig) so every [Property]
+		// holder reflects config/*.properties + mygs.properties overrides + active-event overrides. Without this the
+		// migrated holders run on bare field-initializer defaults — e.g. CommandsConfig.ACCESS_LEVELS is empty and
+		// ChatProcessor.RegisterCommand -> ChatCommand.GetLevel() throws "Missing access level". Run here: after
+		// DataManager+World are registered above (Config.Load -> EventService.GetActiveEventConfigProperties touches
+		// EVENT_DATA) and before CronService (TIME_ZONE_ID) + the engines (ChatProcessor needs ACCESS_LEVELS).
+		Aion.GameServer.Configs.Config.Load();
+
 		if (Aion.GameServer.Services.Cron.CronService.GetInstance() == null)
 			Aion.GameServer.Services.Cron.CronService.InitSingleton(
 				typeof(Aion.GameServer.Utils.Cron.ThreadPoolManagerRunnableRunner),
@@ -112,9 +143,39 @@ public sealed class GameServerBootstrapService : IHostedService
 		// init resolve them.) Previously this block sat just before SpawnEngine.spawnAll(), i.e. AFTER the
 		// location-init cluster's spawning services (VortexService.initVortexLocations) — an ordering bug that
 		// surfaced only once the spawn path was driven with real spawn data.
-		var engineTasks = _engines.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
+		// Java parity: GameServer.main:100-101 — Stream.of(QuestEngine, AIEngine, InstanceEngine, ChatProcessor,
+		// ZoneService, GeoService).getInstance()).parallel().forEach(GameEngine::init). These faithful singletons
+		// reflection-register the [AIName]/quest/instance/zone/command handlers compiled into the assembly; their
+		// Init() MUST run here (after DataManager+World are registered above, before the location-init cluster +
+		// SpawnEngine.spawnAll) so every Npc spawned downstream resolves its AI by name via AIEngine.NewAI. They
+		// are initialized inline (not via DI _engines) because DI would construct them before DataManager is ready.
+		// These engines are process-wide singletons whose Init() reflection-registers handlers into static maps and
+		// is NOT idempotent (re-running throws "Duplicate AIs"/duplicate quest handler). Production boots once; the
+		// test host runs StartAsync repeatedly in one process, so guard with a once-flag (like the CronService guard
+		// above). Also gate on real content data being loaded: the handlers register against QUEST_DATA/NPC_DATA
+		// templates (e.g. a quest handler's Register() -> RegisterOnLevelChanged -> QUEST_DATA.GetQuestById, which is
+		// faithful and NREs if the template is absent — Java only avoids it because production data is always full).
+		// Minimal-fixture unit boots (single-item static data, empty world) thus skip content-engine init; production
+		// and real-data integration boots have full data and init once. The DI _engines re-init safely each call.
+		bool shouldInitFaithfulEngines = !_faithfulEnginesInitialized
+			&& Aion.GameServer.Dataholders.DataManager.QUEST_DATA.GetQuestTemplates().Count > 0;
+		var faithfulEngines = shouldInitFaithfulEngines
+			? new Aion.GameServer.Model.GameEngine[]
+			{
+				global::Aion.GameServer.QuestEngine.QuestEngine.GetInstance(),
+				global::Aion.GameServer.Ai.AIEngine.GetInstance(),
+				global::Aion.GameServer.Instance.InstanceEngine.GetInstance(),
+				global::Aion.GameServer.Utils.ChatHandlers.ChatProcessor.GetInstance(),
+				global::Aion.GameServer.World.Zone.ZoneService.GetInstance(),
+				global::Aion.GameServer.World.Geo.GeoService.GetInstance(),
+			}
+			: System.Array.Empty<Aion.GameServer.Model.GameEngine>();
+		var engineTasks = _engines.Concat(faithfulEngines)
+			.Select(engine => InitEngineAsync(engine, cancellationToken).AsTask()).ToArray();
 		if (engineTasks.Length > 0)
 			await Task.WhenAll(engineTasks);
+		if (shouldInitFaithfulEngines)
+			_faithfulEnginesInitialized = true;
 
 		// DropRegistrationService.getInstance() (GameServer.main:108): empty ctor (drop-table registration happens
 		// per-NPC-death at runtime via RegisterDrop). Bounded singleton touch, dep-clean.
