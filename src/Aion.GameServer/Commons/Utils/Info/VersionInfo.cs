@@ -14,6 +14,10 @@ namespace Aion.GameServer.Commons.Utils.Info;
 /// </summary>
 public sealed class VersionInfo
 {
+    // Java parity: public static final VersionInfo commons = new VersionInfo(VersionInfo.class) — the commons-jar
+    // build/version banner. Here it reflects the assembly that defines VersionInfo (Aion.GameServer).
+    public static readonly VersionInfo commons = new VersionInfo(typeof(VersionInfo));
+
     private string? source;
     private string? revision;
     private string? branch;

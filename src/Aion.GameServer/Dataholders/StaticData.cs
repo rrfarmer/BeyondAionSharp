@@ -178,6 +178,12 @@ public sealed partial class StaticData
 	// defaults so the DataManager.*_DATA accessors compile. TODO(runtime): deserialize their source XML
 	// (e.g. game-server/data/static_data/quest_data/quest_data.xml is a self-contained <quests> root) and assign here.
 	public QuestsData Quests { get; private set; } = new();
+
+	// Captured at boot by LoadLeafHoldersFromFiles so the operator-reload contract (admincommands/Reload)
+	// can re-run the relevant leaf loaders against the same source tree. Java's Reload reads the fixed
+	// "./data/static_data/..." paths directly; here the directory is whatever the loader was pointed at.
+	public string? StaticDataDirectory { get; private set; }
+
 	public TribeRelationsData TribeRelations { get; private set; } = new();
 	public WorldMapsData WorldMaps2 { get; private set; } = new();
 	public NpcShoutData NpcShouts { get; private set; } = new();
@@ -275,6 +281,7 @@ public sealed partial class StaticData
 	/// </summary>
 	public void LoadLeafHoldersFromFiles(string staticDataDirectory, Microsoft.Extensions.Logging.ILogger? logger = null)
 	{
+		StaticDataDirectory = staticDataDirectory;
 		BindPointDataDh = TryLoadHolder(BindPointDataDh, Path.Combine(staticDataDirectory, "bind_points", "bind_points.xml"), logger);
 		ChestDataDh = TryLoadHolder(ChestDataDh, Path.Combine(staticDataDirectory, "chests", "chest_templates.xml"), logger);
 		CuringObjectsDataDh = TryLoadHolder(CuringObjectsDataDh, Path.Combine(staticDataDirectory, "curing_objects", "curing_objects.xml"), logger);
@@ -533,6 +540,86 @@ public sealed partial class StaticData
 		{
 			logger?.LogError(ex, "Failed to validate decompose random reward item ids.");
 		}
+	}
+
+	// ---------------------------------------------------------------------------------------------------------
+	// Operator-reload surface (Java parity: admincommands/Reload). Java's Reload re-deserializes a fixed source
+	// XML/dir into the DataManager static field (or runs a setter on the existing holder); here the matching
+	// leaf loaders are re-run against the captured StaticDataDirectory and the *Dh slot is reassigned, so the
+	// DataManager.*_DATA accessors (which delegate to these slots) immediately reflect the reloaded data. Only
+	// the tables Java's Reload supports are exposed; each method returns the resulting holder so the handler can
+	// report its size (mirrors Java's "<n> ... loaded." messages). A null StaticDataDirectory (loader never ran)
+	// throws so a reload before boot is a hard error rather than a silent empty.
+	private string RequireStaticDataDirectory()
+		=> StaticDataDirectory ?? throw new InvalidOperationException(
+			"StaticData leaf holders were never loaded; cannot reload before boot.");
+
+	public ItemData ReloadItemData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		ItemDataDh = TryLoadHolder(new ItemData(), Path.Combine(dir, "items", "item_templates.xml"), logger);
+		ItemDataDh.Cleanup();
+		return ItemDataDh;
+	}
+
+	public SkillData ReloadSkillData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		SkillDataDh = TryLoadHolder(new SkillData(), Path.Combine(dir, "skills", "skill_templates.xml"), logger);
+		return SkillDataDh;
+	}
+
+	public QuestsData ReloadQuestData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		Quests = TryLoadHolder(new QuestsData(), Path.Combine(dir, "quest_data", "quest_data.xml"), logger);
+		return Quests;
+	}
+
+	public XMLQuests ReloadXmlQuests(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		XmlQuests = TryLoadMergedHolder<XMLQuests>(Path.Combine(dir, "quest_script_data"), (m, p) => m.MergePending(p), logger);
+		return XmlQuests;
+	}
+
+	public CustomDrop ReloadCustomDrop(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		CustomNpcDropDh = TryLoadHolder(new CustomDrop(), Path.Combine(dir, "custom_drop", "custom_drop.xml"), logger);
+		return CustomNpcDropDh;
+	}
+
+	public UpgradeArcadeData ReloadUpgradeArcadeData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		UpgradeArcade = TryLoadHolder(new UpgradeArcadeData(), Path.Combine(dir, "events", "arcadelist.xml"), logger);
+		return UpgradeArcade;
+	}
+
+	public DecomposableItemsData ReloadDecomposableItemsData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		DecomposableItemsDataDh = TryLoadDecomposableItems(Path.Combine(dir, "decomposable_items", "decomposable_items.xml"), ItemDataDh, logger);
+		return DecomposableItemsDataDh;
+	}
+
+	// NPC_SKILL and EVENT: Java builds a flat template list from the re-imported dir and calls the holder's
+	// setter (setNpcSkillTemplates / setEvents). The C# merged loader already runs the equivalent merge +
+	// AfterUnmarshal, producing a fully-built holder, so the *Dh slot is reassigned to it — the observable
+	// result (the DataManager accessor returning the freshly-indexed data) is identical to Java's setter path.
+	public NpcSkillData ReloadNpcSkillData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		NpcSkillDataDh = TryLoadMergedHolder<NpcSkillData>(Path.Combine(dir, "npc_skills"), (m, p) => m.MergePending(p), logger);
+		return NpcSkillDataDh;
+	}
+
+	public EventData ReloadEventData(Microsoft.Extensions.Logging.ILogger? logger = null)
+	{
+		var dir = RequireStaticDataDirectory();
+		Events = TryLoadMergedHolder<EventData>(Path.Combine(dir, "events", "timed_events"), (m, p) => m.MergePending(p), logger);
+		return Events;
 	}
 
 	// DECOMPOSABLE_ITEMS needs the in-progress ItemData for its children-first AfterUnmarshal (ResultedItem validates

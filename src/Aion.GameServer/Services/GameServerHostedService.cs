@@ -32,6 +32,9 @@ public sealed class GameServerHostedService : IHostedService
 		_logger.LogInformation("Starting game-server client listener on {EndPoint}", _options.ClientEndPoint);
 		// Java game server is single-threaded for read/write (NIO_READ_WRITE_THREADS must be 1).
 		_nioServer = new NioServer(1, new ServerCfg(_options.ClientEndPoint, "Aion game clients", new GameConnectionFactoryImpl()));
+		// Register the running reactor so admincommands/Debug can enumerate live client connections
+		// (Java reaches this via reflection on the static GameServer.nioServer field).
+		NioServer.RegisterInstance(_nioServer);
 		_nioServer.Connect(new ThreadPoolExecutor());
 		return Task.CompletedTask;
 	}

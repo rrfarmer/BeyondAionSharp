@@ -126,6 +126,19 @@ public sealed class DataManager
 	public static BaseData BASE_DATA => SD.BaseDataDh;
 	public static AssembledNpcsData ASSEMBLED_NPC_DATA => SD.AssembledNpcsDataDh;
 
+	// Operator-reload entrypoints (Java parity: admincommands/Reload re-deserializes DataManager.XXX_DATA from
+	// its source XML at runtime). Delegate to the bound StaticData instance so the static accessors above
+	// reflect the reloaded holders immediately.
+	public static ItemData ReloadItemData(ILogger? logger = null) => SD.ReloadItemData(logger);
+	public static SkillData ReloadSkillData(ILogger? logger = null) => SD.ReloadSkillData(logger);
+	public static QuestsData ReloadQuestData(ILogger? logger = null) => SD.ReloadQuestData(logger);
+	public static XMLQuests ReloadXmlQuests(ILogger? logger = null) => SD.ReloadXmlQuests(logger);
+	public static CustomDrop ReloadCustomDrop(ILogger? logger = null) => SD.ReloadCustomDrop(logger);
+	public static UpgradeArcadeData ReloadUpgradeArcadeData(ILogger? logger = null) => SD.ReloadUpgradeArcadeData(logger);
+	public static DecomposableItemsData ReloadDecomposableItemsData(ILogger? logger = null) => SD.ReloadDecomposableItemsData(logger);
+	public static NpcSkillData ReloadNpcSkillData(ILogger? logger = null) => SD.ReloadNpcSkillData(logger);
+	public static EventData ReloadEventData(ILogger? logger = null) => SD.ReloadEventData(logger);
+
 	public static Task<DataManager> LoadAsync(
 		string repoRoot,
 		string? cacheDirectory = null,

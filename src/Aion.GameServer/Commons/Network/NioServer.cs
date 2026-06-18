@@ -115,6 +115,24 @@ public class NioServer
         }
     }
 
+    /// <summary>
+    /// Java parity (idiomatic-infra): admincommands/Debug reaches the live game-client connections by reflecting
+    /// the static GameServer.nioServer field and walking its read-write dispatcher selector keys. The C# reactor
+    /// holds the NioServer privately in <see cref="Aion.GameServer.Services.GameServerHostedService"/>, so the
+    /// same observable enumeration (every <see cref="AConnection"/> attached to a live selection key) is exposed
+    /// publicly here; the equivalent of the reflective field access is the static singleton bridge below
+    /// (gameplay-faithful-infra-idiomatic). The result mirrors Java's selector().keys() attachment filter.
+    /// </summary>
+    public HashSet<AConnection> GetAllConnections() => FindAllConnections();
+
+    // Singleton bridge: the running NioServer instance registers itself at boot so the Debug admin command can
+    // enumerate connections without a static field (mirrors Java's reflective GameServer.nioServer access).
+    private static NioServer? _instance;
+
+    public static void RegisterInstance(NioServer instance) => _instance = instance;
+
+    public static NioServer? GetRegisteredInstance() => _instance;
+
     private HashSet<AConnection> FindAllConnections()
     {
         HashSet<AConnection> activeConnections = new HashSet<AConnection>();
