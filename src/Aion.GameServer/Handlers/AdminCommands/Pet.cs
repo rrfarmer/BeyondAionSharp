@@ -21,7 +21,7 @@ public class Pet : AdminCommand
             "<del> <pet id> - Deletes the pet with the specified ID.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

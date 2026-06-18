@@ -13,7 +13,7 @@ public class Teleportation : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (admin.IsInCustomState(CustomPlayerState.TELEPORTATION_MODE))
             admin.UnsetCustomState(CustomPlayerState.TELEPORTATION_MODE);

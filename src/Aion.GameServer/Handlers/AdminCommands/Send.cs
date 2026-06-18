@@ -25,7 +25,7 @@ public class Send : AdminCommand
         SetSyntaxInfo("<file> - Sends packets to your client, based on the ./data/packets/<file>.xml template.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

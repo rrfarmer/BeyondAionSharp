@@ -12,7 +12,7 @@ public class Partyrecall : ConsoleCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         PacketSendUtility.SendMessage(admin, "Command not implemented.");
         return;

@@ -17,7 +17,7 @@ public class Gag : AdminCommand
             "<player> <remove> - Removes the chat ban of this player.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

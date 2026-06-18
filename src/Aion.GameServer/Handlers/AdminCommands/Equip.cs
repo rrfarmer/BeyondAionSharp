@@ -27,7 +27,7 @@ public class Equip : AdminCommand
             "temper <0-255> [player] - Temper all equipped items of your target or the given player.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

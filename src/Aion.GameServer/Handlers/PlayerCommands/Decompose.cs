@@ -23,7 +23,7 @@ public class Decompose : PlayerCommand
         SetSyntaxInfo("<item> [count] - Decomposes the specified item (default: all, optional: number of items to decompose).");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

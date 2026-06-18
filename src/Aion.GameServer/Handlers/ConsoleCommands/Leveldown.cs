@@ -16,7 +16,7 @@ public class Leveldown : ConsoleCommand
         SetSyntaxInfo("<value> - Levels your target down by the specified number of levels.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

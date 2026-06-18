@@ -14,7 +14,7 @@ public class Resurrect : ConsoleCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         VisibleObject candidate = admin.IsDead() ? admin : admin.GetTarget();
         if (candidate is not Player player)

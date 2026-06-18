@@ -12,7 +12,7 @@ public class Dispel : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         VisibleObject target = admin.GetTarget();
         if (target == null)

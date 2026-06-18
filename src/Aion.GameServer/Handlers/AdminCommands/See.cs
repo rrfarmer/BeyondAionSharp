@@ -14,7 +14,7 @@ public class See : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (admin.GetSeeState() < 2)
         {

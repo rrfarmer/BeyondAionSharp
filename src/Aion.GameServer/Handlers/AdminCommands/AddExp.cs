@@ -13,7 +13,7 @@ public class AddExp : AdminCommand
         SetSyntaxInfo("<exp> - The experience points to add (may be negative).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

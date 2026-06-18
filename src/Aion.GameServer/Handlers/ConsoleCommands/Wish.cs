@@ -34,7 +34,7 @@ public class Wish : ConsoleCommand
             "<item name> <enchant> - Adds the specified item with the enchant level to your target.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

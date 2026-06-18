@@ -16,7 +16,7 @@ public class Skill : ConsoleCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         Player target = null;
         if (paramsArr.Length > 0)

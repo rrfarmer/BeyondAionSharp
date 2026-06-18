@@ -18,7 +18,7 @@ public class RelinquishCraft : AdminCommand
             "<name> <skillId> <expert|master> - Removes the players master or expert status for the given crafting skill.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 2)
         {

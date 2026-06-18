@@ -25,7 +25,7 @@ public class Id : PlayerCommand
             "<item|quest> - Shows the ID of the specified item or quest.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         VisibleObject target = player.GetTarget();
 

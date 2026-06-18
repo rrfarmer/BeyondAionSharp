@@ -13,7 +13,7 @@ public class MovePlayerToPlayer : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr == null || paramsArr.Length < 2)
         {

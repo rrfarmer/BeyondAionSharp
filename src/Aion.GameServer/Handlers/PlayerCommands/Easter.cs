@@ -47,7 +47,7 @@ public class Easter : PlayerCommand
             "[10] - (" + rewards[9][0] + " eggs) " + ChatUtil.Item(rewards[9][1]));
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

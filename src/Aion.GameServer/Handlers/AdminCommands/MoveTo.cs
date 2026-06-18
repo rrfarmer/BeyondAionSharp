@@ -25,7 +25,7 @@ public class MoveTo : AdminCommand
             "<npc name|ID> - Moves you to the position of the npc.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         string errorMsg = null;
 

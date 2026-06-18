@@ -18,7 +18,7 @@ public class Speed : AdminCommand, IStatOwner
         SetSyntaxInfo("<0-100> - Set your speed to the specified value (0 to reset).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

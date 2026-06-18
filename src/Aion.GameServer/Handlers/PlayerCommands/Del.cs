@@ -14,7 +14,7 @@ public class Del : PlayerCommand
         SetSyntaxInfo("<item link|ID> [count] - Removes item(s) with the specified name/ID (default: 1, optional: number of items to delete).");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

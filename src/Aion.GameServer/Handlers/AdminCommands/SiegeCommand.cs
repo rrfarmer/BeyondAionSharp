@@ -27,7 +27,7 @@ public class SiegeCommand : AdminCommand
         );
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         switch (paramsArr.Length == 0 ? "" : paramsArr[0].ToLower())
         {

@@ -14,7 +14,7 @@ public class Online : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         int elyosCount = 0;
         int asmoCount = 0;

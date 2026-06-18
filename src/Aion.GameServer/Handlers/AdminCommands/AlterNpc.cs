@@ -27,7 +27,7 @@ public class AlterNpc : AdminCommand
             "<change> [stat] [value] - Changes the respective stat to given value.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

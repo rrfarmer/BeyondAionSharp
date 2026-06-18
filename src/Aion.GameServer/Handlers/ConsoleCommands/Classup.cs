@@ -18,7 +18,7 @@ public class Classup : ConsoleCommand
         SetSyntaxInfo("<class> - Promotes your characters class to the one specified.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

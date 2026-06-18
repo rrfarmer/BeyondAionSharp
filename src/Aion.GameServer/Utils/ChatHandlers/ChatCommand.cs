@@ -82,7 +82,7 @@ public abstract class ChatCommand
         this.syntaxInfo = ParseSyntaxInfo(lines);
     }
 
-    public string GetSyntaxInfo()
+    public virtual string GetSyntaxInfo()
     {
         if (syntaxInfo == null) // init default info if handler did not set any syntax info
             SetSyntaxInfo();
@@ -137,7 +137,8 @@ public abstract class ChatCommand
     internal abstract bool Process(Player player, params string[] paramsArr);
 
     /// <summary>Code executed after successful access validation; ArgumentException is caught and the message printed to the player.</summary>
-    protected abstract void Execute(Player player, params string[] paramsArr);
+    /// <remarks>Java parity: declared <c>protected abstract</c> in ChatCommand, but GoTo widens its override to <c>public</c> so cross-package wrappers (Teleportto) can call <c>getCommand(GoTo.class).execute(...)</c>. C# cannot widen visibility on an override, so the base contract is public to permit the same cross-command dispatch.</remarks>
+    public abstract void Execute(Player player, params string[] paramsArr);
 
     /// <summary>Override if the default message extraction is not sufficient. Null sends default syntax info.</summary>
     protected string ToErrorMessage(ArgumentException e)

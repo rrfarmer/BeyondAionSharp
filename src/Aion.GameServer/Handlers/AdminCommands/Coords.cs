@@ -13,7 +13,7 @@ public class Coords : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         VisibleObject target = admin.GetTarget() == null ? admin : admin.GetTarget();
         SendInfo(admin, ChatUtil.Capitalize(target.Name) + "'s position:\n" + target.GetPosition().ToCoordString());

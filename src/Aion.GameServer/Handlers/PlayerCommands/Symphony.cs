@@ -49,7 +49,7 @@ public class Symphony : PlayerCommand
             "[13] - (" + rewards[12][0] + " copies): " + rewards[12][2] + "x " + ChatUtil.Item(rewards[12][1]));
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

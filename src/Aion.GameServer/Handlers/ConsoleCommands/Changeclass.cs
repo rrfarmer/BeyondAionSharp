@@ -18,7 +18,7 @@ public class Changeclass : ConsoleCommand
         SetSyntaxInfo("<class> - Changes your characters class to the one specified.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

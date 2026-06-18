@@ -21,7 +21,7 @@ public class UseSkill : AdminCommand
             "<me|self|target> <id> [lvl] [f] - Lets your target use the skill on you, itself or its target (f = force use).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

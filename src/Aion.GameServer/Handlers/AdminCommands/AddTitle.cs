@@ -18,7 +18,7 @@ public class AddTitle : AdminCommand
         SetSyntaxInfo("<titleId> [playerName] - Adds the title to your target or the specified player.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length < 1 || paramsArr.Length > 2)
         {

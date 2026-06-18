@@ -16,7 +16,7 @@ public class Help : PlayerCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         List<ChatCommand> allowedCommands = FindAllowedCommands(player);
 

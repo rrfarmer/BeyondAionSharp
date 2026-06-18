@@ -13,7 +13,7 @@ public class Nomorph : PlayerCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (player.GetTransformModel().GetEventModelId() == player.GetObjectTemplate().GetTemplateId())
         {

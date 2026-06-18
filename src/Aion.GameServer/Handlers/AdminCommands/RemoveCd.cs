@@ -22,7 +22,7 @@ public class RemoveCd : AdminCommand
             "<instance> <all|worldId> - Removes specified instance cd(s) of your target.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         VisibleObject target = admin.GetTarget();
         if (target == null)

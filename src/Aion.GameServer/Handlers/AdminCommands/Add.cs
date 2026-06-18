@@ -23,7 +23,7 @@ public class Add : AdminCommand
             "<player> <item link|ID> [count] - Adds the specified item(s) to the player's inventory.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

@@ -24,7 +24,7 @@ public class Stat : AdminCommand
             "<abs> <stat set id|cancel> - Apply fixed stats of the given stats_set ID from absolute_stats.xml or cancel them.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

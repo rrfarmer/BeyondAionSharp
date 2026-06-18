@@ -13,7 +13,7 @@ public class NoExp : PlayerCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         PlayerCommonData pcd = player.GetCommonData();
 

@@ -14,7 +14,7 @@ public class Ranking : AdminCommand
         SetSyntaxInfo("<update> - Runs the daily Abyss rank update task.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 1 && "update".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
             AbyssRankUpdateService.PerformUpdate();

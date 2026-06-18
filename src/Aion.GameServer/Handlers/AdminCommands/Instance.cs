@@ -22,7 +22,7 @@ public class Instance : AdminCommand
         );
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length < 2)
         {

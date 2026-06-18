@@ -33,7 +33,7 @@ public class Reload : AdminCommand
             "<items|customdrops|gameshop> - Reloads the specified data.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

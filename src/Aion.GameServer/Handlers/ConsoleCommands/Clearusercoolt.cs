@@ -15,7 +15,7 @@ public class Clearusercoolt : ConsoleCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         string playerName = ChatUtil.GetRealCharName(paramsArr[0], true);
         Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(playerName);

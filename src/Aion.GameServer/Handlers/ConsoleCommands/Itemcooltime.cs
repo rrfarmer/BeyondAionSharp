@@ -15,7 +15,7 @@ public class Itemcooltime : ConsoleCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (player.GetItemCoolDowns() != null)
         {

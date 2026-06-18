@@ -16,7 +16,7 @@ public class BanHdd : AdminCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         try
         {

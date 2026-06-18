@@ -16,7 +16,7 @@ public class Deletecquest : ConsoleCommand
         SetSyntaxInfo("<3> <quest> - Deletes the quest from the targets quest list.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

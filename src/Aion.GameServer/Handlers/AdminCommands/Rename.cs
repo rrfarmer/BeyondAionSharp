@@ -22,7 +22,7 @@ public class Rename : AdminCommand
             "<player name> <new name> [f] - Renames the given player (f = force rename, ignoring reserved names).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

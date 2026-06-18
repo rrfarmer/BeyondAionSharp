@@ -18,7 +18,7 @@ public class MoveToMe : AdminCommand
             "<name> <(g)rp|(a)lli> - Teleports either the players group or his alliance including him.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

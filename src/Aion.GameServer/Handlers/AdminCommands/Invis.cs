@@ -17,7 +17,7 @@ public class Invis : AdminCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (!player.IsInVisualState(CreatureVisualState.HIDE20))
         {

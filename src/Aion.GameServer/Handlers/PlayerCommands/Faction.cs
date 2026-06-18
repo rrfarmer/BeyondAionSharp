@@ -20,7 +20,7 @@ public class Faction : PlayerCommand
         SetSyntaxInfo("<message> - Sends the message to all players of your faction." + priceInfo);
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (!CustomConfig.FACTION_CMD_CHANNEL)
         {

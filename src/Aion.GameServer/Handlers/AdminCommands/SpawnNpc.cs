@@ -24,7 +24,7 @@ public class SpawnNpc : AdminCommand
             "<item link|ID> - Spawns the house object from given item link or ID.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length < 1)
         {

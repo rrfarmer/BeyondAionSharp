@@ -25,7 +25,7 @@ public class Heal : AdminCommand
             "<number%> - Heals your targets HP by given percentage.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         VisibleObject target = player.GetTarget();
         if (!(target is Creature))

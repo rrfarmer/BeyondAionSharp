@@ -15,7 +15,7 @@ public class Guild : ConsoleCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         Player target = paramsArr.Length > 0 ? Aion.GameServer.World.World.GetInstance().GetPlayer(paramsArr[0]) : null;
         if (target != null)

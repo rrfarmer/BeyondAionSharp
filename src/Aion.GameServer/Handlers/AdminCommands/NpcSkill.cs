@@ -16,7 +16,7 @@ public class NpcSkill : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         Npc target = null;
         VisibleObject creature = admin.GetTarget();

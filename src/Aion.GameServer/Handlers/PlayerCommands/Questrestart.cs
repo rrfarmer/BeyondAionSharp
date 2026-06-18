@@ -15,7 +15,7 @@ public class Questrestart : PlayerCommand
         SetSyntaxInfo("<quest link|ID> - Restarts the specified quest.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

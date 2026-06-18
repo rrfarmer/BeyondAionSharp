@@ -53,7 +53,7 @@ public class Buy : PlayerCommand
         AddReward(188053109, 1, 2500); // Ahserion's Equipment Chest
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
             ShowRewards(player);

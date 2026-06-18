@@ -26,7 +26,7 @@ public class WorldRaid : AdminCommand
             "stop <location_id> - Stops the world raid for the given location");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (!EventsConfig.ENABLE_WORLDRAID)
         {

@@ -18,7 +18,7 @@ public class Advent : PlayerCommand
             "get - Gets your reward for today on this character.\n" + ChatUtil.Color("ATTENTION:", Color.Pink) + " Only one character per account can receive this reward!");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length != 1)
             SendInfo(player);

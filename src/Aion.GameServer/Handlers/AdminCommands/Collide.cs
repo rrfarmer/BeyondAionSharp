@@ -24,7 +24,7 @@ public class Collide : AdminCommand
         );
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         bool isMe = false;
         if (paramsArr.Length > 0 && !(isMe = "me".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase)))

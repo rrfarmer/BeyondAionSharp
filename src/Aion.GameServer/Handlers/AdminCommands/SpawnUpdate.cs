@@ -24,7 +24,7 @@ public class SpawnUpdate : AdminCommand
             "<w> [walker_id] - Set walker data of the selected npc (default: remove walker data, optional: set walker id to npc).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

@@ -18,7 +18,7 @@ public class Endquest : ConsoleCommand
         SetSyntaxInfo("<quest> - Completes the specified quest (without giving rewards).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

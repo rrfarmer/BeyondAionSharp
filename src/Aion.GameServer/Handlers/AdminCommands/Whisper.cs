@@ -13,7 +13,7 @@ public class Whisper : AdminCommand
         SetSyntaxInfo("<on|off> - Enable or disable whispers from others (GMs can always whisper you).");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

@@ -14,7 +14,7 @@ public class GmList : PlayerCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         StringBuilder sb = new StringBuilder();
         int count = 0;

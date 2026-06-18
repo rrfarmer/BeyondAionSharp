@@ -22,7 +22,7 @@ public class PlayerInfo : AdminCommand
         SetSyntaxInfo("<player name> <loc|item|group|skills|legion|ap|chars|knownlist>");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

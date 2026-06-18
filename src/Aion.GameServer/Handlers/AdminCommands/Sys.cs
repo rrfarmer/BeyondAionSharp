@@ -29,7 +29,7 @@ public class Sys : AdminCommand
             "<restart|shutdown> [delay] - Restarts or shuts down the server after the specified delay in seconds (default: uses delay from config).");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr == null || paramsArr.Length < 1)
         {

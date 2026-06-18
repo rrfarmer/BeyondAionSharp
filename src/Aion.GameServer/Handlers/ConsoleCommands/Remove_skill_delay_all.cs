@@ -12,7 +12,7 @@ public class Remove_skill_delay_all : ConsoleCommand
         SetSyntaxInfo("<1|0> - Enable or disable skill cooldowns.");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         if (paramsArr.Length == 0)
         {

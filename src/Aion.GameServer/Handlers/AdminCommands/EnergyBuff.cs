@@ -14,7 +14,7 @@ public class EnergyBuff : AdminCommand
     {
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         VisibleObject target = player.GetTarget();
         if (target == null)

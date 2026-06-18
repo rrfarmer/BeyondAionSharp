@@ -11,7 +11,7 @@ public class ChangeRace : AdminCommand
     {
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         admin.GetCommonData().SetRace(admin.GetOppositeRace());
         admin.GetController().OnChangedPlayerAttributes();

@@ -25,7 +25,7 @@ public class State : AdminCommand
             "list - Shows possible state names and ID. Add ID values together to add or remove multiple states at once.");
     }
 
-    protected override void Execute(Player admin, params string[] paramsArr)
+    public override void Execute(Player admin, params string[] paramsArr)
     {
         VisibleObject target = admin.GetTarget();
         if (target == null)

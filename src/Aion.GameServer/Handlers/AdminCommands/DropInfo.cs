@@ -22,7 +22,7 @@ public class DropInfo : AdminCommand
         SetSyntaxInfo("[all] - Lists drops of the selected npc (default: only drops for your level range, optional: all possible drops).");
     }
 
-    protected override void Execute(Player player, params string[] paramsArr)
+    public override void Execute(Player player, params string[] paramsArr)
     {
         VisibleObject visibleObject = player.GetTarget();
 
