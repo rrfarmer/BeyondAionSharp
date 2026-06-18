@@ -125,11 +125,6 @@ public static class PositionUtil
 
     // TODO-backlog F2: isBehind(VisibleObject, VisibleObject[, float]) — needs VisibleObject
     // TODO-backlog F2: isInFrontOf(VisibleObject, VisibleObject[, float]) — needs VisibleObject
-    // TODO-backlog F2: calculateAngleTowards(VisibleObject, VisibleObject) — needs VisibleObject
-    // TODO-backlog F2: calculateAngleFrom(VisibleObject, VisibleObject) — needs VisibleObject
-    // TODO-backlog F2: getHeadingTowards(VisibleObject, float, float) — needs VisibleObject
-    // TODO-backlog F2: getHeadingTowards(VisibleObject, VisibleObject) — needs VisibleObject
-    // TODO-backlog F2: getDirectionalBound(VisibleObject, VisibleObject[, boolean]) — needs VisibleObject.getObjectTemplate().getBoundRadius()
     // Java parity: getDistance(VisibleObject, float, float, float)
     public static double GetDistance(VisibleObject obj, float x, float y, float z) =>
         GetDistance(obj.GetX(), obj.GetY(), obj.GetZ(), x, y, z);
@@ -188,6 +183,28 @@ public static class PositionUtil
     // Java parity: calculateAngleFrom(VisibleObject, VisibleObject)
     public static float CalculateAngleFrom(VisibleObject obj1, VisibleObject obj2) =>
         CalculateAngleFrom(obj1.GetX(), obj1.GetY(), obj2.GetX(), obj2.GetY());
+
+    // Java parity: calculateAngleTowards(VisibleObject, VisibleObject)
+    public static float CalculateAngleTowards(VisibleObject obj, VisibleObject target) =>
+        CalculateAngleTowards(obj.GetX(), obj.GetY(), obj.GetHeading(), target.GetX(), target.GetY());
+
+    // Java parity: getDirectionalBound(VisibleObject, VisibleObject, boolean inverseTarget)
+    public static float GetDirectionalBound(VisibleObject object1, VisibleObject object2, bool inverseTarget)
+    {
+        float angle = 90 - (inverseTarget ? CalculateAngleTowards(object2, object1) : CalculateAngleTowards(object1, object2));
+        double radians = angle * (Math.PI / 180.0);
+        float x1 = (float)(object1.GetX() + object1.GetObjectTemplate().GetBoundRadius().GetSide() * Math.Cos(radians));
+        float y1 = (float)(object1.GetY() + object1.GetObjectTemplate().GetBoundRadius().GetFront() * Math.Sin(radians));
+        float x2 = (float)(object2.GetX() + object2.GetObjectTemplate().GetBoundRadius().GetSide() * Math.Cos(Math.PI + radians));
+        float y2 = (float)(object2.GetY() + object2.GetObjectTemplate().GetBoundRadius().GetFront() * Math.Sin(Math.PI + radians));
+        float bound1 = (float)GetDistance(object1.GetX(), object1.GetY(), x1, y1);
+        float bound2 = (float)GetDistance(object2.GetX(), object2.GetY(), x2, y2);
+        return bound1 - bound2;
+    }
+
+    // Java parity: getDirectionalBound(VisibleObject, VisibleObject)
+    public static float GetDirectionalBound(VisibleObject object1, VisibleObject object2) =>
+        GetDirectionalBound(object1, object2, false);
 
     // Java parity: checkAngleDiff(float, float, float)
     private static bool CheckAngleDiff(float angle1, float angle2, float maxAngleDiff)
