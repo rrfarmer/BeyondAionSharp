@@ -101,6 +101,20 @@ public sealed class GameServerBootstrapService : IHostedService
 		// Java parity: DataManager static accessors (DataManager.ITEM_DATA, ...) read through the
 		// instance singleton; bind it before any engine InitAsync touches a DataManager.* accessor.
 		Aion.GameServer.Dataholders.DataManager.RegisterInstance(dataManager);
+
+		// Java parity: DataManager.init() runs DecomposeAction.validateRandomItemIds() AFTER the holders are wired
+		// (it reads the DataManager.ITEM_DATA bridge). Must run here, after RegisterInstance — not inside
+		// StaticData.LoadLeafHoldersFromFiles, where the bridge isn't bound yet ("DataManager singleton bridge not
+		// initialized"). try/catch keeps a bad/absent reward id non-fatal at boot.
+		try
+		{
+			Aion.GameServer.Model.Templates.Items.Actions.DecomposeAction.ValidateRandomItemIds();
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "Failed to validate decompose random reward item ids.");
+		}
+
 		_logger.LogInformation(
 			"Static data cache loaded from {CacheFile}; {Count} XML files imported",
 			dataManager.StaticData.CacheFilePath,

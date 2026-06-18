@@ -529,17 +529,10 @@ public sealed partial class StaticData
 		{
 			logger?.LogError(ex, "Failed to process global drop rules (gd_npc_names expansion).");
 		}
-		try
-		{
-			// Java parity: DataManager.init() calls DecomposeAction.validateRandomItemIds() after field assignment —
-			// validates the hardcoded random-reward item-id arrays (chunkEarth/chunkSand/chunkRock/...) against the
-			// live ITEM_DATA. Independent of the DECOMPOSABLE holder; throws on an invalid id exactly as Java.
-			Model.Templates.Items.Actions.DecomposeAction.ValidateRandomItemIds();
-		}
-		catch (Exception ex)
-		{
-			logger?.LogError(ex, "Failed to validate decompose random reward item ids.");
-		}
+		// Java parity: DataManager.init() calls DecomposeAction.validateRandomItemIds() AFTER the holders are wired
+		// into the DataManager bridge — so it runs in GameServerBootstrapService right after
+		// DataManager.RegisterInstance, NOT here (the bridge isn't bound during leaf-holder load, which produced the
+		// "DataManager singleton bridge not initialized" error reading DataManager.ITEM_DATA).
 	}
 
 	// ---------------------------------------------------------------------------------------------------------
