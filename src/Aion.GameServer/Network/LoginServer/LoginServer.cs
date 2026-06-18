@@ -3,7 +3,9 @@ using System.Collections.Concurrent;
 using System.Net.Sockets;
 using Aion.Commons.Network;
 using Aion.GameServer.Configuration;
+using Aion.GameServer.Configs.Main;
 using Aion.GameServer.Data;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Network.LoginServer.ServerPackets;
 using Microsoft.Extensions.Logging;
 
@@ -19,6 +21,8 @@ public sealed class LoginServer : IAsyncDisposable
 	private readonly ConcurrentDictionary<int, TaskCompletionSource<AccountAuthResult>> _pendingAccountAuthRequests = new();
 	// Java parity: network/loginserver/LoginServer.loginRequests (Map<Integer, LoginRequest>).
 	private readonly ConcurrentDictionary<int, LoginRequest> _loginRequests = new();
+	// Java parity: network/loginserver/LoginServer.loggedInAccounts (Map<Integer, AionConnection>).
+	private readonly ConcurrentDictionary<int, global::Aion.GameServer.Network.Aion.AionConnection> _loggedInAccounts = new();
 	private TcpClient? _client;
 	private NetworkStream? _stream;
 	private Task? _readerTask;
@@ -109,6 +113,78 @@ public sealed class LoginServer : IAsyncDisposable
 		}
 	}
 
+	// Java parity: network/loginserver/LoginServer.accountAuthenticationResponse(...). Called by CM_ACOUNT_AUTH_RESPONSE
+	// to notify the GameServer of the result of client authentication; completes the client (loginRequests) path.
+	public void AccountAuthenticationResponse(int accountId, string accountName, bool result, long creationDate,
+		global::Aion.GameServer.Model.Account.AccountTime accountTime, sbyte accessLevel, sbyte membership, long toll, string allowedHddSerial)
+	{
+		if (!_loginRequests.TryRemove(accountId, out var loginRequest))
+			return;
+
+		var client = loginRequest.Connection;
+		if (!result || !ValidateMacAndHddSerial(client, allowedHddSerial))
+		{
+			client.Close(new SM_L2AUTH_LOGIN_CHECK(false, accountName)); // LS sends no accName when result is false
+			SendPacket(new SmAccountDisconnected(accountId)); // disconnect manually from login server because account isn't attached to connection yet
+			return;
+		}
+
+		var account = global::Aion.GameServer.Services.AccountService.GetAccount(accountId, accountName, creationDate, accountTime, accessLevel, membership, toll, allowedHddSerial);
+		if (SecurityConfig.HDD_SERIAL_LOCK_UNLOCKED_ACCOUNTS && account.GetAllowedHddSerial().Length == 0 && client.GetHddSerial().Length != 0)
+		{
+			account.SetAllowedHddSerial(client.GetHddSerial());
+			SendPacket(new SM_CHANGE_ALLOWED_HDD_SERIAL(account));
+		}
+		KickOnlineCharacters(account);
+		client.SetAccount(account);
+		client.SetState(global::Aion.GameServer.Network.Aion.AionConnection.State.AUTHED);
+		_loggedInAccounts[accountId] = client;
+		_logger.LogInformation("{Account} authed with MAC: {Mac} and HDD serial: {Hdd}", account, client.GetMacAddress(), client.GetHddSerial());
+		client.SendPacket(new SM_L2AUTH_LOGIN_CHECK(true, accountName));
+		SendPacket(new SmAccountConnectionInfo(account.GetId(), DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), client.GetIP(), client.GetMacAddress(), client.GetHddSerial()));
+	}
+
+	// Java parity: network/loginserver/LoginServer.validateMacAndHddSerial(AionConnection, String).
+	private bool ValidateMacAndHddSerial(global::Aion.GameServer.Network.Aion.AionConnection client, string allowedHddSerial)
+	{
+		if (!System.Text.RegularExpressions.Regex.IsMatch(client.GetMacAddress() ?? string.Empty, "^([0-9A-F]{2}-){5}[0-9A-F]{2}$"))
+		{
+			_logger.LogWarning("{Client} sent an invalid MAC address (modified client or hack): {Mac}", client, client.GetMacAddress());
+			return false;
+		}
+		else if (global::Aion.GameServer.Network.BannedMacManager.GetInstance().IsBanned(client.GetMacAddress()))
+		{
+			_logger.LogInformation("{Client} was kicked due to mac ban", client);
+			return false;
+		}
+		else if (global::Aion.GameServer.Services.Ban.HDDBanService.GetInstance().IsBanned(client.GetHddSerial()))
+		{
+			_logger.LogInformation("{Client} was kicked because hdd serial {Hdd} is banned", client, client.GetHddSerial());
+			return false;
+		}
+		else if (SecurityConfig.HDD_SERIAL_LOCK_ENABLE && allowedHddSerial.Length != 0 && !allowedHddSerial.Equals(client.GetHddSerial()))
+		{
+			_logger.LogInformation("{Client} was kicked due to hdd serial mismatch. Expected {Expected} but client connected with {Actual}", client, allowedHddSerial, client.GetHddSerial());
+			return false;
+		}
+		return true;
+	}
+
+	// Java parity: network/loginserver/LoginServer.kickOnlineCharacters(Account).
+	private void KickOnlineCharacters(global::Aion.GameServer.Model.Account.Account account)
+	{
+		foreach (var accountData in account)
+		{
+			var pcd = accountData.GetPlayerCommonData();
+			if (pcd.IsOnline())
+			{
+				var player = global::Aion.GameServer.World.World.GetInstance().GetPlayer(pcd.GetPlayerObjId());
+				if (player != null && player.GetClientConnection() != null)
+					player.GetClientConnection().Close(SM_SYSTEM_MESSAGE.STR_KICK_ANOTHER_USER_TRY_LOGIN()); // kick
+			}
+		}
+	}
+
 	// Java parity: network/loginserver/LoginServer.requestAuthReconnection(int, AionConnection).
 	// When up and the requesting connection owns the account, ask the LoginServer for a reconnect key; otherwise close.
 	public void RequestAuthReconnection(int accountId, global::Aion.GameServer.Network.Aion.AionConnection client)
@@ -184,6 +260,8 @@ public sealed class LoginServer : IAsyncDisposable
 		{
 			var accountId = account.GetId();
 			_pendingAccountAuthRequests.TryRemove(accountId, out _);
+			// Java parity: loggedInAccounts.remove(connection.getAccount().getId()).
+			_loggedInAccounts.TryRemove(accountId, out _);
 			SendPacket(new SmAccountDisconnected(accountId));
 		}
 	}
@@ -323,6 +401,19 @@ public sealed class LoginServer : IAsyncDisposable
 				AllowedHddSerial: packet.ReadS())
 			: new AccountAuthResult(accountId, Ok: false);
 
+		// Java parity: CM_ACOUNT_AUTH_RESPONSE.runImpl -> LoginServer.getInstance().accountAuthenticationResponse(...).
+		// This completes the client (loginRequests) path so the authenticating client receives SM_L2AUTH_LOGIN_CHECK(true)
+		// and is set AUTHED. Build AccountTime from the parsed accumulated online/rest times (matching CM_ACOUNT_AUTH_RESPONSE.readImpl).
+		var accountTime = new global::Aion.GameServer.Model.Account.AccountTime();
+		if (result.Ok)
+		{
+			accountTime.SetAccumulatedOnlineTime(result.AccumulatedOnlineTime);
+			accountTime.SetAccumulatedRestTime(result.AccumulatedRestTime);
+		}
+		AccountAuthenticationResponse(accountId, result.AccountName ?? string.Empty, result.Ok, result.CreationDate, accountTime,
+			(sbyte)result.AccessLevel, (sbyte)result.Membership, result.Toll, result.AllowedHddSerial ?? string.Empty);
+
+		// Dead path (RequestAccountAuthAsync has no callers) — left intact for safety.
 		if (_pendingAccountAuthRequests.TryRemove(accountId, out var pending))
 			pending.TrySetResult(result);
 	}
