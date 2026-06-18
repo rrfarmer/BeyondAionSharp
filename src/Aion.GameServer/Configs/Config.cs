@@ -100,6 +100,9 @@ public static class Config
         typeof(PffConfig),
     };
 
+    /// <summary>Java parity: Config.getClasses() — returns the full CONFIGS list (used by the //configure admin command).</summary>
+    public static IReadOnlyList<Type> GetClasses() => Configs;
+
     /// <summary>Java parity: loadProperties default folders (relative to the game-server working directory).</summary>
     private static readonly IReadOnlyList<string> DefaultsFolders = new[]
     {

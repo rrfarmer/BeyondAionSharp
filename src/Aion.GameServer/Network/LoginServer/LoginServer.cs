@@ -68,6 +68,13 @@ public sealed class LoginServer : IAsyncDisposable
 		SendPacket(new ServerPackets.SM_BAN(type, accountId, ip, time, adminObjId));
 	}
 
+	// Java parity: LoginServer.sendLsControlPacket(int, int, Player, Player).
+	public void SendLsControlPacket(int type, int param, global::Aion.GameServer.Model.GameObjects.Players.Player player,
+		global::Aion.GameServer.Model.GameObjects.Players.Player admin)
+	{
+		SendPacket(new ServerPackets.SM_LS_CONTROL(type, param, player, admin));
+	}
+
 	public LoginServerState State => _state;
 
 	public bool IsAuthed => _state == LoginServerState.Authed;
