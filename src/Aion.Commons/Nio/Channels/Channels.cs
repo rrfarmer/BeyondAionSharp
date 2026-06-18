@@ -62,8 +62,14 @@ public sealed class JavaNetSocket
         return new InetAddress(rep?.Address);
     }
 
-    /// <summary>java.net.ServerSocket.bind(SocketAddress).</summary>
-    public void Bind(EndPoint endpoint) => socket.Bind(endpoint);
+    /// <summary>java.net.ServerSocket.bind(SocketAddress). Java's ServerSocket.bind() puts the socket into the
+    /// listening state implicitly; .NET requires an explicit Socket.Listen() after Bind(), so do it here (this facade
+    /// is only used for the reactor's server socket). Default backlog 50 matches java.net.ServerSocket's default.</summary>
+    public void Bind(EndPoint endpoint)
+    {
+        socket.Bind(endpoint);
+        socket.Listen(50);
+    }
 
     /// <summary>java.net.Socket.setSoLinger(boolean on, int linger).</summary>
     public void SetSoLinger(bool on, int linger) => socket.LingerState = new LingerOption(on, linger);

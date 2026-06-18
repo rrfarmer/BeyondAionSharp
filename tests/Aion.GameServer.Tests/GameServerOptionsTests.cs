@@ -61,7 +61,10 @@ public class GameServerOptionsTests
 		Assert.Equal(10, options.PeriodicSave.PlayerPetsSeconds);
 
 		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientEndPoint);
-		Assert.Equal(new IPEndPoint(IPAddress.Any, 7777), options.Network.ClientConnectEndPoint);
+		// connect_address (the address advertised to clients in the login server's server-list) is overridden to
+		// loopback in the committed local-dev mygs.properties so a same-machine client can reach the game server
+		// (the default 0.0.0.0 is a valid bind target but unreachable as a client connect target).
+		Assert.Equal(new IPEndPoint(IPAddress.Loopback, 7777), options.Network.ClientConnectEndPoint);
 		Assert.Equal(9014, options.Network.LoginEndPoint.Port);
 		Assert.Equal(9021, options.Network.ChatEndPoint.Port);
 		Assert.Equal(1, options.Network.GameServerId);
