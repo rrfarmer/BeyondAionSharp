@@ -1,0 +1,19 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\Aion.ChatServer\\Aion.ChatServer.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Aion.GameServer\\Aion.GameServer.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Aion.LoginServer\\Aion.LoginServer.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
