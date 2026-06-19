@@ -116,7 +116,8 @@ public class LegionMemberDAO
             LegionMember legionMember = new LegionMember(playerObjId, legion);
             legionMember.SetRank(Enum.Parse<LegionRank>(resultSet.GetString(resultSet.GetOrdinal("rank"))));
             legionMember.SetNickname(resultSet.GetString(resultSet.GetOrdinal("nickname")));
-            legionMember.SetSelfIntro(resultSet.GetString(resultSet.GetOrdinal("selfintro")));
+            int siOrd = resultSet.GetOrdinal("selfintro"); // selfintro is nullable (varchar DEFAULT '', no NOT NULL); Java getString tolerates null, C# GetString throws on DBNull
+            legionMember.SetSelfIntro(resultSet.IsDBNull(siOrd) ? null : resultSet.GetString(siOrd));
             legionMember.SetChallengeScore(resultSet.GetInt32(resultSet.GetOrdinal("challenge_score")));
             return legionMember;
         }

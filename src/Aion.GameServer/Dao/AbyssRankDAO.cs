@@ -250,7 +250,10 @@ public class AbyssRankDAO
                 int title = rs.GetInt32(rs.GetOrdinal("p.title_id"));
                 PlayerClass playerClass = Enum.Parse<PlayerClass>(rs.GetString(rs.GetOrdinal("p.player_class")));
                 Gender gender = Enum.Parse<Gender>(rs.GetString(rs.GetOrdinal("p.gender")));
-                string legionName = rs.GetString(rs.GetOrdinal("l.name"));
+                // Java parity: l.name comes from a LEFT JOIN (null for a legionless ranked player); Java getString
+                // returns null, C# GetString throws on DBNull -> ranking list truncated at the first legionless player.
+                int lnOrd = rs.GetOrdinal("l.name");
+                string legionName = rs.IsDBNull(lnOrd) ? null : rs.GetString(lnOrd);
                 results.Add(new RankingListPlayer(position, oldPosition, id, name, race, level, rank, ap, gp, title, playerClass, gender, legionName));
             }
         }
