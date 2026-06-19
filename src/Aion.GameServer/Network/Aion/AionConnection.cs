@@ -186,8 +186,9 @@ public class AionConnection : AConnection<AionServerPacket>
                 System.Console.Error.WriteLine($"[NET] SEND {packet.GetType().Name} THREW during Write: {ex}");
                 throw;
             }
-            if (packet.GetType() != typeof(SM_MOVE)) // SM_MOVE is high-frequency movement spam — skip from diagnostic
-                System.Console.Error.WriteLine($"[NET] send {packet.GetType().Name} ({data.Limit()} bytes) state={state}");
+            var _pt = packet.GetType(); // skip high-frequency movement/combat packets from the diagnostic spam
+            if (_pt != typeof(SM_MOVE) && _pt != typeof(SM_ATTACK) && _pt != typeof(SmAttackStatus))
+                System.Console.Error.WriteLine($"[NET] send {_pt.Name} ({data.Limit()} bytes) state={state}");
             if (data.Limit() > AionServerPacket.MAX_CLIENT_SUPPORTED_PACKET_SIZE)
                 log.LogWarning(packet + " contains " + (data.Limit() - AionServerPacket.MAX_CLIENT_SUPPORTED_PACKET_SIZE) + " more bytes than the game client of " + GetActivePlayer() + " can read");
             return true;
