@@ -26,6 +26,16 @@ public static class CustomConfig
     [Property(key: "gameserver.chat.whisper.level", defaultValue: "10")]
     public static int LEVEL_TO_WHISPER = 10;
 
+    /// <summary>
+    /// Multiplier applied to every NPC/gatherable respawn delay (the per-spawn respawn_time from the spawn data).
+    /// 1.0 = retail/Java behaviour (no change); 0.5 = respawn twice as fast; 2.0 = twice as slow. A spawn with
+    /// respawn_time 0 (no-respawn: world raids, handler spawns) is unaffected — the no-respawn check runs on the raw
+    /// value before this multiplier is applied. Custom server-admin knob (no Java counterpart).
+    /// Key: gameserver.custom.respawn.time_multiplier
+    /// </summary>
+    [Property(key: "gameserver.custom.respawn.time_multiplier", defaultValue: "1.0")]
+    public static float RESPAWN_TIME_MULTIPLIER = 1.0f;
+
     /// <summary>Days after which a broker item is unregistered (client cannot display more than 255 days). Key: gameserver.broker.registration_expiration_days</summary>
     [Property(key: "gameserver.broker.registration_expiration_days", defaultValue: "8")]
     public static int BROKER_REGISTRATION_EXPIRATION_DAYS = 8;

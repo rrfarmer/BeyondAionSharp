@@ -63,7 +63,7 @@ public class RespawnService
         {
             respawnTask.Run();
             return ValueTask.CompletedTask;
-        }, TimeSpan.FromMilliseconds(spawnTemplate.GetRespawnTime() * 1000));
+        }, TimeSpan.FromMilliseconds((long)(spawnTemplate.GetRespawnTime() * 1000L * Aion.GameServer.Configs.Main.CustomConfig.RESPAWN_TIME_MULTIPLIER)));
         pendingRespawns.TryGetValue(visibleObject.GetObjectId(), out RespawnTask oldRespawnTask);
         pendingRespawns[visibleObject.GetObjectId()] = respawnTask;
         if (oldRespawnTask != null) // objectId should not have been in pendingRespawns
