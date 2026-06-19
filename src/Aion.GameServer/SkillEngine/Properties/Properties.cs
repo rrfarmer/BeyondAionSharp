@@ -73,8 +73,14 @@ public class Properties
     [XmlAttribute("direction")]
     public AreaDirections direction = AreaDirections.NONE;
 
+    // Java parity: @XmlAttribute TargetSpeciesAttribute targetSpecies is null when the attribute is absent. A C#
+    // non-nullable enum defaults to ordinal 0 (PC), and the always-true `targetSpecies != null` guard below then runs
+    // TargetSpeciesProperty, which removes every Npc target -> no skill could be cast on a mob. Back it with a nullable
+    // string proxy so absent -> null (XmlSerializer can't represent a nullable-enum attribute directly).
     [XmlAttribute("target_species")]
-    public TargetSpeciesAttribute targetSpecies;
+    public string? TargetSpeciesRaw;
+    private TargetSpeciesAttribute? _targetSpecies;
+    private bool _targetSpeciesParsed;
 
     [XmlAttribute("ineffective_range")]
     public int ineffectiveRange;
@@ -131,7 +137,7 @@ public class Properties
             return result;
         if (targetStatus != null && !TargetStatusProperty.Set(this, result, skillTemplate))
             return result;
-        if (targetSpecies != null && !TargetSpeciesProperty.Set(this, result))
+        if (GetTargetSpecies() != null && !TargetSpeciesProperty.Set(this, result))
             return result;
         if (targetType != null && !MaxCountProperty.Set(this, result))
             return result;
@@ -209,9 +215,14 @@ public class Properties
         return direction;
     }
 
-    public TargetSpeciesAttribute GetTargetSpecies()
+    public TargetSpeciesAttribute? GetTargetSpecies()
     {
-        return targetSpecies;
+        if (!_targetSpeciesParsed)
+        {
+            _targetSpecies = string.IsNullOrEmpty(TargetSpeciesRaw) ? (TargetSpeciesAttribute?)null : System.Enum.Parse<TargetSpeciesAttribute>(TargetSpeciesRaw);
+            _targetSpeciesParsed = true;
+        }
+        return _targetSpecies;
     }
 
     public enum CastState
