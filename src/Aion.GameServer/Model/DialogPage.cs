@@ -166,6 +166,7 @@ public static class DialogPageExtensions
     public static int GetStartPageId(Npc npc, Player player)
     {
         TalkInfo talkInfo = npc.GetObjectTemplate().GetTalkInfo();
+        System.Console.Error.WriteLine($"[QUEST] GetStartPageId npc={npc.GetNpcId()} talkInfo={(talkInfo == null ? "NULL" : $"isDialog={talkInfo.IsDialogNpc()} func={(talkInfo.GetFuncDialogIds() == null ? "null" : string.Join(",", talkInfo.GetFuncDialogIds()))}")} interactionAllowed={(talkInfo == null ? "n/a" : DialogService.IsInteractionAllowed(player, npc).ToString())}");
         if (talkInfo == null || !talkInfo.IsDialogNpc() && talkInfo.GetFuncDialogIds() == null)
             return 0; // HTML_PAGE_NULL (npc has no conversation or function dialog)
         if (!DialogService.IsInteractionAllowed(player, npc))

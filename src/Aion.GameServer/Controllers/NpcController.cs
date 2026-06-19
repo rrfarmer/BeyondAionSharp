@@ -155,7 +155,8 @@ public class NpcController : CreatureController<Npc>
         if (lootingPet != null && PositionUtil.IsInRange(owner, lootingPet.GetMaster(), 28, false))
         {
             int npcObjId = owner.GetObjectId();
-            ISet<Aion.GameServer.Model.Drop.DropItem> drops = Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetCurrentDropMap()[npcObjId];
+            // Java parity: Map.get() returns null when absent; C# indexer throws KeyNotFoundException.
+            Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetCurrentDropMap().TryGetValue(npcObjId, out HashSet<Aion.GameServer.Model.Drop.DropItem> drops);
             if (drops != null && drops.Count != 0)
             {
                 PacketSendUtility.SendPacket(lootingPet.GetMaster(), new Aion.GameServer.Network.Aion.ServerPackets.SM_PET(PetSpecialFunction.AUTOLOOT, true, npcObjId));
@@ -168,12 +169,13 @@ public class NpcController : CreatureController<Npc>
 
     private Pet FindPetForLooting(Npc npc)
     {
-        Aion.GameServer.Model.GameObjects.DropNpc dropNpc = Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetDropRegistrationMap()[npc.GetObjectId()];
+        // Java parity: Map.get() returns null when absent; C# indexer throws KeyNotFoundException.
+        Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetDropRegistrationMap().TryGetValue(npc.GetObjectId(), out Aion.GameServer.Model.GameObjects.DropNpc dropNpc);
         if (dropNpc == null) // npc didn't drop anything
             return null;
         if (dropNpc.GetAllowedLooters().Count != 1) // auto looting is not available in FFA loot mode
             return null;
-        Aion.GameServer.Model.GameObjects.Players.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(dropNpc.GetAllowedLooters().GetEnumerator().Current);
+        Aion.GameServer.Model.GameObjects.Players.Player player = Aion.GameServer.World.World.GetInstance().GetPlayer(System.Linq.Enumerable.First(dropNpc.GetAllowedLooters())); // Java allowedLooters.iterator().next()
         if (player == null) // looter got disconnected
             return null;
         Pet pet = player.GetPet();
