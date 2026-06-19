@@ -176,7 +176,12 @@ public class PlayerDAO
                 cd.SetRace(Enum.Parse<Race>(resultSet.GetString(resultSet.GetOrdinal("race"))));
                 cd.SetGender(Enum.Parse<Gender>(resultSet.GetString(resultSet.GetOrdinal("gender"))));
                 int loOrd = resultSet.GetOrdinal("last_online");
-                cd.SetLastOnline(resultSet.IsDBNull(loOrd) ? (DateTime?)null : resultSet.GetDateTime(loOrd));
+                // last_online is written as UTC wall-clock (PlayerEnterWorldService/PlayerLeaveWorldService store
+                // DateTimeOffset...UtcDateTime; GetLastOnlineEpochSeconds also assumes UTC). MySqlDataReader.GetDateTime
+                // returns Kind=Unspecified, so implicit DateTime->DateTimeOffset conversions (reentry-time check,
+                // energy-of-repose) would misread it as local -> a just-logged-out char looks like it's in the future
+                // -> reentry blocked for hours. Tag it UTC at the load boundary so all conversions are consistent.
+                cd.SetLastOnline(resultSet.IsDBNull(loOrd) ? (DateTime?)null : DateTime.SpecifyKind(resultSet.GetDateTime(loOrd), DateTimeKind.Utc));
                 int noteOrd = resultSet.GetOrdinal("note"); // Java getString returns null on SQL NULL; C# GetString throws on DBNull (note is nullable)
                 cd.SetNote(resultSet.IsDBNull(noteOrd) ? null : resultSet.GetString(noteOrd));
                 cd.SetQuestExpands(resultSet.GetInt32(resultSet.GetOrdinal("quest_expands")));
