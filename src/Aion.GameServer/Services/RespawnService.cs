@@ -23,7 +23,8 @@ public class RespawnService
     /// <summary>Schedules decay (despawn) of the npc with the default delay time. Replaces an existing decay task.</summary>
     public static ScheduledTask ScheduleDecayTask(Npc npc)
     {
-        ISet<Aion.GameServer.Model.Drop.DropItem> drop = Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetCurrentDropMap()[npc.GetObjectId()];
+        // Java parity: Map.get() returns null when absent; C# indexer throws KeyNotFoundException.
+        Aion.GameServer.Services.Drop.DropRegistrationService.GetInstance().GetCurrentDropMap().TryGetValue(npc.GetObjectId(), out HashSet<Aion.GameServer.Model.Drop.DropItem> drop);
         int decayInterval;
         if (drop == null || drop.Count == 0)
             decayInterval = IMMEDIATE_DECAY;
