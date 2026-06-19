@@ -241,6 +241,24 @@ public sealed class Selector
     private volatile bool wakeupPending;
     private readonly object gate = new();
 
+    // Self-pipe used to faithfully emulate java.nio Selector.wakeup(): a blocked Socket.Select()
+    // cannot otherwise be interrupted from another thread (the flag is only checked at the top of
+    // DoSelect). A loopback UDP socket is kept in every select's read set; wakeup() sends it a byte,
+    // making Socket.Select return immediately so cross-thread interest changes (e.g. a worker thread
+    // enqueuing a server packet + setting OP_WRITE) are honored without latency.
+    private readonly Socket wakeupSocket;
+    private readonly EndPoint wakeupEndpoint;
+    private readonly byte[] wakeupOneByte = new byte[1];
+    private readonly byte[] wakeupDrain = new byte[64];
+
+    public Selector()
+    {
+        wakeupSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+        wakeupSocket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+        wakeupSocket.Blocking = false;
+        wakeupEndpoint = wakeupSocket.LocalEndPoint!;
+    }
+
     internal void Add(SelectionKey key) { lock (gate) keys.Add(key); }
     internal void Remove(SelectionKey key) { lock (gate) { keys.Remove(key); selectedKeys.Remove(key); } }
 
@@ -251,7 +269,12 @@ public sealed class Selector
     public ISet<SelectionKey> SelectedKeys() => selectedKeys;
 
     /// <summary>java.nio: Selector.wakeup() — cause a blocking select() to return promptly.</summary>
-    public Selector Wakeup() { wakeupPending = true; return this; }
+    public Selector Wakeup()
+    {
+        wakeupPending = true;
+        try { wakeupSocket.SendTo(wakeupOneByte, wakeupEndpoint); } catch (SocketException) { }
+        return this;
+    }
 
     /// <summary>java.nio: Selector.selectNow() — non-blocking.</summary>
     public int SelectNow() => DoSelect(0);
@@ -259,11 +282,18 @@ public sealed class Selector
     /// <summary>java.nio: Selector.select() — blocks (bounded) until ready keys or wakeup.</summary>
     public int Select() => DoSelect(1000);
 
+    private void DrainWakeup()
+    {
+        try { while (wakeupSocket.Available > 0) wakeupSocket.Receive(wakeupDrain); }
+        catch (SocketException) { }
+    }
+
     private int DoSelect(int timeoutMillis)
     {
         if (wakeupPending)
         {
             wakeupPending = false;
+            DrainWakeup();
             return 0;
         }
         List<SelectionKey> snapshot;
@@ -281,32 +311,35 @@ public sealed class Selector
             if ((ops & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0) readList.Add(s);
             if ((ops & SelectionKey.OP_WRITE) != 0) writeList.Add(s);
         }
-        if (readList.Count == 0 && writeList.Count == 0)
-        {
-            if (timeoutMillis > 0) System.Threading.Thread.Sleep(Math.Min(timeoutMillis, 50));
-            return 0;
-        }
+        // Always watch the self-pipe so a concurrent wakeup() interrupts the blocking Socket.Select.
+        readList.Add(wakeupSocket);
 
-        var rr = new List<Socket>(readList);
-        var ww = new List<Socket>(writeList);
         try
         {
-            Socket.Select(rr.Count > 0 ? rr : null, ww.Count > 0 ? ww : null, null, timeoutMillis <= 0 ? 0 : timeoutMillis * 1000);
+            Socket.Select(readList, writeList.Count > 0 ? writeList : null, null, timeoutMillis <= 0 ? 0 : timeoutMillis * 1000);
         }
         catch (SocketException)
         {
             return 0;
         }
 
+        // Socket.Select trims each list in place to the ready sockets. Drain the self-pipe if it fired.
+        if (readList.Contains(wakeupSocket))
+            DrainWakeup();
+
+        // Reset ready state every cycle so readyOps reflects ONLY this select's readiness — never a
+        // stale value from a previous cycle (a stale OP_READ on a write-only-ready key would make the
+        // dispatcher attempt a spurious read on a non-blocking socket and close the connection).
         selectedKeys.Clear();
-        foreach (Socket s in rr)
-            if (map.TryGetValue(s, out SelectionKey? k))
+        foreach (SelectionKey k in snapshot)
+            k.readyOpsValue = 0;
+        foreach (Socket s in readList)
+            if (s != wakeupSocket && map.TryGetValue(s, out SelectionKey? k))
             {
-                int interest = k.InterestOps();
-                k.readyOpsValue = interest & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT);
+                k.readyOpsValue |= k.InterestOps() & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT);
                 selectedKeys.Add(k);
             }
-        foreach (Socket s in ww)
+        foreach (Socket s in writeList)
             if (map.TryGetValue(s, out SelectionKey? k))
             {
                 k.readyOpsValue |= k.InterestOps() & SelectionKey.OP_WRITE;
@@ -315,7 +348,11 @@ public sealed class Selector
         return selectedKeys.Count;
     }
 
-    public void Close() { lock (gate) { keys.Clear(); selectedKeys.Clear(); } }
+    public void Close()
+    {
+        lock (gate) { keys.Clear(); selectedKeys.Clear(); }
+        try { wakeupSocket.Close(); } catch (SocketException) { }
+    }
 }
 
 /// <summary>Java parity: java.nio.channels.spi.SelectorProvider.</summary>
