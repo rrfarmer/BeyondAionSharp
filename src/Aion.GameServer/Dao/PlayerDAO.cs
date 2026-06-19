@@ -177,7 +177,8 @@ public class PlayerDAO
                 cd.SetGender(Enum.Parse<Gender>(resultSet.GetString(resultSet.GetOrdinal("gender"))));
                 int loOrd = resultSet.GetOrdinal("last_online");
                 cd.SetLastOnline(resultSet.IsDBNull(loOrd) ? (DateTime?)null : resultSet.GetDateTime(loOrd));
-                cd.SetNote(resultSet.GetString(resultSet.GetOrdinal("note")));
+                int noteOrd = resultSet.GetOrdinal("note"); // Java getString returns null on SQL NULL; C# GetString throws on DBNull (note is nullable)
+                cd.SetNote(resultSet.IsDBNull(noteOrd) ? null : resultSet.GetString(noteOrd));
                 cd.SetQuestExpands(resultSet.GetInt32(resultSet.GetOrdinal("quest_expands")));
                 cd.SetNpcExpands(resultSet.GetInt32(resultSet.GetOrdinal("npc_expands")));
                 cd.SetItemExpands(resultSet.GetInt32(resultSet.GetOrdinal("item_expands")));
@@ -203,6 +204,7 @@ public class PlayerDAO
         }
         catch (Exception e)
         {
+            System.Console.Error.WriteLine($"[DAO] LoadPlayerCommonData({playerObjId}) THREW (returning null -> downstream NRE): {e}");
             log.LogError(e, "Could not load PlayerCommonData data for player: " + playerObjId);
         }
         return null;
