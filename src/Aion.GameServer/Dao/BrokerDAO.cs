@@ -52,7 +52,8 @@ public class BrokerDAO
                 int itemPointer = rset.GetInt32(rset.GetOrdinal("item_pointer"));
                 int itemId = rset.GetInt32(rset.GetOrdinal("item_id"));
                 long itemCount = rset.GetInt64(rset.GetOrdinal("item_count"));
-                string itemCreator = rset.GetString(rset.GetOrdinal("item_creator"));
+                int icOrd = rset.GetOrdinal("item_creator"); // item_creator is nullable (DEFAULT NULL — null for non-crafted items); Java getString tolerates null, C# GetString throws on DBNull
+                string itemCreator = rset.IsDBNull(icOrd) ? null : rset.GetString(icOrd);
                 int sellerId = rset.GetInt32(rset.GetOrdinal("seller_id"));
                 long price = rset.GetInt64(rset.GetOrdinal("price"));
                 BrokerRace itemBrokerRace = Enum.Parse<BrokerRace>(rset.GetString(rset.GetOrdinal("broker_race")));
