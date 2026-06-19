@@ -33,6 +33,7 @@ public class CM_VERSION_CHECK : AionClientPacket
 
     protected override void RunImpl()
     {
+        System.Console.Error.WriteLine($"[NET] CM_VERSION_CHECK: aionClientVersion={aionClientVersion} (INTERNAL_VERSION={SM_VERSION_CHECK.INTERNAL_VERSION}) npcScriptIfaceVer={npcScriptInterfaceVersion} liteInfo={liteInfo}");
         SendPacket(new SM_VERSION_CHECK(aionClientVersion, EventService.GetInstance().GetEventTheme()));
     }
 }
