@@ -173,7 +173,8 @@ public class HousesDAO
                 house.SetPermissionsFromDB(rset.GetInt32(rset.GetOrdinal("settings")));
                 int npOrd = rset.GetOrdinal("next_pay");
                 house.SetNextPay(rset.IsDBNull(npOrd) ? (DateTimeOffset?)null : new DateTimeOffset(rset.GetDateTime(npOrd)));
-                house.SetSignNotice(rset.GetString(rset.GetOrdinal("sign_notice")));
+                int snOrd = rset.GetOrdinal("sign_notice"); // sign_notice is nullable (DEFAULT NULL); Java getString tolerates null, C# GetString throws on DBNull
+                house.SetSignNotice(rset.IsDBNull(snOrd) ? null : rset.GetString(snOrd));
                 house.SetPersistentState(IPersistable.PersistentState.UPDATED);
 
                 int id = studios ? house.GetOwnerId() : address.GetId();

@@ -141,7 +141,8 @@ public class InventoryDAO
         int icOrd = rset.GetOrdinal("item_color");
         int? itemColor = rset.IsDBNull(icOrd) ? (int?)null : rset.GetInt32(icOrd); // accepts null (which means not dyed)
         int colorExpireTime = rset.GetInt32(rset.GetOrdinal("color_expires"));
-        string itemCreator = rset.GetString(rset.GetOrdinal("item_creator"));
+        int creatorOrd = rset.GetOrdinal("item_creator"); // item_creator is nullable (DEFAULT NULL — null for non-crafted items); Java getString tolerates null, C# GetString throws on DBNull
+        string itemCreator = rset.IsDBNull(creatorOrd) ? null : rset.GetString(creatorOrd);
         int expireTime = rset.GetInt32(rset.GetOrdinal("expire_time"));
         int activationCount = rset.GetInt32(rset.GetOrdinal("activation_count"));
         int isEquiped = rset.GetInt32(rset.GetOrdinal("is_equipped"));
