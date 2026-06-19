@@ -287,6 +287,7 @@ public static class AionClientPacketFactory
 		PacketInfo packetInfo = opcode < 0 || opcode >= packets.Length ? null : packets[opcode];
 		if (packetInfo == null)
 		{
+			System.Console.Error.WriteLine($"[NET] recv UNKNOWN opcode 0x{opcode:X3} state={state} — no handler (dropped)");
 			client.SendUnknownClientPacketInfo(opcode);
 			if (NetworkConfig.LOG_UNKNOWN_PACKETS)
 				log.LogWarning(string.Format("Aion client sent data with unknown opcode: 0x{0:X3}, state={1} {2}{3}", opcode, state.ToString(), Environment.NewLine, NetworkUtils.ToHex(data)));
@@ -294,11 +295,13 @@ public static class AionClientPacketFactory
 		}
 		if (!packetInfo.IsValid(state))
 		{
+			System.Console.Error.WriteLine($"[NET] recv {packetInfo.GetPacketClassName()} (0x{opcode:X3}) but state={state} is INVALID for it (dropped)");
 			if (NetworkConfig.LOG_IGNORED_PACKETS)
 				log.LogWarning(client + " sent " + packetInfo.GetPacketClassName() + " but the connections current state (" + state
 					+ ") is invalid for this packet. Packet won't be instantiated.");
 			return null;
 		}
+		System.Console.Error.WriteLine($"[NET] recv {packetInfo.GetPacketClassName()} (0x{opcode:X3}) state={state}");
 		return packetInfo.NewPacket(opcode, data, client);
 	}
 

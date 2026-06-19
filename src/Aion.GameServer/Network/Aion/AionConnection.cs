@@ -90,6 +90,7 @@ public class AionConnection : AConnection<AionServerPacket>
 
     protected override void Initialized()
     {
+        System.Console.Error.WriteLine($"[NET] client connected from {GetIP()} — sending SM_KEY");
         SendPacket(new SM_KEY());
     }
 
@@ -114,15 +115,18 @@ public class AionConnection : AConnection<AionServerPacket>
         {
             if (++corruptPackets >= MAX_CORRUPT_PACKETS_BEFORE_DISCONNECT)
             {
+                System.Console.Error.WriteLine($"[NET] DECRYPT failed {corruptPackets}x — DISCONNECTING client");
                 log.LogWarning("Client packet decryption failed " + corruptPackets + " times, disconnecting " + this);
                 return false;
             }
+            System.Console.Error.WriteLine($"[NET] decrypt fail [{corruptPackets}/{MAX_CORRUPT_PACKETS_BEFORE_DISCONNECT}] (packet passed)");
             log.LogDebug("[" + corruptPackets + "/" + MAX_CORRUPT_PACKETS_BEFORE_DISCONNECT + "] Decrypt fail, client packet passed...");
             return true;
         }
 
         if (data.Remaining() < 5)
         {
+            System.Console.Error.WriteLine($"[NET] fake packet (remaining {data.Remaining()} < 5) — DISCONNECTING client");
             log.LogWarning("Received fake packet from " + this + ", disconnecting");
             return false;
         }
@@ -217,6 +221,7 @@ public class AionConnection : AConnection<AionServerPacket>
         if (msg.Length == 0)
             msg = " " + this;
 
+        System.Console.Error.WriteLine($"[NET] client DISCONNECTED (state={state}):{msg}");
         log.LogInformation("Client disconnected:" + msg);
     }
 
