@@ -11,7 +11,7 @@ public class MaxCountProperty
 {
     public static bool Set(Properties properties, Properties.ValidationResult result)
     {
-        TargetRangeAttribute value = properties.GetTargetType();
+        TargetRangeAttribute? value = properties.GetTargetType(); // Java parity: null when target_type absent
         int maxCount = properties.GetTargetMaxCount();
         if (maxCount == 0 || result.GetTargets().Count <= maxCount)
             return true;

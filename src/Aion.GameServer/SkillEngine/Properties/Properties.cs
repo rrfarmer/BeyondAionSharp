@@ -19,11 +19,18 @@ public class Properties
     [XmlAttribute("awr")]
     public bool addWeaponRange;
 
+    // Java parity: nullable when the attribute is absent (same trap as target_species above). Non-nullable C# enums
+    // + the always-true `!= null` guards in ValidateEffectedList would run TargetRelation/TargetRange/MaxCount
+    // filtering that Java skips. Back with nullable string proxies so absent -> null.
     [XmlAttribute("target_relation")]
-    public TargetRelationAttribute targetRelation;
+    public string? TargetRelationRaw;
+    private TargetRelationAttribute? _targetRelation;
+    private bool _targetRelationParsed;
 
     [XmlAttribute("target_type")]
-    public TargetRangeAttribute targetType;
+    public string? TargetTypeRaw;
+    private TargetRangeAttribute? _targetType;
+    private bool _targetTypeParsed;
 
     [XmlAttribute("target_distance")]
     public int targetDistance;
@@ -131,15 +138,15 @@ public class Properties
         float y, float z)
     {
         ValidationResult result = new ValidationResult(targets, firstTarget);
-        if (targetType != null && !TargetRangeProperty.Set(this, result, effector, skillTemplate, x, y, z))
+        if (GetTargetType() != null && !TargetRangeProperty.Set(this, result, effector, skillTemplate, x, y, z))
             return result;
-        if (targetRelation != null && !TargetRelationProperty.Set(this, result, effector, skillTemplate))
+        if (GetTargetRelation() != null && !TargetRelationProperty.Set(this, result, effector, skillTemplate))
             return result;
         if (targetStatus != null && !TargetStatusProperty.Set(this, result, skillTemplate))
             return result;
         if (GetTargetSpecies() != null && !TargetSpeciesProperty.Set(this, result))
             return result;
-        if (targetType != null && !MaxCountProperty.Set(this, result))
+        if (GetTargetType() != null && !MaxCountProperty.Set(this, result))
             return result;
         result.valid = true;
         return result;
@@ -160,14 +167,24 @@ public class Properties
         return addWeaponRange;
     }
 
-    public TargetRelationAttribute GetTargetRelation()
+    public TargetRelationAttribute? GetTargetRelation()
     {
-        return targetRelation;
+        if (!_targetRelationParsed)
+        {
+            _targetRelation = string.IsNullOrEmpty(TargetRelationRaw) ? (TargetRelationAttribute?)null : System.Enum.Parse<TargetRelationAttribute>(TargetRelationRaw);
+            _targetRelationParsed = true;
+        }
+        return _targetRelation;
     }
 
-    public TargetRangeAttribute GetTargetType()
+    public TargetRangeAttribute? GetTargetType()
     {
-        return targetType;
+        if (!_targetTypeParsed)
+        {
+            _targetType = string.IsNullOrEmpty(TargetTypeRaw) ? (TargetRangeAttribute?)null : System.Enum.Parse<TargetRangeAttribute>(TargetTypeRaw);
+            _targetTypeParsed = true;
+        }
+        return _targetType;
     }
 
     public int GetTargetDistance()

@@ -12,7 +12,7 @@ public class TargetRelationProperty
 {
     public static bool Set(Properties properties, Properties.ValidationResult result, Creature effector, SkillTemplate skillTemplate)
     {
-        TargetRelationAttribute value = properties.GetTargetRelation();
+        TargetRelationAttribute? value = properties.GetTargetRelation(); // Java parity: null when target_relation absent
         switch (value)
         {
             case TargetRelationAttribute.ALL:

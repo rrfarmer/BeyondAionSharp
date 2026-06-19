@@ -73,7 +73,7 @@ public class FirstTargetProperty
                     || skill.GetSkillTemplate().GetDispelCategory() == DispelCategoryType.NPC_DEBUFF_PHYSICAL)
                     break;
 
-                TargetRelationAttribute relation = skill.GetSkillTemplate().GetProperties().GetTargetRelation();
+                TargetRelationAttribute? relation = skill.GetSkillTemplate().GetProperties().GetTargetRelation(); // Java parity: null when target_relation absent
                 if (skill.GetFirstTarget() == null || skill.GetFirstTarget().Equals(effector))
                 {
                     if (effector is Player playerEffector2)
@@ -81,7 +81,7 @@ public class FirstTargetProperty
                         if (skill.GetSkillTemplate().GetProperties().GetTargetType() == TargetRangeAttribute.AREA)
                             return skill.GetFirstTarget() != null;
 
-                        TargetRangeAttribute type = skill.GetSkillTemplate().GetProperties().GetTargetType();
+                        TargetRangeAttribute? type = skill.GetSkillTemplate().GetProperties().GetTargetType(); // Java parity: null when target_type absent
                         if ((relation != TargetRelationAttribute.ALL && relation != TargetRelationAttribute.MYPARTY && relation != TargetRelationAttribute.FRIEND)
                             || type == TargetRangeAttribute.PARTY)
                         {

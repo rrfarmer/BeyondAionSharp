@@ -20,7 +20,7 @@ public class TargetRangeProperty
     public static bool Set(Properties properties, Properties.ValidationResult result, Creature skillEffector, SkillTemplate skillTemplate, float x,
         float y, float z)
     {
-        TargetRangeAttribute value = properties.GetTargetType();
+        TargetRangeAttribute? value = properties.GetTargetType(); // Java parity: null when target_type absent
         int effectiveRange = skillEffector is Trap ? skillEffector.GetGameStats().GetAttackRange().GetCurrent() : properties.GetEffectiveRange();
 
         List<Creature> effectedList = result.GetTargets();
