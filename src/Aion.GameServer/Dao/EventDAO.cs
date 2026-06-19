@@ -61,8 +61,12 @@ public class EventDAO
             while (rset.Read())
             {
                 int buffIndex = rset.GetInt32(rset.GetOrdinal("buff_index"));
-                HashSet<int> activePoolSkillIds = ParseInts(rset.GetString(rset.GetOrdinal("buff_active_pool_ids")));
-                HashSet<int> activeRandomDays = ParseInts(rset.GetString(rset.GetOrdinal("buff_allowed_days")));
+                // buff_active_pool_ids / buff_allowed_days are nullable (DEFAULT NULL); Java getString returns null
+                // (ParseInts(null) -> null), C# GetString throws on DBNull. Pass null through on DBNull.
+                int apOrd = rset.GetOrdinal("buff_active_pool_ids");
+                HashSet<int> activePoolSkillIds = ParseInts(rset.IsDBNull(apOrd) ? null : rset.GetString(apOrd));
+                int adOrd = rset.GetOrdinal("buff_allowed_days");
+                HashSet<int> activeRandomDays = ParseInts(rset.IsDBNull(adOrd) ? null : rset.GetString(adOrd));
                 storedBuffData.Add(new StoredBuffData(buffIndex, activePoolSkillIds, activeRandomDays));
             }
             return storedBuffData;

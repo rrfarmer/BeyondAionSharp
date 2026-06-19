@@ -180,7 +180,9 @@ public class PlayerPunishmentsDAO
         {
             while (rs.Read())
             {
-                Result = new CharacterBanInfo(rs.GetInt64(rs.GetOrdinal("start_time")), rs.GetInt64(rs.GetOrdinal("duration")), rs.GetString(rs.GetOrdinal("reason")));
+                int reasonOrd = rs.GetOrdinal("reason"); // reason is nullable (text, no NOT NULL); Java getString tolerates null, C# GetString throws on DBNull
+                string reason = rs.IsDBNull(reasonOrd) ? null : rs.GetString(reasonOrd);
+                Result = new CharacterBanInfo(rs.GetInt64(rs.GetOrdinal("start_time")), rs.GetInt64(rs.GetOrdinal("duration")), reason);
             }
         }
     }
