@@ -80,8 +80,10 @@ public class CraftSkillUpdateService
     {
         if (player.GetLevel() < 10)
             return;
-        Profession profession = professionByNpc.GetValueOrDefault(npc.GetNpcId());
-        if (profession == null)
+        // Java parity: professionByNpc.get(npcId) returns null for a non-profession NPC. Profession is a C# enum
+        // (value type), so GetValueOrDefault returns ordinal 0 (ESSENCETAPPING) and the `== null` guard was dead,
+        // wrongly treating any unmapped NPC as ESSENCETAPPING. Use TryGetValue to early-return when not mapped.
+        if (!professionByNpc.TryGetValue(npc.GetNpcId(), out Profession profession))
             return;
         int skillId = profession.GetSkillId();
         if (skillId == 0)

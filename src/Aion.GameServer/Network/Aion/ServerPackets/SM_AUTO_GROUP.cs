@@ -20,11 +20,13 @@ public class SM_AUTO_GROUP : AionServerPacket
 
     public SM_AUTO_GROUP(int maskId)
     {
-        AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
-        if (agt == null)
+        // Java parity: getAGTByMaskId returns null when not found; calling .Value first throws before the null-check.
+        AutoGroupType? agtN = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+        if (agtN == null)
         {
             throw new ArgumentException("AutoGroupType not found for maskId: " + maskId);
         }
+        AutoGroupType agt = agtN.Value;
 
         this.maskId = maskId;
         this.messageId = agt.GetL10nId();

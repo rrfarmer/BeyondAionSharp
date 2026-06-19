@@ -30,9 +30,11 @@ public class AutoGroupService
 
     public void StartLooking(Player player, int maskId, EntryRequestType ert)
     {
-        AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
-        if (agt == null || !CanRegister(player, ert, agt))
+        // Java parity: getAGTByMaskId returns null when not found; .Value first would throw before the null-check.
+        AutoGroupType? agtN = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+        if (agtN == null || !CanRegister(player, ert, agtN.Value))
             return;
+        AutoGroupType agt = agtN.Value;
         List<LookingForParty> lfps = lookingParties.GetOrAdd(maskId, k => new List<LookingForParty>());
         LookingForParty lfp;
         lock (lfps)
@@ -65,9 +67,11 @@ public class AutoGroupService
         List<LookingForParty> queuedParties = lookingParties.GetValueOrDefault(maskId);
         if (queuedParties == null || queuedParties.Count == 0)
             return;
-        AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
-        if (agt == null)
+        // Java parity: getAGTByMaskId returns null when not found; .Value first would throw before the null-check.
+        AutoGroupType? agtN = AutoGroupTypeExtensions.GetAGTByMaskId(maskId);
+        if (agtN == null)
             return;
+        AutoGroupType agt = agtN.Value;
         lock (queuedParties)
         {
             queuedParties.Sort();

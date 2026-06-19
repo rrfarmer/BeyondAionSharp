@@ -212,9 +212,10 @@ public class DialogService
                 {
                     if (AutoGroupConfig.AUTO_GROUP_ENABLE)
                     {
-                        AutoGroupType agt = AutoGroupTypeExtensions.GetAutoGroup(npc.GetNpcId()).Value;
-                        if (agt != null && PeriodicInstanceManager.GetInstance().IsRegistrationOpen(agt.GetTemplate().GetMaskId()))
-                            PacketSendUtility.SendPacket(player, new SM_AUTO_GROUP(agt.GetTemplate().GetMaskId()));
+                        // Java parity: getAutoGroup returns null for a non-autogroup NPC; .Value first would throw.
+                        AutoGroupType? agt = AutoGroupTypeExtensions.GetAutoGroup(npc.GetNpcId());
+                        if (agt != null && PeriodicInstanceManager.GetInstance().IsRegistrationOpen(agt.Value.GetTemplate().GetMaskId()))
+                            PacketSendUtility.SendPacket(player, new SM_AUTO_GROUP(agt.Value.GetTemplate().GetMaskId()));
                     }
                     else
                     {

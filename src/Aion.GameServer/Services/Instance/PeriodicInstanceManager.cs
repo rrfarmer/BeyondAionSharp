@@ -96,9 +96,10 @@ public class PeriodicInstanceManager
 
     private void BroadcastRegistrationUpdate(SM_SYSTEM_MESSAGE msg, int maskId, bool isClosed)
     {
-        AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
-        if (type != null)
+        AutoGroupType? typeN = AutoGroupTypeExtensions.GetAGTByMaskId(maskId); // Java parity: null when not found (.Value would throw)
+        if (typeN != null)
         {
+            AutoGroupType type = typeN.Value;
             World.World.GetInstance().ForEachPlayer(player =>
             {
                 if (IsInLvlRange(player.GetLevel(), type.GetTemplate().GetMinLvl(), type.GetTemplate().GetMaxLvl()))
@@ -122,9 +123,10 @@ public class PeriodicInstanceManager
     {
         foreach (int maskId in openedRegistrations)
         {
-            AutoGroupType agt = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
-            if (agt != null)
+            AutoGroupType? agtN = AutoGroupTypeExtensions.GetAGTByMaskId(maskId); // Java parity: null when not found (.Value would throw)
+            if (agtN != null)
             {
+                AutoGroupType agt = agtN.Value;
                 AutoGroup data = agt.GetTemplate();
                 if (IsInLvlRange(player.GetLevel(), data.GetMinLvl(), data.GetMaxLvl())
                     && !player.GetPortalCooldownList().IsPortalUseDisabled(data.GetInstanceMapId()))
@@ -147,9 +149,10 @@ public class PeriodicInstanceManager
     {
         if (openedRegistrations.Contains(maskId))
         {
-            AutoGroupType type = AutoGroupTypeExtensions.GetAGTByMaskId(maskId).Value;
-            if (type != null)
+            AutoGroupType? typeN = AutoGroupTypeExtensions.GetAGTByMaskId(maskId); // Java parity: null when not found (.Value would throw)
+            if (typeN != null)
             {
+                AutoGroupType type = typeN.Value;
                 AutoGroup template = type.GetTemplate();
                 if (IsInLvlRange(player.GetLevel(), template.GetMinLvl(), template.GetMaxLvl()))
                     PacketSendUtility.SendPacket(player, new SM_AUTO_GROUP(maskId));
