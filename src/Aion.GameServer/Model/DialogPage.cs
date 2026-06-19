@@ -242,8 +242,13 @@ public static class DialogPageExtensions
     {
         QuestNpc questNpc = Aion.GameServer.QuestEngine.QuestEngine.GetInstance().GetQuestNpc(npc.GetNpcId());
         if (questNpc == null)
+        {
+            System.Console.Error.WriteLine($"[QUEST] HasQuestInteraction npc={npc.GetNpcId()}: NO questNpc registered -> generic dialog");
             return false;
-        return questNpc.GetOnQuestStart().Any(startableQuest => QuestService.CheckStartConditions(player, startableQuest, false))
-            || player.GetQuestStateList().GetUncompletedQuests().Any(activeQuest => questNpc.GetOnTalkEvent().Contains(activeQuest.GetQuestId()));
+        }
+        bool startable = questNpc.GetOnQuestStart().Any(startableQuest => QuestService.CheckStartConditions(player, startableQuest, false));
+        bool active = player.GetQuestStateList().GetUncompletedQuests().Any(activeQuest => questNpc.GetOnTalkEvent().Contains(activeQuest.GetQuestId()));
+        System.Console.Error.WriteLine($"[QUEST] HasQuestInteraction npc={npc.GetNpcId()} pLevel={player.GetLevel()} pRace={player.GetRace()}: onQuestStart=[{string.Join(",", questNpc.GetOnQuestStart())}] startable={startable} active={active}");
+        return startable || active;
     }
 }

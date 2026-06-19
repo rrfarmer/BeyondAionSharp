@@ -100,6 +100,7 @@ public class QuestEngine : GameEngine
         scriptManager.Load(GSConfig.QUEST_HANDLER_DIRECTORY);
         foreach (XMLQuest xmlQuest in DataManager.XML_QUESTS.GetAllQuests())
             xmlQuest.Register(this);
+        System.Console.Error.WriteLine($"[QUEST] Init done: {questHandlers.Count} quest handlers, {questNpcs.Count} quest-NPCs registered (XML_QUESTS={DataManager.XML_QUESTS.GetAllQuests().Count}, QUEST_DATA={DataManager.QUEST_DATA.GetQuestTemplates().Count})");
         log.LogInformation("Loaded " + questHandlers.Count + " quest handlers.");
         if (GSConfig.ANALYZE_QUESTHANDLERS)
             ThreadPoolManager.GetInstance().ExecuteLongRunning(() => QuestSpawnAnalyzer.Run(questHandlers.Values, questNpcs.Values, true));
