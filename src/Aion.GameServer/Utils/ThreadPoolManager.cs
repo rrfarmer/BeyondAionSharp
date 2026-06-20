@@ -47,6 +47,15 @@ public sealed class ThreadPoolManager : IAsyncDisposable
 		return new ScheduledTask(task, linkedTokenSource, DateTimeOffset.UtcNow + delay);
 	}
 
+	/// <summary>
+	/// Java parity: <c>new FutureTask&lt;&gt;(runnable, null)</c> stored but NOT submitted to any executor.
+	/// The body does not run until <see cref="ScheduledTask.Run"/> is called (e.g. from CM_TELEPORT_ANIMATION_DONE
+	/// once the client reports the teleport fade-out animation finished). This is distinct from <see cref="Schedule"/>
+	/// (which starts the body on the pool immediately): scheduling the spawn-in eagerly would push the new-map packets
+	/// before the client is ready, breaking cross-map / instance teleports.
+	/// </summary>
+	public ScheduledTask Deferred(Action body) => new ScheduledTask(new Task(body));
+
 	public Task ScheduleAtFixedRate(
 		Func<CancellationToken, ValueTask> action,
 		TimeSpan initialDelay,
@@ -201,12 +210,36 @@ public sealed class ScheduledTask
 
 	private readonly DateTimeOffset _dueTimeUtc;
 
+	// Non-null only for deferred (run-on-demand) tasks created via ThreadPoolManager.Deferred. For pool-scheduled
+	// tasks this is null and Run() stays a no-op observe marker.
+	private readonly Task? _deferredTask;
+
 	internal ScheduledTask(Task completion, CancellationTokenSource cancellationTokenSource, DateTimeOffset dueTimeUtc)
 	{
 		Completion = completion;
 		_cancellationTokenSource = cancellationTokenSource;
 		_dueTimeUtc = dueTimeUtc;
+		_deferredTask = null;
 		_ = completion.ContinueWith(
+			_ =>
+			{
+				Interlocked.Exchange(ref _isComplete, 1);
+				_cancellationTokenSource.Dispose();
+			},
+			CancellationToken.None,
+			TaskContinuationOptions.ExecuteSynchronously,
+			TaskScheduler.Default);
+	}
+
+	// Java parity: a stored RunnableFuture (new FutureTask<>(runnable, null)) that has NOT started. Unlike the
+	// pool-scheduled ctor, the body runs only when Run() is invoked; IsDone() stays false until then.
+	internal ScheduledTask(Task deferredTask)
+	{
+		_deferredTask = deferredTask;
+		Completion = deferredTask;
+		_cancellationTokenSource = new CancellationTokenSource();
+		_dueTimeUtc = DateTimeOffset.UtcNow;
+		_ = deferredTask.ContinueWith(
 			_ =>
 			{
 				Interlocked.Exchange(ref _isComplete, 1);
@@ -225,12 +258,16 @@ public sealed class ScheduledTask
 	// Java parity: Future.isDone() — true once the task completed (normally, exceptionally, or cancelled).
 	public bool IsDone() => Completion.IsCompleted;
 
-	// Java parity: RunnableFuture.run() — execute the deferred task now rather than waiting for its delay.
-	// Idiomatic-infra adaptation: the action body is already scheduled on the pool; calling Run() here is a
-	// no-op marker so the Java CM_TELEPORT_ANIMATION_DONE "run now" path compiles and the subsequent Get()
-	// observes the result. (gameplay-faithful-infra-idiomatic)
+	// Java parity: RunnableFuture.run() — execute the task now. For a deferred task (ThreadPoolManager.Deferred)
+	// the body has not started yet, so this runs it synchronously on the caller's thread (matching FutureTask.run()
+	// invoked from CM_TELEPORT_ANIMATION_DONE). For pool-scheduled tasks the body already ran on the pool, so Run()
+	// is a no-op observe marker and the subsequent Get() surfaces the result. RunSynchronously stores any thrown
+	// exception on the task (it does not propagate here); Get() re-throws it, mirroring FutureTask.get().
 	public void Run()
 	{
+		Task? deferred = _deferredTask;
+		if (deferred != null && deferred.Status == TaskStatus.Created)
+			deferred.RunSynchronously();
 	}
 
 	// Java parity: Future.get() — block until the task completes, surfacing any execution exception

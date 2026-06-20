@@ -185,12 +185,12 @@ public class TeleportService
         {
             // send teleport animation to player and trigger CM_TELEPORT_ANIMATION_DONE when the animation ended
             PacketSendUtility.SendPacket(player, new SM_TELEPORT_LOC(worldId, instanceId, x, y, z, h, animation));
-            // task will be triggered from CM_TELEPORT_ANIMATION_DONE
-            // Java parity: new FutureTask<Void>(spawnTask, null) stored (not submitted), run later via CM_TELEPORT_ANIMATION_DONE.
-            // Idiomatic-infra adaptation: ScheduledTask is the C# Future surface (IsDone/Run/Get); schedule the spawn body so the
-            // stored task is a real ScheduledTask, and CM_TELEPORT_ANIMATION_DONE.GetAndRemoveTask(TELEPORT).Get() observes it.
+            // Java parity: new FutureTask<Void>(spawnTask, null) stored (NOT submitted) — the spawn-in runs only when
+            // CM_TELEPORT_ANIMATION_DONE fires, i.e. after the client finished the fade-out. Eagerly scheduling it
+            // (e.g. Schedule(..., TimeSpan.Zero)) pushes the new-map SM_CHANNEL_INFO/SM_PLAYER_SPAWN before the client
+            // is ready, which breaks cross-map / instance teleports (player never enters the instance).
             player.GetController().AddTask(TaskId.TELEPORT,
-                ThreadPoolManager.GetInstance().Schedule(_ => { spawnTask.Run(); return System.Threading.Tasks.ValueTask.CompletedTask; }, TimeSpan.Zero));
+                ThreadPoolManager.GetInstance().Deferred(() => spawnTask.Run()));
         }
     }
 
