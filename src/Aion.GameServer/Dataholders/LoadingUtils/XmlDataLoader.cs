@@ -47,7 +47,12 @@ public static class XmlDataLoader
 	public static void ValidateCache(string cacheFilePath, string schemaFilePath)
 	{
 		// Java parity: static-data XSD validation of generated cache/static_data.xml.
-		var schemas = new XmlSchemaSet();
+		// static_data.xsd pulls in ~100 sibling schemas via <xs:include schemaLocation="..."> (incl.
+		// import.xsd, which declares the <import> element). .NET's XmlSchemaSet defaults XmlResolver to
+		// null, which silently drops every relative include — so compiling the set leaves ref="import"
+		// dangling and throws "The 'import' element is not declared." Java's JAXP resolves includes
+		// relative to the schema file by default; give the set an URL resolver so we match that.
+		var schemas = new XmlSchemaSet { XmlResolver = new XmlUrlResolver() };
 		schemas.Add(null, schemaFilePath);
 
 		var settings = new XmlReaderSettings
