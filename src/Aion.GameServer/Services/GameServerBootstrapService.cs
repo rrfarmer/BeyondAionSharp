@@ -454,9 +454,28 @@ public sealed class GameServerBootstrapService : IHostedService
 
 	public async Task StopAsync(CancellationToken cancellationToken)
 	{
-		// Java parity: ShutdownHook/SystemExitManager orderly engine, world, scheduler shutdown.
+		// Java parity: the tail of ShutdownHook.run() (lines 75-79) — flush gameplay data, THEN tear down the
+		// scheduler/thread pool. The player save (Java line 72: GameServer.shutdownNioServer disconnects + saves
+		// every player) has already run by the time we get here: .NET stops IHostedServices in reverse registration
+		// order, so GameServerHostedService.StopAsync -> NioServer.Shutdown (the player-save path) completes before
+		// this bootstrap StopAsync. The remaining Java save steps MUST run here on every real shutdown — the admin
+		// "shutdown" command (ShutdownHook.InitShutdown -> StopApplication) AND Ctrl+C/SIGTERM both funnel through
+		// the host's StopAsync — ordered before the thread-pool teardown so the writes complete. Previously
+		// PeriodicSaveService.OnShutdown() was only ever called from a unit test, so on a live restart the
+		// legion-warehouse item changes + the serverLastRun server variable were silently lost.
+
+		// Java parity: ShutdownHook.run():75 — PeriodicSaveService.getInstance().onShutdown() saves the legion
+		// warehouses + the serverLastRun server variable and cancels the periodic save tasks. The faithful singleton
+		// was already created at boot (GameServerBootstrapService.StartAsync, GameServer.main:156), so this just
+		// re-fetches it. Run it before the ThreadPoolManager shutdown below: StoreDataAndCancel cancels each
+		// scheduled save task and then performs the save inline, so the pool must still be intact.
+		PeriodicSaveService.GetInstance().OnShutdown();
+
+		// Java parity: ShutdownHook.run():77 — GameTimeService.getInstance().saveGameTime().
 		await _gameTimeService.ShutdownAsync(cancellationToken);
 
+		// Java parity: ShutdownHook.run():78-79 — CronService + ThreadPoolManager shutdown. The faithful GameEngine
+		// services shut down here; the thread pool is torn down LAST so every save above has completed first.
 		foreach (var engine in _engines.Reverse())
 			await engine.ShutdownAsync(cancellationToken);
 

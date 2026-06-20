@@ -47,10 +47,10 @@ public class PlayerSettingsDAO
                         playerSettings.SetHouseBuddies(resultSet.GetFieldValue<byte[]>(settingsOrd));
                         break;
                     case -1:
-                        playerSettings.SetDisplay(resultSet.GetInt32(settingsOrd));
+                        playerSettings.SetDisplay(ReadIntSetting(resultSet, settingsOrd));
                         break;
                     case -2:
-                        playerSettings.SetDeny(resultSet.GetInt32(settingsOrd));
+                        playerSettings.SetDeny(ReadIntSetting(resultSet, settingsOrd));
                         break;
                 }
             }
@@ -61,6 +61,25 @@ public class PlayerSettingsDAO
         }
         playerSettings.SetPersistentState(IPersistable.PersistentState.UPDATED);
         return playerSettings;
+    }
+
+    /// <summary>
+    /// Reads an int settings value (display/deny) from the BLOB <c>settings</c> column. saveSettings writes those
+    /// rows via an int parameter, which MySQL coerces into the blob as ASCII text (e.g. 5 -&gt; byte 0x35). Java's
+    /// JDBC <c>ResultSet.getInt()</c> transparently parses that text, but MySqlConnector's <c>GetInt32</c> throws
+    /// "Can't convert Blob to Int32" on a binary column. That throw aborted the whole load loop before the later
+    /// shortcuts (toolbar) row was read, so every returning player silently lost their settings. Replicate JDBC's
+    /// lenient behavior by decoding the stored bytes and parsing.
+    /// </summary>
+    private static int ReadIntSetting(MySqlDataReader resultSet, int ordinal)
+    {
+        object value = resultSet.GetValue(ordinal);
+        if (value is byte[] bytes)
+        {
+            string text = System.Text.Encoding.ASCII.GetString(bytes).Trim();
+            return text.Length == 0 ? 0 : int.Parse(text, System.Globalization.CultureInfo.InvariantCulture);
+        }
+        return Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public static void SaveSettings(Player player)

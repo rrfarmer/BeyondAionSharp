@@ -26,6 +26,19 @@ var builder = Host.CreateDefaultBuilder(args)
 			config.AddEnvironmentVariables();
 		}
 	)
+	.ConfigureHostOptions(
+		options =>
+		{
+			// Java parity: ShutdownHook.run() persists gameplay data during shutdown with no host-imposed deadline
+			// (player save via NioServer.Shutdown, then PeriodicSaveService.onShutdown -> legion warehouses +
+			// serverLastRun, then GameTimeService.saveGameTime — see GameServerBootstrapService.StopAsync). The .NET
+			// host cancels graceful shutdown after HostOptions.ShutdownTimeout, which would truncate those saves: the
+			// sequential StopAsync chain already spends up to ~5s in NioServer.Shutdown's player-disconnect wait alone,
+			// before the legion-warehouse write (which scales with legion count) even begins. Raise the deadline well
+			// past that worst case so the gameplay-data persistence steps always run to completion.
+			options.ShutdownTimeout = TimeSpan.FromSeconds(60);
+		}
+	)
 	.ConfigureServices(
 		(hostContext, services) =>
 		{
