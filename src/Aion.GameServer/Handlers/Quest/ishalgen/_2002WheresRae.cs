@@ -25,7 +25,7 @@ public class _2002WheresRae : AbstractQuestHandler
 
 	public override void Register()
 	{
-		int[] npc_ids = { 203519, 203534, 203553, 700045, 203516, 203538 };
+		int[] npc_ids = { 203519, 203534, 203553, 700045, 203516, 203538, 790002, 205020 };
 		qe.RegisterOnQuestCompleted(questId);
 		qe.RegisterOnLevelChanged(questId);
 		qe.RegisterQuestNpc(210377).AddOnKillEvent(questId);
