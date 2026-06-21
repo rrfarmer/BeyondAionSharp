@@ -14,7 +14,10 @@ public class Percentage
 
     public List<SummonGroup> GetSummons()
     {
-        return summons;
+        // Java parity: JAXB leaves summons null when <summonGroup> is absent. C# XmlSerializer materializes an empty
+        // list, which SummonerAI's `getSummons() != null` branch would enter (running handleBeforeSpawn on a
+        // non-individual percent with no summons). Normalize empty -> null so the null-check matches Java.
+        return summons == null || summons.Count == 0 ? null : summons;
     }
 
     public int GetPercent()

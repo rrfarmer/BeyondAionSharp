@@ -73,11 +73,15 @@ public class PortalPath
 
     public List<QuestReq> GetQuestReq()
     {
-        return questReq;
+        // Java parity: JAXB leaves questReq null when <quest_req> is absent. C# XmlSerializer instead materializes an
+        // EMPTY list, which PortalService.checkQuests treats as "requirements present, none matched" and wrongly blocks
+        // entry (e.g. Haramel showed the NO_RIGHT dialog). Normalize empty -> null so the null-check consumers match Java.
+        return questReq == null || questReq.Count == 0 ? null : questReq;
     }
 
     public List<ItemReq> GetItemReq()
     {
-        return itemReq;
+        // Java parity: same null-vs-empty gap as GetQuestReq (CheckAndRemoveRequiredItems does `if (itemReq != null)`).
+        return itemReq == null || itemReq.Count == 0 ? null : itemReq;
     }
 }
