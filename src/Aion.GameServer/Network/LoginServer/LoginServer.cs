@@ -98,23 +98,17 @@ public sealed class LoginServer : IAsyncDisposable
 	{
 		if (IsAuthed)
 		{
-			bool found = false;
 			foreach (var request in _loginRequests.Values)
 			{
 				if (ReferenceEquals(request.Connection, client))
 				{
-					System.Console.Error.WriteLine("[AUTH] AuthenticateClient: bridge AUTHED, forwarding SM_ACCOUNT_AUTH to login server");
 					SendPacket(request.AuthResponse);
-					found = true;
 					break;
 				}
 			}
-			if (!found)
-				System.Console.Error.WriteLine("[AUTH] AuthenticateClient: NO matching _loginRequests entry for this client (CM_MAC_ADDRESS before CM_L2AUTH_LOGIN_CHECK?) — nothing forwarded");
 		}
 		else
 		{
-			System.Console.Error.WriteLine("[AUTH] AuthenticateClient: bridge NOT authed — CLOSING client");
 			client.Close(); // disconnect this client since authentication will not happen
 		}
 	}
@@ -124,24 +118,20 @@ public sealed class LoginServer : IAsyncDisposable
 	public void AccountAuthenticationResponse(int accountId, string accountName, bool result, long creationDate,
 		global::Aion.GameServer.Model.Account.AccountTime accountTime, sbyte accessLevel, sbyte membership, long toll, string allowedHddSerial)
 	{
-		System.Console.Error.WriteLine($"[AUTH] AccountAuthenticationResponse: accountId={accountId} loginServerResult={result} accountName={accountName}");
 		if (!_loginRequests.TryRemove(accountId, out var loginRequest))
 		{
-			System.Console.Error.WriteLine($"[AUTH] no _loginRequests entry for accountId={accountId} — nothing to complete (client may have already dropped)");
 			return;
 		}
 
 		var client = loginRequest.Connection;
 		if (!result)
 		{
-			System.Console.Error.WriteLine($"[AUTH] login server REJECTED accountId={accountId} — closing client");
 			client.Close(new SM_L2AUTH_LOGIN_CHECK(false, accountName));
 			SendPacket(new SmAccountDisconnected(accountId));
 			return;
 		}
 		if (!ValidateMacAndHddSerial(client, allowedHddSerial))
 		{
-			System.Console.Error.WriteLine($"[AUTH] MAC/HDD validation FAILED for accountId={accountId} (mac='{client.GetMacAddress()}') — closing client");
 			client.Close(new SM_L2AUTH_LOGIN_CHECK(false, accountName));
 			SendPacket(new SmAccountDisconnected(accountId));
 			return;

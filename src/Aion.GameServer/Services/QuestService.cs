@@ -408,7 +408,6 @@ public sealed class QuestService
         }
         catch (Exception ex)
         {
-            System.Console.Error.WriteLine($"[QUEST] CheckStartConditions(questId={questId}) THREW (returns false -> quest hidden): {ex}");
             log.LogError(ex, "QE: exception in checkStartCondition (" + player + ", questId " + questId + ")");
         }
         return false;

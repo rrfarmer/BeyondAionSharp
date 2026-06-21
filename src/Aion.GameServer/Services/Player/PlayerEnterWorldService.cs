@@ -160,7 +160,6 @@ public sealed class PlayerEnterWorldService
             }
             catch (Exception ex)
             {
-                System.Console.Error.WriteLine($"[ENTER] EnterWorld THREW for objId={objectId} ({player?.GetName()}) -> CONNECTION_ERROR (client stuck 'Preparing to reconnect'): {ex}");
                 player.GetController().Delete();
                 pcd.SetOnline(false);
                 PlayerDAO.OnlinePlayer(player, false);

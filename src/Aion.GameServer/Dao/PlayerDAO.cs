@@ -209,7 +209,6 @@ public class PlayerDAO
         }
         catch (Exception e)
         {
-            System.Console.Error.WriteLine($"[DAO] LoadPlayerCommonData({playerObjId}) THREW (returning null -> downstream NRE): {e}");
             log.LogError(e, "Could not load PlayerCommonData data for player: " + playerObjId);
         }
         return null;

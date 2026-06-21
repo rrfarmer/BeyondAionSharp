@@ -166,7 +166,6 @@ public static class DialogPageExtensions
     public static int GetStartPageId(Npc npc, Player player)
     {
         TalkInfo talkInfo = npc.GetObjectTemplate().GetTalkInfo();
-        System.Console.Error.WriteLine($"[QUEST] GetStartPageId npc={npc.GetNpcId()} talkInfo={(talkInfo == null ? "NULL" : $"isDialog={talkInfo.IsDialogNpc()} func={(talkInfo.GetFuncDialogIds() == null ? "null" : string.Join(",", talkInfo.GetFuncDialogIds()))}")} interactionAllowed={(talkInfo == null ? "n/a" : DialogService.IsInteractionAllowed(player, npc).ToString())}");
         if (talkInfo == null || !talkInfo.IsDialogNpc() && talkInfo.GetFuncDialogIds() == null)
             return 0; // HTML_PAGE_NULL (npc has no conversation or function dialog)
         if (!DialogService.IsInteractionAllowed(player, npc))
@@ -244,12 +243,10 @@ public static class DialogPageExtensions
         QuestNpc questNpc = Aion.GameServer.QuestEngine.QuestEngine.GetInstance().GetQuestNpc(npc.GetNpcId());
         if (questNpc == null)
         {
-            System.Console.Error.WriteLine($"[QUEST] HasQuestInteraction npc={npc.GetNpcId()}: NO questNpc registered -> generic dialog");
             return false;
         }
         bool startable = questNpc.GetOnQuestStart().Any(startableQuest => QuestService.CheckStartConditions(player, startableQuest, false));
         bool active = player.GetQuestStateList().GetUncompletedQuests().Any(activeQuest => questNpc.GetOnTalkEvent().Contains(activeQuest.GetQuestId()));
-        System.Console.Error.WriteLine($"[QUEST] HasQuestInteraction npc={npc.GetNpcId()} pLevel={player.GetLevel()} pRace={player.GetRace()}: onQuestStart=[{string.Join(",", questNpc.GetOnQuestStart())}] startable={startable} active={active}");
         return startable || active;
     }
 }

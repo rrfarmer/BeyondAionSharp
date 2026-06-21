@@ -31,7 +31,6 @@ public abstract class AionClientPacket : BaseClientPacket<AionConnection>
         }
         catch (Exception e)
         {
-            System.Console.Error.WriteLine($"[NET] RunImpl THREW handling {GetType().Name} from {GetConnection()}: {e}");
             log.LogError(e, "Error handling client packet from " + GetConnection() + ": " + this);
         }
     }

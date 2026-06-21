@@ -24666,7 +24666,6 @@ public sealed class SM_SYSTEM_MESSAGE : AionServerPacket
     // per writeS. Integer.toString == int.ToString. The 28k-line msgId catalog is DATA (verified path, not every entry).
     protected override void WriteImpl(AionConnection con)
     {
-        System.Console.Error.WriteLine($"[SYSMSG] msgId={msgId} params=[{string.Join(",", @params)}]");
         WriteC(chatType);
         WriteC(0x00); // to do for shoots text encoding (unk dialect)
         WriteD(senderObjId);

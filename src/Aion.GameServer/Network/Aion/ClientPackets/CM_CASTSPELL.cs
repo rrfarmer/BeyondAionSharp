@@ -90,8 +90,6 @@ public class CM_CASTSPELL : AionClientPacket
         }
 
         SkillTemplate template = DataManager.SKILL_DATA.GetSkillTemplate(spellid);
-        var _tgt = player.GetTarget();
-        System.Console.Error.WriteLine($"[SKILL] CM_CASTSPELL spellid={spellid} targetType={targetType} pktTargetObjId={targetObjectId} playerTarget={(_tgt == null ? "NULL" : _tgt.GetObjectId().ToString())} template={(template == null ? "NULL" : "id=" + template.GetSkillId() + " passive=" + template.IsPassive() + " firstTarget=" + template.GetProperties()?.GetFirstTarget() + " relation=" + template.GetProperties()?.GetTargetRelation())} isEnemy={(_tgt is global::Aion.GameServer.Model.GameObjects.Creature _c ? player.IsEnemy(_c).ToString() : "n/a")}");
         if (template == null || template.IsPassive())
             return;
 
