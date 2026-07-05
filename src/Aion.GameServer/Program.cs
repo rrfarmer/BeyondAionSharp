@@ -124,6 +124,9 @@ var builder = Host.CreateDefaultBuilder(args)
 			// boots the faithful NioServer + GameConnectionFactoryImpl directly.
 			services.AddHostedService<GameServerHostedService>();
 			services.AddHostedService<OutboundLinkHostedService>();
+			// Admin HTTP endpoint (opt-in via gameserver.admin.api.*) used by the external web portal to send
+			// mail through the live SystemMailService instead of writing to the game DB directly.
+			services.AddHostedService<Aion.GameServer.Services.Admin.AdminHttpService>();
 		}
 	)
 	.ConfigureLogging(

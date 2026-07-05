@@ -37,6 +37,8 @@ public sealed class GameServerOptions
 
 	public GameServerAdministrationOptions Administration { get; init; } = new();
 
+	public GameServerAdminApiOptions AdminApi { get; init; } = new();
+
 	public GameServerRateOptions Rates { get; init; } = new();
 
 	public GameServerPriceOptions Prices { get; init; } = new();
@@ -314,7 +316,17 @@ public sealed class GameServerOptions
 				InstanceEnterAllAccessLevel = GetIntWithEnvironment(loader, "gameserver.administration.instance.enter_all", 2),
 				OperationalItemIds = LoadOperationalItemIds(startDirectory),
 			},
-			Rates = new GameServerRateOptions
+			AdminApi = new GameServerAdminApiOptions
+				{
+					// Not a Java config: local admin HTTP endpoint used by the external web portal to send mail
+					// through the live server (SystemMailService) instead of writing to the DB directly. Disabled
+					// by default; enable + set a token via env (GAMESERVER_ADMIN_API_ENABLED / _TOKEN / _PORT).
+					Enabled = GetBoolWithEnvironment(loader, "gameserver.admin.api.enabled", false),
+					BindHost = GetWithEnvironment(loader, "gameserver.admin.api.bind", "+"),
+					Port = GetIntWithEnvironment(loader, "gameserver.admin.api.port", 7780),
+					Token = GetWithEnvironment(loader, "gameserver.admin.api.token", string.Empty),
+				},
+				Rates = new GameServerRateOptions
 			{
 				ManastoneChances = GetFloatListWithEnvironment(loader, "gameserver.rates.manastone_chances", "75.0, 75.0"),
 				EnchantmentStoneBaseChances = GetFloatListWithEnvironment(loader, "gameserver.rates.enchantment_stone.base_chances", "65.0, 65.0"),
@@ -815,6 +827,23 @@ public sealed class GameServerAdministrationOptions
 	public int InstanceEnterAllAccessLevel { get; init; } = 2;
 
 	public IReadOnlySet<int> OperationalItemIds { get; init; } = new HashSet<int>();
+}
+
+public sealed class GameServerAdminApiOptions
+{
+	// Local admin HTTP endpoint (not a Java config). Consumed by AdminHttpService; used by the external web
+	// portal to deliver mail through the live server (SystemMailService) instead of writing to the DB directly.
+	public bool Enabled { get; init; }
+
+	// HttpListener bind host. "+" listens on all interfaces (fine inside the docker container). Use "localhost"
+	// for a local Windows run if you hit a urlacl/permission error binding "+".
+	public string BindHost { get; init; } = "+";
+
+	public int Port { get; init; } = 7780;
+
+	// Shared secret required in the X-Admin-Token header. When Enabled, a non-empty token is required or the
+	// endpoint refuses to start (fail closed).
+	public string Token { get; init; } = string.Empty;
 }
 
 public sealed class GameServerNetworkOptions

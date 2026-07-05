@@ -54,6 +54,18 @@ public class DialogService
         Mailbox mailbox = player.GetMailbox();
         if (mailbox != null && mailbox.mailBoxState != PlayerMailboxState.CLOSED)
             mailbox.mailBoxState = PlayerMailboxState.CLOSED;
+
+        // The express-mail Shugo Courier is meant to despawn when the client sends CM_READ_EXPRESS_MAIL action 0
+        // on window close (see CM_READ_EXPRESS_MAIL). Some clients only ever send action 1 (summon), so the
+        // courier lingers until its 5-minute SERVICE_TIME timer. Closing the courier's own dialog is a reliable
+        // "done with express mail" signal, so retire it here too. (Deliberate addition over the Java source, which
+        // relies solely on the client's action-0 packet.)
+        Npc postman = player.GetPostman();
+        if (postman != null && postman.Equals(target))
+        {
+            postman.GetController().Delete();
+            player.SetPostman(null);
+        }
     }
 
     public static void OnDialogSelect(int dialogActionId, Player player, Npc npc, int questId, int extendedRewardIndex)
