@@ -183,7 +183,18 @@ public sealed class AdminHttpService : IHostedService
                 recipientName = pcd.GetName();
             }
 
-            if (dto.ItemId <= 0 || dto.ItemCount <= 0)
+            bool hasItemAttachment = dto.ItemId != 0 || dto.ItemCount != 0;
+            if (dto.Kinah < 0)
+            {
+                await WriteJsonAsync(ctx, 400, new { ok = false, error = "kinah cannot be negative." });
+                return;
+            }
+            if (!hasItemAttachment && dto.Kinah <= 0)
+            {
+                await WriteJsonAsync(ctx, 400, new { ok = false, error = "item attachment or positive kinah is required." });
+                return;
+            }
+            if (hasItemAttachment && (dto.ItemId <= 0 || dto.ItemCount <= 0))
             {
                 await WriteJsonAsync(ctx, 400, new { ok = false, error = "itemId and itemCount must be positive." });
                 return;
@@ -204,8 +215,8 @@ public sealed class AdminHttpService : IHostedService
                 return;
             }
 
-            _logger.LogInformation("Admin API: express item mail {ItemId}x{Count} -> {Recipient} ({Delivery})",
-                dto.ItemId, dto.ItemCount, recipientName, online ? "online-notified" : "offline");
+            _logger.LogInformation("Admin API: express mail item={ItemId}x{Count} kinah={Kinah} -> {Recipient} ({Delivery})",
+                dto.ItemId, dto.ItemCount, dto.Kinah, recipientName, online ? "online-notified" : "offline");
             await WriteJsonAsync(ctx, 200, new { ok = true, delivered = online ? "online" : "offline", recipientName });
         }
         catch (Exception ex)
