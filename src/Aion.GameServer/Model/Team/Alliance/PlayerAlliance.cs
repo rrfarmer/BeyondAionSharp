@@ -9,8 +9,10 @@ namespace Aion.GameServer.Model.Team.Alliance;
 public class PlayerAlliance : TemporaryPlayerTeam<PlayerAllianceMember>
 {
     private readonly Dictionary<int, PlayerAllianceGroup> groups = new Dictionary<int, PlayerAllianceGroup>();
-    // Java CopyOnWriteArrayList → List (foundational concurrency caveat).
-    private readonly ICollection<int> viceCaptainIds = new List<int>();
+    // Java parity: CopyOnWriteArrayList — the exposed collection is mutated (Assign/Change/Leave
+    // vice-captain events) and iterated (ChangeAllianceLeaderEvent, SM_ALLIANCE_INFO) concurrently,
+    // so it must be copy-on-write itself (a plain List threw "Collection was modified" mid-iteration).
+    private readonly ICollection<int> viceCaptainIds = new Aion.GameServer.Utils.CopyOnWriteArrayList<int>();
     private int allianceReadyStatus;
     private TeamType type;
     private Aion.GameServer.Model.Team.League.League league;

@@ -11,8 +11,9 @@ public class Legion : AionObject
     private string legionName;
     private int legionLevel = 1;
     private long contributionPoints = 0;
-    // Java parity: CopyOnWriteArrayList — concurrent read-heavy member id list (C# has no CoW list; foundational diff).
-    private List<int> memberIds = new List<int>();
+    // Java parity: CopyOnWriteArrayList — concurrent read-heavy member id list; iteration is safe
+    // against concurrent join/leave (a plain List threw "Collection was modified" mid-iteration).
+    private IList<int> memberIds = new Aion.GameServer.Utils.CopyOnWriteArrayList<int>();
     private short deputyPermission = 0x1E0C;
     private short centurionPermission = 0x1C08;
     private short legionaryPermission = 0x1800;
@@ -48,10 +49,12 @@ public class Legion : AionObject
 
     public void SetMemberIds(List<int> memberIds)
     {
-        this.memberIds = memberIds;
+        // Java assigns the DAO's ArrayList directly, silently dropping the CopyOnWriteArrayList
+        // guarantee post-load; wrap it so the field's declared thread-safety survives a DB reload.
+        this.memberIds = new Aion.GameServer.Utils.CopyOnWriteArrayList<int>(memberIds);
     }
 
-    public List<int> GetMemberIds()
+    public IList<int> GetMemberIds()
     {
         return memberIds;
     }

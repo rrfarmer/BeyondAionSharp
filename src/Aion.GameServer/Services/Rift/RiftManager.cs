@@ -15,7 +15,7 @@ using Aion.GameServer.World.Knownlist;
 
 namespace Aion.GameServer.Services.Rift;
 
-/// <summary>Java parity: services/rift/RiftManager (Source). Singleton; static riftsPerWorld (ConcurrentDictionary&lt;int,List&lt;Npc&gt;&gt;) and riftGroups (ConcurrentDictionary&lt;string,SpawnTemplate&gt;); addRiftSpawnTemplate, spawnRift/spawnVortex (RiftEnum lookup), spawnInstance (build Npc, store/position/spawn), addSpawnedRift/getSpawnedRifts/removeSpawnedRift. ConcurrentHashMap->ConcurrentDictionary; CopyOnWriteArrayList->List (snapshot-on-write concurrency dropped); computeIfAbsent->GetOrAdd; Collections.emptyList->new List; rift.name()->RiftEnum.Name(). RVController/SpawnTemplate/VortexLocation/RiftLocation red-tolerated.</summary>
+/// <summary>Java parity: services/rift/RiftManager (Source). Singleton; static riftsPerWorld (ConcurrentDictionary&lt;int,List&lt;Npc&gt;&gt;) and riftGroups (ConcurrentDictionary&lt;string,SpawnTemplate&gt;); addRiftSpawnTemplate, spawnRift/spawnVortex (RiftEnum lookup), spawnInstance (build Npc, store/position/spawn), addSpawnedRift/getSpawnedRifts/removeSpawnedRift. ConcurrentHashMap->ConcurrentDictionary; CopyOnWriteArrayList semantics restored via copy-on-write (add/remove publish a fresh List so concurrent RiftInformer iterators never see an in-place mutation — a plain List threw "Collection was modified"); computeIfAbsent->AddOrUpdate; Collections.emptyList->new List; rift.name()->RiftEnum.Name(). RVController/SpawnTemplate/VortexLocation/RiftLocation red-tolerated.</summary>
 public class RiftManager
 {
     private static readonly ILogger log = NullLoggerFactory.Instance.CreateLogger(nameof(RiftManager));
@@ -109,7 +109,14 @@ public class RiftManager
 
     private static void AddSpawnedRift(Npc rift)
     {
-        riftsPerWorld.GetOrAdd(rift.GetWorldId(), k => new List<Npc>()).Add(rift);
+        // Java parity: riftsPerWorld values are CopyOnWriteArrayList — a write replaces the
+        // per-world list with a fresh copy so it is never mutated in place. A published list is
+        // therefore an immutable snapshot, and concurrent RiftInformer iterators are safe (a
+        // plain List.Add during their foreach threw "Collection was modified").
+        riftsPerWorld.AddOrUpdate(
+            rift.GetWorldId(),
+            k => new List<Npc> { rift },
+            (k, existing) => new List<Npc>(existing) { rift });
     }
 
     public static List<Npc> GetSpawnedRifts(int worldId)
@@ -120,8 +127,28 @@ public class RiftManager
 
     public static bool RemoveSpawnedRift(Npc rift)
     {
-        List<Npc> rifts = riftsPerWorld.GetValueOrDefault(rift.GetWorldId());
-        return rifts != null && rifts.Remove(rift);
+        // Java parity: CopyOnWriteArrayList.remove — copy-on-write with a CAS retry loop so the
+        // published list is replaced atomically and never mutated in place (see AddSpawnedRift).
+        int worldId = rift.GetWorldId();
+        while (true)
+        {
+            if (!riftsPerWorld.TryGetValue(worldId, out List<Npc> rifts))
+            {
+                return false;
+            }
+            int index = rifts.IndexOf(rift);
+            if (index < 0)
+            {
+                return false;
+            }
+            List<Npc> updated = new List<Npc>(rifts);
+            updated.RemoveAt(index);
+            if (riftsPerWorld.TryUpdate(worldId, updated, rifts))
+            {
+                return true;
+            }
+            // Another writer swapped the list concurrently; retry with the latest snapshot.
+        }
     }
 
     public static RiftManager GetInstance()
