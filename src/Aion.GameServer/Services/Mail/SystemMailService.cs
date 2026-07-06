@@ -96,12 +96,22 @@ public class SystemMailService
         Letter newLetter = new Letter(IDFactory.GetInstance().NextId(), recipientCommonData.GetPlayerObjId(), attachedItem, finalAttachedKinahCount,
             title, message, sender, DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()).UtcDateTime, true, letterType);
 
-        if (!MailDAO.StoreLetter(newLetter))
-            return false;
-
         if (attachedItem != null)
+        {
             if (!InventoryDAO.Store(attachedItem, recipientCommonData.GetPlayerObjId()))
                 return false;
+        }
+
+        if (!MailDAO.StoreLetter(newLetter))
+        {
+            if (attachedItem != null)
+            {
+                attachedItem.SetPersistentState(Aion.GameServer.Model.GameObjects.IPersistable.PersistentState.DELETED);
+                if (!InventoryDAO.Store(attachedItem, recipientCommonData.GetPlayerObjId()))
+                    log.LogError("[SYSMAILSERVICE] > Failed to clean up attached item {ItemObjectId} after mail store failure.", attachedItem.GetObjectId());
+            }
+            return false;
+        }
 
         if (LoggingConfig.LOG_SYSMAIL)
             log.LogInformation("[SYSMAILSERVICE] > [SenderName: " + sender + "] [RecipientName: " + recipientName + "] RETURN ITEM ID:" + attachedItemId
