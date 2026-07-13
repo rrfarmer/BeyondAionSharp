@@ -1,31 +1,24 @@
+using Aion.GameServer.Dao;
 using Aion.GameServer.Network.Aion;
 
 namespace Aion.GameServer.Network.Aion.ServerPackets;
 
-/// <summary>Java parity: network/aion/serverpackets/SM_GM_BOOKMARK_ADD (Yeats). Adds a GM teleport bookmark (name + worldId + x/y/z).</summary>
+/// <summary>Adds a persisted GM teleport bookmark to the client.</summary>
 public class SM_GM_BOOKMARK_ADD : AionServerPacket
 {
-    // //fsc 64 sdfffd [Teleportatiions Platz2] 120010000 230 250 290 1
+    private readonly BookmarkDAO.Bookmark bookmark;
 
-    private string name;
-    private int worldId;
-    private float x, y, z;
-
-    public SM_GM_BOOKMARK_ADD(string name, int worldId, float x, float y, float z)
+    public SM_GM_BOOKMARK_ADD(BookmarkDAO.Bookmark bookmark)
     {
-        this.name = name;
-        this.worldId = worldId;
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.bookmark = bookmark;
     }
 
     protected override void WriteImpl(AionConnection con)
     {
-        WriteS(name);
-        WriteD(worldId);
-        WriteF(x);
-        WriteF(y);
-        WriteF(z);
+        WriteS(bookmark.Name);
+        WriteD(bookmark.WorldId);
+        WriteF(bookmark.X);
+        WriteF(bookmark.Y);
+        WriteF(bookmark.Z);
     }
 }

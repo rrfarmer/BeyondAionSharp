@@ -248,7 +248,7 @@ public sealed class GoldenPacketFixtureTests
 		"SM_CONQUEROR_PROTECTOR" => new SM_CONQUEROR_PROTECTOR(inputs.GetProperty("type").GetInt32(), inputs.GetProperty("buffLvl").GetInt32(), inputs.GetProperty("cooldown").GetInt32()),
 		"SM_LEGION_EDIT" => ReconstructLegionEdit(inputs),
 		"SM_UPGRADE_ARCADE" => ReconstructUpgradeArcade(inputs),
-		"SM_GM_BOOKMARK_ADD" => new SM_GM_BOOKMARK_ADD(inputs.GetProperty("name").GetString()!, inputs.GetProperty("worldId").GetInt32(), inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle()),
+		"SM_GM_BOOKMARK_ADD" => new SM_GM_BOOKMARK_ADD(new Aion.GameServer.Dao.BookmarkDAO.Bookmark(inputs.GetProperty("name").GetString()!, inputs.GetProperty("worldId").GetInt32(), inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle())),
 		"SM_ALLIANCE_READY_CHECK" => new SM_ALLIANCE_READY_CHECK(inputs.GetProperty("playerObjectId").GetInt32(), inputs.GetProperty("statusCode").GetInt32()),
 		"SM_BIND_POINT_INFO" => new SM_BIND_POINT_INFO(inputs.GetProperty("mapId").GetInt32(), inputs.GetProperty("x").GetSingle(), inputs.GetProperty("y").GetSingle(), inputs.GetProperty("z").GetSingle()),
 		"SM_CHAT_INIT" => new SM_CHAT_INIT(inputs.GetProperty("token").EnumerateArray().Select(e => (byte)e.GetInt32()).ToArray()),

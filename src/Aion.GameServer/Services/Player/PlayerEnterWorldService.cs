@@ -323,6 +323,8 @@ public sealed class PlayerEnterWorldService
             ClassChangeService.ShowClassChangeDialog(player);
 
         GMService.GetInstance().OnPlayerLogin(player);
+        foreach (BookmarkDAO.Bookmark bookmark in BookmarkDAO.LoadBookmarks(player.GetObjectId()))
+            PacketSendUtility.SendPacket(player, new SM_GM_BOOKMARK_ADD(bookmark));
 
         if (player.GetAbyssRank().GetRank().GetId() >= AbyssRankEnum.STAR1_OFFICER.GetId())
         {

@@ -1,3 +1,4 @@
+using Aion.GameServer.Dao;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Utils;
@@ -8,25 +9,22 @@ namespace Aion.GameServer.Handlers.ConsoleCommands;
 /// <summary>Java parity: data/handlers/consolecommands/Bookmark_add (ginho1). Adds a GM teleport bookmark at the admin's current position.</summary>
 public class Bookmark_add : ConsoleCommand
 {
+    public const string ALIAS = "Bookmark_add";
+
     public Bookmark_add()
-        : base("Bookmark_add")
+        : base(ALIAS)
     {
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
     {
-        if (paramsArr.Length > 0)
-        {
-            string bookmark_name = "";
-            foreach (string str in paramsArr)
-            {
-                bookmark_name += str + " ";
-            }
-            if (bookmark_name.Length != 0)
-            {
-                bookmark_name = bookmark_name.Trim();
-                PacketSendUtility.SendPacket(admin, new SM_GM_BOOKMARK_ADD(bookmark_name, admin.GetWorldId(), admin.GetX(), admin.GetY(), admin.GetZ()));
-            }
-        }
+        string bookmarkName = string.Join(" ", paramsArr);
+        if (bookmarkName.Length == 0)
+            return;
+        if (bookmarkName.Length > 27)
+            bookmarkName = bookmarkName.Substring(0, 27);
+        var bookmark = new BookmarkDAO.Bookmark(bookmarkName, admin.GetWorldId(), admin.GetX(), admin.GetY(), admin.GetZ());
+        BookmarkDAO.StoreBookmark(admin.GetObjectId(), bookmark);
+        PacketSendUtility.SendPacket(admin, new SM_GM_BOOKMARK_ADD(bookmark));
     }
 }

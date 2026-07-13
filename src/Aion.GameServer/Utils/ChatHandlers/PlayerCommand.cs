@@ -15,7 +15,7 @@ public abstract class PlayerCommand : ChatCommand
 
     public override bool ValidateAccess(Player player)
     {
-        bool hasAccess = player.HasPermission(GetLevel()) || CommandsAccessService.HasAccess(player.GetObjectId(), GetAlias());
+        bool hasAccess = player.HasPermission(GetLevel()) || CommandsAccessService.HasAccess(player.GetObjectId(), GetAliasForLevel());
         if (!hasAccess && player.IsStaff())
             SendInfo(player, "<You need membership level " + GetLevel() + " or higher to use " + GetAliasWithPrefix() + ">");
         return hasAccess;

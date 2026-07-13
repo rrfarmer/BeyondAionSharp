@@ -50,6 +50,7 @@ public sealed class GameServerConfigPropertiesMapTests
             Assert.Equal((sbyte)0, CommandsConfig.ACCESS_LEVELS["help"]);          // player command, level 0
             Assert.Equal((sbyte)10, CommandsConfig.ACCESS_LEVELS["faction"]);      // player command, level 10
             Assert.Equal((sbyte)9, CommandsConfig.ACCESS_LEVELS["Bookmark_add"]);  // console command (underscore key)
+            Assert.DoesNotContain("bk", CommandsConfig.ACCESS_LEVELS.Keys);
             // The dotted handler-directories key does NOT match ^[a-zA-Z0-9_]+$ → excluded from the map.
             Assert.DoesNotContain("gameserver.commands.handler_directories", CommandsConfig.ACCESS_LEVELS.Keys);
 

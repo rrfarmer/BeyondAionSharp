@@ -25,7 +25,7 @@ public abstract class AdminCommand : ChatCommand
 
     public override bool ValidateAccess(Player player)
     {
-        bool hasAccess = player.HasAccess((sbyte)GetLevel()) || CommandsAccessService.HasAccess(player.GetObjectId(), GetAlias());
+        bool hasAccess = player.HasAccess((sbyte)GetLevel()) || CommandsAccessService.HasAccess(player.GetObjectId(), GetAliasForLevel());
         if (!hasAccess && player.IsStaff())
             SendInfo(player, "<You need access level " + GetLevel() + " or higher to use " + GetAliasWithPrefix() + ">");
         return hasAccess;

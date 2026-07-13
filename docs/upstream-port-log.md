@@ -11,7 +11,7 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | `635777e99` | 2026-06-01 | Normalize retail no-resist behavior for selected effect types (#140) | Ported | `main` | Exact 91-type no-resist normalization, cannot-miss integration, MPSHIELD conflicts, and focused tests. |
 | `56d461d56` | 2026-06-01 | Fixed selling to certain NPCs | Ported | `main` | Exact NPC XML carryover; all 79 changed records verified through the functional-dialog parser. |
 | `7bd02e9d2` | 2026-06-06 | Always resist nofly/fall effects with INVULNERABLE_WING (#141) | Ported | `main` | Calculation-time wing immunity for fall/no-fly effects with safe non-player application and focused tests. |
-| `3b3a6b07d` | 2026-06-06 | Fixed GM bookmarks | Pending | | |
+| `3b3a6b07d` | 2026-06-06 | Fixed GM bookmarks | Ported | `main` | Player-scoped bookmark DAO, client-native command/login flow, exact SQL/config carryover, and packet/access tests. |
 | `796a72bd6` | 2026-06-06 | Shield mastery: damage reduce instead of block % (#142) | Pending | | |
 | `6ee1e7b03` | 2026-06-07 | Removed unsupported in-game shop (closes #18) | Pending | | |
 | `266a073fb` | 2026-06-08 | Load country code specific goodslists (#144) | Pending | | |

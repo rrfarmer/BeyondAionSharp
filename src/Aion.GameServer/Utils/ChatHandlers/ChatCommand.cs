@@ -67,6 +67,11 @@ public abstract class ChatCommand
         return alias;
     }
 
+    protected virtual string GetAliasForLevel()
+    {
+        return alias;
+    }
+
     public string GetDescription()
     {
         return description;
@@ -125,8 +130,8 @@ public abstract class ChatCommand
 
     public byte GetLevel()
     {
-        if (!CommandsConfig.ACCESS_LEVELS.TryGetValue(alias, out sbyte level))
-            throw new NullReferenceException("Missing access level for " + GetAliasWithPrefix());
+        if (!CommandsConfig.ACCESS_LEVELS.TryGetValue(GetAliasForLevel(), out sbyte level))
+            throw new NullReferenceException("Missing access level for " + prefix + GetAliasForLevel());
         return (byte)level;
     }
 
