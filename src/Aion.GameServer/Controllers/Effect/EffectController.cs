@@ -622,13 +622,10 @@ public class EffectController
                 {
                     case DispelCategoryType.ALL:
                     case DispelCategoryType.BUFF:// DispelBuffCounterAtkEffect
-                        if (ef.GetReqDispelLevel() <= dispelLevel)
+                        if (ef.GetReqDispelLevel() <= dispelLevel && RemovePower(ef, power))
                         {
-                            if (RemovePower(ef, power))
-                            {
-                                ef.SetDesignatedDispelEffect(effect);
-                                dispelledEffectCount++;
-                            }
+                            ef.SetDesignatedDispelEffect(effect);
+                            dispelledEffectCount++;
                             count--;
                         }
                         break;
@@ -700,12 +697,12 @@ public class EffectController
                     if (RemovePower(effect, power))
                     {
                         effectsToEnd.Add(effect);
+                        count--;
                     }
                     else if (owner is Player)
                     {
                         insufficientDispelPower = true;
                     }
-                    count--;
                 }
                 else
                     insufficientDispelLevel = true;

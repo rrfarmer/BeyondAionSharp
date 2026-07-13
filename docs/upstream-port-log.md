@@ -21,6 +21,6 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | `12851ab5a` | 2026-06-14 | `//moveto` improvements | Ported | `main` | Preserved active instance coordinates, added obstacle-ignoring forward movement, switched teleport correction to absolute position packets, and added focused math/encoding tests; 801 tests pass. |
 | `37c93df63` | 2026-06-14 | Fixed XP for NPCs with custom HP via `modifyOwnerStat()` | Ported | `main` | XP now uses runtime MAXHP, with an isolated real-NPC/test-AI regression proving modified HP affects reward; 802 tests pass. |
 | `9d32f6172` | 2026-06-16 | feat: instance scaling (#143) | Ported | `main` | Added configurable, grow-only instance NPC HP/damage scaling backed by weak instance state; shared config blob matches Java exactly, focused lifecycle/stat tests added, and all 809 tests pass. |
-| `ee8cb3e40` | 2026-06-16 | Decrease the dispel counter only upon successful removal of a buff/debuff (#147) | Pending | | |
+| `ee8cb3e40` | 2026-06-16 | Decrease the dispel counter only upon successful removal of a buff/debuff (#147) | Ported | `main` | Dispel target count now decreases only after power fully removes an effect in both affected paths; two ordered-candidate regressions added, and all 811 tests pass. |
 | `302cd8ac7` | 2026-06-21 | Fix incorrect skill mapping logic for req_dispel attributes (#148) | Pending | | |
 | `59f65a956` | 2026-06-21 | Fixed buff removal when unsocketing stigmas (#BA3708) | Pending | | |
