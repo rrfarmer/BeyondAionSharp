@@ -111,11 +111,19 @@ public static class SkillLearnService
         PlayerSkillEntry skill = player.GetSkillList().GetSkillEntry(skillId);
         if (skill != null)
         {
-            player.GetEffectController().RemoveEffect(skillId);
+            SkillTemplate skillTemplate = DataManager.SKILL_DATA.GetSkillTemplate(skillId);
+            if (ShouldRemoveEffectOnSkillRemoval(skillTemplate))
+                player.GetEffectController().RemoveEffect(skillId);
             player.GetSkillList().RemoveSkill(skillId);
             PacketSendUtility.SendPacket(player, new SM_SKILL_REMOVE(skill));
             return true;
         }
         return false;
+    }
+
+    internal static bool ShouldRemoveEffectOnSkillRemoval(SkillTemplate skillTemplate)
+    {
+        return skillTemplate.IsPassive() || skillTemplate.IsToggle() || skillTemplate.IsDeityAvatar()
+            || skillTemplate.GetStack()!.StartsWith("WS_", StringComparison.Ordinal);
     }
 }
