@@ -266,7 +266,7 @@ public abstract class EffectTemplate
         return true;
     }
 
-    private bool IsDodgedOrResisted(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum)
+    protected virtual bool IsDodgedOrResisted(Aion.GameServer.SkillEngine.Model.Effect effect, StatEnum? statEnum)
     {
         return !IsNoResist() && (!CheckEffectResistRate(effect, statEnum) || !CheckDodgeOrResistRate(effect));
     }
