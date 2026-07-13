@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Aion.GameServer.Dataholders;
 using Aion.GameServer.Model.GameObjects.Players;
 using Aion.GameServer.Model.Templates.Npc;
+using Aion.GameServer.Network.Aion.ServerPackets;
 using Aion.GameServer.Services.Instance;
 using Aion.GameServer.Services.Teleport;
 using Aion.GameServer.Utils;
@@ -22,7 +23,8 @@ public class MoveTo : AdminCommand
             "<map name|ID> <x> <y> [z] - Moves you to the specified position (map names need underscores instead of spaces).",
             "<position link> - Moves you to the position of the chat link.",
             "<player name> - Moves you to the position of the player.",
-            "<npc name|ID> - Moves you to the position of the npc.");
+            "<npc name|ID> - Moves you to the position of the npc.",
+            "forward <distance> - Moves you forward by the specified distance, ignoring any obstacles in between.");
     }
 
     public override void Execute(Player admin, params string[] paramsArr)
@@ -31,6 +33,11 @@ public class MoveTo : AdminCommand
 
         if (paramsArr.Length >= 1)
         {
+            if (paramsArr.Length == 2 && "forward".Equals(paramsArr[0], StringComparison.OrdinalIgnoreCase))
+            {
+                MoveForward(admin, float.Parse(paramsArr[1], System.Globalization.CultureInfo.InvariantCulture));
+                return;
+            }
             WorldPosition pos;
             if (paramsArr.Length == 1)
                 pos = ChatUtil.GetPosition(paramsArr[0]);
@@ -74,6 +81,19 @@ public class MoveTo : AdminCommand
         SendInfo(admin, errorMsg);
     }
 
+    private static void MoveForward(Player admin, float distance)
+    {
+        (float x, float y) = CalculateForwardPosition(admin.GetX(), admin.GetY(), admin.GetHeading(), distance);
+        admin.GetPosition().SetXYZH(x, y, admin.GetZ(), admin.GetHeading());
+        PacketSendUtility.BroadcastToSightedPlayers(admin, new SM_POSITION(admin), true);
+    }
+
+    internal static (float X, float Y) CalculateForwardPosition(float x, float y, byte heading, float distance)
+    {
+        double radians = Math.PI / 180 * PositionUtil.ConvertHeadingToAngle(heading);
+        return ((float)(x + Math.Cos(radians) * distance), (float)(y + Math.Sin(radians) * distance));
+    }
+
     private WorldPosition ParseWorldPosition(Player admin, string[] paramsArr)
     {
         int coordIndex = 0;
@@ -88,7 +108,7 @@ public class MoveTo : AdminCommand
         }
         else
         {
-            mapId = admin.GetPosition().GetMapId();
+            mapId = EncodeMapAndInstanceId(admin.GetWorldId(), admin.GetInstanceId());
         }
         float? x = null, y = null, z = null;
         Regex p = new Regex("^((?<type>x|y|z)(=|:)\"?)?(?<coord>[0-9]+(\\.[0-9]+)?f?)\"?,?$", RegexOptions.IgnoreCase);
@@ -114,6 +134,8 @@ public class MoveTo : AdminCommand
         }
         return x == null || y == null ? null : ChatUtil.ParsedCoordsToWorldPosition(mapId, x.Value, y.Value, z, null);
     }
+
+    internal static int EncodeMapAndInstanceId(int worldId, int instanceId) => worldId + instanceId - 1;
 
     private void DoMoveTo(Player admin, WorldPosition pos, string message)
     {

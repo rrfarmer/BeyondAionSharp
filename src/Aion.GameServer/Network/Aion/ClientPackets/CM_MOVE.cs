@@ -108,7 +108,7 @@ public class CM_MOVE : AionClientPacket
                         player.GetMoveController().SetIsJumping(false);
                         global::Aion.GameServer.World.World.GetInstance().UpdatePosition(player, x2, y2, z2, heading);
                         m.OnMoveFromClient();
-                        PacketSendUtility.BroadcastToSightedPlayers(player, new SM_MOVE(player), true);
+                        PacketSendUtility.BroadcastToSightedPlayers(player, new SM_POSITION(player), true);
                         return;
                     }
                 }

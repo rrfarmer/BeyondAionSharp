@@ -18,7 +18,7 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | `9ca6a3753` | 2026-06-13 | Fixed NPC states | Ported | `main` | Exact NPC/spawn state data, obsolete aggro-runner AI removal, and focused template/spawn regression coverage; 781 tests pass. |
 | `edeb1a997` | 2026-06-14 | Implemented aerial_spawn attribute | Ported | `main` | Exact spawn/XSD data, runtime aerial flag propagation, retail state precedence, and focused model/controller tests; 786 tests pass. |
 | `031a7eec6` | 2026-06-14 | Fixed issues with `//enemy` command | Ported | `main` | Centralized NPC disposition/aggro semantics, corrected command text, and covered all custom-state attackability cases; 794 tests pass. |
-| `12851ab5a` | 2026-06-14 | `//moveto` improvements | Pending | | |
+| `12851ab5a` | 2026-06-14 | `//moveto` improvements | Ported | `main` | Preserved active instance coordinates, added obstacle-ignoring forward movement, switched teleport correction to absolute position packets, and added focused math/encoding tests; 801 tests pass. |
 | `37c93df63` | 2026-06-14 | Fixed XP for NPCs with custom HP via `modifyOwnerStat()` | Pending | | |
 | `9d32f6172` | 2026-06-16 | feat: instance scaling (#143) | Pending | | |
 | `ee8cb3e40` | 2026-06-16 | Decrease the dispel counter only upon successful removal of a buff/debuff (#147) | Pending | | |
