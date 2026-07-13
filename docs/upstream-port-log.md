@@ -14,7 +14,7 @@ Baseline: Beyond Aion Java `4.8` at `f2f77fefef00aacbef4c10614c18b339bbdaa05a`.
 | `3b3a6b07d` | 2026-06-06 | Fixed GM bookmarks | Ported | `main` | Player-scoped bookmark DAO, client-native command/login flow, exact SQL/config carryover, and packet/access tests. |
 | `796a72bd6` | 2026-06-06 | Shield mastery: damage reduce instead of block % (#142) | Ported | `main` | Exact six-skill XML carryover from block to damage reduction, with focused data parity coverage. |
 | `6ee1e7b03` | 2026-06-07 | Removed unsupported in-game shop (closes #18) | Ported | `main` | End-to-end shop/toll/premium removal, compacted bridge opcodes and auth packet, plus exact SQL/config carryover; 765 tests pass. |
-| `266a073fb` | 2026-06-08 | Load country code specific goodslists (#144) | Pending | | |
+| `266a073fb` | 2026-06-08 | Load country code specific goodslists (#144) | Ported | `main` | Exact six-region goods-list data, country-aware cache/direct-holder selection with fallback, and client-native trade rejection; 775 tests pass. |
 | `9ca6a3753` | 2026-06-13 | Fixed NPC states | Pending | | |
 | `edeb1a997` | 2026-06-14 | Implemented aerial_spawn attribute | Pending | | |
 | `031a7eec6` | 2026-06-14 | Fixed issues with `//enemy` command | Pending | | |

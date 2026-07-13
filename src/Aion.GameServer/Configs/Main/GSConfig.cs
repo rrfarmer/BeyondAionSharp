@@ -10,7 +10,8 @@ namespace Aion.GameServer.Configs.Main;
 public static class GSConfig
 {
     /// <summary>
-    /// Server country code (client checks against its cc start parameter): 1=NA, 2=EU, 7=RU, 99=Region free
+    /// Server country code (client checks against its cc start parameter): 0=KR, 1=NA, 2=EU, 4=JP, 5=CN, 6=TW,
+    /// 7=RU, 99=Region free
     /// (allows any client but limits character names to 10 chars). Key: gameserver.country.code
     /// </summary>
     [Property(key: "gameserver.country.code", defaultValue: "99")]

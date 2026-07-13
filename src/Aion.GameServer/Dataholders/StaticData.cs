@@ -310,7 +310,8 @@ public sealed partial class StaticData
 		PanelSkillsDataDh = TryLoadHolder(PanelSkillsDataDh, Path.Combine(staticDataDirectory, "polymorph_panels", "polymorph_panels.xml"), logger);
 		RideDataDh = TryLoadHolder(RideDataDh, Path.Combine(staticDataDirectory, "ride", "ride.xml"), logger);
 		WorldRaidDataDh = TryLoadHolder(WorldRaidDataDh, Path.Combine(staticDataDirectory, "world_raid", "world_raids.xml"), logger);
-		GoodsListDataDh = TryLoadHolder(GoodsListDataDh, Path.Combine(staticDataDirectory, "goodslists", "goodslists.xml"), logger);
+		GoodsListDataDh = TryLoadHolder(GoodsListDataDh,
+			LoadingUtils.XmlMerger.ApplyCountryOverride(Path.Combine(staticDataDirectory, "goodslists", "goodslists.xml")), logger);
 		NpcFactionsDataDh = TryLoadHolder(NpcFactionsDataDh, Path.Combine(staticDataDirectory, "npc_factions", "npc_factions.xml"), logger);
 		TeleporterDataDh = TryLoadHolder(TeleporterDataDh, Path.Combine(staticDataDirectory, "npc_teleporter.xml"), logger);
 		HousePartsDataDh = TryLoadHolder(HousePartsDataDh, Path.Combine(staticDataDirectory, "housing", "house_parts.xml"), logger);

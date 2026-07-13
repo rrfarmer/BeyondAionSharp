@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml;
+using Aion.GameServer.Configs.Main;
 
 namespace Aion.GameServer.Dataholders.LoadingUtils;
 
@@ -10,6 +11,15 @@ public sealed class XmlMerger
 	private const string SingleRootTagAttributeName = "singleRootTag";
 	private const string RecursiveImportAttributeName = "recursiveImport";
 	private const string MetadataCountKey = "__count";
+	private static readonly IReadOnlyDictionary<int, string> CountryRegions = new Dictionary<int, string>
+	{
+		[1] = "usa",
+		[2] = "europe",
+		[4] = "japan",
+		[5] = "china",
+		[6] = "taiwan",
+		[7] = "russia",
+	};
 	private static readonly uint[] CrcTable = BuildCrcTable();
 	private readonly string _sourceFilePath;
 	private readonly string _cacheFilePath;
@@ -87,7 +97,7 @@ public sealed class XmlMerger
 		if (string.IsNullOrWhiteSpace(importPath))
 			throw new XmlException("Attribute 'file' is missing or empty on import element.");
 
-		var fullPath = Path.GetFullPath(Path.Combine(_sourceDirectory, importPath));
+		var fullPath = ApplyCountryOverride(Path.GetFullPath(Path.Combine(_sourceDirectory, importPath)));
 		if (!File.Exists(fullPath) && !Directory.Exists(fullPath))
 			throw new FileNotFoundException($"Missing file to import: {fullPath}", fullPath);
 
@@ -110,6 +120,23 @@ public sealed class XmlMerger
 
 		if (singleRootTag && importedAny)
 			writer.WriteEndElement();
+	}
+
+	internal static string ApplyCountryOverride(string filePath)
+	{
+		return ApplyCountryOverride(filePath, GSConfig.SERVER_COUNTRY_CODE);
+	}
+
+	internal static string ApplyCountryOverride(string filePath, int countryCode)
+	{
+		if (!CountryRegions.TryGetValue(countryCode, out var region))
+			return filePath;
+
+		var directory = Path.GetDirectoryName(filePath);
+		var extension = Path.GetExtension(filePath);
+		var fileName = Path.GetFileNameWithoutExtension(filePath);
+		var overridePath = Path.Combine(directory ?? string.Empty, $"{fileName}_{region}{extension}");
+		return File.Exists(overridePath) ? overridePath : filePath;
 	}
 
 	private void ImportFile(string filePath, bool skipStartElement, bool skipEndElement, XmlWriter writer, IDictionary<string, string> metadata)
@@ -163,7 +190,7 @@ public sealed class XmlMerger
 			if (string.IsNullOrWhiteSpace(importPath))
 				throw new XmlException("Attribute 'file' is missing or empty on import element.");
 
-			var fullPath = Path.GetFullPath(Path.Combine(_sourceDirectory, importPath));
+			var fullPath = ApplyCountryOverride(Path.GetFullPath(Path.Combine(_sourceDirectory, importPath)));
 			if (File.Exists(fullPath))
 			{
 				files.Add(fullPath);
